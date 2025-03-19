@@ -13,7 +13,7 @@ def load_data(file_path):
 
 def compute_mape(labels, mode):
     """
-    Compute the Mean Absolute Percentage Error (MAPE) for the last 20% of the data.
+    Compute the Mean Absolute Percentage Error (MAPE) and additional statistics for the last 20% of the data.
 
     If mode is 'non_log', reverse the log scaling using np.expm1.
 
@@ -21,6 +21,10 @@ def compute_mape(labels, mode):
         last_20_percent: The last 20% slice of the labels.
         mape: The overall mean absolute percentage error.
         median: The median absolute percentage error.
+        iqr: The interquartile range (75th percentile - 25th percentile).
+        perc_10: The 10th percentile of the error distribution.
+        perc_90: The 90th percentile of the error distribution.
+        max_error: The maximum absolute percentage error.
     """
     if mode == "non_log":
         labels = np.expm1(labels)
@@ -28,21 +32,25 @@ def compute_mape(labels, mode):
     num_samples = labels.shape[0]
     split_point = int(num_samples * 0.8)
 
-    # Calculate the mean over the first 80% of the data
     mean_80_percent = np.mean(labels[:split_point, :, :], axis=0)
-    # Extract the last 20% of the data
     last_20_percent = labels[split_point:, :, :]
 
-    # Calculate MAPE for each element in the last 20%
     mape_values = np.abs(
         (last_20_percent - mean_80_percent) / last_20_percent) * 100
+
+    # Calculate some statistics
     mape = np.mean(mape_values)
     median = np.median(mape_values)
+    iqr = np.percentile(mape_values, 75) - \
+        np.percentile(mape_values, 25)
+    perc_10 = np.percentile(mape_values, 10)
+    perc_90 = np.percentile(mape_values, 90)
+    max_error = np.max(mape_values)
 
-    return last_20_percent, mape, median
+    return last_20_percent, mape, median, iqr, perc_10, perc_90, max_error
 
 
-def plot_compartments(last_20_percent, dataset, mode, save_dir):
+def plot_compartments(last_20_percent, dataset, mode, save_dir, size_tikz=14, size_labels=16, size_title=20, size_legend=12):
     """
     Plot the compartment time series for each run using data from the last 20%.
     The plot is saved to the specified directory.
@@ -65,12 +73,14 @@ def plot_compartments(last_20_percent, dataset, mode, save_dir):
     for comp_idx in range(num_compartments):
         for run in range(200):
             axes[comp_idx].plot(last_20_percent[run, :, comp_idx], alpha=0.7)
-        axes[comp_idx].set_xlabel("Days")
-        axes[comp_idx].set_ylabel("Value")
-        axes[comp_idx].set_title(compartments[comp_idx])
+        axes[comp_idx].set_xlabel("Days", fontsize=size_labels)
+        axes[comp_idx].set_ylabel("Value", fontsize=size_labels)
+        axes[comp_idx].set_title(compartments[comp_idx], fontsize=size_title)
+        axes[comp_idx].tick_params(
+            axis='both', which='major', labelsize=size_tikz)
         # Optionally add legend to the first subplot if needed
         if comp_idx == 0:
-            axes[comp_idx].legend()
+            axes[comp_idx].legend(fontsize=size_legend)
 
     plt.tight_layout()
     os.makedirs(save_dir, exist_ok=True)
@@ -130,8 +140,7 @@ def process_dataset(dataset_file, base_dataset_path, save_dir):
     Process a single dataset:
       - Load the data.
       - Compute MAPE for both 'non_log' and 'log' modes.
-      - Plot compartment time series for 'non_log' mode.
-      - Plot mean and standard deviation for each compartment for 'non_log' mode.
+      - Print MAPE statistics.
     """
     dataset_path = os.path.join(base_dataset_path, dataset_file)
     data = load_data(dataset_path)
@@ -139,8 +148,15 @@ def process_dataset(dataset_file, base_dataset_path, save_dir):
     modes = ["non_log", "log"]
     for mode in modes:
         labels = data['labels']
-        last_20_percent, mape, median = compute_mape(labels, mode)
+        last_20_percent, mape, median, iqr, perc_10, perc_90, max_error = compute_mape(
+            labels, mode)
+
         print(f"{dataset_file}_{mode}_MAPE for the last 20%: {mape:.2f}%")
+        print(f"  - Median MAPE: {median:.2f}%")
+        print(f"  - IQR (Interquartilbereich): {iqr:.2f}%")
+        print(f"  - 10. Perzentil: {perc_10:.2f}%")
+        print(f"  - 90. Perzentil: {perc_90:.2f}%")
+        print(f"  - Maximaler Fehler: {max_error:.2f}%\n")
 
         if mode == "non_log":
             plot_compartments(last_20_percent, dataset_file, mode, save_dir)
@@ -153,8 +169,8 @@ def main():
 
     dataset_files = os.listdir(base_dataset_path)
     # only use specific datasets 'data_secir_simple_30days_I_based_10k.pickle' and 'data_secir_simple_30days_10k.pickle'
-    # dataset_files = ['data_secir_simple_30days_I_based_10k.pickle',
-    #                  'data_secir_simple_30days_10k.pickle']
+    dataset_files = ['data_secir_simple_30days_I_based_10k.pickle',
+                     'data_secir_simple_30days_10k.pickle']
     for dataset_file in dataset_files:
         process_dataset(dataset_file, base_dataset_path, save_dir)
 

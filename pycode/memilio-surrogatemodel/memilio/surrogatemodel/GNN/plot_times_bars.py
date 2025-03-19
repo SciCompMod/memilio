@@ -8,7 +8,13 @@ save_path = os.path.join(cwd, "saves")
 os.makedirs(save_path, exist_ok=True)
 
 # timings GNN vs Graph-ODE
-df = pd.read_csv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "times.csv"))
+df = pd.read_csv("/localdata1/zunk_he/memilio/times.csv")
+
+# sizes plots
+size_tikz = 15
+size_labels = 20
+size_title = 20
+size_legend = 20
 
 df_long = pd.melt(
     df,
@@ -45,20 +51,29 @@ for num_pred in num_preds:
         palette="husl",
         sharex=True
     )
-    g.set_axis_labels("Time (s)", "Days")
+    g.set_axis_labels("Time (s)", "Days", fontsize=size_labels)
     g.set(xscale="log")
-    g.set_titles(f"Num_Pred = {num_pred}")
+    g.set_titles(f"Num_Pred = {num_pred}", fontsize=size_title)
+
+    g.fig.set_size_inches(12, 6)
 
     for ax in g.axes.flat:
+        x_min, x_max = ax.get_xlim()
+
         for p in ax.patches:
             width = p.get_width()
             ax.text(width, p.get_y() + p.get_height() / 2,
-                    f'{width:.3f}', ha='left', va='center')
+                    f'{width:.3f}', ha='left', va='center', fontsize=size_tikz)
+
+        ax.set_xlim(x_min, x_max)
+
+        ax.tick_params(axis='both', which='major', labelsize=size_tikz)
 
     # delete legend
     g._legend.remove()
     g.fig.tight_layout()
-    g.fig.savefig(os.path.join(save_path, f'plots_Num_Pred_{num_pred}.png'), dpi=500)
+    g.fig.savefig(os.path.join(
+        save_path, f'plots_Num_Pred_{num_pred}.png'), dpi=500)
 
 # Separate legend plot
 # Create a dummy plot to extract the legend
@@ -76,9 +91,10 @@ plt.close(fig)  # Close the dummy plot
 
 # Create a new figure for the legend
 fig, ax = plt.subplots()
-fig.legend(handles, labels, loc='center', ncol=4)
+fig.legend(handles, labels, loc='center', ncol=4, fontsize=size_legend)
 plt.axis('off')
-fig.savefig(os.path.join(save_path, 'legend.png'), bbox_inches='tight', dpi=500)
+fig.savefig(os.path.join(save_path, 'legend.png'),
+            bbox_inches='tight', dpi=500)
 plt.close(fig)
 
 
@@ -86,9 +102,9 @@ plt.close(fig)
 df = pd.DataFrame(data=[[30, 0, 0.65, 7.34], [60, 0, 0.58, 5.62], [90, 0, 1.24, 9.75], [30, 1, 0.82, 8.87], [
                   30, 2, 0.73, 8.02], [30, 3, 0.99, 10.53]], columns=['Days', 'Dampings', 'Test  MAPE (log-scale)', 'Test MAPE (orig. scale)'])
 
-columns = ['Days', 'Dampings'] 
-column_labels = ['Days', 'Contact changes'] 
-dfs_plot = [df[df['Dampings']==0], df[df['Days']==30]] # inverted order
+columns = ['Days', 'Dampings']
+column_labels = ['Days', 'Contact changes']
+dfs_plot = [df[df['Dampings'] == 0], df[df['Days'] == 30]]  # inverted order
 for i in range(len(dfs_plot)):
     g = sns.catplot(
         data=dfs_plot[i],
@@ -100,9 +116,18 @@ for i in range(len(dfs_plot)):
         sharex=True,
         legend=False
     )
-    g.set_axis_labels(column_labels[i], "Test MAPE (orig. scale, in %)")
+    g.set_axis_labels(
+        column_labels[i], "Test MAPE (orig. scale, in %)", fontsize=size_labels)
+    g.set_titles(f"Num_Pred = {num_pred}", fontsize=size_title)
+    for ax in g.axes.flat:
+        # for p in ax.patches:
+        #     height = p.get_height()
+        #     ax.text(p.get_x() + p.get_width() / 2, height,
+        #             f'{height:.2f}', ha='center', va='bottom', fontsize=size_tikz)
+        ax.tick_params(axis='both', which='major', labelsize=size_tikz)
     g.tight_layout()
-    g.savefig(os.path.join(save_path, 'results_lstm_Ibased_withagegroups_testMAPE_'+str(i)+'.png'), bbox_inches='tight', dpi=500)                  
+    g.savefig(os.path.join(save_path, 'results_lstm_Ibased_withagegroups_testMAPE_' +
+              str(i)+'.png'), bbox_inches='tight', dpi=500)
 
 
 # MAPEs GNN
@@ -110,9 +135,9 @@ df = pd.DataFrame(data=[[30, 0, 5.83, 15.05], [60, 0, 4.14, 10.33], [90, 0, 4.29
                   30, 2, 6.74, 16.48], [30, 3, 8.75, 27.11]], columns=['Days', 'Dampings', 'Test  MAPE (log-scale)', 'Test MAPE (orig. scale)'])
 
 
-columns = ['Days', 'Dampings'] 
-column_labels = ['Days', 'Contact changes'] 
-dfs_plot = [df[df['Dampings']==0], df[df['Days']==30]] # inverted order
+columns = ['Days', 'Dampings']
+column_labels = ['Days', 'Contact changes']
+dfs_plot = [df[df['Dampings'] == 0], df[df['Days'] == 30]]  # inverted order
 for i in range(len(dfs_plot)):
     g = sns.catplot(
         data=dfs_plot[i],
@@ -124,6 +149,15 @@ for i in range(len(dfs_plot)):
         sharex=True,
         legend=False
     )
-    g.set_axis_labels(column_labels[i], "Test MAPE (orig. scale, in %)")
+    g.set_axis_labels(
+        column_labels[i], "Test MAPE (orig. scale, in %)", fontsize=size_labels)
+    g.set_titles(f"Num_Pred = {num_pred}", fontsize=size_title)
+    for ax in g.axes.flat:
+        # for p in ax.patches:
+        #     height = p.get_height()
+        #     ax.text(p.get_x() + p.get_width() / 2, height,
+        #             f'{height:.2f}', ha='center', va='bottom', fontsize=size_tikz)
+        ax.tick_params(axis='both', which='major', labelsize=size_tikz)
     g.tight_layout()
-    g.savefig(os.path.join(save_path, 'results_gnn_Ibased_nodeswithvariance_testMAPE_'+str(i)+'.png'), bbox_inches='tight', dpi=500)                  
+    g.savefig(os.path.join(save_path, 'results_gnn_Ibased_nodeswithvariance_testMAPE_' +
+              str(i)+'.png'), bbox_inches='tight', dpi=500)

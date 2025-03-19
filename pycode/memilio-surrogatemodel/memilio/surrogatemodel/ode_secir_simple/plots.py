@@ -257,10 +257,10 @@ def boxplot_inputs_single(label='', days=60, size_tikz=10, size_labels=12, size_
     plt.savefig(save_dir + "boxplot_input_compartments_noagegroups_I_based.png")
 
 
-boxplot_inputs_single()
+# boxplot_inputs_single()
 
 
-def heatmap_gridsearch_results(df_gridsearch, savename, size_labels=30):
+def heatmap_gridsearch_results(df_gridsearch, savename, size_tikz=35, size_labels=40, size_title=40, size_legend=40):
     """
     Creates three heatmaps (MLP, CNN, LSTM) side-by-side without an integrated colorbar.
     Then saves two additional figures containing a vertical and a horizontal colorbar.
@@ -269,7 +269,10 @@ def heatmap_gridsearch_results(df_gridsearch, savename, size_labels=30):
                           ['model', 'number_of_hidden_layers', 'number_of_neurons', 'kfold_val'].
     :param savename: Filename to save the main heatmap figure (e.g. "heatmap.png").
                      Two additional files will be created by appending suffixes.
-    :param size_labels: Font size for axis labels and tick labels.
+    :param size_tikz: Font size for tick labels.
+    :param size_labels: Font size for axis labels.
+    :param size_title: Font size for titles.
+    :param size_legend: Font size for legend.
     """
 
     # --- Pivot tables for each model ---
@@ -313,9 +316,9 @@ def heatmap_gridsearch_results(df_gridsearch, savename, size_labels=30):
 
         # Ticks/labels
         ax.set_xticks(np.arange(len(df_heatmap.columns)))
-        ax.set_xticklabels(df_heatmap.columns, fontsize=25)
+        ax.set_xticklabels(df_heatmap.columns, fontsize=size_tikz)
         ax.set_yticks(np.arange(len(df_heatmap.index)))
-        ax.set_yticklabels(df_heatmap.index, fontsize=25)
+        ax.set_yticklabels(df_heatmap.index, fontsize=size_tikz)
 
         ax.set_ylabel('Number of Hidden Layers', fontsize=size_labels)
         ax.set_xlabel('Units per Layer', fontsize=size_labels)
@@ -327,9 +330,9 @@ def heatmap_gridsearch_results(df_gridsearch, savename, size_labels=30):
             for j in range(len(df_heatmap.columns)):
                 val = df_heatmap.values[i, j]
                 ax.text(j, i, f"{val:.2f}", ha="center",
-                        va="center", color="k", fontsize=25)
+                        va="center", color="k", fontsize=size_tikz)
 
-        ax.set_title(f'Model = {name}', fontsize=30)
+        ax.set_title(f'Model = {name}', fontsize=size_title)
 
     # Save the main figure (NO colorbar in it)
     savedir = "/localdata1/zunk_he/memilio/new_heatmaps/simple"
@@ -352,8 +355,8 @@ def heatmap_gridsearch_results(df_gridsearch, savename, size_labels=30):
     # 1) Vertical colorbar
     vert_fig, vert_ax = plt.subplots(figsize=(1, 10))
     cbar_v = vert_fig.colorbar(sm, cax=vert_ax, orientation='vertical')
-    cbar_v.set_label('Validation MAPE', size=20)
-    cbar_v.ax.tick_params(labelsize=15)
+    cbar_v.set_label('Validation MAPE', size=size_legend)
+    cbar_v.ax.tick_params(labelsize=size_tikz)
     vert_fig.savefig(os.path.join(savedir, vertical_savename),
                      bbox_inches='tight')
     plt.close(vert_fig)
@@ -361,8 +364,8 @@ def heatmap_gridsearch_results(df_gridsearch, savename, size_labels=30):
     # 2) Horizontal colorbar
     horiz_fig, horiz_ax = plt.subplots(figsize=(10, 1))
     cbar_h = horiz_fig.colorbar(sm, cax=horiz_ax, orientation='horizontal')
-    cbar_h.set_label('Validation MAPE', size=20)
-    cbar_h.ax.tick_params(labelsize=15)
+    cbar_h.set_label('Validation MAPE', size=size_legend)
+    cbar_h.ax.tick_params(labelsize=size_tikz)
     horiz_fig.savefig(os.path.join(
         savedir, horizontal_savename), bbox_inches='tight')
     plt.close(horiz_fig)
@@ -396,11 +399,11 @@ def plot_optimizer():
 
 
 # secir simple
-filepath = os.path.join(
-    "/localdata1/gnn_paper_2024/data/results/grid_search/without_agegroups/dataframe_30days_I_based_10k_nodamp.csv")
-df = pd.DataFrame(data=pd.read_csv(filepath))
-savename = "heatmap_secir_simple_30days_10k_paper.png"
-heatmap_gridsearch_results(df, savename)
+# filepath = os.path.join(
+#     "/localdata1/gnn_paper_2024/data/results/grid_search/without_agegroups/dataframe_30days_I_based_10k_nodamp.csv")
+# df = pd.DataFrame(data=pd.read_csv(filepath))
+# savename = "heatmap_secir_simple_30days_10k_paper.png"
+# heatmap_gridsearch_results(df, savename)
 
 # secir groups
 filepath = os.path.join(

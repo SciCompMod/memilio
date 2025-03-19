@@ -1,15 +1,16 @@
+import os
 import pickle
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_mean_err(data):
+def get_mean_err(data, plot_compartments, mode):
     labels = data['labels']
     num_samples = labels.shape[0]
 
     # reverse log scale
-    # labels = np.expm1(labels)
+    labels = np.expm1(labels)
 
     # split at 80%
     split_point = int(num_samples * 0.8)
@@ -19,6 +20,10 @@ def get_mean_err(data):
 
     # Extract the last 20% of data
     last_20_percent = labels[split_point:, :, :]
+
+    aggregated_last_20 = np.sum(last_20_percent.reshape(last_20_percent.shape[0],
+                                                        last_20_percent.shape[1],
+                                                        6, 8), axis=2)
 
     # Calculate MAPE for each element in the last 20%
     # mape_values = np.abs(
@@ -39,15 +44,62 @@ def get_mean_err(data):
     # mape_values = np.nan_to_num(mape_values)
 
     # plot mape values in a histogram
-    plt.hist(mape_values.flatten(), bins=100)
-    plt.xlabel("MAPE")
-    plt.ylabel("Frequency")
-    plt.yscale('log')
+    # plt.hist(mape_values.flatten(), bins=100)
+    # plt.xlabel("MAPE")
+    # plt.ylabel("Frequency")
+    # plt.yscale('log')
     # plt.show()
 
     # calculate mean ( -> Sum up and divide by n)
     mape = np.mean(mape_values)
     median = np.median(mape_values)
+
+    if plot_compartments:
+        # Define compartment names
+        compartments = [
+            'Susceptible',
+            'Exposed',
+            'InfectedNoSymptoms',
+            'InfectedSymptoms',
+            'InfectedSevere',
+            'InfectedCritical',
+            'Recovered',
+            'Dead'
+        ]
+        num_compartments = len(compartments)
+
+        # Create a figure with a 2x4 grid of subplots (one subplot per compartment)
+        fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+        axes = axes.flatten()
+
+        # Choose 200 random runs (or all runs if fewer than 200)
+        total_runs = aggregated_last_20.shape[0]
+        n_to_plot = 200 if total_runs >= 200 else total_runs
+        random_indices = np.random.choice(
+            total_runs, size=n_to_plot, replace=False)
+
+        # Plot the time series for each compartment over the 30 days
+        for comp in range(num_compartments):
+            for run in random_indices:
+                # aggregated_last_20[run, :, comp] is the time series for the given run and compartment
+                axes[comp].plot(aggregated_last_20[run, :, comp],
+                                alpha=0.7,
+                                label=None)
+            axes[comp].set_xlabel("Days")
+            axes[comp].set_ylabel("Value")
+            axes[comp].set_title(compartments[comp])
+            # Optionally, add a legend in the first subplot
+            if comp == 0:
+                axes[comp].legend()
+        plt.tight_layout()
+
+        # Save the plot in the desired directory
+        save_dir = "/localdata1/gnn_paper_2024/images/without_spatial_res/plot_labels/secir_groups/"
+        os.makedirs(save_dir, exist_ok=True)
+        save_path = os.path.join(
+            save_dir, f"data_secir_agegroups_{mode}_compartments.png")
+        plt.savefig(save_path)
+        plt.clf()
 
     # 10 highest MAPE values
     # print("10 highest MAPE values:")
@@ -58,19 +110,18 @@ def get_mean_err(data):
     return mape
 
 
-path_dataset_old = "/localdata1/gnn_paper_2024/data/one_population/with_agegroups_Germany/nodamp//data_secir_groups_60days_I_based_Germany_100k_nodamp.pickle"
-path_dataset_ibased = "/localdata1/gnn_paper_2024/data/one_population/with_agegroups_Germany/nodamp//data_secir_groups_60days_I_based_Germany_100k_nodamp.pickle"
+path_datasets = "/localdata1/gnn_paper_2024/data/one_population/with_agegroups_Germany/"
+modes = ["nodamp"]  # ,"with_damp"]  #
 
-# read the data
-with open(path_dataset_old, 'rb') as f:
-    data_old = pickle.load(f)
+for mode in modes:
+    path_datasets = os.path.join(path_datasets, mode)
+    datasets = os.listdir(path_datasets)
+    # remove every non .pickle file
+    datasets = [dataset for dataset in datasets if dataset.endswith('.pickle')]
+    for dataset in datasets:
+        with open(os.path.join(path_datasets, dataset), 'rb') as f:
+            data = pickle.load(f)
 
-with open(path_dataset_ibased, 'rb') as f:
-    data_ibased = pickle.load(f)
-
-# calculate MAPE for both datasets
-mape_old = get_mean_err(data_old)
-mape_ibased = get_mean_err(data_ibased)
-
-print(f"Mean MAPE for old dataset: {mape_old}%")
-print(f"Mean MAPE for I-based dataset: {mape_ibased}%")
+        # calculate MAPE for both datasets
+        mape_old = get_mean_err(data, True, dataset)
+        print(f"{dataset}_{mode}_MAPE for the last 20%: {mape_old:.2f}%")

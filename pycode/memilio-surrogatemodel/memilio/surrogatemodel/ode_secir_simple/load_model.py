@@ -17,7 +17,7 @@ path = os.path.dirname(os.path.realpath(__file__))
 path_data = os.path.join(os.path.dirname(os.path.realpath(
     os.path.dirname(os.path.realpath(path)))), 'data_paper')
 
-days = 90
+days = 30
 dpi = 300
 path_data = "/localdata1/gnn_paper_2024/data/one_population/without_agegroups"
 filename = f"data_secir_simple_{days}days_I_based_10k.pickle"
@@ -97,7 +97,7 @@ def lineplots_compartments(mape_per_day, mape_reversed_per_day, savename):
     fig.legend(lines[:2], line_labels[:2], loc='lower center')
     fig.subplots_adjust(bottom=0.85)
     fig.suptitle(
-        'Test MAPE for log-scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
+        'Test MAPE for log-scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and original scaled ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
     plot_dir = '/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/no_agegroups/'
     plt.savefig(os.path.join(plot_dir, savename))
@@ -115,14 +115,14 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
 
     for ax, c, m, mr in zip(axes, infectionstates, mape_per_day.transpose(), mape_reversed_per_day.transpose()):
         # Plot the first line (mape_per_day) on the primary y-axis (left)
-        ax.plot(m, color='blue', label='Test MAPE scaled')
-        ax.set_ylabel('Test MAPE (Scaled)', color='blue')
+        ax.plot(m, color='blue', label='Test MAPE log scaled')
+        ax.set_ylabel('Test MAPE (log. Scaled)', color='blue')
         ax.tick_params(axis='y', labelcolor='blue')
 
         # Create a secondary y-axis for the second line (mape_reversed_per_day)
         ax2 = ax.twinx()
-        ax2.plot(mr, color='red', label='Test MAPE not scaled')
-        ax2.set_ylabel('Test MAPE (Not Scaled)', color='red')
+        ax2.plot(mr, color='red', label='Test MAPE orig. scaled')
+        ax2.set_ylabel('Test MAPE (orig. Scaled)', color='red')
         ax2.tick_params(axis='y', labelcolor='red')
 
         ax.set_title(c, fontsize=10)
@@ -138,10 +138,10 @@ def lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename
                 lines.append(line)
                 labels.append(label)
 
-    fig.legend(lines, labels, ncols=2, loc='lower center',
-               bbox_to_anchor=(0.5, -0.01))
+    # fig.legend(lines, labels, ncols=2, loc='lower center',
+    #            bbox_to_anchor=(0.5, -0.01))
     fig.suptitle(
-        'Test MAPE for scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and unscaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
+        'Test MAPE for log scaled ('+str(np.round(np.mean(mape_per_day), 4))+'%) and original scaled data ('+str(np.round(np.mean(mape_reversed_per_day), 4))+'%)', fontsize=16)
 
     plot_dir = '/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/no_agegroups/'
     plt.savefig(os.path.join(plot_dir, savename))
@@ -330,23 +330,26 @@ def lineplots_pred_labels(pred_reversed, labels_reversed, savename,  num_plots):
         print(f'Plot No. {i} saved')
 
 
-def plot_mape_per_run(mape_per_run, savename):
+def plot_mape_per_run(mape_per_run, savename, log):
 
     plt.figure().clf()
 
     fig, ax = plt.subplots()
     # axs[0].ticklabel_format(style='plain')
     ax.plot(mape_per_run)
-    ax.set_ylabel('Test MAPE')
+    if log:
+        ax.set_ylabel('Test MAPE (log scale)', fontsize=12)
+    else:
+        ax.set_ylabel('Test MAPE (orig. scale)', fontsize=12)
     ax.set_xlabel('Run')
     ax.grid()
     # ax.set_xscale('log')
     ax.set_yscale('log')
-    ax.set_title('Test MAPE per run')
+    # ax.set_title('Test MAPE per run')
     # ax.set_xticks(np.arange(0,3500000,500000))
 
     plt.savefig(
-        '/localdata1/gnn_paper_2024/images/MAPE_per_run/' + savename, dpi=dpi)
+        '/localdata1/gnn_paper_2024/images/without_spatial_res/MAPE_per_run/' + savename, dpi=dpi)
 
 
 def mape_log_original(num_plots, pred_reversed, labels_reversed, test_inputs):
@@ -464,16 +467,16 @@ savename = 'mape_per_day_simpleNN_log_and_nonlog_mape' + title_add
 
 
 savename_2 = 'mape_per_day_simpleNN_log_and_nonlog_twoaxes_mape' + title_add
-lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename_2)
+# lineplots_compartments_twoaxes(mape_per_day, mape_reversed_per_day, savename_2)
 
-savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
-lineplots_pred_labels(pred_reversed, labels_reversed,
-                      savename_3,  num_plots=50)
+# savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
+# lineplots_pred_labels(pred_reversed, labels_reversed,
+#                       savename_3,  num_plots=50)
 
 
 title_add = f'_{days}d_Ibased_10k_noDamp.png'
 savename = 'mape_per_run_simpleNN_log_mape' + title_add
-plot_mape_per_run(mape_per_run, savename)
+plot_mape_per_run(mape_per_run, savename, log=True)
 
 savename = 'mape_per_run_simpleNN_nonlog_mape' + title_add
-plot_mape_per_run(mape_reversed_per_run, savename)
+plot_mape_per_run(mape_reversed_per_run, savename, log=False)

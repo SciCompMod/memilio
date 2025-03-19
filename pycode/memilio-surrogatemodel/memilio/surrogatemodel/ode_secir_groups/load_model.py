@@ -301,15 +301,30 @@ def lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed, test_inpu
             pred_plot = np.insert(pred, 0, input_data[-1])
             label_plot = np.insert(label_data, 0, input_data[-1])
 
+            # Plot the lines
             ax.plot(np.arange(1, 6),
                     input_data[:5], color='black', label='Inputs', linewidth=3)
             ax.plot(np.arange(5, days + 6), label_plot,
                     color='red', label='Labels', linewidth=3)
             ax.plot(np.arange(5, days + 6), pred_plot, color='deepskyblue',
                     label='Predictions', linestyle='--', linewidth=2)
+
             ax.set_title(state)
             ax.set_ylabel('Number of individuals')
             ax.yaxis.set_major_formatter(sci_formatter)
+
+            # Compute and add text (MAPE)
+            not_log_mape = np.round(
+                100 * np.mean(abs((label_data - pred) / label_data)), 4)
+            log_mape = np.round(
+                100 * np.mean(abs((np.log1p(label_data) - np.log1p(pred)) / np.log1p(label_data))), 4)
+
+            textstr = '\n'.join(
+                (f'MAPE (log scale): {log_mape}%', f'MAPE (orig. scale): {not_log_mape}%'))
+            props = dict(boxstyle='round,pad=0.3',
+                         facecolor='lightgray', edgecolor='black', alpha=0.8)
+            ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=10,
+                    verticalalignment='top', horizontalalignment='left', bbox=props)
 
         axes[-2].set_xlabel('Day')
         axes[-1].set_xlabel('Day')
@@ -495,7 +510,7 @@ def barplot_hyperparameters(filename):
     plt.savefig("secir_groups_optimizer.png")
 
 
-def heatmap_activation_optimizer(filename, filename_2, filename_3, label_size=25):
+def heatmap_activation_optimizer(filename, filename_2, filename_3, size_tikz=45, size_labels=50, size_title=50, size_legend=40):
     path_data = os.path.join(
         "/localdata1/gnn_paper_2024/data/results/grid_search/with_agegroups/")
     filepath = os.path.join(path_data, filename)
@@ -519,9 +534,9 @@ def heatmap_activation_optimizer(filename, filename_2, filename_3, label_size=25
 
     # Show all ticks and label them with the respective list entries
     ax.set_xticks(np.arange(len(df_plot.columns)))
-    ax.set_xticklabels(df_plot.columns, fontsize=label_size)
+    ax.set_xticklabels(df_plot.columns, fontsize=size_tikz)
     ax.set_yticks(np.arange(len(df_plot.index)))
-    ax.set_yticklabels(df_plot.index, fontsize=label_size)
+    ax.set_yticklabels(df_plot.index, fontsize=size_tikz)
 
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45,
@@ -531,15 +546,15 @@ def heatmap_activation_optimizer(filename, filename_2, filename_3, label_size=25
     for i in range(len(df_plot.index)):
         for j in range(len(df_plot.columns)):
             ax.text(j, i, np.around(df_plot.values, decimals=2)[i, j],
-                    ha="center", va="center", color="black", fontsize=label_size)
+                    ha="center", va="center", color="black", fontsize=size_tikz)
 
     cbar = ax.figure.colorbar(im, ax=ax)
     cbar.ax.set_ylabel('Validation MAPE', rotation=-90,
-                       va="bottom", fontsize=label_size + 5)
+                       va="bottom", fontsize=size_labels)
     # increase tikz size in the colorbar
-    cbar.ax.tick_params(labelsize=label_size)
+    cbar.ax.tick_params(labelsize=size_tikz)
 
-    ax.set_title("Activation and Optimizer for LSTM", fontsize=label_size + 5)
+    ax.set_title("Activation and Optimizer for LSTM", fontsize=size_title)
     fig.tight_layout()
     plt.savefig(
         "heatmap_activation_optimizer_LSTM_GroupsNN_I_based.png", dpi=300)
@@ -558,8 +573,8 @@ savename_2 = 'mape_per_day_GroupsNN_log_and_nonlog_twoaxes_mape' + title_add
 
 
 savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
-# lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
-#                                    test_inputs, age_groups, 20, savename_3)
+lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
+                                   test_inputs, age_groups, 20, savename_3)
 
 # # BOXPLOT INPUTS
 # file_path = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_groups_30days_I_based_Germany_10k.pickle'
@@ -596,7 +611,7 @@ savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
 # barplot_hyperparameters(filename)
 
 # # HYPERPARAMETERS I_BASED
-filename = 'groups_I_based_dataframe_optimizer_paper.csv'
-filename_2 = 'groups_I_based_dataframe_optimizer_paper_part2.csv'
-filename_3 = 'groups_I_based_dataframe_optimizer_paper_part3.csv'
-heatmap_activation_optimizer(filename, filename_2, filename_3)
+# filename = 'groups_I_based_dataframe_optimizer_paper.csv'
+# filename_2 = 'groups_I_based_dataframe_optimizer_paper_part2.csv'
+# filename_3 = 'groups_I_based_dataframe_optimizer_paper_part3.csv'
+# heatmap_activation_optimizer(filename, filename_2, filename_3)
