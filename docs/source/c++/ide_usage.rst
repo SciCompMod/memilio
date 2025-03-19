@@ -80,6 +80,7 @@ Note that the last time point in our initial flow TimeSeries determines the star
 With this, we can construct our model:
 
 .. code-block:: cpp
+
     mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
 
@@ -94,6 +95,7 @@ Practically, one first needs to create an object of a class that is derived from
 In this example, we start with creating a ``SmootherCosine`` object with parameter 2.0 that is then passed to the ``StateAgeFunctionWrapper`` object. Then we create a vector of type ``StateAgeFunctionWrapper``. Within this vector we adapt the distribution parameter for the transition from ``InfectedNoSymptoms`` to ``InfectedSymptoms``. Finally, this vector of ``StateAgeFunctionWrapper`` objects is passed to the model as demosntarted below.
 
 .. code-block:: cpp
+
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
@@ -105,6 +107,7 @@ In this example, we start with creating a ``SmootherCosine`` object with paramet
 The transition probabilities can be set as follows
 
 .. code-block:: cpp
+
     std::vector<ScalarType> vec_prob(num_transitions, 0.5);
     // The following probabilities must be 1, as there is no other way to go.
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
@@ -115,6 +118,7 @@ Here, we set the contact matrix used in the simulation. One can define multiple 
 In our example below we use only one contact matrix. We only consider one age group and set the contact rate to 10. 
 
 .. code-block:: cpp
+
     size_t num_matrices =1;
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(num_matrices, num_agegroups);
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
@@ -125,6 +129,7 @@ The parameters ``TransmissionProbabilityOnContact``, ``RelativeTransmissionNoSym
 Here we use an ``ExponentialSurvivalFunction`` to set the mentioned parameters. 
 
 .. code-block:: cpp
+
     mio::ExponentialSurvivalFunction exponential(0.5);
     mio::StateAgeFunctionWrapper prob(exponential);
 
@@ -135,6 +140,7 @@ Here we use an ``ExponentialSurvivalFunction`` to set the mentioned parameters.
 Finally, we can also set the parameters Seasonality and StartDay directly as follows. 
 
 .. code-block:: cpp
+
     model.parameters.set<mio::isecir::Seasonality>(0.1);
     // Start the simulation on the 40th day of a year (i.e. in February).
     model.parameters.set<mio::isecir::StartDay>(40);
@@ -142,11 +148,13 @@ Finally, we can also set the parameters Seasonality and StartDay directly as fol
 Before the simulation, we check if all constraints of the model are satisfied so that the simulation can run as expected. 
 
 .. code-block:: cpp
+
     model.check_constraints(dt);
 
 To simulate the model from `t0` (that is determined by the initial flows provided to the constructor) to `tmax` with given step size `dt`, a Simulation has to be created and advanced until `tmax`, which is done as follows: 
 
 .. code-block:: cpp
+
     ScalarType tmax = 10.;
 
     mio::isecir::Simulation sim(model, dt);
@@ -155,6 +163,7 @@ To simulate the model from `t0` (that is determined by the initial flows provide
 We can access and print the computed compartments and flows as follows. 
 
 .. code-block:: cpp
+
     auto compartments = sim.get_result();
     auto flows = sim.get_transitions();
 
@@ -164,6 +173,7 @@ We can access and print the computed compartments and flows as follows.
 If one wants to interpolate the results to a TimeSeries containing only full days, this can be done by
 
 .. code-block:: cpp
+    
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());
 
 
