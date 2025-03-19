@@ -26,12 +26,13 @@ data = pickle.load(file)
 test_inputs = data['inputs'][int(0.8 * len(data['inputs'])):]
 test_labels = data['labels'][int(0.8 * len(data['labels'])):]
 
+all_models = os.listdir(
+    '/localdata1/gnn_paper_2024/data/results/saved_models/saved_models_secir_groups_paper/')
 
 # load trained model
 # new_model = tf.keras.models.load_model('/home/schm_a45/Documents/code3/memilio/pycode/memilio-surrogatemodel/memilio/saved_models_secir_simple')
 new_model = tf.keras.models.load_model(
-    f'/localdata1/gnn_paper_2024/data/results/saved_models/saved_models_secir_groups_paper//LSTM_NODAMP_{days}days_I_based_secirgroups_10k.h5')
-
+    f'/localdata1/gnn_paper_2024/data/results/saved_models/saved_models_secir_groups_paper/LSTM_NODAMP_{days}days_I_based_secirgroups_10k.h5')
 pred = new_model.predict(test_inputs)
 
 pred_reversed = np.expm1(pred)
@@ -67,17 +68,20 @@ def mape_per_day_compartments_per_agegroup_dual_axis(mape_per_day, mape_reversed
 
         for ax, compartment, m, mr in zip(axes, infectionstates, mape_group.T, mape_reversed_group.T):
             # Primary y-axis (scaled MAPE)
-            ax.plot(m, color='blue', label='MAPE (scaled)')
-            ax.set_ylabel('MAPE (Scaled)', color='blue')
+            ax.plot(m, color='blue', label='MAPE (log. scaled)')
+            ax.set_ylabel('MAPE (log. Scaled)', color='blue')
             ax.tick_params(axis='y', labelcolor='blue')
             ax.set_title(compartment, fontsize=10)
 
             # Secondary y-axis (log scale MAPE)
             ax2 = ax.twinx()
-            ax2.plot(mr, color='red', label='MAPE (log scale)')
-            ax2.set_ylabel('MAPE (Log Scale)', color='red')
-            ax2.tick_params(axis='y', labelcolor='red')
+            ax2.plot(mr, color='red', label='MAPE (orig. scale)')
+            ax2.set_ylabel('MAPE (orig. Scale)', color='red')
             ax2.set_yscale('log')
+            ax2.spines['right'].set_color('red')
+            # colors, not labelcolor
+            ax2.tick_params(axis='y', which='both', colors='red')
+            ax2.set_ylabel('MAPE (orig. Scale)', color='red')
 
         # Set x-axis labels for the last row only
         axes[-2].set_xlabel('Day')
@@ -91,10 +95,10 @@ def mape_per_day_compartments_per_agegroup_dual_axis(mape_per_day, mape_reversed
                     lines.append(line)
                     labels.append(label)
 
-        fig.legend(lines, labels, loc='lower center',
-                   ncol=2, bbox_to_anchor=(0.5, -0.05))
+        # fig.legend(lines, labels, loc='lower center',
+        #            ncol=2, bbox_to_anchor=(0.5, -0.05))
         fig.suptitle(
-            f'MAPE for Age Group {group}: Scaled ({np.round(np.mean(mape_group), 4)}%) | Log ({np.round(np.mean(mape_reversed_group), 4)}%)', fontsize=14)
+            'Test MAPE for log scaled ('+str(np.round(np.mean(mape_group), 4))+'%) and original scaled data ('+str(np.round(np.mean(mape_reversed_group), 4))+'%)', fontsize=16)
 
         # Save plot in a directory specific to the age group
         plot_dir = f"/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/with_agegroups/secir_with_agegroup_{days}days_I_based/"
@@ -115,16 +119,21 @@ def mape_per_day_compartments_per_agegroup_dual_axis(mape_per_day, mape_reversed
     mean_mape_reversed = np.mean(reshaped_mape_reversed, axis=1)
 
     for ax, compartment, m, mr in zip(axes, infectionstates, mean_mape.T, mean_mape_reversed.T):
-        ax.plot(m, color='blue', label='Mean MAPE (scaled)')
-        ax.set_ylabel('MAPE (Scaled)', color='blue')
+        # Primary y-axis (scaled MAPE)
+        ax.plot(m, color='blue', label='MAPE (log. scaled)')
+        ax.set_ylabel('MAPE (log. Scaled)', color='blue')
         ax.tick_params(axis='y', labelcolor='blue')
         ax.set_title(compartment, fontsize=10)
 
+        # Secondary y-axis (log scale MAPE)
         ax2 = ax.twinx()
-        ax2.plot(mr, color='red', label='Mean MAPE (log scale)')
-        ax2.set_ylabel('MAPE (Log Scale)', color='red')
-        ax2.tick_params(axis='y', labelcolor='red')
+        ax2.plot(mr, color='red', label='MAPE (orig. scale)')
+        ax2.set_ylabel('MAPE (orig. Scale)', color='red')
         ax2.set_yscale('log')
+        ax2.spines['right'].set_color('red')
+        # colors, not labelcolor
+        ax2.tick_params(axis='y', which='both', colors='red')
+        ax2.set_ylabel('MAPE (orig. Scale)', color='red')
 
     axes[-2].set_xlabel('Day')
     axes[-1].set_xlabel('Day')
@@ -136,10 +145,10 @@ def mape_per_day_compartments_per_agegroup_dual_axis(mape_per_day, mape_reversed
                 lines.append(line)
                 labels.append(label)
 
-    fig.legend(lines, labels, loc='lower center',
-               ncol=2, bbox_to_anchor=(0.5, -0.05))
+    # fig.legend(lines, labels, loc='lower center',
+    #            ncol=2, bbox_to_anchor=(0.5, -0.05))
     fig.suptitle(
-        f'Mean MAPE across Age Groups: Scaled ({np.round(np.mean(mean_mape), 4)}%) | Log ({np.round(np.mean(mean_mape_reversed), 4)}%)', fontsize=14)
+        f'Mean MAPE across Age Groups for log Scaled ({np.round(np.mean(mean_mape), 4)}%) and original scaled data ({np.round(np.mean(mean_mape_reversed), 4)}%)', fontsize=14)
 
     mean_plot_dir = f"/localdata1/gnn_paper_2024/images/without_spatial_res/lineplots_MAPE_per_day/with_agegroups/secir_with_agegroup_{days}days_I_based/"
     os.makedirs(mean_plot_dir, exist_ok=True)
@@ -486,48 +495,54 @@ def barplot_hyperparameters(filename):
     plt.savefig("secir_groups_optimizer.png")
 
 
-def heatmap_activation_optimiizer(filename, filename_2):
-    path = os.path.dirname(os.path.realpath(__file__))
-    path_data = os.path.join(os.path.dirname(os.path.realpath(
-        os.path.dirname(os.path.realpath(path)))), 'secir_groups_grid_search_paper')
+def heatmap_activation_optimizer(filename, filename_2, filename_3, label_size=25):
+    path_data = os.path.join(
+        "/localdata1/gnn_paper_2024/data/results/grid_search/with_agegroups/")
     filepath = os.path.join(path_data, filename)
     df = pd.DataFrame(data=pd.read_csv(filepath))
     # plot for part2
     filepath = os.path.join(path_data, filename_2)
     df_2 = pd.DataFrame(data=pd.read_csv(filepath))
-    df_concat = pd.conct(df, df_2)
-    df_plot = df_concat[['optimizer', 'activation', 'kfold_test']]
+    filepath = os.path.join(path_data, filename_3)
+    df_3 = pd.DataFrame(data=pd.read_csv(filepath))
+    df_concat = pd.concat([df, df_2, df_3])
+    df_plot = df_concat[['optimizer', 'activation', 'kfold_val']]
 
     plt.figure().clf()
 
     df_plot = df_plot.pivot(
         index='optimizer', columns='activation', values='kfold_val')
 
-    fig, ax = plt.subplots()
+    # Increase plot size here:
+    fig, ax = plt.subplots(figsize=(20, 10))
     im = ax.imshow(df_plot.values, cmap='RdYlGn_r')
 
     # Show all ticks and label them with the respective list entries
-    ax.set_xticks(np.arange(len(df_plot.columns)), labels=df_plot.columns)
-    ax.set_yticks(np.arange(len(df_plot.index)), labels=df_plot.index)
+    ax.set_xticks(np.arange(len(df_plot.columns)))
+    ax.set_xticklabels(df_plot.columns, fontsize=label_size)
+    ax.set_yticks(np.arange(len(df_plot.index)))
+    ax.set_yticklabels(df_plot.index, fontsize=label_size)
 
     # Rotate the tick labels and set their alignment.
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-             rotation_mode="anchor")
+    plt.setp(ax.get_xticklabels(), rotation=45,
+             ha="right", rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
     for i in range(len(df_plot.index)):
         for j in range(len(df_plot.columns)):
-            text = ax.text(j, i, np.around(df_plot.values, decimals=2)[i, j],
-                           ha="center", va="center", color="black")
+            ax.text(j, i, np.around(df_plot.values, decimals=2)[i, j],
+                    ha="center", va="center", color="black", fontsize=label_size)
 
-    cbar_kw = {}
-    cbar = ax.figure.colorbar(im, ax=ax, **cbar_kw)
-    cbar.ax.set_ylabel('MAPE', rotation=-90, va="bottom")
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel('Validation MAPE', rotation=-90,
+                       va="bottom", fontsize=label_size + 5)
+    # increase tikz size in the colorbar
+    cbar.ax.tick_params(labelsize=label_size)
 
-    ax.set_title("Activation and Optimizer for LSTM")
+    ax.set_title("Activation and Optimizer for LSTM", fontsize=label_size + 5)
     fig.tight_layout()
-    plt.show()
-    plt.savefig("heatmap_activation_optimizer_LSTM_GroupsNN_I_based.png")
+    plt.savefig(
+        "heatmap_activation_optimizer_LSTM_GroupsNN_I_based.png", dpi=300)
 
 
 # line plots
@@ -537,14 +552,14 @@ age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
 # mape_per_day_compartments_per_agegroup(
 #     mape_per_day, mape_reversed_per_day, age_groups, savename)
 
-# savename_2 = 'mape_per_day_GroupsNN_log_and_nonlog_twoaxes_mape' + title_add
+savename_2 = 'mape_per_day_GroupsNN_log_and_nonlog_twoaxes_mape' + title_add
 # mape_per_day_compartments_per_agegroup_dual_axis(
 #     mape_per_day, mape_reversed_per_day, age_groups, savename_2)
 
 
 savename_3 = f'compartments_secir_noagegroup_{days}days_I_based' + title_add
-lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
-                                   test_inputs, age_groups, 20, savename_3)
+# lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
+#                                    test_inputs, age_groups, 20, savename_3)
 
 # # BOXPLOT INPUTS
 # file_path = '/home/schm_a45/Documents/Code/memilio_test/memilio/pycode/memilio-surrogatemodel/memilio/data_paper/data_secir_groups_30days_I_based_Germany_10k.pickle'
@@ -581,6 +596,7 @@ lineplots_pred_labels_per_agegroup(pred_reversed, labels_reversed,
 # barplot_hyperparameters(filename)
 
 # # HYPERPARAMETERS I_BASED
-# filename = 'groups_I_based_dataframe_optimizer_paper.csv'
-# filename_2 = 'groups_I_based_dataframe_optimizer_paper_part2.csv'
-# heatmap_activation_optimiizer(filename, filename_2)
+filename = 'groups_I_based_dataframe_optimizer_paper.csv'
+filename_2 = 'groups_I_based_dataframe_optimizer_paper_part2.csv'
+filename_3 = 'groups_I_based_dataframe_optimizer_paper_part3.csv'
+heatmap_activation_optimizer(filename, filename_2, filename_3)
