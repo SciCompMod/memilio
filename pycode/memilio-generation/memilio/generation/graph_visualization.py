@@ -34,8 +34,6 @@ class Visualization:
 
         :param ast: ast object from AST class.
         :param cursor: The current node of the AST as a cursor object from libclang.
-        :param ast: AST: 
-        :param cursor: Cursor: 
 
         """
 
@@ -70,8 +68,6 @@ class Visualization:
 
         :param cursor: The current node of the AST as a cursor object from libclang.
         :param max_depth: Maximal depth the graph displays.
-        :param cursor: Cursor: 
-        :param max_depth: int: 
         :param output_file_name: str:  (Default value = 'ast_graph')
 
         """
@@ -92,8 +88,6 @@ class Visualization:
 
         :param ast: ast object from AST class.
         :param cursor: The current node of the AST as a cursor object from libclang.
-        :param ast: AST: 
-        :param cursor: Cursor: 
         :param output_file_name: str:  (Default value = 'ast_formated.txt')
 
         """
@@ -133,13 +127,7 @@ def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int,
     :param cursor: The current node of the AST as a libclang cursor object.
     :param ast: AST object from the AST class.
     :param writer: Function that takes `level` and `cursor_label` and handles output.
-    :param level: The current depth in the AST for indentation purposes.
-    :param cursor: Cursor: 
-    :param ast: AST: 
-    :param writer: Callable[[int: 
-    :param str]: 
-    :param None]: 
-    :param level: int:  (Default value = 0)
+    :param level: The current depth in the AST for indentation purposes. Default value = 0)
 
     """
 
@@ -170,10 +158,6 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     :param max_d: Maximal depth.
     :param current_d: Current depth.
     :param parent_node: Name of the parent node in the graph (None for the root node).
-    :param cursor: Cursor: 
-    :param graph: Digraph: 
-    :param max_d: int: 
-    :param current_d: int: 
     :param parent_node: str:  (Default value = None)
 
     """
@@ -181,7 +165,8 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     if current_d > max_d:
         return
 
-    node_label = f"{cursor.kind.name}{newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
+    node_label = f"{cursor.kind.name}{
+        newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
 
     current_node = f"{cursor.kind.name}_{cursor.hash}"
 
@@ -191,7 +176,8 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
         graph.edge(parent_node, current_node)
 
     if cursor.kind.is_reference():
-        referenced_label = f"ref_to_{cursor.referenced.kind.name}{newline()}({cursor.referenced.spelling})"
+        referenced_label = f"ref_to_{cursor.referenced.kind.name}{
+            newline()}({cursor.referenced.spelling})"
         referenced_node = f"ref_{cursor.referenced.hash}"
         graph.node(referenced_node, label=referenced_label)
         graph.edge(current_node, referenced_node)

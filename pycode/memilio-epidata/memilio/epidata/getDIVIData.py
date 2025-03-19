@@ -67,12 +67,8 @@ def fetch_divi_data(
     :param conf_obj: configuration object
     :param filename: str
         File format which is used for writing the data. Default defined in defaultDict.
-    :param read_data: bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    :param directory: str: 
-    :param filename: str: 
-    :param read_data: bool:  (Default value = dd.defaultDict['read_data'])
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
+    :param read_data: bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
     :returns: Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
 
     """
@@ -109,17 +105,10 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
 
     :param df_raw: pd.DataFrame
     :param conf_obj: configuration object
-    :param start_date: date  The first date in dataframe. Default defined in defaultDict.
-    :param end_date: date The last date in dataframe. Default defined in defaultDict.
-    :param impute_dates: bool  Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    :param moving_average: int  Integers >=0.Applies an 'moving_average'-days moving average on all time seriesto smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param df_raw: pd.DataFrame: 
-    :param start_date: date:  (Default value = date(2020)
-    :param 4: 
-    :param 24): 
-    :param end_date: date:  (Default value = dd.defaultDict['end_date'])
-    :param impute_dates: bool:  (Default value = dd.defaultDict['impute_dates'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
+    :param start_date: date  The first date in dataframe. Default value = date(2020, 4, 24).
+    :param end_date: date The last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: bool  Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
+    :param moving_average: int  Integers >=0.Applies an 'moving_average'-days moving average on all time seriesto smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
     :returns: df pd.DataFrame  processed divi data
 
     """
@@ -201,14 +190,9 @@ def write_divi_data(df: pd.DataFrame,
     :param directory: str
         Path to the output directory
     :param conf_obj: configuration object
-    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    :param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param df: pd.DataFrame: 
-    :param directory: str: 
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param impute_dates: bool:  (Default value = dd.defaultDict['impute_dates'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
+    :param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
     :returns: data_dict Dict Dictionary containing datasets at county, state and national level
 
     """
@@ -284,27 +268,14 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
     for counties, states and whole Germany, respectively.
 
-    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
-    :param out_folder: Folder where data is written to. Default defined in defaultDict.
-    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
-    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Date of first date in dataframe. Default value = ``date(2020, 4, 24)``.
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
     :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param to_dataset: bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
-    :param read_data: bool:  (Default value = dd.defaultDict['read_data'])
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param out_folder: str:  (Default value = dd.defaultDict['out_folder'])
-    :param start_date: date:  (Default value = date(2020)
-    :param 4: 
-    :param 24): 
-    :param end_date: date:  (Default value = dd.defaultDict['end_date'])
-    :param impute_dates: bool:  (Default value = dd.defaultDict['impute_dates'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
     :param **kwargs: 
 
     """
@@ -351,8 +322,7 @@ def divi_data_sanity_checks(df: pd.DataFrame) -> None:
     Checks if the headers of the dataframe are those which are needed
     Checks if the size of the dataframe is not unusual
 
-    :param df: The dataframe which has to be checked
-    :param df: pd.DataFrame: 
+    :param df: The dataframe which has to be checked pd.DataFrame
 
     """
     # there should be 13 headers

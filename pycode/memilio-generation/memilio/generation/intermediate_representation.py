@@ -62,11 +62,9 @@ class IntermediateRepresentation:
         """Check for missing data in the IntermediateRepresentation.
         Called by the Scanner as last step of the data extraction.
 
-        :param optional: Dictionary of the optional data from the config.json.
+        :param optional: Dictionary of the optional data from the config.json. (Default value = Dict[str, Union[str, bool]])
         :param self: Self: 
-        :param optional: Dict[str: 
-        :param Union[str: 
-        :param bool]]: 
+
 
         """
         assert (self.model_class != None), "set a model name"

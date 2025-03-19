@@ -60,13 +60,9 @@ def check_for_completeness(df: pd.DataFrame,
     Note: There is no check if data for every day and every county is available (which can happen).
 
     :param df: pd.Dataframe. Dataframe to check
-    :param merge_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
-    :param merge_eisenach: bool True or False. Defines if Eisenbach districts are kept separated or get merged. Default defined in defaultDict.
+    :param merge_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default value = false
+    :param merge_eisenach: bool True or False. Defines if Eisenbach districts are kept separated or get merged. Default value = True.
     :param run_checks: bool
-    :param df: pd.DataFrame: 
-    :param run_checks: bool: 
-    :param merge_berlin: bool:  (Default value = False)
-    :param merge_eisenach: bool:  (Default value = True)
     :returns: Boolean to say if data is complete or not
 
     """
@@ -105,10 +101,7 @@ def fetch_case_data(
     :param filename: str
         Name of the full dataset filename
     :param conf_obj: configuration object
-    :param read_data: bool. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    :param directory: str: 
-    :param filename: str: 
-    :param read_data: bool:  (Default value = dd.defaultDict['read_data'])
+    :param read_data: bool. Defines if data is read from file or downloaded. (Default value = dd.defaultDict['read_data'])
     :returns: df pd.Dataframe. Dataframe containing the downloaded case data
 
     """
@@ -201,13 +194,8 @@ def preprocess_case_data(raw_df: pd.DataFrame,
     :param filename: str
         Name of the full dataset filename
     :param conf_obj: configuration object
-    :param split_berlin: bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
-    :param rep_date: bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
-    :param raw_df: pd.DataFrame: 
-    :param directory: str: 
-    :param filename: str: 
-    :param split_berlin: bool:  (Default value = dd.defaultDict['split_berlin'])
-    :param rep_date: bool:  (Default value = dd.defaultDict['rep_date'])
+    :param split_berlin: bool. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict. (Default value = dd.defaultDict['split_berlin'])
+    :param rep_date: bool Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['rep_date'])
     :returns: df pd.Dataframe
 
     """
@@ -319,25 +307,15 @@ def write_case_data(df: pd.DataFrame,
         Path to the output directory
     :param conf_obj: configuration object
     :param file_format: str
-        File format which is used for writing the data. Default defined in defaultDict.
+        File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
     :param start_date: date
-        Date of first date in dataframe. Default 2020-01-01.
-    :param end_date: date. Date of last date in dataframe. Default defined in defaultDict.
-    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    :param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param split_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict.
-    :param rep_date: bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+        Date of first date in dataframe. Default 2020-01-01. (Default value = dd.defaultDict['start_date'])
+    :param end_date: date. Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates']) 
+    :param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :param split_berlin: bool True or False. Defines if Berlin's districts are kept separated or get merged. Default defined in defaultDict. (Default value = dd.defaultDict['split_berlin'])
+    :param rep_date: bool True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['rep_date'])
     :param files: list. List of strings or 'All' or 'Plot'. Defines which files should be provided (and plotted). Default 'All'.
-    :param df: pd.DataFrame: 
-    :param directory: str: 
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param start_date: date:  (Default value = dd.defaultDict['start_date'])
-    :param end_date: date:  (Default value = dd.defaultDict['end_date'])
-    :param impute_dates: bool:  (Default value = dd.defaultDict['impute_dates'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
-    :param split_berlin: bool:  (Default value = dd.defaultDict['split_berlin'])
-    :param rep_date: bool:  (Default value = dd.defaultDict['rep_date'])
-    :param files: str or list:  (Default value = 'All')
     :returns: None
 
     """
@@ -513,31 +491,17 @@ def get_case_data(read_data: bool = dd.defaultDict['read_data'],
         - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
         - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
-    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
-    :param out_folder: Folder where data is written to. Default defined in defaultDict.
-    :param start_date: Date of first date in dataframe. Default 2020-01-01.
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
-    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Date of first date in dataframe. (Default value = dd.defaultDict['start_date'])
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
     :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param split_berlin: True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
-    :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict.
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :param split_berlin: True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict. (Default value = dd.defaultDict['split_berlin'])
+    :param rep_date: True or False. Defines if reporting date or reference date is taken into dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['rep_date'])
     :param files: List of strings or 'All' or 'Plot'. Defnies which files should be provided (and plotted). Default 'All'.
-    :param to_dataset: bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
-    :param read_data: bool:  (Default value = dd.defaultDict['read_data'])
-    :param out_folder: str:  (Default value = dd.defaultDict['out_folder'])
-    :param file_format: str:  (Default value = dd.defaultDict['file_format'])
-    :param start_date: date:  (Default value = dd.defaultDict['start_date'])
-    :param end_date: date:  (Default value = dd.defaultDict['end_date'])
-    :param impute_dates: bool:  (Default value = dd.defaultDict['impute_dates'])
-    :param moving_average: int:  (Default value = dd.defaultDict['moving_average'])
-    :param split_berlin: bool:  (Default value = dd.defaultDict['split_berlin'])
-    :param rep_date: bool:  (Default value = dd.defaultDict['rep_date'])
-    :param files: str or list:  (Default value = 'All')
     :param **kwargs: 
     :returns: None
 

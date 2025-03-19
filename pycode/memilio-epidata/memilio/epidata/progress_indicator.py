@@ -52,18 +52,18 @@ class ProgressIndicator:
 
     def __init__(self, message, animator, delay, auto_adjust=False):
         """ Create a ProgressIndicator.
-        @param message String. Shown in front of the animation without
+        :param message: String. Shown in front of the animation without
             seperator. If it would not fit in a single line with the
             animation, it will be printed once in a new line above the
             animation instead. Must not contain `\r` or `\n`.
-        @param animator Generator expression. The expression must loop, i.e.
+        :param animator: Generator expression. The expression must loop, i.e.
             it should never return StopIteration. `next(animator)` must be a
             string of length < `os.get_terminal_size().columns`. The length
             should be constant, otherwise animations may leave artifacts (this
             can be worked around by prepending `"\033[K"` to each string).
-        @param delay Positive real number. Sets delay in seconds between
+        :param delay: Positive real number. Sets delay in seconds between
             drawing animation frames.
-        @param auto_adjust [Default: False] Bool. Specify whether each frame
+        :param auto_adjust: [Default: False] Bool. Specify whether each frame
             of the animation should be forced to fit in a single line. Can be
             usefull for long, line filling animations.
         """
@@ -204,9 +204,9 @@ class Spinner(ProgressIndicator):
         Start the animation by either using the `start`/`stop` functions or a
         'with' block.
 
-        @param delay [Default: 0.1] positive real number. Sets delay in
+        :param delay: [Default: 0.1] positive real number. Sets delay in
             seconds between drawing animation frames.
-        @param message [Default: ""] string. Text shown before the indicator.
+        :param message: [Default: ""] string. Text shown before the indicator.
         """
         def _spin():
             """ """
@@ -224,13 +224,13 @@ class Dots(ProgressIndicator):
         Start the animation by either using the `start`/`stop` functions or a
         'with' block.
 
-        @param delay [Default: 1] positive real number. Sets delay in seconds
+        :param delay: [Default: 1] positive real number. Sets delay in seconds
             between drawing animation frames.
-        @param message [Default: ""] string. Text shown before the indicator.
-        @param num_dots [Default: 3] positive integer. Determines maximum
+        :param message: [Default: ""] string. Text shown before the indicator.
+        :param num_dots: [Default: 3] positive integer. Determines maximum
             number of dots drawn before clearing them with blanks.
-        @param dot [Default: "."] string. Drawn up to num_dots times.
-        @param blank [Default: " "] string. Placeholder for yet to be drawn
+        :param dot: [Default: "."] string. Drawn up to num_dots times.
+        :param blank: [Default: " "] string. Placeholder for yet to be drawn
             dots. Must have same length as dot.
         """
         assert (len(dot) == len(blank))
@@ -257,16 +257,16 @@ class Percentage(ProgressIndicator):
         Start the animation by either using the `start`/`stop` functions or a
         `with` `as` block.
 
-        @param delay [Default: 1] non-negative real number. Sets delay in
+        :param delay: [Default: 1] non-negative real number. Sets delay in
             seconds between drawing animation frames. If delay is set to 0, no
             new thread is spawned. The output is then updated in the main
             thread, whenever 'set_progress' is called.
-        @param message [Default: ""] string. Text shown before the indicator.
-        @param percentage [Default: 0] real number in [0, 1]. Initial
+        :param message: [Default: ""] string. Text shown before the indicator.
+        :param percentage: [Default: 0] real number in [0, 1]. Initial
             percentage shown in the animation.
-        @param use_bar [Default: True] bool. If True, adds a progress bar
+        :param use_bar: [Default: True] bool. If True, adds a progress bar
             visualizing the current percentage.
-        @param keep_output [Default: False] bool. Whether the last animation
+        :param keep_output: [Default: False] bool. Whether the last animation
             frame should be kept as a new line  when stopping.
         """
         if delay == 0:

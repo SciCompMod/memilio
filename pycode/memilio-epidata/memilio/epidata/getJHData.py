@@ -56,16 +56,12 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
        - Germany, SouthKorea, Spain, France, Italy, US, China
        - furthermore, all countries, for which provinces are added, are written to a file
 
-    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
-    :param out_folder: Folder where data is written to. Default defined in defaultDict.
-    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
-    :param impute_dates: Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    :param moving_average: Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    :param 1: 
-    :param 22): 
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = date(2020, 1, 22))
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
     :param **kwargs: 
 
     """

@@ -45,12 +45,7 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
     :param compartments: List of compartments to be plotted.
     :param file_format: Format of the file to be created. Either 'h5' or 'json'. (Default value = 'h5')
     :param relative: Defines if data should be scaled relative to population. (Default value = False)
-    :param age_groups: Dictionary of age groups to be considered. (Default value = {0: '0-4')
-    :param 1: '5-14': 
-    :param 2: '15-34': 
-    :param 3: '35-59': 
-    :param 4: '60-79': 
-    :param 5: '80+'}: 
+    :param age_groups: Dictionary of age groups to be considered. (Default value = {0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'}) 
 
     """
 
@@ -126,13 +121,7 @@ def create_gif_map_plot(input_data, output_dir, compartments, filename="simulati
     :param output_dir: Path where the gif should be stored.
     :param filename: Name of the temporary file. (Default value = "simulation")
     :param relative: Defines if data should be scaled relative to population. (Default value = True)
-    :param age_groups: Dictionary of age groups to be considered. (Default value = {0: '0-4')
-    :param compartments: 
-    :param 1: '5-14': 
-    :param 2: '15-34': 
-    :param 3: '35-59': 
-    :param 4: '60-79': 
-    :param 5: '80+'}: 
+    :param age_groups: Dictionary of age groups to be considered. (Default value = {0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'})
 
     """
 

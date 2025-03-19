@@ -49,7 +49,6 @@ class Generator:
 
         :param intermed_repr: Dataclass holding the model features.
         :param self: Self: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         # create the substitutions with a given intermed_repr
@@ -105,7 +104,6 @@ class Generator:
 
         :param intermed_repr: Dataclass holding the model features.
         :param self: Self: 
-        :param intermed_repr: IntermediateRepresentation: 
 
         """
         # read templates

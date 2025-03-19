@@ -71,7 +71,6 @@ def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
     """Try to load the compile_commands.json ressource and retrieve the corresponding directory name.
 
     :param skbuild_path_to_database: Value from config.json
-    :param skbuild_path_to_database: str: 
     :returns: Path of directory
 
     """
@@ -93,7 +92,6 @@ def get_base_class(base_type: Type) -> List[Any]:
     """Retrieve the base class.
     Example for base_type: CompartmentalModel.
 
-    :param Type: of the current node.
     :param base_type: Type: 
 
     """
@@ -107,8 +105,7 @@ def get_base_class_string(base_type: Type) -> List[Any]:
     """Retrieve the spelling of the base class.
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 
-    :param Type: of the current node.
-    :param base_type: Type: 
+    :param base_type: of the current node.
 
     """
     # fixes an issue in the generation of the abstract syntax tree

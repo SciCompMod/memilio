@@ -60,7 +60,6 @@ def assign_geographical_entities(countykey_list, govkey_list, run_checks):
 
     Keyword arguments:
 
-    :param setup_dict: dictionary with necessary values
     :param countykey_list: List of county regional keys.
     :param govkey_list: List of governing regions regional keys.
     :param run_checks: 
@@ -146,9 +145,9 @@ def get_commuter_data(read_data=dd.defaultDict['read_data'],
     Keyword arguments:
 
     :param read_data: True or False. Defines if data is read from file or downloaded.
-        Only for population data. Commuter data is always downloaded. Default defined in defaultDict.
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
-    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+        Only for population data. Commuter data is always downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
     :param setup_dict: dictionary with necessary values:
         'path': String with datapath where mobility files can be found
         'abs_tol': tolerated undetected people
