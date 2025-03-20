@@ -42,7 +42,8 @@ The following steps detail how to configure and execute a graph simulation:
 
    First, set up the compartment model by initializing the populations and parameters. In this example, we use a single age group and start with 10,000 susceptible individuals. Additionally, the necessary epidemiological parameters (e.g. time periods, transmission probabilities) are set.
 
-   .. code-block:: cpp       
+   .. code-block:: cpp
+
            const size_t num_groups = 1;
            mio::osecir::Model model(num_groups);
            model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
@@ -114,6 +115,7 @@ The following steps detail how to configure and execute a graph simulation:
    Build a graph where each node represents a simulation and each edge represents mobility between a pair of nodes. Mobility coefficients (here, 0.1 for all compartments) determine the fraction of the population exchanged between nodes.
 
    .. code-block:: cpp
+    
            const auto t0   = 0.;
            mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<ScalarType>> g;
            g.add_node(1001, model_group1, t0);
