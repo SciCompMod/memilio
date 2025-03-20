@@ -48,13 +48,17 @@ Contents
    :maxdepth: 2
    :caption: Python Interface
 
-   python/model_usage
-   python/model_creation
+   python/python_packages
+   python/memilio_simulation
+   python/memilio_epidata
+   python/memilio_surrogate
+   python/memilio_generation
+   python/memilio_plot
 
 .. toctree::
    :maxdepth: 1
    :caption: Code API 
 
    models/index
-   pythonapi
+   pythonapi/pythonapi
    api/library_root

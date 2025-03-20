@@ -7,11 +7,11 @@ Python API
 .. autosummary::
     :toctree: generated
     :recursive:
-    :caption: Pyhton Module API
-
-    memilio.generation
-    memilio.epidata
-    memilio.simulation
-    memilio.surrogatemodel
-    memilio.plot
     
+    memilio.plot
+
+.. toctree::
+    :maxdepth: 1
+    
+    memilio.simulation 
+
