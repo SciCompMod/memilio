@@ -9,18 +9,19 @@ IDE-SECIR model
 
 This model is based on integro-differential equations.
 The eight compartments 
-- `Susceptible` ($S$), may become Exposed at any time
-- `Exposed` ($E$), becomes InfectedNoSymptoms after some time
-- `InfectedNoSymptoms` ($I_{NS}$), becomes InfectedSymptoms or Recovered after some time
-- `InfectedSymptoms` ($I_{Sy}$), becomes InfectedSevere or Recovered after some time
-- `InfectedSevere` ($I_{Sev}$), becomes InfectedCritical or Recovered after some time
-- `InfectedCritical` ($I_{Cr}$), becomes Recovered or Dead after some time
-- `Recovered` ($R$)
-- `Dead` ($D$)
+
+- `Susceptible` (:math:`S`), may become Exposed at any time
+- `Exposed` (:math:`E`), becomes InfectedNoSymptoms after some time
+- `InfectedNoSymptoms` (:math:`I_{NS}`), becomes InfectedSymptoms or Recovered after some time
+- `InfectedSymptoms` (:math:`I_{Sy}`), becomes InfectedSevere or Recovered after some time
+- `InfectedSevere` (:math:`I_{Sev}`), becomes InfectedCritical or Recovered after some time
+- `InfectedCritical` (:math:`I_{Cr}`), becomes Recovered or Dead after some time
+- `Recovered` (:math:`R`)
+- `Dead` (:math:`D`)
 
 are used to simulate the spread of the disease and corresponding transition distributions can be set in a flexible way. 
 
-The simulation runs in discrete time steps using a non-standard numerical scheme. This approach is based on the paper ["A non-standard numerical scheme for an age-of infection epidemic model" by Messina et al., Journal of Computational Dynamics, 2022](https://doi.org/10.3934/jcd.2021029). 
+The simulation runs in discrete time steps using a non-standard numerical scheme. This approach is based on the paper `"A non-standard numerical scheme for an age-of infection epidemic model" by Messina et al., Journal of Computational Dynamics, 2022 <https://doi.org/10.3934/jcd.2021029>`_. 
 
 For a detailed description and application of the model, see:
 
@@ -40,9 +41,9 @@ To initialize the model, the following inputs need to be passed to the model con
 
 - a time series containing the flows within a time step between the infection states for a large enough number of time points before the start of the simulation,
 - a vector containing the population sizes for every age group,
-- a vector containing the total number of deaths at time t0 for every age group,
+- a vector containing the total number of deaths at time :math:`t0` for every age group,
 - the number of age groups,
-- optionally, a vector containing the total confirmed cases at time t0 and can be set if it should be used for initialization for every age group.
+- optionally, a vector containing the total confirmed cases at time :math:`t0` and can be set if it should be used for initialization for every age group.
 
 The number of age groups, the population sizes and total number of deaths can be defined directly by 
 
@@ -55,8 +56,8 @@ The number of age groups, the population sizes and total number of deaths can be
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
 
-In this example, we define the necessary flows before the simulation start by defining a time series at time points -10, ..., 0 that all contain the same vector of flows. The number of required time points before the simulation start depends on the chosen transition distributions that we can adapt later. 
-Note that the last time point in our initial flow TimeSeries determines the start time of the simulation. 
+In this example, we define the necessary flows before the simulation start by defining a time series at time points :math:`-10,\dots, 0` that all contain the same vector of flows. The number of required time points before the simulation start depends on the chosen transition distributions that we can adapt later. 
+Note that the last time point in our initial flow ``TimeSeries`` determines the start time of the simulation. 
 
 .. code-block:: cpp
 
@@ -90,25 +91,36 @@ Note that the last time point in our initial flow TimeSeries determines the star
 
 There are different options for initializing a fictional scenario. Regardless of the approach, you must provide a history of values for the transitions as demonstrated above and possibly additional information to compute the initial distribution of the population in the compartments. This information must be of the following type:  
 
-    - You can state the number of total confirmed cases `total_confirmed_cases` at time $t_0$. The number of recovered people is set accordingly and the remaining values are derived in the model before starting the simulation. Then the model can be constructed by 
+    - You can state the number of total confirmed cases `total_confirmed_cases` at time :math:`t_0`. The number of recovered people is set accordingly and the remaining values are derived in the model before starting the simulation. Then the model can be constructed by 
+
     .. code-block:: cpp
+
         mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 100.);
         mio::isecir::Model model(std::move(init), N, deaths, num_agegroups, total_confirmed_cases);
+    
     - If you cannot provide this number of total confirmed cases, we can construct the model without this information.
+
     .. code-block:: cpp
+    
         mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
     In that case, we have three possible options for initializing:
-        - You can set the number of people in the `Susceptible` compartment at time $t_0$ via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
-        .. code-block:: cpp
-            model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000.;
-        - You can set the number of people in the `Recovered` compartment at time $t_0$ via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
-        .. code-block:: cpp
-            model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 1000.;
-        - If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in [Messina et al (2022)](https://doi.org/10.3934/jcd.2021029) to set the `Susceptible`s. 
+        - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
 
-- The file [parameters_io](parameters_io.h) provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at [IDE initialization example](../../examples/ide_initialization.cpp).
+        .. code-block:: cpp
+
+            model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000.;
+
+        - You can set the number of people in the `Recovered` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+
+        .. code-block:: cpp
+
+            model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 1000.;
+
+        - If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in `Messina et al (2022) <https://doi.org/10.3934/jcd.2021029>`_ to set the ``Susceptible``s. 
+
+- The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/ide_secir/parameters_io.h>`_ provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at  `IDE initialization example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ide_initialization.cpp>`_.
 
 If we do not want to use the default parameters, we can adapt them as follows. 
 
@@ -174,7 +186,7 @@ Before the simulation, we check if all constraints of the model are satisfied so
 
     model.check_constraints(dt);
 
-To simulate the model from `t0` (that is determined by the initial flows provided to the constructor) to `tmax` with given step size `dt`, a Simulation has to be created and advanced until `tmax`, which is done as follows: 
+To simulate the model from :math:`t_0` (that is determined by the initial flows provided to the constructor) to :math:`t_{\max}` with given step size :math:`dt`, a Simulation has to be created and advanced until :math:`t_{\max}`, which is done as follows: 
 
 .. code-block:: cpp
 
@@ -214,6 +226,7 @@ How to: Set up and run a simulation of the IDE-SEIR model
 To initialize the model, the following inputs need to be passed to the model constructor:
 
 .. code-block:: cpp
+
     using Vec = mio::TimeSeries<double>::Vector;
 
 
