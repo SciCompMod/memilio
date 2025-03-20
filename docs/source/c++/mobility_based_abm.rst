@@ -1,10 +1,10 @@
 Agent-Based Model
 =================
 
-This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the
-:doc:`SECIR <osecir>` compartmental model that uses a system of ODEs, this model simulates
+This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the
 model and interacting with (infecting) each other. For a detailed overview of the ABM, see 
+
 - Kerkmann D, Korf S, et al. Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread. https://doi.org/10.48550/arXiv.2410.08050
 
 Structure
@@ -12,7 +12,7 @@ Structure
 
 The model consists of the following major classes:
 
-1. **Person**: Represents an agent of the model. A person has an ID (i.e. a unique number), an age, a location,
+1. **Person**: Represents an agent of the model. A person has an ID (i.e. 
    and a list with their assigned locations (i.e. the locations they visit during the simulation). They can perform
    tests and wear masks. Every person has lists with past and current infections and vaccinations.
 2. **Infection**: Collection of all information about a person's infection, i.e. infectiousness, infection course,
@@ -44,14 +44,13 @@ level of the susceptible person.
 Mobility Phase
 ~~~~~~~~~~~~~~~~~~
 
-During the mobility phase, each person may change their location. Mobility follows complex
+During the mobility phase, each person may change their location. Mobility follow
 `rules <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.cpp>`_, considering the current location, time of day, and properties of the person (e.g. age).
 Some location changes are deterministic and regular (e.g. going to work), while others are random (e.g. going shopping or to a
 social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
 You can restrict some mobility rules by allowing only a proportion of people to enter specific locations.
 
-Another way of mobility we use in the `simulation of Braunschweig <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm_braunschweig.cpp>`_ is using trips. A trip
-consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
+Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
 At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different
 trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are
 in quarantine or in the hospital cannot change their location.
@@ -63,14 +62,14 @@ Disease Progression
 The ABM implements a detailed disease progression model that captures the full course of an infection from exposure to resolution. The disease progression is modeled through the ``Infection`` class, which contains:
 
 1. **Infection States**: Similar to the SECIR model, an infected person progresses through states:
-   - **Susceptible**: Initial state before infection
-   - **Exposed**: Infected but not yet infectious
-   - **InfectedNoSymptoms**: Infectious but without symptoms
-   - **InfectedSymptoms**: Showing symptoms but not severe
-   - **InfectedSevere**: Severe infection requiring hospitalization
-   - **InfectedCritical**: Critical infection requiring ICU
-   - **Recovered**: Recovered from infection with immunity
-   - **Dead**: Deceased due to infection
+   - `**Susceptible**`: Initial state before infection
+   - `**Exposed**`: Infected but not yet infectious
+   - `**InfectedNoSymptoms**`: Infectious but without symptoms
+   - `**InfectedSymptoms**`: Showing symptoms but not severe
+   - `**InfectedSevere**`: Severe infection requiring hospitalization
+   - `**InfectedCritical**`: Critical infection requiring ICU
+   - `**Recovered**`: Recovered from infection with immunity
+   - `**Dead**`: Deceased due to infection
 
 2. **Viral Load Dynamics**: The model implements realistic viral load curves based on scientific data:
    - **Incline Phase**: Rapid increase in viral concentration
@@ -118,7 +117,7 @@ The examples demonstrate two approaches:
    
    // Run simulation with history object
    sim.advance(tmax, history);
-   
+
 
 Interventions
 ~~~~~~~~~~~~~~~~~~
