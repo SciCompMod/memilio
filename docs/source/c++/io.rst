@@ -1,4 +1,4 @@
-MEmilio C++ IO
+Input / Output
 ==============
 
 This document describes utilities for reading and writing data from and to files in different formats, in cases where
@@ -15,7 +15,7 @@ This document describes utilities for reading and writing data from and to files
  
 
 The Serialization framework
-===========================
+---------------------------
 
 Serialization is the process of converting a data structure or object into a different format that can be stored or
 transmitted. In this section we will show you how to make use of and implement MEmilio's serialization feature, as
@@ -30,7 +30,7 @@ Our guiding example will be a humble struct ``Foo``:
 
 
 Using serialization
---------------------
+~~~~~~~~~~~~~~~~~~~
 
 In the next sections we will explain how to implement serialization (both for types and formats), here we quickly show
 how to use it once it already is implemented for a type. In the following examples, we serialize (write) ``Foo`` to a
@@ -52,7 +52,7 @@ There is also support for a binary format. If you want to use a format directly 
 ``serialize_json``/``deserialize_json`` and ``serialize_binary``/``deserialize_binary`` functions.
 
 Main functions and types
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **functions serialize and deserialize**:
   Main entry points to the framework to write and read values, respectively. The functions expect an IOContext
@@ -63,7 +63,7 @@ Main functions and types
   Used for error handling, see section "Error Handling" below.
 
 Default serialization
-----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 Before we get into the details of the framework, this feature provides an easy and convenient alternative to
 implementing the serialize and deserialize functions. To give an example:
@@ -113,7 +113,7 @@ value provided to ``add`` is also used to assign a value during deserialization,
 directly in the function (i.e. as a non-const lvalue reference).
 
 Concepts
---------
+~~~~~~~~
 
 1. **IOContext**
 
@@ -170,7 +170,7 @@ Concepts
      indistinguishable from an empty optional, so make sure to provide the correct key.
 
 Error handling
---------------
+~~~~~~~~~~~~~~
 
 Errors are handled by returning error codes. The type IOStatus contains an error code and an optional string with
 additional information. The type IOResult contains either a value or an IOStatus that describes an error. Operations
@@ -184,7 +184,7 @@ the values if all are successful. See the documentation of ``IOStatus``, ``IORes
 details.
 
 Adding a new data type to be serialized
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Serialization of a new type T can be customized by providing *either* member functions ``serialize`` and ``deserialize``
 *or* free functions ``serialize_internal`` and ``deserialize_internal``.
@@ -217,20 +217,20 @@ The free functions ``serialize_internal`` and ``deserialize_internal`` must be f
 for examples where this was done for, e.g., Eigen3 matrices and STL containers.
 
 Adding a new format
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Implement concepts IOContext and IOObject that provide the operations listed above. Your implementation should handle
 all built-in types as well as ``std::string``. It may handle other types (e.g., STL containers) as well if it can do so
 more efficiently than the provided general free functions.
 
 Other IO modules
-================
+----------------
 
 - HDF5 support classes for C++
 - Reading of mobility matrix files
 
 The command line interface
-==========================
+--------------------------
 
 We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
 or read from a parameter set. It can take parameters from command line arguments (i.e. the content of ``argv`` in the
@@ -250,7 +250,7 @@ Name  (Alias)          Description
 ``--read_from_json``   Allows reading parameters from a file instead of the command line. Both parameter names and
                        aliases can be used, for example:
 
-                       .. code-block:: json
+                       .. code-block::
 
                           {"<ParameterName>" : <value>, "<ParameterAlias>" : <value> }
 
@@ -267,7 +267,7 @@ corresponding to the Type of the parameter. Note that some characters may need t
 JSON string ``"some string"`` must be entered as ``\\"some string\\"`` or ``'"some string"'``.
 
 Working with the History object
-===============================
+-------------------------------
 
 The History object provides a way to save data throughout the simulation process. It offers an interface where users can
 define the data to be saved from a given object using Loggers and the method of saving it using Writers. Afterward, the
@@ -276,7 +276,7 @@ user can access this data from the History object and manipulate it. For a basic
 `this example <../../examples/abm_history_example.cpp>`__.
 
 Loggers
--------
+~~~~~~~
 
 The ``Logger`` struct is a tool for logging data from a given object. Each user-implemented Logger must have a ``Type``
 and implement two functions: ``Type log(const T&)`` and ``bool should_log(const T&)``. The input ``T`` for these
@@ -312,7 +312,7 @@ All implemented Loggers must be default constructible/destructible. For user-def
     };
 
 Writers
--------
+~~~~~~~
 
 The ``Writer`` struct defines how to store the logged data from one or more implemented ``Loggers``. Each
 user-implemented ``Writer`` must have a ``Data`` Type and implement the
@@ -342,7 +342,7 @@ Timeseries. The according Logger has to have a suitable return type.
     };
 
 History
--------
+~~~~~~~
 
 The ``History`` class manages the Writers and Loggers and provides an interface to log data. It is templated on one
 ``Writer`` and several suitable and unique ``Loggers``. To use the Writer to log something, the ``History`` provides the
