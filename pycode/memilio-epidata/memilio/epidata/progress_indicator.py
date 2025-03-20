@@ -26,7 +26,7 @@ from os import name as os_name
 
 
 class ProgressIndicator:
-    """! Print an animation to show that something is happening.
+    """ Print an animation to show that something is happening.
     Animations are rendered in a new thread, which is set up as deamon so that
     it stops on main thread exit.
     The subclasses Dots, Spinner and Percentage provide some default animations.
@@ -43,25 +43,27 @@ class ProgressIndicator:
             do_something...
             indicator.set_progress((i+1)/n)
     ```
+
+
     """
 
     _first_init = True
     _disabled = False
 
     def __init__(self, message, animator, delay, auto_adjust=False):
-        """! Create a ProgressIndicator.
-        @param message String. Shown in front of the animation without
+        """ Create a ProgressIndicator.
+        :param message: String. Shown in front of the animation without
             seperator. If it would not fit in a single line with the
             animation, it will be printed once in a new line above the
             animation instead. Must not contain `\r` or `\n`.
-        @param animator Generator expression. The expression must loop, i.e.
+        :param animator: Generator expression. The expression must loop, i.e.
             it should never return StopIteration. `next(animator)` must be a
             string of length < `os.get_terminal_size().columns`. The length
             should be constant, otherwise animations may leave artifacts (this
             can be worked around by prepending `"\033[K"` to each string).
-        @param delay Positive real number. Sets delay in seconds between
+        :param delay: Positive real number. Sets delay in seconds between
             drawing animation frames.
-        @param auto_adjust [Default: False] Bool. Specify whether each frame
+        :param auto_adjust: [Default: False] Bool. Specify whether each frame
             of the animation should be forced to fit in a single line. Can be
             usefull for long, line filling animations.
         """
@@ -81,27 +83,28 @@ class ProgressIndicator:
             ProgressIndicator._console_setup()
 
     def __enter__(self):
-        """! Calls start at the beginning of a 'with' block. """
+        """ Calls start at the beginning of a 'with' block. """
         self.start()
         return self
 
     def __exit__(self, exception, value, trace):
-        """! Calls stop at the end of a 'with' block. """
+        """ Calls stop at the end of a 'with' block. """
         self.stop()
 
     @staticmethod
     def disable_indicators(disable):
-        """! Globally prevents new indicators from starting.
+        """ Globally prevents new indicators from starting.
         This does not affect currently running indicators.
 
-        @param disable Bool. If True, no new indicators can be started.
+        :param disable: Bool. If True, no new indicators can be started.
             If False, resume default behaviour.
+
         """
         ProgressIndicator._disabled = disable
 
     @staticmethod
     def _console_setup():
-        """! Set up the console evironment. """
+        """ Set up the console evironment."""
         if os_name == 'nt':  # os name can be nt, posix, or java
             # Windows uses nt, which does not support carriage returns by
             # default. the following Windows specific module should fix this.
@@ -121,7 +124,11 @@ class ProgressIndicator:
                 warn(msg, category=RuntimeWarning, stacklevel=2)
 
     def _adjust_to_terminal_size(self, reserve=0):
-        """! Keep animation in a single line."""
+        """ Keep animation in a single line.
+
+        :param reserve:  (Default value = 0)
+
+        """
         # use width - 1, since show() prepends a space
         width = get_terminal_size().columns - 1
         self._frame = self._frame[:(width)]
@@ -131,42 +138,46 @@ class ProgressIndicator:
         self._space = width - len(self._frame) - len(self._message)
 
     def _advance(self):
-        """! Advance the animation to the next frame. """
+        """ Advance the animation to the next frame."""
         self._frame = next(self._animator)
         if self._auto_adjust:
             self._adjust_to_terminal_size()
 
     def _render(self):
-        """! Regularly update the animation. Do not call manually! """
+        """ Regularly update the animation. Do not call manually!"""
         while self._thread_is_running:
             self.step()
             # wait before writing next frame
             time.sleep(self._delay)
 
     def set_message(self, message):
-        """! Change the message displayed in front of the animation.
-        @param message String. Shown in front of the animation without
+        """ Change the message displayed in front of the animation.
+
+        :param message: String. Shown in front of the animation without
             seperator. If it would not fit in a single line with the
             animation, it will be printed once in a new line above the
             animation instead. Must not contain `\r` or `\n`.
+
         """
         self._message = message
         self._adjust_to_terminal_size()
 
     def show(self):
-        """! Print the animation without advancing it."""
+        """ Print the animation without advancing it."""
         # prepend a space to fit the cursor
         sys.stdout.write(f" {self._message}{self._frame}\r")
         sys.stdout.flush()
 
     def step(self):
-        """! Advance and print the animation. """
+        """ Advance and print the animation."""
         self._advance()
         self.show()
 
     def start(self):
-        """! Start the animation in a new thread.
+        """ Start the animation in a new thread.
         Must call stop afterwards.
+
+
         """
         if not ProgressIndicator._disabled and not self._thread_is_running:
             self._thread_is_running = True
@@ -176,7 +187,7 @@ class ProgressIndicator:
             self._thread.start()
 
     def stop(self):
-        """! Stop the animation and join the thread. """
+        """ Stop the animation and join the thread."""
         if self._thread_is_running:
             self._thread_is_running = False
             if self._thread and self._thread.is_alive():
@@ -185,46 +196,48 @@ class ProgressIndicator:
 
 
 class Spinner(ProgressIndicator):
-    """! Subclass of ProgressIndicator with a predefined animation. """
+    """ Subclass of ProgressIndicator with a predefined animation."""
 
     def __init__(self, delay=0.1, message=""):
-        """! Initializes a ProgressIndicator with a rotating line animation.
+        """ Initializes a ProgressIndicator with a rotating line animation.
         This method spawns a new thread to print the animation.
         Start the animation by either using the `start`/`stop` functions or a
         'with' block.
 
-        @param delay [Default: 0.1] positive real number. Sets delay in
+        :param delay: [Default: 0.1] positive real number. Sets delay in
             seconds between drawing animation frames.
-        @param message [Default: ""] string. Text shown before the indicator.
+        :param message: [Default: ""] string. Text shown before the indicator.
         """
         def _spin():
+            """ """
             while True:  # loop animation
                 yield from "|/-\\"
         super().__init__(message + " ", _spin(), delay)
 
 
 class Dots(ProgressIndicator):
-    """! Subclass of ProgressIndicator with a predefined animation. """
+    """ Subclass of ProgressIndicator with a predefined animation."""
 
     def __init__(self, delay=1, message="", num_dots=3, dot=".", blank=" "):
-        """! Initializes ProgressIndicator with a 'dot, dot, dot' animation.
+        """ Initializes ProgressIndicator with a 'dot, dot, dot' animation.
         This method spawns a new thread to print the animation.
         Start the animation by either using the `start`/`stop` functions or a
         'with' block.
 
-        @param delay [Default: 1] positive real number. Sets delay in seconds
+        :param delay: [Default: 1] positive real number. Sets delay in seconds
             between drawing animation frames.
-        @param message [Default: ""] string. Text shown before the indicator.
-        @param num_dots [Default: 3] positive integer. Determines maximum
+        :param message: [Default: ""] string. Text shown before the indicator.
+        :param num_dots: [Default: 3] positive integer. Determines maximum
             number of dots drawn before clearing them with blanks.
-        @param dot [Default: "."] string. Drawn up to num_dots times.
-        @param blank [Default: " "] string. Placeholder for yet to be drawn
+        :param dot: [Default: "."] string. Drawn up to num_dots times.
+        :param blank: [Default: " "] string. Placeholder for yet to be drawn
             dots. Must have same length as dot.
         """
         assert (len(dot) == len(blank))
         assert (num_dots > 0)
 
         def _dots():
+            """ """
             while True:  # loop animation
                 for n in range(1, num_dots+1):  # iterate animation frames
                     # return single frame
@@ -234,26 +247,26 @@ class Dots(ProgressIndicator):
 
 
 class Percentage(ProgressIndicator):
-    """! Subclass of ProgressIndicator with a predefined animation. """
+    """ Subclass of ProgressIndicator with a predefined animation."""
 
     def __init__(self, delay=1, message="", percentage=0, use_bar=True,
                  keep_output=False):
-        """! Initializes ProgressIndicator displaying a percentage.
+        """ Initializes ProgressIndicator displaying a percentage.
         The percentage can be updated using the `set_progress` method.
         By default, this method spawns a new thread to print the animation.
         Start the animation by either using the `start`/`stop` functions or a
         `with` `as` block.
 
-        @param delay [Default: 1] non-negative real number. Sets delay in
+        :param delay: [Default: 1] non-negative real number. Sets delay in
             seconds between drawing animation frames. If delay is set to 0, no
             new thread is spawned. The output is then updated in the main
             thread, whenever 'set_progress' is called.
-        @param message [Default: ""] string. Text shown before the indicator.
-        @param percentage [Default: 0] real number in [0, 1]. Initial
+        :param message: [Default: ""] string. Text shown before the indicator.
+        :param percentage: [Default: 0] real number in [0, 1]. Initial
             percentage shown in the animation.
-        @param use_bar [Default: True] bool. If True, adds a progress bar
+        :param use_bar: [Default: True] bool. If True, adds a progress bar
             visualizing the current percentage.
-        @param keep_output [Default: False] bool. Whether the last animation
+        :param keep_output: [Default: False] bool. Whether the last animation
             frame should be kept as a new line  when stopping.
         """
         if delay == 0:
@@ -267,13 +280,14 @@ class Percentage(ProgressIndicator):
         self._disabled = False
 
         def _perc():
+            """ """
             while True:
                 yield f"{100*self._progress:6.2f}%"
 
         super().__init__(message + " ", _perc(), delay, use_bar)
 
     def _advance(self):
-        """! Advance the animation to the next frame. """
+        """ Advance the animation to the next frame."""
         self._frame = next(self._animator)
         if self._use_bar:
             self._adjust_to_terminal_size(5)
@@ -281,15 +295,17 @@ class Percentage(ProgressIndicator):
             self._frame = self._bar(self._space, self._progress) + self._frame
 
     def start(self):
-        """! Start the animation. Must call stop() afterwards.
+        """ Start the animation. Must call stop() afterwards.
         If delay > 0, this method spawns a new thread.
+
+
         """
         self._disabled = ProgressIndicator._disabled
         if self._use_thread:
             super().start()
 
     def stop(self):
-        """! Stops the animation. """
+        """ Stops the animation."""
         if not self._disabled:
             if self._use_thread:
                 self.step()
@@ -301,8 +317,10 @@ class Percentage(ProgressIndicator):
             super().stop()
 
     def set_progress(self, percentage):
-        """! Updates the percentage shown by the indicator. Steps if delay = 0.
-        @param percentage real number. Must be in the interval [0, 1].
+        """ Updates the percentage shown by the indicator. Steps if delay = 0.
+
+        :param percentage: real number. Must be in the interval [0, 1].
+
         """
         self._progress = percentage
         if not self._disabled and not self._thread_is_running:
@@ -310,10 +328,12 @@ class Percentage(ProgressIndicator):
 
     @staticmethod
     def _bar(width, percentage):
-        """! Returns a progress bar.
-        @param width Total width of the bar. Must be at least 4.
-        @param percentage Float in [0,1].
-        @return String of length width, visualizing percentage.
+        """ Returns a progress bar.
+
+        :param width: Total width of the bar. Must be at least 4.
+        :param percentage: Float in [0,1].
+        :returns: String of length width, visualizing percentage.
+
         """
         w = width - 3  # 3 == len("[] ")
         n = int(w * percentage)

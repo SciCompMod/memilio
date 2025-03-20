@@ -25,7 +25,10 @@ from memilio.simulation.osecir import (InfectionState, PopulationsArray)
 
 
 class TestCustomIndexArray(TestCase):
+    """ """
+
     def test_init(self):
+        """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
         array = PopulationsArray(dims)
         self.assertEqual(array.size_AgeGroup(), dims[0])
@@ -33,12 +36,14 @@ class TestCustomIndexArray(TestCase):
         self.assertEqual(array.size(), dims)
 
     def test_init_single_index(self):
+        """ """
         dims = AgeGroup(3)
         array = AgeGroupArray(dims)
         self.assertEqual(array.size_AgeGroup(), dims)
         self.assertEqual(array.size(), dims)
 
     def test_assign(self):
+        """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
         array = PopulationsArray(dims)
         array[:, :] = 1.0
@@ -51,6 +56,7 @@ class TestCustomIndexArray(TestCase):
             array[AgeGroup(0), InfectionState.InfectedNoSymptoms].value, 3.0)
 
     def test_assign_steps(self):
+        """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
         array = PopulationsArray(dims)
         array[::AgeGroup(1), InfectionState.InfectedNoSymptoms] = 1.0
@@ -63,6 +69,7 @@ class TestCustomIndexArray(TestCase):
         self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 0.0)
 
     def test_iter(self):
+        """ """
         dims = AgeGroup(3)
         array = AgeGroupArray(dims)
         for v in array:

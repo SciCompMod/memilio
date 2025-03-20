@@ -325,7 +325,7 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
 /**
  * @brief Sets the graph edges.
  * Reads the commuting matrices from txt files and sets the graph edges with that.
- * @param[in] data_dir Directory that contains the data files.
+ * @param[in] mobility_data_file File that contains the commuting matrix.
  * @param[in, out] params_graph Graph whose nodes are set by the function.
  * @param[in] mobile_compartments Compartments that commute.
  * @param[in] contact_locations_size Number of contact locations.
@@ -335,20 +335,15 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
  */
 template <class ContactLocation, class Model, class MobilityParams, class MobilityCoefficientGroup,
           class InfectionState, class ReadFunction>
-IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>& params_graph,
+IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, MobilityParams>& params_graph,
                          std::initializer_list<InfectionState>& mobile_compartments, size_t contact_locations_size,
                          ReadFunction&& read_func, std::vector<ScalarType> commuting_weights,
                          std::vector<std::vector<size_t>> indices_of_saved_edges = {})
 {
     // mobility between nodes
-    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      read_func((data_dir / "mobility" / "commuter_mobility.txt").string()));
-    BOOST_OUTCOME_TRY(auto&& mobility_data_twitter,
-                      read_func((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
+    BOOST_OUTCOME_TRY(auto&& mobility_data_commuter, read_func(mobility_data_file.string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_twitter.rows() != Eigen::Index(params_graph.nodes().size()) ||
-        mobility_data_twitter.cols() != Eigen::Index(params_graph.nodes().size())) {
+        mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size())) {
         return mio::failure(mio::StatusCode::InvalidValue,
                             "Mobility matrices do not have the correct size. You may need to run "
                             "transformMobilitydata.py from pycode memilio epidata package.");
@@ -377,20 +372,9 @@ IOResult<void> set_edges(const fs::path& data_dir, Graph<Model, MobilityParams>&
                         commuter_coeff_ij * commuting_weights[size_t(age)];
                 }
             }
-            //others
-            auto total_population = populations.get_total();
-            auto twitter_coeff    = mobility_data_twitter(county_idx_i, county_idx_j) /
-                                 total_population; //data is absolute numbers, we need relative
-            for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
-                for (auto compartment : mobile_compartments) {
-                    auto coeff_idx = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
-                }
-            }
-
             //only add edges with mobility above thresholds for performance
             //thresholds are chosen empirically so that more than 99% of mobility is covered, approx. 1/3 of the edges
-            if (commuter_coeff_ij > 4e-5 || twitter_coeff > 1e-5) {
+            if (commuter_coeff_ij > 4e-5) {
                 params_graph.add_edge(county_idx_i, county_idx_j, std::move(mobility_coeffs), indices_of_saved_edges);
             }
         }

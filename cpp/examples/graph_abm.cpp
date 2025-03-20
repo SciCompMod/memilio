@@ -69,6 +69,7 @@ struct Logger : mio::LogAlways {
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::warn);
     // This is an example with three age groups representing children, adults and seniors.
     size_t num_age_groups         = 3;
     const auto age_group_children = mio::AgeGroup(0);

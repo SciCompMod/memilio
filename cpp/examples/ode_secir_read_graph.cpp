@@ -28,8 +28,8 @@
 std::string setup(int argc, char** argv, const std::string data_dir)
 {
     if (argc == 2) {
-        std::cout << "Using file " << argv[1] << " in data/mobility." << std::endl;
-        return mio::path_join(data_dir, "mobility", (std::string)argv[1]);
+        std::cout << "Using file " << argv[1] << " in data/Germany/mobility." << std::endl;
+        return mio::path_join(data_dir, "Germany", "mobility", (std::string)argv[1]);
     }
     else {
         if (argc > 2) {
@@ -38,17 +38,20 @@ std::string setup(int argc, char** argv, const std::string data_dir)
         else {
             mio::log_warning("No arguments given.");
         }
-        std::cout << "Using default file twitter_scaled_1252 in data/mobility." << std::endl;
-        std::cout << "Usage: read_graph MOBILITY_FILE" << "\n\n";
-        std::cout << "This example performs a simulation based on twitter "
-                     "mobility data."
-                  << std::endl;
-        return mio::path_join(data_dir, "mobility", "twitter_scaled_1252.txt");
+        auto mobility_file = "commuter_mobility_2022.txt";
+        std::cout << "Using file " << mobility_file << " in data/Germany/mobility." << std::endl;
+        std::cout << "Usage: read_graph MOBILITY_FILE"
+                  << "\n\n";
+        std::cout
+            << "This example performs a simulation based on mobility data from the German Federal Employment Agency."
+            << std::endl;
+        return mio::path_join(data_dir, "Germany", "mobility", mobility_file);
     }
 }
 
 int main(int argc, char** argv)
 {
+    mio::set_log_level(mio::LogLevel::critical);
     std::string data_dir = DATA_DIR;
     std::string filename = setup(argc, argv, data_dir);
 
@@ -111,21 +114,22 @@ int main(int argc, char** argv)
     auto read_mobility_result = mio::read_mobility_plain(filename);
     if (!read_mobility_result) {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
-        return -1;
+        std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file." << '\n';
+        return 0;
     }
-    auto& twitter_mobility_2018 = read_mobility_result.value();
+    auto& commuter_mobility = read_mobility_result.value();
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
     mio::Graph<mio::osecir::Model<FP>, mio::MobilityParameters<FP>> graph;
-    for (int node = 0; node < twitter_mobility_2018.rows(); node++) {
+    for (int node = 0; node < commuter_mobility.rows(); node++) {
         graph.add_node(node, model);
     }
-    for (int row = 0; row < twitter_mobility_2018.rows(); row++) {
-        for (int col = 0; col < twitter_mobility_2018.cols(); col++) {
+    for (int row = 0; row < commuter_mobility.rows(); row++) {
+        for (int col = 0; col < commuter_mobility.cols(); col++) {
             graph.add_edge(row, col,
                            Eigen::VectorXd::Constant(10 * (size_t)nb_groups,
-                                                     twitter_mobility_2018(row, col) /
+                                                     commuter_mobility(row, col) /
                                                          graph.nodes()[row].property.populations.get_total()));
         }
     }

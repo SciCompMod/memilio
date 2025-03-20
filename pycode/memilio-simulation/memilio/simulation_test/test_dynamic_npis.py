@@ -26,7 +26,10 @@ from memilio.simulation.osecir import Model
 
 
 class Test_DynamicNPIs(unittest.TestCase):
+    """ """
+
     def test_dynamic_npis(self):
+        """ """
         model = Model(0)
         dynamic_npis = model.parameters.DynamicNPIsInfectedSymptoms
         dynamic_npis.interval = 3.0

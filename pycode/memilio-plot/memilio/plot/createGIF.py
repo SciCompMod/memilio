@@ -36,15 +36,17 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 def create_plot_map(day, filename, files_input, output_path, compartments,  file_format='h5', relative=False,  age_groups={0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'}):
-    """! Plots region-specific information for a single day of the simulation.
-    @param[in] day Day of the simulation.
-    @param[in] filename Name of the file to be created.
-    @param[in] files_input Dictionary of input files.
-    @param[in] output_path Output path for the figure.
-    @param[in] compartments List of compartments to be plotted.
-    @param[in] file_format Format of the file to be created. Either 'h5' or 'json'.
-    @param[in] relative Defines if data should be scaled relative to population.
-    @param[in] age_groups Dictionary of age groups to be considered.
+    """ Plots region-specific information for a single day of the simulation.
+
+    :param day: Day of the simulation.
+    :param filename: Name of the file to be created.
+    :param files_input: Dictionary of input files.
+    :param output_path: Output path for the figure.
+    :param compartments: List of compartments to be plotted.
+    :param file_format: Format of the file to be created. Either 'h5' or 'json'. (Default value = 'h5')
+    :param relative: Defines if data should be scaled relative to population. (Default value = False)
+    :param age_groups: Dictionary of age groups to be considered. (Default value = {0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'}) 
+
     """
 
     if len(age_groups) == 6:
@@ -111,15 +113,16 @@ def create_plot_map(day, filename, files_input, output_path, compartments,  file
 
 def create_gif_map_plot(input_data, output_dir, compartments, filename="simulation", relative=True, age_groups={0: '0-4', 1: '5-14', 2: '15-34',
                                                                                                                 3: '35-59', 4: '60-79', 5: '80+'}):
-    """! Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then 
+    """ Creates a gif of the simulation results by calling create_plot_map for each day of the simulation and then
     storing the single plots in a temporary directory. Currently only works for the results created by the parameter study.
 
-    @param[in] input_data Path to the input data. The Path should contain a file called 'Results' which contains 
+    :param input_data: Path to the input data. The Path should contain a file called 'Results' which contains
         the simulation results. This is the default output folder of the parameter study.
-    @param[in] output_dir Path where the gif should be stored.
-    @param[in] filename Name of the temporary file.
-    @param[in] relative Defines if data should be scaled relative to population.
-    @param[in] age_groups Dictionary of age groups to be considered.
+    :param output_dir: Path where the gif should be stored.
+    :param filename: Name of the temporary file. (Default value = "simulation")
+    :param relative: Defines if data should be scaled relative to population. (Default value = True)
+    :param age_groups: Dictionary of age groups to be considered. (Default value = {0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'})
+
     """
 
     files_input = {'Data set':  input_data + '/Results'}
