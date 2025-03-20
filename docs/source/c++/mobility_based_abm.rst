@@ -62,34 +62,34 @@ Disease Progression
 The ABM implements a detailed disease progression model that captures the full course of an infection from exposure to resolution. The disease progression is modeled through the ``Infection`` class, which contains:
 
 1. **Infection States**: Similar to the SECIR model, an infected person progresses through states:
-   - `**Susceptible**`: Initial state before infection
-   - `**Exposed**`: Infected but not yet infectious
-   - `**InfectedNoSymptoms**`: Infectious but without symptoms
-   - `**InfectedSymptoms**`: Showing symptoms but not severe
-   - `**InfectedSevere**`: Severe infection requiring hospitalization
-   - `**InfectedCritical**`: Critical infection requiring ICU
-   - `**Recovered**`: Recovered from infection with immunity
-   - `**Dead**`: Deceased due to infection
+   * **Susceptible**: Initial state before infection
+   * **Exposed**: Infected but not yet infectious
+   * **InfectedNoSymptoms**: Infectious but without symptoms
+   * **InfectedSymptoms**: Showing symptoms but not severe
+   * **InfectedSevere**: Severe infection requiring hospitalization
+   * **InfectedCritical**: Critical infection requiring ICU
+   * **Recovered**: Recovered from infection with immunity
+   * **Dead**: Deceased due to infection
 
 2. **Viral Load Dynamics**: The model implements realistic viral load curves based on scientific data:
-   - **Incline Phase**: Rapid increase in viral concentration
-   - **Peak**: Maximum viral load
-   - **Decline Phase**: Gradual decrease until clearance
+   * **Incline Phase**: Rapid increase in viral concentration
+   * **Peak**: Maximum viral load
+   * **Decline Phase**: Gradual decrease until clearance
    
 3. **Infectiousness**: The probability of transmitting the virus depends on viral load through an invlogit function:
 
 4. **Stochastic Transitions**: Progression between states is stochastic, with age-dependent probabilities:
-   - The duration in each state is drawn from distributions in the model parameters
-   - Prior immunity (from vaccination or previous infection) affects:
-     - Viral load (reduced peak)
-     - Severity progression (reduced probability of severe outcomes)
-     - Duration of infectious period
+   * The duration in each state is drawn from distributions in the model parameters
+   * Prior immunity (from vaccination or previous infection) affects:
+     * Viral load (reduced peak)
+     * Severity progression (reduced probability of severe outcomes)
+     * Duration of infectious period
    
 5. **Infection Course**: The infection course is determined by:
-   - Age group of the person
-   - Virus variant
-   - Protection status (prior immunity)
-   - Random factors (individual variation)
+   * Age group of the person
+   * Virus variant
+   * Protection status (prior immunity)
+   * Random factors (individual variation)
 
 
 Data Collection
