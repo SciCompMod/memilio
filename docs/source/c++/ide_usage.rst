@@ -1,15 +1,26 @@
 IDE Models
 ==========
 
-Models based on integro-differential equations allow arbitrary stay time distributions...
-
 In MEmilio, two models based on integro-differential equations are implemented. They have different infection states and are solved with different numerical solvers. Their respective usage is described below.
 
 
 IDE-SECIR model
 ----------------
 
-This IDE-based model implements eight infection states and corresponding transition distributions can be set in a flexible way. The model is solved with a nonstandard finite difference scheme
+This model is based on integro-differential equations.
+The eight compartments 
+- `Susceptible` ($S$), may become Exposed at any time
+- `Exposed` ($E$), becomes InfectedNoSymptoms after some time
+- `InfectedNoSymptoms` ($I_{NS}$), becomes InfectedSymptoms or Recovered after some time
+- `InfectedSymptoms` ($I_{Sy}$), becomes InfectedSevere or Recovered after some time
+- `InfectedSevere` ($I_{Sev}$), becomes InfectedCritical or Recovered after some time
+- `InfectedCritical` ($I_{Cr}$), becomes Recovered or Dead after some time
+- `Recovered` ($R$)
+- `Dead` ($D$)
+
+are used to simulate the spread of the disease and corresponding transition distributions can be set in a flexible way. 
+
+The simulation runs in discrete time steps using a non-standard numerical scheme. This approach is based on the paper ["A non-standard numerical scheme for an age-of infection epidemic model" by Messina et al., Journal of Computational Dynamics, 2022](https://doi.org/10.3934/jcd.2021029). 
 
 For a detailed description and application of the model, see:
 
@@ -75,13 +86,27 @@ Note that the last time point in our initial flow TimeSeries determines the star
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
 
-With this, we can construct our model:
-.. code-block:: cpp
-    mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
+There are different options for initializing a fictional scenario. Regardless of the approach, you must provide a history of values for the transitions as demonstrated above and possibly additional information to compute the initial distribution of the population in the compartments. This information must be of the following type:  
 
+    - You can state the number of total confirmed cases `total_confirmed_cases` at time $t_0$. The number of recovered people is set accordingly and the remaining values are derived in the model before starting the simulation. Then the model can be constructed by 
+    .. code-block:: cpp
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 100.);
+        mio::isecir::Model model(std::move(init), N, deaths, num_agegroups, total_confirmed_cases);
+    - If you cannot provide this number of total confirmed cases, we can construct the model without this information.
+    .. code-block:: cpp
+        mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
-TODO: Mention other init possibilities. 
+    In that case, we have three possible options for initializing:
+        - You can set the number of people in the `Susceptible` compartment at time $t_0$ via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        .. code-block:: cpp
+            model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000.;
+        - You can set the number of people in the `Recovered` compartment at time $t_0$ via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+        .. code-block:: cpp
+            model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 1000.;
+        - If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in [Messina et al (2022)](https://doi.org/10.3934/jcd.2021029) to set the `Susceptible`s. 
 
+- The file [parameters_io](parameters_io.h) provides functionality to compute initial data for the IDE-SECIR model based on real data. An example for this initialization method can be found at [IDE initialization example](../../examples/ide_initialization.cpp).
 
 If we do not want to use the default parameters, we can adapt them as follows. 
 
@@ -155,12 +180,6 @@ If one wants to interpolate the results to a TimeSeries containing only full day
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result());
 
 
-TODO:   
-- different initialization possible
-
-
-
-
 IDE-SEIR model
 ---------------
 This IDE-based model implements four infection states. 
@@ -169,8 +188,47 @@ For a detailed description and application of the model, see:
 
 Ploetzke ... BA
 
-Simulation
------------
-
 How to: Set up and run a simulation of the IDE-SEIR model
 ----------------------------------------------------------
+
+To initialize the model, the following inputs need to be passed to the model constructor:
+
+.. code-block:: cpp
+    using Vec = mio::TimeSeries<double>::Vector;
+
+
+    int N     = 810000;
+    double dt = 0.1;
+    mio::TimeSeries<double> init(1);
+
+    /**
+    * Construction of the initial TimeSeries with point of times and the corresponding number of susceptibles.  
+    * The smallest time should be small enough. See the documentation of the IdeSeirModel constructor for 
+    * detailed information. Initial data are chosen randomly.
+    */
+    init.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
+    while (init.get_last_time() < 0) {
+        init.add_time_point(init.get_last_time() + dt,
+                            Vec::Constant(1, (double)init.get_last_value()[0] + init.get_last_time()));
+    }
+
+    // Initialize model.
+    mio::iseir::Model<double> model(std::move(init), dt, N);
+
+    // Set working parameters.
+    model.parameters.set<mio::iseir::LatencyTime>(3.3);
+    model.parameters.set<mio::iseir::InfectiousTime>(8.2);
+    model.parameters.set<mio::iseir::TransmissionRisk>(0.015);
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+    // Add damping.
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
+    model.parameters.get<mio::iseir::ContactFrequency<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
+
+    // Carry out simulation.
+    int tmax  = 15;
+    model.simulate(tmax);
+    // Calculate values for compartments EIR.
+    auto result = model.calculate_EIR();
+    //Print results.
+    result.print_table({"S", "E", "I", "R"});
