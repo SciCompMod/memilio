@@ -1,4 +1,4 @@
-Agent-Based Model
+Realistic Agent-Based Model
 =================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
@@ -62,6 +62,7 @@ Disease Progression
 The ABM implements a detailed disease progression model that captures the full course of an infection from exposure to resolution. The disease progression is modeled through the ``Infection`` class, which contains:
 
 1. **Infection States**: Similar to the SECIR model, an infected person progresses through states:
+
    - **Susceptible**: Initial state before infection
    - **Exposed**: Infected but not yet infectious
    - **InfectedNoSymptoms**: Infectious but without symptoms
@@ -302,9 +303,3 @@ Currently, a few things are not yet implemented, such as:
 
 - Different trips for each day.
 - Trace functionality.
-
-
-Overview of the ``abm`` namespace:
------------------------------------------
-
-.. doxygennamespace:: mio::abm
