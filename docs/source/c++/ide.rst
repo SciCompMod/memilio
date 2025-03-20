@@ -149,7 +149,7 @@ The transition probabilities can be set as follows
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]        = vec_prob;
 
-Here, we set the contact matrix used in the simulation. One can define multiple matrices for different locations. The size of each of these matrices is defined by tha number of age groups. 
+Here, we set the contact matrix used in the simulation. One can define multiple matrices for different locations. The size of each of these matrices is defined by the number of age groups. 
 In our example below we use only one contact matrix. We only consider one age group and set the contact rate to 10. 
 
 .. code-block:: cpp
@@ -214,16 +214,31 @@ If one wants to interpolate the results to a ``TimeSeries`` containing only full
 
 IDE-SEIR model
 ---------------
-This IDE-based model implements four infection states. 
+
+The four compartments 
+- `Susceptible` (:math:`S`), may become exposed at any time
+- `Exposed` (:math:`E`), becomes infected after some time
+- `Infected` (:math:`I`), will recover after some time
+- `Recovered` (:math:`R`)
+
+are used to simulate the spread of the disease. 
+
+The simulation runs in discrete time steps using a trapezoidal rule. The model and the numerical scheme is based on the paper `"Modeling infectious diseases using integro-differential equations: Optimal
+control strategies for policy decisions and Applications in COVID-19" by Keimer and Pflug, 2020 <http://dx.doi.org/10.13140/RG.2.2.10845.44000>`_. 
 
 For a detailed description and application of the model, see:
 
-Ploetzke ... BA
+Plötzke L (2021) Modellierung epidemischer Infektionskrankheiten auf der Basis von gewöhnlichen und Integro-Differentialgleichungen. Bachelor thesis, University of Cologne. https://elib.dlr.de/143504/
 
 How to: Set up and run a simulation of the IDE-SEIR model
 ----------------------------------------------------------
 
 To initialize the model, the following inputs need to be passed to the model constructor:
+- a time series containing the number of Susceptibles for a large enough number of time points before the start of the simulation,
+- the time step size :math:`dt` used for numerical integration,
+- the size of the population of the considered region :math:`N`. 
+
+The initialization of the model can be done as follows where we set the Susceptibles from :math:`-15, \dots, 0` based on the total population and the time of the previous time point.
 
 .. code-block:: cpp
 
@@ -234,11 +249,6 @@ To initialize the model, the following inputs need to be passed to the model con
     double dt = 0.1;
     mio::TimeSeries<double> init(1);
 
-    /**
-    * Construction of the initial TimeSeries with point of times and the corresponding number of susceptibles.  
-    * The smallest time should be small enough. See the documentation of the IdeSeirModel constructor for 
-    * detailed information. Initial data are chosen randomly.
-    */
     init.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt,
@@ -248,20 +258,46 @@ To initialize the model, the following inputs need to be passed to the model con
     // Initialize model.
     mio::iseir::Model<double> model(std::move(init), dt, N);
 
-    // Set working parameters.
+If we do not want to use the default parameters, we can adapt them as follows.
+
+The parameters ``LatencyTime``, ``InfectiousTime`` and ``TransmissionRisk`` can be set directly. 
+
+.. code-block:: cpp
+
     model.parameters.set<mio::iseir::LatencyTime>(3.3);
     model.parameters.set<mio::iseir::InfectiousTime>(8.2);
     model.parameters.set<mio::iseir::TransmissionRisk>(0.015);
+
+Here, we set the contact matrix used in the simulation. One can define multiple matrices for different locations. The size of each of these matrices is defined by the number of age groups. 
+In our example below we use only one contact matrix. Our model considers one age group and we set the contact rate to 10.  
+
+.. code-block:: cpp
+
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-    // Add damping.
+
+To simulate the implementation of nonpharmaceutical, we add dampings to the contact rate. Here, we apply a damping of :math:`0.7` after :math:`10`` days. 
+
+.. code-block:: cpp
+
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
     model.parameters.get<mio::iseir::ContactFrequency<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
-    // Carry out simulation.
+After defining :math:`t_{\max}``, we can simulate, which means that we calculate the value for the compartment :math:`S`.
+
+.. code-block:: cpp
+
     int tmax  = 15;
     model.simulate(tmax);
-    // Calculate values for compartments EIR.
+
+The values of the remaining compartments :math:`E`, :math:`I` and :math:`R` are calculated using the parameters ``LatencyTime`` and ``InfectiousTime`` and obtain a time series containing the values of all compartments. 
+
+.. code-block:: cpp
+
     auto result = model.calculate_EIR();
-    //Print results.
+
+Finally, we ca print our results. 
+
+.. code-block:: cpp
+
     result.print_table({"S", "E", "I", "R"});
