@@ -41,6 +41,8 @@ int main()
 
     mio::sseirvv::Model model;
 
+    log_rng_seeds(model.rng, mio::LogLevel::debug);
+
     ScalarType total_population = 180000;
 
     model.populations[{mio::sseirvv::InfectionState::ExposedV1}]     = 0;
