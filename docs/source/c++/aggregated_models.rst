@@ -7,5 +7,6 @@ There are different equation-based models implemented in MEmilio that consider a
     :maxdepth: 1
 
     ode
+    lct
     sde
-    ide_usage
+    ide
