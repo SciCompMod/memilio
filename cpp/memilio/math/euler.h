@@ -51,7 +51,9 @@ public:
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         // we are misusing the next step y as temporary space to store the derivative
+        std::cout << "EULER vor f " << std::endl << std::flush;
         f(yt, t, ytp1);
+        std::cout << "EULER nach f " << std::endl << std::flush;
         ytp1 = yt + dt * ytp1;
         t += dt;
         return true;

@@ -57,8 +57,10 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
+        std::cout << "starting advance..." << std::endl;
         return get_ode_integrator().advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
+                std::cout << "t: " << t << " dt: " << get_dt() << std::endl;
                 get_model().step_size = get_dt();
                 get_model().get_derivatives(y, y, t, dydt);
             },
@@ -76,8 +78,11 @@ public:
  */
 inline TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model)
 {
+    std::cout << "Simulating SEIRVV; t=" << t0 << " ... " << tmax << " with dt = " << dt << "." << std::endl;
     model.check_constraints();
+    std::cout << "creatingg simulation..." << std::endl;
     Simulation sim(model, t0, dt);
+    std::cout << "advancing simulation..." << std::endl;
     sim.advance(tmax);
     return sim.get_result();
 }
@@ -109,6 +114,7 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
+        std::cout << "starting advance..." << std::endl;
         assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
             // See the general mio::FlowSimulation for more details on this DerivFunction.
@@ -122,6 +128,8 @@ public:
                 dflows_dt.setZero();
                 model.step_size = get_dt(); // set the current step size
                 model.get_flows(m_pop, m_pop, t, dflows_dt);
+                // print current t and stepsize
+                std::cout << "t: " << t << " dt: " << get_dt() << std::endl;
             },
             tmax, get_dt(), get_flows());
         compute_population_results();
