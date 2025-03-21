@@ -178,11 +178,12 @@ public:
         m_standard_dev = standard_dev;
     }
 
-    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean)
+    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double quantile)
         : VisitableParameterDistribution<ParameterDistributionNormal>()
         , m_mean(mean)
         , m_upper_bound(upper_bound)
         , m_lower_bound(lower_bound)
+        , m_quantile(quantile)
     {
         // if upper and lower bound are given, the standard deviation is calculated such that [lower_bound, upper_bound] represent the 0.995 quartile]
         m_standard_dev = upper_bound; // set as to high and adapt then
@@ -190,12 +191,14 @@ public:
         m_distribution = mio::NormalDistribution<double>::ParamType(m_mean, m_standard_dev);
     }
 
-    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
+    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev,
+                                double quantile)
         : VisitableParameterDistribution<ParameterDistributionNormal>()
         , m_mean(mean)
         , m_standard_dev(standard_dev)
         , m_upper_bound(upper_bound)
         , m_lower_bound(lower_bound)
+        , m_quantile(quantile)
     {
         check_quantiles(m_mean, m_standard_dev);
         m_distribution = mio::NormalDistribution<double>::ParamType(m_mean, m_standard_dev);
@@ -369,6 +372,7 @@ public:
         obj.add_element("StandardDev", m_standard_dev);
         obj.add_element("LowerBound", m_lower_bound);
         obj.add_element("UpperBound", m_upper_bound);
+        obj.add_element("Quantile", m_quantile);
         obj.add_list("PredefinedSamples", m_predefined_samples.begin(), m_predefined_samples.end());
     }
 
@@ -386,17 +390,18 @@ public:
         auto s      = obj.expect_element("StandardDev", Tag<double>{});
         auto lb     = obj.expect_element("LowerBound", Tag<double>{});
         auto ub     = obj.expect_element("UpperBound", Tag<double>{});
+        auto qu     = obj.expect_element("Quantile", Tag<double>{});
         auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
         auto p      = apply(
             io,
-            [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& predef_) {
-                auto distr = ParameterDistributionNormal(lb_, ub_, m_, s_);
+            [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& qu_, auto&& predef_) {
+                auto distr = ParameterDistributionNormal(lb_, ub_, m_, s_, qu_);
                 for (auto&& e : predef_) {
                     distr.add_predefined_sample(e);
                 }
                 return distr;
             },
-            lb, ub, m, s, predef);
+            lb, ub, m, s, qu, predef);
         if (p) {
             return success(p.value());
         }
@@ -422,8 +427,8 @@ private:
     double m_standard_dev; // the standard deviation of the normal distribution
     double m_upper_bound = std::numeric_limits<
         double>::max(); // upper bound and lower bound can be given to the constructor instead of stddev
-    double m_lower_bound               = std::numeric_limits<double>::min();
-    constexpr static double m_quantile = 2.5758; // 0.995 quartile
+    double m_lower_bound = std::numeric_limits<double>::min();
+    double m_quantile    = 2.5758; // default is 0.995 quartile
     NormalDistribution<double>::ParamType m_distribution;
     bool m_log_stddev_change = true;
 };

@@ -190,7 +190,8 @@ TEST(ParameterStudies, test_normal_distribution)
     EXPECT_GE(std_dev_demanded, parameter_dist_normal_1.get_standard_dev());
 
     // check if full argument constructor works correctly
-    mio::ParameterDistributionNormal parameter_dist_normal_2(-1.0, 1.0, 0, parameter_dist_normal_1.get_standard_dev());
+    mio::ParameterDistributionNormal parameter_dist_normal_2(-1.0, 1.0, 0, parameter_dist_normal_1.get_standard_dev(),
+                                                             2.5758);
 
     EXPECT_EQ(parameter_dist_normal_1.get_lower_bound(), parameter_dist_normal_2.get_lower_bound());
     EXPECT_EQ(parameter_dist_normal_1.get_upper_bound(), parameter_dist_normal_2.get_upper_bound());

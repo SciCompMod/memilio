@@ -293,13 +293,14 @@ TEST(TestJsonSerializer, customindexarray)
 
 TEST(TestJsonSerializer, normal_distribution)
 {
-    auto dist = mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.1);
+    auto dist = mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.1, 2.5758);
     Json::Value expected_value;
     expected_value["Type"]              = "Normal";
     expected_value["Mean"]              = 0.5;
     expected_value["StandardDev"]       = 0.1;
     expected_value["LowerBound"]        = 0.0;
     expected_value["UpperBound"]        = 1.0;
+    expected_value["Quantile"]          = 2.5758;
     expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
     auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
     EXPECT_EQ(js.value(), expected_value);
@@ -333,13 +334,14 @@ TEST(TestJsonSerializer, serialize_uv)
     auto js                 = mio::serialize_json(uv);
     EXPECT_EQ(js.value(), expected_value);
 
-    uv.set_distribution(mio::ParameterDistributionNormal(-1.0, 2.0, 0.5, 0.1));
+    uv.set_distribution(mio::ParameterDistributionNormal(-1.0, 2.0, 0.5, 0.1, 2.5758));
     js                                                  = mio::serialize_json(uv);
     expected_value["Distribution"]["Type"]              = "Normal";
     expected_value["Distribution"]["Mean"]              = 0.5;
     expected_value["Distribution"]["StandardDev"]       = 0.1;
     expected_value["Distribution"]["LowerBound"]        = -1.0;
     expected_value["Distribution"]["UpperBound"]        = 2.0;
+    expected_value["Distribution"]["Quantile"]          = 2.5758;
     expected_value["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     EXPECT_EQ(js.value(), expected_value);
 }
@@ -360,6 +362,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     json_uv["Distribution"]["UpperBound"]        = 2.0;
     json_uv["Distribution"]["Mean"]              = 0.5;
     json_uv["Distribution"]["StandardDev"]       = 0.1;
+    json_uv["Distribution"]["Quantile"]          = 2.5758;
     json_uv["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     {
         auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});
