@@ -7,11 +7,19 @@
 
 MEmilio implements various models for infectious disease dynamics, from simple compartmental models through Integro-Differential equation-based models to agent- or individual-based models. Its modular design allows the combination of different models with different mobility patterns. Through efficient implementation and parallelization, MEmilio brings cutting edge and compute intensive epidemiological models to a large scale, enabling a precise and high-resolution spatiotemporal infectious disease dynamics. MEmilio will be extended continuously. It is available open-source and we encourage everyone to make use of it.
 
-If you use MEmilio, please cite our works:
+If you use MEmilio, please cite our work
 
-- Kühn, Martin Joachim und Abele, Daniel und Kerkmann, David und Korf, Sascha Alexander und Zunker, Henrik und Wendler, Anna Clara und Bicker, Julia und Nguyen, Dang Khoa und Klitz, Margrit und Koslow, Wadim und Siggel, Martin und Kleinert, Jan und Rack, Kathrin und Binder, Sebastian und Plötzke, Lena und Schmieding, René und Lenz, Patrick und Betz, Maximilian Franz und Lutz, Annette und Gerstein, Carlotta und Schmidt, Agatha und Meyer-Hermann, Michael und Basermann, Achim  (2022) MEmilio - a high performance Modular EpideMIcs simuLatIOn software (2022). https://github.com/SciCompMod/memilio, https://elib.dlr.de/192140/.
+- Kühn, Martin Joachim et al. (2024). *MEmilio - a High Performance Modular Epidemics Simulation Software (2022)*. Available at `https://github.com/SciCompMod/memilio` and `https://elib.dlr.de/209739/`.
 
-- Koslow W, Kühn MJ, Binder S, Klitz M, Abele D, et al. (2022) Appropriate relaxation of non-pharmaceutical interventions minimizes the risk of a resurgence in SARS-CoV-2 infections in spite of the Delta variant. PLOS Computational Biology 18(5): e1010054. https://doi.org/10.1371/journal.pcbi.1010054
+and, in particular, for
+
+- Ordinary differential equation-based (ODE) and Graph-ODE models: Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `https://doi.org/10.1371/journal.pcbi.1012630`
+- Integro-differential equation-based (IDE) models: Wendler AC, Plötzke L, Tritzschak H, Kühn MJ. (2024). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. Submitted for publication. `https://arxiv.org/abs/2408.12228`
+- Agent-based models (ABMs): Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2024). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. arXiv. `https://arxiv.org/abs/2410.08050`
+- Hybrid agent-metapopulation-based models: Bicker J, Schmieding R, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `https://doi.org/10.1016/j.idm.2024.12.015`
+- Graph Neural Networks: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2024). *Towards Graph Neural Network Surrogates Leveraging Mechanistic Expert Knowledge for Pandemic Response*. arXiv. `https://arxiv.org/abs/2411.06500`
+- ODE-based models with Linear Chain Trick: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Submitted for publication. `https://doi.org/10.48550/arXiv.2412.09140`
+- Behavior-based ODE models: Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. arXiv. `https://arxiv.org/abs/2502.14428`
 
 **Getting started**
 

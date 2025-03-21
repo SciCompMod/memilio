@@ -1,0 +1,41 @@
+/* Newlines (\a) and spaces (\20) before each parameter
+.sig-param::before {
+    content: "\a\20\20\20\20\20\20\20\20\20\20\20\20\20\20\20\20";
+    white-space: pre;
+}
+
+/* Newline after the last parameter (so the closing bracket is on a new line) 
+dt em.sig-param:last-of-type::after {
+    content: "\a";
+    white-space: pre;
+}
+
+/* To have blue background of width of the block (instead of width of content) 
+dl.class > dt:first-of-type {
+    display: block !important;
+} */
+
+/* Take out pointless vertical whitespace in the signatures. */
+.rst-content dl .sig dl,
+.rst-content dl .sig dd {
+  margin-bottom: 0;
+}
+
+/* Make signature boxes full-width, with view-source and header links right-aligned. */
+.rst-content dl .sig {
+  width: -webkit-fill-available;
+}
+.rst-content .viewcode-link {
+  display: inline-flex;
+  float: inline-end;
+  margin-right: 1.5em;
+}
+.rst-content .headerlink {
+  position: absolute;
+  right: 0.5em;
+}
+
+.wy-table-responsive table td,
+.wy-table-responsive table th {
+  white-space: normal;
+}

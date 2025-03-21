@@ -2,6 +2,10 @@
 
 # -- Project information
 
+import sys
+import os
+import subprocess
+import memilio
 project = 'MEmilio'
 copyright = '2020-2025 MEmilio'
 author = ''
@@ -9,15 +13,13 @@ author = ''
 release = ''
 version = '1.3.0'
 
-import subprocess, os, sys
 
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
 if read_the_docs_build:
 
-     subprocess.call('cd ..; doxygen', shell=True)
+    subprocess.call('cd ..; doxygen', shell=True)
 
-import memilio
 # sys.path.insert(0, os.path.abspath('../../pycode'))
 
 # -- General configuration
@@ -30,10 +32,11 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx_copybutton',
+    'sphinx_design',
     'breathe',
     'exhale',
     'hoverxref.extension',
-#    'sphinx_remove_toctrees'
+    #    'sphinx_remove_toctrees'
 ]
 
 intersphinx_mapping = {
@@ -59,13 +62,13 @@ hoverxref_role_types = {
 }
 
 exhale_args = {
-     "containmentFolder":   "./api",
-     "rootFileName":        "library_root.rst",
-     "doxygenStripFromPath":    "..",
-     "rootFileTitle":       "C++ API",
-     "createTreeView":      True,
-     "treeViewIsBootstrap": False,
-     "contentsDirectives":    False,
+    "containmentFolder":   "./api",
+    "rootFileName":        "library_root.rst",
+    "doxygenStripFromPath":    "..",
+    "rootFileTitle":       "C++ API",
+    "createTreeView":      True,
+    "treeViewIsBootstrap": False,
+    "contentsDirectives":    False,
 }
 
 breathe_projects = {"MEmilio": "../xml"}
@@ -76,13 +79,15 @@ breathe_default_project = "MEmilio"
 templates_path = ['_templates']
 # -- Options for HTML output
 
-# html_static_path = ['_static']
-# html_css_files = [
-#     'custom.css',
-# ]
+html_static_path = ['_static']
+html_css_files = [
+    'custom.css',
+]
 # html_js_files = [
 #     'custom.js',
 # ]
+
+maximum_signature_line_length = 40
 
 html_theme = 'sphinx_rtd_theme'
 html_logo = "../memilio-small.png"
@@ -110,4 +115,3 @@ html_theme_options = {
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
-
