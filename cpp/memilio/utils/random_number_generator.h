@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -661,6 +661,13 @@ using DiscreteDistribution = DistributionAdapter<DiscreteDistributionInPlace<Int
  */
 template <class Real>
 using ExponentialDistribution = DistributionAdapter<std::exponential_distribution<Real>>;
+
+/**
+ * adapted std::normal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using NormalDistribution = DistributionAdapter<std::normal_distribution<Real>>;
 
 /**
  * adapted std::uniform_int_distribution.

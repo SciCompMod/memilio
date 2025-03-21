@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -58,8 +58,8 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                         Eigen::Ref<Vector<FP>> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const override
     {
         auto params                              = this->parameters;
         AgeGroup n_agegroups                     = params.get_num_groups();

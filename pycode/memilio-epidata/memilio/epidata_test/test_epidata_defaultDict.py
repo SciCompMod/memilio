@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -24,6 +24,7 @@ from memilio.epidata import defaultDict as dd
 
 
 class Test_defaultDict(unittest.TestCase):
+    """ """
     test_dict_county = {
         'Flensburg, Stadt': 1001,
         'Berlin': 11000,
@@ -57,6 +58,7 @@ class Test_defaultDict(unittest.TestCase):
                             'make_plot')
 
     def test_invert_dict(self):
+        """ """
         inv_county = dd.invert_dict(dd.County)
         # check that test_dict_county is a subset of inv_county
         for county in self.test_dict_county.keys():
@@ -76,6 +78,7 @@ class Test_defaultDict(unittest.TestCase):
             self.assertNotIn(value, inv_dd.values())
 
     def test_uniqueness(self):
+        """ """
         # tests whether the names of counties and states are unique
         self.assertEqual(dd.invert_dict(dd.invert_dict(dd.County)), dd.County)
         self.assertEqual(dd.invert_dict(dd.invert_dict(dd.State)), dd.State)

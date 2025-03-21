@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -75,10 +75,10 @@ int main()
     if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
 
-        ScalarType dt                                 = 0.001;
-        mio::Vector<ScalarType> total_population      = mio::Vector<ScalarType>::Constant(1, 1000000.);
-        mio::Vector<ScalarType> deaths                = mio::Vector<ScalarType>::Constant(1, 10.);
-        mio::Vector<ScalarType> total_confirmed_cases = mio::Vector<ScalarType>::Constant(1, 16000.);
+        ScalarType dt                                    = 0.001;
+        Eigen::VectorX<ScalarType> total_population      = Eigen::VectorX<ScalarType>::Constant(1, 1000000.);
+        Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Constant(1, 10.);
+        Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Constant(1, 16000.);
 
         // Create TimeSeries with num_transitions elements.
         int num_transitions = (int)mio::lsecir::InfectionTransition::Count;

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -23,13 +23,17 @@ import memilio.simulation as mio
 
 
 class Test_UncertainValue(unittest.TestCase):
+    """ """
+
     def test_value(self):
+        """ """
         uv = mio.UncertainValue(0)
         self.assertEqual(uv.value, 0.0)
         uv.value = 1.0
         self.assertEqual(uv.value, 1.0)
 
     def test_distribution(self):
+        """ """
         uv = mio.UncertainValue(0)
         uv.set_distribution(mio.ParameterDistributionUniform(2, 2))
         uv.draw_sample()

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -33,6 +33,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class TestGetCaseData(fake_filesystem_unittest.TestCase):
+    """ """
     path = '/home/Case_Data'
 
     # strings for read, download and update data
@@ -137,9 +138,15 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         "IstErkrankungsbeginn":1, "IdBundesland":1}]""")
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def write_case_data(self, out_folder):
+        """
+
+        :param out_folder: 
+
+        """
         # write dataset for reading data
         case_file = "CaseDataFull.json"
         case_file_with_path = os.path.join(out_folder, case_file)
@@ -147,6 +154,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             f.write(self.test_string_all_federal_states_and_counties_read)
 
     def write_case_data_arcgis(self, out_folder):
+        """
+
+        :param out_folder: 
+
+        """
         # write dataset from source for mocking download from arcgis
         case_file = "CaseDataArcgis.json"
         case_file_with_path = os.path.join(out_folder, case_file)
@@ -154,6 +166,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             f.write(self.test_string_all_federal_states_and_counties_arcgis)
 
     def write_case_data_not_all_states(self, out_folder):
+        """
+
+        :param out_folder: 
+
+        """
         case_file = "CaseDataNotFull.json"
         case_file_with_path = os.path.join(out_folder, case_file)
         with open(case_file_with_path, 'w') as f:
@@ -161,6 +178,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_get_case_data(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
         # Test with downloading data
         read_data = True
         file_format = 'json_timeasstring'
@@ -175,7 +197,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = 'Plot'
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         self.write_case_data_arcgis(directory)
@@ -220,6 +242,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_get_case_data_split_berlin(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
         # Test case with downloading data where first csv-source is incomplete and second one is used
         # and split_berlin = True
         read_data = False
@@ -236,7 +263,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         files = ['all_county', 'all_county_gender',
                  'all_state', 'all_germany', 'infected', 'deaths']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -326,6 +353,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
            return_value=pd.read_json(io.StringIO(
                test_string_all_federal_states_and_counties_read)).copy())
     def test_get_case_data_moving_average(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
 
         read_data = True
         file_format = 'json_timeasstring'
@@ -340,7 +372,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_germany', 'infected', 'deaths', 'all_state']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -474,6 +506,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
            return_value=pd.read_json(io.StringIO(
                test_string_all_federal_states_and_counties_read)).copy())
     def test_get_case_data_impute_dates(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
         read_data = True
         file_format = 'json_timeasstring'
         out_folder = self.path
@@ -487,7 +524,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_germany']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         gcd.get_case_data(
@@ -557,6 +594,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
            return_value=pd.read_json(io.StringIO(test_string_all_federal_states_and_counties_read)).copy())
     def test_get_case_data_moving_average_and_split_berlin(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
         # test if split_berlin and moving_average = True are working together
 
         read_data = True
@@ -572,7 +614,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_county']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -604,6 +646,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
             df_county['Date'] == '2020-06-09')]['Deaths'].item(), 0)
 
     def test_get_case_data_all_dates_and_split_berlin(self):
+        """ """
         # test if split_berlin and moving_average = True are working together
         read_data = True
         file_format = 'json_timeasstring'
@@ -618,7 +661,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['infected_county']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file
@@ -643,6 +686,11 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_no_raw(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
         read_data = False
         file_format = 'json_timeasstring'
         out_folder = self.path
@@ -656,7 +704,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = 'All'
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         mock_file.return_value = pd.read_json(io.StringIO(
@@ -710,11 +758,17 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
                          ["Recovered"].item(), 2)
 
     def test_check_for_completeness(self):
+        """ """
         empty_df = pd.DataFrame()
         self.assertEqual(gcd.check_for_completeness(empty_df, True), False)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file')
     def test_rep_date(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
 
         mock_file.return_value = pd.read_json(io.StringIO(
             self.test_string_all_federal_states_and_counties_github))
@@ -732,7 +786,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = True
         files = 'Plot'
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         gcd.get_case_data(
@@ -745,6 +799,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 5)
 
     def test_get_case_data_timeframe(self):
+        """ """
 
         read_data = True
         file_format = 'json_timeasstring'
@@ -759,7 +814,7 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         rep_date = False
         files = ['all_germany']
 
-        directory = os.path.join(out_folder, 'Germany/')
+        directory = os.path.join(out_folder, 'Germany', 'pydata')
         gd.check_dir(directory)
 
         # write file

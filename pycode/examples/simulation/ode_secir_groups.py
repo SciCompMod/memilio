@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn, Wadim Koslow, Annalena Lange, Khoa Nguyen
 #
@@ -33,9 +33,11 @@ from memilio.simulation.osecir import (Model, Simulation,
 
 
 def run_ode_secir_groups_simulation(show_plot=True):
-    """
-    Runs the c++ ODE SECIHURD model using mulitple age groups 
+    """Runs the c++ ODE SECIHURD model using mulitple age groups
     and plots the results
+
+    :param show_plot:  (Default value = True)
+
     """
 
     # Define Comartment names

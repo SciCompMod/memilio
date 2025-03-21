@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Patrick Lenz
 #
@@ -28,6 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
+    """ """
 
     # set verbosity level to Debug to check prints
     gd.Conf.v_level = 'Debug'
@@ -183,9 +184,11 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         'numbers': [0, 3, 3, 4, 7, 11, 8, 11, 19, 12, 15, 27]})
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def test_get_state_IDs(self):
+        """ """
         # zfill is false
         unique_geo_entitites = geoger.get_state_ids(False)
         self.assertEqual(unique_geo_entitites, self.list_int_state_ids)
@@ -195,11 +198,13 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertEqual(unique_geo_entitites, self.list_str_state_ids)
 
     def test_get_state_names(self):
+        """ """
 
         state_names = geoger.get_state_names()
         self.assertEqual(state_names, self.list_str_states)
 
     def test_get_state_names_and_ids(self):
+        """ """
 
         # zfill is false
         statenamesandids = geoger.get_state_names_and_ids(False)
@@ -218,6 +223,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertEqual(statenamesandids, teststatenamesandids)
 
     def test_insert_names_of_states(self):
+        """ """
         test_df = pd.DataFrame(self.state_data)
         result_df = geoger.insert_names_of_states(test_df)
         # the test dataframe should be unchanged as it is the input of the function
@@ -225,6 +231,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(result_df, self.state_df_with_names)
 
     def test_get_county_ids(self):
+        """ """
 
         # check with Berlin as one county and Wartburgkreis and Eisenach to Wartburgkreis
         countyids = geoger.get_county_ids(
@@ -251,6 +258,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertNotIn('5362', countyids)
 
     def test_get_county_names(self):
+        """ """
 
         # check with Berlin as one county and Wartburgkreis and Eisenach to Wartburgkreis
         countynames = geoger.get_county_names(
@@ -271,6 +279,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             all(countyname in countynames for countyname in self.merge_berlin_names))
 
     def test_get_county_names_and_ids(self):
+        """ """
 
         # check with Berlin as one county and Wartburgkreis and Eisenach to Wartburgkreis and zfill is false
         countynamesandids = geoger.get_county_names_and_ids(
@@ -296,6 +305,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertIn(zfilltest, countynamesandids)
 
     def test_insert_county_names(self):
+        """ """
         test_df = pd.DataFrame(self.county_data)
         result_df = geoger.insert_names_of_counties(test_df)
         # the test dataframe should be unchanged as it is the input of the function
@@ -304,6 +314,11 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 
     @patch('builtins.print')
     def test_check_for_all_counties(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
 
         # check with all counties
         unique_county_list = geoger.get_county_ids(False, False, False)
@@ -346,6 +361,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             'Error: Downloaded data is not complete. Missing 12 counties.')
 
     def test_get_countyid_to_stateid_map(self):
+        """ """
 
         countytostate = geoger.get_countyid_to_stateid_map(
             merge_eisenach=True, zfill=False)
@@ -362,6 +378,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertTrue("'16056': '16'" in str(countytostate))
 
     def test_get_stateid_to_countyids_map(self):
+        """ """
 
         # test merge_eisenach = true and zfill = false
         statetocounty = geoger.get_stateid_to_countyids_map(
@@ -381,6 +398,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertEqual(self.stc_zfill_true_list, statetocounty['01'])
 
     def test_get_governing_regions(self):
+        """ """
 
         # test currently governing regions
         gov_regs = geoger.get_governing_regions(strict=True)
@@ -391,6 +409,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertEqual(gov_regs, self.gov_regs_false_test_string)
 
     def test_get_official_county_table(self):
+        """ """
 
         county_table = geoger.get_official_county_table()
         # test headers of df
@@ -399,6 +418,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
                 self.assertFalse("headers have changed.")
 
     def test_get_nuts3_county_id_map(self):
+        """ """
         # [merge_berlin = True], merge_eisenach = True (Eisenach not anymore in official table)
         nuts_key_dict = geoger.get_nuts3_county_id_map()
         assert 16056 not in nuts_key_dict.values()
@@ -407,6 +427,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             assert int(id) not in nuts_key_dict.values()
 
     def test_get_intermediateregion_IDs(self):
+        """ """
         # Ulm is merged with StuttgartRegion, zfill is false
         unique_geo_entitites = geoger.get_intermediateregion_ids(True, False)
         self.assertEqual(unique_geo_entitites, self.test_list_regions1)
@@ -424,6 +445,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertEqual(unique_geo_entitites, list(range(34)))
 
     def test_get_intermediateregion_names(self):
+        """ """
         # Ulm merged
         region_names = geoger.get_intermediateregion_names(True)
         self.assertEqual(region_names, self.test_list_regions3)
@@ -440,6 +462,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertTrue('Ulm' in region_names)
 
     def get_intermediateregion_to_name(self):
+        """ """
 
         region_to_name = geoger.get_intermediateregion_to_name(True)
         self.assertEqual(region_to_name, dict(zip(self.test_list_regions1,
@@ -453,6 +476,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             zip(list(range(34)), self.test_list_regions3_ulm)))
 
     def test_get_intermediateregion_names_and_ids(self):
+        """ """
 
         # Ulm is merged, zfill is false
         regionnamesandids = geoger.get_intermediateregion_names_and_ids(
@@ -483,6 +507,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertTrue(regionnamesandids[32], ['Ulm', 32])
 
     def test_get_countyid_to_intermediateregionid_map(self):
+        """ """
         # Ulm is merged, Eisenach is merged, zfill is false
         countytoregion = geoger.get_countyid_to_intermediateregionid_map(
             True, True, False)
@@ -508,6 +533,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertTrue('8421: 32' in str(countytoregion))
 
     def test_get_intermediateregionid_to_countyids_map(self):
+        """ """
 
         # Ulm merged, Eisenach merged, and zfill is false
         regiontocounty = geoger.get_intermediateregionid_to_countyids_map(
@@ -544,6 +570,7 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             in str(regiontocounty))
 
     def test_merge_df_counties(self):
+        """ """
         test_df = pd.DataFrame(self.eisenach_unmerged_data)
         group_columns = ['Date', 'labels']
         result_df = geoger.merge_df_counties(

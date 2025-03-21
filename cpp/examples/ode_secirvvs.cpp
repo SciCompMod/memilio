@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn
 *
@@ -23,7 +23,7 @@
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::debug);
+    mio::set_log_level(mio::LogLevel::warn);
 
     double t0   = 0;
     double tmax = 30;

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -214,12 +214,14 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecir::
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(auto&& minimum,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+        BOOST_OUTCOME_TRY(
+            auto&& baseline,
+            mio::read_mobility_plain(
+                (data_dir / "Germany" / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+        BOOST_OUTCOME_TRY(
+            auto&& minimum,
+            mio::read_mobility_plain(
+                (data_dir / "Germany" / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
@@ -485,6 +487,11 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const auto& read_function_edges = mio::read_mobility_plain;
     const auto& node_id_function    = mio::get_node_ids;
 
+    const auto data_dir_Germany = mio::path_join(data_dir.string(), "Germany");
+
+    const auto mobility_data_file = mio::path_join(data_dir_Germany, "mobility", "commuter_mobility_2022.txt");
+    const auto pydata_dir         = mio::path_join(data_dir_Germany, "pydata");
+
     const auto& set_node_function =
         mio::set_nodes<mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
                        mio::osecir::Model<double>, mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
@@ -492,12 +499,11 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const auto& set_edge_function =
         mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                        mio::MobilityCoefficientGroup, mio::osecir::InfectionState, decltype(read_function_edges)>;
-    BOOST_OUTCOME_TRY(
-        set_node_function(params, start_date, end_date, data_dir,
-                          mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),
-                          true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
-                          scaling_factor_icu, tnt_capacity_factor, 0, false, true));
-    BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
+    BOOST_OUTCOME_TRY(set_node_function(params, start_date, end_date, pydata_dir,
+                                        mio::path_join(pydata_dir, "county_current_population.json"), true,
+                                        params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                                        scaling_factor_icu, tnt_capacity_factor, 0, false, true));
+    BOOST_OUTCOME_TRY(set_edge_function(mobility_data_file, params_graph, mobile_compartments, contact_locations.size(),
                                         read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
                                         {}));
 

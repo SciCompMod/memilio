@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -85,8 +85,9 @@ public:
      * @param[in] t The current time.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Vector<ScalarType>> pop, Eigen::Ref<const Vector<ScalarType>> y, ScalarType t,
-                         Eigen::Ref<Vector<ScalarType>> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop,
+                         Eigen::Ref<const Eigen::VectorX<ScalarType>> y, ScalarType t,
+                         Eigen::Ref<Eigen::VectorX<ScalarType>> dydt) const override
     {
         // Vectors are sorted such that we first have all InfectionState%s for AgeGroup 0,
         // afterwards all for AgeGroup 1 and so on.
@@ -113,11 +114,11 @@ public:
         TimeSeries<ScalarType> compartments_ts(num_compartments);
         if (!(this->populations.get_num_compartments() == (size_t)subcompartments_ts.get_num_elements())) {
             log_error("Result does not match InfectionState of the Model.");
-            Vector<ScalarType> wrong_size = Vector<ScalarType>::Constant(num_compartments, -1);
+            Eigen::VectorX<ScalarType> wrong_size = Eigen::VectorX<ScalarType>::Constant(num_compartments, -1);
             compartments_ts.add_time_point(-1, wrong_size);
             return compartments_ts;
         }
-        Vector<ScalarType> compartments(num_compartments);
+        Eigen::VectorX<ScalarType> compartments(num_compartments);
         for (Eigen::Index timepoint = 0; timepoint < subcompartments_ts.get_num_time_points(); ++timepoint) {
             compress_vector(subcompartments_ts[timepoint], compartments);
             compartments_ts.add_time_point(subcompartments_ts.get_time(timepoint), compartments);
@@ -148,7 +149,8 @@ private:
      * @param[out] compartments Reference to the vector where the output is stored.
      */
     template <size_t Group = 0>
-    void compress_vector(const Vector<ScalarType>& subcompartments, Vector<ScalarType>& compartments) const
+    void compress_vector(const Eigen::VectorX<ScalarType>& subcompartments,
+                         Eigen::VectorX<ScalarType>& compartments) const
     {
         static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup = type_at_index_t<Group, LctStates...>;
@@ -182,8 +184,9 @@ private:
      * @param[out] dydt A reference to the calculated output.
      */
     template <size_t Group = 0>
-    void get_derivatives_impl(Eigen::Ref<const Vector<ScalarType>> pop, Eigen::Ref<const Vector<ScalarType>> y,
-                              ScalarType t, Eigen::Ref<Vector<ScalarType>> dydt) const
+    void get_derivatives_impl(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop,
+                              Eigen::Ref<const Eigen::VectorX<ScalarType>> y, ScalarType t,
+                              Eigen::Ref<Eigen::VectorX<ScalarType>> dydt) const
     {
         static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup = type_at_index_t<Group, LctStates...>;
@@ -294,8 +297,8 @@ private:
      * @param[out] dydt A reference to the calculated output.
      */
     template <size_t Group1, size_t Group2 = 0>
-    void interact(Eigen::Ref<const Vector<ScalarType>> pop, Eigen::Ref<const Vector<ScalarType>> y, ScalarType t,
-                  Eigen::Ref<Vector<ScalarType>> dydt) const
+    void interact(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
+                  ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> dydt) const
     {
         static_assert((Group1 < num_groups) && (Group1 >= 0) && (Group2 < num_groups) && (Group2 >= 0),
                       "The template parameters Group1 & Group2 should be valid.");

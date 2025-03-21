@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -27,6 +27,11 @@ import memilio.simulation.osecir as osecir
 
 
 def run_ode_secir_mobility_simulation(plot_results=True):
+    """
+
+    :param plot_results:  (Default value = True)
+
+    """
     mio.set_log_level(mio.LogLevel.Warning)
 
     t0 = 0

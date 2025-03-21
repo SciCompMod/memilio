@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -43,23 +43,29 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          merge_eisenach=False,
                          **kwargs
                          ):
-    """! ...
-    @param file_format File format which is used for writing the data. 
+    """ ...
+
+    :param file_format: File format which is used for writing the data.
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder 
-        out_folder/Germany.
-    @param start_date [Default = '', taken from read data] Start date
+    :param out_folder: Path to folder where data is written in folder
+        out_folder/Germany. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Default = '', taken from read data] Start date
         of stored data frames.
-    @param end_date [Default = '', taken from read data] End date of
+    :param end_date: Default = '', taken from read data] End date of
         stored data frames.
-    @param moving_average 0 [Default] or Number > 0. Defines the number of
+    :param moving_average: 0 [Default] or Number > 0. Defines the number of
         days for which a centered moving average is computed.
+    :param read_data:  (Default value = dd.defaultDict['read_data'])
+    :param merge_berlin:  (Default value = True)
+    :param merge_eisenach:  (Default value = False)
+    :param **kwargs: 
+
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
     directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(directory, 'Germany', 'pydata/')
     gd.check_dir(directory)
 
     if not read_data:
@@ -195,7 +201,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     # arg_dict = gd.cli("testing")
     transformWeatherData(read_data=False, moving_average=30)

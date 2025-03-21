@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Kathrin Rack, Annette Lutz
 #
@@ -41,8 +41,11 @@ data_folder = os.path.join(dd.defaultDict['out_folder'], "pydata", "Germany")
 
 def get_Data(endday_divi=yesterday, moving_average=True):
     """function to get DIVI and case data
-    @param endday_divi divi data will be loaded until this day
-    @param moving_average Defines if moving average is used"""
+
+    :param endday_divi: divi data will be loaded until this day (Default value = yesterday)
+    :param moving_average: Defines if moving average is use (Default value = True)
+
+    """
     print('Download case data from the Internet, takes some time')
     getCaseData.get_case_data(
         out_folder=dd.defaultDict['out_folder'],
@@ -57,10 +60,13 @@ def plot_cases(
         moving_average, daystart=pd.Timestamp('2020.01.28'),
         simulationperiod=100, saveplot=False):
     """plot case data: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
-        @param moving_average Defines if moving-average is used
-        @param daystart Day at which should be started in timestamp format
-        @param simulationperiod number in integer format of days for which data should be plotted
-        @param saveplot boolean value; says if plot should be saved """
+
+    :param moving_average: Defines if moving-average is used
+    :param daystart: Day at which should be started in timestamp format (Default value = pd.Timestamp('2020.01.28'))
+    :param simulationperiod: number in integer format of days for which data should be plotted (Default value = 100)
+    :param saveplot: boolean value; says if plot should be save (Default value = False)
+
+    """
     df = pd.read_json(os.path.join(data_folder, "cases_infected.json"))
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
@@ -140,10 +146,13 @@ def plot_cases_age(
         moving_average, daystart=pd.Timestamp('2020.01.28'),
         simulationperiod=100, saveplot=False):
     """plot case data age resolved: Cumulative confirmed infections and deaths as well as 7-days moving average for both data sets.
-    @param moving_average Defines if moving-average is used
-    @param daystart Day at which should be started in timestamp format
-    @param simulationperiod number in integer format of days for which data should be plotted
-    @param saveplot boolean value; says if plot should be saved """
+
+    :param moving_average: Defines if moving-average is used
+    :param daystart: Day at which should be started in timestamp format (Default value = pd.Timestamp('2020.01.28'))
+    :param simulationperiod: number in integer format of days for which data should be plotted (Default value = 100)
+    :param saveplot: boolean value; says if plot should be save (Default value = False)
+
+    """
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
     df = pd.read_json(os.path.join(data_folder, "cases_all_age.json"))
@@ -228,11 +237,14 @@ def plot_cases_county(
         moving_average, daystart=pd.Timestamp('2020.01.28'),
         simulationperiod=100, county='SK Köln', saveplot=False):
     """plot case data for one county: Cumulative confirmed infections and deaths as well as 7-days moving average for both data sets.
-    @param moving_average Defines if moving-average is used
-    @param daystart Day at which should be started in timestamp format
-    @param simulationperiod number in integer format of days for which data should be plotted
-    @param county county, for which data chould be plotted
-    @param saveplot boolean value; says if plot should be saved """
+
+    :param moving_average: Defines if moving-average is used
+    :param daystart: Day at which should be started in timestamp format (Default value = pd.Timestamp('2020.01.28'))
+    :param simulationperiod: number in integer format of days for which data should be plotted (Default value = 100)
+    :param county: county, for which data chould be plotted (Default value = 'SK Köln')
+    :param saveplot: boolean value; says if plot should be save (Default value = False)
+
+    """
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
     df = pd.read_json(os.path.join(data_folder, "cases_all_county.json"))
@@ -302,10 +314,13 @@ def plot_DIVI_data(
         daystart=pd.Timestamp('2020.04.26'),
         simulationperiod=100, endday_divi=yesterday, saveplot=False):
     """plot DIVI data
-        @param daystart Day at which should be started in timestamp format
-        @param simulationperiod number in integer format of days for which data should be plotted
-        @param endday_divi last available day of divi data in timestamp format
-        @param saveplot boolean value; says if plot should be saved """
+
+    :param daystart: Day at which should be started in timestamp format (Default value = pd.Timestamp('2020.04.26'))
+    :param simulationperiod: number in integer format of days for which data should be plotted (Default value = 100)
+    :param endday_divi: last available day of divi data in timestamp format (Default value = yesterday)
+    :param saveplot: boolean value; says if plot should be save (Default value = False)
+
+    """
     if daystart < pd.Timestamp('2020.04.26'):
         print(
             "error: DIVI data set starts on April 26, 2020; you asked for start date "
@@ -336,9 +351,12 @@ def plot_DIVI_data(
 
 def main():
     """plot all available plts
-        @param read_data boolean, if True data will just be read from available data downloaded before,
+
+    :param read_data: boolean, if True data will just be read from available data downloaded before,
          else data will be downloaded
-        @param saveplot boolean value; says if plot should be saved """
+    :param saveplot: boolean value; says if plot should be save
+
+    """
 
     read_data = True
     saveplot = False

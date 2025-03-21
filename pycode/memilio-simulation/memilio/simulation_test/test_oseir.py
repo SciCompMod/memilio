@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -30,10 +30,12 @@ from memilio.simulation.oseir import Model, simulate, simulate_flows
 
 
 class Test_oseir_integration(unittest.TestCase):
+    """ """
 
     here = os.path.dirname(os.path.abspath(__file__))
 
     def setUp(self):
+        """ """
 
         model = Model(1)
         A0 = AgeGroup(0)
@@ -65,17 +67,19 @@ class Test_oseir_integration(unittest.TestCase):
         self.model = model
 
     def test_simulate_simple(self):
+        """ """
         result = simulate(t0=0., tmax=100., dt=0.1, model=self.model)
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_compare_with_cpp(self):
-        """
-        Tests the correctness of the python bindings. The results of a simulation 
-        in python get compared to the results of a cpp simulation. Cpp simulation 
-        results contained in the file ode-seir-compare.csv. 
+        """Tests the correctness of the python bindings. The results of a simulation
+        in python get compared to the results of a cpp simulation. Cpp simulation
+        results contained in the file ode-seir-compare.csv.
         If cpp model changes this test needs to be adjusted accordingly.
+
+
         """
         refData = pd.read_csv(
             os.path.join(self.here + '/data/ode-seir-compare.csv'),
@@ -110,6 +114,7 @@ class Test_oseir_integration(unittest.TestCase):
                 self.assertAlmostEqual(ref, actual, delta=tol)
 
     def test_flow_simulation_simple(self):
+        """ """
         flow_sim_results = simulate_flows(
             t0=0., tmax=100., dt=0.1, model=self.model)
         flows = flow_sim_results[1]
@@ -123,6 +128,7 @@ class Test_oseir_integration(unittest.TestCase):
         self.assertEqual(len(compartments.get_last_value()), 4)
 
     def test_check_constraints_parameters(self):
+        """ """
 
         model = Model(1)
         A0 = AgeGroup(0)

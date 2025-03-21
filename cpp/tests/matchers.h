@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,6 +20,7 @@
 #ifndef EPI_TESTS_MATCHERS_H
 #define EPI_TESTS_MATCHERS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/io/io.h"

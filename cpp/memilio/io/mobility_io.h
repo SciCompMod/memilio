@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele, Wadim Koslow, Martin J. Kuehn
+* Authors: Daniel Abele, Wadim Koslow, Henrik Zunker, Martin J. Kuehn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef READ_TWITTER_H
-#define READ_TWITTER_H
+#ifndef MEMILIO_IO_MOBILITY_IO_H
+#define MEMILIO_IO_MOBILITY_IO_H
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/mobility/graph.h"
@@ -214,4 +214,4 @@ IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& en
 
 } // namespace mio
 
-#endif // READ_TWITTER_H
+#endif // MEMILIO_IO_MOBILITY_IO_H

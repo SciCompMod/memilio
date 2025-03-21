@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -32,9 +32,11 @@ from memilio.simulation.osecir import Model, Simulation, simulate
 
 
 def run_ode_secir_ageres_simulation(show_plot=True):
-    """
-    Runs the c++ ODE SECIHURD model using multiple age groups
+    """Runs the c++ ODE SECIHURD model using multiple age groups
     and plots the results
+
+    :param show_plot:  (Default value = True)
+
     """
 
     model = Model(3)

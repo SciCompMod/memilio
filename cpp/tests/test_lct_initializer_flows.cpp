@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
 *
@@ -39,7 +39,7 @@ TEST(TestInitializer, compareWithPrevious)
     using Model    = mio::lsecir::Model<LctState>;
 
     // Previous result.
-    mio::Vector<ScalarType> compare(LctState::Count);
+    Eigen::VectorX<ScalarType> compare(LctState::Count);
     compare << 82810889.00545, 850.70432, 970.04980, 315.32890, 391.51799, 391.39351, 565.45854, 580.79267, 85.97421,
         86.02738, 80.26791, 189.53449, 167.57963, 329757.36512, 9710;
 
@@ -66,9 +66,9 @@ TEST(TestInitializer, compareWithPrevious)
     model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.1;
     model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.1;
 
-    mio::Vector<ScalarType> total_confirmed_cases = mio::Vector<ScalarType>::Constant(1, 341223.);
-    mio::Vector<ScalarType> deaths                = mio::Vector<ScalarType>::Constant(1, 9710.);
-    mio::Vector<ScalarType> total_population      = mio::Vector<ScalarType>::Constant(1, 83155031.);
+    Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Constant(1, 341223.);
+    Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Constant(1, 9710.);
+    Eigen::VectorX<ScalarType> total_population      = Eigen::VectorX<ScalarType>::Constant(1, 83155031.);
 
     // Add time points for initialization of transitions.
     mio::TimeSeries<ScalarType> init((int)mio::lsecir::InfectionTransition::Count);
@@ -110,7 +110,7 @@ TEST(TestInitializer, compareWithPreviousThreeGroups)
     using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
 
     // Previous result.
-    mio::Vector<ScalarType> compare(LctState::Count);
+    Eigen::VectorX<ScalarType> compare(LctState::Count);
     compare << 82810889.00545, 850.70432, 970.04980, 315.32890, 391.51799, 391.39351, 565.45854, 580.79267, 85.97421,
         86.02738, 80.26791, 189.53449, 167.57963, 329757.36512, 9710;
 
@@ -139,11 +139,12 @@ TEST(TestInitializer, compareWithPreviousThreeGroups)
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10.));
 
-    mio::Vector<ScalarType> total_confirmed_cases =
-        mio::Vector<ScalarType>::Constant(num_groups, 341223. / (ScalarType)num_groups);
-    mio::Vector<ScalarType> deaths = mio::Vector<ScalarType>::Constant(num_groups, 9710. / (ScalarType)num_groups);
-    mio::Vector<ScalarType> total_population =
-        mio::Vector<ScalarType>::Constant(num_groups, 83155031. / (ScalarType)num_groups);
+    Eigen::VectorX<ScalarType> total_confirmed_cases =
+        Eigen::VectorX<ScalarType>::Constant(num_groups, 341223. / (ScalarType)num_groups);
+    Eigen::VectorX<ScalarType> deaths =
+        Eigen::VectorX<ScalarType>::Constant(num_groups, 9710. / (ScalarType)num_groups);
+    Eigen::VectorX<ScalarType> total_population =
+        Eigen::VectorX<ScalarType>::Constant(num_groups, 83155031. / (ScalarType)num_groups);
 
     // Add time points for initialization of transitions.
     mio::TimeSeries<ScalarType> init(num_groups * (size_t)mio::lsecir::InfectionTransition::Count);
@@ -190,10 +191,10 @@ TEST(TestInitializer, testConstraints)
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
 
-    ScalarType dt                                 = 0.5;
-    mio::Vector<ScalarType> total_confirmed_cases = mio::Vector<ScalarType>::Constant(2, 341223.);
-    mio::Vector<ScalarType> deaths                = mio::Vector<ScalarType>::Constant(2, 9710.);
-    mio::Vector<ScalarType> total_population      = mio::Vector<ScalarType>::Constant(2, 83155031.);
+    ScalarType dt                                    = 0.5;
+    Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Constant(2, 341223.);
+    Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Constant(2, 9710.);
+    Eigen::VectorX<ScalarType> total_population      = Eigen::VectorX<ScalarType>::Constant(2, 83155031.);
     // Use a model with two groups.
     using InfState                = mio::lsecir::InfectionState;
     using LctState                = mio::LctInfectionState<InfState, 1, 2, 3, 2, 3, 2, 1, 1>;
@@ -205,7 +206,7 @@ TEST(TestInitializer, testConstraints)
 
     // Check wrong size of initial flows.
     mio::TimeSeries<ScalarType> init_wrong_size(infectionTransition_count - 1);
-    mio::Vector<ScalarType> vec_wrong_size = mio::Vector<ScalarType>::Ones(infectionTransition_count - 1);
+    Eigen::VectorX<ScalarType> vec_wrong_size = Eigen::VectorX<ScalarType>::Ones(infectionTransition_count - 1);
     init_wrong_size.add_time_point(-50, vec_wrong_size);
     while (init_wrong_size.get_last_time() < 0) {
         init_wrong_size.add_time_point(init_wrong_size.get_last_time() + dt, vec_wrong_size);
@@ -219,7 +220,7 @@ TEST(TestInitializer, testConstraints)
 
     // Check if last time of initial flows is not zero.
     mio::TimeSeries<ScalarType> init_wrong(infectionTransition_count);
-    mio::Vector<ScalarType> vec_init = mio::Vector<ScalarType>::Ones(infectionTransition_count);
+    Eigen::VectorX<ScalarType> vec_init = Eigen::VectorX<ScalarType>::Ones(infectionTransition_count);
     init_wrong.add_time_point(-50, vec_init);
     while (init_wrong.get_last_time() < -5) {
         init_wrong.add_time_point(init_wrong.get_last_time() + dt, vec_init);
@@ -334,7 +335,7 @@ TEST(TestInitializer, testConstraints)
     // Check with negative result for deaths.
     mio::TimeSeries<ScalarType> init_negative_deaths(infectionTransition_count);
     vec_init[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical] = 1;
-    deaths = mio::Vector<ScalarType>::Constant(2, -100.);
+    deaths = Eigen::VectorX<ScalarType>::Constant(2, -100.);
     init_negative_deaths.add_time_point(-50., vec_init);
     while (init_negative_deaths.get_last_time() < 0) {
         init_negative_deaths.add_time_point(init_negative_deaths.get_last_time() + dt, vec_init);
@@ -345,7 +346,7 @@ TEST(TestInitializer, testConstraints)
     EXPECT_TRUE(status);
 
     // Check with correct initialization values.
-    deaths = mio::Vector<ScalarType>::Constant(2, 100.);
+    deaths = Eigen::VectorX<ScalarType>::Constant(2, 100.);
     mio::TimeSeries<ScalarType> init_right(infectionTransition_count);
     init_right.add_time_point(-50, vec_init);
     while (init_right.get_last_time() < 0) {

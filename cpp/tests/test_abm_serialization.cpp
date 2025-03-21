@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding
 *
@@ -32,6 +32,7 @@
 #include "models/abm/person.h"
 #include "models/abm/trip_list.h"
 #include "models/abm/model.h"
+#include <bitset>
 #include <cstddef>
 
 #ifdef MEMILIO_HAS_JSONCPP
@@ -126,12 +127,12 @@ TEST(TestAbmSerialization, TestingScheme)
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value testing_criteria;
-    std::array<bool, mio::abm::MAX_NUM_AGE_GROUPS> ages_bits{}; // initialize to false
-    ages_bits[i++]                     = true;
-    testing_criteria["ages"]["bitset"] = mio::serialize_json(ages_bits).value();
-    std::array<bool, (size_t)mio::abm::InfectionState::Count> inf_st_bits{}; // initialize to false
-    inf_st_bits[i++]                               = true;
-    testing_criteria["infection_states"]["bitset"] = mio::serialize_json(inf_st_bits).value();
+    std::bitset<mio::abm::MAX_NUM_AGE_GROUPS> ages_bits{}; // initialize to false
+    ages_bits[i++]           = true;
+    testing_criteria["ages"] = mio::serialize_json(ages_bits).value();
+    std::bitset<(size_t)mio::abm::InfectionState::Count> inf_st_bits{}; // initialize to false
+    inf_st_bits[i++]                     = true;
+    testing_criteria["infection_states"] = mio::serialize_json(inf_st_bits).value();
 
     Json::Value test_parameters;
     test_parameters["sensitivity"]              = mio::serialize_json(mio::UncertainValue<double>{(double)i++}).value();
@@ -197,7 +198,6 @@ TEST(TestAbmSerialization, Person)
     reference_json["assigned_locations"]  = json_uint_array({i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++});
     reference_json["cells"]               = json_uint_array({i++});
     reference_json["compliance"]          = json_double_array({(double)i++, (double)i++, (double)i++});
-    reference_json["id"]                  = Json::UInt(i++);
     reference_json["infections"]          = Json::Value(Json::arrayValue);
     reference_json["last_transport_mode"] = Json::UInt(i++);
     reference_json["location"]            = Json::UInt(i++);
@@ -214,6 +214,8 @@ TEST(TestAbmSerialization, Person)
         mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
     reference_json["time_at_location"]["seconds"] = Json::Int(i++);
     reference_json["vaccinations"]                = Json::Value(Json::arrayValue);
+    reference_json["id"]                          = Json::UInt(i++);
+    reference_json["rng_index"]                   = Json::UInt(i++);
 
     test_json_serialization<mio::abm::Person>(reference_json);
 }

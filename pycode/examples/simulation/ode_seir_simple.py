@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
 #
@@ -29,9 +29,7 @@ from memilio.simulation.oseir import (Model, interpolate_simulation_result,
 
 
 def run_ode_seir_simulation():
-    """
-    Runs the c++ ODE SEIR model
-    """
+    """Runs the c++ ODE SEIR model"""
 
     # Define population of age groups
     populations = [83000]

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen, Rene Schmieding
 *
@@ -20,21 +20,23 @@
 
 #include "abm/personal_rng.h"
 #include "abm/person.h"
+#include "abm/person_id.h"
+#include <cstdint>
 
 namespace mio
 {
 namespace abm
 {
-PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, PersonId id,
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(mio::Key<uint64_t> key, uint32_t index,
                                                              mio::Counter<uint32_t>& counter)
     : m_key(key)
-    , m_person_id(id)
+    , m_person_index(index)
     , m_counter(counter)
 {
 }
 
-PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person)
-    : PersonalRandomNumberGenerator(rng.get_key(), person.get_id(), person.get_rng_counter())
+PersonalRandomNumberGenerator::PersonalRandomNumberGenerator(Person& person)
+    : PersonalRandomNumberGenerator(person.get_rng_key(), person.get_rng_index(), person.get_rng_counter())
 {
 }
 

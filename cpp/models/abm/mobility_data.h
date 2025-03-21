@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Sascha Korf
 *
@@ -39,7 +39,8 @@ enum class TransportMode : uint32_t
     PublicTransport,
     Walking,
     Other,
-    Unknown
+    Unknown,
+    Count //last!!
 };
 
 /**
