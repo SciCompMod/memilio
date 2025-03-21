@@ -22,6 +22,7 @@
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm_helpers.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "random_number_test.h"
 
 using TestLocation = RandomNumberTest;
@@ -85,6 +86,7 @@ TEST_F(TestLocation, interact)
     auto dt = mio::abm::seconds(8640); //0.1 days
 
     // Setup model parameters for viral loads and infectivity distributions.
+    // Setup model parameters for viral loads and infectivity distributions.
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
     params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {{1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
@@ -92,7 +94,8 @@ TEST_F(TestLocation, interact)
     params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
 
     // Set incubtion period to two days so that the newly infected person is still exposed
-    params.get<mio::abm::IncubationPeriod>()[{variant, age}] = 2.;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
+    EXPECT_CALL(mock_logNorm_dist.get_mock(), invoke).WillRepeatedly(testing::Return(2));
 
     // Setup location with some chance of exposure
     mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
