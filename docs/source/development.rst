@@ -19,7 +19,7 @@ We recommend to configure it locally such that it runs automatically on every co
 
 For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`_ and this short video series: https://calmcode.io/pre-commit/the-problem.html
 
-Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068 Be therefore sure to not commit python code from a worktree.
+Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068 . Be therefore sure to not commit python code from a worktree.
 
 C++ Coding guidelines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,6 +230,11 @@ If using autopep8, e.g., of the Python plugin for Visual Studio Code or VSCodium
     "python.formatting.autopep8Args": ["--max-line-length", "79", "--experimental"]
 
 to your corresponding ``settings.json``.
+
+
+**Docstrings**
+
+Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html . 
 
 
 Git workflow
