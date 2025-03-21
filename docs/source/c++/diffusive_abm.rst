@@ -8,7 +8,7 @@ The features of an agent are its position and its infection state. The evolution
 
 with :math:`X` the vector of all agents' positions and :math:`Z` the vector of all agents' infection states. The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, while :math:`L` defines movement, i.e. location changes, only acting on :math:`X`. Infection state adoptions are modeled with independent Poisson processes given by adoption rate functions. Adoption rates always depend on the source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the `influences`. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Movement is modeled with independent diffusion processes. A temporal Gillespie algorithm (a direct method without rejection sampling) is used for simulation. Therefore, :math:`G` and :math:`L` are not implemented explicitly, instead their effects are sampled via the `move` and `adoption_rate` functions, respectively.
 
-The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential given in the class QuadWellModel is implemented, but any other suitable potential can be used as implementation. 
+The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential given in the class ``QuadWellModel`` is implemented, but any other suitable potential can be used as implementation. 
 
 Simulation
 -----------
@@ -137,7 +137,7 @@ Additionally, the agents are automatically aggregated by region and infection st
     //Print result object to console. Infection state "Xi" with i=0,...,3 is the number of agents having infection state X in region i
     result.print_table({"S0", "E0", "C0", "I0", "R0", "D0", "S1", "E1", "C1", "I1", "R1", "D1", "S2", "E2", "C2", "I2", "R2", "D2", "S3", "E3", "C3", "I3", "R3", "D3"})
 
-If one wants to interpolate the aggregated results to a TimeSeries containing only full days, this can be done by
+If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` containing only full days, this can be done by
 
 .. code-block:: cpp
 

@@ -1,4 +1,4 @@
-ODE Model Creation
+ODE model creation
 ==================
 
 Model definition
@@ -9,13 +9,16 @@ given by a system of ordinary differential equations. For example we consider a 
 
 .. math::  
     \begin{aligned}
-        S'(t) & = -\rho\phi\ \frac(S(t)*I(t))(N) \\
-        I'(t) & = \rho\phi\ \frac(S(t)*I(t))(N) - \frac(\mu_R + \mu_D)(T_I)I(t) \\
-        R'(t) & = \frac(\mu_R)(T_I)I(t) \\
-        D'(t) & = \frac(\mu_R)(T_I)I(t) \\
+        S'(t) & = -\rho\phi\ \frac{S(t)*I(t)}{N_{\perp D}} \\
+        I'(t) & = \rho\phi\ \frac{S(t)*I(t)}{N_{\perp D}} - \frac{\mu_R + \mu_D}{T_I}I(t) \\
+        R'(t) & = \frac{\mu_R}{T_I}I(t) \\
+        D'(t) & = \frac{\mu_D}{T_I}I(t) \\
     \end{aligned}
 
-and some initial values for :math:`t=0`. Here :math:`N := S(t) + I(t) + R(t)`.
+and some initial values for :math:`t=0`. Here :math:`N_{\perp D} := S(t) + I(t) + R(t)`.
 
 This type of model is called compartmental model, because the model population is represented by discrete infection
 states**S**usceptible, **I**nfected, **R**ecovered, **D**ead, also called compartments.
+
+How to define an ODE model
+--------------------------
