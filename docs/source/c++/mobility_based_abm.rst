@@ -1,99 +1,83 @@
-Realistic Agent-Based Model
+Agent-based model
 =================
 
 This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the compartmental models that use a system of ODEs, this model simulates
 the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the
-model and interacting with (infecting) each other. For a detailed overview of the ABM, see 
+model and interacting with (infecting) each other. For a detailed overview of the ABM, see:
 
 - Kerkmann D, Korf S, et al. Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread. https://doi.org/10.48550/arXiv.2410.08050
 
+Introduction
+-----------
+
+The model is implemented in multiple classes and headers located in the ``/cpp/models/abm/`` directory. The core classes and their locations are:
+
+- ``Person`` (person.h): Represents individual agents in the simulation
+- ``Infection`` (infection.h): Manages infection dynamics and disease progression 
+- ``Location`` (location.h): Defines places where agents interact
+- ``Model`` (model.h): Coordinates all components of the simulation
+- ``Simulation`` (simulation.h): Executes the simulation logic
+
+The following sections outline the major features of the agent-based model.
+
 Structure
----------
+~~~~~~~~~
 
 The model consists of the following major classes:
 
-1. **Person**: Represents an agent of the model. A person has an ID (i.e. 
-   and a list with their assigned locations (i.e. the locations they visit during the simulation). They can perform
+1. **Person**: Represents an agent of the model. A person has an ID and a list with their assigned locations (i.e. the locations they visit during the simulation). They can perform
    tests and wear masks. Every person has lists with past and current infections and vaccinations.
+   
 2. **Infection**: Collection of all information about a person's infection, i.e. infectiousness, infection course,
    virus variant. The infection course is drawn stochastically from the infection states that are similar to the
    compartments of the SECIR model.
+   
 3. **Location**: Represents places in the model where people meet and interact, e.g. home, school, work, social event
    sites. A location can be split into cells to model parts of a location, like classrooms in a school. Some infection
    parameters are location-specific and one can activate NPIs like mandatory masks or tests to enter the location.
+   
 4. **Model**: Collection of all persons and locations. It also holds information about the testing strategy of the
    simulation and holds the rules for the mobility phase.
+   
 5. **Simulation**: Runs the simulation and stores results.
 
-
-
-Simulation
-----------
-
-The simulation runs in discrete time steps. Each step has two phases, an **interaction phase** and a **mobility phase**.
-After these two phases the disease can progress and the simulation time is increased by one step.
-
-Interaction Phase
-~~~~~~~~~~~~~~~~~~~
-
-In this phase, each person interacts with the other persons at the same location. This interaction determines the
-transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability
-of infection depends on a multitude of factors, such as the viral load and infectiousness of the infected and the immunity
-level of the susceptible person.
-
-Mobility Phase
-~~~~~~~~~~~~~~~~~~
-
-During the mobility phase, each person may change their location. Mobility follow
-`rules <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.cpp>`_, considering the current location, time of day, and properties of the person (e.g. age).
-Some location changes are deterministic and regular (e.g. going to work), while others are random (e.g. going shopping or to a
-social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
-You can restrict some mobility rules by allowing only a proportion of people to enter specific locations.
-
-Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
-At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different
-trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are
-in quarantine or in the hospital cannot change their location.
-
-
-Disease Progression
+Disease progression
 ~~~~~~~~~~~~~~~~~~
 
 The ABM implements a detailed disease progression model that captures the full course of an infection from exposure to resolution. The disease progression is modeled through the ``Infection`` class, which contains:
 
-1. **Infection States**: Similar to the SECIR model, an infected person progresses through states:
+1. **Infection States**: Similar to the SECIR model, an infected person progresses through states defined in ``infection_state.h``:
 
-   - **Susceptible**: Initial state before infection
-   - **Exposed**: Infected but not yet infectious
-   - **InfectedNoSymptoms**: Infectious but without symptoms
-   - **InfectedSymptoms**: Showing symptoms but not severe
-   - **InfectedSevere**: Severe infection requiring hospitalization
-   - **InfectedCritical**: Critical infection requiring ICU
-   - **Recovered**: Recovered from infection with immunity
-   - **Dead**: Deceased due to infection
+   * **Susceptible**: Initial state before infection
+   * **Exposed**: Infected but not yet infectious
+   * **InfectedNoSymptoms**: Infectious but without symptoms
+   * **InfectedSymptoms**: Showing symptoms but not severe
+   * **InfectedSevere**: Severe infection requiring hospitalization
+   * **InfectedCritical**: Critical infection requiring ICU
+   * **Recovered**: Recovered from infection with immunity
+   * **Dead**: Deceased due to infection
 
 2. **Viral Load Dynamics**: The model implements realistic viral load curves based on scientific data:
-   - **Incline Phase**: Rapid increase in viral concentration
-   - **Peak**: Maximum viral load
-   - **Decline Phase**: Gradual decrease until clearance
+   * **Incline Phase**: Rapid increase in viral concentration
+   * **Peak**: Maximum viral load
+   * **Decline Phase**: Gradual decrease until clearance
    
-3. **Infectiousness**: The probability of transmitting the virus depends on viral load through an invlogit function:
+3. **Infectiousness**: The probability of transmitting the virus depends on viral load through an invlogit function.
 
 4. **Stochastic Transitions**: Progression between states is stochastic, with age-dependent probabilities:
-   - The duration in each state is drawn from distributions in the model parameters
-   - Prior immunity (from vaccination or previous infection) affects:
-     - Viral load (reduced peak)
-     - Severity progression (reduced probability of severe outcomes)
-     - Duration of infectious period
+   * The duration in each state is drawn from distributions in the model parameters
+   * Prior immunity (from vaccination or previous infection) affects:
+     * Viral load (reduced peak)
+     * Severity progression (reduced probability of severe outcomes)
+     * Duration of infectious period
    
 5. **Infection Course**: The infection course is determined by:
-   - Age group of the person
-   - Virus variant
-   - Protection status (prior immunity)
-   - Random factors (individual variation)
+   * Age group of the person
+   * Virus variant
+   * Protection status (prior immunity)
+   * Random factors (individual variation)
 
-
-Data Collection
+Data collection
 ~~~~~~~~~~~~~~~~~~
 
 The ABM simulation can collect data through the ``History`` object, which allows for flexible data logging. This is particularly 
@@ -119,7 +103,6 @@ The examples demonstrate two approaches:
    // Run simulation with history object
    sim.advance(tmax, history);
 
-
 Interventions
 ~~~~~~~~~~~~~~~~~~
 
@@ -131,7 +114,35 @@ The ABM supports various interventions that can be applied at specific time poin
 
 3. **Lockdowns**: Restrict movement between locations
 
-Get Started
+Simulation
+----------
+
+The simulation runs in discrete time steps. Each step has two phases, an **interaction phase** and a **mobility phase**.
+After these two phases the disease can progress and the simulation time is increased by one step.
+
+Interaction phase
+~~~~~~~~~~~~~~~~~~~
+
+In this phase, each person interacts with the other persons at the same location. This interaction determines the
+transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability
+of infection depends on a multitude of factors, such as the viral load and infectiousness of the infected and the immunity
+level of the susceptible person.
+
+Mobility phase
+~~~~~~~~~~~~~~~~~~
+
+During the mobility phase, each person may change their location. Mobility follow
+`rules <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.cpp>`_, considering the current location, time of day, and properties of the person (e.g. age).
+Some location changes are deterministic and regular (e.g. going to work), while others are random (e.g. going shopping or to a
+social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
+You can restrict some mobility rules by allowing only a proportion of people to enter specific locations.
+
+Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
+At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different
+trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are
+in quarantine or in the hospital cannot change their location.
+
+How to
 -----------
 
 This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, you can find a full
@@ -162,7 +173,7 @@ duration of the incubation period to 4 days:
 
    model.parameters.get<mio::abm::IncubationPeriod>() = 4.;
 
-Locations and Persons
+Locations and persons
 ~~~~~~~~~~~~~~~~~~~~~
 
 To add a location to the model, we have to specify the kind of location:
@@ -220,7 +231,7 @@ In our example, we categorize individuals into two groups: children and parents.
    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
    add_household_group_to_model(model, twoPersonHousehold_group);
 
-Testing Strategies
+Testing strategies
 ~~~~~~~~~~~~~~~~~
 
 During the simulation, people can get tested, and we have to specify the scheme for that:
@@ -239,7 +250,7 @@ During the simulation, people can get tested, and we have to specify the scheme 
                                                      test_parameters, probability);
    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
-Initializing Infections
+Initializing infections
 ~~~~~~~~~~~~~~~~~~~~~~
 
 For some infections to happen during the simulation, we have to initialize people with infections:
@@ -259,7 +270,7 @@ For some infections to happen during the simulation, we have to initialize peopl
        }
    }
 
-Running the Simulation
+Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~
 
 Finally, we run the simulation:
@@ -296,10 +307,12 @@ Finally, we can print the data to a text file:
    std::get<0>(log).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
    std::cout << "Results written to abm_minimal.txt" << std::endl;
 
-Current Limitations
+[THIS SECTION NEEDS EXAMPLE OUTPUT IMAGES - Add two images showing model output]
+
+Current limitations
 -------------------
 
 Currently, a few things are not yet implemented, such as:
 
-- Different trips for each day.
-- Trace functionality.
+* Different trips for each day
+* Trace functionality
