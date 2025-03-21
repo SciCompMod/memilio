@@ -38,7 +38,7 @@ class Test_ParameterDistribution(unittest.TestCase):
 
     def test_normal(self):
         """ """
-        N = mio.ParameterDistributionNormal(-1.0, 1.0, 0.0, 1.0)
+        N = mio.ParameterDistributionNormal(-1.0, 1.0, 0.0, 1.0, 2.5758)
         # properties
         self.assertEqual(N.mean, 0.0)  # std_dev automatically adapted
 
@@ -50,7 +50,7 @@ class Test_ParameterDistribution(unittest.TestCase):
     def test_polymorphic(self):
         """ """
         uv = mio.UncertainValue()
-        N = mio.ParameterDistributionNormal(0, 2, 1.0)
+        N = mio.ParameterDistributionNormal(0, 2, 1.0, 2.5758)
         uv.set_distribution(N)
         self.assertIsNot(uv.get_distribution(), N)
         self.assertIsInstance(uv.get_distribution(),

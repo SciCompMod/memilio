@@ -51,7 +51,7 @@ class Test_Pickle(unittest.TestCase):
     def test_distribution(self):
         """ """
 
-        test = msim.ParameterDistributionNormal(0, 1, 0.4, 0.1)
+        test = msim.ParameterDistributionNormal(0, 1, 0.4, 0.1, 2.5758)
 
         data = pickle.dumps(test)
         pickle_test = pickle.loads(data)
@@ -62,7 +62,8 @@ class Test_Pickle(unittest.TestCase):
     def test_damping_sampling(self):
         """ """
         test = msim.UncertainValue(2.2)
-        test.set_distribution(msim.ParameterDistributionNormal(0, 1, 0.4, 0.1))
+        test.set_distribution(
+            msim.ParameterDistributionNormal(0, 1, 0.4, 0.1, 2.5758))
         test = msim.DampingSampling(test, 1, 2, 3, [0, 1], np.arange(2))
 
         data = pickle.dumps(test)
