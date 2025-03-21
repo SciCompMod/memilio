@@ -32,7 +32,7 @@ namespace mio
 /**
  * @brief Daily local ICU occupancy aggregated for each age group.
  */
-template <typename FP = double>
+template <typename FP>
 struct ICUOccupancyLocal {
     using Type = mio::TimeSeries<FP>;
     static Type get_default(AgeGroup size)
@@ -48,7 +48,7 @@ struct ICUOccupancyLocal {
 /**
  * @brief Shape parameter of the gamma distribution.
  */
-template <typename FP = double>
+template <typename FP>
 struct GammaShapeParameter {
     using Type = FP;
     static Type get_default(AgeGroup)
@@ -64,7 +64,7 @@ struct GammaShapeParameter {
 /**
  * @brief Scale parameter of the gamma distribution.
  */
-template <typename FP = double>
+template <typename FP>
 struct GammaScaleParameter {
     using Type = FP;
     static Type get_default(AgeGroup)
@@ -95,7 +95,7 @@ struct GammaCutOff {
 /**
  * @brief Maximum allowed contact reduction factors per location.
  */
-template <typename FP = double>
+template <typename FP>
 struct ContactReductionMax {
     using Type = std::vector<FP>;
     static Type get_default(AgeGroup)
@@ -111,7 +111,7 @@ struct ContactReductionMax {
 /**
  * @brief Minimum allowed contact reduction factors per location.
  */
-template <typename FP = double>
+template <typename FP>
 struct ContactReductionMin {
     using Type = std::vector<FP>;
     static Type get_default(AgeGroup)
@@ -127,7 +127,7 @@ struct ContactReductionMin {
 /**
  * @brief Soft-plus curvature parameter for contact adjustment.
  */
-template <typename FP = double>
+template <typename FP>
 struct SoftPlusCurvatureParameter {
     using Type = FP;
     static Type get_default(AgeGroup)
@@ -143,7 +143,7 @@ struct SoftPlusCurvatureParameter {
 /**
  * @brief Nominal ICU capacity.
  */
-template <typename FP = double>
+template <typename FP>
 struct NominalICUCapacity {
     using Type = FP;
     static Type get_default(AgeGroup)
@@ -156,10 +156,11 @@ struct NominalICUCapacity {
     }
 };
 
-template <typename FP = double>
-using ParametersFeedback = ParameterSet<ICUOccupancyLocal<FP>, GammaShapeParameter<FP>, GammaScaleParameter<FP>,
-                                        GammaCutOff, ContactReductionMax<FP>, ContactReductionMin<FP>,
-                                        SoftPlusCurvatureParameter<FP>, NominalICUCapacity<FP>>;
+template <typename FP>
+using FeedbackSimulationParameters =
+    ParameterSet<ICUOccupancyLocal<FP>, GammaShapeParameter<FP>, GammaScaleParameter<FP>, GammaCutOff,
+                 ContactReductionMax<FP>, ContactReductionMin<FP>, SoftPlusCurvatureParameter<FP>,
+                 NominalICUCapacity<FP>>;
 
 /**
  * @brief A generic feedback simulation extending existing simulations with a feedback mechanism.
@@ -177,12 +178,12 @@ class FeedbackSimulation
 {
 public:
     /**
-     * @brief Constructs the FeedbackSimulation by using a existing simulation instance and ICU compartment indices.
+     * @brief Constructs the FeedbackSimulation by taking ownership of an existing simulation instance.
      *
      * @param sim The simulation instance to be extended with feedback mechanism.
      * @param icu_indices A vector of indices indicating ICU compartments for specific model.
      */
-    explicit FeedbackSimulation(Sim sim, const std::vector<size_t>& icu_indices)
+    explicit FeedbackSimulation(Sim&& sim, const std::vector<size_t>& icu_indices)
         : m_simulation(std::move(sim))
         , m_icu_indices(icu_indices)
         , m_feedback_parameters(m_simulation.get_model().parameters.get_num_groups())
@@ -195,6 +196,10 @@ public:
      *
      * The simulation is advanced in steps of dt_feedback. At each step, feedback
      * is applied, then the simulation is advanced, and afterwards the current ICU occupancy is stored.
+     * 
+     * Note that the simulation may make additional substeps depending on its own
+     * timestep dt. When using fixed-step integrators, dt_feedback should be an integer multiple of
+     * the simulation timestep dt.
      *
      * @param tmax The maximum simulation time.
      * @param dt_feedback The feedback time step (default 1.0).
@@ -361,7 +366,7 @@ public:
 private:
     Sim m_simulation;
     std::vector<size_t> m_icu_indices;
-    ParametersFeedback<FP> m_feedback_parameters;
+    FeedbackSimulationParameters<FP> m_feedback_parameters;
     mio::TimeSeries<ScalarType> m_perceived_risk;
 };
 

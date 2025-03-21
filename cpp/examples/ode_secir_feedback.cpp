@@ -85,6 +85,10 @@ void initialize_feedback(mio::FeedbackSimulation<double, mio::Simulation<double,
 
 int main()
 {
+    // This example demonstrates the implementation of a feedback mechanism for a ODE SECIR model.
+    // It shows how the perceived risk dynamically impacts contact reduction measures.
+    // The feedback mechanism adjusts contact rates during simulation based on the perceived
+    // risk which is calculated from the ICU occupancy using a memory kernel.
     mio::set_log_level(mio::LogLevel::warn);
 
     const double tmax          = 35;
