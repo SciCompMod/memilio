@@ -47,9 +47,9 @@ To initialize the model, the following inputs need to be passed to the model con
 
 - a time series containing the flows within a time step between the infection states for a large enough number of time points before the start of the simulation,
 - a vector containing the population sizes for every age group,
-- a vector containing the total number of deaths at time :math:`t0` for every age group,
+- a vector containing the total number of deaths at time :math:`t_0` for every age group,
 - the number of age groups,
-- optionally, a vector containing the total confirmed cases at time :math:`t0` and can be set if it should be used for initialization for every age group.
+- optionally, a vector containing the total confirmed cases at time :math:`t_0` and can be set if it should be used for initialization for every age group.
 
 The number of age groups, the population sizes and total number of deaths can be defined directly by 
 
@@ -112,6 +112,7 @@ There are different options for initializing a fictional scenario. Regardless of
         mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
 
     In that case, we have three possible options for initializing:
+
         - You can set the number of people in the `Susceptible` compartment at time :math:`t_0` via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
 
         .. code-block:: cpp
@@ -164,7 +165,6 @@ In our example below we use only one contact matrix. We only consider one age gr
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(num_matrices, num_agegroups);
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
 
 The parameters ``TransmissionProbabilityOnContact``, ``RelativeTransmissionNoSymptoms`` and ``RiskOfInfectionFromSymptomatic`` can be made dependent on the time. This is why we use a ``StateAgeFunction`` that is passed to a ``StateAgeFunctionWrapper`` to set these parameters. Note that there is also a ``ConstantFunction`` availbale if we do not want to have any dependency on the time. 
 Here we use an ``ExponentialSurvivalFunction`` to set the mentioned parameters. 
@@ -224,6 +224,7 @@ IDE-SEIR model
 Introduction
 ~~~~~~~~~~~~~
 The four compartments 
+
 - `Susceptible` (:math:`S`), may become exposed at any time
 - `Exposed` (:math:`E`), becomes infected after some time
 - `Infected` (:math:`I`), will recover after some time
@@ -287,14 +288,14 @@ In our example below we use only one contact matrix. Our model considers one age
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
 
-To simulate the implementation of nonpharmaceutical, we add dampings to the contact rate. Here, we apply a damping of :math:`0.7` after :math:`10`` days. 
+To simulate the implementation of nonpharmaceutical interventions, we add dampings to the contact rate. Here, we apply a damping of :math:`0.7` after :math:`10`` days, meaning that the contact rate is reduced to 30% of the initial value.  
 
 .. code-block:: cpp
 
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
     model.parameters.get<mio::iseir::ContactFrequency<double>>() = mio::UncertainContactMatrix<double>(contact_matrix);
 
-After defining :math:`t_{\max}``, we can simulate, which means that we calculate the value for the compartment :math:`S`.
+After defining :math:`t_{\max}`, we can simulate, which means that we calculate the value for the compartment :math:`S`.
 
 .. code-block:: cpp
 

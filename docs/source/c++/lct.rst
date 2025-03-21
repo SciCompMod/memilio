@@ -8,11 +8,6 @@ The Linear Chain Trick provides the option to use Erlang-distributed stay times 
 The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
 The LCT model can still be described by an ordinary differential equation system.
 
-For a detailed description and application of the model, see:
-
-- Plötzke L, Wendler A, Schmieding R, Kühn MJ (2024) Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions. Under review. https://doi.org/10.48550/arXiv.2412.09140
-- Hurtado PJ und Kirosingh AS (2019) Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell time distributions into mean field ODE models. Journal of Mathematical Biology. https://doi.org/10.1007/s00285-019-01412-w
-
 The eight compartments 
 
 - `Susceptible` (:math:`S`), may become Exposed at any time
@@ -31,16 +26,22 @@ You can divide the population according to different groups, e.g. AgeGroups or g
 Simulation
 -----------
 
+The simulation runs in discrete time steps. Different ODE solvers are available, some of them use an adaptive time step size.
+
+For a detailed description and application of the model, see:
+
+- Plötzke L, Wendler A, Schmieding R, Kühn MJ (2024) Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions. Under review. https://doi.org/10.48550/arXiv.2412.09140
+- Hurtado PJ und Kirosingh AS (2019) Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell time distributions into mean field ODE models. Journal of Mathematical Biology. https://doi.org/10.1007/s00285-019-01412-w
+
 How to: Set up and run a simulation of the LCT-SECIR model
 -----------------------------------------------------------
 
-We start by defining the number of subcompartments and constructing the model. 
+In the following, we will use an example with one age group/category.
+
+We start by defining the number of subcompartments and constructing the model. We can choose the number of subcompartments individually for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 
 .. code-block:: cpp
     
-    // Simple example to demonstrate how to run a simulation using an LCT-SECIR model.
-    // One single AgeGroup/Category member is used here.
-    // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
     constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 3, NumInfectedSymptoms = 1, NumInfectedSevere = 1,
                      NumInfectedCritical = 5;
     using InfState                       = mio::lsecir::InfectionState;
@@ -49,13 +50,10 @@ We start by defining the number of subcompartments and constructing the model.
     using Model    = mio::lsecir::Model<LctState>;
     Model model;
 
-    // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
-    // defined initial vector is used to initialize the LCT model.
-    bool use_initializer_flows = false;
+If we do not want to use the default parameters, they can be set as follows.
 
-    ScalarType tmax = 10;
+.. code-block:: cpp
 
-    // Set Parameters.
     model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
     model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2.;
     model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
@@ -64,11 +62,6 @@ We start by defining the number of subcompartments and constructing the model.
 
     model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-    // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
-
     model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
     model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
     model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
@@ -76,55 +69,33 @@ We start by defining the number of subcompartments and constructing the model.
     model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
     model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
-    if (use_initializer_flows) {
-        // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
+Here, we set the contact matrix used in the simulation. One can define multiple matrices for different locations. The size of each of these matrices is defined by the number of age groups. 
+In our example below we use only one contact matrix. We only consider one age group and set the contact rate to 10. 
 
-        ScalarType dt                                    = 0.001;
-        Eigen::VectorX<ScalarType> total_population      = Eigen::VectorX<ScalarType>::Constant(1, 1000000.);
-        Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Constant(1, 10.);
-        Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Constant(1, 16000.);
+.. code-block:: cpp
 
-        // Create TimeSeries with num_transitions elements.
-        int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
-        mio::TimeSeries<ScalarType> flows(num_transitions);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
 
-        mio::TimeSeries<ScalarType>::Vector vec_flows(num_transitions);
-        vec_flows[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]                 = 2.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 1.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-        vec_flows                                                                              = vec_flows * dt;
-        // Add initial time point to time series.
-        flows.add_time_point(-110, vec_flows);
-        // Add further time points until time 0.
-        while (flows.get_last_time() < -dt / 2) {
-            flows.add_time_point(flows.get_last_time() + dt, vec_flows);
-        }
+To simulate the implementation of nonpharmaceutical interventions, we add dampings to the contact rate. Here, we apply a damping of :math:`0.7` after :math:`5`` days, meaning that the contact rate is reduced to 30% of the initial value. 
 
-        // Set initialization vector for the LCT model.
-        mio::lsecir::Initializer<Model> initializer(std::move(flows), model);
-        initializer.set_tol_for_support_max(1e-6);
-        auto status = initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
-        if (status) {
-            return 1;
-        }
-    }
-    else {
-        // Simple example how to initialize model without flows.
-        // Define the initial values with the distribution of the population into subcompartments.
-        // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
-        // how the entries of the initial value vector relate to the defined template parameters of the model or the number
-        // of subcompartments. It is also possible to define the initial values directly.
+.. code-block:: cpp
+
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
+
+For the simulation, we need initial values for all (sub)compartments. If we do not set the initial values manually, these are internally set to :math:`0`.
+
+We start with constructing a vector ``initial_populations`` that we will pass on to the model. It contains vectors for each compartment, that contains a vector with initial values for the respective subcompartments. 
+    
+.. code-block:: cpp
+
         std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-        // Assert that initial_populations has the right shape.
+We assert that vector has the correct size by checking that the number of ``InfectionStates`` and the number of subcomaprtments are correct.
+
+.. code-block:: cpp
+
         if (initial_populations.size() != (size_t)InfState::Count) {
             mio::log_error(
                 "The number of vectors in initial_populations does not match the number of InfectionStates.");
@@ -147,7 +118,10 @@ We start by defining the number of subcompartments and constructing the model.
             return 1;
         }
 
-        // Transfer the initial values in initial_populations to the model.
+Now, we transfer the vector ``initial_populations`` to the model. 
+
+.. code-block:: cpp
+
         std::vector<ScalarType> flat_initial_populations;
         for (auto&& vec : initial_populations) {
             flat_initial_populations.insert(flat_initial_populations.end(), vec.begin(), vec.end());
@@ -157,13 +131,99 @@ We start by defining the number of subcompartments and constructing the model.
         }
     }
 
-    // Perform a simulation.
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
-    // The simulation result is divided by subcompartments.
-    // We call the function calculate_compartments to get a result according to the InfectionStates.
+We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt` as follows:
+
+.. code-block:: cpp
+
+    ScalarType t0 = 0;
+    ScalarType tmax = 10;
+    ScalarType dt = 0.5;
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model);
+
+The simulation result is divided by subcompartments. We can call the function calculate_compartments to get a result according to the InfectionStates.
+
+.. code-block:: cpp
+
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
+
+We can interpolate the simulation results to a ``TimeSeries`` containing only full days and print the results to the terminal. 
+
+.. code-block:: cpp
+
     auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
     interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 12, 4);
+
+
+Remarks
+~~~~~~~~
+
+Above, we have defined the vector of initial values ``initial_populations`` directly. There also exists a function, that computes an intial value vector for the compartments based on a ``TimeSeries`` with flows that are given for a big enough time window before the simulation start. We will demonstarte this below. 
+Here, we assume that a model was already constructedas above. 
+
+We start with defining the vectors ``total_population``, ``deaths`` and ``total_confirmed_cases``that contain the respective values per age group.
+
+.. code-block:: cpp
+
+        Eigen::VectorX<ScalarType> total_population      = Eigen::VectorX<ScalarType>::Constant(1, 1000000.);
+        Eigen::VectorX<ScalarType> deaths                = Eigen::VectorX<ScalarType>::Constant(1, 10.);
+        Eigen::VectorX<ScalarType> total_confirmed_cases = Eigen::VectorX<ScalarType>::Constant(1, 16000.);
+
+
+
+Now, we will define a time series containing flows for some time before the simulation start that will later be used to compute the initial values for the compartments. 
+
+We start by defining the time step size :math:`dt` that determines the distance between the time points that will be added to the time series.  
+
+.. code-block:: cpp
+
+        ScalarType dt                                    = 0.001;
+
+We proceed by creating a time series ``flows`` that contains a vector with the size of the number of transitions that the model allows. 
+
+.. code-block:: cpp
+    
+        int num_transitions = (int)mio::lsecir::InfectionTransition::Count;
+        mio::TimeSeries<ScalarType> flows(num_transitions);
+
+Here, we define the vector that will be added to the time series for each time point. 
+
+.. code-block:: cpp
+
+        mio::TimeSeries<ScalarType>::Vector vec_flows(num_transitions);
+        vec_flows[(int)mio::lsecir::InfectionTransition::SusceptibleToExposed]                 = 2.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 1.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+        vec_flows[(int)mio::lsecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+        vec_flows                                                                              = vec_flows * dt;
+
+
+We add the first time point at :math:`-110` and add time points until time :math:`0` where the time step size :math:`dt`determines the distance between the time points. 
+
+.. code-block:: cpp
+
+        flows.add_time_point(-110, vec_flows);
+        while (flows.get_last_time() < -dt / 2) {
+            flows.add_time_point(flows.get_last_time() + dt, vec_flows);
+        }
+
+Now, we can construct an object of type ``Initializer`` where the computations for the initial value vector will be performed.
+
+.. code-block:: cpp
+
+        mio::lsecir::Initializer<Model> initializer(std::move(flows), model);
+
+Finally, we can compute the initialization vector. This is based on the knowledge of the flows as well as the Erlang-distributed stay times in the respective compartments. For further details, see the documentation of the function.
+
+.. code-block:: cpp
+
+        auto status = initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
+    
 
 
 
