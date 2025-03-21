@@ -121,7 +121,7 @@ Subpopulations stratified by region and infection state are saved in a ``mio::Ti
     //Print result object to console. Infection state "Xi" with i=0,...,3 is the number of agents having infection state X in region i
     result.print_table({"S0", "E0", "C0", "I0", "R0", "D0", "S1", "E1", "C1", "I1", "R1", "D1", "S2", "E2", "C2", "I2", "R2", "D2", "S3", "E3", "C3", "I3", "R3", "D3"})
 
-If one wants to interpolate the aggregated results to a TimeSeries containing only full days, this can be done by
+If one wants to interpolate the aggregated results to a ``mio::TimeSeries`` containing only full days, this can be done by
 
 .. code-block:: cpp
 
