@@ -7,7 +7,8 @@ Model Creation
    :maxdepth: 1
 
    structure
-   ode
-   sde
-   ide
+   ode_creation
+   lct_creation
+   sde_creation
+   ide_creation
     
