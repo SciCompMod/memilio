@@ -18,7 +18,7 @@ given by a system of ordinary differential equations. For example we consider a 
 and some initial values for :math:`t=0`. Here :math:`N_{\perp D} := S(t) + I(t) + R(t)`.
 
 This type of model is called compartmental model, because the model population is represented by discrete infection
-states**S**usceptible, **I**nfected, **R**ecovered, **D**ead, also called compartments.
+states **S** usceptible, **I** nfected, **R** ecovered, **D** ead, also called compartments.
 
 How to define an ODE model
 --------------------------

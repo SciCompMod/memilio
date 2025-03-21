@@ -58,6 +58,7 @@ The ABM implements a detailed disease progression model that captures the full c
    * **Dead**: Deceased due to infection
 
 2. **Viral Load Dynamics**: The model implements realistic viral load curves based on scientific data:
+
    * **Incline Phase**: Rapid increase in viral concentration
    * **Peak**: Maximum viral load
    * **Decline Phase**: Gradual decrease until clearance
@@ -65,13 +66,16 @@ The ABM implements a detailed disease progression model that captures the full c
 3. **Infectiousness**: The probability of transmitting the virus depends on viral load through an invlogit function.
 
 4. **Stochastic Transitions**: Progression between states is stochastic, with age-dependent probabilities:
+
    * The duration in each state is drawn from distributions in the model parameters
    * Prior immunity (from vaccination or previous infection) affects:
+
      * Viral load (reduced peak)
      * Severity progression (reduced probability of severe outcomes)
      * Duration of infectious period
    
 5. **Infection Course**: The infection course is determined by:
+
    * Age group of the person
    * Virus variant
    * Protection status (prior immunity)

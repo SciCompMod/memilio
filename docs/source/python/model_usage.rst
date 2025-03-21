@@ -29,7 +29,7 @@ Python and C++.
       
       C++:
 
-      .. code-block:: c++
+      .. code-block:: cpp
 
 
          #include "ode_seir/model.h"

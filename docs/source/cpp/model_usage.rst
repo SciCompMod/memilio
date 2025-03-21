@@ -10,4 +10,3 @@ Model Usage
    individual_models
    mobility_metapop
    io
-   visualization
