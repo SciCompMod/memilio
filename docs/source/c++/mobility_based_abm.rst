@@ -307,12 +307,3 @@ Finally, we can print the data to a text file:
    std::get<0>(log).print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
    std::cout << "Results written to abm_minimal.txt" << std::endl;
 
-[THIS SECTION NEEDS EXAMPLE OUTPUT IMAGES - Add two images showing model output]
-
-Current limitations
--------------------
-
-Currently, a few things are not yet implemented, such as:
-
-* Different trips for each day
-* Trace functionality
