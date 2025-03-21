@@ -41,9 +41,10 @@ void bind_parameter_distribution_normal(py::module_& m, std::string const& name)
 {
     bind_class<mio::ParameterDistributionNormal, EnablePickling::IfAvailable, mio::ParameterDistribution>(m,
                                                                                                           name.c_str())
+        .def(py::init<double, double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
+             py::arg("std_dev"), py::arg("quantile"))
         .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
-             py::arg("std_dev"))
-        .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
+             py::arg("quantile"))
         .def(py::init<double, double>(), py::arg("mean"), py::arg("std_dev"))
         .def_property("mean", &mio::ParameterDistributionNormal::get_mean, &mio::ParameterDistributionNormal::set_mean)
         .def_property("standard_dev", &mio::ParameterDistributionNormal::get_standard_dev,
