@@ -1,4 +1,4 @@
-IDE Models
+IDE models
 ==========
 
 In MEmilio, two models based on integro-differential equations are implemented. They have different infection states and are solved with different numerical solvers. Their respective usage is described below.
@@ -6,6 +6,9 @@ In MEmilio, two models based on integro-differential equations are implemented. 
 
 IDE-SECIR model
 ----------------
+
+Introduction
+~~~~~~~~~~~~~
 
 This model is based on integro-differential equations.
 The eight compartments 
@@ -21,6 +24,9 @@ The eight compartments
 
 are used to simulate the spread of the disease and corresponding transition distributions can be set in a flexible way. 
 
+Simulation
+~~~~~~~~~~~
+
 The simulation runs in discrete time steps using a non-standard numerical scheme. This approach is based on the paper `"A non-standard numerical scheme for an age-of infection epidemic model" by Messina et al., Journal of Computational Dynamics, 2022 <https://doi.org/10.3934/jcd.2021029>`_. 
 
 For a detailed description and application of the model, see:
@@ -29,7 +35,7 @@ Wendler A, Plötzke L, Tritzschak H, Kühn MJ (2024) A nonstandard numerical sch
 
 
 How to: Set up and run a simulation of the IDE-SECIR model
------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The numerical solver requires a fixed time step size which we define by
 
@@ -215,6 +221,8 @@ If one wants to interpolate the results to a ``TimeSeries`` containing only full
 IDE-SEIR model
 ---------------
 
+Introduction
+~~~~~~~~~~~~~
 The four compartments 
 - `Susceptible` (:math:`S`), may become exposed at any time
 - `Exposed` (:math:`E`), becomes infected after some time
@@ -222,6 +230,9 @@ The four compartments
 - `Recovered` (:math:`R`)
 
 are used to simulate the spread of the disease. 
+
+Simulation
+~~~~~~~~~~~
 
 The simulation runs in discrete time steps using a trapezoidal rule. The model and the numerical scheme is based on the paper `"Modeling infectious diseases using integro-differential equations: Optimal
 control strategies for policy decisions and Applications in COVID-19" by Keimer and Pflug, 2020 <http://dx.doi.org/10.13140/RG.2.2.10845.44000>`_. 
@@ -231,7 +242,7 @@ For a detailed description and application of the model, see:
 Plötzke L (2021) Modellierung epidemischer Infektionskrankheiten auf der Basis von gewöhnlichen und Integro-Differentialgleichungen. Bachelor thesis, University of Cologne. https://elib.dlr.de/143504/
 
 How to: Set up and run a simulation of the IDE-SEIR model
-----------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To initialize the model, the following inputs need to be passed to the model constructor:
 - a time series containing the number of Susceptibles for a large enough number of time points before the start of the simulation,

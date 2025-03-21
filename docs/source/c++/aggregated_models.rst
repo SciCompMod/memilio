@@ -8,5 +8,6 @@ There are different equation-based models implemented in MEmilio that consider a
 
     ode
     lct
+    glct
     sde
     ide
