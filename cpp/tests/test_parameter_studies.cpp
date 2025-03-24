@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/parameter_distributions.h"
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
@@ -239,6 +240,37 @@ TEST(ParameterStudies, test_uniform_distribution)
     }
 }
 
+TEST(ParameterStudies, test_lognormal_distribution)
+{
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
+    // check if full argument constructor works correctly
+    mio::ParameterDistributionLogNormal parameter_dist_lognorm(0.0, 0.25);
+
+    EXPECT_EQ(parameter_dist_lognorm.get_log_mean(), 0.0);
+    EXPECT_EQ(parameter_dist_lognorm.get_log_stddev(), 0.25);
+}
+
+TEST(ParameterStudies, test_exponential_distribution)
+{
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
+    // check if full argument constructor works correctly
+    mio::ParameterDistributionExponential parameter_dist_exponential(1.);
+
+    EXPECT_EQ(parameter_dist_exponential.get_rate(), 1.0);
+}
+
+TEST(ParameterStudies, test_constant_distribution)
+{
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
+
+    // check if full argument constructor works correctly
+    mio::ParameterDistributionConstant parameter_dist_constant(2.);
+
+    EXPECT_EQ(parameter_dist_constant.get_constant(), 2.0);
+}
+
 TEST(ParameterStudies, test_predefined_samples)
 {
     mio::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
@@ -262,6 +294,27 @@ TEST(ParameterStudies, test_predefined_samples)
     // predefined sample was deleted, get real sample which cannot be 2 due to [min,max]
     var = parameter_dist_normal.get_sample(mio::thread_local_rng());
     EXPECT_NE(var, 2);
+
+    mio::ParameterDistributionLogNormal parameter_dist_lognorm(0.0, 0.25);
+    //set predefined sample
+    parameter_dist_lognorm.add_predefined_sample(-5.);
+    var = parameter_dist_lognorm.get_sample(mio::thread_local_rng());
+    EXPECT_EQ(var, -5.);
+
+    mio::ParameterDistributionExponential parameter_dist_exponential(1.);
+    //set predefined sample
+    parameter_dist_exponential.add_predefined_sample(-2.);
+    var = parameter_dist_exponential.get_sample(mio::thread_local_rng());
+    EXPECT_EQ(var, -2.);
+
+    mio::ParameterDistributionConstant parameter_dist_constant(3.);
+    //set predefined sample
+    parameter_dist_constant.add_predefined_sample(1.);
+    var = parameter_dist_constant.get_sample(mio::thread_local_rng());
+    EXPECT_EQ(var, 1.);
+    //get another sample with should be the constant
+    var = parameter_dist_constant.get_sample(mio::thread_local_rng());
+    EXPECT_EQ(var, 3.);
 }
 
 TEST(ParameterStudies, check_ensemble_run_result)

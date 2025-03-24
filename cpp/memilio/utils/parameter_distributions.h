@@ -470,16 +470,6 @@ public:
         return {m_lower_bound, m_upper_bound};
     }
 
-    void set_lower_bound(double lower_bound)
-    {
-        m_lower_bound = lower_bound;
-    }
-
-    void set_upper_bound(double upper_bound)
-    {
-        m_upper_bound = upper_bound;
-    }
-
     double get_lower_bound() const
     {
         return m_lower_bound;
@@ -605,16 +595,6 @@ public:
     std::vector<double> params() const override
     {
         return {m_log_mean, m_log_stddev};
-    }
-
-    void set_log_mean(double log_mean)
-    {
-        m_log_mean = log_mean;
-    }
-
-    void set_log_stddev(double log_stddev)
-    {
-        m_log_stddev = log_stddev;
     }
 
     double get_log_mean() const
@@ -744,11 +724,6 @@ public:
         return {m_rate};
     }
 
-    void set_rate(double rate)
-    {
-        m_rate = rate;
-    }
-
     double get_rate() const
     {
         return m_rate;
@@ -864,11 +839,6 @@ public:
     std::vector<double> params() const override
     {
         return {m_constant};
-    }
-
-    void set_constant(double constant)
-    {
-        m_constant = constant;
     }
 
     double get_constant() const

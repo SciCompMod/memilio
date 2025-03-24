@@ -56,10 +56,8 @@ void bind_parameter_distribution_uniform(py::module_& m, std::string const& name
     bind_class<mio::ParameterDistributionUniform, EnablePickling::IfAvailable, mio::ParameterDistribution>(m,
                                                                                                            name.c_str())
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"))
-        .def_property("lower_bound", &mio::ParameterDistributionUniform::get_lower_bound,
-                      &mio::ParameterDistributionUniform::set_lower_bound)
-        .def_property("upper_bound", &mio::ParameterDistributionUniform::get_upper_bound,
-                      &mio::ParameterDistributionUniform::set_upper_bound);
+        .def_property("lower_bound", &mio::ParameterDistributionUniform::get_lower_bound)
+        .def_property("upper_bound", &mio::ParameterDistributionUniform::get_upper_bound);
 }
 
 } // namespace pymio
