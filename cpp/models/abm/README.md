@@ -1,12 +1,12 @@
 # Agent-Based Model
 
-This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike the [SECIR](../ode_secir/README.md) compartmental model that uses a system of ODEs, this model simulates the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the model and interacting with (infecting) each other.
+This module models and simulates the epidemic using an agent-based model (*ABM*) approach. Unlike compartmental models like the [SECIR](../ode_secir/README.md) model that uses a system of ODEs, this model simulates the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the model and interacting with (infecting) each other.
 
 ## Structure
 
 The model consists of the following major classes:
 
-1. Person: represents an agent of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
+1. Person: represents an agent of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations it can visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
 2. Infection: collection of all information about a persons' infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model.
 3. Location: represents places in the model where people meet and interact, e.g. home, school, work, social event sites. A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and one can activate NPIs like mandatory masks or tests to enter the location.
 4. Model: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the mobility phase.
@@ -18,11 +18,11 @@ The simulation runs in discrete time steps. Each step has two phases, an interac
 
 ### Interaction Phase
 
-In this phase, each person interacts with the other persons at the same location. This interaction determines the transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infected and the immunity level of the susceptible person.
+In this phase, each person interacts with the other persons at the same location. This interaction determines the transmission of the disease. A susceptible person can become infected by contact with an infected person. The probability of infection depends on a multitude of factors, such as the viral load and infectiousness of the infected and the immunity level of the susceptible person at the time of transmission.
 
 ### Mobility Phase
 
-During the mobility phase, each person may change their location. Mobility follows complex [rules](../abm/mobility_rules.cpp), considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location. You can restrict some mobility rules by allowing only a proportion of people to enter specific locations.
+During the mobility phase, each person may change their location. Mobility follows complex [rules](../abm/mobility_rules.cpp), considering the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend). When agents are tested positive, they are quarantined and cannot leave their home, unless their infection becomes worse and they have to go to the hospital or the ICU. In general, if an agent suffers from severe or critical symptoms, it will move to the hospital or ICU with highest priority. Some mobility rules can be restricted by allowing only a proportion of people to enter specific locations.
 
 Another way of mobility we use in the simulation of Braunschweig (simulations/abm_braunschweig.cpp) is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed and where the person is heading to. At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. There can be different trips on the weekend than during the week, but other than that, the agents do the same trips every day. As before, agents that are in quarantine or in the hospital cannot change their location.
 
@@ -129,7 +129,7 @@ Then we run the simulation.
 sim.advance(mio::abm::TimePoint(0) + mio::abm::days(30));
 ```
 
-Alternitavely if we want to track things in the simulation, we need to set up a [history](../../memilio/io/README.md#the-history-object), for example, to track all the Infection states of each simulation step.
+Alternitavely, if we want to track things in the simulation, we need to set up a [history](../../memilio/io/README.md#the-history-object), for example, to track all the Infection states of each simulation step.
 
 ```cpp
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> history;
