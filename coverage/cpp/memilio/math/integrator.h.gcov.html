@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-24 08:14:53</td>
+            <td class="headerValue">2025-03-24 13:03:19</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">17</td>
@@ -151,13 +151,13 @@
 <a name="89"><span class="lineNum">      89 </span>            :      * @return A reference to the minimum possible value of dt.</a>
 <a name="90"><span class="lineNum">      90 </span>            :      * @{</a>
 <a name="91"><span class="lineNum">      91 </span>            :      */</a>
-<a name="92"><span class="lineNum">      92 </span><span class="lineCov">     224549 :     FP&amp; get_dt_min()</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">     224513 :     FP&amp; get_dt_min()</span></a>
 <a name="93"><span class="lineNum">      93 </span>            :     {</a>
-<a name="94"><span class="lineNum">      94 </span><span class="lineCov">     224549 :         return m_dt_min;</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">     224513 :         return m_dt_min;</span></a>
 <a name="95"><span class="lineNum">      95 </span>            :     }</a>
-<a name="96"><span class="lineNum">      96 </span><span class="lineCov">     538092 :     const FP&amp; get_dt_min() const</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">     560537 :     const FP&amp; get_dt_min() const</span></a>
 <a name="97"><span class="lineNum">      97 </span>            :     {</a>
-<a name="98"><span class="lineNum">      98 </span><span class="lineCov">     538092 :         return m_dt_min;</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">     560537 :         return m_dt_min;</span></a>
 <a name="99"><span class="lineNum">      99 </span>            :     }</a>
 <a name="100"><span class="lineNum">     100 </span>            :     /** @} */</a>
 <a name="101"><span class="lineNum">     101 </span>            : </a>
@@ -171,9 +171,9 @@
 <a name="109"><span class="lineNum">     109 </span>            :     {</a>
 <a name="110"><span class="lineNum">     110 </span><span class="lineCov">       1106 :         return m_dt_max;</span></a>
 <a name="111"><span class="lineNum">     111 </span>            :     }</a>
-<a name="112"><span class="lineNum">     112 </span><span class="lineCov">     211812 :     const FP&amp; get_dt_max() const</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">     220232 :     const FP&amp; get_dt_max() const</span></a>
 <a name="113"><span class="lineNum">     113 </span>            :     {</a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">     211812 :         return m_dt_max;</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">     220232 :         return m_dt_max;</span></a>
 <a name="115"><span class="lineNum">     115 </span>            :     }</a>
 <a name="116"><span class="lineNum">     116 </span>            :     /** @} */</a>
 <a name="117"><span class="lineNum">     117 </span>            : </a>
@@ -231,28 +231,28 @@
 <a name="169"><span class="lineNum">     169 </span><span class="lineCov">      56254 :         FP dt_min_restore = m_core-&gt;get_dt_min(); // used to restore dt_min, if it was decreased to reach tmax</span></a>
 <a name="170"><span class="lineNum">     170 </span><span class="lineCov">      56254 :         FP t              = t0;</span></a>
 <a name="171"><span class="lineNum">     171 </span>            : </a>
-<a name="172"><span class="lineNum">     172 </span><span class="lineCov">     163933 :         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) &gt; 1e-10; ++i) {</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">     168143 :         for (size_t i = results.get_num_time_points() - 1; fabs((tmax - t) / (tmax - t0)) &gt; 1e-10; ++i) {</span></a>
 <a name="173"><span class="lineNum">     173 </span>            :             // We don't make time steps too small as the error estimator of an adaptive integrator</a>
 <a name="174"><span class="lineNum">     174 </span>            :             //may not be able to handle it. this is very conservative and maybe unnecessary,</a>
 <a name="175"><span class="lineNum">     175 </span>            :             //but also unlikely to happen. may need to be reevaluated.</a>
 <a name="176"><span class="lineNum">     176 </span>            : </a>
-<a name="177"><span class="lineNum">     177 </span><span class="lineCov">     107679 :             if (dt &gt; tmax - t) {</span></a>
-<a name="178"><span class="lineNum">     178 </span><span class="lineCov">      55957 :                 dt_restore = dt;</span></a>
-<a name="179"><span class="lineNum">     179 </span><span class="lineCov">      55957 :                 dt         = tmax - t;</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">     111889 :             if (dt &gt; tmax - t) {</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">      55939 :                 dt_restore = dt;</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">      55939 :                 dt         = tmax - t;</span></a>
 <a name="180"><span class="lineNum">     180 </span>            :                 // if necessary, also reduce minimal step size such that we do not step past tmax</a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">      55957 :                 m_core-&gt;get_dt_min() = min(tmax - t, m_core-&gt;get_dt_min());</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">      55939 :                 m_core-&gt;get_dt_min() = min(tmax - t, m_core-&gt;get_dt_min());</span></a>
 <a name="182"><span class="lineNum">     182 </span>            :                 // if dt_min was reduced, the following step will be the last due to dt == dt_min (see step method)</a>
 <a name="183"><span class="lineNum">     183 </span>            :                 // dt_min must be restored after this loop</a>
 <a name="184"><span class="lineNum">     184 </span>            :             }</a>
 <a name="185"><span class="lineNum">     185 </span>            : </a>
-<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     107679 :             dt_copy = dt;</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     111889 :             dt_copy = dt;</span></a>
 <a name="187"><span class="lineNum">     187 </span>            : </a>
-<a name="188"><span class="lineNum">     188 </span><span class="lineCov">     107679 :             results.add_time_point();</span></a>
-<a name="189"><span class="lineNum">     189 </span><span class="lineCov">     107679 :             step_okay &amp;= m_core-&gt;step(f, results[i], t, dt, results[i + 1]);</span></a>
-<a name="190"><span class="lineNum">     190 </span><span class="lineCov">     107679 :             results.get_last_time() = t;</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">     111889 :             results.add_time_point();</span></a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">     111889 :             step_okay &amp;= m_core-&gt;step(f, results[i], t, dt, results[i + 1]);</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">     111889 :             results.get_last_time() = t;</span></a>
 <a name="191"><span class="lineNum">     191 </span>            : </a>
 <a name="192"><span class="lineNum">     192 </span>            :             // if dt has been changed by step, register the current m_core as adaptive.</a>
-<a name="193"><span class="lineNum">     193 </span><span class="lineCov">     107679 :             m_is_adaptive |= !floating_point_equal&lt;FP&gt;(dt, dt_copy, Limits&lt;FP&gt;::zero_tolerance());</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">     111889 :             m_is_adaptive |= !floating_point_equal&lt;FP&gt;(dt, dt_copy, Limits&lt;FP&gt;::zero_tolerance());</span></a>
 <a name="194"><span class="lineNum">     194 </span>            :         }</a>
 <a name="195"><span class="lineNum">     195 </span><span class="lineCov">      56254 :         m_core-&gt;get_dt_min() = dt_min_restore; // restore dt_min</span></a>
 <a name="196"><span class="lineNum">     196 </span>            :         // if dt was decreased to reach tmax in the last time iteration,</a>

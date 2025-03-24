@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-24 08:14:53</td>
+            <td class="headerValue">2025-03-24 13:03:19</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">21</td>
@@ -236,28 +236,28 @@
 <a name="174"><span class="lineNum">     174 </span>            :     }</a>
 <a name="175"><span class="lineNum">     175 </span><span class="lineCov">       1072 : }</span></a>
 <a name="176"><span class="lineNum">     176 </span>            : </a>
-<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        382 : bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator&amp; rng, Person&amp; person, const Location&amp; location,</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        454 : bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator&amp; rng, Person&amp; person, const Location&amp; location,</span></a>
 <a name="178"><span class="lineNum">     178 </span>            :                                    TimePoint t)</a>
 <a name="179"><span class="lineNum">     179 </span>            : {</a>
 <a name="180"><span class="lineNum">     180 </span>            :     // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.</a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">        382 :     if (location.get_type() == mio::abm::LocationType::Home) {</span></a>
-<a name="182"><span class="lineNum">     182 </span><span class="lineCov">         45 :         return true;</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">        454 :     if (location.get_type() == mio::abm::LocationType::Home) {</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">         81 :         return true;</span></a>
 <a name="183"><span class="lineNum">     183 </span>            :     }</a>
 <a name="184"><span class="lineNum">     184 </span>            : </a>
 <a name="185"><span class="lineNum">     185 </span>            :     // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.</a>
-<a name="186"><span class="lineNum">     186 </span><span class="lineCov">        337 :     if (!person.is_compliant(rng, InterventionType::Testing)) {</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">        373 :     if (!person.is_compliant(rng, InterventionType::Testing)) {</span></a>
 <a name="187"><span class="lineNum">     187 </span><span class="lineCov">         18 :         return false;</span></a>
 <a name="188"><span class="lineNum">     188 </span>            :     }</a>
 <a name="189"><span class="lineNum">     189 </span>            : </a>
 <a name="190"><span class="lineNum">     190 </span>            :     // Lookup schemes for this specific location as well as the location type</a>
 <a name="191"><span class="lineNum">     191 </span>            :     // Lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes</a>
-<a name="192"><span class="lineNum">     192 </span><span class="lineCov">       1869 :     for (auto key : {std::make_pair(location.get_type(), location.get_id()),</span></a>
-<a name="193"><span class="lineNum">     193 </span><span class="lineCov">       2188 :                      std::make_pair(location.get_type(), LocationId::invalid_id())}) {</span></a>
-<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        638 :         auto iter_schemes =</span></a>
-<a name="195"><span class="lineNum">     195 </span><span class="lineCov">        638 :             std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&amp;](const auto&amp; p) {</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">       2085 :     for (auto key : {std::make_pair(location.get_type(), location.get_id()),</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">       2440 :                      std::make_pair(location.get_type(), LocationId::invalid_id())}) {</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        710 :         auto iter_schemes =</span></a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">        710 :             std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&amp;](const auto&amp; p) {</span></a>
 <a name="196"><span class="lineNum">     196 </span><span class="lineCov">        198 :                 return p.type == key.first &amp;&amp; p.id == key.second;</span></a>
 <a name="197"><span class="lineNum">     197 </span>            :             });</a>
-<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        638 :         if (iter_schemes != m_location_to_schemes_map.end()) {</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        710 :         if (iter_schemes != m_location_to_schemes_map.end()) {</span></a>
 <a name="199"><span class="lineNum">     199 </span>            :             // Apply all testing schemes that are found</a>
 <a name="200"><span class="lineNum">     200 </span><span class="lineCov">         81 :             auto&amp; schemes = iter_schemes-&gt;schemes;</span></a>
 <a name="201"><span class="lineNum">     201 </span>            :             // Whether the Person is allowed to enter or not depends on the test result(s).</a>
@@ -268,7 +268,7 @@
 <a name="206"><span class="lineNum">     206 </span>            :             }</a>
 <a name="207"><span class="lineNum">     207 </span>            :         }</a>
 <a name="208"><span class="lineNum">     208 </span>            :     }</a>
-<a name="209"><span class="lineNum">     209 </span><span class="lineCov">        274 :     return true;</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">        310 :     return true;</span></a>
 <a name="210"><span class="lineNum">     210 </span>            : }</a>
 <a name="211"><span class="lineNum">     211 </span>            : </a>
 <a name="212"><span class="lineNum">     212 </span>            : } // namespace abm</a>
