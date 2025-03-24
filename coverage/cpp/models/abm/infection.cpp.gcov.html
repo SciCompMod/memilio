@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-19 08:00:17</td>
+            <td class="headerValue">2025-03-24 08:14:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">12</td>
@@ -153,8 +153,8 @@
 <a name="91"><span class="lineNum">      91 </span><span class="lineCov">         18 :         return InfectionState::Susceptible;</span></a>
 <a name="92"><span class="lineNum">      92 </span>            : </a>
 <a name="93"><span class="lineNum">      93 </span><span class="lineCov">      14238 :     return (*std::prev(std::upper_bound(m_infection_course.begin(), m_infection_course.end(), t,</span></a>
-<a name="94"><span class="lineNum">      94 </span><span class="lineCov">      32706 :                                         [](const TimePoint&amp; s, std::pair&lt;TimePoint, InfectionState&gt; state) {</span></a>
-<a name="95"><span class="lineNum">      95 </span><span class="lineCov">      32706 :                                             return state.first &gt; s;</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">      32850 :                                         [](const TimePoint&amp; s, std::pair&lt;TimePoint, InfectionState&gt; state) {</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">      32850 :                                             return state.first &gt; s;</span></a>
 <a name="96"><span class="lineNum">      96 </span><span class="lineCov">      28476 :                                         })))</span></a>
 <a name="97"><span class="lineNum">      97 </span><span class="lineCov">      14238 :         .second;</span></a>
 <a name="98"><span class="lineNum">      98 </span>            : }</a>
@@ -195,8 +195,8 @@
 <a name="133"><span class="lineNum">     133 </span><span class="lineCov">        522 :     m_infection_course.push_back(std::pair&lt;TimePoint, InfectionState&gt;(t, next_state));</span></a>
 <a name="134"><span class="lineNum">     134 </span><span class="lineCov">        522 :     auto&amp; uniform_dist = UniformDistribution&lt;double&gt;::get_instance();</span></a>
 <a name="135"><span class="lineNum">     135 </span>            :     ScalarType v; // random draws</a>
-<a name="136"><span class="lineNum">     136 </span><span class="lineCov">       1134 :     while ((next_state != InfectionState::Recovered &amp;&amp; next_state != InfectionState::Dead)) {</span></a>
-<a name="137"><span class="lineNum">     137 </span><span class="lineCov">        612 :         switch (next_state) {</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">       1080 :     while ((next_state != InfectionState::Recovered &amp;&amp; next_state != InfectionState::Dead)) {</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">        558 :         switch (next_state) {</span></a>
 <a name="138"><span class="lineNum">     138 </span><span class="lineCov">         72 :         case InfectionState::Exposed:</span></a>
 <a name="139"><span class="lineNum">     139 </span>            :             // roll out how long until infected without symptoms</a>
 <a name="140"><span class="lineNum">     140 </span><span class="lineCov">         72 :             time_period = days(params.get&lt;IncubationPeriod&gt;()[{m_virus_variant, age}]); // subject to change</span></a>
@@ -207,71 +207,71 @@
 <a name="145"><span class="lineNum">     145 </span><span class="lineCov">        207 :             v = uniform_dist(rng);</span></a>
 <a name="146"><span class="lineNum">     146 </span><span class="lineCov">        207 :             if (v &lt; 0.5) { // TODO: subject to change</span></a>
 <a name="147"><span class="lineNum">     147 </span>            :                 time_period =</a>
-<a name="148"><span class="lineNum">     148 </span><span class="lineCov">         81 :                     days(params.get&lt;InfectedNoSymptomsToSymptoms&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         81 :                 next_state = InfectionState::InfectedSymptoms;</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">         45 :                     days(params.get&lt;InfectedNoSymptomsToSymptoms&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         45 :                 next_state = InfectionState::InfectedSymptoms;</span></a>
 <a name="150"><span class="lineNum">     150 </span>            :             }</a>
 <a name="151"><span class="lineNum">     151 </span>            :             else {</a>
-<a name="152"><span class="lineNum">     152 </span><span class="lineCov">        378 :                 time_period = days(</span></a>
-<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        378 :                     params.get&lt;InfectedNoSymptomsToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="154"><span class="lineNum">     154 </span><span class="lineCov">        126 :                 next_state = InfectionState::Recovered;</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">        486 :                 time_period = days(</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        486 :                     params.get&lt;InfectedNoSymptomsToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">        162 :                 next_state = InfectionState::Recovered;</span></a>
 <a name="155"><span class="lineNum">     155 </span>            :             }</a>
 <a name="156"><span class="lineNum">     156 </span>            : </a>
 <a name="157"><span class="lineNum">     157 </span><span class="lineCov">        207 :             break;</span></a>
-<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        207 :         case InfectionState::InfectedSymptoms:</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        171 :         case InfectionState::InfectedSymptoms:</span></a>
 <a name="159"><span class="lineNum">     159 </span>            :             // roll out next infection step</a>
 <a name="160"><span class="lineNum">     160 </span>            :             {</a>
-<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        207 :                 ScalarType severity_protection_factor = 0.5;</span></a>
-<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        207 :                 v                                     = uniform_dist(rng);</span></a>
-<a name="163"><span class="lineNum">     163 </span><span class="lineCov">        207 :                 if (latest_protection.type != ProtectionType::NoProtection) {</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        171 :                 ScalarType severity_protection_factor = 0.5;</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        171 :                 v                                     = uniform_dist(rng);</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">        171 :                 if (latest_protection.type != ProtectionType::NoProtection) {</span></a>
 <a name="164"><span class="lineNum">     164 </span>            :                     severity_protection_factor =</a>
 <a name="165"><span class="lineNum">     165 </span><span class="lineCov">         18 :                         params.get&lt;SeverityProtectionFactor&gt;()[{latest_protection.type, age, m_virus_variant}](</span></a>
 <a name="166"><span class="lineNum">     166 </span><span class="lineCov">          9 :                             t.days() - latest_protection.time.days());</span></a>
 <a name="167"><span class="lineNum">     167 </span>            :                 }</a>
-<a name="168"><span class="lineNum">     168 </span><span class="lineCov">        207 :                 if (v &lt; (1 - severity_protection_factor) * 0.5) {</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">        171 :                 if (v &lt; (1 - severity_protection_factor) * 0.5) {</span></a>
 <a name="169"><span class="lineNum">     169 </span>            :                     time_period =</a>
-<a name="170"><span class="lineNum">     170 </span><span class="lineCov">         45 :                         days(params.get&lt;InfectedSymptomsToSevere&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">         45 :                     next_state = InfectionState::InfectedSevere;</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">         27 :                         days(params.get&lt;InfectedSymptomsToSevere&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">         27 :                     next_state = InfectionState::InfectedSevere;</span></a>
 <a name="172"><span class="lineNum">     172 </span>            :                 }</a>
 <a name="173"><span class="lineNum">     173 </span>            :                 else {</a>
-<a name="174"><span class="lineNum">     174 </span><span class="lineCov">        486 :                     time_period = days(</span></a>
-<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        486 :                         params.get&lt;InfectedSymptomsToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        162 :                     next_state = InfectionState::Recovered;</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">        432 :                     time_period = days(</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        432 :                         params.get&lt;InfectedSymptomsToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        144 :                     next_state = InfectionState::Recovered;</span></a>
 <a name="177"><span class="lineNum">     177 </span>            :                 }</a>
-<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        207 :                 break;</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        171 :                 break;</span></a>
 <a name="179"><span class="lineNum">     179 </span>            :             }</a>
-<a name="180"><span class="lineNum">     180 </span><span class="lineCov">         90 :         case InfectionState::InfectedSevere:</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">         72 :         case InfectionState::InfectedSevere:</span></a>
 <a name="181"><span class="lineNum">     181 </span>            :             // roll out next infection step</a>
-<a name="182"><span class="lineNum">     182 </span><span class="lineCov">         90 :             v = uniform_dist(rng);</span></a>
-<a name="183"><span class="lineNum">     183 </span><span class="lineCov">         90 :             if (v &lt; 0.25) { // TODO: subject to change</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">         72 :             v = uniform_dist(rng);</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">         72 :             if (v &lt; 0.25) { // TODO: subject to change</span></a>
 <a name="184"><span class="lineNum">     184 </span><span class="lineCov">          9 :                 time_period = days(params.get&lt;SevereToDead&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
 <a name="185"><span class="lineNum">     185 </span><span class="lineCov">          9 :                 next_state  = InfectionState::Dead;</span></a>
-<a name="186"><span class="lineNum">     186 </span><span class="lineCov">         81 :             } else if  (v &lt; 0.5) { // TODO: subject to change</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">         63 :             } else if  (v &lt; 0.5) { // TODO: subject to change</span></a>
 <a name="187"><span class="lineNum">     187 </span><span class="lineCov">         18 :                 time_period = days(params.get&lt;SevereToCritical&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
 <a name="188"><span class="lineNum">     188 </span><span class="lineCov">         18 :                 next_state  = InfectionState::InfectedCritical;</span></a>
 <a name="189"><span class="lineNum">     189 </span>            :             }</a>
 <a name="190"><span class="lineNum">     190 </span>            :             else {</a>
-<a name="191"><span class="lineNum">     191 </span><span class="lineCov">         63 :                 time_period = days(params.get&lt;SevereToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="192"><span class="lineNum">     192 </span><span class="lineCov">         63 :                 next_state  = InfectionState::Recovered;</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">         45 :                 time_period = days(params.get&lt;SevereToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">         45 :                 next_state  = InfectionState::Recovered;</span></a>
 <a name="193"><span class="lineNum">     193 </span>            :             }</a>
-<a name="194"><span class="lineNum">     194 </span><span class="lineCov">         90 :             break;</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">         72 :             break;</span></a>
 <a name="195"><span class="lineNum">     195 </span><span class="lineCov">         36 :         case InfectionState::InfectedCritical:</span></a>
 <a name="196"><span class="lineNum">     196 </span>            :             // roll out next infection step</a>
 <a name="197"><span class="lineNum">     197 </span><span class="lineCov">         36 :             v = uniform_dist(rng);</span></a>
 <a name="198"><span class="lineNum">     198 </span><span class="lineCov">         36 :             if (v &lt; 0.5) { // TODO: subject to change</span></a>
-<a name="199"><span class="lineNum">     199 </span><span class="lineCov">         18 :                 time_period = days(params.get&lt;CriticalToDead&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="200"><span class="lineNum">     200 </span><span class="lineCov">         18 :                 next_state  = InfectionState::Dead;</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">          9 :                 time_period = days(params.get&lt;CriticalToDead&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">          9 :                 next_state  = InfectionState::Dead;</span></a>
 <a name="201"><span class="lineNum">     201 </span>            :             }</a>
 <a name="202"><span class="lineNum">     202 </span>            :             else {</a>
 <a name="203"><span class="lineNum">     203 </span>            :                 time_period =</a>
-<a name="204"><span class="lineNum">     204 </span><span class="lineCov">         18 :                     days(params.get&lt;CriticalToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="205"><span class="lineNum">     205 </span><span class="lineCov">         18 :                 next_state = InfectionState::Recovered;</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">         27 :                     days(params.get&lt;CriticalToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">         27 :                 next_state = InfectionState::Recovered;</span></a>
 <a name="206"><span class="lineNum">     206 </span>            :             }</a>
 <a name="207"><span class="lineNum">     207 </span><span class="lineCov">         36 :             break;</span></a>
 <a name="208"><span class="lineNum">     208 </span><span class="lineNoCov">          0 :         default:</span></a>
 <a name="209"><span class="lineNum">     209 </span><span class="lineNoCov">          0 :             break;</span></a>
 <a name="210"><span class="lineNum">     210 </span>            :         }</a>
-<a name="211"><span class="lineNum">     211 </span><span class="lineCov">        612 :         t = t + time_period;</span></a>
-<a name="212"><span class="lineNum">     212 </span><span class="lineCov">        612 :         m_infection_course.push_back({t, next_state});</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">        558 :         t = t + time_period;</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">        558 :         m_infection_course.push_back({t, next_state});</span></a>
 <a name="213"><span class="lineNum">     213 </span>            :     }</a>
 <a name="214"><span class="lineNum">     214 </span><span class="lineCov">        522 : }</span></a>
 <a name="215"><span class="lineNum">     215 </span>            : </a>
@@ -286,8 +286,8 @@
 <a name="224"><span class="lineNum">     224 </span><span class="lineCov">        522 :     auto&amp; uniform_dist = UniformDistribution&lt;double&gt;::get_instance();</span></a>
 <a name="225"><span class="lineNum">     225 </span>            :     ScalarType v; // random draws</a>
 <a name="226"><span class="lineNum">     226 </span>            : </a>
-<a name="227"><span class="lineNum">     227 </span><span class="lineCov">       1620 :     while ((previous_state != InfectionState::Exposed)) {</span></a>
-<a name="228"><span class="lineNum">     228 </span><span class="lineCov">       1098 :         switch (previous_state) {</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">       1638 :     while ((previous_state != InfectionState::Exposed)) {</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">       1116 :         switch (previous_state) {</span></a>
 <a name="229"><span class="lineNum">     229 </span>            : </a>
 <a name="230"><span class="lineNum">     230 </span><span class="lineCov">        450 :         case InfectionState::InfectedNoSymptoms:</span></a>
 <a name="231"><span class="lineNum">     231 </span><span class="lineCov">        450 :             time_period    = days(params.get&lt;IncubationPeriod&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
@@ -306,10 +306,10 @@
 <a name="244"><span class="lineNum">     244 </span><span class="lineCov">        153 :             previous_state = InfectionState::InfectedSymptoms;</span></a>
 <a name="245"><span class="lineNum">     245 </span><span class="lineCov">        153 :             break;</span></a>
 <a name="246"><span class="lineNum">     246 </span>            : </a>
-<a name="247"><span class="lineNum">     247 </span><span class="lineCov">         72 :         case InfectionState::InfectedCritical:</span></a>
-<a name="248"><span class="lineNum">     248 </span><span class="lineCov">         72 :             time_period    = days(params.get&lt;SevereToCritical&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="249"><span class="lineNum">     249 </span><span class="lineCov">         72 :             previous_state = InfectionState::InfectedSevere;</span></a>
-<a name="250"><span class="lineNum">     250 </span><span class="lineCov">         72 :             break;</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">         90 :         case InfectionState::InfectedCritical:</span></a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">         90 :             time_period    = days(params.get&lt;SevereToCritical&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">         90 :             previous_state = InfectionState::InfectedSevere;</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">         90 :             break;</span></a>
 <a name="251"><span class="lineNum">     251 </span>            : </a>
 <a name="252"><span class="lineNum">     252 </span><span class="lineCov">         81 :         case InfectionState::Recovered:</span></a>
 <a name="253"><span class="lineNum">     253 </span>            :             // roll out next infection step</a>
@@ -325,13 +325,13 @@
 <a name="263"><span class="lineNum">     263 </span><span class="lineCov">         18 :                 previous_state = InfectionState::InfectedSymptoms;</span></a>
 <a name="264"><span class="lineNum">     264 </span>            :             }</a>
 <a name="265"><span class="lineNum">     265 </span><span class="lineCov">         45 :             else if (v &lt; 0.75) {</span></a>
-<a name="266"><span class="lineNum">     266 </span><span class="lineCov">         27 :                 time_period = days(params.get&lt;SevereToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="267"><span class="lineNum">     267 </span><span class="lineCov">         27 :                 previous_state = InfectionState::InfectedSevere;</span></a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">          9 :                 time_period = days(params.get&lt;SevereToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">          9 :                 previous_state = InfectionState::InfectedSevere;</span></a>
 <a name="268"><span class="lineNum">     268 </span>            :             }</a>
 <a name="269"><span class="lineNum">     269 </span>            :             else {</a>
 <a name="270"><span class="lineNum">     270 </span>            :                 time_period =</a>
-<a name="271"><span class="lineNum">     271 </span><span class="lineCov">         18 :                     days(params.get&lt;CriticalToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
-<a name="272"><span class="lineNum">     272 </span><span class="lineCov">         18 :                 previous_state = InfectionState::InfectedCritical;</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">         36 :                     days(params.get&lt;CriticalToRecovered&gt;()[{m_virus_variant, age}]); // TODO: subject to change</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">         36 :                 previous_state = InfectionState::InfectedCritical;</span></a>
 <a name="273"><span class="lineNum">     273 </span>            :             }</a>
 <a name="274"><span class="lineNum">     274 </span><span class="lineCov">         81 :             break;</span></a>
 <a name="275"><span class="lineNum">     275 </span>            : </a>
@@ -350,8 +350,8 @@
 <a name="288"><span class="lineNum">     288 </span><span class="lineNoCov">          0 :         default:</span></a>
 <a name="289"><span class="lineNum">     289 </span><span class="lineNoCov">          0 :             break;</span></a>
 <a name="290"><span class="lineNum">     290 </span>            :         }</a>
-<a name="291"><span class="lineNum">     291 </span><span class="lineCov">       1098 :         start_date = start_date - time_period;</span></a>
-<a name="292"><span class="lineNum">     292 </span><span class="lineCov">       1098 :         m_infection_course.insert(m_infection_course.begin(), {start_date, previous_state});</span></a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineCov">       1116 :         start_date = start_date - time_period;</span></a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">       1116 :         m_infection_course.insert(m_infection_course.begin(), {start_date, previous_state});</span></a>
 <a name="293"><span class="lineNum">     293 </span>            :     }</a>
 <a name="294"><span class="lineNum">     294 </span><span class="lineCov">       1044 :     return start_date;</span></a>
 <a name="295"><span class="lineNum">     295 </span>            : }</a>
