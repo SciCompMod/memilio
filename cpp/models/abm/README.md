@@ -6,7 +6,7 @@ This module models and simulates the epidemic using an agent-based model (*ABM*)
 
 The model consists of the following major classes:
 
-1. Person: represents an agent of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations they visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
+1. Person: represents an agent of the model. A person has an ID, i.e. a unique number, an age, a location and a list with their assigned locations, i.e. the locations it can visit during the simulation. They can perform tests and wear masks. Every person has lists with past and current infections and vaccinations.
 2. Infection: collection of all information about a persons' infection, i.e. infectiousness, infection course, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model.
 3. Location: represents places in the model where people meet and interact, e.g. home, school, work, social event sites. A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and one can activate NPIs like mandatory masks or tests to enter the location.
 4. Model: collection of all persons and locations. It also holds information about the testing strategy of the simulation and holds the rules for the mobility phase.
