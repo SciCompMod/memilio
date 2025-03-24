@@ -74,6 +74,7 @@ Includes:
 Code Documentation:
 
   - Use doxygen docstrings. In particular
+  
     - Write an explicit `@brief` for method documentations. Continue the detailed description in the next line.
     - Always start a line with a capital letter and end with a dot.
     - The plural of classes, objects etc. should be denoted with a `%` sign between class name and plural s, e.g., `Household%s`. This is in order to visualize it correctly and provide a link on the doxygen page.
