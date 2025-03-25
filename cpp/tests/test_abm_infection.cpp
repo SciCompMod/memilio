@@ -170,13 +170,15 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
         mock_logNormal_dist;
     EXPECT_CALL(mock_logNormal_dist.get_mock(), invoke)
-        .Times(testing::Exactly(9)) // 5 draws for infection 1 and 4 for infection 2
+        .Times(testing::Exactly(13)) // 5 draws for infection 1 and 4 for infection 2 and 4 draws for infection3
         .WillRepeatedly(testing::Return(1)); // All times will be 1 day
     // Mock viral load draws and infection paths
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(14)) // 6 viral load draws and 1 infection path draw per infection
-        .WillRepeatedly(testing::Return(0.55)); // is necessary for infection 1 to recover and infection 2 to die
+        .Times(testing::Exactly(
+            22)) // 6 viral load draws per infection and 1 infection path draw per infection (for infection1 and 2) and 2 infection paths draws for infection3
+        .WillRepeatedly(testing::Return(
+            0.55)); // is necessary for infection 1 to recover, infection 2 to die and infection 3 to turn severe
 
     auto infection1 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
                                           mio::abm::InfectionState::InfectedCritical,
@@ -190,6 +192,13 @@ TEST_F(TestInfection, drawInfectionCourseForward)
                                           {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
     EXPECT_EQ(infection2.get_infection_state(t), mio::abm::InfectionState::InfectedSevere);
     EXPECT_EQ(infection2.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::Dead);
+
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.6;
+    auto infection3 = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, age_group_15_to_34, params, t,
+                                          mio::abm::InfectionState::InfectedSymptoms,
+                                          {mio::abm::ProtectionType::NoProtection, mio::abm::TimePoint(0)}, true);
+    EXPECT_EQ(infection3.get_infection_state(t), mio::abm::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(infection3.get_infection_state(t + mio::abm::days(1)), mio::abm::InfectionState::InfectedSevere);
 }
 
 /**
