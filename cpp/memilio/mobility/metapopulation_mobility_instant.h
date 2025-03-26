@@ -388,6 +388,28 @@ public:
     }
     /** @} */
 
+    template <class Sim>
+    void set_custom_mobility_return(std::function<void(Eigen::Ref<typename TimeSeries<FP>::Vector>, const Sim&,
+                                                       Eigen::Ref<const typename TimeSeries<FP>::Vector>, FP, FP)>
+                                        func)
+    {
+        if (func) {
+            m_has_custom_func = true;
+
+            m_custom_func = [func = std::move(func)](void* mobile_pop, const void* sim, const void* total, FP t,
+                                                     FP dt) {
+                auto* mobile_pop_ptr = static_cast<Eigen::Ref<typename TimeSeries<FP>::Vector>*>(mobile_pop);
+                auto* sim_ptr        = static_cast<const Sim*>(sim);
+                auto* total_ptr      = static_cast<const Eigen::Ref<const typename TimeSeries<FP>::Vector>*>(total);
+                func(*mobile_pop_ptr, *sim_ptr, *total_ptr, t, dt);
+            };
+        }
+        else {
+            m_has_custom_func = false;
+            m_custom_func     = nullptr;
+        }
+    }
+
     /**
      * compute mobility from node_from to node_to.
      * mobility is based on coefficients.
@@ -410,6 +432,9 @@ private:
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
     std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
     TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
+
+    std::function<void(void*, const void*, const void*, FP, FP)> m_custom_func;
+    bool m_has_custom_func = false;
 
     /**
      * @brief Computes a condensed version of `m_mobile_population` and stores it in `m_mobility_results`.
@@ -535,8 +560,8 @@ auto get_mobility_factors(const SimulationNode<Sim>& node, double t, const Eigen
  * detect a get_mobility_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when moving from their source node.
@@ -590,8 +615,17 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse(node_to.get_result(), m_mobile_population.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_mobility_returns<FP, Sim>(m_mobile_population[i], node_to.get_simulation(), *v0,
-                                                m_mobile_population.get_time(i), dt);
+            if (m_has_custom_func) {
+                auto mobile_pop = m_mobile_population[i];
+                auto& sim_ref   = node_to.get_simulation();
+                auto total_ref  = *v0;
+
+                m_custom_func(&mobile_pop, &sim_ref, &total_ref, m_mobile_population.get_time(i), dt);
+            }
+            else {
+                calculate_mobility_returns<FP, Sim>(m_mobile_population[i], node_to.get_simulation(), *v0,
+                                                    m_mobile_population.get_time(i), dt);
+            }
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
