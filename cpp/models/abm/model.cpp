@@ -292,20 +292,6 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                                                     get_location(person.get_location()), t, dt);
             }
         } // implicit taskloop barrier
-        //normalize cached exposure rates
-        for (size_t i = 0; i < num_locations; ++i) {
-            for (auto age_group = AgeGroup(0); age_group < AgeGroup(parameters.get_num_groups()); ++age_group) {
-                auto num_persons_in_location =
-                    std::count_if(m_persons.begin(), m_persons.end(), [age_group](Person& p) {
-                        return p.get_age() == age_group;
-                    });
-                if (num_persons_in_location > 0) {
-                    for (auto& v : m_contact_exposure_rates_cache[i].slice(AgeGroup(age_group))) {
-                        v = v / num_persons_in_location;
-                    }
-                }
-            }
-        }
     } // implicit single barrier
 }
 
