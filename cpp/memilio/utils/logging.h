@@ -104,6 +104,12 @@ inline void log_error(spdlog::string_view_t fmt, const Args&... args)
 }
 
 template <typename... Args>
+inline void log_critical(spdlog::string_view_t fmt, const Args&... args)
+{
+    spdlog::default_logger_raw()->error(fmt, args...);
+}
+
+template <typename... Args>
 inline void log_warning(spdlog::string_view_t fmt, const Args&... args)
 {
     spdlog::default_logger_raw()->warn(fmt, args...);

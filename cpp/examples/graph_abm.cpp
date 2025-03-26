@@ -28,6 +28,8 @@
 #include "graph_abm/graph_abmodel.h"
 #include "memilio/io/history.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/parameter_distributions.h"
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -77,15 +79,24 @@ int main()
     auto model1 = mio::GraphABModel(num_age_groups, 0);
 
     //Set infection parameters
-    model1.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
-    model1.parameters.get<mio::abm::InfectedNoSymptomsToSymptoms>()  = 2.;
-    model1.parameters.get<mio::abm::InfectedNoSymptomsToRecovered>() = 4.;
-    model1.parameters.get<mio::abm::InfectedSymptomsToRecovered>()   = 5.;
-    model1.parameters.get<mio::abm::InfectedSymptomsToSevere>()      = 6.;
-    model1.parameters.get<mio::abm::SevereToRecovered>()             = 8.;
-    model1.parameters.get<mio::abm::SevereToCritical>()              = 7.;
-    model1.parameters.get<mio::abm::CriticalToRecovered>()           = 10.;
-    model1.parameters.get<mio::abm::CriticalToDead>()                = 11.;
+    model1.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
+    model1.parameters.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2.));
+    model1.parameters.get<mio::abm::TimeInfectedNoSymptomsToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
+    model1.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(5.));
+    model1.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(6.));
+    model1.parameters.get<mio::abm::TimeInfectedSevereToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(8.));
+    model1.parameters.get<mio::abm::TimeInfectedSevereToCritical>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(7.));
+    model1.parameters.get<mio::abm::TimeInfectedCriticalToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(10.));
+    model1.parameters.get<mio::abm::TimeInfectedCriticalToDead>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(11.));
 
     //Age group 0 goes to school and age group 1 goes to work
     model1.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_children] = true;
@@ -135,15 +146,24 @@ int main()
     auto model2 = mio::GraphABModel(num_age_groups, 1);
 
     //Set infection parameters
-    model2.parameters.get<mio::abm::IncubationPeriod>()              = 4.;
-    model2.parameters.get<mio::abm::InfectedNoSymptomsToSymptoms>()  = 2.;
-    model2.parameters.get<mio::abm::InfectedNoSymptomsToRecovered>() = 4.;
-    model2.parameters.get<mio::abm::InfectedSymptomsToRecovered>()   = 5.;
-    model2.parameters.get<mio::abm::InfectedSymptomsToSevere>()      = 6.;
-    model2.parameters.get<mio::abm::SevereToRecovered>()             = 8.;
-    model2.parameters.get<mio::abm::SevereToCritical>()              = 7.;
-    model2.parameters.get<mio::abm::CriticalToRecovered>()           = 10.;
-    model2.parameters.get<mio::abm::CriticalToDead>()                = 11.;
+    model2.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
+    model2.parameters.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(2.));
+    model2.parameters.get<mio::abm::TimeInfectedNoSymptomsToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
+    model2.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(5.));
+    model2.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(6.));
+    model2.parameters.get<mio::abm::TimeInfectedSevereToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(8.));
+    model2.parameters.get<mio::abm::TimeInfectedSevereToCritical>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(7.));
+    model2.parameters.get<mio::abm::TimeInfectedCriticalToRecovered>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(10.));
+    model2.parameters.get<mio::abm::TimeInfectedCriticalToDead>() =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(11.));
 
     //Age group 0 goes to school and age group 1 goes to work
     model2.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_children] = true;

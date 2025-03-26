@@ -21,6 +21,7 @@
 #include "abm/person.h"
 #include "abm/random_events.h"
 #include "abm/location_type.h"
+#include "abm/parameters.h"
 
 namespace mio
 {
@@ -51,7 +52,7 @@ LocationType go_to_school(PersonalRandomNumberGenerator& /*rng*/, const Person& 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
-        params.get<mio::abm::AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
+        params.get<AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
         !person.is_in_quarantine(t, params)) {
         return LocationType::School;
     }
@@ -68,7 +69,7 @@ LocationType go_to_work(PersonalRandomNumberGenerator& /*rng*/, const Person& pe
     auto current_loc = person.get_location_type();
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        params.get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
+        params.get<AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
         !person.is_in_quarantine(t, params)) {
@@ -106,7 +107,8 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
     auto current_loc = person.get_location_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
+        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19 && t.hour_of_day() < 22) ||
+         (t.day_of_week() >= 5 && t.hour_of_day() >= 10 && t.hour_of_day() < 22)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::SocialEvent,
