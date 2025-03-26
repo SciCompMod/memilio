@@ -30,10 +30,14 @@
 namespace mio
 {
 /**
- * @brief Daily local ICU occupancy aggregated for each age group.
+ * @brief Daily local ICU occupancy per age group.
+ * 
+ * This parameter stores all historic (local) ICU occupancy values normalized per 100,000 inhabitants.
+ * The values are extracted from the simulation results based on the provided ICU compartment indices
+ * and are updated at each feedback step.
  */
 template <typename FP>
-struct ICUOccupancyLocal {
+struct ICUOccupancyHistory {
     using Type = mio::TimeSeries<FP>;
     static Type get_default(AgeGroup size)
     {
@@ -41,7 +45,7 @@ struct ICUOccupancyLocal {
     }
     static std::string name()
     {
-        return "ICUOccupancyLocal";
+        return "ICUOccupancyHistory";
     }
 };
 
@@ -158,7 +162,7 @@ struct NominalICUCapacity {
 
 template <typename FP>
 using FeedbackSimulationParameters =
-    ParameterSet<ICUOccupancyLocal<FP>, GammaShapeParameter<FP>, GammaScaleParameter<FP>, GammaCutOff,
+    ParameterSet<ICUOccupancyHistory<FP>, GammaShapeParameter<FP>, GammaScaleParameter<FP>, GammaCutOff,
                  ContactReductionMax<FP>, ContactReductionMin<FP>, SoftPlusCurvatureParameter<FP>,
                  NominalICUCapacity<FP>>;
 
@@ -264,7 +268,7 @@ public:
      */
     FP calc_risk_perceived()
     {
-        const auto& icu_occ    = m_feedback_parameters.template get<ICUOccupancyLocal<FP>>();
+        const auto& icu_occ    = m_feedback_parameters.template get<ICUOccupancyHistory<FP>>();
         size_t num_time_points = icu_occ.get_num_time_points();
         size_t n = std::min(static_cast<size_t>(num_time_points), m_feedback_parameters.template get<GammaCutOff>());
         FP perceived_risk = 0.0;
@@ -285,7 +289,7 @@ public:
      *
      * This function use the latest simulation results and extracts the ICU occupancy
      * based on the indices given. The occupancy values are then normalized to  100,000 inhabitants,
-     * and then stored (as a new time point) in the ICUOccupancyLocal parameter.
+     * and then stored (as a new time point) in the ICUOccupancyHistory parameter.
      *
      * @param t The current simulation time at which the ICU occupancy is recorded.
      */
@@ -300,11 +304,11 @@ public:
         }
         // normalize by total population and scale to 100,000 inhabitants
         icu_occ = icu_occ / model.populations.get_total() * 100000;
-        m_feedback_parameters.template get<ICUOccupancyLocal<FP>>().add_time_point(t, icu_occ);
+        m_feedback_parameters.template get<ICUOccupancyHistory<FP>>().add_time_point(t, icu_occ);
     }
 
     /**
-     * @brief Transforms the perceived risk into a contact reduction factor and apply it to the contact patterns.
+     * @brief Transforms the perceived risk into a contact reduction factor and applies it to the contact patterns.
      *
      * This function computes a contact reduction factor for each location based on the perceived risk. For smooth transitions,
      * we use a softplus function as described in Dönges et al. (doi.org/10.3389/fphy.2022.842180).
@@ -317,7 +321,7 @@ public:
         auto& params          = m_simulation.get_model().parameters;
         const auto num_groups = (size_t)params.get_num_groups();
 
-        // get feedback parameters.
+        // get feedback parameters
         const auto& contactReductionMax = m_feedback_parameters.template get<ContactReductionMax<FP>>();
         const auto& contactReductionMin = m_feedback_parameters.template get<ContactReductionMin<FP>>();
         const auto epsilon              = m_feedback_parameters.template get<SoftPlusCurvatureParameter<FP>>();
@@ -360,14 +364,13 @@ public:
         }
         // update the contact matrices after all dampings have been added.
         params.template get<ContactPatterns>().make_matrix();
-        this->get_model().parameters.template get<ContactPatterns>().make_matrix();
     }
 
 private:
-    Sim m_simulation;
-    std::vector<size_t> m_icu_indices;
-    FeedbackSimulationParameters<FP> m_feedback_parameters;
-    mio::TimeSeries<ScalarType> m_perceived_risk;
+    Sim m_simulation; ///< The simulation instance.
+    std::vector<size_t> m_icu_indices; ///< The ICU compartment indices from the model.
+    FeedbackSimulationParameters<FP> m_feedback_parameters; ///< The feedback parameters.
+    mio::TimeSeries<ScalarType> m_perceived_risk; ///< The perceived risk time series.
 };
 
 } // namespace mio

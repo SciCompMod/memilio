@@ -76,7 +76,7 @@ TEST_F(TestFeedbackSimulation, AdvanceAddICUAndRisk)
     feedback_sim->advance(2.0, 1.0);
 
     // ICU occupancy time series should now have 2 time points.
-    const auto& icu_occ = feedback_sim->get_parameters().template get<mio::ICUOccupancyLocal<double>>();
+    const auto& icu_occ = feedback_sim->get_parameters().template get<mio::ICUOccupancyHistory<double>>();
     EXPECT_EQ(icu_occ.get_num_time_points(), 2);
 
     // similarly, the perceived risk time series should also have 2 entries.
@@ -94,7 +94,7 @@ TEST_F(TestFeedbackSimulation, CalcPerceivedRisk)
     // add a single ICU occupancy time points with value 2.
     Eigen::VectorXd icu_value(1);
     icu_value << 2;
-    auto& icu_occ = fb_params.template get<mio::ICUOccupancyLocal<double>>();
+    auto& icu_occ = fb_params.template get<mio::ICUOccupancyHistory<double>>();
     icu_occ.add_time_point(0.0, icu_value);
     double risk = feedback_sim->calc_risk_perceived();
     // For day 0, we have gamma = exp(0) = 1 and therefore perc_risk = 2 / 10 = 0.2.
@@ -120,7 +120,7 @@ TEST_F(TestFeedbackSimulation, ApplyFeedback)
     size_t initial_dampings = contact_patterns.get_dampings().size();
 
     // set all historical ICU occupancy values to 100.0, to have maximum perceived risk.
-    auto& icu_occ = feedback_params.template get<mio::ICUOccupancyLocal<double>>();
+    auto& icu_occ = feedback_params.template get<mio::ICUOccupancyHistory<double>>();
     Eigen::VectorXd icu_value(1);
     icu_value << 100.0;
     for (int t = -45; t <= 0; ++t) {
@@ -144,15 +144,15 @@ TEST_F(TestFeedbackSimulation, AddICUOccupancy)
 {
     // check that the ICU occupancy time series is empty
     auto& feedback_params = feedback_sim->get_parameters();
-    EXPECT_EQ(feedback_params.template get<mio::ICUOccupancyLocal<double>>().get_num_time_points(), 0);
+    EXPECT_EQ(feedback_params.template get<mio::ICUOccupancyHistory<double>>().get_num_time_points(), 0);
 
     // add ICU occupancy for t = 1.0.
     feedback_sim->add_icu_occupancy(1.0);
 
     // check that the ICU occupancy time series now has one time point.
-    EXPECT_EQ(feedback_params.template get<mio::ICUOccupancyLocal<double>>().get_num_time_points(), 1);
+    EXPECT_EQ(feedback_params.template get<mio::ICUOccupancyHistory<double>>().get_num_time_points(), 1);
     // check that stored value is equal to the inital value relative to 100,000
-    auto stored_val = feedback_params.template get<mio::ICUOccupancyLocal<double>>().get_value(0);
+    auto stored_val = feedback_params.template get<mio::ICUOccupancyHistory<double>>().get_value(0);
     auto expected_val =
         feedback_sim->get_model().populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] /
         feedback_sim->get_model().populations.get_total() * 100000;

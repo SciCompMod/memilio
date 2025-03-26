@@ -71,7 +71,7 @@ void initialize_feedback(mio::FeedbackSimulation<double, mio::Simulation<double,
     feedback_simulation.get_parameters().template get<mio::NominalICUCapacity<double>>() = 10;
 
     // ICU occupancy in the past for memory kernel
-    auto& icu_occupancy     = feedback_simulation.get_parameters().template get<mio::ICUOccupancyLocal<double>>();
+    auto& icu_occupancy     = feedback_simulation.get_parameters().template get<mio::ICUOccupancyHistory<double>>();
     Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(1, 1);
     const auto cutoff       = static_cast<int>(feedback_simulation.get_parameters().template get<mio::GammaCutOff>());
     for (int t = -cutoff; t <= 0; ++t) {
@@ -113,11 +113,10 @@ int main()
     initialize_feedback(feedback_simulation);
 
     // run the simulation with feedback mechanism
-    auto results = feedback_simulation.advance(tmax);
+    feedback_simulation.advance(tmax);
 
     // print the perceived risk and the final total population
     auto& perceived_risk = feedback_simulation.get_perceived_risk();
     perceived_risk.print_table({"Perceived Risk"});
-    std::cout << "Population at tmax = " << results.sum() << std::endl;
     return 0;
 }
