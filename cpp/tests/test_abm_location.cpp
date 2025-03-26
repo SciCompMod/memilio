@@ -167,3 +167,18 @@ TEST_F(TestLocation, getGeographicalLocation)
     // Verify that the set geographical location matches the expected values.
     EXPECT_EQ(location.get_geographical_location(), geographical_location);
 }
+
+/**
+ * @brief Test whether the contact rates of a location are reduced if the total contacts in that location exceed the maximum number of contacts.
+ */
+TEST_F(TestLocation, adjustContactRates)
+{
+    mio::abm::Location loc(mio::abm::LocationType::SocialEvent, mio::abm::LocationId(0));
+    //Set the maximum contacts smaller than the contact rates
+    loc.get_infection_parameters().get<mio::abm::MaximumContacts>()                                    = 2;
+    loc.get_infection_parameters().get<mio::abm::ContactRates>()[{mio::AgeGroup(0), mio::AgeGroup(0)}] = 4;
+    mio::abm::adjust_contact_rates(loc, 1);
+    auto adjusted_contacts_rate =
+        loc.get_infection_parameters().get<mio::abm::ContactRates>()[{mio::AgeGroup(0), mio::AgeGroup(0)}];
+    EXPECT_EQ(adjusted_contacts_rate, 2);
+}
