@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-24 13:03:19</td>
+            <td class="headerValue">2025-03-26 13:07:09</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">8</td>
@@ -104,9 +104,9 @@
 <a name="42"><span class="lineNum">      42 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="43"><span class="lineNum">      43 </span>            : struct TransmissionProbabilityOnContact {</a>
 <a name="44"><span class="lineNum">      44 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="45"><span class="lineNum">      45 </span><span class="lineCov">        163 :     static Type get_default(AgeGroup size)</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">        191 :     static Type get_default(AgeGroup size)</span></a>
 <a name="46"><span class="lineNum">      46 </span>            :     {</a>
-<a name="47"><span class="lineNum">      47 </span><span class="lineCov">        326 :         return Type(size, 1.);</span></a>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">        382 :         return Type(size, 1.);</span></a>
 <a name="48"><span class="lineNum">      48 </span>            :     }</a>
 <a name="49"><span class="lineNum">      49 </span>            :     static std::string name()</a>
 <a name="50"><span class="lineNum">      50 </span>            :     {</a>
@@ -120,9 +120,9 @@
 <a name="58"><span class="lineNum">      58 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="59"><span class="lineNum">      59 </span>            : struct TimeExposed {</a>
 <a name="60"><span class="lineNum">      60 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="61"><span class="lineNum">      61 </span><span class="lineCov">        163 :     static Type get_default(AgeGroup size)</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">        191 :     static Type get_default(AgeGroup size)</span></a>
 <a name="62"><span class="lineNum">      62 </span>            :     {</a>
-<a name="63"><span class="lineNum">      63 </span><span class="lineCov">        326 :         return Type(size, 5.2);</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">        382 :         return Type(size, 5.2);</span></a>
 <a name="64"><span class="lineNum">      64 </span>            :     }</a>
 <a name="65"><span class="lineNum">      65 </span>            :     static std::string name()</a>
 <a name="66"><span class="lineNum">      66 </span>            :     {</a>
@@ -136,9 +136,9 @@
 <a name="74"><span class="lineNum">      74 </span>            : template &lt;typename FP = double&gt;</a>
 <a name="75"><span class="lineNum">      75 </span>            : struct TimeInfected {</a>
 <a name="76"><span class="lineNum">      76 </span>            :     using Type = CustomIndexArray&lt;UncertainValue&lt;FP&gt;, AgeGroup&gt;;</a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">        163 :     static Type get_default(AgeGroup size)</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">        191 :     static Type get_default(AgeGroup size)</span></a>
 <a name="78"><span class="lineNum">      78 </span>            :     {</a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">        326 :         return Type(size, 6.0);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">        382 :         return Type(size, 6.0);</span></a>
 <a name="80"><span class="lineNum">      80 </span>            :     }</a>
 <a name="81"><span class="lineNum">      81 </span>            :     static std::string name()</a>
 <a name="82"><span class="lineNum">      82 </span>            :     {</a>
@@ -152,9 +152,9 @@
 <a name="90"><span class="lineNum">      90 </span>            : template &lt;class FP = ScalarType&gt;</a>
 <a name="91"><span class="lineNum">      91 </span>            : struct ContactPatterns {</a>
 <a name="92"><span class="lineNum">      92 </span>            :     using Type = UncertainContactMatrix&lt;FP&gt;;</a>
-<a name="93"><span class="lineNum">      93 </span><span class="lineCov">        163 :     static Type get_default(AgeGroup size)</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">        191 :     static Type get_default(AgeGroup size)</span></a>
 <a name="94"><span class="lineNum">      94 </span>            :     {</a>
-<a name="95"><span class="lineNum">      95 </span><span class="lineCov">        163 :         return Type(1, static_cast&lt;Eigen::Index&gt;((size_t)size));</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">        191 :         return Type(1, static_cast&lt;Eigen::Index&gt;((size_t)size));</span></a>
 <a name="96"><span class="lineNum">      96 </span>            :     }</a>
 <a name="97"><span class="lineNum">      97 </span>            :     static std::string name()</a>
 <a name="98"><span class="lineNum">      98 </span>            :     {</a>
@@ -173,15 +173,15 @@
 <a name="111"><span class="lineNum">     111 </span>            : class Parameters : public ParametersBase&lt;FP&gt;</a>
 <a name="112"><span class="lineNum">     112 </span>            : {</a>
 <a name="113"><span class="lineNum">     113 </span>            : public:</a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        163 :     Parameters(AgeGroup num_agegroups)</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        191 :     Parameters(AgeGroup num_agegroups)</span></a>
 <a name="115"><span class="lineNum">     115 </span>            :         : ParametersBase&lt;FP&gt;(num_agegroups)</a>
-<a name="116"><span class="lineNum">     116 </span><span class="lineCov">        163 :         , m_num_groups{num_agegroups}</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">        191 :         , m_num_groups{num_agegroups}</span></a>
 <a name="117"><span class="lineNum">     117 </span>            :     {</a>
-<a name="118"><span class="lineNum">     118 </span><span class="lineCov">        163 :     }</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">        191 :     }</span></a>
 <a name="119"><span class="lineNum">     119 </span>            : </a>
-<a name="120"><span class="lineNum">     120 </span><span class="lineCov">        333 :     AgeGroup get_num_groups() const</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">        431 :     AgeGroup get_num_groups() const</span></a>
 <a name="121"><span class="lineNum">     121 </span>            :     {</a>
-<a name="122"><span class="lineNum">     122 </span><span class="lineCov">        333 :         return m_num_groups;</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">        431 :         return m_num_groups;</span></a>
 <a name="123"><span class="lineNum">     123 </span>            :     }</a>
 <a name="124"><span class="lineNum">     124 </span>            : </a>
 <a name="125"><span class="lineNum">     125 </span>            :     /**</a>
