@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file customPlot.py
-@brief Plots time series data as provided by the scripts.
+:strong:`customPlot.py`
+Plots time series data as provided by the scripts.
 """
 import os
 
@@ -37,22 +37,27 @@ def plot_multiple_series(
         x, y, legend, title='', xlabel='', ylabel='', linewidth=1,
         xticks_idx='default', loc_legend='upper left', fig_size=(10, 6), plot_outside=True, fig_name='customPlot',
         path_rel='figures/', dpi=300, outercolor='white', innercolor='white'):
-    """! Plots a variable number of time series data on the same time window
+    """ Plots a variable number of time series data on the same time window
     inside one plot.
 
-    @param x x values to plot.
-    @param y List of curve(s) to plot.
-    @param legend List of legend(s) for y value curve(s).
-    @param title title of the plot.
-    @param xlabel labels for x values.
-    @param ylabel labels for y values.
-    @param linewidth [Default: 1] Width of plotted curves.
-    @param xticks_idx [Default: 'default'] List of xticks indices to be used. 
+    :param x: x values to plot.
+    :param y: List of curve(s) to plot.
+    :param legend: List of legend(s) for y value curve(s).
+    :param title: title of the plot. (Default value = '')
+    :param xlabel: labels for x values. (Default value = '')
+    :param ylabel: labels for y values. (Default value = '')
+    :param linewidth: Default: 1] Width of plotted curves.
+    :param xticks_idx: Default: 'default'] List of xticks indices to be used.
         If 'default' is used, then every 30th x-value is printed.
-    @param dpi Dots per inch of figure.
-    @param outercolor Outer color of figure.
-    @oaram innercolor Inner color of figure.
-    @param fig_name name of the figure to save.
+    :param dpi: Dots per inch of figure. (Default value = 300)
+    :param outercolor: Outer color of figure.
+    :param innercolor: Inner color of figure. (Default value = 'white')
+    :param fig_name: name of the figure to save. (Default value = 'customPlot')
+    :param loc_legend:  (Default value = 'upper left')
+    :param fig_size:  (Default value = (10, 6))
+    :param plot_outside:  (Default value = True)
+    :param path_rel:  (Default value = 'figures/')
+
     """
     fig, ax = plt.subplots(figsize=fig_size, facecolor=outercolor)
 

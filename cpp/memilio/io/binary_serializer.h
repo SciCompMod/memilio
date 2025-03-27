@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -278,7 +278,7 @@ public:
                                      "Unexpected type in stream:" + type_result.value() + ". Expected " + type);
             }
         }
-        return BinarySerializerObject(m_stream, m_status, m_flags);
+        return obj;
     }
 
     /**

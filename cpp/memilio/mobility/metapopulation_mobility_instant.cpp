@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -21,5 +21,4 @@
 
 namespace mio
 {
-
 } // namespace mio

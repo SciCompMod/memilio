@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Henrik Zunker
 #
@@ -30,6 +30,7 @@ from memilio.simulation.osecir import (Model, Simulation,
 
 
 class Location(Enum):
+    """ """
     Home = 0
     School = 1
     Work = 2
@@ -37,6 +38,7 @@ class Location(Enum):
 
 
 class Intervention(Enum):
+    """ """
     Home = 0
     SchoolClosure = 1
     HomeOffice = 2
@@ -46,6 +48,7 @@ class Intervention(Enum):
 
 
 class InterventionLevel(Enum):
+    """ """
     Main = 0
     PhysicalDistanceAndMasks = 1
     SeniorAwareness = 2
@@ -53,6 +56,7 @@ class InterventionLevel(Enum):
 
 
 class Simulation:
+    """ """
 
     def __init__(self, data_dir, start_date, results_dir):
         self.num_groups = 6
@@ -63,7 +67,20 @@ class Simulation:
             os.makedirs(self.results_dir)
 
     def set_covid_parameters(self, model):
+        """
+
+        :param model: 
+
+        """
         def array_assign_uniform_distribution(param, min, max, num_groups=6):
+            """
+
+            :param param: 
+            :param min: 
+            :param max: 
+            :param num_groups:  (Default value = 6)
+
+            """
             if isinstance(
                     min, (int, float)) and isinstance(
                         max, (int, float)):
@@ -186,15 +203,20 @@ class Simulation:
             mio.ParameterDistributionUniform(seasonality_min, seasonality_max))
 
     def set_contact_matrices(self, model):
+        """
+
+        :param model: 
+
+        """
         contact_matrices = mio.ContactMatrixGroup(
             len(list(Location)), self.num_groups)
         locations = ["home", "school_pf_eig", "work", "other"]
 
         for i, location in enumerate(locations):
             baseline_file = os.path.join(
-                self.data_dir, "contacts", "baseline_" + location + ".txt")
+                self.data_dir, "Germany", "contacts", "baseline_" + location + ".txt")
             minimum_file = os.path.join(
-                self.data_dir, "contacts", "minimum_" + location + ".txt")
+                self.data_dir, "Germany", "contacts", "minimum_" + location + ".txt")
             contact_matrices[i] = mio.ContactMatrix(
                 mio.read_mobility_plain(baseline_file),
                 mio.read_mobility_plain(minimum_file)
@@ -202,6 +224,12 @@ class Simulation:
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
     def set_npis(self, params, end_date):
+        """
+
+        :param params: 
+        :param end_date: 
+
+        """
         contacts = params.ContactPatterns
         dampings = contacts.dampings
 
@@ -230,6 +258,17 @@ class Simulation:
         def damping_helper(
                 t, min, max, damping_level, type, location,
                 group_weights=group_weights_all):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+            :param damping_level: 
+            :param type: 
+            :param location: 
+            :param group_weights:  (Default value = group_weights_all)
+
+            """
             v = mio.UncertainValue(0.5 * (max + min))
             v.set_distribution(mio.ParameterDistributionUniform(min, max))
             return mio.DampingSampling(
@@ -241,34 +280,90 @@ class Simulation:
                 group_weights=group_weights)
 
         def contacts_at_home(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_home, [loc_home])
 
         def school_closure(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_school, [loc_school])
 
         def home_office(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_homeoffice, [loc_work])
 
         def social_events(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_gathering, [loc_other])
 
         def social_events_work(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_main, typ_gathering, [loc_work])
 
         def physical_distancing_home_school(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_home, loc_school])
 
         def physical_distancing_work_other(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_work, loc_other])
 
         def senior_awareness(t, min, max):
+            """
+
+            :param t: 
+            :param min: 
+            :param max: 
+
+            """
             return damping_helper(
                 t, min, max, lvl_seniors, typ_senior, [loc_home, loc_other],
                 group_weights_seniors)
@@ -418,6 +513,11 @@ class Simulation:
             contacts.dampings = dampings
 
     def get_graph(self, end_date):
+        """
+
+        :param end_date: 
+
+        """
         model = Model(self.num_groups)
         self.set_covid_parameters(model)
         self.set_contact_matrices(model)
@@ -429,25 +529,37 @@ class Simulation:
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
 
-        path_population_data = os.path.join(
-            self.data_dir, "pydata", "Germany",
-            "county_current_population.json")
+        data_dir_Germany = os.path.join(self.data_dir, "Germany")
+        mobility_data_file = os.path.join(
+            data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
+        pydata_dir = os.path.join(data_dir_Germany, "pydata")
+
+        path_population_data = os.path.join(pydata_dir,
+                                            "county_current_population.json")
 
         mio.osecir.set_nodes(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
             mio.Date(end_date.year,
-                     end_date.month, end_date.day), self.data_dir,
+                     end_date.month, end_date.day), pydata_dir,
             path_population_data, True, graph, scaling_factor_infected,
             scaling_factor_icu, tnt_capacity_factor, 0, False)
 
         mio.osecir.set_edges(
-            self.data_dir, graph, len(Location))
+            mobility_data_file, graph, len(Location))
 
         return graph
 
     def run(self, num_days_sim, num_runs=10, save_graph=True, create_gif=True):
+        """
+
+        :param num_days_sim: 
+        :param num_runs:  (Default value = 10)
+        :param save_graph:  (Default value = True)
+        :param create_gif:  (Default value = True)
+
+        """
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 

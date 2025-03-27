@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -25,7 +25,10 @@ import memilio.simulation as mio
 
 
 class Test_UncertainMatrix(unittest.TestCase):
+    """ """
+
     def test_dampings(self):
+        """ """
         m = mio.UncertainContactMatrix(
             mio.ContactMatrixGroup(num_matrices=2, size=2))
         d = mio.DampingSampling(

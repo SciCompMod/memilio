@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -17,10 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/location_type.h"
 #include "abm_helpers.h"
 #include "abm/common_abm_loggers.h"
 #include "matchers.h"
 #include "memilio/io/history.h"
+#include <cstdint>
 
 TEST(TestSimulation, advance_random)
 {
@@ -44,22 +46,21 @@ TEST(TestSimulation, advance_random)
 
     sim.advance(mio::abm::TimePoint(0) + mio::abm::hours(50), historyTimeSeries);
     auto log = std::get<0>(historyTimeSeries.get_log());
-    ASSERT_EQ(log.get_num_time_points(), 51);
-    ASSERT_THAT(log.get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
+    EXPECT_EQ(log.get_num_time_points(), 51);
+    EXPECT_THAT(log.get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
     for (auto&& v : log) {
-        ASSERT_EQ(v.sum(), 4);
+        EXPECT_EQ(v.sum(), 4);
     }
 }
 
 TEST(TestSimulation, getModelAndTimeConst)
 {
-
     auto t     = mio::abm::TimePoint(0);
     auto model = mio::abm::Model(num_age_groups);
     auto sim   = mio::abm::Simulation(t + mio::abm::days(7), std::move(model));
 
     auto t_test = mio::abm::days(7);
-    ASSERT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
+    EXPECT_EQ(sim.get_time(), mio::abm::TimePoint(t_test.seconds()));
 
     const mio::abm::Model model_test{std::move(sim.get_model())};
     EXPECT_EQ(model_test.get_locations().size(), 1);
@@ -99,13 +100,20 @@ TEST(TestSimulation, advanceWithCommonHistory)
     mio::abm::TripList& trip_list = model.get_trip_list();
 
     // We add trips for person two to test the history and if it is working correctly
-    mio::abm::Trip trip1(person2, mio::abm::TimePoint(0) + mio::abm::hours(2), work_id);
-    mio::abm::Trip trip2(person2, mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
-    mio::abm::Trip trip3(person2, mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id);
-    mio::abm::Trip trip4(person2, mio::abm::TimePoint(0) + mio::abm::hours(5), social_id);
-    mio::abm::Trip trip5(person2, mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id);
-    mio::abm::Trip trip6(person2, mio::abm::TimePoint(0) + mio::abm::hours(7), public_id);
-    mio::abm::Trip trip7(person2, mio::abm::TimePoint(0) + mio::abm::hours(8), home_id);
+    mio::abm::Trip trip1(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id,
+                         home_id, mio::abm::LocationType::Work);
+    mio::abm::Trip trip2(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id,
+                         home_id, mio::abm::LocationType::ICU);
+    mio::abm::Trip trip3(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(4), hospital_id,
+                         home_id, mio::abm::LocationType::Hospital);
+    mio::abm::Trip trip4(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(5), social_id,
+                         home_id, mio::abm::LocationType::SocialEvent);
+    mio::abm::Trip trip5(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(6), basics_id,
+                         home_id, mio::abm::LocationType::BasicsShop);
+    mio::abm::Trip trip6(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(7), public_id,
+                         home_id, mio::abm::LocationType::PublicTransport);
+    mio::abm::Trip trip7(static_cast<uint64_t>(person2.get()), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id,
+                         home_id, mio::abm::LocationType::Home);
 
     trip_list.add_trip(trip1);
     trip_list.add_trip(trip2);
@@ -131,17 +139,17 @@ TEST(TestSimulation, advanceWithCommonHistory)
     auto logTimeSeries        = std::get<0>(historyTimeSeries.get_log());
     auto logMobilityInfoDelta = std::get<0>(historyPersonInfDelta.get_log());
 
-    ASSERT_EQ(logLocationInfo[0].size(), 9); // Check if all locations are in the log, 9 locations
-    ASSERT_EQ(logPersonInfo[0].size(), 3); // Check if all persons are in the log, 3 persons
-    ASSERT_EQ(
+    EXPECT_EQ(logLocationInfo[0].size(), 9); // Check if all locations are in the log, 9 locations
+    EXPECT_EQ(logPersonInfo[0].size(), 3); // Check if all persons are in the log, 3 persons
+    EXPECT_EQ(
         logMobilityInfo.size(),
         25); // Check if for all time points Mobility data is in the log, 25 time points (24 hours + 1 for the initial state)
-    ASSERT_EQ(logTimeSeries.get_num_time_points(),
+    EXPECT_EQ(logTimeSeries.get_num_time_points(),
               25); // Check if all time points are in the log, 25 time points (24 hours + 1 for the initial state)
-    ASSERT_EQ(
+    EXPECT_EQ(
         logMobilityInfoDelta.size(),
         26); // Check if for all time points Mobility data is in the log, 26 time points (24 hours + 1 for the initial state + 1 helper entry for calculating the delta)
-    ASSERT_EQ(logMobilityInfoDelta[0].size(),
+    EXPECT_EQ(logMobilityInfoDelta[0].size(),
               3); // Check if all persons are in the delta-logger Mobility helper entry 0, 3 persons
-    ASSERT_EQ(logMobilityInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
+    EXPECT_EQ(logMobilityInfoDelta[1].size(), 3); // Check if all persons are in the delta-log first entry, 3 persons
 }

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: David Kerkmann
 *
@@ -36,7 +36,7 @@ namespace abm
 */
 enum class VirusVariant : std::uint32_t
 {
-    Wildtype = 0,
+    Wildtype,
 
     Count // last!!
 };

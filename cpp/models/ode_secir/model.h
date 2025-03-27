@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -76,8 +76,8 @@ public:
     {
     }
 
-    void get_flows(Eigen::Ref<const Vector<FP>> pop, Eigen::Ref<const Vector<FP>> y, FP t,
-                   Eigen::Ref<Vector<FP>> flows) const override
+    void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
@@ -122,19 +122,19 @@ public:
                                     params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>()[j]);
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                double season_val =
+                ScalarType season_val =
                     (1 + params.template get<Seasonality<FP>>() *
                              sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5)));
-                double cont_freq_eff =
+                ScalarType cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                  static_cast<Eigen::Index>((size_t)j));
-                double Nj =
+                ScalarType Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                double divNj   = 1.0 / Nj; // precompute 1.0/Nj
-                double dummy_S = y[Si] * cont_freq_eff * divNj *
-                                 params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
-                                 (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
-                                  riskFromInfectedSymptomatic * pop[ISyj]);
+                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
+                ScalarType dummy_S     = y[Si] * cont_freq_eff * divNj *
+                                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
+                                     (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +
+                                      riskFromInfectedSymptomatic * pop[ISyj]);
 
                 // Susceptible -> Exposed
                 flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>({i})] +=
@@ -142,11 +142,11 @@ public:
             }
 
             // ICU capacity shortage is close
-            double criticalPerSevereAdjusted = smoother_cosine(
+            ScalarType criticalPerSevereAdjusted = smoother_cosine(
                 icu_occupancy, 0.90 * params.template get<ICUCapacity<FP>>(), params.template get<ICUCapacity<FP>>(),
                 params.template get<CriticalPerSevere<FP>>()[i], 0);
 
-            double deathsPerSevereAdjusted =
+            ScalarType deathsPerSevereAdjusted =
                 params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
 
             // Exposed -> InfectedNoSymptoms
@@ -253,7 +253,7 @@ class Simulation;
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<FP, Model<FP>>>
-double get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Vector<FP>>& y);
+double get_infections_relative(const Simulation<FP, Base>& model, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y);
 
 /**
  * specialization of compartment model simulation for secir models.
@@ -283,7 +283,7 @@ public:
      * @param tmax next stopping point of simulation
      * @return value at tmax
      */
-    Eigen::Ref<Vector<FP>> advance(FP tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
@@ -382,7 +382,8 @@ inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
 
 //see declaration above.
 template <typename FP, class Base>
-double get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/, const Eigen::Ref<const Vector<FP>>& y)
+double get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/,
+                               const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
@@ -608,9 +609,9 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 */
 
 template <typename FP, class Base>
-Vector<FP> get_reproduction_numbers(const Simulation<FP, Base>& sim)
+Eigen::VectorX<FP> get_reproduction_numbers(const Simulation<FP, Base>& sim)
 {
-    Vector<FP> temp(sim.get_result().get_num_time_points());
+    Eigen::VectorX<FP> temp(sim.get_result().get_num_time_points());
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
         temp[i] = get_reproduction_number((size_t)i, sim).value();
     }
@@ -660,7 +661,7 @@ IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const Simulatio
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Vector<FP>>& y)
+auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
@@ -690,7 +691,7 @@ auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Re
 }
 
 template <typename FP = ScalarType, class Base = mio::Simulation<Model<FP>, FP>>
-auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Vector<FP>> mobile_population, FP time)
+auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
     auto& model       = sim.get_model();
     auto nondetection = 1.0;

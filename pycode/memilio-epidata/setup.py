@@ -8,13 +8,12 @@ __version__ = '1.0.0'
 
 
 class PylintCommand(Command):
-    """
-    Custom command to run pylint and get a report as html.
-    """
+    """Custom command to run pylint and get a report as html."""
     description = "Runs pylint and outputs the report as html."
     user_options = []
 
     def initialize_options(self):
+        """ """
         from pylint.reporters.json_reporter import JSONReporter
         from pylint.reporters.text import ParseableTextReporter, TextReporter
         from pylint_json2html import JsonExtendedReporter
@@ -30,10 +29,12 @@ class PylintCommand(Command):
         }
 
     def finalize_options(self):
+        """ """
         self.reporter, self.out_file = self.REPORTERS.get(
             self.out_format)  # , self.REPORTERS.get("parseable"))
 
     def run(self):
+        """ """
         os.makedirs("build_pylint", exist_ok=True)
 
         # Run pylint
@@ -91,6 +92,8 @@ setup(
         'pyxlsb',
         'wget',
         'twill==3.1',
+        # set PyQt6-sip version as the one pulled by PyQt6 in Epidata-CI (using manylinux_2_28_x86_64) req. python 3.9
+        'PyQt6-sip<13.9',
         'PyQt6',
         'python-calamine',
         pymagic

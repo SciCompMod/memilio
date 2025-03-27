@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -92,7 +92,7 @@ public:
         return m_t0;
     }
 
-    void evolve(double t, double dt)
+    void advance(double t, double dt)
     {
         m_simulation.advance(t + dt);
         m_last_state = m_simulation.get_result().get_last_value();
@@ -129,6 +129,7 @@ public:
      */
     MobilityParameters(const MobilityCoefficientGroup& coeffs)
         : m_coefficients(coeffs)
+        , m_saved_compartment_indices(0)
     {
     }
 
@@ -138,6 +139,38 @@ public:
      */
     MobilityParameters(const Eigen::VectorXd& coeffs)
         : m_coefficients({MobilityCoefficients(coeffs)})
+        , m_saved_compartment_indices(0)
+    {
+    }
+
+    /**
+     * @brief Constructor for initializing mobility parameters with coefficients from type `MobilityCoefficientGroup`
+     * and specific save indices.
+     *
+     * @param[in] coeffs A group of mobility coefficients represented by a `MobilityCoefficientGroup` object, defining 
+     * how individuals move between nodes.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
+     * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
+     */
+    MobilityParameters(const MobilityCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_coefficients(coeffs)
+        , m_saved_compartment_indices(save_indices)
+    {
+    }
+
+    /**
+     * @brief Constructor for initializing mobility parameters with coefficients from an Eigen Vector
+     * and specific save indices.
+     *
+     * @param[in] coeffs An `Eigen::VectorXd` containing mobility coefficients.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
+     * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
+     */
+    MobilityParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_coefficients({MobilityCoefficients(coeffs)})
+        , m_saved_compartment_indices(save_indices)
     {
     }
 
@@ -179,7 +212,21 @@ public:
     {
         m_coefficients = coeffs;
     }
-    /** @} */
+
+    /**
+     * @brief Get the indices of compartments to be saved during mobility.
+     *
+     * This function returns a reference to the vector of `m_saved_compartment_indices`, which specifies the groups of 
+     * compartments that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation 
+     * using the `add_mobility_result_time_point` function.
+     *
+     * @return A reference to the 2D vector containing indices of compartments to be saved. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a group of compartments defined by indices.
+     */
+    const auto& get_save_indices() const
+    {
+        return m_saved_compartment_indices;
+    }
 
     /**
      * Get/Set dynamic NPIs that are implemented when relative infections exceed thresholds.
@@ -241,6 +288,7 @@ public:
 private:
     MobilityCoefficientGroup m_coefficients; //one per group and compartment
     DynamicNPIs<FP> m_dynamic_npis;
+    std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
 };
 
 /** 
@@ -251,7 +299,7 @@ class MobilityEdge
 {
 public:
     /**
-     * create edge with coefficients.
+     * @brief Create edge with coefficients.
      * @param coeffs % of people in each group and compartment that change node in each time step.
      */
     MobilityEdge(const MobilityParameters<FP>& params)
@@ -259,18 +307,60 @@ public:
         , m_mobile_population(params.get_coefficients().get_shape().rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
+        , m_saved_compartment_indices(params.get_save_indices())
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
     {
     }
 
     /**
-     * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that change node in each time step.
+     * @brief Create edge with coefficients.
+     * 
+     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment 
+     * that change nodes in each time step.
      */
     MobilityEdge(const Eigen::VectorXd& coeffs)
         : m_parameters(coeffs)
         , m_mobile_population(coeffs.rows())
         , m_return_times(0)
         , m_return_mobile_population(false)
+        , m_saved_compartment_indices(0)
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
+    {
+    }
+
+    /**
+     * @brief Create edge with coefficients as MobilityParameters object and a 2D vector of indices which determine which compartments are saved.
+     *
+     * @param[in] params A `MobilityParameters` object representing the percentage of people in each group and compartment 
+     * that change nodes in each time step.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * Each inner vector represents a group of indices to be saved.
+     */
+    MobilityEdge(const MobilityParameters<FP>& params, const std::vector<std::vector<size_t>>& save_indices)
+        : m_parameters(params)
+        , m_mobile_population(params.get_coefficients().get_shape().rows())
+        , m_return_times(0)
+        , m_return_mobile_population(false)
+        , m_saved_compartment_indices(save_indices)
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
+    {
+    }
+
+    /**
+     * @brief Create edge with coefficients and a 2D vector of indices which determine which compartments are saved.
+     *
+     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment that migrate 
+     * in each time step.
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments, while each 
+     * inner vector represents a group of indices for compartments to be saved.
+     */
+    MobilityEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_parameters(coeffs)
+        , m_mobile_population(coeffs.rows())
+        , m_return_times(0)
+        , m_return_mobile_population(false)
+        , m_saved_compartment_indices(save_indices)
+        , m_mobility_results(m_saved_compartment_indices.size() + 1)
     {
     }
 
@@ -281,6 +371,22 @@ public:
     {
         return m_parameters;
     }
+
+    /**
+     * @brief Get the count of commuters in selected compartments, along with the total number of commuters.
+     *
+     * @return A reference to the TimeSeries object representing the mobility results.
+     * @{
+     */
+    TimeSeries<ScalarType>& get_mobility_results()
+    {
+        return m_mobility_results;
+    }
+    const TimeSeries<ScalarType>& get_mobility_results() const
+    {
+        return m_mobility_results;
+    }
+    /** @} */
 
     /**
      * compute mobility from node_from to node_to.
@@ -302,7 +408,45 @@ private:
     bool m_return_mobile_population;
     double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
     std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
+    std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
+    TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
+
+    /**
+     * @brief Computes a condensed version of `m_mobile_population` and stores it in `m_mobility_results`.
+     *
+     * The `m_mobility_results` then only contains commuters with infection states `InfectedNoSymptoms` and 
+     * `InfectedSymptoms`. Additionally, the total number of commuters is stored in the last entry of `m_mobility_results`.
+     *
+     * @param[in] t The current time.
+     */
+    void add_mobility_result_time_point(const double t);
 };
+
+template <typename FP>
+void MobilityEdge<FP>::add_mobility_result_time_point(const double t)
+{
+    const size_t save_indices_size = this->m_saved_compartment_indices.size();
+    if (save_indices_size > 0) {
+
+        const auto& last_value           = m_mobile_population.get_last_value();
+        Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
+
+        // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
+        std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
+                       condensed_values.data(), [&last_value](const auto& indices) {
+                           return std::accumulate(indices.begin(), indices.end(), 0.0,
+                                                  [&last_value](double sum, auto i) {
+                                                      return sum + last_value[i];
+                                                  });
+                       });
+
+        // the last value is the sum of commuters
+        condensed_values[save_indices_size] = m_mobile_population.get_last_value().sum();
+
+        // Move the condensed values to the m_mobility_results time series
+        m_mobility_results.add_time_point(t, std::move(condensed_values));
+    }
+}
 
 /**
  * adjust number of people that changed node when they return according to the model.
@@ -472,6 +616,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
             }
             node_from.get_result().get_last_value() += m_mobile_population[i];
             node_to.get_result().get_last_value() -= m_mobile_population[i];
+            add_mobility_result_time_point(t);
             m_mobile_population.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -489,18 +634,20 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
 
         node_to.get_result().get_last_value() += m_mobile_population.get_last_value();
         node_from.get_result().get_last_value() -= m_mobile_population.get_last_value();
+
+        add_mobility_result_time_point(t);
     }
     m_return_mobile_population = !m_return_mobile_population;
 }
 
 /**
  * edge functor for mobility-based simulation.
- * @see SimulationNode::evolve
+ * @see SimulationNode::advance
  */
 template <class Sim>
-void evolve_model(double t, double dt, SimulationNode<Sim>& node)
+void advance_model(double t, double dt, SimulationNode<Sim>& node)
 {
-    node.evolve(t, dt);
+    node.advance(t, dt);
 }
 
 /**
@@ -525,19 +672,24 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
  * @{
  */
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(double, double, mio::SimulationNode<Sim>&)>
 make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>,
+    return make_graph_sim(t0, dt, graph, static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
                           static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
                               &apply_mobility<FP, Sim>));
 }
 
 template <typename FP, class Sim>
-GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>>
+GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(double, double, mio::SimulationNode<Sim>&)>
 make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>,
+    return make_graph_sim(t0, dt, std::move(graph),
+                          static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
                           static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
                               &apply_mobility<FP, Sim>));
 }

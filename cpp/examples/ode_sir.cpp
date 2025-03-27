@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
+#include "memilio/data/analyze_result.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/config.h"
 #include "memilio/math/euler.h"
@@ -60,6 +60,9 @@ int main()
         std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
     auto sir = simulate(t0, tmax, dt, model, integrator);
 
-    sir.print_table({"S", "I", "R"});
-    std::cout << "\nnumber total: " << sir.get_last_value().sum() << "\n";
+    // interpolate results
+    auto interpolated_results = mio::interpolate_simulation_result(sir);
+
+    interpolated_results.print_table({"S", "I", "R"});
+    std::cout << "\nPopulation total: " << sir.get_last_value().sum() << "\n";
 }

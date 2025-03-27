@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -23,7 +23,10 @@ import memilio.simulation as mio
 
 
 class Test_Regions(unittest.TestCase):
+    """ """
+
     def test_get_holidays(self):
+        """ """
         holidays = mio.get_holidays_de(9, start_date=mio.Date(
             2020, 10, 15), end_date=mio.Date(2020, 11, 15))
         self.assertEqual(len(holidays), 1)
@@ -31,6 +34,7 @@ class Test_Regions(unittest.TestCase):
         self.assertEqual(holidays[0][1], mio.Date(2020, 11, 7))
 
     def test_state_id(self):
+        """ """
         self.assertEqual(mio.get_state_id_de(1001), 1)
         self.assertEqual(mio.get_state_id_de(2000), 2)
         self.assertEqual(mio.get_state_id_de(9161), 9)

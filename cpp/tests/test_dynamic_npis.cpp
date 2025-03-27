@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -297,8 +297,8 @@ TEST(DynamicNPIs, mobility)
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_safe);
     });
-    node_from.evolve(3.0, 2.5);
-    node_to.evolve(3.0, 2.5);
+    node_from.advance(3.0, 2.5);
+    node_to.advance(3.0, 2.5);
     edge.apply_mobility(3.0, 2.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
@@ -306,8 +306,8 @@ TEST(DynamicNPIs, mobility)
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
-    node_from.evolve(4.5, 1.5);
-    node_to.evolve(4.5, 1.5);
+    node_from.advance(4.5, 1.5);
+    node_to.advance(4.5, 1.5);
     edge.apply_mobility(4.5, 1.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
@@ -316,8 +316,8 @@ TEST(DynamicNPIs, mobility)
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
-    node_from.evolve(6.0, 1.5);
-    node_to.evolve(6.0, 1.5);
+    node_from.advance(6.0, 1.5);
+    node_to.advance(6.0, 1.5);
     edge.apply_mobility(6.0, 1.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented
@@ -480,10 +480,10 @@ TEST(DynamicNPIs, secirvvs_threshold_safe)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
                                                 100.0);
 
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
 
     mio::DynamicNPIs<double> npis;
     npis.set_threshold(
@@ -516,10 +516,10 @@ TEST(DynamicNPIs, secirvvs_threshold_exceeded)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
                                                 100);
 
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
 
     mio::DynamicNPIs<double> npis;
     npis.set_threshold(
@@ -553,10 +553,10 @@ TEST(DynamicNPIs, secirvvs_delayed_implementation)
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
                                                 100);
 
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFirstVaccination<double>>().array().setConstant(0);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().resize(mio::SimulationDay(size_t(1000)));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccination<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
 
     mio::ContactMatrixGroup& cm = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
     cm[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.0));

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -97,7 +97,7 @@ public:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Vector<FP>> advance(FP tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         return m_integrator.advance(
             [this](auto&& y, auto&& t, auto&& dydt) {

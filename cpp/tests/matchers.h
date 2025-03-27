@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -20,10 +20,68 @@
 #ifndef EPI_TESTS_MATCHERS_H
 #define EPI_TESTS_MATCHERS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/floating_point.h"
 #include "memilio/io/io.h"
 #include "gmock/gmock.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
+
+#include "json/json.h"
+
+namespace Json
+{
+void PrintTo(const Value& json, std::ostream* os);
+} // namespace Json
+
+std::string json_type_to_string(Json::ValueType t);
+
+MATCHER_P(JsonEqual, expected_json, testing::PrintToString(expected_json))
+{
+    auto match_rec = [&](auto&& match, const Json::Value& a, const Json::Value& b, std::string name) {
+        // first check if the types match
+        if (a.type() != b.type()) {
+            *result_listener << "type mismatch for " << name << ", expected " << json_type_to_string(a.type())
+                             << ", actual " << json_type_to_string(b.type());
+            return false;
+        }
+        // handle object types by recursively matching members
+        if (a.isObject()) {
+            for (auto& key : a.getMemberNames()) {
+                if (!b.isMember(key)) {
+                    *result_listener << "missing key \"" << key << "\" in " << name;
+                    return false;
+                }
+                if (!match(match, a[key], b[key], name + "[\"" + key + "\"]")) {
+                    return false;
+                }
+            }
+        }
+        // handle arrays by recursively matching each item
+        else if (a.isArray()) {
+            if (a.size() != b.size()) {
+                *result_listener << "wrong number of items in " << name << ", expected " << a.size() << ", actual "
+                                 << b.size();
+                return false;
+            }
+            for (Json::ArrayIndex i = 0; i < a.size(); ++i) {
+                if (!match(match, a[i], b[i], name + "[\"" + std::to_string(i) + "\"]")) {
+                    return false;
+                }
+            }
+        }
+        // handle value types using Json::Value::operator==
+        else if (a != b) {
+            *result_listener << "value mismatch in " << name << ", expected " << testing::PrintToString(a)
+                             << ", actual " << testing::PrintToString(b);
+            return false;
+        }
+        return true;
+    };
+    return match_rec(match_rec, expected_json, arg, "Json::Value");
+}
+#endif //MEMILIO_HAS_JSONCPP
 
 /**
  * @brief overload gtest printer function for eigen matrices.

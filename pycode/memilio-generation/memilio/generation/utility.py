@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file utility.py
-@brief Additional functions used for the code generation.
+:strong:`utility.py`
+Additional functions used for the code generation.
 """
 import os
 import subprocess
@@ -38,12 +38,13 @@ from clang.cindex import Config, Cursor, Type
 
 
 def try_set_libclang_path(path: str) -> None:
-    """
-    Try to set the file path for the libclang library. 
+    """Try to set the file path for the libclang library.
     If its already set, the returned Exception gets caught and discarded.
     If the given path string is empty or None, the path is determined with a call on the terminal.
 
-    @param path Path to the library files of libclang. Can be an empty string.
+    :param path: Path to the library files of libclang. Can be an empty string.
+    :param path: str: 
+
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
@@ -67,11 +68,11 @@ def try_set_libclang_path(path: str) -> None:
 
 
 def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
-    """
-    Try to load the compile_commands.json ressource and retrieve the corresponding directory name.
+    """Try to load the compile_commands.json ressource and retrieve the corresponding directory name.
 
-    @param skbuild_path_to_database Value from config.json
-    @return Path of directory
+    :param skbuild_path_to_database: Value from config.json
+    :returns: Path of directory
+
     """
     pkg = importlib_resources.files("memilio.generation")
     filename = skbuild_path_to_database.split('_skbuild')
@@ -88,11 +89,11 @@ def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
 
 
 def get_base_class(base_type: Type) -> List[Any]:
-    """
-    Retrieve the base class.
+    """Retrieve the base class.
     Example for base_type: CompartmentalModel.
 
-    @param Type of the current node.
+    :param base_type: Type: 
+
     """
     result = [base_type.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
@@ -101,11 +102,11 @@ def get_base_class(base_type: Type) -> List[Any]:
 
 
 def get_base_class_string(base_type: Type) -> List[Any]:
-    """
-    Retrieve the spelling of the base class.
+    """Retrieve the spelling of the base class.
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 
-    @param Type of the current node.
+    :param base_type: of the current node.
+
     """
     # fixes an issue in the generation of the abstract syntax tree
     # depending on the compiler version a whitespace is added between '>>'
@@ -114,105 +115,3 @@ def get_base_class_string(base_type: Type) -> List[Any]:
         result.append(get_base_class_string(
             base_type.get_template_argument_type(i)))
     return result
-
-
-def indent(spaces: int) -> str:
-    """ 
-    Indentation string for pretty-printing.
-
-    @param spaces Number of spaces.
-    """
-    return '  '*spaces
-
-
-def output_cursor_print(cursor: Cursor, spaces: int) -> None:
-    """ 
-    Low level cursor output to the terminal.
-
-    @param cursor Represents the current node of the AST as an Cursor object from libclang.
-    @param spaces Number of spaces.
-    """
-    spelling = ''
-    displayname = ''
-
-    if cursor.spelling:
-        spelling = cursor.spelling
-    if cursor.displayname:
-        displayname = cursor.displayname
-    kind = cursor.kind
-
-    print(indent(spaces) + spelling, '<' + str(kind) + '>')
-    print(indent(spaces+1) + '"' + displayname + '"')
-
-
-def output_cursor_and_children_print(cursor: Cursor, spaces: int = 0) -> None:
-    """ 
-    Output this cursor and its children with minimal formatting to the terminal.
-
-    @param cursor Represents the current node of the AST as an Cursor object from libclang.
-    @param spaces [Default = 0] Number of spaces.
-    """
-    output_cursor_print(cursor, spaces)
-    if cursor.kind.is_reference():
-        print(indent(spaces) + 'reference to:')
-        output_cursor_print(cursor.referenced, spaces+1)
-
-    # Recurse for children of this cursor
-    has_children = False
-    for c in cursor.get_children():
-        if not has_children:
-            print(indent(spaces) + '{')
-            has_children = True
-        output_cursor_and_children_print(c, spaces+1)
-
-    if has_children:
-        print(indent(spaces) + '}')
-
-
-def output_cursor_file(cursor: Cursor, f: TextIO, spaces: int) -> None:
-    """ 
-    Low level cursor output to a file.
-
-    @param cursor Represents the current node of the AST as an Cursor object from libclang.
-    @param f Open file object for output.
-    @param spaces Number of spaces.
-    """
-    spelling = ''
-    displayname = ''
-
-    if cursor.spelling:
-        spelling = cursor.spelling
-    if cursor.displayname:
-        displayname = cursor.displayname
-    kind = cursor.kind
-
-    f.write(indent(spaces) + spelling + ' <' + str(kind) + '> ')
-    if cursor.location.file:
-        f.write(cursor.location.file.name + '\n')
-    f.write(indent(spaces+1) + '"' + displayname + '"\n')
-
-
-def output_cursor_and_children_file(
-        cursor: Cursor, f: TextIO, spaces: int = 0) -> None:
-    """ 
-    Output this cursor and its children with minimal formatting to a file.
-
-    @param cursor Represents the current node of the AST as an Cursor object from libclang.
-    @param f Open file object for output.
-    @param spaces Number of spaces.
-    """
-    output_cursor_file(cursor, f, spaces)
-    if cursor.kind.is_reference():
-        f.write(indent(spaces) + 'reference to:\n')
-        output_cursor_file(cursor.referenced, f, spaces+1)
-
-    # Recurse for children of this cursor
-    has_children = False
-    for c in cursor.get_children():
-        if not has_children:
-            f.write(indent(spaces) + '{\n')
-            has_children = True
-        output_cursor_and_children_file(c, f, spaces+1)
-
-    if has_children:
-        f.write(indent(spaces) + '}\n')

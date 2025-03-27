@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
@@ -25,6 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 
+#include "memilio/io/default_serialize.h"
 #include "boost/atomic/atomic.hpp"
 
 namespace mio
@@ -47,6 +48,12 @@ struct GeographicalLocation {
     bool operator!=(const GeographicalLocation& other) const
     {
         return !(latitude == other.latitude && longitude == other.longitude);
+    }
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("GraphicalLocation").add("latitude", latitude).add("longitude", longitude);
     }
 };
 
@@ -73,6 +80,12 @@ struct CellCapacity {
     }
     uint32_t volume; ///< Volume of the Cell.
     uint32_t persons; ///< Maximal number of Person%s at the Cell.
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("CellCapacity").add("volume", volume).add("persons", persons);
+    }
 };
 
 /**
@@ -87,6 +100,12 @@ struct Cell {
     * @return The relative cell size for the Cell.
     */
     ScalarType compute_space_per_person_relative() const;
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Cell").add("capacity", m_capacity);
+    }
 }; // namespace mio
 
 /**
@@ -100,19 +119,22 @@ public:
      * @param[in] loc_type The #LocationType.
      * @param[in] loc_id The index of the Location in the Model.
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] model_id [Default: 0] The model id the Location is in.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
+    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, int model_id = 0,
+                      uint32_t num_cells = 1);
 
     /**
      * @brief Construct a copy of a Location with a new ID.
      * @param[in] other The Location to copy from.
      * @param[in] id The ID for the new Location.
      */
-    explicit Location(const Location& other, LocationId id)
+    explicit Location(const Location& other, LocationId id, int model_id = 0)
         : Location(other)
     {
-        m_id = id;
+        m_id       = id;
+        m_model_id = model_id;
     }
 
     /**
@@ -214,52 +236,12 @@ public:
     }
 
     /**
-     * @brief Get the information whether NPIs are active at this Location.
-     * If true requires e.g. Mask%s when entering a Location.
-     * @return True if NPIs are active at this Location.
+     * @brief Get the information whether masks are required to enter this Location.
+     * @return True if masks are required to enter this Location.
      */
-    bool get_npi_active() const
+    bool is_mask_required() const
     {
-        return m_npi_active;
-    }
-
-    /**
-     * @brief Activate or deactivate NPIs at this Location.
-     * @param[in] new_status Status of NPIs.
-     */
-    void set_npi_active(bool new_status)
-    {
-        m_npi_active = new_status;
-    }
-
-    /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
-    {
-        auto obj = io.create_object("Location");
-        obj.add_element("index", m_id);
-        obj.add_element("type", m_type);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Location> deserialize(IOContext& io)
-    {
-        auto obj   = io.expect_object("Location");
-        auto index = obj.expect_element("index", Tag<LocationId>{});
-        auto type  = obj.expect_element("type", Tag<LocationType>{});
-        return apply(
-            io,
-            [](auto&& index_, auto&& type_) {
-                return Location{type_, index_};
-            },
-            index, type);
+        return m_required_mask != MaskType::None;
     }
 
     /**
@@ -280,14 +262,38 @@ public:
         m_geographical_location = location;
     }
 
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Location")
+            .add("type", m_type)
+            .add("id", m_id)
+            .add("parameters", m_parameters)
+            .add("cells", m_cells)
+            .add("required_mask", m_required_mask)
+            .add("geographical_location", m_geographical_location);
+    }
+
+    /**
+     * @brief Get the model id the location is in. Is only relevant for graph ABM or hybrid model.
+     * @return Model id of the location
+     */
+    int get_model_id() const
+    {
+        return m_model_id;
+    }
+
 private:
+    friend DefaultFactory<Location>;
+    Location() = default;
+
     LocationType m_type; ///< Type of the Location.
     LocationId m_id; ///< Unique identifier for the Location in the Model owning it.
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
-    bool m_npi_active; ///< If true requires e.g. Mask%s to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
+    int m_model_id; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
 };
 
 } // namespace abm

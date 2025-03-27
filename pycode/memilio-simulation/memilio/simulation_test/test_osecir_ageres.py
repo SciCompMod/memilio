@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -30,10 +30,12 @@ from memilio.simulation.osecir import Model, Simulation, simulate
 
 
 class Test_osecir_integration(unittest.TestCase):
+    """ """
 
     here = os.path.dirname(os.path.abspath(__file__))
 
     def setUp(self):
+        """ """
 
         self.t0 = 0
         self.tmax = 50
@@ -97,12 +99,14 @@ class Test_osecir_integration(unittest.TestCase):
         self.model = model
 
     def test_simulate_simple(self):
+        """ """
         result = simulate(t0=0., tmax=100., dt=0.1, model=self.model)
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_simulation_simple(self):
+        """ """
         sim = Simulation(self.model, t0=0., dt=0.1)
         sim.advance(tmax=100.)
         result = sim.result
@@ -111,11 +115,12 @@ class Test_osecir_integration(unittest.TestCase):
         self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_compare_with_cpp(self):
-        """
-        Tests the correctness of the python bindings. The results of a simulation
+        """Tests the correctness of the python bindings. The results of a simulation
         in python get compared to the results of a cpp simulation. Cpp simulation
         results contained in the file ode-secihurd-ageres-compare.csv.
         If cpp model changes this test needs to be adjusted accordingly.
+
+
         """
         refData = pd.read_csv(
             os.path.join(self.here + '/data/ode-secihurd-ageres-compare.csv'),

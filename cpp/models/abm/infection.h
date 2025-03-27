@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: David Kerkmann, Sascha Korf, Khoa Nguyen
 *
@@ -21,6 +21,7 @@
 #define MIO_ABM_INFECTION_H
 
 #include "abm/personal_rng.h"
+#include "memilio/io/default_serialize.h"
 #include "abm/time.h"
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
@@ -44,11 +45,21 @@ struct ViralLoad {
     ScalarType peak; ///< Peak amplitude of the ViralLoad.
     ScalarType incline; ///< Incline of the ViralLoad during incline phase in log_10 scale per day (always positive).
     ScalarType decline; ///< Decline of the ViralLoad during decline phase in log_10 scale per day (always negative).
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("ViralLoad")
+            .add("start_date", start_date)
+            .add("end_date", end_date)
+            .add("peak", peak)
+            .add("incline", incline)
+            .add("decline", decline);
+    }
 };
 
 class Infection
 {
-
 public:
     /**
      * @brief Create an Infection for a single Person.
@@ -59,13 +70,12 @@ public:
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
-     * @param[in] latest_exposure [Default: {ExposureType::NoProtection, TimePoint(0)}] The pair value of last ExposureType (previous Infection/Vaccination) and TimePoint of that protection.
+     * @param[in] latest_protection [Default: {ProtectionType::NoProtection, TimePoint(0)}] The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
      * @param[in] detected [Default: false] If the Infection is detected.     
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
               TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
-              std::pair<ExposureType, TimePoint> latest_exposure = {ExposureType::NoProtection, TimePoint(0)},
-              bool detected                                      = false);
+              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -114,9 +124,24 @@ public:
     */
     TimePoint get_start_date() const;
 
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("Infection")
+            .add("infection_course", m_infection_course)
+            .add("virus_variant", m_virus_variant)
+            .add("viral_load", m_viral_load)
+            .add("log_norm_alpha", m_log_norm_alpha)
+            .add("log_norm_beta", m_log_norm_beta)
+            .add("detected", m_detected);
+    }
+
 private:
+    friend DefaultFactory<Infection>;
+    Infection() = default;
+
     /**
-     * @brief Determine ViralLoad course and Infection course based on init_state.
+     * @brief Determine Infection course based on #InfectionState init_state.
      * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all
      * subsequent #InfectionState%s.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
@@ -124,26 +149,38 @@ private:
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] latest_protection  Latest protection against Infection, has an influence on transition probabilities.
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                    TimePoint init_date, InfectionState start_state,
-                                    std::pair<ExposureType, TimePoint> latest_protection);
+                                    TimePoint init_date, InfectionState start_state, ProtectionEvent latest_protection);
 
     /**
-     * @brief Determine ViralLoad course and Infection course prior to the given start_state.
+     * @brief Determine Infection course subsequent to the given #InfectionState start_state.
+     * From the start_state, a random path through the #InfectionState tree is chosen, that is
+     * Susceptible -> InfectedNoSymptoms,
+     * InfectedNoSymptoms -> InfectedSymptoms or InfectedNoSymptoms -> Recovered,
+     * InfectedSymptoms -> Infected_Severe or InfectedSymptoms -> Recovered,
+     * InfectedSevere -> InfectedCritical or InfectedSevere -> Recovered or InfectedSevere -> Dead,
+     * InfectedCritical -> Recovered or InfectedCritical -> Dead,
+     * with artifical, hardcoded probabilites, until either Recoverd or Dead is reached.
+     * This is subject to change when parameter distributions for these transitions are implemented.
+     * The duration in each #InfectionState is taken from the respective parameter.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] latest_protection Latest protection against Infection, has an influence on transition probabilities.
      */
     void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                       TimePoint init_date, InfectionState start_state,
-                                       std::pair<ExposureType, TimePoint> latest_protection);
+                                       TimePoint init_date, InfectionState init_state,
+                                       ProtectionEvent latest_protection);
 
     /**
-     * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
+     * @brief Determine Infection course prior to the given #InfectionState start_state.
+     * From the start_state, a random path through the #InfectionState tree is chosen backwards, until Susceptible is reached.
+     * For more detailed information, refer to draw_infection_course_forward.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the person.
      * @param[in] params Parameters of the Model.
