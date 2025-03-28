@@ -25,10 +25,24 @@
 #include <fstream>
 
 #ifdef MEMILIO_WITH_CUDA
-#define R123_NO_CUDA_DEVICE_RANDOM 1
+#define R123_NO_CUDA_DEVICE_RANDOM=1
+#define BOOST_NO_CXX11_VARIADIC_TEMPLATES=1
+#endif
+
+// Note: Place all includes after the defines
+#include "abm/household.h"
+#include "abm/lockdown_rules.h"
+#include "abm/model.h"
+#include "abm/common_abm_loggers.h"
+
+
+#ifdef MEMILIO_WITH_CUDA
 #include <cuda_runtime.h>
 #include <iostream>
 #include <vector>
+
+// CUDA test functions remain unchanged...
+#endif
 
 // Define a larger test size for multi-core testing
 #define CUDA_TEST_SIZE 1024
