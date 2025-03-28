@@ -25,6 +25,7 @@
 #include <fstream>
 
 #ifdef MEMILIO_WITH_CUDA
+#define R123_NO_CUDA_DEVICE_RANDOM 1
 #include <cuda_runtime.h>
 #include <iostream>
 #include <vector>
