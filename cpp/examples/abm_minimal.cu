@@ -19,8 +19,8 @@
 */
 
 #ifdef MEMILIO_WITH_CUDA
-#define R123_NO_CUDA_DEVICE_RANDOM=1
-#define BOOST_NO_CXX11_VARIADIC_TEMPLATES=1
+#define R123_NO_CUDA_DEVICE_RANDOM 1
+#define BOOST_NO_CXX11_VARIADIC_TEMPLATES 1
 #endif
 
 // Note: Place all includes after the defines
@@ -184,7 +184,7 @@ bool testCuda()
 #endif
 
 // Simple function to run ABM simulation that doesn't depend on CUDA
-__host__ void runABMSimulation()
+void runABMSimulation()
 {
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
