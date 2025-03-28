@@ -26,11 +26,31 @@
 
 #ifdef MEMILIO_WITH_CUDA
 #include <cuda_runtime.h>
+#include <iostream>
+#include <vector>
+
+// Define a larger test size for multi-core testing
+#define CUDA_TEST_SIZE 1024
 
 // Simple CUDA kernel to verify CUDA functionality
 __global__ void testCudaKernel(int* result) 
 {
     *result = 42;
+}
+
+// More complex kernel to test parallel computing on multiple cores
+__global__ void testParallelKernel(float* input, float* output, int size) 
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < size) {
+        // Simple computation to verify parallel processing
+        float value = input[idx];
+        // Do some work to ensure the GPU is actually utilized
+        for(int i = 0; i < 1000; i++) {
+            value = sinf(value) * cosf(value) + sqrtf(fabs(value));
+        }
+        output[idx] = value;
+    }
 }
 
 // Helper function to test if CUDA is working properly
@@ -44,6 +64,19 @@ bool testCuda()
         return false;
     }
     
+    std::cout << "CUDA test: Found " << deviceCount << " CUDA device(s)" << std::endl;
+    
+    // Display information about the GPU
+    cudaDeviceProp deviceProp;
+    for (int device = 0; device < deviceCount; device++) {
+        cudaGetDeviceProperties(&deviceProp, device);
+        std::cout << "  Device " << device << ": " << deviceProp.name << std::endl;
+        std::cout << "    Compute capability: " << deviceProp.major << "." << deviceProp.minor << std::endl;
+        std::cout << "    Multiprocessors: " << deviceProp.multiProcessorCount << std::endl;
+        std::cout << "    Max threads per block: " << deviceProp.maxThreadsPerBlock << std::endl;
+    }
+    
+    // Basic test - single value
     int* d_result;
     int h_result = 0;
     
@@ -59,13 +92,83 @@ bool testCuda()
     // Free device memory
     cudaFree(d_result);
     
-    if (h_result == 42) {
-        std::cout << "CUDA test: Success! CUDA is working properly." << std::endl;
-        return true;
-    } else {
-        std::cout << "CUDA test: Failed! CUDA kernel did not produce expected result." << std::endl;
+    if (h_result != 42) {
+        std::cout << "CUDA test: Failed! Basic kernel did not produce expected result." << std::endl;
         return false;
     }
+    
+    std::cout << "CUDA test: Basic single-thread test passed." << std::endl;
+    
+    // Extended test - multiple cores
+    std::cout << "CUDA test: Running multi-core performance test..." << std::endl;
+    
+    // Create input data
+    std::vector<float> h_input(CUDA_TEST_SIZE);
+    std::vector<float> h_output(CUDA_TEST_SIZE);
+    
+    // Initialize input data
+    for (int i = 0; i < CUDA_TEST_SIZE; i++) {
+        h_input[i] = static_cast<float>(i) * 0.01f;
+    }
+    
+    // Allocate device memory
+    float* d_input;
+    float* d_output;
+    cudaMalloc((void**)&d_input, CUDA_TEST_SIZE * sizeof(float));
+    cudaMalloc((void**)&d_output, CUDA_TEST_SIZE * sizeof(float));
+    
+    // Copy input data to device
+    cudaMemcpy(d_input, h_input.data(), CUDA_TEST_SIZE * sizeof(float), cudaMemcpyHostToDevice);
+    
+    // Create CUDA events for timing
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    
+    // Record start time
+    cudaEventRecord(start);
+    
+    // Launch parallel kernel (use 256 threads per block)
+    int blockSize = 256;
+    int numBlocks = (CUDA_TEST_SIZE + blockSize - 1) / blockSize;
+    testParallelKernel<<<numBlocks, blockSize>>>(d_input, d_output, CUDA_TEST_SIZE);
+    
+    // Record end time
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    
+    // Calculate elapsed time
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    
+    // Copy result back
+    cudaMemcpy(h_output.data(), d_output, CUDA_TEST_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
+    
+    // Clean up
+    cudaFree(d_input);
+    cudaFree(d_output);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    
+    // Verify results (just check that they're not all zeros)
+    bool hasNonZeroResults = false;
+    for (int i = 0; i < CUDA_TEST_SIZE; i++) {
+        if (h_output[i] != 0.0f) {
+            hasNonZeroResults = true;
+            break;
+        }
+    }
+    
+    if (!hasNonZeroResults) {
+        std::cout << "CUDA test: Failed! Parallel kernel did not produce valid results." << std::endl;
+        return false;
+    }
+    
+    std::cout << "CUDA test: Multi-core test passed." << std::endl;
+    std::cout << "CUDA test: Processing time: " << milliseconds << " ms" << std::endl;
+    std::cout << "CUDA test: Success! CUDA is working properly with multiple cores." << std::endl;
+    
+    return true;
 }
 #endif
 
