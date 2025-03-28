@@ -101,6 +101,16 @@ target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 if(MEMILIO_ENABLE_CUDA)
     set_source_files_properties(examples/abm_minimal.cpp PROPERTIES LANGUAGE CUDA)
+    target_link_libraries(abm_minimal_example PRIVATE ${CUDA_LIBRARIES})
+    
+    # Add CUDA include directories
+    target_include_directories(abm_minimal_example PRIVATE ${CUDA_INCLUDE_DIRS})
+    
+    # Set CUDA-specific compilation flags
+    set_target_properties(abm_minimal_example PROPERTIES 
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_STANDARD 14
+        CUDA_STANDARD_REQUIRED ON)
 endif()
 
 add_executable(abm_history_example abm_history_object.cpp)
