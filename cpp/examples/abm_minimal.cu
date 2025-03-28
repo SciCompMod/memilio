@@ -37,7 +37,7 @@
 #include <vector>
 
 // CUDA test functions remain unchanged...
-#endif
+
 
 // Define a larger test size for multi-core testing
 #define CUDA_TEST_SIZE 1024
