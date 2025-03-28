@@ -24,8 +24,60 @@
 
 #include <fstream>
 
+#ifdef MEMILIO_WITH_CUDA
+#include <cuda_runtime.h>
+
+// Simple CUDA kernel to verify CUDA functionality
+__global__ void testCudaKernel(int* result) 
+{
+    *result = 42;
+}
+
+// Helper function to test if CUDA is working properly
+bool testCuda()
+{
+    int deviceCount = 0;
+    cudaError_t error = cudaGetDeviceCount(&deviceCount);
+    
+    if (error != cudaSuccess || deviceCount == 0) {
+        std::cout << "CUDA test: No CUDA devices found!" << std::endl;
+        return false;
+    }
+    
+    int* d_result;
+    int h_result = 0;
+    
+    // Allocate device memory
+    cudaMalloc((void**)&d_result, sizeof(int));
+    
+    // Launch kernel
+    testCudaKernel<<<1, 1>>>(d_result);
+    
+    // Copy result back
+    cudaMemcpy(&h_result, d_result, sizeof(int), cudaMemcpyDeviceToHost);
+    
+    // Free device memory
+    cudaFree(d_result);
+    
+    if (h_result == 42) {
+        std::cout << "CUDA test: Success! CUDA is working properly." << std::endl;
+        return true;
+    } else {
+        std::cout << "CUDA test: Failed! CUDA kernel did not produce expected result." << std::endl;
+        return false;
+    }
+}
+#endif
+
 int main()
 {
+    // Test CUDA if enabled
+    #ifdef MEMILIO_WITH_CUDA
+    testCuda();
+    #else
+    std::cout << "CUDA support is not enabled." << std::endl;
+    #endif
+
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
     mio::set_log_level(mio::LogLevel::warn);

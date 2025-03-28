@@ -21,6 +21,7 @@ option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
+option(MEMILIO_ENABLE_CUDA "Enable CUDA" OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -142,6 +143,27 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
             "-Werror")
     endif()
 endif()
+
+############ ADD CUDA ################
+# CUDA support configuration
+if(MEMILIO_ENABLE_CUDA)
+    # Require CMake 3.17+ for better CUDA support
+    cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+    enable_language(CUDA)
+
+    find_package(CUDA REQUIRED)
+    set(CMAKE_CUDA_STANDARD 17)
+    
+    include_directories(${CUDA_INCLUDE_DIRS})
+    message(STATUS "CUDA support enabled. Using CUDA ${CUDA_VERSION}")
+    message(STATUS "CUDA architecture: ${CMAKE_CUDA_ARCHITECTURES}")
+
+    add_definitions(-DMEMILIO_WITH_CUDA)
+
+endif()
+#############################################
+
+
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
