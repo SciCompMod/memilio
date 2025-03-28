@@ -326,8 +326,20 @@ int main()
     // Test CUDA if enabled
     #ifdef MEMILIO_WITH_CUDA
     std::cout << "Testing CUDA capabilities..." << std::endl;
-    bool cudaWorking = testCuda();
-    std::cout << "CUDA test " << (cudaWorking ? "passed!" : "failed!") << std::endl;
+    
+    // Guard the CUDA test with proper CUDA error handling
+    cudaError_t cudaStatus = cudaSetDevice(0);
+    if (cudaStatus != cudaSuccess) {
+        std::cerr << "CUDA initialization failed: " << cudaGetErrorString(cudaStatus) << std::endl;
+        std::cout << "CUDA test failed! Continuing without CUDA." << std::endl;
+    }
+    else {
+        bool cudaWorking = testCuda();
+        std::cout << "CUDA test " << (cudaWorking ? "passed!" : "failed!") << std::endl;
+        
+        // Reset the device before running non-CUDA code
+        cudaDeviceReset();
+    }
     #else
     std::cout << "CUDA support is not enabled." << std::endl;
     #endif
