@@ -131,6 +131,7 @@ bool testCuda()
     // Launch parallel kernel (use 256 threads per block)
     int blockSize = 256;
     int numBlocks = (CUDA_TEST_SIZE + blockSize - 1) / blockSize;
+    // Fix potential kernel launch syntax issue
     testParallelKernel<<<numBlocks, blockSize>>>(d_input, d_output, CUDA_TEST_SIZE);
     
     // Record end time

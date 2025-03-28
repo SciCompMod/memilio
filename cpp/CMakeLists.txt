@@ -160,6 +160,10 @@ if(MEMILIO_ENABLE_CUDA)
 
     add_definitions(-DMEMILIO_WITH_CUDA)
 
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES 75)
+    endif()
+
 endif()
 #############################################
 
