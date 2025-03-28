@@ -17,12 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
-#include "abm/model.h"
-#include "abm/common_abm_loggers.h"
-
-#include <fstream>
 
 #ifdef MEMILIO_WITH_CUDA
 #define R123_NO_CUDA_DEVICE_RANDOM=1
@@ -34,6 +28,8 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+
+#include <fstream>
 
 
 #ifdef MEMILIO_WITH_CUDA
