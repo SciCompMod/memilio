@@ -312,7 +312,7 @@ void runABMSimulation()
 
     // Run the simulation until tmax with the history object.
     std::cout << "Running ABM simulation..." << std::endl;
-    sim.advance(tmax, historyTimeSeries);
+    // sim.advance(tmax, historyTimeSeries);
     std::cout << "ABM simulation completed." << std::endl;
 
     // The results are written into the file "abm_minimal.txt" as a table
@@ -346,7 +346,7 @@ int main()
     #endif
 
     // Run ABM simulation (this doesn't use CUDA and shouldn't cause conflicts)
-    runABMSimulation();
+    // runABMSimulation();
 
     return 0;
 }
