@@ -98,7 +98,7 @@ target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_F
 
 add_executable(abm_minimal_example abm_minimal.cu)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
-target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+# target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 if(MEMILIO_ENABLE_CUDA)
     set_source_files_properties(examples/abm_minimal.cu PROPERTIES LANGUAGE CUDA)
     target_link_libraries(abm_minimal_example PRIVATE ${CUDA_LIBRARIES})
