@@ -26,14 +26,15 @@
 
 int main()
 {
+    // This is an example for running the IDE-SECIR model in a graph. It demonstrates a simple setup for a graph without
+    // mobility that consists of two nodes and no edges.
+
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     const ScalarType t0   = 0.;
     const ScalarType tmax = 10.;
 
-    // Time step of graph simulation, after every time step the simulation is restarted in every node.
-    const ScalarType dt_graph = 5.;
-    // Time step of IDE solver.
+    // Set time step size of IDE solver. Note that the time step size will be constant throughout the simulation. 
     const ScalarType dt_ide_solver = 1.;
 
     size_t num_agegroups = 1;
@@ -44,11 +45,12 @@ int main()
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
 
     // Create TimeSeries with num_transitions * num_agegroups elements where initial transitions needed for simulation
-    // will be stored.
+    // will be stored. We require values for the transitions for a sufficient number of time points before the start of
+    // the simulation to initialize our model.  
     size_t num_transitions = (size_t)mio::isecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> transitions_init(num_transitions * num_agegroups);
 
-    // Add time points for initialization of transitions.
+    // Define vector of transitions that will be added to the time points of the TimeSeries transitions_init.
     Vec vec_init(num_transitions * num_agegroups);
     vec_init[(size_t)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.;
     vec_init[(size_t)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.;
@@ -60,30 +62,32 @@ int main()
     vec_init[(size_t)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.;
     vec_init[(size_t)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.;
     vec_init[(size_t)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.;
-
+    // Multiply vec_init with dt_ide_solver so that within a time interval of length 1, always the above number of 
+    // individuals are transitioning from one compartment to another, irrespective of the chosen time step size. 
     vec_init = vec_init * dt_ide_solver;
-    // Add initial time point to time series.
+
+    // In this example, we use the default transition distributions. For these distributions, setting the initial time 
+    // point of the TimeSeries transitions_init at time -10 will give us a sufficient number of time points before t0=0.
     transitions_init.add_time_point(-10, vec_init);
-    // Add further time points until time t0.
+    // Add further time points with distance dt_ide_solver until time t0.
     while (transitions_init.get_last_time() < t0 - dt_ide_solver / 2.) {
         transitions_init.add_time_point(transitions_init.get_last_time() + dt_ide_solver, vec_init);
     }
 
-    // Initialize model.
+    // Initialize IDE model that will be used in in each node in the graph below. 
     mio::isecir::Model model(std::move(transitions_init), N_init, deaths_init, num_agegroups);
     model.check_constraints(dt_ide_solver);
 
-    // Two identical models.
-    mio::isecir::Model model1 = model;
-    mio::isecir::Model model2 = model;
-
-    // Set up graph with two nodes and no edges.
+    // Set up graph with two nodes and no edges. To each node, we pass an id, the above constructed IDE model as well 
+    // as the time step size that will be used by the numerical solver. For simplicity, we use the same model in
+    // both nodes.
     mio::Graph<mio::SimulationNode<mio::isecir::Simulation>, mio::MobilityEdge<ScalarType>> g;
-    g.add_node(1001, model1, dt_ide_solver);
-    g.add_node(1002, model2, dt_ide_solver);
+    g.add_node(1001, model, dt_ide_solver);
+    g.add_node(1002, model, dt_ide_solver);
 
-    // Simulate without any mobility between the nodes.
-    auto sim = mio::make_no_mobility_sim(t0, dt_graph, std::move(g));
+    // We simulate using the GraphSim class make_no_mobilty_sim. This allows us to run a graph simulation even though 
+    // we do not have defined any mobility between the nodes.
+    auto sim = mio::make_no_mobility_sim(t0, std::move(g));
 
     sim.advance(tmax);
 

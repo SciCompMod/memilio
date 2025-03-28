@@ -41,7 +41,7 @@ public:
     /**
      * @brief setup the Simulation for an IDE model.
      * @param[in] model An instance of the IDE model.
-     * @param[in] dt Step size of numerical solver.
+     * @param[in] dt Step size of numerical solver. Throughout the simulation, the step size will be constant. 
      */
     Simulation(Model const& model, ScalarType dt = 0.1)
         : m_model(std::make_unique<Model>(model))

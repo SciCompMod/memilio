@@ -68,7 +68,7 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
 
     // Define graph simulation that doesn't consider mobility even if we have edges that allow mobility.
     auto graph_sim_no_mobility =
-        mio::make_no_mobility_sim(t0, dt,
+        mio::make_no_mobility_sim(t0, 
                                   mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>,
                                              mio::MobilityEdge<double>>());
 
