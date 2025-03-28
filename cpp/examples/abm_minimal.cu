@@ -20,7 +20,6 @@
 
 #ifdef MEMILIO_WITH_CUDA
 #define R123_NO_CUDA_DEVICE_RANDOM 1
-#define BOOST_NO_CXX11_VARIADIC_TEMPLATES 1
 #endif
 
 // Note: Place all includes after the defines
