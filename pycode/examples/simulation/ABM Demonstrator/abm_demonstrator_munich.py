@@ -599,9 +599,11 @@ def run_abm_simulation(sim_num):
     # starting time point
     t0 = abm.TimePoint(0)
     # end time point: simulation will run 14 days
-    tmax = t0 + abm.days(14)
+    tmax = t0 + abm.days(90)
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
+    # set seeds for simulation
+    abm.set_seeds(sim.model, sim_num)
     start_init = time.time()
     # initialize model
     abm.initialize_model(sim.model, input_path + 'persons.csv', os.path.join(
@@ -611,8 +613,6 @@ def run_abm_simulation(sim_num):
     # read infection parameters
     parameters = pd.read_csv(os.path.join(
         input_path, 'parameter_table.csv'), index_col=0)
-    # set seeds for simulation
-    abm.set_seeds(sim.model, sim_num)
     # set infection parameters
     sim.model.parameters = set_infection_parameters(parameters)
     # set age groups that go to school and work
