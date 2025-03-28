@@ -131,7 +131,6 @@ bool testCuda()
     // Launch parallel kernel (use 256 threads per block)
     int blockSize = 256;
     int numBlocks = (CUDA_TEST_SIZE + blockSize - 1) / blockSize;
-    // Fix potential kernel launch syntax issue
     testParallelKernel<<<numBlocks, blockSize>>>(d_input, d_output, CUDA_TEST_SIZE);
     
     // Record end time
@@ -173,15 +172,9 @@ bool testCuda()
 }
 #endif
 
-int main()
+// Simple function to run ABM simulation that doesn't depend on CUDA
+void runABMSimulation()
 {
-    // Test CUDA if enabled
-    #ifdef MEMILIO_WITH_CUDA
-    testCuda();
-    #else
-    std::cout << "CUDA support is not enabled." << std::endl;
-    #endif
-
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
     mio::set_log_level(mio::LogLevel::warn);
@@ -309,7 +302,7 @@ int main()
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(10);
+    auto tmax = t0 + mio::abm::days(5); // Reduced from 10 to 5 days for faster testing
     auto sim  = mio::abm::Simulation(t0, std::move(model));
 
     // Create a history object to store the time series of the infection states.
@@ -317,16 +310,30 @@ int main()
         Eigen::Index(mio::abm::InfectionState::Count)};
 
     // Run the simulation until tmax with the history object.
+    std::cout << "Running ABM simulation..." << std::endl;
     sim.advance(tmax, historyTimeSeries);
+    std::cout << "ABM simulation completed." << std::endl;
 
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
+    // The results are written into the file "abm_minimal.txt" as a table
     std::ofstream outfile("abm_minimal.txt");
     std::get<0>(historyTimeSeries.get_log())
         .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
+}
+
+int main()
+{
+    // Test CUDA if enabled
+    #ifdef MEMILIO_WITH_CUDA
+    std::cout << "Testing CUDA capabilities..." << std::endl;
+    bool cudaWorking = testCuda();
+    std::cout << "CUDA test " << (cudaWorking ? "passed!" : "failed!") << std::endl;
+    #else
+    std::cout << "CUDA support is not enabled." << std::endl;
+    #endif
+
+    // Run ABM simulation (this doesn't use CUDA and shouldn't cause conflicts)
+    runABMSimulation();
 
     return 0;
 }
