@@ -1,4 +1,3 @@
-
 import datetime as dt
 import os.path
 import h5py
@@ -324,9 +323,8 @@ def extract_nrw_data_and_combine(files, date, relative=True):
                 filters={'Group': filter_age, 'InfectionState': [2]},
                 output='matrix',
                 file_format=file_format)
-            df['Group'] = df.Group.str.extract('(\d+)')
+            df['Group'] = df.Group.str.extract(r'(\d+)')
             df['Group'] = df['Group'].apply(pd.to_numeric, errors='coerce')
-            # df['Region'] = df['Group']
             df['Region'] = (df['Group']-1) // len(age_groups)
             df = df.groupby(['Region'], as_index=False).agg({'Count': "sum"})
 
@@ -462,9 +460,14 @@ if __name__ == '__main__':
 
     plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
 
-    # plot_maps(files=results, output_dir=plot_dir, legend=models, name='NRWAdaptiveDay')
-    # plot_difference_maps(files={key: value for key, value in results.items() if key in {
-    #     'Model C', 'Model D'}}, output_dir=plot_dir)
-    # plot_difference(files={key: value for key, value in results.items() if key in {
-    # 'Model C', 'Model D'}}, output_dir=plot_dir)
+    plot_maps(files=results, output_dir=plot_dir,
+              legend=models, name='NRWAdaptiveDay')
+    plot_difference_maps(
+        files={key: value for key, value in results.items()
+               if key in {'Model C', 'Model D'}},
+        output_dir=plot_dir)
+    plot_difference(
+        files={key: value for key, value in results.items()
+               if key in {'Model C', 'Model D'}},
+        output_dir=plot_dir)
     compare_compartments(files=results, output_dir=plot_dir,  legend=models)
