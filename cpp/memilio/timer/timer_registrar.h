@@ -1,25 +1,20 @@
 #ifndef MIO_TIMER_TIMER_REGISTRAR_H
 #define MIO_TIMER_TIMER_REGISTRAR_H
 
-#include "memilio/timer/definitions.h"
-#include "memilio/timer/basic_timer.h"
+#include "memilio/timer/registration.h"
+#include "memilio/timer/table_printer.h"
 
-#include <iostream>
 #include <list>
-#include <map>
+#include <memory>
 #include <mutex>
+#include <ostream>
 #include <string>
+#include <utility>
 
 namespace mio
 {
 namespace timing
 {
-
-struct TimerRegistration {
-    std::string name;
-    BasicTimer& timer;
-    int thread_id;
-};
 
 // holds raw pointers to names and durations of the thread_local Timer instances
 class TimerRegistrar
@@ -44,37 +39,28 @@ public:
         m_registration_lock.unlock();
     }
 
-    const auto& get_register()
+    const auto& get_register() const
     {
         return m_register;
     }
 
-    // questionable whether this should be allowed to be used over print_on_exit.
-    void print_timers(std::ostream& out = std::cout)
+    void print_timers(std::ostream& out = std::cout) const
     {
         PRAGMA_OMP(single)
         {
-            const auto indent = "  ";
-            out << "All Timers: " << m_register.size() << "\n";
-            for (const auto& entry : m_register) {
-                out << indent << entry.name << ": " << std::scientific
-                    << time_in_seconds(entry.timer.get_elapsed_time()) << "\n";
-            }
-            // dedupe list entries from parallel execution
-            std::map<std::string, DurationType> deduper;
-            for (const auto& entry : m_register) {
-                deduper[entry.name] += entry.timer.get_elapsed_time();
-            }
-            out << "Unique Timers (accumulated): " << deduper.size() << "\n";
-            for (const auto& entry : deduper) {
-                out << indent << entry.first << ": " << std::scientific << time_in_seconds(entry.second) << "\n";
-            }
+            get_instance().m_printer->print(m_register, out);
         }
     }
 
-    void print_on_exit() // requires dtor (i.e. get_instance scheme)
+    void disable_final_timer_summary() const
     {
-        m_print_on_death = true;
+        get_instance().m_print_on_death = false;
+    }
+
+    void set_printer(std::unique_ptr<Printer>&& printer)
+    {
+        m_printer.swap(printer);
+        // old value of m_printer (now stored in printer) is deleted at end of scope
     }
 
 private:
@@ -86,14 +72,15 @@ private:
             PRAGMA_OMP(single)
             {
                 std::cout << "Final Timer Summary\n";
-                print_timers();
+                m_printer->print(m_register, std::cout);
             }
         }
     }
 
+    std::unique_ptr<Printer> m_printer = std::make_unique<TablePrinter>();
+    bool m_print_on_death              = true;
     std::list<TimerRegistration> m_register;
     std::mutex m_registration_lock;
-    bool m_print_on_death;
 };
 
 } // namespace timing

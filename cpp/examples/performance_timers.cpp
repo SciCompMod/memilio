@@ -1,14 +1,22 @@
+#include "memilio/timer/list_printer.h"
+#include "memilio/timer/table_printer.h"
+#include "memilio/timer/timer_registrar.h"
 #include "memilio/utils/mioomp.h"
 #include "memilio/timer/timers.h"
 
+#include <functional>
 #include <thread>
 
 int main()
 {
     mio::ScopedTimer timer_hw(CONST_LITERAL("Hello World!"));
 
-    // timing::TimerRegistrar::get_instance().preregister_timers<timer_name_loop_inner_prereg>();
-    mio::timing::TimerRegistrar::get_instance().print_on_exit();
+    // Set a Printer to output the timers.
+    // Both printer and format used here are the default value, we set them only as a demonstration how they could be
+    // changed. If the defaults are
+    auto tf = std::make_unique<mio::timing::TablePrinter>();
+    tf->set_time_format("{:e}");
+    mio::timing::TimerRegistrar::get_instance().set_printer(std::move(tf));
 
     volatile int ctr = 0;
     int N            = 1000;
@@ -53,5 +61,5 @@ int main()
         }
     }
 
-    mio::timing::TimerRegistrar::get_instance().print_timers();
+    return 0;
 }
