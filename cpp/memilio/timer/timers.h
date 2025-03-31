@@ -5,6 +5,8 @@
 #include "memilio/timer/basic_timer.h"
 #include "memilio/timer/definitions.h"
 #include "memilio/timer/timer_registrar.h"
+#include <boost/core/demangle.hpp>
+#include <type_traits>
 
 namespace mio
 {
@@ -29,7 +31,8 @@ public:
 private:
     Timer()
     {
-        TimerRegistrar::get_instance().add_timer({Name, *this, mio::get_omp_thread_id()});
+        const auto name = std::is_same_v<Tag, void> ? Name : boost::core::demangle(typeid(Tag).name()) + "::" + Name;
+        TimerRegistrar::get_instance().add_timer({name, *this, mio::get_omp_thread_id()});
     }
 };
 
