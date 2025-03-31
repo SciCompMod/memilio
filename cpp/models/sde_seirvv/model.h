@@ -59,73 +59,51 @@ public:
     void get_flows(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
                    ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> flows) const
     {
-        std::cout << "calc flows" << std::endl;
         auto& params = this->parameters;
+        params.get<ContactPatterns>().get_matrix_at(t)(0, 0);
+        ScalarType coeffStoIV1 = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                                 params.get<TransmissionProbabilityOnContactV1>() / populations.get_total();
+        ScalarType coeffStoIV2 = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                                 params.get<TransmissionProbabilityOnContactV2>() / populations.get_total();
 
-        // Hole den Kontaktmuster-Wert aus der Matrix bei Zeit t
-        ScalarType cp_val = params.get<ContactPatterns>().get_matrix_at(t)(0, 0);
-        std::cout << "ContactPatterns value: " << cp_val << std::endl;
+        // Normal distributed values for the stochastic part of the flows, variables are encoded
+        // in the following way: x_y is the stochastic part for the flow from x to y. Variant
+        // specific compartments also get an addendum v1 or v2 denoting the relevant variant.
 
-        // Berechne Koeffizienten für die Transmission
-        ScalarType coeffStoIV1 = cp_val * params.get<TransmissionProbabilityOnContactV1>() / populations.get_total();
-        std::cout << "coeffStoIV1: " << coeffStoIV1 << std::endl;
-
-        ScalarType coeffStoIV2 = cp_val * params.get<TransmissionProbabilityOnContactV2>() / populations.get_total();
-        std::cout << "coeffStoIV2: " << coeffStoIV2 << std::endl;
-
-        // Normalverteilte Zufallszahlen für den stochastischen Anteil der Flows
         ScalarType s_ev1 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "s_ev1: " << s_ev1 << std::endl;
-
         ScalarType s_ev2 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "s_ev2: " << s_ev2 << std::endl;
-
         ScalarType ev1_iv1 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "ev1_iv1: " << ev1_iv1 << std::endl;
-
         ScalarType ev2_iv2 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "ev2_iv2: " << ev2_iv2 << std::endl;
-
         ScalarType iv1_rv1 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "iv1_rv1: " << iv1_rv1 << std::endl;
-
         ScalarType iv2_rv2 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "iv2_rv2: " << iv2_rv2 << std::endl;
-
         ScalarType rv1_ev1v2 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "rv1_ev1v2: " << rv1_ev1v2 << std::endl;
-
         ScalarType ev1v2_iv1v2 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "ev1v2_iv1v2: " << ev1v2_iv1v2 << std::endl;
-
         ScalarType iv1v2_rv1v2 =
             mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        std::cout << "iv1v2_rv1v2: " << iv1v2_rv1v2 << std::endl;
 
-        // Berechne Optimierungsgrößen
-        ScalarType inv_step_size = 1.0 / step_size;
-        std::cout << "inv_step_size: " << inv_step_size << std::endl;
+        // Assuming that no person can change its InfectionState twice in a single time step,
+        // take the minimum of the calculated flow and the source compartment, to ensure that
+        // no compartment attains negative values.
 
+        // Calculate inv_step_size and inv_sqrt_step_size for optimization.
+        ScalarType inv_step_size      = 1.0 / step_size;
         ScalarType inv_sqrt_step_size = 1.0 / sqrt(step_size);
-        std::cout << "inv_sqrt_step_size: " << inv_sqrt_step_size << std::endl;
 
-        // Berechne den ersten Outflow aus S
+        // Two outgoing flows from S so will clamp their sum to S * inv_step_size to ensure non-negative S.
         const ScalarType outflow1 = std::clamp(
             coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV1] +
                 sqrt(coeffStoIV1 * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::InfectedV1]) *
                     inv_sqrt_step_size * s_ev1,
             0.0, y[(size_t)InfectionState::Susceptible] * inv_step_size);
-        std::cout << "outflow1: " << outflow1 << std::endl;
 
-        // Berechne den zweiten Outflow aus S
         const ScalarType outflow2 =
             std::clamp(coeffStoIV1 * y[(size_t)InfectionState::Susceptible] *
                                (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2]) +
@@ -133,69 +111,43 @@ public:
                                 (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2])) *
                                inv_sqrt_step_size * s_ev2,
                        0.0, y[(size_t)InfectionState::Susceptible] * inv_step_size);
-        std::cout << "outflow2: " << outflow2 << std::endl;
 
-        // Summe der Outflows
         const ScalarType outflow_sum = outflow1 + outflow2;
-        std::cout << "outflow_sum: " << outflow_sum << std::endl;
-
         if (outflow_sum > 0) {
             const ScalarType scale =
                 std::clamp(outflow_sum, 0.0, y[(size_t)InfectionState::Susceptible] * inv_step_size) / outflow_sum;
-            std::cout << "scale: " << scale << std::endl;
             flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV1>()] = outflow1 * scale;
-            std::cout << "flow Sus -> ExpV1: "
-                      << flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV1>()]
-                      << std::endl;
             flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()] = outflow2 * scale;
-            std::cout << "flow Sus -> ExpV2: "
-                      << flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()]
-                      << std::endl;
         }
         else {
             flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV1>()] = 0;
-            std::cout << "flow Sus -> ExpV1 auf 0 gesetzt" << std::endl;
             flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::ExposedV2>()] = 0;
-            std::cout << "flow Sus -> ExpV2 auf 0 gesetzt" << std::endl;
         }
 
-        // Fluss von ExposedV1 zu InfectedV1
         flows[get_flat_flow_index<InfectionState::ExposedV1, InfectionState::InfectedV1>()] =
             std::clamp((1.0 / params.get<TimeExposedV1>()) * y[(size_t)InfectionState::ExposedV1] +
                            sqrt((1.0 / params.get<TimeExposedV1>()) * y[(size_t)InfectionState::ExposedV1]) *
                                inv_sqrt_step_size * ev1_iv1,
                        0.0, y[(size_t)InfectionState::ExposedV1] * inv_step_size);
-        std::cout << "flow ExpV1 -> InfV1: "
-                  << flows[get_flat_flow_index<InfectionState::ExposedV1, InfectionState::InfectedV1>()] << std::endl;
 
-        // Fluss von ExposedV2 zu InfectedV2
         flows[get_flat_flow_index<InfectionState::ExposedV2, InfectionState::InfectedV2>()] =
             std::clamp((1.0 / params.get<TimeExposedV2>()) * y[(size_t)InfectionState::ExposedV2] +
                            sqrt((1.0 / params.get<TimeExposedV2>()) * y[(size_t)InfectionState::ExposedV2]) *
                                inv_sqrt_step_size * ev2_iv2,
                        0.0, y[(size_t)InfectionState::ExposedV2] * inv_step_size);
-        std::cout << "flow ExpV2 -> InfV2: "
-                  << flows[get_flat_flow_index<InfectionState::ExposedV2, InfectionState::InfectedV2>()] << std::endl;
 
-        // Fluss von InfectedV1 zu RecoveredV1
         flows[get_flat_flow_index<InfectionState::InfectedV1, InfectionState::RecoveredV1>()] =
             std::clamp((1.0 / params.get<TimeInfectedV1>()) * y[(size_t)InfectionState::InfectedV1] +
                            sqrt((1.0 / params.get<TimeInfectedV1>()) * y[(size_t)InfectionState::InfectedV1]) *
                                inv_sqrt_step_size * iv1_rv1,
                        0.0, y[(size_t)InfectionState::InfectedV1] * inv_step_size);
-        std::cout << "flow InfV1 -> RecV1: "
-                  << flows[get_flat_flow_index<InfectionState::InfectedV1, InfectionState::RecoveredV1>()] << std::endl;
 
-        // Fluss von InfectedV2 zu RecoveredV2
         flows[get_flat_flow_index<InfectionState::InfectedV2, InfectionState::RecoveredV2>()] =
             std::clamp((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV2] +
                            sqrt((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV2]) *
                                inv_sqrt_step_size * iv2_rv2,
                        0.0, y[(size_t)InfectionState::InfectedV2] * inv_step_size);
-        std::cout << "flow InfV2 -> RecV2: "
-                  << flows[get_flat_flow_index<InfectionState::InfectedV2, InfectionState::RecoveredV2>()] << std::endl;
 
-        // Fluss von RecoveredV1 zu ExposedV1V2
         flows[get_flat_flow_index<InfectionState::RecoveredV1, InfectionState::ExposedV1V2>()] =
             std::clamp(coeffStoIV2 * y[(size_t)InfectionState::RecoveredV1] *
                                (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2]) +
@@ -203,31 +155,18 @@ public:
                                 (pop[(size_t)InfectionState::InfectedV1V2] + pop[(size_t)InfectionState::InfectedV2])) *
                                inv_sqrt_step_size * rv1_ev1v2,
                        0.0, y[(size_t)InfectionState::RecoveredV1] * inv_step_size);
-        std::cout << "flow RecV1 -> ExpV1V2: "
-                  << flows[get_flat_flow_index<InfectionState::RecoveredV1, InfectionState::ExposedV1V2>()]
-                  << std::endl;
 
-        // Fluss von ExposedV1V2 zu InfectedV1V2
         flows[get_flat_flow_index<InfectionState::ExposedV1V2, InfectionState::InfectedV1V2>()] =
             std::clamp((1.0 / params.get<TimeExposedV2>()) * y[(size_t)InfectionState::ExposedV1V2] +
                            sqrt((1.0 / params.get<TimeExposedV2>()) * y[(size_t)InfectionState::ExposedV1V2]) /
                                sqrt(step_size) * ev1v2_iv1v2,
                        0.0, y[(size_t)InfectionState::ExposedV1V2] * inv_step_size);
-        std::cout << "flow ExpV1V2 -> InfV1V2: "
-                  << flows[get_flat_flow_index<InfectionState::ExposedV1V2, InfectionState::InfectedV1V2>()]
-                  << std::endl;
 
-        // Fluss von InfectedV1V2 zu RecoveredV1V2
         flows[get_flat_flow_index<InfectionState::InfectedV1V2, InfectionState::RecoveredV1V2>()] =
             std::clamp((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV1V2] +
                            sqrt((1.0 / params.get<TimeInfectedV2>()) * y[(size_t)InfectionState::InfectedV1V2]) /
                                sqrt(step_size) * iv1v2_rv1v2,
                        0.0, y[(size_t)InfectionState::InfectedV1V2] * inv_step_size);
-        std::cout << "flow InfV1V2 -> RecV1V2: "
-                  << flows[get_flat_flow_index<InfectionState::InfectedV1V2, InfectionState::RecoveredV1V2>()]
-                  << std::endl;
-
-        std::cout << "calc flows done" << std::endl;
     }
 
     ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
