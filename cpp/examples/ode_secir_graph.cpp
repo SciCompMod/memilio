@@ -28,82 +28,113 @@
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::off);
     const auto t0   = 0.;
-    const auto tmax = 30.;
+    const auto tmax = 300.;
     const auto dt   = 0.5; //time step of Mobility, daily Mobility every second step
 
-    const size_t num_groups = 1;
-    mio::osecir::Model model(num_groups);
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
-    model.parameters.set<mio::osecir::StartDay>(0);
-    model.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.2);
+    double cont_freq = 10; // see Polymod study
 
-    model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()            = 3.2;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>() = 2.0;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()   = 5.8;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()     = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()   = 7.1;
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+           nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()  = 0.1;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<ScalarType>>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()                 = 0.3;
+    const auto num_groups = 6;
+    mio::osecir::Model<double> model(num_groups);
+    auto nb_groups = model.parameters.get_num_groups();
+    double fact    = 1.0 / (double)(size_t)nb_groups;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    auto& params = model.parameters;
+
+    params.set<mio::osecir::StartDay>(60);
+    params.set<mio::osecir::Seasonality<double>>(0.2);
+    params.get<mio::osecir::TestAndTraceCapacity<double>>() = 35;
+
+    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
+        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
+        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.;
+        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.8;
+        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 9.5;
+        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 7.1;
+
+        model.populations[{i, mio::osecir::InfectionState::Exposed}]                     = fact * nb_exp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}]          = fact * nb_car_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]            = fact * nb_inf_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]              = fact * nb_hosp_t0;
+        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]            = fact * nb_icu_t0;
+        model.populations[{i, mio::osecir::InfectionState::Recovered}]                   = fact * nb_rec_t0;
+        model.populations[{i, mio::osecir::InfectionState::Dead}]                        = fact * nb_dead_t0;
+        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
+                                                                         fact * nb_total_t0);
+
+        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
+        params.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
+    }
+
+    model.apply_constraints();
+
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] =
+        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime(30.));
 
     //two mostly identical groups
     auto model_group1 = model;
-    auto model_group2 = model;
     //some contact restrictions in model_group1
     mio::ContactMatrixGroup& contact_matrix_m1 =
         model_group1.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix_m1[0].add_damping(0.7, mio::SimulationTime(15.));
+    contact_matrix_m1[0].add_damping(0.1, mio::SimulationTime(15.));
 
     //infection starts in group 1
     model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 9990;
     model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]     = 100;
 
-    // get indices of INS and ISy compartments.
-    std::vector<std::vector<size_t>> indices_save_edges(2);
-
-    // Reserve Space. The multiplication by 2 is necessary because we have the
-    // base and the confirmed compartments for each age group.
-    for (auto& vec : indices_save_edges) {
-        vec.reserve(2 * num_groups);
-    }
-
-    // get indices and write them to the vector
-    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(num_groups); ++i) {
-        indices_save_edges[0].emplace_back(
-            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptoms}));
-        indices_save_edges[0].emplace_back(
-            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}));
-        indices_save_edges[1].emplace_back(
-            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptoms}));
-        indices_save_edges[1].emplace_back(
-            model.populations.get_flat_index({i, mio::osecir::InfectionState::InfectedSymptomsConfirmed}));
-    }
-
     mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<ScalarType>> g;
-    g.add_node(1001, model_group1, t0);
-    g.add_node(1002, model_group2, t0);
-    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
-    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
+
+    const size_t num_nodes = 50;
+
+    // Create nodes with varying parameters
+    for (size_t i = 0; i < num_nodes; ++i) {
+        auto model_node = model;
+
+        // some dampings
+        if (i < num_nodes / 10) {
+            mio::ContactMatrixGroup& contact_matrix_node =
+                model_node.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+            contact_matrix_node[0].add_damping(0.1, mio::SimulationTime(15.));
+        }
+
+        // Add initial infection to first node only
+        if (i == 0) {
+            model_node.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 9900;
+            model_node.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]     = 200;
+        }
+
+        // Add node to graph
+        g.add_node(i, model_node, t0);
+    }
+
+    // Create edges between nodes
+    for (size_t i = 0; i < num_nodes; ++i) {
+        for (size_t j = 0; j < num_nodes; ++j) {
+            if (i != j) {
+                g.add_edge(i, j,
+                           Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count * num_groups, 0.1));
+            }
+        }
+    }
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
-
-    auto& edge_1_0 = sim.get_graph().edges()[1];
-    auto& results  = edge_1_0.property.get_mobility_results();
-    results.print_table({"Commuter INS", "Commuter ISy", "Commuter Total"});
 
     return 0;
 }
