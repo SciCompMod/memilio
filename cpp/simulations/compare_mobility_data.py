@@ -76,9 +76,8 @@ print(f"Brunswick data loaded: {len(bs)} trips")
 print(f"Munich data loaded: {len(mu)} trips")
 
 # Function to create side-by-side plots
-def create_comparison_plot(title, filename, figsize=(16, 7)):
+def create_comparison_plot(filename, figsize=(16, 7)):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
-    fig.suptitle(title, fontsize=16)
     return fig, ax1, ax2
 
 # Map ages to our defined age groups
@@ -104,7 +103,7 @@ mu['AgeGroup'] = mu['age'].apply(map_to_age_group)
 
 # 1. Age Distribution Comparison
 print("Creating age distribution comparison...")
-fig, ax_bs, ax_mu = create_comparison_plot("Age Distribution Comparison", "age_distribution.png")
+fig, ax_bs, ax_mu = create_comparison_plot( "age_distribution.png")
 
 # Brunswick
 bs_persons_ages = bs[['personID', 'AgeGroup']].drop_duplicates()
@@ -136,7 +135,7 @@ plt.savefig(os.path.join(output_path, 'age_distribution_comparison.png'), dpi=30
 
 # 2. Heatmap Leisure Comparison (excluding "not specified")
 print("Creating leisure heatmap comparison...")
-fig, ax_bs, ax_mu = create_comparison_plot("Leisure Activities Transition Comparison", "heatmap_leisure.png")
+fig, ax_bs, ax_mu = create_comparison_plot("heatmap_leisure.png")
 
 # Function to create filtered heatmap excluding "not specified" (key 0)
 def create_filtered_heatmap(data, ax, title):
@@ -174,7 +173,7 @@ plt.savefig(os.path.join(output_path, 'heatmap_leisure_comparison.png'), dpi=300
 
 # 3. Number of trips to different location types (with dict_leisure mapping)
 print("Creating location types comparison...")
-fig, ax_bs, ax_mu = create_comparison_plot("Number of Trips to Different Location Types", "location_types.png")
+fig, ax_bs, ax_mu = create_comparison_plot( "location_types.png")
 
 # Function to map activity codes to names
 def map_activity_to_name(series):
@@ -204,7 +203,7 @@ plt.savefig(os.path.join(output_path, 'location_types_comparison.png'), dpi=300)
 
 # 4. Number of trips per person
 print("Creating trips per person comparison...")
-fig, ax_bs, ax_mu = create_comparison_plot("Number of Trips per Person", "trips_per_person.png")
+fig, ax_bs, ax_mu = create_comparison_plot( "trips_per_person.png")
 
 # Brunswick
 bs_persons = bs.groupby(['personID']).size().reset_index(name='counts')
@@ -243,7 +242,6 @@ age_group_title_labels = {
 
 # Create a subplot for each age group (2 cities × 6 age groups)
 fig, axes = plt.subplots(2, 6, figsize=(24, 10))
-fig.suptitle("Trip Purpose Distribution by Age Group", fontsize=22)
 
 # Custom colors
 colors = plt.cm.tab10(np.arange(len(dict_leisure)))
@@ -273,7 +271,7 @@ def create_better_pie(ax, data_dict, title):
     for autotext in autotexts:
         # Move text closer to center to avoid overlap
         x, y = autotext.get_position()
-        autotext.set_position((1.1*x, 1.1*y))
+        autotext.set_position((1.2*x, 1.2*y))
     
     ax.set_title(title, fontsize=16)
     ax.axis('equal')  # Equal aspect ratio ensures pie is drawn as a circle
@@ -284,7 +282,7 @@ for i, age_group in enumerate([age_group_0_to_4, age_group_5_to_14, age_group_15
     
     # Brunswick - top row
     bs_age_group = bs[bs['AgeGroup'] == age_group]
-    bs_trip_purpose = bs_age_group.groupby(['ActivityAfter']).size()
+    bs_trip_purpose = bs_age_group.groupby(['ActivityAfter']).size().reindex(dict_leisure.keys(), fill_value=0)
     
     # Map activity codes to names and create dictionary for the pie chart
     bs_trip_purpose_dict = {dict_leisure[idx]: count for idx, count in bs_trip_purpose.items() if idx in dict_leisure}
@@ -294,7 +292,7 @@ for i, age_group in enumerate([age_group_0_to_4, age_group_5_to_14, age_group_15
     
     # Munich - bottom row
     mu_age_group = mu[mu['AgeGroup'] == age_group]
-    mu_trip_purpose = mu_age_group.groupby(['ActivityAfter']).size()
+    mu_trip_purpose = mu_age_group.groupby(['ActivityAfter']).size().reindex(dict_leisure.keys(), fill_value=0)
     
     mu_trip_purpose_dict = {dict_leisure[idx]: count for idx, count in mu_trip_purpose.items() if idx in dict_leisure}
     
@@ -312,7 +310,6 @@ plt.savefig(os.path.join(output_path, 'trip_purpose_by_age_comparison.png'), dpi
 # Apply the same improvements to the overall pie charts
 print("Creating overall trip purpose comparison...")
 fig, (ax_bs, ax_mu) = plt.subplots(1, 2, figsize=(16, 8))
-fig.suptitle("Trip Purpose Distribution", fontsize=18)
 
 # Convert numeric activity codes to human-readable labels
 # Brunswick
@@ -326,13 +323,12 @@ mu_trip_purpose_dict = {dict_leisure[idx]: count for idx, count in mu_trip_purpo
 create_better_pie(ax_mu, mu_trip_purpose_dict, "Munich")
 
 plt.tight_layout()
-plt.subplots_adjust(top=0.9)
+# plt.subplots_adjust(top=0.9)
 plt.savefig(os.path.join(output_path, 'trip_purpose_comparison.png'), dpi=300)
 
 # 6. Overall Trip Purpose Distribution with bigger captions
 print("Creating overall trip purpose comparison...")
 fig, (ax_bs, ax_mu) = plt.subplots(1, 2, figsize=(16, 8))
-fig.suptitle("Trip Purpose Distribution", fontsize=20)
 
 # Convert numeric activity codes to human-readable labels
 # Brunswick
