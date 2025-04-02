@@ -30,7 +30,7 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::off);
     const auto t0   = 0.;
-    const auto tmax = 300.;
+    const auto tmax = 500.;
     const auto dt   = 0.5; //time step of Mobility, daily Mobility every second step
 
     double cont_freq = 10; // see Polymod study
@@ -83,8 +83,6 @@ int main()
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
 
     //two mostly identical groups
     auto model_group1 = model;
@@ -99,7 +97,7 @@ int main()
 
     mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<ScalarType>> g;
 
-    const size_t num_nodes = 50;
+    const size_t num_nodes = 400;
 
     // Create nodes with varying parameters
     for (size_t i = 0; i < num_nodes; ++i) {
@@ -127,7 +125,7 @@ int main()
         for (size_t j = 0; j < num_nodes; ++j) {
             if (i != j) {
                 g.add_edge(i, j,
-                           Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count * num_groups, 0.1));
+                           Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count * num_groups, 0.001));
             }
         }
     }
