@@ -81,7 +81,7 @@ bool testCuda()
     for (int device = 0; device < deviceCount; device++) {
         cudaGetDeviceProperties(&deviceProp, device);
         std::cout << "  Device " << device << ": " << deviceProp.name << std::endl;
-        std::cout << "    Compute capability: " << deviceProp.major << "." << deviceProp.minor << std::endl;
+        std::cout << "   Compute capability: " << deviceProp.major << "." << deviceProp.minor << std::endl;
         std::cout << "    Multiprocessors: " << deviceProp.multiProcessorCount << std::endl;
         std::cout << "    Max threads per block: " << deviceProp.maxThreadsPerBlock << std::endl;
     }
