@@ -96,18 +96,22 @@ add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-# Add CUDA ABM minimal example 
-add_executable(abm_minimal_example abm_minimal.cu)
-target_link_libraries(abm_minimal_example PRIVATE memilio abm)
+# Add C++ caller for CUDA example
+add_executable(abm_minimal_caller abm_minimal_caller.cpp)
+target_compile_options(abm_minimal_caller PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_ENABLE_CUDA)
-    # Already a .cu file so no need to set language
-    target_link_libraries(abm_minimal_example PRIVATE ${CUDA_LIBRARIES})
-    target_include_directories(abm_minimal_example PRIVATE ${CUDA_INCLUDE_DIRS})
-    set_target_properties(abm_minimal_example PROPERTIES
-                         CUDA_SEPARABLE_COMPILATION ON)
-else()
-    # Compile as regular C++ if CUDA is disabled
-    target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    # Create a library from the CUDA code so we can link it to the C++ caller
+    add_library(abm_minimal_cuda OBJECT abm_minimal.cu)
+    target_link_libraries(abm_minimal_cuda PRIVATE ${CUDA_LIBRARIES})
+    target_include_directories(abm_minimal_cuda PRIVATE ${CUDA_INCLUDE_DIRS})
+    set_target_properties(abm_minimal_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    
+    # Link the CUDA library to the C++ caller
+    set_target_properties(abm_minimal_caller PROPERTIES
+                         CUDA_SEPARABLE_COMPILATION ON
+                         CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+    target_link_libraries(abm_minimal_caller PRIVATE $<TARGET_OBJECTS:abm_minimal_cuda> ${CUDA_LIBRARIES} memilio abm)
 endif()
 
 add_executable(abm_history_example abm_history_object.cpp)
