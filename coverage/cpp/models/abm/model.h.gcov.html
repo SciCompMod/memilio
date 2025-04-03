@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-26 13:07:09</td>
+            <td class="headerValue">2025-04-03 12:28:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">31</td>
@@ -512,11 +512,11 @@
 <a name="450"><span class="lineNum">     450 </span><span class="lineCov">       1098 :         person.set_assigned_location(get_location(location).get_type(), location, m_id);</span></a>
 <a name="451"><span class="lineNum">     451 </span><span class="lineCov">       1098 :     }</span></a>
 <a name="452"><span class="lineNum">     452 </span>            : </a>
-<a name="453"><span class="lineNum">     453 </span><span class="lineCov">      18298 :     Location&amp; get_location(LocationId id)</span></a>
+<a name="453"><span class="lineNum">     453 </span><span class="lineCov">      18287 :     Location&amp; get_location(LocationId id)</span></a>
 <a name="454"><span class="lineNum">     454 </span>            :     {</a>
-<a name="455"><span class="lineNum">     455 </span><span class="lineCov">      18298 :         assert(id != LocationId::invalid_id() &amp;&amp; &quot;Given LocationId must be valid.&quot;);</span></a>
-<a name="456"><span class="lineNum">     456 </span><span class="lineCov">      18298 :         assert(id &lt; LocationId((uint32_t)m_locations.size()) &amp;&amp; &quot;Given LocationId is not in this Model.&quot;);</span></a>
-<a name="457"><span class="lineNum">     457 </span><span class="lineCov">      18298 :         return m_locations[id.get()];</span></a>
+<a name="455"><span class="lineNum">     455 </span><span class="lineCov">      18287 :         assert(id != LocationId::invalid_id() &amp;&amp; &quot;Given LocationId must be valid.&quot;);</span></a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineCov">      18287 :         assert(id &lt; LocationId((uint32_t)m_locations.size()) &amp;&amp; &quot;Given LocationId is not in this Model.&quot;);</span></a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineCov">      18287 :         return m_locations[id.get()];</span></a>
 <a name="458"><span class="lineNum">     458 </span>            :     }</a>
 <a name="459"><span class="lineNum">     459 </span>            :     /** @} */</a>
 <a name="460"><span class="lineNum">     460 </span>            : </a>
@@ -631,11 +631,11 @@
 <a name="569"><span class="lineNum">     569 </span>            :      * @param[in] person Reference to Person.</a>
 <a name="570"><span class="lineNum">     570 </span>            :      * @return ID of the Location of LocationType type assigend to person.</a>
 <a name="571"><span class="lineNum">     571 </span>            :      */</a>
-<a name="572"><span class="lineNum">     572 </span><span class="lineCov">       9112 :     LocationId find_location(LocationType type, const Person&amp; person) const</span></a>
+<a name="572"><span class="lineNum">     572 </span><span class="lineCov">       9103 :     LocationId find_location(LocationType type, const Person&amp; person) const</span></a>
 <a name="573"><span class="lineNum">     573 </span>            :     {</a>
-<a name="574"><span class="lineNum">     574 </span><span class="lineCov">       9112 :         auto location_id = person.get_assigned_location(type);</span></a>
-<a name="575"><span class="lineNum">     575 </span><span class="lineCov">       9112 :         assert(location_id != LocationId::invalid_id() &amp;&amp; &quot;The person has no assigned location of that type.&quot;);</span></a>
-<a name="576"><span class="lineNum">     576 </span><span class="lineCov">      18224 :         return location_id;</span></a>
+<a name="574"><span class="lineNum">     574 </span><span class="lineCov">       9103 :         auto location_id = person.get_assigned_location(type);</span></a>
+<a name="575"><span class="lineNum">     575 </span><span class="lineCov">       9103 :         assert(location_id != LocationId::invalid_id() &amp;&amp; &quot;The person has no assigned location of that type.&quot;);</span></a>
+<a name="576"><span class="lineNum">     576 </span><span class="lineCov">      18206 :         return location_id;</span></a>
 <a name="577"><span class="lineNum">     577 </span>            :     }</a>
 <a name="578"><span class="lineNum">     578 </span>            : </a>
 <a name="579"><span class="lineNum">     579 </span>            :     /**</a>
@@ -644,19 +644,19 @@
 <a name="582"><span class="lineNum">     582 </span>            :      * @param[in] t Time step of the simulation.</a>
 <a name="583"><span class="lineNum">     583 </span>            :      * @param[in] dt Step size of the simulation.</a>
 <a name="584"><span class="lineNum">     584 </span>            :      */</a>
-<a name="585"><span class="lineNum">     585 </span><span class="lineCov">       2854 :     inline void interact(Person&amp; person, TimePoint t, TimeSpan dt)</span></a>
+<a name="585"><span class="lineNum">     585 </span><span class="lineCov">       2853 :     inline void interact(Person&amp; person, TimePoint t, TimeSpan dt)</span></a>
 <a name="586"><span class="lineNum">     586 </span>            :     {</a>
-<a name="587"><span class="lineNum">     587 </span><span class="lineCov">       2854 :         if (!m_are_exposure_caches_valid) {</span></a>
+<a name="587"><span class="lineNum">     587 </span><span class="lineCov">       2853 :         if (!m_are_exposure_caches_valid) {</span></a>
 <a name="588"><span class="lineNum">     588 </span>            :             // checking caches is only needed for external calls</a>
 <a name="589"><span class="lineNum">     589 </span>            :             // during simulation (i.e. in evolve()), the caches are computed in begin_step</a>
 <a name="590"><span class="lineNum">     590 </span><span class="lineNoCov">          0 :             compute_exposure_caches(t, dt);</span></a>
 <a name="591"><span class="lineNum">     591 </span><span class="lineNoCov">          0 :             m_are_exposure_caches_valid = true;</span></a>
 <a name="592"><span class="lineNum">     592 </span>            :         }</a>
-<a name="593"><span class="lineNum">     593 </span><span class="lineCov">       2854 :         auto personal_rng = PersonalRandomNumberGenerator(person);</span></a>
-<a name="594"><span class="lineNum">     594 </span><span class="lineCov">       8562 :         mio::abm::interact(personal_rng, person, get_location(person.get_location()),</span></a>
-<a name="595"><span class="lineNum">     595 </span><span class="lineCov">       5708 :                            m_air_exposure_rates_cache[person.get_location().get()],</span></a>
-<a name="596"><span class="lineNum">     596 </span><span class="lineCov">       8562 :                            m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);</span></a>
-<a name="597"><span class="lineNum">     597 </span><span class="lineCov">       2854 :     }</span></a>
+<a name="593"><span class="lineNum">     593 </span><span class="lineCov">       2853 :         auto personal_rng = PersonalRandomNumberGenerator(person);</span></a>
+<a name="594"><span class="lineNum">     594 </span><span class="lineCov">       8559 :         mio::abm::interact(personal_rng, person, get_location(person.get_location()),</span></a>
+<a name="595"><span class="lineNum">     595 </span><span class="lineCov">       5706 :                            m_air_exposure_rates_cache[person.get_location().get()],</span></a>
+<a name="596"><span class="lineNum">     596 </span><span class="lineCov">       8559 :                            m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);</span></a>
+<a name="597"><span class="lineNum">     597 </span><span class="lineCov">       2853 :     }</span></a>
 <a name="598"><span class="lineNum">     598 </span>            : </a>
 <a name="599"><span class="lineNum">     599 </span>            :     /**</a>
 <a name="600"><span class="lineNum">     600 </span>            :      * @brief Implementation of Model::get_person. </a>

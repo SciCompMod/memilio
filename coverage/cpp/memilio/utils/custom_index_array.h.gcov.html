@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-26 13:07:09</td>
+            <td class="headerValue">2025-04-03 12:28:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">981</td>
@@ -133,23 +133,23 @@
 <a name="71"><span class="lineNum">      71 </span>            : </a>
 <a name="72"><span class="lineNum">      72 </span>            : // Internal implementation for flatten_index</a>
 <a name="73"><span class="lineNum">      73 </span>            : template &lt;size_t I, typename Index&gt;</a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">   71242000 : std::enable_if_t&lt;(I == (Index::size - 1)), std::pair&lt;size_t, size_t&gt;&gt; flatten_index(Index const&amp; indices,</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">   71119211 : std::enable_if_t&lt;(I == (Index::size - 1)), std::pair&lt;size_t, size_t&gt;&gt; flatten_index(Index const&amp; indices,</span></a>
 <a name="75"><span class="lineNum">      75 </span>            :                                                                                     Index const&amp; dimensions)</a>
 <a name="76"><span class="lineNum">      76 </span>            : {</a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">   71242000 :     assert(get&lt;I&gt;(indices) &lt; get&lt;I&gt;(dimensions));</span></a>
-<a name="78"><span class="lineNum">      78 </span><span class="lineCov">   71242000 :     return {(size_t)mio::get&lt;I&gt;(indices), (size_t)mio::get&lt;I&gt;(dimensions)};</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">   71119211 :     assert(get&lt;I&gt;(indices) &lt; get&lt;I&gt;(dimensions));</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">   71119211 :     return {(size_t)mio::get&lt;I&gt;(indices), (size_t)mio::get&lt;I&gt;(dimensions)};</span></a>
 <a name="79"><span class="lineNum">      79 </span>            : }</a>
 <a name="80"><span class="lineNum">      80 </span>            : </a>
 <a name="81"><span class="lineNum">      81 </span>            : template &lt;size_t I, typename Index&gt;</a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">   31902066 : std::enable_if_t&lt;(I &lt; (Index::size - 1)), std::pair&lt;size_t, size_t&gt;&gt; flatten_index(Index const&amp; indices,</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">   31849271 : std::enable_if_t&lt;(I &lt; (Index::size - 1)), std::pair&lt;size_t, size_t&gt;&gt; flatten_index(Index const&amp; indices,</span></a>
 <a name="83"><span class="lineNum">      83 </span>            :                                                                                    Index const&amp; dimensions)</a>
 <a name="84"><span class="lineNum">      84 </span>            : {</a>
-<a name="85"><span class="lineNum">      85 </span><span class="lineCov">   31902066 :     assert(mio::get&lt;I&gt;(indices) &lt; mio::get&lt;I&gt;(dimensions));</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">   31849271 :     assert(mio::get&lt;I&gt;(indices) &lt; mio::get&lt;I&gt;(dimensions));</span></a>
 <a name="86"><span class="lineNum">      86 </span>            : </a>
-<a name="87"><span class="lineNum">      87 </span><span class="lineCov">   31902066 :     size_t val, prod;</span></a>
-<a name="88"><span class="lineNum">      88 </span><span class="lineCov">   31902066 :     std::tie(val, prod) = flatten_index&lt;I + 1&gt;(indices, dimensions);</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">   31849271 :     size_t val, prod;</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">   31849271 :     std::tie(val, prod) = flatten_index&lt;I + 1&gt;(indices, dimensions);</span></a>
 <a name="89"><span class="lineNum">      89 </span>            : </a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">   63792079 :     return {val + (size_t)mio::get&lt;I&gt;(indices) * prod, prod * (size_t)mio::get&lt;I&gt;(dimensions)};</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">   63686490 :     return {val + (size_t)mio::get&lt;I&gt;(indices) * prod, prod * (size_t)mio::get&lt;I&gt;(dimensions)};</span></a>
 <a name="91"><span class="lineNum">      91 </span>            : }</a>
 <a name="92"><span class="lineNum">      92 </span>            : </a>
 <a name="93"><span class="lineNum">      93 </span>            : template &lt;typename T&gt;</a>
@@ -171,9 +171,9 @@
 <a name="109"><span class="lineNum">     109 </span>            :  * @return the corresponding flat index</a>
 <a name="110"><span class="lineNum">     110 </span>            :  */</a>
 <a name="111"><span class="lineNum">     111 </span>            : template &lt;typename MultiIndex&gt;</a>
-<a name="112"><span class="lineNum">     112 </span><span class="lineCov">   71242000 : size_t flatten_index(MultiIndex const&amp; indices, MultiIndex const&amp; dimensions)</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">   71119211 : size_t flatten_index(MultiIndex const&amp; indices, MultiIndex const&amp; dimensions)</span></a>
 <a name="113"><span class="lineNum">     113 </span>            : {</a>
-<a name="114"><span class="lineNum">     114 </span><span class="lineCov">   71242000 :     return details::flatten_index&lt;0&gt;(indices, dimensions).first;</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">   71119211 :     return details::flatten_index&lt;0&gt;(indices, dimensions).first;</span></a>
 <a name="115"><span class="lineNum">     115 </span>            : }</a>
 <a name="116"><span class="lineNum">     116 </span>            : </a>
 <a name="117"><span class="lineNum">     117 </span>            : /**</a>
@@ -282,18 +282,18 @@
 <a name="220"><span class="lineNum">     220 </span>            :      * @return size along a specified dimension</a>
 <a name="221"><span class="lineNum">     221 </span>            :      */</a>
 <a name="222"><span class="lineNum">     222 </span>            :     template &lt;typename Tag&gt;</a>
-<a name="223"><span class="lineNum">     223 </span><span class="lineCov">     103404 :     mio::Index&lt;Tag&gt; size() const</span></a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineCov">     103394 :     mio::Index&lt;Tag&gt; size() const</span></a>
 <a name="224"><span class="lineNum">     224 </span>            :     {</a>
-<a name="225"><span class="lineNum">     225 </span><span class="lineCov">     103404 :         return get&lt;Tag&gt;(m_dimensions);</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">     103394 :         return get&lt;Tag&gt;(m_dimensions);</span></a>
 <a name="226"><span class="lineNum">     226 </span>            :     }</a>
 <a name="227"><span class="lineNum">     227 </span>            : </a>
 <a name="228"><span class="lineNum">     228 </span>            :     /**</a>
 <a name="229"><span class="lineNum">     229 </span>            :      * @brief returns the size of the array along all dimensions.</a>
 <a name="230"><span class="lineNum">     230 </span>            :      * @return multi-index with size of the array along all dimensions.</a>
 <a name="231"><span class="lineNum">     231 </span>            :      */</a>
-<a name="232"><span class="lineNum">     232 </span><span class="lineCov">   18133056 :     Index size() const</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">   18097848 :     Index size() const</span></a>
 <a name="233"><span class="lineNum">     233 </span>            :     {</a>
-<a name="234"><span class="lineNum">     234 </span><span class="lineCov">   18133056 :         return m_dimensions;</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">   18097848 :         return m_dimensions;</span></a>
 <a name="235"><span class="lineNum">     235 </span>            :     }</a>
 <a name="236"><span class="lineNum">     236 </span>            : </a>
 <a name="237"><span class="lineNum">     237 </span>            :     /**</a>
@@ -342,9 +342,9 @@
 <a name="280"><span class="lineNum">     280 </span>            :      * @param MultiIndex</a>
 <a name="281"><span class="lineNum">     281 </span>            :      * @return the value at the index</a>
 <a name="282"><span class="lineNum">     282 </span>            :      */</a>
-<a name="283"><span class="lineNum">     283 </span><span class="lineCov">    4041018 :     Type&amp; operator[](Index const&amp; index)</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">    4041336 :     Type&amp; operator[](Index const&amp; index)</span></a>
 <a name="284"><span class="lineNum">     284 </span>            :     {</a>
-<a name="285"><span class="lineNum">     285 </span><span class="lineCov">    4041018 :         return m_y[get_flat_index(index)];</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">    4041336 :         return m_y[get_flat_index(index)];</span></a>
 <a name="286"><span class="lineNum">     286 </span>            :     }</a>
 <a name="287"><span class="lineNum">     287 </span>            : </a>
 <a name="288"><span class="lineNum">     288 </span>            :     /**</a>
@@ -352,9 +352,9 @@
 <a name="290"><span class="lineNum">     290 </span>            :      * @param index a flat index</a>
 <a name="291"><span class="lineNum">     291 </span>            :      * @return the value at the index</a>
 <a name="292"><span class="lineNum">     292 </span>            :      */</a>
-<a name="293"><span class="lineNum">     293 </span><span class="lineCov">   21308464 :     Type const&amp; operator[](Index const&amp; index) const</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">   21272144 :     Type const&amp; operator[](Index const&amp; index) const</span></a>
 <a name="294"><span class="lineNum">     294 </span>            :     {</a>
-<a name="295"><span class="lineNum">     295 </span><span class="lineCov">   21308464 :         return m_y[get_flat_index(index)];</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineCov">   21272144 :         return m_y[get_flat_index(index)];</span></a>
 <a name="296"><span class="lineNum">     296 </span>            :     }</a>
 <a name="297"><span class="lineNum">     297 </span>            : </a>
 <a name="298"><span class="lineNum">     298 </span>            :     /**</a>
@@ -387,9 +387,9 @@
 <a name="325"><span class="lineNum">     325 </span>            :      * @param indices the custom indices for each category</a>
 <a name="326"><span class="lineNum">     326 </span>            :      * @return a flat index into the data structure storing the compartment populations</a>
 <a name="327"><span class="lineNum">     327 </span>            :      */</a>
-<a name="328"><span class="lineNum">     328 </span><span class="lineCov">   54312101 :     size_t get_flat_index(Index const&amp; index) const</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">   54223008 :     size_t get_flat_index(Index const&amp; index) const</span></a>
 <a name="329"><span class="lineNum">     329 </span>            :     {</a>
-<a name="330"><span class="lineNum">     330 </span><span class="lineCov">   54312101 :         return (Eigen::Index)flatten_index(index, m_dimensions);</span></a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">   54223008 :         return (Eigen::Index)flatten_index(index, m_dimensions);</span></a>
 <a name="331"><span class="lineNum">     331 </span>            :     }</a>
 <a name="332"><span class="lineNum">     332 </span>            : </a>
 <a name="333"><span class="lineNum">     333 </span>            :     /**</a>

@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-26 13:07:09</td>
+            <td class="headerValue">2025-04-03 12:28:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">26</td>
@@ -151,9 +151,9 @@
 <a name="89"><span class="lineNum">      89 </span>            :     PRAGMA_OMP(parallel for)</a>
 <a name="90"><span class="lineNum">      90 </span><span class="lineCov">       3929 :     for (uint32_t person_index = 0; person_index &lt; num_persons; ++person_index) {</span></a>
 <a name="91"><span class="lineNum">      91 </span><span class="lineCov">       2866 :         if (m_activeness_statuses[person_index]) {</span></a>
-<a name="92"><span class="lineNum">      92 </span><span class="lineCov">       2854 :             assert(m_persons[person_index].get_location_model_id() == m_id &amp;&amp;</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">       2853 :             assert(m_persons[person_index].get_location_model_id() == m_id &amp;&amp;</span></a>
 <a name="93"><span class="lineNum">      93 </span>            :                    &quot;Person is not in this model but still active.&quot;);</a>
-<a name="94"><span class="lineNum">      94 </span><span class="lineCov">       2854 :             interact(m_persons[person_index], t, dt);</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">       2853 :             interact(m_persons[person_index], t, dt);</span></a>
 <a name="95"><span class="lineNum">      95 </span>            :         }</a>
 <a name="96"><span class="lineNum">      96 </span>            :     }</a>
 <a name="97"><span class="lineNum">      97 </span><span class="lineCov">       1063 : }</span></a>
@@ -346,10 +346,10 @@
 <a name="284"><span class="lineNum">     284 </span><span class="lineCov">       2866 :             const Person&amp; person = m_persons[i];</span></a>
 <a name="285"><span class="lineNum">     285 </span><span class="lineCov">       2866 :             const auto location  = person.get_location().get();</span></a>
 <a name="286"><span class="lineNum">     286 </span><span class="lineCov">       2866 :             if (m_activeness_statuses[i]) {</span></a>
-<a name="287"><span class="lineNum">     287 </span><span class="lineCov">       2854 :                 assert(m_persons[i].get_location_model_id() == m_id &amp;&amp; &quot;Person is not in this model but still active.&quot;);</span></a>
-<a name="288"><span class="lineNum">     288 </span><span class="lineCov">       5708 :                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],</span></a>
-<a name="289"><span class="lineNum">     289 </span><span class="lineCov">       2854 :                                                     m_contact_exposure_rates_cache[location], person,</span></a>
-<a name="290"><span class="lineNum">     290 </span><span class="lineCov">       2854 :                                                     get_location(person.get_location()), t, dt);</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">       2853 :                 assert(m_persons[i].get_location_model_id() == m_id &amp;&amp; &quot;Person is not in this model but still active.&quot;);</span></a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">       5706 :                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],</span></a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">       2853 :                                                     m_contact_exposure_rates_cache[location], person,</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">       2853 :                                                     get_location(person.get_location()), t, dt);</span></a>
 <a name="291"><span class="lineNum">     291 </span>            :             }</a>
 <a name="292"><span class="lineNum">     292 </span>            :         } // implicit taskloop barrier</a>
 <a name="293"><span class="lineNum">     293 </span>            :     } // implicit single barrier</a>

@@ -11956,12 +11956,12 @@ from memilio.epidata import defaultDict as dd</pre></td>
                 <td><pre>Similar lines in 2 files
 ==memilio.epidata.getCaseData:[236:242]
 ==memilio.epidata.getDIVIData:[139:145]
+    try:
+        df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(
+            df[dd.EngEng[&#39;date&#39;]], format=&#34;ISO8601&#34;)
+    except ValueError:
         try:
-            df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(
-                df[dd.EngEng[&#39;date&#39;]], format=&#34;ISO8601&#34;)
-        except ValueError:
-            try:
-                df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(</pre></td>
+            df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(</pre></td>
             </tr>
             
             <tr>
@@ -12034,7 +12034,9 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import modifyDataframeSeries as mdfs</pre></td>
+from memilio.epidata import modifyDataframeSeries as mdfs
+
+# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
             </tr>
             
             <tr>
@@ -12174,37 +12176,38 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 pd.options.mode.copy_on_write = True
 
 
-def transformWeatherData(read_data=dd.defaultDict[&#39;read_data&#39;],
-                         file_format=dd.defaultDict[&#39;file_format&#39;],
-                         out_folder=dd.defaultDict[&#39;out_folder&#39;],
-                         start_date=dd.defaultDict[&#39;start_date&#39;],
-                         end_date=dd.defaultDict[&#39;end_date&#39;],
-                         moving_average=dd.defaultDict[&#39;moving_average&#39;],
-                         merge_berlin=True,
-                         merge_eisenach=False,
-                         **kwargs
-                         ):
-    &#34;&#34;&#34; ...
+def get_jh_data(read_data=dd.defaultDict[&#39;read_data&#39;],
+                file_format=dd.defaultDict[&#39;file_format&#39;],
+                out_folder=dd.defaultDict[&#39;out_folder&#39;],
+                start_date=date(2020, 1, 22),
+                end_date=dd.defaultDict[&#39;end_date&#39;],
+                impute_dates=dd.defaultDict[&#39;impute_dates&#39;],
+                **kwargs):
+    &#34;&#34;&#34; Download data from John Hopkins University
 
-    :param file_format: File format which is used for writing the data.
-        Default defined in defaultDict.
-    :param out_folder: Path to folder where data is written in folder
-        out_folder/Germany. (Default value = dd.defaultDict[&#39;out_folder&#39;])
-    :param start_date: Default = &#39;&#39;, taken from read data] Start date
-        of stored data frames.
-    :param end_date: Default = &#39;&#39;, taken from read data] End date of
-        stored data frames.
-    :param moving_average: 0 [Default] or Number &gt; 0. Defines the number of
-        days for which a centered moving average is computed.
-    :param read_data:  (Default value = dd.defaultDict[&#39;read_data&#39;])
-    :param merge_berlin:  (Default value = True)
-    :param merge_eisenach:  (Default value = False)
+       Data is either downloaded and afterwards stored or loaded from a stored filed.
+       The file is &#34;FullData_JohnHopkins.json&#34;
+
+       Working with the data includes
+       - rename columns such that &#34;/&#34; is deleted, e.g Country/Region becomes CountryRegion
+       - data of all countries together are written to a file
+       - download the data from following countries in a separate file
+       and are stored in the according folders with the country name
+       - Germany, SouthKorea, Spain, France, Italy, US, China
+       - furthermore, all countries, for which provinces are added, are written to a file
+
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;read_data&#39;])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;file_format&#39;])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;out_folder&#39;])
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = date(2020, 1, 22))
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;end_date&#39;])
+    :param impute_dates: Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;impute_dates&#39;])
     :param **kwargs:
 
     &#34;&#34;&#34;
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
-</pre></td>
+    # Generate folders if needed</pre></td>
             </tr>
             
             <tr>
@@ -12242,7 +12245,9 @@ import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd</pre></td>
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+
+# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
             </tr>
             
             <tr>

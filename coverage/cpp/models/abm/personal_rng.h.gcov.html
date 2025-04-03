@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-03-26 13:07:09</td>
+            <td class="headerValue">2025-04-03 12:28:53</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">3</td>
@@ -128,26 +128,26 @@
 <a name="66"><span class="lineNum">      66 </span>            :     /**</a>
 <a name="67"><span class="lineNum">      67 </span>            :      * @return Get the key.</a>
 <a name="68"><span class="lineNum">      68 </span>            :      */</a>
-<a name="69"><span class="lineNum">      69 </span><span class="lineCov">       2591 :     mio::Key&lt;uint64_t&gt; get_key() const</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">       2600 :     mio::Key&lt;uint64_t&gt; get_key() const</span></a>
 <a name="70"><span class="lineNum">      70 </span>            :     {</a>
-<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       2591 :         return m_key;</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       2600 :         return m_key;</span></a>
 <a name="72"><span class="lineNum">      72 </span>            :     }</a>
 <a name="73"><span class="lineNum">      73 </span>            : </a>
 <a name="74"><span class="lineNum">      74 </span>            :     /**</a>
 <a name="75"><span class="lineNum">      75 </span>            :      * @return Get the current counter.</a>
 <a name="76"><span class="lineNum">      76 </span>            :      */</a>
-<a name="77"><span class="lineNum">      77 </span><span class="lineCov">       2609 :     mio::Counter&lt;uint64_t&gt; get_counter() const</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">       2618 :     mio::Counter&lt;uint64_t&gt; get_counter() const</span></a>
 <a name="78"><span class="lineNum">      78 </span>            :     {</a>
-<a name="79"><span class="lineNum">      79 </span><span class="lineCov">       5218 :         return mio::rng_totalsequence_counter&lt;uint64_t&gt;(m_person_index, m_counter);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">       5236 :         return mio::rng_totalsequence_counter&lt;uint64_t&gt;(m_person_index, m_counter);</span></a>
 <a name="80"><span class="lineNum">      80 </span>            :     }</a>
 <a name="81"><span class="lineNum">      81 </span>            : </a>
 <a name="82"><span class="lineNum">      82 </span>            :     /**</a>
 <a name="83"><span class="lineNum">      83 </span>            :      * Increment the counter.</a>
 <a name="84"><span class="lineNum">      84 </span>            :      */</a>
-<a name="85"><span class="lineNum">      85 </span><span class="lineCov">       2591 :     void increment_counter()</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">       2600 :     void increment_counter()</span></a>
 <a name="86"><span class="lineNum">      86 </span>            :     {</a>
-<a name="87"><span class="lineNum">      87 </span><span class="lineCov">       2591 :         ++m_counter;</span></a>
-<a name="88"><span class="lineNum">      88 </span><span class="lineCov">       2591 :     }</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">       2600 :         ++m_counter;</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">       2600 :     }</span></a>
 <a name="89"><span class="lineNum">      89 </span>            : </a>
 <a name="90"><span class="lineNum">      90 </span>            : private:</a>
 <a name="91"><span class="lineNum">      91 </span>            :     mio::Key&lt;uint64_t&gt; m_key; ///&lt; Global RNG Key</a>
