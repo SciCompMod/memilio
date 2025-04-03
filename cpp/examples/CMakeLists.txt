@@ -110,6 +110,16 @@ else()
     target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
+add_executable(gpu_integrator gpu_integrator.cu)
+target_link_libraries(gpu_integrator PRIVATE memilio)
+# target_compile_options(gpu_integrator PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+if(MEMILIO_ENABLE_CUDA)
+    target_link_libraries(gpu_integrator PRIVATE ${CUDA_LIBRARIES})
+    target_include_directories(gpu_integrator PRIVATE ${CUDA_INCLUDE_DIRS})
+    set_target_properties(gpu_integrator PROPERTIES
+                         CUDA_SEPARABLE_COMPILATION ON)
+endif()
+
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)
 target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
