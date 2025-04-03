@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,20 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef BASE_DIR_H
+#define BASE_DIR_H
+
+#include "memilio/config.h"
 
 /**
- * Configured by cmake.
- */
+ * @brief Returns path to the repo directory.
+*/
+std::string mio::base_dir()
+{
+    return MEMILIO_BASE_DIR;
+}
 
-#ifndef MIO_CONFIG_INTERNAL_H
-#define MIO_CONFIG_INTERNAL_H
-
-#cmakedefine MEMILIO_HAS_HDF5
-#cmakedefine MEMILIO_HAS_JSONCPP
-#cmakedefine MEMILIO_ENABLE_MPI
-#cmakedefine MEMILIO_ENABLE_OPENMP
-#cmakedefine MEMILIO_ENABLE_PROFILING
-
-const char* const MEMILIO_BASE_DIR = "${MEMILIO_BASE_DIR}/";
-
-#endif
+#endif // BASE_DIR_H

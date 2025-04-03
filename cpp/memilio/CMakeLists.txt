@@ -95,6 +95,7 @@ add_library(memilio
     utils/miompi.cpp
     utils/mioomp.h
     utils/type_list.h
+    utils/base_dir.h
 )
 
 target_include_directories(memilio PUBLIC
