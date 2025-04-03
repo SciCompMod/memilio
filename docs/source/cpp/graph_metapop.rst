@@ -1,5 +1,5 @@
-Mobility
-========
+Graph-based metapopulation model
+================================
 
 In order to extend the local models with spatial resolution, we provide a module to loosely couple multiple simulation instances and model the mobility between them. Each instance can represent a different geographical region. The regions are stored as nodes in a multi-edge graph as proposed in Kühn et al. (2021), with edges between them representing the mobility between the regions. 
 We assume that :math:`n` different geographic units (denoted as *regions*) are given. The mobility extension can contain a arbitrary number of regions. The number of edges is limited by the number of regions squared. 

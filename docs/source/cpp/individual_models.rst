@@ -12,3 +12,4 @@ Additionally, agents have much more features e.g. an individual infection histor
 
     mobility_based_abm
     diffusive_abm
+    graph_abm
