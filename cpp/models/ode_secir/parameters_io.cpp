@@ -123,8 +123,6 @@ IOResult<void> read_confirmed_cases_data(
             auto date_df = region_entry.date;
             auto age     = size_t(region_entry.age_group);
 
-            bool read_icu = false; //params.populations.get({age, SecirCompartments::U}) == 0;
-
             if (date_df == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
                 num_rec[age] += region_entry.num_confirmed;
@@ -147,16 +145,12 @@ IOResult<void> read_confirmed_cases_data(
             }
             if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {
                 num_InfectedSevere[age] -= mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                if (read_icu) {
-                    num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                }
+                num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
             }
             if (date_df ==
                 offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age] - t_InfectedCritical[age])) {
                 num_death[age] += region_entry.num_deaths;
-                if (read_icu) {
-                    num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                }
+                num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
             }
         }
     }
