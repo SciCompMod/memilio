@@ -68,6 +68,8 @@ int main()
 
     // In this example, we use the default transition distributions. For these distributions, setting the initial time 
     // point of the TimeSeries transitions_init at time -10 will give us a sufficient number of time points before t0=0.
+    // For more information on this, we refer to the documentation of TransitionDistributions in
+    // models/ide_secir/parameters.h.
     transitions_init.add_time_point(-10, vec_init);
     // Add further time points with distance dt_ide_solver until time t0.
     while (transitions_init.get_last_time() < t0 - dt_ide_solver / 2.) {
@@ -85,10 +87,11 @@ int main()
     g.add_node(1001, model, dt_ide_solver);
     g.add_node(1002, model, dt_ide_solver);
 
-    // We simulate using the GraphSim class make_no_mobilty_sim. This allows us to run a graph simulation even though 
-    // we do not have defined any mobility between the nodes.
+    // We use make_no_mobilty_sim to create a GrapSimulation for the model graph we defined above. This function allows 
+    // us to create a simulation without having to define mobility between nodes. Any edges would be effectively 
+    // ignored by the simulation.
     auto sim = mio::make_no_mobility_sim(t0, std::move(g));
-
+    // Run the simulation. This advances all graph nodes independently. 
     sim.advance(tmax);
 
     // Print results of first node.
