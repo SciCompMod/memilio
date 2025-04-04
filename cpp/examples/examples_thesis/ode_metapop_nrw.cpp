@@ -67,12 +67,14 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseirmet
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_agegroups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(auto&& baseline,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(auto&& minimum,
-                          mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+        BOOST_OUTCOME_TRY(
+            auto&& baseline,
+            mio::read_mobility_plain(
+                (data_dir / "Germany" / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+        BOOST_OUTCOME_TRY(
+            auto&& minimum,
+            mio::read_mobility_plain(
+                (data_dir / "Germany" / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
@@ -87,12 +89,12 @@ mio::IOResult<void> set_population_data(mio::oseirmetapop::Model<FP>& model, con
 {
     BOOST_OUTCOME_TRY(
         auto&& node_ids,
-        mio::get_node_ids((data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true,
+        mio::get_node_ids((data_dir / "Germany" / "pydata" / "county_current_population_nrw.json").string(), true,
                           true));
 
     BOOST_OUTCOME_TRY(const auto&& population_data,
                       mio::read_population_data(
-                          (data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true));
+                          (data_dir / "Germany" / "pydata" / "county_current_population_nrw.json").string(), true));
 
     for (auto&& entry : population_data) {
         auto it = std::find_if(node_ids.begin(), node_ids.end(), [&entry](auto r) {
@@ -129,8 +131,9 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmetapop::Model<FP>& model, co
     }
     else {
         // mobility between nodes
-        BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                          mio::read_mobility_plain((data_dir / "mobility" / "commuter_mobility_nrw.txt").string()));
+        BOOST_OUTCOME_TRY(
+            auto&& mobility_data_commuter,
+            mio::read_mobility_plain((data_dir / "Germany" / "mobility" / "commuter_mobility_2022_nrw.txt").string()));
         if (mobility_data_commuter.rows() != Eigen::Index(number_regions) ||
             mobility_data_commuter.cols() != Eigen::Index(number_regions)) {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -209,7 +212,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& data_dir = "";
+    const std::string& data_dir = "/home/carlotta/code/memilio/data";
 
     mio::oseirmetapop::Model<ScalarType> model(number_regions, number_age_groups);
     auto result_prepare_simulation = set_parameters_and_population(model, data_dir);
