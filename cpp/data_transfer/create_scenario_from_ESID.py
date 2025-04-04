@@ -576,7 +576,7 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, num_runs=10):
+    def run(self, num_runs=10):
         mio.set_log_level(mio.LogLevel.Warning)
 
         header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
@@ -584,6 +584,11 @@ class Simulation:
         # list all scenarios
         scenarios = requests.get(
             self.run_data_url + "scenarios/", headers=header).json()
+
+        # Get the number of days to simulate from scenario definition in API. Here, we assume that all scenarios have
+        # the same duration.
+        num_days_sim = (datetime.datetime.strptime(
+            scenarios[0]['endDate'], "%Y-%m-%d")-datetime.datetime.strptime(scenarios[0]['startDate'], "%Y-%m-%d")).days
 
         self.parameter_list = requests.get(
             self.run_data_url + "parameterdefinitions/", headers=header).json()
@@ -649,7 +654,7 @@ class Simulation:
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    run_data_url = "http://localhost:8123/"
+    run_data_url = "https://zam10063.zam.kfa-juelich.de/api-new/"
     # with open(scenario_data_path) as f:
     #     scenario_data = json.load(f)
     mcmc_dir = os.path.join(cwd, "mcmc data")
@@ -657,4 +662,4 @@ if __name__ == "__main__":
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
-    sim.run(num_days_sim=30, num_runs=3)
+    sim.run(num_runs=3)
