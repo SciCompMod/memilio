@@ -12,10 +12,11 @@ def main():
 
     arg_dict = gd.cli("commuter_official")
 
-    directory = arg_dict['out_folder'].split('/pydata')[0]
+    directory = os.path.join(
+        arg_dict['out_folder'].split('/pydata/')[0], 'Germany/')
     directory_mobility = os.path.join(directory, 'mobility/')
-    directory_population = os.path.join(directory, 'pydata/Germany/')
-    mobility_file = 'commuter_mobility'
+    directory_population = os.path.join(directory, 'pydata/')
+    mobility_file = 'commuter_mobility_2022'
     population_file = 'county_current_population'
 
     mobility_matrix = pd.read_csv(
