@@ -87,7 +87,7 @@ int main()
     g.add_node(1001, model, dt_ide_solver);
     g.add_node(1002, model, dt_ide_solver);
 
-    // We use make_no_mobilty_sim to create a GrapSimulation for the model graph we defined above. This function allows 
+    // We use make_no_mobilty_sim to create a GraphSimulation for the model graph we defined above. This function allows 
     // us to create a simulation without having to define mobility between nodes. Any edges would be effectively 
     // ignored by the simulation.
     auto sim = mio::make_no_mobility_sim(t0, std::move(g));
