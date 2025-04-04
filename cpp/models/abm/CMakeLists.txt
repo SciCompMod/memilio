@@ -1,7 +1,9 @@
+add_library(cuda_abm_interface INTERFACE interface_cuda.h)
+
+# Then define the main ABM library
 add_library(abm
     location.cpp
     location.h
-    location_id.h
     household.cpp
     household.h
     simulation.cpp
@@ -35,9 +37,31 @@ add_library(abm
     mask.cpp
     common_abm_loggers.h
 )
-target_link_libraries(abm PUBLIC memilio)
+
+# Link abm to memilio
+target_link_libraries(abm PUBLIC memilio cuda_abm_interface)
 target_include_directories(abm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_compile_options(abm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+# Add CUDA implementation only if CUDA is enabled
+if(MEMILIO_ENABLE_CUDA)
+    
+    add_library(cuda_logger STATIC common_abm_loggers_cuda.cu)
+    # Set CUDA properties
+    set_target_properties(cuda_logger PROPERTIES 
+                         CUDA_SEPARABLE_COMPILATION ON
+                         CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+    
+    # Link dependencies, but don't create a cycle
+    target_link_libraries(cuda_logger PUBLIC ${CUDA_LIBRARIES} ${CUDA_CUDART_LIBRARY} cuda_abm_interface)
+    target_include_directories(cuda_logger PRIVATE 
+                             ${CUDA_INCLUDE_DIRS}
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
+    
+    # Now link the CUDA logger to the main ABM library
+    target_link_libraries(abm PUBLIC cuda_logger
+    cuda_abm_interface)
+endif()

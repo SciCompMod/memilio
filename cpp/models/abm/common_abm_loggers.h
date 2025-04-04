@@ -29,11 +29,14 @@
 #include "models/abm/location_type.h"
 #include "abm/mobility_data.h"
 #include "memilio/utils/mioomp.h"
+#include "abm/interface_cuda.h"
 
 namespace mio
 {
 namespace abm
 {
+
+
 
 /**
  * @brief Struct to save specific mobility data of an agent.
@@ -130,6 +133,35 @@ struct LogPersonInformation : mio::LogOnce {
                 person.get_age()));
         }
         return person_information;
+    }
+};
+
+struct LogTimeAtLocationForEachPerson : mio::LogAlways {
+    using Type = std::vector<double>;
+    static Type log(const mio::abm::Simulation<>& sim)
+    {
+        const auto& persons = sim.get_model().get_persons();
+        const int num_persons = persons.size();
+        
+        #ifdef MEMILIO_WITH_CUDA
+        // Create a vector of CudaPerson objects
+        std::vector<CudaPerson> cuda_persons;
+        cuda_persons.reserve(num_persons);
+        
+        for (const auto& p : persons) {
+            cuda_persons.push_back(CudaPerson(p.get_id().get(), p.get_time_at_location().hours()));
+        }
+        
+        // Call the CUDA implementation
+        return logTimeAtLocationCuda(cuda_persons, num_persons);
+        #else
+        Type tal(num_persons);
+        #pragma omp parallel for
+        for (const Person& p : persons) {
+            tal.at(p.get_id().get()) = p.get_time_at_location().hours();
+        }
+        return tal;
+        #endif
     }
 };
 

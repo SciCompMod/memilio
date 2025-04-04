@@ -36,3 +36,6 @@ target_link_libraries(graph_simulation_benchmark PRIVATE memilio ode_secirvvs be
 
 add_executable(abm_benchmark abm.cpp)
 target_link_libraries(abm_benchmark PRIVATE abm benchmark::benchmark)
+
+add_executable(abm_cuda abmXcuda.cpp)
+target_link_libraries(abm_cuda PRIVATE abm benchmark::benchmark)

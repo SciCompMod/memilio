@@ -86,7 +86,7 @@ void Model::evolve(TimePoint t, TimeSpan dt)
 void Model::interaction(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
-    PRAGMA_OMP(parallel for)
+    //PRAGMA_OMP(parallel for)
     for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
         if (m_activeness_statuses[person_index]) {
             assert(m_persons[person_index].get_location_model_id() == m_id &&
@@ -99,7 +99,7 @@ void Model::interaction(TimePoint t, TimeSpan dt)
 void Model::perform_mobility(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
-    PRAGMA_OMP(parallel for)
+    //PRAGMA_OMP(parallel for)
     for (uint32_t person_index = 0; person_index < num_persons; ++person_index) {
         if (m_activeness_statuses[person_index]) {
             Person& person    = m_persons[person_index];
@@ -213,16 +213,16 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
 
 void Model::build_compute_local_population_cache() const
 {
-    PRAGMA_OMP(single)
+    //PRAGMA_OMP(single)
     {
         const size_t num_locations = m_locations.size();
         const size_t num_persons   = m_persons.size();
         m_local_population_cache.resize(num_locations);
-        PRAGMA_OMP(taskloop)
+        //PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
             m_local_population_cache[i] = 0;
         } // implicit taskloop barrier
-        PRAGMA_OMP(taskloop)
+        ////PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
             if (m_activeness_statuses[i]) {
                 assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
@@ -234,12 +234,12 @@ void Model::build_compute_local_population_cache() const
 
 void Model::build_exposure_caches()
 {
-    PRAGMA_OMP(single)
+    ////PRAGMA_OMP(single)
     {
         const size_t num_locations = m_locations.size();
         m_air_exposure_rates_cache.resize(num_locations);
         m_contact_exposure_rates_cache.resize(num_locations);
-        PRAGMA_OMP(taskloop)
+        //PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
             m_air_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count});
             m_contact_exposure_rates_cache[i].resize({CellIndex(m_locations[i].get_cells().size()), VirusVariant::Count,
@@ -252,7 +252,7 @@ void Model::build_exposure_caches()
 
 void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
 {
-    PRAGMA_OMP(single)
+    //PRAGMA_OMP(single)
     {
         // if cache shape was changed (e.g. by add_location), rebuild it
         if (m_exposure_caches_need_rebuild) {
@@ -264,7 +264,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
 
         // 1) reset all cached values
         // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
-        PRAGMA_OMP(taskloop)
+        //PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; ++i) {
             const auto index         = i;
             auto& local_air_exposure = m_air_exposure_rates_cache[index];
@@ -279,7 +279,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         // here is an implicit (and needed) barrier from parallel for
 
         // 2) add all contributions from each person
-        PRAGMA_OMP(taskloop)
+        // PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; ++i) {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().get();
