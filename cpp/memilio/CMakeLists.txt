@@ -96,11 +96,17 @@ add_library(memilio
     utils/mioomp.h
     utils/type_list.h
 )
+include(GenerateExportHeader)
+GENERATE_EXPORT_HEADER( memilio
+    EXPORT_MACRO_NAME memilio_EXPORT
+    EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/exports/memilio_export.h)
 
 target_include_directories(memilio PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # includes configured by cmake
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> #includes configured by cmake
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/exports>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}> 
+    
 )
 
 target_compile_features(memilio PUBLIC cxx_std_17)

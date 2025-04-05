@@ -21,27 +21,20 @@ if(MEMILIO_ENABLE_PROFILING)
 endif()
 
 # ## SPDLOG
+MESSAGE(STATUS "Searching for SPDLOG and downloading if not found")
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v${MEMILIO_SPDLOG_VERSION}
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+    FIND_PACKAGE_ARGS ${MEMILIO_SPDLOG_VERSION}
+)
+
 set(SPDLOG_INSTALL ON)
 
-if(MEMILIO_USE_BUNDLED_SPDLOG)
-    message(STATUS "Downloading Spdlog library")
+FetchContent_MakeAvailable(spdlog)
 
-    include(FetchContent)
-    FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v${MEMILIO_SPDLOG_VERSION}
-    )
-    FetchContent_GetProperties(spdlog)
-
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
-
-else()
-    find_package(spdlog REQUIRED)
-endif()
 
 # ## EIGEN
 if(MEMILIO_USE_BUNDLED_EIGEN)
@@ -143,6 +136,7 @@ else()
 endif()
 
 # ## HDF5
+MESSAGE(STATUS "Looking for HDF5")
 find_package(HDF5 COMPONENTS C)
 
 if(HDF5_FOUND)
@@ -152,42 +146,29 @@ else()
 endif()
 
 # ## JSONCPP
-if(MEMILIO_USE_BUNDLED_JSONCPP)
-    message(STATUS "Downloading jsoncpp library")
+MESSAGE(STATUS "Searching for Jsoncpp and downloading if not found")
 
-    include(FetchContent)
-    FetchContent_Declare(
-        jsoncpp
-        URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
-    )
-    FetchContent_GetProperties(jsoncpp)
 
-    if(NOT jsoncpp_POPULATED)
-        FetchContent_Populate(jsoncpp)
+include(FetchContent)
+FetchContent_Declare(
+    jsoncpp
+    URL https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_JSONCPP_VERSION}.tar.gz
+)
 
-        # set jsoncpp configurations
-        set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
-        set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
-
-        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
-
-        # unset global cache variables to avoid clashes with our code
-        unset(BUILD_OBJECT_LIBS CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
-        unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
-    endif()
-
-    if(BUILD_SHARED_LIBS)
-        add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
-    else()
-        add_library(JsonCpp::JsonCpp ALIAS jsoncpp_static)
-    endif()
+set(JSONCPP_WITH_TESTS "Compile and (for jsoncpp_check) run JsonCpp test executables" OFF)
+set(JSONCPP_WITH_POST_BUILD_UNITTEST "Automatically run unit-tests as a post build step" ON)
+FetchContent_MakeAvailable(jsoncpp)
+# unset global cache variables to avoid clashes with our code
+unset(BUILD_OBJECT_LIBS CACHE)
+unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
+unset(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
+unset(CMAKE_PDB_OUTPUT_DIRECTORY CACHE)
+unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY CACHE)
+if(BUILD_SHARED_LIBS)
+    add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
 else()
-    find_package(jsoncpp CONFIG)
+    add_library(JsonCpp::JsonCpp ALIAS jsoncpp_static)
 endif()
-
 if(TARGET JsonCpp::JsonCpp)
     set(MEMILIO_HAS_JSONCPP ON)
 else()

@@ -1,20 +1,22 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(memilio VERSION 1.0.0)
+project(memilio 
+    VERSION 1.0.0 
+    DESCRIPTION "A library for simulations of pandemics."
+    HOMEPAGE_URL "https://github.com/DLR-SC/memilio" 
+    LANGUAGES CXX)
+include(GNUInstallDirs)
+
+set(CMAKE_CXX_STANDARD 17)
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
-option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
-option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
-option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." ON)
-option(MEMILIO_BUILD_STATIC_LIBS "Build memilio as a static library." ON)
+option(MEMILIO_BUILD_SHARED_LIBS "Build memilio as a shared library." OFF)
 option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
@@ -37,32 +39,14 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Please choose Release or Debug. Default is Release." FORCE)
 endif()
 
-if(MEMILIO_BUILD_SHARED_LIBS)
-    set(BUILD_SHARED_LIBS ON)
-
+IF(MEMILIO_BUILD_SHARED_LIBS)
+    set(BUILD_STATIC_LIBS OFF)
     if(MSVC)
-        # Current workaround for windows to not build shared libs as we neeed to plugin export variables
-        # TODO: add expoerts for windows files
-        message(WARNING "Building shared libs is not supported on windows. Building static libs instead.")
-        set(BUILD_SHARED_LIBS OFF)
-        set(BUILD_STATIC_LIBS ON)
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     endif()
 else()
-    set(BUILD_SHARED_LIBS OFF)
-endif()
-
-if(MEMILIO_BUILD_STATIC_LIBS)
     set(BUILD_STATIC_LIBS ON)
-else()
-    set(BUILD_STATIC_LIBS OFF)
 endif()
-
-# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24 and above
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
-    cmake_policy(SET CMP0135 NEW)
-endif()
-
-include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
@@ -72,7 +56,7 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
 # code coverage analysis
 # Note: this only works under linux and with make
-# Ninja creates different directory names which do not work together with this scrupt
+# Ninja creates different directory names which do not work together with this script
 # as STREQUAL is case-sensitive https://github.com/TriBITSPub/TriBITS/issues/131, also allow DEBUG as accepted input
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     option(MEMILIO_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
@@ -183,6 +167,8 @@ endif()
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
+
+
 
 install(TARGETS memilio
     EXPORT memilio-targets

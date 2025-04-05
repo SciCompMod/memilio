@@ -21,7 +21,7 @@
 #define MEMILIO_IO_EPI_DATA_H
 
 #include "memilio/config.h"
-
+#include "memilio_export.h"
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/epidemiology/age_group.h"
