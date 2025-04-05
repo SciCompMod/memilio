@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -20,13 +20,12 @@
 #ifndef EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
 #define EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
 
-#include "memilio/math/eigen.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/utils/stl_util.h"
 
-#include <vector>
 #include <numeric>
 #include <ostream>
+#include <vector>
 
 namespace mio
 {

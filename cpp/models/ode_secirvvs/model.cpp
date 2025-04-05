@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
@@ -18,11 +18,3 @@
 * limitations under the License.
 */
 #include "ode_secirvvs/model.h"
-
-namespace mio
-{
-namespace osecirvvs
-{
-
-} // namespace osecirvvs
-} // namespace mio

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
 *
@@ -20,19 +20,25 @@
 #ifndef EULER_H
 #define EULER_H
 
+#include "memilio/config.h"
 #include "memilio/math/integrator.h"
-
-#include <vector>
 
 namespace mio
 {
 
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
+ * @tparam FP A floating point type, e.g., ScalarType.
  */
-class EulerIntegratorCore : public IntegratorCore
+template <typename FP = ScalarType>
+class EulerIntegratorCore : public IntegratorCore<FP>
 {
 public:
+    EulerIntegratorCore()
+        : IntegratorCore<FP>(FP{}, FP{})
+    {
+    }
+
     /**
      * @brief Fixed step width of the integration
      *
@@ -41,8 +47,15 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override;
+    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
+              Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
+    {
+        // we are misusing the next step y as temporary space to store the derivative
+        f(yt, t, ytp1);
+        ytp1 = yt + dt * ytp1;
+        t += dt;
+        return true;
+    }
 };
 
 } // namespace mio

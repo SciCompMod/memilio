@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -33,6 +33,17 @@ struct AgeGroup : public Index<AgeGroup> {
     AgeGroup(size_t val)
         : Index<AgeGroup>(val)
     {
+    }
+
+    /**
+     * Override deserialize of base class
+     * @see mio::Index::deserialize
+     */
+    template <class IOContext>
+    static IOResult<AgeGroup> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(auto&& i, mio::deserialize(io, Tag<size_t>{}));
+        return success(AgeGroup(i));
     }
 };
 

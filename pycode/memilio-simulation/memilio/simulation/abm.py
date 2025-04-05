@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Daniel Abele
 #
@@ -22,4 +22,4 @@
 Python bindings for MEmilio ABM model.
 """
 
-from memilio._simulation_abm import *
+from memilio.simulation._simulation_abm import *

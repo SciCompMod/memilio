@@ -1,7 +1,7 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
-# Authors: Kathrin Rack, Wadim Koslow
+# Authors: Kathrin Rack, Wadim Koslow, Patrick Lenz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -18,16 +18,14 @@
 # limitations under the License.
 #############################################################################
 """
-@file getPopulationData.py
+:strong:`getPopulationData.py`
 
-@brief Downloads data about population statistic
+Downloads data about population statistic
 
 """
 import warnings
 import requests
 import os
-import twill
-import time
 import io
 
 import numpy as np
@@ -41,71 +39,46 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def read_population_data(username, password, read_data, directory):
-    '''! Reads Population data either from regionalstatistik.de or from directory
+def read_population_data(ref_year):
+    """ Reads Population data from regionalstatistik.de
 
-    A request is made using the twill package. Username and Password are required to
-    sign in on regionalstatistik.de. After the sign twill navigates to the file to download.
+    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
 
-    @param username Username to sign in at regionalstatistik.de. 
-    @param password Password to sign in at regionalstatistik.de.
-    @param read_data False or True. Defines if data is read from file or downloaded.
-    @param directory Path to folder where data is read from.
-    @return DataFrame
-    '''
+    :param ref_year: Default: None or year (jjjj) convertible to str. Reference year.
+    :returns: DataFrame
 
-    filename = '12411-02-03-4'
-    if not read_data:
-        sign_in_url = 'https://www.regionalstatistik.de/genesis/online?Menu=Anmeldung'
+    """
+    if ref_year is not None:
+        try:
+            download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv&zeiten=' + \
+                str(ref_year)
+            req = requests.get(download_url)
+            df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
+        except pd.errors.ParserError:
+            gd.default_print('Warning', 'Data for year '+str(ref_year) +
+                             ' is not available; downloading newest data instead.')
+            ref_year = None
+    if ref_year is None:
+        download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
+        req = requests.get(download_url)
+        df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
 
-        # sign in to regionalstatistik.de with given username and password
-        twill.browser.user_agent = requests.utils.default_headers()[
-            'User-Agent']
-        twill.commands.go(sign_in_url)
-        twill.commands.fv('3', 'KENNUNG', username)
-        twill.commands.fv('3', 'PASSWORT', password)
-        twill.commands.submit('login', '3')
-        # navigate to file as in documentation
-        twill.commands.follow('Themen')
-        twill.commands.follow(filename[:2])
-        # wait 2 seconds to prevent error
-        # page needs some time to load
-        time.sleep(2)
-        twill.commands.follow(filename.split('-')[0])
-        twill.commands.follow(filename)
-        # start 'Werteabruf'
-        twill.commands.submit('45', '3')
-        # read csv file (1,4 for xlsx)
-        twill.commands.submit('1', '5')
-
-        df_pop_raw = pd.read_csv(io.StringIO(
-            twill.browser.html), sep=';', header=6)
-
-    else:
-        data_file = os.path.join(directory, filename)
-        if os.path.isfile(data_file+'.xlsx'):
-            df_pop_raw = pd.read_excel(
-                data_file+'.xlsx', engine='openpyxl', sheet_name=filename, header=4)
-        elif os.path.isfile(data_file+'.csv'):
-            df_pop_raw = pd.read_excel(data_file+'.csv', sep=';', header=6)
-        else:
-            raise FileNotFoundError(
-                'Data file '+filename+' was not found in out_folder/Germany')
-
-    return df_pop_raw
+    return df_pop_raw, ref_year
 
 
-def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
-    '''! Writes population dataframe into directory with new column names and age groups
+def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool, ref_year):
+    """ Writes population dataframe into directory with new column names and age groups
 
-    @param df_pop Population data DataFrame to be exported
-    @param directory Directory where data is written to.
-    @param file_format File format which is used for writing the data.
-    @param merge_eisenach Defines whether the counties 'Wartburgkreis'
+    :param df_pop: Population data DataFrame to be exported pd.DataFrame
+    :param directory: Directory where data is written to. str
+    :param file_format: File format which is used for writing the data. str
+    :param merge_eisenach: Defines whether the counties 'Wartburgkreis'
         and 'Eisenach' are listed separately or
-        combined as one entity 'Wartburgkreis'.
-    @return exported DataFrame
-    '''
+        combined as one entity 'Wartburgkreis'. bool
+    :param ref_year: None or year (jjjj) convertible to str. Reference year.
+    :returns: exported DataFrame
+
+    """
 
     new_cols = [
         dd.EngEng['idCounty'],
@@ -153,36 +126,39 @@ def export_population_dataframe(df_pop, directory, file_format, merge_eisenach):
 
     gd.check_dir(directory)
 
-    if len(df_pop_export) == 401:
-        filename = 'county_current_population_dim401'
-        gd.write_dataframe(df_pop_export, directory, filename, file_format)
-
-    if len(df_pop_export) == 400 or merge_eisenach:
+    if ref_year is None:
         filename = 'county_current_population'
+    else:
+        filename = 'county_' + str(ref_year) + '_population'
 
-        # Merge Eisenach and Wartburgkreis
-        df_pop_export = geoger.merge_df_counties_all(
-            df_pop_export, sorting=[dd.EngEng["idCounty"]],
-            columns=dd.EngEng["idCounty"])
+    if len(df_pop_export) == 401:
+        filename = filename + '_dim401'
 
-        gd.write_dataframe(df_pop_export, directory, filename, file_format)
+    # Merge Eisenach and Wartburgkreis
+    df_pop_export = geoger.merge_df_counties_all(
+        df_pop_export, sorting=[dd.EngEng["idCounty"]],
+        columns=dd.EngEng["idCounty"])
+
+    gd.write_dataframe(df_pop_export, directory, filename, file_format)
 
     return df_pop_export
 
 
 def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
-    '''! Assigns population data of all counties of old dataframe in new created dataframe
+    """ Assigns population data of all counties of old dataframe in new created dataframe
 
-    In df_pop_raw there might be additional information like federal states, 
+    In df_pop_raw there might be additional information like federal states,
     governing regions etc. which is not necessary for the dataframe.
-    Also checks for incomplete data.    
+    Also checks for incomplete data.
 
-    @param df_pop_raw Raw Population DataFrame read from regionalstatistik.de
-    @param counties List of counties to be assigned in new DataFrame
-    @param age_cols Age groups in old DataFrame
-    @param idCountyidx indexes in old DataFrame where data of corresponding county starts
-    @return new DataFrame
-    '''
+    :param df_pop_raw: Raw Population DataFrame read from regionalstatistik.de
+    :param counties: List of counties to be assigned in new DataFrame
+    :param age_cols: Age groups in old DataFrame
+    :param idCountyidx: indexes in old DataFrame where data of corresponding county starts
+    :param idCounty_idx: 
+    :returns: new DataFrame
+
+    """
 
     new_cols = {dd.EngEng['idCounty']: counties[:, 1],
                 dd.EngEng['county']: counties[:, 0]}
@@ -231,84 +207,83 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
         elif len(county_id) < 5:
             pass
         else:
-            print('no data for ' + df_pop_raw.loc
-                  [start_idx, dd.EngEng['idCounty']])
             raise gd.DataError(
-                'Error. County ID in input population data '
+                'No data for ' + df_pop_raw.loc
+                [start_idx, dd.EngEng['idCounty']] +
+                'County ID in input population data '
                 'found which could not be assigned.')
 
     return df_pop
 
 
 def test_total_population(df_pop, age_cols):
-    """! Tests if total population matches expectation
-    @param df_pop Population Dataframe with all counties
-    @param age_cols All age groups in DataFrame"""
+    """ Tests if total population matches expectation
 
-    total_sum_2020 = 83155031
-    total_sum_2021 = 83237124
-    total_sum_2022 = 84358845
-    total_sum = df_pop[age_cols].sum().sum()
+    :param df_pop: Population Dataframe with all counties
+    :param age_cols: All age groups in DataFram
 
-    if total_sum == total_sum_2022:
-        pass
-    elif total_sum == total_sum_2021:
-        warnings.warn('Using data of 2021. Newer data is available.')
-    elif total_sum == total_sum_2020:
-        warnings.warn('Using data of 2020. Newer data is available.')
-    else:
-        raise gd.DataError('Total Population does not match expectation.')
-
-
-def get_population_data(read_data=dd.defaultDict['read_data'],
-                        file_format=dd.defaultDict['file_format'],
-                        out_folder=dd.defaultDict['out_folder'],
-                        no_raw=dd.defaultDict['no_raw'],
-                        merge_eisenach=True,
-                        username='',
-                        password=''):
-    """! Download age-stratified population data for the German counties.
-
-    The data we use is:
-    Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
-    'Bevölkerung nach Geschlecht und Altersgruppen (17)' 
-    of regionalstatistik.de. 
-    ATTENTION: The raw file cannot be downloaded 
-    automatically by our scripts without an Genesis Online account. In order to
-    work on this dataset, please enter your username and password or manually download it from:
-
-    https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
-    Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
-    Bevölkerungsstandes" ->  "12411-02-03-4: Bevölkerung nach Geschlecht und 
-    Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
-    krfr. Städte". 
-
-    Download the xlsx or csv file and put it under dd.defaultDict['out_folder'], 
-    this normally is Memilio/data/pydata/Germany. 
-    The folders 'pydata/Germany' have to be created if they do not exist yet. 
-    Then this script can be run.
-
-    @param read_data False or True. Defines if data is read from file or
-        downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data.
-        Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder
-        out_folder/Germany. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is written or
-        not. Default defined in defaultDict. Currently not used.
-    @param merge_eisenach [Default: True] or False. Defines whether the
-        counties 'Wartburgkreis' and 'Eisenach' are listed separately or
-        combined as one entity 'Wartburgkreis'.
-    @param username Username to sign in at regionalstatistik.de. 
-    @param password Password to sign in at regionalstatistik.de.
-    @return DataFrame with adjusted population data for all ages to current level.
     """
 
-    directory = os.path.join(out_folder, 'Germany')
+    total_sum_expect = 84e6
+    total_sum = df_pop[age_cols].sum().sum()
+
+    if not isinstance(total_sum, (int, np.integer)):
+        raise gd.DataError('Unexpected dtypes in Population Data.')
+    # check if total population is +-5% accurate to 2024 population
+    if (total_sum > 1.05*total_sum_expect) or (total_sum < 0.95*total_sum_expect):
+        gd.default_print(
+            'Warning', 'Total Population does not match expectation.')
+
+
+def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
+                          out_folder: str = dd.defaultDict['out_folder'],
+                          ref_year=None,
+                          **kwargs
+                          ) -> pd.DataFrame:
+    """ Downloads or reads the population data.
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file "FullData_population.json" exists, the data is read form this file
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
+    The downloaded dataframe is written to the file "FullData_population".
+
+    :param read_data: False or True. Defines if data is read from file or
+        downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param out_folder: Path to folder where data is written in folder
+        out_folder/Germany. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param ref_year: (Default: None) or year (jjjj) convertible to str. Reference year.
+    :param **kwargs: 
+    :returns: DataFrame with adjusted population data for all ages to current level.
+
+    """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+
+    if read_data == True:
+        gd.default_print(
+            'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
+        read_data = False
+
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
-    df_pop_raw = read_population_data(username, password, read_data, directory)
+    df_pop_raw, ref_year = read_population_data(ref_year)
 
+    return df_pop_raw, ref_year
+
+
+def preprocess_population_data(df_pop_raw: pd.DataFrame,
+                               merge_eisenach: bool = True,
+                               ) -> pd.DataFrame:
+    """ Processing of the downloaded data
+        * the columns are renamed to English and the state and county names are added.
+
+    :param df_pop_raw: pd.DataFrame. A Dataframe containing input population data
+    :param merge_eisenach: Default: True] or False. Defines whether the
+     counties 'Wartburgkreis' and 'Eisenach' are listed separately or
+     combined as one entity 'Wartburgkreis'. (Default value = True)
+    :returns: df pd.DataFrame. Processed population data
+
+    """
     column_names = list(df_pop_raw.columns)
     # rename columns
     rename_columns = {
@@ -349,17 +324,105 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     df_pop = assign_population_data(
         df_pop_raw, counties, age_cols, idCounty_idx)
-
     test_total_population(df_pop, age_cols)
+    return df_pop
 
+
+def write_population_data(df_pop: pd.DataFrame,
+                          out_folder: str = dd.defaultDict['out_folder'],
+                          file_format: str = dd.defaultDict['file_format'],
+                          merge_eisenach: bool = True,
+                          ref_year=None
+                          ) -> None or pd.DataFrame:
+    """ Write the population data into json files
+    Three kinds of structuring of the data are done.
+    We obtain the chronological sequence of ICU and ICU_ventilated
+    stored in the files "county_population".json", "state_population.json" and "germany_population.json"
+    for counties, states and whole Germany, respectively.
+
+    :param df_pop: pd.DataFrame. A Dataframe containing processed population data
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: str. Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param merge_eisenach: bool, Default: True. Defines whether the
+        counties 'Wartburgkreis' and 'Eisenach' are listed separately or
+        combined as one entity 'Wartburgkreis'. 
+    :param ref_year: Default: None or year (jjjj) convertible to str. Reference year.
+    :returns: None
+
+    """
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     df_pop_export = export_population_dataframe(
-        df_pop, directory, file_format, merge_eisenach)
+        df_pop, directory, file_format, merge_eisenach, ref_year)
+    return df_pop_export
 
+
+def get_population_data(read_data: bool = dd.defaultDict['read_data'],
+                        file_format: str = dd.defaultDict['file_format'],
+                        out_folder: str = dd.defaultDict['out_folder'],
+                        merge_eisenach: bool = True,
+                        ref_year=None,
+                        **kwargs
+                        ):
+    """ Download age-stratified population data for the German counties.
+
+    The data we use is:
+    Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
+    'Bevölkerung nach Geschlecht und Altersgruppen (17)'
+    of regionalstatistik.de.
+    ATTENTION: The raw file cannot be downloaded
+    automatically by our scripts without an Genesis Online account. In order to
+    work on this dataset, please enter your username and password or manually download it from:
+
+    https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
+    Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
+    Bevölkerungsstandes" ->  "12411-02-03-4: Bevölkerung nach Geschlecht und
+    Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
+    krfr. Städte".
+
+    Download the xlsx or csv file and put it under dd.defaultDict['out_folder'],
+    this normally is Memilio/data/pydata/Germany.
+    The folders 'pydata/Germany' have to be created if they do not exist yet.
+    Then this script can be run.
+
+    :param read_data: False or True. Defines if data is read from file or
+        downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data.
+        Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Path to folder where data is written in folder
+        out_folder/Germany. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param merge_eisenach: bool, Default: True]. Defines whether the
+        counties 'Wartburgkreis' and 'Eisenach' are listed separately or
+        combined as one entity 'Wartburgkreis'.
+    :param ref_year: Default: None] or year (jjjj) convertible to str. Reference year.
+    :param username: str. Username to sign in at regionalstatistik.de.
+    :param password: str. Password to sign in at regionalstatistik.de.
+    :param **kwargs: 
+    :returns: DataFrame with adjusted population data for all ages to current level.
+
+    """
+    raw_df, ref_year = fetch_population_data(
+        read_data=read_data,
+        out_folder=out_folder,
+        file_format=file_format,
+        ref_year=ref_year,
+        **kwargs
+    )
+    preprocess_df = preprocess_population_data(
+        df_pop_raw=raw_df,
+        merge_eisenach=merge_eisenach
+    )
+    df_pop_export = write_population_data(
+        df_pop=preprocess_df,
+        file_format=file_format,
+        out_folder=out_folder,
+        merge_eisenach=True,
+        ref_year=ref_year
+    )
     return df_pop_export
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("population")
     get_population_data(**arg_dict)

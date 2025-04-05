@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -31,8 +31,11 @@ if TYPE_CHECKING:
 
 def includes(intermed_repr: IntermediateRepresentation) -> str:
     """
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     substitution_string = (
         "//Includes from pymio\n"
@@ -71,8 +74,11 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
     """
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     substitution_string = (
         "namespace pymio"
@@ -111,8 +117,11 @@ def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
 
 def population_enums(intermed_repr: IntermediateRepresentation) -> str:
     """
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     substitution_string = ""
     for key, values in intermed_repr.enum_populations.items():
@@ -137,8 +146,11 @@ def population_enums(intermed_repr: IntermediateRepresentation) -> str:
 
 def population(intermed_repr: IntermediateRepresentation) -> str:
     """
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     for value in intermed_repr.model_base[1:]:
         if "Population" in value[0]:
@@ -147,8 +159,11 @@ def population(intermed_repr: IntermediateRepresentation) -> str:
 
 def model_init(intermed_repr: IntermediateRepresentation) -> str:
     """
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     substitution_string = ""
     for init in intermed_repr.model_init:
@@ -168,12 +183,13 @@ def model_init(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the AgeGroup class.
+    """Generate the code for the AgeGroup class.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if not intermed_repr.parameterset_wrapper:
         return ""
@@ -184,12 +200,13 @@ def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the parameterset_wrapper needed when using age groups.
+    """Generate the code for the parameterset_wrapper needed when using age groups.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if not intermed_repr.parameterset_wrapper:
         return ""
@@ -207,12 +224,13 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def age_group(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the AgeGroup class.
+    """Generate the code for the AgeGroup class.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if not intermed_repr.age_group:
         return ""
@@ -227,12 +245,13 @@ def age_group(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def simulation(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for the Simulation class.
+    """Generate the code for the Simulation class.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if intermed_repr.simulation_class is None or (
             not intermed_repr.simulation_class.strip()):
@@ -247,12 +266,13 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def simulation_graph(intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code of the classes for graph simulations.
+    """Generate the code of the classes for graph simulations.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if intermed_repr.simulation_class is None or (
             not intermed_repr.simulation_class.strip()):
@@ -262,8 +282,8 @@ def simulation_graph(intermed_repr: IntermediateRepresentation) -> str:
         "pymio::bind_ModelNode<{namespace}{model_class}>(m, \"ModelNode\");\n\t"
         "pymio::bind_SimulationNode<{namespace}{simulation_class}<>>(m, \"SimulationNode\");\n\t"
         "pymio::bind_ModelGraph<{namespace}{model_class}>(m, \"ModelGraph\");\n\t"
-        "pymio::bind_MigrationGraph<{namespace}{simulation_class}<>>(m, \"MigrationGraph\");\n\t"
-        "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MigrationEdge>>(m, \"MigrationSimulation\");\n\t"
+        "pymio::bind_MobilityGraph<{namespace}{simulation_class}<>>(m, \"MobilityGraph\");\n\t"
+        "pymio::bind_GraphSimulation<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MobilityEdge>>(m, \"MobilitySimulation\");\n\t"
     ).format(
         namespace=intermed_repr.namespace,
         model_class=intermed_repr.model_class,
@@ -273,19 +293,20 @@ def simulation_graph(intermed_repr: IntermediateRepresentation) -> str:
 
 def simulation_vector_definition(
         intermed_repr: IntermediateRepresentation) -> str:
-    """
-    Generate the code for vector definition.
+    """Generate the code for vector definition.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if intermed_repr.simulation_class is None or (
             not intermed_repr.simulation_class.strip()):
         return ""
 
     return (
-        "PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MigrationEdge>>);\n"
+        "PYBIND11_MAKE_OPAQUE(std::vector<mio::Graph<mio::SimulationNode<{namespace}{simulation_class}<>>, mio::MobilityEdge>>);\n"
     ).format(
         namespace=intermed_repr.namespace,
         simulation_class=intermed_repr.simulation_class

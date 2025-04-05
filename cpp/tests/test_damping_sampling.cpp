@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -26,21 +26,22 @@
 
 TEST(TestDampingSampling, apply)
 {
-    auto ds  = std::vector<mio::DampingSampling>{mio::DampingSampling{mio::UncertainValue(0.5),
-                                                                     mio::DampingLevel(0),
-                                                                     mio::DampingType(0),
-                                                                     mio::SimulationTime(0.0),
-                                                                     {0},
-                                                                     Eigen::VectorXd::Constant(2, 1.0)},
-                                                mio::DampingSampling{mio::UncertainValue(0.25),
-                                                                     mio::DampingLevel(1),
-                                                                     mio::DampingType(0),
-                                                                     mio::SimulationTime(1.0),
-                                                                     {
-                                                                         0,
-                                                                         1,
-                                                                     },
-                                                                     Eigen::VectorXd::Constant(2, 1.0)}};
+    auto ds =
+        std::vector<mio::DampingSampling<double>>{mio::DampingSampling<double>{mio::UncertainValue<double>(0.5),
+                                                                               mio::DampingLevel(0),
+                                                                               mio::DampingType(0),
+                                                                               mio::SimulationTime(0.0),
+                                                                               {0},
+                                                                               Eigen::VectorXd::Constant(2, 1.0)},
+                                                  mio::DampingSampling<double>{mio::UncertainValue<double>(0.25),
+                                                                               mio::DampingLevel(1),
+                                                                               mio::DampingType(0),
+                                                                               mio::SimulationTime(1.0),
+                                                                               {
+                                                                                   0,
+                                                                                   1,
+                                                                               },
+                                                                               Eigen::VectorXd::Constant(2, 1.0)}};
     auto cmg = mio::ContactMatrixGroup(2, 2);
 
     mio::apply_dampings(cmg, ds, [](auto&& v) {
@@ -64,9 +65,9 @@ TEST(TestDampingSampling, contactMask)
                 MatrixNear((Eigen::MatrixXd(2, 2) << 0.0, 1 - sqrt(0.5), 1 - sqrt(0.5), 0.5).finished()));
 }
 
-TEST(TestDampingSampling, migrationMask)
+TEST(TestDampingSampling, mobilityMask)
 {
-    auto m = mio::make_migration_damping_vector(mio::ColumnVectorShape(6), (Eigen::VectorXd(2) << 0.5, 0.25).finished())
+    auto m = mio::make_mobility_damping_vector(mio::ColumnVectorShape(6), (Eigen::VectorXd(2) << 0.5, 0.25).finished())
                  .eval();
     ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::VectorXd(6) << 0.5, 0.5, 0.5, 0.25, 0.25, 0.25).finished()));
 }

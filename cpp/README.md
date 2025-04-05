@@ -4,21 +4,22 @@ The MEmilio C++ library contains the implementation of the epidemiological model
 
 Directory structure:
 - memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
-- models: implementation of concrete models (ODE and ABM)
+- models: implementation of concrete models (ODE, IDE, LCT and ABM)
 - simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
 - cmake: build utility code
 - thirdparty: configuration of dependencies
+- benchmarks: applications to analyze runtime performance of the framework
 
 ## Requirements
 
 MEmilio C++ uses CMake as a build configuration system (https://cmake.org/)
 
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
-- GCC, versions 7.3.0 - 10.2.0
-- Clang, version 9.0
-- MSVC, versions 19.16.27045.0 (Visual Studio 2017) - 19.29.30133.0 (Visual Studio 2019)
+- GCC, versions 9.4 and 11.4
+- Clang, version 6.0 and 14.0
+- MSVC, versions 19.29 (Visual Studio 2019) - 19.38 (Visual Studio 2022)
 
 MEmilio C++ is regularly tested on gitlub runners using Ubuntu 18.04 and 20.04 and Windows Server 2016 and 2019. It is expected to run on any comparable Linux or Windows system. It is currently not tested on MacOS.
 
@@ -26,10 +27,10 @@ The following table lists the dependencies that are used. Most of them are requi
 
 | Library | Version  | Required | Bundled               | Notes |
 |---------|----------|----------|-----------------------|-------|
-| spdlog  | 1.11.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
-| Eigen   | 3.3.9    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
-| Boost   | 1.75.0   | Yes      | Yes (.tar.gz archive) | https://www.boost.org/ |
-| JsonCpp | 1.9.5    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
+| spdlog  | 1.15.0   | Yes      | Yes (git repo)        | https://github.com/gabime/spdlog |
+| Eigen   | 3.4.0    | Yes      | Yes (git repo)        | http://gitlab.com/libeigen/eigen |
+| Boost   | 1.84.0   | Yes      | Yes (git repo)        | https://github.com/boostorg/boost |
+| JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
 
@@ -53,6 +54,11 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
 - `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
+- `MEMILIO_ENABLE_OPENMP`: compile MEmilio with multithreading using OpenMP, ON or OFF, default OFF.
+- `MEMILIO_ENABLE_MPI`: compile MEmilio with distributed memory parallelization using MPI. ON or OFF, default OFF. Requires an MPI implementation to be installed on the system. 
+- `MEMILIO_ENABLE_WARNINGS`: enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
+- `MEMILIO_ENABLE_WARNINGS_AS_ERRORS`: compilation warnings are treated as compilation errors. ON or OFF, default ON.
+- `MEMILIO_ENABLE_PROFILING`: compile with runtime profiling support. ON or OFF, default OFF. See [here](benchmarks/profiling.md) for information.
 
 Other important options may need:
 - `CMAKE_BUILD_TYPE`: controls compiler optimizations and diagnostics, Debug, Release, or RelWithDebInfo; not available for Multi-Config CMake Generators like Visual Studio, set the build type in the IDE or when running the compiler.

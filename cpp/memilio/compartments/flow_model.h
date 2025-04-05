@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
 *
@@ -69,8 +69,8 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
  * Flows is expected to be a TypeList containing types Flow<A,B>, where A and B are compartments from the enum Comp.
  * Some examples can be found in the cpp/models/ directory, within the model.h files.
  */
-template <class Comp, class Pop, class Params, class Flows>
-class FlowModel : public CompartmentalModel<Comp, Pop, Params>
+template <typename FP, class Comp, class Pop, class Params, class Flows>
+class FlowModel : public CompartmentalModel<FP, Comp, Pop, Params>
 {
     using PopIndex = typename Pop::Index;
     // FlowIndex is the same as PopIndex without the category Comp. It is used as argument type for
@@ -84,21 +84,21 @@ class FlowModel : public CompartmentalModel<Comp, Pop, Params>
     static_assert(FlowIndex::size == PopIndex::size - 1, "Compartments must be used exactly once as population index.");
 
 public:
-    using Base = CompartmentalModel<Comp, Pop, Params>;
+    using Base = CompartmentalModel<FP, Comp, Pop, Params>;
     /**
      * @brief Default constructor, forwarding args to Base constructor.
      */
     template <class... Args>
     FlowModel(Args... args)
-        : CompartmentalModel<Comp, Pop, Params>(args...)
+        : CompartmentalModel<FP, Comp, Pop, Params>(args...)
         , m_flow_values((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size())
     {
     }
 
     // Note: use get_flat_flow_index when accessing flows
     // Note: by convention, we compute incoming flows, thus entries in flows must be non-negative
-    virtual void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/,
-                           double /*t*/, Eigen::Ref<Eigen::VectorXd> /*flows*/) const = 0;
+    virtual void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
+                           FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*flows*/) const = 0;
 
     /**
      * @brief Compute the right-hand-side of the ODE dydt = f(y, t) from flow values.
@@ -108,7 +108,7 @@ public:
      * @param[in] flows The current flow values (as calculated by get_flows) as a flat array.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> dydt) const
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> flows, Eigen::Ref<Eigen::VectorX<FP>> dydt) const
     {
         // set dydt to 0, then iteratively add all flow contributions
         dydt.setZero();
@@ -134,8 +134,8 @@ public:
      * @param[in] t The current time.
      * @param[out] dydt A reference to the calculated output.
      */
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override final
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                         Eigen::Ref<Eigen::VectorX<FP>> dydt) const override final
     {
         m_flow_values.setZero();
         get_flows(pop, y, t, m_flow_values);
@@ -147,9 +147,9 @@ public:
      * This can be used as initial conditions in an ODE solver. By default, this is a zero vector.
      * @return The initial flows.
      */
-    Eigen::VectorXd get_initial_flows() const
+    Eigen::VectorX<FP> get_initial_flows() const
     {
-        return Eigen::VectorXd::Zero((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size());
+        return Eigen::VectorX<FP>::Zero((this->populations.numel() / static_cast<size_t>(Comp::Count)) * Flows::size());
     }
 
     /**
@@ -204,7 +204,7 @@ public:
     }
 
 private:
-    mutable Eigen::VectorXd m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
+    mutable Eigen::VectorX<FP> m_flow_values; ///< Cache to avoid allocation in get_derivatives (using get_flows).
 
     /**
      * @brief Compute the derivatives of the compartments.
@@ -216,7 +216,7 @@ private:
      * @tparam I The index of a flow in FlowChart.
      */
     template <size_t I = 0>
-    inline void get_rhs_impl(Eigen::Ref<const Eigen::VectorXd> flows, Eigen::Ref<Eigen::VectorXd> rhs,
+    inline void get_rhs_impl(Eigen::Ref<const Eigen::VectorX<FP>> flows, Eigen::Ref<Eigen::VectorX<FP>> rhs,
                              const FlowIndex& index) const
     {
         using Flow                 = type_at_index_t<I, Flows>;
@@ -238,22 +238,23 @@ private:
  * Detect whether certain member functions (the name before '_expr_t') exist.
  * If the member function exists in the type M, this template when instatiated
  * will be equal to the return type of the function. Otherwise the template is invalid.
+ * @tparam FP floating point type, e.g. double.
  * @tparam M Any class, e.g. FlowModel.
  * @{
  */
-template <class M>
+template <typename FP, class M>
 using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
-    std::declval<Eigen::Ref<const Eigen::VectorXd>>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+    std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
 
-template <class M>
+template <typename FP, class M>
 using get_flows_expr_t =
-    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
-                                                std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
-                                                std::declval<double>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
+                                                std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
+                                                std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
 
-template <class M>
+template <typename FP, class M>
 using get_initial_flows_expr_t =
-    decltype(std::declval<Eigen::VectorXd>() = std::declval<const M&>().get_initial_flows());
+    decltype(std::declval<Eigen::VectorX<FP>>() = std::declval<const M&>().get_initial_flows());
 /** @} */
 
 /**
@@ -261,13 +262,14 @@ using get_initial_flows_expr_t =
  * Defines a static constant of name `value`. 
  * The constant `value` will be equal to true if M is a valid flow model type.
  * Otherwise, `value` will be equal to false.
+ * @tparam FP floating point type, e.g. double.
  * @tparam Model A type that may or may not be a flow model.
  */
-template <class Model>
-using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, Model>::value &&
-                                                    is_expression_valid<get_flows_expr_t, Model>::value &&
-                                                    is_expression_valid<get_initial_flows_expr_t, Model>::value &&
-                                                    is_compartment_model<Model>::value)>;
+template <typename FP, class Model>
+using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, FP, Model>::value &&
+                                                    is_expression_valid<get_flows_expr_t, FP, Model>::value &&
+                                                    is_expression_valid<get_initial_flows_expr_t, FP, Model>::value &&
+                                                    is_compartment_model<FP, Model>::value)>;
 
 } // namespace mio
 

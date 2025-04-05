@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -68,14 +68,12 @@ TYPED_TEST(TestEigenUtilMatrix, reshape)
 {
     TypeParam A(2, 3), B(1, 6), C(3, 2), D(6, 1);
     A << 0, 1, 2, 3, 4, 5;
-    if constexpr (TypeParam::IsRowMajor)
-    {
+    if constexpr (TypeParam::IsRowMajor) {
         B << 0, 1, 2, 3, 4, 5;
         C << 0, 1, 2, 3, 4, 5;
         D << 0, 1, 2, 3, 4, 5;
     }
-    else
-    {
+    else {
         B << 0, 3, 1, 4, 2, 5;
         C << 0, 4, 3, 2, 1, 5;
         D << 0, 3, 1, 4, 2, 5;

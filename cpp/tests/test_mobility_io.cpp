@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow
 *
@@ -25,7 +25,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(TestReadMigration, readFormatted)
+TEST(TestReadMobility, readFormatted)
 {
     Eigen::MatrixXd test_matrix(4, 4);
     for (int i = 0; i < 4; i++) {
@@ -38,7 +38,7 @@ TEST(TestReadMigration, readFormatted)
 
     std::fstream file;
 
-    file.open("test_twitter.txt", std::ios::out);
+    file.open("test_mobility.txt", std::ios::out);
 
     if (!file) {
         mio::log_error("File was not created");
@@ -61,14 +61,14 @@ TEST(TestReadMigration, readFormatted)
         file.close();
     }
 
-    auto matrix_read = mio::read_mobility_formatted("test_twitter.txt");
+    auto matrix_read = mio::read_mobility_formatted("test_mobility.txt");
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
     ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());
     ASSERT_EQ(print_wrap(test_matrix), print_wrap(matrix_read.value()));
 }
 
-TEST(TestReadMigration, readPlain)
+TEST(TestReadMobility, readPlain)
 {
     Eigen::MatrixXd test_matrix(6, 6);
 

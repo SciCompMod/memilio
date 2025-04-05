@@ -1,21 +1,27 @@
 add_library(abm
     location.cpp
     location.h
+    location_id.h
     household.cpp
     household.h
     simulation.cpp
     simulation.h
     person.cpp
     person.h
+    person_id.h
+    personal_rng.cpp
+    personal_rng.h
     testing_strategy.cpp
     testing_strategy.h
-    world.cpp
-    world.h
+    model.cpp
+    model.h
     location_type.h
     parameters.h
     parameters.cpp
-    migration_rules.cpp
-    migration_rules.h
+    mobility_rules.cpp
+    mobility_rules.h
+    model_functions.cpp
+    model_functions.h
     trip_list.cpp
     trip_list.h
     lockdown_rules.cpp
@@ -24,9 +30,10 @@ add_library(abm
     infection.h
     infection_state.h
     virus_variant.h
-    vaccine.h
+    protection_event.h
     mask.h
     mask.cpp
+    common_abm_loggers.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -104,7 +104,7 @@ public:
     template <class IOContext>
     static IOResult<Index> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(i, mio::deserialize(io, Tag<size_t>{}));
+        BOOST_OUTCOME_TRY(auto&& i, mio::deserialize(io, Tag<size_t>{}));
         return success(Index(i));
     }
 };

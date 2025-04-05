@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
 *
@@ -27,6 +27,9 @@
 #include "boost/outcome/result.hpp"
 #include "boost/outcome/try.hpp"
 #include "boost/optional.hpp"
+
+#include <bitset>
+#include <string>
 #include <tuple>
 #include <iostream>
 
@@ -332,7 +335,7 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * extern void use_int(int i);
  * IOResult<void> parse_and_use_int(const std::string& s)
  * {
- *   BOOST_OUTCOME_TRY(i, parse_int(s));
+ *   BOOST_OUTCOME_TRY(auto&& i, parse_int(s));
  *   use_int(i);
  *   return success();
  * }
@@ -467,6 +470,7 @@ ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
  * @param f the function that is called with the values contained in `rs` as arguments.
  * @param rs zero or more IOResults from previous operations.
  * @return the result of f(rs.value()...) if successful, the first error encountered otherwise.
+ * @{
  */
 template <class IOContext, class F, class... T>
 details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... rs)
@@ -496,6 +500,17 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
     }
     return result;
 }
+
+template <class IOContext, class F, class... T>
+details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResult<T>...>& results)
+{
+    return std::apply(
+        [&](auto&&... rs) {
+            return apply(io, f, rs...);
+        },
+        results);
+}
+/** @} */
 
 //utility for (de-)serializing tuple-like objects
 namespace details
@@ -633,6 +648,56 @@ IOResult<M> deserialize_internal(IOContext& io, Tag<M> /*tag*/)
 }
 
 /**
+ * @brief Serialize an std::bitset.
+ * @tparam IOContext A type that models the IOContext concept.
+ * @tparam N The size of the bitset.
+ * @param io An IO context.
+ * @param bitset A bitset to be serialized.
+ */
+template <class IOContext, size_t N>
+void serialize_internal(IOContext& io, const std::bitset<N> bitset)
+{
+    std::array<bool, N> bits;
+    for (size_t i = 0; i < N; i++) {
+        bits[i] = bitset[i];
+    }
+    auto obj = io.create_object("BitSet");
+    obj.add_list("bitset", bits.begin(), bits.end());
+}
+
+/**
+ * @brief Deserialize an std::bitset.
+ * @tparam IOContext A type that models the IOContext concept.
+ * @tparam N The size of the bitset.
+ * @param io An IO context.
+ * @param tag Defines the type of the object that is to be deserialized.
+ * @return The restored object if successful, an error otherwise.
+ */
+template <class IOContext, size_t N>
+IOResult<std::bitset<N>> deserialize_internal(IOContext& io, Tag<std::bitset<N>> tag)
+{
+    mio::unused(tag);
+    auto obj  = io.expect_object("BitSet");
+    auto bits = obj.expect_list("bitset", Tag<bool>{});
+
+    return apply(
+        io,
+        [](auto&& bits_) -> IOResult<std::bitset<N>> {
+            if (bits_.size() != N) {
+                return failure(StatusCode::InvalidValue,
+                               "Incorrent number of booleans to deserialize bitset. Expected " + std::to_string(N) +
+                                   ", got " + std::to_string(bits_.size()) + ".");
+            }
+            std::bitset<N> bitset;
+            for (size_t i = 0; i < N; i++) {
+                bitset[i] = bits_[i];
+            }
+            return bitset;
+        },
+        bits);
+}
+
+/**
  * serialize an enum value as its underlying type.
  * @tparam IOContext a type that models the IOContext concept.
  * @tparam E an enum type to be serialized.
@@ -658,7 +723,7 @@ void serialize_internal(IOContext& io, E e)
 template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
 IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 {
-    BOOST_OUTCOME_TRY(i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
+    BOOST_OUTCOME_TRY(auto&& i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
     return success(E(i));
 }
 
@@ -722,7 +787,11 @@ using compare_iterators_t = decltype(std::declval<const C&>().begin() != std::de
  * @tparam C any type.
  */
 template <class C>
-using is_container = is_expression_valid<details::compare_iterators_t, C>;
+using is_container =
+    conjunction<is_expression_valid<details::compare_iterators_t, C>,
+                std::is_constructible<C, decltype(std::declval<C>().begin()), decltype(std::declval<C>().end())>,
+                // Eigen types may pass as container, but we want to handle them separately
+                negation<std::is_base_of<Eigen::EigenBase<C>, C>>>;
 
 /**
  * serialize an STL compatible container.

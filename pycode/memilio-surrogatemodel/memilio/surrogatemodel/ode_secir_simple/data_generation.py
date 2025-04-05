@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Agatha Schmidt, Henrik Zunker, Khoa Nguyen
 #
@@ -31,12 +31,17 @@ from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
                                 UncertainContactMatrix, set_log_level)
-from memilio.simulation.secir import (Index_InfectionState,
-                                      InfectionState, Model, Simulation,
-                                      interpolate_simulation_result, simulate)
+from memilio.simulation.osecir import (Index_InfectionState,
+                                       InfectionState, Model, Simulation,
+                                       interpolate_simulation_result, simulate)
 
 
 def remove_confirmed_compartments(result_array):
+    """
+
+    :param result_array: 
+
+    """
     sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
     sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
     result_array[:, 2] = sum_inf_no_symp
@@ -44,13 +49,14 @@ def remove_confirmed_compartments(result_array):
     return np.delete(result_array, [3, 5], axis=1)
 
 
-def run_secir_simulation(days):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
+def run_secir_simple_simulation(days):
+    """ Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
-    @param Days Describes how many days we simulate within a single run.
-    @return List containing the populations in each compartment for each day of the simulation.
-   """
+    :param days: Describes how many days we simulate within a single run. 
+    :returns: List containing the populations in each compartment for each day of the simulation.
+
+    """
     set_log_level(LogLevel.Off)
 
     populations = [50_000]
@@ -67,9 +73,9 @@ def run_secir_simulation(days):
 
     # Set parameters
     # Compartment transition duration
-    model.parameters.IncubationTime[A0] = 5.2
+    model.parameters.TimeExposed[A0] = 3.2
+    model.parameters.TimeInfectedNoSymptoms[A0] = 2.
     model.parameters.TimeInfectedSymptoms[A0] = 6.
-    model.parameters.SerialInterval[A0] = 4.2
     model.parameters.TimeInfectedSevere[A0] = 12.
     model.parameters.TimeInfectedCritical[A0] = 8.
 
@@ -133,23 +139,24 @@ def run_secir_simulation(days):
 def generate_data(
         num_runs, path, input_width, label_width, normalize=True,
         save_data=True):
-    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
+    """ Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
 
     In general, we have 10 different compartments. However, we aggregate the InfectedNoSymptoms and InfectedSymptomsNoConfirmed compartments. The same
-    holds for the InfectedSymptoms and InfectedSymptomsConfirmed compartments. So, we end up with only 8 different compartments. If we choose, 
-    input_width = 5 and label_width = 20, the dataset has 
+    holds for the InfectedSymptoms and InfectedSymptomsConfirmed compartments. So, we end up with only 8 different compartments. If we choose,
+    input_width = 5 and label_width = 20, the dataset has
     - input with dimension 5 x 8
     - labels with dimension 20 x 8
 
-   @param num_runs Number of times, the function run_secir_simulation is called.
-   @param path Path, where the dataset is saved to.
-   @param input_width Int value that defines the number of time series used for the input.
-   @param label_width Int value that defines the size of the labels.
-   @param normalize [Default: true] Option to transform dataset by logarithmic normalization.
-   @param save_data [Default: true] Option to save the dataset.
-   @return Data dictionary of input and label data sets.
-   """
+    :param num_runs: Number of times, the function run_secir_simple_simulation is called.
+    :param path: Path, where the dataset is saved to.
+    :param input_width: Int value that defines the number of time series used for the input.
+    :param label_width: Int value that defines the size of the labels.
+    :param normalize: Default: true] Option to transform dataset by logarithmic normalization.
+    :param save_data: Default: true] Option to save the dataset.
+    :returns: Data dictionary of input and label data sets.
+
+    """
     data = {
         "inputs": [],
         "labels": []
@@ -163,7 +170,7 @@ def generate_data(
     # Due to the random structure, theres currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
-        data_run = run_secir_simulation(days)
+        data_run = run_secir_simple_simulation(days)
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         bar.next()

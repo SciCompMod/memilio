@@ -271,8 +271,16 @@ pycode/epidemiology/**/*.h5
 pycode/epi_venv/
 pycode/build_pylint/
 
+# Automatic generated python code
+pycode/memilio-simulation-stubs/
+
+# Credentials for data download
+pycode/memilio-epidata/memilio/epidata/CredentialsRegio.ini
+
 # Docs
 docs/html
 docs/xml
+docs/source/api
+docs/source/generated
 
 # End of https://www.gitignore.io/api/c++,node,python

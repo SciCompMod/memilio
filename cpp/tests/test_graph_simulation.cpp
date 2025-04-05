@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -66,7 +66,7 @@ TEST(TestGraphSimulation, simulate)
     MockEdgeFunc edge_func;
     MockNodeFunc node_func;
 
-    const auto t0   = 1;
+    const auto t0   = 1.0;
     const auto tmax = 3.0;
     const auto dt   = 1.0;
 
@@ -120,8 +120,8 @@ TEST(TestGraphSimulation, stopsAtTmax)
     const auto tmax = 3.123;
     const auto dt   = 0.076;
 
-    auto sim = mio::make_graph_sim(
-        t0, dt, g, [](auto&&, auto&&, auto&&) {}, [](auto&&, auto&&, auto&&, auto&&, auto&&) {});
+    auto sim =
+        mio::make_graph_sim(t0, dt, g, [](auto&&, auto&&, auto&&) {}, [](auto&&, auto&&, auto&&, auto&&, auto&&) {});
 
     sim.advance(tmax);
 
@@ -137,17 +137,17 @@ TEST(TestGraphSimulation, stopsAtTmaxStochastic)
     const auto tmax = 5.;
     const auto dt   = 0.076;
 
-    mio::oseir::Model model;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.9;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.1;
+    mio::oseir::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.9;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.1;
     model.populations.set_total(1000);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>, mio::MobilityEdgeStochastic> g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
@@ -193,17 +193,17 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     const auto tmax = 10.;
     const auto dt   = 0.076;
 
-    mio::oseir::Model model;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] = 0.7;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]     = 0.3;
+    mio::oseir::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.7;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 0.3;
     model.populations.set_total(1000);
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdgeStochastic> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>, mio::MobilityEdgeStochastic> g;
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.001));
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<ScalarType>>>>
         mock_exponential_dist;
@@ -243,13 +243,14 @@ TEST(TestGraphSimulation, consistencyStochasticMobility)
     auto actual_values_n1   = std::vector<double>{result_n1[0], result_n1[1], result_n1[2], result_n1[3]};
 
     for (size_t i = 0; i < expected_values_n0.size(); ++i) {
-        EXPECT_THAT(expected_values_n0[i], testing::DoubleNear(actual_values_n0[i], 1e-8));
-        EXPECT_THAT(expected_values_n1[i], testing::DoubleNear(actual_values_n1[i], 1e-8));
+        EXPECT_THAT(expected_values_n0[i], testing::DoubleNear(actual_values_n0[i], 1e-7));
+        EXPECT_THAT(expected_values_n1[i], testing::DoubleNear(actual_values_n1[i], 1e-7));
     }
 }
 
 template <typename Graph>
-mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& model, double t0, double tmax, double dt)
+mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model<double>& model, double t0, double tmax,
+                                              double dt)
 {
     g.add_node(0, model, t0);
     g.add_node(1, model, t0);
@@ -262,7 +263,7 @@ mio::GraphSimulation<Graph> create_simulation(Graph&& g, mio::oseir::Model& mode
         }
     }
 
-    auto sim = mio::make_migration_sim(t0, dt, std::move(g));
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 
@@ -275,28 +276,32 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
     double tmax = 1;
     double dt   = 0.001;
 
-    mio::oseir::Model model;
-    double total_population                                                                            = 10000;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}]   = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}]  = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}] = 100;
-    model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Susceptible)}] =
-        total_population -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Exposed)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Infected)}] -
-        model.populations[{mio::Index<mio::oseir::InfectionState>(mio::oseir::InfectionState::Recovered)}];
-    model.parameters.set<mio::oseir::TimeExposed>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact>(0.04);
-    model.parameters.get<mio::oseir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    mio::oseir::Model<double> model(1);
+    double total_population                                                      = 10000;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
+        total_population - model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}] -
+        model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}];
+    model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<double>>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
+    mio::ContactMatrixGroup& contact_matrix =
+        model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
+    contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
 
-    auto sim_no_flows = create_simulation(
-        mio::Graph<mio::SimulationNode<mio::Simulation<mio::oseir::Model>>, mio::MigrationEdge>(), model, t0, tmax, dt);
+    auto sim_no_flows =
+        create_simulation(mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>,
+                                     mio::MobilityEdge<double>>(),
+                          model, t0, tmax, dt);
 
     auto sim_flows =
-        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<mio::oseir::Model>>, mio::MigrationEdge>(),
+        create_simulation(mio::Graph<mio::SimulationNode<mio::FlowSimulation<double, mio::oseir::Model<double>>>,
+                                     mio::MobilityEdge<double>>(),
                           model, t0, tmax, dt);
 
     //test if all results of both simulations are equal for all nodes

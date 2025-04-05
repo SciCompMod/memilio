@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Daniel Abele
 #
@@ -19,7 +19,7 @@
 #############################################################################
 
 """
-Python bindings for MEmilio oseir model.
+Python bindings for MEmilio ODE SEIR model.
 """
 
-from memilio._simulation_oseir import *
+from memilio.simulation._simulation_oseir import *

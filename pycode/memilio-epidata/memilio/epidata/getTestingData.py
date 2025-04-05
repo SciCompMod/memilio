@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -37,38 +37,33 @@ pd.options.mode.copy_on_write = True
 
 
 def download_testing_data():
-    """! Downloads the Sars-CoV-2 test data sets from RKI on country 
+    """ Downloads the Sars-CoV-2 test data sets from RKI on country
     and federal state level. Information on federal state level do not sum
     up to country-wide information since less laboratories are participating.
 
-    @return dataframe array with country level information first and 
+
+    :returns: dataframe array with country level information first and
         federal state level second
+
     """
     df_test = [[], []]
 
     # get country-wide testing data without resolution per federal state
     # but from much more laboratories
-    url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx?__blob=publicationFile'
-    header = {'User-Agent': 'Mozilla/5.0'}
-    r = requests.get(url, headers=header)
-    with io.BytesIO(r.content) as fh:
-        df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
-        sheet_names = df.sheet_names
-        df_test[0] = pd.read_excel(
-            df, sheet_name=sheet_names[1],
-            dtype={'Positivenanteil (%)': float})
-        # start on calender week 12/2020 as in federal states sheet,
-        # below and remove sum at bottom
-        df_test[0] = df_test[0][2:-1].reset_index()
-        df_test[0] = df_test[0].drop(columns='index')
+    url = "https://github.com/robert-koch-institut/SARS-CoV-2-PCR-Testungen_in_Deutschland/raw/main/SARS-CoV-2-PCR-Testungen_in_Deutschland.csv"
+    df_test[0] = gd.get_file(url=url, read_data=False)
+    # start on calender week 12/2020 as in federal states sheet, below
+    df_test[0] = df_test[0].iloc[2:, :].reset_index(drop=True)
 
     # get testing data on federal state level (from only a subset of
     # laboratories)
     url = 'https://ars.rki.de/Docs/SARS_CoV2/Daten/data_wochenbericht.xlsx'
     header = {'User-Agent': 'Mozilla/5.0'}
     r = requests.get(url, headers=header)
+    if r.status_code != 200:  # e.g. 404
+        raise requests.exceptions.HTTPError("HTTPError: "+str(r.status_code))
     with io.BytesIO(r.content) as fh:
-        df = pd.io.excel.ExcelFile(fh, engine='openpyxl')
+        df = pd.io.excel.ExcelFile(fh, engine=gd.Conf.excel_engine)
         sheet_names = df.sheet_names
         df_test[1] = pd.read_excel(df, sheet_name=sheet_names[3], header=[4],
                                    dtype={'Anteil positiv': float})
@@ -80,11 +75,13 @@ def download_testing_data():
 
 
 def transform_weeks_to_dates(df_test):
-    """! Transforms the calender weeks of the two data frames obtained from 
+    """ Transforms the calender weeks of the two data frames obtained from
         RKI sources to dates in the middle of the corresponding week
         (i.e., Thursdays).
 
-    @return test data data frames with calender weeks replaced by dates.
+    :param df_test: 
+    :returns: test data data frames with calender weeks replaced by dates.
+
     """
     # country-wide data
     df_test[0].rename(
@@ -93,7 +90,7 @@ def transform_weeks_to_dates(df_test):
         # use %G insteaf of %Y (for year) and %V instead of %W (for month)
         # to get ISO week definition
         df_test[0].loc[i, dd.EngEng['date']] = datetime.strftime(datetime.strptime(
-            df_test[0].loc[i, dd.EngEng['date']] + '-4', "%V/%G-%w"), "%Y-%m-%d")
+            str(df_test[0].loc[i, dd.EngEng['date']]).replace('W', '') + '-4', "%G-%V-%u"), "%Y-%m-%d")
 
     # federal state-based data
     df_test[1].rename(columns={df_test[1].columns[1]: dd.EngEng['date']}, inplace=True)
@@ -117,59 +114,62 @@ def transform_weeks_to_dates(df_test):
 def get_testing_data(read_data=dd.defaultDict['read_data'],
                      file_format=dd.defaultDict['file_format'],
                      out_folder=dd.defaultDict['out_folder'],
-                     no_raw=dd.defaultDict['no_raw'],
                      start_date=dd.defaultDict['start_date'],
                      end_date=dd.defaultDict['end_date'],
                      impute_dates=dd.defaultDict['impute_dates'],
                      moving_average=dd.defaultDict['moving_average'],
-                     make_plot=dd.defaultDict['make_plot']):
-    """! Downloads the RKI testing data and provides positive rates of 
-    testing data in different ways. Since positive rates also implicitly 
+                     **kwargs):
+    """ Downloads the RKI testing data and provides positive rates of
+    testing data in different ways. Since positive rates also implicitly
     provide information on testing numbers while the opposite is
-    not necessarily true without having additional information, 
+    not necessarily true without having additional information,
     only positive rates are provided.
 
     The data is read from the internet.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
     While working with the data
     - the column names are changed to English depending on defaultDict
-    - The column "Date" provides information on the date of each data 
+    - The column "Date" provides information on the date of each data
         point given in the corresponding columns.
 
     - The data is exported in three different ways:
-        - germany_testpos: Positive rates of testing for whole Germany 
-        - germany_states_testpos: Positive rates of testing for all 
-            federal states of Germany 
-        - germany_counties_from_states_testpos: Positive rates of testing 
+        - germany_testpos: Positive rates of testing for whole Germany
+        - germany_states_testpos: Positive rates of testing for all
+            federal states of Germany
+        - germany_counties_from_states_testpos: Positive rates of testing
             for all counties of Germany, only taken from the
             values of the federal states. No extrapolation applied.
 
-    - Missing dates are imputed for all data frames ('impute_dates' is 
-        not optional but always executed). 
+    - Missing dates are imputed for all data frames ('impute_dates' is
+        not optional but always executed).
     - A central moving average of N days is optional.
 
-    - Start and end dates can be provided to define the length of the 
+    - Start and end dates can be provided to define the length of the
         returned data frames.
 
-    @param read_data True or False. Defines if data is read from file or downloaded.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    :param read_data: True or False. Defines if data is read from file or downloaded. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
+    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         At the moment they are always imputed.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+    :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
+    :param **kwargs: 
+
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
+    no_raw = conf.no_raw
+
     # data for all dates is automatically added
     impute_dates = True
 
     directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(directory, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     filename_county = "RKITestFull_Country"
@@ -232,17 +232,17 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 
     # drop columns
     df_test[0].drop(
-        columns=['Anzahl Testungen', 'Positiv getestet',
-                 'Anzahl übermittelnder Labore'], inplace=True)
+        columns=['tests_total', 'tests_total_accumulated', 'tests_positive',
+                 'tests_positive_accumulated',
+                 'laboratories_tests', 'capacities_daily',
+                 'capacities_weekly_theoretically', 'capacities_weeklyweek_actually',
+                 'laboratories_capacities', 'laboratories_samplebacklog',
+                 'samplebacklog'], inplace=True)
     df_test[1].drop(columns='Anzahl Gesamt', inplace=True)
 
     # remove unknown locations
     df_test[1] = df_test[1][df_test[1].State != 'unbekannt']
     df_test[1].reset_index(drop=True, inplace=True)
-
-    # correct positive rate to percentage
-    df_test[0][dd.EngEng['positiveRate']
-               ] = df_test[0][dd.EngEng['positiveRate']]/100
 
     # replace state names with IDs
     df_test[1].rename(
@@ -255,7 +255,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[0] = mdfs.impute_and_reduce_df(
         df_test[0],
         {},
-        [dd.EngEng['positiveRate']],
+        [dd.EngEng['testPositiveRatio']],
         impute='forward', moving_average=moving_average,
         min_date=start_date, max_date=end_date)
 
@@ -265,11 +265,11 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_test[0], directory, filename, file_format)
 
     # plot country-wide positive rates
-    if make_plot:
+    if conf.plot:
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
-            [df_test[0][dd.EngEng['positiveRate']]],
+            [df_test[0][dd.EngEng['testPositiveRatio']]],
             ["Germany"],
             title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
             fig_name="Germany_Testing_positive_rate")
@@ -278,7 +278,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     df_test[1] = mdfs.impute_and_reduce_df(
         df_test[1],
         {dd.EngEng["idState"]: [k for k in geoger.get_state_ids()]},
-        [dd.EngEng['positiveRate']],
+        [dd.EngEng['testPositiveRatio']],
         impute='forward', moving_average=moving_average,
         min_date=start_date, max_date=end_date)
     # store positive rates for the all federal states
@@ -287,13 +287,13 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_test[1], directory, filename, file_format)
 
     # plot positive rates of federal states
-    if make_plot:
+    if conf.plot:
         # make plot
         customPlot.plot_multiple_series(
             df_test[0][dd.EngEng['date']],
             [df_test[1].loc
              [df_test[1][dd.EngEng['idState']] == stateID,
-              [dd.EngEng['positiveRate']]] for stateID in geoger.get_state_ids()],
+              [dd.EngEng['testPositiveRatio']]] for stateID in geoger.get_state_ids()],
             [stateName for stateName in geoger.get_state_names()],
             title='Positive rate for Sars-CoV-2 testing', xlabel='Date', ylabel='Positive rate',
             fig_name='FederalStates_Testing_positive_rate')
@@ -316,7 +316,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             columns=({dd.EngEng['idState']: dd.EngEng['idCounty']}),
             inplace=True)
         df_local[dd.EngEng['idCounty']] = county
-        df_test_counties.append(df_test_counties, df_local)
+        df_test_counties.append(df_local)
 
     df_test_counties = pd.concat(df_test_counties)
 
@@ -327,7 +327,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("testing")
     get_testing_data(**arg_dict)

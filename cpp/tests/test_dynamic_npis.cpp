@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -19,7 +19,9 @@
 */
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "ode_secir/model.h"
+#include "ode_secirvvs/model.h"
 #include "matchers.h"
 
 #include <gtest/gtest.h>
@@ -27,18 +29,18 @@
 
 TEST(DynamicNPIs, init)
 {
-    mio::DynamicNPIs npis;
+    mio::DynamicNPIs<double> npis;
     EXPECT_EQ(npis.get_thresholds().size(), 0);
     EXPECT_EQ(npis.get_max_exceeded_threshold(0.0), npis.get_thresholds().end());
 }
 
 TEST(DynamicNPIs, set_threshold)
 {
-    mio::DynamicNPIs npis;
-    npis.set_threshold(0.5, {mio::DampingSampling(123.0, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
-    npis.set_threshold(1.0, {mio::DampingSampling(543.0, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(0.5, {mio::DampingSampling<double>(123.0, mio::DampingLevel(0), mio::DampingType(0),
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+    npis.set_threshold(1.0, {mio::DampingSampling<double>(543.0, mio::DampingLevel(0), mio::DampingType(0),
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
 
     EXPECT_EQ(npis.get_thresholds()[0].first, 1.0);
     EXPECT_EQ(npis.get_thresholds()[0].second[0].get_value().value(), 543.0);
@@ -48,11 +50,11 @@ TEST(DynamicNPIs, set_threshold)
 
 TEST(DynamicNPIs, get_threshold)
 {
-    mio::DynamicNPIs npis;
-    npis.set_threshold(0.5, {mio::DampingSampling(0.5, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
-    npis.set_threshold(1.0, {mio::DampingSampling(0.5, mio::DampingLevel(0), mio::DampingType(0),
-                                                  mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(0.5, {mio::DampingSampling<double>(0.5, mio::DampingLevel(0), mio::DampingType(0),
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
+    npis.set_threshold(1.0, {mio::DampingSampling<double>(0.5, mio::DampingLevel(0), mio::DampingType(0),
+                                                          mio::SimulationTime(0.0), {}, Eigen::VectorXd(1))});
 
     EXPECT_EQ(npis.get_max_exceeded_threshold(2.0), npis.get_thresholds().begin());
     EXPECT_EQ(npis.get_max_exceeded_threshold(0.75), npis.get_thresholds().begin() + 1);
@@ -124,7 +126,7 @@ TEST(DynamicNPIs, implement_empty)
         return g;
     };
 
-    auto dynamic_npis = std::vector<mio::DampingSampling>({mio::DampingSampling(
+    auto dynamic_npis = std::vector<mio::DampingSampling<double>>({mio::DampingSampling<double>(
         0.8, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1}, Eigen::VectorXd::Ones(2))});
     mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.45), mio::SimulationTime(0.6),
                                 make_mask);
@@ -159,9 +161,9 @@ TEST(DynamicNPIs, implement)
     dampexprs[1].add_damping(0.45, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9));
 
     {
-        auto dynamic_npis = std::vector<mio::DampingSampling>(
-            {mio::DampingSampling(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0, 1},
-                                  Eigen::MatrixXd::Ones(3, 1))});
+        auto dynamic_npis = std::vector<mio::DampingSampling<double>>(
+            {mio::DampingSampling<double>(0.4, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0),
+                                          {0, 1}, Eigen::MatrixXd::Ones(3, 1))});
         mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.45), mio::SimulationTime(0.6),
                                     make_mask);
     }
@@ -185,7 +187,7 @@ TEST(DynamicNPIs, implement)
             Damping(0.45, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0.9), 3, 1))); //after npi
 
     {
-        auto dynamic_npis = std::vector<mio::DampingSampling>({mio::DampingSampling(
+        auto dynamic_npis = std::vector<mio::DampingSampling<double>>({mio::DampingSampling<double>(
             0.3, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::MatrixXd::Ones(3, 1))});
         mio::implement_dynamic_npis(dampexprs, dynamic_npis, mio::SimulationTime(0.3), mio::SimulationTime(0.9),
                                     make_mask);
@@ -255,15 +257,15 @@ double get_infections_relative(const DummySim&, double, const Eigen::Ref<const E
 }
 
 //overload required for because the mock is not a compartment model simulation
-template <class DummySim>
-void calculate_migration_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, const DummySim&,
-                                 Eigen::Ref<const mio::TimeSeries<double>::Vector>, double, double)
+template <typename FP, class DummySim>
+void calculate_mobility_returns(Eigen::Ref<typename mio::TimeSeries<FP>::Vector>, const DummySim&,
+                                Eigen::Ref<const typename mio::TimeSeries<FP>::Vector>, double, double)
 {
 }
 
 } // namespace mio_test
 
-TEST(DynamicNPIs, migration)
+TEST(DynamicNPIs, mobility)
 {
     mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
     mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
@@ -271,63 +273,64 @@ TEST(DynamicNPIs, migration)
     auto last_state_safe = (Eigen::VectorXd(2) << 0.01, 0.99).finished();
     auto last_state_crit = (Eigen::VectorXd(2) << 0.02, 0.98).finished();
 
-    mio::DynamicNPIs npis;
+    mio::DynamicNPIs<double> npis;
     npis.set_threshold(
         0.015 * 100'000,
-        {mio::DampingSampling{
+        {mio::DampingSampling<double>{
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(2)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(100'000);
     npis.set_interval(mio::SimulationTime(3.0));
 
-    mio::MigrationCoefficientGroup coeffs(1, 2);
-    mio::MigrationParameters parameters(coeffs);
+    mio::MobilityCoefficientGroup coeffs(1, 2);
+    mio::MobilityParameters<double> parameters(coeffs);
     parameters.set_dynamic_npis_infected(npis);
 
-    mio::MigrationEdge edge(parameters);
+    mio::MobilityEdge<double> edge(parameters);
 
-    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //initial
 
-    edge.apply_migration(0.5, 0.5, node_from, node_to);
+    edge.apply_mobility(0.5, 0.5, node_from, node_to);
 
-    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_safe);
     });
-    node_from.evolve(3.0, 2.5);
-    node_to.evolve(3.0, 2.5);
-    edge.apply_migration(3.0, 2.5, node_from, node_to);
+    node_from.advance(3.0, 2.5);
+    node_to.advance(3.0, 2.5);
+    edge.apply_mobility(3.0, 2.5, node_from, node_to);
 
-    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
-    node_from.evolve(4.5, 1.5);
-    node_to.evolve(4.5, 1.5);
-    edge.apply_migration(4.5, 1.5, node_from, node_to);
+    node_from.advance(4.5, 1.5);
+    node_to.advance(4.5, 1.5);
+    edge.apply_mobility(4.5, 1.5, node_from, node_to);
 
-    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
               0); //threshold exceeded, but only check every 3 days
 
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
-    node_from.evolve(6.0, 1.5);
-    node_to.evolve(6.0, 1.5);
-    edge.apply_migration(6.0, 1.5, node_from, node_to);
+    node_from.advance(6.0, 1.5);
+    node_to.advance(6.0, 1.5);
+    edge.apply_mobility(6.0, 1.5, node_from, node_to);
 
-    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented
+    EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented
 }
 
 namespace mio_test
 {
 
+template <template <typename> class Model>
 class MockSimulation
 {
 public:
-    MockSimulation(mio::osecir::Model m, double t0, double /*dt*/)
+    MockSimulation(Model<double> m, double t0, double /*dt*/)
         : m_model(m)
         , m_result(t0, m.get_initial_values())
     {
@@ -355,7 +358,7 @@ public:
         return m_result.add_time_point(t, m_result.get_last_value());
     }
 
-    mio::osecir::Model m_model;
+    Model<double> m_model;
     mio::TimeSeries<double> m_result;
 };
 
@@ -363,48 +366,238 @@ public:
 
 TEST(DynamicNPIs, secir_threshold_safe)
 {
-    mio::osecir::Model model(1);
+    mio::osecir::Model<double> model(1);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 1.0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100.0);
 
-    mio::DynamicNPIs npis;
+    mio::DynamicNPIs<double> npis;
     npis.set_threshold(
         0.05 * 23'000,
-        {mio::DampingSampling{
+        {mio::DampingSampling<double>{
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(23'000);
-    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms>() = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
 
-    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    EXPECT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+              0);
 
-    mio::osecir::Simulation<mio_test::MockSimulation> sim(model);
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model);
     sim.advance(3.0);
 
-    ASSERT_EQ(
-        sim.get_model().parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    EXPECT_EQ(sim.get_model()
+                  .parameters.get<mio::osecir::ContactPatterns<double>>()
+                  .get_cont_freq_mat()[0]
+                  .get_dampings()
+                  .size(),
+              0);
 }
 
 TEST(DynamicNPIs, secir_threshold_exceeded)
 {
-    mio::osecir::Model model(1);
+    mio::osecir::Model<double> model(1);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
 
-    mio::DynamicNPIs npis;
+    mio::DynamicNPIs<double> npis;
     npis.set_threshold(
         0.05 * 50'000,
-        {mio::DampingSampling{
+        {mio::DampingSampling<double>{
             1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
     npis.set_duration(mio::SimulationTime(5.0));
     npis.set_base_value(50'000);
-    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms>() = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>()    = npis;
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 0.0;
 
-    ASSERT_EQ(model.parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 0);
+    EXPECT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+              0);
 
-    mio::osecir::Simulation<mio_test::MockSimulation> sim(model);
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model);
     sim.advance(3.0);
 
-    ASSERT_EQ(
-        sim.get_model().parameters.get<mio::osecir::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 2);
+    EXPECT_EQ(sim.get_model()
+                  .parameters.get<mio::osecir::ContactPatterns<double>>()
+                  .get_cont_freq_mat()[0]
+                  .get_dampings()
+                  .size(),
+              2);
+}
+
+TEST(DynamicNPIs, secir_delayed_implementation)
+{
+    mio::osecir::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, 100);
+
+    mio::ContactMatrixGroup& cm = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    cm[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(
+        0.05 * 50'000,
+        {mio::DampingSampling<double>{
+            0.5, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime(5.0));
+    npis.set_base_value(50'000);
+    model.parameters.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    EXPECT_EQ(model.parameters.get<mio::osecir::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+              0);
+
+    // start with t0 = 0.0
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 3.0;
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim(model, 0.0);
+    sim.advance(3.0);
+    mio::ContactMatrixGroup const& contact_matrix =
+        sim.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix.get_matrix_at(2.0)(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix.get_matrix_at(3.0)(0, 0), 0.5);
+
+    // second simulation with t0 = 1.0, so the NPIs are implemented at tmax + delay = 6.0
+    const auto tmax                                                             = 4.0;
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 2.0;
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim_2(model, 1.0);
+    sim_2.advance(tmax);
+    mio::ContactMatrixGroup const& contact_matrix_sim_2 =
+        sim_2.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(5.0)(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(6.0)(0, 0), 0.5);
+
+    // third simulation with t0 = 1.0, so the NPIs are implemented at tmax + delay = 14.0
+    model.parameters.get<mio::osecir::DynamicNPIsImplementationDelay<double>>() = 10.0;
+    mio::osecir::Simulation<double, mio_test::MockSimulation<mio::osecir::Model>> sim_3(model, 1.0);
+    sim_3.advance(4.0);
+    mio::ContactMatrixGroup const& contact_matrix_sim_3 =
+        sim_3.get_model().parameters.template get<mio::osecir::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(13.0)(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(14.0)(0, 0), 0.5);
+}
+
+TEST(DynamicNPIs, secirvvs_threshold_safe)
+{
+    mio::osecirvvs::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] = 1.0;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
+                                                100.0);
+
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(
+        0.05 * 23'000,
+        {mio::DampingSampling<double>{
+            1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime(5.0));
+    npis.set_base_value(23'000);
+    model.parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    EXPECT_EQ(
+        model.parameters.get<mio::osecirvvs::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+        0);
+
+    mio::osecirvvs::Simulation<double, mio_test::MockSimulation<mio::osecirvvs::Model>> sim(model);
+    sim.advance(3.0);
+
+    EXPECT_EQ(sim.get_model()
+                  .parameters.get<mio::osecirvvs::ContactPatterns<double>>()
+                  .get_cont_freq_mat()[0]
+                  .get_dampings()
+                  .size(),
+              0);
+}
+
+TEST(DynamicNPIs, secirvvs_threshold_exceeded)
+{
+    mio::osecirvvs::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
+                                                100);
+
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(
+        0.05 * 50'000,
+        {mio::DampingSampling<double>{
+            1.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime(5.0));
+    npis.set_base_value(50'000);
+    model.parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>()    = npis;
+    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 0.0;
+
+    EXPECT_EQ(
+        model.parameters.get<mio::osecirvvs::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+        0);
+
+    mio::osecirvvs::Simulation<double, mio_test::MockSimulation<mio::osecirvvs::Model>> sim(model);
+    sim.advance(3.0);
+
+    EXPECT_EQ(sim.get_model()
+                  .parameters.get<mio::osecirvvs::ContactPatterns<double>>()
+                  .get_cont_freq_mat()[0]
+                  .get_dampings()
+                  .size(),
+              2);
+}
+
+TEST(DynamicNPIs, secirvvs_delayed_implementation)
+{
+    mio::osecirvvs::Model<double> model(1);
+    model.populations[{mio::AgeGroup(0), mio::osecirvvs::InfectionState::InfectedSymptomsNaive}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecirvvs::InfectionState::SusceptibleNaive},
+                                                100);
+
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(0);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(size_t(1000)));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(0);
+
+    mio::ContactMatrixGroup& cm = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
+    cm[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1.0));
+
+    mio::DynamicNPIs<double> npis;
+    npis.set_threshold(
+        0.05 * 50'000,
+        {mio::DampingSampling<double>{
+            0.5, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {0}, Eigen::VectorXd::Ones(1)}});
+    npis.set_duration(mio::SimulationTime(5.0));
+    npis.set_base_value(50'000);
+    model.parameters.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>() = npis;
+
+    EXPECT_EQ(
+        model.parameters.get<mio::osecirvvs::ContactPatterns<double>>().get_cont_freq_mat()[0].get_dampings().size(),
+        0);
+
+    // start with t0 = 0.0
+    mio::osecirvvs::Simulation<double, mio_test::MockSimulation<mio::osecirvvs::Model>> sim(model, 0.0);
+    sim.advance(3.0);
+    mio::ContactMatrixGroup const& contact_matrix =
+        sim.get_model().parameters.template get<mio::osecirvvs::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix.get_matrix_at(2.0)(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix.get_matrix_at(3.0)(0, 0), 0.5);
+
+    // second simulation with t0 = 1.0, so the NPIs are implemented at tmax + delay = 6.0
+    const auto tmax                                                                = 4.0;
+    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 2.0;
+    mio::osecirvvs::Simulation<double, mio_test::MockSimulation<mio::osecirvvs::Model>> sim_2(model, 1.0);
+    sim_2.advance(tmax);
+    mio::ContactMatrixGroup const& contact_matrix_sim_2 =
+        sim_2.get_model().parameters.template get<mio::osecirvvs::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(5.0)(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_2.get_matrix_at(6.0)(0, 0), 0.5);
+
+    // third simulation with t0 = 1.0, so the NPIs are implemented at tmax + delay = 14.0
+    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 10.0;
+    mio::osecirvvs::Simulation<double, mio_test::MockSimulation<mio::osecirvvs::Model>> sim_3(model, 1.0);
+    sim_3.advance(4.0);
+    mio::ContactMatrixGroup const& contact_matrix_sim_3 =
+        sim_3.get_model().parameters.template get<mio::osecirvvs::ContactPatterns<double>>();
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(13.0)(0, 0), 1.0);
+    EXPECT_EQ(contact_matrix_sim_3.get_matrix_at(14.0)(0, 0), 0.5);
 }

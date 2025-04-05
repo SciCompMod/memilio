@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.13)
 project(memilio-python)
 
 include(GNUInstallDirs) # set to gnu folders. No cache variable so this is not global
@@ -13,7 +13,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
-
 FIND_LIBRARY(LIBCLANG_PATH
     clang HINTS ${CMAKE_CXX_COMPILER}/../../
 )

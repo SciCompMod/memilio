@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -26,7 +26,10 @@ import memilio.simulation as mio
 
 
 class Test_TimeSeries(unittest.TestCase):
+    """ """
+
     def test_add_time_point(self):
+        """ """
         ts = mio.TimeSeries(1)
         ts.add_time_point(2, np.r_[1])
         self.assertEqual(ts.get_num_time_points(), 1)
@@ -38,12 +41,14 @@ class Test_TimeSeries(unittest.TestCase):
         self.assertEqual(ts.get_last_time(), 3.5)
 
     def test_set_value(self):
+        """ """
         ts = mio.TimeSeries(1)
         ts.add_time_point(0.0, np.r_[1.0])
         ts.get_value(0)[:] = np.r_[2.0]
         self.assertEqual(ts.get_value(0), np.r_[2.0])
 
     def test_ndarray(self):
+        """ """
         ts = mio.TimeSeries(2)
         ts.add_time_point()
         ts.add_time_point()
@@ -52,6 +57,15 @@ class Test_TimeSeries(unittest.TestCase):
         arr[:, 1] = np.r_[1.0, 1.1, 1.2]
         assert_array_equal(ts.get_last_value(), np.r_[1.1, 1.2])
         assert_array_equal(ts.get_last_time(), 1.0)
+
+    def test_print_table(self):
+        """ """
+        ts = mio.TimeSeries(1)
+        ts.add_time_point(2, np.r_[1])
+        ts.add_time_point(3.5, np.r_[2])
+        output = ts.print_table(["a", "b"], 2, 2)
+        self.assertEqual(
+            output, '\nTime a \n2.00 1.00\n3.50 2.00\n')
 
 
 if __name__ == '__main__':

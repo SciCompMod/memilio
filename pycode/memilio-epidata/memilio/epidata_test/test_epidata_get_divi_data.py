@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Patrick Lenz, Annette Lutz
 #
@@ -30,6 +30,7 @@ from memilio.epidata import getDIVIData as gdd
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
+    """ """
 
     maxDiff = None
 
@@ -47,20 +48,26 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
          'strings': ['one', 'two']})
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def gdd_calls(self, text=''):
-        directory = os.path.join(self.path, 'Germany/')
+        """
+
+        :param text:  (Default value = '')
+
+        """
+        directory = os.path.join(self.path, 'Germany', 'pydata/')
         gdd_calls = [
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'FullData_DIVI.json')),
-            call('Information: Data has been written to',
+            call('Info: Data has been written to ' +
                  os.path.join(directory, 'county_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'state_divi'+text+'.json')),
             call(
-                'Information: Data has been written to',
+                'Info: Data has been written to ' +
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
 
@@ -68,24 +75,43 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_get_divi_data_prints(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test
         # case with start_date before 2020-04-24
-        gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
+        gdd.get_divi_data(out_folder=self.path, start_date=date(
+            2020, 1, 1), verbosity_level='Info')
         expected_call = [
             call(
                 'Warning: First data available on 2020-04-24. You asked for 2020-01-01. Changed it to 2020-04-24.')]
         gdd_calls = self.gdd_calls(text='')
         expected_calls = expected_call + gdd_calls
-        mock_print.assert_has_calls(expected_calls)
+        mock_print.assert_has_calls(expected_calls, any_order=True)
         mock_san.assert_has_calls([call(self.df_test)])
 
     @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_get_divi_data(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test
         # test case with standard parameters
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(out_folder=self.path)
+        datasets = gdd.get_divi_data(out_folder=self.path)
+        df = datasets['raw_data']
+        df_county = datasets['counties']
+        df_states = datasets['states']
+        df_ger = datasets['Germany']
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertEqual(
@@ -119,10 +145,20 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_gdd_ma(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test
         # test case with moving average
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path, moving_average=3)
+        datasets = gdd.get_divi_data(out_folder=self.path, moving_average=3)
+        df = datasets['raw_data']
+        df_county = datasets['counties']
+        df_states = datasets['states']
+        df_ger = datasets['Germany']
         mock_san.assert_has_calls([call(self.df_test)])
         pd.testing.assert_frame_equal(df, self.df_test)
         self.assertAlmostEqual(
@@ -156,10 +192,20 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_gdd_all_dates(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test.copy()
         # test case with impute dates is True
-        (df, df_county, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path, impute_dates=True)
+        datasets = gdd.get_divi_data(out_folder=self.path,  impute_dates=True)
+        df = datasets['raw_data']
+        df_county = datasets['counties']
+        df_states = datasets['states']
+        df_ger = datasets['Germany']
         # Test if sanity check was called
         self.assertTrue(mock_san.called)
         pd.testing.assert_frame_equal(df, self.df_test)
@@ -193,6 +239,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
            return_value=df_test_error)
     def test_divi_data_sanity_checks(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
 
         # first test
         # get random dataframe

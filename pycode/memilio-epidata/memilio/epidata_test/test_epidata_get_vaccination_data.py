@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -22,16 +22,17 @@ from unittest.mock import patch
 
 import os
 import json
+import numpy as np
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import progress_indicator
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
+    """ """
     maxDiff = None
 
     path = '/home/VaccinationData'
@@ -68,7 +69,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     df_vacc_data = df_vacc_data.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
-         'Impfschutz': int, 'Anzahl': int})
+         'Impfschutz': int, 'Anzahl': float})
 
     df_vacc_data_altern = pd.DataFrame(columns=col_names_vacc_data)
     for i in range(len(counties)):
@@ -97,7 +98,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     df_vacc_data_altern = df_vacc_data_altern.astype(
         {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
-         'Impfschutz': int, 'Anzahl': int})
+         'Impfschutz': int, 'Anzahl': float})
 
     filename = os.path.join(
         here, 'test_data', 'TestSetPopulationFinal.json')
@@ -105,14 +106,21 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_pop = pd.DataFrame(json.load(file_object))
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
-        progress_indicator.ProgressIndicator.disable_indicators(True)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
+        """
+
+        :param mockin: 
+        :param mockp: 
+        :param mockv: 
+
+        """
         gvd.get_vaccination_data(out_folder=self.path, read_data=True)
 
     # Sanitizing option 3 for vaccination was introduced in 2021 but soon discontinued
@@ -124,14 +132,26 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
-    @patch('builtins.input', return_value='y')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_get_standard_vaccination_sanitize_3(self, mockin, mockp, mockv):
+        """
+
+        :param mockin: 
+        :param mockp: 
+        :param mockv: 
+
+        """
         gvd.get_vaccination_data(out_folder=self.path,
                                  sanitize_data=3, read_data=True)
 
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            return_value=df_vacc_data_altern)
     def test_sanity_checks(self, mockv):
+        """
+
+        :param mockv: 
+
+        """
         # test empty dataframe
         df_empty = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
@@ -173,10 +193,11 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 "LandkreisId_Impfort": ['05754', '1', '2', '3', '4'],
                 "Altersgruppe": ["01-59", "01-59", "01-59", "01-59", "01-59"],
                 "Impfschutz": [1, 1, 2, 3, 1],
-                "Anzahl": [10000, 1, 2, 3, 4]})
+                "Anzahl": [10000., 1., 2., 3., 4.]})
         gvd.sanity_checks(df_no_errors)
 
     def test_sanitizing_based_on_regions(self):
+        """ """
         to_county_map = {0: [1001, 1002, 2001], 1: [6000], 2: [6005, 6006]}
         age_groups = ['0-1', '2-3', '4-10', '11+']
         data = pd.DataFrame({
@@ -184,8 +205,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             'ID_State': sorted(4*[1, 1, 2, 6, 6, 6]),
             'ID_County': sorted(4*[1001, 1002, 2001, 6000, 6005, 6006]),
             'Age_RKI': 6*age_groups,
-            'vacc_1': [0, 0, 0, 0, 2, 5, 7, 9, 2, 4, 6, 8, 4, 4, 4, 4, 1, 6, 1, 2, 0, 0, 5, 17],
-            'vacc_2': [0, 1, 0, 2, 1, 4, 3, 2, 1, 1, 6, 4, 4, 4, 4, 1, 2, 1, 2, 0, 0, 5, 4, 0]
+            'vacc_1': np.array([0, 0, 0, 0, 2, 5, 7, 9, 2, 4, 6, 8, 4, 4, 4, 4, 1, 6, 1, 2, 0, 0, 5, 17], dtype=float),
+            'vacc_2': np.array([0, 1, 0, 2, 1, 4, 3, 2, 1, 1, 6, 4, 4, 4, 4, 1, 2, 1, 2, 0, 0, 5, 4, 0], dtype=float)
         })
         population = pd.DataFrame({
             'ID_County': [1001, 1002, 2001, 6000, 6005, 6006],
@@ -229,6 +250,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             test_4.reset_index(drop=True), check_dtype=False)
 
     def test_extrapolate_age_groups_vaccinations(self):
+        """ """
         unique_age_groups_old = ['00-04', '05-11', '12-17', '18+']
         unique_age_groups_new = ['00-05', '06-16', '17-19', '20+']
         column_names = ['vacc_1', 'vacc_2']

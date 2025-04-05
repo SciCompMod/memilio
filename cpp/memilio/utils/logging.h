@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin Siggel
 *
@@ -27,7 +27,12 @@
 #endif
 
 #include "memilio/utils/compiler_diagnostics.h"
+#include "ad/ad.hpp"
+
+// C4996: Some stdext functions used in spdlog 1.11 are marked as deprecated in version 19.38.33135.0 of MSVC. Maybe a future version of spdlog will fix this.
+MSVC_WARNING_DISABLE_PUSH(4996)
 #include <spdlog/spdlog.h>
+MSVC_WARNING_POP()
 
 namespace mio
 {
@@ -121,5 +126,25 @@ inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
 }
 
 } // namespace mio
+
+namespace ad
+{
+namespace internal
+{
+
+/**
+ * @brief Format AD types (like ad::gt1s<double>::type) using their value for logging with spdlog.
+ *
+ * If derivative information is needed as well, use `ad::derivative(...)` or define a `fmt::formatter<...>`.
+ */
+template <class FP, class DataHandler>
+const FP& format_as(const active_type<FP, DataHandler>& ad_type)
+{
+    // Note: the format_as function needs to be in the same namespace as the value it takes
+    return value(ad_type);
+}
+
+} // namespace internal
+} // namespace ad
 
 #endif // LOGGING_H

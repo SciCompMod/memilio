@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -20,11 +20,8 @@
 #ifndef ABM_ANALYZE_RESULT_H
 #define ABM_ANALYZE_RESULT_H
 
-#include "abm/simulation.h"
 #include "abm/parameters.h"
-#include "memilio/data/analyze_result.h"
 
-#include <functional>
 #include <vector>
 
 namespace mio

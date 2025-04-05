@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -18,9 +18,10 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_RANDOM_NUMBER_GENERATOR_H
-#define EPI_ABM_RANDOM_NUMBER_GENERATOR_H
+#ifndef MIO_RANDOM_NUMBER_GENERATOR_H
+#define MIO_RANDOM_NUMBER_GENERATOR_H
 
+#include "memilio/io/default_serialize.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
@@ -182,7 +183,9 @@ static_assert(sizeof(Key<uint32_t>) == sizeof(uint32_t), "Empty Base Optimizatio
 * @tparam an unsigned integer type that determines the size of the counter, i.e., the length of the random sequence.
 */
 template <class T>
-struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>, OperatorComparison<Counter<T>>, OperatorAdditionSubtraction<Counter<T>> {
+struct MEMILIO_ENABLE_EBO Counter : TypeSafe<T, Counter<T>>,
+                                    OperatorComparison<Counter<T>>,
+                                    OperatorAdditionSubtraction<Counter<T>> {
     static_assert(std::is_unsigned<T>::value, "Underlying Integer type must be unsigned.");
     using TypeSafe<T, Counter<T>>::TypeSafe;
 };
@@ -243,12 +246,13 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
     static_assert(N_BITS <= C_BITS, "Subsequence index must not be bigger than total sequence counter.");
     static_assert(N_BITS <= sizeof(UIntN) * BITS_PER_BYTE, "Subsequence index must be at least N bits");
 
-    assert(UIntC(subsequence_idx) <= (UIntC(1) << N_BITS) && "Subsequence index is too large."); //(1 << N) is the same as (2^N)
+    assert(UIntC(subsequence_idx) <= (UIntC(1) << N_BITS) &&
+           "Subsequence index is too large."); //(1 << N) is the same as (2^N)
 
     //N high bits: subsequence idx
     //S low bits: subsequence counter
     //=> C = N + S bits: total sequence counter
-    //example: 
+    //example:
     //subsequence index uint32_t(181) = 0x000000B5
     //subsequence counter uint32_t(41309) = 0x0000A15D
     //total sequence counter = 0x000000B50000A15D
@@ -271,7 +275,7 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
 template <class UIntS, class CounterC>
 Counter<UIntS> rng_subsequence_counter(CounterC counter)
 {
-    using UIntC = typename CounterC::ValueType;
+    using UIntC                = typename CounterC::ValueType;
     static const UIntC C_BYTES = sizeof(UIntC);
     static const UIntC S_BYTES = sizeof(UIntS);
 
@@ -352,6 +356,12 @@ public:
             seed(m_seeds);
         }
 #endif
+    }
+
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("RandomNumberGenerator").add("key", m_key).add("counter", m_counter).add("seeds", m_seeds);
     }
 
 private:
@@ -653,6 +663,13 @@ template <class Real>
 using ExponentialDistribution = DistributionAdapter<std::exponential_distribution<Real>>;
 
 /**
+ * adapted std::normal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using NormalDistribution = DistributionAdapter<std::normal_distribution<Real>>;
+
+/**
  * adapted std::uniform_int_distribution.
  * @see DistributionAdapter
  */
@@ -665,6 +682,34 @@ using UniformIntDistribution = DistributionAdapter<std::uniform_int_distribution
  */
 template <class Real>
 using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<Real>>;
+
+template <class IOContext, class UniformDistributionParams,
+          class Real              = typename UniformDistributionParams::DistType::ResultType,
+          std::enable_if_t<std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>,
+                           void*> = nullptr>
+void serialize_internal(IOContext& io, const UniformDistributionParams& p)
+{
+    auto obj = io.create_object("UniformDistributionParams");
+    obj.add_element("a", p.params.a());
+    obj.add_element("b", p.params.b());
+}
+
+template <class IOContext, class UniformDistributionParams,
+          class Real              = typename UniformDistributionParams::DistType::ResultType,
+          std::enable_if_t<std::is_same_v<UniformDistributionParams, typename UniformDistribution<Real>::ParamType>,
+                           void*> = nullptr>
+IOResult<UniformDistributionParams> deserialize_internal(IOContext& io, Tag<UniformDistributionParams>)
+{
+    auto obj = io.expect_object("UniformDistributionParams");
+    auto a   = obj.expect_element("a", Tag<Real>{});
+    auto b   = obj.expect_element("b", Tag<Real>{});
+    return apply(
+        io,
+        [](auto&& a_, auto&& b_) {
+            return UniformDistributionParams{a_, b_};
+        },
+        a, b);
+}
 
 /**
  * adapted poisson_distribution.

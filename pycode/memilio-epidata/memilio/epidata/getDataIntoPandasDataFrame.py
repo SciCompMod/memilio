@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Kathrin Rack
 #
@@ -18,37 +18,152 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDataIntoPandasDataFrame.py
-@brief Tools to convert data to pandas dataframes
+:strong:`getDataIntoPandasDataFrame.py`
+Tools to convert data to pandas dataframes
 
 This tool contains
+
 - load excel format
 - load csv format
 - organizes the command line interface
 - check if directory exists and if not creates it
 - writes pandas dataframe to file of three different formats
 """
-
+import sys
 import os
 import argparse
+import configparser
 import datetime
 import requests
 import magic
 import urllib3
+import warnings
+import matplotlib
 from io import BytesIO
 from zipfile import ZipFile
-from warnings import warn
+from enum import Enum
+from pkg_resources import parse_version
 
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import progress_indicator
 
-# activate CoW for more predictable behaviour of pandas DataFrames
-pd.options.mode.copy_on_write = True
+
+class VerbosityLevel(Enum):
+    """ """
+    Off = 0
+    Critical = 1
+    Error = 2
+    Warning = 3
+    Info = 4
+    Debug = 5
+    Trace = 6
+
+
+class Conf:
+    """Configures all relevant download outputs etc."""
+
+    v_level = 'Info'
+    show_progr = False
+    if parse_version(pd.__version__) < parse_version('2.2'):
+        excel_engine = 'openpyxl'
+    else:
+        # calamine is faster, but cannot be used for pandas < 2.2
+        # also there are issues with pd >= 2.2 and openpyxl engine
+        excel_engine = 'calamine'
+
+    def __init__(self, out_folder, **kwargs):
+
+        # change v_level from int to str
+        if 'verbosity_level' in kwargs.keys():
+            if isinstance(kwargs['verbosity_level'], int):
+                kwargs['verbosity_level'] = VerbosityLevel(
+                    kwargs['verbosity_level']).name
+
+        path = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), 'download_config.conf')
+
+        # activate CoW for more predictable behaviour of pandas DataFrames
+        pd.options.mode.copy_on_write = True
+        # read in config file
+        # if no config file is given, use default values
+        if os.path.exists(path):
+            parser = configparser.ConfigParser()
+            parser.read(path)
+            # all values will be read in as string
+
+            if parser['SETTINGS']['path_to_use'] == 'default':
+                self.path_to_use = out_folder
+            else:
+                self.path_to_use = parser['SETTINGS']['path_to_use']
+
+            matplotlib.use(str(parser['SETTINGS']['mpl_backend']))
+
+            # merge kwargs with config data
+            # Do not overwrite kwargs, just add from parser
+            for key in parser['SETTINGS']:
+                if key not in kwargs:
+                    kwargs.update({key: parser['SETTINGS'][key]})
+
+            Conf.show_progr = True if str(
+                kwargs['show_progress']) == 'True' else False
+            Conf.v_level = str(kwargs['verbosity_level'])
+            self.checks = True if str(
+                kwargs['run_checks']) == 'True' else False
+            self.interactive = True if str(
+                kwargs['interactive']) == 'True' else False
+            self.plot = True if str(kwargs['make_plot']) == 'True' else False
+            self.no_raw = True if str(kwargs['no_raw']) == 'True' else False
+            self.to_dataset = True if str(
+                kwargs['to_dataset']) == 'True' else False
+        else:
+            # default values:
+            Conf.show_progr = kwargs['show_progress'] if 'show_progress' in kwargs.keys(
+            ) else Conf.show_progr
+            Conf.v_level = kwargs['verbosity_level'] if 'verbosity_level' in kwargs.keys(
+            ) else Conf.v_level
+            self.checks = kwargs['run_checks'] if 'run_checks' in kwargs.keys(
+            ) else True
+            self.interactive = kwargs['interactive'] if 'interactive' in kwargs.keys(
+            ) else False
+            self.plot = kwargs['make_plot'] if 'make_plot' in kwargs.keys(
+            ) else dd.defaultDict['make_plot']
+            self.no_raw = kwargs['no_raw'] if 'no_raw' in kwargs.keys(
+            ) else dd.defaultDict['no_raw']
+            self.path_to_use = out_folder
+            self.to_dataset = kwargs['to_dataset'] if 'to_dataset' in kwargs.keys(
+            ) else False
+
+        # suppress Future & DepricationWarnings
+        if VerbosityLevel[Conf.v_level].value <= 2:
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            warnings.simplefilter(action='ignore', category=DeprecationWarning)
+        # deactivate (or activate progress indicator)
+        if Conf.show_progr == True:
+            progress_indicator.ProgressIndicator.disable_indicators(False)
+        else:
+            progress_indicator.ProgressIndicator.disable_indicators(True)
+
+
+def default_print(verbosity_level, message):
+    """
+
+    :param verbosity_level: 
+    :param message: 
+
+    """
+    if VerbosityLevel[verbosity_level].value <= VerbosityLevel[Conf.v_level].value:
+        print(verbosity_level + ": " + message)
 
 
 def user_choice(message, default=False):
+    """
+
+    :param message: 
+    :param default:  (Default value = False)
+
+    """
     while True:
         user_input = input(message + " (y/n): ")[0].lower()
         if user_input == "y":
@@ -62,27 +177,28 @@ def user_choice(message, default=False):
 def download_file(
         url, chunk_size=1024, timeout=None, progress_function=None,
         verify=True):
-    """! Download a file using GET over HTTP.
+    """ Download a file using GET over HTTP.
 
-    @param url Full url of the file to download.
-    @param chunk_size Number of Bytes downloaded at once. Only used when a
+    :param url: Full url of the file to download.
+    :param chunk_size: Number of Bytes downloaded at once. Only used when a
         progress_function is specified. For a good display of progress, this
         size should be about the speed of your internet connection in Bytes/s.
         Can be set to None to let the server decide the chunk size (may be
-        equal to the file size).
-    @param timeout Timeout in seconds for the GET request.
-    @param progress_function Function called regularly, with the current
-        download progress in [0,1] as a float argument.
-    @param verify bool or "interactive". If False, ignores the connection's
+        equal to the file size). (Default value = 1024)
+    :param timeout: Timeout in seconds for the GET request. (Default value = None)
+    :param progress_function: Function called regularly, with the current
+        download progress in [0,1] as a float argument. (Default value = None)
+    :param verify: bool or "interactive". If False, ignores the connection's
         security. If True, only starts downloads from secure connections, and
         insecure connections raise a FileNotFoundError. If "interactive",
-        prompts the user whether or not to allow insecure connections.
-    @return File as BytesIO
+        prompts the user whether or not to allow insecure connections. (Default value = True)
+    :returns: File as BytesIO
+
     """
     if verify not in [True, False, "interactive"]:
-        warn('Invalid input for argument verify. Expected True, False, or'
-             ' "interactive", got ' + str(verify) + '.'
-             ' Proceeding with "verify=True".', category=RuntimeWarning)
+        warnings.warn('Invalid input for argument verify. Expected True, False, or'
+                      ' "interactive", got ' + str(verify) + '.'
+                      ' Proceeding with "verify=True".', category=RuntimeWarning)
         verify = True
     # send GET request as stream so the content is not downloaded at once
     try:
@@ -101,13 +217,19 @@ def download_file(
                 "Error: URL " + url + " could not be opened.")
     if req.status_code != 200:  # e.g. 404
         raise requests.exceptions.HTTPError("HTTPError: "+str(req.status_code))
-    # get file size from http header
-    # this is only the number of bytes downloaded, the size of the actual file
-    # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
-    # by iter_content)
-    file_size = int(req.headers.get('content-length'))
+    if ('content-length' in req.headers) and progress_function:
+        # get file size from http header
+        # this is only the number of bytes downloaded, the size of the actual file
+        # may be larger (e.g. when 'content-encoding' is gzip; decoding is handled
+        # by iter_content)
+        # this is only needed for the progress indicator
+        file_size = int(req.headers.get('content-length'))
+        # if content length is not known, a progress cant be set.
+        set_progr = True
+    else:
+        set_progr = False
     file = bytearray()  # file to be downloaded
-    if progress_function:
+    if set_progr:
         progress = 0
         # download file as bytes via iter_content
         for chunk in req.iter_content(chunk_size=chunk_size):
@@ -124,13 +246,13 @@ def download_file(
 
 
 def extract_zip(file, **param_dict):
-    """! reads a zip file and returns a list of dataframes for every file in the zip folder.
+    """ reads a zip file and returns a list of dataframes for every file in the zip folder.
     If only one file is readable for func_to_use a single dataframe is returned instead of a list with one entry.
 
-    @param file String. Path to Zipfile to read.
-    @param param_dict Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    :param file: String. Path to Zipfile to read.
+    :param param_dict: Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    :returns: list od all dataframes (one for each file).
 
-    @return list od all dataframes (one for each file).
     """
     with ZipFile(file, 'r') as zipObj:
         names = zipObj.namelist()
@@ -150,19 +272,20 @@ def get_file(
         filepath='', url='', read_data=dd.defaultDict['read_data'],
         param_dict={},
         interactive=False):
-    """! Loads data from filepath and stores it in a pandas dataframe.
+    """ Loads data from filepath and stores it in a pandas dataframe.
     If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.
 
-    @param filepath String. Filepath from where the data is read.
-    @param url String. URL to download the dataset.
-    @param read_data True or False. Defines if item is opened from directory (True) or downloaded (False).
-    @param param_dct Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
-    @param interactive bool. Whether to ask for user input. If False, raises Errors instead.
+    :param filepath: String. Filepath from where the data is read. (Default value = '')
+    :param url: String. URL to download the dataset. (Default value = '')
+    :param read_data: True or False. Defines if item is opened from directory (True) or downloaded (False). (Default value = dd.defaultDict['read_data'])
+    :param param_dict: Dict. Additional information for download functions (e.g. engine, sheet_name, header...) (Default value = {})
+    :param interactive: bool. Whether to ask for user input. If False, raises Errors instead. (Default value = False)
+    :returns: pandas dataframe
 
-    @return pandas dataframe
     """
-    param_dict_excel = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+    param_dict_excel = {"sheet_name": 0,
+                        "header": 0, "engine": Conf.excel_engine}
     param_dict_csv = {"sep": ',', "header": 0, "encoding": None, 'dtype': None}
     param_dict_zip = {}
 
@@ -227,7 +350,7 @@ def get_file(
 
 
 def cli(what):
-    """! Defines command line interface
+    """ Defines command line interface
 
     The function parameter "what" is used as a dictionary key.
     The return of the dictionary is either a list of a string and a list of keywords.
@@ -237,11 +360,9 @@ def cli(what):
     If the key is not part of the dictionary the program is stopped.
 
     The following default arguments are added to the parser:
-    - read-from-disk
+    - read-file
     - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
     - out_path
-    - no_raw
-    - no_progress_indicators (excluded from dict)
     The default values are defined in default dict.
 
     Depending on what following parser can be added:
@@ -253,8 +374,15 @@ def cli(what):
     - split_berlin
     - rep_date
     - sanitize_data
+    - no_progress_indicator
+    - interactive
+    - verbose
+    - skip_checks
+    - no_raw
+    - to_dataset
 
-    @param what Defines what packages calls and thus what kind of command line arguments should be defined.
+    :param what: Defines what packages calls and thus what kind of command line arguments should be defined.
+
     """
 
     # TODO: may it would be easier to make a dict like the following one together with a function to get key:
@@ -263,16 +391,15 @@ def cli(what):
     #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date'],
-                "population": ['Download population data from official sources', 'username'],
-                "commuter_official": ['Download commuter data from official sources', 'make_plot'],
-                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'sanitize_data'],
-                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot'],
-                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'make_plot', 'split_berlin', 'rep_date', 'sanitize_data']}
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "cases": ['Download case data from RKI', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'files'],
+                "population": ['Download population data from official sources'],
+                "commuter_official": ['Download commuter data from official sources'],
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'sanitize_data'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "jh": ['Downloads data from Johns Hopkins University', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "hospitalization": ['Download hospitalization data', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'impute_dates', 'moving_average', 'split_berlin', 'rep_date', 'sanitize_data']}
 
     try:
         what_list = cli_dict[what]
@@ -300,10 +427,6 @@ def cli(what):
     parser.add_argument('-o', '--out-folder', type=str,
                         default=out_path_default,
                         help='Defines folder for output.')
-    parser.add_argument(
-        '-n', '--no-raw', default=dd.defaultDict['no_raw'],
-        help='Defines if raw data will be stored for further use.',
-        action='store_true')
 
     if 'start_date' in what_list:
         if what == 'divi':
@@ -334,9 +457,6 @@ def cli(what):
         parser.add_argument(
             '-m', '--moving-average', type=int, default=dd.defaultDict['moving_average'],
             help='Compute a moving average of N days over the time series. Default is ' + str(dd.defaultDict['moving_average']))
-    if 'make_plot' in what_list:
-        parser.add_argument('-p', '--make-plot', default=dd.defaultDict['make_plot'], help='Plots the data.',
-                            action='store_true')
     if 'split_berlin' in what_list:
         parser.add_argument(
             '-b', '--split-berlin', default=dd.defaultDict['split_berlin'],
@@ -351,30 +471,60 @@ def cli(what):
             action='store_true')
     if 'sanitize_data' in what_list:
         parser.add_argument(
-            '-sd', '--sanitize_data', type=int, default=dd.defaultDict['sanitize_data'],
+            '-sd', '--sanitize-data', type=int, default=dd.defaultDict['sanitize_data'], dest='sanitize_data',
             help='Redistributes cases of every county either based on regions ratios or on thresholds and population'
         )
-
-    parser.add_argument(
-        '--no-progress-indicators',
-        help='Disables all progress indicators (used for downloads etc.).',
-        action='store_true')
-
-    if 'username' in what_list:
+    if 'files' in what_list:
         parser.add_argument(
-            '--username', type=str
+            '--files', nargs="*", default='All'
+        )
+    if 'ref_year' in what_list:
+        parser.add_argument(
+            '--ref-year', default='newest',
+            help='Considered year.'
         )
 
+    # add optional download options
+    if '--no-progress-indicators' in sys.argv:
         parser.add_argument(
-            '--password', type=str
+            '--no-progress-indicators', dest='show_progress',
+            help='Disables all progress indicators (used for downloads etc.).',
+            action='store_false')
+
+    if not {'--no-raw', '-n'}.isdisjoint(sys.argv):
+        parser.add_argument(
+            '-n', '--no-raw',
+            help='Defines if raw data will be stored for further use.',
+            action='store_true')
+
+    if not {'--make_plot', '-p'}.isdisjoint(sys.argv):
+        parser.add_argument('-p', '--make-plot',
+                            help='Plots the data.', action='store_true')
+
+    if '--interactive' in sys.argv:
+        parser.add_argument(
+            '--interactive',
+            help='Interactive download (Handle warnings, passwords etc.).', action='store_true')
+
+    if not {'--verbose', '-v', '-vv', '-vvv', '-vvvv', '-vvvvv', '-vvvvvv'}.isdisjoint(sys.argv):
+        parser.add_argument(
+            '-v', '--verbose', dest='verbosity_level',
+            help='Increases verbosity level (Trace, Debug, Info, Warning, Error, Critical, Off).',
+            action='count', default=0)
+
+    if '--skip-checks' in sys.argv:
+        parser.add_argument(
+            '--skip-checks', dest='run_checks', action='store_false',
+            help='Skips sanity checks etc.')
+
+    if '--to-dataset' in sys.argv:
+        parser.add_argument(
+            '--to-dataset', dest='to_dataset',
+            help="To return saved dataframes as objects.",
+            action='store_true'
         )
+
     args = vars(parser.parse_args())
-    # disable progress indicators globally, if the argument --no-progress-indicators was specified
-    progress_indicator.ProgressIndicator.disable_indicators(
-        args["no_progress_indicators"])
-    # remove the no_progress_indicators entry from the dict
-    # (after disabling indicators, its value is no longer usefull)
-    args.pop("no_progress_indicators")
 
     return args
 
@@ -382,7 +532,14 @@ def cli(what):
 def append_filename(
         filename='', impute_dates=False, moving_average=0, split_berlin=False,
         rep_date=False):
-    """! Creates consistent file names for all output.
+    """ Creates consistent file names for all output.
+
+    :param filename:  (Default value = '')
+    :param impute_dates:  (Default value = False)
+    :param moving_average:  (Default value = 0)
+    :param split_berlin:  (Default value = False)
+    :param rep_date:  (Default value = False)
+
     """
     # split_berlin and repdate especially for case data
     if split_berlin:
@@ -399,12 +556,13 @@ def append_filename(
 
 
 def check_dir(directory):
-    """! Checks existence and creates folder
+    """ Checks existence and creates folder
 
     It is checked if the folder given in the parameter "directory" exists.
     If it does not exist it is created.
 
-    @param directory directory which should exist
+    :param directory: directory which should exist
+
     """
 
     # check if directory exists or create it
@@ -413,7 +571,7 @@ def check_dir(directory):
 
 
 def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
-    """! Writes pandas dataframe to file
+    """ Writes pandas dataframe to file
 
     This routine writes a pandas dataframe to a file in a given format.
     The filename is given without ending.
@@ -427,11 +585,11 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     The file format can be json, hdf5, csv or txt.
     For this option the column Date is converted from datetime to string.
 
-    @param df pandas dataframe (pandas DataFrame)
-    @param directory directory where to safe (string)
-    @param file_prefix filename without ending (string)
-    @param file_type defines ending (string)
-    @param param_dict defines parameters for to_csv/txt(dictionary)
+    :param df: pandas dataframe (pandas DataFrame)
+    :param directory: directory where to safe (string)
+    :param file_prefix: filename without ending (string)
+    :param file_type: defines ending (string)
+    :param param_dict: defines parameters for to_csv/txt(dictionary) (Default value = {})
 
     """
 
@@ -465,9 +623,9 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 
-    print("Information: Data has been written to", out_path)
+    default_print('Info', "Data has been written to " + out_path)
 
 
 class DataError(Exception):
-    """ Error for handling incomplete or unexpected Data """
+    """Error for handling incomplete or unexpected Data"""
     pass

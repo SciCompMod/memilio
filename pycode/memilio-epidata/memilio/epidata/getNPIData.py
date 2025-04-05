@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -40,20 +40,24 @@ pd.options.mode.copy_on_write = True
 def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
              start_npi_cols, npi_incid_start, start_date_validation,
              end_date_validation, fine_resolution):
-    """! Validates the transformed NPI data based on read in NPI data list.
+    """ Validates the transformed NPI data based on read in NPI data list.
     Also works for incidence-dependent NPIs as long as no activation or lifting
     delay is used.
-    @param df_npis_old Original data frame.
-    @param df_npis New NPI data frame with potential activation of incidence-
+
+    :param df_npis_old: Original data frame.
+    :param df_npis: New NPI data frame with potential activation of incidence-
         dependent NPIs.
-    @param df_infec_rki Case data for incidence comparison.
-    @param countyID CountyID of county to be validated.
-    @@param npiCode NPI Code of code to be validated.
-    @param start_npi_cols Index of column where NPI information start in
+    :param df_infec_rki: Case data for incidence comparison.
+    :param countyID: CountyID of county to be validated.
+    :param npiCode: NPI Code of code to be validated.
+    :param start_npi_cols: Index of column where NPI information start in
         original data frame.
-    @param npi_incid_start Minimum incidence for activation of NPI codes.
-    @param start_date_validation Start date for validation.
-    @param end_date_validation End date for validation.
+    :param npi_incid_start: Minimum incidence for activation of NPI codes.
+    :param start_date_validation: Start date for validation.
+    :param end_date_validation: End date for validation.
+    :param npiCode: 
+    :param fine_resolution: 
+
     """
 
     if fine_resolution == 2:
@@ -116,26 +120,33 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
 
 
 def print_manual_download(filename, url):
-    """! Print download message to ask the user manually download a file. """
+    """ Print download message to ask the user manually download a file.
 
-    print(
-        'This script needs manual downloading of files. Please register'
-        ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
-        '. Then move it to a folder named raw_data in this directory.')
+    :param filename: 
+    :param url: 
+
+    """
+
+    gd.default_print("Error",
+                     'This script needs manual downloading of files. Please register'
+                     ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
+                     '. Then move it to a folder named raw_data in this directory.')
 
 
-def read_files(directory, fine_resolution):
-    """! Reads files from local directory and returns data in dataframes
+def read_files(directory, fine_resolution, run_checks):
+    """ Reads files from local directory and returns data in dataframes
 
-    @param directory Directory where data is loaded from.
-    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+    :param directory: Directory where data is loaded from.
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
         are considered.
         If '2' is set, all the subcategories (~1200) are considered.
         If '1' is set, all incidence levels of subcategories are merged and
             ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    @return Data frames df_npis_old (Decreed, encoded NPIs for all German
+    :param run_checks: 
+    :returns: Data frames df_npis_old (Decreed, encoded NPIs for all German
         counties) and df_npis_desc (Description of NPIs)
+
     """
     if fine_resolution > 0:
         try:
@@ -217,7 +228,7 @@ def read_files(directory, fine_resolution):
         for tcode in test_codes:
             for i in [''] + ["_" + str(i) for i in range(1, 6)]:
                 if (df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
-                    print(tcode+i + " used.")
+                    gd.default_print("Debug", tcode+i + " used.")
         # end check
 
     else:  # read aggregated NPIs
@@ -238,12 +249,12 @@ def read_files(directory, fine_resolution):
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=2, engine='openpyxl')
+                sheet_name=2, engine=gd.Conf.excel_engine)
         else:
             df_npis_desc = pd.read_excel(
                 os.path.join(
                     directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                sheet_name=3, engine='openpyxl')
+                sheet_name=3, engine=gd.Conf.excel_engine)
     except FileNotFoundError:
         print_manual_download(
             'datensatzbeschreibung_massnahmen.xlsx',
@@ -252,15 +263,19 @@ def read_files(directory, fine_resolution):
 
     # download combinations of npis
     try:
+        fname = 'combination_npis_incl_ranking.xlsx'
         if fine_resolution > 0:
             df_npis_combinations_pre = pd.read_excel(
                 os.path.join(
-                    directory, 'combination_npis_incl_ranking.xlsx'), engine='openpyxl')
+                    directory, fname), engine=gd.Conf.excel_engine)
     except FileNotFoundError:
-        print('File not found.')
-        raise FileNotFoundError
+        raise FileNotFoundError('File ' + fname + ' not found.')
 
-    npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
+    if run_checks:
+        npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre)
+    else:
+        gd.default_print(
+            'Warning', "Sanity checks for NPI data have not been executed.")
 
     return df_npis_old, df_npis_desc, df_npis_combinations_pre
 
@@ -268,7 +283,7 @@ def read_files(directory, fine_resolution):
 def activate_npis_based_on_incidence(
         local_incid, npi_lifting_days_threshold, npi_activation_days_threshold,
         incid_threshold):
-    """!
+    """
     Computes an activation vector according to a given incidence threshold,
     observed incidence and activation or lifting delays.
 
@@ -285,7 +300,7 @@ def activate_npis_based_on_incidence(
     day but only on the next day (another delay of one day). Hence,
     the incidence-dependent NPI is activated or lifted two days after the threshold
     is/is not anymore exceeded, additionally considering the number of consecutive
-    days to implement or lift (see second paragraph above). 
+    days to implement or lift (see second paragraph above).
 
     Please see the examples for a better understanding.
 
@@ -305,7 +320,7 @@ def activate_npis_based_on_incidence(
     int_active then is:
     [0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0]
     Example 1b) ... and npi_lifting_days_threshold=3, npi_activation_days_threshold=2,
-    the NPI will be activated on day 10 (and would be lifted on day 15; 
+    the NPI will be activated on day 10 (and would be lifted on day 15;
     which is not in the vector anymore), i.e., int_active then is:
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
 
@@ -321,12 +336,14 @@ def activate_npis_based_on_incidence(
     so the dataframe should not start with dates where NPIs are implemented.
     For the Corona Datenplattform frame which starts from 2020-03-01
     this is no problem for the first days as there were no NPIs.
-    @param local_incid Incidence observed in local region.
-    @param npi_lifting_days_threshold Number of days for the incidence to be
+
+    :param local_incid: Incidence observed in local region.
+    :param npi_lifting_days_threshold: Number of days for the incidence to be
         lower than threshold to lift the NPI.
-    @param npi_activation_days_threshold Number of days the incidence threshold
+    :param npi_activation_days_threshold: Number of days the incidence threshold
         is exceeded before activation of the NPI.
-    @param incid_threshold Threshold to be considered.
+    :param incid_threshold: Threshold to be considered.
+
     """
 
     if npi_lifting_days_threshold < 1 or npi_activation_days_threshold < 1:
@@ -363,20 +380,21 @@ def activate_npis_based_on_incidence(
 
 def drop_codes_and_categories(
         npi_codes_prior, npi_codes_prior_desc, df_npis_old, fine_resolution):
-    """! Drops codes and categories from original data frame if they are not
+    """ Drops codes and categories from original data frame if they are not
     used.
 
-    @param npi_codes_prior NPI codes read from description sheet.
-    @param npi_codes_prior_desc NPI code descriptions read from description sheet.
-    @param df_npis_old Original data frame with encoding (decreed, yes or no)
+    :param npi_codes_prior: NPI codes read from description sheet.
+    :param npi_codes_prior_desc: NPI code descriptions read from description sheet.
+    :param df_npis_old: Original data frame with encoding (decreed, yes or no)
         for different NPIs
-    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
         are considered.
         If '2' is set, all the subcategories (~1200) are considered.
         If '1' is set, all incidence levels of subcategories are merged and
             ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    @return Returns dropped codes, prior codes and reduced original data frame.
+    :returns: Returns dropped codes, prior codes and reduced original data frame.
+
     """
     if fine_resolution > 0:
 
@@ -441,6 +459,13 @@ def drop_codes_and_categories(
 
 
 def npi_sanity_check(df_npis_old, df_npis_desc, df_npis_combinations_pre):
+    """
+
+    :param df_npis_old: 
+    :param df_npis_desc: 
+    :param df_npis_combinations_pre: 
+
+    """
     # Check if all counties are in df_npis_old
     if not np.array_equal(df_npis_old.ID_County.unique().astype(int), np.array(geoger.get_county_ids(merge_eisenach=False)).astype(int)):
         raise gd.DataError('Not all counties found in DataFrame.')
@@ -476,9 +501,10 @@ def get_npi_data(fine_resolution=2,
                  end_date=dd.defaultDict['end_date'],
                  counties_considered=geoger.get_county_ids(),
                  npi_activation_days_threshold=3,
-                 npi_lifting_days_threshold=5
+                 npi_lifting_days_threshold=5,
+                 **kwargs
                  ):
-    """! Loads a certain resolution of recorded NPI data from
+    """ Loads a certain resolution of recorded NPI data from
     the Corona Datenplattform and extracts the counties asked for and
     activates the NPIs if they are incidence dependent.
 
@@ -500,27 +526,32 @@ def get_npi_data(fine_resolution=2,
     from https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise
     and move it to the *directory*-path mentioned in the beginning of the function.
 
-    @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
+    :param fine_resolution: 2 [Default] or 0 or 1. Defines which categories
         are considered.
         If '2' is set, all the subcategories (~1200) are considered.
         If '1' is set, all incidence levels of subcategories are merged and
             ~200 NPIs are considered.
         If '0' is chosen only the main, summarizing categories (~20) are used.
-    @param file_format File format which is used for writing the data.
+    :param file_format: File format which is used for writing the data.
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder
-        out_folder/Germany.
-    @param start_date [Default = '', taken from read data] Start date
+    :param out_folder: Path to folder where data is written in folder
+        out_folder/Germany. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Default = '', taken from read data] Start date
         of stored data frames.
-    @param end_date [Default = '', taken from read data] End date of
+    :param end_date: Default = '', taken from read data] End date of
         stored data frames.
-    @param counties_considered [Default: 'All']. Either 'All' or a list of
+    :param counties_considered: Default: 'All']. Either 'All' or a list of
         county IDs from 1001 to 16xxx.
-    @param npi_activation_days_threshold [Default: 3]. Defines necessary number
+    :param npi_activation_days_threshold: Default: 3]. Defines necessary number
          of days exceeding case incidence threshold to activate NPIs.
-    @param npi_alifting_days_threshold [Default: 5]. Defines necessary number
+    :param npi_alifting_days_threshold: Default: 5]. Defines necessary number
          of days below case incidence threshold threshold to lift NPIs.
+    :param npi_lifting_days_threshold:  (Default value = 5)
+    :param **kwargs: 
+
     """
+    conf = gd.Conf(out_folder, **kwargs)
+    out_folder = conf.path_to_use
 
     # Depending on the federal state and time period, there are
     # huge differences for number of days before the lifting and activation.
@@ -539,14 +570,14 @@ def get_npi_data(fine_resolution=2,
         counties_considered = [counties_considered]
 
     directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(directory, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     # read manual downloaded files from directory
     df_npis_old, df_npis_desc, df_npis_combinations_pre = read_files(
-        directory, fine_resolution)
+        directory, fine_resolution, conf.checks)
 
-    print('Download completed.')
+    gd.default_print('Debug', 'Download completed.')
 
     # Compute column index of NPI start (columns with NPIs start with days
     # which are provided in format dYYYYMMDD).
@@ -612,8 +643,13 @@ def get_npi_data(fine_resolution=2,
         df_npis_combinations_pre = df_npis_combinations_pre[[
             'Variablenname', 'Massnahmenindex'] + [i for i in range(0, len(columns_used))]]
         # replace empty cells by zeros and x-marked cells by ones
-        df_npis_combinations_pre = df_npis_combinations_pre.replace(np.nan, 0)
-        df_npis_combinations_pre = df_npis_combinations_pre.replace('x', 1)
+        # This has to be done by replacing the values with the same dtype and then changing the dtype
+        # Pandas 3.0 will not allow downcasting with replace operations
+        df_npis_combinations_pre = df_npis_combinations_pre.replace(
+            np.nan, '0')
+        df_npis_combinations_pre = df_npis_combinations_pre.replace('x', '1')
+        df_npis_combinations_pre[df_npis_combinations_pre.columns[2:]
+                                 ] = df_npis_combinations_pre[df_npis_combinations_pre.columns[2:]].astype(int)
 
         # extract different NPI groups and store indices of NPIs belonging
         # to the different groups
@@ -650,7 +686,8 @@ def get_npi_data(fine_resolution=2,
             df_npis_combinations[npic_uniq][1] = df_npis_combinations_pre.iloc[np.array(npi_groups_idx[i]),
                                                                                start_comb_matrix:start_comb_matrix+len(npi_groups_idx[i])].values
             if (df_npis_combinations[npic_uniq][1]-np.transpose(df_npis_combinations[npic_uniq][1])).max() > 0:
-                print('Error in input file: Please correct combination matrix input.')
+                gd.default_print(
+                    'Error', 'Input file does not match with data. Please correct combination matrix input.')
             # make it a dataframe to allow easy removal of code lines and rows
             # if they are not used later on
             df_npis_combinations[npic_uniq][1] = pd.DataFrame(
@@ -685,9 +722,9 @@ def get_npi_data(fine_resolution=2,
                 df_in_valid = pd.read_excel(
                     os.path.join(
                         directory, 'combinations_npis_cleanoutput.xlsx'),
-                    sheet_name=i, engine='openpyxl')
+                    sheet_name=i, engine=gd.Conf.excel_engine)
                 if not df_in_valid.drop(columns='Unnamed: 0').equals(df_out):
-                    print('Error in combination matrix.')
+                    gd.default_print('Error', 'Error in combination matrix.')
                 del df_in_valid
             else:
                 df_out.to_excel(
@@ -720,7 +757,8 @@ def get_npi_data(fine_resolution=2,
             if not dummy_a[i] == dummy_c[i]:
                 errors.append(i)
         if not errors == [0, 1, 2, 3, 4, 5]:
-            print("Additional errors in consistent naming.")
+            gd.default_print(
+                "Error", "Additional errors in consistent naming.")
         # End of check
 
         # correct for consistent naming (mainly done for plotting reasons,
@@ -861,11 +899,11 @@ def get_npi_data(fine_resolution=2,
         for i in range(len(dates_new) - 1)]
     date_diff_idx = np.where(np.array(date_diff) > 1)[0]
     if max(date_diff) > 1:
-        print("Error. Dates missing in data frame:")
+        gd.default_print("Error", "Dates missing in data frame:")
         for i in date_diff_idx:
-            print(
-                "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
-                str(dates_new[i] + timedelta(date_diff[i] - 1)))
+            gd.default_print("Debug",
+                             "\t - From " + str(dates_new[i] + timedelta(1)) + " until " +
+                             str(dates_new[i] + timedelta(date_diff[i] - 1)))
         raise gd.DataError('Exiting. Dates missing in data frame.')
 
     min_date = []
@@ -896,25 +934,15 @@ def get_npi_data(fine_resolution=2,
         max_date + [max(dates_new),
                     pd.to_datetime(end_date)])
 
-    # create new data frame for all NPIs given in the columns,
-    # resolved by county and day
-    df_npis = pd.DataFrame(
-        columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-        list(npis_final[dd.EngEng['npiCode']]))
-    # convert NPI data from object to int such that correlations can be
-    # computed
-    df_npis = df_npis.astype(dict(
-        zip(
-            [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-            list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
-            ['int' for i in npis_final[dd.EngEng['npiCode']]])))
-
     # iterate over countyIDs
     counters = np.zeros(4)  # time counter for output only
     countyidx = 0
-    # replace -99 ("not used anymore") by 0 ("not used")
-    # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
-    df_npis_old.replace([-99, 2, 3, 4, 5], [0, 1, 1, 1, 1], inplace=True)
+
+    # Infer type of columns to be able to use replace with ints without downcasting.
+    df_npis_old = df_npis_old.infer_objects()
+    df_npis_old.replace([-99, 2, 3, 4, 5],
+                        [0, 1, 1, 1, 1], inplace=True)
+
     counter_cases_start = 0
 
     # setup dataframe for each maingroup, same format as df_npi_combinations
@@ -951,6 +979,9 @@ def get_npi_data(fine_resolution=2,
         if df_npis_combinations[maincode][1].columns.to_list() != list(
                 df_npis_combinations[maincode][0].keys()):
             raise gd.DataError('Error. Description and table do not match.')
+
+    # create new data frame for all NPIs
+    df_npis = pd.DataFrame()
 
     for countyID in counties_considered:
         cid = 0
@@ -995,7 +1026,7 @@ def get_npi_data(fine_resolution=2,
 
         # get number of codes of one NPI (incidence indep. + dep.)
         # for fine_resolution=1, inc_codes=1, for fine_res=2, inc_codes=6
-        inc_codes = len(np.where(df_npis.columns.str.contains(
+        inc_codes = len(np.where(npis_final.NPI_code.str.contains(
             npis[dd.EngEng['npiCode']][0]))[0])
 
         # Consistency of incidence independent and dependent NPIs:
@@ -1004,8 +1035,6 @@ def get_npi_data(fine_resolution=2,
         # In order to avoid contradictions, only retain the strictest mentioned
         # implementation. Incidence-independent is always stricter than any
         # incidence-dependent implementation.
-        # define if details are printed (probably to be deactivated)
-        print_details = True
         for i in range(int(len(df_local_old)/inc_codes)):
 
             # check if access is correct
@@ -1018,10 +1047,10 @@ def get_npi_data(fine_resolution=2,
 
             sum_npi_inc = np.where(
                 df_local_old.iloc[inc_codes*i:inc_codes*(i+1), npi_start_col:].sum() > 1)
-            if (len(sum_npi_inc[0]) > 0) and print_details:
-                print(
-                    'Reduce multiple prescription in county ' + str(countyID) +
-                    ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
+            if (len(sum_npi_inc[0]) > 0):
+                gd.default_print("Trace",
+                                 'Reduce multiple prescription in county ' + str(countyID) +
+                                 ' for NPI ' + str(npis.loc[inc_codes*i, 'Description']))
                 for j in sum_npi_inc[0]:
                     # get lowest index (i.e., strictest implementation of NPI).
                     idx_start = np.where(
@@ -1174,11 +1203,9 @@ def get_npi_data(fine_resolution=2,
                             days_deact = np.where(
                                 df_local_new_merged.loc[subcode_active, nocombi_code] > 0)[0]
                             if len(days_deact) > 0:
-                                print('Deactivating for ' +
-                                      'County ' + str(countyID))
-                                print('\t' + str(nocombi_code) + ' due to ' +
-                                      str(subcode) + ' on ' + str(len(days_deact)) + ' days.')
-                                print('\n')
+                                gd.default_print("Trace", 'Deactivating for ' +
+                                                 'County ' + str(countyID)+'\t' + str(nocombi_code) + ' due to ' +
+                                                 str(subcode) + ' on ' + str(len(days_deact)) + ' days.\n')
                                 # take subcode_active rows as days_deact is
                                 # numbering inside subcode_active rows only,
                                 # not numbering on the whole df_local_new_merged
@@ -1225,22 +1252,22 @@ def get_npi_data(fine_resolution=2,
         # print progress
         if countyidx == 1 or countyidx % int(
                 len(counties_considered) / 10) == 0:
-            print('Progress ' + str(countyidx) + ' / ' +
-                  str(len(counties_considered)) +
-                  '. Estimated time remaining: ' +
-                  str(int(time_remain / 60)) + ' min.')
+            gd.default_print('Debug', 'Progress ' + str(countyidx) + ' / ' +
+                             str(len(counties_considered)) +
+                             '. Estimated time remaining: ' +
+                             str(int(time_remain / 60)) + ' min.')
 
     save_interaction_matrix(df_count_deactivation,
                             'count_deactivation', directory)
     plot_interaction_matrix('count_deactivation', directory)
 
     if counter_cases_start >= len(counties_considered)*0.05:
-        print('WARNING: DataFrame starts with reported cases > 0 '
-              'for more than 5 percent of the counties to be considered. '
-              'In this case, incidence computation and activation of '
-              'incidence-dependent NPIs cannot be ensured to work correctly. '
-              'Please consider a start date of some weeks ahead of the '
-              'time window to be analyzed for NPI\'s effects.')
+        gd.default_print('Warning', 'DataFrame starts with reported cases > 0 '
+                         'for more than 5 percent of the counties to be considered. '
+                         'In this case, incidence computation and activation of '
+                         'incidence-dependent NPIs cannot be ensured to work correctly. '
+                         'Please consider a start date of some weeks ahead of the '
+                         'time window to be analyzed for NPI\'s effects.')
 
     save_interaction_matrix(df_count_incid_depend,
                             'joint_codes_incid_depend', directory)
@@ -1250,8 +1277,7 @@ def get_npi_data(fine_resolution=2,
     plot_interaction_matrix('joint_codes_active', directory)
 
     # print sub counters
-    print('Sub task counters are: ')
-    print(counters)
+    gd.default_print('Debug', 'Sub task counters are: '+str(counters))
 
     # reset index and drop old index column
     df_npis.reset_index(inplace=True)
@@ -1278,8 +1304,8 @@ def get_npi_data(fine_resolution=2,
                     start_date_new, end_date_new,
                     fine_resolution)
                 if (a != b):
-                    print('Error in NPI activation computation')
-                    print(a, b, a - b)
+                    gd.default_print('Error', 'Error in NPI activation computation' +
+                                     str(a) + str(b) + str(a - b))
 
     #### end validation ####
 
@@ -1296,16 +1322,14 @@ def get_npi_data(fine_resolution=2,
 
 
 def count_code_multiplicities(df_npis_input, df_count, counties_considered, initial_data_frame=True):
-    """! Count for all pairs of NPI codes how many times they were
+    """ Count for all pairs of NPI codes how many times they were
     mentioned at the same day in the initial data frame.
 
-    @param[in] df_npis_input Initial data frame read from Corona Datenplattform.
-    @param[in,out] df_count Dictionnary of main NPI codes with empty interaction
-         matrix (to be filled) for all codes under main code in df_count[maincode][1].
-    @param[in] counties_considered County IDs for which initial data frame is 
-        considered.
-    @param[in] initial_data_frame Defines where initial data frame structure is 
-        input.
+    :param df_npis_input: 
+    :param df_count: 
+    :param counties_considered: 
+    :param initial_data_frame:  (Default value = True)
+
     """
     for county in counties_considered:
         df_local = df_npis_input[df_npis_input[dd.EngEng['idCounty']] == county]
@@ -1362,12 +1386,12 @@ def count_code_multiplicities(df_npis_input, df_count, counties_considered, init
 
 
 def save_interaction_matrix(df_interactions, filename, directory):
-    """! Saves interaction matrices for all subcodes in provided main codes.
+    """ Saves interaction matrices for all subcodes in provided main codes.
 
-    @param[in] df_interactions Dictionnary of main NPI codes with interaction
-         matrix for all subcodes under main code in df_interactions[maincode][1].
-    @param[in] filename Filename to store result.
-    @param[in] directory Directory where to save data.
+    :param df_interactions: 
+    :param filename: 
+    :param directory: 
+
     """
 
     writer = pd.ExcelWriter(
@@ -1381,14 +1405,15 @@ def save_interaction_matrix(df_interactions, filename, directory):
 
 
 def plot_interaction_matrix(filename, directory):
-    """! Reads interaction matrices from hard drive and writes heatmap plots
-         to hard drive. Separates diagonal and offdiagonal entries as 
+    """ Reads interaction matrices from hard drive and writes heatmap plots
+         to hard drive. Separates diagonal and offdiagonal entries as
          interactions inside one NPI are counted for all incidence dependent
          sublevels while between NPIs only one interaction is counted if more
          than one sublevel is mentioned on each of the sides.
 
-    @param[in] filename Filename to read results from.
-    @param[in] directory Directory where to read and save data.
+    :param filename: 
+    :param directory: 
+
     """
     target_directory = os.path.join(directory, 'heatmaps_' + filename)
     if not os.path.exists(target_directory):
@@ -1396,13 +1421,13 @@ def plot_interaction_matrix(filename, directory):
 
     try:
         codelist = pd.ExcelFile(os.path.join(
-            directory, filename + '.xlsx'), engine='openpyxl').sheet_names
+            directory, filename + '.xlsx'), engine=gd.Conf.excel_engine).sheet_names
     except FileNotFoundError:
         raise FileNotFoundError('File ' + filename + ' not found.')
 
     # invert color map elements for tab20c such that subcolors are shown
     # from light to dark
-    cmap = copy.copy(mpl.cm.get_cmap('tab20b'))
+    cmap = copy.copy(plt.get_cmap('tab20b'))
     colors = [
         cmap(i)
         for i in np.array(
@@ -1415,7 +1440,7 @@ def plot_interaction_matrix(filename, directory):
     for code in codelist:
         df = pd.read_excel(
             os.path.join(directory, filename + '.xlsx'),
-            sheet_name=code, engine='openpyxl')
+            sheet_name=code, engine=gd.Conf.excel_engine)
 
         # remove first column and convert to numpy array
         array_exclusion = df.iloc[:, 1:].to_numpy()
@@ -1487,7 +1512,7 @@ def plot_interaction_matrix(filename, directory):
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     # arg_dict = gd.cli("testing")
     df = get_npi_data(start_date=date(2020, 1, 1),

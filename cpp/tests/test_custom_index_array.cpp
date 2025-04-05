@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Khoa Nguyen
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -379,4 +379,49 @@ TEST(CustomIndexArray, resize_one_dimension)
     array.resize(Tag0(3));
     ASSERT_EQ(array.size().indices, std::make_tuple(Tag0{3}, Tag1{2}));
     ASSERT_EQ(array.numel(), 6);
+}
+
+// Additional test for checking the set_multiple functionality
+TEST(CustomIndexArray, setMultiple_validIndices) {
+    using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
+    // Initialize with zeros
+    ArrayType array({mio::Index<Dim1>(3), Dim2::Count}, 0);
+
+    // Define indices to set
+    std::vector<ArrayType::Index> indices = {
+        {mio::Index<Dim1>(0), Dim2::Male},
+        {mio::Index<Dim1>(2), Dim2::Female}
+    };
+
+    // Set these indices to 42
+    array.set_multiple(indices, 42);
+
+    // Verify that the correct indices have been updated
+    EXPECT_EQ((array[{mio::Index<Dim1>(0), Dim2::Male}]), 42);
+    EXPECT_EQ((array[{mio::Index<Dim1>(2), Dim2::Female}]), 42);
+
+    // Verify that other indices are unchanged
+    EXPECT_EQ((array[{mio::Index<Dim1>(0), Dim2::Female}]), 0);
+    EXPECT_EQ((array[{mio::Index<Dim1>(1), Dim2::Male}]), 0);
+    EXPECT_EQ((array[{mio::Index<Dim1>(1), Dim2::Female}]), 0);
+    EXPECT_EQ((array[{mio::Index<Dim1>(2), Dim2::Male}]), 0);
+}
+
+TEST(CustomIndexArray, setMultiple_emptyIndices) {
+    using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
+    // Initialize with fives
+    ArrayType array({mio::Index<Dim1>(2), Dim2::Count}, 5);
+
+    // Empty vector of indices
+    std::vector<ArrayType::Index> indices;
+
+    // Attempt to set multiple indices to 42
+    array.set_multiple(indices, 42);
+
+    // Verify that all entries remain unchanged
+    for (int age = 0; age < 2; ++age) {
+        for (int gender = 0; gender < static_cast<int>(Dim2::Count); ++gender) {
+            EXPECT_EQ((array[{mio::Index<Dim1>(age), static_cast<Dim2>(gender)}]), 5);
+        }
+    }
 }

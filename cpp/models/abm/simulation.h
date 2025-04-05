@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
 *
@@ -17,14 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_SIMULATOR_H
-#define EPI_ABM_SIMULATOR_H
+#ifndef MIO_ABM_SIMULATION_H
+#define MIO_ABM_SIMULATION_H
 
-#include "abm/world.h"
+#include "abm/model.h"
 #include "abm/time.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/populations.h"
 #include "memilio/io/history.h"
 
 namespace mio
@@ -33,63 +30,50 @@ namespace abm
 {
 
 /**
- * @brief Run the Simulation in discrete steps, evolve the World and report results.
+ * @brief Run the Simulation in discrete steps, evolve the Model and report results.
  */
+template <class M = Model>
 class Simulation
 {
-    using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
 public:
     /**
      * @brief Create a simulation.
      * @param[in] t0 The starting time of the Simulation.
-     * @param[in] world The World to simulate.
+     * @param[in] model The Model to simulate.
      */
-    Simulation(TimePoint t0, World&& world);
-
-    /**
-     * @brief Create a Simulation with an empty World.
-     * World needs to be filled later.
-     * @see Simulation::get_world
-     * @param[in] t0 The starting time of the Simulation.
-     */
-    Simulation(TimePoint t0, size_t num_agegroups)
-        : Simulation(t0, World(num_agegroups))
+    Simulation(TimePoint t0, M&& model)
+        : m_model(std::move(model))
+        , m_t(t0)
+        , m_dt(hours(1))
     {
     }
 
-    /** 
-     * @brief Run the Simulation from the current time to tmax.
-     * @param[in] tmax Time to stop.
+    /**
+     * @brief Create a Simulation with an empty Model.
+     * Model needs to be filled later.
+     * @see Simulation::get_model
+     * @param[in] t0 The starting time of the Simulation.
      */
-    void advance(TimePoint tmax);
+    Simulation(TimePoint t0, size_t num_agegroups)
+        : Simulation(t0, M(num_agegroups))
+    {
+    }
 
     /** 
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
      * @param[in] history History object to log data of the Simulation.
      */
-    template <typename History>
-    void advance(TimePoint tmax, History& history)
+    template <typename... History>
+    void advance(TimePoint tmax, History&... history)
     {
         //log initial system state
-        initialize_locations(m_t);
-        store_result_at(m_t);
-        history.log(*this);
+        (history.log(*this), ...);
         while (m_t < tmax) {
-            evolve_world(tmax);
-            store_result_at(m_t);
-            history.log(*this);
+            evolve_model(tmax);
+            (history.log(*this), ...);
         }
-    }
-
-    /**
-     * @brief Get the result of the Simulation.
-     * Sum over all Location%s of the number of Person%s in an #InfectionState.
-     */
-    const TimeSeries<ScalarType>& get_result() const
-    {
-        return m_result;
     }
 
     /**
@@ -101,24 +85,27 @@ public:
     }
 
     /**
-     * @brief Get the World that this Simulation evolves.
+     * @brief Get the Model that this Simulation evolves.
      */
-    World& get_world()
+    M& get_model()
     {
-        return m_world;
+        return m_model;
     }
-    const World& get_world() const
+    const M& get_model() const
     {
-        return m_world;
+        return m_model;
     }
 
 private:
-    void initialize_locations(TimePoint t);
     void store_result_at(TimePoint t);
-    void evolve_world(TimePoint tmax);
+    void evolve_model(TimePoint tmax)
+    {
+        auto dt = std::min(m_dt, tmax - m_t);
+        m_model.evolve(m_t, dt);
+        m_t += m_dt;
+    }
 
-    World m_world; ///< The World to simulate.
-    TimeSeries<ScalarType> m_result; ///< The result of the Simulation.
+    M m_model; ///< The Model to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

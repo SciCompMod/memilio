@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Carlotta Gerstein, Martin J. Kuehn
 *
@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef EPI_ABM_MASK_TYPE_H
-#define EPI_ABM_MASK_TYPE_H
+#ifndef MIO_ABM_MASK_TYPE_H
+#define MIO_ABM_MASK_TYPE_H
 
 #include <cstdint>
 
@@ -33,7 +33,8 @@ namespace abm
  */
 enum class MaskType : std::uint32_t
 {
-    Community = 0,
+    None,
+    Community,
     Surgical,
     FFP2,
 

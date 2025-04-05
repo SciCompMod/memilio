@@ -1,11 +1,11 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
-# Licensed under the Apache License, Version 2.0 (the "License")
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -24,7 +24,10 @@ from memilio.simulation import Date
 
 
 class TestCustomIndexArray(unittest.TestCase):
+    """ """
+
     def test_init(self):
+        """ """
         year = 2020
         month = 3
         day = 15
@@ -36,6 +39,7 @@ class TestCustomIndexArray(unittest.TestCase):
         self.assertEqual(date.day_in_year, 75)
 
     def test_comparison(self):
+        """ """
         self.assertEqual(Date(2021, 3, 12), Date(2021, 3, 12))
         self.assertNotEqual(Date(2021, 5, 11), Date(2021, 5, 12))
         self.assertNotEqual(Date(2021, 5, 11), Date(2021, 6, 11))
@@ -60,6 +64,7 @@ class TestCustomIndexArray(unittest.TestCase):
         self.assertTrue(Date(2020, 5, 10) >= Date(2020, 5, 9))
 
     def test_calculation(self):
+        """ """
         self.assertEqual(Date(2020, 8, 30) - Date(2020, 8, 15), 15)
         self.assertEqual(Date(2020, 8, 30) - Date(2020, 8, 31), -1)
         self.assertEqual(Date(2020, 7, 25) - Date(2020, 5, 25), 61)

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -78,6 +78,19 @@ TEST(TestDampings, dampingOfSameType)
     EXPECT_EQ(print_wrap(dampings.get_matrix_at(-0.5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
     EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.5 + 1e-32)), MatrixNear(Eigen::MatrixXd::Constant(2, 2, D1)));
     EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e5)), MatrixNear(D2));
+}
+
+TEST(TestDampings, dampingsNegative)
+{
+    mio::Dampings<mio::Damping<mio::RectMatrixShape>> dampings(2, 2);
+    auto D1 = -4.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.25, -0.5, 0.75, -1).finished();
+    dampings.add(D1, mio::DampingLevel(7), mio::DampingType(3), mio::SimulationTime(0.5));
+    dampings.add(D2, mio::DampingLevel(13), mio::DampingType(3), mio::SimulationTime(2.0));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-0.5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.5 + 1e-32)), MatrixNear(Eigen::MatrixXd::Constant(2, 2, D1)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e5)), MatrixNear((D1 + D2.array() - D1 * D2.array()).matrix()));
 }
 
 TEST(TestDampings, dampingsCombined)

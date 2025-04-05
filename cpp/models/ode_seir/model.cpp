@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -19,10 +19,3 @@
 */
 #include "ode_seir/model.h"
 
-namespace mio
-{
-namespace oseir
-{
-
-} // namespace oseir
-} // namespace mio

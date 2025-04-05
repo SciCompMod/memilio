@@ -1,0 +1,92 @@
+[
+    {
+        "Date": "2020-05-24",
+        "Confirmed": 1.2,
+        "Deaths": 0.5,
+        "Recovered": 0
+    },
+    {
+        "Date": "2020-05-25",
+        "Confirmed": 5,
+        "Deaths": 2.0,
+        "Recovered": 2.5
+    },
+    {
+        "Date": "2020-05-26",
+        "Confirmed": 20.2,
+        "Deaths": 5.01,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-05-27",
+        "Confirmed": 25.6,
+        "Deaths": 6,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-05-28",
+        "Confirmed": 27.6,
+        "Deaths": 6,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-05-29",
+        "Confirmed": 30.6,
+        "Deaths": 6,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-05-30",
+        "Confirmed": 30.6,
+        "Deaths": 6,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-05-31",
+        "Confirmed": 35,
+        "Deaths": 6,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-06-01",
+        "Confirmed": 44,
+        "Deaths": 8,
+        "Recovered": 3.0
+    },
+    {
+        "Date": "2020-06-02",
+        "Confirmed": 44.5,
+        "Deaths": 8.999,
+        "Recovered": 6
+    },
+    {
+        "Date": "2020-06-03",
+        "Confirmed": 70,
+        "Deaths": 9,
+        "Recovered": 6
+    },
+    {
+        "Date": "2020-06-04",
+        "Confirmed": 100,
+        "Deaths": 20,
+        "Recovered": 6
+    },
+    {
+        "Date": "2020-06-05",
+        "Confirmed": 100.3,
+        "Deaths": 23.56,
+        "Recovered": 6
+    },
+    {
+        "Date": "2020-06-06",
+        "Confirmed": 115,
+        "Deaths": 24,
+        "Recovered": 6
+    },
+    {
+        "Date": "2020-06-07",
+        "Confirmed": 120.6,
+        "Deaths": 30,
+        "Recovered": 6
+    }
+]

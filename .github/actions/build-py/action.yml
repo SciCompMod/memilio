@@ -31,7 +31,8 @@ runs:
         fi
         cp -r wheelhouse ..
     - name: Upload Python Wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
+

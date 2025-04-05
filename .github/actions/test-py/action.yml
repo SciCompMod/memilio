@@ -26,24 +26,24 @@ runs:
         fi
         python -m pip install --upgrade pip
     - name: Download Python Wheels
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-    - name: Download additional Python Wheels for plot package
-      uses: actions/download-artifact@v3
+    - name: Download Python Wheels from epidata for plot package
+      uses: actions/download-artifact@v4
       if:  inputs.package == 'plot'
       with:
         name: python-wheels-epidata
         path: pycode/wheelhouse
-    - name: Download Python Wheels for surrogatemodel
-      uses: actions/download-artifact@v3
+    - name: Download Python Wheels from simulation for surrogatemodel
+      uses: actions/download-artifact@v4
       if:  inputs.package == 'surrogatemodel'
       with:
         name: python-wheels-simulation
         path: pycode/wheelhouse
     - name: Set up Python ${{ inputs.version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.version }}
     - name: Install Python Wheels
@@ -74,17 +74,16 @@ runs:
           getdividata --help
           getsimdata --help
           cleandata --help
-          getcasesestimation --help
           getcommutermobility --help
           getvaccinationdata --help
           gethospitalizationdata --help
         fi
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: test-py-coverage-reports-${{ inputs.package }}
+        name: test-py-coverage-reports-${{ inputs.package }}-${{ inputs.version }}
         path: |
-          pycode/memilio-${{ inputs.package }}/**/coverage_python.xml
+          pycode/memilio-${{ inputs.package }}/**/coverage_python_${{ inputs.version }}.xml
           coverage_python
         retention-days: 7
         if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}

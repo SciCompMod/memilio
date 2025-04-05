@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Elisabeth Kluth, Khoa Nguyen
 *
@@ -17,17 +17,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_TRIP_LIST_H
-#define EPI_ABM_TRIP_LIST_H
+#ifndef MIO_ABM_TRIP_LIST_H
+#define MIO_ABM_TRIP_LIST_H
 
-#include "abm/parameters.h"
-#include "abm/location.h"
-#include "abm/infection.h"
+#include "abm/location_id.h"
+#include "abm/mobility_data.h"
+#include "abm/person.h"
+#include "abm/person_id.h"
+#include "abm/time.h"
 #include "abm/location_type.h"
-
-#include "memilio/math/eigen.h"
-#include <array>
-#include <random>
+#include "memilio/io/io.h"
+#include "memilio/io/default_serialize.h"
+#include <cstdint>
+#include <vector>
 
 namespace mio
 {
@@ -35,37 +37,70 @@ namespace abm
 {
 
 /**
- * @brief A trip describes a migration from one Location to another Location.
+ * @brief A trip describes a change of Location from one Location to another Location.
  */
 struct Trip {
-    uint32_t person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
-    World, where all Person%s are saved.*/
-    TimePoint time; ///< Time at which a Person changes the Location.
-    LocationId migration_destination; ///< Location where the Person migrates to.
-    LocationId migration_origin; ///< Location where the Person starts the Trip.
-    std::vector<uint32_t> cells; /**< If migration_destination consists of different Cell%s, this gives the index of the
-    Cell%s the Person migrates to.*/
+    //TODO: Origin is currently not used for the trips. Should we delete it then?
+    PersonId person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
+    Model, where all Person%s are saved.*/
+    TimePoint time; ///< Daytime at which a Person changes the Location.
+    LocationId destination; ///< Location where the Person changes to.
+    int destination_model_id; ///< Model id of destination Location.
+    LocationId origin; ///< Location where the Person starts the Trip.
+    int origin_model_id; ///< Model id of origin Location.
+    std::vector<uint32_t> cells; /**< If destination consists of different Cell%s, this gives the index of the
+    Cell%s the Person changes to.*/
+    TransportMode
+        trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
+    LocationType destination_type; ///< Type of destination Location.
 
     /**
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
      * @param[in] time_new Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
-     * @param[in] destination Location where the Person migrates to.
+     * @param[in] destination Location where the Person changes to.
+     * @param[in] destination_model_id Model the Person changes to.
      * @param[in] origin Location where the person starts the Trip.
-     * @param[in] input_cells The index of the Cell%s the Person migrates to.
+     * @param[in] origin_model_id Model the Person starts the Trip.
+     * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
-         const std::vector<uint32_t>& input_cells = {})
+    Trip(PersonId id, TimePoint time_new, LocationId dest, int dest_model_id, LocationId orig, int orig_model_id,
+         TransportMode mode_of_transport, LocationType type_of_activity, const std::vector<uint32_t>& input_cells = {})
+        : person_id(id)
+        , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
+        , destination(dest)
+        , destination_model_id(dest_model_id)
+        , origin(orig)
+        , origin_model_id(orig_model_id)
+        , cells(input_cells)
+        , trip_mode(mode_of_transport)
+        , destination_type(type_of_activity)
     {
-        person_id             = id;
-        time                  = mio::abm::TimePoint(time_new.time_since_midnight().seconds());
-        migration_destination = destination;
-        migration_origin      = origin;
-        cells                 = input_cells;
     }
 
-    Trip(uint32_t id, TimePoint time_new, LocationId destination, const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, destination, destination, input_cells)
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, TransportMode mode_of_transport,
+         LocationType type_of_activity, const std::vector<uint32_t>& input_cells = {})
+        : person_id(id)
+        , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
+        , destination(dest)
+        , destination_model_id(0)
+        , origin(orig)
+        , origin_model_id(0)
+        , cells(input_cells)
+        , trip_mode(mode_of_transport)
+        , destination_type(type_of_activity)
+    {
+    }
+
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, LocationType type_of_activity,
+         const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, dest, orig, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
+    {
+    }
+
+    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationType type_of_activity,
+         const std::vector<uint32_t>& input_cells = {})
+        : Trip(id, time_new, dest, dest, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
     {
     }
 
@@ -74,49 +109,17 @@ struct Trip {
      */
     bool operator==(const Trip& other) const
     {
-        return (person_id == other.person_id) && (time == other.time) &&
-               (migration_destination == other.migration_destination) && (migration_origin == other.migration_origin);
+        return (person_id == other.person_id) && (time == other.time) && (destination == other.destination) &&
+               (origin == other.origin);
     }
 
-    /**
-     * serialize this. 
-     * @see mio::serialize
-     */
-    template <class IOContext>
-    void serialize(IOContext& io) const
+    auto default_serialize()
     {
-        auto obj = io.create_object("Trip");
-        obj.add_element("person_id", person_id);
-        obj.add_element("time", time.seconds());
-        obj.add_element("destination_index", migration_destination.index);
-        obj.add_element("destination_type", migration_destination.type);
-        obj.add_element("origin_index", migration_origin.index);
-        obj.add_element("origin_type", migration_origin.type);
-    }
-
-    /**
-     * deserialize an object of this class.
-     * @see mio::deserialize
-     */
-    template <class IOContext>
-    static IOResult<Trip> deserialize(IOContext& io)
-    {
-        auto obj               = io.expect_object("Trip");
-        auto person_id         = obj.expect_element("person_id", Tag<uint32_t>{});
-        auto time              = obj.expect_element("time", Tag<int>{});
-        auto destination_index = obj.expect_element("destination_index", Tag<uint32_t>{});
-        auto destination_type  = obj.expect_element("destination_type", Tag<uint32_t>{});
-        auto origin_index      = obj.expect_element("origin_index", Tag<uint32_t>{});
-        auto origin_type       = obj.expect_element("origin_type", Tag<uint32_t>{});
-        return apply(
-            io,
-            [](auto&& person_id_, auto&& time_, auto&& destination_index_, auto&& destination_type_,
-               auto&& origin_index_, auto&& origin_type_) {
-                return Trip(person_id_, TimePoint(time_),
-                            LocationId{destination_index_, LocationType(destination_type_)},
-                            LocationId{origin_index_, LocationType(origin_type_)});
-            },
-            person_id, time, destination_index, destination_type, origin_index, origin_type);
+        return Members("Trip")
+            .add("person_id", person_id)
+            .add("time", time)
+            .add("destination", destination)
+            .add("origin", origin);
     }
 };
 
@@ -144,7 +147,7 @@ public:
     TimePoint get_next_trip_time(bool weekend) const;
 
     /**
-     * @brief Add a Trip to migration data.
+     * @brief Add a Trip to the trip list.
      * @param[in] trip The Trip to be added.
      * @param[in] weekend If the Trip is made on a weekend day.     
      */
@@ -188,6 +191,15 @@ public:
         return m_current_index;
     }
 
+    /// This method is used by the default serialization feature.
+    auto default_serialize()
+    {
+        return Members("TestingScheme")
+            .add("trips_weekday", m_trips_weekday)
+            .add("trips_weekend", m_trips_weekend)
+            .add("index", m_current_index);
+    }
+
 private:
     std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
     std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.
@@ -195,6 +207,16 @@ private:
 };
 
 } // namespace abm
+
+/// @brief Creates an instance of abm::Trip for default serialization.
+template <>
+struct DefaultFactory<abm::Trip> {
+    static abm::Trip create()
+    {
+        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}, abm::LocationType{}};
+    }
+};
+
 } // namespace mio
 
 #endif

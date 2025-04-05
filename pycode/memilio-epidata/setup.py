@@ -8,13 +8,12 @@ __version__ = '1.0.0'
 
 
 class PylintCommand(Command):
-    """
-    Custom command to run pylint and get a report as html.
-    """
+    """Custom command to run pylint and get a report as html."""
     description = "Runs pylint and outputs the report as html."
     user_options = []
 
     def initialize_options(self):
+        """ """
         from pylint.reporters.json_reporter import JSONReporter
         from pylint.reporters.text import ParseableTextReporter, TextReporter
         from pylint_json2html import JsonExtendedReporter
@@ -30,10 +29,12 @@ class PylintCommand(Command):
         }
 
     def finalize_options(self):
+        """ """
         self.reporter, self.out_file = self.REPORTERS.get(
             self.out_format)  # , self.REPORTERS.get("parseable"))
 
     def run(self):
+        """ """
         os.makedirs("build_pylint", exist_ok=True)
 
         # Run pylint
@@ -67,7 +68,6 @@ setup(
             'getdividata = memilio.epidata.getDIVIData:main',
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
-            'getcasesestimation = memilio.epidata.getCaseDatawithEstimations:main',
             'getcommutermobility = memilio.epidata.getCommuterMobility:main',
             'getvaccinationdata = memilio.epidata.getVaccinationData:main',
             'gethospitalizationdata = memilio.epidata.getHospitalizationData:main'
@@ -77,9 +77,10 @@ setup(
     long_description='',
     test_suite='memilio.epidata_test',
     install_requires=[
-        # smaller pandas versions contain a bug that sometimes prevents reading
-        # some excel files (e.g. population or twitter data)
+        # pandas 2.0 is minimum for CoW
         'pandas>=2.0.0',
+        # FutureWarning of pandas that pyarrow will be required in a future release
+        'pyarrow',
         'matplotlib',
         'tables',
         # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
@@ -91,12 +92,18 @@ setup(
         'pyxlsb',
         'wget',
         'twill==3.1',
+        # set PyQt6-sip version as the one pulled by PyQt6 in Epidata-CI (using manylinux_2_28_x86_64) req. python 3.9
+        'PyQt6-sip<13.9',
+        'PyQt6',
+        'python-calamine',
         pymagic
     ],
     extras_require={
         'dev': [
-            # first support of python 3.11
-            'pyfakefs>=4.6',
+            # first support of python 3.11 4.6
+            # 5.3.4 has conflicts with openpyxl
+            # 5.3.3 broken
+            'pyfakefs>=4.6,<5.3.3',
             # coverage 7.0.0 can't find .whl files and breaks CI
             'coverage>=7.0.1',
             # pylint 2.16 creates problem with wrapt package version

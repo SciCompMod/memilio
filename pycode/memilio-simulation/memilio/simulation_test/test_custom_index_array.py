@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Daniel Abele
 #
@@ -21,26 +21,31 @@
 from unittest import TestCase, main
 
 from memilio.simulation import UncertainValue, AgeGroup, AgeGroupArray
-from memilio.simulation.secir import (InfectionState, SecirPopulationArray)
+from memilio.simulation.osecir import (InfectionState, PopulationsArray)
 
 
 class TestCustomIndexArray(TestCase):
+    """ """
+
     def test_init(self):
+        """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
-        array = SecirPopulationArray(dims)
+        array = PopulationsArray(dims)
         self.assertEqual(array.size_AgeGroup(), dims[0])
         self.assertEqual(array.size_InfectionState(), dims[1])
         self.assertEqual(array.size(), dims)
 
     def test_init_single_index(self):
+        """ """
         dims = AgeGroup(3)
         array = AgeGroupArray(dims)
         self.assertEqual(array.size_AgeGroup(), dims)
         self.assertEqual(array.size(), dims)
 
     def test_assign(self):
+        """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
-        array = SecirPopulationArray(dims)
+        array = PopulationsArray(dims)
         array[:, :] = 1.0
         array[:, InfectionState.Exposed] = 2.0
         array[AgeGroup(0), InfectionState.InfectedNoSymptoms] = 3.0
@@ -51,8 +56,9 @@ class TestCustomIndexArray(TestCase):
             array[AgeGroup(0), InfectionState.InfectedNoSymptoms].value, 3.0)
 
     def test_assign_steps(self):
+        """ """
         dims = (AgeGroup(5), InfectionState(len(InfectionState.values())))
-        array = SecirPopulationArray(dims)
+        array = PopulationsArray(dims)
         array[::AgeGroup(1), InfectionState.InfectedNoSymptoms] = 1.0
         array[::AgeGroup(2), InfectionState.Exposed] = 2.0
         self.assertEqual(
@@ -63,6 +69,7 @@ class TestCustomIndexArray(TestCase):
         self.assertEqual(array[AgeGroup(1), InfectionState.Exposed].value, 0.0)
 
     def test_iter(self):
+        """ """
         dims = AgeGroup(3)
         array = AgeGroupArray(dims)
         for v in array:
