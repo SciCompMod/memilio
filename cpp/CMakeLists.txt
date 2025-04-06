@@ -146,7 +146,6 @@ endif()
 
 if(MEMILIO_ENABLE_IPOPT)
     message(STATUS "Ipopt enabled, ensuring Fortran language support is enabled.")
-    enable_language(Fortran REQUIRED) # Use REQUIRED to make it fatal if Fortran compiler missing
 endif()
 
 if(MEMILIO_ENABLE_OPENMP)
