@@ -39,10 +39,10 @@ runs:
       run: |
         sudo apt-get -qq update
         sudo apt-get -qq -y install lcov ccache
-        if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
-          sudo apt-get -qq -y install libhdf5-dev gfortran-9
-        fi
         sudo apt-get -qq -y install gfortran-9
+        if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
+          sudo apt-get -qq -y install libhdf5-dev 
+        fi
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             sudo apt-get -qq -y install gcc-9 g++-9 
@@ -75,7 +75,7 @@ runs:
       shell: bash
       run: |
         cd cpp
-        export FC=/usr/bin/gfortran
+        export FC=/usr/bin/gfortran-9
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
