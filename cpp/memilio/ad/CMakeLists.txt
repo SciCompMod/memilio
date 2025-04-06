@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.5)
-project(AD CXX)
-
 add_library(AD INTERFACE)
 add_library(AD::AD ALIAS AD)
 
