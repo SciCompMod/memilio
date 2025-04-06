@@ -62,17 +62,12 @@ Infection::Infection(Person::RandomNumberGenerator& rng, VirusVariant virus, Age
 
 ScalarType Infection::get_viral_load(TimePoint t) const
 {
-    if (t >= m_viral_load.start_date && t <= m_viral_load.end_date) {
-        if (t.days() <= m_viral_load.start_date.days() + m_viral_load.peak / m_viral_load.incline) {
-            return m_viral_load.incline * (t - m_viral_load.start_date).days();
-        }
-        else {
-            return m_viral_load.peak + m_viral_load.decline * (t.days() - m_viral_load.peak / m_viral_load.incline -
-                                                               m_viral_load.start_date.days());
-        }
+    if (t.days() <= m_viral_load.start_date.days() + m_viral_load.peak / m_viral_load.incline) {
+        return m_viral_load.incline * (t - m_viral_load.start_date).days();
     }
     else {
-        return 0.;
+        return m_viral_load.peak + m_viral_load.decline * (t.days() - m_viral_load.peak / m_viral_load.incline -
+                                                           m_viral_load.start_date.days());
     }
 }
 

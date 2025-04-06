@@ -451,7 +451,7 @@ struct TestParameters {
     TestParameters(UncertainValue value)
     {
         sensitivity = value;
-        sensitivity = value;
+        specificity = value;
     }
 };
 
@@ -658,20 +658,6 @@ struct AgeGroupGotoWork {
         return "AgeGroupGotoWork";
     }
 };
-
-struct AgeGroupGotoSocialEvent {
-    using Type = CustomIndexArray<bool, AgeGroup>;
-    static Type get_default(AgeGroup num_agegroups)
-    {
-        auto a = Type(num_agegroups, false);
-        return a;
-    }
-    static std::string name()
-    {
-        return "AgeGroupGotoSocialEvent";
-    }
-};
-
 using ParametersBase =
     ParameterSet<IncubationPeriod, TimeInfectedNoSymptomsToSymptoms, TimeInfectedNoSymptomsToRecovered,
                  TimeInfectedSymptomsToSevere, TimeInfectedSymptomsToRecovered, TimeInfectedSevereToCritical,
@@ -681,7 +667,7 @@ using ParametersBase =
                  DetectInfection, MaskProtection, InfectionRateFromViralShed, MobilityRestrictionParameter,
                  AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
                  WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
-                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, AgeGroupGotoSocialEvent,
+                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork,
                  InfectionProtectionFactor, SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**

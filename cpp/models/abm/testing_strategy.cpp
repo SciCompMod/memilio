@@ -92,11 +92,11 @@ bool TestingScheme::run_scheme(Person::RandomNumberGenerator& rng, Person& perso
         if (m_testing_criteria.evaluate(person, t)) {
             double random = UniformDistribution<double>::get_instance()(rng);
             if (random < m_probability) {
-                return !person.get_tested(rng, t, m_test_parameters);
+                return person.get_tested(rng, t, m_test_parameters);
             }
         }
     }
-    return true;
+    return false;
 }
 
 TestingStrategy::TestingStrategy(
@@ -124,14 +124,14 @@ void TestingStrategy::add_testing_scheme(const LocationId& loc_id, const Testing
     }
 }
 
-bool TestingStrategy::entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, unsigned id,
+bool TestingStrategy::entry_allowed_testing_schemes(Person::RandomNumberGenerator& rng, Person& person, LocationId id,
                                                     const mio::abm::TimePoint t)
 {
-    if (m_testing_schemes_per_location.at(id).empty()) {
+    if (m_testing_schemes_per_location.at(id.index).empty()) {
         return true;
     }
 
-    for (auto&& scheme : m_testing_schemes_per_location.at(id)) {
+    for (auto&& scheme : m_testing_schemes_per_location.at(id.index)) {
         if (scheme.run_scheme(rng, person, t)) {
             return false;
         }

@@ -539,6 +539,7 @@ private:
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
     bool m_should_be_logged = true; ///< Flag to determine if the Person should be logged.
+    bool m_tested_positive = false;
 };
 
 } // namespace abm

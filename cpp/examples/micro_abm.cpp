@@ -401,6 +401,32 @@ void assign_home_contact_matrix(mio::abm::World& world, mio::abm::Location& home
     home.assign_contact_matrices(hcm, assigned_persons, false);
 }
 
+void create_sampled_world(mio::abm::World& world, const fs::path& input_dir, const mio::abm::TimePoint& t0,
+    int max_num_persons, mio::Date start_date_sim)
+{
+    //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
+
+    set_parameters(world.parameters);
+    set_local_parameters(world);
+    restart_timer(timer, "time taken for setting up parameters and local parameters");
+
+    // Create the world object from statistical data.
+    create_world_from_data(world, (input_dir / "mobility/braunschweig_result_ffa8_modified2.csv").generic_string(),
+        max_num_persons);
+    world.use_migration_rules(false);
+    restart_timer(timer, "time taken for braunschweig trip input");
+
+    // Assign an infection state to each person.
+    assign_infection_state(world, t0);
+    restart_timer(timer, "time taken for assigning infection state");
+
+    // Assign vaccination status to each person.
+    assign_vaccination_state(world, start_date_sim);
+    restart_timer(timer, "time taken for assigning vaccination state");
+
+}
+
+
 int main()
 {
     mio::set_log_level(mio::LogLevel::warn);
@@ -426,8 +452,6 @@ int main()
     world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_24]     = true;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()                          = false;
     world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_25_to_64]      = true;
-    world.parameters.get<mio::abm::AgeGroupGotoSocialEvent>()                   = true;
-    world.parameters.get<mio::abm::AgeGroupGotoSocialEvent>()[age_group_0_to_4] = false;
 
     world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_0_to_4]   = 0.1;
     world.parameters.get<mio::abm::BasicShoppingRate>()[age_group_5_to_24]  = 0.5;

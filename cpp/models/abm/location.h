@@ -135,6 +135,8 @@ public:
     {
     }
 
+    bool location_contaminated = false;
+
     /**
      * @brief Return a copy of this #Location object with an empty m_persons.
      * @param[in] num_agegroups The number of age groups in the model.

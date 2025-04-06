@@ -97,7 +97,7 @@ void determine_initial_infection_states_world(const fs::path& input_dir, const m
     auto initial_graph                     = get_graph(date, 1, input_dir);
     const size_t braunschweig_id           = 16; // Braunschweig has ID 16
     auto braunschweig_node                 = initial_graph.value()[braunschweig_id];
-    initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();
+    initial_infection_distribution.array() = braunschweig_node.populations.array().cast<double>();.array() = braunschweig_node.populations.array().cast<double>();
 
     // extrapolate_real_world_data(braunschweig_node, input_dir.string(), date, 90); // 90 days
 }

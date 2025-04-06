@@ -79,12 +79,6 @@ void World::migration(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_persons.size(); ++i) {
         auto&& person                = m_persons[i];
-        auto current_infection_state = person->get_infection_state(t);
-        if (current_infection_state == mio::abm::InfectionState::Susceptible && !m_use_migration_rules &&
-            !person->is_in_quarantine(t, parameters)) {
-            continue;
-        }
-
         auto personal_rng = Person::RandomNumberGenerator(m_rng, *person);
 
         auto try_migration_rule = [&](auto rule) -> bool {
@@ -129,7 +123,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
 
-    if (num_trips != 0) {
+    if (!m_use_migration_rules && num_trips != 0) {
         while (m_trip_list.get_current_index() < num_trips &&
                m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds()) {
             auto& trip             = m_trip_list.get_next_trip();
@@ -146,7 +140,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                     if (target_location != current_location &&
                         target_location.entry_allowed_dampings(personal_rng, t) &&
                         m_testing_strategy.entry_allowed_testing_schemes(personal_rng, *person,
-                                                                         target_location.get_index(), t) &&
+                            {target_location.get_index(), target_location.get_type()}, t) &&
                         target_location.get_number_persons() < target_location.get_capacity().persons) {
                         person->apply_mask_intervention(personal_rng, target_location);
                         person->migrate_to(target_location);
@@ -168,6 +162,7 @@ void World::begin_step(TimePoint t, TimeSpan dt)
     PRAGMA_OMP(parallel for)
     for (auto i = size_t(0); i < m_locations.size(); ++i) {
         auto&& location = m_locations[i];
+        location->location_contaminated = false;
         location->adjust_contact_rates(parameters.get_num_groups());
         location->cache_exposure_rates(t, dt, parameters.get_num_groups(), parameters);
     }
