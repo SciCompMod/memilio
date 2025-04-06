@@ -15,7 +15,6 @@ FetchContent_MakeAvailable(google_benchmark)
 
 if(TARGET benchmark::benchmark)
     set(MEMILIO_BENCHMARK_LIBRARY benchmark::benchmark)
-    set_target_properties(benchmark PROPERTIES FOLDER "Extern/benchmark")
 else()
     message(FATAL_ERROR "FetchContent for Google Benchmark did not provide target 'benchmark::benchmark'.")
 endif() 
@@ -31,8 +30,7 @@ function(add_memilio_benchmark NAME SOURCES)
         ${MEMILIO_DEPS}
         ${MEMILIO_BENCHMARK_LIBRARY}
     )
-
-    set_target_properties(${NAME} PROPERTIES FOLDER "Benchmarks")
+    target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # For bench_config_dir.h
 endfunction()
 
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/configs" MEMILIO_BENCHMARK_CONFIG_DIR)

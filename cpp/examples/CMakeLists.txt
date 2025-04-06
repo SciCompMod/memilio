@@ -18,7 +18,6 @@ function(add_memilio_example NAME SOURCES)
     target_link_libraries(${NAME} PRIVATE memilio ${EXTRA_DEPS})
     memilio_set_warning_flags(${NAME})
     memilio_set_sanitizer_flags(${NAME})
-    set_target_properties(${NAME} PROPERTIES FOLDER "Examples")
     target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # For data_dir.h
 endfunction()
 

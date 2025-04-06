@@ -158,11 +158,6 @@ set(ALL_TEST_SOURCES
 #-------------------------------------------------------
 add_executable(memilio-test ${ALL_TEST_SOURCES})
 
-set_target_properties(memilio-test PROPERTIES
-    FOLDER "Tests"
-    OUTPUT_NAME "memilio-test"
-)
-
 #-------------------------------------------------------
 # Target Configuration (Includes, Links, Flags)
 #-------------------------------------------------------
@@ -230,7 +225,6 @@ else() # Single-config generators
         VERBATIM
     )
 endif()
-set_target_properties(memilio-check PROPERTIES FOLDER "Scripts/Project")
 
 #-------------------------------------------------------
 # IDE Cleanup (Hide Internal/External Targets)

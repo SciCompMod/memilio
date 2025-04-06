@@ -1,7 +1,16 @@
-configure_file(config_internal.h.in memilio/config_internal.h)
+message(STATUS "Configuring Memilio core library...")
+
+# Configure internal header based on CMake settings
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config_internal.h.in" 
+               "${CMAKE_CURRENT_BINARY_DIR}/memilio/config_internal.h"
+               )
 
 add_library(memilio
+    # Config & Core
     config.h
+    memilio/config_internal.h # Generated file
+
+    # Data & Epidemiology
     data/analyze_result.h
     data/analyze_result.cpp
     epidemiology/age_group.h
@@ -19,20 +28,26 @@ add_library(memilio
     epidemiology/lct_infection_state.h
     epidemiology/lct_populations.h
     epidemiology/adoption_rate.h
+    epidemiology/simulation_day.h
+
+    # Geography
     geography/regions.h
     geography/regions.cpp
-    epidemiology/simulation_day.h
-    geography/holiday_data.ipp
+    geography/holiday_data.ipp # Note: .ipp files are usually included by .h/.cpp
+
+    # Compartments & Simulation
     compartments/compartmentalmodel.h
     compartments/flow_model.h
     compartments/simulation.h
     compartments/flow_simulation.h
     compartments/parameter_studies.h
+
+    # IO
     io/default_serialize.h
     io/default_serialize.cpp
     io/io.h
     io/io.cpp
-    io/hdf5_cpp.h
+    io/hdf5_cpp.h # Helper, might not need explicit listing if header-only/internal
     io/json_serializer.h
     io/json_serializer.cpp
     io/binary_serializer.h
@@ -45,6 +60,8 @@ add_library(memilio
     io/epi_data.h
     io/epi_data.cpp
     io/cli.h
+
+    # Math
     math/euler.cpp
     math/euler.h
     math/smoother.h
@@ -62,6 +79,8 @@ add_library(memilio
     math/interpolation.cpp
     math/time_series_functor.h
     math/time_series_functor.cpp
+
+    # Mobility & Graphs
     mobility/metapopulation_mobility_instant.h
     mobility/metapopulation_mobility_instant.cpp
     mobility/metapopulation_mobility_stochastic.h
@@ -70,6 +89,8 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+
+    # Utilities
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp
@@ -97,34 +118,50 @@ add_library(memilio
     utils/type_list.h
 )
 
+# Include directories for build and install interfaces
 target_include_directories(memilio PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # includes configured by cmake
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # Project root include dir (e.g., for memilio/...)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>    # For configured headers (config_internal.h)
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>  # Standard install include dir
 )
 
-target_compile_features(memilio PUBLIC cxx_std_17)
-target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123 AD::AD)
-target_compile_options(memilio
-    PRIVATE
-    ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
-    PUBLIC
-    $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
+# Link core dependencies
+target_link_libraries(memilio PUBLIC
+    spdlog::spdlog       # Logging
+    Eigen3::Eigen        # Linear algebra
+    Boost::boost         # General Boost utilities (if needed directly)
+    Boost::filesystem    # Filesystem operations
+    Boost::disable_autolinking # MSVC specific, ensure provided by FindBoost
+    Random123            # Random number generation (ensure target exists)
+    AD::AD               # Auto-differentiation library target
 )
 
+# Apply project-wide compiler settings
+memilio_set_warning_flags(memilio)
+memilio_set_sanitizer_flags(memilio)
+
+
+# Optional dependencies
 if(MEMILIO_HAS_HDF5)
-    target_link_libraries(memilio PUBLIC ${HDF5_C_LIBRARIES})
-    target_include_directories(memilio PUBLIC ${HDF5_INCLUDE_DIRS})
+    message(STATUS "Linking memilio against HDF5")
+    target_link_libraries(memilio PUBLIC HDF5::HDF5) # Use imported target
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
-    target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+    message(STATUS "Linking memilio against JsonCpp")
+    target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp) # Use imported target
 endif()
 
 if(MEMILIO_ENABLE_MPI)
-    target_link_libraries(memilio PUBLIC MPI::MPI_CXX)
+    message(STATUS "Linking memilio against MPI")
+    target_link_libraries(memilio PUBLIC MPI::MPI_CXX) # Use imported target
 endif()
 
 if(MEMILIO_ENABLE_OPENMP)
+    message(STATUS "Enabling OpenMP for memilio (interface)")
+    # Link OpenMP flags via INTERFACE library target
     target_link_libraries(memilio INTERFACE OpenMP::OpenMP_CXX)
 endif()
+
+
+message(STATUS "Memilio core library configured.")
