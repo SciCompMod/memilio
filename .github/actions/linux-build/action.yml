@@ -76,6 +76,7 @@ runs:
       run: |
         cd cpp
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
+          export fortran=/usr/bin/gfortran-9
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
             export CXX=/usr/bin/g++-9
