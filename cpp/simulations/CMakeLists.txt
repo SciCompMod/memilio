@@ -1,3 +1,5 @@
+#deprecated
+
 if(MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     add_executable(2020_npis_wildtype 2020_npis_sarscov2_wildtype_germany.cpp)
     target_link_libraries(2020_npis_wildtype PRIVATE memilio ode_secir Boost::filesystem ${HDF5_C_LIBRARIES})

@@ -41,7 +41,6 @@ set(BUILD_SHARED_LIBS ${MEMILIO_BUILD_SHARED_LIBS})
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
-option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." OFF)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 
 # Third-party dependency options
@@ -561,7 +560,6 @@ print_config_item("Core Library" "ON") # Assuming memilio target exists
 print_config_item("Models" "${MEMILIO_BUILD_MODELS}")
 print_config_item("Examples" "${MEMILIO_BUILD_EXAMPLES}")
 print_config_item("Tests" "${MEMILIO_BUILD_TESTS}")
-print_config_item("Simulations" "${MEMILIO_BUILD_SIMULATIONS}")
 print_config_item("Benchmarks" "${MEMILIO_BUILD_BENCHMARKS}")
 
 message(STATUS "")
