@@ -37,10 +37,12 @@ endif()
 #-------------------------------------------------------
 # Spdlog (Logging - Required)
 #-------------------------------------------------------
+set(MEMILIO_HAS_SPDLOG FALSE CACHE BOOL "Spdlog support status" FORCE) # Initialize status variable
 if(MEMILIO_USE_BUNDLED_SPDLOG)
     message(STATUS "Using bundled Spdlog ${MEMILIO_BUNDLED_SPDLOG_VERSION}")
     FetchContent_Declare(
         spdlog
+        QUIET
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG        v${MEMILIO_BUNDLED_SPDLOG_VERSION}
         GIT_SHALLOW    TRUE
@@ -58,6 +60,7 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
     if(NOT TARGET spdlog::spdlog)
         message(FATAL_ERROR "Bundled spdlog build did not create target spdlog::spdlog.")
     endif()
+    set(MEMILIO_HAS_SPDLOG TRUE CACHE BOOL "Spdlog support status" FORCE) # Update status variable
 else()
     message(STATUS "Searching for system Spdlog...")
     find_package(spdlog REQUIRED CONFIG) # Use CMake config mode for modern targets
@@ -70,11 +73,13 @@ else()
     elseif(NOT TARGET spdlog::spdlog)
          message(FATAL_ERROR "System spdlog found, but required target spdlog::spdlog is missing.")
     endif()
+    set(MEMILIO_HAS_SPDLOG TRUE CACHE BOOL "Spdlog support status" FORCE) # Update status variable
 endif()
 
 #-------------------------------------------------------
 # Eigen (Linear Algebra - Required)
 #-------------------------------------------------------
+set(MEMILIO_HAS_EIGEN FALSE CACHE BOOL "EIGEN support status" FORCE)
 if(MEMILIO_USE_BUNDLED_EIGEN)
     message(STATUS "Using bundled Eigen ${MEMILIO_BUNDLED_EIGEN_VERSION}")
     FetchContent_Declare(
@@ -83,13 +88,19 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
         GIT_TAG        ${MEMILIO_BUNDLED_EIGEN_VERSION}
         GIT_SHALLOW    TRUE
         GIT_PROGRESS   TRUE
+        QUIET
     )
+    set(BUILD_TESTING OFF CACHE BOOL "" FORCE) 
+    set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE) 
+    set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)     
+    set(EIGEN_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(eigen) # Populates eigen_SOURCE_DIR
     if(NOT TARGET Eigen3::Eigen)
         add_library(Eigen3::Eigen INTERFACE)
         target_include_directories(Eigen3::Eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
         message(STATUS "Created target Eigen3::Eigen for bundled version.")
     endif()
+    set(MEMILIO_HAS_EIGEN TRUE CACHE BOOL "EIGEN support status" FORCE)
 else()
     # Require system Eigen version >= bundled version for consistency
     set(MEMILIO_MINIMAL_EIGEN_VERSION ${MEMILIO_BUNDLED_EIGEN_VERSION})
@@ -101,6 +112,7 @@ else()
     if(NOT TARGET Eigen3::Eigen)
         message(FATAL_ERROR "System Eigen3 found, but required target Eigen3::Eigen is missing.")
     endif()
+    set(MEMILIO_HAS_EIGEN TRUE CACHE BOOL "EIGEN support status" FORCE)
 endif()
 
 #-------------------------------------------------------
@@ -187,43 +199,38 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     add_library(Boost::filesystem ALIAS boost_filesystem)
 
     # Signal that Boost (required parts) is available
-    set(Boost_FOUND ON CACHE BOOL "Boost found (bundled)" FORCE)
+    set(BOOST_FOUND ON CACHE BOOL "Boost found (bundled)" FORCE)
     set(Boost_VERSION_STRING ${MEMILIO_BUNDLED_BOOST_VERSION} CACHE STRING "Boost version (bundled)" FORCE)
-    message(STATUS "Bundled Boost::filesystem target created.")
+    message(VERBOSE "Bundled Boost::filesystem target created.")
 
 else()
     message(STATUS "Searching for system Boost >= ${MEMILIO_MINIMAL_BOOST_VERSION} (components: filesystem)...")
     find_package(Boost ${MEMILIO_MINIMAL_BOOST_VERSION} REQUIRED COMPONENTS filesystem) # find_package should define Boost::filesystem
     message(STATUS "Found system Boost: ${Boost_VERSION_STRING}")
     # Verify find_package created the target
-    if(NOT TARGET Boost::filesystem)
+    if(TARGET Boost::filesystem)
         message(FATAL_ERROR "System Boost found, but required target Boost::filesystem is missing.")
     endif()
 endif()
 
 #-------------------------------------------------------
-# HDF5 (IO Format - Optional)
+# HDF5 (IO Format)
 #-------------------------------------------------------
 # Check MEMILIO_ENABLE_HDF5 option set in the main CMakeLists.txt
 set(MEMILIO_HAS_HDF5 FALSE CACHE BOOL "HDF5 support status" FORCE) # Initialize status variable
-if(MEMILIO_ENABLE_HDF5)
-    message(STATUS "Searching for optional system HDF5 (C library)...")
-    # Find quietly using CONFIG mode first, module mode as fallback (standard find_package behavior)
-    find_package(HDF5 COMPONENTS C QUIET CONFIG)
+message(STATUS "Searching for optional system HDF5 (C library)...")
+# Find quietly using CONFIG mode first, module mode as fallback (standard find_package behavior)
+find_package(HDF5 COMPONENTS C QUIET)
 
-    if(HDF5_FOUND AND TARGET HDF5::HDF5) # Check for FOUND status and modern target
-        message(STATUS "Found system HDF5: ${HDF5_VERSION} (using target HDF5::HDF5)")
-        set(MEMILIO_HAS_HDF5 TRUE CACHE BOOL "HDF5 support status" FORCE)
-    else()
-        message(STATUS "Optional: System HDF5 not found or target HDF5::HDF5 missing.")
-        # MEMILIO_HAS_HDF5 remains FALSE
-    endif()
+if(HDF5_FOUND AND TARGET HDF5::HDF5) # Check for FOUND status and modern target
+    message(STATUS "Found system HDF5: ${HDF5_VERSION} (using target HDF5::HDF5)")
+    set(MEMILIO_HAS_HDF5 TRUE CACHE BOOL "HDF5 support status" FORCE)
 else()
-     message(STATUS "HDF5 support explicitly disabled (MEMILIO_ENABLE_HDF5=OFF).")
+    message(FATAL_ERROR "System HDF5 not found or target HDF5::HDF5 missing.")
 endif()
 
 #-------------------------------------------------------
-# JsonCpp (JSON Parsing - Optional)
+# JsonCpp (JSON Parsing)
 #-------------------------------------------------------
 # Option MEMILIO_USE_BUNDLED_JSONCPP controls whether to fetch or find
 set(MEMILIO_HAS_JSONCPP FALSE CACHE BOOL "JsonCpp support status" FORCE) # Initialize status variable
@@ -231,6 +238,7 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
     message(STATUS "Using bundled JsonCpp ${MEMILIO_BUNDLED_JSONCPP_VERSION}")
     FetchContent_Declare(
         jsoncpp
+        QUIET
         DOWNLOAD_PROGRESS TRUE
         URL               https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_BUNDLED_JSONCPP_VERSION}.tar.gz
         URL_HASH          SHA256=f93b6dd7ce796b13d02c108bc9f79812245a82e577581c4c9aabe57075c90ea2
@@ -280,12 +288,13 @@ else()
 endif()
 
 #-------------------------------------------------------
-# Random123 (RNG - Required, Header-Only)
+# Random123
 #-------------------------------------------------------
 # Always use the bundled version for this simple header-only library
 message(STATUS "Using bundled Random123 ${MEMILIO_BUNDLED_RANDOM123_VERSION}")
 FetchContent_Declare(
     Random123
+    QUIET
     GIT_REPOSITORY https://github.com/DEShawResearch/random123
     GIT_TAG        ${MEMILIO_BUNDLED_RANDOM123_VERSION}
     GIT_SHALLOW    TRUE
@@ -295,8 +304,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Random123) 
 
 # Create the INTERFACE target
-add_library(random123 INTERFACE)
+add_library(Random123 INTERFACE)
 message(STATUS ${FETCHCONTENT_BASE_DIR})
-target_include_directories(random123 SYSTEM INTERFACE ${FETCHCONTENT_BASE_DIR}/include)
-message(STATUS "Bundled Random123 configured. Target Random123::Random123 created.")
+target_include_directories(Random123 SYSTEM INTERFACE ${random123_SOURCE_DIR}/include)
+message(VERBOSE "Bundled Random123 configured. Target Random123 created.")
 

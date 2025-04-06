@@ -83,7 +83,7 @@ mark_as_advanced(
 # Function to check if a package is available and disable the option if not
 function(check_dependency OPTION_NAME PACKAGE_NAME)
     if(${OPTION_NAME})
-        find_package(${PACKAGE_NAME})
+        find_package(${PACKAGE_NAME} QUIET)
         if(NOT ${PACKAGE_NAME}_FOUND)
             message(FATAL_ERROR "${PACKAGE_NAME} not found. ${OPTION_NAME} will be disabled.")
             set(${OPTION_NAME} OFF CACHE BOOL "Disabled because ${PACKAGE_NAME} was not found" FORCE)
@@ -297,7 +297,6 @@ endfunction()
 #-------------------------------------------------------
 # OpenMP configuration 
 #-------------------------------------------------------
-set(MEMILIO_OPENMP_FOUND FALSE) # Track if we successfully configure OpenMP
 if(MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP QUIET) # Find quietly first
     if(OpenMP_CXX_FOUND)
@@ -541,8 +540,8 @@ message(STATUS "")
 message(STATUS "-------------------- Memilio Configuration Summary --------------------")
 print_config_item("Version" "${PROJECT_VERSION}")
 print_config_item("Build type" "${CMAKE_BUILD_TYPE}")
-print_config_item("Install prefix" "${CMAKE_INSTALL_PREFIX}")
 print_config_item("Generator" "${CMAKE_GENERATOR}")
+print_config_item("Installaion" "${MEMILIO_ENABLE_INSTALL} (Prefix: ${CMAKE_INSTALL_PREFIX})")
 
 message(STATUS "")
 message(STATUS "-- Compiler Info --")
@@ -559,7 +558,6 @@ endif()
 message(STATUS "")
 message(STATUS "-- Components --")
 print_config_item("Core Library" "ON") # Assuming memilio target exists
-print_config_item("AD Library" "ON") # Assuming memilio_ad target exists
 print_config_item("Models" "${MEMILIO_BUILD_MODELS}")
 print_config_item("Examples" "${MEMILIO_BUILD_EXAMPLES}")
 print_config_item("Tests" "${MEMILIO_BUILD_TESTS}")
@@ -569,15 +567,11 @@ print_config_item("Benchmarks" "${MEMILIO_BUILD_BENCHMARKS}")
 message(STATUS "")
 message(STATUS "-- Dependencies & Features --")
 # Check third-party library status using targets or MEMILIO_HAS_* variables
-get_property(EIGEN_FOUND TARGET Eigen3::Eigen PROPERTY TYPE) # Check if target exists
-print_config_item("Eigen3" "${EIGEN_FOUND} (Bundled: ${MEMILIO_USE_BUNDLED_EIGEN})")
-get_property(SPDLOG_FOUND TARGET spdlog::spdlog PROPERTY TYPE)
-print_config_item("spdlog" "${SPDLOG_FOUND} (Bundled: ${MEMILIO_USE_BUNDLED_SPDLOG})")
-get_property(BOOST_FS_FOUND TARGET Boost::filesystem PROPERTY TYPE)
-print_config_item("Boost::filesystem" "${BOOST_FS_FOUND} (Bundled: ${MEMILIO_USE_BUNDLED_BOOST})")
-# Optional dependencies status from thirdparty script
-print_config_item("HDF5" "${MEMILIO_HAS_HDF5} (Enabled: ${MEMILIO_ENABLE_HDF5})")
-print_config_item("JsonCpp" "${MEMILIO_HAS_JSONCPP} (Bundled: ${MEMILIO_USE_BUNDLED_JSONCPP})")
+print_config_item("Eigen3" "${MEMILIO_HAS_EIGEN}")
+print_config_item("spdlog" "${MEMILIO_HAS_SPDLOG}")
+print_config_item("Boost" "${MEMILIO_HAS_EIGEN} ")
+print_config_item("HDF5" "${MEMILIO_HAS_HDF5}")
+print_config_item("JsonCpp" "${MEMILIO_HAS_JSONCPP}")
 print_config_item("Ipopt" "${IPOPT_FOUND} (Enabled: ${MEMILIO_ENABLE_IPOPT})")
 print_config_item("gperftools" "${GPERFTOOLS_FOUND} (Enabled: ${MEMILIO_ENABLE_PROFILING})")
 print_config_item("OpenMP" "${MEMILIO_OPENMP_FOUND} (Enabled: ${MEMILIO_ENABLE_OPENMP})")
