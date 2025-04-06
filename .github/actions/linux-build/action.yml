@@ -39,6 +39,13 @@ runs:
       run: |
         sudo apt-get -qq update
         sudo apt-get -qq -y install lcov ccache
+
+        echo "Listing gfortran executables in /usr/bin/..."
+        ls -l /usr/bin/g* || echo "Could not list /usr/bin/gfortran*"
+        echo "Using 'which' to find gfortran-9..."
+        which gfortran-9 || echo "gfortran-9 not found in PATH"
+        echo "Using 'which' to find gfortran..."
+        which gfortran || echo "gfortran not found in PATH"
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev gfortran-9
         fi
