@@ -172,8 +172,6 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/portability.cpp
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/unique_path.cpp
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
-        # Optionally add platform-specific sources using generator expressions
-        # $<IF:$<PLATFORM_ID:Windows>,${boost_download_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp,"">
     )
     target_compile_definitions(Boost::filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
     if(NOT MSVC)
@@ -253,7 +251,6 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
          set(MEMILIO_HAS_JSONCPP TRUE CACHE BOOL "JsonCpp support status" FORCE)
     else()
         message(WARNING "Failed to find expected target after configuring bundled JsonCpp.")
-        # MEMILIO_HAS_JSONCPP remains FALSE
     endif()
 
 else()
@@ -286,7 +283,7 @@ FetchContent_Declare(
     GIT_SHALLOW    TRUE
     GIT_PROGRESS   TRUE
 )
-FetchContent_MakeAvailable(Random123) # Populates random123_SOURCE_DIR
+FetchContent_MakeAvailable(Random123) 
 
 # Create the INTERFACE target
 if(NOT TARGET Random123::Random123)
