@@ -39,13 +39,6 @@ runs:
       run: |
         sudo apt-get -qq update
         sudo apt-get -qq -y install lcov ccache
-
-        echo "Listing gfortran executables in /usr/bin/..."
-        ls -l /usr/bin/g* || echo "Could not list /usr/bin/gfortran*"
-        echo "Using 'which' to find gfortran-9..."
-        which gfortran-9 || echo "gfortran-9 not found in PATH"
-        echo "Using 'which' to find gfortran..."
-        which gfortran || echo "gfortran not found in PATH"
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev gfortran-9
         fi
@@ -82,7 +75,6 @@ runs:
       shell: bash
       run: |
         cd cpp
-        export FC=/usr/bin/gfortran
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -104,7 +96,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_Fortran_COMPILER=/usr/bin/gfortran -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
+        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_Fortran_COMPILER=/usr/bin/gfortran -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
     - name: create build dir archive
       shell: bash
