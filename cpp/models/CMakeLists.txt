@@ -193,7 +193,7 @@ function(add_memilio_model MODEL_NAME)
 
     add_library(${MODEL_NAME} ${MODEL_SOURCES}) # Use the explicitly set list
 
-    target_link_libraries(${MODEL_NAME} PUBLIC memilio)
+    target_link_libraries(${MODEL_NAME} PRIVATE memilio)
 
     # Includes, warnings, sanitizers remain the same
     target_include_directories(${MODEL_NAME} PUBLIC

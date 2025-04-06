@@ -27,6 +27,7 @@ function(add_memilio_benchmark NAME SOURCES)
 
     add_executable(${NAME} ${SOURCES})
     target_link_libraries(${NAME} PRIVATE
+        memilio
         ${MEMILIO_DEPS}
         ${MEMILIO_BENCHMARK_LIBRARY}
     )

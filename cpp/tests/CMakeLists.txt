@@ -166,6 +166,7 @@ target_include_directories(memilio-test PRIVATE
 )
 target_link_libraries(memilio-test PRIVATE
     # Memilio Models (they lready link to the required libraries publicly)
+    memilio
     ode_secir ode_seir ode_secirvvs ode_secirts ode_seair
     ide_seir ide_secir lct_secir glct_secir
     abm graph_abm d_abm smm
