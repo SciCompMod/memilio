@@ -202,7 +202,6 @@
       { "name": "build-unix-release-ipopt", "configurePreset": "unix-release-ipopt", "configuration": "Release" },
       { "name": "build-unix-release-profiling", "configurePreset": "unix-release-profiling", "configuration": "Release" },
       { "name": "build-unix-release-install", "configurePreset": "unix-release-install", "configuration": "Release" },
-  
       { "name": "build-windows-debug", "configurePreset": "windows-debug", "configuration": "Debug" },
       { "name": "build-windows-debug-system", "configurePreset": "windows-debug-system", "configuration": "Debug" },
       { "name": "build-windows-release", "configurePreset": "windows-release", "configuration": "Release" },
@@ -220,7 +219,6 @@
       { "name": "test-unix-debug-ubsan", "configurePreset": "unix-debug-ubsan", "configuration": "Debug", "output": {"outputOnFailure": true} },
       { "name": "test-unix-debug-asan-ubsan", "configurePreset": "unix-debug-asan-ubsan", "configuration": "Debug", "output": {"outputOnFailure": true} },
       { "name": "test-unix-debug-coverage", "configurePreset": "unix-debug-coverage", "configuration": "Debug", "output": {"outputOnFailure": true} },
-  
       { "name": "test-windows-debug", "configurePreset": "windows-debug", "configuration": "Debug", "output": {"outputOnFailure": true} },
       { "name": "test-windows-debug-system", "configurePreset": "windows-debug-system", "configuration": "Debug", "output": {"outputOnFailure": true} },
       { "name": "test-windows-release", "configurePreset": "windows-release", "configuration": "Release", "output": {"outputOnFailure": true} },
