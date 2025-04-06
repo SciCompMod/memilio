@@ -12,7 +12,6 @@ message(STATUS "Configuring GoogleTest dependency for tests...")
 # Force shared CRT for GoogleTest on Windows - set BEFORE MakeAvailable.
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-include(FetchContent)
 FetchContent_Declare(googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG        ${MEMILIO_GTEST_VERSION}
@@ -192,13 +191,11 @@ memilio_set_coverage_flags(memilio-test)
 #-------------------------------------------------------
 # Test Data Configuration
 #-------------------------------------------------------
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR_ABS)
-set(MEMILIO_TEST_DATA_DIR "${MEMILIO_TEST_DATA_DIR_ABS}" CACHE PATH "Absolute path to test data directory")
+file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR)
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/test_data_dir.h.in"
     "${CMAKE_CURRENT_BINARY_DIR}/test_data_dir.h"
-    @ONLY
 )
 
 #-------------------------------------------------------

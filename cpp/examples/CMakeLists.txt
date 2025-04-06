@@ -1,6 +1,7 @@
 # configure directory that contains the data files used by examples
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../data" MEMILIO_DATA_DIR)
-configure_file(data_dir.h.in data_dir.h)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/data_dir.h.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/data_dir.h")
 
 add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)

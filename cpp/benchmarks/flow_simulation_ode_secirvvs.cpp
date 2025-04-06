@@ -24,7 +24,7 @@
 #include "ode_secirvvs/model.h"
 #include <string>
 
-const std::string config_path = "../../benchmarks/simulation.config";
+const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "simulation.config");
 
 // simulation without flows (not in Model definition and not calculated by Simulation)
 void flowless_sim(::benchmark::State& state)

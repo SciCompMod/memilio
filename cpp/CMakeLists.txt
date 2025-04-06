@@ -41,7 +41,7 @@ set(BUILD_SHARED_LIBS ${MEMILIO_BUILD_SHARED_LIBS})
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
-option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
+option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." ON)
 
 # Third-party dependency options
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with memilio" ON)
@@ -79,18 +79,6 @@ mark_as_advanced(
 #-------------------------------------------------------
 # Helper functions
 #-------------------------------------------------------
-# Function to check if a package is available and disable the option if not
-function(check_dependency OPTION_NAME PACKAGE_NAME)
-    if(${OPTION_NAME})
-        find_package(${PACKAGE_NAME} QUIET)
-        if(NOT ${PACKAGE_NAME}_FOUND)
-            message(FATAL_ERROR "${PACKAGE_NAME} not found. ${OPTION_NAME} will be disabled.")
-            set(${OPTION_NAME} OFF CACHE BOOL "Disabled because ${PACKAGE_NAME} was not found" FORCE)
-            return()
-        endif()
-        message(STATUS "${PACKAGE_NAME} found: ${${PACKAGE_NAME}_VERSION}")
-    endif()
-endfunction()
 
 # Function to check compiler version against minimum
 function(check_compiler_version COMPILER_ID CURRENT_VERSION MIN_VERSION)
@@ -142,11 +130,64 @@ endfunction()
 #-------------------------------------------------------
 # Check for required dependencies
 #-------------------------------------------------------
-check_dependency(MEMILIO_ENABLE_MPI MPI)
-check_dependency(MEMILIO_BUILD_BENCHMARKS benchmark)
+if(MEMILIO_ENABLE_MPI)
+    find_package(MPI QUIET)
+    if(NOT MPI_FOUND)
+        message(FATAL_ERROR "MPI not found. MEMILIO_ENABLE_MPI will be disabled.")
+        set(MEMILIO_ENABLE_MPI OFF CACHE BOOL "Disabled because MPI was not found" FORCE)
+        return()
+    endif()
+    message(STATUS "MPI found: ${MPI_VERSION}")
+endif()
+
 if(MEMILIO_ENABLE_IPOPT)
     message(STATUS "Ipopt enabled, ensuring Fortran language support is enabled.")
     enable_language(Fortran REQUIRED) # Use REQUIRED to make it fatal if Fortran compiler missing
+endif()
+
+if(MEMILIO_ENABLE_OPENMP)
+    find_package(OpenMP QUIET) # Find quietly first
+    if(OpenMP_CXX_FOUND)
+        message(STATUS "OpenMP found via find_package.")
+        set(MEMILIO_OPENMP_FOUND TRUE)
+    elseif(APPLE)
+        message(STATUS "OpenMP not found by find_package, attempting macOS Homebrew workaround...")
+        # (Homebrew lookup logic remains the same)
+        if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" OR APPLE_SILICON)
+            set(HOMEBREW_PREFIX "/opt/homebrew")
+        else()
+            set(HOMEBREW_PREFIX "/usr/local")
+        endif()
+        if(EXISTS "${HOMEBREW_PREFIX}/opt/libomp/lib/cmake/libomp")
+             list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
+             find_package(OpenMP QUIET) # Try finding again with the hint
+             if (OpenMP_CXX_FOUND)
+                 message(STATUS "Found OpenMP via Homebrew libomp CMake package.")
+                 set(MEMILIO_OPENMP_FOUND TRUE)
+             endif()
+        endif()
+        # Manual target creation fallback if CMake package didn't work/exist
+        if (NOT MEMILIO_OPENMP_FOUND AND
+            EXISTS "${HOMEBREW_PREFIX}/opt/libomp/include" AND
+            EXISTS "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
+                 message(STATUS "Found Homebrew libomp files, attempting manual target setup for OpenMP.")
+                 # Ensure target doesn't exist before creating
+                 if(NOT TARGET OpenMP::OpenMP_CXX)
+                     add_library(OpenMP::OpenMP_CXX INTERFACE IMPORTED)
+                     set_target_properties(OpenMP::OpenMP_CXX PROPERTIES
+                         INTERFACE_COMPILE_OPTIONS "-Xpreprocessor -fopenmp" # Clang flag
+                         INTERFACE_INCLUDE_DIRECTORIES "${HOMEBREW_PREFIX}/opt/libomp/include"
+                         INTERFACE_LINK_LIBRARIES "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
+                 endif()
+                 set(MEMILIO_OPENMP_FOUND TRUE) # Mark as found via manual setup
+        endif()
+    endif()
+
+    # Final check and disable if not found
+    if(NOT MEMILIO_OPENMP_FOUND)
+        message(WARNING "OpenMP not found or configured. Install OpenMP (e.g., 'brew install libomp' on macOS) or disable MEMILIO_ENABLE_OPENMP.")
+        set(MEMILIO_ENABLE_OPENMP OFF CACHE BOOL "Disabled because OpenMP was not found/configured" FORCE)
+    endif()
 endif()
 
 #-------------------------------------------------------
@@ -293,53 +334,7 @@ function(memilio_set_sanitizer_flags target_name)
     endif()
 endfunction()
 
-#-------------------------------------------------------
-# OpenMP configuration 
-#-------------------------------------------------------
-if(MEMILIO_ENABLE_OPENMP)
-    find_package(OpenMP QUIET) # Find quietly first
-    if(OpenMP_CXX_FOUND)
-        message(STATUS "OpenMP found via find_package.")
-        set(MEMILIO_OPENMP_FOUND TRUE)
-    elseif(APPLE)
-        message(STATUS "OpenMP not found by find_package, attempting macOS Homebrew workaround...")
-        # (Homebrew lookup logic remains the same)
-        if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" OR APPLE_SILICON)
-            set(HOMEBREW_PREFIX "/opt/homebrew")
-        else()
-            set(HOMEBREW_PREFIX "/usr/local")
-        endif()
-        if(EXISTS "${HOMEBREW_PREFIX}/opt/libomp/lib/cmake/libomp")
-             list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
-             find_package(OpenMP QUIET) # Try finding again with the hint
-             if (OpenMP_CXX_FOUND)
-                 message(STATUS "Found OpenMP via Homebrew libomp CMake package.")
-                 set(MEMILIO_OPENMP_FOUND TRUE)
-             endif()
-        endif()
-        # Manual target creation fallback if CMake package didn't work/exist
-        if (NOT MEMILIO_OPENMP_FOUND AND
-            EXISTS "${HOMEBREW_PREFIX}/opt/libomp/include" AND
-            EXISTS "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
-                 message(STATUS "Found Homebrew libomp files, attempting manual target setup for OpenMP.")
-                 # Ensure target doesn't exist before creating
-                 if(NOT TARGET OpenMP::OpenMP_CXX)
-                     add_library(OpenMP::OpenMP_CXX INTERFACE IMPORTED)
-                     set_target_properties(OpenMP::OpenMP_CXX PROPERTIES
-                         INTERFACE_COMPILE_OPTIONS "-Xpreprocessor -fopenmp" # Clang flag
-                         INTERFACE_INCLUDE_DIRECTORIES "${HOMEBREW_PREFIX}/opt/libomp/include"
-                         INTERFACE_LINK_LIBRARIES "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
-                 endif()
-                 set(MEMILIO_OPENMP_FOUND TRUE) # Mark as found via manual setup
-        endif()
-    endif()
 
-    # Final check and disable if not found
-    if(NOT MEMILIO_OPENMP_FOUND)
-        message(WARNING "OpenMP not found or configured. Install OpenMP (e.g., 'brew install libomp' on macOS) or disable MEMILIO_ENABLE_OPENMP.")
-        set(MEMILIO_ENABLE_OPENMP OFF CACHE BOOL "Disabled because OpenMP was not found/configured" FORCE)
-    endif()
-endif()
 
 
 #-------------------------------------------------------
