@@ -233,10 +233,10 @@ if(HDF5_FOUND)
         add_library(HDF5::HDF5 ALIAS hdf5)
         set(MEMILIO_HAS_HDF5 TRUE CACHE BOOL "HDF5 support status" FORCE)
     else()
-         message(FATAL_ERROR "System HDF5 found, but required target (HDF5::HDF5 or hdf5) missing.")
+         message(WARNING "System HDF5 found, but required target (HDF5::HDF5 or hdf5) missing.")
     endif()
 else()
-    message(FATAL_ERROR "System HDF5 not found.")
+    message(WARNING "System HDF5 not found.")
 endif()
 
 #-------------------------------------------------------
