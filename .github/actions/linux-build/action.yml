@@ -75,7 +75,7 @@ runs:
       shell: bash
       run: |
         cd cpp
-        export Fortran=/usr/bin/gfortran-9
+        export FC=/usr/bin/gfortran-9
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
