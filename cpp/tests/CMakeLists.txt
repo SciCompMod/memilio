@@ -178,6 +178,8 @@ target_link_libraries(memilio-test PRIVATE
 memilio_set_warning_flags(memilio-test)
 memilio_set_coverage_flags(memilio-test)
 
+target_compile_options(memilio-test PRIVATE -Wno-ignored-attributes)
+
 #-------------------------------------------------------
 # Test Data Configuration
 #-------------------------------------------------------
