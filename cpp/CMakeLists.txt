@@ -97,11 +97,15 @@ function(add_memilio_component COMPONENT_TYPE)
     endif()
 endfunction()
 
-# Function to add models by category
-function(add_model_group GROUP_NAME)
-    foreach(MODEL ${ARGN})
-        add_subdirectory(models/${MODEL})
-    endforeach()
+# Function to configure a path header file
+function(memilio_configure_path_header TARGET_NAME HEADER_NAME_IN HEADER_NAME_OUT PATH_VARIABLE_NAME PATH_TO_CONFIGURE)
+    file(TO_CMAKE_PATH "${PATH_TO_CONFIGURE}" CONFIGURED_PATH_CMAKE)
+    set(${PATH_VARIABLE_NAME} "${CONFIGURED_PATH_CMAKE}" CACHE INTERNAL "Path to ${PATH_VARIABLE_NAME}")
+    configure_file(
+        "${HEADER_NAME_IN}"   # Relative to caller's source dir
+        "${HEADER_NAME_OUT}"  # Relative to caller's binary dir
+    )
+    target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}") # Caller's binary dir
 endfunction()
 
 # Function to install header directories
@@ -409,48 +413,16 @@ endfunction()
 # Add project components
 #-------------------------------------------------------
 # First add third-party dependencies
+include(FetchContent)
 include(thirdparty/CMakeLists.txt)
 
-# Core libraries (always built)
-add_subdirectory(memilio/ad)
+# Core library 
 add_subdirectory(memilio)
 
 # Conditional components based on build options
 if(MEMILIO_BUILD_MODELS)
     message(STATUS "Building memilio models")
-    
-    # Compartmental models
-    add_model_group("Compartmental models"
-        ode_sir
-        ode_seir
-        ode_seair
-        ode_secir
-        ode_secirts
-        ode_secirvvs
-    )
-    
-    # Stochastic models
-    add_model_group("Stochastic models"
-        sde_sir
-        sde_sirs
-        sde_seirvv
-    )
-    
-    # Network and agent-based models
-    add_model_group("Network models"
-        abm
-        d_abm
-        graph_abm
-    )
-    
-    # Other specialized models
-    add_model_group("Specialized models"
-        lct_secir
-        glct_secir
-        ide_secir
-        ide_seir
-        smm
-    )
+    add_subdirectory(models)
 endif()
 
 # Use the component function for other directories

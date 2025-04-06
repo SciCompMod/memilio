@@ -30,15 +30,9 @@ function(add_memilio_benchmark NAME SOURCES)
         ${MEMILIO_DEPS}
         ${MEMILIO_BENCHMARK_LIBRARY}
     )
-    target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # For bench_config_dir.h
+    memilio_configure_path_header(${NAME} "bench_config_dir.h.in" "bench_config_dir.h" "MEMILIO_BENCHMARK_CONFIG_DIR" "${CMAKE_CURRENT_SOURCE_DIR}/configs")
 endfunction()
 
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/configs" MEMILIO_BENCHMARK_CONFIG_DIR)
-
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/bench_config_dir.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/bench_config_dir.h"
-)
 
 # Define benchmark executables
 add_memilio_benchmark(memilio_integrator_step_benchmark

@@ -161,11 +161,6 @@ add_executable(memilio-test ${ALL_TEST_SOURCES})
 #-------------------------------------------------------
 # Target Configuration (Includes, Links, Flags)
 #-------------------------------------------------------
-target_include_directories(memilio-test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_BINARY_DIR}
-)
-
 target_link_libraries(memilio-test PRIVATE
     # Core Memilio
     memilio
@@ -175,8 +170,6 @@ target_link_libraries(memilio-test PRIVATE
     abm graph_abm d_abm smm
     # Testing Framework
     GTest::gtest GTest::gmock GTest::gtest_main
-    # Other Dependencies
-    AD::AD
 )
 
 # Apply project-wide flags via helper functions (defined in root)
@@ -186,12 +179,11 @@ memilio_set_coverage_flags(memilio-test)
 #-------------------------------------------------------
 # Test Data Configuration
 #-------------------------------------------------------
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR)
-
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_data_dir.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/test_data_dir.h"
-)
+memilio_configure_path_header(memilio-test 
+                                "test_data_dir.h.in" 
+                                "test_data_dir.h" 
+                                "MEMILIO_TEST_DATA_DIR" 
+                                "${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 #-------------------------------------------------------
 # Test Discovery and CTest Integration
@@ -236,15 +228,3 @@ mark_as_advanced(
     BUILD_GMOCK
     BUILD_GTEST
 )
-
-set(GTEST_TARGETS_TO_FOLDER GTest::gtest GTest::gmock GTest::gtest_main)
-if(TARGET gtest)
-    list(APPEND GTEST_TARGETS_TO_FOLDER gtest)
-endif()
-if(TARGET gmock)
-    list(APPEND GTEST_TARGETS_TO_FOLDER gmock)
-endif()
-if(TARGET gtest_main)
-    list(APPEND GTEST_TARGETS_TO_FOLDER gtest_main)
-endif()
-message(STATUS "Tests configuration finalized.")

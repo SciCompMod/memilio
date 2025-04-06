@@ -1,5 +1,3 @@
-message(STATUS "Configuring Memilio Examples...")
-
 #-------------------------------------------------------
 # Data Directory Configuration
 #-------------------------------------------------------
@@ -18,7 +16,11 @@ function(add_memilio_example NAME SOURCES)
     target_link_libraries(${NAME} PRIVATE memilio ${EXTRA_DEPS})
     memilio_set_warning_flags(${NAME})
     memilio_set_sanitizer_flags(${NAME})
-    target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) # For data_dir.h
+    memilio_configure_path_header(${NAME} # Target name
+                                  "data_dir.h.in" # Input template relative to examples/
+                                  "data_dir.h"    # Output file relative to examples build dir
+                                  "MEMILIO_DATA_DIR" # Variable name to set in the header
+                                  "${PROJECT_SOURCE_DIR}/data")
 endfunction()
 
 #-------------------------------------------------------
@@ -47,9 +49,9 @@ add_memilio_example(memilio_example_sde_sir    sde_sir.cpp    sde_sir)
 add_memilio_example(memilio_example_sde_sirs   sde_sirs.cpp   sde_sirs)
 add_memilio_example(memilio_example_sde_seirvv sde_seirvv.cpp sde_seirvv)
 
-add_memilio_example(memilio_example_ad_square  ad_square_example.cpp AD::AD)
-add_memilio_example(memilio_example_ad_odeint  ad_odeint_example.cpp AD::AD Boost::boost)
-add_memilio_example(memilio_example_ode_seair  ode_seair.cpp         ode_seair AD::AD)
+add_memilio_example(memilio_example_ad_square  ad_square_example.cpp)
+add_memilio_example(memilio_example_ad_odeint  ad_odeint_example.cpp Boost::boost)
+add_memilio_example(memilio_example_ode_seair  ode_seair.cpp         ode_seair)
 
 add_memilio_example(memilio_example_ide_seir        ide_seir.cpp        ide_seir)
 add_memilio_example(memilio_example_ide_secir       ide_secir.cpp       ide_secir)
@@ -67,7 +69,7 @@ add_memilio_example(memilio_example_smm smm.cpp smm)
 
 if(MEMILIO_ENABLE_IPOPT)
     message(STATUS "Building examples requiring Ipopt.")
-    add_memilio_example(memilio_example_ode_seair_optimization ode_seair_optimization.cpp ode_seair AD::AD Ipopt::Ipopt)
+    add_memilio_example(memilio_example_ode_seair_optimization ode_seair_optimization.cpp ode_seair Ipopt::Ipopt)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
@@ -88,5 +90,3 @@ if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
     add_memilio_example(memilio_example_ode_param_study      ode_secir_parameter_study.cpp       ode_secir HDF5::HDF5 JsonCpp::JsonCpp)
     add_memilio_example(memilio_example_ode_param_study_graph ode_secir_parameter_study_graph.cpp ode_secir HDF5::HDF5 JsonCpp::JsonCpp)
 endif()
-
-message(STATUS "Memilio Examples configured.")

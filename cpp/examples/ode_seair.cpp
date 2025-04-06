@@ -23,7 +23,7 @@
 // A detailed description of the model can be found in the publication
 // Tsay et al. (2020), Modeling, state estimation, and optimal control for the US COVID-19 outbreak.
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.hpp"
 
 #include "ode_seair/model.h"
 #include "ode_seair/infection_state.h"

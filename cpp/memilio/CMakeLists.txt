@@ -1,5 +1,3 @@
-message(STATUS "Configuring Memilio core library...")
-
 # Configure internal header based on CMake settings
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config_internal.h.in" 
                "${CMAKE_CURRENT_BINARY_DIR}/memilio/config_internal.h"
@@ -116,6 +114,9 @@ add_library(memilio
     utils/miompi.cpp
     utils/mioomp.h
     utils/type_list.h
+
+    #ad library
+    ad/ad.hpp
 )
 
 # Include directories for build and install interfaces
@@ -133,7 +134,6 @@ target_link_libraries(memilio PUBLIC
     Boost::filesystem    # Filesystem operations
     Boost::disable_autolinking # MSVC specific, ensure provided by FindBoost
     Random123            # Random number generation (ensure target exists)
-    AD::AD               # Auto-differentiation library target
 )
 
 # Apply project-wide compiler settings
@@ -162,6 +162,3 @@ if(MEMILIO_ENABLE_OPENMP)
     # Link OpenMP flags via INTERFACE library target
     target_link_libraries(memilio INTERFACE OpenMP::OpenMP_CXX)
 endif()
-
-
-message(STATUS "Memilio core library configured.")

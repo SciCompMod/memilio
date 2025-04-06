@@ -1,5 +1,3 @@
-include(FetchContent)
-
 #-------------------------------------------------------
 # Bundled Library Versions
 #-------------------------------------------------------
@@ -21,16 +19,13 @@ if(MEMILIO_ENABLE_PROFILING)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GPERFTOOLS REQUIRED libprofiler) # Find using pkg-config
 
-    if(GPERFTOOLS_FOUND)
-        # Create an imported target for gperftools
+    if(GPERFTOOLS_FOUND AND NOT TARGET memilio::gperftools)
         add_library(memilio::gperftools INTERFACE IMPORTED)
-        target_include_directories(memilio::gperftools SYSTEM INTERFACE ${GPERFTOOLS_INCLUDE_DIRS})
+        target_include_directories(memilio::gperftools SYSTEM INTERFACE ${GPERFTOOLS_INCLUDE_DIRS}) 
         target_link_libraries(memilio::gperftools INTERFACE ${GPERFTOOLS_LINK_LIBRARIES})
-        message(STATUS "Profiling enabled: Found system gperftools.")
-        set(GPERFTOOLS_FOUND TRUE CACHE INTERNAL "gperftools found (system pkg-config)")
-    else()
-        # pkg_check_modules with REQUIRED should already be fatal, but double-check.
-        message(FATAL_ERROR "gperftools required for profiling but not found.")
+        message(STATUS "Profiling enabled: Found system gperftools. Created target memilio::gperftools.")
+    elseif(NOT GPERFTOOLS_FOUND)
+         message(FATAL_ERROR "gperftools required for profiling but not found.")
     endif()
 endif()
 
@@ -58,9 +53,16 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
 
     # Verify the expected target was created by the bundled build
     if(NOT TARGET spdlog::spdlog)
-        message(FATAL_ERROR "Bundled spdlog build did not create target spdlog::spdlog.")
+        if(TARGET spdlog)
+            message(STATUS "Creating alias spdlog::spdlog for bundled target spdlog.")
+            add_library(spdlog::spdlog ALIAS spdlog)
+            set(MEMILIO_HAS_SPDLOG TRUE CACHE BOOL "Spdlog support status" FORCE)
+        else()
+            message(FATAL_ERROR "Bundled spdlog build did not create expected target spdlog or spdlog::spdlog.")
+        endif()
+    else()
+        set(MEMILIO_HAS_SPDLOG TRUE CACHE BOOL "Spdlog support status" FORCE) # Update status variable
     endif()
-    set(MEMILIO_HAS_SPDLOG TRUE CACHE BOOL "Spdlog support status" FORCE) # Update status variable
 else()
     message(STATUS "Searching for system Spdlog...")
     find_package(spdlog REQUIRED CONFIG) # Use CMake config mode for modern targets
@@ -71,7 +73,7 @@ else()
         message(STATUS "Creating alias spdlog::spdlog for system target spdlog.")
         add_library(spdlog::spdlog ALIAS spdlog)
     elseif(NOT TARGET spdlog::spdlog)
-         message(FATAL_ERROR "System spdlog found, but required target spdlog::spdlog is missing.")
+        message(FATAL_ERROR "System spdlog found, but required target spdlog::spdlog is missing.")
     endif()
     set(MEMILIO_HAS_SPDLOG TRUE CACHE BOOL "Spdlog support status" FORCE) # Update status variable
 endif()
@@ -135,10 +137,10 @@ if(MEMILIO_ENABLE_IPOPT)
     if(TARGET ipopt AND NOT TARGET Ipopt::Ipopt)
         message(STATUS "Bundled Ipopt configured. Creating alias Ipopt::Ipopt.")
         add_library(Ipopt::Ipopt ALIAS ipopt)
-        set(IPOPT_FOUND TRUE CACHE INTERNAL "Ipopt found (bundled)") 
+        set(IPOPT_FOUND TRUE CACHE BOOL "Ipopt found (bundled)") 
     elseif(TARGET Ipopt::Ipopt)
          message(STATUS "Bundled Ipopt configured (target Ipopt::Ipopt found).")
-         set(IPOPT_FOUND TRUE CACHE INTERNAL "Ipopt found (bundled)") 
+         set(IPOPT_FOUND TRUE CACHE BOOL "Ipopt found (bundled)") 
     else()
          # Warn but don't fail by default, allows project to proceed without Ipopt if desired
          message(WARNING "Ipopt target (expected 'ipopt' or 'Ipopt::Ipopt') not found after FetchContent.")
@@ -148,6 +150,7 @@ endif()
 #-------------------------------------------------------
 # Boost 
 #-------------------------------------------------------
+set(BOOST_FOUND FALSE CACHE BOOL "Boost found status" FORCE)
 if(MEMILIO_USE_BUNDLED_BOOST)
     message(STATUS "Using bundled Boost ${MEMILIO_BUNDLED_BOOST_VERSION} (building filesystem component)")
     string(REPLACE "." "_" MEMILIO_BOOST_VERSION_UNDERSC "${MEMILIO_BUNDLED_BOOST_VERSION}")
@@ -158,9 +161,9 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         URL_HASH          SHA256=a5800f405508f5df8114558ca9855d2640a2de8f0445f051fa1c7c3383045724
         
     )
-    FetchContent_MakeAvailable(boost_download) # Populates boost_download_SOURCE_DIR
+    FetchContent_MakeAvailable(boost_download) 
 
-    # Manual build for bundled Boost::filesystem (avoids full Boost build system)
+    #NOTE: Manually building Boost::filesystem to avoid full Boost build system dependency.
     # 1. Interface target for headers
     add_library(boost INTERFACE)
     target_include_directories(boost SYSTEM INTERFACE ${boost_download_SOURCE_DIR})
@@ -199,7 +202,7 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     add_library(Boost::filesystem ALIAS boost_filesystem)
 
     # Signal that Boost (required parts) is available
-    set(BOOST_FOUND ON CACHE BOOL "Boost found (bundled)" FORCE)
+    set(BOOST_FOUND TRUE CACHE BOOL "Boost found (bundled)" FORCE)
     set(Boost_VERSION_STRING ${MEMILIO_BUNDLED_BOOST_VERSION} CACHE STRING "Boost version (bundled)" FORCE)
     message(VERBOSE "Bundled Boost::filesystem target created.")
 
@@ -210,6 +213,7 @@ else()
     # Verify find_package created the target
     if(TARGET Boost::filesystem)
         message(FATAL_ERROR "System Boost found, but required target Boost::filesystem is missing.")
+        set(BOOST_FOUND TRUE CACHE BOOL "Boost found (system)" FORCE) 
     endif()
 endif()
 
@@ -219,14 +223,20 @@ endif()
 # Check MEMILIO_ENABLE_HDF5 option set in the main CMakeLists.txt
 set(MEMILIO_HAS_HDF5 FALSE CACHE BOOL "HDF5 support status" FORCE) # Initialize status variable
 message(STATUS "Searching for optional system HDF5 (C library)...")
-# Find quietly using CONFIG mode first, module mode as fallback (standard find_package behavior)
 find_package(HDF5 COMPONENTS C QUIET)
-
-if(HDF5_FOUND AND TARGET HDF5::HDF5) # Check for FOUND status and modern target
-    message(STATUS "Found system HDF5: ${HDF5_VERSION} (using target HDF5::HDF5)")
-    set(MEMILIO_HAS_HDF5 TRUE CACHE BOOL "HDF5 support status" FORCE)
+if(HDF5_FOUND)
+    if (TARGET HDF5::HDF5)
+        message(STATUS "Found system HDF5: ${HDF5_VERSION} (using target HDF5::HDF5)")
+        set(MEMILIO_HAS_HDF5 TRUE CACHE BOOL "HDF5 support status" FORCE)
+    elseif(TARGET hdf5) # Check for common non-namespaced target from older find modules
+        message(STATUS "Found system HDF5: ${HDF5_VERSION} (target hdf5). Creating alias HDF5::HDF5.")
+        add_library(HDF5::HDF5 ALIAS hdf5)
+        set(MEMILIO_HAS_HDF5 TRUE CACHE BOOL "HDF5 support status" FORCE)
+    else()
+         message(FATAL_ERROR "System HDF5 found, but required target (HDF5::HDF5 or hdf5) missing.")
+    endif()
 else()
-    message(FATAL_ERROR "System HDF5 not found or target HDF5::HDF5 missing.")
+    message(FATAL_ERROR "System HDF5 not found.")
 endif()
 
 #-------------------------------------------------------
@@ -304,8 +314,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Random123) 
 
 # Create the INTERFACE target
-add_library(Random123 INTERFACE)
-message(STATUS ${FETCHCONTENT_BASE_DIR})
-target_include_directories(Random123 SYSTEM INTERFACE ${random123_SOURCE_DIR}/include)
-message(VERBOSE "Bundled Random123 configured. Target Random123 created.")
+if(NOT TARGET Random123)
+    add_library(Random123 INTERFACE)
+    message(STATUS ${FETCHCONTENT_BASE_DIR})
+    target_include_directories(Random123 SYSTEM INTERFACE ${random123_SOURCE_DIR}/include)
+    message(VERBOSE "Bundled Random123 configured. Target Random123 created.")  
+endif()
+
 
