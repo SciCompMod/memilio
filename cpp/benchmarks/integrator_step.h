@@ -22,6 +22,7 @@
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/logging.h"
+#include <bench_config_dir.h>
 
 #include "benchmark/benchmark.h"
 

@@ -21,6 +21,7 @@
 #include "memilio/compartments/flow_simulation.h"
 #include "ode_seir/model.h"
 #include <string>
+#include <bench_config_dir.h>
 
 const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "simulation.config");
 
