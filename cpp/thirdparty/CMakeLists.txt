@@ -27,6 +27,7 @@ if(MEMILIO_ENABLE_PROFILING)
         target_include_directories(memilio::gperftools SYSTEM INTERFACE ${GPERFTOOLS_INCLUDE_DIRS})
         target_link_libraries(memilio::gperftools INTERFACE ${GPERFTOOLS_LINK_LIBRARIES})
         message(STATUS "Profiling enabled: Found system gperftools.")
+        set(GPERFTOOLS_FOUND TRUE CACHE INTERNAL "gperftools found (system pkg-config)")
     else()
         # pkg_check_modules with REQUIRED should already be fatal, but double-check.
         message(FATAL_ERROR "gperftools required for profiling but not found.")
@@ -84,10 +85,8 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
         GIT_PROGRESS   TRUE
     )
     FetchContent_MakeAvailable(eigen) # Populates eigen_SOURCE_DIR
-
-    # Eigen is header-only; manually create the INTERFACE target when fetched
     if(NOT TARGET Eigen3::Eigen)
-        add_library(Eigen3::Eigen INTERFACE IMPORTED)
+        add_library(Eigen3::Eigen INTERFACE)
         target_include_directories(Eigen3::Eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
         message(STATUS "Created target Eigen3::Eigen for bundled version.")
     endif()
@@ -124,8 +123,10 @@ if(MEMILIO_ENABLE_IPOPT)
     if(TARGET ipopt AND NOT TARGET Ipopt::Ipopt)
         message(STATUS "Bundled Ipopt configured. Creating alias Ipopt::Ipopt.")
         add_library(Ipopt::Ipopt ALIAS ipopt)
+        set(IPOPT_FOUND TRUE CACHE INTERNAL "Ipopt found (bundled)") 
     elseif(TARGET Ipopt::Ipopt)
          message(STATUS "Bundled Ipopt configured (target Ipopt::Ipopt found).")
+         set(IPOPT_FOUND TRUE CACHE INTERNAL "Ipopt found (bundled)") 
     else()
          # Warn but don't fail by default, allows project to proceed without Ipopt if desired
          message(WARNING "Ipopt target (expected 'ipopt' or 'Ipopt::Ipopt') not found after FetchContent.")
@@ -139,30 +140,33 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     message(STATUS "Using bundled Boost ${MEMILIO_BUNDLED_BOOST_VERSION} (building filesystem component)")
     string(REPLACE "." "_" MEMILIO_BOOST_VERSION_UNDERSC "${MEMILIO_BUNDLED_BOOST_VERSION}")
     FetchContent_Declare(
-        boost_download # Just downloads the source archive
-        URL               https://archives.boost.io/release/${MEMILIO_BUNDLED_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
-        URL_HASH          SHA256=bcce3562880eea4eb6fbf1914a8f3563c21c5956fa066b984dbb3f96c1ca6766
+        boost_download 
         DOWNLOAD_PROGRESS TRUE
+        URL               https://archives.boost.io/release/${MEMILIO_BUNDLED_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
+        URL_HASH          SHA256=a5800f405508f5df8114558ca9855d2640a2de8f0445f051fa1c7c3383045724
+        
     )
     FetchContent_MakeAvailable(boost_download) # Populates boost_download_SOURCE_DIR
 
     # Manual build for bundled Boost::filesystem (avoids full Boost build system)
     # 1. Interface target for headers
-    add_library(Boost::boost INTERFACE)
-    target_include_directories(Boost::boost SYSTEM INTERFACE ${boost_download_SOURCE_DIR})
+    add_library(boost INTERFACE)
+    target_include_directories(boost SYSTEM INTERFACE ${boost_download_SOURCE_DIR})
+    add_library(Boost::boost ALIAS boost)
     # Suppress common Boost header warnings
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(Boost::boost INTERFACE "-Wno-c++20-attribute-extensions")
+        target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
     endif()
 
     # 2. Interface target to disable MSVC auto-linking
-    add_library(Boost::disable_autolinking INTERFACE)
+    add_library(boost_disable_autolink INTERFACE)
+    add_library(Boost::disable_autolinking ALIAS boost_disable_autolink)
     if(MSVC)
-        target_compile_definitions(Boost::disable_autolinking INTERFACE BOOST_ALL_NO_LIB)
+        target_compile_definitions(boost_disable_autolink INTERFACE BOOST_ALL_NO_LIB)
     endif()
 
     # 3. Static library target for filesystem source files
-    add_library(Boost::filesystem STATIC
+    add_library(boost_filesystem STATIC
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/codecvt_error_category.cpp
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/directory.cpp
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/exception.cpp
@@ -172,13 +176,15 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/portability.cpp
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/unique_path.cpp
         ${boost_download_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
+        $<IF:$<PLATFORM_ID:Windows>,${boost_download_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp,>
     )
-    target_compile_definitions(Boost::filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
+    target_compile_definitions(boost_filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
     if(NOT MSVC)
-       target_compile_definitions(Boost::filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
+       target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
     endif()
-    target_link_libraries(Boost::filesystem PUBLIC Boost::boost Boost::disable_autolinking)
-    set_property(TARGET Boost::filesystem PROPERTY POSITION_INDEPENDENT_CODE ON) # Needed for static libs used in shared libs or executables
+    target_link_libraries(boost_filesystem PUBLIC boost boost_disable_autolink)
+    set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON) # Needed for static libs used in shared libs or executables
+    add_library(Boost::filesystem ALIAS boost_filesystem)
 
     # Signal that Boost (required parts) is available
     set(Boost_FOUND ON CACHE BOOL "Boost found (bundled)" FORCE)
@@ -225,9 +231,10 @@ if(MEMILIO_USE_BUNDLED_JSONCPP)
     message(STATUS "Using bundled JsonCpp ${MEMILIO_BUNDLED_JSONCPP_VERSION}")
     FetchContent_Declare(
         jsoncpp
-        URL               https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_BUNDLED_JSONCPP_VERSION}.tar.gz
-        URL_HASH          SHA256=803bba108191087f8d499b2acfdc7e6e598d45cb93daceaf913248f6ee55335a
         DOWNLOAD_PROGRESS TRUE
+        URL               https://github.com/open-source-parsers/jsoncpp/archive/${MEMILIO_BUNDLED_JSONCPP_VERSION}.tar.gz
+        URL_HASH          SHA256=f93b6dd7ce796b13d02c108bc9f79812245a82e577581c4c9aabe57075c90ea2
+        
     )
     # Set FetchContent build options before MakeAvailable
     set(JSONCPP_WITH_TESTS OFF CACHE BOOL "" FORCE)
@@ -260,14 +267,15 @@ else()
 
     if(TARGET JsonCpp::JsonCpp) # Check for the standard modern target
          set(jsoncpp_version_str "unknown")
-         # Try to get version info
-         if(jsoncpp_VERSION) set(jsoncpp_version_str ${jsoncpp_VERSION})
-         elseif(JsonCpp_VERSION) set(jsoncpp_version_str ${JsonCpp_VERSION}) endif()
+         if(jsoncpp_VERSION) 
+            set(jsoncpp_version_str ${jsoncpp_VERSION})
+         elseif(JsonCpp_VERSION) 
+            set(jsoncpp_version_str ${JsonCpp_VERSION}) 
+        endif()
          message(STATUS "Found system JsonCpp: ${jsoncpp_version_str} (using target JsonCpp::JsonCpp)")
          set(MEMILIO_HAS_JSONCPP TRUE CACHE BOOL "JsonCpp support status" FORCE)
     else()
          message(STATUS "Optional: System JsonCpp not found or JsonCpp::JsonCpp target missing.")
-         # MEMILIO_HAS_JSONCPP remains FALSE
     endif()
 endif()
 
@@ -282,12 +290,13 @@ FetchContent_Declare(
     GIT_TAG        ${MEMILIO_BUNDLED_RANDOM123_VERSION}
     GIT_SHALLOW    TRUE
     GIT_PROGRESS   TRUE
+    SOURCE_SUBDIR ""
 )
 FetchContent_MakeAvailable(Random123) 
 
 # Create the INTERFACE target
-if(NOT TARGET Random123::Random123)
-    add_library(Random123::Random123 INTERFACE)
-    target_include_directories(Random123::Random123 SYSTEM INTERFACE ${random123_SOURCE_DIR}/include)
-    message(STATUS "Bundled Random123 configured. Target Random123::Random123 created.")
-endif()
+add_library(random123 INTERFACE)
+message(STATUS ${FETCHCONTENT_BASE_DIR})
+target_include_directories(random123 SYSTEM INTERFACE ${FETCHCONTENT_BASE_DIR}/include)
+message(STATUS "Bundled Random123 configured. Target Random123::Random123 created.")
+

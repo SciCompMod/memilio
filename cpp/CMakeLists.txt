@@ -83,9 +83,9 @@ mark_as_advanced(
 # Function to check if a package is available and disable the option if not
 function(check_dependency OPTION_NAME PACKAGE_NAME)
     if(${OPTION_NAME})
-        find_package(${PACKAGE_NAME} QUIET)
+        find_package(${PACKAGE_NAME})
         if(NOT ${PACKAGE_NAME}_FOUND)
-            message(WARNING "${PACKAGE_NAME} not found. ${OPTION_NAME} will be disabled.")
+            message(FATAL_ERROR "${PACKAGE_NAME} not found. ${OPTION_NAME} will be disabled.")
             set(${OPTION_NAME} OFF CACHE BOOL "Disabled because ${PACKAGE_NAME} was not found" FORCE)
             return()
         endif()
@@ -173,13 +173,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         set(APPLE_SILICON TRUE)
         set(APPLE_SILICON_FLAGS "-march=native")
     endif()
-   
-    
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message(STATUS "Detected Clang compiler (${CMAKE_CXX_COMPILER_VERSION})")
     set(USING_CLANG_COMPATIBLE TRUE)
-    check_compiler_version("Clang" ${CMAKE_CXX_COMPILER_VERSION} ${MEMILIO_MIN_CLANG_VERSION})
-    
+    check_compiler_version("Clang" ${CMAKE_CXX_COMPILER_VERSION} ${MEMILIO_MIN_CLANG_VERSION}) 
 else()
     message(WARNING "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}. Build may not work correctly.")
 endif()
@@ -188,9 +185,7 @@ endif()
 if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
 endif()
-# Apple Silicon optimizations (kept separate from warning flags)
 if(APPLE_SILICON)
-    # Apply ARM-specific optimizations globally
     add_compile_options(${APPLE_SILICON_FLAGS})
     message(STATUS "Applied Apple Silicon optimization flags: ${APPLE_SILICON_FLAGS}")
 endif()
@@ -262,7 +257,7 @@ function(memilio_set_coverage_flags target_name)
 endfunction()
 
 #-------------------------------------------------------
-# Sanitizer configuration (Refined)
+# Sanitizer configuration
 #-------------------------------------------------------
 set(MEMILIO_SANITIZER_COMPILE_FLAGS "")
 set(MEMILIO_SANITIZER_LINK_FLAGS "")
@@ -300,7 +295,7 @@ function(memilio_set_sanitizer_flags target_name)
 endfunction()
 
 #-------------------------------------------------------
-# OpenMP configuration (Refined)
+# OpenMP configuration 
 #-------------------------------------------------------
 set(MEMILIO_OPENMP_FOUND FALSE) # Track if we successfully configure OpenMP
 if(MEMILIO_ENABLE_OPENMP)
@@ -493,15 +488,6 @@ write_basic_package_version_file(
     COMPATIBILITY SameMinorVersion
     )
 
-# Export the build tree for use without installation
-export(EXPORT memilio-targets
-    FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/memilio-targets.cmake"
-    NAMESPACE memilio::
-)
-
-# Add to user's package registry (CMake 3.24 has improved registry handling)
-export(PACKAGE memilio)
-
 #-------------------------------------------------------
 # Installation configuration
 #-------------------------------------------------------
@@ -545,9 +531,6 @@ if(MEMILIO_ENABLE_INSTALL)
             "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
     )
-
-else()
-    message(WARNING "Installation disabled. Use -DMEMILIO_ENABLE_INSTALL=ON to enable.")
 endif()
 
 
@@ -595,12 +578,10 @@ print_config_item("Boost::filesystem" "${BOOST_FS_FOUND} (Bundled: ${MEMILIO_USE
 # Optional dependencies status from thirdparty script
 print_config_item("HDF5" "${MEMILIO_HAS_HDF5} (Enabled: ${MEMILIO_ENABLE_HDF5})")
 print_config_item("JsonCpp" "${MEMILIO_HAS_JSONCPP} (Bundled: ${MEMILIO_USE_BUNDLED_JSONCPP})")
-get_property(IPOPT_FOUND TARGET Ipopt::Ipopt PROPERTY TYPE) # Check if target exists after thirdparty script
 print_config_item("Ipopt" "${IPOPT_FOUND} (Enabled: ${MEMILIO_ENABLE_IPOPT})")
-get_property(GPERFTOOLS_FOUND TARGET memilio::gperftools PROPERTY TYPE)
 print_config_item("gperftools" "${GPERFTOOLS_FOUND} (Enabled: ${MEMILIO_ENABLE_PROFILING})")
 print_config_item("OpenMP" "${MEMILIO_OPENMP_FOUND} (Enabled: ${MEMILIO_ENABLE_OPENMP})")
-print_config_item("MPI" "${MPI_FOUND} (Enabled: ${MEMILIO_ENABLE_MPI})") # MPI_FOUND set by find_package
+print_config_item("MPI" "${MPI_FOUND} (Enabled: ${MEMILIO_ENABLE_MPI})")
 
 message(STATUS "")
 message(STATUS "-- Build Flags --")

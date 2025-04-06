@@ -37,15 +37,15 @@ else()
 endif()
 
 if(CMAKE_CONFIGURATION_TYPES)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+    add_custom_target(memilio-check COMMAND ${CMAKE_CTEST_COMMAND}
         --force-new-ctest-process --output-on-failure
         --build-config "$<CONFIGURATION>")
 else()
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+    add_custom_target(memilio-check COMMAND ${CMAKE_CTEST_COMMAND}
         --force-new-ctest-process --output-on-failure)
 endif()
 
-set_target_properties(check PROPERTIES FOLDER "Scripts")
+set_target_properties(memilio-check PROPERTIES FOLDER "Scripts")
 
 # include_directories(${gtest_SOURCE_DIR}/include)
 

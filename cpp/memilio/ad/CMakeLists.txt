@@ -6,25 +6,3 @@ target_include_directories(AD INTERFACE
     $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(AD INTERFACE spdlog::spdlog)
-
-### installation related stuff ####
-
- install(TARGETS AD
-     EXPORT ADConfig
-     LIBRARY DESTINATION lib COMPONENT AD
-     ARCHIVE DESTINATION lib COMPONENT AD
-     RUNTIME DESTINATION bin COMPONENT AD
-     INCLUDES DESTINATION include)
-
- install(EXPORT ADConfig
-     FILE ADConfig.cmake
-     NAMESPACE AD::
-     DESTINATION lib/cmake/ADConfig
-     COMPONENT AD)
-
-
- install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-     DESTINATION "include"
-     COMPONENT AD
- )
- 
