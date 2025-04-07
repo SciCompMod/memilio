@@ -56,18 +56,11 @@ class Generator:
             "python_module_name": intermed_repr.python_module_name
         }
 
-        if len(intermed_repr.model_base) > 0:
-            model_base_templates = ", ".join(
-                entry[0] for entry in intermed_repr.model_base if len(entry) > 0
-            )
-        else:
-            raise IndexError("model_base is empty. No base classes found.")
-
         self.substitutions_cpp = {
             "namespace": intermed_repr.namespace,
             "model_class_name": intermed_repr.model_class,
             "model_base": intermed_repr.model_base[0],
-            "model_base_templates": model_base_templates,
+            "model_base_templates": intermed_repr.model_base_templates,
             "python_module_name": intermed_repr.python_module_name,
             "parameterset": intermed_repr.parameterset,
             "includes": StringTemplates.includes(intermed_repr),
@@ -89,7 +82,7 @@ class Generator:
         Template files for python and cpp from the template folder are used 
         and the identifiers substituted with the corresponding substitutions.
 
-        @param intermed_repr Dataclass holding the model features.
+        @param intermed_repr: Dataclass holding the model features.
         """
         with open(os.path.join(intermed_repr.python_generation_module_path,
                                "memilio/generation/template/template_py.txt")) as t:

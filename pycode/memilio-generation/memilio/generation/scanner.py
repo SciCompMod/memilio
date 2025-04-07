@@ -30,7 +30,6 @@ from clang.cindex import *
 from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
-
 from memilio.generation.default_generation_dict import default_dict
 
 
@@ -46,7 +45,7 @@ class Scanner:
         """
         Basic Constructor of Scanner class.
 
-        @param conf ScannerConfig dataclass with the configurations.
+        @param conf: ScannerConfig dataclass with the configurations.
         """
         self.config = conf
         utility.try_set_libclang_path(
@@ -61,8 +60,8 @@ class Scanner:
         """! Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
-        @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        @return Information extracted from the model saved as an IntermediateRepresentation.
+        @param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
+        @return: Information extracted from the model saved as an IntermediateRepresentation.
         """
         if self.config.model_class != default_dict["model"]:
             raise AssertionError("set a model name")
@@ -76,7 +75,7 @@ class Scanner:
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
 
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         source_file = self.config.source_file
         model_folder = os.path.dirname(source_file)
@@ -91,9 +90,9 @@ class Scanner:
         """! Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
         Call check_node_kind for extracting information from the nodes.
 
-        @param node Represents the current node of the abstract syntax tree as a Cursor object from libclang.
-        @param intermed_repr Dataclass used for saving the extracted model features.
-        @param namespace [Default = ""] Namespace of the current node.
+        @param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
+        @param namespace: [Default = ""] Namespace of the current node.
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
@@ -130,8 +129,8 @@ class Scanner:
         """! Inspect the nodes of kind ENUM_DECL and write needed information into intermed_repr.
         Information: Name of Enum
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         if node.spelling.strip() != default_dict["emptystring"]:
             intermed_repr.enum_populations[node.spelling] = []
@@ -142,8 +141,8 @@ class Scanner:
         """! Inspect the nodes of kind ENUM_CONSTANT_DECL and write needed information into intermed_repr.
         Information: Keys of an Enum
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         if node.semantic_parent.spelling in intermed_repr.enum_populations.keys():
             key = node.semantic_parent.spelling
@@ -155,8 +154,8 @@ class Scanner:
         """! Inspect the nodes of kind CLASS_DECL and write information
         (model_class, model_base, simulation_class, parameterset_wrapper) into intermed_repr.
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         if node.spelling == self.config.model_class:
             intermed_repr.model_class = node.spelling
@@ -175,8 +174,8 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """! Helper function to retreive the model base.
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
 
         for base in node.get_children():
@@ -212,8 +211,8 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """! Helper function to retrieve the model specific includes needed for pybind.
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node; Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         filepath = node.location.file.name
         filepaths = filepath.split("../")
@@ -246,8 +245,8 @@ class Scanner:
         config.age_group and write needed information into intermed_repr.
         Information: age_group
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -270,8 +269,8 @@ class Scanner:
         """! Inspect the nodes of kind CONSTRUCTOR and write needed information into intermed_repr.
         Information: intermed_repr.init
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         if intermed_repr.model_class == default_dict["model"]:
             if node.spelling.startswith(default_dict["model"]) and ('<' in node.spelling and '>' in node.spelling):
@@ -290,8 +289,8 @@ class Scanner:
         """! Inspect the nodes of kind TYPE_ALIAS_DECL and write needed information into intermed_repr.
         Information: intermed_repr.parameterset
 
-        @param node Current node represented as a Cursor object.
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param node: Current node represented as a Cursor object.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         if node.spelling == self.config.parameterset:
             intermed_repr.parameterset = node.spelling
@@ -307,7 +306,7 @@ class Scanner:
         Write needed information from config into intermed_repr,
         delet unnecesary enums and check for missing model features.
 
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
 
         population_groups = []
