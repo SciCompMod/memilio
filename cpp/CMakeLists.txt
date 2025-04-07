@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(memilio 
-    VERSION 1.3.0 
+    VERSION 2.0.0 
     DESCRIPTION "A library for the simulations of infectious dynamics."
     HOMEPAGE_URL "https://github.com/SciCompMod/memilio" 
     LANGUAGES CXX)
