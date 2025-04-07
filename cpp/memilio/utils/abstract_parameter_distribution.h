@@ -55,11 +55,26 @@ public:
     {
     }
 
-    AbstractParameterDistribution(AbstractParameterDistribution& other) = default;
+    AbstractParameterDistribution(AbstractParameterDistribution& other)
+        : m_dist(other.m_dist)
+        , sample_impl1(other.sample_impl1)
+        , sample_impl2(other.sample_impl2)
+    {
+    }
 
-    AbstractParameterDistribution(AbstractParameterDistribution&& other) = default;
+    AbstractParameterDistribution(AbstractParameterDistribution&& other)
+        : m_dist(other.m_dist)
+        , sample_impl1(other.sample_impl1)
+        , sample_impl2(other.sample_impl2)
+    {
+    }
 
-    AbstractParameterDistribution(const AbstractParameterDistribution& other) = default;
+    AbstractParameterDistribution(const AbstractParameterDistribution& other)
+        : m_dist(other.m_dist)
+        , sample_impl1(other.sample_impl1)
+        , sample_impl2(other.sample_impl2)
+    {
+    }
 
     AbstractParameterDistribution()
         : m_dist(nullptr)
