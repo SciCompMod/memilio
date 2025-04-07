@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "benchmarks/simulation.h"
+#include "benchmarks/integrator_secir_sim.h"
 #include "benchmarks/flow_simulation_ode_secirvvs.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
@@ -25,7 +25,7 @@
 #include <bench_config_dir.h>
 #include <string>
 
-const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "simulation.config");
+const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "flow_simulation.config");
 
 // simulation without flows (not in Model definition and not calculated by Simulation)
 void flowless_sim(::benchmark::State& state)

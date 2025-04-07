@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "benchmarks/simulation.h"
+#include "benchmarks/integrator_secir_sim.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "ode_seir/model.h"
 #include <string>
