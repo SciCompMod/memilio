@@ -91,7 +91,7 @@ target_link_libraries(micro_abm PRIVATE memilio abm)
 target_compile_options(micro_abm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(panvXabm panvXabmSim.cpp)
-target_link_libraries(panvXabm PRIVATE memilio abm)
+target_link_libraries(panvXabm PRIVATE memilio abm abm Boost::filesystem)
 target_compile_options(panvXabm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 

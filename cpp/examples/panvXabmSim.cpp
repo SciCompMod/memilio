@@ -18,6 +18,8 @@
 #include "memilio/io/io.h"
 #include "abm/household.h"
 #include "memilio/utils/random_number_generator.h"
+#include "abm/common_abm_loggers.h"
+#include "boost/filesystem.hpp"
 
 // Number of age groups and their definitions
 size_t num_age_groups        = 6;
@@ -27,6 +29,68 @@ const auto age_group_15_to_34 = mio::AgeGroup(2);
 const auto age_group_35_to_59 = mio::AgeGroup(3);
 const auto age_group_60_to_79 = mio::AgeGroup(4);
 const auto age_group_80_plus  = mio::AgeGroup(5);
+
+struct LogInfectionStatePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
+        auto curr_time     = sim.get_time();
+        const auto persons = sim.get_world().get_persons();
+
+        // PRAGMA_OMP(parallel for)
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+                             ((uint32_t)p.get_infection_state(curr_time));
+                // PRAGMA_OMP(atomic)
+                sum[index] += 1;
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    /** 
+     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+     * @param[in] sim The simulation of the abm.
+     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+     */
+    static Type log(const mio::abm::Simulation& sim)
+    {
+
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+            Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
+        auto curr_time     = sim.get_time();
+        auto prev_time     = sim.get_prev_time();
+        const auto persons = sim.get_world().get_persons();
+
+        // PRAGMA_OMP(parallel for)
+        for (auto i = size_t(0); i < persons.size(); ++i) {
+            auto& p = persons[i];
+            if (p.get_should_be_logged()) {
+                // PRAGMA_OMP(atomic)
+                if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+                    (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+                    auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+                                 ((uint32_t)p.get_location().get_type());
+                    sum[index] += 1;
+                }
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};
+
 
 /**
  * Helper function to convert log-normal parameters from mean and std to mu and sigma
@@ -110,11 +174,13 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.75;
 
     // Set infection parameters
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 5.6;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 500;
     
     // Set contact parameter (people of same age group meet more often)
     // params.get<mio::abm::AgeGroupGotoSocialEvent>() = true;
 }
+
+
 
 
 /**
@@ -153,10 +219,12 @@ std::map<uint32_t, bool> read_infection_data(const std::string& filename)
     return infected_status;
 }
 
+
 /**
  * Creates a restaurant simulation world from infection data file
+ * and adds additional persons up to number_of_persons if specified
  */
-mio::abm::World create_restaurant_world(const std::string& infection_data_file)
+mio::abm::World create_world_from_file(const std::string& infection_data_file, int number_of_persons = 0)
 {
     // Create world with 6 age groups
     auto world = mio::abm::World(num_age_groups);
@@ -167,40 +235,51 @@ mio::abm::World create_restaurant_world(const std::string& infection_data_file)
     // Read infection data
     auto infected_status = read_infection_data(infection_data_file);
     
-    // Create tables/households map
-    std::map<std::string, std::vector<uint32_t>> tables;
-    
-    // Create one restaurant (social event location)
-    auto restaurant = world.add_location(mio::abm::LocationType::SocialEvent);
-    
     // Create a hospital and ICU for severe cases
     auto hospital = world.add_location(mio::abm::LocationType::Hospital);
     auto icu = world.add_location(mio::abm::LocationType::ICU);
     
-    // Create homes (one per table)
+    // Create common locations
+    auto event = world.add_location(mio::abm::LocationType::SocialEvent);
+    auto shop = world.add_location(mio::abm::LocationType::BasicsShop);
+    auto school = world.add_location(mio::abm::LocationType::School);
+    auto work = world.add_location(mio::abm::LocationType::Work);
+    
+    // Create homes (one per table) for the initial persons from the file
     std::map<std::string, mio::abm::LocationId> table_homes;
     for (const auto& [id, infected] : infected_status) {
-        // Create home location for each person (or group them by table)
+        // Create home location for each person
         auto home = world.add_location(mio::abm::LocationType::Home);
         table_homes[std::to_string(id)] = home;
     }
     
-    // Create people and assign them to locations
-    std::vector<double> weights = {0.05, 0.05, 0.4, 0.4, 0.07, 0.03};
+    // Create people from the infection data and assign them to locations
+    std::vector<double> weights_age = {0.05, 0.05, 0.4, 0.4, 0.07, 0.03};
+    std::vector<double> weight_home_size = {0.2, 0.3, 0.2, 0.2, 0.1};
+    int initial_person_count = 0;
+    
     for (const auto& [id, infected] : infected_status) {
         mio::AgeGroup age = mio::AgeGroup(
             mio::DiscreteDistribution<size_t>::get_instance()(
-                world.get_rng(), weights
+                world.get_rng(), weights_age
             )
         );
         
         // Create person and assign them to their home
         auto& person = world.add_person(table_homes[std::to_string(id)], age);
-        
-        // Assign the person to the restaurant, hospital and ICU
-        person.set_assigned_location(restaurant);
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
+        person.set_assigned_location(event);
+        person.set_assigned_location(world.get_individualized_location(table_homes[std::to_string(id)]));
+        person.set_assigned_location(shop);
+        
+        // Assign school or work based on age
+        if (age == age_group_5_to_14) {
+            person.set_assigned_location(school);
+        }
+        if (age == age_group_15_to_34 || age == age_group_35_to_59) {
+            person.set_assigned_location(work);
+        }
         
         // If infected according to data, set them as exposed
         if (infected) {
@@ -211,37 +290,77 @@ mio::abm::World create_restaurant_world(const std::string& infection_data_file)
                 person.get_age(),
                 world.parameters, 
                 mio::abm::TimePoint(0), 
-                mio::abm::InfectionState::InfectedNoSymptoms
+                mio::abm::InfectionState::Exposed
             ));
         }
         
-        // Keep track of people at each table for contact matrix
-        tables[std::to_string(id)].push_back(person.get_person_id());
+        initial_person_count++;
     }
     
-    // Print an overview of the simulation
-    std::cout << "Created restaurant simulation with " << world.get_persons().size() << " people." << std::endl;
-    std::cout << "Infection data read from: " << infection_data_file << std::endl;
-    std::cout << "Number of tables: " << tables.size() << std::endl;
-    std::cout << "Infected people: " << infected_status.size() << std::endl;
-    std::cout << "Tables and their members and their infection state:" << std::endl;
-    for (const auto& [table, members] : tables) {
-        std::cout << "  Table " << table << ": ";
-        for (const auto& member : members) {
-            std::cout << member << " ";
-            auto person = world.get_person(member);
-            if (person.is_infected(mio::abm::TimePoint(0))) {
-                std::cout << "(" << static_cast<uint32_t>(person.get_infection_state(mio::abm::TimePoint(0))) << ") ";
-            } else {
-                std::cout << "(not found) ";
-            }        
+    // If a higher number of persons is requested, create additional people
+    if (number_of_persons > initial_person_count) {
+        // Create additional homes with 1-5 persons per home
+        std::vector<mio::abm::LocationId> additional_homes;
+        std::vector<int> persons_per_home;
+        
+        // First create homes and determine how many people in each
+        int remaining_persons = number_of_persons - initial_person_count;
+        while (remaining_persons > 0) {
+            // Randomly decide how many people in this home (1-5)
+            int persons_in_home = std::min(remaining_persons, 
+                                          1 + static_cast<int>(
+                                                mio::DiscreteDistribution<size_t>::get_instance()(
+                                                    world.get_rng(), weight_home_size)));
+            
+            // Create a new home
+            auto home = world.add_location(mio::abm::LocationType::Home);
+            additional_homes.push_back(home);
+            persons_per_home.push_back(persons_in_home);
+            
+            remaining_persons -= persons_in_home;
         }
-        std::cout << std::endl;
+        
+        // Now create the people and assign them to homes
+        for (size_t i = 0; i < additional_homes.size(); ++i) {
+            for (int j = 0; j < persons_per_home[i]; ++j) {
+                // Randomly determine age based on weights
+                mio::AgeGroup age = mio::AgeGroup(
+                    mio::DiscreteDistribution<size_t>::get_instance()(
+                        world.get_rng(), weights_age
+                    )
+                );
+                
+                // Create person and assign them to their home
+                auto& person = world.add_person(additional_homes[i], age);
+                
+                // Assign to common locations
+                person.set_assigned_location(world.get_individualized_location(additional_homes[i]));
+                person.set_assigned_location(hospital);
+                person.set_assigned_location(icu);
+                person.set_assigned_location(event);
+                person.set_assigned_location(shop);
+                
+                // Assign school or work based on age
+                if (age == age_group_5_to_14) {
+                    person.set_assigned_location(school);
+                }
+                if (age == age_group_15_to_34 || age == age_group_35_to_59) {
+                    person.set_assigned_location(work);
+                }
+            }
+        }
     }
-    std::cout << "Simulation created successfully." << std::endl;
+    
+    std::cout << "Created world with " << world.get_persons().size() << " people" << std::endl;
+    std::cout << "Number of homes: " << 
+        std::count_if(world.get_locations().begin(), world.get_locations().end(), 
+                      [](const mio::abm::Location& loc) { 
+                         return loc.get_type() == mio::abm::LocationType::Home; 
+                      }) << std::endl;
     
     return world;
 }
+
 
 /**
  * Template function for reading a world from a text file (to be implemented later)
@@ -260,7 +379,7 @@ mio::abm::World read_world_from_file(const std::string& filename)
 int main(int argc, char** argv)
 {
     // Default infection data file path
-    std::string infection_data_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabm/PanVadere/restaurant/simulation_runs/lu-2020_no_airflow/infections.txt";
+    std::string infection_data_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/PanVadere/restaurant/simulation_runs/lu-2020_no_airflow/infections.txt";
     
     // Allow overriding the file path via command line
     if (argc > 1) {
@@ -269,23 +388,58 @@ int main(int argc, char** argv)
     
     std::cout << "Creating restaurant simulation from: " << infection_data_file << std::endl;
     
+    int n_persons= 1000;
+
     // Create the simulation world
-    auto world = create_restaurant_world(infection_data_file);
+    auto world = create_world_from_file(infection_data_file, n_persons);
     
     // Set up simulation timeframe
     auto t0 = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(10);
+    auto tmax = t0 + mio::abm::days(20);
+
+
     
+    auto ensemble_infection_per_loc_type =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
+    ensemble_infection_per_loc_type.reserve(size_t(1));
+
+    auto ensemble_infection_state_per_age_group =
+        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection state per age group results
+    ensemble_infection_state_per_age_group.reserve(size_t(1));
+
+    auto ensemble_params = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
+    ensemble_params.reserve(size_t(1));
+
+
     // Initialize simulation
     auto sim = mio::abm::Simulation(t0, std::move(world));
-    
-    // Create a history object to store time series of infection states
+
+    mio::History<mio::abm::TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup>
+            historyInfectionPerLocationType{
+                Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
+    mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
+            Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)
     };
     
     // Run simulation and collect data
     sim.advance(tmax, historyTimeSeries);
+
+
+    auto temp_sim_infection_per_loc_tpye =
+            std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
+    auto temp_sim_infection_state_per_age_group =
+        std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
+        // Push result of the simulation back to the result vector
+    ensemble_infection_per_loc_type.emplace_back(temp_sim_infection_per_loc_tpye);
+    ensemble_infection_state_per_age_group.emplace_back(temp_sim_infection_state_per_age_group);
+    ensemble_params.emplace_back(std::vector<mio::abm::World>{sim.get_world()});
+
+    BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
+        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/results", true));
+    BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_loc_type, ensemble_params, {0},
+        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/results", true));
     
     // Write results to file
     std::ofstream outfile("panvXabm_results.txt");
