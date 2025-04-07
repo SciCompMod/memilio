@@ -22,7 +22,7 @@
 
 #include "abm/parameters.h"
 #include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 
 #include <vector>
 

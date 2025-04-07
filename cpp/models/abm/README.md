@@ -49,7 +49,7 @@ auto model = mio::abm::Model(num_age_groups);
 We can set several general parameters, which you can find [here](../abm/parameters.h). Here is an example where we set the time to go from Exposed to InfectedNoSymptoms to 4 days:
 
 ```cpp
-model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =  mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(4.));
+model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =  mio::ParameterDistributionConstant(4.);
 ```
 
 To add a location to the model, we have to specify the kind of location.

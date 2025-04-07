@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PARAMETER_DISTRIBUTION_WRAPPER_H
-#define PARAMETER_DISTRIBUTION_WRAPPER_H
+#ifndef ABSTRACT_PARAMETER_DISTRIBUTION_H
+#define ABSTRACT_PARAMETER_DISTRIBUTION_H
 
 #include "memilio/io/io.h"
 #include "memilio/utils/compiler_diagnostics.h"
@@ -55,26 +55,11 @@ public:
     {
     }
 
-    AbstractParameterDistribution(AbstractParameterDistribution& other)
-        : m_dist(other.m_dist)
-        , sample_impl1(other.sample_impl1)
-        , sample_impl2(other.sample_impl2)
-    {
-    }
+    AbstractParameterDistribution(AbstractParameterDistribution& other) = default;
 
-    AbstractParameterDistribution(AbstractParameterDistribution&& other)
-        : m_dist(other.m_dist)
-        , sample_impl1(other.sample_impl1)
-        , sample_impl2(other.sample_impl2)
-    {
-    }
+    AbstractParameterDistribution(AbstractParameterDistribution&& other) = default;
 
-    AbstractParameterDistribution(const AbstractParameterDistribution& other)
-        : m_dist(other.m_dist)
-        , sample_impl1(other.sample_impl1)
-        , sample_impl2(other.sample_impl2)
-    {
-    }
+    AbstractParameterDistribution(const AbstractParameterDistribution& other) = default;
 
     AbstractParameterDistribution()
         : m_dist(nullptr)
@@ -198,4 +183,4 @@ IOResult<AbstractParameterDistribution> deserialize_internal(IOContext& io, Tag<
 
 } // namespace mio
 
-#endif //PARAMETER_DISTRIBUTION_WRAPPER_H
+#endif //ABSTRACT_PARAMETER_DISTRIBUTION_H

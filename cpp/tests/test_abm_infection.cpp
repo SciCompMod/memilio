@@ -24,7 +24,7 @@
 #include "abm/person.h"
 #include "abm/person_id.h"
 #include "abm_helpers.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "random_number_test.h"
 
@@ -41,7 +41,7 @@ TEST_F(TestInfection, init)
     mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
 
     params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionUniform(0.1, 0.2));
+        mio::ParameterDistributionUniform(0.1, 0.2);
 
     //set up a personal RNG for infections
     //uses uniformdistribution but result doesn't matter, so init before the mock

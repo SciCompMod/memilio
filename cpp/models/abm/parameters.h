@@ -30,7 +30,7 @@
 #include "memilio/io/default_serialize.h"
 #include "memilio/io/io.h"
 #include "memilio/math/time_series_functor.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"

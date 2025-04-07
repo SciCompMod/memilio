@@ -21,7 +21,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 
 #include <fstream>
 
@@ -39,8 +39,7 @@ int main()
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.));
+    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
@@ -114,7 +113,7 @@ int main()
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                       test_parameters, probability);
+                                                         test_parameters, probability);
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.

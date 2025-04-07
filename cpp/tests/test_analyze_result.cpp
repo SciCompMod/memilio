@@ -22,7 +22,7 @@
 #include "matchers.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/model.h"
 
@@ -490,33 +490,33 @@ TEST(TestEnsembleParamsPercentile, graph_abm_basic)
 
     model1.parameters
         .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(2., 1.2));
+        mio::ParameterDistributionLogNormal(2., 1.2);
     model1.parameters
         .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(5., 1.2));
+        mio::ParameterDistributionLogNormal(5., 1.2);
     model2.parameters
         .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1.3, 2.));
+        mio::ParameterDistributionLogNormal(1.3, 2.);
     mio::ParameterDistributionLogNormal log_norm4(4., 1.2);
     model2.parameters
         .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.2));
+        mio::ParameterDistributionLogNormal(4., 1.2);
 
     auto g1 = std::vector<mio::abm::Model>({model1, model2});
 
     model1.parameters
         .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1.5, 1.5));
+        mio::ParameterDistributionLogNormal(1.5, 1.5);
     model1.parameters
         .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.5));
+        mio::ParameterDistributionLogNormal(4., 1.5);
     model2.parameters
         .get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(1.1, 1.2));
+        mio::ParameterDistributionLogNormal(1.1, 1.2);
     mio::ParameterDistributionLogNormal log_norm7(6., 1.5);
     model2.parameters
         .get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(0)}] =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(6., 1.5));
+        mio::ParameterDistributionLogNormal(6., 1.5);
 
     auto g2 = std::vector<mio::abm::Model>({model1, model2});
 

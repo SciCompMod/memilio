@@ -21,7 +21,7 @@
 #include "distributions_helpers.h"
 
 #include "memilio/io/json_serializer.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"

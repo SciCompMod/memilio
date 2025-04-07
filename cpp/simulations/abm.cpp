@@ -22,7 +22,7 @@
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
 #include "memilio/config.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/config.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/parameter_distributions.h"
@@ -470,40 +470,31 @@ void set_parameters(mio::abm::Parameters params)
     params.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
     params.set<mio::abm::TimeExposedToNoSymptoms>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedNoSymptomsToSymptoms>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedNoSymptomsToRecovered>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedSymptomsToRecovered>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedSymptomsToSevere>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedSevereToRecovered>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedSevereToCritical>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedCriticalToRecovered>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 
     params.set<mio::abm::TimeInfectedCriticalToDead>(
-        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)},
-         mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.))});
+        {{mio::abm::VirusVariant::Count, mio::AgeGroup(num_age_groups)}, mio::ParameterDistributionLogNormal(4., 1.)});
 }
 
 /**

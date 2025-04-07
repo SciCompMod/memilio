@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "abm/personal_rng.h"
-#include "memilio/utils/parameter_distribution_wrapper.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/random_number_generator.h"
 #include "models/abm/personal_rng.h"
