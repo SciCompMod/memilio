@@ -150,6 +150,7 @@ endif()
 if(MEMILIO_HAS_JSONCPP)
     message(STATUS "Linking memilio against JsonCpp")
     target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+endif()
 
 if(MEMILIO_ENABLE_MPI)
     message(STATUS "Linking memilio against MPI")
