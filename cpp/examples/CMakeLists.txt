@@ -118,9 +118,23 @@ add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
 target_compile_options(ide_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ide_secir_example ide_secir.cpp)
-target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
-target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+# add_executable(ide_secir_example ide_secir.cpp)
+# target_link_libraries(ide_secir_example PRIVATE memilio ide_secir)
+# target_compile_options(ide_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+# Add CUDA IDE minimal example 
+add_executable(ide_secir_hackathon_example ide_secir_hackathon.cpp)
+target_link_libraries(ide_secir_hackathon_example PRIVATE memilio ide_secir)
+if(MEMILIO_ENABLE_CUDA)
+    # Already a .cu file so no need to set language
+    target_link_libraries(ide_secir_hackathon_example PRIVATE ${CUDA_LIBRARIES})
+    target_include_directories(ide_secir_hackathon_example PRIVATE ${CUDA_INCLUDE_DIRS})
+    set_target_properties(ide_secir_hackathon_example PROPERTIES
+                         CUDA_SEPARABLE_COMPILATION ON)
+else()
+    # Compile as regular C++ if CUDA is disabled
+    target_compile_options(ide_secir_hackathon_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
 
 add_executable(ide_secir_ageres_example ide_secir_ageres.cpp)
 target_link_libraries(ide_secir_ageres_example PRIVATE memilio ide_secir)
