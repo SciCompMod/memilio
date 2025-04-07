@@ -51,8 +51,8 @@ add_memilio_benchmark(memilio_flow_simulation_ode_seir_benchmark
     ode_seir
 )
 
-add_memilio_benchmark(memilio_simulation_benchmark
-    simulation.cpp
+add_memilio_benchmark(integrator_secir_benchmark
+    integrator_secir_sim.cpp
     ode_secir
 )
 

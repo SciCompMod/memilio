@@ -144,21 +144,19 @@ memilio_set_sanitizer_flags(memilio)
 # Optional dependencies
 if(MEMILIO_HAS_HDF5)
     message(STATUS "Linking memilio against HDF5")
-    target_link_libraries(memilio PUBLIC HDF5::HDF5) # Use imported target
+    target_link_libraries(memilio PUBLIC HDF5::HDF5)
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
     message(STATUS "Linking memilio against JsonCpp")
-    target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp) # Use imported target
-endif()
+    target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
 
 if(MEMILIO_ENABLE_MPI)
     message(STATUS "Linking memilio against MPI")
-    target_link_libraries(memilio PUBLIC MPI::MPI_CXX) # Use imported target
+    target_link_libraries(memilio PUBLIC MPI::MPI_CXX) 
 endif()
 
 if(MEMILIO_ENABLE_OPENMP)
     message(STATUS "Enabling OpenMP for memilio (interface)")
-    # Link OpenMP flags via INTERFACE library target
     target_link_libraries(memilio INTERFACE OpenMP::OpenMP_CXX)
 endif()

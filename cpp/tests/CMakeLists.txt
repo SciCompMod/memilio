@@ -45,7 +45,7 @@ set(CORE_TESTS
     test_random_number_generator.cpp
 )
 
-set(MODEL_TESTS
+set(EBM_TESTS
     test_populations.cpp
     test_odeseir.cpp
     test_odesir.cpp
@@ -144,7 +144,7 @@ endif()
 # Combine all sources
 set(ALL_TEST_SOURCES
     ${CORE_TESTS}
-    ${MODEL_TESTS}
+    ${EBM_TESTS}
     ${NETWORK_TESTS}
     ${ABM_TESTS}
     ${IO_TESTS}

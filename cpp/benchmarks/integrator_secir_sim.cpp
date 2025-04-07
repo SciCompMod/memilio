@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "benchmarks/simulation.h"
+#include "benchmarks/integrator_secir_sim.h"
 #include "benchmarks/secir_ageres_setups.h"
 
 #include "memilio/math/adapt_rk.h"
