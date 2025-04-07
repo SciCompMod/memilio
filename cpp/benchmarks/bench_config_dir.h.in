@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef DATA_DIR_H
-#define DATA_DIR_H
+#ifndef BENCH_CONFIG_DIR_H
+#define BENCH_CONFIG_DIR_H
 
-constexpr const char* const DATA_DIR = "${MEMILIO_DATA_DIR}";
+constexpr const char* const BENCH_CONFIG_DIR = "${MEMILIO_BENCHMARK_CONFIG_DIR}";
 
-#endif //DATA_DIR_H
+#endif //BENCH_CONFIG_DIR_H

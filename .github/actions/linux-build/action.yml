@@ -39,16 +39,15 @@ runs:
       run: |
         sudo apt-get -qq update
         sudo apt-get -qq -y install lcov ccache
+        sudo apt-get -qq -y install gfortran-9
         if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
           sudo apt-get -qq -y install libhdf5-dev 
         fi
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install gcc-9
-            sudo apt-get -qq -y install g++-9
+            sudo apt-get -qq -y install gcc-9 g++-9 
           else        
-            sudo apt-get -qq -y install gcc-11
-            sudo apt-get -qq -y install g++-11
+             sudo apt-get -qq -y install gcc-11 g++-11 
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
@@ -76,6 +75,7 @@ runs:
       shell: bash
       run: |
         cd cpp
+        export FC=/usr/bin/gfortran-9
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
             export CC=/usr/bin/gcc-9
@@ -97,7 +97,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
+        cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_Fortran_COMPILER=/usr/bin/gfortran-9 -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitizers }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitizers }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DMEMILIO_ENABLE_OPENMP=${{ inputs.openmp }} ..
         make -j4
     - name: create build dir archive
       shell: bash

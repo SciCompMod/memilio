@@ -1,38 +1,67 @@
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing" FORCE)
+# Attempt to find pre-installed Google Benchmark
+set(MEMILIO_BENCHMARK_VERSION "v1.6.1" CACHE STRING "GoogleTest version to use")
 
-# set(BENCHMARK_ENABLE_EXCEPTIONS OFF CACHE BOOL "Disable benchmark exceptions" FORCE)
-set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Don't install benchmark" FORCE)
-set(BENCHMARK_DOWNLOAD_DEPENDENCIES OFF CACHE BOOL "Don't download dependencies" FORCE)
-set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Test in benchmark" FORCE)
+# Configure Google Benchmark build options BEFORE MakeAvailable
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # Don't build benchmark's tests
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE) # Don't install benchmark
+set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE) # Don't require gtest
 
-include(FetchContent)
-FetchContent_Declare(benchmark
+FetchContent_Declare(google_benchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG v1.6.1)
-FetchContent_GetProperties(benchmark)
+    GIT_TAG        ${MEMILIO_BENCHMARK_VERSION}
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(google_benchmark)
 
-if(NOT benchmark_POPULATED)
-    FetchContent_Populate(benchmark)
-    set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE BOOL "")
-    add_subdirectory(${benchmark_SOURCE_DIR} ${benchmark_BINARY_DIR} EXCLUDE_FROM_ALL)
-    unset(CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
-endif()
+if(TARGET benchmark::benchmark)
+    set(MEMILIO_BENCHMARK_LIBRARY benchmark::benchmark)
+else()
+    message(FATAL_ERROR "FetchContent for Google Benchmark did not provide target 'benchmark::benchmark'.")
+endif() 
 
-set_target_properties(benchmark PROPERTIES FOLDER "Extern")
 
-add_executable(integrator_step_benchmark integrator_step.cpp)
-target_link_libraries(integrator_step_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
 
-add_executable(flow_simulation_ode_secirvvs_benchmark flow_simulation_ode_secirvvs.cpp)
-target_link_libraries(flow_simulation_ode_secirvvs_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
+# Helper function to add benchmark executables
+function(add_memilio_benchmark NAME SOURCES)
+    set(MEMILIO_DEPS ${ARGN})
 
-add_executable(flow_simulation_ode_seir_benchmark flow_simulation_ode_seir.cpp)
-target_link_libraries(flow_simulation_ode_seir_benchmark PRIVATE memilio ode_seir benchmark::benchmark)
+    add_executable(${NAME} ${SOURCES})
+    target_link_libraries(${NAME} PRIVATE
+        memilio
+        ${MEMILIO_DEPS}
+        ${MEMILIO_BENCHMARK_LIBRARY}
+    )
+    memilio_configure_path_header(${NAME} "bench_config_dir.h.in" "bench_config_dir.h" "MEMILIO_BENCHMARK_CONFIG_DIR" "${CMAKE_CURRENT_SOURCE_DIR}/configs")
+endfunction()
 
-add_executable(simulation_benchmark simulation.cpp)
-target_link_libraries(simulation_benchmark PRIVATE memilio ode_secir benchmark::benchmark)
-add_executable(graph_simulation_benchmark graph_simulation.cpp)
-target_link_libraries(graph_simulation_benchmark PRIVATE memilio ode_secirvvs benchmark::benchmark)
 
-add_executable(abm_benchmark abm.cpp)
-target_link_libraries(abm_benchmark PRIVATE abm benchmark::benchmark)
+# Define benchmark executables
+add_memilio_benchmark(memilio_integrator_step_benchmark
+    integrator_step.cpp
+    ode_secir
+)
+
+add_memilio_benchmark(memilio_flow_simulation_ode_secirvvs_benchmark
+    flow_simulation_ode_secirvvs.cpp
+    ode_secirvvs
+)
+
+add_memilio_benchmark(memilio_flow_simulation_ode_seir_benchmark
+    flow_simulation_ode_seir.cpp
+    ode_seir
+)
+
+add_memilio_benchmark(integrator_secir_benchmark
+    integrator_secir_sim.cpp
+    ode_secir
+)
+
+add_memilio_benchmark(memilio_graph_simulation_benchmark
+    graph_simulation.cpp
+    ode_secirvvs
+)
+
+add_memilio_benchmark(memilio_abm_benchmark
+    abm.cpp
+    abm
+)

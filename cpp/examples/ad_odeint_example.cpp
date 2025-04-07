@@ -18,12 +18,12 @@
 * limitations under the License.
 */
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.hpp"
 #include "boost/numeric/odeint.hpp"
 #include <array>
 
 // This program shows that  boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
-// algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp.
+// algorithmically diffentiated using the algorithmic differentiation (AD) data types of memilio/ad/ad.hpp.
 
 using ad_forward_type = typename ad::gt1s<double>::type; // AD data type for scalar forward mode
 

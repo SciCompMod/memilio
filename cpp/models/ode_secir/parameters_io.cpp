@@ -22,7 +22,6 @@
 
 //see below for line that causes this warning
 GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
 
 #include "memilio/config.h"
 

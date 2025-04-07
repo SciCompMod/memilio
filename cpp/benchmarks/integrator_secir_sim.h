@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODE_SIMULATION_CONFIG_H
-#define ODE_SIMULATION_CONFIG_H
+#ifndef INTEGRATOR_SECIR_SIM_H
+#define INTEGRATOR_SECIR_SIM_H
 
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/logging.h"
-
+#include <bench_config_dir.h>
 #include "benchmark/benchmark.h"
 
 namespace mio
@@ -89,4 +89,4 @@ struct SimulationConfig {
 
 } // namespace mio
 
-#endif // ODE_SIMULATION_CONFIG_H
+#endif // INTEGRATOR_SECIR_SIM_H

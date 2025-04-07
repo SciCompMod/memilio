@@ -1,0 +1,228 @@
+{
+    "version": 5, 
+    "cmakeMinimumRequired": {
+      "major": 3,
+      "minor": 24,
+      "patch": 0
+    },
+    "configurePresets": [
+      {
+        "name": "base-config",
+        "hidden": true,
+        "description": "Base settings common to all configurations.",
+        "binaryDir": "${sourceDir}/build/${presetName}",
+        "cacheVariables": {
+          "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+          "CMAKE_CXX_STANDARD": "17",
+          "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+          "CMAKE_CXX_EXTENSIONS": "OFF",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+          "MEMILIO_BUILD_TESTS": "ON",
+          "MEMILIO_BUILD_EXAMPLES": "ON",
+          "MEMILIO_BUILD_MODELS": "ON",
+          "MEMILIO_BUILD_BENCHMARKS": "ON",
+          "MEMILIO_USE_BUNDLED_EIGEN": "ON",
+          "MEMILIO_USE_BUNDLED_BOOST": "ON",
+          "MEMILIO_USE_BUNDLED_JSONCPP": "ON",
+          "MEMILIO_USE_BUNDLED_SPDLOG": "ON",
+          "MEMILIO_ENABLE_MPI": "OFF",
+          "MEMILIO_ENABLE_OPENMP": "OFF",
+          "MEMILIO_ENABLE_IPOPT": "OFF",
+          "MEMILIO_ENABLE_PROFILING": "OFF",
+          "MEMILIO_SANITIZE_ADDRESS": "OFF",
+          "MEMILIO_SANITIZE_UNDEFINED": "OFF",
+          "MEMILIO_TEST_COVERAGE": "OFF",
+          "MEMILIO_ENABLE_WARNINGS": "ON",
+          "MEMILIO_ENABLE_WARNINGS_AS_ERRORS": "ON",
+          "MEMILIO_BUILD_SHARED_LIBS": "OFF",
+          "MEMILIO_ENABLE_INSTALL": "OFF"
+        }
+      },
+      {
+        "name": "unix-base",
+        "hidden": true,
+        "inherits": "base-config",
+        "description": "Base settings for Unix-like systems (Linux, macOS)",
+        "generator": "Ninja",
+        "condition": {
+          "type": "not",
+          "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+        }
+      },
+      {
+        "name": "windows-base",
+        "hidden": true,
+        "inherits": "base-config",
+        "description": "Base settings for Windows.",
+        "generator": "Visual Studio 17 2022",
+        "architecture": "x64",
+        "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+         "cacheVariables": { "MEMILIO_BUILD_SHARED_LIBS": "OFF" }
+      },
+      {
+        "name": "system-libs-mixin",
+        "hidden": true,
+        "description": "Mixin to use system libraries instead of bundled ones.",
+        "cacheVariables": {
+          "MEMILIO_USE_BUNDLED_EIGEN": "OFF",
+          "MEMILIO_USE_BUNDLED_BOOST": "OFF",
+          "MEMILIO_USE_BUNDLED_JSONCPP": "OFF",
+          "MEMILIO_USE_BUNDLED_SPDLOG": "OFF"
+        }
+      },
+      {
+        "name": "unix-debug",
+        "displayName": "Unix Debug (Ninja, Bundled Libs)",
+        "inherits": "unix-base",
+        "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      },
+      {
+        "name": "windows-debug",
+        "displayName": "Windows Debug (VS 2022, Bundled Libs)",
+        "inherits": "windows-base",
+        "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      },
+      {
+        "name": "unix-debug-system",
+        "displayName": "Unix Debug (Ninja, System Libs)",
+        "inherits": ["unix-debug", "system-libs-mixin"]
+      },
+      {
+        "name": "windows-debug-system",
+        "displayName": "Windows Debug (VS 2022, System Libs)",
+        "inherits": ["windows-debug", "system-libs-mixin"]
+      },
+      {
+        "name": "unix-release",
+        "displayName": "Unix Release (Ninja, Bundled Libs)",
+        "inherits": "unix-base",
+        "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      },
+      {
+        "name": "windows-release",
+        "displayName": "Windows Release (VS 2022, Bundled Libs)",
+        "inherits": "windows-base",
+        "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      },
+      {
+        "name": "unix-release-system",
+        "displayName": "Unix Release (Ninja, System Libs)",
+        "inherits": ["unix-release", "system-libs-mixin"]
+      },
+      {
+        "name": "windows-release-system",
+        "displayName": "Windows Release (VS 2022, System Libs)",
+        "inherits": ["windows-release", "system-libs-mixin"]
+      },
+      {
+        "name": "unix-relwithdebinfo",
+        "displayName": "Unix RelWithDebInfo (Ninja, Bundled Libs)",
+        "inherits": "unix-base",
+        "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+      },
+      {
+        "name": "windows-relwithdebinfo",
+        "displayName": "Windows RelWithDebInfo (VS 2022, Bundled Libs)",
+        "inherits": "windows-base",
+        "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+      },
+      {
+        "name": "unix-debug-asan",
+        "displayName": "Unix Debug + Address Sanitizer",
+        "inherits": "unix-debug",
+        "cacheVariables": { "MEMILIO_SANITIZE_ADDRESS": "ON" }
+      },
+      {
+        "name": "unix-debug-ubsan",
+        "displayName": "Unix Debug + Undefined Behavior Sanitizer",
+        "inherits": "unix-debug",
+        "cacheVariables": { "MEMILIO_SANITIZE_UNDEFINED": "ON" }
+      },
+      {
+        "name": "unix-debug-asan-ubsan",
+        "displayName": "Unix Debug + ASan + UBSan",
+        "inherits": "unix-debug",
+        "cacheVariables": { "MEMILIO_SANITIZE_ADDRESS": "ON", "MEMILIO_SANITIZE_UNDEFINED": "ON" }
+      },
+       {
+        "name": "unix-debug-coverage",
+        "displayName": "Unix Debug + Code Coverage",
+        "inherits": "unix-debug",
+        "cacheVariables": { "MEMILIO_TEST_COVERAGE": "ON" }
+      },
+      {
+        "name": "unix-release-openmp",
+        "displayName": "Unix Release + OpenMP",
+        "inherits": "unix-release",
+        "cacheVariables": { "MEMILIO_ENABLE_OPENMP": "ON" }
+      },
+      {
+        "name": "unix-release-mpi",
+        "displayName": "Unix Release + MPI",
+        "inherits": "unix-release",
+        "cacheVariables": { "MEMILIO_ENABLE_MPI": "ON" }
+      },
+       {
+        "name": "unix-release-ipopt",
+        "displayName": "Unix Release + Ipopt",
+        "inherits": "unix-release",
+        "cacheVariables": { "MEMILIO_ENABLE_IPOPT": "ON" }
+      },
+       {
+        "name": "unix-release-profiling",
+        "displayName": "Unix Release + Profiling",
+        "inherits": "unix-release",
+        "cacheVariables": { "MEMILIO_ENABLE_PROFILING": "ON" }
+      },
+      {
+        "name": "unix-release-install",
+        "displayName": "Unix Release + Install",
+        "inherits": "unix-release",
+        "cacheVariables": { "MEMILIO_ENABLE_INSTALL": "ON" }
+      },
+      {
+        "name": "windows-release-install",
+        "displayName": "Windows Release + Install",
+        "inherits": "windows-release",
+        "cacheVariables": { "MEMILIO_ENABLE_INSTALL": "ON" }
+      }
+    ],
+    "buildPresets": [
+      { "name": "build-unix-debug", "configurePreset": "unix-debug", "configuration": "Debug" },
+      { "name": "build-unix-debug-system", "configurePreset": "unix-debug-system", "configuration": "Debug" },
+      { "name": "build-unix-release", "configurePreset": "unix-release", "configuration": "Release" },
+      { "name": "build-unix-release-system", "configurePreset": "unix-release-system", "configuration": "Release" },
+      { "name": "build-unix-relwithdebinfo", "configurePreset": "unix-relwithdebinfo", "configuration": "RelWithDebInfo" },
+      { "name": "build-unix-debug-asan", "configurePreset": "unix-debug-asan", "configuration": "Debug" },
+      { "name": "build-unix-debug-ubsan", "configurePreset": "unix-debug-ubsan", "configuration": "Debug" },
+      { "name": "build-unix-debug-asan-ubsan", "configurePreset": "unix-debug-asan-ubsan", "configuration": "Debug" },
+      { "name": "build-unix-debug-coverage", "configurePreset": "unix-debug-coverage", "configuration": "Debug" },
+      { "name": "build-unix-release-openmp", "configurePreset": "unix-release-openmp", "configuration": "Release" },
+      { "name": "build-unix-release-mpi", "configurePreset": "unix-release-mpi", "configuration": "Release" },
+      { "name": "build-unix-release-ipopt", "configurePreset": "unix-release-ipopt", "configuration": "Release" },
+      { "name": "build-unix-release-profiling", "configurePreset": "unix-release-profiling", "configuration": "Release" },
+      { "name": "build-unix-release-install", "configurePreset": "unix-release-install", "configuration": "Release" },
+      { "name": "build-windows-debug", "configurePreset": "windows-debug", "configuration": "Debug" },
+      { "name": "build-windows-debug-system", "configurePreset": "windows-debug-system", "configuration": "Debug" },
+      { "name": "build-windows-release", "configurePreset": "windows-release", "configuration": "Release" },
+      { "name": "build-windows-release-system", "configurePreset": "windows-release-system", "configuration": "Release" },
+      { "name": "build-windows-relwithdebinfo", "configurePreset": "windows-relwithdebinfo", "configuration": "RelWithDebInfo" },
+      { "name": "build-windows-release-install", "configurePreset": "windows-release-install", "configuration": "Release" }
+    ],
+    "testPresets": [
+      { "name": "test-unix-debug", "configurePreset": "unix-debug", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-debug-system", "configurePreset": "unix-debug-system", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-release", "configurePreset": "unix-release", "configuration": "Release", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-release-system", "configurePreset": "unix-release-system", "configuration": "Release", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-relwithdebinfo", "configurePreset": "unix-relwithdebinfo", "configuration": "RelWithDebInfo", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-debug-asan", "configurePreset": "unix-debug-asan", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-debug-ubsan", "configurePreset": "unix-debug-ubsan", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-debug-asan-ubsan", "configurePreset": "unix-debug-asan-ubsan", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-unix-debug-coverage", "configurePreset": "unix-debug-coverage", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-windows-debug", "configurePreset": "windows-debug", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-windows-debug-system", "configurePreset": "windows-debug-system", "configuration": "Debug", "output": {"outputOnFailure": true} },
+      { "name": "test-windows-release", "configurePreset": "windows-release", "configuration": "Release", "output": {"outputOnFailure": true} },
+      { "name": "test-windows-release-system", "configurePreset": "windows-release-system", "configuration": "Release", "output": {"outputOnFailure": true} },
+      { "name": "test-windows-relwithdebinfo", "configurePreset": "windows-relwithdebinfo", "configuration": "RelWithDebInfo", "output": {"outputOnFailure": true} }
+   ]
+  }

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "benchmarks/simulation.h"
+#include "benchmarks/integrator_secir_sim.h"
 #include "benchmarks/secir_ageres_setups.h"
 
 #include "memilio/math/adapt_rk.h"
@@ -29,7 +29,8 @@ void simulation(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // setup benchmark parameters
-    auto cfg = mio::benchmark::SimulationConfig::initialize("benchmarks/simulation.config");
+    const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "integrator_step.config");
+    auto cfg = mio::benchmark::SimulationConfig::initialize(config_path);
     //auto cfg = mio::benchmark::SimulationConfig::initialize(10);
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
 

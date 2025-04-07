@@ -21,7 +21,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/parameter_distributions.h"
-#include <distributions_helpers.h>
+#include "distributions_helpers.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

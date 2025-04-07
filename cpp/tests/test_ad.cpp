@@ -24,7 +24,7 @@
 
 #include "memilio/utils/logging.h"
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.hpp"
 #include "boost/numeric/odeint.hpp"
 #include <gtest/gtest.h>
 
@@ -74,7 +74,7 @@ TEST(Testad, ad_square)
 
 // Test that the "ad" library can be used as expected with a more complex example.
 // This test ensures that boost::numeric::odeint::runge_kutta_cash_karp54 can be fully
-// algorithmically diffentiated using the algorithmic differentiation (AD) data types of ad/ad.hpp.
+// algorithmically diffentiated using the algorithmic differentiation (AD) data types of memilio/ad/ad.hpp.
 
 // Define the rhs of the ODE x' = f(x), that should be solved using odeint.
 template <typename value_type, typename time_type>
