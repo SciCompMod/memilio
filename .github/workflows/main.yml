@@ -377,36 +377,3 @@ jobs:
             workflow: epidata_main.yml
             name: pylint-report-epidata
             path: pycode/build_pylint
-      - name: Download documentation
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation
-          path: docs/html
-      - name: Prepare basic Pages sites
-        run: |
-          mkdir -p public
-          cp docs/style.css public/style.css
-          cp docs/index.html public/index.html
-      - name: Prepare pylint reports
-        run: |
-            mkdir -p public/pylint
-            cp pycode/build_pylint/pylint.html public/pylint/index.html
-      - name: Prepare documentation
-        run: |
-          mkdir -p public/documentation
-          cp -r docs/html/* public/documentation
-      - name: Prepare coverage reports
-        run: |
-          mkdir -p public/coverage
-          mkdir -p public/coverage/cpp
-          mkdir -p public/coverage/python
-          cp -r coverage_python/* public/coverage/python/
-          cp -r coverage/* public/coverage/cpp/
-      - name: Upload pages as artifact
-        uses: actions/upload-artifact@v4
-        if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
-        with:
-          name: pages
-          path: public
-          if-no-files-found: error
-          retention-days: 1
