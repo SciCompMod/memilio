@@ -150,8 +150,6 @@ IOResult<AbstractParameterDistribution> deserialize_internal(IOContext& io, Tag<
 {
     auto obj  = io.expect_object("ParameterDistribution");
     auto type = obj.expect_element("Type", Tag<std::string>{});
-    auto a    = type.value();
-    std::cout << a << std::endl;
     if (type) {
         if (type.value() == "Uniform") {
             BOOST_OUTCOME_TRY(auto&& r, ParameterDistributionUniform::deserialize_elements(io, obj));

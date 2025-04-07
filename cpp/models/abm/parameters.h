@@ -893,6 +893,15 @@ public:
                     return true;
                 }
 
+                if ((this->get<DeathsPerInfectedSevere>()[{v, i}] + this->get<CriticalPerInfectedSevere>()[{v, i}]) >
+                    1.0) {
+                    log_error("Constraint check: Sum of parameters DeathsPerInfectedSevere and "
+                              "CriticalPerInfectedSevere of age group {:.0f} larger than "
+                              "{:d}",
+                              (uint32_t)v, (size_t)i, 1);
+                    return true;
+                }
+
                 if (this->get<DeathsPerInfectedCritical>()[{v, i}] < 0.0 ||
                     this->get<DeathsPerInfectedCritical>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter DeathsPerInfectedCritical of age group {:.0f} smaller than "
