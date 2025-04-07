@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann, Julia Bicker
 *
@@ -51,7 +51,7 @@ namespace abm
 {
 
 /**
- * @brief Time that a Person is infected but not yet infectious in day unit.
+ * @brief Time that a Person is infected but not yet infectious in day unit
  */
 struct TimeExposedToNoSymptoms {
     using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
