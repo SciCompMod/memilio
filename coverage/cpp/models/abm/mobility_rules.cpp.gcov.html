@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-04-03 12:28:53</td>
+            <td class="headerValue">2025-04-07 15:08:37</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">11</td>
@@ -105,135 +105,135 @@
 <a name="43"><span class="lineNum">      43 </span><span class="lineCov">          9 :     return current_loc;</span></a>
 <a name="44"><span class="lineNum">      44 </span>            : }</a>
 <a name="45"><span class="lineNum">      45 </span>            : </a>
-<a name="46"><span class="lineNum">      46 </span><span class="lineCov">        863 : LocationType go_to_school(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">        864 : LocationType go_to_school(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
 <a name="47"><span class="lineNum">      47 </span>            :                           const Parameters&amp; params)</a>
 <a name="48"><span class="lineNum">      48 </span>            : {</a>
-<a name="49"><span class="lineNum">      49 </span><span class="lineCov">        863 :     auto current_loc = person.get_location_type();</span></a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">        864 :     auto current_loc = person.get_location_type();</span></a>
 <a name="50"><span class="lineNum">      50 </span>            : </a>
-<a name="51"><span class="lineNum">      51 </span><span class="lineCov">       2624 :     if (current_loc == LocationType::Home &amp;&amp; t &lt; params.get&lt;LockdownDate&gt;() &amp;&amp; t.day_of_week() &lt; 5 &amp;&amp;</span></a>
-<a name="52"><span class="lineNum">      52 </span><span class="lineCov">       2317 :         person.get_go_to_school_time(params) &gt;= t.time_since_midnight() &amp;&amp;</span></a>
-<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       1303 :         person.get_go_to_school_time(params) &lt; t.time_since_midnight() + dt &amp;&amp;</span></a>
-<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2671 :         params.get&lt;mio::abm::AgeGroupGotoSchool&gt;()[person.get_age()] &amp;&amp; person.goes_to_school(t, params) &amp;&amp;</span></a>
-<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       1061 :         !person.is_in_quarantine(t, params)) {</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">       2628 :     if (current_loc == LocationType::Home &amp;&amp; t &lt; params.get&lt;LockdownDate&gt;() &amp;&amp; t.day_of_week() &lt; 5 &amp;&amp;</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">       2313 :         person.get_go_to_school_time(params) &gt;= t.time_since_midnight() &amp;&amp;</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       1297 :         person.get_go_to_school_time(params) &lt; t.time_since_midnight() + dt &amp;&amp;</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">       2674 :         params.get&lt;mio::abm::AgeGroupGotoSchool&gt;()[person.get_age()] &amp;&amp; person.goes_to_school(t, params) &amp;&amp;</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       1062 :         !person.is_in_quarantine(t, params)) {</span></a>
 <a name="56"><span class="lineNum">      56 </span><span class="lineCov">         99 :         return LocationType::School;</span></a>
 <a name="57"><span class="lineNum">      57 </span>            :     }</a>
 <a name="58"><span class="lineNum">      58 </span>            :     //return home</a>
-<a name="59"><span class="lineNum">      59 </span><span class="lineCov">        764 :     if (current_loc == LocationType::School &amp;&amp; t.hour_of_day() &gt;= 15) {</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">        765 :     if (current_loc == LocationType::School &amp;&amp; t.hour_of_day() &gt;= 15) {</span></a>
 <a name="60"><span class="lineNum">      60 </span><span class="lineCov">          9 :         return LocationType::Home;</span></a>
 <a name="61"><span class="lineNum">      61 </span>            :     }</a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        755 :     return current_loc;</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        756 :     return current_loc;</span></a>
 <a name="63"><span class="lineNum">      63 </span>            : }</a>
 <a name="64"><span class="lineNum">      64 </span>            : </a>
-<a name="65"><span class="lineNum">      65 </span><span class="lineCov">       1035 : LocationType go_to_work(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">       1036 : LocationType go_to_work(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
 <a name="66"><span class="lineNum">      66 </span>            :                         const Parameters&amp; params)</a>
 <a name="67"><span class="lineNum">      67 </span>            : {</a>
-<a name="68"><span class="lineNum">      68 </span><span class="lineCov">       1035 :     auto current_loc = person.get_location_type();</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">       1036 :     auto current_loc = person.get_location_type();</span></a>
 <a name="69"><span class="lineNum">      69 </span>            : </a>
-<a name="70"><span class="lineNum">      70 </span><span class="lineCov">       3174 :     if (current_loc == LocationType::Home &amp;&amp; t &lt; params.get&lt;LockdownDate&gt;() &amp;&amp;</span></a>
-<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       2891 :         params.get&lt;mio::abm::AgeGroupGotoWork&gt;()[person.get_age()] &amp;&amp; t.day_of_week() &lt; 5 &amp;&amp;</span></a>
-<a name="72"><span class="lineNum">      72 </span><span class="lineCov">       1383 :         t.time_since_midnight() + dt &gt; person.get_go_to_work_time(params) &amp;&amp;</span></a>
-<a name="73"><span class="lineNum">      73 </span><span class="lineCov">       3126 :         t.time_since_midnight() &lt;= person.get_go_to_work_time(params) &amp;&amp; person.goes_to_work(t, params) &amp;&amp;</span></a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">       1245 :         !person.is_in_quarantine(t, params)) {</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">       3178 :     if (current_loc == LocationType::Home &amp;&amp; t &lt; params.get&lt;LockdownDate&gt;() &amp;&amp;</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       2896 :         params.get&lt;mio::abm::AgeGroupGotoWork&gt;()[person.get_age()] &amp;&amp; t.day_of_week() &lt; 5 &amp;&amp;</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">       1385 :         t.time_since_midnight() + dt &gt; person.get_go_to_work_time(params) &amp;&amp;</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">       3129 :         t.time_since_midnight() &lt;= person.get_go_to_work_time(params) &amp;&amp; person.goes_to_work(t, params) &amp;&amp;</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">       1246 :         !person.is_in_quarantine(t, params)) {</span></a>
 <a name="75"><span class="lineNum">      75 </span><span class="lineCov">         96 :         return LocationType::Work;</span></a>
 <a name="76"><span class="lineNum">      76 </span>            :     }</a>
 <a name="77"><span class="lineNum">      77 </span>            :     //return home</a>
-<a name="78"><span class="lineNum">      78 </span><span class="lineCov">        939 :     if (current_loc == LocationType::Work &amp;&amp; t.hour_of_day() &gt;= 17) {</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">        940 :     if (current_loc == LocationType::Work &amp;&amp; t.hour_of_day() &gt;= 17) {</span></a>
 <a name="79"><span class="lineNum">      79 </span><span class="lineCov">          9 :         return LocationType::Home;</span></a>
 <a name="80"><span class="lineNum">      80 </span>            :     }</a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">        930 :     return current_loc;</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">        931 :     return current_loc;</span></a>
 <a name="82"><span class="lineNum">      82 </span>            : }</a>
 <a name="83"><span class="lineNum">      83 </span>            : </a>
-<a name="84"><span class="lineNum">      84 </span><span class="lineCov">        691 : LocationType go_to_shop(PersonalRandomNumberGenerator&amp; rng, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">        692 : LocationType go_to_shop(PersonalRandomNumberGenerator&amp; rng, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
 <a name="85"><span class="lineNum">      85 </span>            :                         const Parameters&amp; params)</a>
 <a name="86"><span class="lineNum">      86 </span>            : {</a>
-<a name="87"><span class="lineNum">      87 </span><span class="lineCov">        691 :     auto current_loc = person.get_location_type();</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">        692 :     auto current_loc = person.get_location_type();</span></a>
 <a name="88"><span class="lineNum">      88 </span>            :     //leave</a>
-<a name="89"><span class="lineNum">      89 </span><span class="lineCov">       2138 :     if (t.day_of_week() &lt; 6 &amp;&amp; t.hour_of_day() &gt; 7 &amp;&amp; t.hour_of_day() &lt; 22 &amp;&amp; current_loc == LocationType::Home &amp;&amp;</span></a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1447 :         !person.is_in_quarantine(t, params)) {</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">       2140 :     if (t.day_of_week() &lt; 6 &amp;&amp; t.hour_of_day() &gt; 7 &amp;&amp; t.hour_of_day() &lt; 22 &amp;&amp; current_loc == LocationType::Home &amp;&amp;</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">       1448 :         !person.is_in_quarantine(t, params)) {</span></a>
 <a name="91"><span class="lineNum">      91 </span><span class="lineCov">        756 :         return random_transition(rng, current_loc, dt,</span></a>
 <a name="92"><span class="lineNum">      92 </span><span class="lineCov">        756 :                                  {{LocationType::BasicsShop, params.get&lt;BasicShoppingRate&gt;()[person.get_age()]}});</span></a>
 <a name="93"><span class="lineNum">      93 </span>            :     }</a>
 <a name="94"><span class="lineNum">      94 </span>            : </a>
 <a name="95"><span class="lineNum">      95 </span>            :     //return home</a>
-<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        439 :     if (current_loc == LocationType::BasicsShop &amp;&amp; person.get_time_at_location() &gt;= hours(1)) {</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        440 :     if (current_loc == LocationType::BasicsShop &amp;&amp; person.get_time_at_location() &gt;= hours(1)) {</span></a>
 <a name="97"><span class="lineNum">      97 </span><span class="lineCov">         18 :         return LocationType::Home;</span></a>
 <a name="98"><span class="lineNum">      98 </span>            :     }</a>
 <a name="99"><span class="lineNum">      99 </span>            : </a>
-<a name="100"><span class="lineNum">     100 </span><span class="lineCov">        421 :     return current_loc;</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">        422 :     return current_loc;</span></a>
 <a name="101"><span class="lineNum">     101 </span>            : }</a>
 <a name="102"><span class="lineNum">     102 </span>            : </a>
-<a name="103"><span class="lineNum">     103 </span><span class="lineCov">        808 : LocationType go_to_event(PersonalRandomNumberGenerator&amp; rng, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">        809 : LocationType go_to_event(PersonalRandomNumberGenerator&amp; rng, const Person&amp; person, TimePoint t, TimeSpan dt,</span></a>
 <a name="104"><span class="lineNum">     104 </span>            :                          const Parameters&amp; params)</a>
 <a name="105"><span class="lineNum">     105 </span>            : {</a>
-<a name="106"><span class="lineNum">     106 </span><span class="lineCov">        808 :     auto current_loc = person.get_location_type();</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">        809 :     auto current_loc = person.get_location_type();</span></a>
 <a name="107"><span class="lineNum">     107 </span>            :     //leave</a>
-<a name="108"><span class="lineNum">     108 </span><span class="lineCov">       1956 :     if (current_loc == LocationType::Home &amp;&amp; t &lt; params.get&lt;LockdownDate&gt;() &amp;&amp;</span></a>
-<a name="109"><span class="lineNum">     109 </span><span class="lineCov">       2082 :         ((t.day_of_week() &lt;= 4 &amp;&amp; t.hour_of_day() &gt;= 19) || (t.day_of_week() &gt;= 5 &amp;&amp; t.hour_of_day() &gt;= 10)) &amp;&amp;</span></a>
-<a name="110"><span class="lineNum">     110 </span><span class="lineCov">       1186 :         !person.is_in_quarantine(t, params)) {</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">       1959 :     if (current_loc == LocationType::Home &amp;&amp; t &lt; params.get&lt;LockdownDate&gt;() &amp;&amp;</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">       2085 :         ((t.day_of_week() &lt;= 4 &amp;&amp; t.hour_of_day() &gt;= 19) || (t.day_of_week() &gt;= 5 &amp;&amp; t.hour_of_day() &gt;= 10)) &amp;&amp;</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">       1187 :         !person.is_in_quarantine(t, params)) {</span></a>
 <a name="111"><span class="lineNum">     111 </span><span class="lineCov">        378 :         return random_transition(rng, current_loc, dt,</span></a>
 <a name="112"><span class="lineNum">     112 </span><span class="lineCov">        252 :                                  {{LocationType::SocialEvent,</span></a>
 <a name="113"><span class="lineNum">     113 </span><span class="lineCov">        378 :                                    params.get&lt;SocialEventRate&gt;().get_matrix_at(t.days())[(size_t)person.get_age()]}});</span></a>
 <a name="114"><span class="lineNum">     114 </span>            :     }</a>
 <a name="115"><span class="lineNum">     115 </span>            : </a>
 <a name="116"><span class="lineNum">     116 </span>            :     //return home</a>
-<a name="117"><span class="lineNum">     117 </span><span class="lineCov">       1382 :     if (current_loc == LocationType::SocialEvent &amp;&amp; t.hour_of_day() &gt;= 20 &amp;&amp;</span></a>
-<a name="118"><span class="lineNum">     118 </span><span class="lineCov">        700 :         person.get_time_at_location() &gt;= hours(2)) {</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">       1384 :     if (current_loc == LocationType::SocialEvent &amp;&amp; t.hour_of_day() &gt;= 20 &amp;&amp;</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">        701 :         person.get_time_at_location() &gt;= hours(2)) {</span></a>
 <a name="119"><span class="lineNum">     119 </span><span class="lineCov">          9 :         return LocationType::Home;</span></a>
 <a name="120"><span class="lineNum">     120 </span>            :     }</a>
 <a name="121"><span class="lineNum">     121 </span>            : </a>
-<a name="122"><span class="lineNum">     122 </span><span class="lineCov">        673 :     return current_loc;</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">        674 :     return current_loc;</span></a>
 <a name="123"><span class="lineNum">     123 </span>            : }</a>
 <a name="124"><span class="lineNum">     124 </span>            : </a>
-<a name="125"><span class="lineNum">     125 </span><span class="lineCov">        871 : LocationType go_to_quarantine(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, TimePoint t,</span></a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">        872 : LocationType go_to_quarantine(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, TimePoint t,</span></a>
 <a name="126"><span class="lineNum">     126 </span>            :                               TimeSpan /*dt*/, const Parameters&amp; params)</a>
 <a name="127"><span class="lineNum">     127 </span>            : {</a>
-<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        871 :     auto current_loc = person.get_location_type();</span></a>
-<a name="129"><span class="lineNum">     129 </span><span class="lineCov">        871 :     if (person.is_in_quarantine(t, params) &amp;&amp; current_loc != LocationType::Hospital &amp;&amp;</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        872 :     auto current_loc = person.get_location_type();</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">        872 :     if (person.is_in_quarantine(t, params) &amp;&amp; current_loc != LocationType::Hospital &amp;&amp;</span></a>
 <a name="130"><span class="lineNum">     130 </span>            :         current_loc != LocationType::ICU) {</a>
 <a name="131"><span class="lineNum">     131 </span><span class="lineCov">          9 :         return LocationType::Home;</span></a>
 <a name="132"><span class="lineNum">     132 </span>            :     }</a>
-<a name="133"><span class="lineNum">     133 </span><span class="lineCov">        862 :     return current_loc;</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">        863 :     return current_loc;</span></a>
 <a name="134"><span class="lineNum">     134 </span>            : }</a>
 <a name="135"><span class="lineNum">     135 </span>            : </a>
-<a name="136"><span class="lineNum">     136 </span><span class="lineCov">        809 : LocationType go_to_hospital(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t,</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">        810 : LocationType go_to_hospital(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t,</span></a>
 <a name="137"><span class="lineNum">     137 </span>            :                             TimeSpan /*dt*/, const Parameters&amp; /*params*/)</a>
 <a name="138"><span class="lineNum">     138 </span>            : {</a>
-<a name="139"><span class="lineNum">     139 </span><span class="lineCov">        809 :     auto current_loc = person.get_location_type();</span></a>
-<a name="140"><span class="lineNum">     140 </span><span class="lineCov">        809 :     if (person.get_infection_state(t) == InfectionState::InfectedSevere) {</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">        810 :     auto current_loc = person.get_location_type();</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">        810 :     if (person.get_infection_state(t) == InfectionState::InfectedSevere) {</span></a>
 <a name="141"><span class="lineNum">     141 </span><span class="lineCov">         36 :         return LocationType::Hospital;</span></a>
 <a name="142"><span class="lineNum">     142 </span>            :     }</a>
-<a name="143"><span class="lineNum">     143 </span><span class="lineCov">        773 :     return current_loc;</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">        774 :     return current_loc;</span></a>
 <a name="144"><span class="lineNum">     144 </span>            : }</a>
 <a name="145"><span class="lineNum">     145 </span>            : </a>
-<a name="146"><span class="lineNum">     146 </span><span class="lineCov">        683 : LocationType go_to_icu(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t, TimeSpan /*dt*/,</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">        684 : LocationType go_to_icu(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t, TimeSpan /*dt*/,</span></a>
 <a name="147"><span class="lineNum">     147 </span>            :                        const Parameters&amp; /*params*/)</a>
 <a name="148"><span class="lineNum">     148 </span>            : {</a>
-<a name="149"><span class="lineNum">     149 </span><span class="lineCov">        683 :     auto current_loc = person.get_location_type();</span></a>
-<a name="150"><span class="lineNum">     150 </span><span class="lineCov">        683 :     if (person.get_infection_state(t) == InfectionState::InfectedCritical) {</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">        684 :     auto current_loc = person.get_location_type();</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">        684 :     if (person.get_infection_state(t) == InfectionState::InfectedCritical) {</span></a>
 <a name="151"><span class="lineNum">     151 </span><span class="lineCov">          9 :         return LocationType::ICU;</span></a>
 <a name="152"><span class="lineNum">     152 </span>            :     }</a>
-<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        674 :     return current_loc;</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        675 :     return current_loc;</span></a>
 <a name="154"><span class="lineNum">     154 </span>            : }</a>
 <a name="155"><span class="lineNum">     155 </span>            : </a>
-<a name="156"><span class="lineNum">     156 </span><span class="lineCov">        953 : LocationType return_home_when_recovered(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t,</span></a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">        954 : LocationType return_home_when_recovered(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t,</span></a>
 <a name="157"><span class="lineNum">     157 </span>            :                                         TimeSpan /*dt*/, const Parameters&amp; /*params*/)</a>
 <a name="158"><span class="lineNum">     158 </span>            : {</a>
-<a name="159"><span class="lineNum">     159 </span><span class="lineCov">        953 :     auto current_loc = person.get_location_type();</span></a>
-<a name="160"><span class="lineNum">     160 </span><span class="lineCov">       2095 :     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &amp;&amp;</span></a>
-<a name="161"><span class="lineNum">     161 </span><span class="lineCov">       1142 :         person.get_infection_state(t) == InfectionState::Recovered) {</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">        954 :     auto current_loc = person.get_location_type();</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">       2097 :     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &amp;&amp;</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">       1143 :         person.get_infection_state(t) == InfectionState::Recovered) {</span></a>
 <a name="162"><span class="lineNum">     162 </span><span class="lineCov">         27 :         return LocationType::Home;</span></a>
 <a name="163"><span class="lineNum">     163 </span>            :     }</a>
-<a name="164"><span class="lineNum">     164 </span><span class="lineCov">        926 :     return current_loc;</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">        927 :     return current_loc;</span></a>
 <a name="165"><span class="lineNum">     165 </span>            : }</a>
 <a name="166"><span class="lineNum">     166 </span>            : </a>
-<a name="167"><span class="lineNum">     167 </span><span class="lineCov">       2807 : LocationType get_buried(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t,</span></a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">       2808 : LocationType get_buried(PersonalRandomNumberGenerator&amp; /*rng*/, const Person&amp; person, const TimePoint t,</span></a>
 <a name="168"><span class="lineNum">     168 </span>            :                         TimeSpan /*dt*/, const Parameters&amp; /*params*/)</a>
 <a name="169"><span class="lineNum">     169 </span>            : {</a>
-<a name="170"><span class="lineNum">     170 </span><span class="lineCov">       2807 :     auto current_loc = person.get_location_type();</span></a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">       2807 :     if (person.get_infection_state(t) == InfectionState::Dead) {</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">       2808 :     auto current_loc = person.get_location_type();</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">       2808 :     if (person.get_infection_state(t) == InfectionState::Dead) {</span></a>
 <a name="172"><span class="lineNum">     172 </span><span class="lineCov">        261 :         return LocationType::Cemetery;</span></a>
 <a name="173"><span class="lineNum">     173 </span>            :     }</a>
-<a name="174"><span class="lineNum">     174 </span><span class="lineCov">       2546 :     return current_loc;</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">       2547 :     return current_loc;</span></a>
 <a name="175"><span class="lineNum">     175 </span>            : }</a>
 <a name="176"><span class="lineNum">     176 </span>            : </a>
 <a name="177"><span class="lineNum">     177 </span>            : } // namespace abm</a>

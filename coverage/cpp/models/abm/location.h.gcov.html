@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-04-03 12:28:53</td>
+            <td class="headerValue">2025-04-07 15:08:37</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">21</td>
@@ -120,10 +120,10 @@
 <a name="58"><span class="lineNum">      58 </span>            : };</a>
 <a name="59"><span class="lineNum">      59 </span>            : </a>
 <a name="60"><span class="lineNum">      60 </span>            : struct CellIndex : public mio::Index&lt;CellIndex&gt; {</a>
-<a name="61"><span class="lineNum">      61 </span><span class="lineCov">       5893 :     CellIndex(size_t i)</span></a>
-<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       5893 :         : mio::Index&lt;CellIndex&gt;(i)</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">       5895 :     CellIndex(size_t i)</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       5895 :         : mio::Index&lt;CellIndex&gt;(i)</span></a>
 <a name="63"><span class="lineNum">      63 </span>            :     {</a>
-<a name="64"><span class="lineNum">      64 </span><span class="lineCov">       5893 :     }</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">       5895 :     }</span></a>
 <a name="65"><span class="lineNum">      65 </span>            : };</a>
 <a name="66"><span class="lineNum">      66 </span>            : </a>
 <a name="67"><span class="lineNum">      67 </span>            : using ContactExposureRates = CustomIndexArray&lt;boost::atomic&lt;ScalarType&gt;, CellIndex, VirusVariant, AgeGroup&gt;;</a>
@@ -225,9 +225,9 @@
 <a name="163"><span class="lineNum">     163 </span>            :      * @brief Get the location's identifier in a Model.</a>
 <a name="164"><span class="lineNum">     164 </span>            :      * @return The location's LocationId by value.</a>
 <a name="165"><span class="lineNum">     165 </span>            :      */</a>
-<a name="166"><span class="lineNum">     166 </span><span class="lineCov">      42332 :     LocationId get_id() const</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">      42342 :     LocationId get_id() const</span></a>
 <a name="167"><span class="lineNum">     167 </span>            :     {</a>
-<a name="168"><span class="lineNum">     168 </span><span class="lineCov">      42332 :         return m_id;</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">      42342 :         return m_id;</span></a>
 <a name="169"><span class="lineNum">     169 </span>            :     }</a>
 <a name="170"><span class="lineNum">     170 </span>            : </a>
 <a name="171"><span class="lineNum">     171 </span>            :     /**</a>
@@ -240,9 +240,9 @@
 <a name="178"><span class="lineNum">     178 </span><span class="lineNoCov">          0 :         return m_parameters;</span></a>
 <a name="179"><span class="lineNum">     179 </span>            :     }</a>
 <a name="180"><span class="lineNum">     180 </span>            : </a>
-<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       2907 :     const LocalInfectionParameters&amp; get_infection_parameters() const</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       2908 :     const LocalInfectionParameters&amp; get_infection_parameters() const</span></a>
 <a name="182"><span class="lineNum">     182 </span>            :     {</a>
-<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       2907 :         return m_parameters;</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       2908 :         return m_parameters;</span></a>
 <a name="184"><span class="lineNum">     184 </span>            :     }</a>
 <a name="185"><span class="lineNum">     185 </span>            :     /** @} */</a>
 <a name="186"><span class="lineNum">     186 </span>            : </a>
@@ -250,9 +250,9 @@
 <a name="188"><span class="lineNum">     188 </span>            :      * @brief Get the Cell%s of this Location.</a>
 <a name="189"><span class="lineNum">     189 </span>            :      * @return The vector of all Cell%s of the Location.</a>
 <a name="190"><span class="lineNum">     190 </span>            :      */</a>
-<a name="191"><span class="lineNum">     191 </span><span class="lineCov">      10118 :     const std::vector&lt;Cell&gt;&amp; get_cells() const</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">      10121 :     const std::vector&lt;Cell&gt;&amp; get_cells() const</span></a>
 <a name="192"><span class="lineNum">     192 </span>            :     {</a>
-<a name="193"><span class="lineNum">     193 </span><span class="lineCov">      10118 :         return m_cells;</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">      10121 :         return m_cells;</span></a>
 <a name="194"><span class="lineNum">     194 </span>            :     }</a>
 <a name="195"><span class="lineNum">     195 </span>            : </a>
 <a name="196"><span class="lineNum">     196 </span>            :     /**</a>
@@ -301,9 +301,9 @@
 <a name="239"><span class="lineNum">     239 </span>            :      * @brief Get the information whether masks are required to enter this Location.</a>
 <a name="240"><span class="lineNum">     240 </span>            :      * @return True if masks are required to enter this Location.</a>
 <a name="241"><span class="lineNum">     241 </span>            :      */</a>
-<a name="242"><span class="lineNum">     242 </span><span class="lineCov">       9506 :     bool is_mask_required() const</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">       9515 :     bool is_mask_required() const</span></a>
 <a name="243"><span class="lineNum">     243 </span>            :     {</a>
-<a name="244"><span class="lineNum">     244 </span><span class="lineCov">       9506 :         return m_required_mask != MaskType::None;</span></a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">       9515 :         return m_required_mask != MaskType::None;</span></a>
 <a name="245"><span class="lineNum">     245 </span>            :     }</a>
 <a name="246"><span class="lineNum">     246 </span>            : </a>
 <a name="247"><span class="lineNum">     247 </span>            :     /**</a>

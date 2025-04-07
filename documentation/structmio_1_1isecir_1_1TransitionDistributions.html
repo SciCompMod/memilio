@@ -94,6 +94,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Transition distribution for each transition in <a class="el" href="namespacemio_1_1isecir.html#a4aa9050dca2db281bd2063a108869f73" title="The InfectionTransition enum describes the possible transitions of the infectious state of persons.">InfectionTransition</a>. </p>
+<p>For each transition, the corresponding transition distribution can be chosen independently. The choice of distributions determines how many initial time points are required to initialize the model, see get_global_support_max() in <a class="el" href="ide__secir_2model_8h.html">models/ide_secir/model.h</a>.</p>
 <p>As a default we use <a class="el" href="structmio_1_1SmootherCosine.html" title="Class that defines an smoother_cosine function depending on the state age.">SmootherCosine</a> functions for all transitions with m_parameter=2. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="ac029582cdcbaeb73e8c2bdb0105017f1"></a>

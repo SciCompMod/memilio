@@ -11956,12 +11956,12 @@ from memilio.epidata import defaultDict as dd</pre></td>
                 <td><pre>Similar lines in 2 files
 ==memilio.epidata.getCaseData:[236:242]
 ==memilio.epidata.getDIVIData:[139:145]
-    try:
-        df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(
-            df[dd.EngEng[&#39;date&#39;]], format=&#34;ISO8601&#34;)
-    except ValueError:
         try:
-            df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(</pre></td>
+            df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(
+                df[dd.EngEng[&#39;date&#39;]], format=&#34;ISO8601&#34;)
+        except ValueError:
+            try:
+                df[dd.EngEng[&#39;date&#39;]] = pd.to_datetime(</pre></td>
             </tr>
             
             <tr>
@@ -11975,15 +11975,12 @@ from memilio.epidata import defaultDict as dd</pre></td>
 ==memilio.epidata.getCommuterMobility:[25:32]
 ==memilio.epidata.transformMobilityData:[19:29]
 import os
-
 import numpy as np
 import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-
-# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
+from memilio.epidata import getDataIntoPandasDataFrame as gd</pre></td>
             </tr>
             
             <tr>
@@ -12007,13 +12004,13 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 pd.options.mode.copy_on_write = True
 
 
-def getMobilityFromFile(directory, mobility_file):
-    &#34;&#34;&#34; Gets a mobility matrix that is written in a plain txt file
-    under the given directory into a pandas data frame.
+def read_population_data(ref_year):
+    &#34;&#34;&#34; Reads Population data from regionalstatistik.de
 
-    :param directory: Path to folder where data is read.
-    :param mobility_file: Mobility matrix file which has to be updated.
-    :returns: Mobility matrix data frame.
+    A request is made to regionalstatistik.de and the StringIO is read in as a csv into the dataframe format.
+
+    :param ref_year: Default: None or year (jjjj) convertible to str. Reference year.
+    :returns: DataFrame
 
     &#34;&#34;&#34;</pre></td>
             </tr>
@@ -12105,9 +12102,7 @@ import pandas as pd
 
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-
-# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
+from memilio.epidata import getDataIntoPandasDataFrame as gd</pre></td>
             </tr>
             
             <tr>
@@ -12227,7 +12222,31 @@ from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import modifyDataframeSeries as mdfs
 
-# activate CoW for more predictable behaviour of pandas DataFrames</pre></td>
+
+def fetch_divi_data(
+        directory: str,
+        filename: str,
+        conf_obj,
+        read_data: bool = dd.defaultDict[&#39;read_data&#39;],
+        file_format: str = dd.defaultDict[&#39;file_format&#39;],
+) -&gt; pd.DataFrame:
+    &#34;&#34;&#34; Downloads or reads the DIVI ICU data and writes them in different files.
+
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file &#34;FullData_DIVI.json&#34; exists, the data is read form this file
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
+    The downloaded dataframe is written to the file &#34;FullData_DIVI&#34;.
+
+    :param directory: str
+        Path to the output directory
+    :param conf_obj: configuration object
+    :param filename: str
+        File format which is used for writing the data. Default defined in defaultDict.
+    :param read_data: bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;read_data&#39;])
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;file_format&#39;])
+    :returns: Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
+
+    &#34;&#34;&#34;</pre></td>
             </tr>
             
             <tr>
@@ -12270,35 +12289,16 @@ from memilio.epidata import modifyDataframeSeries as mdfs
 pd.options.mode.copy_on_write = True
 
 
-def get_jh_data(read_data=dd.defaultDict[&#39;read_data&#39;],
-                file_format=dd.defaultDict[&#39;file_format&#39;],
-                out_folder=dd.defaultDict[&#39;out_folder&#39;],
-                start_date=date(2020, 1, 22),
-                end_date=dd.defaultDict[&#39;end_date&#39;],
-                impute_dates=dd.defaultDict[&#39;impute_dates&#39;],
-                **kwargs):
-    &#34;&#34;&#34; Download data from John Hopkins University
+def hospit_sanity_checks(df):
+    &#34;&#34;&#34; Checks the sanity of the hospitalization_data dataframe
 
-       Data is either downloaded and afterwards stored or loaded from a stored filed.
-       The file is &#34;FullData_JohnHopkins.json&#34;
+    Checks if type of the given data is a dataframe
+    Checks if the headers of the dataframe are those which are needed
 
-       Working with the data includes
-       - rename columns such that &#34;/&#34; is deleted, e.g Country/Region becomes CountryRegion
-       - data of all countries together are written to a file
-       - download the data from following countries in a separate file
-       and are stored in the according folders with the country name
-       - Germany, SouthKorea, Spain, France, Italy, US, China
-       - furthermore, all countries, for which provinces are added, are written to a file
+    :param df: The dataframe which has to be checked
 
-    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;read_data&#39;])
-    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;file_format&#39;])
-    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;out_folder&#39;])
-    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = date(2020, 1, 22))
-    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;end_date&#39;])
-    :param impute_dates: Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict[&#39;impute_dates&#39;])
-    :param **kwargs:
-
-    &#34;&#34;&#34;</pre></td>
+    &#34;&#34;&#34;
+    # test if dataframe is empty</pre></td>
             </tr>
             
             <tr>

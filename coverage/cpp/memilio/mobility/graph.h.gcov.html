@@ -37,12 +37,12 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2025-04-03 12:28:53</td>
+            <td class="headerValue">2025-04-07 15:08:37</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">104</td>
-            <td class="headerCovTableEntry">197</td>
-            <td class="headerCovTableEntryLo">52.8 %</td>
+            <td class="headerCovTableEntry">201</td>
+            <td class="headerCovTableEntryLo">51.7 %</td>
           </tr>
           <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
         </table>
@@ -101,25 +101,25 @@
 <a name="39"><span class="lineNum">      39 </span>            : {</a>
 <a name="40"><span class="lineNum">      40 </span>            : </a>
 <a name="41"><span class="lineNum">      41 </span>            : struct OutEdgeBase {</a>
-<a name="42"><span class="lineNum">      42 </span><span class="lineCov">        565 :     OutEdgeBase(size_t start)</span></a>
-<a name="43"><span class="lineNum">      43 </span><span class="lineCov">        565 :         : start_node_idx(start)</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">        583 :     OutEdgeBase(size_t start)</span></a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">        583 :         : start_node_idx(start)</span></a>
 <a name="44"><span class="lineNum">      44 </span>            :     {</a>
-<a name="45"><span class="lineNum">      45 </span><span class="lineCov">        565 :     }</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">        583 :     }</span></a>
 <a name="46"><span class="lineNum">      46 </span>            :     size_t start_node_idx;</a>
 <a name="47"><span class="lineNum">      47 </span>            : };</a>
 <a name="48"><span class="lineNum">      48 </span>            : struct InEdgeBase {</a>
-<a name="49"><span class="lineNum">      49 </span><span class="lineCov">        525 :     InEdgeBase(size_t end)</span></a>
-<a name="50"><span class="lineNum">      50 </span><span class="lineCov">        525 :         : end_node_idx(end)</span></a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">        543 :     InEdgeBase(size_t end)</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">        543 :         : end_node_idx(end)</span></a>
 <a name="51"><span class="lineNum">      51 </span>            :     {</a>
-<a name="52"><span class="lineNum">      52 </span><span class="lineCov">        525 :     }</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">        543 :     }</span></a>
 <a name="53"><span class="lineNum">      53 </span>            :     size_t end_node_idx;</a>
 <a name="54"><span class="lineNum">      54 </span>            : };</a>
 <a name="55"><span class="lineNum">      55 </span>            : struct EdgeBase : public OutEdgeBase, public InEdgeBase {</a>
-<a name="56"><span class="lineNum">      56 </span><span class="lineCov">        525 :     EdgeBase(size_t start, size_t end)</span></a>
-<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        525 :         : OutEdgeBase(start)</span></a>
-<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        525 :         , InEdgeBase(end)</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">        543 :     EdgeBase(size_t start, size_t end)</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        543 :         : OutEdgeBase(start)</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        543 :         , InEdgeBase(end)</span></a>
 <a name="59"><span class="lineNum">      59 </span>            :     {</a>
-<a name="60"><span class="lineNum">      60 </span><span class="lineCov">        525 :     }</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">        543 :     }</span></a>
 <a name="61"><span class="lineNum">      61 </span>            : };</a>
 <a name="62"><span class="lineNum">      62 </span>            : </a>
 <a name="63"><span class="lineNum">      63 </span>            : /**</a>
@@ -129,11 +129,11 @@
 <a name="67"><span class="lineNum">      67 </span>            : template &lt;class NodePropertyT&gt;</a>
 <a name="68"><span class="lineNum">      68 </span>            : struct Node {</a>
 <a name="69"><span class="lineNum">      69 </span>            :     template &lt;class... Args&gt;</a>
-<a name="70"><span class="lineNum">      70 </span><span class="lineCov">        846 :     Node(int node_id, Args&amp;&amp;... args)</span></a>
-<a name="71"><span class="lineNum">      71 </span><span class="lineCov">        846 :         : id{node_id}</span></a>
-<a name="72"><span class="lineNum">      72 </span><span class="lineCov">        846 :         , property(std::forward&lt;Args&gt;(args)...)</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">        864 :     Node(int node_id, Args&amp;&amp;... args)</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">        864 :         : id{node_id}</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">        864 :         , property(std::forward&lt;Args&gt;(args)...)</span></a>
 <a name="73"><span class="lineNum">      73 </span>            :     {</a>
-<a name="74"><span class="lineNum">      74 </span><span class="lineCov">        846 :     }</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">        864 :     }</span></a>
 <a name="75"><span class="lineNum">      75 </span>            :     int id;</a>
 <a name="76"><span class="lineNum">      76 </span>            :     NodePropertyT property;</a>
 <a name="77"><span class="lineNum">      77 </span>            : };</a>
@@ -144,11 +144,11 @@
 <a name="82"><span class="lineNum">      82 </span>            : template &lt;class EdgePropertyT&gt;</a>
 <a name="83"><span class="lineNum">      83 </span>            : struct Edge : public EdgeBase {</a>
 <a name="84"><span class="lineNum">      84 </span>            :     template &lt;class... Args&gt;</a>
-<a name="85"><span class="lineNum">      85 </span><span class="lineCov">        525 :     Edge(size_t start, size_t end, Args&amp;&amp;... args)</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">        543 :     Edge(size_t start, size_t end, Args&amp;&amp;... args)</span></a>
 <a name="86"><span class="lineNum">      86 </span>            :         : EdgeBase{start, end}</a>
-<a name="87"><span class="lineNum">      87 </span><span class="lineCov">        525 :         , property(std::forward&lt;Args&gt;(args)...)</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">        543 :         , property(std::forward&lt;Args&gt;(args)...)</span></a>
 <a name="88"><span class="lineNum">      88 </span>            :     {</a>
-<a name="89"><span class="lineNum">      89 </span><span class="lineCov">        525 :     }</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">        543 :     }</span></a>
 <a name="90"><span class="lineNum">      90 </span>            : </a>
 <a name="91"><span class="lineNum">      91 </span>            :     EdgePropertyT property;</a>
 <a name="92"><span class="lineNum">      92 </span>            : };</a>
@@ -218,34 +218,34 @@
 <a name="156"><span class="lineNum">     156 </span>            :      * @brief add a node to the graph. property of the node is constructed from arguments.</a>
 <a name="157"><span class="lineNum">     157 </span>            :      */</a>
 <a name="158"><span class="lineNum">     158 </span>            :     template &lt;class... Args&gt;</a>
-<a name="159"><span class="lineNum">     159 </span><span class="lineCov">        792 :     Node&lt;NodePropertyT&gt;&amp; add_node(int id, Args&amp;&amp;... args)</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">        810 :     Node&lt;NodePropertyT&gt;&amp; add_node(int id, Args&amp;&amp;... args)</span></a>
 <a name="160"><span class="lineNum">     160 </span>            :     {</a>
-<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        792 :         m_nodes.emplace_back(id, std::forward&lt;Args&gt;(args)...);</span></a>
-<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        792 :         return m_nodes.back();</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        810 :         m_nodes.emplace_back(id, std::forward&lt;Args&gt;(args)...);</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        810 :         return m_nodes.back();</span></a>
 <a name="163"><span class="lineNum">     163 </span>            :     }</a>
 <a name="164"><span class="lineNum">     164 </span>            : </a>
 <a name="165"><span class="lineNum">     165 </span>            :     /**</a>
 <a name="166"><span class="lineNum">     166 </span>            :      * @brief add an edge to the graph. property of the edge is constructed from arguments.</a>
 <a name="167"><span class="lineNum">     167 </span>            :      */</a>
 <a name="168"><span class="lineNum">     168 </span>            :     template &lt;class... Args&gt;</a>
-<a name="169"><span class="lineNum">     169 </span><span class="lineCov">        435 :     Edge&lt;EdgePropertyT&gt;&amp; add_edge(size_t start_node_idx, size_t end_node_idx, Args&amp;&amp;... args)</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">        453 :     Edge&lt;EdgePropertyT&gt;&amp; add_edge(size_t start_node_idx, size_t end_node_idx, Args&amp;&amp;... args)</span></a>
 <a name="170"><span class="lineNum">     170 </span>            :     {</a>
-<a name="171"><span class="lineNum">     171 </span><span class="lineCov">        435 :         assert(m_nodes.size() &gt; start_node_idx &amp;&amp; m_nodes.size() &gt; end_node_idx);</span></a>
-<a name="172"><span class="lineNum">     172 </span><span class="lineCov">        870 :         return *insert_sorted_replace(m_edges,</span></a>
-<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        870 :                                       Edge&lt;EdgePropertyT&gt;(start_node_idx, end_node_idx, std::forward&lt;Args&gt;(args)...),</span></a>
-<a name="174"><span class="lineNum">     174 </span><span class="lineCov">        408 :                                       [](auto&amp;&amp; e1, auto&amp;&amp; e2) {</span></a>
-<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        408 :                                           return e1.start_node_idx == e2.start_node_idx</span></a>
-<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        408 :                                                      ? e1.end_node_idx &lt; e2.end_node_idx</span></a>
-<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        408 :                                                      : e1.start_node_idx &lt; e2.start_node_idx;</span></a>
-<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        870 :                                       });</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">        453 :         assert(m_nodes.size() &gt; start_node_idx &amp;&amp; m_nodes.size() &gt; end_node_idx);</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">        906 :         return *insert_sorted_replace(m_edges,</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        906 :                                       Edge&lt;EdgePropertyT&gt;(start_node_idx, end_node_idx, std::forward&lt;Args&gt;(args)...),</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">        417 :                                       [](auto&amp;&amp; e1, auto&amp;&amp; e2) {</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        417 :                                           return e1.start_node_idx == e2.start_node_idx</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        417 :                                                      ? e1.end_node_idx &lt; e2.end_node_idx</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        417 :                                                      : e1.start_node_idx &lt; e2.start_node_idx;</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        906 :                                       });</span></a>
 <a name="179"><span class="lineNum">     179 </span>            :     }</a>
 <a name="180"><span class="lineNum">     180 </span>            : </a>
 <a name="181"><span class="lineNum">     181 </span>            :     /**</a>
 <a name="182"><span class="lineNum">     182 </span>            :      * @brief range of nodes</a>
 <a name="183"><span class="lineNum">     183 </span>            :      */</a>
-<a name="184"><span class="lineNum">     184 </span><span class="lineCov">     239711 :     auto nodes()</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">     240044 :     auto nodes()</span></a>
 <a name="185"><span class="lineNum">     185 </span>            :     {</a>
-<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     239711 :         return make_range(begin(m_nodes), end(m_nodes));</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     240044 :         return make_range(begin(m_nodes), end(m_nodes));</span></a>
 <a name="187"><span class="lineNum">     187 </span>            :     }</a>
 <a name="188"><span class="lineNum">     188 </span>            : </a>
 <a name="189"><span class="lineNum">     189 </span>            :     /**</a>
@@ -259,9 +259,9 @@
 <a name="197"><span class="lineNum">     197 </span>            :     /**</a>
 <a name="198"><span class="lineNum">     198 </span>            :      * @brief range of edges</a>
 <a name="199"><span class="lineNum">     199 </span>            :      */</a>
-<a name="200"><span class="lineNum">     200 </span><span class="lineCov">      19339 :     auto edges()</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">      19402 :     auto edges()</span></a>
 <a name="201"><span class="lineNum">     201 </span>            :     {</a>
-<a name="202"><span class="lineNum">     202 </span><span class="lineCov">      19339 :         return make_range(begin(m_edges), end(m_edges));</span></a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">      19402 :         return make_range(begin(m_edges), end(m_edges));</span></a>
 <a name="203"><span class="lineNum">     203 </span>            :     }</a>
 <a name="204"><span class="lineNum">     204 </span>            : </a>
 <a name="205"><span class="lineNum">     205 </span>            :     /**</a>
