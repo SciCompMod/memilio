@@ -128,3 +128,7 @@ endif()
 if(MEMILIO_ENABLE_OPENMP)
     target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
+find_package(OpenACC REQUIRED)
+target_link_options(memilio PRIVATE ${OpenACC_CXX_OPTIONS})
+target_compile_options(memilio PRIVATE ${OpenACC_CXX_OPTIONS})

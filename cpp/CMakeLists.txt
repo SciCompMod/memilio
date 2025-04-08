@@ -21,7 +21,6 @@ option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
-option(MEMILIO_ENABLE_CUDA "Enable CUDA" ON)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -96,6 +95,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     endif()
 endif()
 
+string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict")
+
 # set sanitizer compiler flags
 if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
     if(MEMILIO_SANITIZE_ADDRESS)
@@ -128,7 +129,7 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Warray-bounds=0;-Wno-stringop-overread;-fcompare-debug-second;")
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
@@ -144,72 +145,47 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     endif()
 endif()
 
-############ ADD CUDA ################
-# CUDA support configuration
-if(MEMILIO_ENABLE_CUDA)
-    # Require CMake 3.17+ for better CUDA support
-    cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
-    enable_language(CUDA)
-
-    find_package(CUDA REQUIRED)
-    set(CMAKE_CUDA_STANDARD 17)
-    
-    include_directories(${CUDA_INCLUDE_DIRS})
-    message(STATUS "CUDA support enabled. Using CUDA ${CUDA_VERSION}")
-    message(STATUS "CUDA architecture: ${CMAKE_CUDA_ARCHITECTURES}")
-
-    add_definitions(-DMEMILIO_WITH_CUDA)
-
-    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES 75)
-    endif()
-
-endif()
-#############################################
-
-
-
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
-    add_subdirectory(models/abm)
-    add_subdirectory(models/d_abm)
-    add_subdirectory(models/ode_secir)
-    add_subdirectory(models/ode_secirts)
-    add_subdirectory(models/ode_secirvvs)
-    add_subdirectory(models/lct_secir)
-    add_subdirectory(models/glct_secir)
+    # add_subdirectory(models/abm)
+    # add_subdirectory(models/d_abm)
+    # add_subdirectory(models/ode_secir)
+    # add_subdirectory(models/ode_secirts)
+    # add_subdirectory(models/ode_secirvvs)
+    # add_subdirectory(models/lct_secir)
+    # add_subdirectory(models/glct_secir)
     add_subdirectory(models/ide_secir)
-    add_subdirectory(models/ide_seir)
-    add_subdirectory(models/ode_seir)
-    add_subdirectory(models/ode_seair)
-    add_subdirectory(models/ode_sir)
-    add_subdirectory(models/sde_sir)
-    add_subdirectory(models/sde_sirs)
-    add_subdirectory(models/sde_seirvv)
-    add_subdirectory(models/graph_abm)
-    add_subdirectory(models/smm)
+    add_subdirectory(models/ide_secir_acc)
+
+    # add_subdirectory(models/ide_seir)
+    # add_subdirectory(models/ode_seir)
+    # add_subdirectory(models/ode_seair)
+    # add_subdirectory(models/ode_sir)
+    # add_subdirectory(models/sde_sir)
+    # add_subdirectory(models/sde_sirs)
+    # add_subdirectory(models/sde_seirvv)
+    # add_subdirectory(models/graph_abm)
+    # add_subdirectory(models/smm)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-if(MEMILIO_BUILD_TESTS)
-    add_subdirectory(tests)
-endif()
+# if(MEMILIO_BUILD_TESTS)
+# add_subdirectory(tests)
+# endif()
 
-if(MEMILIO_BUILD_SIMULATIONS)
-    # add_subdirectory(simulations)
-endif()
-
-if(MEMILIO_BUILD_BENCHMARKS)
-    add_subdirectory(benchmarks)
-endif()
-
+# if(MEMILIO_BUILD_SIMULATIONS)
+# add_subdirectory(simulations)
+# endif()
+# if(MEMILIO_BUILD_BENCHMARKS)
+# add_subdirectory(benchmarks)
+# endif()
 install(TARGETS memilio
     EXPORT memilio-targets
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
