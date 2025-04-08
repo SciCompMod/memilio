@@ -21,6 +21,7 @@
 #define EPI_TIME_SERIES_H
 
 #include "memilio/io/io.h"
+#include "memilio/math/eigen.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/math/floating_point.h"
 

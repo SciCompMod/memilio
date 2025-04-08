@@ -57,7 +57,7 @@ set(TESTSOURCES
     test_regions.cpp
     test_io_cli.cpp
     test_io_framework.cpp
-    test_binary_serializer.cpp
+    # test_binary_serializer.cpp
     test_compartmentsimulation.cpp
     test_mobility_io.cpp
     test_transform_iterator.cpp

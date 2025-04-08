@@ -25,8 +25,11 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/eigen_util.h"
 #include "boost/outcome/result.hpp"
-#include "boost/outcome/try.hpp"
+// #include "boost/outcome/try.hpp"
 #include "boost/optional.hpp"
+
+// FIXME: remove this hack
+#include "terrible_outcome_try.h"
 
 #include <bitset>
 #include <string>
