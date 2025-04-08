@@ -110,8 +110,14 @@ else()
     target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
+# find_package(OpenACC REQUIRED)
+# --acc
+
+
 add_executable(gpu_integrator gpu_integrator.cu)
 target_link_libraries(gpu_integrator PRIVATE memilio)
+# target_link_options(gpu_integrator PRIVATE ${OpenACC_CXX_OPTIONS})
+# target_compile_options(gpu_integrator PRIVATE ${OpenACC_CXX_OPTIONS})
 # target_compile_options(gpu_integrator PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 if(MEMILIO_ENABLE_CUDA)
     target_link_libraries(gpu_integrator PRIVATE ${CUDA_LIBRARIES})

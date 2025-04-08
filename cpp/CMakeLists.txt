@@ -96,6 +96,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     endif()
 endif()
 
+string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict")
+# message("###########\n  " ${CMAKE_CXX_FLAGS_RELEASE})
+
 # set sanitizer compiler flags
 if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
     if(MEMILIO_SANITIZE_ADDRESS)

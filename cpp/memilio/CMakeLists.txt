@@ -109,6 +109,7 @@ target_compile_options(memilio
     PRIVATE
     ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
     PUBLIC
+    "-acc"
     $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
 

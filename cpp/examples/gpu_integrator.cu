@@ -5,7 +5,6 @@
 
 #include "memilio/math/integrator.h"
 #include "memilio/math/adapt_rk.h"
-#include "memilio/math/stepper_wrapper.h"
 
 #include <iostream>
 #include <memory>
