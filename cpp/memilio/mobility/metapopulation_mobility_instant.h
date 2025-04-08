@@ -31,8 +31,11 @@
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/date.h"
+#include <nvtx3/nvToolsExt.h>
 
 #include "boost/filesystem.hpp"
+
+#include <iostream>
 
 #include <cassert>
 
@@ -535,8 +538,8 @@ auto get_mobility_factors(const SimulationNode<Sim>& node, double t, const Eigen
  * detect a get_mobility_factors function for the Model type.
  */
 template <class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
 
 /**
  * Test persons when moving from their source node.
@@ -557,11 +560,12 @@ void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> mobil
 {
     return test_commuters(node.get_simulation(), mobile_population, time);
 }
-
 template <typename FP>
 template <class Sim>
 void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
+    nvtxRangePushA("MobilityEdge::apply_mobility");
+
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
         m_t_last_dynamic_npi_check = node_from.get_t0();
@@ -638,6 +642,8 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         add_mobility_result_time_point(t);
     }
     m_return_mobile_population = !m_return_mobile_population;
+
+    nvtxRangePop();
 }
 
 /**
