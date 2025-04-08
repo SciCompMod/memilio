@@ -181,15 +181,6 @@ memilio_set_coverage_flags(memilio-test)
 target_compile_options(memilio-test PRIVATE -Wno-ignored-attributes)
 
 #-------------------------------------------------------
-# Test Data Configuration
-#-------------------------------------------------------
-memilio_configure_path_header(memilio-test 
-                                "test_data_dir.h.in" 
-                                "test_data_dir.h" 
-                                "MEMILIO_TEST_DATA_DIR" 
-                                "${CMAKE_CURRENT_SOURCE_DIR}/data")
-
-#-------------------------------------------------------
 # Test Discovery and CTest Integration
 #-------------------------------------------------------
 gtest_discover_tests(memilio-test

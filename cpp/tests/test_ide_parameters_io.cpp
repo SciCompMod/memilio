@@ -30,7 +30,7 @@
 #include "memilio/utils/logging.h"
 #include "memilio/io/io.h"
 
-#include "test_data_dir.h"
+#include "memilio/utils/base_dir.h"
 #include "load_test_data.h"
 #include "matchers.h"
 #include <gtest/gtest.h>
@@ -93,7 +93,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
 
     // Calculate initialization.
     auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
-        model, dt, mio::read_confirmed_cases_noage(mio::path_join(TEST_DATA_DIR, "cases_all_germany.json")).value(),
+        model, dt, mio::read_confirmed_cases_noage(mio::path_join(mio::base_dir(), "cases_all_germany.json")).value(),
         start_date, scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
@@ -178,7 +178,7 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
 
     // Calculate initialization.
     auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
-        model, dt, mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json")).value(),
+        model, dt, mio::read_confirmed_cases_data(mio::path_join(mio::base_dir(), "cases_all_age_ma7.json")).value(),
         start_date, scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
@@ -246,7 +246,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1.);
     auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(
-        model, dt, mio::read_confirmed_cases_noage(mio::path_join(TEST_DATA_DIR, "test_empty_file.json")).value(),
+        model, dt, mio::read_confirmed_cases_noage(mio::path_join(mio::base_dir(), "test_empty_file.json")).value(),
         start_date, scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidFileFormat));
@@ -254,7 +254,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Case where start_date is later than maximal provided date in file.
     start_date = mio::Date(2021, 06, 8);
     std::vector<mio::ConfirmedCasesNoAgeEntry> test_data =
-        mio::read_confirmed_cases_noage(mio::path_join(TEST_DATA_DIR, "cases_all_germany.json")).value();
+        mio::read_confirmed_cases_noage(mio::path_join(mio::base_dir(), "cases_all_germany.json")).value();
     status = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
                                                                            scale_confirmed_cases);
 
@@ -320,7 +320,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1.);
     auto status = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
-        model, dt, mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "test_empty_file.json")).value(),
+        model, dt, mio::read_confirmed_cases_data(mio::path_join(mio::base_dir(), "test_empty_file.json")).value(),
         start_date, scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::InvalidFileFormat));
@@ -328,7 +328,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Case where start_date is later than maximal provided date in file.
     start_date = mio::Date(2021, 01, 05);
     std::vector<mio::ConfirmedCasesDataEntry> test_data =
-        mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_age_ma7.json")).value();
+        mio::read_confirmed_cases_data(mio::path_join(mio::base_dir(), "cases_all_age_ma7.json")).value();
     status = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
                                                                           scale_confirmed_cases);
 

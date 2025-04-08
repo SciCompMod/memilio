@@ -22,10 +22,10 @@
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_secirvvs/model.h"
-#include <bench_config_dir.h>
+#include "memilio/utils/base_dir.h"
 #include <string>
 
-const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "flow_simulation.config");
+const std::string config_path = mio::path_join(mio::base_dir(), "flow_simulation.config");
 
 // simulation without flows (not in Model definition and not calculated by Simulation)
 void flowless_sim(::benchmark::State& state)

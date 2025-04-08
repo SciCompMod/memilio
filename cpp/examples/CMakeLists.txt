@@ -1,13 +1,4 @@
 #-------------------------------------------------------
-# Data Directory Configuration
-#-------------------------------------------------------
-file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/data" MEMILIO_DATA_DIR)
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/data_dir.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/data_dir.h"
-)
-
-#-------------------------------------------------------
 # Helper Function for Examples
 #-------------------------------------------------------
 function(add_memilio_example NAME SOURCES)
@@ -16,11 +7,6 @@ function(add_memilio_example NAME SOURCES)
     target_link_libraries(${NAME} PRIVATE memilio ${EXTRA_DEPS})
     memilio_set_warning_flags(${NAME})
     memilio_set_sanitizer_flags(${NAME})
-    memilio_configure_path_header(${NAME} # Target name
-                                  "data_dir.h.in" # Input template relative to examples/
-                                  "data_dir.h"    # Output file relative to examples build dir
-                                  "MEMILIO_DATA_DIR" # Variable name to set in the header
-                                  "${PROJECT_SOURCE_DIR}/data")
 endfunction()
 
 #-------------------------------------------------------

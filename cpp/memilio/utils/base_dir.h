@@ -1,7 +1,8 @@
+
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,9 +18,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef BENCH_CONFIG_DIR_H
-#define BENCH_CONFIG_DIR_H
+#ifndef BASE_DIR_H
+#define BASE_DIR_H
 
-constexpr const char* const BENCH_CONFIG_DIR = "${MEMILIO_BENCHMARK_CONFIG_DIR}";
+#include "memilio/config.h"
+namespace mio
+{
+/**
+ * @brief Returns path to the repo directory.
+*/
+std::string base_dir()
+{
+    return MEMILIO_BASE_DIR;
+}
+}
 
-#endif //BENCH_CONFIG_DIR_H
+#endif // BASE_DIR_H

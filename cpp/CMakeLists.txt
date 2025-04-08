@@ -75,7 +75,7 @@ mark_as_advanced(
     MEMILIO_ENABLE_IPOPT
     MEMILIO_ENABLE_INSTALL
 )
-
+file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/.." MEMILIO_BASE_DIR)
 #-------------------------------------------------------
 # Helper functions
 #-------------------------------------------------------
@@ -95,17 +95,6 @@ function(add_memilio_component COMPONENT_TYPE)
         message(STATUS "Building memilio ${COMPONENT_TYPE}")
         add_subdirectory(${COMPONENT_TYPE})
     endif()
-endfunction()
-
-# Function to configure a path header file
-function(memilio_configure_path_header TARGET_NAME HEADER_NAME_IN HEADER_NAME_OUT PATH_VARIABLE_NAME PATH_TO_CONFIGURE)
-    file(TO_CMAKE_PATH "${PATH_TO_CONFIGURE}" CONFIGURED_PATH_CMAKE)
-    set(${PATH_VARIABLE_NAME} "${CONFIGURED_PATH_CMAKE}" CACHE INTERNAL "Path to ${PATH_VARIABLE_NAME}")
-    configure_file(
-        "${HEADER_NAME_IN}"   # Relative to caller's source dir
-        "${HEADER_NAME_OUT}"  # Relative to caller's binary dir
-    )
-    target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}") # Caller's binary dir
 endfunction()
 
 # Function to install header directories

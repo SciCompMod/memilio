@@ -31,7 +31,6 @@ function(add_memilio_benchmark NAME SOURCES)
         ${MEMILIO_DEPS}
         ${MEMILIO_BENCHMARK_LIBRARY}
     )
-    memilio_configure_path_header(${NAME} "bench_config_dir.h.in" "bench_config_dir.h" "MEMILIO_BENCHMARK_CONFIG_DIR" "${CMAKE_CURRENT_SOURCE_DIR}/configs")
 endfunction()
 
 

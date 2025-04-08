@@ -31,4 +31,6 @@
 #cmakedefine MEMILIO_ENABLE_OPENMP
 #cmakedefine MEMILIO_ENABLE_PROFILING
 
+const char* const MEMILIO_BASE_DIR = "${MEMILIO_BASE_DIR}/";
+
 #endif

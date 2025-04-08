@@ -32,7 +32,7 @@ void integrator_step(::benchmark::State& state)
     // with "num_agegroups" agegroups, and taking "yt" as the state of the simulation at "t_init"
     // NOTE: yt must have #agegroups * #compartments entries
     // benchmark setup
-    const std::string config_path = mio::path_join(BENCH_CONFIG_DIR, "integrator_step.config");
+    const std::string config_path = mio::path_join(mio::base_dir(), "integrator_step.config");
     auto cfg = mio::benchmark::IntegratorStepConfig::initialize(config_path);
     //auto cfg = mio::benchmark::IntegratorStepConfig::initialize();
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "test_data_dir.h"
+#include "memilio/utils/base_dir.h"
 #include "memilio/utils/stl_util.h"
 #include <string>
 #include <cstring>
@@ -27,7 +27,7 @@
 template <class String>
 std::string get_test_data_file_path(String&& filename)
 {
-    return mio::path_join(TEST_DATA_DIR, filename);
+    return mio::path_join(mio::base_dir(), filename);
 }
 
 /**
