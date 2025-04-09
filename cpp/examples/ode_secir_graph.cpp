@@ -23,6 +23,7 @@
 #include "ode_secir/parameters.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/compartments/simulation.h"
+#include <vector>
 
 #include <iostream>
 
@@ -30,7 +31,7 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::off);
     const auto t0   = 0.;
-    const auto tmax = 500.;
+    const auto tmax = 2.;
     const auto dt   = 0.5; //time step of Mobility, daily Mobility every second step
 
     double cont_freq = 10; // see Polymod study
@@ -134,5 +135,18 @@ int main()
 
     sim.advance(tmax);
 
+    std::vector<double> a(1000000, 1.0);
+    std::vector<double> b(1000000, 1.0);
+    std::vector<double> c(1000000);
+    #pragma acc parallel loop
+    for (size_t i = 0; i < a.size(); i++){
+        c[i] = a[i] + b[i];
+    }
+
+    double result = 0;
+    for (size_t i = 0; i < c.size(); i++){
+        result += c[i];
+    }
+    std::cout << result << std::endl;
     return 0;
 }
