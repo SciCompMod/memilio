@@ -80,7 +80,6 @@ public:
     void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
-        nvtxRangePushA("get_flows");
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
@@ -209,7 +208,6 @@ public:
                 {i})] = (1 - params.template get<DeathsPerCritical<FP>>()[i]) /
                         params.template get<TimeInfectedCritical<FP>>()[i] * y[ICri];
         }
-        nvtxRangePop();
     }
 
     /**

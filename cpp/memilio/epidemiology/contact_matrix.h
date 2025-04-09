@@ -187,9 +187,7 @@ public:
      */
     auto get_matrix_at(SimulationTime t) const
     {
-        nvtxRangePushA("get_matrix_at");
         return m_baseline - (m_dampings.get_matrix_at(t).array() * (m_baseline - m_minimum).array()).matrix();
-        nvtxRangePop();
     }
     auto get_matrix_at(double t) const
     {

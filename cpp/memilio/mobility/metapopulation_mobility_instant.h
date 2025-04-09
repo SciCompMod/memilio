@@ -564,7 +564,6 @@ template <typename FP>
 template <class Sim>
 void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
-    nvtxRangePushA("MobilityEdge::apply_mobility");
 
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -642,8 +641,6 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         add_mobility_result_time_point(t);
     }
     m_return_mobile_population = !m_return_mobile_population;
-
-    nvtxRangePop();
 }
 
 /**
