@@ -23,6 +23,11 @@
 #include "memilio/utils/time_series.h"
 #include <memory>
 
+#include <iostream>
+#include <cmath>
+#include <chrono>
+#include <openacc.h>
+
 namespace mio
 {
 namespace isecir

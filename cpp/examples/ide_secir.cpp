@@ -32,179 +32,179 @@
 
 
 
-#include <iostream>
-#include <cmath>
-#include <chrono>
-#include <openacc.h>
+// #include <iostream>
+// #include <cmath>
+// #include <chrono>
+// #include <openacc.h>
 
-int main() {
-    const int N = 10000000; // 10 million elements
-    float *sin_values, *cos_values;
+// int main() {
+//     const int N = 10000000; // 10 million elements
+//     float *sin_values, *cos_values;
    
-    // Allocate host memory
-    sin_values = new float[N];
-    cos_values = new float[N];
+//     // Allocate host memory
+//     sin_values = new float[N];
+//     cos_values = new float[N];
    
-    // Start total timer
-    auto total_start = std::chrono::high_resolution_clock::now();
+//     // Start total timer
+//     auto total_start = std::chrono::high_resolution_clock::now();
    
-    // ========================
-    // 1. GPU Memory Allocation
-    // ========================
-    auto alloc_start = std::chrono::high_resolution_clock::now();
+//     // ========================
+//     // 1. GPU Memory Allocation
+//     // ========================
+//     auto alloc_start = std::chrono::high_resolution_clock::now();
    
-    #pragma acc enter data create(sin_values[0:N], cos_values[0:N])
+//     #pragma acc enter data create(sin_values[0:N], cos_values[0:N])
    
-    auto alloc_end = std::chrono::high_resolution_clock::now();
+//     auto alloc_end = std::chrono::high_resolution_clock::now();
    
-    // =====================
-    // 2. GPU Computation
-    // =====================
-    auto comp_start = std::chrono::high_resolution_clock::now();
+//     // =====================
+//     // 2. GPU Computation
+//     // =====================
+//     auto comp_start = std::chrono::high_resolution_clock::now();
    
-    #pragma acc parallel loop present(sin_values, cos_values)
-    for(int i = 0; i < N; i++) {
-        sin_values[i] = sinf(i * 0.001f);  // Using float version
-        cos_values[i] = cosf(i * 0.001f);
-    }
-   
-    auto comp_end = std::chrono::high_resolution_clock::now();
-   
-    // =====================
-    // 3. Data Transfer Back
-    // =====================
-    auto copy_start = std::chrono::high_resolution_clock::now();
-   
-    #pragma acc update host(sin_values[0:N], cos_values[0:N])
-   
-    auto copy_end = std::chrono::high_resolution_clock::now();
-   
-    // Clean up GPU memory
-    #pragma acc exit data delete(sin_values, cos_values)
-   
-    // Stop total timer
-    auto total_end = std::chrono::high_resolution_clock::now();
-   
-    // =====================
-    // Timing Results
-    // =====================
-    auto alloc_time = std::chrono::duration_cast<std::chrono::microseconds>(alloc_end - alloc_start).count();
-    auto comp_time = std::chrono::duration_cast<std::chrono::microseconds>(comp_end - comp_start).count();
-    auto copy_time = std::chrono::duration_cast<std::chrono::microseconds>(copy_end - copy_start).count();
-    auto total_time = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_start).count();
-   
-    std::cout << "Timing Results (μs):\n";
-    std::cout << "-------------------\n";
-    std::cout << "GPU Allocation: " << alloc_time << "\n";
-    std::cout << "GPU Computation: " << comp_time << "\n";
-    std::cout << "Host Copy: " << copy_time << "\n";
-    std::cout << "Total Time: " << total_time << "\n";
-   
-    // Verify first and last elements
-    std::cout << "\nVerification:\n";
-    std::cout << "sin_values[0]: " << sin_values[0] << " (expected: " << sinf(0) << ")\n";
-    std::cout << "cos_values[0]: " << cos_values[0] << " (expected: " << cosf(0) << ")\n";
-    std::cout << "sin_values[N-1]: " << sin_values[N-1] << " (expected: " << sinf((N-1)*0.001f) << ")\n";
-   
-    delete[] sin_values;
-    delete[] cos_values;
-   
-    return 0;
-}
-
-
-
-// int main()
-// {
-//     using Vec = mio::TimeSeries<ScalarType>::Vector;
-
-//     size_t num_agegroups = 1;
-
-//     ScalarType tmax = 10;
-//     mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
-//         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
-//     mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
-//         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
-//     ScalarType dt = 1.;
-
-//     int num_transitions = (int)mio::isecir::InfectionTransition::Count;
-
-//     // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
-//     // stored.
-//     mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
-
-//     // Add time points for initialization of transitions.
-//     Vec vec_init(num_transitions * num_agegroups);
-//     vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
-//     vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
-
-//     vec_init = vec_init * dt;
-//     // Add initial time point to time series.
-//     init.add_time_point(-10, vec_init);
-//     // Add further time points until time 0.
-//     while (init.get_last_time() < -dt / 2) {
-//         init.add_time_point(init.get_last_time() + dt, vec_init);
+//     #pragma acc parallel loop present(sin_values, cos_values)
+//     for(int i = 0; i < N; i++) {
+//         sin_values[i] = sinf(i * 0.001f);  // Using float version
+//         cos_values[i] = cosf(i * 0.001f);
 //     }
-
-//     // Initialize model.
-//     mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
-
-//     // Uncomment one of the two lines to use a different method to initialize the model using the TimeSeries init.
-//     // Initialization method with Susceptibles.
-//     // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
-//     // Initialization method with Recovered.
-//     // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
-
-//     // Set working parameters.
-//     mio::SmootherCosine smoothcos(2.0);
-//     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-//     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
-//     // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
-//     vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
-//     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-//         .set_distribution_parameter(4.0);
-
-//     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib;
-
-//     std::vector<ScalarType> vec_prob(num_transitions, 0.5);
-//     // The following probabilities must be 1, as there is no other way to go.
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
-//     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-//     model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]        = vec_prob;
-
-//     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-//     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
-//     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
-//     mio::ExponentialSurvivalFunction exponential(0.5);
-//     mio::StateAgeFunctionWrapper prob(exponential);
-
-//     model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = prob;
-//     model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = prob;
-//     model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]   = prob;
-
-//     model.parameters.set<mio::isecir::Seasonality>(0.1);
-//     // Start the simulation on the 40th day of a year (i.e. in February).
-//     model.parameters.set<mio::isecir::StartDay>(40);
-
-//     model.check_constraints(dt);
-
-//     // Carry out simulation.
-//     mio::isecir::Simulation sim(model, dt);
-//     sim.advance(tmax);
-
-//     auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
-
-//     interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
-//     // Uncomment this line to print the transitions.
-//     // sim.get_transitions().print_table(
-//     //     {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
+   
+//     auto comp_end = std::chrono::high_resolution_clock::now();
+   
+//     // =====================
+//     // 3. Data Transfer Back
+//     // =====================
+//     auto copy_start = std::chrono::high_resolution_clock::now();
+   
+//     #pragma acc update host(sin_values[0:N], cos_values[0:N])
+   
+//     auto copy_end = std::chrono::high_resolution_clock::now();
+   
+//     // Clean up GPU memory
+//     #pragma acc exit data delete(sin_values, cos_values)
+   
+//     // Stop total timer
+//     auto total_end = std::chrono::high_resolution_clock::now();
+   
+//     // =====================
+//     // Timing Results
+//     // =====================
+//     auto alloc_time = std::chrono::duration_cast<std::chrono::microseconds>(alloc_end - alloc_start).count();
+//     auto comp_time = std::chrono::duration_cast<std::chrono::microseconds>(comp_end - comp_start).count();
+//     auto copy_time = std::chrono::duration_cast<std::chrono::microseconds>(copy_end - copy_start).count();
+//     auto total_time = std::chrono::duration_cast<std::chrono::microseconds>(total_end - total_start).count();
+   
+//     std::cout << "Timing Results (μs):\n";
+//     std::cout << "-------------------\n";
+//     std::cout << "GPU Allocation: " << alloc_time << "\n";
+//     std::cout << "GPU Computation: " << comp_time << "\n";
+//     std::cout << "Host Copy: " << copy_time << "\n";
+//     std::cout << "Total Time: " << total_time << "\n";
+   
+//     // Verify first and last elements
+//     std::cout << "\nVerification:\n";
+//     std::cout << "sin_values[0]: " << sin_values[0] << " (expected: " << sinf(0) << ")\n";
+//     std::cout << "cos_values[0]: " << cos_values[0] << " (expected: " << cosf(0) << ")\n";
+//     std::cout << "sin_values[N-1]: " << sin_values[N-1] << " (expected: " << sinf((N-1)*0.001f) << ")\n";
+   
+//     delete[] sin_values;
+//     delete[] cos_values;
+   
+//     return 0;
 // }
+
+
+
+int main()
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    size_t num_agegroups = 10;
+
+    ScalarType tmax = 10;
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
+    ScalarType dt = 0.1;
+
+    int num_transitions = (int)mio::isecir::InfectionTransition::Count;
+
+    // Create TimeSeries with num_transitions * num_agegroups elements where transitions needed for simulation will be
+    // stored.
+    mio::TimeSeries<ScalarType> init(num_transitions * num_agegroups);
+
+    // Add time points for initialization of transitions.
+    Vec vec_init(num_transitions * num_agegroups);
+    vec_init[(int)mio::isecir::InfectionTransition::SusceptibleToExposed]                 = 25.0;
+    vec_init[(int)mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms]          = 15.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] = 8.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToRecovered]        = 4.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSymptomsToRecovered]          = 4.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToInfectedCritical]     = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedSevereToRecovered]            = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToDead]               = 1.0;
+    vec_init[(int)mio::isecir::InfectionTransition::InfectedCriticalToRecovered]          = 1.0;
+
+    vec_init = vec_init * dt;
+    // Add initial time point to time series.
+    init.add_time_point(-10, vec_init);
+    // Add further time points until time 0.
+    while (init.get_last_time() < -dt / 2) {
+        init.add_time_point(init.get_last_time() + dt, vec_init);
+    }
+
+    // Initialize model.
+    mio::isecir::Model model(std::move(init), N, deaths, num_agegroups);
+
+    // Uncomment one of the two lines to use a different method to initialize the model using the TimeSeries init.
+    // Initialization method with Susceptibles.
+    // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 1000;
+    // Initialization method with Recovered.
+    // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
+
+    // Set working parameters.
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
+    vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+        .set_distribution_parameter(4.0);
+
+    model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib;
+
+    std::vector<ScalarType> vec_prob(num_transitions, 0.5);
+    // The following probabilities must be 1, as there is no other way to go.
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
+    vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+    model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]        = vec_prob;
+
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
+    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    mio::ExponentialSurvivalFunction exponential(0.5);
+    mio::StateAgeFunctionWrapper prob(exponential);
+
+    model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = prob;
+    model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = prob;
+    model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[mio::AgeGroup(0)]   = prob;
+
+    model.parameters.set<mio::isecir::Seasonality>(0.1);
+    // Start the simulation on the 40th day of a year (i.e. in February).
+    model.parameters.set<mio::isecir::StartDay>(40);
+
+    model.check_constraints(dt);
+
+    // Carry out simulation.
+    mio::isecir::Simulation sim(model, dt);
+    sim.advance(tmax);
+
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
+
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    // Uncomment this line to print the transitions.
+    // sim.get_transitions().print_table(
+    //     {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
+}

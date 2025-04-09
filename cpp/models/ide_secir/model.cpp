@@ -30,6 +30,11 @@
 #include <algorithm>
 #include <cstddef>
 
+#include <iostream>
+#include <cmath>
+#include <chrono>
+#include <openacc.h>
+
 namespace mio
 {
 namespace isecir
@@ -398,6 +403,7 @@ void Model::initial_compute_compartments(ScalarType dt)
     for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         for (Eigen::Index i = 0; i < (Eigen::Index)InfectionState::Count; i++) {
             int idx = get_state_flat_index(i, group);
+            std::cout<< " populations[0][idx]: "<< populations[0][idx] <<std::endl;
             if (populations[0][idx] < 0) {
                 m_initialization_method = -2;
                 log_error(
@@ -565,6 +571,9 @@ void Model::update_compartments()
     }
 }
 
+
+
+
 void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 {
 
@@ -645,6 +654,100 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
         }
     }
 }
+
+
+
+
+
+
+// void Model::compute_forceofinfection(ScalarType dt, bool initialization)
+// {
+//     m_forceofinfection = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(m_num_agegroups), 0.);
+    
+//     // #pragma acc parallel loop collapse(2)
+//     for (int ii = 0; ii < m_num_agegroups; ++ii) {
+//         for (int jj = 0; jj < m_num_agegroups; ++jj) {
+
+//             AgeGroup i = static_cast<AgeGroup>(ii);
+//             AgeGroup j = static_cast<AgeGroup>(jj);
+
+//             Eigen::Index num_time_points;
+//             ScalarType current_time;
+
+//             if (initialization) {
+//                 num_time_points = transitions.get_num_time_points() - 1;
+//                 current_time = transitions.get_time(num_time_points - 1);
+//             } else {
+//                 num_time_points = transitions.get_num_time_points();
+//                 current_time = transitions.get_last_time();
+//             }
+
+//             ScalarType season_val =
+//                 1 + parameters.get<Seasonality>() *
+//                     sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+
+//             ScalarType calc_time = std::max(
+//                 {m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+//                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+//                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
+//                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToRecovered]});
+            
+//             Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
+
+//             int Dj = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
+//             int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), j);
+//             int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
+//             int INStISyj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
+
+//             ScalarType deaths_j;
+//             if (initialization) {
+//                 deaths_j = populations[Eigen::Index(0)][Dj] - transitions.get_last_value()[ICrtDj];
+//             } else {
+//                 deaths_j = populations.get_last_value()[Dj];
+//             }
+
+//             ScalarType sum = 0;
+            
+//             // #pragma acc loop reduction(+:sum)
+//             for (int ll = num_time_points - 1 - calc_time_index; ll < num_time_points - 1; ++ll) {
+//                 Eigen::Index l = static_cast<Eigen::Index>(ll);
+
+//                 Eigen::Index state_age_index = num_time_points - 1 - l;
+//                 ScalarType state_age = state_age_index * dt;
+//                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
+//                        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
+//                            static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
+//                        (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
+//                             transitions[l + 1][EtINSj] *
+//                             parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
+//                         m_transitiondistributions_in_forceofinfection[j][1][num_time_points - l - 1] *
+//                             transitions[l + 1][INStISyj] *
+//                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
+//             }
+
+//             const double divNj =
+//                 (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
+            
+//             // #pragma acc atomic
+//             m_forceofinfection[i] += divNj * sum;
+//         }
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ---- Functionality to set vectors with necessary information regarding TransitionDistributions. ----
 void Model::set_transitiondistributions_support_max(ScalarType dt)
