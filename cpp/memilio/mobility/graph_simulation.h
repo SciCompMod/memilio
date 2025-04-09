@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
+#include <nvtx3/nvToolsExt.h>
 
 namespace mio
 {
@@ -102,16 +103,23 @@ public:
                 dt = t_max - Base::m_t;
             }
 
+
+            // nvtxRangePushA("Node");
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
+            // nvtxRangePop();
 
             Base::m_t += dt;
 
-            for (auto& e : Base::m_graph.edges()) {
-                Base::m_edge_func(Base::m_t, dt, e.property, Base::m_graph.nodes()[e.start_node_idx].property,
-                                  Base::m_graph.nodes()[e.end_node_idx].property);
+            // nvtxRangePushA("Edge");
+            #pragma acc parallel loop
+            for(size_t i = 0; i < Base::m_graph.edges().size(); i++){
+            //for (auto& e : Base::m_graph.edges()) {
+                Base::m_edge_func(Base::m_t, dt, Base::m_graph.edges()[i].property, Base::m_graph.nodes()[Base::m_graph.edges()[i].start_node_idx].property,
+                                  Base::m_graph.nodes()[Base::m_graph.edges()[i].end_node_idx].property);
             }
+            // nvtxRangePop();
         }
     }
 };

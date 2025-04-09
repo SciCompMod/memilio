@@ -143,6 +143,8 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
             "-Werror")
     endif()
 endif()
+string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict -acc -gpu=mem:unified:nomanagedalloc -Minfo=accel")
+
 
 ############ ADD CUDA ################
 # CUDA support configuration
