@@ -128,3 +128,7 @@ endif()
 if(MEMILIO_ENABLE_OPENMP)
     target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
+if(MEMILIO_ENABLE_OPENACC)
+    target_link_libraries(memilio PUBLIC OpenACC::OpenACC_CXX)
+endif()

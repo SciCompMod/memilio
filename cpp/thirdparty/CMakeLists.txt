@@ -204,6 +204,10 @@ if(MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED COMPONENTS CXX)
 endif()
 
+if(MEMILIO_ENABLE_OPENACC)
+    find_package(OpenACC REQUIRED)
+endif()
+
 # Random123 library for random number generators
 message(STATUS "Downloading Random123 library")
 

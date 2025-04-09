@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.13)
 
 project(memilio VERSION 1.0.0)
 
-option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
+option(MEMILIO_BUILD_TESTS "Build memilio unit tests." OFF)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
-option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
+option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." OFF)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
@@ -22,6 +22,7 @@ option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors.
 option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
 option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
 option(MEMILIO_ENABLE_CUDA "Enable CUDA" ON)
+option(MEMILIO_ENABLE_OPENACC "Enable OpenACC" ON)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -144,6 +145,11 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     endif()
 endif()
 
+
+
+string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict,deprecated_entity_with_custom_message,declared_but_not_referenced,partial_override,offset_in_non_POD_nonstandard -acc -gpu=mem:unified:nomanagedalloc -Minfo=accel")
+
+
 ############ ADD CUDA ################
 # CUDA support configuration
 if(MEMILIO_ENABLE_CUDA)
@@ -167,31 +173,29 @@ if(MEMILIO_ENABLE_CUDA)
 endif()
 #############################################
 
-
-
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
-    add_subdirectory(models/abm)
-    add_subdirectory(models/d_abm)
-    add_subdirectory(models/ode_secir)
-    add_subdirectory(models/ode_secirts)
-    add_subdirectory(models/ode_secirvvs)
-    add_subdirectory(models/lct_secir)
-    add_subdirectory(models/glct_secir)
+    # add_subdirectory(models/abm)
+    # add_subdirectory(models/d_abm)
+    # add_subdirectory(models/ode_secir)
+    # add_subdirectory(models/ode_secirts)
+    # add_subdirectory(models/ode_secirvvs)
+    # add_subdirectory(models/lct_secir)
+    # add_subdirectory(models/glct_secir)
     add_subdirectory(models/ide_secir)
     add_subdirectory(models/ide_seir)
-    add_subdirectory(models/ode_seir)
-    add_subdirectory(models/ode_seair)
-    add_subdirectory(models/ode_sir)
-    add_subdirectory(models/sde_sir)
-    add_subdirectory(models/sde_sirs)
-    add_subdirectory(models/sde_seirvv)
-    add_subdirectory(models/graph_abm)
-    add_subdirectory(models/smm)
+    # add_subdirectory(models/ode_seir)
+    # add_subdirectory(models/ode_seair)
+    # add_subdirectory(models/ode_sir)
+    # add_subdirectory(models/sde_sir)
+    # add_subdirectory(models/sde_sirs)
+    # add_subdirectory(models/sde_seirvv)
+    # add_subdirectory(models/graph_abm)
+    # add_subdirectory(models/smm)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
