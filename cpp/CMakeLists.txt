@@ -96,7 +96,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     endif()
 endif()
 
-string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict")
+string(APPEND CMAKE_CXX_FLAGS "--diag_suppress inline_gnu_noinline_conflict -acc -gpu=mem:unified:nomanagedalloc -Minfo=accel")
 # message("###########\n  " ${CMAKE_CXX_FLAGS_RELEASE})
 
 # set sanitizer compiler flags

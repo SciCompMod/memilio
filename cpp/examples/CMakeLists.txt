@@ -114,10 +114,10 @@ endif()
 # --acc
 
 
-add_executable(gpu_integrator gpu_integrator.cu)
+add_executable(gpu_integrator gpu_integrator.cpp)
 target_link_libraries(gpu_integrator PRIVATE memilio)
-# target_link_options(gpu_integrator PRIVATE ${OpenACC_CXX_OPTIONS})
-# target_compile_options(gpu_integrator PRIVATE ${OpenACC_CXX_OPTIONS})
+target_link_options(gpu_integrator PRIVATE ${OpenACC_CXX_OPTIONS})
+target_compile_options(gpu_integrator PRIVATE ${OpenACC_CXX_OPTIONS})
 # target_compile_options(gpu_integrator PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 if(MEMILIO_ENABLE_CUDA)
     target_link_libraries(gpu_integrator PRIVATE ${CUDA_LIBRARIES})

@@ -109,9 +109,13 @@ target_compile_options(memilio
     PRIVATE
     ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
     PUBLIC
-    "-acc"
     $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
+
+find_package(OpenACC REQUIRED)
+
+target_link_options(memilio PRIVATE ${OpenACC_CXX_OPTIONS})
+target_compile_options(memilio PRIVATE ${OpenACC_CXX_OPTIONS})
 
 if(MEMILIO_HAS_HDF5)
     target_link_libraries(memilio PUBLIC ${HDF5_C_LIBRARIES})
