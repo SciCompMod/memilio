@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <vector>
+#include "abm/location_type.h"
+#include "abm/infection_state.h"
 
 /* 
 * Copyright (C) 2020-2025 MEmilio
@@ -29,6 +31,19 @@ namespace mio
 namespace abm
 {
 
+struct GPurson{
+
+        GPurson(LocationType c_loc, uint32_t pid, InfectionState state) : current_loc(c_loc), id(pid), infection_state(state)
+        {
+            
+        }
+
+        LocationType current_loc;
+        uint32_t id;
+        InfectionState infection_state;
+
+};
+
 // Simple CUDA-compatible structure to hold person data
 struct CudaPerson {
     uint32_t id = 0;
@@ -37,6 +52,7 @@ struct CudaPerson {
     CudaPerson(uint32_t p_id, double t)
         : id(p_id), time_at_location_hours(t) {}
 };
+std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, int num_persons);
 std::vector<double> logTimeAtLocationCuda(const std::vector<CudaPerson>& cuda_persons, int num_persons);
 } // namespace abm
 } // namespace mio

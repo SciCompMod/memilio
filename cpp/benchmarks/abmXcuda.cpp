@@ -117,15 +117,26 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, size_t num_p_p_l
         auto sim = make_simulation(num_persons,num_p_p_loc, seeds);
         state.ResumeTiming();
 
-
-        mio::History<mio::DataWriterToMemory, mio::abm::LogTimeAtLocationForEachPerson> history;
-
         //simulated time should be long enough to have full infection runs and mobility to every location
         auto final_time = sim.get_time() + mio::abm::hours(24);
-        sim.advance(final_time, history);
-        write_log_to_file(history);
+        sim.advance(final_time);
     }
 }
+
+// void abm_benchmark(size_t num_persons, size_t num_p_p_loc, std::initializer_list<uint32_t> seeds)
+// {
+//     mio::set_log_level(mio::LogLevel::warn);
+//     auto sim = make_simulation(num_persons,num_p_p_loc, seeds);
+
+//     //simulated time should be long enough to have full infection runs and mobility to every location
+//     auto final_time = sim.get_time() + mio::abm::hours(24);
+//     sim.advance(final_time);
+// }
+
+// int main(){
+//     abm_benchmark(100,100, {28841971u, 69399375u});
+//     return 0;
+// }
 
 //Measure ABM simulation run time with different sizes and different seeds.
 //Fixed RNG seeds to make runs comparable. When there are code changes, the simulation will still

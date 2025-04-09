@@ -1,4 +1,4 @@
-add_library(cuda_abm_interface INTERFACE interface_cuda.h)
+add_library(cuda_abm_interface INTERFACE interface_cuda.h time.h)
 
 # Then define the main ABM library
 add_library(abm
@@ -63,5 +63,21 @@ if(MEMILIO_ENABLE_CUDA)
     
     # Now link the CUDA logger to the main ABM library
     target_link_libraries(abm PUBLIC cuda_logger
+    cuda_abm_interface)
+
+    add_library(cuda_example STATIC perform_mobility_rules.cu)
+    # Set CUDA properties
+    set_target_properties(cuda_example PROPERTIES 
+                         CUDA_SEPARABLE_COMPILATION ON
+                         CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+    
+    # Link dependencies, but don't create a cycle
+    target_link_libraries(cuda_example PUBLIC ${CUDA_LIBRARIES} ${CUDA_CUDART_LIBRARY} cuda_abm_interface)
+    target_include_directories(cuda_example PRIVATE 
+                             ${CUDA_INCLUDE_DIRS}
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>)
+    
+    # Now link the CUDA logger to the main ABM library
+    target_link_libraries(abm PUBLIC cuda_example
     cuda_abm_interface)
 endif()
