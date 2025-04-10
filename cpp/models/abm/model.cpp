@@ -77,10 +77,10 @@ PersonId Model::add_person(Person&& person)
 
 void Model::evolve(TimePoint t, TimeSpan dt)
 {
-    begin_step(t, dt);
-    log_info("ABM Model interaction.");
-    interaction(t, dt);
-    log_info("ABM Model mobility.");
+    //begin_step(t, dt);
+    //log_info("ABM Model interaction.");
+    //interaction(t, dt);
+    //log_info("ABM Model mobility.");
     perform_mobility(t, dt);
 }
 

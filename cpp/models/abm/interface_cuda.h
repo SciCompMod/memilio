@@ -31,6 +31,14 @@ namespace mio
 namespace abm
 {
 
+struct GPTumeseries{
+        GPTumeseries(int h) : hours(h){
+                
+        }
+
+        int hour;
+};
+
 struct GPurson{
 
         GPurson(LocationType c_loc, uint32_t pid, InfectionState state) : current_loc(c_loc), id(pid), infection_state(state)

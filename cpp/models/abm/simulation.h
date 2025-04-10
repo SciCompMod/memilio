@@ -23,6 +23,7 @@
 #include "abm/model.h"
 #include "abm/time.h"
 #include "memilio/io/history.h"
+#include "abm/interface_cuda.h"
 
 namespace mio
 {
@@ -47,6 +48,9 @@ public:
         , m_t(t0)
         , m_dt(hours(1))
     {
+        #ifdef MEMILIO_WITH_CUDA
+            GPTumeseries gpu_ts(t0.hours());
+        #endif
     }
 
     /**

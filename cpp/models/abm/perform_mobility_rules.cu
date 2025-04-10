@@ -30,6 +30,8 @@
 namespace mio {
 namespace abm {
 
+__device__ int t = 0;
+
 __device__ LocationType get_buried(const GPurson& person){
     auto current_loc = person.current_loc;
     if (person.infection_state == InfectionState::Dead) {
@@ -62,8 +64,28 @@ __device__ LocationType go_to_icu(const GPurson& person){
     }
     return current_loc;
 }
+
+__device__ LocationType go_to_event(const GPurson& person){
+    auto current_loc = person.current_loc;
+    //leave
+    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
+        !person.is_in_quarantine(t, params)) {
+        return random_transition(rng, current_loc, dt,
+                                 {{LocationType::SocialEvent,
+                                   params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
+    }
+
+    //return home
+    if (current_loc == LocationType::SocialEvent && t.hour_of_day() >= 20 &&
+        person.get_time_at_location() >= hours(2)) {
+        return LocationType::Home;
+    }
+
+    return current_loc;
+}
     
-__device__ LocationType try_mobility_rule(const GPurson& person){
+__device__ LocationType try_mobility_rule(const GPurson& person, int t){
     auto loc_type = get_buried(person);
     if(loc_type != person.current_loc){
         return loc_type;
@@ -84,10 +106,10 @@ __device__ LocationType try_mobility_rule(const GPurson& person){
 }
 
 // CUDA kernel for mobility rule get_buried
-__global__ void next_loc(const GPurson* persons, LocationType* results, int num_persons) {
+__global__ void next_loc(const GPurson* persons, LocationType* results, int num_persons, int t) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_persons) {
-        results[persons[idx].id] = try_mobility_rule(persons[idx]);
+        results[persons[idx].id] = try_mobility_rule(persons[idx], t);
     }
 }
 
