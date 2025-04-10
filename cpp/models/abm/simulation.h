@@ -48,9 +48,6 @@ public:
         , m_t(t0)
         , m_dt(hours(1))
     {
-        #ifdef MEMILIO_WITH_CUDA
-            GPTumeseries gpu_ts(t0.hours());
-        #endif
     }
 
     /**

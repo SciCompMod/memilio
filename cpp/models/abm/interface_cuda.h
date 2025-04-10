@@ -31,14 +31,6 @@ namespace mio
 namespace abm
 {
 
-struct GPTumeseries{
-        GPTumeseries(int h) : hours(h){
-                
-        }
-
-        int hour;
-};
-
 struct GPurson{
 
         GPurson(LocationType c_loc, uint32_t pid, InfectionState state) : current_loc(c_loc), id(pid), infection_state(state)
@@ -49,6 +41,7 @@ struct GPurson{
         LocationType current_loc;
         uint32_t id;
         InfectionState infection_state;
+        double time_at_location_hours = 0.0;
 
 };
 
@@ -60,7 +53,7 @@ struct CudaPerson {
     CudaPerson(uint32_t p_id, double t)
         : id(p_id), time_at_location_hours(t) {}
 };
-std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, int num_persons);
+std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, int num_persons, int t, double dt_days, double rate, unsigned long long seed);
 std::vector<double> logTimeAtLocationCuda(const std::vector<CudaPerson>& cuda_persons, int num_persons);
 } // namespace abm
 } // namespace mio

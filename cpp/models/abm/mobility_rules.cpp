@@ -107,6 +107,7 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
     //leave
     if (current_loc == LocationType::Home &&
         (t.hour_of_day() >= 19)) {
+            mio::unused(rng, dt, params);
         // return random_transition(rng, current_loc, dt,
         //                          {{LocationType::SocialEvent,
         //                            params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});

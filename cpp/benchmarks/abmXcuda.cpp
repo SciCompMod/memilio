@@ -113,19 +113,19 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, size_t num_p_p_l
 
     for (auto&& _ : state) {
         state.PauseTiming(); //exclude the setup from the benchmark
-        auto sim = make_simulation(num_persons,num_p_p_loc, seeds, 0.05);
+        auto sim = make_simulation(num_persons,num_p_p_loc, seeds, 0.5);
         state.ResumeTiming();
 
-        // mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        //     Eigen::Index(mio::abm::InfectionState::Count)};
+        mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+            Eigen::Index(mio::abm::InfectionState::Count)};
 
         //simulated time should be long enough to have full infection runs and mobility to every location
         auto final_time = sim.get_time() + mio::abm::hours(24);
-        sim.advance(final_time);
-        // std::ofstream outfile("abm_minimal.txt");
-        // std::get<0>(historyTimeSeries.get_log())
-        //     .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-        // std::cout << "Results written to abm_minimal.txt" << std::endl;
+        sim.advance(final_time, historyTimeSeries);
+        std::ofstream outfile("abm_minimal.txt");
+        std::get<0>(historyTimeSeries.get_log())
+            .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+        std::cout << "Results written to abm_minimal.txt" << std::endl;
     }
 }
 
@@ -154,6 +154,6 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, size_t num_p_p_l
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
 // BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000,100, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
 // BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000,100, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 1000000,100, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 1000,100, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

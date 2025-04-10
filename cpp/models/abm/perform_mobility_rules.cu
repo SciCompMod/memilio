@@ -24,6 +24,8 @@
 #include "abm/location_type.h"
 #include "abm/infection_state.h"
 #include "abm/time.h"
+#include <cmath>
+#include <curand_kernel.h>
 #include <stdio.h>
 #include <chrono>  // Add this for timing measurements
 
@@ -69,23 +71,31 @@ __device__ LocationType go_to_icu(const GPurson& person, int t){
     return current_loc;
 }
 
-__device__ LocationType go_to_event(const GPurson& person, int t_hours){
+__device__ bool random_transition(curandState_t* rng_state, double dt_days, double rate){
+    float u_exp = curand_uniform(rng_state);
+    double v = -std::logf(u_exp) / rate;
+    return v < dt_days;
+}
+
+__device__ LocationType go_to_event(const GPurson& person, curandState_t* rng_state, int t, double dt_days, double rate){
     auto current_loc = person.current_loc;
     if(current_loc == LocationType::Home){
-        if(t%24 >= event_gotime_weekday){
+        if(random_transition(rng_state, dt_days, rate)){
             return LocationType::SocialEvent;
         }
+        // if(t%24 >= event_gotime_weekday){
+        //     return LocationType::SocialEvent;
+        // }
     }
     else if(current_loc == LocationType::SocialEvent){
         if(t%24 >= event_comebacktime && person.time_at_location_hours >= 2.0){
             return LocationType::Home;
         }
     }
-    }
     return current_loc;
 }
     
-__device__ LocationType try_mobility_rule(const GPurson& person, int t){
+__device__ LocationType try_mobility_rule(const GPurson& person, curandState_t* rng_state, int t, double dt_days, double rate){
     auto loc_type = get_buried(person,t);
     if(loc_type != person.current_loc){
         return loc_type;
@@ -102,7 +112,7 @@ __device__ LocationType try_mobility_rule(const GPurson& person, int t){
     if(loc_type != person.current_loc){
         return loc_type;
     }
-    loc_type = go_to_event(person,t);
+    loc_type = go_to_event(person, rng_state, t, dt_days, rate);
     if(loc_type != person.current_loc){
         return loc_type;
     }
@@ -110,10 +120,11 @@ __device__ LocationType try_mobility_rule(const GPurson& person, int t){
 }
 
 // CUDA kernel for mobility rule get_buried
-__global__ void next_loc(const GPurson* persons, LocationType* results, int num_persons, int t) {
+__global__ void next_loc(const GPurson* persons, LocationType* results, int num_persons, int t, double dt_days, unsigned long long seed, curandState_t* states, double rate) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_persons) {
-        results[persons[idx].id] = try_mobility_rule(persons[idx], t);
+        curand_init(seed, idx, 0 &states[idx]);
+        results[persons[idx].id] = try_mobility_rule(persons[idx], states[idx], t, dt_days, rate);
     }
 }
 
@@ -125,7 +136,7 @@ double elapsedMilliseconds(const std::chrono::high_resolution_clock::time_point&
 }
 
 // CUDA implementation for LogTimeAtLocationForEachPerson
-std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, int num_persons) 
+std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, int num_persons, int t, double dt_days, double rate, unsigned long long seed) 
 {
     // Start timing
     auto start_total = std::chrono::high_resolution_clock::now();
@@ -151,6 +162,7 @@ std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, i
     // Allocate device memory
     GPurson* d_persons = nullptr;
     LocationType* d_results = nullptr;
+    curandState_t* d_rng_states = nullptr;
     
     cudaError_t err = cudaMalloc(&d_persons, num_persons * sizeof(GPurson));
     if (err != cudaSuccess) {
@@ -162,6 +174,13 @@ std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, i
     if (err != cudaSuccess) {
         fprintf(stderr, "CUDA Error (cudaMalloc results): %s\n", cudaGetErrorString(err));
         cudaFree(d_persons);
+        return next_locs;
+    }
+
+    err = cudaMalloc(&d_rng_states, num_persons * sizeof(curandState_t));
+    if (err != cudaSuccess) {
+        fprintf(stderr, "CUDA Error (cudaMalloc rng_states): %s\n", cudaGetErrorString(err));
+        cudaFree(d_rng_states);
         return next_locs;
     }
     
@@ -198,7 +217,7 @@ std::vector<LocationType> mobility_rules(const std::vector<GPurson>& gPursons, i
     int numBlocks = (num_persons + blockSize - 1) / blockSize;
     printf("Launching kernel with %d blocks of %d threads\n", numBlocks, blockSize);
     
-    next_loc<<<numBlocks, blockSize>>>(d_persons, d_results, num_persons);
+    next_loc<<<numBlocks, blockSize>>>(d_persons, d_results, num_persons, t, dt_days, seed, d_rng_states, rate);
     
     // Check for kernel launch errors
     err = cudaGetLastError();

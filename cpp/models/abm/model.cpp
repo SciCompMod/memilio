@@ -109,7 +109,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             mio::unused(p);
             gPursons.push_back(GPurson(LocationType::Home, p.get_id().get(), p.get_infection_state(t)));
         }
-        auto target_types = mobility_rules(gPursons, num_persons);
+        auto target_types = mobility_rules(gPursons, num_persons, t.hours(), dt.days(), params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()], m_rng.get_seeds()[0]);
         for (uint32_t person_index = 0; person_index < num_persons; ++person_index){
             Person& person    = m_persons[person_index];
             const Location& target_location   = get_location(find_location(target_types[person_index], person));
