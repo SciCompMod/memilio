@@ -105,12 +105,12 @@ LocationType go_to_event(PersonalRandomNumberGenerator& rng, const Person& perso
 {
     auto current_loc = person.get_location_type();
     //leave
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
-        !person.is_in_quarantine(t, params)) {
-        return random_transition(rng, current_loc, dt,
-                                 {{LocationType::SocialEvent,
-                                   params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
+    if (current_loc == LocationType::Home &&
+        (t.hour_of_day() >= 19)) {
+        // return random_transition(rng, current_loc, dt,
+        //                          {{LocationType::SocialEvent,
+        //                            params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
+        return LocationType::SocialEvent;
     }
 
     //return home

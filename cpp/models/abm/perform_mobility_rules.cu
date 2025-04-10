@@ -30,9 +30,13 @@
 namespace mio {
 namespace abm {
 
-__device__ int t = 0;
+__constant__ int weekend_cutoff = 5 ;
+__constant__ int event_gotimeweekend = 10 ;
+__constant__ int event_gotime_weekday = 19 ;
+__constant__ int event_comebacktime = 20 ;
 
-__device__ LocationType get_buried(const GPurson& person){
+
+__device__ LocationType get_buried(const GPurson& person, int t){
     auto current_loc = person.current_loc;
     if (person.infection_state == InfectionState::Dead) {
         return LocationType::Cemetery;
@@ -40,7 +44,7 @@ __device__ LocationType get_buried(const GPurson& person){
     return current_loc;
 }
 
-__device__ LocationType return_home_when_recovered(const GPurson& person){
+__device__ LocationType return_home_when_recovered(const GPurson& person, int t){
     auto current_loc = person.current_loc;
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
         person.infection_state == InfectionState::Recovered) {
@@ -49,7 +53,7 @@ __device__ LocationType return_home_when_recovered(const GPurson& person){
     return current_loc;
 }
 
-__device__ LocationType go_to_hospital(const GPurson& person){
+__device__ LocationType go_to_hospital(const GPurson& person, int t){
     auto current_loc = person.current_loc;
     if (person.infection_state == InfectionState::InfectedSevere) {
         return LocationType::Hospital;
@@ -57,7 +61,7 @@ __device__ LocationType go_to_hospital(const GPurson& person){
     return current_loc;
 }
 
-__device__ LocationType go_to_icu(const GPurson& person){
+__device__ LocationType go_to_icu(const GPurson& person, int t){
     auto current_loc = person.current_loc;
     if (person.infection_state == InfectionState::InfectedCritical) {
         return LocationType::ICU;
@@ -65,40 +69,40 @@ __device__ LocationType go_to_icu(const GPurson& person){
     return current_loc;
 }
 
-__device__ LocationType go_to_event(const GPurson& person){
+__device__ LocationType go_to_event(const GPurson& person, int t_hours){
     auto current_loc = person.current_loc;
-    //leave
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
-        !person.is_in_quarantine(t, params)) {
-        return random_transition(rng, current_loc, dt,
-                                 {{LocationType::SocialEvent,
-                                   params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
+    if(current_loc == LocationType::Home){
+        if(t%24 >= event_gotime_weekday){
+            return LocationType::SocialEvent;
+        }
     }
-
-    //return home
-    if (current_loc == LocationType::SocialEvent && t.hour_of_day() >= 20 &&
-        person.get_time_at_location() >= hours(2)) {
-        return LocationType::Home;
+    else if(current_loc == LocationType::SocialEvent){
+        if(t%24 >= event_comebacktime && person.time_at_location_hours >= 2.0){
+            return LocationType::Home;
+        }
     }
-
+    }
     return current_loc;
 }
     
 __device__ LocationType try_mobility_rule(const GPurson& person, int t){
-    auto loc_type = get_buried(person);
+    auto loc_type = get_buried(person,t);
     if(loc_type != person.current_loc){
         return loc_type;
     }
-    loc_type = return_home_when_recovered(person);
+    loc_type = return_home_when_recovered(person,t);
     if(loc_type != person.current_loc){
         return loc_type;
     }
-    loc_type = go_to_hospital(person);
+    loc_type = go_to_hospital(person,t);
     if(loc_type != person.current_loc){
         return loc_type;
     }
-    loc_type = go_to_icu(person);
+    loc_type = go_to_icu(person,t);
+    if(loc_type != person.current_loc){
+        return loc_type;
+    }
+    loc_type = go_to_event(person,t);
     if(loc_type != person.current_loc){
         return loc_type;
     }
