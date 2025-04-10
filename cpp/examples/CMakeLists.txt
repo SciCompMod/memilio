@@ -190,3 +190,6 @@ if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
     target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
+
+add_executable(graph_mini_app graph_ode_mini_app.cpp)
+target_compile_options(graph_mini_app PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
