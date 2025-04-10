@@ -234,15 +234,15 @@ int main()
     auto end = std::chrono::high_resolution_clock::now();
 
     auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    std::cout << "Dauer openmp: " << duration_ms << " ms" << std::endl;
+    std::cout << "Dauer: " << duration_ms << " ms" << std::endl;
 
-    auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
+    // auto interpolated_results = mio::interpolate_simulation_result(sim.get_result(), dt / 2.);
 
-    interpolated_results.print_table(
-        {"S1", "E1", "C1", "I1", "H1", "U1", "R1", "D1 ", "S2", "E2", "C2", "I2", "H2", "U2", "R2", "D2 "}, 16, 8);
-    // Uncomment this line to print the transitions.
-    // sim.get_transitions().print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1",
-    //                                    "H->R 1", "U->D 1", "U->R 1", "S->E 2", "E->C 2", "C->I 2", "C->R 2",
-    //                                    "I->H 2", "I->R 2", "H->U 2", "H->R 2", "U->D 2", "U->R 2"},
-    //                                   16, 8);
+    // interpolated_results.print_table(
+    //     {"S1", "E1", "C1", "I1", "H1", "U1", "R1", "D1 ", "S2", "E2", "C2", "I2", "H2", "U2", "R2", "D2 "}, 16, 8);
+    // // Uncomment this line to print the transitions.
+    // // sim.get_transitions().print_table({"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1",
+    // //                                    "H->R 1", "U->D 1", "U->R 1", "S->E 2", "E->C 2", "C->I 2", "C->R 2",
+    // //                                    "I->H 2", "I->R 2", "H->U 2", "H->R 2", "U->D 2", "U->R 2"},
+    // //                                   16, 8);
 }

@@ -403,7 +403,6 @@ void Model::initial_compute_compartments(ScalarType dt)
     for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
         for (Eigen::Index i = 0; i < (Eigen::Index)InfectionState::Count; i++) {
             int idx = get_state_flat_index(i, group);
-            std::cout<< " populations[0][idx]: "<< populations[0][idx] <<std::endl;
             if (populations[0][idx] < 0) {
                 m_initialization_method = -2;
                 log_error(
@@ -421,12 +420,19 @@ void Model::initial_compute_compartments(ScalarType dt)
 void Model::compute_susceptibles(ScalarType dt)
 {
     // We need to compute to compute the Susceptibles in every AgeGroup.
-    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+    // #pragma acc parallel loop
+    // std::cout<<"Start2"<<std::endl;
+    for (int i = 0; i < (m_num_agegroups); ++i) {
+        AgeGroup group(i);
+
         Eigen::Index num_time_points = populations.get_num_time_points();
         // Using number of Susceptibles from previous time step and force of infection from previous time step:
         // Compute current number of Susceptibles and store Susceptibles in populations.
         int Si                           = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
         populations.get_last_value()[Si] = populations[num_time_points - 2][Si] / (1 + dt * m_forceofinfection[group]);
+
+        // std::cout<<populations.get_last_value()[Si]<<std::endl;
+
     }
 }
 
@@ -574,161 +580,82 @@ void Model::update_compartments()
 
 
 
-void Model::compute_forceofinfection(ScalarType dt, bool initialization)
-{
+#include <omp.h>
 
-    m_forceofinfection = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(m_num_agegroups), 0.);
-    // We compute the force of infection for every AgeGroup.
-
-    for (AgeGroup i = AgeGroup(0); i < AgeGroup(m_num_agegroups); ++i) {
-
-        Eigen::Index num_time_points;
-        ScalarType current_time;
-
-        if (initialization) {
-            // Determine m_forceofinfection at time t0-dt which is the penultimate timepoint in transition.
-            num_time_points = transitions.get_num_time_points() - 1;
-            // Get time of penultimate timepoint in transitions.
-            current_time = transitions.get_time(num_time_points - 1);
-        }
-        else {
-            // Determine m_forceofinfection for current last time in transitions.
-            num_time_points = transitions.get_num_time_points();
-            current_time    = transitions.get_last_time();
-        }
-        //We compute the Season Value.
-        ScalarType season_val =
-            1 +
-            parameters.get<Seasonality>() *
-                sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
-        // To include contacts between all age groups we sum over all age groups.
-        for (AgeGroup j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
-            // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
-            ScalarType calc_time = std::max(
-                {m_transitiondistributions_support_max[j]
-                                                      [(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
-                 m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
-                 m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
-                 m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToRecovered]});
-            // Corresponding index.
-            // Need calc_time_index timesteps in sum,
-            // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
-            Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
-
-            int Dj     = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
-            int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), j);
-
-            int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
-            int INStISyj =
-                get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
-
-            // We store the number of deaths for every AgeGroup.
-            ScalarType deaths_j;
-            if (initialization) {
-                // Determine the number of individuals in Dead compartment at time t0-dt.
-                deaths_j = populations[Eigen::Index(0)][Dj] - transitions.get_last_value()[ICrtDj];
-            }
-            else {
-                deaths_j = populations.get_last_value()[Dj];
-            }
-
-            ScalarType sum = 0;
-
-            // Sum over all relevant time points.
-            for (Eigen::Index l = num_time_points - 1 - calc_time_index; l < num_time_points - 1; l++) {
-                Eigen::Index state_age_index = num_time_points - 1 - l;
-                ScalarType state_age         = state_age_index * dt;
-                sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
-                       parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
-                           static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
-                       (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
-                            transitions[l + 1][EtINSj] *
-                            parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
-                        m_transitiondistributions_in_forceofinfection[j][1][num_time_points - l - 1] *
-                            transitions[l + 1][INStISyj] *
-                            parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
-            }
-            const double divNj =
-                (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
-            m_forceofinfection[i] += divNj * sum;
-        }
-    }
-}
-
-
-
-
-
+/* OpenMP*/
 
 // void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 // {
+
 //     m_forceofinfection = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(m_num_agegroups), 0.);
-    
-//     // #pragma acc parallel loop collapse(2)
-//     for (int ii = 0; ii < m_num_agegroups; ++ii) {
-//         for (int jj = 0; jj < m_num_agegroups; ++jj) {
+//     // We compute the force of infection for every AgeGroup.
 
-//             AgeGroup i = static_cast<AgeGroup>(ii);
-//             AgeGroup j = static_cast<AgeGroup>(jj);
+//     #pragma omp parallel for
+//     for (int ii = 0; ii < int(m_num_agegroups); ++ii) {
 
-//             Eigen::Index num_time_points;
-//             ScalarType current_time;
 
-//             if (initialization) {
-//                 num_time_points = transitions.get_num_time_points() - 1;
-//                 current_time = transitions.get_time(num_time_points - 1);
-//             } else {
-//                 num_time_points = transitions.get_num_time_points();
-//                 current_time = transitions.get_last_time();
-//             }
+//         AgeGroup i(ii);
 
-//             ScalarType season_val =
-//                 1 + parameters.get<Seasonality>() *
-//                     sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+//         Eigen::Index num_time_points;
+//         ScalarType current_time;
 
+//         if (initialization) {
+//             // Determine m_forceofinfection at time t0-dt which is the penultimate timepoint in transition.
+//             num_time_points = transitions.get_num_time_points() - 1;
+//             // Get time of penultimate timepoint in transitions.
+//             current_time = transitions.get_time(num_time_points - 1);
+//         }
+//         else {
+//             // Determine m_forceofinfection for current last time in transitions.
+//             num_time_points = transitions.get_num_time_points();
+//             current_time    = transitions.get_last_time();
+//         }
+//         //We compute the Season Value.
+//         ScalarType season_val =
+//             1 +
+//             parameters.get<Seasonality>() *
+//                 sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+//         // To include contacts between all age groups we sum over all age groups.
+//         for (AgeGroup j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
+//             // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
 //             ScalarType calc_time = std::max(
-//                 {m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+//                 {m_transitiondistributions_support_max[j]
+//                                                       [(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
 //                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
 //                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
 //                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToRecovered]});
-            
+//             // Corresponding index.
+//             // Need calc_time_index timesteps in sum,
+//             // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
 //             Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
 
-//             int Dj = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
+//             int Dj     = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
 //             int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), j);
-//             int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
-//             int INStISyj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
 
+//             int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
+//             int INStISyj =
+//                 get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
+
+//             // We store the number of deaths for every AgeGroup.
 //             ScalarType deaths_j;
 //             if (initialization) {
+//                 // Determine the number of individuals in Dead compartment at time t0-dt.
 //                 deaths_j = populations[Eigen::Index(0)][Dj] - transitions.get_last_value()[ICrtDj];
-//             } else {
+//             }
+//             else {
 //                 deaths_j = populations.get_last_value()[Dj];
 //             }
 
 //             ScalarType sum = 0;
-            
-//             // #pragma acc loop reduction(+:sum)
-//             for (int ll = num_time_points - 1 - calc_time_index; ll < num_time_points - 1; ++ll) {
-//                 Eigen::Index l = static_cast<Eigen::Index>(ll);
 
+//             // Sum over all relevant time points.
+//             for (Eigen::Index l = num_time_points - 1 - calc_time_index; l < num_time_points - 1; l++) {
 //                 Eigen::Index state_age_index = num_time_points - 1 - l;
-//                 ScalarType state_age = state_age_index * dt;
-//                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
-//                        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
-//                            static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
-//                        (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
-//                             transitions[l + 1][EtINSj] *
-//                             parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
-//                         m_transitiondistributions_in_forceofinfection[j][1][num_time_points - l - 1] *
-//                             transitions[l + 1][INStISyj] *
-//                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
+//                 ScalarType state_age         = state_age_index * dt;
+//                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age);
 //             }
-
 //             const double divNj =
 //                 (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
-            
-//             // #pragma acc atomic
 //             m_forceofinfection[i] += divNj * sum;
 //         }
 //     }
@@ -738,10 +665,117 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
 
 
 
+/* OpenACC */
+void Model::compute_forceofinfection(ScalarType dt, bool initialization)
+{
+    m_forceofinfection = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(m_num_agegroups), 0.);
+
+    ScalarType* ptr_forceofinfection = m_forceofinfection.array().data();
+    size_t num_agegroups = m_forceofinfection.numel();
+
+    ScalarType* ptr_N = m_N.array().data();
+    size_t num_N = m_N.numel();
 
 
+    ScalarType* ptr_transitions = transitions.data();
+    size_t block_size = transitions.get_num_elements() + 1;
+    size_t num_time_points = transitions.get_num_time_points();
 
+    ScalarType* ptr_populations = populations.data();
+    size_t block_size_pop = populations.get_num_elements() + 1;
+    size_t num_time_points_pop = populations.get_num_time_points();
 
+    size_t total_size = block_size*num_time_points;
+
+    ScalarType seasonality = parameters.get<Seasonality>();
+    ScalarType start_day = parameters.get<StartDay>();
+
+    std::size_t num_vectors = m_transitiondistributions_support_max.array().size();
+    std::size_t vector_size = m_transitiondistributions_support_max.array()(0).size();
+
+    std::vector<ScalarType> flat_storage(num_vectors * vector_size);
+    for (size_t i = 0; i < num_vectors; ++i) {
+        for (size_t j = 0; j < vector_size; ++j) {
+            flat_storage[i * vector_size + j] = m_transitiondistributions_support_max.array()(i)[j];
+        }
+    }
+
+    #pragma acc data copyout(ptr_forceofinfection[0:num_agegroups]) \
+        copyin(ptr_transitions[0:total_size], flat_storage[0:num_vectors*vector_size]) \
+        copyin(ptr_populations[0:block_size_pop*num_time_points_pop]) \
+        copyin(ptr_N[0:num_N])
+    {
+        #pragma acc parallel loop collapse(2)
+        for (int ii = 0; ii < m_num_agegroups; ++ii) {
+            for (int jj = 0; jj < m_num_agegroups; ++jj) {
+
+                int i, j, n;
+
+                ScalarType current_time;
+                if (initialization) {
+                    num_time_points--;
+                    // current_time = transitions.get_time(num_time_points - 1);
+                    i = 0;
+                    j = num_time_points-2;
+                    n = block_size;
+                    current_time=ptr_transitions[i + n * j];
+                } else {
+                    // current_time = transitions.get_last_time();
+                    i= 0;
+                    j = num_time_points-1;
+                    n = block_size;
+                    current_time=ptr_transitions[i + n * j];
+                }
+
+                ScalarType season_val =
+                    1 + seasonality *
+                        sin(3.141592653589793 * (std::fmod((start_day + current_time), 365.0) / 182.5 + 0.5));
+
+                ScalarType calc_time = std::max({flat_storage[jj*vector_size + (int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+                                                 flat_storage[jj*vector_size + (int)InfectionTransition::InfectedNoSymptomsToRecovered],
+                                                 flat_storage[jj*vector_size + (int)InfectionTransition::InfectedSymptomsToInfectedSevere],
+                                                 flat_storage[jj*vector_size + (int)InfectionTransition::InfectedSymptomsToRecovered]});
+
+                size_t calc_time_index = (size_t) std::ceil(calc_time / dt) - 1;
+
+                int Dj = jj * (int)InfectionState::Count + (int)InfectionState::Dead +1;
+                int ICrtDj = jj * (int)InfectionTransition::Count + (int)InfectionTransition::InfectedCriticalToDead+1;
+                int EtINSj = jj * (int)InfectionTransition::Count + (int)InfectionTransition::ExposedToInfectedNoSymptoms+1;  
+                int INStISyj = jj * (int)InfectionTransition::Count + (int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms+1;
+
+                ScalarType deaths_j;
+                if (initialization) {
+                    // deaths_j = populations[Eigen::Index(0)][Dj] - transitions.get_last_value()[ICrtDj];
+                    deaths_j = ptr_populations[Dj] -ptr_transitions[(num_time_points-1)*block_size+ ICrtDj];
+                } else {
+                    // deaths_j = populations.get_last_value()[Dj];
+                    deaths_j = ptr_populations[(num_time_points_pop-1)*block_size_pop + Dj];
+                }
+
+                ScalarType sum = 0;
+                #pragma acc loop reduction(+:sum)
+                for (int ll = num_time_points - 1 - calc_time_index; ll < num_time_points - 1; ++ll) {
+                    size_t state_age_index = num_time_points - 1 - ll;
+                    ScalarType state_age = state_age_index * dt;
+                    sum += season_val * ( (state_age <= 0.0) ? 1.0 : std::exp(-0.5 * (state_age - 0.0)) );
+                }
+
+                const double divNj = (ptr_N[jj] - deaths_j < 1e-12) ? 0.0 : 1.0 / (ptr_N[jj] - deaths_j);
+            
+                #pragma acc atomic 
+                ptr_forceofinfection[ii] += divNj * sum;
+
+            }
+        }
+    }
+
+    // // Print final values (CPU)
+    // std::cout << "Final CPU values:\n";
+    // for (size_t i = 0; i < num_agegroups; ++i) {
+    //     std::cout << m_forceofinfection.array()(i) << " ";
+    // }
+    // std::cout << "\n\n";
+}
 
 
 
@@ -836,3 +870,404 @@ void Model::set_transitiondistributions_in_forceofinfection(ScalarType dt)
 
 } // namespace isecir
 } // namespace mio
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// void Model::compute_forceofinfection(ScalarType dt, bool initialization)
+// {
+
+//     m_forceofinfection = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(m_num_agegroups), 0.);
+
+
+
+
+
+
+
+
+
+
+//     // size_t length = m_forceofinfection.numel();
+//     // ScalarType* gpu_data = new ScalarType[length];
+
+//     // // Initialize (if needed)
+//     // std::copy(m_forceofinfection.array().data(), 
+//     //           m_forceofinfection.array().data() + length,
+//     //           gpu_data);
+        
+//     // // Print initial values (CPU)
+//     // std::cout << "Initial CPU values:\n";
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     std::cout << gpu_data[i] << " ";
+//     // }
+//     // std::cout << "\n\n";
+    
+//     // // --- Timing starts here ---
+//     // auto start = std::chrono::high_resolution_clock::now();
+    
+//     // // 2. Copy data to GPU 
+//     // #pragma acc enter data copyin(gpu_data[0:length])
+//     // auto copy_to_gpu_time = std::chrono::high_resolution_clock::now();
+    
+//     // // 3. Compute on GPU
+//     // #pragma acc parallel loop present(gpu_data)
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     gpu_data[i] = i * 0.1;  // Example computation
+//     // }
+//     // auto gpu_compute_time = std::chrono::high_resolution_clock::now();
+    
+//     // // 4. Copy results back to CPU
+//     // // #pragma acc update self(gpu_data[0:length])
+//     // auto copy_to_cpu_time = std::chrono::high_resolution_clock::now();
+    
+//     // // 5. Free GPU memory
+//     // // #pragma acc exit data delete(gpu_data[0:length])
+//     // auto cleanup_time = std::chrono::high_resolution_clock::now();
+    
+//     // // --- Timing ends here ---
+    
+//     // // 6. Copy results back to Eigen structure
+//     // std::copy(gpu_data, gpu_data + length, m_forceofinfection.array().data());
+//     // delete[] gpu_data;
+    
+//     // // Print final values (CPU)
+//     // std::cout << "Final CPU values:\n";
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     std::cout << m_forceofinfection.array()(i) << " ";
+//     // }
+//     // std::cout << "\n\n";
+    
+//     // // Print timings (microseconds)
+//     // auto t_copy_to_gpu = std::chrono::duration_cast<std::chrono::microseconds>(copy_to_gpu_time - start).count();
+//     // auto t_gpu_compute = std::chrono::duration_cast<std::chrono::microseconds>(gpu_compute_time - copy_to_gpu_time).count();
+//     // auto t_copy_to_cpu = std::chrono::duration_cast<std::chrono::microseconds>(copy_to_cpu_time - gpu_compute_time).count();
+//     // auto t_cleanup = std::chrono::duration_cast<std::chrono::microseconds>(cleanup_time - copy_to_cpu_time).count();
+//     // auto t_total = std::chrono::duration_cast<std::chrono::microseconds>(cleanup_time - start).count();
+    
+//     // std::cout << "Timing results (μs):\n"
+//     //         << "  Copy to GPU: " << t_copy_to_gpu << " μs\n"
+//     //         << "  GPU Compute: " << t_gpu_compute << " μs\n"
+//     //         << "  Copy to CPU: " << t_copy_to_cpu << " μs\n"
+//     //         << "  Cleanup:     " << t_cleanup << " μs\n"
+//     //         << "  Total:       " << t_total << " μs\n";
+
+
+
+
+
+
+
+
+
+
+
+
+//     // ScalarType* data_ptr = m_forceofinfection.array().data();
+//     // size_t length = m_forceofinfection.numel();
+
+//     // // Print initial values (CPU)
+//     // std::cout << "Initial CPU values:\n";
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     std::cout << data_ptr[i] << " ";
+//     // }
+//     // std::cout << "\n\n";
+
+//     // // --- Timing starts here ---
+//     // auto start = std::chrono::high_resolution_clock::now();
+
+//     // // 1. Copy data to GPU
+//     // #pragma acc enter data copyin(data_ptr[0:length])
+//     // auto copy_to_gpu_time = std::chrono::high_resolution_clock::now();
+
+//     // // 2. Compute on GPU
+//     // #pragma acc parallel loop present(data_ptr)
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     data_ptr[i] = i * 0.1;  // Example computation
+//     // }
+//     // auto gpu_compute_time = std::chrono::high_resolution_clock::now();
+
+//     // // 3. Copy results back to CPU
+//     // #pragma acc update self(data_ptr[0:length])
+//     // auto copy_to_cpu_time = std::chrono::high_resolution_clock::now();
+
+//     // // 4. Free GPU memory
+//     // #pragma acc exit data delete(data_ptr[0:length])
+//     // auto cleanup_time = std::chrono::high_resolution_clock::now();
+
+//     // // --- Timing ends here ---
+
+//     // // Print final values (CPU)
+//     // std::cout << "Final CPU values:\n";
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     std::cout << data_ptr[i] << " ";
+//     // }
+//     // std::cout << "\n\n";
+
+//     // // Print timings (milliseconds)
+//     // auto t_copy_to_gpu = std::chrono::duration_cast<std::chrono::microseconds>(copy_to_gpu_time - start).count();
+//     // auto t_gpu_compute = std::chrono::duration_cast<std::chrono::microseconds>(gpu_compute_time - copy_to_gpu_time).count();
+//     // auto t_copy_to_cpu = std::chrono::duration_cast<std::chrono::microseconds>(copy_to_cpu_time - gpu_compute_time).count();
+//     // auto t_cleanup = std::chrono::duration_cast<std::chrono::microseconds>(cleanup_time - copy_to_cpu_time).count();
+//     // auto t_total = std::chrono::duration_cast<std::chrono::microseconds>(cleanup_time - start).count();
+
+//     // std::cout << "Timing results (μs):\n"
+//     //           << "  Copy to GPU: " << t_copy_to_gpu << " μs\n"
+//     //           << "  GPU Compute: " << t_gpu_compute << " μs\n"
+//     //           << "  Copy to CPU: " << t_copy_to_cpu << " μs\n"
+//     //           << "  Cleanup:     " << t_cleanup << " μs\n"
+//     //           << "  Total:       " << t_total << " μs\n"; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//     // double* data_ptr = m_forceofinfection.array().data();
+//     // size_t length = m_forceofinfection.numel();
+
+//     // // Copy to GPU
+//     // #pragma acc enter data copyin(data_ptr[0:length])
+
+//     // // Compute on GPU
+//     // #pragma acc parallel loop present(data_ptr)
+//     // for (size_t i = 0; i < length; ++i) {
+//     //     data_ptr[i] = i * 0.1;  // Example computation
+//     // }
+
+//     // // Optional: Copy results back to CPU
+//     // #pragma acc update self(data_ptr[0:length])
+
+//     // // Free GPU memory
+//     // #pragma acc exit data delete(data_ptr[0:length])
+
+
+
+
+
+
+
+
+
+
+
+
+
+//     for (AgeGroup i = AgeGroup(0); i < AgeGroup(m_num_agegroups); ++i) {
+
+//         Eigen::Index num_time_points;
+//         ScalarType current_time;
+
+//         if (initialization) {
+//             // Determine m_forceofinfection at time t0-dt which is the penultimate timepoint in transition.
+//             num_time_points = transitions.get_num_time_points() - 1;
+//             // Get time of penultimate timepoint in transitions.
+//             current_time = transitions.get_time(num_time_points - 1);
+//         }
+//         else {
+//             // Determine m_forceofinfection for current last time in transitions.
+//             num_time_points = transitions.get_num_time_points();
+//             current_time    = transitions.get_last_time();
+//         }
+//         //We compute the Season Value.
+//         ScalarType season_val =
+//             1 +
+//             parameters.get<Seasonality>() *
+//                 sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+//         // To include contacts between all age groups we sum over all age groups.
+//         for (AgeGroup j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {
+//             // Determine the relevant calculation area = union of the supports of the relevant transition distributions.
+//             ScalarType calc_time = std::max(
+//                 {m_transitiondistributions_support_max[j]
+//                                                       [(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+//                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+//                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
+//                  m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToRecovered]});
+//             // Corresponding index.
+//             // Need calc_time_index timesteps in sum,
+//             // subtract 1 because in the last summand all TransitionDistributions evaluate to 0 (by definition of support_max).
+//             Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
+
+//             int Dj     = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
+//             int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), j);
+
+//             int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
+//             int INStISyj =
+//                 get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
+
+//             // We store the number of deaths for every AgeGroup.
+//             ScalarType deaths_j;
+//             if (initialization) {
+//                 // Determine the number of individuals in Dead compartment at time t0-dt.
+//                 deaths_j = populations[Eigen::Index(0)][Dj] - transitions.get_last_value()[ICrtDj];
+//             }
+//             else {
+//                 deaths_j = populations.get_last_value()[Dj];
+//             }
+
+//             ScalarType sum = 0;
+
+//             // Sum over all relevant time points.
+//             for (Eigen::Index l = num_time_points - 1 - calc_time_index; l < num_time_points - 1; l++) {
+//                 Eigen::Index state_age_index = num_time_points - 1 - l;
+//                 ScalarType state_age         = state_age_index * dt;
+//                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
+//                        parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
+//                            static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
+//                        (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
+//                             transitions[l + 1][EtINSj] *
+//                             parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
+//                         m_transitiondistributions_in_forceofinfection[j][1][num_time_points - l - 1] *
+//                             transitions[l + 1][INStISyj] *
+//                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
+//             }
+//             const double divNj =
+//                 (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
+//             m_forceofinfection[i] += divNj * sum;
+//         }
+//     }
+// }
+
+
+
+
+
+
+// void Model::compute_forceofinfection(ScalarType dt, bool initialization)
+// {
+//     m_forceofinfection = CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(m_num_agegroups), 0.);
+
+
+
+
+    // #pragma acc parallel loop collapse(2)
+    // for (int ii = 0; ii < m_num_agegroups; ++ii) {
+    //     for (int jj = 0; jj < m_num_agegroups; ++jj) {
+
+    //         AgeGroup i = static_cast<AgeGroup>(ii);
+    //         AgeGroup j = static_cast<AgeGroup>(jj);
+
+            // Eigen::Index num_time_points;
+            // ScalarType current_time;
+
+            // if (initialization) {
+            //     num_time_points = transitions.get_num_time_points() - 1;
+            //     current_time = transitions.get_time(num_time_points - 1);
+            // } else {
+            //     num_time_points = transitions.get_num_time_points();
+            //     current_time = transitions.get_last_time();
+            // }
+
+            // ScalarType season_val =
+            //     1 + parameters.get<Seasonality>() *
+            //         sin(3.141592653589793 * (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
+
+            // ScalarType calc_time = std::max(
+            //     {m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms],
+            //      m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedNoSymptomsToRecovered],
+            //      m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToInfectedSevere],
+            //      m_transitiondistributions_support_max[j][(int)InfectionTransition::InfectedSymptomsToRecovered]});
+            
+            // Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
+
+            // int Dj = get_state_flat_index(Eigen::Index(InfectionState::Dead), j);
+            // int ICrtDj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), j);
+            // int EtINSj = get_transition_flat_index(Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), j);
+            // int INStISyj = get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), j);
+
+            // ScalarType deaths_j;
+            // if (initialization) {
+            //     deaths_j = populations[Eigen::Index(0)][Dj] - transitions.get_last_value()[ICrtDj];
+            // } else {
+            //     deaths_j = populations.get_last_value()[Dj];
+            // }
+
+            // ScalarType sum = 0;
+            
+            // #pragma acc loop reduction(+:sum)
+            // for (int ll = num_time_points - 1 - calc_time_index; ll < num_time_points - 1; ++ll) {
+            //     Eigen::Index l = static_cast<Eigen::Index>(ll);
+
+            //     Eigen::Index state_age_index = num_time_points - 1 - l;
+            //     ScalarType state_age = state_age_index * dt;
+            //     sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
+            //            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
+            //                static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
+            //            (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
+            //                 transitions[l + 1][EtINSj] *
+            //                 parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
+            //             m_transitiondistributions_in_forceofinfection[j][1][num_time_points - l - 1] *
+            //                 transitions[l + 1][INStISyj] *
+            //                 parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
+            // }
+
+            // const double divNj =
+            //     (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
+            
+    //         #pragma acc atomic 
+    //         m_forceofinfection[i] += 1.0;
+    //     }
+    // }
+
+// }
+

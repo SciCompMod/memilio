@@ -56,3 +56,7 @@ if [ -n "$build_type" ]; then
 fi
 
 cmake --build ${PWD}/../build -j 16
+
+
+
+# ./compile.sh > output.log 2>&1
