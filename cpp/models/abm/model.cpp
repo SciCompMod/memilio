@@ -136,6 +136,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
             (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
             (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu));
+            (has_locations({LocationType::SocialEvent}) && try_mobility_rule(&go_to_event));
         }
     #endif
     // //PRAGMA_OMP(parallel for)
