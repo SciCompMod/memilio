@@ -73,7 +73,7 @@ __device__ LocationType go_to_icu(const GPurson& person, int t){
 
 __device__ bool random_transition(curandState_t* rng_state, double dt_days, double rate){
     float u_exp = curand_uniform(rng_state);
-    double v = -std::logf(u_exp) / rate;
+    double v = -logf(u_exp) / rate;
     return v < dt_days;
 }
 
@@ -112,10 +112,11 @@ __device__ LocationType try_mobility_rule(const GPurson& person, curandState_t* 
     if(loc_type != person.current_loc){
         return loc_type;
     }
+    for(int i=0; i<3; ++i){
     loc_type = go_to_event(person, rng_state, t, dt_days, rate);
     if(loc_type != person.current_loc){
         return loc_type;
-    }
+    }}
     return person.current_loc;
 }
 
@@ -123,8 +124,8 @@ __device__ LocationType try_mobility_rule(const GPurson& person, curandState_t* 
 __global__ void next_loc(const GPurson* persons, LocationType* results, int num_persons, int t, double dt_days, unsigned long long seed, curandState_t* states, double rate) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < num_persons) {
-        curand_init(seed, idx, 0 &states[idx]);
-        results[persons[idx].id] = try_mobility_rule(persons[idx], states[idx], t, dt_days, rate);
+        curand_init(seed, idx, 0, &states[idx]);
+        results[persons[idx].id] = try_mobility_rule(persons[idx], &states[idx], t, dt_days, rate);
     }
 }
 
