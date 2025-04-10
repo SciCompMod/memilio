@@ -97,10 +97,11 @@ void Model::interaction(TimePoint t, TimeSpan dt)
     }
 }
 
-void Model::perform_mobility(TimePoint t, TimeSpan /*dt*/)
+void Model::perform_mobility(TimePoint t, TimeSpan dt)
 {
     const uint32_t num_persons = static_cast<uint32_t>(m_persons.size());
     #ifdef MEMILIO_WITH_CUDA
+        mio::unused(dt);
         std::vector<GPurson> gPursons;
         gPursons.reserve(num_persons);
         
@@ -108,9 +109,34 @@ void Model::perform_mobility(TimePoint t, TimeSpan /*dt*/)
             mio::unused(p);
             gPursons.push_back(GPurson(LocationType::Home, p.get_id().get(), p.get_infection_state(t)));
         }
-        mobility_rules(gPursons, num_persons);
+        auto target_types = mobility_rules(gPursons, num_persons);
+        for (uint32_t person_index = 0; person_index < num_persons; ++person_index){
+            Person& person    = m_persons[person_index];
+            const Location& target_location   = get_location(find_location(target_types[person_index], person));
+                const LocationId current_location = person.get_location();
+                if (target_location.get_id() != current_location){
+                    change_location(person, target_location.get_id());
+                }   
+        }
     #else
-        std::cout << "Cuda not used for mobility rules.\n";
+        for (uint32_t person_index = 0; person_index < num_persons; ++person_index){
+            Person& person    = m_persons[person_index];
+            auto personal_rng = PersonalRandomNumberGenerator(person);
+            auto try_mobility_rule = [&](auto rule) -> bool {
+                auto target_type = rule(personal_rng, person, t, dt, parameters);
+                const Location& target_location   = get_location(find_location(target_type, person));
+                const LocationId current_location = person.get_location();
+                if (target_location.get_id() == current_location){
+                    return false;
+                }
+                change_location(person, target_location.get_id());
+                return true;
+            };
+            (has_locations({LocationType::Cemetery}) && try_mobility_rule(&get_buried)) ||
+            (has_locations({LocationType::Home}) && try_mobility_rule(&return_home_when_recovered)) ||
+            (has_locations({LocationType::Hospital}) && try_mobility_rule(&go_to_hospital)) ||
+            (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu));
+        }
     #endif
     // //PRAGMA_OMP(parallel for)
     // //#pragma acc parallel loop
