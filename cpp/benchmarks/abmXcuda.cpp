@@ -154,6 +154,6 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, size_t num_p_p_l
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
 // BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000,100, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
 // BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000,100, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 1000000,100, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 10000000,100, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
