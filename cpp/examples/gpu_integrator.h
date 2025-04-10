@@ -51,7 +51,7 @@ struct tableau{
 
 void print(std::vector<double>& vec) {
     for (auto& val : vec) {
-        printf("%10.3f ", val);
+        printf("%e ", val);
     }
     std::cout << "\n";
 }
@@ -105,8 +105,8 @@ bool step(DerivFunction f, const std::vector<double>& yt, double& t, double& dt,
             dt_is_invalid = true;
             dt            = dt_min;
         }
-        std::cout << "---- step t:" << t << " dt:" << dt << "\n";
-        std::cin.ignore();
+        // std::cout << "---- step t:" << t << " dt:" << dt << "\n";
+        // std::cin.ignore();
         // compute first column of kt, i.e. kt_0 for each y in yt_eval
         f(m_yt_eval, t, m_kt_values[0]);
 
@@ -126,36 +126,60 @@ bool step(DerivFunction f, const std::vector<double>& yt, double& t, double& dt,
             // get the derivatives, i.e., compute kt_i for all y in ytp1: kt_i = f(t_eval, ytp1_low)
             f(ytp1, t_eval, m_kt_values[i]);
         }
+
+        // for (int i = 0; i < 6; i++) {
+        //     std::cout << "eval (" << i << "): ";
+        //     print(m_kt_values[i]); 
+        // }
         // calculate low order estimate
 #pragma acc parallel loop
         for (size_t i = 0; i < yt.size(); i++) {
             ytp1[i] = m_yt_eval[i];
-            for (size_t j = 1; j < m_kt_values.size(); j++) {
+            for (size_t j = 0; j < m_kt_values.size(); j++) {
                 ytp1[i] += (dt * (m_kt_values[j][i] * tab.entries_low[j]));
             }
         }
-        std::cout << "low: "; print(ytp1);
+        // std::cout << "low: "; print(ytp1);
         // truncation error estimate: yt_low - yt_high = O(h^(p+1)) where p = order of convergence
-#pragma acc parallel loop
-        for (size_t i = 1; i < yt.size(); i++) {
+// #pragma acc parallel loop
+        for (size_t i = 0; i < yt.size(); i++) {
             m_error_estimate[i] = 0;
-            for (size_t j = 1; j < m_kt_values.size(); j++) {
-                m_error_estimate[i] += dt * std::abs(m_kt_values[j][i] * (tab.entries_high[j] - tab.entries_low[j]));
+            for (size_t j = 0; j < m_kt_values.size(); j++) {
+                m_error_estimate[i] += dt * m_kt_values[j][i] * (tab.entries_high[j] - tab.entries_low[j]);
             }
+            m_error_estimate[i] = std::abs(m_error_estimate[i]);
         }
-        std::cout << "err: "; print(m_error_estimate);
+
+        // std::cout << "tab diff: ";
+        // for (int j = 0; j < 6; j++) {
+        //     std::cout << tab.entries_high[j] - tab.entries_low[j] << " ";
+        // }
+        // std::cout << "\n";
+
+        // std::cout << "kt * tab: ";
+        // for (int i = 0; i < yt.size(); i++) {
+        //     double x = 0;
+        //     for (int j = 0; j < 6; j++) {
+        //         x += m_kt_values[j][i] * (tab.entries_high[j] - tab.entries_low[j]);
+        //     }
+        //     std::cout << x << " ";
+        // }
+        // std::cout << "\n";
+
+        // std::cout << "err: "; print(m_error_estimate);
         // calculate mixed tolerance
         
-        double min_coeff = 2;
-        std::cout << "con: ";
+        double min_coeff = std::numeric_limits<double>::infinity();
+        // std::cout << "con: ";
         // #pragma acc parallel loop
         for (size_t i = 0; i < yt.size(); i++) {
-            double tmp = m_error_estimate[i] > 0 ? (abs_tol + std::abs(ytp1[i]) * rel_tol) / m_error_estimate[i] : 2;
-            std::cout << tmp << " ";
+            double tmp = (abs_tol + std::abs(ytp1[i]) * rel_tol) / m_error_estimate[i] ;
+            // std::cout << tmp << " ";
             min_coeff = std::min(min_coeff, tmp);
         }
-        std::cout << "\n min con: " << min_coeff << "\n";
-        converged = (min_coeff <= 1); // convergence criterion
+        converged = (min_coeff >= 1);
+        // std::cout << "\nmin con: " << min_coeff << "\n";
+        // converged = (min_coeff <= 1); // convergence criterion
 
     
         if (converged || dt_is_invalid) {
@@ -172,7 +196,7 @@ bool step(DerivFunction f, const std::vector<double>& yt, double& t, double& dt,
         // safety factor for more conservative step increases,
         // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
         dt_new *= 0.9;
-        std::cout << "dt: " << dt << "dt_new: " << dt_new << "\n";
+        // std::cout << "dt: " << dt << " dt_new: " << dt_new << "\n";
         // check if updated dt stays within desired bounds and update dt for next step
         dt = std::min(dt_new, dt_max);
     }

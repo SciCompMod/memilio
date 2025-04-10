@@ -63,6 +63,19 @@ void rhs(const std::vector<double>& x, double t, std::vector<double>& dxdt) {
     }
 }
 
+// void rhs2(Eigen::Ref<const Eigen::VectorXd> x, double t, Eigen::Ref<Eigen::VectorXd> dxdt) {
+//     for (size_t i = 0; i < x.size(); i++) {
+//         // dxdt[i] = amplitude[i] * std::sin(t * t_scale[i] + t_offset[i]);
+        
+//         dxdt[i] = 0;
+//         for (size_t j = 0; j < x.size(); j++) {
+//             dxdt[i] += amplitude_lincomb[i][j] * std::sin(t * t_scale[j] + t_offset[j]);
+//         }
+//     }
+// }
+
+
+
 namespace mio {
     void log_debug(std::string_view s) {
         std::cout << s << "\n";
@@ -76,7 +89,7 @@ int main()
     
     mio::log_debug("Enter Main");
 
-    const int size = 30;
+    const int size = 1000, band_width = 2;
 
     // // Guard the CUDA test with proper CUDA error handling
     // // cudaError_t cudaStatus = cudaSetDevice(0);
@@ -92,13 +105,13 @@ int main()
 
     // // TODO: nvidia-x-markers??
 
-    set_params(size, 1, -3.0, 3.0);
+    set_params(size, band_width, -3.0, 3.0);
     mio::log_debug("Params Set");
 
-    print(t_offset);
-    print(t_scale);
-    print(amplitude_lincomb);
-    std::cout << "\n";
+    // print(t_offset);
+    // print(t_scale);
+    // print(amplitude_lincomb);
+    // std::cout << "\n";
 
     // // std::cout << amplitude_lincomb << "\n";
 
@@ -116,16 +129,13 @@ int main()
 
     // TimeSeries<double> results(0, Eigen::VectorXd::Zero(size));
 
-    // const double tmax = 100 * M_PI;
-    // double dt = 0.1;
-
+    const double tmax = 100 * M_PI;
     double dt = 0.1;
+
     double t = 0.0;
-    std::vector<double> y(size, 0.0);
-    std::vector<double> y2(size, 0.0);
-    
-    print(y);
-    print(y2);
+    std::vector<double> x(size, 0.0);
+    std::vector<double> x2(size, 0.0);
+
     std::cout << "\n";
 
     mio::log_debug("Results Set");    
@@ -133,12 +143,14 @@ int main()
 
 
     while (t < 100 * M_PI) {
-        std::cout << "-- integrator t:" << t << " dt:" << dt << "\n";
-        stepper.step(&rhs, y, t, dt, y2);
-        for (size_t i = 0; i < y.size(); i++) {
-            y[i] = y2[i];
-            y2[i] = 0;
+        stepper.step(&rhs, x, t, dt, x2);
+        // print(x);
+        // print(x2);
+        for (size_t i = 0; i < size; i++) {
+            x[i] = x2[i];
+            x2[i] = 0;
         }
+        // std::cin.ignore();
     }
     // integrator.advance(rhs, tmax, dt, results);
     
