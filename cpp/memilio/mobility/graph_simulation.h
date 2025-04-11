@@ -23,6 +23,9 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
 #include <nvtx3/nvToolsExt.h>
+#include <map>
+#include <utility>
+
 
 namespace mio
 {
@@ -85,18 +88,37 @@ protected:
     edge_function m_edge_func;
 };
 
+
+
 template <class Graph, class Timepoint = double, class Timespan = double,
-          class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
-                                  typename Graph::NodeProperty&),
+          class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&, typename Graph::NodeProperty&),
           class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
+
 class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
 {
     using Base = GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>;
     using Base::GraphSimulationBase;
 
 public:
+
+    // std::unordered_map<std::pair<int, int>, size_t> get_edge_map()
+    // {
+    //     std::unordered_map<std::pair<int, int>, size_t> edge_map;
+    //     for (size_t i = 0; i < Base::m_graph.edges().size(); i++) {
+    //         auto& e = Base::m_graph.edges()[i];
+    //         edge_map[std::pair{e.start_node_idx, e.end_node_idx}] = i;
+    //     }
+    //     return edge_map;
+    // }
+
     void advance(Timepoint t_max = 1.0)
     {
+        size_t num_nodes = Base::m_graph.nodes().size();
+        std::map<int, size_t> edge_map;
+        for (size_t i = 0; i < Base::m_graph.edges().size(); i++) {
+            auto& e = Base::m_graph.edges()[i];
+            edge_map[num_nodes * 10 * e.start_node_idx + e.end_node_idx] = i;
+        }        
         auto dt = Base::m_dt;
         while (Base::m_t < t_max) {
             if (Base::m_t + dt > t_max) {
@@ -105,19 +127,41 @@ public:
 
 
             nvtxRangePushA("Node");
-            for (auto& n : Base::m_graph.nodes()) {
-                Base::m_node_func(Base::m_t, dt, n.property);
+            // #pragma acc parallel loop
+            // for (auto& n : Base::m_graph.nodes()) {
+            for (size_t i = 0; i < Base::m_graph.nodes().size(); i++){
+                Base::m_node_func(Base::m_t, dt, Base::m_graph.nodes()[i].property);
             }
             nvtxRangePop();
 
             Base::m_t += dt;
 
             nvtxRangePushA("Edge");
-            #pragma acc parallel loop
-            for(size_t i = 0; i < Base::m_graph.edges().size(); i++){
-            //for (auto& e : Base::m_graph.edges()) {
-                Base::m_edge_func(Base::m_t, dt, Base::m_graph.edges()[i].property, Base::m_graph.nodes()[Base::m_graph.edges()[i].start_node_idx].property,
-                                  Base::m_graph.nodes()[Base::m_graph.edges()[i].end_node_idx].property);
+            // double result = 0.0;
+            // #pragma acc parallel loop
+            // for(size_t i = 0; i < Base::m_graph.edges().size(); i++){
+            // //for (auto& e : Base::m_graph.edges()) {
+            //     // #pragma acc routine
+            //     // Base::m_edge_func(Base::m_t, dt, Base::m_graph.edges()[i].property, Base::m_graph.nodes()[Base::m_graph.edges()[i].start_node_idx].property,
+            //     //                   Base::m_graph.nodes()[Base::m_graph.edges()[i].end_node_idx].property);
+            //     Base::m_graph.edges()[i].property.apply_mobility(Base::m_t, dt, Base::m_graph.nodes()[Base::m_graph.edges()[i].start_node_idx].property,
+            //     Base::m_graph.nodes()[Base::m_graph.edges()[i].end_node_idx].property);
+            //     // result += useful_calculation();
+            // } num_nodes * 10 * e.start_node_idx + e.end_node_idx
+            for(size_t i = 0; i < num_nodes; i++) {
+                #pragma omp parallel for
+                for(size_t j = 0; j < num_nodes; j += 2){
+                    Base::m_graph.edges()[edge_map[num_nodes * ((i+j)%num_nodes) * 10 + ((i+j+1)%num_nodes)]].property.apply_mobility(Base::m_t, dt, Base::m_graph.nodes()[(i+j)%num_nodes].property, Base::m_graph.nodes()[(i+j+1)%num_nodes].property);
+                }
+                // #pragma acc kernels
+                #pragma omp parallel for
+                for(size_t j = 1; j < num_nodes; j += 2){
+                    int graph_index = num_nodes * ((i+j)%num_nodes) * 10 + ((i+j+1)%num_nodes);
+                    // graph_index ++;
+                    int edge_index = edge_map[graph_index];
+                    auto property = Base::m_graph.edges()[edge_index].property;
+                    property.apply_mobility(Base::m_t, dt, Base::m_graph.nodes()[(i+j)%num_nodes].property, Base::m_graph.nodes()[(i+j+1)%num_nodes].property);
+                }
             }
             nvtxRangePop();
         }
