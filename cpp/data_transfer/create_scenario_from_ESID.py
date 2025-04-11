@@ -596,17 +596,16 @@ class Simulation:
         # Therefore, we only need to build the graph once?
 
         for scenario in scenarios:
-            # Get the number of days to simulate from scenario definition in API. 
+            # Get the number of days to simulate from scenario definition in API.
             num_days_sim = (datetime.datetime.strptime(
-            scenario['endDate'], "%Y-%m-%d")-datetime.datetime.strptime(scenarios[0]['startDate'], "%Y-%m-%d")).days
-            
+                scenario['endDate'], "%Y-%m-%d")-datetime.datetime.strptime(scenarios[0]['startDate'], "%Y-%m-%d")).days
+
             extrapolate = False
             if scenario['name'] == 'casedata':
-                # If we are computing the casedata scenario, we need num_days_sim + 1 as the start day is not included 
-                # in the output as in the simulation-based scenarios. 
+                # If we are computing the casedata scenario, we need num_days_sim + 1 as the start day is not included
+                # in the output as in the simulation-based scenarios.
                 num_days_sim += 1
                 extrapolate = True
-                continue
 
             # load full set of scenario data
             self.scenario_data = requests.get(
