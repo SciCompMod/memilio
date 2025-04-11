@@ -8,6 +8,7 @@
 // #include "memilio/math/integrator.h"
 // #include "memilio/math/adapt_rk.h"
 
+#include <numeric>
 #include <iostream>
 #include <memory>
 #include <cmath>
@@ -53,13 +54,21 @@ void set_params(size_t size, size_t band_width, double min, double max) {
 
 
 void rhs(const std::vector<double>& x, double t, std::vector<double>& dxdt) {
-    for (size_t i = 0; i < x.size(); i++) {
-        // dxdt[i] = amplitude[i] * std::sin(t * t_scale[i] + t_offset[i]);
+    // for (size_t i = 0; i < x.size(); i++) {
+    //     dxdt[i] = 0;
+    // }
+    const size_t size = x.size();
+
+    // dxdt[i] = amplitude[i] * std::sin(t * t_scale[i] + t_offset[i]);
+    #pragma acc parallel loop present(amplitude_lincomb, t_scale, t_offset) default(present) // copy(x, t, dxdt)
+    for (size_t i = 0; i < size; i++) {
         
-        dxdt[i] = 0;
-        for (size_t j = 0; j < x.size(); j++) {
-            dxdt[i] += amplitude_lincomb[i][j] * std::sin(t * t_scale[j] + t_offset[j]);
+        double sum = 0;
+        #pragma acc loop reduction(+:sum)
+        for (size_t j = 0; j < size; j++) {
+            sum += amplitude_lincomb[i][j] * std::sin(t * t_scale[j] + t_offset[j]);
         }
+        dxdt[i] = sum;
     }
 }
 
@@ -84,12 +93,13 @@ namespace mio {
 
 int main()
 {   
+
     // using namespace mio;
     // set_log_level(LogLevel::off);
     
     mio::log_debug("Enter Main");
 
-    const int size = 1000, band_width = 2;
+    const int size = 10000, band_width = 2;
 
     // // Guard the CUDA test with proper CUDA error handling
     // // cudaError_t cudaStatus = cudaSetDevice(0);
@@ -103,10 +113,11 @@ int main()
     // //     cudaDeviceReset();
     // // } 
 
-    // // TODO: nvidia-x-markers??
-
     set_params(size, band_width, -3.0, 3.0);
     mio::log_debug("Params Set");
+
+    #pragma acc declare copyin(readonly: amplitude_lincomb, t_offset, t_scale)
+    {}
 
     // print(t_offset);
     // print(t_scale);
@@ -142,7 +153,7 @@ int main()
     mio::log_debug("Integrating...");
 
 
-    while (t < 100 * M_PI) {
+    while (t < tmax) {
         stepper.step(&rhs, x, t, dt, x2);
         // print(x);
         // print(x2);
@@ -152,6 +163,8 @@ int main()
         }
         // std::cin.ignore();
     }
+
+    std::cout << t << " " << dt << " " << std::accumulate(x.begin(), x.end(), 0.0) << "\n";
     // integrator.advance(rhs, tmax, dt, results);
     
     mio::log_debug("Integration Finished");

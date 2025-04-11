@@ -66,7 +66,7 @@ struct Monstrosity {
 
 double abs_tol, rel_tol, dt_min, dt_max;
 
-std::vector<double> m_yt_eval, m_error_estimate;
+std::vector<double> yt, m_error_estimate;
 std::vector<std::vector<double>> m_kt_values; // col major!
 
 tableau tab;
@@ -91,14 +91,10 @@ bool step(DerivFunction f, const std::vector<double>& yt, double& t, double& dt,
     bool converged     = false; // carry for convergence criterion
     bool dt_is_invalid = false;
 
-    // if (m_yt_eval.size() != yt.size()) {
-    //     m_yt_eval.resize(yt.size());
+    // if (yt.size() != yt.size()) {
+    //     yt.resize(yt.size());
     //     m_kt_values.resize(yt.size(), tab.entries_low.size());
     // }
-
-    for (size_t j = 1; j < yt.size(); j++) {
-        m_yt_eval[j] = yt[j];
-    }
 
     while (!converged && !dt_is_invalid) {
         if (dt < dt_min) {
@@ -108,20 +104,28 @@ bool step(DerivFunction f, const std::vector<double>& yt, double& t, double& dt,
         // std::cout << "---- step t:" << t << " dt:" << dt << "\n";
         // std::cin.ignore();
         // compute first column of kt, i.e. kt_0 for each y in yt_eval
-        f(m_yt_eval, t, m_kt_values[0]);
+        
+        #pragma acc declare copyin(yt, t, m_kt_values)
+        {
+            f(yt, t, m_kt_values[0]);
+        }
 
-#pragma acc loop
+        #pragma acc loop
         for (size_t i = 1; i < m_kt_values.size(); i++) {
             // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
             t_eval = t;
             t_eval += tab.entries[i - 1][0] *
                       dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array
             // use ytp1 as temporary storage for evaluating m_kt_values[i]
-            ytp1 = m_yt_eval;
-            for (size_t k = 1; k < tab.entries[i - 1].size(); k++) {
-                for (size_t j = 1; j < yt.size(); j++) {
-                    ytp1[j] += (dt * tab.entries[i - 1][k]) * m_kt_values[k - 1][j];
+            ytp1 = yt;
+            #pragma acc parallel loop
+            for (size_t j = 1; j < yt.size(); j++) {
+                double sum = 0;
+                #pragma acc loop reduction(+:sum)
+                for (size_t k = 1; k < tab.entries[i - 1].size(); k++) {
+                    sum += (dt * tab.entries[i - 1][k]) * m_kt_values[k - 1][j];
                 }
+                ytp1[j] = sum;
             }
             // get the derivatives, i.e., compute kt_i for all y in ytp1: kt_i = f(t_eval, ytp1_low)
             f(ytp1, t_eval, m_kt_values[i]);
@@ -132,9 +136,10 @@ bool step(DerivFunction f, const std::vector<double>& yt, double& t, double& dt,
         //     print(m_kt_values[i]); 
         // }
         // calculate low order estimate
-#pragma acc parallel loop
+        // #pragma acc declare copyin()
+        // #pragma acc parallel loop
         for (size_t i = 0; i < yt.size(); i++) {
-            ytp1[i] = m_yt_eval[i];
+            ytp1[i] = yt[i];
             for (size_t j = 0; j < m_kt_values.size(); j++) {
                 ytp1[i] += (dt * (m_kt_values[j][i] * tab.entries_low[j]));
             }
