@@ -320,14 +320,14 @@ def post_to_db_nodelist():
 def post_to_db_scenarios(days_simulated=30, modelparameters_entry={}, post=True):
     # Define start and end date for casedata scenario
     start_date_casedata = (datetime.datetime.now() -
-                           datetime.timedelta(days=days_simulated + 2)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=days_simulated + 1)).strftime("%Y-%m-%d")
     end_date_casedata = (datetime.datetime.now() -
                          datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     # Define start and end date of simulation
     start_date_simulation = (datetime.datetime.now() -
                              datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     end_date_simulation = (datetime.datetime.now() +
-                           datetime.timedelta(days=days_simulated)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=days_simulated-1)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions
     get_models = requests.get(url + "models/", headers=header)
@@ -547,10 +547,13 @@ def post_to_db(days_simulated=30):
 
 
 def main():
+    """ With this script, we first delete all scenarios that are in the database and then post them again to the database.
+    For the used parameters, see the functions above. """
+
     print("Delete everything from db.")
     delete_everything_from_db()
     print("Fill db.")
-    days_simulated = 3
+    days_simulated = 2
     post_to_db(days_simulated)
 
 
