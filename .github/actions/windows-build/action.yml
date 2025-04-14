@@ -16,6 +16,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install MinGW
+      shell: pwsh
+      run: choco install -y mingw --no-progress -y
     - name: Install ninja
       shell: pwsh
       run: choco install -y ninja

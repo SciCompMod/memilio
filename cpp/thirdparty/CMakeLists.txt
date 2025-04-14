@@ -92,10 +92,6 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
         GIT_PROGRESS   TRUE
         QUIET
     )
-    set(BUILD_TESTING OFF CACHE BOOL "" FORCE) 
-    set(EIGEN_BUILD_TESTING OFF CACHE BOOL "" FORCE) 
-    set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)     
-    set(EIGEN_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(eigen) # Populates eigen_SOURCE_DIR
     if(NOT TARGET Eigen3::Eigen)
         add_library(Eigen3::Eigen INTERFACE)
