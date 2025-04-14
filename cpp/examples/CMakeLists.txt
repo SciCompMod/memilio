@@ -6,9 +6,9 @@ add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(timer timer_test.cpp)
-target_link_libraries(timer PRIVATE memilio) #${CMAKE_THREAD_LIBS_INIT}
-target_compile_options(timer PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+add_executable(performance_timer_example performance_timers.cpp)
+target_link_libraries(performance_timer_example PRIVATE memilio)
+target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(timer2 timer_test2.cpp)
 target_link_libraries(timer2 PRIVATE memilio) #${CMAKE_THREAD_LIBS_INIT}
