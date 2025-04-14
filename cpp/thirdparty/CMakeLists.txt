@@ -96,7 +96,11 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
     )
     # SOURCE_DIR is empty to avoid building the CMake project, we only need the headers
 
-    FetchContent_MakeAvailable(eigen) 
+    FetchContent_GetProperties(eigen)
+
+    if(NOT eigen_POPULATED)
+        FetchContent_Populate(eigen)
+    endif()
 
 
     # Manually create the INTERFACE target since we skipped MakeAvailable
