@@ -8,6 +8,7 @@ import time
 from sklearn.model_selection import KFold
 import numpy as np
 import memilio.surrogatemodel.ode_secir_simple.grid_search as grid_search
+import memilio.surrogatemodel.ode_secir_simple.model as md 
 
 
 label_width = 30
@@ -18,15 +19,16 @@ filename = "data_secir_simple_30days_10k.pickle"
 
 # Saving grid search results
 filename_df = "dataframe_optimizer_paper.csv"
+#filename_df = "dataframe_30days_10k_nodamp.csv"
 
-# General parameters for the training process:
+# General grid search parameters for the training process:
 early_stop = [100]
 max_epochs = [2]
 losses=[tf.keras.losses.MeanAbsolutePercentageError()]
 optimizers = ['Adam', 'AdamW', 'Nadam', 'SGD', 'Adagrad', 'RMSProp']
 metrics=[[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]]
 
-# Define grid search parameters
+# Define grid search parameters for the architecture
 hidden_layers = [1,2]
 neurons_in_hidden_layer = [32]
 activation_function = ['relu', 'elu', 'softmax',  'sigmoid', 'linear', 'tanh']
@@ -53,10 +55,11 @@ with open(os.path.join(path_data, filename), 'rb') as file:
     data = pickle.load(file)
 
 # Split the data: 80% will be used for grid search with cross-validation, and the remaining 20% is withheld for testing
-inputs_grid_search = data['inputs'][:int((0.8 * len(data['inputs'])))]
-labels_grid_search = data['labels'][:int((0.8 * len(data['labels'])))]
-inputs_withhold = data['inputs'][int((0.8 * len(data['inputs']))):]
-labels_withhold = data['labels'][int((0.8 * len(data['labels']))):]
+data_splitted = md.split_data(data['inputs'], data['labels'],0.8,0,0.2)
+inputs_grid_search = data_splitted['train_inputs']
+labels_grid_search = data_splitted['train_labels']
+inputs_withhold = data['test_inputs']
+labels_withhold = data['test_labels']
 
 
 start_hyper = time.perf_counter()

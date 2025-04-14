@@ -8,54 +8,7 @@ import time
 from sklearn.model_selection import KFold
 import numpy as np
 import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures
-
-
-label_width = 30
-num_outputs = 8
-
-# Set up the data path 
-path = os.path.dirname(os.path.realpath(__file__))
-path_data = os.path.join(os.path.dirname(os.path.realpath(
-    os.path.dirname(os.path.realpath(path)))), 'data')
-
-filename = "data_secir_simple_30days_10k.pickle"
-filename_df = "dataframe_30days_10k_nodamp.csv"
-
-# General parameters for the training process:
-early_stop = [100]
-max_epochs = [2]
-losses=[tf.keras.losses.MeanAbsolutePercentageError()]
-optimizers= ["AdamW"]
-metrics=[[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]]
-
-# Define grid search parameters
-hidden_layers = [1,2]
-neurons_in_hidden_layer = [32]
-activation_function = ["relu"]
-models = ["CNN" ]
-
-# Collecting parameters
-training_parameters = [(early, epochs, loss, optimizer, metric) 
-                       for early in early_stop for epochs in max_epochs for loss in losses 
-                       for optimizer in optimizers for metric in metrics]
-
-model_parameters = [(label_width, num_outputs, layer, neuron_number, activation, modelname)
-              for layer in hidden_layers for neuron_number in neurons_in_hidden_layer 
-              for activation in activation_function for modelname in models]
-
-### Preparing data 
-# Loading data 
-if not os.path.isfile(os.path.join(path_data, filename)):
-    raise ValueError(f"No dataset found in path: {path_data}")
-
-with open(os.path.join(path_data, filename), 'rb') as file:
-    data = pickle.load(file)
-
-# Split the data: 80% will be used for grid search with cross-validation, and the remaining 20% is withheld for testing
-inputs_grid_search = data['inputs'][:int((0.8 * len(data['inputs'])))]
-labels_grid_search = data['labels'][:int((0.8 * len(data['labels'])))]
-inputs_withhold = data['inputs'][int((0.8 * len(data['inputs']))):]
-labels_withhold = data['labels'][int((0.8 * len(data['labels']))):]
+import memilio.surrogatemodel.ode_secir_simple.model as md 
 
 # Function to train and evaluate the model using cross-validation
 def train_and_evaluate_model(param, inputs, labels, training_parameter, Print = False):
@@ -100,7 +53,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, Print = 
         valid_labels = tf.gather(labels, indices=val_idx)
 
         # Initializing model
-        model = initialize_model(param)
+        model = md.initialize_model(param)
         # Compile the model
         model.compile(loss=loss,
                       optimizer=optimizer,
@@ -142,40 +95,6 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, Print = 
         "val_losses": [val_losses_history_all]
     }
 
-
-
-def initialize_model(parameters): 
-    """ Initialize model from given list of parameters
-
-    :param parameters: tuple of parameters describing the model architecture, it should be of the form 
-            (num_days_per_output, num_outputs, num_hidden_layers, neurons_per_layer, name_activation, name_architecture)
-    :returns: tensor flow keras model with the given architecture 
-     """
-    label_width, num_outputs, layer, neuron_number, activation, modelname = parameters
-    if modelname == "Dense":
-        return architectures.mlp_multi_input_multi_output(
-            label_width = label_width, 
-            num_outputs = num_outputs,
-            num_hidden_layers = layer, 
-            num_neurons_per_layer = neuron_number,
-            activation = activation
-        )
-    elif modelname == "LSTM":
-        return architectures.lstm_multi_input_multi_output(
-            label_width = label_width, 
-            num_outputs = num_outputs,
-            num_hidden_layers = layer, 
-            num_neurons_per_layer = neuron_number,
-            activation = activation
-        )
-    elif modelname == "CNN":
-        return architectures.cnn_multi_input_multi_output(
-            label_width = label_width, 
-            num_outputs = num_outputs,
-            num_hidden_layers = layer, 
-            num_neurons_per_layer = neuron_number,
-            activation = activation
-        )
     
 def perform_grid_search(model_parameters, inputs, labels, training_parameters, filename_df):
     """ Performing grid search for a given set of model parameters
@@ -226,16 +145,3 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
     df_results.to_csv(file_path)
 
 
-
-# Performing grid search 
-start_hyper = time.perf_counter()
-
-perform_grid_search(model_parameters, inputs_grid_search, labels_grid_search, training_parameters, filename_df)
-
-elapsed_hyper = time.perf_counter() - start_hyper
-print(
-    "Time for hyperparameter testing: {:.4f} minutes".format(
-        elapsed_hyper / 60))
-print(
-    "Time for hyperparameter testing: {:.4f} hours".format(
-        elapsed_hyper / 60 / 60))
