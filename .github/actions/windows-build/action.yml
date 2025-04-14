@@ -16,6 +16,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up MSYS2 and install gfortran
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64 # Or UCRT64, depending on your needs
+        update: true
+        install: >-
+          mingw-w64-x86_64-gcc-fortran
+          # Add other necessary pacman packages here if needed, e.g., make
+        path-type: inherit # Adds MSYS2/MinGW paths to the Windows PATH
     - name: Install ninja
       shell: pwsh
       run: choco install -y ninja
