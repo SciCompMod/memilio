@@ -23,8 +23,7 @@ runs:
         update: true
         install: >-
           mingw-w64-x86_64-gcc-fortran
-          # Add other necessary pacman packages here if needed, e.g., make
-        path-type: inherit # Adds MSYS2/MinGW paths to the Windows PATH
+        path-type: inherit
     - name: Install ninja
       shell: pwsh
       run: choco install -y ninja
