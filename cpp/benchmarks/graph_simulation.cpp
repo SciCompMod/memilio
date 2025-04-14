@@ -25,7 +25,7 @@
 #include "memilio/math/adapt_rk.h"
 #include <string>
 
-const std::string config_path = mio::path_join(mio::base_dir(), "benchmarks/configs/graph_simulation.config");
+const std::string config_path = mio::path_join(mio::base_dir(), "cpp/benchmarks/configs/graph_simulation.config");
 
 mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const ScalarType tmax)
 {

@@ -666,11 +666,11 @@ TEST(TestOdeSECIRVVS, read_data)
 
     auto read_result1 = mio::osecirvvs::read_input_data_county(model1, {2020, 12, 01}, {1002},
                                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                               TEST_GERMANY_PYDATA_DIR, 10);
+                                                               mio::path_join(mio::base_dir(), "Germany/pydata"), 10);
 
     auto read_result2 = mio::osecirvvs::read_input_data(model2, {2020, 12, 01}, {1002},
                                                         std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                        TEST_GERMANY_PYDATA_DIR, 10);
+                                                        mio::path_join(mio::base_dir(), "Germany/pydata"), 10);
 
     auto read_result_district = mio::osecirvvs::read_input_data(
         model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, pydata_dir_District, 10);
@@ -903,7 +903,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_GERMANY_PYDATA_DIR, 2, false),
+                                                       mio::path_join(mio::base_dir(), "Germany/pydata"), 2, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
@@ -944,7 +944,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data(model_vector, {100, 12, 01}, {0},
                                                 std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                TEST_GERMANY_PYDATA_DIR, 0, false),
+                                                mio::path_join(mio::base_dir(), "Germany/pydata"), 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.
@@ -981,7 +981,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {100, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_GERMANY_PYDATA_DIR, 0, false),
+                                                       mio::path_join(mio::base_dir(), "Germany/pydata"), 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.

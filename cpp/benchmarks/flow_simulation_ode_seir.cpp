@@ -23,7 +23,7 @@
 #include <string>
 #include "memilio/utils/base_dir.h"
 
-const std::string config_path = mio::path_join(mio::base_dir(), "benchmarks/configs/flow_simulation.config");
+const std::string config_path = mio::path_join(mio::base_dir(), "cpp/benchmarks/configs/flow_simulation.config");
 
 #include "memilio/compartments/simulation.h"
 #include "models/ode_seir/model.h"

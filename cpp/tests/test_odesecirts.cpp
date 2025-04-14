@@ -859,11 +859,11 @@ TEST(TestOdeSECIRTS, read_data)
 
     auto read_result1 = mio::osecirts::read_input_data_county(model1, {2020, 12, 01}, {1002},
                                                               std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                              TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
+                                                              mio::path_join(mio::base_dir(), "Germany/pydata"), 10, immunity_population);
 
     auto read_result2 =
         mio::osecirts::read_input_data(model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
+                                       1.0, mio::path_join(mio::base_dir(), "Germany/pydata"), 10, immunity_population);
 
     auto read_result_district =
         mio::osecirts::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),

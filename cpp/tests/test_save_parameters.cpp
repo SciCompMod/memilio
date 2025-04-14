@@ -752,9 +752,9 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     }
 
     auto read_result1 = mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf,
-                                                            scaling_factor_icu, TEST_GERMANY_PYDATA_DIR);
+                                                            scaling_factor_icu, mio::path_join(mio::base_dir(), "Germany/pydata"));
     auto read_result2 = mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu,
-                                                     TEST_GERMANY_PYDATA_DIR);
+                                                     mio::path_join(mio::base_dir(), "Germany/pydata"));
     auto read_result_district = mio::osecir::read_input_data(
         model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(mio::base_dir(), "District/pydata"));
     ASSERT_THAT(print_wrap(read_result1), IsSuccess());

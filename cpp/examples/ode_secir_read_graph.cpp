@@ -23,6 +23,7 @@
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
 #include <iostream>
+#include "memilio/utils/base_dir.h"
 
 std::string setup(int argc, char** argv, const std::string data_dir)
 {
@@ -51,6 +52,7 @@ std::string setup(int argc, char** argv, const std::string data_dir)
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::critical);
+    std::string data_dir = mio::path_join(mio::base_dir(), "Germany/pydata");
     std::string filename = setup(argc, argv, data_dir);
 
     const auto t0   = 0.;

@@ -25,7 +25,7 @@
 #include "memilio/utils/base_dir.h"
 #include <string>
 
-const std::string config_path = mio::path_join(mio::base_dir(), "flow_simulation.config");
+const std::string config_path = mio::path_join(mio::base_dir(), "benchmarks/configs/flow_simulation.config");
 
 // simulation without flows (not in Model definition and not calculated by Simulation)
 void flowless_sim(::benchmark::State& state)
