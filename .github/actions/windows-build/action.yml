@@ -16,14 +16,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set up MSYS2 and install gfortran
-      uses: msys2/setup-msys2@v2
-      with:
-        msystem: MINGW64 # Or UCRT64, depending on your needs
-        update: true
-        install: >-
-          mingw-w64-x86_64-gcc-fortran
-        path-type: inherit
     - name: Install ninja
       shell: pwsh
       run: choco install -y ninja
