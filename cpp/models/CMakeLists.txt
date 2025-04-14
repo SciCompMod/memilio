@@ -202,6 +202,7 @@ function(add_memilio_model MODEL_NAME)
     )
     memilio_set_warning_flags(${MODEL_NAME})
     memilio_set_sanitizer_flags(${MODEL_NAME})
+
 endfunction()
 
 # --- Add Models ---
