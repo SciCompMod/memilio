@@ -2,7 +2,7 @@
 # Prerequisite Checks & Setup
 #-------------------------------------------------------
 include(GoogleTest)
-set(MEMILIO_GTEST_VERSION "v1.12.1" CACHE STRING "GoogleTest version to use")
+set(MEMILIO_GTEST_VERSION "release-1.12.1" CACHE STRING "GoogleTest version to use")
 
 #-------------------------------------------------------
 # GoogleTest Dependency Setup (using FetchContent)
