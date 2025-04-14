@@ -90,6 +90,7 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
         GIT_TAG        ${MEMILIO_BUNDLED_EIGEN_VERSION}
         GIT_SHALLOW    TRUE
         GIT_PROGRESS   TRUE
+        SOURCE_SUBDIR ""
         QUIET
     )
     FetchContent_MakeAvailable(eigen) # Populates eigen_SOURCE_DIR
