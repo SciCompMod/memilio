@@ -134,7 +134,7 @@ if(MEMILIO_ENABLE_MPI)
 endif()
 
 if(MEMILIO_ENABLE_IPOPT)
-    enable_language(Fortran)
+    # enable_language(Fortran)
     message(STATUS "Ipopt enabled, ensuring Fortran language support is enabled.")
 endif()
 
