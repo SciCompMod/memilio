@@ -83,24 +83,28 @@ endif()
 #-------------------------------------------------------
 set(MEMILIO_HAS_EIGEN FALSE CACHE BOOL "EIGEN support status" FORCE)
 if(MEMILIO_USE_BUNDLED_EIGEN)
-    message(STATUS "Using bundled Eigen ${MEMILIO_BUNDLED_EIGEN_VERSION}")
+    message(STATUS "Using bundled Eigen ${MEMILIO_BUNDLED_EIGEN_VERSION} (headers only)")
     FetchContent_Declare(
         eigen
+        SOURCE_DIR ""
         GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
         GIT_TAG        ${MEMILIO_BUNDLED_EIGEN_VERSION}
         GIT_SHALLOW    TRUE
         GIT_PROGRESS   TRUE
-        SOURCE_SUBDIR ""
         QUIET
+        
     )
-    FetchContent_MakeAvailable(eigen) # Populates eigen_SOURCE_DIR
+
+    # Get properties. Accessing eigen_SOURCE_DIR later should trigger population.
+    FetchContent_MakeAvailable(eigen) # This will not build the target, but will populate the source directory
+
+
+    # Manually create the INTERFACE target since we skipped MakeAvailable
     if(NOT TARGET Eigen3::Eigen)
-        add_library(Eigen3::Eigen INTERFACE)
-        target_include_directories(Eigen3::Eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
-        if(MSVC)
-            target_compile_options(Eigen3::Eigen INTERFACE "/external:W0" "/external:anglebrackets")
-        endif()
-        message(STATUS "Created target Eigen3::Eigen for bundled version.")
+        add_library(eigen INTERFACE)
+        target_include_directories(eigen SYSTEM INTERFACE ${eigen_SOURCE_DIR})
+        add_library(Eigen3::Eigen ALIAS eigen)
+        message(STATUS "Created INTERFACE target Eigen3::Eigen for bundled headers.")
     endif()
     set(MEMILIO_HAS_EIGEN TRUE CACHE BOOL "EIGEN support status" FORCE)
 else()
@@ -116,6 +120,7 @@ else()
     endif()
     set(MEMILIO_HAS_EIGEN TRUE CACHE BOOL "EIGEN support status" FORCE)
 endif()
+
 
 #-------------------------------------------------------
 # Ipopt (Numerical Optimization - Optional)
