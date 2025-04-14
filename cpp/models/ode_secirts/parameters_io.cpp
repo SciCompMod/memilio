@@ -18,16 +18,18 @@
 * limitations under the License.
 */
 
-#include "ode_secirts/parameters_io.h"
-#include "memilio/geography/regions.h"
-#include "memilio/io/io.h"
-#include "ode_secirts/parameters.h"
-
 #include "memilio/utils/compiler_diagnostics.h"
 
 //see below for line that causes this warning
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
+
+#include "ode_secirts/parameters_io.h"
+#include "memilio/geography/regions.h"
+#include "memilio/io/io.h"
+#include "ode_secirts/parameters.h"
+
+
 
 
 #ifdef MEMILIO_HAS_JSONCPP

@@ -17,12 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/config.h"
+
+
 #include "memilio/utils/compiler_diagnostics.h"
 
 //see below for line that causes this warning
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
+
+
+#include "memilio/config.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
