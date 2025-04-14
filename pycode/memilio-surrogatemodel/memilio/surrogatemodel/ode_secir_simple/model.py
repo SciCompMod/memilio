@@ -206,10 +206,10 @@ def plot_compartment_prediction_model(
     :param inputs: test inputs for model prediction.
     :param labels: test labels.
     :param model: trained model. (Default value = None)
-    :param plot_col: string name of compartment to be plotted.
+    :param plot_col: string name of compartment to be plotted, 
     :param max_subplots: Number of the simulation runs to be plotted and compared against. (Default value = 8)
-    :param plot_compartment:  (Default value = 'InfectedSymptoms')
-
+    :param plot_compartment: possible compartment names "Susceptible", "Exposed",
+        "infectedNoSymptoms", "InfectedSevere", "InfectedCritical", "Recovered", "Dead" 
     """
 
     input_width = inputs.shape[1]
@@ -290,10 +290,15 @@ def get_test_statistic(test_inputs, test_labels, model):
     # reshape [batch, time, features] -> [features, time * batch]
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
+    compartments = [str(compartment).split('.')[1]
+               for compartment in InfectionState.values()]
+    
+    # Excluding combined compartments
+    compartments.pop(5)
+    compartments.pop(3)
     mean_percentage = pd.DataFrame(
         data=relative_err_means_percentage,
-        index=[str(compartment).split('.')[1]
-               for compartment in InfectionState.values()],
+        index=[compartments],
         columns=['Percentage Error'])
 
     return mean_percentage
@@ -339,5 +344,5 @@ if __name__ == "__main__":
     input_data = data['inputs']
     label_data = data['labels']
     model = initialize_model(model_parameters[0])
-    model_output = network_fit(model, input_data, label_data, training_parameters[0], False)
+    model_output = network_fit(model, input_data, label_data, training_parameters[0])
     plot_compartment_prediction_model(input_data, label_data, model)

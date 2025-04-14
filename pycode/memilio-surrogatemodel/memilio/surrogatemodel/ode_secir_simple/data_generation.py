@@ -43,7 +43,7 @@ def remove_confirmed_compartments(result_array):
 
     """
     sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
+    sum_inf_symp = np.sum(result_array[:, [4, 5]], axis=1)
     result_array[:, 2] = sum_inf_no_symp
     result_array[:, 4] = sum_inf_symp
     return np.delete(result_array, [3, 5], axis=1)
@@ -199,7 +199,7 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
+        with open(os.path.join(path, "data_secir_simple_%ddays_%dk.pickle"%(label_width, num_runs//1000)), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -212,6 +212,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 1000
+    num_runs = 10000
     data = generate_data(num_runs, path_data, input_width,
                          label_width)
