@@ -16,9 +16,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install MinGW
-      shell: pwsh
-      run: choco install -y mingw --no-progress -y
     - name: Install ninja
       shell: pwsh
       run: choco install -y ninja
@@ -51,7 +48,7 @@ runs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         )
         cmake --version
-        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=OFF -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="${{github.workspace}}/hdf5/share/cmake/hdf5" ..
+        cmake -G "Ninja" -DCMAKE_FC_COMPILER_FORCED=TRUE -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=OFF -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="${{github.workspace}}/hdf5/share/cmake/hdf5" ..
         cmake --build . -- -j 4
     - name: Upload built binary files
       uses: actions/upload-artifact@v4
