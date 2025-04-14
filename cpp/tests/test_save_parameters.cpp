@@ -632,7 +632,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     double scaling_factor_icu = 1.0;
     mio::Date date(2020, 12, 10);
 
-    std::string path = mio::base_dir();
+    std::string path = mio::path_join(mio::memilio_dir(),"cpp/tests/data");
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
         model[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[group] =
@@ -681,7 +681,7 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
 
     std::vector<int> state = {1};
 
-    std::string path = mio::base_dir();
+    std::string path = mio::path_join(mio::memilio_dir(),"cpp/tests/data");
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
         model[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[group] =
@@ -752,11 +752,11 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     }
 
     auto read_result1 = mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf,
-                                                            scaling_factor_icu, mio::path_join(mio::base_dir(), "Germany/pydata"));
+                                                            scaling_factor_icu, mio::path_join(mio::memilio_dir(),"cpp/tests/data", "Germany/Pydata"));
     auto read_result2 = mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu,
-                                                     mio::path_join(mio::base_dir(), "Germany/pydata"));
+                                                     mio::path_join(mio::memilio_dir(),"cpp/tests/data", "Germany/Pydata"));
     auto read_result_district = mio::osecir::read_input_data(
-        model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(mio::base_dir(), "District/pydata"));
+        model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(mio::memilio_dir(),"cpp/tests/data", "District/pydata"));
     ASSERT_THAT(print_wrap(read_result1), IsSuccess());
     ASSERT_THAT(print_wrap(read_result2), IsSuccess());
     ASSERT_THAT(print_wrap(read_result_district), IsSuccess());
@@ -840,9 +840,9 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     boost::filesystem::create_directory(results_dir);
     auto extrapolate_result = mio::osecir::export_input_data_county_timeseries(
         model, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1,
-        mio::path_join(mio::base_dir(), "county_divi_ma7.json"),
-        mio::path_join(mio::base_dir(), "cases_all_county_age_ma7.json"),
-        mio::path_join(mio::base_dir(), "county_current_population.json"));
+        mio::path_join(mio::memilio_dir(),"cpp/tests/data", "county_divi_ma7.json"),
+        mio::path_join(mio::memilio_dir(),"cpp/tests/data", "cases_all_county_age_ma7.json"),
+        mio::path_join(mio::memilio_dir(),"cpp/tests/data", "county_current_population.json"));
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
     auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"));

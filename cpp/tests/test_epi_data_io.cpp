@@ -251,7 +251,7 @@ TEST(TestEpiDataIo, read_county_ids)
         16061, 16062, 16063, 16064, 16065, 16066, 16067, 16068, 16069, 16070, 16071, 16072, 16073, 16074, 16075, 16076,
         16077};
 
-    std::string path = mio::path_join(mio::base_dir(), "county_current_population.json");
+    std::string path = mio::path_join(mio::memilio_dir(),"cpp/tests/data", "county_current_population.json");
     auto read_ids    = mio::get_node_ids(path, true, true);
     ASSERT_THAT(print_wrap(read_ids), IsSuccess());
 
@@ -264,7 +264,7 @@ TEST(TestEpiDataIo, get_node_ids)
 
     std::vector<int> true_ids_county = {1001};
 
-    std::string path       = mio::path_join(mio::base_dir(), "test_current_population.json");
+    std::string path       = mio::path_join(mio::memilio_dir(),"cpp/tests/data", "test_current_population.json");
     auto read_ids_district = mio::get_node_ids(path, false, true);
     auto read_ids_county   = mio::get_node_ids(path, true, true);
     ASSERT_THAT(print_wrap(read_ids_district), IsSuccess());
@@ -276,7 +276,7 @@ TEST(TestEpiDataIo, get_node_ids)
 
 TEST(TestEpiDataIo, read_divi_data)
 {
-    auto divi_data = mio::read_divi_data(mio::path_join(mio::base_dir(), "test_county_divi.json")).value();
+    auto divi_data = mio::read_divi_data(mio::path_join(mio::memilio_dir(),"cpp/tests/data", "test_county_divi.json")).value();
 
     ASSERT_EQ(divi_data.size(), 4);
 
@@ -308,7 +308,7 @@ TEST(TestEpiDataIo, is_divi_data_available)
 
 TEST(TestEpiDataIo, read_confirmed_cases_data)
 {
-    auto case_data = mio::read_confirmed_cases_data(mio::path_join(mio::base_dir(), "test_cases_all_age.json")).value();
+    auto case_data = mio::read_confirmed_cases_data(mio::path_join(mio::memilio_dir(),"cpp/tests/data", "test_cases_all_age.json")).value();
 
     ASSERT_EQ(case_data.size(), 3);
 
@@ -343,7 +343,7 @@ TEST(TestEpiDataIo, read_confirmed_cases_data)
 TEST(TestEpiDataIo, read_confirmed_cases_noage_data)
 {
     auto rki_data_noage =
-        mio::read_confirmed_cases_noage(mio::path_join(mio::base_dir(), "cases_all_germany.json")).value();
+        mio::read_confirmed_cases_noage(mio::path_join(mio::memilio_dir(),"cpp/tests/data", "cases_all_germany.json")).value();
 
     ASSERT_EQ(rki_data_noage.size(), 15);
 
@@ -370,7 +370,7 @@ TEST(TestEpiDataIo, read_confirmed_cases_noage_data)
 
 TEST(TestEpiDataIO, read_vaccination_data)
 {
-    auto vacc_data = mio::read_vaccination_data(mio::path_join(mio::base_dir(), "test_all_ageinf_vacc.json")).value();
+    auto vacc_data = mio::read_vaccination_data(mio::path_join(mio::memilio_dir(),"cpp/tests/data", "test_all_ageinf_vacc.json")).value();
 
     ASSERT_EQ(vacc_data.size(), 2);
 
@@ -406,7 +406,7 @@ TEST(TestEpiData, set_vaccination_data)
     std::vector<mio::osecirts::Model<double>> model_vector{model};
 
     auto f = mio::osecirts::details::set_vaccination_data(model_vector,
-                                                          mio::path_join(mio::base_dir(), "vaccination_test.json"),
+                                                          mio::path_join(mio::memilio_dir(),"cpp/tests/data", "vaccination_test.json"),
                                                           mio::Date(2022, 4, 15), county_ids, num_days);
 
     auto expected_values_PI =

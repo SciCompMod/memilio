@@ -52,7 +52,7 @@ std::string setup(int argc, char** argv, const std::string data_dir)
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::critical);
-    std::string data_dir = mio::path_join(mio::base_dir(), "Germany/pydata");
+    std::string data_dir = mio::path_join(mio::memilio_dir(), "data");
     std::string filename = setup(argc, argv, data_dir);
 
     const auto t0   = 0.;

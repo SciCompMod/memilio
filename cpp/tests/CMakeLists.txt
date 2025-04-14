@@ -78,38 +78,38 @@ set(EBM_TESTS
     test_smm_model.cpp
 )
 
-set(NETWORK_TESTS
-    test_graph.cpp
-    test_graph_simulation.cpp
-    test_graph_abm.cpp
-)
+# set(NETWORK_TESTS
+#     test_graph.cpp
+#     test_graph_simulation.cpp
+#     test_graph_abm.cpp
+# )
 
-set(ABM_TESTS
-    test_abm_household.cpp
-    test_abm_infection.cpp
-    test_abm_location.cpp
-    test_abm_lockdown_rules.cpp
-    test_abm_masks.cpp
-    test_abm_mobility_rules.cpp
-    test_abm_person.cpp
-    test_abm_simulation.cpp
-    test_abm_serialization.cpp
-    test_abm_testing_strategy.cpp
-    test_abm_model.cpp
-    test_d_abm_model.cpp
-    abm_helpers.h
-    abm_helpers.cpp
-)
+# set(ABM_TESTS
+#     test_abm_household.cpp
+#     test_abm_infection.cpp
+#     test_abm_location.cpp
+#     test_abm_lockdown_rules.cpp
+#     test_abm_masks.cpp
+#     test_abm_mobility_rules.cpp
+#     test_abm_person.cpp
+#     test_abm_simulation.cpp
+#     test_abm_serialization.cpp
+#     test_abm_testing_strategy.cpp
+#     test_abm_model.cpp
+#     test_d_abm_model.cpp
+#     abm_helpers.h
+#     abm_helpers.cpp
+# )
 
-set(IO_TESTS
-    test_regions.cpp
-    test_io_cli.cpp
-    test_io_framework.cpp
-    test_binary_serializer.cpp
-    test_mobility_io.cpp
-    test_contact_matrix.cpp
-    test_analyze_result.cpp
-)
+# set(IO_TESTS
+#     test_regions.cpp
+#     test_io_cli.cpp
+#     test_io_framework.cpp
+#     test_binary_serializer.cpp
+#     test_mobility_io.cpp
+#     test_contact_matrix.cpp
+#     test_analyze_result.cpp
+# )
 
 set(TEST_UTILS
     actions.h

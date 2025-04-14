@@ -29,9 +29,8 @@ void simulation(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // setup benchmark parameters
-    const std::string config_path = mio::path_join(mio::base_dir(), "cpp/benchmarks/configs/integrator_step.config");
+    const std::string config_path = mio::path_join(mio::memilio_dir(), "cpp/benchmarks/configs/integrator_step.config");
     auto cfg = mio::benchmark::SimulationConfig::initialize(config_path);
-    //auto cfg = mio::benchmark::SimulationConfig::initialize(10);
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
 
     for (auto _ : state) {

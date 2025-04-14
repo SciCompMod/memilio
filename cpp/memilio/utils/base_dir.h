@@ -18,8 +18,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef BASE_DIR_H
-#define BASE_DIR_H
+#ifndef MIO_UTILS_BASE_DIR_H
+#define MIO_UTILS_BASE_DIR_H
 
 #include "memilio/config.h"
 #include <string>
@@ -28,10 +28,11 @@ namespace mio
 /**
  * @brief Returns path to the repo directory.
 */
-std::string base_dir()
+inline const std::string memilio_dir()
 {
     return MEMILIO_BASE_DIR;
 }
+
 }
 
-#endif // BASE_DIR_H
+#endif // MIO_UTILS_BASE_DIR_H

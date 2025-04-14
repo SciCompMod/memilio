@@ -25,8 +25,6 @@
 #include "memilio/math/adapt_rk.h"
 #include <string>
 
-const std::string config_path = mio::path_join(mio::base_dir(), "cpp/benchmarks/configs/graph_simulation.config");
-
 mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const ScalarType tmax)
 {
     mio::osecirvvs::Model<ScalarType> model(num_agegroups);
@@ -113,7 +111,7 @@ mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const Scala
 template <class Integrator>
 auto create_simulation()
 {
-    auto cfg = mio::benchmark::GraphConfig::initialize(config_path);
+    auto cfg = mio::benchmark::GraphConfig::initialize(mio::path_join(mio::memilio_dir(), "cpp/benchmarks/configs/graph_simulation.config"));
 
     mio::osecirvvs::Model model = create_model(cfg.num_agegroups, cfg.t_max);
 
@@ -152,7 +150,7 @@ template <class Integrator>
 void graph_sim_secirvvs(::benchmark::State& state)
 {
     mio::set_log_level(mio::LogLevel::critical);
-    auto cfg = mio::benchmark::GraphConfig::initialize(config_path);
+    auto cfg = mio::benchmark::GraphConfig::initialize(mio::path_join(mio::memilio_dir(), "cpp/benchmarks/configs/graph_simulation.config"));
 
     for (auto _ : state) {
         // This code gets timed

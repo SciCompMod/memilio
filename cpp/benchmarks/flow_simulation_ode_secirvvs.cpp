@@ -25,8 +25,6 @@
 #include "memilio/utils/base_dir.h"
 #include <string>
 
-const std::string config_path = mio::path_join(mio::base_dir(), "benchmarks/configs/flow_simulation.config");
-
 // simulation without flows (not in Model definition and not calculated by Simulation)
 void flowless_sim(::benchmark::State& state)
 {
@@ -34,7 +32,7 @@ void flowless_sim(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // load config
-    auto cfg = mio::benchmark::SimulationConfig::initialize(config_path);
+    auto cfg = mio::benchmark::SimulationConfig::initialize(mio::path_join(mio::memilio_dir(), "cpp/benchmarks/configs/flow_simulation.config"));
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
@@ -59,7 +57,7 @@ void flow_sim_comp_only(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // load config
-    auto cfg = mio::benchmark::SimulationConfig::initialize(config_path);
+    auto cfg = mio::benchmark::SimulationConfig::initialize(mio::path_join(mio::memilio_dir(), "cpp/benchmarks/configs/graph_simulation.config"));
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
@@ -84,7 +82,7 @@ void flow_sim(::benchmark::State& state)
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // load config
-    auto cfg = mio::benchmark::SimulationConfig::initialize(config_path);
+    auto cfg = mio::benchmark::SimulationConfig::initialize(mio::path_join(mio::memilio_dir(), "cpp/benchmarks/configs/graph_simulation.config"));
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
