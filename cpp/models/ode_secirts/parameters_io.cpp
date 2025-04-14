@@ -23,6 +23,9 @@
 #include "memilio/io/io.h"
 #include "ode_secirts/parameters.h"
 
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
+
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "memilio/io/epi_data.h"
@@ -97,3 +100,4 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP
+GCC_CLANG_DIAGNOSTIC(pop)
