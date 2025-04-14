@@ -1,5 +1,5 @@
 # Attempt to find pre-installed Google Benchmark
-set(MEMILIO_BENCHMARK_VERSION "v1.6.1" CACHE STRING "GoogleTest version to use")
+set(MEMILIO_BENCHMARK_VERSION "v1.9.2" CACHE STRING "GoogleTest version to use")
 
 # Configure Google Benchmark build options BEFORE MakeAvailable
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # Don't build benchmark's tests
