@@ -35,11 +35,6 @@ endfunction()
 
 
 # Define benchmark executables
-add_memilio_benchmark(memilio_integrator_step_benchmark
-    integrator_step.cpp
-    ode_secir
-)
-
 add_memilio_benchmark(memilio_flow_simulation_ode_secirvvs_benchmark
     flow_simulation_ode_secirvvs.cpp
     ode_secirvvs
@@ -50,17 +45,26 @@ add_memilio_benchmark(memilio_flow_simulation_ode_seir_benchmark
     ode_seir
 )
 
-add_memilio_benchmark(integrator_secir_benchmark
-    integrator_secir_sim.cpp
-    ode_secir
-)
 
-add_memilio_benchmark(memilio_graph_simulation_benchmark
-    graph_simulation.cpp
-    ode_secirvvs
-)
 
 add_memilio_benchmark(memilio_abm_benchmark
     abm.cpp
     abm
 )
+
+if(MEMILIO_HAS_JSONCPP)
+    add_memilio_benchmark(memilio_graph_simulation_benchmark
+        graph_simulation.cpp
+        ode_secirvvs
+    )
+
+    add_memilio_benchmark(integrator_secir_benchmark
+        integrator_secir_sim.cpp
+        ode_secir
+    )
+
+    add_memilio_benchmark(memilio_integrator_step_benchmark
+        integrator_step.cpp
+        ode_secir
+    )
+endif()
