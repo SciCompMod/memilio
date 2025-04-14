@@ -19,9 +19,6 @@
 */
 #include "memilio/config.h"
 
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
-
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ode_secirvvs/parameters_io.h"
