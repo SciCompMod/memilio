@@ -192,7 +192,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     message(STATUS "Detected MSVC compiler (${CMAKE_CXX_COMPILER_VERSION})")
     set(USING_MSVC TRUE)
     check_compiler_version("MSVC" ${CMAKE_CXX_COMPILER_VERSION} ${MEMILIO_MIN_MSVC_VERSION})
-    
+    add_compile_options(/bigobj)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Detected GNU compiler (${CMAKE_CXX_COMPILER_VERSION})")
     set(USING_GNU TRUE)

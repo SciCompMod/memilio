@@ -11,7 +11,10 @@ FetchContent_Declare(google_benchmark
     GIT_TAG        ${MEMILIO_BENCHMARK_VERSION}
     GIT_SHALLOW    TRUE
 )
+set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS TRUE)
 FetchContent_MakeAvailable(google_benchmark)
+unset(CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
+
 
 if(TARGET benchmark::benchmark)
     set(MEMILIO_BENCHMARK_LIBRARY benchmark::benchmark)
