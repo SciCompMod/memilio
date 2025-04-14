@@ -514,7 +514,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
     std::vector<int> region{1002};
-    auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
+    auto path = mio::path_join(TEST_DATA_DIR, "Germany/pydata/cases_all_county_age_ma7.json");
     std::vector<std::vector<int>> t_Exposed(1);
     std::vector<std::vector<int>> t_InfectedNoSymptoms(1);
     std::vector<std::vector<int>> t_InfectedSymptoms(1);
@@ -662,15 +662,18 @@ TEST(TestOdeSECIRVVS, read_data)
     auto model2         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
     auto model3         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
 
-    auto read_result1 = mio::osecirvvs::read_input_data_county(
-        model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+    const auto pydata_dir_District = mio::path_join(TEST_DATA_DIR, "District", "pydata");
 
-    auto read_result2 = mio::osecirvvs::read_input_data(
-        model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+    auto read_result1 = mio::osecirvvs::read_input_data_county(model1, {2020, 12, 01}, {1002},
+                                                               std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                               TEST_GERMANY_PYDATA_DIR, 10);
 
-    auto read_result_district = mio::osecirvvs::read_input_data(model3, {2020, 12, 01}, {1002},
-                                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                                mio::path_join(TEST_DATA_DIR, "pydata/District"), 10);
+    auto read_result2 = mio::osecirvvs::read_input_data(model2, {2020, 12, 01}, {1002},
+                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                        TEST_GERMANY_PYDATA_DIR, 10);
+
+    auto read_result_district = mio::osecirvvs::read_input_data(
+        model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, pydata_dir_District, 10);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());
@@ -900,7 +903,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_DATA_DIR, 2, false),
+                                                       TEST_GERMANY_PYDATA_DIR, 2, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
@@ -940,8 +943,8 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 
     ASSERT_THAT(mio::osecirvvs::read_input_data(model_vector, {100, 12, 01}, {0},
-                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 0,
-                                                false),
+                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                TEST_GERMANY_PYDATA_DIR, 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.
@@ -978,7 +981,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {100, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_DATA_DIR, 0, false),
+                                                       TEST_GERMANY_PYDATA_DIR, 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.

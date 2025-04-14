@@ -198,7 +198,6 @@ TEST(TestAbmSerialization, Person)
     reference_json["assigned_locations"]  = json_uint_array({i++, i++, i++, i++, i++, i++, i++, i++, i++, i++, i++});
     reference_json["cells"]               = json_uint_array({i++});
     reference_json["compliance"]          = json_double_array({(double)i++, (double)i++, (double)i++});
-    reference_json["id"]                  = Json::UInt(i++);
     reference_json["infections"]          = Json::Value(Json::arrayValue);
     reference_json["last_transport_mode"] = Json::UInt(i++);
     reference_json["location"]            = Json::UInt(i++);
@@ -215,6 +214,8 @@ TEST(TestAbmSerialization, Person)
         mio::serialize_json(mio::CustomIndexArray<mio::abm::TestResult, mio::abm::TestType>{}).value();
     reference_json["time_at_location"]["seconds"] = Json::Int(i++);
     reference_json["vaccinations"]                = Json::Value(Json::arrayValue);
+    reference_json["id"]                          = Json::UInt(i++);
+    reference_json["rng_index"]                   = Json::UInt(i++);
 
     test_json_serialization<mio::abm::Person>(reference_json);
 }

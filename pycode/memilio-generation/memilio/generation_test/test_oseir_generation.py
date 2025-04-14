@@ -36,6 +36,7 @@ else:
 
 
 class TestOseirGeneration(unittest.TestCase):
+    """ """
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
     project_path = here.split('/pycode')[0]
@@ -61,6 +62,11 @@ class TestOseirGeneration(unittest.TestCase):
 
     @patch('memilio.generation.scanner.utility.try_get_compilation_database_path')
     def setUp(self, try_get_compilation_database_path_mock):
+        """
+
+        :param try_get_compilation_database_path_mock: 
+
+        """
         try_get_compilation_database_path_mock.return_value = self.build_dir.name
         config_json = {
 
@@ -82,6 +88,7 @@ class TestOseirGeneration(unittest.TestCase):
         self.ast = AST(conf)
 
     def test_clean_oseir(self):
+        """ """
         irdata = self.scanner.extract_results(self.ast.root_cursor)
 
         generator = Generator()
@@ -96,6 +103,7 @@ class TestOseirGeneration(unittest.TestCase):
             self.assertEqual(result.read(), self.expected_test_oseir_cpp)
 
     def test_wrong_model_name(self):
+        """ """
         self.scanner.config.model_class = "wrong_name"
         with self.assertRaises(AssertionError) as error:
             self.scanner.extract_results(self.ast.root_cursor)

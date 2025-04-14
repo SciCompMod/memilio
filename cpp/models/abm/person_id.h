@@ -29,22 +29,22 @@ namespace mio
 namespace abm
 {
 
-/// Unique identifier for a Person within a Model.
-struct MEMILIO_ENABLE_EBO PersonId : public mio::TypeSafe<uint32_t, PersonId>, public OperatorComparison<PersonId> {
+/// Unique ID for a Person within a Model.
+struct MEMILIO_ENABLE_EBO PersonId : public mio::TypeSafe<uint64_t, PersonId>, public OperatorComparison<PersonId> {
     /// @brief Create an ID.
-    PersonId(uint32_t id)
-        : mio::TypeSafe<uint32_t, PersonId>(id)
+    PersonId(uint64_t id)
+        : mio::TypeSafe<uint64_t, PersonId>(id)
     {
     }
 
     /// @brief Create an invalid ID.
     PersonId()
-        : mio::TypeSafe<uint32_t, PersonId>(std::numeric_limits<uint32_t>::max())
+        : mio::TypeSafe<uint64_t, PersonId>(std::numeric_limits<uint64_t>::max())
     {
     }
 
     /// @brief Value for invalid IDs.
-    const static PersonId invalid_id()
+    const static PersonId invalid_ID()
     {
         return PersonId();
     }

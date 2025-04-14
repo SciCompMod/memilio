@@ -26,10 +26,20 @@ from memilio.simulation.osir import Model, simulate, InfectionState
 
 
 class Test_Integrators(unittest.TestCase):
+    """ """
+
     def test_euler_step(self):
+        """ """
 
         # Define a simple deriv function for step
         def deriv_function(y, t, dydt):
+            """
+
+            :param y: 
+            :param t: 
+            :param dydt: 
+
+            """
             dydt[:] = -y
 
         integrator = mio.EulerIntegratorCore()
@@ -43,6 +53,7 @@ class Test_Integrators(unittest.TestCase):
         self.assertTrue((ytp1 == [0.9, 1.8]).all())
 
     def test_model_integration(self):
+        """ """
 
         model = Model(1)
         A0 = mio.AgeGroup(0)

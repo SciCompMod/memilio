@@ -26,8 +26,10 @@ import memilio.simulation.osecir as osecir
 
 
 class Test_ParameterStudy(unittest.TestCase):
+    """ """
 
     def _get_model(self):
+        """ """
         model = osecir.Model(1)
 
         A0 = mio.AgeGroup(0)
@@ -68,6 +70,7 @@ class Test_ParameterStudy(unittest.TestCase):
         return model
 
     def test_graph(self):
+        """ """
         model = self._get_model()
         graph = osecir.ModelGraph()
         graph.add_node(0, model)
@@ -81,6 +84,7 @@ class Test_ParameterStudy(unittest.TestCase):
         self.assertEqual(study.model_graph.num_edges, 2)
 
     def test_run(self):
+        """ """
         model = self._get_model()
 
         t0 = 1
@@ -94,6 +98,12 @@ class Test_ParameterStudy(unittest.TestCase):
 
         # run as graph
         def handle_result_func(graph, run_idx):
+            """
+
+            :param graph: 
+            :param run_idx: 
+
+            """
             self.assertEqual(run_idx, handle_result_func.c)
             handle_result_func.c += 1
             handle_result_func.results.append(graph)
@@ -111,6 +121,12 @@ class Test_ParameterStudy(unittest.TestCase):
 
         # run as single node
         def handle_single_result_func(sim, run_idx):
+            """
+
+            :param sim: 
+            :param run_idx: 
+
+            """
             self.assertEqual(run_idx, handle_single_result_func.c)
             handle_single_result_func.c += 1
             handle_single_result_func.results.append(sim)

@@ -186,8 +186,21 @@ def population_enums(intermed_repr: IntermediateRepresentation) -> str:
 
 def population(intermed_repr: IntermediateRepresentation) -> str:
     """
+
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
+
+    """
+    for value in intermed_repr.model_base[0:]:
+        if "Population" in value[0]:
+            return "Populations"
+
+
+def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
+    """! Sets the draw_sample function as part of the bindings.
+
+    @param intermed_repr Dataclass holding the model features.
+    @return Formatted string representing a part of the bindings.  
     """
     for value in intermed_repr.model_base[0:]:
         if "Population" in value[0]:
@@ -214,8 +227,11 @@ def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
 
 def model_init(intermed_repr: IntermediateRepresentation) -> str:
     """
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     substitution_string = ""
     for init in intermed_repr.model_init:
@@ -238,8 +254,10 @@ def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
     """! Generate the code for the AgeGroup class.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if not intermed_repr.has_age_group:
         return ""
@@ -253,8 +271,10 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
     """! Generate the code for the parameterset_wrapper needed when using age groups.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     if intermed_repr.has_age_group is False:
         return ""
@@ -278,8 +298,10 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
     """! Generate the code for the Simulation class.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     namespace = intermed_repr.namespace
 
@@ -361,8 +383,10 @@ def simulation_vector_definition(
     """! Generate the code for vector definition.
     Not used by every model.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.
+    :param intermed_repr: Dataclass holding the model features.
+    :param intermed_repr: IntermediateRepresentation: 
+    :returns: Formatted string representing a part of the bindings.
+
     """
     namespace = intermed_repr.namespace
     sub_string = ""

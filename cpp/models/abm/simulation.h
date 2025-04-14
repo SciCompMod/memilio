@@ -32,6 +32,7 @@ namespace abm
 /**
  * @brief Run the Simulation in discrete steps, evolve the Model and report results.
  */
+template <class M = Model>
 class Simulation
 {
 
@@ -41,7 +42,12 @@ public:
      * @param[in] t0 The starting time of the Simulation.
      * @param[in] model The Model to simulate.
      */
-    Simulation(TimePoint t0, Model&& model);
+    Simulation(TimePoint t0, M&& model)
+        : m_model(std::move(model))
+        , m_t(t0)
+        , m_dt(hours(1))
+    {
+    }
 
     /**
      * @brief Create a Simulation with an empty Model.
@@ -50,7 +56,7 @@ public:
      * @param[in] t0 The starting time of the Simulation.
      */
     Simulation(TimePoint t0, size_t num_agegroups)
-        : Simulation(t0, Model(num_agegroups))
+        : Simulation(t0, M(num_agegroups))
     {
     }
 
@@ -81,20 +87,25 @@ public:
     /**
      * @brief Get the Model that this Simulation evolves.
      */
-    Model& get_model()
+    M& get_model()
     {
         return m_model;
     }
-    const Model& get_model() const
+    const M& get_model() const
     {
         return m_model;
     }
 
 private:
     void store_result_at(TimePoint t);
-    void evolve_model(TimePoint tmax);
+    void evolve_model(TimePoint tmax)
+    {
+        auto dt = std::min(m_dt, tmax - m_t);
+        m_model.evolve(m_t, dt);
+        m_t += m_dt;
+    }
 
-    Model m_model; ///< The Model to simulate.
+    M m_model; ///< The Model to simulate.
     TimePoint m_t; ///< The current TimePoint of the Simulation.
     TimeSpan m_dt; ///< The length of the time steps.
 };

@@ -34,10 +34,12 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 
 class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/'
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
@@ -45,6 +47,12 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
     @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
     def test_simulation_run(self, mock_baseline, mock_minimum):
+        """
+
+        :param mock_baseline: 
+        :param mock_minimum: 
+
+        """
         days_1 = 10
         days_2 = 30
         days_3 = 50
@@ -94,6 +102,13 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                          43637.833333333336, 22874.066666666666, 8473.6]])
     def test_data_generation_runs(
             self, mock_population, mock_baseline, mock_minimum):
+        """
+
+        :param mock_population: 
+        :param mock_baseline: 
+        :param mock_minimum: 
+
+        """
 
         input_width_1 = 1
         input_width_2 = 5
@@ -133,6 +148,13 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                          43637.833333333336, 22874.066666666666, 8473.6]])
     def test_data_generation_save(
             self, mock_population, mock_baseline, mock_minimum):
+        """
+
+        :param mock_population: 
+        :param mock_baseline: 
+        :param mock_minimum: 
+
+        """
 
         input_width = 2
         label_width = 3
@@ -146,6 +168,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                          ['data_secir_groups.pickle'])
 
     def test_structures_networks(self):
+        """ """
 
         model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
         self.assertEqual(len(model_mlp_multi_input_single_output.layers), 5)
@@ -192,6 +215,13 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
            return_value=[[5256.0, 10551, 32368.5,
                          43637.833333333336, 22874.066666666666, 8473.6]])
     def test_network_fit(self, mock_population, mock_baseline, mock_minimum):
+        """
+
+        :param mock_population: 
+        :param mock_baseline: 
+        :param mock_minimum: 
+
+        """
         max_epochs = 5
         # models with single output
         model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()

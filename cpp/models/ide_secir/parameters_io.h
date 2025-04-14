@@ -288,17 +288,11 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
             return a.date < b.date;
         });
         auto min_date       = min_date_entry->date;
-
-        std::string min_date_string =
-            std::to_string(min_date.day) + "." + std::to_string(min_date.month) + "." + std::to_string(min_date.year);
         // Get first date that is needed.
-        mio::Date min_offset_date          = offset_date_by_days(date, int(min_offset_needed));
-        std::string min_offset_date_string = std::to_string(min_offset_date.day) + "." +
-                                             std::to_string(min_offset_date.month) + "." +
-                                             std::to_string(min_offset_date.year);
-        log_warning("RKI data is needed from " + min_offset_date_string +
-                    " to compute initial values. RKI data is only available from " + min_date_string +
-                    ". Missing dates were set to 0.");
+        mio::Date min_offset_date = offset_date_by_days(date, int(min_offset_needed));
+        log_warning("RKI data is needed from {} to compute initial values. RKI data is only available from {}. Missing "
+                    "dates were set to 0.",
+                    min_offset_date, min_date);
     }
 
     //--- Calculate the flows "after" InfectedNoSymptomsToInfectedSymptoms (that were set above using rki_data). ---

@@ -58,6 +58,7 @@ void write_log_to_file(const T& history)
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::warn);
     // This is a minimal example with children and adults < 60y.
     // We divided them into 4 different age groups, which are defined as follows:
     const size_t num_age_groups   = 4;
@@ -133,14 +134,14 @@ int main()
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                         test_parameters, probability);
+                                                       test_parameters, probability);
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
     // The infection states are chosen randomly.
     auto persons = model.get_persons();
     for (auto& person : persons) {
-        auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
+        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
         mio::abm::InfectionState infection_state =
             (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
         if (infection_state != mio::abm::InfectionState::Susceptible)
@@ -176,14 +177,14 @@ int main()
 
     struct LogTimePoint : mio::LogAlways {
         using Type = double;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<>& sim)
         {
             return sim.get_time().hours();
         }
     };
     struct LogLocationIds : mio::LogOnce {
         using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation& sim)
+        static Type log(const mio::abm::Simulation<>& sim)
         {
             Type location_ids{};
             for (auto& location : sim.get_model().get_locations()) {

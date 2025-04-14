@@ -31,7 +31,7 @@ setup(
             # smaller numpy versions cause a security issue, 1.25 breaks testing with pyfakefs
             'numpy>=1.22,<1.25',
             # smaller pandas versions contain a bug that sometimes prevents reading
-            # some excel files (e.g. population or twitter data)
+            # some excel files (e.g. population or mobility data)
             'pandas>=2.0.0',
         ],
     },

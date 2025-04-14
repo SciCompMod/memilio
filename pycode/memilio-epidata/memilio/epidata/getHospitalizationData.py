@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file getHospitalizationData.py
-@brief Downloads the hospitalization data of the Robert Koch-Institute (RKI) and provides it in different ways.
+:strong:`getHospitalizationData.py`
+Downloads the hospitalization data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
 The raw hospitalization data can be found at
 https://github.com/robert-koch-institut/COVID-19-Hospitalisierungen_in_Deutschland
@@ -41,12 +41,13 @@ pd.options.mode.copy_on_write = True
 
 
 def hospit_sanity_checks(df):
-    """! Checks the sanity of the hospitalization_data dataframe
+    """ Checks the sanity of the hospitalization_data dataframe
 
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed
 
-    @param df The dataframe which has to be checked
+    :param df: The dataframe which has to be checked
+
     """
     # test if dataframe is empty
     if df.empty:
@@ -69,7 +70,7 @@ def hospit_sanity_checks(df):
 
 
 def get_hospitailzations_per_day(seven_days_values):
-    """! Gets the daily cases of hospitalizations from the seven day sum.
+    """ Gets the daily cases of hospitalizations from the seven day sum.
 
     A zero filled array is created where the one day data is stored.
     For each calculated daily case the copied array is adjusted to include only the remaining values.
@@ -78,9 +79,9 @@ def get_hospitailzations_per_day(seven_days_values):
     If there are constant cases left on each day, they are divided on each date by one seventh.
     After that, a few tests are done to check if all cases were distributed correctly.
 
-    @param seven_days_values Array. Total hospitalizations over the last seven days
+    :param seven_days_values: Array. Total hospitalizations over the last seven days
+    :returns: daily_values Hospitalizations per day.
 
-    @return daily_values Hospitalizations per day.
     """
 
     daily_values = np.zeros(len(seven_days_values), dtype=float)
@@ -143,7 +144,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
                              moving_average=dd.defaultDict['moving_average'],
                              **kwargs
                              ):
-    """! Downloads or reads the RKI hospitalization data and writes them in different files.
+    """ Downloads or reads the RKI hospitalization data and writes them in different files.
 
     Available data starts from 2020-03-01.
     If it does not already exist, the folder Germany is generated in the given out_folder.
@@ -157,21 +158,23 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
     "hospit_state_age", "hospit_state", "hospit_germany_age" and "hospit_germany"
     for states or germany and age groups.
 
-    @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    :param read_data: True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict.
+    :param out_folder: Folder where data is written to. Default defined in defaultDict.
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict.
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict.
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
         Here Dates are always imputed so False changes nothing.
-    @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
+    :param moving_average: Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
         to smooth out weekend effects.  Default defined in defaultDict.
+    :param **kwargs: 
+
     """
     impute_dates = True
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
     no_raw = conf.no_raw
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     # get raw dataframe
@@ -267,7 +270,7 @@ def get_hospitalization_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
     arg_dict = gd.cli('hospitalization')
     get_hospitalization_data(**arg_dict)
 

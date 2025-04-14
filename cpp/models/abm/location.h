@@ -119,19 +119,22 @@ public:
      * @param[in] loc_type The #LocationType.
      * @param[in] loc_id The index of the Location in the Model.
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.
+     * @param[in] model_id [Default: 0] The model id the Location is in.
      * @param[in] num_cells [Default: 1] The number of Cell%s in which the Location is divided.
      */
-    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, uint32_t num_cells = 1);
+    explicit Location(LocationType loc_type, LocationId loc_id, size_t num_agegroups = 1, int model_id = 0,
+                      uint32_t num_cells = 1);
 
     /**
      * @brief Construct a copy of a Location with a new ID.
      * @param[in] other The Location to copy from.
      * @param[in] id The ID for the new Location.
      */
-    explicit Location(const Location& other, LocationId id)
+    explicit Location(const Location& other, LocationId id, int model_id = 0)
         : Location(other)
     {
-        m_id = id;
+        m_id       = id;
+        m_model_id = model_id;
     }
 
     /**
@@ -271,6 +274,15 @@ public:
             .add("geographical_location", m_geographical_location);
     }
 
+    /**
+     * @brief Get the model id the location is in. Is only relevant for graph ABM or hybrid model.
+     * @return Model id of the location
+     */
+    int get_model_id() const
+    {
+        return m_model_id;
+    }
+
 private:
     friend DefaultFactory<Location>;
     Location() = default;
@@ -281,6 +293,7 @@ private:
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
     GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
+    int m_model_id; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
 };
 
 } // namespace abm
