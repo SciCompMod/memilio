@@ -22,11 +22,11 @@ filename = "data_secir_simple_30days_10k.pickle"
 filename_df = "dataframe_30days_10k_nodamp.csv"
 
 # General parameters for the training process:
-early_stop = 100
-max_epochs = 2
-loss=tf.keras.losses.MeanAbsolutePercentageError()
-optimizer= "AdamW"
-metrics=[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
+early_stop = [100]
+max_epochs = [2]
+losses=[tf.keras.losses.MeanAbsolutePercentageError()]
+optimizers= ["AdamW"]
+metrics=[[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]]
 
 # Define grid search parameters
 hidden_layers = [1,2]
@@ -35,7 +35,10 @@ activation_function = ["relu"]
 models = ["CNN" ]
 
 # Collecting parameters
-training_parameters = (early_stop, max_epochs, loss, optimizer, metrics)
+training_parameters = [(early, epochs, loss, optimizer, metric) 
+                       for early in early_stop for epochs in max_epochs for loss in losses 
+                       for optimizer in optimizers for metric in metrics]
+
 model_parameters = [(label_width, num_outputs, layer, neuron_number, activation, modelname)
               for layer in hidden_layers for neuron_number in neurons_in_hidden_layer 
               for activation in activation_function for modelname in models]
@@ -55,14 +58,14 @@ inputs_withhold = data['inputs'][int((0.8 * len(data['inputs']))):]
 labels_withhold = data['labels'][int((0.8 * len(data['labels']))):]
 
 # Function to train and evaluate the model using cross-validation
-def train_and_evaluate_model(param, inputs, labels, training_parameters, Print = False):
+def train_and_evaluate_model(param, inputs, labels, training_parameter, Print = False):
     """ Training and evaluating a model with given architecture using 5-fold cross validation, returning a dictionary with the main training statistics. 
 
     :param param: tuple of parameters describing the model architecture, it should be of the form 
             (num_days_per_output, num_outputs, num_hidden_layers, neurons_per_layer, name_activation, name_architecture)
     :param inputs: training inputs 
     :param labels: training output labels 
-    :param training_parameters: tuple of parameters used for the training process, it should be of the form
+    :param training_parameter: tuple of parameters used for the training process, it should be of the form
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
     :param Print:  Boolean, whether or not the evaluation results are printed. 
@@ -72,7 +75,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameters, Print =
     """
     # Unpacking parameters 
     _, _, _, _, activation, modelname = param
-    early_stop, max_epochs, loss, optimizer, metrics = training_parameters
+    early_stop, max_epochs, loss, optimizer, metrics = training_parameter
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=early_stop,
                                                       mode='min')
@@ -178,7 +181,7 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
     """ Performing grid search for a given set of model parameters
 
     The results are stored in directory 'secir_simple_grid_search', each row has the form 
-    ['model', 'number_of_hidden_layers', 'number_of_neurons', 'activation',
+    ['model', 'optimizer', 'number_of_hidden_layers', 'number_of_neurons', 'activation',
                                     'mean_test_MAPE', 'kfold_train', 'kfold_val',
                                     'kfold_test', 'training_time', 'train_losses', 'val_losses']
 
@@ -186,30 +189,31 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
         (num_days_per_output, num_outputs, num_hidden_layers, neurons_per_layer, name_activation, name_architecture)
     :param inputs: training input data 
     :param labels: training label data 
-    :param training_parameters: tuple of parameters used for the training process, it should be of the form
+    :param training_parameters: List of tuples of parameters used for the training process, each should be of the form
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
     :param filename_df: String, giving name of the file, where the data is stored, actual filename is given by filename_df + ".csv"
     
     """
     # Create a DataFrame to store the results
-    df_results = pd.DataFrame(columns=['model', 'number_of_hidden_layers', 'number_of_neurons', 'activation',
+    df_results = pd.DataFrame(columns=['model','optimizer', 'number_of_hidden_layers', 'number_of_neurons', 'activation',
                                     'mean_test_MAPE', 'kfold_train', 'kfold_val',
                                     'kfold_test', 'training_time', 'train_losses', 'val_losses'])
     
     # Iterate the different model architectures and save the training results
     for param in model_parameters:
-        _,_, layer, neuron_number, activation, modelname = param
-        results = train_and_evaluate_model(param, inputs, labels, training_parameters)
-        df_results.loc[len(df_results.index)] = [
-            modelname, layer, neuron_number, activation, np.nan,  # Placeholder for test score
-            results["mean_train_loss_kfold"],
-            results["mean_val_loss_kfold"],
-            np.nan,  # Placeholder for final test score
-            results["training_time"],
-            results["train_losses"],
-            results["val_losses"]
-        ]
+        for training_parameter in training_parameters:
+            _,_, layer, neuron_number, activation, modelname = param
+            results = train_and_evaluate_model(param, inputs, labels, training_parameter)
+            df_results.loc[len(df_results.index)] = [
+                modelname, results["optimizer"], layer, neuron_number, activation, np.nan,  # Placeholder for test score
+                results["mean_train_loss_kfold"],
+                results["mean_val_loss_kfold"],
+                np.nan,  # Placeholder for final test score
+                results["training_time"],
+                results["train_losses"],
+                results["val_losses"]
+            ]
 
     # Save the results in .csv file 
     path = os.path.dirname(os.path.realpath(__file__))
