@@ -344,7 +344,7 @@ set(MEMILIO_CXX_FLAGS_WARNINGS_AS_ERRORS "")
 if(MEMILIO_ENABLE_WARNINGS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         # MSVC warning flags
-        set(MEMILIO_CXX_FLAGS_ENABLE_WARNINGS "/W4")
+        set(MEMILIO_CXX_FLAGS_ENABLE_WARNINGS "/W4;")
     else()
         # GCC/Clang common warning flags
         set(MEMILIO_CXX_FLAGS_ENABLE_WARNINGS 

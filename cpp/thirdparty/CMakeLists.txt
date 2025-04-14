@@ -94,9 +94,9 @@ if(MEMILIO_USE_BUNDLED_EIGEN)
         QUIET
         
     )
+    # SOURCE_DIR is empty to avoid building the CMake project, we only need the headers
 
-    # Get properties. Accessing eigen_SOURCE_DIR later should trigger population.
-    FetchContent_MakeAvailable(eigen) # This will not build the target, but will populate the source directory
+    FetchContent_MakeAvailable(eigen) 
 
 
     # Manually create the INTERFACE target since we skipped MakeAvailable
