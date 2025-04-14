@@ -22,7 +22,6 @@
 #include "memilio/compartments/parameter_studies.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include <data_dir.h>
 #include <iostream>
 
 std::string setup(int argc, char** argv, const std::string data_dir)

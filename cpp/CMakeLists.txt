@@ -12,7 +12,7 @@ project(memilio
 # Define minimum supported compiler versions
 set(MEMILIO_MIN_GCC_VERSION "9.0")
 set(MEMILIO_MIN_CLANG_VERSION "6.0") 
-set(MEMILIO_MIN_MSVC_VERSION "19.20") # MSVC 2019 (16.0)
+set(MEMILIO_MIN_MSVC_VERSION "19.20")
 
 # Set default build type to Release if not specified
 if(NOT CMAKE_BUILD_TYPE)
