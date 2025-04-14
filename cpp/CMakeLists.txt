@@ -133,6 +133,7 @@ if(MEMILIO_ENABLE_MPI)
     message(STATUS "MPI found: ${MPI_VERSION}")
 endif()
 
+message(STATUS "MEMILIO_ENABLE_IPOPT is: ${MEMILIO_ENABLE_IPOPT}")
 if(MEMILIO_ENABLE_IPOPT)
     enable_language(Fortran)
     message(STATUS "Ipopt enabled, ensuring Fortran language support is enabled.")
