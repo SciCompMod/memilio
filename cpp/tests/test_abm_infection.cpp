@@ -54,34 +54,14 @@ TEST_F(TestInfection, init)
 
     //Distribution for state transitions
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(15))
+        .Times(testing::AtLeast(5))
         // 1st infection
         .WillOnce(testing::Return(0.4)) // Transition to Infected
         .WillOnce(testing::Return(0.6)) // Transition to Recovered
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_peak.params.a())) // Viral load draws
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_incline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_decline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_alpha.params.a())) // Infectivity draws
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_beta.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
                                       .params()[0])) // Virus Shed Factor
         // 2nd infection
         .WillOnce(testing::Return(1.0)) // Transition to Recovered
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_peak.params.a())) // Viral load draws
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_incline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_decline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_alpha.params.a())) // Infectivity draws
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_beta.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
                                       .params()[0])) // Virus Shed Factor
         .WillRepeatedly(testing::Return(1.0));
@@ -176,7 +156,7 @@ TEST_F(TestInfection, drawInfectionCourseForward)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly(
-            22)) // 6 viral load draws per infection and 1 infection path draw per infection (for infection1 and 2) and 2 infection paths draws for infection3
+            7)) // 6 viral load draws per infection and 1 infection path draw per infection (for infection1 and 2) and 2 infection paths draws for infection3
         .WillRepeatedly(testing::Return(
             0.55)); // is necessary for infection 1 to recover, infection 2 to die and infection 3 to turn severe
 
@@ -219,47 +199,17 @@ TEST_F(TestInfection, drawInfectionCourseBackward)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>>
         mock_logNormal_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(22))
+        .Times(testing::AtLeast(7))
         // 1st infection
         .WillOnce(testing::Return(0.6)) // Transition to InfectedNoSymptoms
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_peak.params.a())) // Viral load draws
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_incline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_decline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_alpha.params.a())) // Infectivity draws
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_beta.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
                                       .params()[0])) // Virus Shed Factor
         // 2nd infection
         .WillOnce(testing::Return(0.4)) // Transition to InfectedSymptoms
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_peak.params.a())) // Viral load draws
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_incline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_decline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_alpha.params.a())) // Infectivity draws
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_beta.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
                                       .params()[0])) // Virus Shed Factor
         // 3rd infection
         .WillOnce(testing::Return(0.2)) // Transition to InfectedSevere
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_peak.params.a())) // Viral load draws
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_incline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::ViralLoadDistributions>()[{virus_variant_test, age_group_test}]
-                                      .viral_load_decline.params.a()))
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_alpha.params.a())) // Infectivity draws
-        .WillOnce(testing::Return(params.get<mio::abm::InfectivityDistributions>()[{virus_variant_test, age_group_test}]
-                                      .infectivity_beta.params.a()))
         .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
                                       .params()[0])) // Virus Shed Factor
         // 4th infection

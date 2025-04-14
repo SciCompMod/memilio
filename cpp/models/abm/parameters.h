@@ -282,9 +282,9 @@ struct DeathsPerInfectedCritical {
  * Section 3.3.1 or see also supplementary materials Fig. S5.
 */
 struct ViralLoadDistributionsParameters {
-    UniformDistribution<double>::ParamType viral_load_peak;
-    UniformDistribution<double>::ParamType viral_load_incline;
-    UniformDistribution<double>::ParamType viral_load_decline;
+    AbstractParameterDistribution viral_load_peak;
+    AbstractParameterDistribution viral_load_incline;
+    AbstractParameterDistribution viral_load_decline;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -300,8 +300,11 @@ struct ViralLoadDistributions {
     using Type = CustomIndexArray<ViralLoadDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        Type default_val({VirusVariant::Count, size},
-                         ViralLoadDistributionsParameters{{8.1, 8.1}, {2., 2.}, {-0.17, -0.17}});
+        Type default_val(
+            {VirusVariant::Count, size},
+            ViralLoadDistributionsParameters{AbstractParameterDistribution(ParameterDistributionConstant(8.1)),
+                                             AbstractParameterDistribution(ParameterDistributionConstant(2.)),
+                                             AbstractParameterDistribution(ParameterDistributionConstant(-0.17))});
         return default_val;
     }
     static std::string name()
@@ -315,8 +318,8 @@ struct ViralLoadDistributions {
  * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
 */
 struct InfectivityDistributionsParameters {
-    UniformDistribution<double>::ParamType infectivity_alpha;
-    UniformDistribution<double>::ParamType infectivity_beta;
+    AbstractParameterDistribution infectivity_alpha;
+    AbstractParameterDistribution infectivity_beta;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -331,7 +334,10 @@ struct InfectivityDistributions {
     using Type = CustomIndexArray<InfectivityDistributionsParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        Type default_val({VirusVariant::Count, size}, InfectivityDistributionsParameters{{-7., -7.}, {1., 1.}});
+        Type default_val(
+            {VirusVariant::Count, size},
+            InfectivityDistributionsParameters{AbstractParameterDistribution(ParameterDistributionConstant(-7.)),
+                                               AbstractParameterDistribution(ParameterDistributionConstant(1.))});
         return default_val;
     }
     static std::string name()

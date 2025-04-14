@@ -366,27 +366,12 @@ TEST_F(TestModel, evolveMobilityTrips)
     // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist2;
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke)
-        .Times(testing::Exactly(21))
+        .Times(testing::Exactly(6))
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p1
-        .WillOnce(testing::Return(0.8)) // draw random peak p1
-        .WillOnce(testing::Return(0.8)) // draw random incline p1
-        .WillOnce(testing::Return(0.8)) // draw random decline p1
-        .WillOnce(testing::Return(0.8)) // draw random alpha p1
-        .WillOnce(testing::Return(0.8)) // draw random beta p1
         .WillOnce(testing::Return(0.8)) // draw random virus shed p1
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p3
-        .WillOnce(testing::Return(0.8)) // draw random peak p3
-        .WillOnce(testing::Return(0.8)) // draw random incline p3
-        .WillOnce(testing::Return(0.8)) // draw random decline p3
-        .WillOnce(testing::Return(0.8)) // draw random alpha p3
-        .WillOnce(testing::Return(0.8)) // draw random beta p3
         .WillOnce(testing::Return(0.8)) // draw random virus shed p3
         .WillOnce(testing::Return(0.0)) // draw transition from InfectedCritical p4
-        .WillOnce(testing::Return(0.8)) // draw random peak p4
-        .WillOnce(testing::Return(0.8)) // draw random incline p4
-        .WillOnce(testing::Return(0.8)) // draw random decline p4
-        .WillOnce(testing::Return(0.8)) // draw random alpha p4
-        .WillOnce(testing::Return(0.8)) // draw random beta p4
         .WillOnce(testing::Return(0.8)) // draw random virus shed p4
         .RetiresOnSaturation();
 

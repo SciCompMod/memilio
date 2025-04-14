@@ -42,20 +42,16 @@ Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, Age
         high_viral_load_factor -= params.get<HighViralLoadProtectionFactor>()[{latest_protection.type, age, virus}](
             init_date.days() - latest_protection.time.days());
     }
-    m_viral_load.peak = vl_params.viral_load_peak.get_distribution_instance()(rng, vl_params.viral_load_peak.params) *
-                        high_viral_load_factor;
-    m_viral_load.incline =
-        vl_params.viral_load_incline.get_distribution_instance()(rng, vl_params.viral_load_incline.params);
-    m_viral_load.decline =
-        vl_params.viral_load_decline.get_distribution_instance()(rng, vl_params.viral_load_decline.params);
+    m_viral_load.peak    = vl_params.viral_load_peak.get(rng) * high_viral_load_factor;
+    m_viral_load.incline = vl_params.viral_load_incline.get(rng);
+    m_viral_load.decline = vl_params.viral_load_decline.get(rng);
     m_viral_load.end_date =
         m_viral_load.start_date +
         days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
 
-    auto inf_params = params.get<InfectivityDistributions>()[{virus, age}];
-    m_log_norm_alpha =
-        inf_params.infectivity_alpha.get_distribution_instance()(rng, inf_params.infectivity_alpha.params);
-    m_log_norm_beta = inf_params.infectivity_beta.get_distribution_instance()(rng, inf_params.infectivity_beta.params);
+    auto inf_params  = params.get<InfectivityDistributions>()[{virus, age}];
+    m_log_norm_alpha = inf_params.infectivity_alpha.get(rng);
+    m_log_norm_beta  = inf_params.infectivity_beta.get(rng);
 
     auto shedfactor_param          = params.get<VirusShedFactor>()[{virus, age}];
     m_individual_virus_shed_factor = shedfactor_param.get(rng);

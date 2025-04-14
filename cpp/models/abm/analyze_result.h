@@ -184,8 +184,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                         return model.parameters.template get<ViralLoadDistributions>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return (dist1.viral_load_peak.params.a() + dist1.viral_load_peak.params.b()) / 2. <
-                               (dist2.viral_load_peak.params.a() + dist2.viral_load_peak.params.b()) / 2.;
+                        return dist1.viral_load_peak < dist2.viral_load_peak;
                     });
                 param_percentile_dist(
                     node, std::vector<InfectivityDistributionsParameters>(num_runs),
@@ -193,8 +192,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                         return model.parameters.template get<InfectivityDistributions>()[{virus_variant, age_group}];
                     },
                     [](auto& dist1, auto& dist2) {
-                        return (dist1.infectivity_alpha.params.a() + dist1.infectivity_alpha.params.b()) / 2. <
-                               (dist2.infectivity_alpha.params.a() + dist2.infectivity_alpha.params.b()) / 2.;
+                        return dist1.infectivity_alpha < dist2.infectivity_alpha;
                     });
                 param_percentile_dist(
                     node, std::vector<mio::AbstractParameterDistribution>(num_runs),

@@ -23,6 +23,7 @@
 #include "abm/person.h"
 #include "abm_helpers.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/parameter_distributions.h"
 #include "random_number_test.h"
 
 using TestLocation = RandomNumberTest;
@@ -89,9 +90,12 @@ TEST_F(TestLocation, interact)
     // Setup model parameters for viral loads and infectivity distributions.
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
-    params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {{1., 1.}, {0.0001, 0.0001}, {-0.0001, -0.0001}};
+    params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
+                                                                      mio::ParameterDistributionConstant(0.0001),
+                                                                      mio::ParameterDistributionConstant(-0.0001)};
     params.set_default<mio::abm::InfectivityDistributions>(num_age_groups);
-    params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {{1., 1.}, {1., 1.}};
+    params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
+                                                                        mio::ParameterDistributionConstant(1.)};
 
     // Set incubtion period to two days so that the newly infected person is still exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;

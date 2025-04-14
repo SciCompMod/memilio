@@ -38,6 +38,7 @@ namespace mio
  */
 class AbstractParameterDistribution
 {
+
 public:
     /**
      * The implementation handed to the constructor should have get_sample function 
