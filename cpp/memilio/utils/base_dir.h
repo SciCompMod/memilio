@@ -22,6 +22,7 @@
 #define BASE_DIR_H
 
 #include "memilio/config.h"
+#include <string>
 namespace mio
 {
 /**
