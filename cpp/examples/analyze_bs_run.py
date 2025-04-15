@@ -95,9 +95,7 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
     plt.gcf().autofmt_xdate()
     # these are matplotlib.patch.Patch properties
     # place a text box in upper left in axes coords
-    ax = plt.gca()
-    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-            verticalalignment='top', bbox=props)
+
     plt.title('Infection location types')
     plt.gca().set_ylim(bottom=0)
     plt.xlabel('Date')
@@ -158,15 +156,6 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
     # and divide it by the population
     total_infected = total_infected / population * 100
     # and print it
-    textstr = '\n'.join((
-        r'$\mathrm{Total\ infected\ population}=%.2f$' % (total_infected, )
-    ))
-    # these are matplotlib.patch.Patch properties
-    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-    # place a text box in upper left in axes coords
-    ax = plt.gca()
-    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
-            verticalalignment='top', bbox=props)
     
         
 
@@ -1125,7 +1114,7 @@ if __name__ == "__main__":
     # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
     # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113051"
-    path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/results/results_last_run"
+    path = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/results/results_last_run"
 
     if (len(sys.argv) > 1):
         n_runs = sys.argv[1]

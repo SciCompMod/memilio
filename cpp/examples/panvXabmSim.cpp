@@ -173,7 +173,7 @@ void set_parameters(mio::abm::Parameters& params)
     params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.75;
 
     // Set infection parameters
-    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 3;
+    params.get<mio::abm::InfectionRateFromViralShed>()[{mio::abm::VirusVariant::Wildtype}] = 1;
     params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
     
     // Set contact parameter (people of same age group meet more often)
@@ -641,8 +641,8 @@ mio::IOResult<bool> copy_result_folder(std::string const& from_dir, std::string 
 mio::IOResult<void> main_flow()
 {
     // Default infection data file path
-    std::string infection_data_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabm/PanVadere/restaurant/simulation_runs/lu-2020_no_airflow/infections.txt";
-    std::string input_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/results";
+    std::string infection_data_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/PanVadere/restaurant/simulation_runs/lu-2020_airflow_inlet_right_outlet_left/infections.txt";
+    std::string input_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/results";
 
     std::string precomputed_dir = input_dir + "/results";
     std::string result_dir      = input_dir + "/results_" + currentDateTime();
