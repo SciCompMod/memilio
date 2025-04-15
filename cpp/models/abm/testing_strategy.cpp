@@ -43,26 +43,6 @@ bool TestingCriteria::operator==(const TestingCriteria& other) const
     return m_ages == other.m_ages && m_infection_states == other.m_infection_states;
 }
 
-void TestingCriteria::add_age_group(const AgeGroup age_group)
-{
-    m_ages.set(static_cast<size_t>(age_group), true);
-}
-
-void TestingCriteria::remove_age_group(const AgeGroup age_group)
-{
-    m_ages.set(static_cast<size_t>(age_group), false);
-}
-
-void TestingCriteria::add_infection_state(const InfectionState infection_state)
-{
-    m_infection_states.set(static_cast<size_t>(infection_state), true);
-}
-
-void TestingCriteria::remove_infection_state(const InfectionState infection_state)
-{
-    m_infection_states.set(static_cast<size_t>(infection_state), false);
-}
-
 bool TestingCriteria::evaluate(const Person& p, TimePoint t) const
 {
     // An empty vector of ages or none bitset of #InfectionStates% means that no condition on the corresponding property is set.
@@ -91,23 +71,18 @@ bool TestingScheme::operator==(const TestingScheme& other) const
     //To be adjusted and also TestType should be static.
 }
 
-bool TestingScheme::is_active() const
+bool TestingScheme::is_active(TimePoint t) const
 {
-    return m_is_active;
+    return (m_start_date <= t && t < m_end_date);
 }
 
-void TestingScheme::update_activity_status(TimePoint t)
-{
-    m_is_active = (m_start_date <= t && t <= m_end_date);
-}
-
-bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
+void TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
     auto test_result = person.get_test_result(m_test_parameters.type);
     // If the agent has a test result valid until now, use the result directly
     if ((test_result.time_of_testing > TimePoint(std::numeric_limits<int>::min())) &&
         (test_result.time_of_testing + m_validity_period >= t)) {
-        return !test_result.result;
+            return
     }
     // Otherwise, the time_of_testing in the past (i.e. the agent has already performed it).
     if (m_testing_criteria.evaluate(person, t - m_test_parameters.required_time)) {
@@ -115,10 +90,8 @@ bool TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& perso
         if (random < m_probability) {
             bool result = person.get_tested(rng, t - m_test_parameters.required_time, m_test_parameters);
             person.add_test_result(t, m_test_parameters.type, result);
-            return !result;
         }
     }
-    return true;
 }
 
 TestingStrategy::TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_map)
@@ -146,67 +119,16 @@ void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const Loc
     }
 }
 
-void TestingStrategy::remove_testing_scheme(const LocationType& loc_type, const LocationId& loc_id,
-                                            const TestingScheme& scheme)
-{
-    auto iter_schemes =
-        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&](const auto& p) {
-            return p.type == loc_type && p.id == loc_id;
-        });
-    if (iter_schemes != m_location_to_schemes_map.end()) {
-        //remove the scheme from the list
-        auto& schemes_vector = iter_schemes->schemes;
-        auto last            = std::remove(schemes_vector.begin(), schemes_vector.end(), scheme);
-        schemes_vector.erase(last, schemes_vector.end());
-        //delete the list of schemes for this location if no schemes left
-        if (schemes_vector.empty()) {
-            m_location_to_schemes_map.erase(iter_schemes);
-        }
-    }
-}
-
-void TestingStrategy::update_activity_status(TimePoint t)
-{
-    for (auto& [_type, _id, testing_schemes] : m_location_to_schemes_map) {
-        for (auto& scheme : testing_schemes) {
-            scheme.update_activity_status(t);
-        }
-    }
-}
-
-bool TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location,
+void TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location,
                                    TimePoint t)
 {
-    // A Person is always allowed to go home and this is never called if a person is not discharged from a hospital or ICU.
-    if (location.get_type() == mio::abm::LocationType::Home) {
-        return true;
+    if (m_testing_schemes_per_location.at(location.get_id().get()).empty()) {
+        return;
     }
 
-    // If the Person does not comply to Testing where there is a testing scheme at the target location, it is not allowed to enter.
-    if (!person.is_compliant(rng, InterventionType::Testing)) {
-        return false;
+    for (auto&& scheme : m_testing_schemes_per_location.at(location.get_id().get())) {
+        scheme.run_scheme(rng, person, t)
     }
-
-    // Lookup schemes for this specific location as well as the location type
-    // Lookup in std::vector instead of std::map should be much faster unless for large numbers of schemes
-    for (auto key : {std::make_pair(location.get_type(), location.get_id()),
-                     std::make_pair(location.get_type(), LocationId::invalid_id())}) {
-        auto iter_schemes =
-            std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&](const auto& p) {
-                return p.type == key.first && p.id == key.second;
-            });
-        if (iter_schemes != m_location_to_schemes_map.end()) {
-            // Apply all testing schemes that are found
-            auto& schemes = iter_schemes->schemes;
-            // Whether the Person is allowed to enter or not depends on the test result(s).
-            if (!std::all_of(schemes.begin(), schemes.end(), [&rng, &person, t](TestingScheme& ts) {
-                    return !ts.is_active() || ts.run_scheme(rng, person, t);
-                })) {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 } // namespace abm

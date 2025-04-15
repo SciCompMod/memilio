@@ -63,31 +63,6 @@ public:
     bool operator==(const TestingCriteria& other) const;
 
     /**
-     * @brief Add an AgeGroup to the set of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] age_group AgeGroup to be added.
-     */
-    void add_age_group(const AgeGroup age_group);
-
-    /**
-     * @brief Remove an AgeGroup from the set of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] age_group AgeGroup to be removed.
-     */
-    void remove_age_group(const AgeGroup age_group);
-
-    /**
-     * @brief Add an #InfectionState to the set of #InfectionState%s that are either allowed or required to be tested.
-     * @param[in] infection_state #InfectionState to be added.
-     */
-    void add_infection_state(const InfectionState infection_state);
-
-    /**
-     * @brief Remove an #InfectionState from the set of #InfectionState%s that are either allowed or required to be
-     * tested.
-     * @param[in] infection_state #InfectionState to be removed.
-     */
-    void remove_infection_state(const InfectionState infection_state);
-
-    /**
      * @brief Check if a Person and a Location meet all the required properties to get tested.
      * @param[in] p Person to be checked.
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
@@ -133,22 +108,34 @@ public:
      * @brief Gets the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
-    bool is_active() const;
+    bool is_active(TimePoint t) const;
 
     /**
-     * @brief Checks if the scheme is active at a given time and updates activity status.
-     * @param[in] t TimePoint to be updated at.
+     * @brief Gets the start date of the scheme.
+     * @return The start date of the scheme.
      */
-    void update_activity_status(TimePoint t);
+    mio::abm::TimePoint get_start_date() const
+    {
+        return m_start_date;
+    }
+
+    /**
+     * @brief Gets the end date of the scheme.
+     * @return The end date of the scheme.
+     */
+    mio::abm::TimePoint get_end_date() const
+    {
+        return m_end_date;
+    }
+
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
-     * @return If the person is allowed to enter the Location by the scheme.
      */
-    bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
+    void run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -160,7 +147,6 @@ public:
             .add("end_date", m_end_date)
             .add("test_params", m_test_parameters)
             .add("probability", m_probability)
-            .add("is_active", m_is_active);
     }
 
 private:
@@ -173,7 +159,6 @@ private:
     TimePoint m_end_date; ///< Ending date of the scheme.
     TestParameters m_test_parameters; ///< Parameters of the test.
     ScalarType m_probability; ///< Probability of performing the test.
-    bool m_is_active = false; ///< Whether the scheme is currently active.
 };
 
 /**
@@ -226,25 +211,6 @@ public:
     }
 
     /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
-     * @param[in] loc_id LocationId key for TestingScheme to be remove.
-     * @param[in] scheme TestingScheme to be removed.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const LocationId& loc_id, const TestingScheme& scheme);
-
-    /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
-     * @param[in] scheme TestingScheme to be removed.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
-    {
-        remove_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
-    }
-
-    /**
      * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
      * changes the activity status for each TestingScheme accordingly.
      * @param t TimePoint to check the activity status of each TestingScheme.
@@ -257,9 +223,8 @@ public:
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
-     * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+    void run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -269,6 +234,7 @@ public:
 
 private:
     std::vector<LocalStrategy> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
+    std::vector<mio::abm::TimePoint> m_testing_scheme_scheduler;
 };
 
 } // namespace abm
