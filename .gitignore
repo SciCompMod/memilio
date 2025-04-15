@@ -279,3 +279,6 @@ docs/html
 docs/xml
 
 # End of https://www.gitignore.io/api/c++,node,python
+cpp/examples/results/*
+cpp/examples/panvXabm/*
+*.json

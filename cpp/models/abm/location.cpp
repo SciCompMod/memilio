@@ -105,8 +105,12 @@ ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVar
 ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
                                               const Parameters& global_params) const
 {
-    return m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
-           global_params.get<AerosolTransmissionRates>()[{virus}];
+    auto rate=m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
+    global_params.get<AerosolTransmissionRates>()[{virus}];
+    if (rate>0) {
+        std::cout << "Warning: Airborne transmission rate is larger than 0. This should not happen." << std::endl;
+    }
+    return rate;
 }
 
 void Location::interact_micro(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,

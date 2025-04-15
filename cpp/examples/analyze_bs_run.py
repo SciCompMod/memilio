@@ -47,6 +47,9 @@ def plot_infections_loc_types_avarage(path):
 
     time = p50_bs['Time'][()]
 
+   
+
+
     plot_infection_per_location_type_mean(
         time, total_50, total_25, total_75)
 
@@ -75,6 +78,10 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
         np_y50 = gaussian_filter1d(np_y50, sigma=1, mode='nearest')
         
         plt.plot(x[0::24], np_y50, color=ac_color)
+    
+    # We also print which percentage of the population was infected total, for the 50 percent interval
+    # we need to sum up just the last timepoint
+    # and divide it by the populat
 
     plt.legend(legend_plot)
 
@@ -86,7 +93,13 @@ def plot_infection_per_location_type_mean(x, y50, y25, y75):
     plt.gca().set_xticks(x[::150])
     plt.gca().set_xticklabels(xx[::150])
     plt.gcf().autofmt_xdate()
-
+    # these are matplotlib.patch.Patch properties
+    # place a text box in upper left in axes coords
+    ax = plt.gca()
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+            verticalalignment='top', bbox=props)
+    plt.title('Infection location types')
+    plt.gca().set_ylim(bottom=0)
     plt.xlabel('Date')
     plt.ylabel('Number of individuals')
     plt.show()
@@ -110,8 +123,8 @@ def plot_infection_states_results(path):
 
     time = p50_bs['Time'][()]
 
-    plot_infection_states_individual(
-        time, p50_bs, p25_bs, p75_bs)
+    # plot_infection_states_individual(
+    #     time, p50_bs, p25_bs, p75_bs)
     plot_infection_states(time, total_50, total_25, total_75)
 
 def plot_infection_states(x, y50, y25, y75, y_real=None):
@@ -134,6 +147,28 @@ def plot_infection_states(x, y50, y25, y75, y_real=None):
                          alpha=0.5, color=color_plot[i])
         plt.fill_between(x, y50[:, i], y75[:, i],
                          alpha=0.5, color=color_plot[i])
+        
+    # We also print which percentage of the population was infected total, for the 50 percent interval
+    # we need to sum up just the last timepoint
+
+    population = 1000
+    # we need to sum up just the last timepoint
+    total_infected = y50[-1, 1] + y50[-1, 2] + y50[-1, 3] + \
+        y50[-1, 4] + y50[-1, 5] + y50[-1, 7]
+    # and divide it by the population
+    total_infected = total_infected / population * 100
+    # and print it
+    textstr = '\n'.join((
+        r'$\mathrm{Total\ infected\ population}=%.2f$' % (total_infected, )
+    ))
+    # these are matplotlib.patch.Patch properties
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    # place a text box in upper left in axes coords
+    ax = plt.gca()
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14,
+            verticalalignment='top', bbox=props)
+    
+        
 
     # currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
     start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
@@ -272,27 +307,18 @@ def plot_dead(path):
     age_group_access = ['Group1', 'Group2', 'Group3',
                         'Group4', 'Group5', 'Group6', 'Total']
 
-    # we need the real data json file cases_all_county_age
-    df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_age_ma1.json")
 
-    # we just need the columns cases and date
-    # we need to offset the dates by 19 day
-    df_abb['Date'] = df_abb['Date'] + pd.DateOffset(days=18)
-    # we need just the dates bewteen 2021-03-01 and 2021-06-01
-    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
-                    (df_abb['Date'] <= '2021-06-01')]
-    # we just need the cases with id 3101
-    df_abb = df_abb[df_abb['ID_County'] == 3101]
-    # df_abb['Deaths'] = np.round(df_abb[['Deaths']].to_numpy())
+    time = p50_bs['Time'][()]
+    time = time[::24]
+    time = time[0:90]
+
 
     # we need the amount of dead persons for each age group: These are A00-A04, A05-A14, A15-A34, A35-A59, A60-A79, A80+
     age_groups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
     age_grous_string = ['Age 0-4', 'Age 5-14', 'Age 15-34', 'Age 35-59', 'Age 60-79', 'Age 80+']
     # we need to sum up the amount of dead persons for each age group
 
-    # we want the deaths for the age groups
-    df_abb = df_abb[['Date', 'Deaths', 'Age_RKI']]
+
     # we want a plot with 2 rows. Second row has a plot with each age group and the simulated and real dead persons
     # First row has the cumulative dead persons
     fig = plt.figure('Deaths')
@@ -302,21 +328,18 @@ def plot_dead(path):
 
     # we need the cumulative dead persons
     ax = fig.add_subplot(gs[0, :])
-    df_total_dead = df_abb.groupby('Date').sum()[0:90]
-    y_real = df_total_dead['Deaths'].to_numpy()
     # we need to substract the first value from the rest
-    y_real = y_real - y_real[0]
 
     y_sim = p50_bs['Total'][()][:, 7][::24][0:90]
     y_sim = y_sim - y_sim[0]
 
-    y_sim25 = p25_bs['Total'][()][:, 7][::24][0:90]
+    y_sim25 = p25_bs['Total'][()][:,7][::24][0:90]
     y_sim25 = y_sim25 - y_sim25[0]
 
-    y_sim75 = p75_bs['Total'][()][:, 7][::24][0:90]
+    y_sim75 = p75_bs['Total'][()][:,7][::24][0:90]
     y_sim75 = y_sim75 - y_sim75[0]
 
-    y_sim05 = p05_bs['Total'][()][:, 7][::24][0:90]
+    y_sim05 = p05_bs['Total'][()][:,7][::24][0:90]
     y_sim05 = y_sim05 - y_sim05[0]
     
     y_sim95 = p95_bs['Total'][()][:, 7][::24][0:90]
@@ -324,16 +347,12 @@ def plot_dead(path):
 
 
 
-    # we calculate the RMSE
-    rmse_dead = np.sqrt(((y_real- y_sim)**2).mean())
+   
     # we need to plot the cumulative dead persons from the real world and from the simulation
    
-    ax.plot(df_total_dead.index, y_sim, color='tab:blue',label='Simulated deaths')
-    ax.plot(df_total_dead.index, y_real, 'v',color='tab:red', linewidth=4, label='Extrapolated deaths from reported infection case data')
-    ax.fill_between(df_total_dead.index, y_sim75, y_sim25,
-                            alpha=0.5, color='tab:blue', label='50% Confidence interval')
-    ax.fill_between(df_total_dead.index,y_sim95, y_sim05,
-                            alpha=0.25, color='tab:blue', label='90% Confidence interval')
+    ax.plot(time, y_sim, color='tab:blue',label='Simulated deaths')
+    ax.fill_between(time, y_sim75, y_sim25, alpha=0.5, color='tab:blue', label='50% Confidence interval')
+    ax.fill_between(time, y_sim95, y_sim05, alpha=0.25, color='tab:blue', label='90% Confidence interval')
     # ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_dead))), horizontalalignment='center',
     #         verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
     ax.set_label('Number of individuals')
@@ -341,25 +360,25 @@ def plot_dead(path):
     ax.set_ylabel('Number of individuals', fontsize=fontsize-8)
     ax.legend(fontsize=fontsize-8)
 
-    # now for each age group
-    for i, age_group in zip(range(6), age_group_access):
-        ax = fig.add_subplot(gs[1, i])
-        # we need the amount of dead persons for each age group 
-        df_abb_age_group = df_abb[df_abb['Age_RKI'] == age_groups[i]][0:90]
-        y_real =  np.round(df_abb_age_group['Deaths'].to_numpy())
-        # we need to plot the dead persons from the real world and from the simulation
-        ax.plot(df_abb_age_group['Date'], y_real-y_real[0], color='tab:red')
-        ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90]-p50_bs[age_group_access[i]][()][:, 7][::24][0], color='tab:blue')
-        ax.fill_between(df_abb_age_group['Date'], p75_bs[age_group_access[i]][()][:, 7][::24][0:90]-p75_bs[age_group_access[i]][()][:, 7][::24][0], p25_bs[age_group_access[i]][()][:, 7][::24][0:90]-p25_bs[age_group_access[i]][()][:, 7][::24][0],
-                            alpha=0.5, color='tab:blue')
-        ax.set_title('Deaths, '+age_grous_string[i])
-        ax.set_ybound(lower=0)
-        ax.set_xticks(df_abb_age_group['Date'][::50])
-        ax.tick_params(axis='both', which='major', labelsize=fontsize-10)
-        ax.tick_params(axis='both', which='minor', labelsize=fontsize-10)
-        if i == 0:
-            ax.set_ylabel('Number of individuals',fontsize=fontsize-8)
-            ax.set_ybound(upper=1)
+    # # now for each age group
+    # for i, age_group in zip(range(6), age_group_access):
+    #     ax = fig.add_subplot(gs[1, i])
+    #     # we need the amount of dead persons for each age group 
+    #     df_abb_age_group = df_abb[df_abb['Age_RKI'] == age_groups[i]][0:90]
+    #     y_real =  np.round(df_abb_age_group['Deaths'].to_numpy())
+    #     # we need to plot the dead persons from the real world and from the simulation
+    #     ax.plot(df_abb_age_group['Date'], y_real-y_real[0], color='tab:red')
+    #     ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90]-p50_bs[age_group_access[i]][()][:, 7][::24][0], color='tab:blue')
+    #     ax.fill_between(df_abb_age_group['Date'], p75_bs[age_group_access[i]][()][:, 7][::24][0:90]-p75_bs[age_group_access[i]][()][:, 7][::24][0], p25_bs[age_group_access[i]][()][:, 7][::24][0:90]-p25_bs[age_group_access[i]][()][:, 7][::24][0],
+    #                         alpha=0.5, color='tab:blue')
+    #     ax.set_title('Deaths, '+age_grous_string[i])
+    #     ax.set_ybound(lower=0)
+    #     ax.set_xticks(df_abb_age_group['Date'][::50])
+    #     ax.tick_params(axis='both', which='major', labelsize=fontsize-10)
+    #     ax.tick_params(axis='both', which='minor', labelsize=fontsize-10)
+    #     if i == 0:
+    #         ax.set_ylabel('Number of individuals',fontsize=fontsize-8)
+    #         ax.set_ybound(upper=1)
     
     plt.show()
    
@@ -1113,8 +1132,8 @@ if __name__ == "__main__":
     else:
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
     # plot_icu(path)
     # plot_dead(path)
     # plot_cumulative_detected_infections(path)
