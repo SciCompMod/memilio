@@ -26,9 +26,10 @@ import pandas as pd
 import tensorflow as tf
 
 from memilio.simulation.osecir import InfectionState
-import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures 
+import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures
 
-def initialize_model(parameters): 
+
+def initialize_model(parameters):
     """ Initialize model from given list of parameters
 
     :param parameters: tuple of parameters describing the model architecture, it should be of the form 
@@ -38,28 +39,29 @@ def initialize_model(parameters):
     label_width, num_outputs, layer, neuron_number, activation, modelname = parameters
     if modelname == "Dense":
         return architectures.mlp_multi_input_multi_output(
-            label_width = label_width, 
-            num_outputs = num_outputs,
-            num_hidden_layers = layer, 
-            num_neurons_per_layer = neuron_number,
-            activation = activation
+            label_width=label_width,
+            num_outputs=num_outputs,
+            num_hidden_layers=layer,
+            num_neurons_per_layer=neuron_number,
+            activation=activation
         )
     elif modelname == "LSTM":
         return architectures.lstm_multi_input_multi_output(
-            label_width = label_width, 
-            num_outputs = num_outputs,
-            num_hidden_layers = layer, 
-            num_neurons_per_layer = neuron_number,
-            activation = activation
+            label_width=label_width,
+            num_outputs=num_outputs,
+            num_hidden_layers=layer,
+            num_neurons_per_layer=neuron_number,
+            activation=activation
         )
     elif modelname == "CNN":
         return architectures.cnn_multi_input_multi_output(
-            label_width = label_width, 
-            num_outputs = num_outputs,
-            num_hidden_layers = layer, 
-            num_neurons_per_layer = neuron_number,
-            activation = activation
+            label_width=label_width,
+            num_outputs=num_outputs,
+            num_hidden_layers=layer,
+            num_neurons_per_layer=neuron_number,
+            activation=activation
         )
+
 
 def network_fit(model, inputs, labels, training_parameter, plot=True):
     """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
@@ -155,6 +157,7 @@ def network_fit1(path, model, max_epochs=30, early_stop=500, plot=True):
         print(df)
     return history
 
+
 def split_data(inputs, labels, split_train=0.7,
                split_valid=0.2, split_test=0.1):
     """ Split data set in training, validation and testing data sets.
@@ -195,6 +198,7 @@ def split_data(inputs, labels, split_train=0.7,
     }
 
     return data
+
 
 def plot_compartment_prediction_model(
         inputs, labels, model=None, plot_compartment='InfectedSymptoms',
@@ -254,6 +258,7 @@ def plot_compartment_prediction_model(
         os.mkdir("plots")
     plt.savefig('plots/evaluation_secir_simple_' + plot_compartment + '.png')
 
+
 def plot_losses(history):
     """ Plots the losses of the model training.
 
@@ -291,8 +296,8 @@ def get_test_statistic(test_inputs, test_labels, model):
     relative_err_transformed = relative_err.transpose(2, 0, 1).reshape(8, -1)
     relative_err_means_percentage = relative_err_transformed.mean(axis=1) * 100
     compartments = [str(compartment).split('.')[1]
-               for compartment in InfectionState.values()]
-    
+                    for compartment in InfectionState.values()]
+
     # Excluding combined compartments
     compartments.pop(5)
     compartments.pop(3)
@@ -305,14 +310,15 @@ def get_test_statistic(test_inputs, test_labels, model):
 
 
 if __name__ == "__main__":
-    label_width = 30 
+    label_width = 30
     num_outputs = 8
     # General grid search parameters for the training process:
     early_stop = [100]
     max_epochs = [3]
-    losses=[tf.keras.losses.MeanAbsolutePercentageError()]
+    losses = [tf.keras.losses.MeanAbsolutePercentageError()]
     optimizers = ['AdamW']
-    metrics=[[tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]]
+    metrics = [[tf.keras.metrics.MeanAbsoluteError(),
+                tf.keras.metrics.MeanAbsolutePercentageError()]]
 
     # Define grid search parameters for the architecture
     hidden_layers = [3]
@@ -321,12 +327,12 @@ if __name__ == "__main__":
     models = ["LSTM"]
 
     # Collecting parameters
-    training_parameters = [(early, epochs, loss, optimizer, metric) 
-                           for early in early_stop for epochs in max_epochs for loss in losses 
+    training_parameters = [(early, epochs, loss, optimizer, metric)
+                           for early in early_stop for epochs in max_epochs for loss in losses
                            for optimizer in optimizers for metric in metrics]
 
     model_parameters = [(label_width, num_outputs, layer, neuron_number, activation, modelname)
-                        for layer in hidden_layers for neuron_number in neurons_in_hidden_layer 
+                        for layer in hidden_layers for neuron_number in neurons_in_hidden_layer
                         for activation in activation_function for modelname in models]
 
     # getting training data
@@ -344,5 +350,6 @@ if __name__ == "__main__":
     input_data = data['inputs']
     label_data = data['labels']
     model = initialize_model(model_parameters[0])
-    model_output = network_fit(model, input_data, label_data, training_parameters[0])
+    model_output = network_fit(
+        model, input_data, label_data, training_parameters[0])
     plot_compartment_prediction_model(input_data, label_data, model)
