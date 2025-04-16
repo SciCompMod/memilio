@@ -620,6 +620,85 @@ mio::IOResult<void> write_h5_v4(std::string filename,
                      mio::StatusCode::UnknownError, "V3: Loc ids data could not be written.");
     return mio::success();
 }
+
+mio::IOResult<void> write_h5_v5(std::string filename,
+                                mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                             LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history)
+{
+    // hdf5 file contains two datasets (no groups)
+    // 1st dataset: #agents x 2 matrix with entry (i,0) tp of transmission and entry (i,1) tp of recovery
+    // 2nd dataset: #agents x #tps with entry (i,t) LocationType at t.
+
+    // create hdf5 file
+    mio::H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
+    MEMILIO_H5_CHECK(file.id, mio::StatusCode::FileNotFound, filename);
+
+    // get agents ids
+    auto log          = history.get_log();
+    auto agent_ids    = std::get<3>(log)[0];
+    auto logPerPerson = std::get<2>(log);
+
+    //Create group for all data sets
+    mio::H5Group h5group{H5Gcreate(file.id, "data", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+    MEMILIO_H5_CHECK(h5group.id, mio::StatusCode::UnknownError, "H5Group \"data\" could not be created ");
+
+    const int num_agents = static_cast<int>(agent_ids.size());
+    // Dimension and matrix for 1st data set
+    hsize_t dims_d1[] = {static_cast<hsize_t>(num_agents), static_cast<hsize_t>(2)};
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> tsm_matrix(num_agents, 2);
+
+    const int num_timepoints = static_cast<int>(logPerPerson.size());
+    // Dimension and matrix for 2nd data set
+    hsize_t dims_d2[] = {static_cast<hsize_t>(num_agents), static_cast<hsize_t>(num_timepoints)};
+    Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> loc_matrix(num_agents, num_timepoints);
+    // Fill matrices
+    for (auto& id : agent_ids) {
+        // initialize time point transmission and recovery with Null
+        tsm_matrix(id.get(), 0)  = 100000;
+        tsm_matrix(id.get(), 1)  = 100000;
+        bool tp_transmission_set = false;
+        bool tp_recovery_set     = false;
+        for (int t = 0; t < num_timepoints; ++t) {
+            // set time point of transmission
+            if (!tp_transmission_set && time_since_transmission(std::get<3>(logPerPerson[t][id.get()])) > -1) {
+                if (t == 0) {
+                    tsm_matrix(id.get(), 0) = -time_since_transmission(std::get<3>(logPerPerson[t][id.get()]));
+                }
+                else {
+                    tsm_matrix(id.get(), 0) = t + time_since_transmission(std::get<3>(logPerPerson[t][id.get()]));
+                }
+                tp_transmission_set = true;
+            }
+            // set time point of recovery
+            if (tp_transmission_set && !tp_recovery_set &&
+                time_since_transmission(std::get<3>(logPerPerson[t][id.get()])) == -1) {
+                tsm_matrix(id.get(), 1) = t;
+                tp_recovery_set         = true;
+            }
+            loc_matrix(id.get(), t) = static_cast<int>(std::get<1>(logPerPerson[t][id.get()]));
+        }
+    }
+    // DataSpace for data set 1
+    mio::H5DataSpace dspace_d1{H5Screate_simple(2, dims_d1, NULL)};
+    MEMILIO_H5_CHECK(dspace_d1.id, mio::StatusCode::UnknownError, "V3: DataSpace 1 could not be created.");
+    // DataSpace for data set 2
+    mio::H5DataSpace dspace_d2{H5Screate_simple(2, dims_d2, NULL)};
+    MEMILIO_H5_CHECK(dspace_d2.id, mio::StatusCode::UnknownError, "V3: DataSpace 2 could not be created.");
+    // Add data set 1 to HDF5 file
+    mio::H5DataSet dset_t_r_tp{H5Dcreate(h5group.id, "transm_recovery_tp", H5T_NATIVE_DOUBLE, dspace_d1.id, H5P_DEFAULT,
+                                         H5P_DEFAULT, H5P_DEFAULT)};
+    MEMILIO_H5_CHECK(dset_t_r_tp.id, mio::StatusCode::UnknownError,
+                     "V3: Transmission and recovery tp dataSet could not be created.");
+    MEMILIO_H5_CHECK(H5Dwrite(dset_t_r_tp.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, tsm_matrix.data()),
+                     mio::StatusCode::UnknownError, "V3: Transmission and recovery tp data could not be written.");
+    // Add data set 2 to HDF5 file
+    mio::H5DataSet dset_loc_ids{
+        H5Dcreate(h5group.id, "loc_ids", H5T_NATIVE_INT, dspace_d2.id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
+    MEMILIO_H5_CHECK(dset_loc_ids.id, mio::StatusCode::UnknownError, "V3: Loc ids DataSet could not be created.");
+    MEMILIO_H5_CHECK(H5Dwrite(dset_loc_ids.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, loc_matrix.data()),
+                     mio::StatusCode::UnknownError, "V3: Loc ids data could not be written.");
+    return mio::success();
+}
 #endif
 
 void write_mapping_to_file(std::string filename, std::map<int, std::vector<std::string>>& mapping)
@@ -1395,6 +1474,20 @@ PYBIND11_MODULE(_simulation_abm, m)
         [](std::string filename, mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
                                               LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history) {
             auto res = write_h5_v4(filename, history);
+            if (res == mio::success()) {
+                return 0;
+            }
+            else {
+                return 1;
+            }
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "write_h5_v5",
+        [](std::string filename, mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
+                                              LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history) {
+            auto res = write_h5_v5(filename, history);
             if (res == mio::success()) {
                 return 0;
             }

@@ -594,7 +594,7 @@ def num_locations(model):
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
-    # set seed for fixed model initialization (locations and initial infection states)
+    # set seed for initial infection states
     np.random.seed(sim_num)
     # starting time point
     t0 = abm.TimePoint(0)
@@ -699,24 +699,33 @@ def run_abm_simulation(sim_num):
     # end_h5_v2 = time.time()
     # print(f'Time to write v2 output h5: {end_h5_v2 - start_h5_v2} seconds')
 
-    # write results to h5 file v3. The file has one group with two datasets:
-    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
-    # - LocationId at every time step for every agent (matrix of size #agents x #timepoints)
-    start_h5_v3 = time.time()
-    abm.write_h5_v3(os.path.join(
-        output_path, str(sim_num) + '_output_v3.h5'), history)
-    end_h5_v3 = time.time()
-    print(f'Time to write v3 output h5: {end_h5_v3 - start_h5_v3} seconds')
+    # # write results to h5 file v3. The file has one group with two datasets:
+    # # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
+    # # - LocationId at every time step for every agent (matrix of size #agents x #timepoints)
+    # start_h5_v3 = time.time()
+    # abm.write_h5_v3(os.path.join(
+    #     output_path, str(sim_num) + '_output_v3.h5'), history)
+    # end_h5_v3 = time.time()
+    # print(f'Time to write v3 output h5: {end_h5_v3 - start_h5_v3} seconds')
 
     # write results to h5 file v4. The file has one group with two datasets:
     # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
-    # - TanAreaId (int) at every time step for every agent (matrix of size #agents x #timepoints).
-    #   If the agent is at a location not in Munich and the id is 0.
+    # - TanAreaId (int > 0) at every time step for every agent (matrix of size #agents x #timepoints).
+    #   If the agent is at a location not in Munich the id is 0.
     start_h5_v4 = time.time()
     abm.write_h5_v4(os.path.join(
         output_path, str(sim_num) + '_output_v4.h5'), history)
     end_h5_v4 = time.time()
     print(f'Time to write v4 output h5: {end_h5_v4 - start_h5_v4} seconds')
+
+    # write results to h5 file v4. The file has one group with two datasets:
+    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
+    # - LocationType at every time step for every agent (matrix of size #agents x #timepoints).
+    start_h5_v5 = time.time()
+    abm.write_h5_v5(os.path.join(
+        output_path, str(sim_num) + '_output_v5.h5'), history)
+    end_h5_v5 = time.time()
+    print(f'Time to write v5 output h5: {end_h5_v5 - start_h5_v5} seconds')
 
     print('done')
 

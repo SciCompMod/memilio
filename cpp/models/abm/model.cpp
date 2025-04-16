@@ -415,36 +415,25 @@ void Model::check_close_locations(TimePoint t)
     // check whether location closure should be applied
     auto& closures = parameters.get<LocationClosures>();
     if (closures.size() > 0) {
-        log_info("here1");
         // check if closure needs to be applied
         if (std::get<0>(*closures.begin()) <= t) {
-            log_info("here2");
             //first remove old closure
             open_locations_of_type(std::get<1>(*closures.begin()));
-            log_info("here3");
             // Distribution used to draw whether location is closed
             auto& uniform_dist = UniformDistribution<double>::get_instance();
             double p;
-            log_info("Size of locations: {}", m_locations.size());
-            log_info("Closure type: {}", static_cast<int>(std::get<1>(*closures.begin())));
             //Apply new closure
             for (auto& loc : m_locations) {
                 if (std::get<1>(*closures.begin()) == loc.get_type()) {
-                    //log_info("here4");
                     p = uniform_dist(m_rng);
                     if (p < std::get<2>(*closures.begin())) {
                         // close location
                         loc.close_location();
                     }
-                    //log_info("here5");
                 }
             }
-            log_info("here6");
-            // log_info("Closure applied at day t = {} for location type {}.", t.days(),
-            //          static_cast<int>(std::get<1>(*it)));
             //Remove closure
             closures.erase(closures.begin());
-            log_info("here7");
         }
     }
 }
