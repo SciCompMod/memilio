@@ -26,7 +26,7 @@ setup(
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
-    install_requires=['libclang==17.0.0',
+    install_requires=['libclang==17.0.6',
                       'dataclasses', 'dataclasses_json', 'graphviz', 'importlib-resources>=1.1.0; python_version < \'3.9\''],
     extras_require={'dev': []},
     long_description='',
