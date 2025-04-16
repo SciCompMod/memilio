@@ -1,0 +1,4 @@
+variation_id	label	infected
+0	No airflow	12
+1	Airflow: Same side	5
+2	Airflow: Opposite side	0

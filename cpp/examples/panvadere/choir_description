@@ -1,0 +1,18 @@
+Choir rehearsal scenario based on superspreading event (https://pmc.ncbi.nlm.nih.gov/articles/PMC7537089/)
+
+- 60 susceptible agents, 1 infectious
+- measure: mask wearing
+- dose-response assumption: high-risk scenario is considered as: A susceptible person is standing less than 1.5m apart from an infectious person for at least 10 mins.
+    We measure the number of inhaled pathogens for this high-risk situation and set it as a threshold for an infection.
+
+According to the schedule stated by Miller et al. [71], the singers practiced in groups in two rooms, a large one and a smaller one:
+P1) All participants practiced in the large room for 45 min. Several seats between the singers remained empty.
+P2) The singers split into two groups of about equal size for 45 min. One group moved to the small room. The other group, including the index case, remained in the large room, occupying approximately half of the initially used space.
+P3) The split session was followed by a break of 10 min, where the choir members mingled. Some, including the infectious person, used the restroom.
+P4) The final session with all the singers in the large room took another 50 min. The seating chart was the same as during the initial session P1).
+
+results:
+- without mask-wearing: 15/60 susceptible agents get infected
+- with mask-wearing: 0/60 susceptible agents get infected
+
+-> results in infections.txt
