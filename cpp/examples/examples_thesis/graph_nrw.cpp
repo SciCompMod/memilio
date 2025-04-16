@@ -37,10 +37,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::oseir::P
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+                              (data_dir / "Germany" / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
         BOOST_OUTCOME_TRY(auto&& minimum,
                           mio::read_mobility_plain(
-                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+                              (data_dir / "Germany" / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
@@ -91,7 +91,7 @@ set_population_data(const fs::path& data_dir, mio::oseir::Parameters<double>& pa
 
     BOOST_OUTCOME_TRY(const auto&& population_data,
                       mio::read_population_data(
-                          (data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true));
+                          (data_dir / "Germany" / "pydata" / "county_current_population_nrw.json").string(), true));
 
     std::vector<std::vector<double>> vnum_population(node_ids.size(),
                                                      std::vector<double>((size_t)params.get_num_groups(), 0.0));
@@ -144,7 +144,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
 
     BOOST_OUTCOME_TRY(
         auto&& node_ids,
-        mio::get_node_ids((data_dir / "pydata" / "Germany" / "county_current_population_nrw.json").string(), true,
+        mio::get_node_ids((data_dir /  "Germany" / "pydata" / "county_current_population_nrw.json").string(), true,
                           true));
 
     BOOST_OUTCOME_TRY(auto&& nodes, set_population_data(data_dir, params, node_ids));
@@ -154,7 +154,7 @@ mio::IOResult<void> run(const fs::path& data_dir, double t0, double tmax, double
     printf("Setting population from data successful.\n");
 
     BOOST_OUTCOME_TRY(auto&& mobility_data_commuter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_mobility_nrw.txt").string()));
+                      mio::read_mobility_plain((data_dir / "Germany" / "mobility" / "commuter_mobility_2022_nrw.txt").string()));
     if (mobility_data_commuter.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data_commuter.cols() != Eigen::Index(params_graph.nodes().size())) {
         return mio::failure(mio::StatusCode::InvalidValue,
