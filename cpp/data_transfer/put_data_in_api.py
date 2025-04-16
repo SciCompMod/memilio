@@ -52,7 +52,7 @@ def put_scenario(scenario_id, zip_file, url, delay):
     put_response = requests.put(url + "scenarios/" + scenario_id, headers=header,
                                 files={"file": (zip_file, fileobj)})
     print(
-        f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}')
+        f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
 
     print(f'Waiting for {delay} seconds before uploading next scenario')
     time.sleep(delay)
@@ -67,12 +67,15 @@ def put_scenario(scenario_id, zip_file, url, delay):
             f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
 
 
-def put_scenarios(path_to_scenario_results, url, delay=420):
+def put_scenarios(path_to_scenario_results, url, delay=20):
     """ Puts scenarios into database.
 
     @param[in] path_to_scenario_results Directory from where we can access simulation results and where the zips for 
-        uploading will be stored. The casedata results lie in the parent folder of this directory; the scenario results 
-        lie in a subfolder of this folder specified by the scenario id and name.
+        uploading will be stored. We assume that the casedata results lie in the parent folder of this directory, i.e. 
+        the files Results.h5 and Result_sum.h5 lie in the parent directory. For each scenario, we expect the results 
+        to be stored in a subfolder of the directory 'path_to_scenario_results' specified by the scenario id and name. 
+        In this folder we have subfolders for the percentiles and for each percentile, we expect the files Results.h5 
+        and Result_sum.h5. 
     @param[in] url URL of API.
     """
     print(f'Uploading scenarios to {url} from {path_to_scenario_results}')
