@@ -7,6 +7,9 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
+#include "memilio/config_internal.h"
+
+#ifdef MEMILIO_HAS_SBML
 #include <sbml/SBMLTypes.h>
 
 /*
@@ -741,7 +744,7 @@ bool create_example_cpp(Model* model, const char* filename)
 
     std::ofstream example;
     example.open(lowercase_name + ".cpp", std::ios::out);
-    example << "#include \"memilio/compartments/simulation.h\"\n#include \"memilio/config.h\"\n#include "be
+    example << "#include \"memilio/compartments/simulation.h\"\n#include \"memilio/config.h\"\n#include "
                "\"memilio/math/euler.h\"\n#include \"memilio/math/integrator.h\"\n#include "
                "\"memilio/utils/logging.h\"\n#include <memory>\n"
             << std::endl;
@@ -915,3 +918,4 @@ int main(int argc, char* argv[])
     return format_files(filename);
 
 }
+#endif // MEMILIO_HAS_SBML
