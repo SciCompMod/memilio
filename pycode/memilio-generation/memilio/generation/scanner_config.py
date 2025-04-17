@@ -51,13 +51,10 @@ class ScannerConfig:
 
 
     """
-    source_file: str
-    namespace: str
-    python_module_name: str
+
     python_generation_module_path: str
     skbuild_path_to_database: str
-    target_folder: str
-    optional: dict = field(default_factory=dict)
+    libclang_library_path: str
 
     def __post_init__(self: Self) -> None:
         """
