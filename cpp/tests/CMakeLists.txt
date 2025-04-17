@@ -84,6 +84,7 @@ set(TESTSOURCES
     sanitizers.cpp
     temp_file_register.h
     test_graph_abm.cpp
+    test_temporal_hybrid_model.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)

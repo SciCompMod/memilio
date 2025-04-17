@@ -1,7 +1,7 @@
-/*
-* Copyright (C) 2020-2025 MEmilio
+/* 
+* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
-* Authors: Julia Bicker
+* Authors: Julia Bicker, René Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,9 +18,13 @@
 * limitations under the License.
 */
 
-#include "graph_abm/graph_abmodel.h"
+#include "hybrid/temporal_hybrid_model.h"
 
 namespace mio
 {
+namespace hybrid
+{
+
+} //namespace hybrid
 
 } //namespace mio

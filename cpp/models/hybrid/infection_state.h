@@ -1,4 +1,4 @@
-/*
+/* 
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker
@@ -17,10 +17,33 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-#include "graph_abm/graph_abmodel.h"
+#ifndef MIO_HYBRID_INFECTIONSTATE_H
+#define MIO_HYBRID_INFECTIONSTATE_H
 
 namespace mio
 {
 
-} //namespace mio
+namespace hybrid
+{
+
+/**
+ * @brief The InfectionState enum describes the possible symptomatic and non-symptomatic states of persons.
+ */
+enum class InfectionState
+{
+    Susceptible = 0,
+    Exposed,
+    InfectedNoSymptoms,
+    InfectedSymptoms,
+    InfectedSevere,
+    InfectedCritical,
+    Recovered,
+    Dead,
+
+    Count
+};
+
+} // namespace hybrid
+} // namespace mio
+
+#endif //MIO_HYBRID_INFECTIONSTATE_H

@@ -1,4 +1,4 @@
-/*
+/* 
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker
@@ -18,9 +18,30 @@
 * limitations under the License.
 */
 
-#include "graph_abm/graph_abmodel.h"
+#ifndef MIO_HYBRID_CONVERSION_FUNCTIONS_H
+#define MIO_HYBRID_CONVERSION_FUNCTIONS_H
+
+#include "hybrid/temporal_hybrid_model.h"
+#include "hybrid/infection_state.h"
+#include "d_abm/simulation.h"
+#include "d_abm/single_well.h"
+#include "smm/simulation.h"
 
 namespace mio
 {
+namespace hybrid
+{
+
+template <>
+void convert_model(const dabm::Simulation<SingleWell<InfectionState>>& current_model,
+                   smm::Simulation<1, InfectionState>& target_model);
+
+template <>
+void convert_model(const smm::Simulation<1, InfectionState>& current_model,
+                   dabm::Simulation<SingleWell<InfectionState>>& target_model);
+
+} //namespace hybrid
 
 } //namespace mio
+
+#endif //MIO_HYBRID_CONVERSION_FUNCTIONS_H
