@@ -11,11 +11,11 @@ Building the converter
 To build the executable, the following steps are necessary:
 
 1. Install ``libsbml``
-2. Create the cmake files. In our tests, libsbml was never found by default. Therefore, you have to hint cmake to the location of the ``sbml-config.cmake``, e.g. by adding the flag ``-Dsbml_DIR=<path-to-libsbml>``.
+2. Create the Cmake files. In our tests, libsbml was never found by default. Therefore, you have to hint cmake to the location of the ``sbml-config.cmake``, e.g. by adding the flag ``-Dsbml_DIR=<path-to-libsbml>``.
 3. Build the project with the general build command.
 4. The output files will only be nicely formatted, if `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ is installed. It will work also without it, but installing it is recommended.
 
-For more information on the build process, please refere to :doc:`../getting_started`.
+For more information on the build process, please refer to :doc:`../getting_started`.
 
 
 Usage
@@ -55,7 +55,7 @@ The following features are the most important not supported features:
     - Usage of multiple SBML-compartments
     - Rules (unless they are RateRules)
 
-As in an SBML file all species have to be given seperately, it is unfortunately also not possible to automatically use the Population in MEmeilio to stratify the population into different compartments.
+As in an SBML file all species have to be given seperately, it is unfortunately also not possible to automatically use the Population in MEmilio to stratify the population into different compartments.
 
 In general: Please check your models after the conversion to ensure that everything is working as expected.
 

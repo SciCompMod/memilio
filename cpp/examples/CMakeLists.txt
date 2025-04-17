@@ -138,7 +138,8 @@ target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ER
 
 if(MEMILIO_HAS_SBML)
     add_executable(sbml2memilio sbml2memilio.cpp)
-    target_link_libraries(sbml2memilio PRIVATE sbml memilio) #ersetzen um libsbml zu finden
+    target_link_libraries(sbml2memilio PRIVATE sbml memilio)
+
     target_compile_options(sbml2memilio PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
