@@ -19,7 +19,8 @@ Before running the example script, configure the following settings:
 
 
 Example Configuration:
-If you want to use the ode_secirvvs model the config should be like this -> `conf.source_file = os.path.abspath(os.path.join(file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp"))`
+If you want to use the ode_secirvvs model the config should be like this -> `conf.source_file = os.path.abspath(os.path.join(file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp"))` 
+This descibes the filepath to your model.cpp outgoing from the tools folder.
 
 To use a different model, replace ode_secirvvs with the desired model's name in the file path.
 
