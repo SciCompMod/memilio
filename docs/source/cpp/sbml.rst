@@ -10,7 +10,7 @@ Building the converter
 
 To build the executable, the following steps are necessary:
 
-1. Install ``libsbml``
+1. Install ``libsbml``. The latest releases are available on `GitHub <https://github.com/sbmlteam/libsbml/releases>`_, advice can be found in the `documentation <https://sbml.org/software/libsbml/libsbml-docs/api/c/>`_.
 2. Create the Cmake files. In our tests, libsbml was never found by default. Therefore, you have to hint cmake to the location of the ``sbml-config.cmake``, e.g. by adding the flag ``-Dsbml_DIR=<path-to-libsbml>``.
 3. Build the project with the general build command.
 4. The output files will only be nicely formatted, if `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ is installed. It will work also without it, but installing it is recommended.
