@@ -21,18 +21,19 @@
 :strong:`ast.py`
 Create the ast and assign ids. Get ids and nodes. 
 """
+from typing_extensions import Self
 import subprocess
 import tempfile
 import logging
-from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
+from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase, Config
 from typing import TYPE_CHECKING
 from memilio.generation import utility
+
+Config.set_library_file("/usr/lib/llvm-17/lib/libclang.so")
 
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
-
-from typing_extensions import Self
 
 
 class AST:
