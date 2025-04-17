@@ -149,7 +149,7 @@ using Params = mio::ParameterSet<A, B, C, D>;
 // using BadParams = mio::ParameterSet<A, CollisionA>;
 TEST(TestCLI, test_option_verifier)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    GTEST_FLAG_SET(death_test_style, "fast");
 
     EXPECT_DEBUG_DEATH(mio::details::cli::verify_options(mio::ParameterSet<A, NameCollision>()),
                        ".*Options may not have duplicate fields\\. \\(field required\\)");
