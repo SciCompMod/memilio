@@ -100,23 +100,19 @@ TEST_F(TestMathTimeSeriesFunctor, linearInterpolationRandomized)
 
 TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    GTEST_FLAG_SET(death_test_style, "fast");
     // check that the functor does not accept unhandled types.
 
     const auto unhandled_type = (mio::TimeSeriesFunctorType)-1;
 
-// check constructor assert
-#ifndef NDEBUG
-    EXPECT_DEATH(mio::TimeSeriesFunctor<double>(unhandled_type, mio::TimeSeries<double>(0)),
-                 "Unhandled TimeSeriesFunctorType!");
-#endif
+    // check constructor assert
+    EXPECT_DEBUG_DEATH(mio::TimeSeriesFunctor<double>(unhandled_type, mio::TimeSeries<double>(0)),
+                       "Unhandled TimeSeriesFunctorType!");
 
     // abuse default_serialize to set an invalid type
     mio::TimeSeriesFunctor<double> functor;
     std::get<0>(functor.default_serialize().named_refs).value = unhandled_type;
 
-// check assert in functor call
-#ifndef NDEBUG
+    // check assert in functor call
     EXPECT_DEBUG_DEATH(functor(0.0), "Unhandled TimeSeriesFunctorType!");
-#endif
 }
