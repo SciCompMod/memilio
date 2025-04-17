@@ -9,8 +9,6 @@
 
 #include <sbml/SBMLTypes.h>
 
-LIBSBML_CPP_NAMESPACE_USE
-
 /*
     @brief Get the filename
 
