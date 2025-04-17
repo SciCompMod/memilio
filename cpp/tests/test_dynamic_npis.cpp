@@ -297,8 +297,8 @@ TEST(DynamicNPIs, mobility)
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_safe);
     });
-    node_from.evolve(3.0, 2.5);
-    node_to.evolve(3.0, 2.5);
+    node_from.advance(3.0, 2.5);
+    node_to.advance(3.0, 2.5);
     edge.apply_mobility(3.0, 2.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
@@ -306,8 +306,8 @@ TEST(DynamicNPIs, mobility)
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
-    node_from.evolve(4.5, 1.5);
-    node_to.evolve(4.5, 1.5);
+    node_from.advance(4.5, 1.5);
+    node_to.advance(4.5, 1.5);
     edge.apply_mobility(4.5, 1.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(),
@@ -316,8 +316,8 @@ TEST(DynamicNPIs, mobility)
     EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
         node_from.get_simulation().result.add_time_point(t, last_state_crit);
     });
-    node_from.evolve(6.0, 1.5);
-    node_to.evolve(6.0, 1.5);
+    node_from.advance(6.0, 1.5);
+    node_to.advance(6.0, 1.5);
     edge.apply_mobility(6.0, 1.5, node_from, node_to);
 
     EXPECT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented

@@ -716,7 +716,7 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirts::Model<double>>({make_model(num_age_groups)});
     const std::vector<int> region{1002};
-    auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
+    auto path = mio::path_join(TEST_DATA_DIR, "Germany/pydata/cases_all_county_age_ma7.json");
 
     std::vector<std::vector<double>> num_InfectedSymptoms(1);
     std::vector<std::vector<double>> num_death(1);
@@ -737,14 +737,14 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
                     path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
                     num_InfectedSevere, num_icu, num_death, num_timm, model,
-                    std::vector<double>(size_t(num_age_groups), 1.0), 0, true),
+                    std::vector<double>(size_t(num_age_groups), 1.0), 0),
                 IsSuccess());
 
     // read again with invalid date
     ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
                     path, region, {3020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
                     num_InfectedSevere, num_icu, num_death, num_timm, model,
-                    std::vector<double>(size_t(num_age_groups), 1.0), 0, true),
+                    std::vector<double>(size_t(num_age_groups), 1.0), 0),
                 IsFailure(mio::StatusCode::OutOfRange));
 
     // call the compute function with empty case data
@@ -752,8 +752,98 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     ASSERT_THAT(mio::osecirts::details::compute_confirmed_cases_data(
                     empty_case_data, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
                     num_icu, num_death, num_timm, region, {2020, 12, 01}, model,
-                    std::vector<double>(size_t(num_age_groups), 1.0), 0, true),
+                    std::vector<double>(size_t(num_age_groups), 1.0), 0),
                 IsFailure(mio::StatusCode::InvalidValue));
+}
+
+TEST(TestOdeSECIRTS, set_divi_data_invalid_dates)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    auto model = mio::osecirts::Model<double>(1);
+    model.populations.array().setConstant(1);
+    auto model_vector = std::vector<mio::osecirts::Model<double>>{model};
+
+    // Test with date before DIVI dataset was available.
+    EXPECT_THAT(mio::osecirts::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    // Assure that populations is the same as before.
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    // Test with data after DIVI dataset was no longer updated.
+    EXPECT_THAT(mio::osecirts::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
+{
+    const auto num_age_groups = 6;
+    auto model                = mio::osecirts::Model<double>(num_age_groups);
+    model.populations.array().setConstant(1);
+
+    const std::vector<std::vector<double>> immunity_population = {{0.04, 0.04, 0.075, 0.08, 0.035, 0.01},
+                                                                  {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
+                                                                  {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
+
+    // set params
+    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
+        model.parameters.get<mio::osecirts::CriticalPerSevere<double>>()[age_group]         = 1.0;
+        model.parameters.get<mio::osecirts::SeverePerInfectedSymptoms<double>>()[age_group] = 1.0;
+        model.parameters.get<mio::osecirts::TimeInfectedSymptoms<double>>()[age_group]      = 1.0;
+        model.parameters.get<mio::osecirts::TimeInfectedSevere<double>>()[age_group]        = 1.0;
+        model.parameters.get<mio::osecirts::TimeInfectedCritical<double>>()[age_group]      = 1.0;
+    }
+
+    // read case data
+    auto case_data =
+        mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json")).value();
+
+    // Change dates of the case data so that no ICU data is available at that time.
+    // Also, increase the number of confirmed cases by 1 each day.
+    const auto t0 = mio::Date(2025, 1, 1);
+    auto day_add  = 0;
+    for (auto& entry : case_data) {
+        entry.date          = offset_date_by_days(t0, day_add);
+        entry.num_confirmed = day_add;
+        day_add++;
+    }
+
+    // get day in mid of the data
+    auto mid_day = case_data[(size_t)case_data.size() / 2].date;
+
+    // calculate ICU values using set_confirmed_cases_data
+    auto model_vector       = std::vector<mio::osecirts::Model<double>>{model};
+    auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
+
+    EXPECT_THAT(mio::osecirts::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day,
+                                                                 scaling_factor_inf, immunity_population),
+                IsSuccess());
+
+    // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
+    // We only have an entry for age group 2. All other age groups should be zero.
+    for (int i = 0; i < num_age_groups; ++i) {
+        const auto expected_value = (i == 2) ? 1.0 : 0.0;
+
+        auto actual_value_naive =
+            model_vector[0]
+                .populations[{mio::AgeGroup(i), mio::osecirts::InfectionState::InfectedCriticalNaive}]
+                .value();
+        EXPECT_NEAR(actual_value_naive, expected_value * immunity_population[0][i], 1e-10);
+
+        auto actual_value_pi =
+            model_vector[0]
+                .populations[{mio::AgeGroup(i), mio::osecirts::InfectionState::InfectedCriticalPartialImmunity}]
+                .value();
+        EXPECT_NEAR(actual_value_pi, expected_value * immunity_population[1][i], 1e-10);
+
+        auto actual_value_ii =
+            model_vector[0]
+                .populations[{mio::AgeGroup(i), mio::osecirts::InfectionState::InfectedCriticalImprovedImmunity}]
+                .value();
+        EXPECT_NEAR(actual_value_ii, expected_value * immunity_population[2][i], 1e-10);
+    }
 }
 
 TEST(TestOdeSECIRTS, read_data)
@@ -769,15 +859,15 @@ TEST(TestOdeSECIRTS, read_data)
 
     auto read_result1 = mio::osecirts::read_input_data_county(model1, {2020, 12, 01}, {1002},
                                                               std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                              TEST_DATA_DIR, 10, immunity_population);
+                                                              TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
 
     auto read_result2 =
         mio::osecirts::read_input_data(model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, TEST_DATA_DIR, 10, immunity_population);
+                                       1.0, TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
 
     auto read_result_district =
         mio::osecirts::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, mio::path_join(TEST_DATA_DIR, "pydata/District"), 10, immunity_population);
+                                       1.0, mio::path_join(TEST_DATA_DIR, "District/pydata"), 10, immunity_population);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());

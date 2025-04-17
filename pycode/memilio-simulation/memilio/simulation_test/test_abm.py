@@ -30,7 +30,10 @@ num_age_groups = 6
 
 
 class TestAbm(unittest.TestCase):
+    """ """
+
     def test_model(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
         model = sim.model
@@ -38,6 +41,7 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(len(model.locations), 1)
 
     def test_locations(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
         model = sim.model
@@ -62,6 +66,7 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(testing_scheme.active, False)
 
     def test_persons(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, 6)
         model = sim.model
@@ -83,6 +88,7 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(model.persons[1], p2)
 
     def test_simulation(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
         model = sim.model
@@ -106,9 +112,9 @@ class TestAbm(unittest.TestCase):
         # trips
         trip_list = abm.TripList()
         trip_list.add_trip(abm.Trip(0, abm.TimePoint(
-            0) + abm.hours(8), social_event_id, home_id))
+            0) + abm.hours(8), social_event_id, home_id, abm.LocationType.SocialEvent))
         trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
-                           abm.hours(8), work_id, home_id))
+                           abm.hours(8), work_id, home_id, abm.LocationType.Work))
         model.trip_list = trip_list
         model.use_mobility_rules = False
         self.assertEqual(model.trip_list.num_trips(), 2)

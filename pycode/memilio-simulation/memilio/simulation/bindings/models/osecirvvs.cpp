@@ -263,16 +263,16 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::osecirvvs::Simulation<>>(m, "Simulation");
-    pymio::bind_Flow_Simulation<mio::osecirvvs::Simulation<double, mio::FlowSimulation<double, mio::osecirvvs::Model<double>>>>(m, "FlowSimulation");
+    pymio::bind_Flow_Simulation<
+        mio::osecirvvs::Simulation<double, mio::FlowSimulation<double, mio::osecirvvs::Model<double>>>>(
+        m, "FlowSimulation");
 
-    m.def(
-        "simulate", &mio::osecirvvs::simulate<double>, "Simulates an ODE SECIRVVS model from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
+    m.def("simulate", &mio::osecirvvs::simulate<double>, "Simulates an ODE SECIRVVS model from t0 to tmax.",
+          py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
-    m.def(
-        "simulate_flows", &mio::osecirvvs::simulate_flows<double>, "Simulates an ODE SECIRVVS model with flows from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
-
+    m.def("simulate_flows", &mio::osecirvvs::simulate_flows<double>,
+          "Simulates an ODE SECIRVVS model with flows from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+          py::arg("model"), py::arg("integrator") = py::none());
 
     pymio::bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
     pymio::bind_SimulationNode<mio::osecirvvs::Simulation<>>(m, "SimulationNode");
@@ -316,7 +316,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
     m.def(
         "set_edges",
-        [](const std::string& data_dir,
+        [](const std::string& mobility_data_file,
            mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph,
            size_t contact_locations_size) {
             auto mobile_comp = {mio::osecirvvs::InfectionState::SusceptibleNaive,
@@ -333,9 +333,10 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                 mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>,
-                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
-                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
-                data_dir, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, weights);
+                                         mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
+                                         mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
+                mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain,
+                weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);

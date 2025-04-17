@@ -27,6 +27,7 @@ import memilio.simulation.osecir as osecir
 
 
 def run_ode_secir_parameter_study():
+    """ """
     # setup basic parameters
     num_groups = 6
     model = osecir.Model(num_groups)
@@ -79,6 +80,12 @@ def run_ode_secir_parameter_study():
     # process the result of one run
 
     def handle_result(graph, run_idx):
+        """
+
+        :param graph: 
+        :param run_idx: 
+
+        """
         group = mio.AgeGroup(0)
         print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
             0).property.model.parameters.TransmissionProbabilityOnContact[group].value))

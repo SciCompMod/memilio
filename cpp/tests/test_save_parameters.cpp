@@ -736,8 +736,6 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
 
     std::vector<int> county = {1002};
 
-    std::string path = TEST_DATA_DIR;
-
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(6); group++) {
         model1[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[group] =
             0.1 * ((size_t)group + 1);
@@ -753,12 +751,12 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model3[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[group]         = 0.12 * ((size_t)group + 1);
     }
 
-    auto read_result1 =
-        mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf, scaling_factor_icu, path);
-    auto read_result2 =
-        mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu, path);
+    auto read_result1 = mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf,
+                                                            scaling_factor_icu, TEST_GERMANY_PYDATA_DIR);
+    auto read_result2 = mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu,
+                                                     TEST_GERMANY_PYDATA_DIR);
     auto read_result_district = mio::osecir::read_input_data(
-        model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(path, "pydata/District"));
+        model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(TEST_DATA_DIR, "District/pydata"));
     ASSERT_THAT(print_wrap(read_result1), IsSuccess());
     ASSERT_THAT(print_wrap(read_result2), IsSuccess());
     ASSERT_THAT(print_wrap(read_result_district), IsSuccess());

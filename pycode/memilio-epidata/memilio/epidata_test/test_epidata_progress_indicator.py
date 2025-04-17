@@ -29,9 +29,15 @@ progress_indicator.ProgressIndicator.disable_indicators(True)
 
 
 class Test_ProgressIndicator(unittest.TestCase):
+    """ """
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_percentage_indicator(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         progress_indicator.ProgressIndicator.disable_indicators(False)
         # test not full progress
         with progress_indicator.Percentage(delay=0) as p:
@@ -54,6 +60,11 @@ class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_spinner(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         s = progress_indicator.Spinner()
         spinner_prints = [" |", " /", " -", " \\"]
         for i in range(100):
@@ -63,6 +74,11 @@ class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_dots(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         p = progress_indicator.Dots(message="testing dots", delay=0.1)
         for i in range(10):
             p.step()
@@ -71,6 +87,11 @@ class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_start_stop(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         # progress indicator should be disabled
         self.assertEqual(progress_indicator.ProgressIndicator._disabled, True)
         # enable progress indicators
@@ -91,6 +112,11 @@ class Test_ProgressIndicator(unittest.TestCase):
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_message_too_long(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         p = progress_indicator.Percentage(delay=20, keep_output=True)
         p.start()
         p.set_message("A"*1000)

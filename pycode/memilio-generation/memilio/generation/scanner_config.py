@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file scanner_config.py
-@brief Dataclass to import the configurations from the config.json.
+:strong:`scanner_config.py`
+Dataclass to import the configurations from the config.json.
 """
 import os
 from dataclasses import dataclass, field
@@ -31,8 +31,7 @@ from typing_extensions import Self
 @dataclass_json
 @dataclass
 class ScannerConfig:
-    """
-    Provide configurations from JSON-file in Python as dataclass.
+    """Provide configurations from JSON-file in Python as dataclass.
 
     Attributes (and config.json parameters):
         source_file: Path to the main file of the model, e.g., model.cpp
@@ -49,6 +48,7 @@ class ScannerConfig:
             simulation_class: Name of simulation class, if not used set as empty string
             age_group: Boolean defining if model uses age groups
             parameterset_wrapper": Boolean defining if model uses wrapper for parameterset.
+
 
     """
 

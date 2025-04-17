@@ -141,7 +141,7 @@ private:
     Infection() = default;
 
     /**
-     * @brief Determine ViralLoad course and Infection course based on init_state.
+     * @brief Determine Infection course based on #InfectionState init_state.
      * Calls draw_infection_course_backward for all #InfectionState%s prior and draw_infection_course_forward for all
      * subsequent #InfectionState%s.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
@@ -149,25 +149,38 @@ private:
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] latest_protection  Latest protection against Infection, has an influence on transition probabilities.
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                     TimePoint init_date, InfectionState start_state, ProtectionEvent latest_protection);
 
     /**
-     * @brief Determine ViralLoad course and Infection course prior to the given start_state.
+     * @brief Determine Infection course subsequent to the given #InfectionState start_state.
+     * From the start_state, a random path through the #InfectionState tree is chosen, that is
+     * Susceptible -> InfectedNoSymptoms,
+     * InfectedNoSymptoms -> InfectedSymptoms or InfectedNoSymptoms -> Recovered,
+     * InfectedSymptoms -> Infected_Severe or InfectedSymptoms -> Recovered,
+     * InfectedSevere -> InfectedCritical or InfectedSevere -> Recovered or InfectedSevere -> Dead,
+     * InfectedCritical -> Recovered or InfectedCritical -> Dead,
+     * with artifical, hardcoded probabilites, until either Recoverd or Dead is reached.
+     * This is subject to change when parameter distributions for these transitions are implemented.
+     * The duration in each #InfectionState is taken from the respective parameter.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the Person.
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] latest_protection Latest protection against Infection, has an influence on transition probabilities.
      */
     void draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                       TimePoint init_date, InfectionState start_state,
+                                       TimePoint init_date, InfectionState init_state,
                                        ProtectionEvent latest_protection);
 
     /**
-     * @brief Determine ViralLoad course and Infection course subsequent to the given start_state.
+     * @brief Determine Infection course prior to the given #InfectionState start_state.
+     * From the start_state, a random path through the #InfectionState tree is chosen backwards, until Susceptible is reached.
+     * For more detailed information, refer to draw_infection_course_forward.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person.
      * @param[in] age AgeGroup of the person.
      * @param[in] params Parameters of the Model.

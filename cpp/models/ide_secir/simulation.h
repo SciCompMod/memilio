@@ -62,7 +62,7 @@ public:
      */
     TimeSeries<ScalarType> get_result()
     {
-        return m_model->m_populations;
+        return m_model->populations;
     }
 
     /**
@@ -72,7 +72,7 @@ public:
      */
     const TimeSeries<ScalarType>& get_result() const
     {
-        return m_model->m_populations;
+        return m_model->populations;
     }
 
     /**
@@ -82,7 +82,7 @@ public:
      */
     TimeSeries<ScalarType> const& get_transitions()
     {
-        return m_model->m_transitions;
+        return m_model->transitions;
     }
 
     /**

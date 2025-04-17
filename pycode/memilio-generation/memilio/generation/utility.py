@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file utility.py
-@brief Additional functions used for the code generation.
+:strong:`utility.py`
+Additional functions used for the code generation.
 """
 import os
 import subprocess
@@ -38,12 +38,13 @@ from clang.cindex import Config, Cursor, Type
 
 
 def try_set_libclang_path(path: str) -> None:
-    """
-    Try to set the file path for the libclang library. 
+    """Try to set the file path for the libclang library.
     If its already set, the returned Exception gets caught and discarded.
     If the given path string is empty or None, the path is determined with a call on the terminal.
 
-    @param path Path to the library files of libclang. Can be an empty string.
+    :param path: Path to the library files of libclang. Can be an empty string.
+    :param path: str: 
+
     """
     # Check if path was set in config. If not, try to get it with cmd.
     if (not path or path == 'LIBCLANG_PATH-NOTFOUND'):
@@ -67,11 +68,11 @@ def try_set_libclang_path(path: str) -> None:
 
 
 def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
-    """
-    Try to load the compile_commands.json ressource and retrieve the corresponding directory name.
+    """Try to load the compile_commands.json ressource and retrieve the corresponding directory name.
 
-    @param skbuild_path_to_database Value from config.json
-    @return Path of directory
+    :param skbuild_path_to_database: Value from config.json
+    :returns: Path of directory
+
     """
     pkg = importlib_resources.files("memilio.generation")
     filename = skbuild_path_to_database.split('_skbuild')
@@ -88,11 +89,11 @@ def try_get_compilation_database_path(skbuild_path_to_database: str) -> str:
 
 
 def get_base_class(base_type: Type) -> List[Any]:
-    """
-    Retrieve the base class.
+    """Retrieve the base class.
     Example for base_type: CompartmentalModel.
 
-    @param Type of the current node.
+    :param base_type: Type: 
+
     """
     result = [base_type.replace('> >', '>>')]
     for i in range(base_type.get_num_template_arguments()):
@@ -101,11 +102,11 @@ def get_base_class(base_type: Type) -> List[Any]:
 
 
 def get_base_class_string(base_type: Type) -> List[Any]:
-    """
-    Retrieve the spelling of the base class.
+    """Retrieve the spelling of the base class.
     Example for base_type.spelling: CompartmentalModel<mio::Populations<mio::AgeGroup, mio::InfectionState>, Parameters>.
 
-    @param Type of the current node.
+    :param base_type: of the current node.
+
     """
     # FlowModel arguements are not shown in list
 

@@ -36,6 +36,11 @@ from memilio.generation.graph_visualization import Visualization
 
 
 def run_memilio_generation(print_ast=False):
+    """
+
+    :param print_ast:  (Default value = False)
+
+    """
     # Define ScannerConfig and initialize Scanner
     pkg = importlib_resources.files("memilio.generation")
     with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
