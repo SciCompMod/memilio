@@ -50,9 +50,18 @@ runs:
       shell: bash
       run: |
         export PYTHON_VERSION_NO_DOT=$(echo "${{ inputs.version }}" | sed 's/\.//g')
-        for pkg in `ls pycode/wheelhouse/*cp$PYTHON_VERSION_NO_DOT*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
-        for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
+        for pkg in pycode/wheelhouse/*cp$PYTHON_VERSION_NO_DOT*.whl; do
+          python -m pip install "$pkg"
+        done
+        for pkg in pycode/wheelhouse/*py3*.whl; do
+          python -m pip install "$pkg"
+        done
+
         pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
+        if [[ "${{ inputs.package }}" == "generation" ]]; then
+          pip install --force-reinstall --no-deps -e pycode/memilio-generation
+        fi
+
     - name: Run unit tests
       shell: bash
       run: |

@@ -106,7 +106,7 @@ TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
     const auto unhandled_type = (mio::TimeSeriesFunctorType)-1;
 
 // check constructor assert
-#ifdef NDEBUG
+#ifndef NDEBUG
     EXPECT_DEATH(mio::TimeSeriesFunctor<double>(unhandled_type, mio::TimeSeries<double>(0)),
                  "Unhandled TimeSeriesFunctorType!");
 #endif
@@ -116,7 +116,7 @@ TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
     std::get<0>(functor.default_serialize().named_refs).value = unhandled_type;
 
 // check assert in functor call
-#ifdef NDEBUG
+#ifndef NDEBUG
     EXPECT_DEBUG_DEATH(functor(0.0), "Unhandled TimeSeriesFunctorType!");
 #endif
 }
