@@ -47,6 +47,7 @@ Contents
    :caption: C++ Interface
 
    cpp/overview
+   cpp/interfaces
    cpp/installation
    cpp/model_usage
    cpp/model_creation
