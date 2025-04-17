@@ -20,7 +20,7 @@ runs:
       run: |
         sudo apt-get -qq update
         if [[ "${{ inputs.package }}" == "generation" ]]; then
-          sudo apt-get -qq -y install python3-pip gnupg clang-17 libclang-17-dev cmake
+          sudo apt-get -qq -y install python3-pip gnupg clang libclang-dev cmake
         else
           sudo apt-get -qq -y install python3-pip gnupg
         fi
