@@ -44,17 +44,17 @@ runs:
         fi
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install gcc-9
-            sudo apt-get -qq -y install g++-9
-          else        
             sudo apt-get -qq -y install gcc-11
             sudo apt-get -qq -y install g++-11
+          else        
+            sudo apt-get -qq -y install gcc-13
+            sudo apt-get -qq -y install g++-13
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            sudo apt-get -qq -y install clang-6.0
-          else
             sudo apt-get -qq -y install clang-14
+          else
+            sudo apt-get -qq -y install clang-17
           fi
         fi
     - name: ccache 
@@ -78,19 +78,19 @@ runs:
         cd cpp
         if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            export CC=/usr/bin/gcc-9
-            export CXX=/usr/bin/g++-9
-          else        
             export CC=/usr/bin/gcc-11
             export CXX=/usr/bin/g++-11
+          else        
+            export CC=/usr/bin/gcc-13
+            export CXX=/usr/bin/g++-13
           fi
         elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
           if [[ "${{ inputs.version }}" == "min" ]]; then
-            export CC=/usr/bin/clang-6.0
-            export CXX=/usr/bin/clang++-6.0
-          else        
             export CC=/usr/bin/clang-14
             export CXX=/usr/bin/clang++-14
+          else        
+            export CC=/usr/bin/clang-17
+            export CXX=/usr/bin/clang++-17
           fi
         else
           echo "unknown value for action input: compiler"

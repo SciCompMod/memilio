@@ -21,6 +21,7 @@
 :strong:`ast.py`
 Create the ast and assign ids. Get ids and nodes. 
 """
+from typing_extensions import Self
 import subprocess
 import tempfile
 import logging
@@ -31,8 +32,6 @@ from memilio.generation import utility
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
-
-from typing_extensions import Self
 
 
 class AST:
@@ -80,7 +79,7 @@ class AST:
         file_args = file_args[1:-4]
 
         clang_cmd = [
-            "clang-14", self.config.source_file,
+            "clang-18", self.config.source_file,
             "-std=c++17", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
