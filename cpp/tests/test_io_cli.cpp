@@ -212,7 +212,7 @@ TEST(TestCLI, test_set_param)
 
 TEST(TestCLI, test_write_help)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    GTEST_FLAG_SET(death_test_style, "fast");
 
     std::stringstream ss;
     const std::string help =
@@ -239,7 +239,7 @@ TEST(TestCLI, test_write_help)
 
 TEST(TestCLI, test_print_options)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    GTEST_FLAG_SET(death_test_style, "fast");
 
     const std::vector<std::string> args{"", "--print_option", "a", "D"};
     const int argc = (int)args.size();
