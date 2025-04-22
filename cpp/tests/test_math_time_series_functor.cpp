@@ -100,7 +100,13 @@ TEST_F(TestMathTimeSeriesFunctor, linearInterpolationRandomized)
 
 TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
 {
+#ifdef MEMILIO_ENABLE_OPENMP
+    // If OpenMP is enabled, use “threadsafe” mode to silence gtest warnings.
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+#else
+    // Without OpenMP, use “fast” mode to avoidd GCov / sanitizer related errors.
     GTEST_FLAG_SET(death_test_style, "fast");
+#endif
     // check that the functor does not accept unhandled types.
 
     const auto unhandled_type = (mio::TimeSeriesFunctorType)-1;
