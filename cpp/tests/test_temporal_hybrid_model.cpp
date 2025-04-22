@@ -105,7 +105,7 @@ double result_fct_m2(const MockModel2& model2, double /*t*/)
  */
 TEST(TestTemporalHybrid, test_advance)
 {
-    //Create two models that should be combined in a temporl-hybrid model
+    //Create two models that should be combined in a temporal-hybrid model
     MockModel1 m1{0.1, 0.4, {}};
     m1.update_result();
     MockModel2 m2;

@@ -84,6 +84,7 @@ set(TESTSOURCES
     sanitizers.cpp
     temp_file_register.h
     test_graph_abm.cpp
+    test_abstract_parameter_dist.cpp
     test_temporal_hybrid_model.cpp
 )
 
