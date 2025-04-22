@@ -1,7 +1,7 @@
 version: "2"
 
 build:
-  os: "ubuntu-lts-latest"
+  os: "ubuntu-latest"
   apt_packages: 
     - libmagic1
   tools:
