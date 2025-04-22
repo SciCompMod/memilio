@@ -26,6 +26,8 @@
 #include "d_abm/simulation.h"
 #include "d_abm/single_well.h"
 #include "smm/simulation.h"
+#include "memilio/compartments/simulation.h"
+#include "ode_secir/model.h"
 
 namespace mio
 {
@@ -33,12 +35,20 @@ namespace hybrid
 {
 
 template <>
-void convert_model(const dabm::Simulation<SingleWell<InfectionState>>& current_model,
+void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& current_model,
                    smm::Simulation<1, InfectionState>& target_model);
 
 template <>
-void convert_model(const smm::Simulation<1, InfectionState>& current_model,
-                   dabm::Simulation<SingleWell<InfectionState>>& target_model);
+void convert_model(const smm::Simulation<1, hybrid::InfectionState>& current_model,
+                   dabm::Simulation<SingleWell<hybrid::InfectionState>>& target_model);
+
+template <>
+void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& current_model,
+                   mio::Simulation<double, mio::osecir::Model<double>>& target_model);
+
+template <>
+void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& current_model,
+                   dabm::Simulation<SingleWell<hybrid::InfectionState>>& target_model);
 
 } //namespace hybrid
 

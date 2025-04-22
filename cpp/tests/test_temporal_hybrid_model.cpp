@@ -22,10 +22,12 @@
 #include "d_abm/simulation.h"
 #include "d_abm/single_well.h"
 #include "hybrid/infection_state.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/geography/regions.h"
 #include "memilio/utils/random_number_generator.h"
 #include "models/hybrid/conversion_functions.cpp"
 #include "models/hybrid/temporal_hybrid_model.h"
+#include "ode_secir/infection_state.h"
 #include "smm/model.h"
 #include "smm/simulation.h"
 #include "abm_helpers.h"
@@ -207,7 +209,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
         .WillOnce(testing::Return(0.5)) // y-value agent3
         .WillRepeatedly(testing::Return(1.0));
 
-    //Distribution to sample agents' position
+    //Distribution to sample agents' infection state
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke)
         .Times(testing::AtLeast(3))
         .WillOnce(testing::Return(0)) // agent1
@@ -248,7 +250,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
         .WillOnce(testing::Return(0.1)) // y-value agent3
         .WillRepeatedly(testing::Return(1.0));
 
-    //Distribution to sample agents' position
+    //Distribution to sample agents' infection state
     EXPECT_CALL(mock_discrete_dist1.get_mock(), invoke)
         .Times(testing::AtLeast(3))
         .WillOnce(testing::Return(2)) // agent1
@@ -258,6 +260,142 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
 
     //Convert smm simulation to dabm simulation
     mio::hybrid::convert_model(sim_smm, sim_dabm);
+
+    EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
+    //agent1
+    EXPECT_EQ(sim_dabm.get_model().populations[0].position[0], -0.1);
+    EXPECT_EQ(sim_dabm.get_model().populations[0].position[1], 0.1);
+    EXPECT_EQ(sim_dabm.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    //agent2
+    EXPECT_EQ(sim_dabm.get_model().populations[1].position[0], 0.1);
+    EXPECT_EQ(sim_dabm.get_model().populations[1].position[1], -0.1);
+    EXPECT_EQ(sim_dabm.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    //agent3
+    EXPECT_EQ(sim_dabm.get_model().populations[2].position[0], 0.1);
+    EXPECT_EQ(sim_dabm.get_model().populations[2].position[1], 0.1);
+    EXPECT_EQ(sim_dabm.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
+}
+
+/**
+ * @brief Test conversion from dABM to ode-secir and vice versa.
+ */
+TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
+{
+    using Model1 = mio::dabm::Model<SingleWell<mio::hybrid::InfectionState>>;
+    using Model2 = mio::osecir::Model<double>;
+
+    //Initialize agents for dabm
+    SingleWell<mio::hybrid::InfectionState>::Agent a1{Eigen::Vector2d{-0.5, 0},
+                                                      mio::hybrid::InfectionState::Susceptible};
+    SingleWell<mio::hybrid::InfectionState>::Agent a2{Eigen::Vector2d{0.5, 0},
+                                                      mio::hybrid::InfectionState::Susceptible};
+    SingleWell<mio::hybrid::InfectionState>::Agent a3{Eigen::Vector2d{0.5, 0.5},
+                                                      mio::hybrid::InfectionState::InfectedSymptoms};
+
+    Model1 model1({a1, a2, a3}, {});
+    Model2 model2(2);
+
+    //Parameters for simulation
+    double t0 = 0;
+    double dt = 0.1;
+
+    auto sim_dabm   = mio::dabm::Simulation(model1, t0, dt);
+    auto sim_osecir = mio::Simulation(model2, t0 - 1, dt);
+
+    //Convert dabm simulation to osecir simulation
+    mio::hybrid::convert_model(sim_dabm, sim_osecir);
+
+    EXPECT_EQ(sim_osecir.get_result().get_last_time(), t0);
+    EXPECT_NEAR(sim_osecir.get_result().get_last_value()[sim_osecir.get_model().populations.get_flat_index(
+                    {mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible})],
+                1, 1e-10);
+    EXPECT_NEAR(sim_osecir.get_result().get_last_value()[sim_osecir.get_model().populations.get_flat_index(
+                    {mio::AgeGroup(1), mio::osecir::InfectionState::Susceptible})],
+                1, 1e-10);
+    EXPECT_NEAR(sim_osecir.get_result().get_last_value()[sim_osecir.get_model().populations.get_flat_index(
+                    {mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms})],
+                0.5, 1e-10);
+    EXPECT_NEAR(sim_osecir.get_result().get_last_value()[sim_osecir.get_model().populations.get_flat_index(
+                    {mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms})],
+                0.5, 1e-10);
+    auto pop_S = sim_osecir.get_model().populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] +
+                 sim_osecir.get_model().populations[{mio::AgeGroup(1), mio::osecir::InfectionState::Susceptible}];
+    auto pop_ISy =
+        sim_osecir.get_model().populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] +
+        sim_osecir.get_model().populations[{mio::AgeGroup(1), mio::osecir::InfectionState::InfectedSymptoms}];
+    EXPECT_NEAR(pop_S, 2, 1e-10);
+    EXPECT_NEAR(pop_ISy, 1, 1e-10);
+
+    //Delete dabm population
+    sim_dabm.get_model().populations.clear();
+
+    EXPECT_EQ(sim_dabm.get_model().populations.size(), 0);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+
+    //Distribution to sample agents' position
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(6))
+        .WillOnce(testing::Return(-0.5)) // x-value agent1
+        .WillOnce(testing::Return(0)) // y-value agent1
+        .WillOnce(testing::Return(0.5)) // x-value agent2
+        .WillOnce(testing::Return(0)) // y-value agent2
+        .WillOnce(testing::Return(0.5)) // x-value agent3
+        .WillOnce(testing::Return(0.5)) // y-value agent3
+        .WillRepeatedly(testing::Return(1.0));
+
+    //Distribution to sample agents' infection state
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(3))
+        .WillOnce(testing::Return(0)) // agent1
+        .WillOnce(testing::Return(0)) // agent2
+        .WillOnce(testing::Return(3)) // agent3
+        .WillRepeatedly(testing::Return(1));
+
+    //Convert ode-secir simulation to dabm simulation
+    mio::hybrid::convert_model(sim_osecir, sim_dabm);
+
+    EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
+    //agent1
+    EXPECT_EQ(sim_dabm.get_model().populations[0].position[0], -0.5);
+    EXPECT_EQ(sim_dabm.get_model().populations[0].position[1], 0);
+    EXPECT_EQ(sim_dabm.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
+    //agent2
+    EXPECT_EQ(sim_dabm.get_model().populations[1].position[0], 0.5);
+    EXPECT_EQ(sim_dabm.get_model().populations[1].position[1], 0);
+    EXPECT_EQ(sim_dabm.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
+    //agent3
+    EXPECT_EQ(sim_dabm.get_model().populations[2].position[0], 0.5);
+    EXPECT_EQ(sim_dabm.get_model().populations[2].position[1], 0.5);
+    EXPECT_EQ(sim_dabm.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
+
+    //Test if conversion also works if agents should just be overwritten
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist1;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>>
+        mock_discrete_dist1;
+
+    //Distribution to sample agents' position
+    EXPECT_CALL(mock_uniform_dist1.get_mock(), invoke)
+        .Times(testing::AtLeast(6))
+        .WillOnce(testing::Return(-0.1)) // x-value agent1
+        .WillOnce(testing::Return(0.1)) // y-value agent1
+        .WillOnce(testing::Return(0.1)) // x-value agent2
+        .WillOnce(testing::Return(-0.1)) // y-value agent2
+        .WillOnce(testing::Return(0.1)) // x-value agent3
+        .WillOnce(testing::Return(0.1)) // y-value agent3
+        .WillRepeatedly(testing::Return(1.0));
+
+    //Distribution to sample agents' infection state
+    EXPECT_CALL(mock_discrete_dist1.get_mock(), invoke)
+        .Times(testing::AtLeast(3))
+        .WillOnce(testing::Return(2)) // agent1
+        .WillOnce(testing::Return(2)) // agent2
+        .WillOnce(testing::Return(0)) // agent3
+        .WillRepeatedly(testing::Return(1));
+
+    //Convert ode-secir simulation to dabm simulation
+    mio::hybrid::convert_model(sim_osecir, sim_dabm);
 
     EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
     //agent1
