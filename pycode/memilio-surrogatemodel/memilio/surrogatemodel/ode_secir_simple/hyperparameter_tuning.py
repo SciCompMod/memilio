@@ -59,8 +59,8 @@ with open(os.path.join(path_data, filename), 'rb') as file:
 data_splitted = md.split_data(data['inputs'], data['labels'], 0.8, 0, 0.2)
 inputs_grid_search = data_splitted['train_inputs']
 labels_grid_search = data_splitted['train_labels']
-inputs_withhold = data['test_inputs']
-labels_withhold = data['test_labels']
+inputs_withhold = data_splitted['test_inputs']
+labels_withhold = data_splitted['test_labels']
 
 
 start_hyper = time.perf_counter()
