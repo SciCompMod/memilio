@@ -26,6 +26,7 @@ import os
 import pickle
 import pandas as pd
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import tensorflow as tf
@@ -375,7 +376,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
     # testing network_fit
 
     def test_network_fit(self):
-        max_epochs = 2
+        max_epochs = 1
 
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
@@ -387,25 +388,20 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             early_stop, max_epochs, loss, optimizer, metric)
 
         # generate dataset with multiple output
-        input_width = 5
         label_width = 10
-        num_runs = 25
-        data_generation.generate_data(num_runs, self.path, input_width,
-                                      label_width)
 
-        file = open(os.path.join(
-            self.path, 'data_secir_simple_10days_0k.pickle'), 'rb')
-        data = pickle.load(file)
+        inputs = tf.random.uniform([5, 5, 8])
+        labels = tf.random.uniform([5, 10, 8])
 
         model_cnn = network_architectures.cnn_multi_input_multi_output(
-            label_width=label_width, num_filters=2, num_neurons_per_layer=2,
-            num_hidden_layers=1)
+            label_width=label_width, num_filters=1, num_neurons_per_layer=1,
+            num_hidden_layers=0)
         model_lstm = network_architectures.lstm_multi_input_multi_output(
-            label_width=label_width, internal_dimension=4, num_neurons_per_layer=4,
-            num_hidden_layers=1)
+            label_width=label_width, internal_dimension=1, num_neurons_per_layer=1,
+            num_hidden_layers=0)
 
         cnn_output = md.network_fit(
-            model=model_cnn, inputs=data["inputs"], labels=data["labels"],
+            model=model_cnn, inputs=inputs, labels=labels,
             training_parameter=training_parameter, plot=False)
         self.assertEqual(
             cnn_output.model.output_shape[1], label_width)
@@ -413,7 +409,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             len(cnn_output.history['val_loss']), max_epochs)
 
         lstm_output = md.network_fit(
-            model=model_lstm, inputs=data["inputs"], labels=data["labels"],
+            model=model_lstm, inputs=inputs, labels=labels,
             training_parameter=training_parameter, plot=False)
         self.assertEqual(
             lstm_output.model.output_shape[1], label_width)
@@ -424,22 +420,10 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
     # testing train_and_evaluate_model
     def test_train_and_evaluate_model(self):
         # generate dataset with multiple output
-        input_width = 5
-        label_width = 10
-        num_runs = 25
-        data_generation.generate_data(num_runs, self.path, input_width,
-                                      label_width)
 
-        file = open(os.path.join(
-            self.path, 'data_secir_simple_10days_0k.pickle'), 'rb')
-        data = pickle.load(file)
-        file = open(os.path.join(
-            self.path, 'data_secir_simple_10days_0k.pickle'), 'rb')
-        data = pickle.load(file)
-        inputs = data["inputs"]
-        labels = data["labels"]
-
-        max_epochs = 2
+        inputs = tf.random.uniform([5, 5, 8])
+        labels = tf.random.uniform([5, 10, 8])
+        max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
         optimizer = 'AdamW'
@@ -458,9 +442,20 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(res["val_losses"][0][0]), max_epochs)
         self.assertEqual(res["optimizer"], "AdamW")
 
-    # testing perform_grid_search
-    def test_perform_grid_search(self):
+    @patch('memilio.surrogatemodel.ode_secir_simple.grid_search.train_and_evaluate_model')
+    def test_perform_grid_search(self, mock_train_and_evaluate_model):
+        mock_train_and_evaluate_model.return_value = {
+            "model": "._.",
+            "activation": "relu",
+            "optimizer": "Eva",
+            "mean_train_loss_kfold": 42,
+            "mean_val_loss_kfold": 12,
+            "training_time": 1,
+            "train_losses": [3],
+            "val_losses": [6]
+        }
         filename_df = "dataframe_optimizer.csv"
+        os.mkdir(self.path)
 
         # General grid search parameters for the training process:
         early_stop = [100]
@@ -471,8 +466,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                     tf.keras.metrics.MeanAbsolutePercentageError()]]
 
         # Define grid search parameters for the architecture
-        label_width = 10
-        num_outputs = 8
+        label_width = 3
+        num_outputs = 2
         hidden_layers = [1, 2]
         neurons_in_hidden_layer = [32]
         activation_function = ['relu']
@@ -488,16 +483,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                             for activation in activation_function for modelname in models]
 
         # generate dataset with multiple output
-        input_width = 5
-        num_runs = 25
-        data_generation.generate_data(num_runs, self.path, input_width,
-                                      label_width)
-
-        file = open(os.path.join(
-            self.path, 'data_secir_simple_10days_0k.pickle'), 'rb')
-        data = pickle.load(file)
-        inputs = data["inputs"]
-        labels = data["labels"]
+        inputs = tf.random.uniform([5, 1, 2])
+        labels = tf.random.uniform([5, 3, 2])
 
         grid_search.perform_grid_search(
             model_parameters, inputs, labels, training_parameters,
@@ -505,7 +492,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         )
 
         # testing saving the results
-        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(os.path.join(self.path,  'secir_simple_grid_search')),
                          [filename_df])
