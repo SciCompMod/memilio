@@ -562,7 +562,7 @@ public:
                 set_ostream_format(file, 1, precision) << std::left << column_labels[k];
             }
             else {
-                set_ostream_format(file, 1, precision) << std::left << "Column" << k + 1;
+                set_ostream_format(file, 1, precision) << std::left << "#" << k + 1;
             }
         }
         file << "\n";
