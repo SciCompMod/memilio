@@ -160,12 +160,12 @@ int main()
     auto sim_abm = mio::dabm::Simulation(abm, t0, dt);
     auto sim_ode = mio::Simulation(ode, t0, dt);
 
-    const auto result_abm = [](const mio::dabm::Simulation<SingleWell<mio::hybrid::InfectionState>>& sim,
-                               double /*t*/) {
+    const auto result_fct_abm = [](const mio::dabm::Simulation<SingleWell<mio::hybrid::InfectionState>>& sim,
+                                   double /*t*/) {
         return sim.get_result();
     };
 
-    const auto result_ode = [](const mio::Simulation<double, ODE>& sim, double /*t*/) {
+    const auto result_fct_ode = [](const mio::Simulation<double, ODE>& sim, double /*t*/) {
         return sim.get_result();
     };
 
@@ -173,7 +173,7 @@ int main()
     double dt_switch = 0.2;
     mio::hybrid::TemporalHybridSimulation<decltype(sim_abm), decltype(sim_ode), mio::TimeSeries<double>,
                                           mio::TimeSeries<double>>
-        hybrid_sim(sim_abm, sim_ode, result_abm, result_ode, true, t0, dt_switch);
+        hybrid_sim(sim_abm, sim_ode, result_fct_abm, result_fct_ode, true, t0, dt_switch);
 
     //Define switching conditiond
     const auto condition = [](const mio::TimeSeries<double>& result_abm, const mio::TimeSeries<double>& result_ode,

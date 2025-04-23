@@ -29,21 +29,47 @@ namespace mio
 namespace hybrid
 {
 
+/**
+ * @brief Convert one model into another. Some template specilizations of this function can be found in conversion_functions.h
+ * @tparam CurrentModel Simulation type of the model currently used.
+ * @tparam TargetModel Simulation type of the model the current simulation should be converted to.
+ * @param[in,out] CurrentModel Simulation of currently used model.
+ * @param[in,out] TargetModel Simulation of target model.
+ */
 template <class CurrentModel, class TargetModel>
 void convert_model(const CurrentModel&, TargetModel&) = delete;
+
+/**
+ * @brief A temporal-hybrid simulation. 
+ * The temporal-hybrid simulation switches between two models during the course of time according to a given condition. This requires a specilization of the convert_model function for the two models used.
+ * @tparam Model1 (Simulation) Type of the first model used.
+ * @tparam Model2 (Simulation) Type of the second model used.
+ * @tparam ResultType1 Result type of the first model. The results of both models are needed to evalute the switching condition.
+ */
 
 template <class Model1, class Model2, class ResultType1, class ResultType2>
 class TemporalHybridSimulation
 {
 
 public:
+    //Functions returning the result/current state of both models
     using result1_function = std::function<ResultType1(const Model1&, double t)>;
     using result2_function = std::function<ResultType2(const Model2&, double t)>;
 
-    //Should return true when the simulation should be continued with the model that is not used currently
+    //Should return true when the simulation should be continued with the model that is not used currently i.e. a switch needs to be applied
     using switching_condition =
         std::function<bool(const ResultType1& state_model1, const ResultType2& state_model2, bool model1_used)>;
 
+    /**
+     * @brief Create a temporal-hybrid simulation
+     * @param[in] model1 First model/simulation used for the hybrid simulation.
+     * @param[in] model2 Second model/simulation used for the hybrid simulation.
+     * @param[in] result1 Function returning the result/current state of first model.
+     * @param[in] result2 Function returning the result/current state of second model.
+     * @param[in] initially_use_model1 Boolean specifying which model to use at simulation start.
+     * @param[in] t0 Start time of the simulation.
+     * @param[in] dt Timestep with which the switching is checked.
+     */
     TemporalHybridSimulation(Model1& model1, Model2& model2, const result1_function& result1,
                              const result2_function& result2, bool initially_use_model1, double t0 = 0, double dt = 0.1)
         : m_model1(std::move(model1))
