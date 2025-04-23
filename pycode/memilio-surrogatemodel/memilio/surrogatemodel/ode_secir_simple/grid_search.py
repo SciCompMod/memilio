@@ -97,7 +97,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, Print=Fa
     }
 
 
-def perform_grid_search(model_parameters, inputs, labels, training_parameters, filename_df):
+def perform_grid_search(model_parameters, inputs, labels, training_parameters, filename_df, path=None):
     """ Performing grid search for a given set of model parameters
 
     The results are stored in directory 'secir_simple_grid_search', each row has the form 
@@ -113,7 +113,7 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
     :param filename_df: String, giving name of the file, where the data is stored, actual filename is given by filename_df + ".csv"
-
+    :param path: String representing the path, where dataframe should be stored
     """
     # Create a DataFrame to store the results
     df_results = pd.DataFrame(columns=['model', 'optimizer', 'number_of_hidden_layers', 'number_of_neurons', 'activation',
@@ -138,10 +138,14 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
             ]
 
     # Save the results in .csv file
-    path = os.path.dirname(os.path.realpath(__file__))
-    file_path = os.path.join(os.path.dirname(
-        os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'secir_simple_grid_search')
+    folder_name = 'secir_simple_grid_search'
+    if path is None:
+        path = os.path.dirname(os.path.realpath(__file__))
+        file_path = os.path.join(os.path.dirname(os.path.realpath(path)),
+                                 folder_name)
+    else:
+        file_path = os.path.join(path, folder_name)
+
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
     file_path = os.path.join(file_path, filename_df)
