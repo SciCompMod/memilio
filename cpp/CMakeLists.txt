@@ -89,6 +89,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
+            LCOV_ARGS --ignore-errors gcov,mismatch
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
@@ -127,10 +128,10 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Wno-stringop-overread;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
+        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;-Wno-stringop-overread;")
 endif()
 
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)

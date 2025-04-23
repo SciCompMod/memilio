@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/model.h"
 
@@ -41,7 +42,7 @@ int main()
     printf("\n N(%.0f,%.0f)-distribution with sampling only in [%.0f,%.0f]", mean, stddev, min, max);
     int counter[10] = {0};
     for (int i = 0; i < 1000; i++) {
-        int rounded = (int)(some_parameter.get_sample() - 1);
+        int rounded = (int)(some_parameter.get_sample(mio::thread_local_rng()) - 1);
         if (rounded >= 0 && rounded < 10) {
             counter[rounded]++;
         }
@@ -59,7 +60,7 @@ int main()
 
     double counter_unif[10] = {0};
     for (int i = 0; i < 1000; i++) {
-        int rounded = (int)(some_other_parameter.get_sample() - 1);
+        int rounded = (int)(some_other_parameter.get_sample(mio::thread_local_rng()) - 1);
         if (rounded >= 0 && rounded < 10) {
             counter_unif[rounded]++;
         }
