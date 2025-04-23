@@ -539,7 +539,7 @@ public:
      * The first column of the CSV file contains the time points. The remaining columns
      * contain the values at each time point. Column headers can be specified with column_labels.
      *
-     * @param filename Path to the CSV file.conjunction
+     * @param filename Path to the CSV file
      * @param column_labels [Default: {}] Vector of labels for each column after the time column.
      * @param separator [Default: ','] Separator character.
      * @param precision [Default: 6] Number of decimals for floating point values.
