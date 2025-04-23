@@ -165,6 +165,10 @@ def cnn_multi_input_multi_output(label_width, conv_size=3, num_outputs=8, num_fi
     if num_outputs < 1:
         raise ValueError(
             "Output dimension must be at least 1, here %d" % (num_outputs))
+    if num_filters < 1:
+        raise ValueError(
+            "Number of filters must be at least 1, here %d" % (num_filters)
+        )
     if num_hidden_layers < 0:
         raise ValueError(
             "Number of hidden layers must be at least 0, here %d" % (num_hidden_layers))
