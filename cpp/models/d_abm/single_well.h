@@ -145,8 +145,8 @@ public:
                     if (is_contact(agent, contact)) {
                         num_contacts++;
                         for (size_t i = 0; i < adoption_rate.influences.size(); i++) {
-                            if (contact.status == adoption_rate.influences[i]) {
-                                influences += adoption_rate.factors[i];
+                            if (contact.status == adoption_rate.influences[i].status) {
+                                influences += adoption_rate.influences[i].factor;
                             }
                         }
                     }

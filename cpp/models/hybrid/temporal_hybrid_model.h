@@ -37,17 +37,17 @@ class TemporalHybridSimulation
 {
 
 public:
-    using result1_function = ResultType1 (*)(const Model1&, double t);
-    using result2_function = ResultType2 (*)(const Model2&, double t);
+    using result1_function = std::function<ResultType1(const Model1&, double t)>;
+    using result2_function = std::function<ResultType2(const Model2&, double t)>;
 
-    //Should return true when the simulation should be continued with model2
+    //Should return true when the simulation should be continued with the model that is not used currently
     using switching_condition =
         std::function<bool(const ResultType1& state_model1, const ResultType2& state_model2, bool model1_used)>;
 
-    TemporalHybridSimulation(Model1& model1, Model2& model2, result1_function result1, result2_function result2,
-                             bool initially_use_model1, double t0 = 0, double dt = 0.1)
-        : m_model1(model1)
-        , m_model2(model2)
+    TemporalHybridSimulation(Model1& model1, Model2& model2, const result1_function& result1,
+                             const result2_function& result2, bool initially_use_model1, double t0 = 0, double dt = 0.1)
+        : m_model1(std::move(model1))
+        , m_model2(std::move(model2))
         , m_result1(result1)
         , m_result2(result2)
         , m_using_model1(initially_use_model1)
