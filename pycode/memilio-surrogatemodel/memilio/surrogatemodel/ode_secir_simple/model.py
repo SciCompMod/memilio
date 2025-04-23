@@ -37,6 +37,7 @@ def initialize_model(parameters):
     :returns: tensor flow keras model with the given architecture 
      """
     label_width, num_outputs, layer, neuron_number, activation, modelname = parameters
+
     if modelname == "Dense":
         return architectures.mlp_multi_input_multi_output(
             label_width=label_width,
@@ -61,6 +62,9 @@ def initialize_model(parameters):
             num_neurons_per_layer=neuron_number,
             activation=activation
         )
+    else:
+        raise ValueError(
+            "name_architecture must be one of 'Dense', 'LSTM' or 'CNN'")
 
 
 def network_fit(model, inputs, labels, training_parameter, plot=True):
@@ -312,7 +316,7 @@ def get_test_statistic(test_inputs, test_labels, model):
 if __name__ == "__main__":
     label_width = 30
     num_outputs = 8
-    # General grid search parameters for the training process:
+    # General parameters for the training process:
     early_stop = [100]
     max_epochs = [3]
     losses = [tf.keras.losses.MeanAbsolutePercentageError()]
@@ -320,7 +324,7 @@ if __name__ == "__main__":
     metrics = [[tf.keras.metrics.MeanAbsoluteError(),
                 tf.keras.metrics.MeanAbsolutePercentageError()]]
 
-    # Define grid search parameters for the architecture
+    # Define parameters for the architecture
     hidden_layers = [3]
     neurons_in_hidden_layer = [32]
     activation_function = ['relu']
