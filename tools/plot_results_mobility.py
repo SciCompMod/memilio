@@ -215,7 +215,7 @@ def plot_maps(files, output_dir, legend, name=''):
             fontsize=13)
 
 
-def plot_difference(files, output_dir):
+def plot_difference(files, output_dir, name='difference2D'):
     fig = plt.figure()
 
     df_dif = pd.DataFrame(columns=['Time', 'difference', 'absolute value'])
@@ -240,7 +240,7 @@ def plot_difference(files, output_dir):
     plt.tight_layout()
     plt.legend()
     plt.grid(linestyle='--')
-    plt.savefig(os.path.join(output_dir, 'difference2D.png'))
+    plt.savefig(os.path.join(output_dir, name))
     plt.close()
 
 
@@ -460,14 +460,16 @@ if __name__ == '__main__':
 
     plot_dir = os.path.join(os.path.dirname(__file__), '../Plots')
 
-    plot_maps(files=results, output_dir=plot_dir,
-              legend=models, name='NRWAdaptiveDay')
-    plot_difference_maps(
-        files={key: value for key, value in results.items()
-               if key in {'Model C', 'Model D'}},
-        output_dir=plot_dir)
-    plot_difference(
-        files={key: value for key, value in results.items()
-               if key in {'Model C', 'Model D'}},
-        output_dir=plot_dir)
-    compare_compartments(files=results, output_dir=plot_dir,  legend=models)
+    # plot_maps(files=results, output_dir=plot_dir,
+    #           legend=models, name='NRWAdaptiveDay')
+    # plot_difference_maps(
+    #     files={key: value for key, value in results.items()
+    #            if key in {'Model C', 'Model D'}},
+    #     output_dir=plot_dir)
+    # plot_difference(
+    #     files={key: value for key, value in results.items()
+    #            if key in {'Model C', 'Model D'}},
+    #     output_dir=plot_dir)
+    # compare_compartments(files=results, output_dir=plot_dir,  legend=models)
+    plot_difference(files={'Old result': 'cpp/build/ode_result_nrw_test', 'New result': 'cpp/build/ode_result_nrw'}, output_dir=plot_dir, name='difference_ode_results_test')
+    # plot_difference(files={'Old result': 'results/graph_result_nrw', 'New result': 'cpp/build/graph_result_nrw'}, output_dir=plot_dir, name='difference_graph_results')

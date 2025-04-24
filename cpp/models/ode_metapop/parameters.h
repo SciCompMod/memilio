@@ -101,22 +101,6 @@ struct CommutingStrengths {
     }
 };
 
-// /**
-//  * @brief The infectious time in day unit.
-//  */
-// template <typename FP = ScalarType>
-// struct PopulationAfterCommuting {
-//     using Type = CustomIndexArray<FP, Region, AgeGroup>;
-//     static Type get_default(Region size_region, AgeGroup size_agegroups)
-//     {
-//         return Type({size_region, size_agegroups}, 0.);
-//     }
-//     static std::string name()
-//     {
-//         return "TimeInfected";
-//     }
-// };
-
 template <typename FP = ScalarType>
 using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>,
                                     ContactPatterns<FP>, CommutingStrengths<FP>>;
@@ -202,7 +186,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-1;
+        const double tol_times = 1e-1;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_agegroups); i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
@@ -233,10 +217,12 @@ public:
     }
 
 private:
-    // Parameters(ParametersBase&& base)
-    //     : ParametersBase(std::move(base)) //TODO: Adjust
-    // {
-    // }
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
+        , m_num_regions(base.get_num_regions())
+        , m_num_agegroups(base.get_num_agegroups())
+    {
+    }
 
 public:
     /**

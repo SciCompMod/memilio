@@ -147,8 +147,8 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmetapop::Model<FP>& model, co
             mobility_data_commuter(county_idx_i, county_idx_i) =
                 1 - mobility_data_commuter.rowwise().sum()(county_idx_i);
         }
-        model.parameters.template get<mio::oseirmetapop::CommutingStrengths<>>().get_cont_freq_mat()[0].get_baseline() =
-            mobility_data_commuter;
+
+        model.set_commuting_strengths(mobility_data_commuter);
 
         printf("Setting mobility weights successful.\n");
         return mio::success();
@@ -161,9 +161,6 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmetapop::Model<FP>& 
     auto& populations = model.populations;
     auto& parameters  = model.parameters;
 
-    size_t number_regions    = (size_t)parameters.get_num_regions();
-    size_t number_age_groups = (size_t)parameters.get_num_agegroups();
-
     BOOST_OUTCOME_TRY(set_population_data(model, data_dir));
     populations[{mio::oseirmetapop::Region(27), mio::AgeGroup(4), mio::oseirmetapop::InfectionState::Susceptible}] -=
         100;
@@ -174,27 +171,6 @@ mio::IOResult<void> set_parameters_and_population(mio::oseirmetapop::Model<FP>& 
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, parameters))
 
     BOOST_OUTCOME_TRY(set_covid_parameters(parameters));
-
-    mio::ContactMatrixGroup& commuting_strengths =
-        parameters.template get<mio::oseirmetapop::CommutingStrengths<>>().get_cont_freq_mat();
-
-    auto& population_after_commuting = model.m_population_after_commuting;
-    for (size_t region_n = 0; region_n < number_regions; ++region_n) {
-        for (size_t age = 0; age < number_age_groups; ++age) {
-            double population_n = 0;
-            for (size_t state = 0; state < (size_t)mio::oseirmetapop::InfectionState::Count; state++) {
-                population_n += populations[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age),
-                                             mio::oseirmetapop::InfectionState(state)}];
-            }
-            population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] += population_n;
-            for (size_t region_m = 0; region_m < number_regions; ++region_m) {
-                population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] -=
-                    commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
-                population_after_commuting[{mio::oseirmetapop::Region(region_m), mio::AgeGroup(age)}] +=
-                    commuting_strengths[0].get_baseline()(region_n, region_m) * population_n;
-            }
-        }
-    }
 
     return mio::success();
 }
@@ -212,7 +188,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    const std::string& data_dir = "/home/carlotta/code/memilio/data";
+    const std::string& data_dir = "";
 
     mio::oseirmetapop::Model<ScalarType> model(number_regions, number_age_groups);
     auto result_prepare_simulation = set_parameters_and_population(model, data_dir);

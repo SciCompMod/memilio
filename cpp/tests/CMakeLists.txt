@@ -9,7 +9,6 @@ set(TESTSOURCES
     test_populations.cpp
     test_odeseir.cpp
     test_odesir.cpp
-    test_odesirmobility.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
     test_damping.cpp
@@ -85,6 +84,7 @@ set(TESTSOURCES
     sanitizers.cpp
     temp_file_register.h
     test_graph_abm.cpp
+    test_odemetapop.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)

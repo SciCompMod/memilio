@@ -207,6 +207,40 @@ public:
         return temp;
     }
 
+    void set_commuting_strengths(const Eigen::MatrixXd& commuting_strengths)
+    {
+        auto& commuting_strengths_param =
+            this->parameters.template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline();
+        commuting_strengths_param = commuting_strengths;
+
+        auto number_regions    = (size_t)this->parameters.get_num_regions();
+        auto number_age_groups = (size_t)this->parameters.get_num_agegroups();
+        auto& population       = this->populations;
+
+        for (size_t region_n = 0; region_n < number_regions; ++region_n) {
+            for (size_t age = 0; age < number_age_groups; ++age) {
+                double population_n = 0;
+                for (size_t state = 0; state < (size_t)mio::oseirmetapop::InfectionState::Count; state++) {
+                    population_n += population[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age),
+                                                mio::oseirmetapop::InfectionState(state)}];
+                }
+                m_population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] += population_n;
+                for (size_t region_m = 0; region_m < number_regions; ++region_m) {
+                    m_population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] -=
+                        commuting_strengths(region_n, region_m) * population_n;
+                    m_population_after_commuting[{mio::oseirmetapop::Region(region_m), mio::AgeGroup(age)}] +=
+                        commuting_strengths(region_n, region_m) * population_n;
+                }
+            }
+        }
+    }
+
+    void set_commuting_strengths()
+    {
+        auto number_regions = (size_t)this->parameters.get_num_regions();
+        set_commuting_strengths(Eigen::MatrixXd::Identity(number_regions, number_regions));
+    }
+
     mio::Populations<FP, Region, AgeGroup> m_population_after_commuting;
 }; // namespace oseirmetapop
 
