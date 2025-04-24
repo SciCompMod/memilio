@@ -129,3 +129,8 @@ endif()
 if(MEMILIO_ENABLE_OPENMP)
     target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
+if(MEMILIO_ENABLE_LIKWID_MARKER)
+    target_link_libraries(memilio PUBLIC likwid)
+    target_compile_definitions(memilio PUBLIC "-DLIKWID_PERFMON")
+endif()
