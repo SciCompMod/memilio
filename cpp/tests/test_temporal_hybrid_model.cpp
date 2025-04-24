@@ -190,10 +190,11 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
     EXPECT_NEAR(pop_S, 2, 1e-10);
     EXPECT_NEAR(pop_ISy, 1, 1e-10);
 
-    //Delete dabm population
-    sim_dabm.get_model().populations.clear();
+    //Create ABM without agents
+    Model1 model3({}, {});
+    auto sim_dabm2 = mio::dabm::Simulation(model3, t0 - 1, dt);
 
-    EXPECT_EQ(sim_dabm.get_model().populations.size(), 0);
+    EXPECT_EQ(sim_dabm2.get_model().populations.size(), 0);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
@@ -218,21 +219,21 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
         .WillRepeatedly(testing::Return(1));
 
     //Convert smm simulation to dabm simulation
-    mio::hybrid::convert_model(sim_smm, sim_dabm);
+    mio::hybrid::convert_model(sim_smm, sim_dabm2);
 
-    EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
+    EXPECT_EQ(sim_dabm2.get_model().populations.size(), 3);
     //agent1
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[0], -0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[1], 0);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
     //agent2
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[0], 0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[1], 0);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], 0);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
     //agent3
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[0], 0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[1], 0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
 
     //Test if conversion also works if agents should just be overwritten
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist1;
@@ -259,21 +260,21 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
         .WillRepeatedly(testing::Return(1));
 
     //Convert smm simulation to dabm simulation
-    mio::hybrid::convert_model(sim_smm, sim_dabm);
+    mio::hybrid::convert_model(sim_smm, sim_dabm2);
 
-    EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
+    EXPECT_EQ(sim_dabm2.get_model().populations.size(), 3);
     //agent1
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[0], -0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[1], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
     //agent2
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[0], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[1], -0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], -0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
     //agent3
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[0], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[1], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
 }
 
 /**
@@ -326,10 +327,11 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
     EXPECT_NEAR(pop_S, 2, 1e-10);
     EXPECT_NEAR(pop_ISy, 1, 1e-10);
 
-    //Delete dabm population
-    sim_dabm.get_model().populations.clear();
+    //Create ABM without agents
+    Model1 model3({}, {});
+    auto sim_dabm2 = mio::dabm::Simulation(model3, t0 - 1, dt);
 
-    EXPECT_EQ(sim_dabm.get_model().populations.size(), 0);
+    EXPECT_EQ(sim_dabm2.get_model().populations.size(), 0);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
@@ -354,21 +356,21 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
         .WillRepeatedly(testing::Return(1));
 
     //Convert ode-secir simulation to dabm simulation
-    mio::hybrid::convert_model(sim_osecir, sim_dabm);
+    mio::hybrid::convert_model(sim_osecir, sim_dabm2);
 
-    EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
+    EXPECT_EQ(sim_dabm2.get_model().populations.size(), 3);
     //agent1
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[0], -0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[1], 0);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
     //agent2
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[0], 0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[1], 0);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], 0);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
     //agent3
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[0], 0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[1], 0.5);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.5);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
 
     //Test if conversion also works if agents should just be overwritten
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist1;
@@ -395,19 +397,19 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
         .WillRepeatedly(testing::Return(1));
 
     //Convert ode-secir simulation to dabm simulation
-    mio::hybrid::convert_model(sim_osecir, sim_dabm);
+    mio::hybrid::convert_model(sim_osecir, sim_dabm2);
 
     EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);
     //agent1
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[0], -0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].position[1], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
     //agent2
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[0], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].position[1], -0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], -0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
     //agent3
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[0], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].position[1], 0.1);
-    EXPECT_EQ(sim_dabm.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.1);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
 }

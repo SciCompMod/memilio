@@ -20,6 +20,7 @@
 
 #include "d_abm/parameters.h"
 #include "d_abm/quad_well.h"
+#include "d_abm/single_well.h"
 #include "d_abm/model.h"
 #include "d_abm/simulation.h"
 #include "memilio/utils/random_number_generator.h"
@@ -60,6 +61,16 @@ TEST(TestQuadWell, adopt)
     EXPECT_EQ(agent.status, InfectionState::E);
 }
 
+TEST(TestSingleWell, adopt)
+{
+    //Test adopt function i.e. if agent adopts the given status
+    SingleWell<InfectionState>::Agent agent{Eigen::Vector2d{-1, 1}, InfectionState::S};
+    SingleWell<InfectionState> sw({agent}, {});
+    EXPECT_EQ(agent.status, InfectionState::S);
+    sw.adopt(agent, InfectionState::E);
+    EXPECT_EQ(agent.status, InfectionState::E);
+}
+
 TEST(TestQuadWell, adoptionRate)
 {
     //Test whether adoption rates are calculated correctly.
@@ -97,6 +108,40 @@ TEST(TestQuadWell, adoptionRate)
     EXPECT_EQ(qw1.adoption_rate(a1, InfectionState::E), 1. / 30.);
 }
 
+TEST(TestSingleWell, adoptionRate)
+{
+    //Test whether adoption rates are calculated correctly.
+    //First-order adoption rates are given by:
+    // rate.factor * N(rate.from)
+    // with N(from) the number of agents having infection state "from"
+    // Second-order adoption rates are given by:
+    // rate.factor * N(rate.from)/total_pop * sum (over all rate.influences) influence.factor * N_contact(influence.status)
+    // with N_contact(status) the number of agents having infection state "status" that are within the contact radius
+
+    //Agents
+    SingleWell<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
+    SingleWell<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
+    SingleWell<InfectionState>::Agent a3{Eigen::Vector2d{-1.1, 1}, InfectionState::I};
+    //Initialize model without third agent
+    SingleWell<InfectionState> sw({a1, a2}, {{InfectionState::S,
+                                              InfectionState::E,
+                                              mio::regions::Region(0),
+                                              0.1,
+                                              {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
+    //Initialize model with all agents
+    SingleWell<InfectionState> sw1({a1, a2, a3}, {{InfectionState::S,
+                                                   InfectionState::E,
+                                                   mio::regions::Region(0),
+                                                   0.1,
+                                                   {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
+    //a1 has contact to a2
+    EXPECT_EQ(sw.adoption_rate(a1, InfectionState::E), 0.025);
+    //There is no rate from I to E, hence rate for a2 is 0
+    EXPECT_EQ(sw.adoption_rate(a2, InfectionState::E), 0.0);
+    //a1 now has contact to a2 and a3 (both status I) which increases the rate
+    EXPECT_EQ(sw1.adoption_rate(a1, InfectionState::E), 1. / 30.);
+}
+
 TEST(TestQuadWell, move)
 {
     //Test evaluation of diffusion process with euler-maruyama integration
@@ -108,11 +153,44 @@ TEST(TestQuadWell, move)
     qw.move(0, 0.1, a1);
     qw.move(0, 0.1, a2);
     //a1 moves in direction of the function gradient
-    EXPECT_EQ(a1.position[0], -0.9888);
-    EXPECT_EQ(a1.position[1], 1);
+    EXPECT_NEAR(a1.position[0], -0.9888, 1e-12);
+    EXPECT_NEAR(a1.position[1], 1, 1e-12);
     //As a2 has infection state I, it does not move
     EXPECT_EQ(a2.position[0], -1.2);
     EXPECT_EQ(a2.position[1], 1);
+}
+
+TEST(TestSingleWell, move)
+{
+    //Test evaluation of diffusion process with euler-maruyama integration
+    SingleWell<InfectionState>::Agent a1{Eigen::Vector2d{-1.2, 1}, InfectionState::S};
+    SingleWell<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
+    //Sigma is set to 0, thus movement is only given by the function gradient
+    //Set I as non-moving state
+    SingleWell<InfectionState> sw({a1, a2}, {}, 0.1, 0., {InfectionState::I});
+    sw.move(0, 0.1, a1);
+    sw.move(0, 0.1, a2);
+    //a1 moves in direction of the function gradient
+    EXPECT_NEAR(a1.position[0], -0.8544, 1e-12);
+    EXPECT_NEAR(a1.position[1], 0.8, 1e-12);
+    //As a2 has infection state I, it does not move
+    EXPECT_EQ(a2.position[0], -1.2);
+    EXPECT_EQ(a2.position[1], 1);
+}
+
+TEST(TestSingleWell, time_point)
+{
+    //Test evaluation time_point function of singlewell potential
+    SingleWell<InfectionState>::Agent a1{Eigen::Vector2d{-1.2, 1}, InfectionState::S};
+    SingleWell<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
+    SingleWell<InfectionState>::Agent a3{Eigen::Vector2d{1, 1}, InfectionState::I};
+    SingleWell<InfectionState> sw({a1, a2, a3}, {}, 0.1, 0., {});
+    auto vec = sw.time_point();
+    //Agents are aggregated by their compartment
+    EXPECT_EQ(vec.size(), static_cast<size_t>(InfectionState::Count));
+    EXPECT_EQ(vec[static_cast<size_t>(InfectionState::S)], 1);
+    EXPECT_EQ(vec[static_cast<size_t>(InfectionState::E)], 0);
+    EXPECT_EQ(vec[static_cast<size_t>(InfectionState::I)], 2);
 }
 
 TEST(TestQuadWell, change_well)

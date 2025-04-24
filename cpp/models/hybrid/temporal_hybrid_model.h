@@ -82,6 +82,11 @@ public:
     {
     }
 
+    /**
+     * @brief Advance simulation to tmax.
+     * @param[in] tmax End time point of the simulation
+     * @param[in] switch_model Switching condition that is checked every m_dt step.
+     */
     void advance(double tmax, const switching_condition& switch_model)
     {
         while (m_t < tmax) {
@@ -109,54 +114,68 @@ public:
         }
     }
 
+    /**
+     * @brief Get the result of model 1.
+     * @return Result of model 1 using the function m_result1.
+     */
     ResultType1 get_result_model1()
     {
         return m_result1(m_model1, m_t);
     }
 
+    /**
+     * @brief Get the result of model 2.
+     * @return Result of model 2 using the function m_result1.
+     */
     ResultType2 get_result_model2()
     {
         return m_result2(m_model2, m_t);
     }
 
+    /**
+     * @brief Returns first model used for the simulation.
+     */
     const auto& get_model1() const
     {
         return m_model1;
     }
-
     auto& get_model1()
     {
         return m_model1;
     }
 
+    /**
+     * @brief Returns second model used for the simulation.
+     */
     const auto& get_model2() const
     {
         return m_model2;
     }
-
     auto& get_model2()
     {
         return m_model2;
     }
 
+    /**
+     * @brief Returns whether the first model is currently used for simulation.
+     */
     const auto& using_model1() const
     {
         return m_using_model1;
     }
-
     auto& using_model1()
     {
         return m_using_model1;
     }
 
 private:
-    Model1 m_model1;
-    Model2 m_model2;
-    result1_function m_result1;
-    result2_function m_result2;
-    bool m_using_model1;
-    double m_t;
-    double m_dt;
+    Model1 m_model1; ///< First model used for the simulation.
+    Model2 m_model2; ///< Second model used for the simulation.
+    result1_function m_result1; ///< Result function of first model.
+    result2_function m_result2; ///< Result function of second model.
+    bool m_using_model1; ///< Boolean specifying whether model 1 is currently used for simulation.
+    double m_t; ///< Current time step.
+    double m_dt; ///< Step size with which the switching condition is checked.
 };
 
 } //namespace hybrid

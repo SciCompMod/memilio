@@ -34,6 +34,8 @@ namespace mio
 namespace hybrid
 {
 
+//This header contains template specilizations for the convert_model function, see mio::hybrid::TemporalHybridSimulation.
+
 template <>
 void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& current_model,
                    smm::Simulation<1, InfectionState>& target_model);
