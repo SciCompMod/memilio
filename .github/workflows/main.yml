@@ -316,13 +316,6 @@ jobs:
           package: surrogatemodel
           coverage: ON
 
-  test-docs:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/test-docs
-
   codecov:
     if: github.event.pull_request.draft == false
     needs: merge-test-artifacts
@@ -348,32 +341,3 @@ jobs:
           directory: ./coverage_python
           files: ./coverage_python/**,./coverage.info
           verbose: true
-
-  pages:
-    if: github.event.pull_request.draft == false
-    permissions:
-      contents: write
-    needs: [test-docs, merge-test-artifacts]
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install git
-      - name: Download python coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: test-py-coverage-reports-surrogatemodel
-      - name: Download cpp coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: test-cpp-coverage-reports
-      - name: Download pylint report
-        #if an error occurs here, the pylint report was not built, probably manually trigger epidata-ci
-        uses: dawidd6/action-download-artifact@v6
-        with:
-            github_token: ${{secrets.GITHUB_TOKEN}}
-            workflow: epidata_main.yml
-            name: pylint-report-epidata
-            path: pycode/build_pylint
