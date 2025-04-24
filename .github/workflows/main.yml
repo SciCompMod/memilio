@@ -19,7 +19,7 @@ on:
 
 jobs:
   pre-commit:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,9 +36,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "ubuntu-22.04"
+            os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
 
   build-cpp-gcc-no-optional-deps:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-build
@@ -64,7 +64,7 @@ jobs:
 
   build-cpp-gcc-openmp:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-build
@@ -114,9 +114,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "ubuntu-22.04"
+            os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -127,7 +127,7 @@ jobs:
  
   merge-test-artifacts:
     needs: [test-cpp-gcc_clang, test-cpp-msvc, test-py-surrogatemodel]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: merge-coverage-artifacts
         uses: actions/upload-artifact/merge@v4
@@ -153,7 +153,7 @@ jobs:
   test-cpp-gcc-no-optional-deps:
     if: github.event.pull_request.draft == false
     needs: build-cpp-gcc-no-optional-deps
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/linux-test
@@ -164,7 +164,7 @@ jobs:
   test-cpp-gcc-openmp:
     if: github.event.pull_request.draft == false
     needs: build-cpp-gcc-openmp
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       OMP_NUM_THREADS: 4
@@ -216,9 +216,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "ubuntu-22.04"
+            os: "ubuntu-latest"
           - version: "min"
-            os: "ubuntu-20.04"
+            os: "ubuntu-22.04"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -247,7 +247,7 @@ jobs:
 
   build-py-generation:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v4
@@ -257,7 +257,7 @@ jobs:
 
   build-py-simulation:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v4
@@ -267,7 +267,7 @@ jobs:
 
   build-py-surrogatemodel:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_28_x86_64
     steps:
       - uses: actions/checkout@v4
@@ -281,7 +281,7 @@ jobs:
       matrix: 
         version: ["3.8", "3.11"]
     needs: build-py-generation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
@@ -294,7 +294,7 @@ jobs:
     strategy:
       matrix: 
         version: ["3.8", "3.11"]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
@@ -307,7 +307,7 @@ jobs:
     strategy:
       matrix: 
         version: ["3.8", "3.11"]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/test-py
@@ -319,7 +319,7 @@ jobs:
   codecov:
     if: github.event.pull_request.draft == false
     needs: merge-test-artifacts
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies

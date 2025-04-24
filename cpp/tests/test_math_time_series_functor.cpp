@@ -19,6 +19,7 @@
 */
 #include "memilio/math/time_series_functor.h"
 #include "random_number_test.h"
+#include "utils.h"
 
 #include "gtest/gtest.h"
 #include <vector>
@@ -100,7 +101,7 @@ TEST_F(TestMathTimeSeriesFunctor, linearInterpolationRandomized)
 
 TEST_F(TestMathTimeSeriesFunctor, unhandledTypes)
 {
-    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    mio::set_death_test_mode();
     // check that the functor does not accept unhandled types.
 
     const auto unhandled_type = (mio::TimeSeriesFunctorType)-1;
