@@ -3,8 +3,8 @@
 
 #include "memilio/timer/definitions.h"
 #include "memilio/timer/registration.h"
-#include "spdlog/fmt/bundled/base.h"
-#include "spdlog/fmt/bundled/format.h"
+#include "memilio/utils/logging.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -14,9 +14,7 @@
 #include <list>
 #include <map>
 #include <ostream>
-#include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace mio
@@ -173,8 +171,8 @@ private:
     {
         std::vector<std::string> rows; // list of all timer names
         std::map<std::string, size_t> row_to_index; // map from name to index, used to fill table
-        bool is_multithreaded = false; // keep track of whether a thread > 0 exists
-        // map rows from thread 0 first, so the order of timers (somewhat) corresponds to their call order
+        bool is_multithreaded = false; // keep track of whether a thread id > 0 exists
+        // map rows from thread 0 first, so the order of timers (mostly) corresponds to their call order
         for (const auto& [name, _, thread] : timer_register) {
             if (thread == 0) {
                 if (row_to_index.emplace(name, rows.size()).second) {
@@ -187,10 +185,12 @@ private:
         }
         // make a second pass to add timers from other threads
         // this does nothing, if all timers are used on thread 0 at least once
-        for (auto& [name, _, thread] : timer_register) {
-            if (thread != 0) {
-                if (row_to_index.emplace(name, rows.size()).second) {
-                    rows.push_back(name);
+        if (is_multithreaded) {
+            for (auto& [name, _, thread] : timer_register) {
+                if (thread != 0) {
+                    if (row_to_index.emplace(name, rows.size()).second) {
+                        rows.push_back(name);
+                    }
                 }
             }
         }
