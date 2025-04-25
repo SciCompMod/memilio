@@ -187,10 +187,10 @@ TEST(TestSingleWell, time_point)
     SingleWell<InfectionState> sw({a1, a2, a3}, {}, 0.1, 0., {});
     auto vec = sw.time_point();
     //Agents are aggregated by their compartment
-    EXPECT_EQ(vec.size(), static_cast<size_t>(InfectionState::Count));
-    EXPECT_EQ(vec[static_cast<size_t>(InfectionState::S)], 1);
-    EXPECT_EQ(vec[static_cast<size_t>(InfectionState::E)], 0);
-    EXPECT_EQ(vec[static_cast<size_t>(InfectionState::I)], 2);
+    EXPECT_EQ(vec.size(), static_cast<int>(InfectionState::Count));
+    EXPECT_NEAR(vec[static_cast<size_t>(InfectionState::S)], 1, 1e-14);
+    EXPECT_NEAR(vec[static_cast<size_t>(InfectionState::E)], 0, 1e-14);
+    EXPECT_NEAR(vec[static_cast<size_t>(InfectionState::I)], 2, 1e-14);
 }
 
 TEST(TestQuadWell, change_well)
