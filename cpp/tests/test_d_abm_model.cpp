@@ -123,11 +123,13 @@ TEST(TestSingleWell, adoptionRate)
     SingleWell<InfectionState>::Agent a2{Eigen::Vector2d{-1.2, 1}, InfectionState::I};
     SingleWell<InfectionState>::Agent a3{Eigen::Vector2d{-1.1, 1}, InfectionState::I};
     //Initialize model without third agent
-    SingleWell<InfectionState> sw({a1, a2}, {{InfectionState::S,
-                                              InfectionState::E,
-                                              mio::regions::Region(0),
-                                              0.1,
-                                              {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
+    SingleWell<InfectionState> sw({a1, a2},
+                                  {{InfectionState::S,
+                                    InfectionState::E,
+                                    mio::regions::Region(0),
+                                    0.1,
+                                    {{InfectionState::C, 1}, {InfectionState::I, 0.5}}},
+                                   {InfectionState::I, InfectionState::R, mio::regions::Region(0), 0.15, {}}});
     //Initialize model with all agents
     SingleWell<InfectionState> sw1({a1, a2, a3}, {{InfectionState::S,
                                                    InfectionState::E,
@@ -136,6 +138,8 @@ TEST(TestSingleWell, adoptionRate)
                                                    {{InfectionState::C, 1}, {InfectionState::I, 0.5}}}});
     //a1 has contact to a2
     EXPECT_EQ(sw.adoption_rate(a1, InfectionState::E), 0.025);
+    //a2 can recover
+    EXPECT_EQ(sw.adoption_rate(a2, InfectionState::R), 0.15);
     //There is no rate from I to E, hence rate for a2 is 0
     EXPECT_EQ(sw.adoption_rate(a2, InfectionState::E), 0.0);
     //a1 now has contact to a2 and a3 (both status I) which increases the rate
