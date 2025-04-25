@@ -19,9 +19,9 @@ option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
-option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
-option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
-option(MEMILIO_ENABLE_LIKWID_MARKER "Build memilio with likwid for performance measuring" OFF)
+option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler." OFF)
+option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
+option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
