@@ -881,12 +881,8 @@ int main(int argc, char* argv[])
     document = reader.readSBML(filename);
 
     if (SBMLDocument_getNumErrors(document) > 0) {
-        if (XMLError_getId(SBMLDocument_getError(d, 0)) == SBML_READ_ERROR_FILE_NOT_FOUND){
-            std::cout << "File not found!" << std::endl;
-            return 1;
-        }
-        if (XMLError_getId(SBMLDocument_getError(d, 0)) == SBML_READ_ERROR_NOT_SBML){
-            std::cout << "File is not a valid SBML file!" << std::endl;
+        if (XMLError_isFatal(SBMLDocument_getError(document, 0)) || XMLError_isError(SBMLDocument_getError(document, 0))) {
+            std::cout << "Fatal error!" << std::endl;
             return 1;
         }
     }
