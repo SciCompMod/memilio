@@ -104,6 +104,10 @@ add_executable(twitter_mobility_example twitter_mobility.cpp)
 target_link_libraries(twitter_mobility_example PRIVATE memilio ode_secir)
 target_compile_options(twitter_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ide_endemic_secir_example ide_endemic_secir.cpp)
+target_link_libraries(ide_endemic_secir_example PRIVATE memilio ide_endemic_secir)
+target_compile_options(ide_endemic_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
 target_compile_options(ide_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

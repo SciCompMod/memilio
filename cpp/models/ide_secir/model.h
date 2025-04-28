@@ -68,7 +68,7 @@ public:
           CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>());
 
     // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
-    /**
+    /**c
     * @brief Checks constraints on model parameters and initial data.
     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
     */
