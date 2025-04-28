@@ -12,7 +12,6 @@
 #include <string>
 #include <vector>
 
-
 /**
 *    @brief Get the filename
 *
@@ -34,7 +33,7 @@ std::string get_filename(const char* filename)
 *
 *    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a folder with the resulting name using `boost::filesystem`.
 **/
-void create_folder(const std::string & filename)
+void create_folder(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     boost::filesystem::path p(lowercase_name);
@@ -50,7 +49,8 @@ void create_folder(const std::string & filename)
 *
 *    This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then re-added to the part and the parts are joined together.
 **/
-std::string format_main_formula(Model * model, char* math_string, std::string * name_namespace){
+std::string format_main_formula(Model* model, char* math_string, std::string* name_namespace)
+{
     std::string return_string = "";
     std::vector<std::string> formula_parts;
     boost::split(formula_parts, math_string, boost::is_any_of(" "), boost::algorithm::token_compress_on);
@@ -155,7 +155,9 @@ std::string format_event_variable(std::string formula, Model* model, std::string
         return_string = "sim.get_model().parameters.get<mio::" + *name_namespace + "::" + formula + "<ScalarType>>()";
     }
     else if (model->getListOfSpecies()->getElementBySId(formula) != NULL) {
-        return_string = "sim.get_result().get_last_value()[sim.get_model().populations.get_flat_index(mio::" + *name_namespace + "::InfectionState::" + formula + ")]";
+        return_string =
+            "sim.get_result().get_last_value()[sim.get_model().populations.get_flat_index(mio::" + *name_namespace +
+            "::InfectionState::" + formula + ")]";
     }
     else if (model->getListOfCompartments()->getElementBySId(formula) != NULL) {
         throw "Unfortunately compartments can not be changed at the moment :(";
@@ -194,10 +196,13 @@ std::string format_event_formulas(std::string formula, Model* model, std::string
         }
 
         if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
-            formula_parts[i] = "sim.get_model().parameters.get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
+            formula_parts[i] =
+                "sim.get_model().parameters.get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
         }
         else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
-            formula_parts[i] = "sim.get_result().get_last_value()[sim.get_model().populations.get_flat_index(mio::" + *name_namespace + "::InfectionState::" + formula_parts[i] + ")]";
+            formula_parts[i] =
+                "sim.get_result().get_last_value()[sim.get_model().populations.get_flat_index(mio::" + *name_namespace +
+                "::InfectionState::" + formula_parts[i] + ")]";
         }
         else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
             double size =
@@ -259,7 +264,8 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
         }
 
         if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
-            formula_parts[i] = "params.template get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
+            formula_parts[i] =
+                "params.template get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
         }
         else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
             return "Error";
@@ -295,24 +301,26 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
 *    This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two values. If that is not the case, it throws an error. Then it expects one of the two noeds to be a time node. The other node has the comparison value and is returned. It is always assumed, but never checked, that we have a positive comparison, i.e. the time is indeed the maximum time.
 *    This function is used to find the maximum time until which an event runs. It is used for the generation of the example.cpp file.
 **/
-std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace){
-    auto trigger_type = trigger->getType();
-    std::vector<ASTNodeType_t> comparisons = {AST_RELATIONAL_GEQ, AST_RELATIONAL_GT, AST_RELATIONAL_LEQ, AST_RELATIONAL_LT};
-    bool is_comparison = false;
-    for (auto i: comparisons){
-        if (i == trigger_type){
+std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace)
+{
+    auto trigger_type                      = trigger->getType();
+    std::vector<ASTNodeType_t> comparisons = {AST_RELATIONAL_GEQ, AST_RELATIONAL_GT, AST_RELATIONAL_LEQ,
+                                              AST_RELATIONAL_LT};
+    bool is_comparison                     = false;
+    for (auto i : comparisons) {
+        if (i == trigger_type) {
             is_comparison = true;
         }
     }
-    if(! is_comparison){
+    if (!is_comparison) {
         return "Error";
     }
-    if(trigger->getNumChildren() > 2){
+    if (trigger->getNumChildren() > 2) {
         return "Error";
     }
-    auto left_child = trigger->getLeftChild();
+    auto left_child  = trigger->getLeftChild();
     auto right_child = trigger->getRightChild();
-    if(left_child->getType() != AST_NAME_TIME && right_child->getType() != AST_NAME_TIME){
+    if (left_child->getType() != AST_NAME_TIME && right_child->getType() != AST_NAME_TIME) {
         return "Error";
     }
     if (left_child->getType() == AST_NAME_TIME) {
@@ -384,7 +392,7 @@ bool create_infection_state(Model* model, const std::string& filename)
 *
 *    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a file with the resulting name using `boost::filesystem`. Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as default value. (This may be overwritten in the example.cpp file.)
 **/
-bool create_parameters(Model* model, const std::string & filename)
+bool create_parameters(Model* model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
@@ -449,7 +457,7 @@ bool create_parameters(Model* model, const std::string & filename)
 *
 *    Creates the generic model.cpp file. The file location is generated using the filename.
 **/
-bool create_model_cpp(const std::string & filename)
+bool create_model_cpp(const std::string& filename)
 {
 
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -772,24 +780,28 @@ bool create_example_cpp(Model* model, const std::string& filename)
     table.pop_back();
 
     //Add initial assignments for Parameters...
-    for (size_t i = 0; i < model->getNumInitialAssignments(); i++){
+    for (size_t i = 0; i < model->getNumInitialAssignments(); i++) {
         auto assignment = model->getListOfInitialAssignments()->get(i);
-        for (size_t j = 0; j < model->getNumParameters(); j++){ 
+        for (size_t j = 0; j < model->getNumParameters(); j++) {
             if (model->getParameter(j)->getIdAttribute() == assignment->getSymbol())
-            example << "params.get<mio::" << lowercase_name << "::" << assignment->getSymbol() << "<ScalarType>>()  = " << format_main_formula(model, SBML_formulaToL3String(assignment->getMath()), &lowercase_name) << ";" << std::endl;
+                example << "params.get<mio::" << lowercase_name << "::" << assignment->getSymbol()
+                        << "<ScalarType>>()  = "
+                        << format_main_formula(model, SBML_formulaToL3String(assignment->getMath()), &lowercase_name)
+                        << ";" << std::endl;
         }
     }
 
     example << "std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = "
                "std::make_shared<mio::EulerIntegratorCore<ScalarType>>();"
             << std::endl;
-    example << "auto sim = mio::Simulation<ScalarType, mio::" << lowercase_name << "::Model<ScalarType>>(model, t0, dt);" << std::endl;
+    example << "auto sim = mio::Simulation<ScalarType, mio::" << lowercase_name
+            << "::Model<ScalarType>>(model, t0, dt);" << std::endl;
     example << "sim.set_integrator(integrator);" << std::endl;
     for (size_t i = 0; i < model->getListOfEvents()->size(); i++) {
-        auto event                 = model->getListOfEvents()->get(i);
-        auto trigger               = event->getTrigger()->getMath();
+        auto event       = model->getListOfEvents()->get(i);
+        auto trigger     = event->getTrigger()->getMath();
         std::string tmax = find_tmax(trigger, model, &lowercase_name);
-        if(tmax == "Error"){
+        if (tmax == "Error") {
             std::cout << "There is an event that I can not implement, I will ignore it." << std::endl;
         }
         else {
@@ -806,7 +818,7 @@ bool create_example_cpp(Model* model, const std::string& filename)
         }
     }
     example << "sim.advance(tmax + 50); \nauto sir = sim.get_result();" << std::endl;
-    
+
     example << "sir.print_table({" << table << "});" << std::endl;
     example << "std::cout << \"\\nnumber total: \" << sir.get_last_value().sum() << \"\\n\";" << std::endl;
 
@@ -881,7 +893,8 @@ int main(int argc, char* argv[])
     document = reader.readSBML(filename);
 
     if (SBMLDocument_getNumErrors(document) > 0) {
-        if (XMLError_isFatal(SBMLDocument_getError(document, 0)) || XMLError_isError(SBMLDocument_getError(document, 0))) {
+        if (XMLError_isFatal(SBMLDocument_getError(document, 0)) ||
+            XMLError_isError(SBMLDocument_getError(document, 0))) {
             std::cout << "Fatal error!" << std::endl;
             return 1;
         }
@@ -926,6 +939,5 @@ int main(int argc, char* argv[])
     }
 
     return format_files(core_filename);
-
 }
 #endif // MEMILIO_HAS_SBML
