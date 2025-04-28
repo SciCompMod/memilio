@@ -1,9 +1,8 @@
 Creating models using SBML
 ===========================
 
-The `SBML <https://sbml.org/>`_ integration into memilio works via the ``sbml2memilio`` executable. 
-Building it requires the installation of `libsbml <https://sbml.org/software/libsbml/>`_ . Then the general build 
-command will produce the executable in the `build/bin`-directory. 
+The `SBML <https://sbml.org/>`_ integration into memilio works via the ``sbml_to_memilio`` executable. 
+Building it requires the installation of `libsbml <https://sbml.org/software/libsbml/>`_ . Then the general build command will produce the executable at ``build/bin/sbml_to_memilio``. 
 
 Building the converter
 ---------------------------------
