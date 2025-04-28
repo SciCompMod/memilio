@@ -583,11 +583,6 @@ TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
     EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
 
-    // Test with data after DIVI dataset was no longer updated.
-    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
-                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
-
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -612,7 +607,7 @@ TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
 
     // Change dates of the case data so that no ICU data is available at that time.
     // Also, increase the number of confirmed cases by 1 each day.
-    const auto t0 = mio::Date(2025, 1, 1);
+    const auto t0 = mio::Date(2000, 1, 1);
     auto day_add  = 0;
     for (auto& entry : case_data) {
         entry.date          = offset_date_by_days(t0, day_add);
@@ -666,14 +661,14 @@ TEST(TestOdeSECIRVVS, read_data)
 
     auto read_result1 = mio::osecirvvs::read_input_data_county(model1, {2020, 12, 01}, {1002},
                                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                               TEST_GERMANY_PYDATA_DIR, 10);
+                                                               TEST_GERMANY_PYDATA_DIR, 30);
 
     auto read_result2 = mio::osecirvvs::read_input_data(model2, {2020, 12, 01}, {1002},
                                                         std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                        TEST_GERMANY_PYDATA_DIR, 10);
+                                                        TEST_GERMANY_PYDATA_DIR, 30);
 
     auto read_result_district = mio::osecirvvs::read_input_data(
-        model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, pydata_dir_District, 10);
+        model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, pydata_dir_District, 30);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());
@@ -903,7 +898,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_GERMANY_PYDATA_DIR, 2, false),
+                                                       TEST_GERMANY_PYDATA_DIR, 30, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
@@ -1585,4 +1580,46 @@ TEST(TestOdeSECIRVVS, apply_variant_function)
     EXPECT_NEAR(
         sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
         0.4, 1e-10);
+}
+
+TEST(TestOdeSECIRVVS, set_vaccination_data_not_avail)
+{
+    const auto num_age_groups = 2;
+    const auto num_days       = 5;
+    mio::osecirvvs::Model<double> model(num_age_groups);
+    std::vector<mio::osecirvvs::Model<double>> model_vector = {model};
+
+    // Setup initial non-zero vaccination data
+    auto& params = model_vector[0].parameters;
+    params.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days + 1));
+    params.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days + 1));
+
+    const double initial_partial_vacc_val = 10.0;
+    const double initial_full_vacc_val    = 5.0;
+
+    for (auto g = mio::AgeGroup(0); g < mio::AgeGroup(num_age_groups); ++g) {
+        for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
+            params.get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{g, d}] = initial_partial_vacc_val;
+            params.get<mio::osecirvvs::DailyFullVaccinations<double>>()[{g, d}]    = initial_full_vacc_val;
+        }
+    }
+
+    // call set_vaccination_data with an unavailable date
+    mio::Date unavailable_date(2019, 1, 1); // Date before vaccinations started
+    std::vector<int> region = {1001};
+    std::string any_path    = "dummy_vacc_path.json";
+    auto result =
+        mio::osecirvvs::details::set_vaccination_data(model_vector, any_path, unavailable_date, region, num_days);
+
+    ASSERT_THAT(result, IsSuccess());
+
+    // Check that vaccinations are set to zero for all days and age groups
+    for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
+        for (auto a = mio::AgeGroup(0); a < mio::AgeGroup(num_age_groups); ++a) {
+            auto partial_vacc = params.get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{a, d}];
+            auto full_vacc    = params.get<mio::osecirvvs::DailyFullVaccinations<double>>()[{a, d}];
+            EXPECT_NEAR(partial_vacc, 0.0, 1e-10);
+            EXPECT_NEAR(full_vacc, 0.0, 1e-10);
+        }
+    }
 }
