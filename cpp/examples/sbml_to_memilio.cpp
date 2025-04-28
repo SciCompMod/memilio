@@ -13,27 +13,27 @@
 #include <vector>
 
 
-/*
-    @brief Get the filename
-
-    @param filename The filename to be processed
-
-    Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input file without file ending. 
-    This function is regularly used to get the namespace used for the generated code.
-*/
+/**
+*    @brief Get the filename
+*
+*    @param filename The filename to be processed
+*
+*    Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input file without file ending. 
+*    This function is regularly used to get the namespace used for the generated code.
+**/
 std::string get_filename(const char* filename)
 {
     boost::filesystem::path p(filename);
     return p.stem().string();
 }
 
-/*
-    @brief Creates a folder with the given name to store the generated model files
-
-    @param filename The name of the folder to be created
-
-    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a folder with the resulting name using `boost::filesystem`.
-*/
+/**
+*    @brief Creates a folder with the given name to store the generated model files
+*
+*    @param filename The name of the folder to be created
+*
+*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a folder with the resulting name using `boost::filesystem`.
+**/
 void create_folder(const std::string & filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -41,15 +41,15 @@ void create_folder(const std::string & filename)
     boost::filesystem::create_directory(p);
 }
 
-/*
-    @brief Formats a formula for the example.cpp file
-
-    @param model The model where the formula stems from
-    @param math_string The formula to be processed, preprocessed as char*
-    @param name_namespace The namespace of the model
-
-    This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then re-added to the part and the parts are joined together.
-*/
+/**
+*    @brief Formats a formula for the example.cpp file
+*
+*    @param model The model where the formula stems from
+*    @param math_string The formula to be processed, preprocessed as char*
+*    @param name_namespace The namespace of the model
+*
+*    This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then re-added to the part and the parts are joined together.
+**/
 std::string format_main_formula(Model * model, char* math_string, std::string * name_namespace){
     std::string return_string = "";
     std::vector<std::string> formula_parts;
@@ -97,22 +97,22 @@ std::string format_main_formula(Model * model, char* math_string, std::string * 
     return boost::algorithm::join(formula_parts, " ");
 }
 
-/*
-    @brief Returns the initial assignment of a species for the example.cpp file
-
-    @param species The species to be processed
-    @param model The model where the species stems from
-    @param name_namespace The namespace of the model
-
-    First it checks whether an initial amount is given for the species. Then it checks the other possibilites for initial assignements:
-    - If an initial concentration is given, it is used
-    - If an initial assignment is given, it is used. This could be
-        - a values
-        - a other parameter
-        - a formula, which would then be parsed using :cpp:func:`format_main_formula(Model * model, char* math_string, std::string * name_namespace)`
-
-    If none of these are given, it returns "NAN", otherwise the identified value.
-*/
+/**
+*    @brief Returns the initial assignment of a species for the example.cpp file
+*
+*    @param species The species to be processed
+*    @param model The model where the species stems from
+*    @param name_namespace The namespace of the model
+*
+*    First it checks whether an initial amount is given for the species. Then it checks the other possibilites for initial assignements:
+*    - If an initial concentration is given, it is used
+*    - If an initial assignment is given, it is used. This could be
+*        - a values
+*        - a other parameter
+*        - a formula, which would then be parsed using :cpp:func:`format_main_formula(Model * model, char* math_string, std::string * name_namespace)`
+*
+*    If none of these are given, it returns "NAN", otherwise the identified value.
+**/
 std::string get_initial_assignment(Species* species, Model* model, std::string* name_namespace)
 {
     double base_value = species->getInitialAmount();
@@ -138,15 +138,15 @@ std::string get_initial_assignment(Species* species, Model* model, std::string* 
     return std::to_string(base_value);
 }
 
-/*
-    @brief Returns the string to change variables inside an event for the example.cpp file
-
-    @param formula The formula to be processed
-    @param model The model where the formula stems from
-    @param name_namespace The namespace of the model
-
-    Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to get the corresponding values, in the last case it throws an error (not supported). 
-*/
+/**
+*    @brief Returns the string to change variables inside an event for the example.cpp file
+*
+*    @param formula The formula to be processed
+*    @param model The model where the formula stems from
+*    @param name_namespace The namespace of the model
+*
+*    Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to get the corresponding values, in the last case it throws an error (not supported). 
+**/
 std::string format_event_variable(std::string formula, Model* model, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -163,15 +163,15 @@ std::string format_event_variable(std::string formula, Model* model, std::string
     return return_string;
 }
 
-/*
-    @brief Formats the formula for an event for use in the example.cpp file
-
-    @param formula The formula to be processed
-    @param model The model where the formula stems from
-    @param name_namespace The namespace of the model
-
-    Goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the part and the parts are joined together.
-*/
+/**
+*    @brief Formats the formula for an event for use in the example.cpp file
+*
+*    @param formula The formula to be processed
+*    @param model The model where the formula stems from
+*    @param name_namespace The namespace of the model
+*
+*    Goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the part and the parts are joined together.
+**/
 std::string format_event_formulas(std::string formula, Model* model, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -220,23 +220,23 @@ std::string format_event_formulas(std::string formula, Model* model, std::string
     return boost::algorithm::join(formula_parts, " ");
 }
 
-/*
-    @brief Formats the trigger formula for an event for use in the example.cpp file
-
-    @param formula The formula to be processed
-    @param model The model where the formula stems from
-    @param name_namespace The namespace of the model
-
-    Goes through the parts of the formula as identified by spaces.
-    - It first strips leading/trailing braces and leading minus sings. 
-    - Then it checks if the part is a parameter, species or compartment. 
-        - If it is a parameter, it is replaced by the corresponding parameter in the model. 
-        - If it is a species, it throws an error. 
-        - If it is a compartment, it is replaced by the size of the compartment. 
-    - If it is pi, it is replaced by M_PI. 
-    - If it is time, it throws an error. 
-    The leading and trailing braces are then re-added to the part and the parts are joined together.
-*/
+/**
+*    @brief Formats the trigger formula for an event for use in the example.cpp file
+*
+*    @param formula The formula to be processed
+*    @param model The model where the formula stems from
+*    @param name_namespace The namespace of the model
+*
+*    Goes through the parts of the formula as identified by spaces.
+*    - It first strips leading/trailing braces and leading minus sings. 
+*    - Then it checks if the part is a parameter, species or compartment. 
+*        - If it is a parameter, it is replaced by the corresponding parameter in the model. 
+*        - If it is a species, it throws an error. 
+*        - If it is a compartment, it is replaced by the size of the compartment. 
+*    - If it is pi, it is replaced by M_PI. 
+*    - If it is time, it throws an error. 
+*    The leading and trailing braces are then re-added to the part and the parts are joined together.
+**/
 std::string format_event_trigger(std::string formula, Model* model, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -285,16 +285,16 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
     return boost::algorithm::join(formula_parts, " ");
 }
 
-/*
-    @brief Returns the maximal time mentioned in a formula
-
-    @param trigger The formula to be processed as ASTNode*
-    @param model The model where the formula stems from
-    @param name_namespace The namespace of the model
-
-    This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two values. If that is not the case, it throws an error. Then it expects one of the two noeds to be a time node. The other node has the comparison value and is returned. It is always assumed, but never checked, that we have a positive comparison, i.e. the time is indeed the maximum time.
-    This function is used to find the maximum time until which an event runs. It is used for the generation of the example.cpp file.
-*/
+/**
+*    @brief Returns the maximal time mentioned in a formula
+*
+*    @param trigger The formula to be processed as ASTNode*
+*    @param model The model where the formula stems from
+*    @param name_namespace The namespace of the model
+*
+*    This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two values. If that is not the case, it throws an error. Then it expects one of the two noeds to be a time node. The other node has the comparison value and is returned. It is always assumed, but never checked, that we have a positive comparison, i.e. the time is indeed the maximum time.
+*    This function is used to find the maximum time until which an event runs. It is used for the generation of the example.cpp file.
+**/
 std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace){
     auto trigger_type = trigger->getType();
     std::vector<ASTNodeType_t> comparisons = {AST_RELATIONAL_GEQ, AST_RELATIONAL_GT, AST_RELATIONAL_LEQ, AST_RELATIONAL_LT};
@@ -324,13 +324,13 @@ std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_na
     return "Error";
 }
 
-/*
-    @brief Checks that a model is suitable, i.e. only uses one compartment
-
-    @param model The model to be checked
-
-    This function checks whether the model has exactly one compartment. If it does not, it returns false. 
-*/
+/**
+*    @brief Checks that a model is suitable, i.e. only uses one compartment
+*
+*    @param model The model to be checked
+*
+*    This function checks whether the model has exactly one compartment. If it does not, it returns false. 
+**/
 bool verify_model_suitability(Model* model)
 {
     if (model->getNumCompartments() != 1) {
@@ -340,14 +340,14 @@ bool verify_model_suitability(Model* model)
     return true;
 }
 
-/*
-    @brief Creates the infection_states.h file
-
-    @param model The model to be processed
-    @param filename The name of the file to be processed
-
-    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a file with the resulting name using `boost::filesystem`. Then it writes the species in the model as infection states to the file.
-*/
+/**
+*    @brief Creates the infection_states.h file
+*
+*    @param model The model to be processed
+*    @param filename The name of the file to be processed
+*
+*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a file with the resulting name using `boost::filesystem`. Then it writes the species in the model as infection states to the file.
+**/
 bool create_infection_state(Model* model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -376,14 +376,14 @@ bool create_infection_state(Model* model, const std::string& filename)
     return true;
 }
 
-/*
-    @brief Creates the parameters.h file
-
-    @param model The model to be processed
-    @param filename The name of the file to be processed
-
-    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a file with the resulting name using `boost::filesystem`. Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as default value. (This may be overwritten in the example.cpp file.)
-*/
+/**
+*    @brief Creates the parameters.h file
+*
+*    @param model The model to be processed
+*    @param filename The name of the file to be processed
+*
+*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates a file with the resulting name using `boost::filesystem`. Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as default value. (This may be overwritten in the example.cpp file.)
+**/
 bool create_parameters(Model* model, const std::string & filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -442,13 +442,13 @@ bool create_parameters(Model* model, const std::string & filename)
     return true;
 }
 
-/*
-    @brief Create the model.cpp file
-
-    @param filename The name of the file to be processed
-
-    Creates the generic model.cpp file. The file location is generated using the filename.
-*/
+/**
+*    @brief Create the model.cpp file
+*
+*    @param filename The name of the file to be processed
+*
+*    Creates the generic model.cpp file. The file location is generated using the filename.
+**/
 bool create_model_cpp(const std::string & filename)
 {
 
@@ -464,20 +464,20 @@ bool create_model_cpp(const std::string & filename)
     return true;
 }
 
-/*
-    @brief Create the model.h file
-
-    @param model The model to be processed
-    @param filename The name of the file to be processed
-
-    Creates the model.h file based on the filename. First some generic input is written to the file. Then the `get_derivatives`-function is generated. It
-    - creates an index variable for every species
-    - creates a lambda function for every function definition in the model to have it at hand
-    - goes through every reaction in the model and generates the corresponding code. This is done in local scopes to make sure local parameters don't cause errors.
-    - checks every rule whether it is a RateRule and generates code for it if it is.
-    
-    In the end it appends a generic serialization function.
-*/
+/**
+*    @brief Create the model.h file
+*
+*    @param model The model to be processed
+*    @param filename The name of the file to be processed
+*
+*    Creates the model.h file based on the filename. First some generic input is written to the file. Then the `get_derivatives`-function is generated. It
+*    - creates an index variable for every species
+*    - creates a lambda function for every function definition in the model to have it at hand
+*    - goes through every reaction in the model and generates the corresponding code. This is done in local scopes to make sure local parameters don't cause errors.
+*    - checks every rule whether it is a RateRule and generates code for it if it is.
+*    
+*    In the end it appends a generic serialization function.
+**/
 bool create_model_h(Model* model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -701,13 +701,13 @@ bool create_model_h(Model* model, const std::string& filename)
     return true;
 }
 
-/*
-    @brief Create the CMakeLists.txt file for the model folder
-
-    @param filename The name of the file to be processed
-
-    Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this program are needed. The file location is generated using the filename and the file is stored in the generated folder.
-*/
+/**
+*    @brief Create the CMakeLists.txt file for the model folder
+*
+*    @param filename The name of the file to be processed
+*
+*    Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this program are needed. The file location is generated using the filename and the file is stored in the generated folder.
+**/
 bool create_cmake(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -728,16 +728,16 @@ bool create_cmake(const std::string& filename)
     return true;
 }
 
-/*
-    @brief Creates the corresponding file to example.cpp
-
-    @param model The model to be processed
-    @param filename The name of the file to be processed
-
-    The filename is based on the given filename. 
-    The file first contains generic input, then the model, it's parameters and specis are initialized. 
-    The model is simulated in steps to add events that are triggered by a specific time. In the end the model is simulated for another 50 days. The results are printed to the console and saved in a file as a table.
-*/
+/**
+*    @brief Creates the corresponding file to example.cpp
+*
+*    @param model The model to be processed
+*    @param filename The name of the file to be processed
+*
+*    The filename is based on the given filename. 
+*    The file first contains generic input, then the model, it's parameters and specis are initialized. 
+*    The model is simulated in steps to add events that are triggered by a specific time. In the end the model is simulated for another 50 days. The results are printed to the console and saved in a file as a table.
+**/
 bool create_example_cpp(Model* model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -822,13 +822,13 @@ bool create_example_cpp(Model* model, const std::string& filename)
     return true;
 }
 
-/*
-    @brief Create the additional lines for the CmakeLists.txt file
-
-    @param filename The name of the file to be processed
-
-    Extracts the filename using :cpp:func:`get_filename(const char* filename)`. Then it writes the generic compilation commands to a file called "CMakeListsAddition.txt" that is stored in the current working directory.
-*/
+/**
+*    @brief Create the additional lines for the CmakeLists.txt file
+*
+*    @param filename The name of the file to be processed
+*
+*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`. Then it writes the generic compilation commands to a file called "CMakeListsAddition.txt" that is stored in the current working directory.
+**/
 bool modify_cmakelists(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -846,28 +846,28 @@ bool modify_cmakelists(const std::string& filename)
     return true;
 }
 
-/* 
-    @brief Calls clang-format to format the generated files
-
-    @param filename The name of the file to be processed
-
-    Calls clang-format using the `system` command. The command is generated using the filename.
-*/
+/** 
+*    @brief Calls clang-format to format the generated files
+*
+*    @param filename The name of the file to be processed
+*
+*    Calls clang-format using the `system` command. The command is generated using the filename.
+**/
 int format_files(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string command =
-        std::string("clang-format -i --files= ") + lowercase_name + ".cpp " + lowercase_name + "/*.[hc]*";
+        std::string("clang-format -i --files= ") + lowercase_name + ".cpp " + lowercase_name + "/**.[hc]*";
     return system(command.c_str());
 }
 
-/* 
-    @brief Runs the program
-    @param argc The number of command line arguments
-    @param argv The command line arguments, here the name of the file that should be processed
-
-    This function expects exaclty one parameter which should be the path to the file that should be processed. If more or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file as a SBML file and generates the MEmilio code for it.
-*/
+/** 
+*    @brief Runs the program
+*    @param argc The number of command line arguments
+*    @param argv The command line arguments, here the name of the file that should be processed
+*
+*    This function expects exaclty one parameter which should be the path to the file that should be processed. If more or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file as a SBML file and generates the MEmilio code for it.
+**/
 int main(int argc, char* argv[])
 {
     if (argc != 2) {
