@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 """
-@file modifyDataframeSeries.py
-@brief Tools for modifying data frame series like imputing zeros for unknown dates,
+:strong:`modifyDataframeSeries.py`
+Tools for modifying data frame series like imputing zeros for unknown dates,
     copying previous values, and/or computing moving averages
 """
 import itertools
@@ -38,19 +38,20 @@ pd.options.mode.copy_on_write = True
 def impute_and_reduce_df(
         df_old, group_by_cols, mod_cols, impute='forward', moving_average=0,
         min_date='', max_date='', start_w_firstval=False):
-    """! Impute missing dates of dataframe time series and optionally calculates a moving average of the data.
+    """ Impute missing dates of dataframe time series and optionally calculates a moving average of the data.
     Extracts Dates between min and max date.
 
-    @param df_old old pandas dataframe
-    @param group_by_cols Column names for grouping by and items of particular group specification (e.g., for region: list of county or federal state IDs)
-    @param mod_cols List of columns for which the imputation and/or moving average is conducted (e.g., Confirmed or ICU)
-    @param impute [Default: 'forward'] imputes either based on older values ('forward') or zeros ('zeros')
-    @param moving_average [Default: 0, no averaging] Number of days over which to compute the moving average
-    @param min_date [Default: '', taken from df_old] If set, minimum date to be set in new data frame for all items in group_by
-    @param max_date [Default: '', taken from df_old] If set, maximum date to be set in new data frame for all items in group_by
-    @param start_w_firstval: [Default: False] If True and min_date < first date in dataframe, then between min_date and first date, the value
+    :param df_old: old pandas dataframe
+    :param group_by_cols: Column names for grouping by and items of particular group specification (e.g., for region: list of county or federal state IDs)
+    :param mod_cols: List of columns for which the imputation and/or moving average is conducted (e.g., Confirmed or ICU)
+    :param impute: Default: 'forward'] imputes either based on older values ('forward') or zeros ('zeros')
+    :param moving_average: Default: 0, no averaging] Number of days over which to compute the moving average
+    :param min_date: Default: '', taken from df_old] If set, minimum date to be set in new data frame for all items in group_by
+    :param max_date: Default: '', taken from df_old] If set, maximum date to be set in new data frame for all items in group_by
+    :param start_w_firstval: Default: False] If True and min_date < first date in dataframe, then between min_date and first date, the value
         of the first date will be repeated backwards. If False, then zero is set there.
-    @return dataframe with imputed dates (and moving average if requested)
+    :returns: dataframe with imputed dates (and moving average if requested)
+
     """
     # derive date from time
     try:
@@ -211,16 +212,17 @@ def impute_and_reduce_df(
 def split_column_based_on_values(
         df_to_split, column_to_split, column_vals_name, groupby_list,
         column_identifiers_to_names_dict, compute_cumsum):
-    """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
+    """ Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
     all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
-    @param df_to_split global pandas dataframe
-    @param column_to_split identifier of the column for which separate values will define separate dataframes
-    @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
-    @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
-    @param column_identifiers_to_names_dict Dict for new labels of resulting columns.
-    @param compute_cumsum Computes cumulative sum in new generated columns
-    @return a dataframe with the new splitted columns
+    :param df_to_split: global pandas dataframe
+    :param column_to_split: identifier of the column for which separate values will define separate dataframes
+    :param column_vals_name: The name of the original column which will be split into separate columns named according to new_column_labels.
+    :param groupby_list: The name of the original columns with which data of new_column_labels can be joined.
+    :param column_identifiers_to_names_dict: Dict for new labels of resulting columns.
+    :param compute_cumsum: Computes cumulative sum in new generated columns
+    :returns: a dataframe with the new splitted columns
+
     """
     column_identifiers = sorted(df_to_split[column_to_split].unique())
     new_column_labels = []
@@ -263,16 +265,16 @@ def split_column_based_on_values(
 
 
 def extract_subframe_based_on_dates(df, start_date, end_date):
-    """! Removes all data with date lower than start date or higher than end date.
+    """ Removes all data with date lower than start date or higher than end date.
 
     Returns the Dataframe with only dates between start date and end date.
     Resets the Index of the Dataframe.
 
-    @param df The dataframe which has to be edited
-    @param start_date Date of first date in dataframe
-    @param end_date Date of last date in dataframe
+    :param df: The dataframe which has to be edited
+    :param start_date: Date of first date in dataframe
+    :param end_date: Date of last date in dataframe
+    :returns: a dataframe with the extracted dates
 
-    @return a dataframe with the extracted dates
     """
 
     upperdate = datetime.strftime(end_date, '%Y-%m-%d')
@@ -289,17 +291,19 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
 
 
 def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='object'):
-    """! Adds a column to a given dataframe based on a mapping of values of a given column
+    """ Adds a column to a given dataframe based on a mapping of values of a given column
 
     The mapping is defined by a list containing tupels of the form (new_value, old_value)
     where old_value is a value in the col_to_map and new_value the value
     that is added in the new column if col_to_map contains the old_value.
-    @param df dataframe to modify
-    @param col_to_map column containing values to be mapped
-    @param new_col_name name of the new column containing the mapped values
-    @param map List of tuples of values in the column to be added and values in the given column
-    @param new_col_dtype String of dtype [Default: 'object'] for the new generated column
-    @return dataframe df with column of state names correspomding to state ids
+
+    :param df: dataframe to modify
+    :param col_to_map: column containing values to be mapped
+    :param new_col_name: name of the new column containing the mapped values
+    :param map: List of tuples of values in the column to be added and values in the given column
+    :param new_col_dtype: String of dtype [Default: 'object'] for the new generated column
+    :returns: dataframe df with column of state names correspomding to state ids
+
     """
     df_new = df[:]
     loc_new_col = df_new.columns.get_loc(col_to_map)+1
@@ -315,11 +319,11 @@ def insert_column_by_map(df, col_to_map, new_col_name, map, new_col_dtype='objec
 
 
 def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
-    """! Creates a mapping from given intervals to new desired intervals
+    """ Creates a mapping from given intervals to new desired intervals
 
-    @param from_lower_bounds lower bounds of original intervals
-    @param to_lower_bounds desired lower bounds of new intervals
-    @return mapping from intervals to intervals
+    :param from_lower_bounds: lower bounds of original intervals
+    :param to_lower_bounds: desired lower bounds of new intervals
+    :returns: mapping from intervals to intervals
         The mapping is given as a list of tupels for every original interval.
         The list contains a tuple for every new interval intersecting the
         original interval. Each tuple defines the share of the original interval
@@ -333,6 +337,7 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
          [[3/5,2], [2/5,3]],
          [[1,3]],
          [[1,3]]]
+
     """
     if (from_lower_bounds[0] != to_lower_bounds[0] or
             from_lower_bounds[-1] != to_lower_bounds[-1]):
@@ -384,7 +389,7 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
 def fit_age_group_intervals(
         df_age_in, age_out, df_population=None, max_age=100):
-    """! Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y".
+    """ Creates a mapping from given intervals to new desired intervals. Provide all intervals as "x-y".
          Boundary age groups can be provided with "<x" or ">y". Minimum and maximum are then taken as 0 and 99, respectively.
         Example:
         If df_population is set, we can use this data set to best interpolate
@@ -403,10 +408,11 @@ def fit_age_group_intervals(
         The output is:
         ["1-5": 3.2, "6-10": 0.8, "11-50": 8., "51:99": 10.]
 
-    @param df_age_in Dataframe with columns of different age intervals and one row for subpopulation sizes for an arbitrary feature.
-    @param age_out Desired age group distribution in list of strings. 
-    @param df_population Total population data of the same structure as df_age_in used to inter- or extrapolate date of @df_age_in.
-    @return Subpopulations of @df_age_in inter- or extrapolated to age stratification as required by @age_out.
+    :param df_age_in: Dataframe with columns of different age intervals and one row for subpopulation sizes for an arbitrary feature.
+    :param age_out: Desired age group distribution in list of strings.
+    :param df_population: Total population data of the same structure as df_age_in used to inter- or extrapolate date of @df_age_in. (Default value = None)
+    :param max_age:  (Default value = 100)
+    :returns: Subpopulations of @df_age_in inter- or extrapolated to age stratification as required by @age_out.
 
     """
     # First check if the input is valid.

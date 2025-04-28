@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Patrick Lenz, Annette Lutz
 #
@@ -30,6 +30,7 @@ from memilio.epidata import getDIVIData as gdd
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
+    """ """
 
     maxDiff = None
 
@@ -47,10 +48,16 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
          'strings': ['one', 'two']})
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def gdd_calls(self, text=''):
-        directory = os.path.join(self.path, 'Germany/')
+        """
+
+        :param text:  (Default value = '')
+
+        """
+        directory = os.path.join(self.path, 'Germany', 'pydata/')
         gdd_calls = [
             call('Info: Data has been written to ' +
                  os.path.join(directory, 'FullData_DIVI.json')),
@@ -68,6 +75,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_get_divi_data_prints(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test
         # case with start_date before 2020-04-24
         gdd.get_divi_data(out_folder=self.path, start_date=date(
@@ -84,6 +98,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_get_divi_data(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test
         # test case with standard parameters
         datasets = gdd.get_divi_data(out_folder=self.path)
@@ -124,6 +145,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_gdd_ma(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test
         # test case with moving average
         datasets = gdd.get_divi_data(out_folder=self.path, moving_average=3)
@@ -164,6 +192,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.gd.get_file')
     @patch('builtins.print')
     def test_gdd_all_dates(self, mock_print, mock_file, mock_san):
+        """
+
+        :param mock_print: 
+        :param mock_file: 
+        :param mock_san: 
+
+        """
         mock_file.return_value = self.df_test.copy()
         # test case with impute dates is True
         datasets = gdd.get_divi_data(out_folder=self.path,  impute_dates=True)
@@ -204,6 +239,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDataIntoPandasDataFrame.get_file',
            return_value=df_test_error)
     def test_divi_data_sanity_checks(self, mock_file):
+        """
+
+        :param mock_file: 
+
+        """
 
         # first test
         # get random dataframe

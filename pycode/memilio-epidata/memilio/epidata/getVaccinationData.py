@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn, Wadim Koslow
 #
@@ -39,6 +39,14 @@ pd.options.mode.copy_on_write = True
 
 
 def download_vaccination_data(read_data, filename, directory, interactive):
+    """
+
+    :param read_data: 
+    :param filename: 
+    :param directory: 
+    :param interactive: 
+
+    """
     url = "https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Deutschland_Landkreise_COVID-19-Impfungen.csv"
     path = os.path.join(directory + filename + ".json")
     df_data = gd.get_file(path, url, read_data, param_dict={'dtype': {
@@ -49,6 +57,11 @@ def download_vaccination_data(read_data, filename, directory, interactive):
 
 
 def sanity_checks(df):
+    """
+
+    :param df: 
+
+    """
     # test if dataframe is empty
     if df.empty:
         raise gd.DataError(
@@ -71,17 +84,18 @@ def sanity_checks(df):
 def compute_vaccination_ratios(
         age_group_list, vaccinations_table, vacc_column, region_column,
         population, merge_2022=True):
-    """! Computes vaccination ratios based on the number of vaccinations
+    """ Computes vaccination ratios based on the number of vaccinations
     and the corresponding population data
 
-    @param age_group_list List of age groups considered.
-    @param vaccinations_table Table of vaccinations (possible multiple columns
+    :param age_group_list: List of age groups considered.
+    :param vaccinations_table: Table of vaccinations (possible multiple columns
         for different number of doses)
-    @param vacc_column Column name of vaccinations_table to be considered.
-    @param region_column Column of regions in vaccinations table, e.g., ID_County or ID_State.
-    @param population Table of population data for the given regions and considered age groups.
-    @param merge_2022 [Default: False] Defines whether population data has to be merged to counties as of 2022.
-    @return All vaccination ratios per region and age group.
+    :param vacc_column: Column name of vaccinations_table to be considered.
+    :param region_column: Column of regions in vaccinations table, e.g., ID_County or ID_State.
+    :param population: Table of population data for the given regions and considered age groups.
+    :param merge_2022: Default: False] Defines whether population data has to be merged to counties as of 2022.
+    :returns: All vaccination ratios per region and age group.
+
     """
     # create new data frame and reshape it
     df_vacc_ratios = pd.DataFrame(columns=[region_column] + age_group_list)
@@ -103,17 +117,18 @@ def compute_vaccination_ratios(
 
 def sanitizing_average_regions(
         df, to_county_map, age_groups, column_names, age_population):
-    """! Vaccinations in all regions are split up per population of its counties.
+    """ Vaccinations in all regions are split up per population of its counties.
     This is done by summing up all vaccinations in this region and divide this by the population ratios.
     This is done for every age group and number of vaccination seperately.
     A new dataframme is created where the new data is stored.
 
-    @param df DataFrame with Data to compute.
-    @param to_county_map dict with regions as keys and countyIDs as values.
-    @param age_groups list of all age groups as in df.
-    @param column_names list of columns to compute.
-    @param age_population Dataframe with number of population per age group and county.
-    @return New DataFrame with sanitized data.
+    :param df: DataFrame with Data to compute.
+    :param to_county_map: dict with regions as keys and countyIDs as values.
+    :param age_groups: list of all age groups as in df.
+    :param column_names: list of columns to compute.
+    :param age_population: Dataframe with number of population per age group and county.
+    :returns: New DataFrame with sanitized data.
+
     """
 
     # create list of DataFrames, later to be merged
@@ -155,19 +170,20 @@ def sanitizing_average_regions(
 
 def sanitizing_extrapolation_mobility(
         df, age_groups, column_names, age_population, neighbors_mobility):
-    """! ATTENTION: DO NOT USE! ONLY FOR BACKWARD STABILITY AND DEVELOPMENT PURPOSES.
+    """ ATTENTION: DO NOT USE! ONLY FOR BACKWARD STABILITY AND DEVELOPMENT PURPOSES.
     Distributes vaccinations of a county to connected counties if a lot more vaccinations than the federal state average were reported at the newest date.
     Thus for different max dates data for a specific date can be different.
     The average vaccination ratio per age group is only computed for completed vaccinations.
     The average vaccination ratios for partially and refreshed vaccinations are not computed. Those vaccinations are also distributed by the ratios of completed vaccinations.
     Since the distribution is done for one county after another a different order of counties may result in different data.
 
-    @param df DataFrame with Data to compute.
-    @param age_groups list of all age groups as in df.
-    @param column_names list of columns to compute.
-    @param age_population Dataframe with number of population per age group and county.
-    @param neighbors_mobility dict with counties as keys and commuter mobility to other counties as values.
-    @return New DataFrame with sanitized data.
+    :param df: DataFrame with Data to compute.
+    :param age_groups: list of all age groups as in df.
+    :param column_names: list of columns to compute.
+    :param age_population: Dataframe with number of population per age group and county.
+    :param neighbors_mobility: dict with counties as keys and commuter mobility to other counties as values.
+    :returns: New DataFrame with sanitized data.
+
     """
     max_sanit_threshold_arr = np.zeros(len(age_groups))
 
@@ -383,21 +399,22 @@ def extrapolate_age_groups_vaccinations(
         df_data, population_all_ages, unique_age_groups_old,
         unique_age_groups_new, column_names, age_old_to_all_ages_indices,
         min_all_ages, all_ages_to_age_new_share):
-    """! Original age groups (05-11, 12-17, 18-59, 60+) are replaced by infection data age groups
+    """ Original age groups (05-11, 12-17, 18-59, 60+) are replaced by infection data age groups
     (0-4, 5-14, 15-34, 35-59, 60-79, 80+). For every county the vacinations of old age groups are split to infection
     data age groups by its population ratio.
     For every age group and county a new dataframe is created. After the extrapolation all subframes are merged together.
 
-    @param age_old_to_all_ages_indices List. List of original ages
-    @param df_data DataFrame with Data to compute.
-    @param population_all_ages Dataframe with number of population for every age group and county.
-    @param unique_age_groups_old List of original age groups.
-    @param unique_age_groups_new List of infection data age groups.
-    @param column_names List of columns to compute.
-    @param age_old_to_age_new_indices Defines in which new age group data from old age group is stored.
-    @param min_all_ages List of lower age from all age groups
-    @param all_ages_to_age_new_share Age groups indices of all age groups in every new age group
-    @return New DataFrame with new age groups.
+    :param age_old_to_all_ages_indices: List. List of original ages
+    :param df_data: DataFrame with Data to compute.
+    :param population_all_ages: Dataframe with number of population for every age group and county.
+    :param unique_age_groups_old: List of original age groups.
+    :param unique_age_groups_new: List of infection data age groups.
+    :param column_names: List of columns to compute.
+    :param age_old_to_age_new_indices: Defines in which new age group data from old age group is stored.
+    :param min_all_ages: List of lower age from all age groups
+    :param all_ages_to_age_new_share: Age groups indices of all age groups in every new age group
+    :returns: New DataFrame with new age groups.
+
     """
 
     # create list of dataframes, later to be merged
@@ -473,17 +490,19 @@ def fetch_vaccination_data(
         directory: str,
         read_data: str = dd.defaultDict['read_data'],
 ) -> pd.DataFrame:
-    """ Downloads or reads the vaccination data and writes the RKIVaccFull dataset
+    """Downloads or reads the vaccination data and writes the RKIVaccFull dataset
 
-    @param directory: str
+    :param directory: str
         Path to the output directory
-    @param filename: str
+    :param filename: str
         Name of the full dataset filename
-    @param conf_obj
-        configuration object
-    @param read_data bool True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    :param conf_obj: configuration object
+    :param read_data: bool True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
+    :param filename: str: 
+    :param directory: str: 
+    :param read_data: str:  (Default value = dd.defaultDict['read_data'])
+    :returns: pd.DataFrame fetched vaccination data
 
-    @return pd.DataFrame fetched vaccination data
     """
     out_folder = conf_obj.path_to_use
     no_raw = conf_obj.no_raw
@@ -508,22 +527,21 @@ def process_vaccination_data(
         moving_average: int = dd.defaultDict['moving_average'],
         sanitize_data: int = dd.defaultDict['sanitize_data']
 ) -> dict:
-    """! Processes downloaded raw data
+    """ Processes downloaded raw data
     While working with the data
     - the column names are changed to English depending on defaultDict
     - The column "Date" provides information on the date of each data point given in the corresponding columns.
 
-    @param df_data pd.DataFrame a Dataframe containing processed vaccination data
-    @param directory: str
+    :param df_data: pd.DataFrame a Dataframe containing processed vaccination data
+    :param directory: str
         Path to the output directory
-    @param conf_obj
-        configuration object
-    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param moving_average int. Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param sanitize_data int. Value in {0,1,2,3}; Default: 1. For many counties,
+    :param conf_obj: configuration object
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['start_date'])
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :param sanitize_data: int. Value in {0,1,2,3}; Default: 1. For many counties,
         vaccination data is not correctly attributed to home locations of
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is corrected.
         0: No sanitizing applied.
@@ -535,9 +553,9 @@ def process_vaccination_data(
         closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
-        state level.
+        state level. Default defined in defaultDict. (Default value = dd.defaultDict['sanitize_data'])
+    :returns: tuple and DataFrame
 
-    @return tuple and DataFrame
     """
     out_folder = conf_obj.path_to_use
     no_raw = conf_obj.no_raw
@@ -880,7 +898,7 @@ def write_vaccination_data(dict_data: dict,
                            impute_dates: bool = True,
                            moving_average: int = dd.defaultDict['moving_average'],
                            ) -> None or Tuple:
-    """! Writes the vaccination data
+    """ Writes the vaccination data
     The data is exported in three different ways:
         - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
         - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
@@ -894,7 +912,8 @@ def write_vaccination_data(dict_data: dict,
     - Start and end dates can be provided to define the length of the returned data frames.
     Parameters
     ----------
-    @param dict_data dict. Contains various datasets or values
+
+    :param dict_data: dict. Contains various datasets or values
         - df_data_agevacc_county_cs: pd.DataFrame a Dataframe containing processed vaccination data
         - vacc_column_names
         - unique_age_groups_old
@@ -906,24 +925,14 @@ def write_vaccination_data(dict_data: dict,
         - min_all_ages
         - all_ages_to_age_new_share
         - population_new_ages
-
-    @param directory: str
+    :param directory: str
         Path to the output directory
-    @param conf_obj
-        configuration object
-    @param file_format: str. File format which is used for writing the data. Default defined in defaultDict.
-    @param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
-        sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties, vaccination data is not correctly attributed to home locations of
-        vaccinated persons. If 'sanitize_data' is set to larger 0, this is corrected.
-        0: No sanitizing applied.
-        1: Averaging ratios over federal states.
-        2: Averaging ratios over intermediate regions.
-        3: All counties with vaccination quotas of more than 'sanitizing_threshold' will be adjusted to the average of its
-        federal state and remaining vaccinations will be distributed to closely connected neighboring regions using commuter mobility networks.
-        The sanitizing threshold will be defined by the age group-specific average on the corresponding vaccination ratios on county and federal
-        state level.
-    @return: none
+    :param conf_obj: configuration object
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param impute_dates: bool. True or False. Defines if values for dates without new information are imputed. (Default value = True)
+    :param moving_average: int. Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :returns: none
+
     """
 
     df_data_agevacc_county_cs = dict_data["df_data_agevacc_county_cs"]
@@ -1177,10 +1186,10 @@ def get_vaccination_data(
         impute_dates: bool = True,
         **kwargs
 ):
-    """! Downloads the RKI vaccination data and provides different kind of structured data.
+    """ Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
-    The file is read in or stored at the folder "out_folder"/Germany/.
+    The file is read in or stored at the folder "out_folder"/Germany/pydata.
     To store and change the data we use pandas.
 
     While working with the data
@@ -1199,15 +1208,15 @@ def get_vaccination_data(
 
     - Start and end dates can be provided to define the length of the returned data frames.
 
-    @param read_data [Currently not used] True or False. Defines if data is read from file or downloaded.
-        Here Data is always downloaded from the internet.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties,
+    :param read_data: Currently not used] True or False. Defines if data is read from file or downloaded.
+        Here Data is always downloaded from the internet. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Date of first date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['start_date'])
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :param sanitize_data: Value in {0,1,2,3}; Default: 1. For many counties,
         vaccination data is not correctly attributed to home locations of
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
         corrected.
@@ -1220,19 +1229,17 @@ def get_vaccination_data(
         closely connected neighboring regions using commuter mobility networks.
         The sanitizing threshold will be defined by the age group-specific
         average on the corresponding vaccination ratios on county and federal
-        state level.
-    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
+        state level. 
+        Default defined in defaultDict. (Default value = dd.defaultDict['sanitize_data'])
+    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. (Default value = True)
+    :param **kwargs: 
+    :returns: None
 
-    @return None
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     filename = "RKIVaccFull"
@@ -1264,7 +1271,7 @@ def get_vaccination_data(
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("vaccination")
     get_vaccination_data(**arg_dict)

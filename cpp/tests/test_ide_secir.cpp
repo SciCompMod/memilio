@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke, Anna Wendler
 *
@@ -347,8 +347,8 @@ TEST(IdeSecir, checkInitializations)
                               mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model2.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model2.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
-    model2.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+    model2.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 5000;
+    model2.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Carry out simulation.
     mio::isecir::Simulation sim2(model2, dt);
@@ -363,8 +363,8 @@ TEST(IdeSecir, checkInitializations)
                               mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model3.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
-    model3.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
+    model3.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model3.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 1000;
 
     // Carry out simulation.
     mio::isecir::Simulation sim3(model3, dt);
@@ -394,8 +394,8 @@ TEST(IdeSecir, checkInitializations)
                               mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model5.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
-    model5.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+    model5.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model5.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Carry out simulation.
     mio::isecir::Simulation sim5(model5, dt);
@@ -412,8 +412,8 @@ TEST(IdeSecir, checkInitializations)
                               mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 0.));
 
     model6.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-    model6.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
-    model6.m_populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
+    model6.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Susceptible] = 0;
+    model6.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered]   = 0;
 
     // Carry out simulation.
     mio::isecir::Simulation sim6(model6, dt);
@@ -437,7 +437,7 @@ TEST(IdeSecir, testModelConstraints)
     // Set wrong initial data and use check_constraints().
     // Follow the same order as in check_constraints().
 
-    // --- Test with wrong size of the initial value vector for the flows.
+    // --- Test with wrong size of the initial value vector for the transitions.
     size_t num_agegroups = 1;
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> N =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
@@ -474,12 +474,13 @@ TEST(IdeSecir, testModelConstraints)
     while (init.get_last_time() < 0) {
         init.add_time_point(init.get_last_time() + dt, vec_init);
     }
+
     deaths[mio::AgeGroup(0)] = -10;
 
     // Initialize a model.
     mio::isecir::Model model_negative_deaths(std::move(init), N, deaths, num_agegroups);
 
-    // Return true for negative entry in m_populations.
+    // Return true for negative entry in populations.
     constraint_check = model_negative_deaths.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
@@ -525,14 +526,14 @@ TEST(IdeSecir, testModelConstraints)
     // Create TimeSeries with num_transitions elements.
     mio::TimeSeries<ScalarType> init_different_last_time(num_transitions);
     // Add enough time points for initialization of transitions but with different last time point
-    // than before so that it does not match last time point of m_populations (that was set in
+    // than before so that it does not match last time point of populations (that was set in
     // when constructing model above).
     init_different_last_time.add_time_point(-4, vec_init);
     while (init_different_last_time.get_last_time() < 1) {
         init_different_last_time.add_time_point(init_different_last_time.get_last_time() + dt, vec_init);
     }
 
-    model.m_transitions = init_different_last_time;
+    model.transitions = init_different_last_time;
 
     // Return true for not last time points of compartments and transitions not matching.
     constraint_check = model.check_constraints(dt);
@@ -548,19 +549,44 @@ TEST(IdeSecir, testModelConstraints)
         populations_many_timepoints.add_time_point(populations_many_timepoints.get_last_time() + dt, vec_populations);
     }
 
-    model.m_populations = populations_many_timepoints;
+    model.populations = populations_many_timepoints;
 
     // Return true for too many time points given for populations.
     constraint_check = model.check_constraints(dt);
     EXPECT_TRUE(constraint_check);
 
-    // --- Correct wrong setup so that next check can go through.
+    // --- Test with wrong size of total_confirmed_cases.
     // Create TimeSeries with num_compartments elements.
     mio::TimeSeries<ScalarType> correct_populations(num_compartments);
     // Add one time point.
     correct_populations.add_time_point(1, vec_populations);
 
-    model.m_populations = correct_populations;
+    model.populations = correct_populations;
+
+    // Create total_confirmed_cases with wrong size regarding the number of age groups.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases_wrong_size =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups + 1), 100.);
+
+    model.total_confirmed_cases = total_confirmed_cases_wrong_size;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Test with negative value in total_confirmed_cases.
+    // Create total_confirmed_cases with wrong size regarding the number of age groups.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases_negative =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), -100.);
+
+    model.total_confirmed_cases = total_confirmed_cases_negative;
+
+    constraint_check = model.check_constraints(dt);
+    EXPECT_TRUE(constraint_check);
+
+    // --- Correct wrong setup so that next check can go through.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> correct_total_confirmed_cases =
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 100.);
+
+    model.total_confirmed_cases = correct_total_confirmed_cases;
 
     constraint_check = model.check_constraints(dt);
     EXPECT_FALSE(constraint_check);

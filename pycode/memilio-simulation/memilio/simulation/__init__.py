@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Daniel Abele
 #
@@ -26,7 +26,7 @@ from memilio.simulation._simulation import *
 
 
 def __getattr__(attr):
-    """! The __getattr__ function is used here to implement lazy loading for the submodules within the memilio.simulation package. 
+    """ The __getattr__ function is used here to implement lazy loading for the submodules within the memilio.simulation package. 
     Submodules are only imported when they are first accessed, which can save memory and reduce startup time, if not all submodules 
     are needed for every execution.
     """

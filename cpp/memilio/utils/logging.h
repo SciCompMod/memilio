@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin Siggel
 *
@@ -99,6 +99,12 @@ inline void log_info(spdlog::string_view_t fmt, const Args&... args)
 
 template <typename... Args>
 inline void log_error(spdlog::string_view_t fmt, const Args&... args)
+{
+    spdlog::default_logger_raw()->error(fmt, args...);
+}
+
+template <typename... Args>
+inline void log_critical(spdlog::string_view_t fmt, const Args&... args)
 {
     spdlog::default_logger_raw()->error(fmt, args...);
 }

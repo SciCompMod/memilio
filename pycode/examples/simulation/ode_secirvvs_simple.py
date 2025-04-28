@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn, Maximilian Betz
 #
@@ -31,9 +31,11 @@ from memilio.simulation.osecirvvs import Model, simulate
 
 
 def run_ode_secirvvs_simulation(show_plot=True):
-    """
-    Runs the c++ ODE SECIRVVS model using a single age group 
+    """Runs the c++ ODE SECIRVVS model using a single age group
     and plots the results
+
+    :param show_plot:  (Default value = True)
+
     """
 
     t0 = 0

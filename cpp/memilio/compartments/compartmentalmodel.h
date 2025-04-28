@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
 *
@@ -95,7 +95,7 @@ public:
     virtual ~CompartmentalModel()                            = default;
 
     // REMARK: Not pure virtual for easier java/python bindings.
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>>, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
                                  FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*dydt*/) const {};
 
     /**

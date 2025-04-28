@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Agatha Schmidt, Henrik Zunker
 #
@@ -32,15 +32,17 @@ from memilio.surrogatemodel.ode_secir_simple import network_architectures
 def plot_compartment_prediction_model(
         inputs, labels, model=None, plot_compartment='InfectedSymptoms',
         max_subplots=8):
-    """! Plot prediction of the model and label for one compartment.
+    """ Plot prediction of the model and label for one compartment.
 
-    If model is none, we just plot the inputs and labels for the selected compartment without any predictions.  
+    If model is none, we just plot the inputs and labels for the selected compartment without any predictions.
 
-    @param inputs test inputs for model prediction. 
-    @param labels test labels. 
-    @param model trained model. 
-    @param plot_col string name of compartment to be plotted. 
-    @param max_subplots Number of the simulation runs to be plotted and compared against. 
+    :param inputs: test inputs for model prediction.
+    :param labels: test labels.
+    :param model: trained model. (Default value = None)
+    :param plot_col: string name of compartment to be plotted.
+    :param max_subplots: Number of the simulation runs to be plotted and compared against. (Default value = 8)
+    :param plot_compartment:  (Default value = 'InfectedSymptoms')
+
     """
 
     input_width = inputs.shape[1]
@@ -87,12 +89,13 @@ def plot_compartment_prediction_model(
 
 
 def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
-    """! Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
+    """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
-    @param path path of the dataset. 
-    @param model Keras sequential model.
-    @param max_epochs int maximum number of epochs in training. 
-    @param early_stop Integer that forces an early stop of training if the given number of epochs does not give a significant reduction of validation loss. 
+    :param path: path of the dataset.
+    :param model: Keras sequential model.
+    :param max_epochs: int maximum number of epochs in training. (Default value = 30)
+    :param early_stop: Integer that forces an early stop of training if the given number of epochs does not give a significant reduction of validation loss. (Default value = 500)
+    :param plot:  (Default value = True)
 
     """
 
@@ -135,9 +138,9 @@ def network_fit(path, model, max_epochs=30, early_stop=500, plot=True):
 
 
 def plot_losses(history):
-    """! Plots the losses of the model training.  
+    """ Plots the losses of the model training.
 
-    @param history model training history. 
+    :param history: model training history.
 
     """
     plt.plot(history.history['loss'])
@@ -153,11 +156,11 @@ def plot_losses(history):
 
 
 def get_test_statistic(test_inputs, test_labels, model):
-    """! Calculates the mean absolute percentage error based on the test dataset.   
+    """ Calculates the mean absolute percentage error based on the test dataset.
 
-    @param test_inputs inputs from test data.
-    @param test_labels labels (output) from test data.
-    @param model trained model. 
+    :param test_inputs: inputs from test data.
+    :param test_labels: labels (output) from test data.
+    :param model: trained model.
 
     """
 
@@ -181,14 +184,15 @@ def get_test_statistic(test_inputs, test_labels, model):
 
 def split_data(inputs, labels, split_train=0.7,
                split_valid=0.2, split_test=0.1):
-    """! Split data set in training, validation and testing data sets.
+    """ Split data set in training, validation and testing data sets.
 
-   @param inputs input dataset
-   @param labels label dataset
-   @param split_train Share of training data sets.
-   @param split_valid Share of validation data sets.
-   @param split_test Share of testing data sets.
-   """
+    :param inputs: input dataset
+    :param labels: label dataset
+    :param split_train: Share of training data sets. (Default value = 0.7)
+    :param split_valid: Share of validation data sets. (Default value = 0.2)
+    :param split_test: Share of testing data sets. (Default value = 0.1)
+
+    """
 
     if split_train + split_valid + split_test > 1 + 1e-10:
         raise ValueError(

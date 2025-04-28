@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen
 *
@@ -23,7 +23,9 @@
 #include "abm/parameters.h"
 #include "abm/infection.h"
 #include "abm/location.h"
+#include "abm/person_id.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstdint>
 #include <vector>
 
 namespace mio
@@ -31,20 +33,24 @@ namespace mio
 namespace abm
 {
 
-Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id, AgeGroup age,
-               PersonId person_id)
+Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, LocationId location_id,
+               int location_model_id, AgeGroup age, PersonId person_id)
     : m_location(location_id)
     , m_location_type(location_type)
+    , m_location_model_id(location_model_id)
     , m_assigned_locations((uint32_t)LocationType::Count, LocationId::invalid_id())
     , m_home_isolation_start(TimePoint(-(std::numeric_limits<int>::max() / 2)))
     , m_age(age)
     , m_time_at_location(0)
     , m_mask(Mask(MaskType::None, TimePoint(-(std::numeric_limits<int>::max() / 2))))
     , m_compliance((uint32_t)InterventionType::Count, 1.)
-    , m_person_id(person_id)
     , m_cells{0}
     , m_last_transport_mode(TransportMode::Unknown)
     , m_test_results({TestType::Count}, TestResult())
+    , m_assigned_location_model_ids((int)LocationType::Count)
+    , m_person_id(person_id)
+    , m_rng_key(rng.get_key())
+    , m_rng_index(static_cast<uint32_t>(person_id.get()))
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
@@ -52,10 +58,11 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
 }
 
-Person::Person(const Person& other, PersonId id)
+Person::Person(const Person& other, PersonId person_id)
     : Person(other)
 {
-    m_person_id = id;
+    m_person_id = person_id;
+    m_rng_index = static_cast<uint32_t>(person_id.get());
 }
 
 bool Person::is_infected(TimePoint t) const
@@ -91,11 +98,12 @@ LocationId Person::get_location() const
     return m_location;
 }
 
-void Person::set_location(LocationType type, LocationId id)
+void Person::set_location(LocationType type, LocationId id, int model_id)
 {
-    m_location         = id;
-    m_location_type    = type;
-    m_time_at_location = TimeSpan(0);
+    m_location          = id;
+    m_location_type     = type;
+    m_location_model_id = model_id;
+    m_time_at_location  = TimeSpan(0);
 }
 
 const Infection& Person::get_infection() const
@@ -108,14 +116,20 @@ Infection& Person::get_infection()
     return m_infections.back();
 }
 
-void Person::set_assigned_location(LocationType type, LocationId id)
+void Person::set_assigned_location(LocationType type, LocationId id, int model_id = 0)
 {
-    m_assigned_locations[static_cast<uint32_t>(type)] = id;
+    m_assigned_locations[static_cast<uint32_t>(type)]          = id;
+    m_assigned_location_model_ids[static_cast<uint32_t>(type)] = model_id;
 }
 
 LocationId Person::get_assigned_location(LocationType type) const
 {
     return m_assigned_locations[static_cast<uint32_t>(type)];
+}
+
+int Person::get_assigned_location_model_id(LocationType type) const
+{
+    return m_assigned_location_model_ids[static_cast<uint32_t>(type)];
 }
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const
@@ -214,14 +228,14 @@ bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType i
 ProtectionEvent Person::get_latest_protection() const
 {
     ProtectionType latest_protection_type = ProtectionType::NoProtection;
-    TimePoint infection_time          = TimePoint(0);
+    TimePoint infection_time              = TimePoint(0);
     if (!m_infections.empty()) {
         latest_protection_type = ProtectionType::NaturalInfection;
-        infection_time       = m_infections.back().get_start_date();
+        infection_time         = m_infections.back().get_start_date();
     }
     if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
         latest_protection_type = m_vaccinations.back().type;
-        infection_time       = m_vaccinations.back().time;
+        infection_time         = m_vaccinations.back().time;
     }
     return ProtectionEvent{latest_protection_type, infection_time};
 }
@@ -240,7 +254,7 @@ ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const 
 void Person::set_mask(MaskType type, TimePoint t)
 {
     m_mask.change_mask(type, t);
-} 
+}
 
 void Person::add_test_result(TimePoint t, TestType type, bool result)
 {

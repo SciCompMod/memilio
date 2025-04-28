@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -514,7 +514,7 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     auto num_age_groups = 6; //reading data requires RKI data age groups
     auto model          = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
     std::vector<int> region{1002};
-    auto path = mio::path_join(TEST_DATA_DIR, "pydata/Germany/cases_all_county_age_ma7.json");
+    auto path = mio::path_join(TEST_DATA_DIR, "Germany/pydata/cases_all_county_age_ma7.json");
     std::vector<std::vector<int>> t_Exposed(1);
     std::vector<std::vector<int>> t_InfectedNoSymptoms(1);
     std::vector<std::vector<int>> t_InfectedSymptoms(1);
@@ -570,6 +570,91 @@ TEST(TestOdeSECIRVVS, read_confirmed_cases)
     ASSERT_THAT(read, IsSuccess());
 }
 
+TEST(TestOdeSECIRVVS, set_divi_data_invalid_dates)
+{
+    mio::set_log_level(mio::LogLevel::off);
+    auto model = mio::osecirvvs::Model<double>(1);
+    model.populations.array().setConstant(1);
+    auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
+
+    // Test with date before DIVI dataset was available.
+    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    // Assure that populations is the same as before.
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    // Test with data after DIVI dataset was no longer updated.
+    EXPECT_THAT(mio::osecirvvs::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
+                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSECIRVVS, set_confirmed_cases_data_with_ICU)
+{
+    const auto num_age_groups = 6;
+    auto model                = mio::osecirvvs::Model<double>(num_age_groups);
+    model.populations.array().setConstant(1);
+
+    // set params
+    for (auto age_group = mio::AgeGroup(0); age_group < (mio::AgeGroup)num_age_groups; age_group++) {
+        model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[age_group]         = 1.0;
+        model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms<double>>()[age_group] = 1.0;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[age_group]      = 1.0;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSevere<double>>()[age_group]        = 1.0;
+        model.parameters.get<mio::osecirvvs::TimeInfectedCritical<double>>()[age_group]      = 1.0;
+    }
+
+    // read case data
+    auto case_data =
+        mio::read_confirmed_cases_data(mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json")).value();
+
+    // Change dates of the case data so that no ICU data is available at that time.
+    // Also, increase the number of confirmed cases by 1 each day.
+    const auto t0 = mio::Date(2025, 1, 1);
+    auto day_add  = 0;
+    for (auto& entry : case_data) {
+        entry.date          = offset_date_by_days(t0, day_add);
+        entry.num_confirmed = day_add;
+        day_add++;
+    }
+
+    // get day in mid of the data
+    auto mid_day = case_data[(size_t)case_data.size() / 2].date;
+
+    // calculate ICU values using set_confirmed_cases_data
+    auto model_vector       = std::vector<mio::osecirvvs::Model<double>>{model};
+    auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
+    EXPECT_THAT(
+        mio::osecirvvs::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day, scaling_factor_inf),
+        IsSuccess());
+
+    // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
+    // We only have an entry for age group 2. All other age groups should be zero.
+    for (int i = 0; i < num_age_groups; ++i) {
+        const auto expected_value = (i == 2) ? 1.0 : 0.0;
+
+        auto actual_value_naive =
+            model_vector[0]
+                .populations[{mio::AgeGroup(i), mio::osecirvvs::InfectionState::InfectedCriticalNaive}]
+                .value();
+        EXPECT_NEAR(actual_value_naive, expected_value, 1e-10);
+
+        auto actual_value_pi =
+            model_vector[0]
+                .populations[{mio::AgeGroup(i), mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]
+                .value();
+        EXPECT_NEAR(actual_value_pi, expected_value, 1e-10);
+
+        auto actual_value_ii =
+            model_vector[0]
+                .populations[{mio::AgeGroup(i), mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]
+                .value();
+        EXPECT_NEAR(actual_value_ii, expected_value, 1e-10);
+    }
+}
+
 TEST(TestOdeSECIRVVS, read_data)
 {
     auto num_age_groups = 6; //reading data requires RKI data age groups
@@ -577,15 +662,18 @@ TEST(TestOdeSECIRVVS, read_data)
     auto model2         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
     auto model3         = std::vector<mio::osecirvvs::Model<double>>({make_model(num_age_groups)});
 
-    auto read_result1 = mio::osecirvvs::read_input_data_county(
-        model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+    const auto pydata_dir_District = mio::path_join(TEST_DATA_DIR, "District", "pydata");
 
-    auto read_result2 = mio::osecirvvs::read_input_data(
-        model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 10);
+    auto read_result1 = mio::osecirvvs::read_input_data_county(model1, {2020, 12, 01}, {1002},
+                                                               std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                               TEST_GERMANY_PYDATA_DIR, 10);
 
-    auto read_result_district = mio::osecirvvs::read_input_data(model3, {2020, 12, 01}, {1002},
-                                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                                mio::path_join(TEST_DATA_DIR, "pydata/District"), 10);
+    auto read_result2 = mio::osecirvvs::read_input_data(model2, {2020, 12, 01}, {1002},
+                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                        TEST_GERMANY_PYDATA_DIR, 10);
+
+    auto read_result_district = mio::osecirvvs::read_input_data(
+        model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, pydata_dir_District, 10);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());
@@ -595,17 +683,17 @@ TEST(TestOdeSECIRVVS, read_data)
     auto expected_values =
         (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirvvs::InfectionState::Count)) << 8792.15, 175.889,
          3.21484, 0.0633116, 0.221057, 1.42882, 0.0351731, 0.29682, 0, 0, 0, 6.93838, 0.0725173, 0.206715, 0, 0, 0,
-         0.0337498, 1.23324e-05, 0.000208293, 0.0292822, 5.8568e-05, 0.000406386, 1340.42, 0, 0, 0, 17067.6, 220.137,
+         0.0337498, 1.23324e-05, 0.000208293, 0.0292822, 5.8568e-05, 0.000406386, 1340.42, 0, 0, 0, 17067.7, 220.137,
          7.64078, 0.0970237, 0.381933, 4.91193, 0.0779655, 0.741778, 0, 0, 0, 11.7286, 0.0890643, 0.286235, 0, 0, 0,
-         0.0434344, 8.40756e-06, 0.000160098, 0.0294125, 3.7932e-05, 0.000296738, 1891.19, 0, 0, 0, 72501, 176.267,
+         0.0434344, 8.40756e-06, 0.000160098, 0.0294125, 3.7932e-05, 0.000296738, 1891.18, 0, 0, 0, 72501, 176.267,
          47.227, 0.113013, 0.490073, 24.4094, 0.0730141, 0.765246, 0, 0, 0, 64.6789, 0.0855947, 0.303032, 0, 0, 0,
-         1.23754, 4.5968e-05, 0.000964262, 0.0751837, 1.82724e-05, 0.000157466, 1670.26, 0, 0, 0, 80790.1, 184.645,
+         1.23754, 4.5968e-05, 0.000964262, 0.0751837, 1.82724e-05, 0.000157466, 1670.26, 0, 0, 0, 80791.1, 184.645,
          44.5477, 0.100229, 0.50512, 23.6881, 0.0666206, 0.811467, 0, 0, 0, 58.9805, 0.0758111, 0.31192, 0, 0, 0,
-         3.75961, 0.000136175, 0.00331973, 0.486628, 0.000111199, 0.00111367, 2022.58, 0, 0, 0, 41581, 177.478, 9.27393,
-         0.0389771, 0.216151, 5.77433, 0.030336, 0.4066, 0, 0, 0, 13.3664, 0.0312302, 0.141394, 0, 0, 0, 3.119,
-         0.000209444, 0.00561852, 2.60439, 0.00111169, 0.0122515, 2136.6, 0, 0, 0, 13223.8, 216.037, 11.1838, 0.179986,
+         3.75961, 0.000136175, 0.00331973, 0.486628, 0.000111199, 0.00111367, 2021.62, 0, 0, 0, 41582.5, 177.478,
+         9.27393, 0.0389771, 0.216151, 5.77433, 0.030336, 0.4066, 0, 0, 0, 13.3664, 0.0312302, 0.141394, 0, 0, 0, 3.119,
+         0.000209444, 0.00561852, 2.60439, 0.00111169, 0.0122515, 2135.09, 0, 0, 0, 13224.1, 216.037, 11.1838, 0.179986,
          0.863926, 3.50537, 0.0705169, 0.818075, 0, 0, 0, 3.52982, 0.0331744, 0.130002, 0, 0, 0, 0.695168, 0.000190699,
-         0.00442784, 4.67895, 0.00764769, 0.0729502, 2253.61, 0, 0, 0)
+         0.00442784, 4.67895, 0.00764769, 0.0729502, 2253.25, 0, 0, 0)
             .finished();
 
     ASSERT_THAT(print_wrap(model1[0].populations.array().cast<double>()),
@@ -815,7 +903,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {2020, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_DATA_DIR, 2, false),
+                                                       TEST_GERMANY_PYDATA_DIR, 2, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
@@ -830,11 +918,11 @@ TEST(TestOdeSECIRVVS, model_initialization)
          0.000325876, 0.0011537, 0, 0, 0, 1.24042, 1.74173e-07, 3.65358e-06, 0.0753588, 6.9234e-08, 5.96637e-07,
          1671.81, 0, 0, 0, 3.00317e+07, 184.888, 44.9988, 0.000272769, 0.00137466, 23.9279, 0.000181305, 0.00220837, 0,
          0, 0, 59.4274, 0.000205796, 0.000846734, 0, 0, 0, 3.76905, 3.67799e-07, 8.9664e-06, 0.48785, 3.00341e-07,
-         3.00797e-06, 2022.51, 0, 0, 0, 1.65123e+07, 177.579, 9.4638, 0.000100211, 0.00055573, 5.89255, 7.79946e-05,
+         3.00797e-06, 2021.56, 0, 0, 0, 1.65123e+07, 177.579, 9.4638, 0.000100211, 0.00055573, 5.89255, 7.79946e-05,
          0.00104538, 0, 0, 0, 13.5709, 7.98864e-05, 0.000361685, 0, 0, 0, 3.13496, 5.30384e-07, 1.4228e-05, 2.61772,
-         2.81518e-06, 3.1025e-05, 2136.56, 0, 0, 0, 6.17983e+06, 216.328, 11.9625, 0.000412312, 0.00197908, 3.74944,
+         2.81518e-06, 3.1025e-05, 2135.05, 0, 0, 0, 6.17984e+06, 216.328, 11.9625, 0.000412312, 0.00197908, 3.74944,
          0.00016154, 0.00187405, 0, 0, 0, 3.71387, 7.47535e-05, 0.000292941, 0, 0, 0, 0.707117, 4.15435e-07,
-         9.64602e-06, 4.75937, 1.66604e-05, 0.000158922, 2253.59, 0, 0, 0)
+         9.64602e-06, 4.75937, 1.66604e-05, 0.000158922, 2253.23, 0, 0, 0)
             .finished();
 
     ASSERT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
@@ -855,8 +943,8 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     auto model_vector = std::vector<mio::osecirvvs::Model<double>>{model};
 
     ASSERT_THAT(mio::osecirvvs::read_input_data(model_vector, {100, 12, 01}, {0},
-                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_DATA_DIR, 0,
-                                                false),
+                                                std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                TEST_GERMANY_PYDATA_DIR, 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.
@@ -893,7 +981,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
 
     ASSERT_THAT(mio::osecirvvs::read_input_data_county(model_vector, {100, 12, 01}, {0},
                                                        std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                       TEST_DATA_DIR, 0, false),
+                                                       TEST_GERMANY_PYDATA_DIR, 0, false),
                 IsSuccess());
 
     // if we enter an old date, the model only should be initialized with the population data.

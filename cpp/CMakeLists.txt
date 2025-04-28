@@ -24,8 +24,8 @@ option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
-# try to treat AppleClang as Clang, but warn about missing support 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+# try to treat AppleClang as Clang, but warn about missing support
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
 endif()
@@ -82,12 +82,14 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
+
         # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as
         # uncovered.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
+            LCOV_ARGS --ignore-errors gcov,mismatch
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
@@ -126,10 +128,10 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Wno-stringop-overread;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
+        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;-Wno-stringop-overread;")
 endif()
 
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
@@ -149,6 +151,7 @@ add_subdirectory(memilio)
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
+    add_subdirectory(models/d_abm)
     add_subdirectory(models/ode_secir)
     add_subdirectory(models/ode_secirts)
     add_subdirectory(models/ode_secirvvs)
@@ -162,6 +165,8 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/sde_sir)
     add_subdirectory(models/sde_sirs)
     add_subdirectory(models/sde_seirvv)
+    add_subdirectory(models/graph_abm)
+    add_subdirectory(models/smm)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

@@ -28,7 +28,7 @@ The model parameters used are the following:
 | $\xi_{I_{NS}}$               |  `RelativeTransmissionNoSymptoms`               | Proportion infected people with no symptoms who are not isolated. |
 | $\xi_{I_{Sy}}$               | `RiskOfInfectionFromSymptomatic`                | Proportion of infected persons with symptoms who are not isolated. |
 | $N$                         | `m_N`   | Total population. |
-| $D$                         |  Entry of `m_populations`  | Number of dead people. |
+| $D$                         |  Entry of `populations`  | Number of dead people. |
 | $\mu_{z_1}^{z_2}$              |   `TransitionProbabilities`              | Probability of transitioning from compartment $z_1$ to compartment $z_2$. |  
 | $\gamma_{z_1}^{z_2}(\tau)$              |   `TransitionDistributions`              | Expected proportion of people who are still in compartment $z_1$ $\tau$ days after entering this compartment and who will move to compartment $z_2$ later in the course of the disease. |  
 
@@ -47,6 +47,6 @@ An example can be found at:
 - There are various options for initializing a fictional scenario. Regardless of the approach, you must provide a history of values for the transitions and additional information to compute the initial distribution of the population in the compartments. This information must be of the following type:  
 
     - You can state the number of total confirmed cases `total_confirmed_cases` at time $t_0$. The number of recovered people is set accordingly and the remaining values are derived in the model before starting the simulation.
-    - You can set the number of people in the `Susceptible` compartment at time $t_0$ via `m_populations`. Initial values of the other compartments are derived in the model before starting the simulation.
-    - You can set the number of people in the `Recovered` compartment at time $t_0$ via `m_populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+    - You can set the number of people in the `Susceptible` compartment at time $t_0$ via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
+    - You can set the number of people in the `Recovered` compartment at time $t_0$ via `populations`. Initial values of the other compartments are derived in the model before starting the simulation.
     - If none of the above is used, the force of infection formula and the values for the initial transitions are used consistently with the numerical scheme proposed in [Messina et al (2022)](https://doi.org/10.3934/jcd.2021029) to set the `Susceptible`s. 

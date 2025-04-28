@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
 *
@@ -80,7 +80,7 @@ public:
             const size_t Ii = this->populations.get_flat_index({i, InfectionState::Infected});
 
             for (auto j : make_index_range(age_groups)) {
-                const size_t Sj = this->populations.get_flat_index({i, InfectionState::Susceptible});
+                const size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
                 const size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
                 const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});

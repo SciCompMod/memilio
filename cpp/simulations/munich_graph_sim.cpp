@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2023 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker, Daniel Abele, Martin Kühn
 *
@@ -103,14 +103,14 @@ mio::IOResult<void> set_nodes(mio::Graph<mio::osecir::Model<double>, mio::Mobili
 }
 
 mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
-                              const fs::path& data_dir)
+                              const fs::path& mobility_data_dir)
 {
     auto mobile_compartments = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                 mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
     //mobility matrix has to be provided by the user as input and should have shape num_nodes x num_nodes
     BOOST_OUTCOME_TRY(auto&& mobility_data,
-                      mio::read_mobility_plain(mio::path_join((data_dir).string(), "mobility_matrix.txt")));
+                      mio::read_mobility_plain(mio::path_join((mobility_data_dir).string(), "mobility_matrix.txt")));
     if (mobility_data.rows() != Eigen::Index(params_graph.nodes().size()) ||
         mobility_data.cols() != Eigen::Index(params_graph.nodes().size())) {
         return mio::failure(mio::StatusCode::InvalidValue, "Mobility matrices do not have the correct size.");

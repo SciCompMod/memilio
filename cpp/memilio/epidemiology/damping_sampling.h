@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -21,6 +21,7 @@
 #define EPI_SECIR_DAMPING_SAMPLING_H
 
 #include "memilio/epidemiology/damping.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include <memory>
 

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
 *
@@ -238,10 +238,7 @@ TEST(TestGraph, set_edges)
                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 0.66, 0.66,
                    0.66, 0, 0.66, 0, 0, 0, 0.66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
                       .finished();
-    auto e_other = (Eigen::ArrayXd(6 * Eigen::Index(mio::osecir::InfectionState::Count)) << 2, 2, 2, 0, 2, 0, 0, 0, 2,
-                    0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0, 2, 2,
-                    2, 0, 2, 0, 0, 0, 2, 0, 2, 2, 2, 0, 2, 0, 0, 0, 2, 0)
-                       .finished();
+    auto e_other = Eigen::ArrayXd::Zero(6 * Eigen::Index(mio::osecir::InfectionState::Count));
 
     EXPECT_EQ(params_graph.edges().size(), 2);
 

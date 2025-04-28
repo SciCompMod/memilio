@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Kathrin Rack, Lena Ploetzke, Martin J. Kuehn
 #
@@ -18,9 +18,9 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDIVIData.py
+:strong:`getDIVIData.py`
 
-@brief Data of the DIVI
+Data of the DIVI
 about Sars-CoV2 is downloaded.
 This data contains the number of Covid19 patients in intensive care
 and the number of those that are additionally ventilated.
@@ -28,6 +28,7 @@ and the number of those that are additionally ventilated.
 DIVI - Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
 
 data explanation:
+
 - reporting_hospitals is the number of reporting hospitals
 - ICU is the number of covid patients in reporting hospitals
 - ICU_ventilated is the number of ventilated covid patients in reporting hospitals
@@ -54,23 +55,22 @@ def fetch_divi_data(
         read_data: bool = dd.defaultDict['read_data'],
         file_format: str = dd.defaultDict['file_format'],
 ) -> pd.DataFrame:
-    """! Downloads or reads the DIVI ICU data and writes them in different files.
+    """ Downloads or reads the DIVI ICU data and writes them in different files.
 
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
     and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
     The downloaded dataframe is written to the file "FullData_DIVI".
 
-    @param directory str
+    :param directory: str
         Path to the output directory
-    @param conf_obj
-        configuration object
-    @param filename str
+    :param conf_obj: configuration object
+    :param filename: str
         File format which is used for writing the data. Default defined in defaultDict.
-    @param read_data bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
+    :param read_data: bool. True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :returns: Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
 
-    @return Tuple[df_raw, start_date] Tuple. Contains the fetched data as well as the adjusted starting date
     """
     no_raw = conf_obj.no_raw
 
@@ -100,19 +100,17 @@ def preprocess_divi_data(df_raw: pd.DataFrame,
                          impute_dates: bool = dd.defaultDict['impute_dates'],
                          moving_average: int = dd.defaultDict['moving_average'],
                          ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """! Processing of the downloaded data
+    """ Processing of the downloaded data
         * the columns are renamed to English and the state and county names are added.
 
-    @param df_raw pd.DataFrame
-    @param conf_obj
-        configuration object
-    @param start_date date  The first date in dataframe. Default defined in defaultDict.
-    @param end_date date The last date in dataframe. Default defined in defaultDict.
-    @param impute_dates bool  Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average int  Integers >=0.Applies an 'moving_average'-days moving average on all time seriesto smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param **kwargs
+    :param df_raw: pd.DataFrame
+    :param conf_obj: configuration object
+    :param start_date: date  The first date in dataframe. Default value = date(2020, 4, 24).
+    :param end_date: date The last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: bool  Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
+    :param moving_average: int  Integers >=0.Applies an 'moving_average'-days moving average on all time seriesto smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :returns: df pd.DataFrame  processed divi data
 
-    @return df pd.DataFrame  processed divi data
     """
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
@@ -181,23 +179,22 @@ def write_divi_data(df: pd.DataFrame,
                     impute_dates: bool = dd.defaultDict['impute_dates'],
                     moving_average: int = dd.defaultDict['moving_average'],
                     ) -> Dict:
-    """! Write the divi data into json files
+    """ Write the divi data into json files
 
     Three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
     for counties, states and whole Germany, respectively.
 
-    @param df pd.DataFrame. Dataframe containing processed divi data
-    @param directory str
+    :param df: pd.DataFrame. Dataframe containing processed divi data
+    :param directory: str
         Path to the output directory
-    @param conf_obj
-        configuration object
-    @param file_format str. File format which is used for writing the data. Default defined in defaultDict.
-    @param impute_dates bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict.
+    :param conf_obj: configuration object
+    :param file_format: str. File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param impute_dates: bool True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
+    :param moving_average: int Integers >=0. Applies an 'moving_average'-days moving average on all time series to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :returns: data_dict Dict Dictionary containing datasets at county, state and national level
 
-    @return data_dict Dict Dictionary containing datasets at county, state and national level
     """
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
@@ -254,11 +251,11 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
                   moving_average: int = dd.defaultDict['moving_average'],
                   **kwargs
                   ):
-    """! Downloads or reads the DIVI ICU data and writes them in different files.
+    """ Downloads or reads the DIVI ICU data and writes them in different files.
 
     Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
-    It has been announced that the dataset will no longer be updated from 2024-07-21 (CW29). 
+    It has been announced that the dataset will no longer be updated from 2024-07-21 (CW29).
     If end_date is later, a warning is displayed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
@@ -271,23 +268,21 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
     for counties, states and whole Germany, respectively.
 
-    @param read_data True or False. Defines if data is read from file or downloaded. Default defined in defaultDict.
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Folder where data is written to. Default defined in defaultDict.
-    @param start_date Date of first date in dataframe. Default defined in defaultDict.
-    @param end_date Date of last date in dataframe. Default defined in defaultDict.
-    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
-    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
-        to smooth out effects of irregular reporting. Default defined in defaultDict.
-    @param to_dataset bool True or False. Whether to return the dataframe as an object instead of json file.
-        If True - returns objects with dataframes
-        If False - write dataframes into files
-        Default defined in defaultDict.
+    :param read_data: True or False. Defines if data is read from file or downloaded. Default defined in defaultDict. (Default value = dd.defaultDict['read_data'])
+    :param file_format: File format which is used for writing the data. Default defined in defaultDict. (Default value = dd.defaultDict['file_format'])
+    :param out_folder: Folder where data is written to. Default defined in defaultDict. (Default value = dd.defaultDict['out_folder'])
+    :param start_date: Date of first date in dataframe. Default value = ``date(2020, 4, 24)``.
+    :param end_date: Date of last date in dataframe. Default defined in defaultDict. (Default value = dd.defaultDict['end_date'])
+    :param impute_dates: True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict. (Default value = dd.defaultDict['impute_dates'])
+    :param moving_average: Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out effects of irregular reporting. Default defined in defaultDict. (Default value = dd.defaultDict['moving_average'])
+    :param **kwargs: 
+
     """
     conf = gd.Conf(out_folder, **kwargs)
     out_folder = conf.path_to_use
 
-    directory = os.path.join(out_folder, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany', 'pydata')
     gd.check_dir(directory)
 
     filename = "FullData_DIVI"
@@ -321,13 +316,14 @@ def get_divi_data(read_data: bool = dd.defaultDict['read_data'],
 
 
 def divi_data_sanity_checks(df: pd.DataFrame) -> None:
-    """! Checks the sanity of the divi_data dataframe
+    """ Checks the sanity of the divi_data dataframe
 
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed
     Checks if the size of the dataframe is not unusual
 
-    @param df The dataframe which has to be checked
+    :param df: The dataframe which has to be checked pd.DataFrame
+
     """
     # there should be 13 headers
     num_headers = 13
@@ -360,7 +356,7 @@ def divi_data_sanity_checks(df: pd.DataFrame) -> None:
 
 
 def main():
-    """ Main program entry."""
+    """Main program entry."""
 
     arg_dict = gd.cli('divi',)
     get_divi_data(**arg_dict)

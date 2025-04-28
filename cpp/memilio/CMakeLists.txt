@@ -18,6 +18,7 @@ add_library(memilio
     epidemiology/dynamic_npis.cpp
     epidemiology/lct_infection_state.h
     epidemiology/lct_populations.h
+    epidemiology/adoption_rate.h
     geography/regions.h
     geography/regions.cpp
     epidemiology/simulation_day.h
@@ -83,6 +84,7 @@ add_library(memilio
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
+    utils/abstract_parameter_distribution.h
     utils/time_series.h
     utils/time_series.cpp
     utils/span.h

@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Maximilian Betz
 #
@@ -26,3 +26,4 @@ from .intermediate_representation import IntermediateRepresentation
 from .scanner import Scanner
 from .scanner_config import ScannerConfig
 from .ast import AST
+from .default_generation_dict import default_dict

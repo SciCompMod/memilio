@@ -84,7 +84,8 @@ if(MEMILIO_USE_BUNDLED_BOOST)
 
     include(FetchContent)
     FetchContent_Declare(boost
-        #don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
+
+        # don't use the URL from github, that download isn't complete and requires more setup (subrepositories, bootstrapping)
         URL https://archives.boost.io/release/${MEMILIO_BOOST_VERSION}/source/boost_${MEMILIO_BOOST_VERSION_UNDERSC}.tar.gz
     )
     FetchContent_GetProperties(boost)
@@ -97,9 +98,9 @@ if(MEMILIO_USE_BUNDLED_BOOST)
     add_dependencies(boost boost-bootstrap)
     add_library(Boost::boost ALIAS boost)
     target_include_directories(boost SYSTEM INTERFACE $<BUILD_INTERFACE:${boost_SOURCE_DIR}>)
-    
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
             target_compile_options(boost INTERFACE "-Wno-c++20-attribute-extensions")
         else()
             target_compile_options(boost INTERFACE "-Wno-c++20-extensions")
@@ -122,13 +123,15 @@ if(MEMILIO_USE_BUNDLED_BOOST)
         ${boost_SOURCE_DIR}/libs/filesystem/src/utf8_codecvt_facet.cpp
         ${boost_SOURCE_DIR}/libs/filesystem/src/windows_file_codecvt.cpp
     )
+
     # Ensure that the boost atomic library is used instead of the standard atomic library, where some functionality is only available as of C++20.
     target_compile_definitions(boost_filesystem PUBLIC BOOST_FILESYSTEM_NO_CXX20_ATOMIC_REF)
 
     target_link_libraries(boost_filesystem PUBLIC boost_disable_autolink boost)
     set_property(TARGET boost_filesystem PROPERTY POSITION_INDEPENDENT_CODE ON)
     add_library(Boost::filesystem ALIAS boost_filesystem)
-    if(NOT MSVC) #on gcc and apple clang we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost 
+
+    if(NOT MSVC) # on gcc and apple clang we need to define BOOST_NO_CXX98_FUNCTION_BASE because a deprecated function is sometimes used in boost
         target_compile_definitions(boost_filesystem PUBLIC BOOST_NO_CXX98_FUNCTION_BASE)
     endif()
 
@@ -193,15 +196,15 @@ else()
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
 endif()
 
-if (MEMILIO_ENABLE_MPI)
+if(MEMILIO_ENABLE_MPI)
     find_package(MPI REQUIRED COMPONENTS CXX)
 endif()
 
-if (MEMILIO_ENABLE_OPENMP)
+if(MEMILIO_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED COMPONENTS CXX)
 endif()
 
-#Random123 library for random number generators
+# Random123 library for random number generators
 message(STATUS "Downloading Random123 library")
 
 include(FetchContent)

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Khoa Nguyen, Rene Schmieding
 *
@@ -22,7 +22,8 @@
 #define MIO_ABM_PERSONAL_RNG_H
 
 #include "memilio/utils/random_number_generator.h"
-#include "abm/person_id.h"
+#include "models/abm/person_id.h"
+#include <cstdint>
 
 namespace mio
 {
@@ -51,18 +52,16 @@ public:
     /**
      * Creates a RandomNumberGenerator for a person.
      * @param key Key to be used by the generator.
-     * @param id Id of the Person.
+     * @param index index of the Person.
      * @param counter Reference to the Person's RNG Counter.
      */
-    PersonalRandomNumberGenerator(mio::Key<uint64_t> key, PersonId id, mio::Counter<uint32_t>& counter);
+    PersonalRandomNumberGenerator(mio::Key<uint64_t> key, uint32_t index, mio::Counter<uint32_t>& counter);
 
     /**
      * Creates a RandomNumberGenerator for a person.
-     * Uses the same key as another RandomNumberGenerator.
-     * @param rng RandomNumberGenerator who's key will be used.
      * @param person Reference to the Person who's counter will be used.
      */
-    PersonalRandomNumberGenerator(const mio::RandomNumberGenerator& rng, Person& person);
+    PersonalRandomNumberGenerator(Person& person);
 
     /**
      * @return Get the key.
@@ -77,7 +76,7 @@ public:
      */
     mio::Counter<uint64_t> get_counter() const
     {
-        return mio::rng_totalsequence_counter<uint64_t>(m_person_id.get(), m_counter);
+        return mio::rng_totalsequence_counter<uint64_t>(m_person_index, m_counter);
     }
 
     /**
@@ -90,7 +89,7 @@ public:
 
 private:
     mio::Key<uint64_t> m_key; ///< Global RNG Key
-    PersonId m_person_id; ///< Id of the Person
+    uint32_t m_person_index; ///< Index of the Person
     mio::Counter<uint32_t>& m_counter; ///< Reference to the Person's rng counter
 };
 

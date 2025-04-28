@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -31,6 +31,7 @@ from memilio.epidata import getCommuterMobility as gcm
 
 
 class TestCommuterMobility(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/CMData/'
 
@@ -69,10 +70,16 @@ class TestCommuterMobility(fake_filesystem_unittest.TestCase):
         df_pop = pd.DataFrame(json.load(file_object))
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('builtins.print')
     def test_verify_sorted(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         self.assertEqual(True, gcm.verify_sorted(self.test_countykey_list))
         self.assertEqual(False, gcm.verify_sorted(self.test_countykey_list2))
         Errorcall = ('Error: Input list not sorted.')
@@ -80,6 +87,11 @@ class TestCommuterMobility(fake_filesystem_unittest.TestCase):
 
     @patch('builtins.print')
     def test_assign_geographical_entities(self, mock_print):
+        """
+
+        :param mock_print: 
+
+        """
         (
             countykey2govkey, countykey2localnumlist, gov_county_table,
             state_gov_table) = gcm.assign_geographical_entities(
@@ -120,7 +132,11 @@ class TestCommuterMobility(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_commuter_data(self, mock_input, mock_popul):
-        """! Tests mobility data by some randomly chosen tests.
+        """ Tests mobility data by some randomly chosen tests.
+
+        :param mock_input: 
+        :param mock_popul: 
+
         """
 
         df_commuter_mobility = gcm.get_commuter_data(
@@ -154,6 +170,13 @@ class TestCommuterMobility(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print, mock_input, mock_popul):
+        """
+
+        :param mock_print: 
+        :param mock_input: 
+        :param mock_popul: 
+
+        """
 
         testcountyid = 1051
         # direction = both

@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin Siggel, Daniel Abele, Martin J. Kuehn, Jan Kleinert, Maximilian Betz
 *
@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
 #include "pybind_util.h"
 #include "memilio/utils/parameter_distributions.h"
 
@@ -29,21 +30,22 @@ namespace pymio
 void bind_parameter_distribution(py::module_& m, std::string const& name)
 {
     bind_class<mio::ParameterDistribution, EnablePickling::Never>(m, name.c_str())
-        .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,
-                      &mio::ParameterDistribution::set_lower_bound)
-        .def_property("upper_bound", &mio::ParameterDistribution::get_upper_bound,
-                      &mio::ParameterDistribution::set_upper_bound)
         .def("add_predefined_sample", &mio::ParameterDistribution::add_predefined_sample)
         .def("remove_predefined_samples", &mio::ParameterDistribution::remove_predefined_samples)
-        .def("get_sample", &mio::ParameterDistribution::get_sample);
+        .def("get_sample", [](mio::ParameterDistribution& self) {
+            return self.get_sample(mio::thread_local_rng());
+        });
 }
 
 void bind_parameter_distribution_normal(py::module_& m, std::string const& name)
 {
-    bind_class<mio::ParameterDistributionNormal, EnablePickling::IfAvailable, mio::ParameterDistribution>(m, name.c_str())
+    bind_class<mio::ParameterDistributionNormal, EnablePickling::IfAvailable, mio::ParameterDistribution>(m,
+                                                                                                          name.c_str())
+        .def(py::init<double, double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
+             py::arg("std_dev"), py::arg("quantile"))
         .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
-             py::arg("std_dev"))
-        .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
+             py::arg("quantile"))
+        .def(py::init<double, double>(), py::arg("mean"), py::arg("std_dev"))
         .def_property("mean", &mio::ParameterDistributionNormal::get_mean, &mio::ParameterDistributionNormal::set_mean)
         .def_property("standard_dev", &mio::ParameterDistributionNormal::get_standard_dev,
                       &mio::ParameterDistributionNormal::set_standard_dev);
@@ -51,9 +53,11 @@ void bind_parameter_distribution_normal(py::module_& m, std::string const& name)
 
 void bind_parameter_distribution_uniform(py::module_& m, std::string const& name)
 {
-    bind_class<mio::ParameterDistributionUniform, EnablePickling::IfAvailable, mio::ParameterDistribution>(m, name.c_str())
-        .def(py::init<>())
-        .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
+    bind_class<mio::ParameterDistributionUniform, EnablePickling::IfAvailable, mio::ParameterDistribution>(m,
+                                                                                                           name.c_str())
+        .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"))
+        .def_property_readonly("lower_bound", &mio::ParameterDistributionUniform::get_lower_bound)
+        .def_property_readonly("upper_bound", &mio::ParameterDistributionUniform::get_upper_bound);
 }
 
 } // namespace pymio

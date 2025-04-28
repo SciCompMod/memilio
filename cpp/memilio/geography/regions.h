@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -23,6 +23,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
+#include "memilio/utils/index.h"
 
 #include "boost/filesystem.hpp"
 
@@ -36,6 +37,14 @@ namespace mio
  */
 namespace regions
 {
+
+/// @biref Index for enumerating subregions (cities, counties, etc.) of the modelled area.
+struct Region : public mio::Index<Region> {
+    Region(const size_t num_regions)
+        : mio::Index<Region>(num_regions)
+    {
+    }
+};
 
 /**
          * Id of a state.

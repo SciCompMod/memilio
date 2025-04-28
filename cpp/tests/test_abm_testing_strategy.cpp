@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
 *
@@ -30,7 +30,8 @@ TEST_F(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     // Create test locations and a person in a specific infection state.
     mio::abm::Location home(mio::abm::LocationType::Home, 0, num_age_groups);
     mio::abm::Location work(mio::abm::LocationType::Work, 0, num_age_groups);
-    auto person = make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+    auto person =
+        make_test_person(this->get_rng(), home, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
 
     mio::abm::TimePoint t{0};
     // Initialize testing criteria with no age group or infection state set.
@@ -119,10 +120,10 @@ TEST_F(TestTestingScheme, runScheme)
     auto person1 =
         make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
-    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(person1);
     auto person2 = make_test_person(this->get_rng(), loc_home, age_group_15_to_34, mio::abm::InfectionState::Recovered,
                                     start_date - test_params_pcr.required_time);
-    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(person2);
 
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
@@ -170,10 +171,10 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     auto person1 =
         make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms,
                          start_date - test_params_pcr.required_time);
-    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person1);
+    auto rng_person1 = mio::abm::PersonalRandomNumberGenerator(person1);
     auto person2 = make_test_person(this->get_rng(), loc_work, age_group_15_to_34, mio::abm::InfectionState::Recovered,
                                     start_date - test_params_pcr.required_time);
-    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(this->get_rng(), person2);
+    auto rng_person2 = mio::abm::PersonalRandomNumberGenerator(person2);
 
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;

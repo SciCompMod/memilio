@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -33,13 +33,16 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 
 
 class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/'
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def test_simulation_run(self):
+        """ """
 
         days_1 = 10
         days_2 = 30
@@ -54,6 +57,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(simulation_3), days_3+1)
 
     def test_data_generation_runs(self):
+        """ """
 
         input_width_1 = 1
         input_width_2 = 3
@@ -85,6 +89,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(data_2['labels'][0][0]), 8)
 
     def test_data_generation_save(self):
+        """ """
 
         input_width = 2
         label_width = 3
@@ -98,6 +103,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                          ['data_secir_simple.pickle'])
 
     def test_structures_networks(self):
+        """ """
 
         model_mlp_multi_input_single_output = network_architectures.mlp_multi_input_single_output()
         self.assertEqual(len(model_mlp_multi_input_single_output.layers), 5)
@@ -135,6 +141,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(output_zeros.shape[2], 8)
 
     def test_network_fit(self):
+        """ """
 
         max_epochs = 5
 

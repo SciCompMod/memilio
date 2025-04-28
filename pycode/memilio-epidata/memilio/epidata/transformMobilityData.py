@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Martin J. Kuehn
 #
@@ -31,12 +31,13 @@ pd.options.mode.copy_on_write = True
 
 
 def getMobilityFromFile(directory, mobility_file):
-    """! Gets a mobility matrix that is written in a plain txt file
+    """ Gets a mobility matrix that is written in a plain txt file
     under the given directory into a pandas data frame.
 
-    @param directory Path to folder where data is read.
-    @param mobility_file Mobility matrix file which has to be updated.
-    @return Mobility matrix data frame.
+    :param directory: Path to folder where data is read.
+    :param mobility_file: Mobility matrix file which has to be updated.
+    :returns: Mobility matrix data frame.
+
     """
     mobility_matrix = pd.read_csv(
         os.path.join(directory + mobility_file + '.txt'),
@@ -46,13 +47,14 @@ def getMobilityFromFile(directory, mobility_file):
 
 
 def createFederalStatesMobility(directory, mobility_file):
-    """! Creates mobility matrices for German federal states based on
+    """ Creates mobility matrices for German federal states based on
     county mobility. If mobility matrix dimensions are different from the
     number of German counties, nothing is done.
 
-    @param directory Path to folder where data is read and written.
-    @param mobility_file Mobility matrix file which has to be updated.
-    @return State-aggregated mobility matrix if input matrix is sized correctly, zero otherwise.
+    :param directory: Path to folder where data is read and written.
+    :param mobility_file: Mobility matrix file which has to be updated.
+    :returns: State-aggregated mobility matrix if input matrix is sized correctly, zero otherwise.
+
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
@@ -98,13 +100,14 @@ def createFederalStatesMobility(directory, mobility_file):
 
 
 def updateMobility2022(directory, mobility_file):
-    """! Merges rows and columns of Eisenach to Wartburgkreis which has
+    """ Merges rows and columns of Eisenach to Wartburgkreis which has
     become one single county by July 2021. If mobility matrix dimension is different
     from 401x401, nothing is done.
 
-    @param directory Path to folder where data is read and written.
-    @param mobility_file Mobility matrix file which has to be updated.
-    @return Reduced mobility matrix or input mobility matrix if matrix was already reduced.
+    :param directory: Path to folder where mobility data is read and written.
+    :param mobility_file: Mobility matrix file which has to be updated.
+    :returns: Reduced mobility matrix or input mobility matrix if matrix was already reduced.
+
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
@@ -135,20 +138,19 @@ def updateMobility2022(directory, mobility_file):
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
     arg_dict = gd.cli("commuter_official")
 
-    directory = arg_dict['out_folder'].split('/pydata')[0]
-    directory = os.path.join(directory, 'mobility/')
+    directory = os.path.join(arg_dict['out_folder'], 'Germany', 'mobility/')
+    ref_year = dd.defaultDict['ref_year']
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be
-    updateMobility2022(directory, mobility_file='twitter_scaled_1252')
-    updateMobility2022(directory, mobility_file='commuter_mobility')
+    updateMobility2022(
+        directory, mobility_file=f'commuter_mobility_{ref_year}')
     # create federal states mobility matrix (not used in simulation for now)
-    createFederalStatesMobility(directory, mobility_file='twitter_scaled_1252')
     createFederalStatesMobility(
-        directory, mobility_file='commuter_mobility')
+        directory, mobility_file=f'commuter_mobility_{ref_year}')
 
 
 if __name__ == "__main__":

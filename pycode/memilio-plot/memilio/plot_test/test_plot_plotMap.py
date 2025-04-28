@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -33,6 +33,7 @@ import memilio.plot.plotMap as pm
 
 
 class TestPlotMap(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/plot_data'
 
@@ -60,12 +61,14 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
                   3: '35-59', 4: '60-79', 5: '80+'}
 
     def test_extract_time_steps(self):
+        """ """
         for file in self.files_input.values():
             num_days = pm.extract_time_steps(
                 file, file_format=self.file_format)
             assert num_days == 1
 
     def test_extract_data(self):
+        """ """
         filter_age = None
         i = 0
         for file in self.files_input.values():
@@ -95,6 +98,14 @@ class TestPlotMap(fake_filesystem_unittest.TestCase):
     def test_plot_list(
             self, mock_save_interactive, mock_read_file, mock_plt,
             mock_geopandas_plot):
+        """
+
+        :param mock_save_interactive: 
+        :param mock_read_file: 
+        :param mock_plt: 
+        :param mock_geopandas_plot: 
+
+        """
 
         dfs_all = pd.DataFrame(columns=['ID_County', 'Count 0', 'Count 1'], data=[
                                [1001, 2, 3], [1002, 3, 4]])

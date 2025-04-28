@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors:
 #
@@ -32,6 +32,7 @@ from memilio.epidata import getVaccinationData as gvd
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
+    """ """
     maxDiff = None
 
     path = '/home/VaccinationData'
@@ -105,6 +106,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_pop = pd.DataFrame(json.load(file_object))
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
@@ -112,6 +114,13 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_get_vaccination_data_alternative_ages(self, mockin, mockp, mockv):
+        """
+
+        :param mockin: 
+        :param mockp: 
+        :param mockv: 
+
+        """
         gvd.get_vaccination_data(out_folder=self.path, read_data=True)
 
     # Sanitizing option 3 for vaccination was introduced in 2021 but soon discontinued
@@ -125,12 +134,24 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.get_population_data', return_value=df_pop)
     @patch('memilio.epidata.getDataIntoPandasDataFrame.user_choice', return_value=True)
     def test_get_standard_vaccination_sanitize_3(self, mockin, mockp, mockv):
+        """
+
+        :param mockin: 
+        :param mockp: 
+        :param mockv: 
+
+        """
         gvd.get_vaccination_data(out_folder=self.path,
                                  sanitize_data=3, read_data=True)
 
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            return_value=df_vacc_data_altern)
     def test_sanity_checks(self, mockv):
+        """
+
+        :param mockv: 
+
+        """
         # test empty dataframe
         df_empty = pd.DataFrame()
         with self.assertRaises(gd.DataError) as error:
@@ -176,6 +197,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         gvd.sanity_checks(df_no_errors)
 
     def test_sanitizing_based_on_regions(self):
+        """ """
         to_county_map = {0: [1001, 1002, 2001], 1: [6000], 2: [6005, 6006]}
         age_groups = ['0-1', '2-3', '4-10', '11+']
         data = pd.DataFrame({
@@ -228,6 +250,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             test_4.reset_index(drop=True), check_dtype=False)
 
     def test_extrapolate_age_groups_vaccinations(self):
+        """ """
         unique_age_groups_old = ['00-04', '05-11', '12-17', '18+']
         unique_age_groups_new = ['00-05', '06-16', '17-19', '20+']
         column_names = ['vacc_1', 'vacc_2']
