@@ -605,7 +605,7 @@ void Dampings<S>::update_active_dampings(
         auto& active_same_type = *iter_active_same_type;
         //find active with the same level
         auto& sum_same_level = *std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
-            return get<DampingLevel>(sum) == get<DampingLevel>(damping);
+            return get<DampingLevel>(sum).get() == get<DampingLevel>(damping).get();
         });
         //remove active with the same type and level and add new one
         get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
@@ -616,7 +616,7 @@ void Dampings<S>::update_active_dampings(
         active_by_type.emplace_back(get<MatrixIdx>(damping), get<DampingLevel>(damping), get<DampingType>(damping));
         //find damping with same level if existent
         auto iter_sum_same_level = std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
-            return get<DampingLevel>(sum) == get<DampingLevel>(damping);
+            return get<DampingLevel>(sum).get() == get<DampingLevel>(damping).get();
         });
         if (iter_sum_same_level != sum_by_level.end()) {
             //add to existing level
