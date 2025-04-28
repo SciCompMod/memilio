@@ -1,16 +1,17 @@
+#include "memilio/config_internal.h"
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
+#ifdef MEMILIO_HAS_SBML
+#include <sbml/SBMLTypes.h>
+
 #include <cmath>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-
-#include "memilio/config_internal.h"
-
-#ifdef MEMILIO_HAS_SBML
-#include <sbml/SBMLTypes.h>
 
 /*
     @brief Get the filename
