@@ -880,6 +880,17 @@ int main(int argc, char* argv[])
 
     document = reader.readSBML(filename);
 
+    if (SBMLDocument_getNumErrors(document) > 0) {
+        if (XMLError_getId(SBMLDocument_getError(d, 0)) == SBML_READ_ERROR_FILE_NOT_FOUND){
+            std::cout << "File not found!" << std::endl;
+            return 1;
+        }
+        if (XMLError_getId(SBMLDocument_getError(d, 0)) == SBML_READ_ERROR_NOT_SBML){
+            std::cout << "File is not a valid SBML file!" << std::endl;
+            return 1;
+        }
+    }
+
     auto model = document->getModel();
 
     if (!verify_model_suitability(model)) {
