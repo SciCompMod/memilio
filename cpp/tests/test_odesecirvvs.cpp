@@ -1083,6 +1083,48 @@ TEST(TestOdeSECIRVVS, run_simulation)
     ASSERT_THAT(print_wrap(result.matrix()), MatrixNear(print_wrap(expected_result.matrix()), 1e-5, 1e-5));
 }
 
+TEST(TestOdeSECIRVVS, set_vaccination_data_not_avail)
+{
+    const auto num_age_groups = 2;
+    const auto num_days       = 5;
+    mio::osecirvvs::Model<double> model(num_age_groups);
+    std::vector<mio::osecirvvs::Model<double>> model_vector = {model};
+
+    // Setup initial non-zero vaccination data
+    auto& params = model_vector[0].parameters;
+    params.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days + 1));
+    params.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days + 1));
+
+    const double initial_partial_vacc_val = 10.0;
+    const double initial_full_vacc_val    = 5.0;
+
+    for (auto g = mio::AgeGroup(0); g < mio::AgeGroup(num_age_groups); ++g) {
+        for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
+            params.get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{g, d}] = initial_partial_vacc_val;
+            params.get<mio::osecirvvs::DailyFullVaccinations<double>>()[{g, d}]    = initial_full_vacc_val;
+        }
+    }
+
+    // call set_vaccination_data with an unavailable date
+    mio::Date unavailable_date(2019, 1, 1); // Date before vaccinations started
+    std::vector<int> region = {1001};
+    std::string any_path    = "dummy_vacc_path.json";
+    auto result =
+        mio::osecirvvs::details::set_vaccination_data(model_vector, any_path, unavailable_date, region, num_days);
+
+    ASSERT_THAT(result, IsSuccess());
+
+    // Check that vaccinations are set to zero for all days and age groups
+    for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
+        for (auto a = mio::AgeGroup(0); a < mio::AgeGroup(num_age_groups); ++a) {
+            auto partial_vacc = params.get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{a, d}];
+            auto full_vacc    = params.get<mio::osecirvvs::DailyFullVaccinations<double>>()[{a, d}];
+            EXPECT_NEAR(partial_vacc, 0.0, 1e-10);
+            EXPECT_NEAR(full_vacc, 0.0, 1e-10);
+        }
+    }
+}
+
 #endif
 
 TEST(TestOdeSECIRVVS, parameter_percentiles)
@@ -1580,46 +1622,4 @@ TEST(TestOdeSECIRVVS, apply_variant_function)
     EXPECT_NEAR(
         sim.get_model().parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)],
         0.4, 1e-10);
-}
-
-TEST(TestOdeSECIRVVS, set_vaccination_data_not_avail)
-{
-    const auto num_age_groups = 2;
-    const auto num_days       = 5;
-    mio::osecirvvs::Model<double> model(num_age_groups);
-    std::vector<mio::osecirvvs::Model<double>> model_vector = {model};
-
-    // Setup initial non-zero vaccination data
-    auto& params = model_vector[0].parameters;
-    params.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days + 1));
-    params.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days + 1));
-
-    const double initial_partial_vacc_val = 10.0;
-    const double initial_full_vacc_val    = 5.0;
-
-    for (auto g = mio::AgeGroup(0); g < mio::AgeGroup(num_age_groups); ++g) {
-        for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
-            params.get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{g, d}] = initial_partial_vacc_val;
-            params.get<mio::osecirvvs::DailyFullVaccinations<double>>()[{g, d}]    = initial_full_vacc_val;
-        }
-    }
-
-    // call set_vaccination_data with an unavailable date
-    mio::Date unavailable_date(2019, 1, 1); // Date before vaccinations started
-    std::vector<int> region = {1001};
-    std::string any_path    = "dummy_vacc_path.json";
-    auto result =
-        mio::osecirvvs::details::set_vaccination_data(model_vector, any_path, unavailable_date, region, num_days);
-
-    ASSERT_THAT(result, IsSuccess());
-
-    // Check that vaccinations are set to zero for all days and age groups
-    for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
-        for (auto a = mio::AgeGroup(0); a < mio::AgeGroup(num_age_groups); ++a) {
-            auto partial_vacc = params.get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{a, d}];
-            auto full_vacc    = params.get<mio::osecirvvs::DailyFullVaccinations<double>>()[{a, d}];
-            EXPECT_NEAR(partial_vacc, 0.0, 1e-10);
-            EXPECT_NEAR(full_vacc, 0.0, 1e-10);
-        }
-    }
 }
