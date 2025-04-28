@@ -597,8 +597,8 @@ void Dampings<S>::update_active_dampings(
 
     //find active with same type and level if existent
     auto iter_active_same_type = std::find_if(active_by_type.begin(), active_by_type.end(), [&damping](auto& active) {
-        return get<DampingLevel>(active) == get<DampingLevel>(damping) &&
-               get<DampingType>(active) == get<DampingType>(damping);
+        return get<DampingLevel>(active).get() == get<DampingLevel>(damping).get() &&
+               get<DampingType>(active).get() == get<DampingType>(damping).get();
     });
     if (iter_active_same_type != active_by_type.end()) {
         //replace active of the same type and level
