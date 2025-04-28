@@ -166,8 +166,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     if current_d > max_d:
         return
 
-    node_label = f"{cursor.kind.name}{
-        newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
+    node_label = f"{cursor.kind.name}{newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
 
     current_node = f"{cursor.kind.name}_{cursor.hash}"
 
@@ -177,8 +176,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
         graph.edge(parent_node, current_node)
 
     if cursor.kind.is_reference():
-        referenced_label = f"ref_to_{cursor.referenced.kind.name}{
-            newline()}({cursor.referenced.spelling})"
+        referenced_label = f"ref_to_{cursor.referenced.kind.name}{newline()}({cursor.referenced.spelling})"
         referenced_node = f"ref_{cursor.referenced.hash}"
         graph.node(referenced_node, label=referenced_label)
         graph.edge(current_node, referenced_node)
