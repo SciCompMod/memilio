@@ -36,7 +36,7 @@ For a detailed description and application of the model, see:
 How to: Set up and run a simulation of the LCT-SECIR model
 -----------------------------------------------------------
 
-In the following, we will use an example with one age group/category.
+In the following, we will demonstrate how to run a simulation using the LCT-SECIR model. This examples uses one age group/category.
 
 We start by defining the number of subcompartments and constructing the model. We can choose the number of subcompartments individually for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
 
@@ -70,7 +70,7 @@ If we do not want to use the default parameters, they can be set as follows.
     model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
 Here, we set the contact matrix used in the simulation. One can define multiple matrices for different locations. The size of each of these matrices is defined by the number of age groups. 
-In our example below we use only one contact matrix. We only consider one age group and set the contact rate to 10. 
+In our example below we use only one contact matrix for one location. We only consider one age group and set the contact rate to 10. 
 
 .. code-block:: cpp
 
@@ -92,7 +92,7 @@ We start with constructing a vector ``initial_populations`` that we will pass on
         std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-We assert that vector has the correct size by checking that the number of ``InfectionStates`` and the number of subcomaprtments are correct.
+We assert that vector has the correct size by checking that the number of ``InfectionStates`` and the number of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -131,7 +131,7 @@ Now, we transfer the vector ``initial_populations`` to the model.
         }
     }
 
-We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt` as follows:
+We can simulate using the defined model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt` as follows:
 
 .. code-block:: cpp
 
@@ -140,7 +140,7 @@ We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step
     ScalarType dt = 0.5;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model);
 
-The simulation result is divided by subcompartments. We can call the function calculate_compartments to get a result according to the InfectionStates.
+The simulation result is divided by subcompartments. We can call the function calculate_compartments to get a result according to the ``InfectionStates``.
 
 .. code-block:: cpp
 
