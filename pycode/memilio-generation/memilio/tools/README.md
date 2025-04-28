@@ -43,11 +43,11 @@ python example_oseir.py
 The package contains a [Visualization class](/pycode/memilio-generation/memilio/generation/graph_visualization.py) to display the generated AST.
 This allows for:
 
-Printing the AST in the terminal
+- Printing the AST in the terminal
 
-Saving it as a graph (PNG format)
+- Saving it as a graph (PNG format)
 
-Formatting it in a text file
+- Formatting it in a text file
 
 You can print the AST in the example script with the aviz instance of the Visualisation() class.
 
