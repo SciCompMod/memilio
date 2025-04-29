@@ -897,14 +897,14 @@ int main(int argc, char* argv[])
         if (XMLError_isFatal(SBMLDocument_getError(document, 0)) ||
             XMLError_isError(SBMLDocument_getError(document, 0))) {
             mio::log_error("Fatal error while trying to read the input file!");
-            return 1;
+            return 3;
         }
     }
 
     auto model = document->getModel();
 
     if (!verify_model_suitability(model)) {
-        return 1;
+        return 4;
     }
 
     std::string core_filename = get_filename(filename);
@@ -912,31 +912,31 @@ int main(int argc, char* argv[])
     create_folder(core_filename);
 
     if (!create_infection_state(model, core_filename)) {
-        return 1;
+        return 5;
     }
 
     if (!create_parameters(model, core_filename)) {
-        return 1;
+        return 6;
     }
 
     if (!create_model_cpp(core_filename)) {
-        return 1;
+        return 7;
     }
 
     if (!create_model_h(model, core_filename)) {
-        return 1;
+        return 8;
     }
 
     if (!create_cmake(core_filename)) {
-        return 1;
+        return 9;
     }
 
     if (!create_example_cpp(model, core_filename)) {
-        return 1;
+        return 10;
     }
 
     if (!modify_cmakelists(core_filename)) {
-        return 1;
+        return 11;
     }
     mio::log_info("Created all files.");
     mio::log_info("Formatting files.");
