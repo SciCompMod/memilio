@@ -1,9 +1,9 @@
 #include "memilio/config_internal.h"
+#include "memilio/utils/logging.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
-#ifdef MEMILIO_HAS_SBML
 #include <sbml/SBMLTypes.h>
 
 #include <cmath>
@@ -38,6 +38,7 @@ void create_folder(const std::string& filename)
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     boost::filesystem::path p(lowercase_name);
     boost::filesystem::create_directory(p);
+    mio::log_info("Creating folder at ./{}", p.string());
 }
 
 /**
@@ -298,7 +299,7 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
 *    @param model The model where the formula stems from
 *    @param name_namespace The namespace of the model
 *
-*    This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two values. If that is not the case, it throws an error. Then it expects one of the two noeds to be a time node. The other node has the comparison value and is returned. It is always assumed, but never checked, that we have a positive comparison, i.e. the time is indeed the maximum time.
+*    This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two values. If that is not the case, it throws an error. Then it expects one of the two nodes to be a time node. The other node has the comparison value and is returned. It is always assumed, but never checked, that we have a positive comparison, i.e. the time is indeed the maximum time.
 *    This function is used to find the maximum time until which an event runs. It is used for the generation of the example.cpp file.
 **/
 std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace)
@@ -329,6 +330,7 @@ std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_na
     else {
         return format_event_trigger(SBML_formulaToL3String(left_child), model, name_namespace);
     }
+    mio::log_debug("No tmax as number was found in the formula.");
     return "Error";
 }
 
@@ -342,7 +344,7 @@ std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_na
 bool verify_model_suitability(Model* model)
 {
     if (model->getNumCompartments() != 1) {
-        std::cout << "Currently only models with exactly 1 compartment are supported!" << std::endl;
+        mio::log_error("Currently only models with exactly 1 compartment are supported!");
         return false;
     }
     return true;
@@ -883,7 +885,7 @@ int format_files(const std::string& filename)
 int main(int argc, char* argv[])
 {
     if (argc != 2) {
-        std::cout << "Please provide a SBML file at startup!" << std::endl << std::endl;
+        mio::log_error("Please provide a SBML file at startup!");
         return 1;
     }
     const char* filename = argv[1];
@@ -895,7 +897,7 @@ int main(int argc, char* argv[])
     if (SBMLDocument_getNumErrors(document) > 0) {
         if (XMLError_isFatal(SBMLDocument_getError(document, 0)) ||
             XMLError_isError(SBMLDocument_getError(document, 0))) {
-            std::cout << "Fatal error!" << std::endl;
+            mio::log_error("Fatal error while trying to read the input file!");
             return 1;
         }
     }
@@ -937,7 +939,7 @@ int main(int argc, char* argv[])
     if (!modify_cmakelists(core_filename)) {
         return 1;
     }
-
+    mio::log_info("Created all files.");
+    mio::log_info("Formatting files.");
     return format_files(core_filename);
 }
-#endif // MEMILIO_HAS_SBML
