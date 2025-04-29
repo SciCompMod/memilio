@@ -1,31 +1,64 @@
-#ifndef MEMILIO_TIMER_TIMERS_H
-#define MEMILIO_TIMER_TIMERS_H
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#ifndef MIO_TIMER_TIMERS_H
+#define MIO_TIMER_TIMERS_H
 
 #include "memilio/utils/mioomp.h"
 #include "memilio/timer/basic_timer.h"
-#include "memilio/timer/definitions.h"
 #include "memilio/timer/timer_registrar.h"
-#include <boost/core/demangle.hpp>
-#include <type_traits>
+#include "memilio/utils/string_literal.h"
+
+#include <string>
 
 namespace mio
 {
 namespace timing
 {
 
-// second attempt, templates dont look nice at all, but are indep. of the char[] used, only using its content
-template <class Tag, char... Chars>
+/// @brief Thread local singleton timer, identified by its name. Best used via AutoTimer.
+template <StringLiteral Name, StringLiteral Scope = "">
 class NamedTimer : public BasicTimer
 {
 public:
-    static constexpr char Name[] = {Chars..., '\0'};
+    /// @brief Do not allow construction other than through get_instance and the default constructor.
+    NamedTimer(NamedTimer&)  = delete;
+    NamedTimer(NamedTimer&&) = delete;
+
+    /// @brief Get the timer's name as a runtime string.
+    static std::string name()
+    {
+        return std::string(Name);
+    }
+
+    /// @brief Get the timer's scope as a runtime string.
+    static std::string scope()
+    {
+        return std::string(Scope);
+    }
 
     /**
-     * @brief Get a thread local instance of this timer.
+     * @brief Get a thread local instance of this timer. It is automatically registered to the TimerRegistrar.
      * 
-     * This is the only way to obtain a NamedTimer, as its constructors are disabled. The benefit is, that NamedTimer is
-     * inherently threadsafe, the drawback is that 
-     *
+     * This is the only way to obtain a NamedTimer, as its constructors are disabled. Since there is exactly one timer
+     * for each Name and Scope combination, this timer is inherently threadsafe. The Name and Scope together effectively
+     * work as a key for a global map, though the map access is made during compilation.
      */
     static NamedTimer& get_instance()
     {
@@ -36,72 +69,44 @@ public:
     }
 
 private:
+    /**
+     * @brief Create a NamedTimer and register it.
+     * Since this is the only available constructor, and the registration is made before construction is done, it is
+     * guaranteed (by standard), that NamedTimer is destroyed after TimerRegistrar. See
+     * https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf 15.6.2 and 15.4-9.
+     */
     NamedTimer()
     {
-        const auto name = std::is_same_v<Tag, void> ? Name : boost::core::demangle(typeid(Tag).name()) + "::" + Name;
-        TimerRegistrar::get_instance().add_timer({name, *this, mio::get_omp_thread_id()});
+        TimerRegistrar::get_instance().add_timer({name(), scope(), *this, mio::get_omp_thread_id()});
     }
-
-    NamedTimer(NamedTimer&)  = delete;
-    NamedTimer(NamedTimer&&) = delete;
 };
 
-namespace details
-{
-
 /**
- * @brief Get the NamedTimer identified by timer_name.
- * @param timer_name[in] A callable returning a constexpr char, for example `CONST_LITERAL("example")`.
- * @tparam Tag Any type.
- * @tparam Identifier The type of timer_name.
- * @tparam I Index sequence from 0 to strlen(timer_name()).
- * @return A reference to the specified NamedTimer.
+ * @brief Timer that automatically starts when it is created, and stops when it is destroyed.
+ * @tparam Name, Scope The name and scope of a NamedTimer. Do not set these if you want to use a BasicTimer.
  */
-template <class Tag, class Identifier, std::size_t... I>
-constexpr auto& get_named_timer_impl(Identifier timer_name, std::index_sequence<I...>)
-{
-    (void)timer_name; // if the name is "", i.e. empty, the Identifier shows up as unused
-    return NamedTimer<Tag, timer_name()[I]...>::get_instance();
-}
-
-} // namespace details
-
-/**
- * @brief Get the NamedTimer identified by timer_name.
- * @param timer_name[in] A callable returning a constexpr char, for example `CONST_LITERAL("example")`.
- * @tparam Tag Any type, defaults to void.
- * @tparam Identifier The type of timer_name.
- * @return A reference to the specified NamedTimer.
- */
-template <class Tag = void, class Identifier>
-constexpr auto& get_named_timer(Identifier timer_name)
-{
-    static_assert(
-        std::is_same_v<decltype(std::declval<Identifier>()()), const char*>,
-        "Identifier must evaluate to a const char*. Use for example 'get_named_timer(CONST_LITERAL(\"example\"))'");
-    // use an index sequence to "explode" the char* givne by timer_name() into a list of single char template values.
-    return details::get_named_timer_impl<Tag>(
-        timer_name, std::make_index_sequence<::mio::details::constexpr_strlen(timer_name())>{});
-}
-
-} // namespace timing
-
-template <class Tag = void>
+template <StringLiteral Name, StringLiteral Scope = "">
 class AutoTimer
 {
 public:
-    template <class Identifier>
-    AutoTimer(Identifier timer_name)
-        : m_timer(timing::get_named_timer<Tag>(timer_name))
+    /// @brief Run the NamedTimer given by the template parameter(s) Name (and Scope).
+    AutoTimer()
+        : m_timer(NamedTimer<Name, Scope>::get_instance())
     {
         m_timer.start();
     }
 
-    AutoTimer(timing::BasicTimer& timer)
+    /// @brief Run the given BasicTimer. Does not take ownership, so mind the timer's lifetime!
+    AutoTimer(BasicTimer& timer)
         : m_timer(timer)
     {
+        static_assert(Name.empty() && Scope.empty(),
+                      "Do not set the Name and Scope templates when using this constructor.");
         m_timer.start();
     }
+
+    AutoTimer(AutoTimer&)  = delete;
+    AutoTimer(AutoTimer&&) = delete;
 
     ~AutoTimer()
     {
@@ -109,9 +114,14 @@ public:
     }
 
 private:
-    timing::BasicTimer& m_timer;
+    BasicTimer& m_timer; ///< Reference to the timer so it can be stopped in AutoTimer's destructor.
 };
+
+// Deduction guide that allows omitting the template parameter when using the BasicTimer constructor.
+AutoTimer(BasicTimer& timer) -> AutoTimer<"">;
+
+} // namespace timing
 
 } // namespace mio
 
-#endif // MEMILIO_TIMER_TIMERS_H
+#endif // MIO_TIMER_TIMERS_H

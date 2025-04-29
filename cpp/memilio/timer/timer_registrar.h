@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef MIO_TIMER_TIMER_REGISTRAR_H
 #define MIO_TIMER_TIMER_REGISTRAR_H
 
@@ -8,8 +27,6 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
-#include <string>
-#include <utility>
 
 namespace mio
 {
@@ -23,13 +40,10 @@ public:
     /**
      * @brief Access the TimerRegistrar.
      *
-     * The TimerRegistrar acts as a singleton, using this method to access the instance.
-     * This allows using TimerRegistrar without having to manage a TimerRegistrar or pass an instance to any class or
-     * function that uses timers. In particular, it allows e.g. NamedTimer to register itself automatically, and it
-     * allows guaranteeing a correct destruction order. That is, since TimerRegistrar::get_instance is being called
-     * within the NamedTimer constructor, TimerRegistrar _finishes_ its constructor before NamedTimer.
-     * For reference, see 15.6.2 and 15.4-9 of the c++17 standart,
-     * https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf
+     * TimerRegistrar acts as a singleton, using this method to access the instance.
+     * This makes TimerRegistrar accessible everywhere, without having to manage a TimerRegistrar object or pass an
+     * instance to any class or function that uses timers. In particular, it allows e.g. NamedTimer to register itself
+     * automatically, while guaranteeing a correct destruction order.
      *
      * @return A reference to the TimerRegistrar instance.
      */
@@ -44,7 +58,8 @@ public:
      *
      * Note that the TimerRegistrar does not manage any storage, it only keeps a list of the timers and their names.
      * Therefore, if you manually call add_timer, you have to make sure that the registered timer lives long enough
-     * for e.g. the last print_timer call. You may want to disable_final_timer_summary, and look at get_instance.
+     * for e.g. the last print_timer call. You may want to disable_final_timer_summary, and look at NamedTimer as an
+     * example that does guarantee correct object lifetime.  
      *
      * @param registration A new registration with a name, a reference to a timer, and the thread id it is created on.
      */

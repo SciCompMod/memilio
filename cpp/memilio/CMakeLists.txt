@@ -100,6 +100,7 @@ add_library(memilio
     utils/miompi.h
     utils/miompi.cpp
     utils/mioomp.h
+    utils/string_literal.h
     utils/type_list.h
 )
 

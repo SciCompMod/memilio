@@ -1,19 +1,33 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef MIO_TIMER_TABLE_PRINTER_H
 #define MIO_TIMER_TABLE_PRINTER_H
 
 #include "memilio/timer/definitions.h"
 #include "memilio/timer/registration.h"
-#include "memilio/utils/logging.h"
+#include "memilio/utils/logging.h" // included for fmt
 
 #include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <iomanip>
-#include <ios>
-#include <iostream>
+#include <ostream>
 #include <list>
 #include <map>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -21,10 +35,10 @@ namespace mio
 {
 namespace timing
 {
-
 namespace details
 {
 
+/// @brief Table used by TablePrinter with named rows and columns. With some extra work, this could be reused elsewhere.
 template <class T>
 class Table
 {
@@ -72,7 +86,7 @@ public:
 
     std::string& get_col_name(size_t col)
     {
-        assert(col < column_names.size());
+        assert(col < m_column_names.size());
         return m_column_names[col];
     }
 
@@ -102,16 +116,27 @@ private:
 class TablePrinter : public Printer
 {
 public:
+    /**
+     * @brief Change the format_string used for printed time values. Default is scientific notation "{:e}".
+     * @param[in] format_string A format string for printing double values. Should have fixed width, like "{:16.4f}".
+     */
     void set_time_format(std::string format_string)
     {
         m_time_format = format_string;
     }
 
+    /**
+     * @brief Print a table with timing results (aggregated over threads).
+     * If multiple threads were used for timing, adds columns with min, max and average time measured per thread, and a
+     * column with the number of threads.
+     * @param[in] timer_register TimerRegistrar's register of timers.
+     * @param[inout] out The stream to write to.
+     */
     void print(const std::list<TimerRegistration>& timer_register, std::ostream& out = std::cout) override
     {
         auto [table, is_multithreaded, name_width, max_val] = create_table(timer_register);
         // calculate column_widths
-        const size_t time_width   = fmt::format(m_time_format, max_val).size();
+        const size_t time_width   = fmt::format(fmt::runtime(m_time_format), max_val).size();
         const size_t thread_width = table.get_col_name(table.cols() - 1).size();
         std::vector<size_t> col_widths(table.cols() + 1);
         // note that col_width is offset by 1 relative to table, as uses index 0 for the first value,
@@ -146,7 +171,7 @@ public:
         // print table content, only adding statistics when mulithreaded
         for (size_t row = 0; row < table.rows(); row++) {
             out << border_l << std::setw(col_widths[0]) << std::left << table.get_row_name(row);
-            out << separator << std::setw(col_widths[1]) << fmt::format(m_time_format, table(row, 0));
+            out << separator << std::setw(col_widths[1]) << fmt::format(fmt::runtime(m_time_format), table(row, 0));
             if (is_multithreaded) {
                 const int& num_threads = static_cast<int>(table(row, 4));
                 for (int col = 1; col < 4; col++) {
@@ -155,7 +180,7 @@ public:
                     }
                     else {
                         out << separator << std::setw(col_widths[col + 1])
-                            << fmt::format(m_time_format, table(row, col));
+                            << fmt::format(fmt::runtime(m_time_format), table(row, col));
                     }
                 }
                 out << separator << std::setw(thread_width) << std::right << num_threads;
@@ -166,6 +191,12 @@ public:
     }
 
 private:
+    /**
+     * @brief The first part of the print function, separated as a somewhat independant step.
+     * @param[in] timer_register The list of all timers that should be converted to a table.
+     * @return Returns the table of timers, whether multiple threads were used, the width of the name column, and the
+     * largest value found in the table.
+     */
     inline static std::tuple<details::Table<double>, bool, size_t, double>
     create_table(const std::list<TimerRegistration>& timer_register)
     {
@@ -173,10 +204,11 @@ private:
         std::map<std::string, size_t> row_to_index; // map from name to index, used to fill table
         bool is_multithreaded = false; // keep track of whether a thread id > 0 exists
         // map rows from thread 0 first, so the order of timers (mostly) corresponds to their call order
-        for (const auto& [name, _, thread] : timer_register) {
+        for (const auto& [name, scope, _, thread] : timer_register) {
             if (thread == 0) {
-                if (row_to_index.emplace(name, rows.size()).second) {
-                    rows.push_back(name);
+                const std::string qn = qualified_name(name, scope);
+                if (row_to_index.emplace(qn, rows.size()).second) {
+                    rows.push_back(qn);
                 }
             }
             else {
@@ -186,10 +218,11 @@ private:
         // make a second pass to add timers from other threads
         // this does nothing, if all timers are used on thread 0 at least once
         if (is_multithreaded) {
-            for (auto& [name, _, thread] : timer_register) {
+            for (auto& [name, scope, _, thread] : timer_register) {
                 if (thread != 0) {
-                    if (row_to_index.emplace(name, rows.size()).second) {
-                        rows.push_back(name);
+                    const std::string qn = qualified_name(name, scope);
+                    if (row_to_index.emplace(qn, rows.size()).second) {
+                        rows.push_back(qn);
                     }
                 }
             }
@@ -204,8 +237,8 @@ private:
         const int elapsed = 0, min = 1, max = 2, avg = 3, num = 4;
         // accumulate elapsed time and gather statistics in the table
         // averages are calculated later, using finished values from elapsed and num
-        for (auto& [name, timer, thread] : timer_register) {
-            const auto row  = row_to_index[name];
+        for (auto& [name, scope, timer, thread] : timer_register) {
+            const auto row  = row_to_index[qualified_name(name, scope)];
             const auto time = time_in_seconds(timer.get_elapsed_time());
             table(row, elapsed) += time;
             if (is_multithreaded) {
@@ -231,7 +264,7 @@ private:
         return {table, is_multithreaded, name_width, max_val};
     }
 
-    std::string m_time_format = "{:e}";
+    std::string m_time_format = "{:e}"; ///< Format string used to print elapsed time and other timing statistics.
 };
 
 } // namespace timing
