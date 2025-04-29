@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
 *
@@ -229,6 +229,31 @@ public:
             num_icu, date, state_id, county_id, district_id);
     }
 };
+
+/**
+ * @brief Checks if DIVI data is available for a given date.
+ * @param date The date to check.
+ * @return True if date is within 2020-04-23 and 2024-07-21, false otherwise.
+ */
+inline bool is_divi_data_available(const Date& date)
+{
+    static const Date divi_data_start(2020, 4, 23);
+    return date >= divi_data_start;
+}
+
+/**
+ * @brief Checks if vaccination data is available for any day within the given date interval.
+ * @param start_date The start date of the interval to check.
+ * @param end_date The end date of the interval to check.
+ * @return True if there is any overlap between the given date range and the vaccination data
+ *  availability period, false otherwise.
+ */
+inline bool is_vaccination_data_available(const Date& start_date, const Date& end_date)
+{
+    static const Date vaccination_data_start(2020, 12, 27);
+    static const Date vaccination_data_end(2024, 7, 9);
+    return !(end_date < vaccination_data_start || start_date > vaccination_data_end);
+}
 
 /**
  * Deserialize a list of DiviEntry from json.

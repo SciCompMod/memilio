@@ -592,9 +592,6 @@ class Simulation:
         self.intervention_list = requests.get(
             self.run_data_url + "interventions/templates/", headers=header).json()
 
-        # TODO: Assuming all parameters are equal for each scenarios.
-        # Therefore, we only need to build the graph once?
-
         for scenario in scenarios:
             # Get the number of days to simulate from scenario definition in API.
             num_days_sim = (datetime.datetime.strptime(
@@ -657,10 +654,7 @@ class Simulation:
 if __name__ == "__main__":
     cwd = os.getcwd()
     run_data_url = "https://zam10063.zam.kfa-juelich.de/api-new/"
-    # with open(scenario_data_path) as f:
-    #     scenario_data = json.load(f)
     mcmc_dir = os.path.join(cwd, "mcmc data")
-    date_today = '2025-01-13'
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
