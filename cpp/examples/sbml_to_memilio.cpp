@@ -425,6 +425,7 @@ bool create_parameters(Model* model, const std::string& filename)
     }
     else {
         for (size_t i = 0; i < number_parameters; i++) {
+            if (i != 0) { parameterset_initializer += ", "; }
             Parameter param  = *(Parameter*)model->getListOfParameters()->get(i);
             double value     = param.getValue();
             std::string name = param.getId();
@@ -433,11 +434,9 @@ bool create_parameters(Model* model, const std::string& filename)
                        << std::endl;
             parameters << "return " << value << ";\n}" << std::endl;
             parameters << "static std::string name()\n{\n   return \"" << name << "\";\n}\n};\n" << std::endl;
-            parameterset_initializer = parameterset_initializer + name + "<FP>, ";
+            parameterset_initializer = parameterset_initializer + name + "<FP>";
         }
     }
-    parameterset_initializer.pop_back();
-    parameterset_initializer.pop_back();
     parameters << "template <typename FP = ScalarType>" << std::endl;
     parameters << parameterset_initializer << ">;\n " << std::endl;
     parameters << "template <typename FP = ScalarType>\nclass Parameters : public ParametersBase<FP>\n{\npublic:\n    "
