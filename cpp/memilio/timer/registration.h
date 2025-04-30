@@ -49,6 +49,10 @@ inline std::string qualified_name(const std::string& name, const std::string& sc
 /// @brief Struct with a virtual print method to allow exchanging how TimerRegistration%s are evaluated.
 struct Printer {
     virtual void print(const std::list<TimerRegistration>&, std::ostream&) = 0;
+
+    virtual ~Printer()
+    {
+    }
 };
 
 } // namespace timing
