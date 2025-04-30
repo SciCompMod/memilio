@@ -105,7 +105,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(self.path),
-                         ['data_secir_simple_3days_0k.pickle'])
+                         ['data_secir_simple_3days_1.pickle'])
 
     # Testing network_architectures.py
 
@@ -390,8 +390,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         # generate dataset with multiple output
         label_width = 10
 
-        inputs = tf.random.uniform([5, 5, 8])
-        labels = tf.random.uniform([5, 10, 8])
+        inputs = tf.ones([5, 5, 8])
+        labels = tf.ones([5, 10, 8])
 
         model_cnn = network_architectures.cnn_multi_input_multi_output(
             label_width=label_width, num_filters=1, num_neurons_per_layer=1,
@@ -420,9 +420,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
     # testing train_and_evaluate_model
     def test_train_and_evaluate_model(self):
         # generate dataset with multiple output
-
-        inputs = tf.random.uniform([5, 5, 8])
-        labels = tf.random.uniform([5, 10, 8])
+        inputs = tf.ones([5, 5, 8])
+        labels = tf.ones([5, 10, 8])
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
@@ -483,8 +482,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                             for activation in activation_function for modelname in models]
 
         # generate dataset with multiple output
-        inputs = tf.random.uniform([5, 1, 2])
-        labels = tf.random.uniform([5, 3, 2])
+        inputs = tf.ones([5, 1, 2])
+        labels = tf.ones([5, 3, 2])
 
         grid_search.perform_grid_search(
             model_parameters, inputs, labels, training_parameters,

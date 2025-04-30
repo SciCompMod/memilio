@@ -199,8 +199,12 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        filename = "data_secir_simple_%ddays_%dk.pickle" % (
-            label_width, num_runs//1000)
+        if num_runs > 1000:
+            filename = "data_secir_simple_%ddays_%dk.pickle" % (
+                label_width, num_runs//1000)
+        else:
+            filename = "data_secir_simple_%ddays_%d.pickle" % (
+                label_width, num_runs)
         with open(os.path.join(path, filename), 'wb') as f:
             pickle.dump(data, f)
     return data
