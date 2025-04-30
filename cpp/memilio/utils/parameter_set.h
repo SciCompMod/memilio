@@ -225,7 +225,7 @@ public:
      */
     template <class Dummy = void,
               class       = std::enable_if_t<
-                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+                        details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
     ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {
@@ -356,7 +356,7 @@ private:
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
     {
         //read current parameter, append result to results of previous parameters, recurse to next parameter
-        const size_t I        = sizeof...(Rs);
+        constexpr size_t I    = sizeof...(Rs);
         using TaggedParameter = std::tuple_element_t<I, decltype(ParameterSet::m_tup)>;
         auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
         return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
