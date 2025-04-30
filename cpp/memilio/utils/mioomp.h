@@ -20,7 +20,7 @@
 #ifndef MIO_UTIL_OPENMP_H
 #define MIO_UTIL_OPENMP_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // included for MEMILIO_ENABLE_OPENMP
 #include "memilio/utils/compiler_diagnostics.h"
 
 #ifdef MEMILIO_ENABLE_OPENMP
