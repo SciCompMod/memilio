@@ -543,7 +543,7 @@ bool create_model_h(Model& model, const std::string& filename)
     std::ofstream model_h;
     model_h.open(lowercase_name + "/model.h", std::ios::out);
     if (model_h) {
-
+        //Add generic code 
         model_h << "#ifndef " << uppercase_name << "_MODEL_H\n#define " << uppercase_name << "_MODEL_H" << std::endl;
         model_h << "\n#include <cmath>\n#include \"memilio/compartments/compartmentalmodel.h\"\n#include "
                    "\"memilio/epidemiology/age_group.h\"\n#include \"memilio/epidemiology/populations.h\"\n#include "
@@ -567,12 +567,14 @@ bool create_model_h(Model& model, const std::string& filename)
                "FP t, Eigen::Ref<Eigen::VectorX<FP>> dydt) const override\n{"
             << std::endl;
         model_h << "auto& params = this->parameters;" << std::endl;
+        // Create index variables for every species
         for (size_t i = 0; i < number_species; i++) {
             Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
             model_h << "    size_t " << curr_species.getId()
                     << "i = this->populations.get_flat_index({InfectionState::" << curr_species.getId() << "});"
                     << std::endl;
         }
+        // Create lambda functions for every function definition
         for (size_t i = 0; i < model.getListOfFunctionDefinitions()->size(); i++) {
             FunctionDefinition function_def = *(FunctionDefinition*)model.getListOfFunctionDefinitions()->get(i);
             std::string lambda_string       = SBML_formulaToL3String(function_def.getMath());
@@ -597,6 +599,7 @@ bool create_model_h(Model& model, const std::string& filename)
             model_h << "};" << std::endl;
         }
         model_h << std::endl;
+        // Create reactions
         for (size_t i = 0; i < number_reactions; i++) {
             model_h << "{" << std::endl;
             auto curr_reaction = *(Reaction*)model.getListOfReactions()->get(i);
@@ -621,19 +624,7 @@ bool create_model_h(Model& model, const std::string& filename)
             boost::split(formula_parts, math_string, boost::is_any_of(" "), boost::algorithm::token_compress_on);
             for (size_t j = 0; j < formula_parts.size(); j++) {
                 std::string leading_bracket = "", trailing_bracket = "";
-                while (formula_parts[j].find_first_of('(') != std::string::npos) {
-                    size_t first_index = formula_parts[j].find_first_of('(');
-                    leading_bracket    = leading_bracket + formula_parts[j].substr(0, first_index + 1);
-                    formula_parts[j].erase(0, first_index + 1);
-                }
-                if (formula_parts[j][0] == '-') {
-                    leading_bracket = leading_bracket + "-";
-                    formula_parts[j].erase(0, 1);
-                }
-                while (formula_parts[j].back() == ')' || formula_parts[j].back() == ',') {
-                    trailing_bracket = trailing_bracket + formula_parts[j].back();
-                    formula_parts[j].pop_back();
-                }
+                strip_formula(leading_bracket, trailing_bracket, formula_parts[j]);
                 if (formula->getListOfLocalParameters()->getElementBySId(formula_parts[j]) != NULL) {
                 }
                 else if (model.getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
@@ -677,12 +668,7 @@ bool create_model_h(Model& model, const std::string& filename)
                 if (formula_parts[j] == "time") {
                     formula_parts[j] = "t";
                 }
-                if (leading_bracket.size() > 0) {
-                    formula_parts[j] = leading_bracket + formula_parts[j];
-                }
-                if (trailing_bracket.size() > 0) {
-                    formula_parts[j] = formula_parts[j] + trailing_bracket;
-                }
+                append_brackets(leading_bracket, trailing_bracket, formula_parts[j]);
             }
 
             std::string output_formula = boost::algorithm::join(formula_parts, " ");
@@ -696,6 +682,7 @@ bool create_model_h(Model& model, const std::string& filename)
             }
             model_h << "}" << std::endl;
         }
+        // Add rate rule formulas
         for (size_t i = 0; i < model.getListOfRules()->size(); i++) {
             auto rule = model.getListOfRules()->get(i);
             if (rule->getType() == RULE_TYPE_RATE) {
@@ -704,19 +691,7 @@ bool create_model_h(Model& model, const std::string& filename)
                 boost::split(formula_parts, math_string, boost::is_any_of(" "), boost::algorithm::token_compress_on);
                 for (size_t j = 0; j < formula_parts.size(); j++) {
                     std::string leading_bracket = "", trailing_bracket = "";
-                    while (formula_parts[j].find_first_of('(') != std::string::npos) {
-                        size_t first_index = formula_parts[j].find_first_of('(');
-                        leading_bracket    = leading_bracket + formula_parts[j].substr(0, first_index + 1);
-                        formula_parts[j].erase(0, first_index + 1);
-                    }
-                    if (formula_parts[j][0] == '-') {
-                        leading_bracket = leading_bracket + "-";
-                        formula_parts[j].erase(0, 1);
-                    }
-                    while (formula_parts[j].back() == ')' || formula_parts[j].back() == ',') {
-                        trailing_bracket = trailing_bracket + formula_parts[j].back();
-                        formula_parts[j].pop_back();
-                    }
+                    strip_formula(leading_bracket, trailing_bracket, formula_parts[j]);
                     if (model.getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
                         formula_parts[j] = "params.template get<" + formula_parts[j] + "<FP>>()";
                     }
@@ -734,18 +709,14 @@ bool create_model_h(Model& model, const std::string& filename)
                     if (formula_parts[j] == "time") {
                         formula_parts[j] = "t";
                     }
-                    if (leading_bracket.size() > 0) {
-                        formula_parts[j] = leading_bracket + formula_parts[j];
-                    }
-                    if (trailing_bracket.size() > 0) {
-                        formula_parts[j] = formula_parts[j] + trailing_bracket;
-                    }
+                    append_brackets(leading_bracket, trailing_bracket, formula_parts[j]);
                 }
                 std::string output_formula = boost::algorithm::join(formula_parts, " ");
                 model_h << "dydt[" << rule->getVariable() << "i] += " << output_formula << ";" << std::endl;
             }
         }
         model_h << "}" << std::endl;
+        // Add generic serialization function
         model_h
             << "template <class IOContext>\n    void serialize(IOContext& io) const\n    {\n        auto obj = "
                "io.create_object(\"Model\");\n        obj.add_element(\"Parameters\", this->parameters);\n        "
