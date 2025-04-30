@@ -136,12 +136,17 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
 endif()
-# workarounds for compiler bugs or overzealous optimization/analysis
+# woyrkarounds for compiler bugs or overzealous optimization/analysis
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
                "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
                "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
+               "-Wno-stringop-overread;"
+        )
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Wno-stringop-overread;"
         )
     endif()
 endif()

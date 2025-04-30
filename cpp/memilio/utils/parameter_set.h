@@ -356,8 +356,7 @@ private:
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
     {
         //read current parameter, append result to results of previous parameters, recurse to next parameter
-        constexpr size_t I    = sizeof...(Rs);
-        using TaggedParameter = std::tuple_element_t<I, decltype(ParameterSet::m_tup)>;
+        using TaggedParameter = std::tuple_element_t<sizeof...(Rs), decltype(ParameterSet::m_tup)>;
         auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
         return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
     }
