@@ -5,7 +5,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
-#include <sbml/SBMLDocument.h>
 #include <sbml/SBMLTypes.h>
 
 #include <cmath>
@@ -47,6 +46,56 @@ void create_folder(const std::string& filename)
 }
 
 /**
+*   @brief Strips leading and trailing brackets and minus signs from a formula
+*
+*   @param leading_bracket The string to store leading brackets and minus signs
+*   @param trailing_bracket The string to store trailing brackets
+*   @param formula The formula to be processed
+*
+*   This function goes through the formula and removes leading brackets and minus signs. It also removes trailing
+*   brackets and commas. The leading brackets and minus signs are stored in the leading_bracket string, the trailing
+*   brackets in the trailing_bracket string. The formula is modified in place. This function can be reversed by calling
+*   :cpp:func:`append_brackets(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
+*/
+void strip_formula(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)
+{
+    while (formula.find_first_of('(') != std::string::npos) {
+        size_t first_index = formula.find_first_of('(');
+        leading_bracket    = leading_bracket + formula.substr(0, first_index + 1);
+        formula.erase(0, first_index + 1);
+    }
+    if (formula[0] == '-') {
+        leading_bracket = leading_bracket + "-";
+        formula.erase(0, 1);
+    }
+    while (formula.back() == ')' || formula.back() == ',') {
+        trailing_bracket = trailing_bracket + formula.back();
+        formula.pop_back();
+    }
+}
+
+/**
+*   @brief Appends leading and trailing brackets to a formula
+*
+*   @param leading_bracket The string storing leading brackets and minus signs
+*   @param trailing_bracket The string storing trailing brackets
+*   @param formula The formula to be processed
+*
+*   This function adds the content of the ``leading_bracket`` string to the beginning of the formula and the content of
+*   the ``trailing_bracket`` string to the end of the formula. This function can be used to reverse the effect of
+*   :cpp:func:`strip_formula(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
+*/
+void append_brackets(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)
+{
+    if (leading_bracket.size() > 0) {
+        formula = leading_bracket + formula;
+    }
+    if (trailing_bracket.size() > 0) {
+        formula = formula + trailing_bracket;
+    }
+}
+
+/**
 *    @brief Formats a formula for the example.cpp file
 *
 *    @param model The model where the formula stems from
@@ -67,19 +116,7 @@ std::string format_main_formula(Model & model, char* math_string, std::string* n
     boost::split(formula_parts, math_string, boost::is_any_of(" "), boost::algorithm::token_compress_on);
     for (size_t i = 0; i < formula_parts.size(); i++) {
         std::string leading_bracket = "", trailing_bracket = "";
-        while (formula_parts[i].find_first_of('(') != std::string::npos) {
-            size_t first_index = formula_parts[i].find_first_of('(');
-            leading_bracket    = leading_bracket + formula_parts[i].substr(0, first_index + 1);
-            formula_parts[i].erase(0, first_index + 1);
-        }
-        if (formula_parts[i][0] == '-') {
-            leading_bracket = leading_bracket + "-";
-            formula_parts[i].erase(0, 1);
-        }
-        while (formula_parts[i].back() == ')' || formula_parts[i].back() == ',') {
-            trailing_bracket = trailing_bracket + formula_parts[i].back();
-            formula_parts[i].pop_back();
-        }
+        strip_formula(leading_bracket, trailing_bracket, formula_parts[i]);
         if (model.getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] = "params.template get<mio::" + *name_namespace + "::" + formula_parts[i] + "<double>>()";
         }
@@ -98,12 +135,7 @@ std::string format_main_formula(Model & model, char* math_string, std::string* n
         if (formula_parts[i] == "time") {
             formula_parts[i] = "0.0";
         }
-        if (leading_bracket.size() > 0) {
-            formula_parts[i] = leading_bracket + formula_parts[i];
-        }
-        if (trailing_bracket.size() > 0) {
-            formula_parts[i] = formula_parts[i] + trailing_bracket;
-        }
+        append_brackets(leading_bracket, trailing_bracket, formula_parts[i]);
     }
     return boost::algorithm::join(formula_parts, " ");
 }
@@ -200,19 +232,7 @@ mio::IOResult<std::string> format_event_formulas(std::string formula, Model & mo
     boost::split(formula_parts, formula, boost::is_any_of(" "), boost::algorithm::token_compress_on);
     for (size_t i = 0; i < formula_parts.size(); i++) {
         std::string leading_bracket = "", trailing_bracket = "";
-        while (formula_parts[i].find_first_of('(') != std::string::npos) {
-            size_t first_index = formula_parts[i].find_first_of('(');
-            leading_bracket    = leading_bracket + formula_parts[i].substr(0, first_index + 1);
-            formula_parts[i].erase(0, first_index + 1);
-        }
-        if (formula_parts[i][0] == '-') {
-            leading_bracket = leading_bracket + "-";
-            formula_parts[i].erase(0, 1);
-        }
-        while (formula_parts[i].back() == ')' || formula_parts[i].back() == ',') {
-            trailing_bracket = trailing_bracket + formula_parts[i].back();
-            formula_parts[i].pop_back();
-        }
+        strip_formula(leading_bracket, trailing_bracket, formula_parts[i]);
 
         if (model.getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] =
@@ -234,12 +254,7 @@ mio::IOResult<std::string> format_event_formulas(std::string formula, Model & mo
         if (formula_parts[i] == "time") {
             formula_parts[i] = "t";
         }
-        if (leading_bracket.size() > 0) {
-            formula_parts[i] = leading_bracket + formula_parts[i];
-        }
-        if (trailing_bracket.size() > 0) {
-            formula_parts[i] = formula_parts[i] + trailing_bracket;
-        }
+        append_brackets(leading_bracket, trailing_bracket, formula_parts[i]);
     }
     return mio::success(boost::algorithm::join(formula_parts, " "));
 }
@@ -268,19 +283,7 @@ mio::IOResult<std::string> format_event_trigger(std::string formula, Model & mod
     boost::split(formula_parts, formula, boost::is_any_of(" "), boost::algorithm::token_compress_on);
     for (size_t i = 0; i < formula_parts.size(); i++) {
         std::string leading_bracket = "", trailing_bracket = "";
-        while (formula_parts[i].find_first_of('(') != std::string::npos) {
-            size_t first_index = formula_parts[i].find_first_of('(');
-            leading_bracket    = leading_bracket + formula_parts[i].substr(0, first_index + 1);
-            formula_parts[i].erase(0, first_index + 1);
-        }
-        if (formula_parts[i][0] == '-') {
-            leading_bracket = leading_bracket + "-";
-            formula_parts[i].erase(0, 1);
-        }
-        while (formula_parts[i].back() == ')' || formula_parts[i].back() == ',') {
-            trailing_bracket = trailing_bracket + formula_parts[i].back();
-            formula_parts[i].pop_back();
-        }
+        strip_formula(leading_bracket, trailing_bracket, formula_parts[i]);
 
         if (model.getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] =
@@ -300,12 +303,7 @@ mio::IOResult<std::string> format_event_trigger(std::string formula, Model & mod
         if (formula_parts[i] == "time") {
             return mio::failure(mio::StatusCode::InvalidValue);
         }
-        if (leading_bracket.size() > 0) {
-            formula_parts[i] = leading_bracket + formula_parts[i];
-        }
-        if (trailing_bracket.size() > 0) {
-            formula_parts[i] = formula_parts[i] + trailing_bracket;
-        }
+        append_brackets(leading_bracket, trailing_bracket, formula_parts[i]);
     }
     return mio::success(boost::algorithm::join(formula_parts, " "));
 }
