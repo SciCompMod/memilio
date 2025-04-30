@@ -175,6 +175,18 @@ public:
                 this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
                 corrected                                                  = true;
             }
+            if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
+                 Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
+                        .cwiseAbs()
+                        .maxCoeff() > 1e-10 ||
+                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
+                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
+                log_warning("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
+                            "staying equals the complement of those leaving. Running without commuting.");
+                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline() =
+                    Eigen::MatrixXd::Identity((size_t)this->get_num_regions(), (size_t)this->get_num_regions());
+                return true;
+            }
         }
         return corrected;
     }
@@ -210,6 +222,16 @@ public:
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
                           "greater {:.4f}",
                           this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
+                return true;
+            }
+            if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
+                 Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
+                        .cwiseAbs()
+                        .maxCoeff() > 1e-10 ||
+                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
+                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
+                log_error("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
+                          "staying equals the complement of those leaving.");
                 return true;
             }
         }

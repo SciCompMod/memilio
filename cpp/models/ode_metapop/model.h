@@ -86,14 +86,14 @@ public:
                         population.get_flat_index({Region(region_n), AgeGroup(age_j), InfectionState::Susceptible});
 
                     const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
-                    double coeffStoI =
+                    double coeffStoE =
                         0.5 *
                         params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
                         params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
                     flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
-                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n, age_j)) * coeffStoI *
+                        (pop[Ijn] * Nj_inv + infections_due_commuting(region_n, age_j)) * coeffStoE *
                         y[population.get_flat_index({Region(region_n), AgeGroup(age_i), InfectionState::Susceptible})];
                 }
             }
