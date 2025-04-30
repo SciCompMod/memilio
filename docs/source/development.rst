@@ -38,7 +38,7 @@ Naming rules:
 
   - Classes begin with large Letters , e.g. ``class MyClass``
   - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function`` 
-  - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading "m_", e.g. ``m_my_member``.
+  - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading ``m_``, e.g. ``m_my_member``.
 
 Return Values:
 

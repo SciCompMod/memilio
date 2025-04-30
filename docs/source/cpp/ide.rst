@@ -37,7 +37,9 @@ Wendler A, Plötzke L, Tritzschak H, Kühn MJ (2024) A nonstandard numerical sch
 How to: Set up and run a simulation of the IDE-SECIR model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The numerical solver requires a fixed time step size which we define by
+In the following, we will demonstrate how to run a simulation using the IDE-SECIR model.
+
+We start by defining the step size of the numerical solver. Note that the time step size is fixed during the simulation. We define it define by
 
 .. code-block:: cpp
 
