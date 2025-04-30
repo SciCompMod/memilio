@@ -29,6 +29,7 @@ TEST(TimingTest, BasicTimer)
     EXPECT_EQ(bt.get_elapsed_time(), mio::timing::DurationType{0});
     bt.start();
     bt.stop();
+    // since the timers are not very precise (though accurate), we simply test that *any* measurement was taken
     EXPECT_GT(bt.get_elapsed_time(), mio::timing::DurationType{0});
 }
 
@@ -40,5 +41,6 @@ TEST(TimingTest, AutoTimer)
     {
         mio::timing::AutoTimer at(bt);
     }
+    // since the timers are not very precise (though accurate), we simply test that *any* measurement was taken
     EXPECT_GT(bt.get_elapsed_time(), mio::timing::DurationType{0});
 }

@@ -656,9 +656,14 @@ public:
     using iterator_category = std::random_access_iterator_tag;
     using reference         = ReferenceType;
     using value_type        = ValueType;
+
+    /**
+     * @brief Dereferencable type with a copy of a reference.
+     * This is needed in case Derived::get_reference returns a temporary object, like Eigen::Ref.
+     */
     struct pointer {
         reference m_ref;
-        reference* operator->()
+        auto operator->()
         {
             return &m_ref;
         }
