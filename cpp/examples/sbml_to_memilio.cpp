@@ -1,5 +1,6 @@
 #include "memilio/config_internal.h"
 #include "memilio/utils/logging.h"
+#include "memilio/io/io.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -157,7 +158,7 @@ std::string get_initial_assignment(Species* species, Model* model, std::string* 
 *    Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to
 *    get the corresponding values, in the last case it prints an error message. 
 **/
-std::string format_event_variable(std::string formula, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> format_event_variable(std::string formula, Model* model, std::string* name_namespace)
 {
     std::string return_string = "";
 
@@ -171,8 +172,9 @@ std::string format_event_variable(std::string formula, Model* model, std::string
     }
     else if (model->getListOfCompartments()->getElementBySId(formula) != NULL) {
         mio::log_error("Unfortunately compartments can not be changed at the moment.");
+        return mio::failure(mio::StatusCode::InvalidValue);
     }
-    return return_string;
+    return mio::success(return_string);
 }
 
 /**
@@ -189,7 +191,7 @@ std::string format_event_variable(std::string formula, Model* model, std::string
 *    replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the 
 *    part and the parts are joined together.
 **/
-std::string format_event_formulas(std::string formula, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> format_event_formulas(std::string formula, Model* model, std::string* name_namespace)
 {
     std::string return_string = "";
     std::vector<std::string> formula_parts;
@@ -237,7 +239,7 @@ std::string format_event_formulas(std::string formula, Model* model, std::string
             formula_parts[i] = formula_parts[i] + trailing_bracket;
         }
     }
-    return boost::algorithm::join(formula_parts, " ");
+    return mio::success(boost::algorithm::join(formula_parts, " "));
 }
 
 /**
@@ -257,7 +259,7 @@ std::string format_event_formulas(std::string formula, Model* model, std::string
 *    - If it is time, it prints an error. 
 *    The leading and trailing braces are then re-added to the part and the parts are joined together.
 **/
-std::string format_event_trigger(std::string formula, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> format_event_trigger(std::string formula, Model* model, std::string* name_namespace)
 {
     std::string return_string = "";
     std::vector<std::string> formula_parts;
@@ -283,7 +285,7 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
                 "params.template get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
         }
         else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
-            return "Error";
+            return mio::failure(mio::StatusCode::InvalidValue);
         }
         else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
             double size =
@@ -294,7 +296,7 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
             formula_parts[i] = "M_PI";
         }
         if (formula_parts[i] == "time") {
-            return "Error";
+            return mio::failure(mio::StatusCode::InvalidValue);
         }
         if (leading_bracket.size() > 0) {
             formula_parts[i] = leading_bracket + formula_parts[i];
@@ -303,11 +305,11 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
             formula_parts[i] = formula_parts[i] + trailing_bracket;
         }
     }
-    return boost::algorithm::join(formula_parts, " ");
+    return mio::success(boost::algorithm::join(formula_parts, " "));
 }
 
 /**
-*    @brief Returns the maximal time mentioned in a formula
+*    @brief Returns the maximal time mentioned in a formula or an error code
 *
 *    @param trigger The formula to be processed as ASTNode*
 *    @param model The model where the formula stems from
@@ -320,7 +322,7 @@ std::string format_event_trigger(std::string formula, Model* model, std::string*
 *    This function is used to find the maximum time until which an event runs. It is used for the generation of the     
 *    example.cpp file.
 **/
-std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace)
 {
     auto trigger_type                      = trigger->getType();
     std::vector<ASTNodeType_t> comparisons = {AST_RELATIONAL_GEQ, AST_RELATIONAL_GT, AST_RELATIONAL_LEQ,
@@ -332,15 +334,15 @@ std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_na
         }
     }
     if (!is_comparison) {
-        return "Error";
+        return mio::failure(mio::StatusCode::InvalidValue);
     }
     if (trigger->getNumChildren() > 2) {
-        return "Error";
+        return mio::failure(mio::StatusCode::InvalidValue);
     }
     auto left_child  = trigger->getLeftChild();
     auto right_child = trigger->getRightChild();
     if (left_child->getType() != AST_NAME_TIME && right_child->getType() != AST_NAME_TIME) {
-        return "Error";
+        return mio::failure(mio::StatusCode::InvalidValue);
     }
     if (left_child->getType() == AST_NAME_TIME) {
         return format_event_trigger(SBML_formulaToL3String(right_child), model, name_namespace);
@@ -349,7 +351,7 @@ std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_na
         return format_event_trigger(SBML_formulaToL3String(left_child), model, name_namespace);
     }
     mio::log_debug("No tmax as number was found in the formula.");
-    return "Error";
+    return mio::failure(mio::StatusCode::InvalidValue);
 }
 
 /**
@@ -357,7 +359,8 @@ std::string find_tmax(const ASTNode* trigger, Model* model, std::string* name_na
 *
 *    @param model The model to be checked
 *
-*    This function checks whether the model has exactly one compartment. If it does not, it returns false. 
+*    This function checks whether the model has exactly one compartment. If it does not, it returns false and prints an 
+*    error. 
 **/
 bool verify_model_suitability(Model* model)
 {
@@ -827,22 +830,25 @@ bool create_example_cpp(Model* model, const std::string& filename)
             << "::Model<ScalarType>>(model, t0, dt);" << std::endl;
     example << "sim.set_integrator(integrator);" << std::endl;
     for (size_t i = 0; i < model->getListOfEvents()->size(); i++) {
-        auto event       = model->getListOfEvents()->get(i);
-        auto trigger     = event->getTrigger()->getMath();
-        std::string tmax = find_tmax(trigger, model, &lowercase_name);
-        if (tmax == "Error") {
-            std::cout << "There is an event that I can not implement, I will ignore it." << std::endl;
+        auto event                      = model->getListOfEvents()->get(i);
+        auto trigger                    = event->getTrigger()->getMath();
+        mio::IOResult<std::string> tmax = find_tmax(trigger, model, &lowercase_name);
+        if (!tmax) {
+            mio::log_info("There is an event that I can not implement, I will ignore it.");
         }
         else {
-            example << "tmax = " << tmax << ";" << std::endl;
+            example << "tmax = " << tmax.value() << ";" << std::endl;
             example << "sim.advance(tmax);" << std::endl;
             for (size_t j = 0; j < event->getListOfEventAssignments()->size(); j++) {
-                auto assignment     = event->getListOfEventAssignments()->get(j);
-                auto variable       = assignment->getVariable();
-                variable            = format_event_variable(variable, model, &lowercase_name);
-                std::string formula = SBML_formulaToL3String(assignment->getMath());
-                formula             = format_event_formulas(formula, model, &lowercase_name);
-                example << variable << " = " << formula << ";" << std::endl;
+                auto assignment                               = event->getListOfEventAssignments()->get(j);
+                auto variable                                 = assignment->getVariable();
+                mio::IOResult<std::string> formatted_variable = format_event_variable(variable, model, &lowercase_name);
+                if (!formatted_variable) {
+                    return false;
+                }
+                std::string formula                          = SBML_formulaToL3String(assignment->getMath());
+                mio::IOResult<std::string> formatted_formula = format_event_formulas(formula, model, &lowercase_name);
+                example << formatted_variable.value() << " = " << formatted_formula.value() << ";" << std::endl;
             }
         }
     }
