@@ -5,11 +5,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
+#include <sbml/SBMLDocument.h>
 #include <sbml/SBMLTypes.h>
 
 #include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -58,7 +60,7 @@ void create_folder(const std::string& filename)
 *    pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then 
 *    re-added to the part and the parts are joined together.
 **/
-std::string format_main_formula(Model* model, char* math_string, std::string* name_namespace)
+std::string format_main_formula(Model & model, char* math_string, std::string* name_namespace)
 {
     std::string return_string = "";
     std::vector<std::string> formula_parts;
@@ -78,16 +80,16 @@ std::string format_main_formula(Model* model, char* math_string, std::string* na
             trailing_bracket = trailing_bracket + formula_parts[i].back();
             formula_parts[i].pop_back();
         }
-        if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
+        if (model.getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] = "params.template get<mio::" + *name_namespace + "::" + formula_parts[i] + "<double>>()";
         }
-        else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
+        else if (model.getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] =
                 "model.populations[{mio::" + *name_namespace + "::InfectionState::" + formula_parts[i] + "}]";
         }
-        else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
+        else if (model.getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
             double size =
-                Compartment_getSize((Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[i]));
+                Compartment_getSize((Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[i]));
             formula_parts[i] = std::to_string(size);
         }
         if (formula_parts[i] == "pi") {
@@ -123,13 +125,13 @@ std::string format_main_formula(Model* model, char* math_string, std::string* na
 *
 *    If none of these are given, it returns "NAN", otherwise the identified value.
 **/
-std::string get_initial_assignment(Species* species, Model* model, std::string* name_namespace)
+std::string get_initial_assignment(Species* species, Model & model, std::string* name_namespace)
 {
     double base_value = species->getInitialAmount();
     if (!isnan(species->getInitialConcentration())) {
         base_value = species->getInitialConcentration();
     }
-    auto initial_assignment = model->getInitialAssignmentBySymbol(species->getId());
+    auto initial_assignment = model.getInitialAssignmentBySymbol(species->getId());
     if (initial_assignment != NULL) {
         auto formula = initial_assignment->getMath();
         if (formula->isNumber()) {
@@ -158,19 +160,19 @@ std::string get_initial_assignment(Species* species, Model* model, std::string* 
 *    Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to
 *    get the corresponding values, in the last case it prints an error message. 
 **/
-mio::IOResult<std::string> format_event_variable(std::string formula, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> format_event_variable(std::string formula, Model & model, std::string* name_namespace)
 {
     std::string return_string = "";
 
-    if (model->getListOfParameters()->getElementBySId(formula) != NULL) {
+    if (model.getListOfParameters()->getElementBySId(formula) != NULL) {
         return_string = "sim.get_model().parameters.get<mio::" + *name_namespace + "::" + formula + "<ScalarType>>()";
     }
-    else if (model->getListOfSpecies()->getElementBySId(formula) != NULL) {
+    else if (model.getListOfSpecies()->getElementBySId(formula) != NULL) {
         return_string =
             "sim.get_result().get_last_value()[sim.get_model().populations.get_flat_index(mio::" + *name_namespace +
             "::InfectionState::" + formula + ")]";
     }
-    else if (model->getListOfCompartments()->getElementBySId(formula) != NULL) {
+    else if (model.getListOfCompartments()->getElementBySId(formula) != NULL) {
         mio::log_error("Unfortunately compartments can not be changed at the moment.");
         return mio::failure(mio::StatusCode::InvalidValue);
     }
@@ -191,7 +193,7 @@ mio::IOResult<std::string> format_event_variable(std::string formula, Model* mod
 *    replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the 
 *    part and the parts are joined together.
 **/
-mio::IOResult<std::string> format_event_formulas(std::string formula, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> format_event_formulas(std::string formula, Model & model, std::string* name_namespace)
 {
     std::string return_string = "";
     std::vector<std::string> formula_parts;
@@ -212,18 +214,18 @@ mio::IOResult<std::string> format_event_formulas(std::string formula, Model* mod
             formula_parts[i].pop_back();
         }
 
-        if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
+        if (model.getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] =
                 "sim.get_model().parameters.get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
         }
-        else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
+        else if (model.getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] =
                 "sim.get_result().get_last_value()[sim.get_model().populations.get_flat_index(mio::" + *name_namespace +
                 "::InfectionState::" + formula_parts[i] + ")]";
         }
-        else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
+        else if (model.getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
             double size =
-                Compartment_getSize((Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[i]));
+                Compartment_getSize((Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[i]));
             formula_parts[i] = std::to_string(size);
         }
         if (formula_parts[i] == "pi") {
@@ -259,7 +261,7 @@ mio::IOResult<std::string> format_event_formulas(std::string formula, Model* mod
 *    - If it is time, it prints an error. 
 *    The leading and trailing braces are then re-added to the part and the parts are joined together.
 **/
-mio::IOResult<std::string> format_event_trigger(std::string formula, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> format_event_trigger(std::string formula, Model & model, std::string* name_namespace)
 {
     std::string return_string = "";
     std::vector<std::string> formula_parts;
@@ -280,16 +282,16 @@ mio::IOResult<std::string> format_event_trigger(std::string formula, Model* mode
             formula_parts[i].pop_back();
         }
 
-        if (model->getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
+        if (model.getListOfParameters()->getElementBySId(formula_parts[i]) != NULL) {
             formula_parts[i] =
                 "params.template get<mio::" + *name_namespace + "::" + formula_parts[i] + "<ScalarType>>()";
         }
-        else if (model->getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
+        else if (model.getListOfSpecies()->getElementBySId(formula_parts[i]) != NULL) {
             return mio::failure(mio::StatusCode::InvalidValue);
         }
-        else if (model->getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
+        else if (model.getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
             double size =
-                Compartment_getSize((Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[i]));
+                Compartment_getSize((Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[i]));
             formula_parts[i] = std::to_string(size);
         }
         if (formula_parts[i] == "pi") {
@@ -322,7 +324,7 @@ mio::IOResult<std::string> format_event_trigger(std::string formula, Model* mode
 *    This function is used to find the maximum time until which an event runs. It is used for the generation of the     
 *    example.cpp file.
 **/
-mio::IOResult<std::string> find_tmax(const ASTNode* trigger, Model* model, std::string* name_namespace)
+mio::IOResult<std::string> find_tmax(const ASTNode* trigger, Model & model, std::string* name_namespace)
 {
     auto trigger_type                      = trigger->getType();
     std::vector<ASTNodeType_t> comparisons = {AST_RELATIONAL_GEQ, AST_RELATIONAL_GT, AST_RELATIONAL_LEQ,
@@ -362,9 +364,9 @@ mio::IOResult<std::string> find_tmax(const ASTNode* trigger, Model* model, std::
 *    This function checks whether the model has exactly one compartment. If it does not, it returns false and prints an 
 *    error. 
 **/
-bool verify_model_suitability(Model* model)
+bool verify_model_suitability(Model & model)
 {
-    if (model->getNumCompartments() != 1) {
+    if (model.getNumCompartments() != 1) {
         mio::log_error("Currently only models with exactly 1 compartment are supported!");
         return false;
     }
@@ -381,10 +383,10 @@ bool verify_model_suitability(Model* model)
 *    a file with the resulting name using `boost::filesystem`. Then it writes the species in the model as infection 
 *    states to the file.
 **/
-bool create_infection_state(Model* model, const std::string& filename)
+bool create_infection_state(Model & model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
-    size_t number_species      = model->getListOfSpecies()->size();
+    size_t number_species      = model.getListOfSpecies()->size();
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
 
     std::ofstream infection_state;
@@ -400,7 +402,7 @@ bool create_infection_state(Model* model, const std::string& filename)
     infection_state << "enum class InfectionState" << std::endl;
     infection_state << "{" << std::endl;
     for (size_t i = 0; i < number_species; i++) {
-        Species curr_species = *(Species*)model->getListOfSpecies()->get(i);
+        Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
         infection_state << "  " << curr_species.getId() << "," << std::endl;
     }
     infection_state << "  Count\n};\n}\n}\n\n#endif" << std::endl;
@@ -419,12 +421,12 @@ bool create_infection_state(Model* model, const std::string& filename)
 *    a file with the resulting name using `boost::filesystem`. Then it creates one struct for every parameter in the 
 *    model. It uses the value as returned by libsbml as default value. (This may be overwritten in the example.cpp file.)
 **/
-bool create_parameters(Model* model, const std::string& filename)
+bool create_parameters(Model & model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
 
-    size_t number_parameters = model->getListOfParameters()->size();
+    size_t number_parameters = model.getListOfParameters()->size();
 
     std::ofstream parameters;
     parameters.open(lowercase_name + "/parameters.h", std::ios::out);
@@ -453,7 +455,7 @@ bool create_parameters(Model* model, const std::string& filename)
             if (i != 0) {
                 parameterset_initializer += ", ";
             }
-            Parameter param  = *(Parameter*)model->getListOfParameters()->get(i);
+            Parameter param  = *(Parameter*)model.getListOfParameters()->get(i);
             double value     = param.getValue();
             std::string name = param.getId();
             parameters << "template <typename FP = ScalarType>" << std::endl;
@@ -515,12 +517,12 @@ bool create_model_cpp(const std::string& filename)
 *    
 *    In the end it appends a generic serialization function.
 **/
-bool create_model_h(Model* model, const std::string& filename)
+bool create_model_h(Model & model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
-    size_t number_species      = model->getListOfSpecies()->size();
-    size_t number_reactions    = model->getListOfReactions()->size();
+    size_t number_species      = model.getListOfSpecies()->size();
+    size_t number_reactions    = model.getListOfReactions()->size();
     std::ofstream model_h;
     model_h.open(lowercase_name + "/model.h", std::ios::out);
 
@@ -546,13 +548,13 @@ bool create_model_h(Model* model, const std::string& filename)
             << std::endl;
     model_h << "auto& params = this->parameters;" << std::endl;
     for (size_t i = 0; i < number_species; i++) {
-        Species curr_species = *(Species*)model->getListOfSpecies()->get(i);
+        Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
         model_h << "    size_t " << curr_species.getId()
                 << "i = this->populations.get_flat_index({InfectionState::" << curr_species.getId() << "});"
                 << std::endl;
     }
-    for (size_t i = 0; i < model->getListOfFunctionDefinitions()->size(); i++) {
-        FunctionDefinition function_def = *(FunctionDefinition*)model->getListOfFunctionDefinitions()->get(i);
+    for (size_t i = 0; i < model.getListOfFunctionDefinitions()->size(); i++) {
+        FunctionDefinition function_def = *(FunctionDefinition*)model.getListOfFunctionDefinitions()->get(i);
         std::string lambda_string       = SBML_formulaToL3String(function_def.getMath());
         std::string variable_string     = "";
         std::string formula_string      = "";
@@ -577,7 +579,7 @@ bool create_model_h(Model* model, const std::string& filename)
     model_h << std::endl;
     for (size_t i = 0; i < number_reactions; i++) {
         model_h << "{" << std::endl;
-        auto curr_reaction = *(Reaction*)model->getListOfReactions()->get(i);
+        auto curr_reaction = *(Reaction*)model.getListOfReactions()->get(i);
         auto products      = curr_reaction.getListOfProducts();
         auto educts        = curr_reaction.getListOfReactants();
         auto modifiers     = curr_reaction.getListOfModifiers();
@@ -614,10 +616,10 @@ bool create_model_h(Model* model, const std::string& filename)
             }
             if (formula->getListOfLocalParameters()->getElementBySId(formula_parts[j]) != NULL) {
             }
-            else if (model->getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
+            else if (model.getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
                 formula_parts[j] = "params.template get<" + formula_parts[j] + "<FP>>()";
             }
-            else if (model->getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
+            else if (model.getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
                 bool prod = false, ed = false, mod = false;
                 for (size_t k = 0; k < products->size(); k++) {
                     if (products->get(k)->getSpecies() == formula_parts[k]) {
@@ -644,9 +646,9 @@ bool create_model_h(Model* model, const std::string& filename)
                     formula_parts[j] = "pop[" + formula_parts[j] + "j]";
                 }
             }
-            else if (model->getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
+            else if (model.getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
                 double size = Compartment_getSize(
-                    (Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[j]));
+                    (Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[j]));
                 formula_parts[j] = std::to_string(size);
             }
             if (formula_parts[j] == "pi") {
@@ -674,8 +676,8 @@ bool create_model_h(Model* model, const std::string& filename)
         }
         model_h << "}" << std::endl;
     }
-    for (size_t i = 0; i < model->getListOfRules()->size(); i++) {
-        auto rule = model->getListOfRules()->get(i);
+    for (size_t i = 0; i < model.getListOfRules()->size(); i++) {
+        auto rule = model.getListOfRules()->get(i);
         if (rule->getType() == RULE_TYPE_RATE) {
             auto math_string = SBML_formulaToL3String(rule->getMath());
             std::vector<std::string> formula_parts;
@@ -695,15 +697,15 @@ bool create_model_h(Model* model, const std::string& filename)
                     trailing_bracket = trailing_bracket + formula_parts[j].back();
                     formula_parts[j].pop_back();
                 }
-                if (model->getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
+                if (model.getListOfParameters()->getElementBySId(formula_parts[j]) != NULL) {
                     formula_parts[j] = "params.template get<" + formula_parts[j] + "<FP>>()";
                 }
-                else if (model->getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
+                else if (model.getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
                     formula_parts[j] = "y[" + formula_parts[j] + "i]";
                 }
-                else if (model->getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
+                else if (model.getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
                     double size = Compartment_getSize(
-                        (Compartment*)model->getListOfCompartments()->getElementBySId(formula_parts[j]));
+                        (Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[j]));
                     formula_parts[j] = std::to_string(size);
                 }
                 if (formula_parts[j] == "pi") {
@@ -778,10 +780,10 @@ bool create_cmake(const std::string& filename)
 *    The model is simulated in steps to add events that are triggered by a specific time. In the end the model is 
 *    simulated for another 50 days. The results are printed to the console and saved in a file as a table.
 **/
-bool create_example_cpp(Model* model, const std::string& filename)
+bool create_example_cpp(Model & model, const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
-    size_t number_species      = model->getListOfSpecies()->size();
+    size_t number_species      = model.getListOfSpecies()->size();
 
     std::ofstream example;
     example.open(lowercase_name + ".cpp", std::ios::out);
@@ -803,7 +805,7 @@ bool create_example_cpp(Model* model, const std::string& filename)
     example << "auto& params = model.parameters;" << std::endl;
     std::string table = "";
     for (size_t i = 0; i < number_species; i++) {
-        Species curr_species = *(Species*)model->getListOfSpecies()->get(i);
+        Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
         std::string number   = get_initial_assignment(&curr_species, model, &lowercase_name);
         example << "model.populations[{mio::" << lowercase_name << "::InfectionState::" << curr_species.getId()
                 << "}] = " << number << ";" << std::endl;
@@ -812,10 +814,10 @@ bool create_example_cpp(Model* model, const std::string& filename)
     table.pop_back();
 
     //Add initial assignments for Parameters...
-    for (size_t i = 0; i < model->getNumInitialAssignments(); i++) {
-        auto assignment = model->getListOfInitialAssignments()->get(i);
-        for (size_t j = 0; j < model->getNumParameters(); j++) {
-            if (model->getParameter(j)->getIdAttribute() == assignment->getSymbol())
+    for (size_t i = 0; i < model.getNumInitialAssignments(); i++) {
+        auto assignment = model.getListOfInitialAssignments()->get(i);
+        for (size_t j = 0; j < model.getNumParameters(); j++) {
+            if (model.getParameter(j)->getIdAttribute() == assignment->getSymbol())
                 example << "params.get<mio::" << lowercase_name << "::" << assignment->getSymbol()
                         << "<ScalarType>>()  = "
                         << format_main_formula(model, SBML_formulaToL3String(assignment->getMath()), &lowercase_name)
@@ -829,8 +831,8 @@ bool create_example_cpp(Model* model, const std::string& filename)
     example << "auto sim = mio::Simulation<ScalarType, mio::" << lowercase_name
             << "::Model<ScalarType>>(model, t0, dt);" << std::endl;
     example << "sim.set_integrator(integrator);" << std::endl;
-    for (size_t i = 0; i < model->getListOfEvents()->size(); i++) {
-        auto event                      = model->getListOfEvents()->get(i);
+    for (size_t i = 0; i < model.getListOfEvents()->size(); i++) {
+        auto event                      = model.getListOfEvents()->get(i);
         auto trigger                    = event->getTrigger()->getMath();
         mio::IOResult<std::string> tmax = find_tmax(trigger, model, &lowercase_name);
         if (!tmax) {
@@ -935,20 +937,19 @@ int main(int argc, char* argv[])
         return 1;
     }
     const char* filename = argv[1];
-    SBMLDocument* document;
     SBMLReader reader;
 
-    document = reader.readSBML(filename);
+    std::unique_ptr<SBMLDocument>document(reader.readSBML(filename));
 
-    if (SBMLDocument_getNumErrors(document) > 0) {
-        if (XMLError_isFatal(SBMLDocument_getError(document, 0)) ||
-            XMLError_isError(SBMLDocument_getError(document, 0))) {
+    if (SBMLDocument_getNumErrors(document.get()) > 0) {
+        if (XMLError_isFatal(SBMLDocument_getError(document.get(), 0)) ||
+            XMLError_isError(SBMLDocument_getError(document.get(), 0))) {
             mio::log_error("Fatal error while trying to read the input file!");
             return 3;
         }
     }
 
-    auto model = document->getModel();
+    Model& model = *document->getModel();
 
     if (!verify_model_suitability(model)) {
         return 4;
