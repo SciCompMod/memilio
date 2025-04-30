@@ -864,14 +864,21 @@ bool modify_cmakelists(const std::string& filename)
 *
 *    @param filename The name of the file to be processed
 *
-*    Calls clang-format using the `system` command. The command is generated using the filename.
+*    Calls clang-format using the `system` command. The command is generated using the filename. Dpending on the return code, an error or info message is printed.
 **/
-int format_files(const std::string& filename)
+void format_files(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string command =
         std::string("clang-format -i --files= ") + lowercase_name + ".cpp " + lowercase_name + "/**.[hc]*";
-    return system(command.c_str());
+    int status = system(command.c_str());
+    mio::log_debug("Return status: {}", status);
+    if (status != 0) {
+        mio::log_error("Error while trying to format the files, files are functional but hard to read.");
+    }
+    else {
+        mio::log_info("Formatted all files.");
+    }
 }
 
 /** 
@@ -883,6 +890,8 @@ int format_files(const std::string& filename)
 **/
 int main(int argc, char* argv[])
 {
+    mio::set_log_level(mio::LogLevel::debug);
+
     if (argc != 2) {
         mio::log_error("Please provide a SBML file at startup!");
         return 1;
@@ -940,5 +949,5 @@ int main(int argc, char* argv[])
     }
     mio::log_info("Created all files.");
     mio::log_info("Formatting files.");
-    return format_files(core_filename);
+    format_files(core_filename);
 }
