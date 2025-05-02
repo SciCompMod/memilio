@@ -271,19 +271,75 @@ def set_infection_parameters(parameters):
     return infection_params
 
 
+def get_person_age_string(age):
+    if age == age_group_0_to_4:
+        return "Age0to4"
+    elif age == age_group_5_to_15:
+        return "Age5to14"
+    elif age == age_group_16_to_34:
+        return "Age15to34"
+    elif age == age_group_35_to_59:
+        return "Age35to59"
+    elif age == age_group_60_to_79:
+        return "Age60to79"
+    elif age == age_group_80_plus:
+        return "Age80plus"
+    else:
+        print("Error: Age group cannot be found.")
+        return " "
+
+
 def assign_infection_states(model, t0, exposed_pct, infected_no_symptoms_pct, infected_symptoms_pct,
-                            infected_severe_pct, infected_critical_pct, recovered_pct):
+                            infected_severe_pct, infected_critical_pct, recovered_pct, parameters, loc_list):
     susceptible_pct = 1 - exposed_pct - infected_no_symptoms_pct - \
         infected_symptoms_pct - infected_severe_pct - \
         infected_critical_pct - recovered_pct
     for person in model.persons:
         # draw infection state from distribution for every agent
+        if (len(loc_list) > 0):
+            if (not (int(person.assigned_location(abm.LocationType.Home).index()) in [int(x[2:]) for x in loc_list])):
+                continue
         infection_state = np.random.choice(np.arange(0, int(abm.InfectionState.Count)),
                                            p=[susceptible_pct, exposed_pct, infected_no_symptoms_pct,
                                                infected_symptoms_pct, infected_severe_pct, infected_critical_pct, recovered_pct, 0.0])
         if (abm.InfectionState(infection_state) != abm.InfectionState.Susceptible):
+            shift = False
+            shift_rate = 0.
+            if (abm.InfectionState(infection_state) == abm.InfectionState.Exposed):
+                shift = True
+                param_string = get_person_age_string(
+                    person.age) + "_IncubationPeriod"
+                shift_rate = 1. / \
+                    (np.exp(parameters.loc[param_string].value +
+                     (parameters.loc[param_string].dev**2)/2.) / 4.)
+            elif (abm.InfectionState(infection_state) == abm.InfectionState.InfectedNoSymptoms):
+                shift = True
+                param_string1 = get_person_age_string(
+                    person.age) + "_InfectedNoSymptomsToSymptoms"
+                shift_rate1 = 1. / \
+                    (np.exp(parameters.loc[param_string1].value +
+                     (parameters.loc[param_string1].dev**2)/2.) / 4.)
+                param_string2 = get_person_age_string(
+                    person.age) + "_InfectedNoSymptomsToRecovered"
+                shift_rate2 = 1. / \
+                    (np.exp(parameters.loc[param_string2].value +
+                     (parameters.loc[param_string2].dev**2)/2.) / 4.)
+                shift_rate = np.minimum(shift_rate1, shift_rate2)
+            elif (abm.InfectionState(infection_state) == abm.InfectionState.InfectedSymptoms):
+                shift = True
+                param_string1 = get_person_age_string(
+                    person.age) + "_InfectedSymptomsToRecovered"
+                shift_rate1 = 1. / \
+                    (np.exp(parameters.loc[param_string1].value +
+                     (parameters.loc[param_string1].dev**2)/2.) / 4.)
+                param_string2 = get_person_age_string(
+                    person.age) + "_InfectedSymptomsToSevere"
+                shift_rate2 = 1. / \
+                    (np.exp(parameters.loc[param_string2].value +
+                     (parameters.loc[param_string2].dev**2)/2.) / 4.)
+                shift_rate = np.minimum(shift_rate1, shift_rate2)
             person.add_new_infection(Infection(
-                model, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False), t0)
+                model, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False, shift, shift_rate), t0)
 
 
 def save_persons(trip_file):
@@ -561,6 +617,7 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
             f.write(line)
             f.write('\n')
         f.close()
+    return new_dict
 
 
 def num_locations(model):
@@ -591,14 +648,21 @@ def num_locations(model):
     print('')
 
 
+def create_home_mapping(map):
+    for key, loc_list in map.items():
+        map[key] = [loc for loc in loc_list if loc[:2] == "00"]
+    return map
+
+
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
+    local_outbreak = False
     # set seed for initial infection states
     np.random.seed(sim_num)
     # starting time point
     t0 = abm.TimePoint(0)
-    # end time point: simulation will run 14 days
+    # end time point of simulation
     tmax = t0 + abm.days(90)
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
@@ -637,21 +701,38 @@ def run_abm_simulation(sim_num):
         abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0)
     sim.model.add_location_closure(abm.TimePoint(
         abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0)
-    # assign initial infection states according to distribution
-    assign_infection_states(sim.model, t0, 0.002, 0.005,
-                            0.0029, 0.0001, 0.0, 0.0)
     end_init = time.time()
     print(f'Time for model initialization: {end_init - start_init} seconds')
 
-    # map locations to TAN areas
+    # map locations to wastewater areas
     start_map = time.time()
-    map_traffic_cell_to_wastewater_area(os.path.join(
+    tan_map = map_traffic_cell_to_wastewater_area(os.path.join(
         output_path, str(sim_num) + '_mapping.txt'), os.path.join(input_path, 'Munich_shape250319/Verschnitt_DLR_TAN_Rep.shp'), os.path.join(
         output_path, str(sim_num) + '_mapping_tan.txt'), os.path.join(
         output_path, str(sim_num) + '_mapping_tan_locs.txt'))
     end_map = time.time()
     print(
         f'Time for mapping locations to TAN areas: {end_map - start_map} seconds')
+
+    start_locs = []
+    # specify starting locations if local outbreak should be simulated
+    if (local_outbreak):
+        start_home_map = time.time()
+        home_map = create_home_mapping(tan_map)
+        start_areas = ['58']
+        start_locs = [loc for area in start_areas for loc in home_map[area]]
+        end_home_map = time.time()
+        print(
+            f'Time for creating outbreak loc list: {end_home_map - start_home_map} seconds')
+
+    # assign initial infection states according to distribution
+    start_assign = time.time()
+    assign_infection_states(sim.model, t0, 0.00013, 0.00005,
+                            0.00002, 0.0, 0.0, 0.0, parameters, start_locs)
+    end_assign = time.time()
+    print(
+        f'Time for assigning infection state: {end_assign - start_assign} seconds')
+
     # initialize tan wastewater ids for all locations
     start_ww_init = time.time()
     abm.set_wastewater_ids(os.path.join(
@@ -735,7 +816,6 @@ if __name__ == "__main__":
         'abm demonstrator',
         description='Example demonstrating the agent-based model for a synthetic population of Munich.')
     args = arg_parser.parse_args()
-
     # set LogLevel
     mio.abm.set_log_level_warn()
     for i in range(0, 1):

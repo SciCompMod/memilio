@@ -19,6 +19,10 @@
 */
 
 #include "abm/infection.h"
+#include "abm/infection_state.h"
+#include "abm/time.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/random_number_generator.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
@@ -31,12 +35,14 @@ namespace abm
 {
 
 Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
-                     TimePoint init_date, InfectionState init_state, ProtectionEvent latest_protection, bool detected)
+                     TimePoint init_date, InfectionState init_state, ProtectionEvent latest_protection, bool detected,
+                     bool shift_init, double shift_rate)
     : m_virus_variant(virus)
     , m_detected(detected)
 {
     assert(age.get() < params.get_num_groups());
-    m_viral_load.start_date = draw_infection_course(rng, age, params, init_date, init_state, latest_protection);
+    m_viral_load.start_date =
+        draw_infection_course(rng, age, params, init_date, init_state, latest_protection, shift_init, shift_rate);
 
     auto vl_params                    = params.get<ViralLoadDistributions>()[{virus, age}];
     ScalarType high_viral_load_factor = 1;
@@ -166,9 +172,14 @@ TimeSpan Infection::get_time_in_state(InfectionState state)
 
 TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                            TimePoint init_date, InfectionState init_state,
-                                           ProtectionEvent latest_protection)
+                                           ProtectionEvent latest_protection, bool shift_init, double shift_rate)
 {
     assert(age.get() < params.get_num_groups());
+    double shift_in_days = 0.;
+    if (shift_init) {
+        shift_in_days = mio::ExponentialDistribution<double>::get_instance()(rng, shift_rate);
+    }
+    init_date -= days(shift_in_days);
     TimePoint start_date = draw_infection_course_backward(rng, age, params, init_date, init_state);
     draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
     return start_date;
@@ -193,7 +204,14 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
             // roll out how long until infected without symptoms
             time_in_state = params.get<IncubationPeriod>()[{m_virus_variant, age}];
             time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-            next_state    = InfectionState::InfectedNoSymptoms;
+            if (start_state == InfectionState::Exposed && (init_date + time_period) <= TimePoint(0)) {
+                log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial state. "
+                            "Time in initial state will "
+                            "be set to shift time + 1 hours.",
+                            init_date.days());
+                time_period = TimePoint(0) - init_date + hours(1);
+            }
+            next_state = InfectionState::InfectedNoSymptoms;
             break;
         case InfectionState::InfectedNoSymptoms:
             // roll out next infection step
@@ -201,12 +219,26 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
             if (v < params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}]) {
                 time_in_state = params.get<TimeInfectedNoSymptomsToSymptoms>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                next_state    = InfectionState::InfectedSymptoms;
+                if (start_state == InfectionState::InfectedNoSymptoms && (init_date + time_period) <= TimePoint(0)) {
+                    log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                "state. Time in initial state will "
+                                "be set to shift time + 1 hours.",
+                                init_date.days());
+                    time_period = TimePoint(0) - init_date + hours(1);
+                }
+                next_state = InfectionState::InfectedSymptoms;
             }
             else {
                 time_in_state = params.get<TimeInfectedNoSymptomsToRecovered>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                next_state    = InfectionState::Recovered;
+                if (start_state == InfectionState::InfectedNoSymptoms && (init_date + time_period) <= TimePoint(0)) {
+                    log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                "state. Time in initial state will "
+                                "be set to shift time + 1 hours.",
+                                init_date.days());
+                    time_period = TimePoint(0) - init_date + hours(1);
+                }
+                next_state = InfectionState::Recovered;
             }
 
             break;
@@ -225,12 +257,26 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
                             params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}]) {
                     time_in_state = params.get<TimeInfectedSymptomsToSevere>()[{m_virus_variant, age}];
                     time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                    next_state    = InfectionState::InfectedSevere;
+                    if (start_state == InfectionState::InfectedSymptoms && (init_date + time_period) <= TimePoint(0)) {
+                        log_warning("Drawn shift time for start_date (in days) {} bigger that total time in initial "
+                                    "state. Time in initial state will "
+                                    "be set to shift time + 1 hours.",
+                                    init_date.days());
+                        time_period = TimePoint(0) - init_date + hours(1);
+                    }
+                    next_state = InfectionState::InfectedSevere;
                 }
                 else {
                     time_in_state = params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}];
                     time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                    next_state    = InfectionState::Recovered;
+                    if (start_state == InfectionState::InfectedSymptoms && (init_date + time_period) <= TimePoint(0)) {
+                        log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                    "state. Time in initial state will "
+                                    "be set to shift time + 1 hours.",
+                                    init_date.days());
+                        time_period = TimePoint(0) - init_date + hours(1);
+                    }
+                    next_state = InfectionState::Recovered;
                 }
                 break;
             }
@@ -240,12 +286,26 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
             if (v < params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}]) {
                 time_in_state = params.get<TimeInfectedSevereToCritical>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                next_state    = InfectionState::InfectedCritical;
+                if (start_state == InfectionState::InfectedSevere && (init_date + time_period) <= TimePoint(0)) {
+                    log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                "state. Time in initial state will "
+                                "be set to shift time + 1 hours.",
+                                init_date.days());
+                    time_period = TimePoint(0) - init_date + hours(1);
+                }
+                next_state = InfectionState::InfectedCritical;
             }
             else {
                 time_in_state = params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                next_state    = InfectionState::Recovered;
+                if (start_state == InfectionState::InfectedSevere && (init_date + time_period) <= TimePoint(0)) {
+                    log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                "state. Time in initial state will "
+                                "be set to shift time + 1 hours.",
+                                init_date.days());
+                    time_period = TimePoint(0) - init_date + hours(1);
+                }
+                next_state = InfectionState::Recovered;
             }
             break;
         case InfectionState::InfectedCritical:
@@ -254,12 +314,26 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
             if (v < params.get<DeathsPerInfectedCritical>()[{m_virus_variant, age}]) {
                 time_in_state = params.get<TimeInfectedCriticalToDead>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                next_state    = InfectionState::Dead;
+                if (start_state == InfectionState::InfectedCritical && (init_date + time_period) <= TimePoint(0)) {
+                    log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                "state. Time in initial state will "
+                                "be set to shift time + 1 hours.",
+                                init_date.days());
+                    time_period = TimePoint(0) - init_date + hours(1);
+                }
+                next_state = InfectionState::Dead;
             }
             else {
                 time_in_state = params.get<TimeInfectedCriticalToRecovered>()[{m_virus_variant, age}];
                 time_period   = days(time_in_state.get_distribution_instance()(rng, time_in_state.params));
-                next_state    = InfectionState::Recovered;
+                if (start_state == InfectionState::InfectedCritical && (init_date + time_period) <= TimePoint(0)) {
+                    log_warning("Drawn shift time for start_date (in days) {} is bigger that total time in initial "
+                                "state. Time in initial state will "
+                                "be set to shift time + 1 hours.",
+                                init_date.days());
+                    time_period = TimePoint(0) - init_date + hours(1);
+                }
+                next_state = InfectionState::Recovered;
             }
             break;
         default:

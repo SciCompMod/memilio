@@ -71,11 +71,14 @@ public:
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
      * @param[in] latest_protection [Default: {ProtectionType::NoProtection, TimePoint(0)}] The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
-     * @param[in] detected [Default: false] If the Infection is detected.     
+     * @param[in] detected [Default: false] If the Infection is detected.
+     * @param[in] shift_init [Default: false] If the infection should not start at the beginning of the initial state. This is only relevant for model initialization.
+     * @param[in] shift_rate [Default: 1] Rate of the exponential distribution used to draw the shift time if start_date should be shifted.     
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
               TimePoint start_date, InfectionState start_state = InfectionState::Exposed,
-              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false);
+              ProtectionEvent latest_protection = {ProtectionType::NoProtection, TimePoint(0)}, bool detected = false,
+              bool shift_init = false, double shift_rate = 1.);
 
     /**
      * @brief Gets the ViralLoad of the Infection at a given TimePoint.
@@ -169,10 +172,13 @@ private:
      * @param[in] params Parameters of the Model.
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state #InfectionState at time of initializing the Infection.
+     * @param[in] shift_init Specifies whether start date should be shifted. Only relevant for model initialization.
+     * @param[in] shift_rate Rate for the exponential distribution used to draw the ne init_date is shift is required.
      * @return The starting date of the Infection.
      */
     TimePoint draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
-                                    TimePoint init_date, InfectionState start_state, ProtectionEvent latest_protection);
+                                    TimePoint init_date, InfectionState start_state, ProtectionEvent latest_protection,
+                                    bool shift_init, double shift_rate);
 
     /**
      * @brief Determine ViralLoad course and Infection course prior to the given start_state.

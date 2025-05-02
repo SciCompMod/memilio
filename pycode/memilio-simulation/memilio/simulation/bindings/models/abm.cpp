@@ -997,6 +997,10 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
             int work_id   = row[index["work_id"]];
             int work_zone = row[index["work_zone"]];
 
+            if (work_zone == -2) {
+                mio::log_error("Person with id {} has work age but no work zone", row[index["puid"]]);
+            }
+
             mio::abm::LocationId work;
 
             auto iter_work = work_locations.find(work_id);
@@ -1209,10 +1213,11 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_class<mio::abm::Infection, pymio::EnablePickling::Never>(m, "Infection")
         .def(py::init([](mio::abm::Model& model, mio::abm::Person& person, mio::abm::VirusVariant variant,
-                         mio::abm::TimePoint start_date, mio::abm::InfectionState start_state, bool detected) {
+                         mio::abm::TimePoint start_date, mio::abm::InfectionState start_state, bool detected,
+                         bool shift_init, double shift_rate) {
             auto rng = mio::abm::PersonalRandomNumberGenerator(model.get_rng(), person);
             return mio::abm::Infection(rng, variant, person.get_age(), model.parameters, start_date, start_state,
-                                       person.get_latest_protection(), detected);
+                                       person.get_latest_protection(), detected, shift_init, shift_rate);
         }))
         .def("get_infection_start", &mio::abm::Infection::get_infection_start)
         .def("get_time_in_state", [](mio::abm::Infection& self, mio::abm::InfectionState state) {
