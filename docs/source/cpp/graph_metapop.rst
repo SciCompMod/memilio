@@ -4,29 +4,29 @@ Graph-based metapopulation model
 Introduction
 -------------
 
-Todo Julia
+This model realizes a metapopulation model using a directed graph with instances of an ODE-based model as graph nodes. Any ODE-based model implemented in MEmilio can be used in the graph nodes, see :doc:`<ode>`, representing one geographical region. Currently, only ODE-based models are supported as nodes, but support for other models will be added soon. Mobility between graph nodes is modelled via graph edges. There are two different types of mobility edges implemented in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first one implements a deterministic instant mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
 
-In order to extend the local models with spatial resolution, we provide a module to loosely couple multiple simulation instances and model the mobility between them. Each instance can represent a different geographical region. The regions are stored as nodes in a multi-edge graph as proposed in Kühn et al. (2021), with edges between them representing the mobility between the regions. 
-We assume that :math:`n` different geographic units (denoted as *regions*) are given. The mobility extension can contain a arbitrary number of regions. The number of edges is limited by the number of regions squared. 
-A pair of nodes is connected via multi edges, where each edge represents the mobility of a specific group of individuals. The number of edges between a pair of nodes is given as the product of the number of age groups and number of compartments in the (local) model.
+Simulation
+-----------
 
+During the simulation, graph nodes are advanced independently from each other according to their local solver until the next time point where mobility via the edges takes place. The concrete exchange of individuals or subpopulations via the graph edges depends on the chosen edge type.
 
-Currently, only ODE models are supported as nodes; support for other models will be added soon.
+Instant mobility - Henrik
+
+For further details, please refer to:
+
+- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `<https://doi.org/10.1016/j.mbs.2021.108648>`_
+
+Detailed Mobility - Henrik
 
 For further details, please refer to:
 
 - Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `<https://doi.org/10.1371/journal.pcbi.1012630>`_
-- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `<https://doi.org/10.1016/j.mbs.2021.108648>`_
-
-Simulation
------------
-Todo Julia general
-
-Instant mobility - Henrik
-
-Detailed Mobility - Henrik
 
 Stochastic Mobility - Julia
+
+####OLD#####
+
 The mobility can contain a different scale of complexity.  One option is the "instant" mobility scheme, where we implement two daily exchanges of commuters that occur instantaneously, at the beginning of the day and after half a day. With this approach,
 commuters can change their infection state during the half-day stay. Theres also another more "detailed" mobility scheme, where travel times and stay durations are considered; see Zunker et al. (2024) for more details.
 
