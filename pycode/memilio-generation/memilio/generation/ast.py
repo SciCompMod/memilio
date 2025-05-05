@@ -80,7 +80,7 @@ class AST:
 
         clang_cmd = [
             "clang-18", self.config.source_file,
-            "-std=c++17", '-emit-ast', '-o', '-']
+            "-std=c++20", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
         try:
