@@ -68,7 +68,7 @@ def initialize_model(parameters):
 
 
 def network_fit(model, inputs, labels, training_parameter, plot=True):
-    """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
+    """ Training and evaluation of a given model with given training parameters.
 
     :param model: Keras sequential model.
     :param inputs: Training input data 
@@ -110,55 +110,6 @@ def network_fit(model, inputs, labels, training_parameter, plot=True):
         df = get_test_statistic(test_inputs, test_labels, model)
         print(df)
 
-    return history
-
-
-def network_fit1(path, model, max_epochs=30, early_stop=500, plot=True):
-    """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
-
-    :param path: path of the dataset.
-    :param model: Keras sequential model.
-    :param max_epochs: int maximum number of epochs in training. (Default value = 30)
-    :param early_stop: Integer that forces an early stop of training if the given number of epochs does not give a significant reduction of validation loss. (Default value = 500)
-    :param plot:  (Default value = True)
-
-    """
-
-    if not os.path.isfile(os.path.join(path, 'data_secir_simple.pickle')):
-        ValueError("no dataset found in path: " + path)
-
-    file = open(os.path.join(path, 'data_secir_simple.pickle'), 'rb')
-
-    data = pickle.load(file)
-    data_splitted = split_data(data['inputs'], data['labels'])
-
-    train_inputs = data_splitted['train_inputs']
-    train_labels = data_splitted['train_labels']
-    valid_inputs = data_splitted['valid_inputs']
-    valid_labels = data_splitted['valid_labels']
-    test_inputs = data_splitted['test_inputs']
-    test_labels = data_splitted['test_labels']
-
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                      patience=early_stop,
-                                                      mode='min')
-
-    model.compile(
-        loss=tf.keras.losses.MeanSquaredError(),
-        optimizer=tf.keras.optimizers.Adam(),
-        metrics=[tf.keras.metrics.MeanAbsoluteError()])
-
-    history = model.fit(train_inputs, train_labels, epochs=max_epochs,
-                        validation_data=(valid_inputs, valid_labels),
-                        callbacks=[early_stopping])
-
-    if (plot):
-        plot_losses(history)
-        plot_compartment_prediction_model(
-            test_inputs, test_labels, model=model,
-            plot_compartment='InfectedSymptoms', max_subplots=3)
-        df = get_test_statistic(test_inputs, test_labels, model)
-        print(df)
     return history
 
 

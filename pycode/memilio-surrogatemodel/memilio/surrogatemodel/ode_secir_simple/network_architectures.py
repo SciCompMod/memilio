@@ -61,7 +61,7 @@ def mlp_multi_input_single_output(num_outputs=8, num_hidden_layers=3, num_neuron
 def mlp_multi_input_multi_output(label_width, num_outputs=8, num_hidden_layers=3, num_neurons_per_layer=32, activation='relu'):
     """ Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for multiple time step.
 
-    Reshaping adds an extra dimension to the output, so the shape of the output is 1x8. This makes the shape comparable to that of the multi-output models.
+    Reshaping adds an extra dimension to the output, so the shape of the output is 1xnum_outputs. This makes the shape comparable to that of the multi-output models.
 
     :param label_width: Number of time steps in the output.
     :param num_outputs: Default: 8 Number of compartments. Default value is reached when aggregating the confirmed compartments.
@@ -197,7 +197,7 @@ def cnn_multi_input_multi_output(label_width, conv_size=3, num_outputs=8, num_fi
 
 
 def lstm_multi_input_multi_output(label_width, num_outputs=8, internal_dimension=32, num_hidden_layers=1, num_neurons_per_layer=32, activation="relu"):
-    """ LSTM Network which uses multiple time steps as input and returns the 8 compartments for one single time step in the future.
+    """ LSTM Network which uses multiple time steps as input and returns the compartments for multiple time step in the future.
 
     Input and output have shape [number of expert model simulations, time points in simulation, number of individuals in infection states].
 
