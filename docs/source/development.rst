@@ -322,7 +322,7 @@ The full list of labels that should be used to identify issues can be found at: 
 Agent-based model development 
 ------------------------------------------------
 
-If you add new features to the agent-based model, please make sure to run the benchmarks and check if the performance is acceptable. See the section on `performance monitoring <#performance-monitoring>`_ for more information.
+If you add new features to the agent-based model, please make sure to run the benchmarks and check if the performance is acceptable. See the section on :ref:`performance-monitoring-cpp` for more information.
 
 
 Documentation

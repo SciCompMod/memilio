@@ -1,6 +1,8 @@
 Development
 =================================
 
+.. _performance-monitoring-cpp:
+
 Performance monitoring
 ---------------------------------
 
