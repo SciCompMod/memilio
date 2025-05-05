@@ -10,6 +10,16 @@ The stochastic metapopulation model uses a Markov process to simulate disease dy
 
 The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z` the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X` the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Adoption rates always depend on the source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the `influences`. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct methode (stochastic simulation algorithm) is used for simulation.
 
+Simulation
+----------
+
+At the beginning of the simulation, the waiting times for all events are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting time for the event that just happend is drawn. The simulation saves the system state in discrete time steps.
+
+For a detailed description and application of the model, see:
+
+- Bicker J, Schmieding R, et al. (2025) Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing.
+Infectious Disease Modelling, Volume 10, Issue 2. https://doi.org/10.1016/j.idm.2024.12.015
+
 How to: Set up and run a simulation of the stochastic metapopulation model
 --------------------------------------------------------------------------
 
