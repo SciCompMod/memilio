@@ -102,8 +102,21 @@ struct CommutingStrengths {
 };
 
 template <typename FP = ScalarType>
+struct PopulationAfterCommuting {
+    using Type = Populations<FP, Region, AgeGroup>;
+    static Type get_default(Region size_regions, AgeGroup size_agegroups)
+    {
+        return Type({size_regions, size_agegroups}, 0.);
+    }
+    static std::string name()
+    {
+        return "PopulationAfterCommuting";
+    }
+};
+
+template <typename FP = ScalarType>
 using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>,
-                                    ContactPatterns<FP>, CommutingStrengths<FP>>;
+                                    ContactPatterns<FP>, CommutingStrengths<FP>, PopulationAfterCommuting<FP>>;
 
 /**
  * @brief Parameters of SEIR model.
@@ -175,18 +188,28 @@ public:
                 this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
                 corrected                                                  = true;
             }
-            if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
-                 Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
-                        .cwiseAbs()
-                        .maxCoeff() > 1e-10 ||
-                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
-                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
-                log_warning("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
-                            "staying equals the complement of those leaving. Running without commuting.");
-                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline() =
-                    Eigen::MatrixXd::Identity((size_t)this->get_num_regions(), (size_t)this->get_num_regions());
-                return true;
+            for (auto j = Region(0); j < Region(m_num_regions); j++) {
+                if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
+                    log_warning(
+                        "Constraint check: Parameter PopulationAfterCommuting changed from {:.4f} to {:.4f}. Please "
+                        "note that this only prevents division by zero. Consider to cancel and reset parameters.",
+                        this->template get<PopulationAfterCommuting<FP>>()[{j, i}], 1.0);
+                    this->template get<PopulationAfterCommuting<FP>>()[{j, i}] = 1.0;
+                    corrected                                                  = true;
+                }
             }
+        }
+        if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
+             Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
+                    .cwiseAbs()
+                    .maxCoeff() > 1e-10 ||
+            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
+            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
+            log_warning("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
+                        "staying equals the complement of those leaving. Running without commuting.");
+            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline() =
+                Eigen::MatrixXd::Identity((size_t)this->get_num_regions(), (size_t)this->get_num_regions());
+            corrected = true;
         }
         return corrected;
     }
@@ -224,17 +247,25 @@ public:
                           this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
                 return true;
             }
-            if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
-                 Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
-                        .cwiseAbs()
-                        .maxCoeff() > 1e-10 ||
-                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
-                this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
-                log_error("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
-                          "staying equals the complement of those leaving.");
-                return true;
+            for (auto j = Region(0); j < Region(m_num_regions); j++) {
+                if (this->template get<PopulationAfterCommuting<FP>>()[{j, i}] <= 0.0) {
+                    log_error("Constraint check: Parameter PopulationAfterCommuting {:.4f} smaller or equal {:.4f}",
+                              this->template get<PopulationAfterCommuting<FP>>()[{j, i}], 0.0);
+                    return true;
+                }
             }
         }
+        if ((this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).rowwise().sum() -
+             Eigen::VectorXd::Ones((size_t)this->get_num_regions()))
+                    .cwiseAbs()
+                    .maxCoeff() > 1e-10 ||
+            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).minCoeff() < 0.0 ||
+            this->template get<CommutingStrengths<FP>>().get_cont_freq_mat().get_matrix_at(0).maxCoeff() > 1.0) {
+            log_error("Constraint check: Parameter CommutingStrengths does not ensure that the number of people "
+                      "staying equals the complement of those leaving.");
+            return true;
+        }
+
         return false;
     }
 

@@ -122,10 +122,7 @@ mio::IOResult<void> set_mobility_weights(mio::oseirmetapop::Model<FP>& model, co
 {
     size_t number_regions = (size_t)model.parameters.get_num_regions();
     if (number_regions == 1) {
-        model.parameters.template get<mio::oseirmetapop::CommutingStrengths<>>()
-            .get_cont_freq_mat()[0]
-            .get_baseline()
-            .setConstant(1.0);
+        model.set_commuting_strengths();
 
         return mio::success();
     }

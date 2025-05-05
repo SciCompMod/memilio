@@ -43,8 +43,6 @@ public:
     Model(int num_regions, int num_agegroups)
         : Base(Populations({Region(num_regions), AgeGroup(num_agegroups), InfectionState::Count}),
                ParameterSet(Region(num_regions), AgeGroup(num_agegroups)))
-        , m_population_after_commuting(
-              mio::Populations<FP, Region, AgeGroup>({Region(num_regions), AgeGroup(num_agegroups)}))
     {
     }
 
@@ -69,7 +67,7 @@ public:
         for (size_t region_n = 0; region_n < n_regions; region_n++) {
             for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
                 infectious_share_per_region(region_n, age_i) /=
-                    m_population_after_commuting[{Region(region_n), AgeGroup(age_i)}];
+                    params.template get<PopulationAfterCommuting<FP>>()[{Region(region_n), AgeGroup(age_i)}];
             }
         }
         Eigen::MatrixXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
@@ -132,6 +130,7 @@ public:
 
         ContactMatrixGroup const& contact_matrix      = params.template get<ContactPatterns<ScalarType>>();
         ContactMatrixGroup const& commuting_strengths = params.template get<CommutingStrengths<ScalarType>>();
+        Populations const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
 
         Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
         Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
@@ -157,7 +156,7 @@ public:
                                 coeffStoE * y.get_value(t_idx)[Si] *
                                 commuting_strengths.get_matrix_at(y.get_time(t_idx))(n.get(), k.get()) *
                                 commuting_strengths.get_matrix_at(y.get_time(t_idx))(m.get(), k.get()) /
-                                m_population_after_commuting[{k, j}];
+                                population_after_commuting[{k, j}];
                         }
                     }
                 }
@@ -213,9 +212,10 @@ public:
             this->parameters.template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline();
         commuting_strengths_param = commuting_strengths;
 
-        auto number_regions    = (size_t)this->parameters.get_num_regions();
-        auto number_age_groups = (size_t)this->parameters.get_num_agegroups();
-        auto& population       = this->populations;
+        auto number_regions              = (size_t)this->parameters.get_num_regions();
+        auto number_age_groups           = (size_t)this->parameters.get_num_agegroups();
+        auto& population                 = this->populations;
+        auto& population_after_commuting = this->parameters.template get<PopulationAfterCommuting<FP>>();
 
         for (size_t region_n = 0; region_n < number_regions; ++region_n) {
             for (size_t age = 0; age < number_age_groups; ++age) {
@@ -224,11 +224,11 @@ public:
                     population_n += population[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age),
                                                 mio::oseirmetapop::InfectionState(state)}];
                 }
-                m_population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] += population_n;
+                population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] += population_n;
                 for (size_t region_m = 0; region_m < number_regions; ++region_m) {
-                    m_population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] -=
+                    population_after_commuting[{mio::oseirmetapop::Region(region_n), mio::AgeGroup(age)}] -=
                         commuting_strengths(region_n, region_m) * population_n;
-                    m_population_after_commuting[{mio::oseirmetapop::Region(region_m), mio::AgeGroup(age)}] +=
+                    population_after_commuting[{mio::oseirmetapop::Region(region_m), mio::AgeGroup(age)}] +=
                         commuting_strengths(region_n, region_m) * population_n;
                 }
             }
@@ -240,8 +240,6 @@ public:
         auto number_regions = (size_t)this->parameters.get_num_regions();
         set_commuting_strengths(Eigen::MatrixXd::Identity(number_regions, number_regions));
     }
-
-    mio::Populations<FP, Region, AgeGroup> m_population_after_commuting;
 }; // namespace oseirmetapop
 
 } // namespace oseirmetapop

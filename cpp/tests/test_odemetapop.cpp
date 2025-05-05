@@ -82,7 +82,7 @@ TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
 
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
-    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0.0, 0.5, 0.5, 0., 0., 0., 0., 1.;
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
 
     // model.check_constraints() combines the functions from population and parameters.
@@ -107,10 +107,29 @@ TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mobility_data_commuter(0, 1) = -0.5;
+    mobility_data_commuter(0, 2) = 0.75;
+    mobility_data_commuter(0, 3) = 0.75;
     model.set_commuting_strengths(mobility_data_commuter);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
     mobility_data_commuter(0, 1) = 1.5;
+    mobility_data_commuter(0, 2) = 0.;
+    mobility_data_commuter(0, 3) = 0.;
+    model.set_commuting_strengths(mobility_data_commuter);
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    mobility_data_commuter(0, 0) = 0.;
+    mobility_data_commuter(0, 1) = 0.;
+    mobility_data_commuter(0, 2) = 0.;
+    mobility_data_commuter(0, 3) = 1.;
+    model.set_commuting_strengths(mobility_data_commuter);
+    model.parameters.set<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>(
+        mio::Populations<ScalarType, mio::oseirmetapop::Region, mio::AgeGroup>(
+            {mio::oseirmetapop::Region(4), mio::AgeGroup(1)}, 0.));
+    ASSERT_EQ(model.parameters.check_constraints(), 1);
+
+    // Nobody commutes to region 2
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0., 0.5, 0.5, 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
@@ -129,7 +148,7 @@ TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
 
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
-    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0.0, 0.5, 0.5, 0., 0., 0., 0., 1.;
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
 
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
@@ -152,30 +171,54 @@ TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.04);
     mobility_data_commuter(0, 1) += 0.5;
     model.set_commuting_strengths(mobility_data_commuter);
-    ASSERT_EQ(model.parameters.apply_constraints(), 1);
-    ASSERT_EQ(model.parameters.get<mio::oseirmetapop::CommutingStrengths<ScalarType>>()
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::CommutingStrengths<ScalarType>>()
                   .get_cont_freq_mat()[0]
                   .get_baseline()
                   .isIdentity(),
               true);
 
     mobility_data_commuter(0, 1) = -0.5;
+    mobility_data_commuter(0, 2) = 0.75;
+    mobility_data_commuter(0, 3) = 0.75;
     model.set_commuting_strengths(mobility_data_commuter);
-    ASSERT_EQ(model.parameters.apply_constraints(), 1);
-    ASSERT_EQ(model.parameters.get<mio::oseirmetapop::CommutingStrengths<ScalarType>>()
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::CommutingStrengths<ScalarType>>()
                   .get_cont_freq_mat()[0]
                   .get_baseline()
                   .isIdentity(),
               true);
 
     mobility_data_commuter(0, 1) = 1.5;
+    mobility_data_commuter(0, 2) = 0.;
+    mobility_data_commuter(0, 3) = 0.;
     model.set_commuting_strengths(mobility_data_commuter);
-    ASSERT_EQ(model.parameters.apply_constraints(), 1);
-    ASSERT_EQ(model.parameters.get<mio::oseirmetapop::CommutingStrengths<ScalarType>>()
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_EQ(model.parameters.get<mio::oseirmetapop::CommutingStrengths<ScalarType>>()
                   .get_cont_freq_mat()[0]
                   .get_baseline()
                   .isIdentity(),
               true);
+
+    mobility_data_commuter(0, 0) = 0.;
+    mobility_data_commuter(0, 1) = 0.;
+    mobility_data_commuter(0, 2) = 0.;
+    mobility_data_commuter(0, 3) = 1.;
+    model.set_commuting_strengths(mobility_data_commuter);
+    model.parameters.set<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>(
+        mio::Populations<ScalarType, mio::oseirmetapop::Region, mio::AgeGroup>(
+            {mio::oseirmetapop::Region(4), mio::AgeGroup(1)}, 0.));
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR((model.parameters.get<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>()[{
+                    mio::oseirmetapop::Region(3), mio::AgeGroup(0)}]),
+                1.0, tol_times);
+
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0., 0.5, 0.5, 0., 0., 0., 1.;
+    model.set_commuting_strengths(mobility_data_commuter);
+    EXPECT_EQ(model.parameters.apply_constraints(), 1);
+    EXPECT_NEAR((model.parameters.get<mio::oseirmetapop::PopulationAfterCommuting<ScalarType>>()[{
+                    mio::oseirmetapop::Region(1), mio::AgeGroup(0)}]),
+                1.0, tol_times);
 
     mio::set_log_level(mio::LogLevel::warn);
 }
@@ -264,7 +307,7 @@ TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
 
     Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
                                            (size_t)model.parameters.get_num_regions());
-    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0.0, 0.5, 0.5, 0., 0., 0., 0., 1.;
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
 
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-seir-metapop-compare.csv");
