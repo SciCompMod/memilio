@@ -28,6 +28,7 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
+#include "memilio/io/epi_data.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
@@ -321,6 +322,74 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
     }
     return success();
 }
+
+template <class TestAndTrace, class ContactPattern, class Model, class MobilityParams, class Parameters,
+          class ReadFunction, class NodeIdFunction, typename FP = double>
+IOResult<void> set_nodes_cached(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
+                                const std::string& population_data_path, bool is_node_for_county,
+                                Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
+                                NodeIdFunction&& node_func, const std::vector<double>& scaling_factor_inf,
+                                double scaling_factor_icu, double tnt_capacity_factor, int num_days = 0,
+                                bool export_time_series = false, bool rki_age_groups = true,
+                                const std::vector<mio::ConfirmedCasesDataEntry>& case_data   = {},
+                                const std::vector<std::vector<double>>& population_data      = {},
+                                const std::vector<mio::VaccinationDataEntry>& vacc_data      = {},
+                                const std::vector<mio::DiviEntry>& divi_data                 = {})
+
+{
+    BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
+    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+    for (auto& node : nodes) {
+        node.parameters = params;
+    }
+
+    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string(),
+                                num_days, export_time_series, case_data, population_data, vacc_data, divi_data));
+
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+
+        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+
+        //local parameters
+        auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
+        tnt_value       = UncertainValue<FP>(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
+        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+
+        auto id = 0;
+        if (is_node_for_county) {
+            id = int(regions::CountyId(node_ids[node_idx]));
+        }
+        else {
+            id = int(regions::DistrictId(node_ids[node_idx]));
+        }
+        //holiday periods
+        auto holiday_periods = regions::get_holidays(regions::get_state_id(id), start_date, end_date);
+        auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+            });
+
+        //uncertainty in populations
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].populations[{i, j}];
+                compartment_value =
+                    UncertainValue<FP>(0.5 * (1.1 * double(compartment_value) + 0.9 * double(compartment_value)));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * double(compartment_value),
+                                                                                     1.1 * double(compartment_value)));
+            }
+        }
+
+        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
+    }
+    return success();
+}
+
+
 
 /**
  * @brief Sets the graph edges.

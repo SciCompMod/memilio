@@ -24,10 +24,12 @@ from enum import Enum
 import os
 import requests
 from itertools import combinations
+import concurrent.futures
 
 
 import memilio.simulation as mio
 import memilio.simulation.osecirvvs as osecirvvs
+from memilio.epidata import geoModificationGermany as geoger
 
 
 class Location(Enum):
@@ -120,12 +122,98 @@ class Simulation:
         self.num_groups = 6
         self.data_dir = data_dir
         self.results_dir = results_dir
-        self.szenario_data = ""
         self.intervention_list = []
         self.parameter_list = []
         self.run_data_url = run_data_url
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
+
+        node_ids = geoger.get_county_ids(True, True)
+        path_vacc_data = os.path.join(
+            self.data_dir, "pydata", "Germany", "vacc_county_ageinf_ma7.json")
+        path_case_data = os.path.join(
+            self.data_dir, "pydata", "Germany", "cases_all_county_age_ma7.json")
+        path_population_data = os.path.join(
+            self.data_dir, "pydata", "Germany", "county_current_population.json")
+        self.vacc_data = osecirvvs.read_vaccination_data(path_vacc_data)
+        self.case_data = osecirvvs.read_confirmed_cases_data(path_case_data)
+        self.population_data = osecirvvs.read_population_data(
+            path_population_data, node_ids)
+
+    def _process_scenario(self, scenario, header, num_runs):
+        scenario_data_run = None
+        print("Processing scenario: ", scenario['name'])
+        try:
+            num_days_sim = (datetime.datetime.strptime(
+                scenario['endDate'], "%Y-%m-%d") - datetime.datetime.strptime(scenario['startDate'], "%Y-%m-%d")).days
+
+            extrapolate = False
+            if scenario['name'] == 'casedata':
+                num_days_sim += 1
+                extrapolate = True
+
+            max_retries = 100
+            retry_delay = 2
+
+            for attempt in range(max_retries):
+                try:
+                    scenario_data_run = requests.get(
+                        self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
+                    break
+                except requests.exceptions.RequestException as e:
+                    if attempt < max_retries - 1:
+                        print(
+                            f"Retry {attempt+1}/{max_retries} for scenario {scenario['name']}. Error: {e}")
+                        time.sleep(retry_delay * (2**attempt))
+                    else:
+                        raise
+
+            # for testing
+            # scenario_data_run['startDate'] = "2024-12-22"
+            # scenario_data_run['endDate'] = "2024-01-01"
+
+            graph = self.get_graph(extrapolate, scenario_data_run)
+
+            if extrapolate:
+                return f"Processed casedata scenario {scenario['id']}"
+
+            print(
+                f"Starting simulation for scenario: {scenario['id']} ({scenario['name']})")
+            study = osecirvvs.ParameterStudy(
+                graph, 0., num_days_sim, 0.5, num_runs)
+            ensemble = study.run(False)
+
+            ensemble_results = []
+            ensemble_params = []
+            for run in range(num_runs):
+                graph_run = ensemble[run]
+                ensemble_results.append(
+                    osecirvvs.interpolate_simulation_result(graph_run))
+                ensemble_params.append(
+                    [graph_run.get_node(node_indx).property.model
+                     for node_indx in range(graph.num_nodes)])
+
+            node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
+
+            save_percentiles = True
+            save_single_runs = False
+
+            res_dir_scenario = os.path.join(
+                self.results_dir,
+                f'{scenario["name"]}_{scenario["id"]}'
+            )
+
+            if not os.path.exists(res_dir_scenario):
+                os.makedirs(res_dir_scenario)
+            osecirvvs.save_results(
+                ensemble_results, ensemble_params, node_ids, res_dir_scenario,
+                save_single_runs, save_percentiles, num_days_sim, True)
+            return f"Successfully processed scenario {scenario['id']}"
+
+        except Exception as e:
+            print(
+                f"Error processing scenario {scenario.get('id', 'N/A')}: {e}")
+            return f"Failed to process scenario {scenario.get('id', 'N/A')}: {e}"
 
     def get_parameter_values(self, parameters, parameter_name):
         parameter = next(
@@ -137,10 +225,8 @@ class Simulation:
         print(f"Parameter {parameter_name} not found in parameters")
         return None, None
 
-    def set_covid_parameters(self, model):
-        # read parameters given from the scenario
-        # TODO: Fix when the scenario data is fixed
-        parameters = self.scenario_data['modelParameters']
+    def set_covid_parameters(self, model, scenario_data):
+        parameters = scenario_data['modelParameters']
 
         # Create a mapping from parameterId to name
         id_to_name = {entry['id']: entry['name']
@@ -401,7 +487,7 @@ class Simulation:
 
         # start day is set to the n-th day of the year
         start_date = datetime.datetime.strptime(
-            self.scenario_data['startDate'], '%Y-%m-%d').date()
+            scenario_data['startDate'], '%Y-%m-%d').date()
         start_day = mio.Date(
             start_date.year, start_date.month, start_date.day).day_in_year
 
@@ -440,7 +526,7 @@ class Simulation:
             )
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
-    def set_npis(self, params):
+    def set_npis(self, params, scenario_data):
         # set up for damping
         contacts = params.ContactPatterns
         dampings = contacts.dampings
@@ -501,7 +587,7 @@ class Simulation:
                 t, min, max, lvl_pd_and_masks, typ_distance, [loc_other])
 
         # read interventions given from the scenario
-        interventions_scenario = self.scenario_data['linkedInterventions']
+        interventions_scenario = scenario_data['linkedInterventions']
 
         for intervention in interventions_scenario:
             # search intervention in self.intervention_list
@@ -536,11 +622,11 @@ class Simulation:
 
         params.ContactPatterns.dampings = dampings
 
-    def get_graph(self, extrapolate):
+    def get_graph(self, extrapolate, scenario_data):
         model = osecirvvs.Model(self.num_groups)
-        self.set_covid_parameters(model)
+        self.set_covid_parameters(model, scenario_data)
         self.set_contact_matrices(model)
-        self.set_npis(model.parameters)
+        self.set_npis(model.parameters, scenario_data)
 
         graph = osecirvvs.ModelGraph()
 
@@ -554,29 +640,28 @@ class Simulation:
 
         # get start date in mio.Date format
         start_date = datetime.datetime.strptime(
-            self.scenario_data['startDate'], '%Y-%m-%d').date()
+            scenario_data['startDate'], '%Y-%m-%d').date()
         start_date = mio.Date(
             start_date.year, start_date.month, start_date.day)
 
         # get nums between start and end date
         end_date = datetime.datetime.strptime(
-            self.scenario_data['endDate'], '%Y-%m-%d').date()
+            scenario_data['endDate'], '%Y-%m-%d').date()
         end_date = mio.Date(
             end_date.year, end_date.month, end_date.day)
 
-        osecirvvs.set_nodes(
-            model.parameters,
-            start_date,
-            end_date, self.data_dir,
-            path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, tnt_capacity_factor, end_date - start_date - 1, extrapolate)
+        osecirvvs.set_nodes_cached(
+            model.parameters, start_date, end_date, self.data_dir, path_population_data,
+            True, graph, scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor,
+            end_date - start_date - 1, extrapolate, True, self.case_data, self.population_data,
+            self.vacc_data)
 
         osecirvvs.set_edges(
             self.data_dir, graph, len(Location))
 
         return graph
 
-    def run(self, num_runs=10):
+    def run(self, num_runs=10, max_workers=10):
         mio.set_log_level(mio.LogLevel.Warning)
 
         header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
@@ -592,70 +677,27 @@ class Simulation:
         self.intervention_list = requests.get(
             self.run_data_url + "interventions/templates/", headers=header).json()
 
-        for scenario in scenarios:
-            # Get the number of days to simulate from scenario definition in API.
-            num_days_sim = (datetime.datetime.strptime(
-                scenario['endDate'], "%Y-%m-%d")-datetime.datetime.strptime(scenarios[0]['startDate'], "%Y-%m-%d")).days
+        print(
+            f"Processing {len(scenarios)} scenarios with {max_workers} workers.")
 
-            extrapolate = False
-            if scenario['name'] == 'casedata':
-                # If we are computing the casedata scenario, we need num_days_sim + 1 as the start day is not included
-                # in the output as in the simulation-based scenarios.
-                num_days_sim += 1
-                extrapolate = True
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(self._process_scenario, scenario, header, num_runs)
+                       for scenario in scenarios]
 
-            # load full set of scenario data
-            self.scenario_data = requests.get(
-                self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    result = future.result()
+                    print(result)
+                except Exception as exc:
+                    print(f'Exception: {exc}')
 
-            # for testing overwrite startDate and endDate
-            # self.scenario_data['startDate'] = "2024-12-22"
-            # self.scenario_data['endDate'] = "2024-01-01"
-
-            graph = self.get_graph(extrapolate)
-
-            # in the casedata scenario, we are just interested in the extrapolated data. Therefore, we skip the simulation.
-            if extrapolate:
-                continue
-
-            study = osecirvvs.ParameterStudy(
-                graph, 0., num_days_sim, 0.5, num_runs)
-            ensemble = study.run(False)
-
-            ensemble_results = []
-            ensemble_params = []
-            for run in range(num_runs):
-                graph_run = ensemble[run]
-                ensemble_results.append(
-                    osecirvvs.interpolate_simulation_result(graph_run))
-                ensemble_params.append(
-                    [graph_run.get_node(node_indx).property.model
-                     for node_indx in range(graph.num_nodes)])
-
-            node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
-
-            save_percentiles = True
-            save_single_runs = False
-
-            res_dir_scenario = os.path.join(
-                self.results_dir,
-                f'{scenario["name"]}_{scenario["id"]}'
-            )
-
-            # create directory if it does not exist
-            if not os.path.exists(res_dir_scenario):
-                os.makedirs(res_dir_scenario)
-
-            osecirvvs.save_results(
-                ensemble_results, ensemble_params, node_ids, res_dir_scenario,
-                save_single_runs, save_percentiles, num_days_sim, True)
+        print("Finished all scenarios.")
 
 
 if __name__ == "__main__":
     cwd = os.getcwd()
     run_data_url = "https://zam10063.zam.kfa-juelich.de/api-new/"
-    mcmc_dir = os.path.join(cwd, "mcmc data")
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
         results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
-    sim.run(num_runs=3)
+    sim.run(num_runs=3, max_workers=1)
