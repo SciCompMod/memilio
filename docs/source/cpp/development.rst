@@ -1,13 +1,15 @@
 Development
 =================================
 
+.. _performance-monitoring-cpp:
+
 Performance monitoring
 ---------------------------------
 
 LIKWID
 ~~~~~~
 
-To measure the performance of the code, we use LIKWID. We recommend measuring the performance on an HPC system with LIKWID installed or refer to `<https://github.com/RRZE-HPC/likwid/wiki/Build>_` on how to get LIKWID.
+To measure the performance of the code, we use LIKWID. We recommend measuring the performance on an HPC system with LIKWID installed or refer to `<https://github.com/RRZE-HPC/likwid/wiki/Build>`_ on how to get LIKWID.
 Run ``likwid-perfctr ./bin/my_example`` to measure the performance of the entire example. To measure the performance of a specific part, use the LIKWID marker API:
 
 .. code-block:: cpp
