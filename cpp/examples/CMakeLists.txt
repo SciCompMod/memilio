@@ -136,12 +136,6 @@ add_executable(smm_example smm.cpp)
 target_link_libraries(smm_example PRIVATE memilio smm)
 target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-if(MEMILIO_HAS_SBML)
-    add_executable(sbml_to_memilio sbml_to_memilio.cpp)
-    target_link_libraries(sbml_to_memilio PRIVATE sbml memilio)
-    target_compile_options(sbml_to_memilio PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-endif()
-
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
     target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)

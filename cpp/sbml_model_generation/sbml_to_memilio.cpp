@@ -40,7 +40,7 @@ std::string get_filename(const char* filepath)
 void create_folder(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
-    boost::filesystem::path p(lowercase_name);
+    boost::filesystem::path p("../sbml_model_generation/" + lowercase_name);
     boost::filesystem::create_directory(p);
     mio::log_info("Creating folder at ./{}", p.string());
 }
@@ -388,7 +388,7 @@ bool create_infection_state(Model& model, const std::string& filename)
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
 
     std::ofstream infection_state;
-    infection_state.open(lowercase_name + "/infection_state.h", std::ios::out);
+    infection_state.open("../sbml_model_generation/" + lowercase_name + "/infection_state.h", std::ios::out);
     if (infection_state) {
 
         infection_state << "#ifndef " << uppercase_name << "_INFECTIONSTATE_H" << std::endl;
@@ -433,7 +433,7 @@ bool create_parameters(Model& model, const std::string& filename)
     size_t number_parameters = model.getListOfParameters()->size();
 
     std::ofstream parameters;
-    parameters.open(lowercase_name + "/parameters.h", std::ios::out);
+    parameters.open("../sbml_model_generation/" + lowercase_name + "/parameters.h", std::ios::out);
     if (parameters) {
 
         parameters << "#ifndef " << uppercase_name << "_PARAMETERS_H" << std::endl;
@@ -505,7 +505,7 @@ bool create_model_cpp(const std::string& filename)
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
 
     std::ofstream model_cpp;
-    model_cpp.open(lowercase_name + "/model.cpp", std::ios::out);
+    model_cpp.open("../sbml_model_generation/" + lowercase_name + "/model.cpp", std::ios::out);
     if (model_cpp) {
 
         model_cpp << "#include \"" << lowercase_name << "/model.h\"\n\nnamespace mio\n{" << std::endl;
@@ -541,7 +541,7 @@ bool create_model_h(Model& model, const std::string& filename)
     size_t number_species      = model.getListOfSpecies()->size();
     size_t number_reactions    = model.getListOfReactions()->size();
     std::ofstream model_h;
-    model_h.open(lowercase_name + "/model.h", std::ios::out);
+    model_h.open("../sbml_model_generation/" + lowercase_name + "/model.h", std::ios::out);
     if (model_h) {
         //Add generic code 
         model_h << "#ifndef " << uppercase_name << "_MODEL_H\n#define " << uppercase_name << "_MODEL_H" << std::endl;
@@ -633,28 +633,28 @@ bool create_model_h(Model& model, const std::string& filename)
                 else if (model.getListOfSpecies()->getElementBySId(formula_parts[j]) != NULL) {
                     bool prod = false, ed = false, mod = false;
                     for (size_t k = 0; k < products->size(); k++) {
-                        if (products->get(k)->getSpecies() == formula_parts[k]) {
+                        if (products->get(k)->getSpecies() == formula_parts[j]) {
                             prod = true;
                         }
                     }
                     for (size_t k = 0; k < educts->size(); k++) {
-                        if (educts->get(k)->getSpecies() == formula_parts[k]) {
+                        if (educts->get(k)->getSpecies() == formula_parts[j]) {
                             ed = true;
                         }
                     }
                     for (size_t k = 0; k < modifiers->size(); k++) {
-                        if (modifiers->get(k)->getSpecies() == formula_parts[k]) {
+                        if (modifiers->get(k)->getSpecies() == formula_parts[j]) {
                             mod = true;
                         }
                     }
                     if (prod) {
-                        formula_parts[j] = "pop[" + formula_parts[j] + "j]";
+                        formula_parts[j] = "pop[" + formula_parts[j] + "i]";
                     }
                     else if (ed) {
-                        formula_parts[j] = "y[" + formula_parts[j] + "j]";
+                        formula_parts[j] = "y[" + formula_parts[j] + "i]";
                     }
                     else if (mod) {
-                        formula_parts[j] = "pop[" + formula_parts[j] + "j]";
+                        formula_parts[j] = "pop[" + formula_parts[j] + "i]";
                     }
                 }
                 else if (model.getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
@@ -674,7 +674,7 @@ bool create_model_h(Model& model, const std::string& filename)
             std::string output_formula = boost::algorithm::join(formula_parts, " ");
             for (size_t j = 0; j < educts->size(); j++) {
                 auto educt = *(SpeciesReference*)educts->get(j);
-                model_h << "dydt[" << educt.getSpecies() << "j] -= " << output_formula << ";" << std::endl;
+                model_h << "dydt[" << educt.getSpecies() << "i] -= " << output_formula << ";" << std::endl;
             }
             for (size_t j = 0; j < products->size(); j++) {
                 auto product = *(SpeciesReference*)products->get(j);
@@ -751,7 +751,7 @@ bool create_cmake(const std::string& filename)
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
 
     std::ofstream cmakelists;
-    cmakelists.open(lowercase_name + "/CMakeLists.txt", std::ios::out);
+    cmakelists.open("../sbml_model_generation/" + lowercase_name + "/CMakeLists.txt", std::ios::out);
     if (cmakelists.good()) {
         cmakelists << "add_library(" << lowercase_name << std::endl;
         cmakelists << "infection_state.h\nmodel.h\nmodel.cpp\nparameters.h\n)" << std::endl;
@@ -789,7 +789,7 @@ bool create_example_cpp(Model& model, const std::string& filename)
     size_t number_species      = model.getListOfSpecies()->size();
 
     std::ofstream example;
-    example.open(lowercase_name + ".cpp", std::ios::out);
+    example.open("../sbml_model_generation/" + lowercase_name + ".cpp", std::ios::out);
     if (example) {
         example << "#include \"memilio/compartments/simulation.h\"\n#include \"memilio/config.h\"\n#include "
                    "\"memilio/math/euler.h\"\n#include \"memilio/math/integrator.h\"\n#include "
@@ -864,11 +864,13 @@ bool create_example_cpp(Model& model, const std::string& filename)
         example << "sim.advance(tmax + 50); \nauto sir = sim.get_result();" << std::endl;
 
         example << "sir.print_table({" << table << "});" << std::endl;
-        example << "std::cout << \"\\nnumber total: \" << sir.get_last_value().sum() << \"\\n\";" << std::endl;
+        example << "mio::log_info(\"number total: {}\", sir.get_last_value().sum());" << std::endl;
 
         example << "const std::string file_name = \"" << lowercase_name << ".dat\";" << std::endl;
-        example << "std::ofstream file(file_name);\nstd::cout << \"Writing output to \" << file_name << std::endl;"
-                << std::endl;
+        example << "std::ofstream file(file_name);" << std::endl;
+        example << "if (!file) {  mio::log_error(\"Could not open file for writing: {}\", file_name); return 1; }"
+             << std::endl;
+        example << "mio::log_info(\"Writing output to {}\", file_name);" << std::endl;
         example << "sir.print_table({" << table << "}, 10, 3, file);" << std::endl;
         example << "file.close();" << std::endl;
 
@@ -895,20 +897,18 @@ bool modify_cmakelists(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::ofstream modifications;
-    modifications.open("CMakeListsAddition.txt", std::ios::app);
+    modifications.open("../sbml_model_generation/CMakeLists.txt", std::ios::app);
     if (modifications) {
+        modifications << "add_subdirectory(" << lowercase_name << ")" << std::endl;
         modifications << "add_executable(ex_" << lowercase_name << " " << lowercase_name << ".cpp)" << std::endl;
         modifications << "target_link_libraries(ex_" << lowercase_name << " PRIVATE memilio " << lowercase_name << ")"
                       << std::endl;
         modifications << "target_compile_options(ex_" << lowercase_name
-                      << " PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})" << std::endl;
-        modifications.close();
-        modifications.open("CMakeListsFolderNames.txt", std::ios::app);
-        modifications << "add_subdirectory(models/" << lowercase_name << ")" << std::endl;
+                      << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n" << std::endl;
         modifications.close();
     }
     else {
-        mio::log_error("Could not open file for writing: CMakeListsAddition.txt");
+        mio::log_error("Could not open file for writing: CMakelists.txt");
         return false;
     }
     return true;
@@ -926,7 +926,7 @@ void format_files(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string command =
-        std::string("clang-format -i --files= ") + lowercase_name + ".cpp " + lowercase_name + "/**.[hc]*";
+        std::string("clang-format -i --files= ../sbml_model_generation/") + lowercase_name + ".cpp ../sbml_model_generation/" + lowercase_name + "/**.[hc]*";
     int status = system(command.c_str());
     mio::log_debug("Return status: {}", status);
     if (status != 0) {

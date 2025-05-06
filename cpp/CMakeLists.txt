@@ -7,6 +7,7 @@ option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
+option(MEMILIO_BUILD_SBML_MODELS "Build the SBML importer and imported models." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -143,6 +144,9 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     endif()
 endif()
 
+set(MEMILIO_CXX_FLAGS_SBML_GENERATED "${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS};")
+string(APPEND MEMILIO_CXX_FLAGS_SBML_GENERATED "-Wno-unused-parameter;-Wno-unused-variable;")
+
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
@@ -182,6 +186,10 @@ endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
+endif()
+
+if(MEMILIO_BUILD_SBML_MODELS)
+    add_subdirectory(sbml_model_generation)
 endif()
 
 install(TARGETS memilio

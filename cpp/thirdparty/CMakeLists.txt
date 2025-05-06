@@ -202,7 +202,7 @@ if(sbml_FOUND)
     set(MEMILIO_HAS_SBML ON)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
 else()
-    message(WARNING "LibSBML was not found. The SBML integration into memilio will not be build.")
+    message(WARNING "LibSBML was not found. The SBML importer will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
