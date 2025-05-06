@@ -448,14 +448,6 @@ bool create_parameters(Model& model, const std::string& filename)
 
         std::string parameterset_initializer = "using ParametersBase = ParameterSet<";
 
-        if (number_parameters == 0) {
-            parameters
-                << "template <typename FP = ScalarType>\nstruct DummyParam {\n    using Type = double;\n    static "
-                   "Type get_default()\n    {\n        return 0.0;\n    }\n    static std::string name()\n    {\n   "
-                   "     return \"DummyParameter\";\n    }\n};\n"
-                << std::endl;
-            parameterset_initializer = parameterset_initializer + "DummyParam<FP>, ";
-        }
         else {
             for (size_t i = 0; i < number_parameters; i++) {
                 if (i != 0) {
