@@ -17,13 +17,13 @@ Below is an overview of the model architecture and its compartments.
 +-----------------------------+-----------------------------------------------+-----------------------------------------------------------------------------------------------+
 | Mathematical variable       | C++ variable name                             | Description                                                                                   |
 +=============================+===============================================+===============================================================================================+
-| :math:`\phi`               | ``ContactPatterns``                           | Daily contact rate / Number of daily contacts.                                                |
+| :math:`\phi`                | ``ContactPatterns``                           | Daily contact rate / Number of daily contacts.                                                |
 +-----------------------------+-----------------------------------------------+-----------------------------------------------------------------------------------------------+
-| :math:`\rho`               | ``TransmissionProbabilityOnContact``        | Transmission risk for people located in the Susceptible compartment.                          |
+| :math:`\rho`                | ``TransmissionProbabilityOnContact``          | Transmission risk for people located in the Susceptible compartment.                          |
 +-----------------------------+-----------------------------------------------+-----------------------------------------------------------------------------------------------+
-| :math:`N`                  | ``populations.get_total()``                   | Total population.                                                                             |
+| :math:`N`                   | ``populations.get_total()``                   | Total population.                                                                             |
 +-----------------------------+-----------------------------------------------+-----------------------------------------------------------------------------------------------+
-| :math:`T_{I}`              | ``TimeInfected``                              | Time in days an individual stays in the Infected compartment.                                |
+| :math:`T_{I}`               | ``TimeInfected``                              | Time in days an individual stays in the Infected compartment.                                 |
 +-----------------------------+-----------------------------------------------+-----------------------------------------------------------------------------------------------+
 
 An example can be found in the
