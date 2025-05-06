@@ -53,6 +53,7 @@ The following features are the most important not supported features:
     - Events not triggered by time
     - Usage of multiple SBML-compartments
     - Rules (unless they are RateRules)
+    - The ``^`` operator for exponentiation in functions
 
 As in an SBML file all species have to be given seperately, it is unfortunately also not possible to automatically use the Population in MEmilio to stratify the population into different compartments.
 
