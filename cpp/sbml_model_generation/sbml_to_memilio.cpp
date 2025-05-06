@@ -35,24 +35,28 @@ std::string get_filename(const char* filepath)
 *    @return IOResult<std::string> The path to the folder or an error code
 *
 *    This function tries to find the folder called `folder_name`. It checks whether it is in the current directory or any
-*    of the two parent directories. This function is thus tailored to find the folder for the sbml generated model files.
+*    of the two parent directories. It makes sure that it does not accidently use the folder with the same name in the 
+*    build directory. This function is thus tailored to find the folder for the sbml generated model files.
 *    If the folder is not found, it returns an error code. 
 */
 mio::IOResult<std::string> get_path(std::string folder_name)
 {
     boost::filesystem::path current_path = boost::filesystem::absolute(boost::filesystem::current_path());
     boost::filesystem::path folder_path  = current_path / folder_name;
-    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path)) {
+    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path) &&
+        current_path.stem().string() != "build") {
         return mio::success(folder_path.string());
     }
     current_path = current_path.parent_path();
     folder_path  = current_path / folder_name;
-    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path)) {
+    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path) &&
+        current_path.stem().string() != "build") {
         return mio::success(folder_path.string());
     }
     current_path = current_path.parent_path();
     folder_path  = current_path / folder_name;
-    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path)) {
+    if (boost::filesystem::exists(folder_path) && boost::filesystem::is_directory(folder_path) &&
+        current_path.stem().string() != "build") {
         return mio::success(folder_path.string());
     }
     mio::log_error("Could not find the folder {} in the current path or its parent directories.", folder_name);
