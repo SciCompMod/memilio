@@ -342,6 +342,9 @@ public:
     }
 
 private:
+    // Fix default constructor for empty parameter set
+    template <class Dummy = void, class = std::enable_if_t<(sizeof...(Tags)), Dummy>, class = Dummy>
+
     ParameterSet(const typename Tags::Type&... t)
         : m_tup(t...)
     {
