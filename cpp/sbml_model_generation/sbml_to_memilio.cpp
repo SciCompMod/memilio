@@ -457,12 +457,12 @@ bool create_parameters(Model& model, const std::string& filename)
             std::string name = param.getId();
             parameters << "template <typename FP = ScalarType>" << std::endl;
             parameters << "struct " << name << " {\n    using Type = double;\n  static Type get_default()\n{"
-                        << std::endl;
+                       << std::endl;
             parameters << "return " << value << ";\n}" << std::endl;
             parameters << "static std::string name()\n{\n   return \"" << name << "\";\n}\n};\n" << std::endl;
             parameterset_initializer = parameterset_initializer + name + "<FP>";
         }
-        
+
         parameters << "template <typename FP = ScalarType>" << std::endl;
         parameters << parameterset_initializer << ">;\n " << std::endl;
         parameters
@@ -534,7 +534,7 @@ bool create_model_h(Model& model, const std::string& filename)
     std::ofstream model_h;
     model_h.open("../sbml_model_generation/" + lowercase_name + "/model.h", std::ios::out);
     if (model_h) {
-        //Add generic code 
+        //Add generic code
         model_h << "#ifndef " << uppercase_name << "_MODEL_H\n#define " << uppercase_name << "_MODEL_H" << std::endl;
         model_h << "\n#include <cmath>\n#include \"memilio/compartments/compartmentalmodel.h\"\n#include "
                    "\"memilio/epidemiology/age_group.h\"\n#include \"memilio/epidemiology/populations.h\"\n#include "
@@ -861,7 +861,7 @@ bool create_example_cpp(Model& model, const std::string& filename)
         example << "const std::string file_name = \"" << lowercase_name << ".dat\";" << std::endl;
         example << "std::ofstream file(file_name);" << std::endl;
         example << "if (!file) {  mio::log_error(\"Could not open file for writing: {}\", file_name); return 1; }"
-             << std::endl;
+                << std::endl;
         example << "mio::log_info(\"Writing output to {}\", file_name);" << std::endl;
         example << "sir.print_table({" << table << "}, 10, 3, file);" << std::endl;
         example << "file.close();" << std::endl;
@@ -896,7 +896,8 @@ bool modify_cmakelists(const std::string& filename)
         modifications << "target_link_libraries(ex_" << lowercase_name << " PRIVATE memilio " << lowercase_name << ")"
                       << std::endl;
         modifications << "target_compile_options(ex_" << lowercase_name
-                      << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n" << std::endl;
+                      << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n"
+                      << std::endl;
         modifications.close();
     }
     else {
@@ -917,8 +918,8 @@ bool modify_cmakelists(const std::string& filename)
 void format_files(const std::string& filename)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
-    std::string command =
-        std::string("clang-format -i --files= ../sbml_model_generation/") + lowercase_name + ".cpp ../sbml_model_generation/" + lowercase_name + "/**.[hc]*";
+    std::string command        = std::string("clang-format -i --files= ../sbml_model_generation/") + lowercase_name +
+                          ".cpp ../sbml_model_generation/" + lowercase_name + "/**.[hc]*";
     int status = system(command.c_str());
     mio::log_debug("Return status: {}", status);
     if (status != 0) {
