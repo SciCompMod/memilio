@@ -448,22 +448,21 @@ bool create_parameters(Model& model, const std::string& filename)
 
         std::string parameterset_initializer = "using ParametersBase = ParameterSet<";
 
-        else {
-            for (size_t i = 0; i < number_parameters; i++) {
-                if (i != 0) {
-                    parameterset_initializer += ", ";
-                }
-                Parameter param  = *(Parameter*)model.getListOfParameters()->get(i);
-                double value     = param.getValue();
-                std::string name = param.getId();
-                parameters << "template <typename FP = ScalarType>" << std::endl;
-                parameters << "struct " << name << " {\n    using Type = double;\n  static Type get_default()\n{"
-                           << std::endl;
-                parameters << "return " << value << ";\n}" << std::endl;
-                parameters << "static std::string name()\n{\n   return \"" << name << "\";\n}\n};\n" << std::endl;
-                parameterset_initializer = parameterset_initializer + name + "<FP>";
+        for (size_t i = 0; i < number_parameters; i++) {
+            if (i != 0) {
+                parameterset_initializer += ", ";
             }
+            Parameter param  = *(Parameter*)model.getListOfParameters()->get(i);
+            double value     = param.getValue();
+            std::string name = param.getId();
+            parameters << "template <typename FP = ScalarType>" << std::endl;
+            parameters << "struct " << name << " {\n    using Type = double;\n  static Type get_default()\n{"
+                        << std::endl;
+            parameters << "return " << value << ";\n}" << std::endl;
+            parameters << "static std::string name()\n{\n   return \"" << name << "\";\n}\n};\n" << std::endl;
+            parameterset_initializer = parameterset_initializer + name + "<FP>";
         }
+        
         parameters << "template <typename FP = ScalarType>" << std::endl;
         parameters << parameterset_initializer << ">;\n " << std::endl;
         parameters
@@ -572,6 +571,7 @@ bool create_model_h(Model& model, const std::string& filename)
             std::string lambda_string       = SBML_formulaToL3String(function_def.getMath());
             std::string variable_string     = "";
             std::string formula_string      = "";
+            mio::log_debug("Lambda function: {}", lambda_string);
             if (lambda_string.find_last_of(',') != std::string::npos) {
                 size_t delim = lambda_string.find_last_of(',');
                 std::vector<std::string> variables;
