@@ -625,6 +625,19 @@ public:
 
             double first_vacc;
             double full_vacc;
+
+            const auto& first_vaccination = params.template get<DailyFirstVaccination<FP>>();
+            const auto& full_vaccination = params.template get<DailyFullVaccination<FP>>();
+
+            const auto max_day_first = first_vaccination.template size<SimulationDay>().get();
+            const auto max_day_full =full_vaccination.template size<SimulationDay>().get();
+
+            const auto max_day_data = SimulationDay(std::min(max_day_first, max_day_full) - 1);
+
+            if (t_idx > max_day_data) {
+                t_idx = max_day_data;
+            }
+
             if (t_idx == SimulationDay(0)) {
                 first_vacc = params.template get<DailyFirstVaccination<FP>>()[{(AgeGroup)i, t_idx}];
                 full_vacc  = params.template get<DailyFullVaccination<FP>>()[{(AgeGroup)i, t_idx}];

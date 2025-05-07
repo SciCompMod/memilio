@@ -458,7 +458,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
                 if (remaining_after_return(j) < 0) {
                     auto num_comparts = (Eigen::Index)Sim::Model::Compartments::Count;
                     auto group        = Eigen::Index(j / num_comparts);
-                    auto compart      = j % num_comparts;
+                    // auto compart      = j % num_comparts;
                     // log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
                     //     "Underflow during mobility returns at time {}, compartment {}, age group {}: {}", t, compart,
                     //     group, remaining_after_return(j));

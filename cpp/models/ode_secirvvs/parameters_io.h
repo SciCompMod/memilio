@@ -1100,12 +1100,12 @@ IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date dat
                                              date, scaling_factor_icu));
 
     if (!case_data.empty()) {
-        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, case_data, county, date, scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, case_data, county, date, scaling_factor_inf, true));
     }
     else {
         BOOST_OUTCOME_TRY(
             details::set_confirmed_cases_data(model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
-                                              county, date, scaling_factor_inf));
+                                              county, date, scaling_factor_inf, true));
     }
 
     if (!population_data.empty() && !case_data.empty()) {
