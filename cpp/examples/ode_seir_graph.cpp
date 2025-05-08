@@ -50,10 +50,6 @@ void flow_based_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, 
     auto second_last_flow = flows.get_value(flows.get_num_time_points() - 2);
     Eigen::VectorXd diff  = last_flow - second_last_flow;
 
-    // Scale flows by the ratio of the mobile population to the total population
-    double scale_factor         = mobile_population.sum() / total.sum();
-    Eigen::VectorXd diff_mobile = diff * scale_factor;
-
     // Access the model to determine compartment indices
     const auto& model       = sim.get_model();
     const size_t num_groups = static_cast<size_t>(model.parameters.get_num_groups());
@@ -62,23 +58,96 @@ void flow_based_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, 
     // Apply the flows to each age group for the SEIR compartments
     for (mio::AgeGroup group(0); group < mio::AgeGroup(num_groups); ++group) {
         size_t flow_base_idx = static_cast<size_t>(group) * 3; // Three flows per age group: S->E, E->I, I->R
-        size_t S_idx         = model.populations.get_flat_index({group, InfState::Susceptible});
-        size_t E_idx         = model.populations.get_flat_index({group, InfState::Exposed});
-        size_t I_idx         = model.populations.get_flat_index({group, InfState::Infected});
-        size_t R_idx         = model.populations.get_flat_index({group, InfState::Recovered});
+        size_t S_i           = model.populations.get_flat_index({group, InfState::Susceptible});
+        size_t E_i           = model.populations.get_flat_index({group, InfState::Exposed});
+        size_t I_i           = model.populations.get_flat_index({group, InfState::Infected});
+        size_t R_i           = model.populations.get_flat_index({group, InfState::Recovered});
 
-        if (flow_base_idx + 2 < static_cast<size_t>(diff_mobile.size())) {
-            // Flow S -> E
-            mobile_population[S_idx] -= diff_mobile[flow_base_idx];
-            mobile_population[E_idx] += diff_mobile[flow_base_idx];
-            // Flow E -> I
-            mobile_population[E_idx] -= diff_mobile[flow_base_idx + 1];
-            mobile_population[I_idx] += diff_mobile[flow_base_idx + 1];
-            // Flow I -> R
-            mobile_population[I_idx] -= diff_mobile[flow_base_idx + 2];
-            mobile_population[R_idx] += diff_mobile[flow_base_idx + 2];
+        double scale_S = (total[S_i] > 1e-10) ? (mobile_population[S_i] / total[S_i]) : 0.0;
+        double scale_E = (total[E_i] > 1e-10) ? (mobile_population[E_i] / total[E_i]) : 0.0;
+        double scale_I = (total[I_i] > 1e-10) ? (mobile_population[I_i] / total[I_i]) : 0.0;
+
+        scale_S = std::max(0.0, std::min(1.0, scale_S));
+        scale_E = std::max(0.0, std::min(1.0, scale_E));
+        scale_I = std::max(0.0, std::min(1.0, scale_I));
+
+        if (flow_base_idx + 2 < static_cast<size_t>(diff.size())) {
+            double flow_SE_mobile = diff[flow_base_idx] * scale_S;
+            double flow_EI_mobile = diff[flow_base_idx + 1] * scale_E;
+            double flow_IR_mobile = diff[flow_base_idx + 2] * scale_I;
+
+            mobile_population[S_i] -= flow_SE_mobile;
+            mobile_population[E_i] += flow_SE_mobile - flow_EI_mobile;
+            mobile_population[I_i] += flow_EI_mobile - flow_IR_mobile;
+            mobile_population[R_i] += flow_IR_mobile;
         }
     }
+    mobile_population = mobile_population.cwiseMax(0.0);
+}
+
+void probabilistic_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, const SimType& sim,
+                                    Eigen::Ref<const Eigen::VectorXd> total, ScalarType t, ScalarType dt)
+{
+    mio::unused(t); // Time t is used implicitly via the state 'total' and parameters at that time
+    const auto& model       = sim.get_model();
+    const size_t num_groups = static_cast<size_t>(model.parameters.get_num_groups());
+    using InfState          = mio::oseir::InfectionState;
+
+    // Store initial mobile population state
+    Eigen::VectorXd mobile_pop_initial = mobile_population;
+
+    // Iterate over each age group
+    for (mio::AgeGroup i(0); i < mio::AgeGroup(num_groups); ++i) {
+        // Get compartment indices for the current age i
+        size_t S_i = model.populations.get_flat_index({i, InfState::Susceptible});
+        size_t E_i = model.populations.get_flat_index({i, InfState::Exposed});
+        size_t I_i = model.populations.get_flat_index({i, InfState::Infected});
+        size_t R_i = model.populations.get_flat_index({i, InfState::Recovered});
+
+        // Get parameters for the destination node (from the simulation 'sim')
+        ScalarType time_exposed  = model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[i];
+        ScalarType time_infected = model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[i];
+        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[i];
+
+        ScalarType force_of_infection = 0.0;
+
+        for (mio::AgeGroup j(0); j < mio::AgeGroup(num_groups); ++j) {
+            const size_t Ij = model.populations.get_flat_index({j, InfState::Infected});
+
+            ScalarType Nj = 0;
+            for (size_t comp = 0; comp < static_cast<size_t>(InfState::Count); ++comp) {
+                Nj += total[model.populations.get_flat_index({j, static_cast<InfState>(comp)})];
+            }
+
+            const ScalarType divNj = (Nj < mio::Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
+            const ScalarType coeffStoE =
+                model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>()
+                    .get_cont_freq_mat()
+                    .get_matrix_at(t)(i.get(), j.get()) *
+                model.parameters.template get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;
+
+            force_of_infection += coeffStoE * total[Ij];
+        }
+
+        double p_S_to_S = std::exp(-force_of_infection * dt);
+        double p_E_to_E = (time_exposed > 1e-10) ? std::exp(-dt / time_exposed) : 1.0; // Avoid division by zero
+        double p_I_to_I = (time_infected > 1e-10) ? std::exp(-dt / time_infected) : 1.0; // Avoid division by zero
+
+        p_S_to_S = std::max(0.0, std::min(1.0, p_S_to_S));
+        p_E_to_E = std::max(0.0, std::min(1.0, p_E_to_E));
+        p_I_to_I = std::max(0.0, std::min(1.0, p_I_to_I));
+
+        double p_S_to_E = 1.0 - p_S_to_S;
+        double p_E_to_I = 1.0 - p_E_to_E;
+        double p_I_to_R = 1.0 - p_I_to_I;
+
+        mobile_population[S_i] = mobile_pop_initial[S_i] * p_S_to_S;
+        mobile_population[E_i] = mobile_pop_initial[E_i] * p_E_to_E + mobile_pop_initial[S_i] * p_S_to_E;
+        mobile_population[I_i] = mobile_pop_initial[I_i] * p_I_to_I + mobile_pop_initial[E_i] * p_E_to_I;
+        mobile_population[R_i] = mobile_pop_initial[R_i] /* * p_R_to_R=1 */ + mobile_pop_initial[I_i] * p_I_to_R;
+    }
+
+    mobile_population = mobile_population.cwiseMax(0.0);
 }
 
 /**
@@ -192,7 +261,14 @@ GraphType createGraph(const mio::oseir::Model<ScalarType>& model_group1,
     // Set the custom mobility return function for each edge
     if (costum_mobility) {
         for (auto& edge : graph.edges()) {
-            edge.property.set_custom_mobility_return<SimType>(integrate_mobile_population_euler);
+            // 1. Flow-Based Approach<
+            // edge.property.set_custom_mobility_return<SimType>(flow_based_mobility_returns);
+
+            // 2. Probabilistic Approach
+            edge.property.set_custom_mobility_return<SimType>(probabilistic_mobility_returns);
+
+            // 3. Simple Euler Integration Approach
+            // edge.property.set_custom_mobility_return<SimType>(integrate_mobile_population_euler);
         }
     }
     return graph;
@@ -273,8 +349,8 @@ int main()
     mio::set_log_level(mio::LogLevel::warn);
     const ScalarType t0        = 0.0;
     const ScalarType tmax      = 40.0;
-    const ScalarType dt        = 0.5; // Time step for mobility simulation
-    const bool costum_mobility = false;
+    const ScalarType dt        = 0.5;
+    const bool costum_mobility = true;
 
     // --- Base model configuration ---
     const size_t num_groups           = 1;

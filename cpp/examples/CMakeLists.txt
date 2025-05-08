@@ -26,6 +26,26 @@ add_executable(ode_seir_graph_example ode_seir_graph.cpp)
 target_link_libraries(ode_seir_graph_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_seir_error_compare ode_seir_error_compare.cpp)
+target_link_libraries(ode_seir_error_compare PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_error_compare PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_error_compare_cp ode_seir_error_compare_cp.cpp)
+target_link_libraries(ode_seir_error_compare_cp PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_error_compare_cp PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_error_compare_stress ode_seir_error_compare_stress.cpp)
+target_link_libraries(ode_seir_error_compare_stress PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_error_compare_stress PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_convergence ode_seir_convergence.cpp)
+target_link_libraries(ode_seir_convergence PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_convergence PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_seir_flow_explicit_comp_example ode_seir_flow_explicit_comp.cpp)
+target_link_libraries(ode_seir_flow_explicit_comp_example PRIVATE memilio ode_seir)
+target_compile_options(ode_seir_flow_explicit_comp_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_sir_example ode_sir.cpp)
 target_link_libraries(ode_sir_example PRIVATE memilio ode_sir)
 target_compile_options(ode_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

@@ -88,15 +88,16 @@ public:
     {
     }
 
-    CompartmentalModel(const CompartmentalModel&)            = default;
-    CompartmentalModel(CompartmentalModel&&)                 = default;
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&)      = default;
     CompartmentalModel& operator=(const CompartmentalModel&) = default;
-    CompartmentalModel& operator=(CompartmentalModel&&)      = default;
-    virtual ~CompartmentalModel()                            = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
+    virtual ~CompartmentalModel()                       = default;
 
     // REMARK: Not pure virtual for easier java/python bindings.
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
-                                 FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*dydt*/) const {};
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/,
+                                 Eigen::Ref<const Eigen::VectorX<FP>> /*y*/, FP /*t*/,
+                                 Eigen::Ref<Eigen::VectorX<FP>> /*dydt*/) const {};
 
     /**
      * @brief This function evaluates the right-hand-side f of the ODE dydt = f(y, t).

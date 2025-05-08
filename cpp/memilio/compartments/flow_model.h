@@ -55,8 +55,8 @@ using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()
 
 // Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
 template <class OmittedTag, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
+using filtered_index_t = decltype(
+    as_index<IndexTemplate>(std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
 
 } //namespace details
 
@@ -78,13 +78,15 @@ class FlowModel : public CompartmentalModel<FP, Comp, Pop, Params>
     // population of the model.
     // The remaining indices (those contained in FlowIndex) must still be provided to get an entry of population.
     // This approach only works with exactly one category of type Comp in PopIndex (hence the assertion below).
-    using FlowIndex = details::filtered_index_t<Comp, Index, PopIndex>;
     // Enforce that Comp is a unique Category of PopIndex, since we use Flows (via their source/target) to provide
     // Comp indices for the population.
-    static_assert(FlowIndex::size == PopIndex::size - 1, "Compartments must be used exactly once as population index.");
+    static_assert(details::filtered_index_t<Comp, Index, PopIndex>::size == PopIndex::size - 1,
+                  "Compartments must be used exactly once as population index.");
 
 public:
-    using Base = CompartmentalModel<FP, Comp, Pop, Params>;
+    using FlowIndex = details::filtered_index_t<Comp, Index, PopIndex>;
+    using Base      = CompartmentalModel<FP, Comp, Pop, Params>;
+    using Flow_List = Flows;
     /**
      * @brief Default constructor, forwarding args to Base constructor.
      */
