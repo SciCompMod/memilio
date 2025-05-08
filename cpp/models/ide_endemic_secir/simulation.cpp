@@ -22,6 +22,9 @@ void Simulation::advance(ScalarType tmax)
     m_model->set_meaninfectivity(m_dt);
     // m_model->set_initalvaluesforceofinfection(m_dt);
     m_model->set_reproductionnumber_c(m_dt);
+    m_model->set_probability_of_transition(m_dt);
+    m_model->set_meansojourntime(m_dt);
+    m_model->set_equilibrium();
 
     // For every time step:
     while (m_model->transitions.get_last_time() < tmax - m_dt / 2) {
@@ -30,6 +33,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt);
         m_model->m_forceofinfection.add_time_point(m_model->m_forceofinfection.get_last_time() + m_dt);
         m_model->m_totalpopulation.add_time_point(m_model->m_totalpopulation.get_last_time() + m_dt);
+        m_model->m_normalizedpopulations.add_time_point(m_model->m_normalizedpopulations.get_last_time() + m_dt);
 
         // Compute susceptibles:
         m_model->compute_susceptibles(m_dt);
@@ -42,6 +46,9 @@ void Simulation::advance(ScalarType tmax)
 
         // Compute m_populationsize:
         m_model->compute_populationsize();
+
+        // Compute normalized compartments:
+        m_model->compute_normalizedcompartments();
 
         // Compute m_forceofinfection;
         m_model->compute_forceofinfection(m_dt);

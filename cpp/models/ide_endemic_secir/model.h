@@ -8,6 +8,7 @@
 #include "memilio/utils/time_series.h"
 
 #include "vector"
+#include <Eigen/src/Core/util/Meta.h>
 #include <vector>
 
 namespace mio
@@ -143,6 +144,13 @@ private:
     void compute_populationsize();
 
     /**
+     * @brief Compute the normalized compartments for the current last time in normalized_populations.
+     * 
+     * The normalized compartments are computed as populations / m_populationsize.
+     */
+    void compute_normalizedcompartments();
+
+    /**
      * @brief Computes the force of infection for the current last time in transitions.
      *
      * Computed value is stored in m_forceofinfection.
@@ -198,13 +206,15 @@ private:
      */
     void set_meaninfectivity(ScalarType dt);
 
-    // /**
-    //  *@brief Setter for the vector m_initalvaluesforceofinfection that contains the approximated value of the part of the
-    //  * force of infection term that is influenced by the initial values.
-    //  *
-    //  * @param[in] dt Time step size.
-    //  */
+    // // /**
+    // //  *@brief Setter for the vector m_initalvaluesforceofinfection that contains the approximated value of the part of the
+    // //  * force of infection term that is influenced by the initial values.
+    // //  *
+    // //  * @param[in] dt Time step size.
+    // //  */
     // void set_initalvaluesforceofinfection(ScalarType dt);
+
+    // ---- Functionality for the model analysis. ----
 
     /**
      * @brief Setter for the Reproduction number R_c.
@@ -212,13 +222,33 @@ private:
      */
     void set_reproductionnumber_c(ScalarType dt);
 
+    //TODO Beschreibung
+    void set_probability_of_transition(ScalarType dt);
+
+    //TODO Beschreibung
+    void set_meansojourntime(ScalarType dt);
+
+    /**
+     * @brief Setter for the equilibrium of the normalized model
+     *
+     * If the m_reproductionnumber_c < 1 we use the disease free equilibrium and if m_reproductionnumber_c > 1 we compute
+     * the endemic equilibrium.
+     *
+    */
+    void set_equilibrium();
+
     // ---- Private parameters. ----
 
     TimeSeries<ScalarType> m_forceofinfection{
-        TimeSeries<ScalarType>(1)}; ///< Vector containing the Force of infection term for every time point,
+        TimeSeries<ScalarType>(1)}; ///< TimeSeries containing the Force of infection term for every time point,
     // needed for the numerical scheme.
     TimeSeries<ScalarType> m_totalpopulation{TimeSeries<ScalarType>(
-        1)}; ///< Vector containing the total population size of the considered region for each time point.
+        1)}; ///< TimeSeries containing the total population size of the considered region for each time point.
+    TimeSeries<ScalarType> m_normalizedpopulations{
+        TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count) -
+                               1)}; ///< TimeSeries containing points of time and the corresponding portion
+    // of people in defined #IndectionState%s.
+
     ScalarType m_reproductionnumber_c; ///< The control Reproduction number
 
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
@@ -238,8 +268,19 @@ private:
     std::vector<ScalarType>
         m_meaninfectivity; ///> a vector containing the approximated mean infectivity for all time points.
 
-    std::vector<ScalarType> m_initalvaluesforceofinfection; ///> a vector containing the parts of the force of infection
-    // that are influenced by the inital values of our model, i.e phi_0 and f.
+    std::vector<ScalarType> m_equilibriumnormalizedcompartments{
+        std::vector<ScalarType>(int(InfectionState::Count), 0.)}; ///< Vector containing
+    // the equilibrium for the normalized compartments.
+
+    ScalarType m_equilibriumforceofinfection{0.}; ///< The equilibrium of the force of infection.
+
+    std::vector<ScalarType> m_probabilityoftransition{
+        std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///<TODO
+
+    std::vector<ScalarType> m_meansojourntime{std::vector<ScalarType>((int)InfectionState::Count - 2, 0.)}; ///<TODO
+
+    // std::vector<ScalarType> m_initalvaluesforceofinfection; ///> a vector containing the parts of the force of infection
+    // // that are influenced by the inital values of our model, i.e phi_0 and f.
 
     // ---- Friend classes/functions. ----
     // In the Simulation class, the actual simulation is performed which is why it needs access to the here

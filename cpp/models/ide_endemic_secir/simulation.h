@@ -5,6 +5,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
+#include <vector>
 
 namespace mio
 {
@@ -34,6 +35,11 @@ public:
         return m_model->populations;
     }
 
+    TimeSeries<ScalarType> get_normalizedcompartments()
+    {
+        return m_model->m_normalizedpopulations;
+    }
+
     /**
      * @brief Get the result of the simulation for the compartments
      * Return the number of persons in all #InfectionState%s
@@ -41,6 +47,11 @@ public:
     TimeSeries<ScalarType>& get_compartments() const
     {
         return m_model->populations;
+    }
+
+    TimeSeries<ScalarType>& get_normalizedcompartments() const
+    {
+        return m_model->m_normalizedpopulations;
     }
 
     /**
@@ -64,6 +75,16 @@ public:
     ScalarType const& get_reproductionnumber_c()
     {
         return m_model->m_reproductionnumber_c;
+    }
+
+    std::vector<ScalarType> const& get_equilibriumcompartments()
+    {
+        return m_model->m_equilibriumnormalizedcompartments;
+    }
+
+    ScalarType const& get_equilibrium_forceofinfection()
+    {
+        return m_model->m_equilibriumforceofinfection;
     }
 
     /**
