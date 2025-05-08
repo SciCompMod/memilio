@@ -30,7 +30,6 @@ from clang.cindex import *
 from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
-
 from memilio.generation.default_generation_dict import default_dict
 
 
@@ -60,8 +59,10 @@ class Scanner:
         """ Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
-        @param root_cursor Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        @return Information extracted from the model saved as an IntermediateRepresentation.
+        :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
+        :param self: Self: 
+        :returns: Information extracted from the model saved as an IntermediateRepresentation.
+
         """
         if self.config.model_class != default_dict["model"]:
             raise AssertionError("set a model name")
@@ -75,7 +76,7 @@ class Scanner:
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
 
-        @param intermed_repr Dataclass used for saving the extracted model features.
+        @param intermed_repr: Dataclass used for saving the extracted model features.
         """
         source_file = self.config.source_file
         model_folder = os.path.dirname(source_file)

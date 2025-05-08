@@ -105,6 +105,7 @@ class Visualization:
 
         output_path = os.path.abspath(f"{output_file_name}")
         logging.info(f"AST-formatted written to {output_path}")
+        logging.info(f"AST-formatted written to {output_path}")
 
 
 def indent(level: int) -> str:
@@ -166,7 +167,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     if current_d > max_d:
         return
 
-    node_label = f"{cursor.kind.name}{ newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
+    node_label = f"{cursor.kind.name}{newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
 
     current_node = f"{cursor.kind.name}_{cursor.hash}"
 

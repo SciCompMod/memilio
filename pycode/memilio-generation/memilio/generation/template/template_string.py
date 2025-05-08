@@ -37,6 +37,14 @@ def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
     return scalartypestr
 
 
+def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
+    """! Set the datatype for the bindings via. intermediate_representation.
+    @return string from intermediate_representation
+    """
+    scalartypestr = intermed_repr.scalartype
+    return scalartypestr
+
+
 def includes(intermed_repr: IntermediateRepresentation) -> str:
     """! Fills in the Includes for the binding
     @param intermed_repr Dataclass holding the model features.
@@ -208,10 +216,10 @@ def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
-    """! Sets the draw_sample function as part of the bindings.
+    """ Sets the draw_sample function as part of the bindings.
 
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.  
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings.  
     """
     if not intermed_repr.has_draw_sample:
         return ""

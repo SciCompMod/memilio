@@ -31,7 +31,7 @@ else:
     # For older python versions
     import importlib_resources
 
-from memilio.generation import Generator, Scanner, ScannerConfig, AST
+from memilio.generation import Generator, Scanner, ScannerConfig, AST, ast_handler
 from memilio.generation.graph_visualization import Visualization
 
 
@@ -42,20 +42,13 @@ def run_memilio_generation(print_ast=False):
         with open(path) as file:
             conf = ScannerConfig.schema().loads(file.read(), many=True)[0]
 
-    home_dir = os.path.expanduser("~")
+    file_path = os.path.dirname(os.path.abspath(__file__))
 
-    relative_path = path.relative_to(home_dir)
-
-    user_specific_folder = relative_path.parts[0]
-
-    home_and_user_folder = os.path.join(home_dir, user_specific_folder)
-
-    conf.source_file = home_and_user_folder + \
-        "/memilio/cpp/models/ode_seir/model.cpp"
+    conf.source_file = os.path.abspath(os.path.join(
+        file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp "))
 
     # Could be any target folder
-    conf.target_folder = home_and_user_folder + \
-        "/memilio/pycode/memilio-generation/../memilio-generation/memilio/generation"
+    conf.target_folder = file_path
 
     scanner = Scanner(conf)
     ast = AST(conf)

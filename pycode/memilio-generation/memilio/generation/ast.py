@@ -30,8 +30,6 @@ from memilio.generation import utility
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
 
-from typing_extensions import Self
-
 
 class AST:
     """ Handles AST creation and ID assignment.
