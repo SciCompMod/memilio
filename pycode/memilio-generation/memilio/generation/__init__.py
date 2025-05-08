@@ -27,3 +27,4 @@ from .scanner import Scanner
 from .scanner_config import ScannerConfig
 from .ast import AST
 from .default_generation_dict import default_dict
+from .ast_handler import ASTHandler

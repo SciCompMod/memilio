@@ -17,13 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-"""
-@file ast.py
-@brief Create the ast and assign ids. Get ids and nodes. 
-"""
+
 import subprocess
 import tempfile
 import logging
+import os
 from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
 from typing import TYPE_CHECKING
 from memilio.generation import utility
@@ -36,78 +34,112 @@ from typing_extensions import Self
 
 
 class AST:
-    """! Create the ast and assign ids.
-    Functions for getting nodes and node ids.
+    """ Handles AST creation and ID assignment.
+    Provides functionality to generate the AST from a source file using Clang,
+    assign unique IDs to AST nodes, and retrieve nodes or their IDs.
     """
 
     def __init__(self: Self, conf: "ScannerConfig") -> None:
+        """ Basic constructor of the AST class.
+
+        :param conf: ScannerConfig dataclass with the configurations.
+        """
+
         self.config = conf
         self.cursor_id = -1
         self.id_to_val = dict()
         self.val_to_id = dict()
         self.cursor = None
-        self.translation_unit = self.create_ast()
+        self.translation_unit = TranslationUnit
 
-    def create_ast(self: Self) -> TranslationUnit:
-        """! Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
-        A compile_commands.json is required (automatically generated in the build process).
+    def create_ast_for_pickle(self):
+        """ Create the abstract syntax tree and run external processes outside the pickling context.
+        This method sets up the necessary arguments, invokes Clang to generate the AST,
+        and stores the resulting AST in a temporary file, returning the file path.
+
+        :returns: Path to the generated AST file.
         """
+
         self.cursor_id = -1
         self.id_to_val.clear()
         self.val_to_id.clear()
 
-        idx = Index.create()
+        file_args = self.get_file_args()
 
-        file_args = []
+        clang_cmd = self.prepare_clang_command(file_args)
 
+        clang_cmd_result = self.run_clang_command(clang_cmd)
+
+        ast_file_path = self.create_temp_ast_file(clang_cmd_result)
+
+        logging.info(f"AST file created at: {ast_file_path}")
+        return ast_file_path
+
+    def get_file_args(self):
+        """Extract arguments from the compilation database, excluding unwanted ones.
+
+        :returns: List of relevant file arguments.
+        """
         unwanted_arguments = [
             '-Wno-unknown-warning', "--driver-mode=g++", "-O3", "-Werror", "-Wshadow"
         ]
+        file_args = []
 
-        dirname = utility.try_get_compilation_database_path(
-            self.config.skbuild_path_to_database)
+        dirname = self.config.skbuild_path_to_database
         compdb = CompilationDatabase.fromDirectory(dirname)
         commands = compdb.getCompileCommands(self.config.source_file)
         for command in commands:
             for argument in command.arguments:
                 if argument not in unwanted_arguments:
                     file_args.append(argument)
-        file_args = file_args[1:-4]
 
+        return file_args[1:-4]
+
+    def prepare_clang_command(self, file_args):
+        """Prepare the Clang command without executing it.
+
+        :param file_args: List of file arguments for the Clang command.
+        :returns: List of command-line arguments for Clang.
+        """
         clang_cmd = [
             "clang-14", self.config.source_file,
-            "-std=c++17", '-emit-ast', '-o', '-']
+            "-std=c++17", '-emit-ast', '-o', '-', '-x', 'c++'
+        ]
         clang_cmd.extend(file_args)
+        return clang_cmd
 
+    def run_clang_command(self, clang_cmd):
+        """Execute the Clang command.
+
+        :param clang_cmd: List of command-line arguments for Clang.
+        :returns: Result of the Clang command execution.
+        """
         try:
             clang_cmd_result = subprocess.run(
                 clang_cmd, stdout=subprocess.PIPE)
             clang_cmd_result.check_returncode()
+            return clang_cmd_result
         except subprocess.CalledProcessError as e:
-            # Capture standard error and output
-            logging.error(
-                f"Clang failed with return code {e.returncode}. Error: {clang_cmd_result.stderr.decode()}")
-            raise RuntimeError(
-                f"Clang AST generation failed. See error log for details.")
+            logging.error(f"Clang failed: {e}")
+            raise RuntimeError("Clang AST generation failed.")
 
-        # Since `clang.Index.read` expects a file path, write generated abstract syntax tree to a
-        # temporary named file. This file will be automatically deleted when closed.
-        with tempfile.NamedTemporaryFile() as ast_file:
-            ast_file.write(clang_cmd_result.stdout)
-            translation_unit = idx.read(ast_file.name)
+    def create_temp_ast_file(self, clang_cmd_result):
+        """Create a temporary file and write the Clang AST output to it.
 
-        self._assing_ast_with_ids(translation_unit.cursor)
-
-        logging.info("AST generation completed successfully.")
-
-        return translation_unit
+        :param clang_cmd_result: Result of the Clang command execution.
+        :returns: Path to the temporary AST file.
+        """
+        ast_file = tempfile.NamedTemporaryFile(delete=False)
+        ast_file.write(clang_cmd_result.stdout)
+        ast_file.flush()
+        ast_file.close()
+        return ast_file.name
 
     def _assing_ast_with_ids(self, cursor: Cursor) -> None:
-        """! Traverse the AST and assign a unique ID to each node during traversal.
+        """ Traverse the AST and assign a unique ID to each node.
 
-        @param cursor: The current node (Cursor) in the AST to traverse.
+        :param cursor: The current node (Cursor) in the AST to traverse.
         """
-
         self.cursor_id += 1
         id = self.cursor_id
         self.id_to_val[id] = cursor
@@ -125,14 +157,16 @@ class AST:
 
     @property
     def root_cursor(self):
+        """ Returns the root cursor of the AST."""
         return self.translation_unit.cursor
 
     def get_node_id(self, cursor: Cursor) -> int:
-        """! Returns the id of the current node.
-
+        """ Returns the id of the current node.
         Extracts the key from the current cursor from the dictonary id_to_val
 
-        @param cursor: The current node of the AST as a cursor object from libclang.
+        :param cursor: The current node of the AST as a cursor object from libclang.
+        :returns: The ID of the current node.
+
         """
         for cursor_id in self.val_to_id[cursor.hash]:
 
@@ -142,9 +176,10 @@ class AST:
         raise IndexError(f"Cursor {cursor} is out of bounds.")
 
     def get_node_by_index(self, index: int) -> Cursor:
-        """! Returns the node at the specified index position.
+        """ Returns the node at the specified index position.
 
-        @param index: Node_id from the AST.
+        :param index: Node_id from the ast.
+        :returns: The node at the specified index.
         """
 
         if index < 0 or index >= len(self.id_to_val):

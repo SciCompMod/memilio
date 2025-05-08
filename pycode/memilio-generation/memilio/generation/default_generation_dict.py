@@ -10,5 +10,6 @@ default_dict = {
     "parameterspacefile": "parameter_space.h",
     "analyzeresultfile": "analyze_result.h",
     "namespace": "namespace",
-    "mio": "mio"
+    "mio": "mio",
+    "drawsample": "draw_sample"
 }
