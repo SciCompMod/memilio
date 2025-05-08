@@ -10,3 +10,4 @@ Model Usage
    individual_models
    mobility_metapop
    io
+   hybrid_models

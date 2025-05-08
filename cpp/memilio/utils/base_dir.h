@@ -1,4 +1,4 @@
-/*
+/* 
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker
@@ -17,10 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef BASE_DIR_H
+#define BASE_DIR_H
 
-#include "graph_abm/graph_abmodel.h"
+#include "memilio/config.h"
 
-namespace mio
+/**
+ * @brief Returns path to the repo directory.
+*/
+std::string mio::base_dir()
 {
+    return MEMILIO_BASE_DIR;
+}
 
-} //namespace mio
+#endif // BASE_DIR_H
