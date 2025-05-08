@@ -47,7 +47,7 @@ public:
     /// @brief Set the elapsed time to 0. Only call while stopped.
     void reset()
     {
-        m_elapsed_time = 0;
+        m_elapsed_time = mio::timing::DurationType{0};
     }
 
     /// @brief Get the total time spent between starts and stops. Do not use while the timer is started.
