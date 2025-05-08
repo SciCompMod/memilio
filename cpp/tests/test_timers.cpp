@@ -35,7 +35,10 @@
 struct TimingTest : public ::testing::Test {
     static void SetUpTestSuite()
     {
+        // avoid uneccessary prints
         mio::timing::TimerRegistrar::get_instance().disable_final_timer_summary();
+        // named timers are not reset when using the gtest_repeat flag, so we reset it manually
+        mio::timing::NamedTimer<"TestTimer", "TimingTest::AutoTimer">::get_instance().reset();
     }
 };
 
@@ -61,6 +64,9 @@ TEST_F(TimingTest, BasicTimer)
     bt.stop();
     // since the timers are not very precise (though accurate), we simply test that *any* measurement was taken
     EXPECT_GT(bt.get_elapsed_time(), mio::timing::DurationType{0});
+    bt.reset();
+    // check that reset works
+    EXPECT_EQ(bt.get_elapsed_time(), mio::timing::DurationType{0});
 }
 
 TEST_F(TimingTest, NamedTimer)
@@ -103,7 +109,7 @@ TEST_F(TimingTest, TimerRegistrar)
     // check member functions by using them for adding basic timers:
     // use get_instance and get_register. implicitly verified by later tests
     auto& reg                = mio::timing::TimerRegistrar::get_instance();
-    const int old_num_timers = reg.get_register().size(); // this may be bigger than 0, depending on other tests
+    const int old_num_timers = (int)reg.get_register().size(); // this may be bigger than 0, depending on other tests
     std::vector<mio::timing::BasicTimer> bts(mio::omp::get_max_threads());
 
     // check add_timer by registering a timer (per omp thread)

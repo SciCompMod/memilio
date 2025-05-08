@@ -44,6 +44,12 @@ public:
         m_elapsed_time += stop_time - m_start_time;
     }
 
+    /// @brief Set the elapsed time to 0. Only call while stopped.
+    void reset()
+    {
+        m_elapsed_time = 0;
+    }
+
     /// @brief Get the total time spent between starts and stops. Do not use while the timer is started.
     DurationType get_elapsed_time() const
     {
