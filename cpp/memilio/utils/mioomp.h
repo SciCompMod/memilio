@@ -47,34 +47,19 @@
 
 namespace mio
 {
-
-inline int get_omp_thread_id()
+namespace omp
 {
-#ifdef MEMILIO_ENABLE_OPENMP
-    return omp_get_thread_num();
-#else
-    return 0;
-#endif
-}
 
-inline int get_omp_num_threads()
-{
-#ifdef MEMILIO_ENABLE_OPENMP
-    return omp_get_num_threads();
-#else
-    return 1;
-#endif
-}
+/// @brief Get an id for the current OpenMP thread. When OpenMP is disabled, this is always 0.
+int get_thread_id();
 
-inline int get_omp_max_threads()
-{
-#ifdef MEMILIO_ENABLE_OPENMP
-    return omp_get_max_threads();
-#else
-    return 1;
-#endif
-}
+/// @brief Get the current number of OpenMP threads. When OpenMP is disabled, this is always 1.
+int get_num_threads();
 
+/// @brief Get an upper bound to the number of OpenMP threads. When OpenMP is disabled, this is always 1.
+int get_max_threads();
+
+} // namespace omp
 } // namespace mio
 
 #endif

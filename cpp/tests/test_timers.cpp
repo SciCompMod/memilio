@@ -102,21 +102,21 @@ TEST_F(TimingTest, TimerRegistrar)
 {
     // check member functions by using them for adding basic timers:
     // use get_instance and get_register. implicitly verified by later tests
-    auto& reg                 = mio::timing::TimerRegistrar::get_instance();
-    const auto old_num_timers = reg.get_register().size(); // this may be bigger than 0, depending on other tests
-    std::vector<mio::timing::BasicTimer> bts(mio::get_omp_num_threads());
+    auto& reg                = mio::timing::TimerRegistrar::get_instance();
+    const int old_num_timers = reg.get_register().size(); // this may be bigger than 0, depending on other tests
+    std::vector<mio::timing::BasicTimer> bts(mio::omp::get_max_threads());
 
     // check add_timer by registering a timer (per omp thread)
-    PRAGMA_OMP(parallel)
+    PRAGMA_OMP(parallel num_threads(mio::omp::get_max_threads()))
     {
-        const auto i = mio::get_omp_thread_id();
+        const auto i = mio::omp::get_thread_id();
         reg.add_timer({"name", "", bts[i], i}); // reusing names is bad. but the registrar does not care
     }
     // -> verify by register size
-    const auto new_num_timers = old_num_timers + mio::get_omp_num_threads();
+    const int new_num_timers = old_num_timers + mio::omp::get_max_threads();
     ASSERT_EQ(reg.get_register().size(), new_num_timers);
     // -> verify by registered thread_id (the last registered timers should be 0,...,num_threads, in any order)
-    std::vector<bool> ids_found(mio::get_omp_num_threads(), false);
+    std::vector<bool> ids_found(mio::omp::get_max_threads(), false);
     auto reg_itr = reg.get_register().crbegin();
     for (size_t i = 0; i < ids_found.size(); i++) {
         ids_found[reg_itr->thread_id] = true;

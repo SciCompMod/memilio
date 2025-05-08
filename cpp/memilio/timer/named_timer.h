@@ -77,7 +77,7 @@ private:
      */
     NamedTimer()
     {
-        TimerRegistrar::get_instance().add_timer({name(), scope(), *this, mio::get_omp_thread_id()});
+        TimerRegistrar::get_instance().add_timer({name(), scope(), *this, mio::omp::get_thread_id()});
     }
 };
 

@@ -72,6 +72,7 @@ add_library(memilio
     mobility/graph.cpp
     timer/auto_timer.h
     timer/basic_timer.h
+    timer/definitions.cpp
     timer/definitions.h
     timer/list_printer.h
     timer/named_timer.h
@@ -102,6 +103,7 @@ add_library(memilio
     utils/miompi.h
     utils/miompi.cpp
     utils/mioomp.h
+    utils/mioomp.cpp
     utils/string_literal.h
     utils/type_list.h
 )

@@ -52,7 +52,7 @@ public:
 
 private:
     TimeType m_start_time; ///< The last time point at which start() was called
-    DurationType m_elapsed_time; ///< The total time spent between starts and stops.
+    DurationType m_elapsed_time{0}; ///< The total time spent between starts and stops.
 };
 
 } // namespace timing

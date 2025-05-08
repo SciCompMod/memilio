@@ -62,7 +62,7 @@ int main()
 
     const int N = 1000; // Number of iterations. Be wary of increasing this number when using the sleep_for load!
 
-    std::cout << "Num threads: " << mio::get_omp_max_threads() << "\n";
+    std::cout << "Num threads: " << mio::omp::get_max_threads() << "\n";
 
     // Open a new scope to time computations.
     {
