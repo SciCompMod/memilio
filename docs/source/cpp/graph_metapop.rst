@@ -11,13 +11,28 @@ Simulation
 
 During the simulation, graph nodes are advanced independently from each other according to their local solver until the next time point where mobility via the edges takes place. The concrete exchange of individuals or subpopulations via the graph edges depends on the chosen edge type.
 
-Instant mobility - Henrik
+**Instant mobility approach**
+
+The instant mobility approach was introduced by Kühn et al. (2021) and mainly represents daily instant commuting activities between different regions. Using realistic commuting data, such as the absolute number of commuters between regions, we can model realistic exchanges of individuals in the metapopulation context.
+
+In this approach, the commuters are exchanged twice daily in an instantaneous manner, allowing the integration of age-specific mobility restrictions. The implementation also allows the restriction of mobility activities for certain infection states, such as symptomatic infected individuals. An important feature implemented in Kühn et al. (2022) is the testing of commuters, which enables the detection and potential isolation of asymptomatic or symptomatic infected individuals before they can infect people in other regions.
+
+The instant mobility approach assumes instant exchange between regions without considering travel times. The length of stay is fixed to half a day.
+Since all regions exchange commuters simultaneously, this scheme offers great properties for parallelization and has fewer constraints on the integration time step compared to more detailed mobility approaches.
 
 For further details, please refer to:
 
 - Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `<https://doi.org/10.1016/j.mbs.2021.108648>`_
+- Kühn MJ, Abele D, Binder S, Rack K, Klitz M, et al. (2022). *Regional opening strategies with commuter testing and containment of new SARS-CoV-2 variants in Germany*. *BMC Infectious Diseases* 22(1): 333. `DOI:10.1186/s12879-022-07302-9 <https://doi.org/10.1186/s12879-022-07302-9>`_
 
-Detailed Mobility - Henrik
+**Detailed mobility approach**
+
+The detailed mobility scheme was introduced in Zunker et al. (2024) and further develops the instant approach. The detailed mobility model addresses some of the constraints of the instant approach by adding realistic travel and stay times.
+
+The core idea of this detailed approach is that each region has a second, local model, which can be parameterized independently from the existing model, to represent mobility within the region. This allows for more detailed modeling of population movement.
+
+To have a realistic representation of the exchange process, we calculate the centroids of each region, which is represented by a polygon. When modeling travel between two non-adjacent regions (nodes k and l), the model creates a path connecting their centroids, which may pass through other regions. The predefined travel time between regions is then distributed across all regions along this path.
+Commuters move along these paths and pass through various mobility models during their trip. This allows for potential interactions with other commuters during transit. The detailed mobility approach enables modeling of scenarios that cannot be addressed with the instant approach, such as the impact of different mask type usage in public transport. However, this increased realism comes at the cost of greater computational effort and requires more detailed input data.
 
 For further details, please refer to:
 
