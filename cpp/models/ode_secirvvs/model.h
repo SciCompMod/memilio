@@ -24,9 +24,9 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/epidemiology/populations.h"
-#include "ode_secirvvs/analyze_result.h"
-#include "ode_secirvvs/infection_state.h"
-#include "ode_secirvvs/parameters.h"
+#include "analyze_result.h"
+#include "infection_state.h"
+#include "parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 

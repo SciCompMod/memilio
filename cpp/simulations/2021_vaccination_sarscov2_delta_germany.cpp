@@ -697,151 +697,268 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     return mio::success();
 }
 
+// int main(int argc, char** argv)
+// {
+//     //TODO: proper command line interface to set:
+//     //- number of runs
+//     //- start and end date (may be incompatible with runmode::load)
+//     //- seeds
+//     //- log level
+//     //- ...
+
+//     mio::set_log_level(mio::LogLevel::warn);
+//     mio::mpi::init();
+
+//     bool late      = false;
+//     bool masks     = true;
+//     bool test      = true;
+//     bool high      = false;
+//     bool long_time = false;
+//     bool future    = false;
+
+//     RunMode mode;
+//     std::string save_dir;
+//     std::string data_dir;
+//     std::string result_dir;
+//     bool save_single_runs = true;
+//     if (argc == 10) {
+//         mode       = RunMode::Save;
+//         data_dir   = argv[1];
+//         save_dir   = argv[2];
+//         result_dir = argv[3];
+//         if (atoi(argv[4]) == 0) {
+//             save_single_runs = false;
+//         }
+//         if (atoi(argv[5]) == 1) {
+//             high = true;
+//         }
+//         else {
+//             high = false;
+//         }
+//         if (atoi(argv[6]) == 1) {
+//             late = true;
+//         }
+//         else {
+//             late = false;
+//         }
+//         if (atoi(argv[7]) == 1) {
+//             masks = true;
+//             test  = true;
+//         }
+//         else {
+//             masks = false;
+//             test  = false;
+//         }
+//         if (atoi(argv[8]) == 1) {
+//             long_time = true;
+//         }
+//         else {
+//             long_time = false;
+//         }
+//         if (atoi(argv[9]) == 1) {
+//             future = true;
+//         }
+//         else {
+//             future = false;
+//         }
+//         if (mio::mpi::is_root()) {
+//             printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+//                    (int)masks, (int)late, (int)high, (int)long_time, (int)future);
+//             printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+//             printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+//         }
+//     }
+//     else if (argc == 4) {
+//         mode       = RunMode::Load;
+//         save_dir   = argv[1];
+//         result_dir = argv[2];
+//         data_dir   = "";
+//         if (mio::mpi::is_root()) {
+//             printf("Loading graph from \"%s\".\n", save_dir.c_str());
+//             printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+//         }
+//     }
+//     else if (argc == 5) {
+//         mode       = RunMode::Save;
+//         data_dir   = argv[1];
+//         save_dir   = argv[2];
+//         result_dir = argv[3];
+//         if (atoi(argv[4]) == 0) {
+//             save_single_runs = false;
+//         }
+//         if (mio::mpi::is_root()) {
+//             printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
+//                    (int)masks, (int)late, (int)high, (int)long_time, (int)future);
+//             printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+//             printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+//         }
+//     }
+//     else {
+//         if (mio::mpi::is_root()) {
+//             printf("Usage:\n");
+//             printf("2021_vaccination_delta <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
+//             printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
+//             printf("\tStore the results in <result_dir>\n");
+//             printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
+//             printf("2021_vaccination_delta <load_dir> <result_dir>\n");
+//             printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+//         }
+//         mio::mpi::finalize();
+//         return 0;
+//     }
+
+//     if (future) {
+//         result_dir += "_future";
+//     }
+//     if (long_time) {
+//         result_dir += "_long";
+//     }
+//     if (high) {
+//         result_dir += "_high";
+//     }
+//     if (late) {
+//         result_dir += "_late";
+//     }
+//     if (masks) {
+//         result_dir += "_mask";
+//     }
+//     if (test) {
+//         result_dir += "_test";
+//     }
+//     if (mio::mpi::is_root()) {
+//         boost::filesystem::path dir(result_dir);
+//         bool created = boost::filesystem::create_directories(dir);
+
+//         if (created) {
+//             mio::log_info("Directory '{:s}' was created.", dir.string());
+//         }
+//         printf("Saving results to \"%s\".\n", result_dir.c_str());
+//     }
+
+//     auto result =
+//         run(mode, data_dir, save_dir, result_dir, save_single_runs, late, masks, test, high, long_time, future);
+//     if (!result) {
+//         printf("%s\n", result.error().formatted_message().c_str());
+//         mio::mpi::finalize();
+//         return -1;
+//     }
+//     mio::mpi::finalize();
+//     return 0;
+// }
+
+
+
+#include <iostream> // for std::cout if needed
+
 int main(int argc, char** argv)
 {
-    //TODO: proper command line interface to set:
-    //- number of runs
-    //- start and end date (may be incompatible with runmode::load)
-    //- seeds
-    //- log level
-    //- ...
-
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::debug); // Increase verbosity
     mio::mpi::init();
 
-    bool late      = false;
-    bool masks     = true;
-    bool test      = true;
-    bool high      = false;
+    bool late = false;
+    bool masks = true;
+    bool test = true;
+    bool high = false;
     bool long_time = false;
-    bool future    = false;
+    bool future = false;
 
     RunMode mode;
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
     bool save_single_runs = true;
+
+    printf("Received %d arguments.\n", argc);
+    for (int i = 0; i < argc; ++i) {
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
+
     if (argc == 10) {
-        mode       = RunMode::Save;
-        data_dir   = argv[1];
-        save_dir   = argv[2];
+        mode = RunMode::Save;
+        data_dir = argv[1];
+        save_dir = argv[2];
         result_dir = argv[3];
-        if (atoi(argv[4]) == 0) {
-            save_single_runs = false;
-        }
-        if (atoi(argv[5]) == 1) {
-            high = true;
-        }
-        else {
-            high = false;
-        }
-        if (atoi(argv[6]) == 1) {
-            late = true;
-        }
-        else {
-            late = false;
-        }
-        if (atoi(argv[7]) == 1) {
-            masks = true;
-            test  = true;
-        }
-        else {
-            masks = false;
-            test  = false;
-        }
-        if (atoi(argv[8]) == 1) {
-            long_time = true;
-        }
-        else {
-            long_time = false;
-        }
-        if (atoi(argv[9]) == 1) {
-            future = true;
-        }
-        else {
-            future = false;
-        }
+
+        save_single_runs = atoi(argv[4]) != 0;
+        high = atoi(argv[5]) == 1;
+        late = atoi(argv[6]) == 1;
+        masks = atoi(argv[7]) == 1;
+        test = masks; // mirrors masks flag
+        long_time = atoi(argv[8]) == 1;
+        future = atoi(argv[9]) == 1;
+
         if (mio::mpi::is_root()) {
-            printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
-                   (int)masks, (int)late, (int)high, (int)long_time, (int)future);
-            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+            printf("[DEBUG] Mode: SAVE\n");
+            printf("Parsed options:\n");
+            printf("\tSave single runs: %d\n", (int)save_single_runs);
+            printf("\tHigh: %d, Late: %d, Masks: %d, Long: %d, Future: %d\n",
+                   (int)high, (int)late, (int)masks, (int)long_time, (int)future);
+            printf("\tData Dir: %s\n", data_dir.c_str());
+            printf("\tSave Dir: %s\n", save_dir.c_str());
+            printf("\tResult Dir (before suffixing): %s\n", result_dir.c_str());
         }
     }
     else if (argc == 4) {
-        mode       = RunMode::Load;
-        save_dir   = argv[1];
+        mode = RunMode::Load;
+        save_dir = argv[1];
         result_dir = argv[2];
-        data_dir   = "";
+        data_dir = "";
+
         if (mio::mpi::is_root()) {
-            printf("Loading graph from \"%s\".\n", save_dir.c_str());
-            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+            printf("[DEBUG] Mode: LOAD\n");
+            printf("\tLoad Dir: %s\n", save_dir.c_str());
+            printf("\tResult Dir: %s\n", result_dir.c_str());
         }
     }
     else if (argc == 5) {
-        mode       = RunMode::Save;
-        data_dir   = argv[1];
-        save_dir   = argv[2];
+        mode = RunMode::Save;
+        data_dir = argv[1];
+        save_dir = argv[2];
         result_dir = argv[3];
-        if (atoi(argv[4]) == 0) {
-            save_single_runs = false;
-        }
+        save_single_runs = atoi(argv[4]) != 0;
+
         if (mio::mpi::is_root()) {
-            printf("Options: masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n",
-                   (int)masks, (int)late, (int)high, (int)long_time, (int)future);
-            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
-            printf("Exporting single run results and parameters: %d.\n", (int)save_single_runs);
+            printf("[DEBUG] Mode: SAVE (basic)\n");
+            printf("\tData Dir: %s\n", data_dir.c_str());
+            printf("\tSave Dir: %s\n", save_dir.c_str());
+            printf("\tResult Dir: %s\n", result_dir.c_str());
         }
     }
     else {
         if (mio::mpi::is_root()) {
+            printf("[ERROR] Invalid argument count: %d\n", argc);
             printf("Usage:\n");
             printf("2021_vaccination_delta <data_dir> <save_dir> <result_dir> <high> <late> <masks> <long> <future>\n");
-            printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
-            printf("\tStore the results in <result_dir>\n");
-            printf("\t<high> <late> <masks> <long> <future> are either 0 or 1 to define a particular scenario\n");
             printf("2021_vaccination_delta <load_dir> <result_dir>\n");
-            printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         }
         mio::mpi::finalize();
         return 0;
     }
 
-    if (future) {
-        result_dir += "_future";
-    }
-    if (long_time) {
-        result_dir += "_long";
-    }
-    if (high) {
-        result_dir += "_high";
-    }
-    if (late) {
-        result_dir += "_late";
-    }
-    if (masks) {
-        result_dir += "_mask";
-    }
-    if (test) {
-        result_dir += "_test";
-    }
+    // Append to result dir
+    if (future) result_dir += "_future";
+    if (long_time) result_dir += "_long";
+    if (high) result_dir += "_high";
+    if (late) result_dir += "_late";
+    if (masks) result_dir += "_mask";
+    if (test) result_dir += "_test";
+
     if (mio::mpi::is_root()) {
+        printf("[DEBUG] Final result_dir: %s\n", result_dir.c_str());
         boost::filesystem::path dir(result_dir);
         bool created = boost::filesystem::create_directories(dir);
-
         if (created) {
             mio::log_info("Directory '{:s}' was created.", dir.string());
         }
-        printf("Saving results to \"%s\".\n", result_dir.c_str());
     }
 
-    auto result =
-        run(mode, data_dir, save_dir, result_dir, save_single_runs, late, masks, test, high, long_time, future);
+    auto result = run(mode, data_dir, save_dir, result_dir, save_single_runs, late, masks, test, high, long_time, future);
     if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
+        printf("[ERROR] run() failed: %s\n", result.error().formatted_message().c_str());
         mio::mpi::finalize();
         return -1;
     }
+
     mio::mpi::finalize();
     return 0;
 }

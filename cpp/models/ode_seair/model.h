@@ -24,8 +24,8 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
-#include "ode_seair/infection_state.h"
-#include "ode_seair/parameters.h"
+#include "infection_state.h"
+#include "parameters.h"
 
 namespace mio
 {

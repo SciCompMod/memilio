@@ -26,18 +26,26 @@ import pandas as pd
 import memilio.epidata.getPopulationData as gpd
 import memilio.plot.plotMap as pm
 
+import matplotlib
+
+import os
+
+matplotlib.use('Agg')
+
 if __name__ == '__main__':
 
-    files_input = {'Data set 1': 'pycode/examples/plot/Synthetic_data_counties_sh',
-                   'Data set 2 (plot set 1 again...)': 'pycode/examples/plot/Synthetic_data_counties_sh'}
+    # Get the current script directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    files_input = {
+        'Data set 1': os.path.join(script_dir, 'Synthetic_data_counties_sh'),
+        'Data set 2 (plot set 1 again...)': os.path.join(script_dir, 'Synthetic_data_counties_sh')
+    }
+
     file_format = 'json'
-    # Define age groups which will be considered through filtering
-    # Keep keys and values as well as its assignment constant, remove entries
-    # if only part of the population should be plotted or considered, e.g., by
-    # setting:
-    # age_groups = {1: '5-14', 2: '15-34'}
-    age_groups = {0: '0-4', 1: '5-14', 2: '15-34',
-                  3: '35-59', 4: '60-79', 5: '80+'}
+    age_groups = {0: '0-4', 1: '5-14', 2: '15-34', 3: '35-59', 4: '60-79', 5: '80+'}
+    
+    # Set filter_age depending on which age groups you're interested in
     if len(age_groups) == 6:
         filter_age = None
     else:
@@ -50,12 +58,7 @@ if __name__ == '__main__':
 
     i = 0
     for file in files_input.values():
-        # MEmilio backend hdf5 example
-        # df = pm.extract_data(
-        #     file, region_spec=None, column=None, date=1,
-        #     filters={'Group': filter_age, 'InfectionState': [3, 4]},
-        #     file_format=file_format)
-        # MEmilio epidata json example
+        # Extract the data using the corrected file path
         df = pm.extract_data(
             file, region_spec='ID_County',
             column='Synthetic data',
@@ -65,22 +68,19 @@ if __name__ == '__main__':
             file_format=file_format)
 
         if relative:
-
             try:
                 population = pd.read_json(
-                    'data/pydata/Germany/county_current_population.json')
-            # pandas>1.5 raise FileNotFoundError instead of ValueError
+                    os.path.join(script_dir, 'data/pydata/Germany/county_current_population.json'))
             except (ValueError, FileNotFoundError):
                 print("Population data was not found. Download it from the internet.")
                 population = gpd.get_population_data(
                     read_data=False, file_format=file_format,
-                    out_folder='data/pydata/Germany/', no_raw=True,
+                    out_folder=os.path.join(script_dir, 'data/pydata/Germany/'), no_raw=True,
                     merge_eisenach=True)
 
-            # For fitting of different age groups we need format ">X".
             age_group_values = list(age_groups.values())
             age_group_values[-1] = age_group_values[-1].replace('80+', '>79')
-            # scale data
+            # Scale data
             df = pm.scale_dataframe_relative(df, age_group_values, population)
 
         if i == 0:
@@ -92,10 +92,11 @@ if __name__ == '__main__':
     min_val = dfs_all[dfs_all.columns[1:]].min().min()
     max_val = dfs_all[dfs_all.columns[1:]].max().max()
 
+    # Plot the map using the corrected paths
     pm.plot_map(
         dfs_all, scale_colors=np.array([min_val, max_val]),
         legend=['', ''],
         title='Synthetic data (relative)', plot_colorbar=True,
-        output_path=os.path.dirname(__file__),
+        output_path=script_dir,
         fig_name='customPlot', dpi=300,
         outercolor=[205 / 255, 238 / 255, 251 / 255])

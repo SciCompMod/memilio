@@ -1,0 +1,13 @@
+A High Performance Modular Epidemics Simulation Software
+https://elib.dlr.de/213614/ (Julia)
+
+ODE: (Henrik)
+https://doi.org/10.1371/journal.pcbi.1012630
+
+IDE: (Anna)
+https://arxiv.org/abs/2408.12228
+
+ABM: David, Julia
+https://arxiv.org/pdf/2410.08050
+
+... MORE
