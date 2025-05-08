@@ -38,8 +38,9 @@ struct TimerRegistration {
 };
 
 /**
- * @brief Concatonate scope, two colons "::" and name, if scope is not empty. Otherwise, returns name.
- * @param[in] name, scope Any 
+ * @brief If scope is empty, returns name. Otherwise, concatonates scope, two colons "::" and name.
+ * @param[in] name, scope Any strings.
+ * @return The qualified name given by name and scope. 
  */
 inline std::string qualified_name(const std::string& name, const std::string& scope)
 {

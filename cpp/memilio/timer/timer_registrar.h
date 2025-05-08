@@ -23,6 +23,7 @@
 #include "memilio/timer/registration.h"
 #include "memilio/timer/table_printer.h"
 
+#include <iostream>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -127,10 +128,15 @@ public:
 private:
     /// @brief Instead of constructing a TimerRegistrar, use its static method `TimerRegistrar::get_instance()`.
     TimerRegistrar() = default;
-    /// @brief TimerRegistrar must not be copied, use `TimerRegistrar::get_instance()` to access it.
-    TimerRegistrar(TimerRegistrar&) = delete;
-    /// @brief TimerRegistrar must not be moved, use `TimerRegistrar::get_instance()` to access it.
+    /**
+     * @brief TimerRegistrar must not be copied or moved, use `TimerRegistrar::get_instance()` to access it.
+     * @{
+     */
+    TimerRegistrar(TimerRegistrar&)  = delete;
     TimerRegistrar(TimerRegistrar&&) = delete;
+    void operator=(TimerRegistrar&)  = delete;
+    void operator=(TimerRegistrar&&) = delete;
+    /** @} */
 
     /// @brief Specify a destructor to allow printing all timers after exit from main.
     ~TimerRegistrar()

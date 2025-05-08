@@ -17,10 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/timer/auto_timer.h"
 #include "memilio/timer/table_printer.h"
-#include "memilio/timer/timer_registrar.h"
-#include "memilio/utils/mioomp.h"
-#include "memilio/timer/timers.h"
 
 #include <thread> // This is only used for the example load function.
 

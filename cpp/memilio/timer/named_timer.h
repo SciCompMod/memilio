@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_TIMER_TIMERS_H
-#define MIO_TIMER_TIMERS_H
+#ifndef MIO_TIMER_NAMED_TIMER_H
+#define MIO_TIMER_NAMED_TIMER_H
 
 #include "memilio/utils/mioomp.h"
 #include "memilio/timer/basic_timer.h"
@@ -81,47 +81,7 @@ private:
     }
 };
 
-/**
- * @brief Timer that automatically starts when it is created, and stops when it is destroyed.
- * @tparam Name, Scope The name and scope of a NamedTimer. Do not set these if you want to use a BasicTimer.
- */
-template <StringLiteral Name, StringLiteral Scope = "">
-class AutoTimer
-{
-public:
-    /// @brief Run the NamedTimer given by the template parameter(s) Name (and Scope).
-    AutoTimer()
-        : m_timer(NamedTimer<Name, Scope>::get_instance())
-    {
-        m_timer.start();
-    }
-
-    /// @brief Run the given BasicTimer. Does not take ownership, so mind the timer's lifetime!
-    AutoTimer(BasicTimer& timer)
-        : m_timer(timer)
-    {
-        static_assert(Name.empty() && Scope.empty(),
-                      "Do not set the Name and Scope templates when using this constructor.");
-        m_timer.start();
-    }
-
-    AutoTimer(AutoTimer&)  = delete;
-    AutoTimer(AutoTimer&&) = delete;
-
-    ~AutoTimer()
-    {
-        m_timer.stop();
-    }
-
-private:
-    BasicTimer& m_timer; ///< Reference to the timer so it can be stopped in AutoTimer's destructor.
-};
-
-// Deduction guide that allows omitting the template parameter when using the BasicTimer constructor.
-AutoTimer(BasicTimer& timer) -> AutoTimer<"">;
-
 } // namespace timing
-
 } // namespace mio
 
-#endif // MIO_TIMER_TIMERS_H
+#endif // MIO_TIMER_NAMED_TIMER_H
