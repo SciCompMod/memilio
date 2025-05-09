@@ -53,6 +53,9 @@ def put_scenario(scenario_id, zip_file, url, delay):
                                 files={"file": (zip_file, fileobj)})
     print(
         f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
+    
+    if put_response.status_code!=200:
+        print(put_response.text)
 
     print(f'Waiting for {delay} seconds before uploading next scenario')
     time.sleep(delay)
@@ -67,7 +70,7 @@ def put_scenario(scenario_id, zip_file, url, delay):
             f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
 
 
-def put_scenarios(path_to_scenario_results, url, delay=20):
+def put_scenarios(path_to_scenario_results, url, delay=420):
     """ Puts scenarios into database.
 
     @param[in] path_to_scenario_results Directory from where we can access simulation results and where the zips for 
@@ -107,14 +110,14 @@ def put_scenarios(path_to_scenario_results, url, delay=20):
                                  zipped_name=f"{scenario['name']}_{scenario['id']}", percentiles=percentiles,
                                  case_data=False)
 
-        print(f'Uploading {scenario["id"]}')
+        print(f'Uploading {scenario["name"]} with id {scenario["id"]}')
         put_scenario(scenario['id'], zip_file=zip_file, url=url, delay=delay)
 
 
 def main():
     url = 'https://zam10063.zam.kfa-juelich.de/api-new/'
     # put_scenarios(os.path.join('/home/jadebeck/', "results_osecirvvs/"), url)
-    put_scenarios(os.path.join(os.getcwd(), "results_osecirvvs/"), url)
+    put_scenarios(os.path.join(os.getcwd(), "results_retros_adapted_deaths/"), url)
 
 
 if __name__ == '__main__':
