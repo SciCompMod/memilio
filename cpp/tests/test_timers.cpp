@@ -36,10 +36,10 @@ struct TimingTest : public ::testing::Test {
     }
 
 private:
-    mio::timing::BasicTimer m_timer;
+    inline static mio::timing::BasicTimer m_timer;
 
 public:
-    std::list<mio::timing::TimerRegistration> printable_timers()
+    static std::list<mio::timing::TimerRegistration> printable_timers()
     {
         return {{"A", "A", m_timer, 0},
                 {"B", "", m_timer, 0},
@@ -49,7 +49,7 @@ public:
     }
 
     // something to make sure the timers do not measure 0
-    void wait_briefly()
+    static void wait_briefly()
     {
         std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
@@ -166,17 +166,17 @@ TEST_F(TimingTest, ListPrinter)
     // test printer against a known good configuration. changes to the printer will break this test. in that case,
     // manually verify the new behaviour, and update the reference_output.
 
-    std::string reference_output = "All Timers: 5\n"
-                                   "  A::A: 0.000000e+00 (0)\n"
-                                   "  B: 0.000000e+00 (0)\n"
-                                   "  B: 0.000000e+00 (1)\n"
-                                   "  C::C has a fairly long name: 0.000000e+00 (0)\n"
-                                   "  D::D: 0.000000e+00 (2)\n"
-                                   "Unique Timers (accumulated): 4\n"
-                                   "  A::A: 0.000000e+00\n"
-                                   "  B: 0.000000e+00\n"
-                                   "  C::C has a fairly long name: 0.000000e+00\n"
-                                   "  D::D: 0.000000e+00\n";
+    const std::string reference_output = "All Timers: 5\n"
+                                         "  A::A: 0.000000e+00 (0)\n"
+                                         "  B: 0.000000e+00 (0)\n"
+                                         "  B: 0.000000e+00 (1)\n"
+                                         "  C::C has a fairly long name: 0.000000e+00 (0)\n"
+                                         "  D::D: 0.000000e+00 (2)\n"
+                                         "Unique Timers (accumulated): 4\n"
+                                         "  A::A: 0.000000e+00\n"
+                                         "  B: 0.000000e+00\n"
+                                         "  C::C has a fairly long name: 0.000000e+00\n"
+                                         "  D::D: 0.000000e+00\n";
     std::stringstream out;
 
     mio::timing::ListPrinter p;
@@ -190,19 +190,43 @@ TEST_F(TimingTest, TablePrinter)
     // test printer against a known good configuration. changes to the printer will break this test. in that case,
     // manually verify the new behaviour, and update the reference_output.
 
-    std::string reference_output =
-        "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n"
-        "| Timers                      | Elapsed Time | Min          | Max          | Average      | #Threads |\n"
-        "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n"
-        "| A::A                        | 0.000000e+00 | --           | --           | --           |        1 |\n"
-        "| B                           | 0.000000e+00 | 0.000000e+00 | 0.000000e+00 | 0.000000e+00 |        2 |\n"
-        "| C::C has a fairly long name | 0.000000e+00 | --           | --           | --           |        1 |\n"
-        "| D::D                        | 0.000000e+00 | --           | --           | --           |        1 |\n"
-        "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n";
-    std::stringstream out;
+    {
+        const std::string reference_output =
+            "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n"
+            "| Timers                      | Elapsed Time | Min          | Max          | Average      | #Threads |\n"
+            "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n"
+            "| A::A                        | 0.000000e+00 |           -- |           -- |           -- |        1 |\n"
+            "| B                           | 0.000000e+00 | 0.000000e+00 | 0.000000e+00 | 0.000000e+00 |        2 |\n"
+            "| C::C has a fairly long name | 0.000000e+00 |           -- |           -- |           -- |        1 |\n"
+            "| D::D                        | 0.000000e+00 |           -- |           -- |           -- |        1 |\n"
+            "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n";
 
-    mio::timing::TablePrinter p;
-    p.print(this->printable_timers(), out);
+        std::stringstream out;
 
-    EXPECT_EQ(out.str(), reference_output);
+        mio::timing::TablePrinter p;
+        p.print(this->printable_timers(), out);
+
+        EXPECT_EQ(out.str(), reference_output);
+    }
+
+    // same as above, but change the format
+    {
+        const std::string reference_output =
+            "+-----------------------------+--------------+--------+--------+---------+----------+\n"
+            "| Timers                      | Elapsed Time | Min    | Max    | Average | #Threads |\n"
+            "+-----------------------------+--------------+--------+--------+---------+----------+\n"
+            "| A::A                        |         0.00 |     -- |     -- |      -- |        1 |\n"
+            "| B                           |         0.00 |   0.00 |   0.00 |    0.00 |        2 |\n"
+            "| C::C has a fairly long name |         0.00 |     -- |     -- |      -- |        1 |\n"
+            "| D::D                        |         0.00 |     -- |     -- |      -- |        1 |\n"
+            "+-----------------------------+--------------+--------+--------+---------+----------+\n";
+
+        std::stringstream out;
+
+        mio::timing::TablePrinter p;
+        p.set_time_format("{:6.2f}");
+        p.print(this->printable_timers(), out);
+
+        EXPECT_EQ(out.str(), reference_output);
+    }
 }

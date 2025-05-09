@@ -25,6 +25,7 @@
 #include "memilio/utils/logging.h" // included for fmt
 
 #include <algorithm>
+#include <limits>
 #include <ostream>
 #include <list>
 #include <map>
@@ -171,15 +172,16 @@ public:
         // print table content, only adding statistics when multithreaded
         for (size_t row = 0; row < table.rows(); row++) {
             out << border_l << std::setw(col_widths[0]) << std::left << table.get_row_name(row);
-            out << separator << std::setw(col_widths[1]) << fmt::format(fmt::runtime(m_time_format), table(row, 0));
+            out << separator << std::setw(col_widths[1]) << std::right
+                << fmt::format(fmt::runtime(m_time_format), table(row, 0));
             if (is_multithreaded) {
                 const int& num_threads = static_cast<int>(table(row, 4));
                 for (int col = 1; col < 4; col++) {
                     if (num_threads == 1) {
-                        out << separator << std::setw(col_widths[col + 1]) << "-- ";
+                        out << separator << std::setw(col_widths[col + 1]) << std::right << "--";
                     }
                     else {
-                        out << separator << std::setw(col_widths[col + 1])
+                        out << separator << std::setw(col_widths[col + 1]) << std::right
                             << fmt::format(fmt::runtime(m_time_format), table(row, col));
                     }
                 }
@@ -235,6 +237,12 @@ private:
         size_t name_width = 6; // width of the name column, defaults to length of "Timers".
         // shorthands for the columns, so there are fewer mystery numbers
         const int elapsed = 0, min = 1, max = 2, avg = 3, num = 4;
+        // initialize min values to
+        if (is_multithreaded) {
+            for (size_t row = 0; row < table.rows(); row++) {
+                table(row, min) = std::numeric_limits<double>::max();
+            }
+        }
         // accumulate elapsed time and gather statistics in the table
         // averages are calculated later, using finished values from elapsed and num
         for (auto& [name, scope, timer, thread] : timer_register) {
@@ -242,13 +250,7 @@ private:
             const auto time = time_in_seconds(timer.get_elapsed_time());
             table(row, elapsed) += time;
             if (is_multithreaded) {
-                if (table(row, min) == 0.0) {
-                    // we need to overwrite the first min value, otherwise it would stay at 0
-                    table(row, min) = time;
-                }
-                else {
-                    table(row, min) = std::min(table(row, min), time);
-                }
+                table(row, min) = std::min(table(row, min), time);
                 table(row, max) = std::max(table(row, max), time);
                 table(row, num) += 1;
             }
