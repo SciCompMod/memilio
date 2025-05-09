@@ -36,7 +36,7 @@ struct StringLiteral {
     using size_type        = size_t;
     using string_view_type = std::basic_string_view<value_type>;
 
-    /// @brief The length of the StringLiteral (not counting the trailing '\0')
+    /// @brief The length of the StringLiteral (not counting the trailing '\0').
     static constexpr size_type size()
     {
         return Size;
@@ -87,7 +87,7 @@ struct StringLiteral {
 
     /**
      * @brief Join two literals.
-     * @param[in] left, right The strings to join. Operands can be StringLiteral%s or regular string literal%s.
+     * @param[in] left, right The strings to join. Operands can be StringLiteral%s or regular string literals.
      * @return A new StringLiteral containing the joined string.
      * @{
      */

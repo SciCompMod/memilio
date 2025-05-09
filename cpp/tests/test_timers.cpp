@@ -18,41 +18,50 @@
 * limitations under the License.
 */
 #include "memilio/timer/auto_timer.h"
-#include "memilio/utils/mioomp.h"
+#include "memilio/timer/list_printer.h"
+#include "memilio/timer/table_printer.h"
 
 #include "gtest/gtest.h"
 
-#include <algorithm>
-#include <chrono>
-#include <cstddef>
-#include <memory>
 #include <sstream>
-#include <string>
-#include <thread>
-#include <utility>
-#include <vector>
 
 struct TimingTest : public ::testing::Test {
     static void SetUpTestSuite()
     {
         // avoid uneccessary prints
         mio::timing::TimerRegistrar::get_instance().disable_final_timer_summary();
-        // named timers are not reset when using the gtest_repeat flag, so we reset it manually
+        // named timers are not reset when using the gtest_repeat flag, so we reset them manually here
         mio::timing::NamedTimer<"TestTimer", "TimingTest::AutoTimer">::get_instance().reset();
+        mio::timing::NamedTimer<"TestTimer", "TimingTest::NamedTimer">::get_instance().reset();
+    }
+
+private:
+    mio::timing::BasicTimer m_timer;
+
+public:
+    std::list<mio::timing::TimerRegistration> printable_timers()
+    {
+        return {{"A", "A", m_timer, 0},
+                {"B", "", m_timer, 0},
+                {"B", "", m_timer, 1},
+                {"C has a fairly long name", "C", m_timer, 0},
+                {"D", "D", m_timer, 2}};
+    }
+
+    // something to make sure the timers do not measure 0
+    void wait_briefly()
+    {
+        std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
 };
 
+// very simple printer that only outputs the number of registrations
 struct SizePrinter : public mio::timing::Printer {
     void print(const std::list<mio::timing::TimerRegistration>& list, std::ostream& out) override
     {
         out << list.size();
     }
 };
-
-void wait_briefly()
-{
-    std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-}
 
 TEST_F(TimingTest, BasicTimer)
 {
@@ -72,6 +81,7 @@ TEST_F(TimingTest, BasicTimer)
 TEST_F(TimingTest, NamedTimer)
 {
     // check that getters for instance, name and scope work
+    // Note: named timers have to be reset in SetUpTestSuite
     auto& nt = mio::timing::NamedTimer<"TestTimer", "TimingTest::NamedTimer">::get_instance();
     EXPECT_STREQ("TestTimer", nt.name().c_str());
     EXPECT_STREQ("TimingTest::NamedTimer", nt.scope().c_str());
@@ -93,6 +103,7 @@ TEST_F(TimingTest, AutoTimer)
         mio::timing::AutoTimer at(bt);
         wait_briefly();
     }
+    // Note: named timers have to be reset in SetUpTestSuite
     auto& nt = mio::timing::NamedTimer<"TestTimer", "TimingTest::AutoTimer">::get_instance();
     EXPECT_EQ(nt.get_elapsed_time(), mio::timing::DurationType{0});
     {
@@ -148,4 +159,50 @@ TEST_F(TimingTest, qualified_name)
     // test that name and scope are concatonated as expected
     EXPECT_EQ(mio::timing::qualified_name("name", ""), "name");
     EXPECT_EQ(mio::timing::qualified_name("name", "scope"), "scope::name");
+}
+
+TEST_F(TimingTest, ListPrinter)
+{
+    // test printer against a known good configuration. changes to the printer will break this test. in that case,
+    // manually verify the new behaviour, and update the reference_output.
+
+    std::string reference_output = "All Timers: 5\n"
+                                   "  A::A: 0.000000e+00 (0)\n"
+                                   "  B: 0.000000e+00 (0)\n"
+                                   "  B: 0.000000e+00 (1)\n"
+                                   "  C::C has a fairly long name: 0.000000e+00 (0)\n"
+                                   "  D::D: 0.000000e+00 (2)\n"
+                                   "Unique Timers (accumulated): 4\n"
+                                   "  A::A: 0.000000e+00\n"
+                                   "  B: 0.000000e+00\n"
+                                   "  C::C has a fairly long name: 0.000000e+00\n"
+                                   "  D::D: 0.000000e+00\n";
+    std::stringstream out;
+
+    mio::timing::ListPrinter p;
+    p.print(this->printable_timers(), out);
+
+    EXPECT_EQ(out.str(), reference_output);
+}
+
+TEST_F(TimingTest, TablePrinter)
+{
+    // test printer against a known good configuration. changes to the printer will break this test. in that case,
+    // manually verify the new behaviour, and update the reference_output.
+
+    std::string reference_output =
+        "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n"
+        "| Timers                      | Elapsed Time | Min          | Max          | Average      | #Threads |\n"
+        "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n"
+        "| A::A                        | 0.000000e+00 | --           | --           | --           |        1 |\n"
+        "| B                           | 0.000000e+00 | 0.000000e+00 | 0.000000e+00 | 0.000000e+00 |        2 |\n"
+        "| C::C has a fairly long name | 0.000000e+00 | --           | --           | --           |        1 |\n"
+        "| D::D                        | 0.000000e+00 | --           | --           | --           |        1 |\n"
+        "+-----------------------------+--------------+--------------+--------------+--------------+----------+\n";
+    std::stringstream out;
+
+    mio::timing::TablePrinter p;
+    p.print(this->printable_timers(), out);
+
+    EXPECT_EQ(out.str(), reference_output);
 }
