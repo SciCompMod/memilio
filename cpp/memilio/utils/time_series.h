@@ -28,6 +28,8 @@
 #include <iterator>
 #include <vector>
 #include <ostream>
+#include <fstream>
+#include <iomanip>
 
 namespace mio
 {
@@ -529,6 +531,55 @@ public:
             }
         }
         out << "\n";
+    }
+
+    /**
+     * @brief Exports a TimeSeries object into a CSV file.
+     *
+     * The first column of the CSV file contains the time points. The remaining columns
+     * contain the values at each time point. Column headers can be specified with column_labels.
+     *
+     * @param filename Path to the CSV file
+     * @param column_labels [Default: {}] Vector of labels for each column after the time column.
+     * @param separator [Default: ','] Separator character.
+     * @param precision [Default: 6] Number of decimals for floating point values.
+     * @return bool Indicates success or failure.
+     */
+    bool export_csv(const std::string& filename, const std::vector<std::string>& column_labels = {},
+                    char separator = ',', int precision = 6) const
+    {
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            return false;
+        }
+        file << std::fixed << std::setprecision(precision);
+
+        // Column headers
+        set_ostream_format(file, 1, precision) << std::left << "Time";
+        for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
+            file << separator;
+            if (k < column_labels.size()) {
+                set_ostream_format(file, 1, precision) << std::left << column_labels[k];
+            }
+            else {
+                set_ostream_format(file, 1, precision) << std::left << "#" << k + 1;
+            }
+        }
+        file << "\n";
+
+        // Data
+        const auto num_points = static_cast<size_t>(get_num_time_points());
+        for (size_t i = 0; i < num_points; i++) {
+            set_ostream_format(file, 1, precision) << std::right << get_time(i);
+            const auto& res_i = get_value(i);
+            for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
+                file << separator;
+                set_ostream_format(file, 1, precision) << std::right << res_i[j];
+            }
+            file << "\n";
+        }
+
+        return true;
     }
 
     /**
