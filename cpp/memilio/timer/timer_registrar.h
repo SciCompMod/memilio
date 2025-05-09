@@ -152,7 +152,7 @@ private:
     }
 
     std::unique_ptr<Printer> m_printer = std::make_unique<TablePrinter>(); ///< A printer to visualize all timers.
-    bool m_print_on_death              = true; ///< Whether to call m_printer during the desctructor.
+    bool m_print_on_death              = true; ///< Whether to call m_printer during the destructor.
     std::list<TimerRegistration> m_register; ///< List that allows access to timers without having their name.
     std::mutex m_registration_lock; ///< Lock to safeguard m_register against concurrent writes.
 };

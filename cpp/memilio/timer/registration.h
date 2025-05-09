@@ -38,7 +38,7 @@ struct TimerRegistration {
 };
 
 /**
- * @brief If scope is empty, returns name. Otherwise, concatonates scope, two colons "::" and name.
+ * @brief If scope is empty, returns name. Otherwise, concatenates scope, two colons "::" and name.
  * @param[in] name, scope Any strings.
  * @return The qualified name given by name and scope. 
  */

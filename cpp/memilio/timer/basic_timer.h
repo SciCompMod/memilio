@@ -21,6 +21,7 @@
 #define MIO_TIMER_BASIC_TIMER_H
 
 #include "memilio/timer/definitions.h"
+#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -34,31 +35,74 @@ public:
     /// @brief Start the timer. Must be followed by exactly one stop.
     void start()
     {
+        should_be_running(false);
+        set_running(true);
         m_start_time = get_time_now();
     }
 
     /// @brief Stop the timer and update the elapsed time. After calling stop, the timer may be started again.
     void stop()
     {
+        should_be_running(true);
+        set_running(false);
         const TimeType stop_time = get_time_now();
         m_elapsed_time += stop_time - m_start_time;
     }
 
-    /// @brief Set the elapsed time to 0. Only call while stopped.
+    /// @brief Set the elapsed time to 0. Only call while the timer is stopped.
     void reset()
     {
+        should_be_running(false);
         m_elapsed_time = mio::timing::DurationType{0};
     }
 
-    /// @brief Get the total time spent between starts and stops. Do not use while the timer is started.
+    /// @brief Get the total time spent between starts and stops. Only call while the timer is stopped.
     DurationType get_elapsed_time() const
     {
+        should_be_running(false);
         return m_elapsed_time;
+    }
+
+    ~BasicTimer()
+    {
+        should_be_running(false);
     }
 
 private:
     TimeType m_start_time; ///< The last time point at which start() was called
     DurationType m_elapsed_time{0}; ///< The total time spent between starts and stops.
+
+#ifndef NDEBUG
+    bool m_is_running = false; ///< In Debug builds, tracks whether the timer is running.
+
+    /// @brief In Debug builds, change whether the timer is running or not.
+    void set_running(bool new_state)
+    {
+        m_is_running = new_state;
+    }
+
+    /// @brief In Debug builds, check that the state of m_is_running is as expected. Log an error if not.
+    void should_be_running(bool expected) const
+    {
+        if (m_is_running != expected) {
+            mio::log_error("A BasicTimer was {}running while expected to be {}. "
+                           "This may be due to mixing up start and stop, calling get_elapsed_time while the timer "
+                           "is running, or using the same timer with multiple threads. "
+                           "Consider using an AutoTimer with name (and scope) to avoid this.",
+                           m_is_running ? "" : "not ", expected ? "started" : "stopped");
+        }
+        // else: everything ok.
+    }
+#else
+    void set_running(bool)
+    {
+        // noop
+    }
+    void should_be_running(bool) const
+    {
+        // noop
+    }
+#endif
 };
 
 } // namespace timing

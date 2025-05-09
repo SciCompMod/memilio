@@ -26,20 +26,11 @@ namespace timing
 
 #ifdef MEMILIO_ENABLE_OPENMP
 
-/**
- * @brief Convert a duration to a (floating point) number of seconds.
- * @param[in] duration Any DurationType value, mainly `BasicTimer::get_elapsed_time()`.  
- * @return The duration in seconds.
- */
 double time_in_seconds(DurationType duration)
 {
     return duration;
 }
 
-/**
- * @brief Get the current time.
- * @return Returns omp_get_wtime() if OpenMP is enabled, stead_clock::now() otherwise.
- */
 TimeType get_time_now()
 {
     return omp_get_wtime();
@@ -47,20 +38,11 @@ TimeType get_time_now()
 
 #else
 
-/**
- * @brief Convert a duration to a (floating point) number of seconds.
- * @param[in] duration Any DurationType value, mainly `BasicTimer::get_elapsed_time()`.  
- * @return The duration in seconds.
- */
 double time_in_seconds(DurationType duration)
 {
     return std::chrono::duration_cast<std::chrono::duration<double>>(duration).count();
 }
 
-/**
- * @brief Get the current time.
- * @return Returns omp_get_wtime() if OpenMP is enabled, stead_clock::now() otherwise.
- */
 TimeType get_time_now()
 {
     return std::chrono::steady_clock::now();

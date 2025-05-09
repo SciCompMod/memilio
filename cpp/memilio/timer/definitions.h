@@ -51,7 +51,7 @@ double time_in_seconds(DurationType duration);
 
 /**
  * @brief Get the current time.
- * @return Returns omp_get_wtime() if OpenMP is enabled, stead_clock::now() otherwise.
+ * @return Returns omp_get_wtime() if OpenMP is enabled, steady_clock::now() otherwise.
  */
 TimeType get_time_now();
 

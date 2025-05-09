@@ -139,7 +139,7 @@ public:
         const size_t time_width   = fmt::format(fmt::runtime(m_time_format), max_val).size();
         const size_t thread_width = table.get_col_name(table.cols() - 1).size();
         std::vector<size_t> col_widths(table.cols() + 1);
-        // note that col_width is offset by 1 relative to table, as uses index 0 for the first value,
+        // note that col_width is offset by 1 relative to table, as it uses index 0 for the first value,
         // but here we want to print the timer (or row) name first
         col_widths[0] = name_width;
         for (size_t col = 0; col < table.cols(); col++) {
@@ -168,7 +168,7 @@ public:
         }
         out << border_r;
         draw_hline();
-        // print table content, only adding statistics when mulithreaded
+        // print table content, only adding statistics when multithreaded
         for (size_t row = 0; row < table.rows(); row++) {
             out << border_l << std::setw(col_widths[0]) << std::left << table.get_row_name(row);
             out << separator << std::setw(col_widths[1]) << fmt::format(fmt::runtime(m_time_format), table(row, 0));
@@ -192,7 +192,7 @@ public:
 
 private:
     /**
-     * @brief The first part of the print function, separated as a somewhat independant step.
+     * @brief The first part of the print function, separated as a somewhat independent step.
      * @param[in] timer_register The list of all timers that should be converted to a table.
      * @return Returns the table of timers, whether multiple threads were used, the width of the name column, and the
      * largest value found in the table.
