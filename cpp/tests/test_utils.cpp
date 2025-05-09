@@ -19,6 +19,7 @@
 */
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
+#include "memilio/utils/mioomp.h"
 
 #include <gtest/gtest.h>
 
@@ -101,4 +102,34 @@ TEST(TestUtils, IndexRange)
         EXPECT_EQ(flat_index, reference_flat_index);
         iterator++;
     }
+}
+
+TEST(TestUtils, OpenMP)
+{
+    using namespace mio::omp;
+    // check getters outside of a parallel region
+    EXPECT_EQ(get_thread_id(), 0);
+    EXPECT_EQ(get_num_threads(), 1);
+#ifndef MEMILIO_ENABLE_OPENMP
+    EXPECT_EQ(get_max_threads(), 1); // without OpenMP we can be stricter here
+#else
+    EXPECT_GE(get_max_threads(), 1);
+#endif
+    // check num_threads and thread_id inside a parallel region
+    int num_threads = 0;
+    int sum         = 0; // accumulated ids
+    PRAGMA_OMP(parallel)
+    {
+        PRAGMA_OMP(single)
+        {
+            num_threads = get_num_threads();
+        }
+        PRAGMA_OMP(atomic)
+        sum += get_thread_id();
+    }
+    EXPECT_EQ(num_threads, get_max_threads());
+    EXPECT_EQ(get_num_threads(), 1); // repeated check
+    // check that all thread ids are uniqueliy present via summation over 0,...,get_max_threads()
+    // (this check is mathematically not sufficient, but should be good enough pragmatically)
+    EXPECT_EQ(sum, (get_max_threads() * (get_max_threads() - 1)) / 2);
 }

@@ -64,6 +64,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
+    test_timers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
     test_ide_secir_ageres.cpp
