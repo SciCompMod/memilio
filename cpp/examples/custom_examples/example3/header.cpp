@@ -141,6 +141,41 @@ bool TutorialCpp_NLP::eval_f(
     return true;
 }
 
+// bool TutorialCpp_NLP::eval_grad_f(
+//     Ipopt::Index n,
+//     const Ipopt::Number* x,
+//     bool /*new_x*/,
+//     Ipopt::Number* grad_f
+// ) {
+//     assert(n == n_);
+//     using ad_t = ad::ga1s<double>::type;
+
+//     tape_->reset();
+
+//     std::vector<ad_t> x_ad(n);
+
+//     for (Ipopt::Index i = 0; i < n; ++i) {
+//         ad::value(x_ad[i]) = x[i];
+//         ad::derivative(x_ad[i]) = 0.0;
+//         tape_->register_variable(x_ad[i]);
+//     }
+
+//     ad_t obj_ad = objective_function(x_ad.data(), static_cast<std::size_t>(n));
+//     tape_->register_output_variable(obj_ad);
+//     ad::derivative(obj_ad) = 1.0;
+
+//     tape_->interpret_adjoint();
+
+//     for (Ipopt::Index i = 0; i < n; ++i) {
+//         grad_f[i] = ad::derivative(x_ad[i]);
+//     }
+
+//     return true;
+// }
+
+
+
+
 bool TutorialCpp_NLP::eval_grad_f(
     Ipopt::Index n,
     const Ipopt::Number* x,
@@ -148,30 +183,30 @@ bool TutorialCpp_NLP::eval_grad_f(
     Ipopt::Number* grad_f
 ) {
     assert(n == n_);
-    using ad_t = ad::ga1s<double>::type;
 
-    tape_->reset();
+    using ad_t = ad::gt1s<double>::type;
 
-    std::vector<ad_t> x_ad(n);
-
-    for (Ipopt::Index i = 0; i < n; ++i) {
-        ad::value(x_ad[i]) = x[i];
-        ad::derivative(x_ad[i]) = 0.0;
-        tape_->register_variable(x_ad[i]);
-    }
-
-    ad_t obj_ad = objective_function(x_ad.data(), static_cast<std::size_t>(n));
-    tape_->register_output_variable(obj_ad);
-    ad::derivative(obj_ad) = 1.0;
-
-    tape_->interpret_adjoint();
-
-    for (Ipopt::Index i = 0; i < n; ++i) {
-        grad_f[i] = ad::derivative(x_ad[i]);
+    #pragma omp parallel
+    {
+        std::vector<ad_t> x_ad(n);
+        for (Ipopt::Index i = 0; i < n; ++i) {
+            x_ad[i] = x[i];
+            ad::derivative(x_ad[i]) = 0.0;
+        } 
+        
+        #pragma omp for
+        for (Ipopt::Index column = 0; column < n; ++column) {
+            ad::derivative(x_ad[column]) = 1.0;
+            ad_t obj_ad = objective_function(x_ad.data(), static_cast<std::size_t>(n));
+            grad_f[column] = ad::derivative(obj_ad);
+            ad::derivative(x_ad[column]) = 0.0;
+        }
     }
 
     return true;
 }
+
+
 
 bool TutorialCpp_NLP::eval_g(
     Ipopt::Index n,
