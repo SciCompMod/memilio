@@ -5,8 +5,6 @@
 #include "models/ode_seir_metapop/parameters.h"
 #include "models/ode_seir_metapop/regions.h"
 
-#include <omp.h>
-
 int main()
 {
     const ScalarType t0   = 0.;
