@@ -7,7 +7,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
-#include "models/ode_metapop/regions.h"
+#include "models/ode_seir_metapop/regions.h"
 #include "Eigen/Sparse"
 
 #include <vector>

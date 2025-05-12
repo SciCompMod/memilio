@@ -1,5 +1,5 @@
 
-#include "ode_metapop/model.h"
+#include "ode_seir_metapop/model.h"
 
 namespace mio
 {
