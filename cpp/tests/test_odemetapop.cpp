@@ -2,9 +2,9 @@
 #include "load_test_data.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
-#include "ode_metapop/model.h"
-#include "ode_metapop/infection_state.h"
-#include "ode_metapop/parameters.h"
+#include "ode_seir_metapop/model.h"
+#include "ode_seir_metapop/infection_state.h"
+#include "ode_seir_metapop/parameters.h"
 #include "memilio/math/euler.h"
 #include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
