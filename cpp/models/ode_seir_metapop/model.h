@@ -1,12 +1,12 @@
 
-#ifndef ODESEIRMOBILITYIMPROVED_MODEL_H
-#define ODESEIRMOBILITYIMPROVED_MODEL_H
+#ifndef ODESEIRMETAPOP_MODEL_H
+#define ODESEIRMETAPOP_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "models/ode_metapop/infection_state.h"
-#include "models/ode_metapop/parameters.h"
-#include "models/ode_metapop/regions.h"
+#include "models/ode_seir_metapop/infection_state.h"
+#include "models/ode_seir_metapop/parameters.h"
+#include "models/ode_seir_metapop/regions.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
 

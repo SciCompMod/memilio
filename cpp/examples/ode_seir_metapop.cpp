@@ -1,9 +1,9 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/custom_index_array.h"
-#include "models/ode_metapop/infection_state.h"
-#include "models/ode_metapop/model.h"
-#include "models/ode_metapop/parameters.h"
-#include "models/ode_metapop/regions.h"
+#include "models/ode_seir_metapop/infection_state.h"
+#include "models/ode_seir_metapop/model.h"
+#include "models/ode_seir_metapop/parameters.h"
+#include "models/ode_seir_metapop/regions.h"
 
 #include <omp.h>
 
