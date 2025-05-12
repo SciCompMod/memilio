@@ -45,6 +45,10 @@ add_executable(ode_metapop_steps examples_thesis/ode_metapop_steps.cpp)
 target_link_libraries(ode_metapop_steps PRIVATE memilio ode_metapop)
 target_compile_options(ode_metapop_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_metapop_seir_example ode_seir_metapop.cpp)
+target_link_libraries(ode_metapop_seir_example PRIVATE memilio ode_metapop)
+target_compile_options(ode_metapop_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(basic_reproduction_number_modela examples_thesis/basic_reproduction_number_modela.cpp)
 target_link_libraries(basic_reproduction_number_modela PRIVATE memilio ode_seir)
 target_compile_options(basic_reproduction_number_modela PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
