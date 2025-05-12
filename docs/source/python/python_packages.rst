@@ -60,7 +60,7 @@ Most of them serve their own use case,
 
         +++
 
-        .. button-ref:: surrogate_models
+        .. button-ref:: memilio_surrogate
             :expand:
             :color: secondary
             :click-parent:
@@ -101,6 +101,8 @@ Most of them serve their own use case,
 
             To the generation package
 
+
+.. _Python_Installation:
 
 Installation
 ------------
