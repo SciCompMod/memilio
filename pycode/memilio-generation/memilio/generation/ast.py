@@ -25,6 +25,7 @@ import os
 from clang.cindex import Cursor, TranslationUnit, Index, CompilationDatabase
 from typing import TYPE_CHECKING
 from memilio.generation import utility
+from typing_extensions import Self
 
 
 if TYPE_CHECKING:
@@ -157,6 +158,13 @@ class AST:
     def root_cursor(self):
         """ Returns the root cursor of the AST."""
         return self.translation_unit.cursor
+
+    def set_translation_unit(self: Self, tu: TranslationUnit) -> None:
+        """ Set the translation unit for the AST.
+
+        :param tu: The translation unit to set.
+        """
+        self.translation_unit = tu
 
     def get_node_id(self, cursor: Cursor) -> int:
         """ Returns the id of the current node.

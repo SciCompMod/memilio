@@ -48,7 +48,7 @@ class ASTHandler:
     def handle_ast_creation(self: T) -> None:
         """ Handle the creation of the ASTs. Single or Parallel.
         """
-        if len(self.ast_list) == 1:
+        if len(self.source_files) == 1:
             self.single_creation(self.conf)
         else:
             self.parallel_creation(self.conf)
@@ -79,7 +79,7 @@ class ASTHandler:
         idx = Index.create()
         tu = idx.read(ast_path)
         ast._assing_ast_with_ids(tu.cursor)
-        ast.set_tu(tu)
+        ast.set_translation_unit(tu)
         os.remove(ast_path)
         return tu
 

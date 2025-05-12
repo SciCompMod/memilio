@@ -126,6 +126,7 @@ class Scanner:
             CursorKind.STRUCT_DECL: self.check_struct,
             CursorKind.TYPE_ALIAS_DECL: self.check_type_alias,
             CursorKind.TYPE_ALIAS_TEMPLATE_DECL: self.check_type_alias
+
         }
         return switch.get(kind, lambda *args: None)
 
