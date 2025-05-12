@@ -30,6 +30,41 @@ add_executable(sde_sir_example sde_sir.cpp)
 target_link_libraries(sde_sir_example PRIVATE memilio sde_sir)
 target_compile_options(sde_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_metapop_wang_nrw examples_thesis/ode_metapop_wang_nrw.cpp)
+target_link_libraries(ode_metapop_wang_nrw PRIVATE memilio ode_metapop_wang)
+target_compile_options(ode_metapop_wang_nrw PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+if (MEMILIO_ENABLE_OPENMP)
+    add_executable(ode_metapop_timing examples_thesis/ode_metapop_timing.cpp)
+    target_link_libraries(ode_metapop_timing PRIVATE memilio ode_metapop likwid stdc++)
+    target_compile_options(ode_metapop_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    target_compile_definitions(ode_metapop_timing PRIVATE "-DLIKWID_PERFMON")
+endif()
+
+add_executable(ode_metapop_steps examples_thesis/ode_metapop_steps.cpp)
+target_link_libraries(ode_metapop_steps PRIVATE memilio ode_metapop)
+target_compile_options(ode_metapop_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_metapop_seir_example ode_seir_metapop.cpp)
+target_link_libraries(ode_metapop_seir_example PRIVATE memilio ode_metapop)
+target_compile_options(ode_metapop_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(basic_reproduction_number_modela examples_thesis/basic_reproduction_number_modela.cpp)
+target_link_libraries(basic_reproduction_number_modela PRIVATE memilio ode_seir)
+target_compile_options(basic_reproduction_number_modela PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(basic_reproduction_number_modelb examples_thesis/basic_reproduction_number_modelb.cpp)
+target_link_libraries(basic_reproduction_number_modelb PRIVATE memilio ode_metapop_wang)
+target_compile_options(basic_reproduction_number_modelb PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(basic_reproduction_number_modelc examples_thesis/basic_reproduction_number_modelc.cpp)
+target_link_libraries(basic_reproduction_number_modelc PRIVATE memilio ode_metapop)
+target_compile_options(basic_reproduction_number_modelc PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_metapop_nrw examples_thesis/ode_metapop_nrw.cpp)
+target_link_libraries(ode_metapop_nrw PRIVATE memilio ode_metapop)
+target_compile_options(ode_metapop_nrw PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(sde_sirs_example sde_sirs.cpp)
 target_link_libraries(sde_sirs_example PRIVATE memilio sde_sirs)
 target_compile_options(sde_sirs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -91,6 +126,21 @@ target_compile_options(ode_secir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENAB
 add_executable(ode_secir_graph_example ode_secir_graph.cpp)
 target_link_libraries(ode_secir_graph_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(graph_nrw examples_thesis/graph_nrw.cpp)
+target_link_libraries(graph_nrw PRIVATE memilio ode_seir)
+target_compile_options(graph_nrw PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(graph_steps examples_thesis/graph_steps.cpp)
+target_link_libraries(graph_steps PRIVATE memilio ode_seir)
+target_compile_options(graph_steps PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+if (MEMILIO_ENABLE_OPENMP)
+    add_executable(graph_timing examples_thesis/graph_timing.cpp)
+    target_link_libraries(graph_timing PRIVATE memilio ode_seir likwid stdc++)
+    target_compile_options(graph_timing PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    target_compile_definitions(graph_timing PRIVATE "-DLIKWID_PERFMON")
+endif()
 
 add_executable(graph_stochastic_mobility_example graph_stochastic_mobility.cpp)
 target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_secir)

@@ -85,6 +85,7 @@ set(TESTSOURCES
     temp_file_register.h
     test_graph_abm.cpp
     test_abstract_parameter_dist.cpp
+    test_odemetapop.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
