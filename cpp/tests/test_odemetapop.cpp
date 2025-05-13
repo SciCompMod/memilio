@@ -128,7 +128,7 @@ TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
             {mio::oseirmetapop::Region(4), mio::AgeGroup(1)}, 0.));
     ASSERT_EQ(model.parameters.check_constraints(), 1);
 
-    // Nobody commutes to region 2
+    // Nobody commutes to region 2 but everybody originating fron there commutes to other regions.
     mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0., 0.5, 0.5, 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
     ASSERT_EQ(model.parameters.check_constraints(), 1);
@@ -213,6 +213,7 @@ TEST_F(ModelTestOdeMetapop, apply_constraints_parameters)
                     mio::oseirmetapop::Region(3), mio::AgeGroup(0)}]),
                 1.0, tol_times);
 
+    // Nobody commutes to region 2 but everybody originating fron there commutes to other regions.
     mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0., 0.5, 0.5, 0., 0., 0., 1.;
     model.set_commuting_strengths(mobility_data_commuter);
     EXPECT_EQ(model.parameters.apply_constraints(), 1);
