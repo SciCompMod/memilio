@@ -348,7 +348,7 @@ def extract_nrw_data_and_combine(files, date, relative=True):
 
             try:
                 population = pd.read_json(
-                    'data/pydata/Germany/county_current_population.json')
+                    'data/Germany/pydata/county_current_population.json')
             # pandas>1.5 raise FileNotFoundError instead of ValueError
             except (ValueError, FileNotFoundError):
                 print("Population data was not found. Download it from the internet.")

@@ -212,10 +212,11 @@ public:
             this->parameters.template get<CommutingStrengths<FP>>().get_cont_freq_mat()[0].get_baseline();
         commuting_strengths_param = commuting_strengths;
 
-        auto number_regions              = (size_t)this->parameters.get_num_regions();
-        auto number_age_groups           = (size_t)this->parameters.get_num_agegroups();
-        auto& population                 = this->populations;
-        auto& population_after_commuting = this->parameters.template get<PopulationAfterCommuting<FP>>();
+        auto number_regions    = (size_t)this->parameters.get_num_regions();
+        auto number_age_groups = (size_t)this->parameters.get_num_agegroups();
+        auto& population       = this->populations;
+        mio::Populations<FP, Region, AgeGroup> population_after_commuting(
+            {Region(number_regions), AgeGroup(number_age_groups)}, 0.);
 
         for (size_t region_n = 0; region_n < number_regions; ++region_n) {
             for (size_t age = 0; age < number_age_groups; ++age) {
@@ -233,6 +234,7 @@ public:
                 }
             }
         }
+        this->parameters.template get<PopulationAfterCommuting<FP>>() = population_after_commuting;
     }
 
     void set_commuting_strengths()
