@@ -71,6 +71,54 @@ TEST_F(ModelTestOdeMetapop, checkPopulationConservation)
     EXPECT_NEAR(num_persons, total_population_per_region * (size_t)model.parameters.get_num_regions(), 1e-9);
 }
 
+TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
+{
+    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
+    contact_matrix[0].get_baseline().setConstant(2.7);
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+
+    Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
+                                           (size_t)model.parameters.get_num_regions());
+    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
+    model.set_commuting_strengths(mobility_data_commuter);
+
+    std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-seir-metapop-compare.csv");
+    auto result                              = mio::simulate<double, mio::oseirmetapop::Model<>>(t0, tmax, dt, model);
+
+    result.print_table({"S", "E", "I", "R"}, 16, 18);
+
+    ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
+
+    for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
+        double t     = refData[static_cast<size_t>(irow)][0];
+        auto rel_tol = 1e-6;
+
+        //test result diverges at damping because of changes, not worth fixing at the moment
+        if (t > 11.0 && t < 13.0) {
+            //strong divergence around damping
+            rel_tol = 0.5;
+        }
+        else if (t > 13.0) {
+            //minor divergence after damping
+            rel_tol = 1e-2;
+        }
+        mio::unused(rel_tol);
+
+        ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
+
+        for (size_t icol = 0; icol < 12; ++icol) {
+            double ref    = refData[static_cast<size_t>(irow)][icol + 1];
+            double actual = result[irow][icol];
+
+            double tol = rel_tol * ref;
+            ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
+        }
+    }
+}
+
 TEST_F(ModelTestOdeMetapop, check_constraints_parameters)
 {
     model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
@@ -266,7 +314,7 @@ TEST(TestOdeMetapop, compareSEIR)
     std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = std::make_shared<mio::EulerIntegratorCore<>>();
 
     auto result                                  = simulate(t0, tmax, dt, model, integrator);
-    std::vector<std::vector<ScalarType>> refData = load_test_data_csv<ScalarType>("seir-compare-euler.csv");
+    std::vector<std::vector<ScalarType>> refData = load_test_data_csv<ScalarType>("ode-seir-compare-euler.csv");
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
@@ -292,53 +340,6 @@ TEST(TestOdeMetapop, compareSEIR)
             ScalarType actual = result[irow][icol];
 
             ScalarType tol = rel_tol * ref;
-            ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
-        }
-    }
-}
-
-TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
-{
-    model.parameters.set<mio::oseirmetapop::TimeExposed<ScalarType>>(5.2);
-    model.parameters.set<mio::oseirmetapop::TimeInfected<ScalarType>>(6);
-    model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<ScalarType>>(0.1);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirmetapop::ContactPatterns<ScalarType>>();
-    contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
-
-    Eigen::MatrixXd mobility_data_commuter((size_t)model.parameters.get_num_regions(),
-                                           (size_t)model.parameters.get_num_regions());
-    mobility_data_commuter << 0., 0., 0., 1., 0.2, 0., 0.6, 0.2, 0., 0.5, 0.5, 0., 0., 0., 0., 1.;
-    model.set_commuting_strengths(mobility_data_commuter);
-
-    std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-seir-metapop-compare.csv");
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto result = mio::simulate<double, mio::oseirmetapop::Model<>>(t0, tmax, dt, model, integrator);
-
-    ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
-
-    for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
-        double t     = refData[static_cast<size_t>(irow)][0];
-        auto rel_tol = 1e-6;
-
-        //test result diverges at damping because of changes, not worth fixing at the moment
-        if (t > 11.0 && t < 13.0) {
-            //strong divergence around damping
-            rel_tol = 0.5;
-        }
-        else if (t > 13.0) {
-            //minor divergence after damping
-            rel_tol = 1e-2;
-        }
-        mio::unused(rel_tol);
-
-        ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
-
-        for (size_t icol = 0; icol < 12; ++icol) {
-            double ref    = refData[static_cast<size_t>(irow)][icol + 1];
-            double actual = result[irow][icol];
-
-            double tol = rel_tol * ref;
             ASSERT_NEAR(ref, actual, tol) << "at row " << irow;
         }
     }
