@@ -71,6 +71,7 @@ add_library(memilio
     mobility/graph.h
     mobility/graph.cpp
     timer/auto_timer.h
+    timer/basic_timer.cpp
     timer/basic_timer.h
     timer/definitions.cpp
     timer/definitions.h
