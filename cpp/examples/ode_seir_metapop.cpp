@@ -11,12 +11,9 @@ int main()
     const ScalarType tmax = 10;
     ScalarType dt         = 0.1;
 
-    size_t number_regions    = 3;
-    size_t number_age_groups = 1;
+    mio::oseirmetapop::Model<ScalarType> model(3, 1);
 
-    mio::oseirmetapop::Model<ScalarType> model(number_regions, number_age_groups);
-
-    for (size_t i = 0; i < number_regions; i++) {
+    for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
         model.populations[{mio::oseirmetapop::Region(i), mio::AgeGroup(0),
                            mio::oseirmetapop::InfectionState::Susceptible}] = 10000;
     }

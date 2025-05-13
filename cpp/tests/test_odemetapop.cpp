@@ -88,8 +88,6 @@ TEST_F(ModelTestOdeMetapop, compareWithPreviousRun)
     std::vector<std::vector<double>> refData = load_test_data_csv<double>("ode-seir-metapop-compare.csv");
     auto result                              = mio::simulate<double, mio::oseirmetapop::Model<>>(t0, tmax, dt, model);
 
-    result.print_table({"S", "E", "I", "R"}, 16, 18);
-
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
     for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
