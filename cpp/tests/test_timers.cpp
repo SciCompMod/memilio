@@ -17,13 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "utils.h"
 #include "memilio/timer/auto_timer.h"
 #include "memilio/timer/list_printer.h"
 #include "memilio/timer/table_printer.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-#include <sstream>
+#include <utility>
 
 struct TimingTest : public ::testing::Test {
     static void SetUpTestSuite()
@@ -65,6 +66,9 @@ struct SizePrinter : public mio::timing::Printer {
 
 TEST_F(TimingTest, BasicTimer)
 {
+    // replace spdlog::default_logger
+    mio::RedirectLogger logger;
+    logger.capture();
     // test the basic functionality of BasicTimer
     mio::timing::BasicTimer bt{};
     EXPECT_EQ(bt.get_elapsed_time(), mio::timing::DurationType{0});
@@ -76,6 +80,27 @@ TEST_F(TimingTest, BasicTimer)
     bt.reset();
     // check that reset works
     EXPECT_EQ(bt.get_elapsed_time(), mio::timing::DurationType{0});
+    // check that there are no error reports
+    EXPECT_EQ(logger.read(), "");
+#ifndef NDEBUG
+    // almost all of BasicTimer, including its destructor, expects to be called while stopped - except for stop itself
+    bt.start();
+    bt.start();
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("expected to be stopped."));
+    bt.get_elapsed_time();
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("expected to be stopped."));
+    bt.reset();
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("expected to be stopped."));
+    bt.stop();
+    bt.stop();
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("expected to be started."));
+    { // trigger destructor
+        mio::timing::BasicTimer{}.start();
+    }
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("expected to be stopped."));
+#endif
+    // restore spdlog::default_logger
+    logger.release();
 }
 
 TEST_F(TimingTest, NamedTimer)
