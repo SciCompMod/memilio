@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.13)
 
 project(memilio VERSION 1.0.0)
 
+set(CMAKE_CXX_STANDARD "20")
+set(CMAKE_CXX_STANDARD_REQUIRED "20")
+
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
