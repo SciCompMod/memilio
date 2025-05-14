@@ -38,32 +38,13 @@ For further details, please refer to:
 
 - Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `<https://doi.org/10.1371/journal.pcbi.1012630>`_
 
-Stochastic Mobility - Julia
+**Stochastic mobility approach**
 
-####OLD#####
+In the stochastic mobility approach, transitions of individuals between regions, i.e. graph nodes, are modeled as stochastic jumps. The frequency of individuals transitioning from region i to region j is determined by a rate :math:`\lambda_{ij}` which can be interpreted as the (expected) fraction of the population in region i that commutes to region j within one day. In contrast to the instant and detailed mobility approach, the time points and the number of transitions between two regions are stochastic.
 
-The mobility can contain a different scale of complexity.  One option is the "instant" mobility scheme, where we implement two daily exchanges of commuters that occur instantaneously, at the beginning of the day and after half a day. With this approach,
-commuters can change their infection state during the half-day stay. Theres also another more "detailed" mobility scheme, where travel times and stay durations are considered; see Zunker et al. (2024) for more details.
-
-Basicallly, the graph simulation consists of two phases:
-
-1. **Advance the Simulation:**
-   
-   - Each node progresses independently according to its model.
-
-2. **Exchange of Population:**
-   
-   - Individuals are exchanged between nodes along the graph edges.
-   - The number of exchanged individuals is determined by coefficients.
-   - Number of daily commuters may include time-dependent damping factors, similar to the dampings used in contact matrices.
-   - While located in another node, the individuals can change their infection state. Therefore, we need to estimate the infection state of the commuters at the time of the return.
 
 How to: Set up a graph and run a graph simulation
 -------------------------------------------------
-
-Henrik How to for normal graph
-
-Julia adds for stochastic
 
 The graph simulation couples multiple simulation instances representing different geographic regions via a graph-based approach. In this example, a compartment model based on ODEs (ODE-SECIR) is used for each region. The simulation proceeds by advancing each region independently and then exchanging portions of the population between regions along the graph edges.
 
@@ -153,6 +134,24 @@ The following steps detail how to configure and execute a graph simulation:
            g.add_node(1002, model_group2, t0);
            g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
            g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
+
+    For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as edge type for the graph. The rates or mibility coefficients can be set as follows:
+
+    .. code-block:: cpp
+
+        mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> graph;
+        graph.add_node(1001, model_group1, t0);
+        graph.add_node(1002, model_group2, t0);
+
+        auto transition_rates = mio::MobilityCoefficients(model.populations.numel());
+
+        for (auto compartment = mio::Index<mio::osecir::InfectionState>(0); compartment < model.populations.size<mio::osecir::InfectionState>(); compartment++) {
+            auto coeff_idx = model.populations.get_flat_index({mio::AgeGroup(0), compartment});
+            transition_rates.get_baseline()[coeff_idx] = 0.01;
+        }
+
+        graph.add_edge(0, 1, std::move(transition_rates));
+        graph.add_edge(1, 0, std::move(transition_rates));
 
 5. **Initialize and Advance the Mobility Simulation:**
 
