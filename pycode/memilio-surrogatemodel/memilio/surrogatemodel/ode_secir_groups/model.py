@@ -190,20 +190,21 @@ def prepare_data_classic(data):
     # Calculate split inidces
     split_indices = calc_split_index(n)
 
+    # Flattening all inputs
+    inputs = flat_input(data["inputs"])
+    labels = data["labels"]
+    cmatrix = flat_input(data["contact_matrix"])
+    dampdays = data["damping_day"]
+
     # Splitting the data
     compinputs_train, compinputs_valid, compinputs_test = tf.split(
-        data["inputs"], split_indices, 0)
+        inputs, split_indices, 0)
     labels_train, labels_valid, labels_test = tf.split(
-        data["labels"], split_indices, 0)
+        labels, split_indices, 0)
     cmatrix_train, cmatrix_valid, cmatrix_test = tf.split(
-        data["contact_matrix"], split_indices, 0)
+        cmatrix, split_indices, 0)
     dampdays_train, dampdays_valid, dampdays_test = tf.split(
-        data("damping_day"), split_indices, 0)
-
-    # Reshaping the matrix input
-    cmatrix_train = flat_input(tf.stack(cmatrix_train))
-    cmatrix_valid = flat_input(tf.stack(cmatrix_valid))
-    cmatrix_test = flat_input(tf.stack(cmatrix_test))
+        dampdays, split_indices, 0)
 
     # Combining the ingredients to one input object
     inputs_train = tf.concat(
@@ -501,8 +502,8 @@ if __name__ == "__main__":
     hidden_layers = 3
     neurons_in_hidden_layer = 512
     activation_function = 'relu'
-    modelname = "LSTM"
-    modeltype = "timeseries"  # or "classic"
+    modelname = "Dense"
+    modeltype = "classic"  # or "classic"
 
     model_parameters = (label_width, number_age_groups, number_compartments,
                         hidden_layers, neurons_in_hidden_layer, activation_function, modelname)
