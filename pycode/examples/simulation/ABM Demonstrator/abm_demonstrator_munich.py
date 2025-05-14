@@ -338,6 +338,7 @@ def assign_infection_states(model, t0, exposed_pct, infected_no_symptoms_pct, in
                     (np.exp(parameters.loc[param_string2].value +
                      (parameters.loc[param_string2].dev**2)/2.) / 4.)
                 shift_rate = np.minimum(shift_rate1, shift_rate2)
+            # shift = False
             person.add_new_infection(Infection(
                 model, person, VirusVariant.Wildtype, t0, abm.InfectionState(infection_state), False, shift, shift_rate), t0)
 
@@ -654,10 +655,27 @@ def create_home_mapping(map):
     return map
 
 
+def write_time_to_file(sim_nums, init_times, sim_times, output_times, file):
+    with open(file, 'w') as f:
+        line = "Sim_num,init,simulation,output"
+        f.write(line)
+        f.write('\n')
+        for i in range(len(sim_nums)):
+            line = f"{sim_nums[i]},{init_times[i]},{sim_times[i]},{output_times[i]}"
+            f.write(line)
+            f.write('\n')
+    f.close()
+
+
 def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
     local_outbreak = False
+    # Timing for initialization, simulation and output writing
+    total_init_time = 0.0
+    total_simulation_time = 0.0
+    total_output_time = 0.0
+    start_init = time.time()
     # set seed for initial infection states
     np.random.seed(sim_num)
     # starting time point
@@ -668,7 +686,6 @@ def run_abm_simulation(sim_num):
     sim = abm.Simulation(t0, num_age_groups)
     # set seeds for simulation
     abm.set_seeds(sim.model, sim_num)
-    start_init = time.time()
     # initialize model
     abm.initialize_model(sim.model, input_path + 'persons.csv', os.path.join(
         input_path, 'hospitals.csv'), os.path.join(
@@ -693,17 +710,17 @@ def run_abm_simulation(sim_num):
     # sim.model.add_infection_rate_damping(
     #     abm.TimePoint(abm.days(5).seconds), 0.2)
     # add closure for work, event, shop and school locations at day 5
-    sim.model.add_location_closure(abm.TimePoint(
-        abm.days(5).seconds), abm.LocationType.Work, 1.0)
-    sim.model.add_location_closure(abm.TimePoint(
-        abm.days(5).seconds), abm.LocationType.School, 1.0)
-    sim.model.add_location_closure(abm.TimePoint(
-        abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0)
-    sim.model.add_location_closure(abm.TimePoint(
-        abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0)
+    # sim.model.add_location_closure(abm.TimePoint(
+    #     abm.days(5).seconds), abm.LocationType.Work, 1.0)
+    # sim.model.add_location_closure(abm.TimePoint(
+    #     abm.days(5).seconds), abm.LocationType.School, 1.0)
+    # sim.model.add_location_closure(abm.TimePoint(
+    #     abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0)
+    # sim.model.add_location_closure(abm.TimePoint(
+    #     abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0)
     end_init = time.time()
     print(f'Time for model initialization: {end_init - start_init} seconds')
-
+    total_init_time += (end_init - start_init)
     # map locations to wastewater areas
     start_map = time.time()
     tan_map = map_traffic_cell_to_wastewater_area(os.path.join(
@@ -713,6 +730,7 @@ def run_abm_simulation(sim_num):
     end_map = time.time()
     print(
         f'Time for mapping locations to TAN areas: {end_map - start_map} seconds')
+    total_output_time += end_map - start_map
 
     start_locs = []
     # specify starting locations if local outbreak should be simulated
@@ -724,6 +742,7 @@ def run_abm_simulation(sim_num):
         end_home_map = time.time()
         print(
             f'Time for creating outbreak loc list: {end_home_map - start_home_map} seconds')
+        total_init_time += (end_home_map - start_home_map)
 
     # assign initial infection states according to distribution
     start_assign = time.time()
@@ -732,6 +751,7 @@ def run_abm_simulation(sim_num):
     end_assign = time.time()
     print(
         f'Time for assigning infection state: {end_assign - start_assign} seconds')
+    total_init_time += (end_assign - start_assign)
 
     # initialize tan wastewater ids for all locations
     start_ww_init = time.time()
@@ -740,6 +760,10 @@ def run_abm_simulation(sim_num):
     end_ww_init = time.time()
     print(
         f'Time for initializing TAN areas for all locations: {end_ww_init - start_ww_init} seconds')
+    total_init_time += (end_ww_init - start_ww_init)
+    # write size per location
+    abm.write_size_per_location(os.path.join(
+        output_path, str(sim_num) + '_size_per_loc.txt'), sim.model)
     # output object
     history = History()
     start_advance = time.time()
@@ -748,18 +772,21 @@ def run_abm_simulation(sim_num):
     end_advance = time.time()
     print(
         f'Time for advancing simulation: {end_advance - start_advance} seconds')
+    total_simulation_time += (end_advance - start_advance)
     # write infection paths per agent to file
     start_o1 = time.time()
     abm.save_infection_paths(os.path.join(
         output_path, str(sim_num) + '_infection_paths.txt'), sim.model, tmax)
     end_o1 = time.time()
     print(f'Time writing infection paths txt: {end_o1 - start_o1} seconds')
+    total_output_time += (end_o1 - start_o1)
     # write compartment size per time step to file
     start_o2 = time.time()
     abm.save_comp_output(os.path.join(
         output_path, str(sim_num) + '_comps.csv'), sim.model, history)
     end_o2 = time.time()
     print(f'Time writing comps csv: {end_o2 - start_o2} seconds')
+    total_output_time += (end_o2 - start_o2)
     # # write results to h5 file v1. The file has two data sets for every AgentId which are:
     # # - LocationId at every time step
     # # - Time since transmission at every time step
@@ -768,6 +795,7 @@ def run_abm_simulation(sim_num):
     #     output_path, str(sim_num) + '_output_v1.h5'), history)
     # end_h5_v1 = time.time()
     # print(f'Time to write v1 output h5: {end_h5_v1 - start_h5_v1} seconds')
+    # total_output_time += (end_h5_v1 - start_h5_v1)
 
     # # write results to h5 file v2. The file has three data sets for every AgentId which are:
     # # - Time since transmission at change points. Even indices are the change time point
@@ -779,6 +807,7 @@ def run_abm_simulation(sim_num):
     #     output_path, str(sim_num) + '_output_v2.h5'), history)
     # end_h5_v2 = time.time()
     # print(f'Time to write v2 output h5: {end_h5_v2 - start_h5_v2} seconds')
+    # total_output_time += (end_h5_v2 - start_h5_v2)
 
     # # write results to h5 file v3. The file has one group with two datasets:
     # # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
@@ -788,6 +817,7 @@ def run_abm_simulation(sim_num):
     #     output_path, str(sim_num) + '_output_v3.h5'), history)
     # end_h5_v3 = time.time()
     # print(f'Time to write v3 output h5: {end_h5_v3 - start_h5_v3} seconds')
+    # total_output_time += (end_h5_v3 - start_h5_v3)
 
     # write results to h5 file v4. The file has one group with two datasets:
     # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
@@ -798,6 +828,7 @@ def run_abm_simulation(sim_num):
         output_path, str(sim_num) + '_output_v4.h5'), history)
     end_h5_v4 = time.time()
     print(f'Time to write v4 output h5: {end_h5_v4 - start_h5_v4} seconds')
+    total_output_time += (end_h5_v4 - start_h5_v4)
 
     # write results to h5 file v4. The file has one group with two datasets:
     # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
@@ -807,8 +838,9 @@ def run_abm_simulation(sim_num):
         output_path, str(sim_num) + '_output_v5.h5'), history)
     end_h5_v5 = time.time()
     print(f'Time to write v5 output h5: {end_h5_v5 - start_h5_v5} seconds')
-
+    total_output_time += (end_h5_v5 - start_h5_v5)
     print('done')
+    return (sim_num, total_init_time, total_simulation_time, total_output_time)
 
 
 if __name__ == "__main__":
@@ -818,5 +850,15 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
     # set LogLevel
     mio.abm.set_log_level_warn()
-    for i in range(0, 1):
-        run_abm_simulation(i, **args.__dict__)
+    sim_nums = []
+    init_times = []
+    sim_times = []
+    output_times = []
+    for i in range(0, 10):
+        o = run_abm_simulation(i, **args.__dict__)
+        sim_nums.append(o[0])
+        init_times.append(o[1])
+        sim_times.append(o[2])
+        output_times.append(o[3])
+    write_time_to_file(sim_nums, init_times, sim_times, output_times,
+                       sys.path[0] + '/output/timings/90days/timings.txt')

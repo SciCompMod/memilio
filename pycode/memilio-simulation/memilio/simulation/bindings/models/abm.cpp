@@ -1045,6 +1045,41 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
     write_mapping_to_file(outfile, loc_area_mapping);
 }
 
+void write_size_per_location(std::string out_file, mio::abm::Model& model)
+{
+    std::map<std::string, size_t> size_per_loc;
+    // Count number of assigned persons for each location
+    for (auto& a : model.get_persons()) {
+        for (auto& loc_id : a.get_assigned_locations()) {
+            auto& loc = model.get_location(loc_id);
+            if (loc_id != mio::abm::LocationId::invalid_id() && loc.get_type() != mio::abm::LocationType::Cemetery) {
+                std::string loc_string =
+                    "0" + std::to_string(static_cast<int>(loc.get_type())) + std::to_string(loc.get_id().get());
+                auto string_iter = size_per_loc.find(loc_string);
+                if (string_iter == size_per_loc.end()) {
+                    size_per_loc.insert({loc_string, 1});
+                }
+                else {
+                    size_per_loc[loc_string] += 1;
+                }
+            }
+        }
+    }
+    //write map to file
+    auto file = fopen(out_file.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", out_file);
+    }
+    else {
+        for (auto it = size_per_loc.begin(); it != size_per_loc.end(); it++) {
+            fprintf(file, "%s", (it->first).c_str());
+            fprintf(file, " %d", int(it->second));
+            fprintf(file, "\n");
+        }
+        fclose(file);
+    }
+}
+
 PYBIND11_MODULE(_simulation_abm, m)
 {
     pymio::iterable_enum<mio::abm::InfectionState>(m, "InfectionState")
@@ -1430,6 +1465,7 @@ PYBIND11_MODULE(_simulation_abm, m)
     m.def("save_infection_paths", &write_infection_paths, py::return_value_policy::reference_internal);
     m.def("save_comp_output", &write_compartments, py::return_value_policy::reference_internal);
     m.def("set_wastewater_ids", &set_wastewater_ids, py::return_value_policy::reference_internal);
+    m.def("write_size_per_location", &write_size_per_location, py::return_value_policy::reference_internal);
 
 #ifdef MEMILIO_HAS_HDF5
     m.def(
