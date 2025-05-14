@@ -1,4 +1,22 @@
-
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Carlotta Gerstein
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef ODESEIRMETAPOP_PARAMETERS_H
 #define ODESEIRMETAPOP_PARAMETERS_H
 
@@ -18,8 +36,8 @@ namespace oseirmetapop
 {
 
 /****************************************************
- * Define Parameters of the SEIR model with mobility *
- ****************************************************/
+* Define Parameters of the SEIR model with mobility *
+****************************************************/
 
 /**
  * @brief Probability of getting infected from a contact.
@@ -38,7 +56,7 @@ struct TransmissionProbabilityOnContact {
 };
 
 /**
- * @brief the latent time in day unit
+ * @brief The latent time in day unit.
  */
 template <typename FP = ScalarType>
 struct TimeExposed {
@@ -70,8 +88,9 @@ struct TimeInfected {
 };
 
 /**
-     * @brief The contact patterns within the society are modelled using a ContactMatrix.
-     */
+ * @brief The contact patterns within the society are modelled using a 
+ * ContactMatrix.
+ */
 template <typename FP = ScalarType>
 struct ContactPatterns {
     using Type = UncertainContactMatrix<FP>;
@@ -86,7 +105,9 @@ struct ContactPatterns {
 };
 
 /**
- * @brief The contact patterns between different Region%s are modelled using a ContactMatrix.
+ * @brief The commuting patterns between different Region%s are modelled using a ContactMatrix of size n_regions x n_regions.
+ * Each entry of the matrix represents the fraction of individuals commuting from one Region to another. The diagonal corresponds 
+ * to the fraction of individuals staying in their Region.
  */
 template <typename FP = ScalarType>
 struct CommutingStrengths {
@@ -101,6 +122,11 @@ struct CommutingStrengths {
     }
 };
 
+/**
+ * @brief The number of individuals in each Region and AgeGroup if commuting was applied.
+ * Computed as the sum of the number of individuals staying in their Region and the number of individuals commuting to this Region 
+ * minus the number of individuals commuting from this Region.
+ */
 template <typename FP = ScalarType>
 struct PopulationAfterCommuting {
     using Type = Populations<FP, Region, AgeGroup>;
@@ -119,7 +145,7 @@ using ParametersBase = ParameterSet<TransmissionProbabilityOnContact<FP>, TimeEx
                                     ContactPatterns<FP>, CommutingStrengths<FP>, PopulationAfterCommuting<FP>>;
 
 /**
- * @brief Parameters of SEIR model.
+ * @brief Parameters of the SEIR metapopulation model.
  */
 template <typename FP = ScalarType>
 class Parameters : public ParametersBase<FP>
@@ -144,7 +170,6 @@ public:
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
-     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
      *
      * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
      *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
@@ -153,7 +178,7 @@ public:
      *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
      *            may often be necessary to have set meaningful values.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     * @return Returns true if one ore more constraints were corrected, false otherwise.  
      */
     bool apply_constraints()
     {
@@ -279,7 +304,7 @@ private:
 
 public:
     /**
-     * deserialize an object of this class.
+     * @brief Deserialize an object of this class.
      * @see mio::deserialize
      */
     template <class IOContext>

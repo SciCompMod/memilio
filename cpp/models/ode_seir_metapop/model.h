@@ -1,4 +1,22 @@
-
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Carlotta Gerstein, Martin J. Kuehn, Henrik Zunker
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef ODESEIRMETAPOP_MODEL_H
 #define ODESEIRMETAPOP_MODEL_H
 
@@ -21,13 +39,16 @@ namespace oseirmetapop
 {
 
 /********************
-    * define the model *
-    ********************/
+* define the model *
+********************/
 
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed>,
                        Flow<InfectionState::Exposed, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
+/**
+ * @brief The Model holds the Parameters and the initial Populations and defines the ordinary differential equations.
+ */
 template <typename FP = ScalarType>
 class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, Region, AgeGroup, InfectionState>,
                                Parameters<FP>, Flows>
@@ -40,12 +61,24 @@ public:
     using typename Base::ParameterSet;
     using typename Base::Populations;
 
+    /**
+     * @brief Create a Model with the given number of Region%s and AgeGroups.
+     * @param[in] num_regions The number of Region%s.
+     * @param[in] num_agegroups The number of AgeGroup%s.
+     */
     Model(int num_regions, int num_agegroups)
         : Base(Populations({Region(num_regions), AgeGroup(num_agegroups), InfectionState::Count}),
                ParameterSet(Region(num_regions), AgeGroup(num_agegroups)))
     {
     }
 
+    /**
+     * @brief Compute the values of the flows between compartments at a given time. 
+     * @param[in] pop The current population by #InfectionState, AgeGroup and Region.
+     * @param[in] y The current population by #InfectionState, AgeGroup and Region.
+     * @param[in] t The current time.
+     * @param[in, out] flows The computed flows between compartments.
+     */
     void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
@@ -110,8 +143,8 @@ public:
 
     /**
     *@brief Computes the reproduction number at a given index time of the Model output obtained by the Simulation.
-    *@param t_idx The index time at which the reproduction number is computed.
-    *@param y The TimeSeries obtained from the Model Simulation.
+    *@param[in] t_idx The index time at which the reproduction number is computed.
+    *@param[in] y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided index time.
     */
     IOResult<ScalarType> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y)
@@ -193,8 +226,8 @@ public:
 
     /**
     *@brief Computes the reproduction number for all time points of the Model output obtained by the Simulation.
-    *@param y The TimeSeries obtained from the Model Simulation.
-    *@returns vector containing all reproduction numbers
+    *@param[in] y The TimeSeries obtained from the Model Simulation.
+    *@returns Vector containing all reproduction numbers
     */
     Eigen::VectorXd get_reproduction_numbers(const mio::TimeSeries<ScalarType>& y)
     {
@@ -206,6 +239,10 @@ public:
         return temp;
     }
 
+    /**
+     * @brief Set the CommutingStrengths matrix and update the PopulationAfterCommuting.
+     * @param[in] commuting_strengths The matrix containing the fractions of the commuting population between Region%s.
+     */
     void set_commuting_strengths(const Eigen::MatrixXd& commuting_strengths)
     {
         auto& commuting_strengths_param =
@@ -237,6 +274,11 @@ public:
         this->parameters.template get<PopulationAfterCommuting<FP>>() = population_after_commuting;
     }
 
+    /**
+     * @brief Set the CommutingStrengths matrix without data.
+     * This function sets the CommutingStrengths matrix to the identity matrix, which corresponds to no commuting between Region%s.
+     * This prevents division by zero but does not produce meaningful results.
+     */
     void set_commuting_strengths()
     {
         auto number_regions = (size_t)this->parameters.get_num_regions();

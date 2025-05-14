@@ -42,7 +42,16 @@ and the epidemiological parameters, e.g.:
     model.parameters.set<mio::oseirmetapop::TimeInfected<>>(8.097612257);
     model.parameters.set<mio::oseirmetapop::TransmissionProbabilityOnContact<>>(0.07333);
 
-Construct an ``Eigen::MatrixXd`` of size :math:`n_{regions} \times n_{regions}` satisfying the sum of each row equal to 1.0, e.g.:
+Construct an ``Eigen::MatrixXd`` of size :math:`n_{regions} \times n_{regions}` which describes the fraction of individuals commuting from one region to another. The matrix should satify the sum of each row equal to 1.0, e.g.:
 .. code-block:: cpp
     Eigen::MatrixXd mobility_data_commuter(3, 3);
     mobility_data_commuter << 0.4, 0.3, 0.3, 0.2, 0.7, 0.1, 0.4, 0.1, 0.5;
+
+Set the commuting strengths matrix via the ``set_commuting_strengths`` method to ensure that the population after commuting is correctly updated:
+.. code-block:: cpp
+    
+    model.set_commuting_strengths(mobility_data_commuter);
+
+Finally, to run the simulation from `t0` to `tmax` with a time step of `dt`, use the following command:
+.. code-block:: cpp
+    simulate(t0, tmax, dt, model);
