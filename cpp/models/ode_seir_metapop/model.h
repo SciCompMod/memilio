@@ -27,11 +27,7 @@
 #include "models/ode_seir_metapop/regions.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
-
-GCC_CLANG_DIAGNOSTIC(push)
-GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
-#include <Eigen/Dense>
-GCC_CLANG_DIAGNOSTIC(pop)
+#include "memilio/compartments/simulation.h"
 
 namespace mio
 {
