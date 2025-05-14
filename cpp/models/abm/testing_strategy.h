@@ -146,7 +146,7 @@ public:
             .add("start_date", m_start_date)
             .add("end_date", m_end_date)
             .add("test_params", m_test_parameters)
-            .add("probability", m_probability)
+            .add("probability", m_probability);
     }
 
 private:
@@ -209,13 +209,6 @@ public:
     {
         add_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
     }
-
-    /**
-     * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
-     * changes the activity status for each TestingScheme accordingly.
-     * @param t TimePoint to check the activity status of each TestingScheme.
-     */
-    void update_activity_status(const TimePoint t);
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person.
