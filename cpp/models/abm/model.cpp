@@ -126,6 +126,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                     if(!m_testing_strategy.run_strategy_and_check_if_entry_allowed(personal_rng, person, target_location, t)){
                         return false;
                     }
+                    
 
                     // update worn mask to target location's requirements
                     if (target_location.is_mask_required()) {
@@ -190,7 +191,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // skip the trip if the performed TestingStrategy is positive
-        if (m_testing_strategy.run_strategy_and_check_if_entry_allowed(personal_rng, person, target_location, t)) {
+        if (!m_testing_strategy.run_strategy_and_check_if_entry_allowed(personal_rng, person, target_location, t)) {
             continue;
         }
         // all requirements are met, move to target location
