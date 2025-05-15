@@ -22,8 +22,8 @@
 
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/logging.h"
-#include "ode_secirvvs/model.h"
-#include "ode_secirvvs/infection_state.h"
+#include "models/ode_secirvvs/model.h"
+#include "models/ode_secirvvs/infection_state.h"
 
 #include <assert.h>
 

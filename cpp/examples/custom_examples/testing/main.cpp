@@ -169,84 +169,94 @@ void print_matrix(const std::string& label, const Eigen::MatrixXd& m) {
 }
 
 int main() {
-    // Example 1: Age-Specific Contact Reduction
-    {
-        // 3 age groups: children, adults, elderly
-        Eigen::VectorXd groups(3);
-        groups << 1.0, 0.5, 0.2; // Full effect on children, half on adults, 20% on elderly
+    // // Example 1: Age-Specific Contact Reduction
+    // {
+    //     // 3 age groups: children, adults, elderly
+    //     Eigen::VectorXd groups(3);
+    //     groups << 1.0, 0.5, 0.2; // Full effect on children, half on adults, 20% on elderly
         
-        DampingSampling school_closure(
-            UniformDistribution<double>(0.4, 0.6), // 40-60% effectiveness
-            DampingLevel(0), DampingType(0), SimulationTime(0.0),
-            {0}, // Apply to first contact matrix
-            groups
-        );
+    // DampingSampling school_closure(
+    //     UniformDistribution<double>(std::uniform_real_distribution<double>(0.4, 0.6)),
+    //     DampingLevel(0), DampingType(0), SimulationTime(0.0),
+    //     {0}, groups);
 
-        std::vector<SquareDampings> contact_matrices(1, SquareDampings(3));
+    // std::vector<SquareDampings> contact_matrices(1, SquareDampings(3));
+
+    // auto matrix_func = static_cast<decltype(make_contact_damping_matrix)*>(&make_contact_damping_matrix);
+    // apply_dampings(contact_matrices, std::vector<DampingSampling>{school_closure}, matrix_func);
+
+    //     DampingSampling school_closure(
+    //         UniformDistribution<double>(0.4, 0.6), // 40-60% effectiveness
+    //         DampingLevel(0), DampingType(0), SimulationTime(0.0),
+    //         {0}, // Apply to first contact matrix
+    //         groups
+    //     );
+
+    //     std::vector<SquareDampings> contact_matrices(1, SquareDampings(3));
         
-        // Apply with mean value (50%)
-        apply_dampings(contact_matrices, {school_closure}, make_contact_damping_matrix);
+    //     // Apply with mean value (50%)
+    //     apply_dampings(contact_matrices, {school_closure}, make_contact_damping_matrix);
         
-        std::cout << "=== Example 1: Age-Specific Contact Reduction ===\n";
-        std::cout << "Mean estimate (50% base reduction):\n";
-        print_matrix("School contacts", contact_matrices[0].get_matrix_at(0.0));
+    //     std::cout << "=== Example 1: Age-Specific Contact Reduction ===\n";
+    //     std::cout << "Mean estimate (50% base reduction):\n";
+    //     print_matrix("School contacts", contact_matrices[0].get_matrix_at(0.0));
 
-        // Draw actual sample (e.g., 55%)
-        school_closure.draw_sample();
-        contact_matrices[0].clear();
-        apply_dampings(contact_matrices, {school_closure}, make_contact_damping_matrix);
+    //     // Draw actual sample (e.g., 55%)
+    //     school_closure.draw_sample();
+    //     contact_matrices[0].clear();
+    //     apply_dampings(contact_matrices, {school_closure}, make_contact_damping_matrix);
         
-        std::cout << "Sampled value (" << (100*school_closure.get_value()) << "% effectiveness):\n";
-        print_matrix("Adjusted school contacts", contact_matrices[0].get_matrix_at(0.0));
-    }
+    //     std::cout << "Sampled value (" << (100*school_closure.get_value()) << "% effectiveness):\n";
+    //     print_matrix("Adjusted school contacts", contact_matrices[0].get_matrix_at(0.0));
+    // }
 
-    // Example 2: Combined Mobility Restrictions
-    {
-        // Fixed travel restriction: 30% reduction
-        SquareDampings fixed_travel_ban(3);
-        fixed_travel_ban.add(0.3, DampingLevel(0), DampingType(1), SimulationTime(0.0));
+    // // Example 2: Combined Mobility Restrictions
+    // {
+    //     // Fixed travel restriction: 30% reduction
+    //     SquareDampings fixed_travel_ban(3);
+    //     fixed_travel_ban.add(0.3, DampingLevel(0), DampingType(1), SimulationTime(0.0));
 
-        // Random mobility reduction: 0-20% additional reduction
-        DampingSampling mobility_sampling(
-            UniformDistribution<double>(0.0, 0.2),
-            DampingLevel(1), DampingType(1), SimulationTime(7.0),
-            {0}, // Same matrix index
-            Eigen::VectorXd::Constant(3, 1.0)
-        );
+    //     // Random mobility reduction: 0-20% additional reduction
+    //     DampingSampling mobility_sampling(
+    //         UniformDistribution<double>(0.0, 0.2),
+    //         DampingLevel(1), DampingType(1), SimulationTime(7.0),
+    //         {0}, // Same matrix index
+    //         Eigen::VectorXd::Constant(3, 1.0)
+    //     );
 
-        std::vector<SquareDampings> mobility_matrices(1, SquareDampings(3));
-        mobility_matrices[0] = fixed_travel_ban;
+    //     std::vector<SquareDampings> mobility_matrices(1, SquareDampings(3));
+    //     mobility_matrices[0] = fixed_travel_ban;
 
-        // Apply random component
-        mobility_sampling.draw_sample();
-        apply_dampings(mobility_matrices, {mobility_sampling}, make_contact_damping_matrix);
+    //     // Apply random component
+    //     mobility_sampling.draw_sample();
+    //     apply_dampings(mobility_matrices, {mobility_sampling}, make_contact_damping_matrix);
 
-        std::cout << "\n=== Example 2: Layered Mobility Reductions ===\n";
-        std::cout << "Fixed reduction: 30%\n";
-        std::cout << "Sampled additional reduction: " << (100*mobility_sampling.get_value()) << "%\n";
-        print_matrix("Total mobility damping", mobility_matrices[0].get_matrix_at(7.0));
-    }
+    //     std::cout << "\n=== Example 2: Layered Mobility Reductions ===\n";
+    //     std::cout << "Fixed reduction: 30%\n";
+    //     std::cout << "Sampled additional reduction: " << (100*mobility_sampling.get_value()) << "%\n";
+    //     print_matrix("Total mobility damping", mobility_matrices[0].get_matrix_at(7.0));
+    // }
 
-    // Example 3: Time-Dependent Workplace Restrictions
-    {
-        DampingSampling work_schedule(
-            NormalDistribution<double>(0.4, 0.1), // 40% ±10% reduction
-            DampingLevel(0), DampingType(2), SimulationTime(14.0),
-            {1}, // Second contact matrix (workplaces)
-            (Eigen::VectorXd(3) << 0.1, 0.8, 0.4).finished() // Strong effect on adults
-        );
+    // // Example 3: Time-Dependent Workplace Restrictions
+    // {
+    //     DampingSampling work_schedule(
+    //         NormalDistribution<double>(0.4, 0.1), // 40% ±10% reduction
+    //         DampingLevel(0), DampingType(2), SimulationTime(14.0),
+    //         {1}, // Second contact matrix (workplaces)
+    //         (Eigen::VectorXd(3) << 0.1, 0.8, 0.4).finished() // Strong effect on adults
+    //     );
 
-        std::vector<SquareDampings> workplaces(2, SquareDampings(3)); // [0]=schools, [1]=workplaces
+    //     std::vector<SquareDampings> workplaces(2, SquareDampings(3)); // [0]=schools, [1]=workplaces
         
-        // Sample and apply
-        work_schedule.draw_sample();
-        apply_dampings(workplaces, {work_schedule}, make_contact_damping_matrix);
+    //     // Sample and apply
+    //     work_schedule.draw_sample();
+    //     apply_dampings(workplaces, {work_schedule}, make_contact_damping_matrix);
 
-        std::cout << "\n=== Example 3: Workplace Restrictions ===\n";
-        std::cout << "Sampled workplace reduction: " << (100*work_schedule.get_value()) << "%\n";
-        print_matrix("Work contact matrix", workplaces[1].get_matrix_at(14.0));
-        print_matrix("School contact matrix (unaffected)", workplaces[0].get_matrix_at(14.0));
-    }
+    //     std::cout << "\n=== Example 3: Workplace Restrictions ===\n";
+    //     std::cout << "Sampled workplace reduction: " << (100*work_schedule.get_value()) << "%\n";
+    //     print_matrix("Work contact matrix", workplaces[1].get_matrix_at(14.0));
+    //     print_matrix("School contact matrix (unaffected)", workplaces[0].get_matrix_at(14.0));
+    // }
 
     return 0;
 }

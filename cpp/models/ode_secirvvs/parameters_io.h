@@ -24,7 +24,7 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "ode_secirvvs/model.h"
+#include "models/ode_secirvvs/model.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"

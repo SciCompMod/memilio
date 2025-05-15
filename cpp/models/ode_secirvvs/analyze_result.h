@@ -20,8 +20,8 @@
 #ifndef MIO_ODE_SECIRVVS_ANALYZE_RESULT_H
 #define MIO_ODE_SECIRVVS_ANALYZE_RESULT_H
 
-#include "ode_secirvvs/infection_state.h"
-#include "ode_secirvvs/parameters.h"
+#include "models/ode_secirvvs/infection_state.h"
+#include "models/ode_secirvvs/parameters.h"
 
 namespace mio
 {
