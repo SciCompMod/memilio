@@ -35,37 +35,26 @@ TEST_F(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
 
     mio::abm::TimePoint t{0};
     // Initialize testing criteria with no age group or infection state set.
-    auto testing_criteria = mio::abm::TestingCriteria();
+    auto testing_criteria_empty = mio::abm::TestingCriteria();
     // Empty criteria should evaluate to true.
-    EXPECT_EQ(testing_criteria.evaluate(person, t), true);
+    EXPECT_EQ(testing_criteria_empty.evaluate(person, t), true);
 
     // Add infection states to the criteria.
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
-
-    // Add an incorrect age group and evaluate.
-    testing_criteria.add_age_group(age_group_35_to_59);
+    std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
+                                                                   mio::abm::InfectionState::InfectedNoSymptoms};
+    std::vector<mio::AgeGroup> test_age_groups         = {age_group_35_to_59};
+    auto testing_criteria_false_ag = mio::abm::TestingCriteria(test_age_groups, test_infection_states);
     // Age group mismatch, should evaluate to false.
-    EXPECT_EQ(testing_criteria.evaluate(person, t), false);
-    // Remove the incorrect age group and evaluate again.
-    testing_criteria.remove_age_group(age_group_35_to_59);
-    EXPECT_EQ(testing_criteria.evaluate(person, t), true);
-    // Remove the infection state and check evaluation.
-    testing_criteria.remove_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    EXPECT_EQ(testing_criteria.evaluate(person, t), false);
+    EXPECT_EQ(testing_criteria_false_ag.evaluate(person, t), false);
 
-    // Add the infection state again and verify.
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
+    // Add age groups to the criteria.
+    test_age_groups.push_back(age_group_15_to_34);
+    auto testing_criteria_right_ag = mio::abm::TestingCriteria(test_age_groups, test_infection_states);
+    // Now it should evaluate to true.
+    EXPECT_EQ(testing_criteria_right_ag.evaluate(person, t), true);
 
-    // Test equality of testing criteria.
-    auto testing_criteria_manual = mio::abm::TestingCriteria(
-        std::vector<mio::AgeGroup>({age_group_15_to_34}),
-        std::vector<mio::abm::InfectionState>({mio::abm::InfectionState::InfectedNoSymptoms}));
-    EXPECT_EQ(testing_criteria == testing_criteria_manual, false);
-    // Modify manual criteria to match.
-    testing_criteria_manual.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    testing_criteria_manual.remove_age_group(age_group_15_to_34);
-    EXPECT_EQ(testing_criteria == testing_criteria_manual, true);
+    // Test inequality of testing criteria.
+    EXPECT_EQ(testing_criteria_right_ag == testing_criteria_false_ag, false);
 }
 
 using TestTestingScheme = RandomNumberTest;

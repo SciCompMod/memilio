@@ -70,7 +70,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     for (auto& person : model.get_persons()) {
         auto prng = mio::abm::PersonalRandomNumberGenerator(person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
-        auto pct_infected = 0.00;
+        auto pct_infected = 0.05;
         if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
             auto state = mio::abm::InfectionState(
                 mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
@@ -113,7 +113,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
 
     model.get_testing_strategy().add_testing_scheme_location_type(
         {mio::abm::LocationType::School, mio::abm::LocationType::Work,
-         mio::abm::LocationType::SocialEvent, mio::abm::LocationType::BasicsShop},
+         mio::abm::LocationType::SocialEvent, mio::abm::LocationType::Home},
         mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
                                 mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
@@ -164,5 +164,6 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
