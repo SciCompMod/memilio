@@ -1,8 +1,39 @@
 tape_->create
-tape_->create_callback_object
+tape_->create_callback_object:
+    std::vector<tape_callback> tape_callbacks;
+        template <class ext_fcn_data_type, typename FCN_PARAMETERS>
+        inline ext_fcn_data_type *create_callback_object(const FCN_PARAMETERS &parameters) {
+            const reference_constructor_wrapper<FCN_PARAMETERS> ref_wrapper(parameters);
+            tape_callback external_fcn;
+            tape_callbacks.push_back(external_fcn);
+            tape_callbacks.back()._position() = get_position();
+            ext_fcn_data_type *userdata = ref_wrapper.template create<ext_fcn_data_type>();
+            tape_callbacks.back()._userdata() = userdata;
+            userdata->set_tape(this);
+            return userdata;
+        }
+        template <class ext_fcn_data_type>
+        inline ext_fcn_data_type *create_callback_object() {
+            void *dummy;
+            return create_callback_object<ext_fcn_data_type>(dummy);
+        }
+        template <class ext_fcn_data_type, typename FCN_CALLBACK>
+        inline void insert_callback(FCN_CALLBACK callback_handler, ext_fcn_data_type *D) {
+            if (tape_callbacks.back()._userdata() == D) {
+                tape_callbacks.back().template set_callback<ext_fcn_data_type>(callback_handler);
+                tape_callbacks.back()._position() = get_position();
+                AD_TAPE_INT tmp = 0;
+                _get_insert_ptr(1, tmp)->arg = 0;
+            } else {
+                throw ad::exception::create<std::runtime_error>("please always insert most recently created external function object.");
+            }
+        }
 tape_->get_allocated_tape_memory_size
 tape_->get_checkpoint_memory_size
-tape_->get_position
+tape_->get_position:
+    inline position_t get_position() const {
+        return position_t(static_cast<AD_TAPE_INT>(_topOfStack - _stack), _progvarcounter);
+    }
 tape_->get_tape_memory_size
 tape_->insert_callback
 tape_->interpret_adjoint
@@ -10,11 +41,57 @@ tape_->interpret_adjoint_and_reset_to
 tape_->interpret_adjoint_and_zero_adjoints_from_to
 tape_->interpret_adjoint_and_zero_adjoints_to
 tape_->interpret_adjoint_from
-tape_->interpret_adjoint_from_to
-tape_->interpret_adjoint_to
-tape_->is_active
-tape_->register_output_variable
-tape_->register_variable
+tape_->interpret_adjoint_from_to(const position_t &from, const position_t &to)
+tape_->interpret_adjoint_to(const position_t &to)
+tape_->is_active()
+tape_->register_output_variable:
+    template<class DATA_HANDLER_1 >
+    inline void register_output_variable(ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> &x) {
+        x = static_cast<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> >(1.0) * x;
+    }
+    template<class DATA_HANDLER_1 >
+    inline void register_output_variable(ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> *x, const size_t n) {
+        if (n == 0) return;
+        for (size_t i = 0; i < n; ++i)
+            x[i] = static_cast<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> >(1.0) * x[i];
+    }
+    template<class DATA_HANDLER_1 >
+    inline void register_output_variable(std::vector<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> > &x) {
+        for (size_t i = 0; i < x.size(); i++)
+            register_output_variable(x[i]);
+    }
+tape_->register_variable:
+    template<class DATA_HANDLER_1 >
+    inline void register_variable(ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> &x) {
+        AD_TAPE_INT new_tape_index;
+        TAPE_ENTRY *cur = _get_insert_ptr(1, new_tape_index);
+        (void) cur;
+        cur->arg = 0;
+        DATA_HANDLER_1 &data = const_cast<DATA_HANDLER_1 &>(x._data());
+        data.register_variable(new_tape_index, this);
+    }
+    template<class DATA_HANDLER_1 >
+    inline void register_variable(ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> &x, const typename ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1>::VALUE_TYPE &v) {
+        x = v;
+        register_variable(x);
+    }
+    template<class DATA_HANDLER_1 >
+    inline void register_variable(std::vector<ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> > &x) {
+        for (size_t i = 0; i < x.size(); i++)
+            register_variable(x[i]);
+    }
+    template<class DATA_HANDLER_1 >
+    inline void register_variable(ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> *x, const int n, const typename ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1>::VALUE_TYPE *const v) {
+        if (n == 0) return;
+        for (int i = 0; i < n; ++i)
+            register_variable(x[i], v[i]);
+    }
+    template<class DATA_HANDLER_1 >
+    inline void register_variable(ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1> *x, const size_t n) {
+        if (n == 0) return;
+        for (size_t i = 0; i < n; ++i)
+            register_variable(x[i]);
+    }
 tape_->remove
 tape_->reset
 tape_->reset_to

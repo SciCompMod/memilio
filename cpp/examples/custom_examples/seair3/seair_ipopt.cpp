@@ -1,4 +1,4 @@
-#include "header.h"
+#include "seair_ipopt.h"
 
 #include <iostream>
 #include <cassert>
@@ -16,82 +16,11 @@
 #include "settings.h"
 #include "IpIpoptData.hpp"
 
-#include "models/ode_seair/model.h"
-#include "memilio/compartments/simulation.h"
-
-template <typename FP>
-FP Seair_NLP::objective_function(const FP* parameters, std::size_t n) {
-    FP objective = 0.0;
-    for (std::size_t controlIndex = 0; controlIndex < settings_.numControlIntervals; controlIndex++){
-        FP socialDistancing = parameters[controlIndex * settings_.numControls + 0];
-        FP quarantined      = parameters[controlIndex * settings_.numControls + 1];
-        FP testingRate      = parameters[controlIndex * settings_.numControls + 2];
-
-        objective += settings_.pcResolution * (-socialDistancing - quarantined + 0.1 * testingRate);
-    }
-    return objective;
-}
-
-template <typename FP>
-void Seair_NLP::constraint_functions(const FP* parameters, std::size_t n, FP* constraints, std::size_t m) {
-
-    std::vector<FP> grid(settings_.numIntervals + 1);
-    FP grid_spacing = (settings_.tmax - settings_.t0) / settings_.numIntervals;
-    for (std::size_t i = 0; i < grid.size(); ++i) {
-        grid[i] = settings_.t0 + i * grid_spacing;
-    }
-
-    mio::oseair::Model<FP> model;
-    set_initial_values(model, settings_);
-
-    for (std::size_t controlIndex = 0; controlIndex < settings_.numControlIntervals; controlIndex++){
-
-        FP socialDistancing = parameters[controlIndex * settings_.numControls + 0];
-        FP quarantined      = parameters[controlIndex * settings_.numControls + 1];
-        FP testingRate      = parameters[controlIndex * settings_.numControls + 2];
-        model.parameters.template get<mio::oseair::SocialDistancing<FP>>() = socialDistancing;
-        model.parameters.template get<mio::oseair::Quarantined<FP>>()      = quarantined;
-        model.parameters.template get<mio::oseair::TestingRate<FP>>()      = testingRate;
-
-        for (std::size_t i = 0; i < settings_.pcResolution ; i++)
-        {
-            std::size_t gridindex = controlIndex * settings_.pcResolution + i;
-            auto result = mio::simulate<FP, mio::oseair::Model<FP>>(grid[gridindex], grid[gridindex + 1], settings_.dt, model);
-
-            for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
-                model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
-            }
-            constraints[gridindex] = result.get_last_value()[(int)mio::oseair::InfectionState::Infected];
-        }
-    }
-}
-
-template <typename FP>
-void set_initial_values(mio::oseair::Model<FP>& model, const ProblemSettings& settings)
-{
-    using IS = mio::oseair::InfectionState;
-
-    const std::array<std::pair<IS, FP>, 6> init = {{
-        {IS::Susceptible,  0.9977558755803503 * settings.N},
-        {IS::Exposed,      0.0003451395725394549 * settings.N},
-        {IS::Asymptomatic, 0.00037846880968213874 * settings.N},
-        {IS::Infected,     337072.0},
-        {IS::Recovered,    17448.0},
-        {IS::Dead,         9619.0}
-    }};
-
-    for (const auto& [state, value] : init) {
-        model.populations[{mio::Index<IS>(state)}] = value;
-    }
-}
-
-constexpr Ipopt::Number INF = 1e19;
-
 Seair_NLP::Seair_NLP(const ProblemSettings& settings) : 
     settings_(settings)
 {
     n_ = settings_.numControlIntervals * settings_.numControls;
-    m_ = settings_.numIntervals * settings_.numPathConstraints;
+    m_ = settings_.numPathConstraints + settings_.numTerminalConstraints;
 
     nnz_jac_g_ = n_ * m_;
     bool use_hessian_approximation = false;
@@ -116,14 +45,21 @@ Seair_NLP::Seair_NLP(const ProblemSettings& settings) :
     }
 
     // Fill g_l_ and g_u_ from path constraint bounds
-    for (int interval = 0; interval < settings_.numIntervals; interval++){
-        for (int constraintIndex = 0; constraintIndex < settings_.numPathConstraints; ++constraintIndex) {
-            int idx = interval * settings_.numPathConstraints + constraintIndex;
+    for (int constraintIndex = 0; constraintIndex < settings_.numPathConstraints; ++constraintIndex) {
+        int idx = constraintIndex;
+        const auto& bounds = settings_.pathConstraints[constraintIndex].second;
+        g_l_[idx] = bounds.first;
+        g_u_[idx] = bounds.second;
+    }
 
-            const auto& bounds = settings_.pathConstraints[constraintIndex].second;
-            g_l_[idx] = bounds.first;
-            g_u_[idx] = bounds.second;
-        }
+    // Fill g_l_ and g_u_ from terminal constraint bounds
+    int terminalOffset = settings_.numPathConstraints;
+    for (int i = 0; i < settings_.numTerminalConstraints; ++i) {
+        int idx = terminalOffset + i;
+
+        const auto& bounds = settings_.terminalConstraints[i].second;
+        g_l_[idx] = bounds.first;
+        g_u_[idx] = bounds.second;
     }
     
     if (!ad::ga1s<double>::global_tape) {
@@ -211,7 +147,7 @@ bool Seair_NLP::eval_f(
 ) {
     assert(n == n_);
 
-    obj_value = objective_function(x, static_cast<std::size_t>(n));
+    obj_value = objective_function(settings_, x, n);
 
     return true;
 }
@@ -225,7 +161,7 @@ bool Seair_NLP::eval_g(
 ) {
     assert(n == n_ && m == m_);
 
-    constraint_functions(x, static_cast<std::size_t>(n), g, static_cast<std::size_t>(m));
+    constraint_functions(settings_, x, n, g, m);
 
     return true;
 }
@@ -259,7 +195,7 @@ bool Seair_NLP::eval_jac_g(
 ) {
     assert(n == n_ && m == m_ && nele_jac == nnz_jac_g_);
 
-    bool use_forward_mode = true;
+    bool use_forward_mode = false;
 
     if (use_forward_mode) {
         // Use forward mode for Jacobian evaluation
@@ -308,7 +244,7 @@ bool Seair_NLP::eval_grad_f_forward(
         #pragma omp for
         for (Ipopt::Index column = 0; column < n; ++column) {
             ad::derivative(x_ad[column]) = 1.0;
-            ad_t obj_ad = objective_function(x_ad.data(), static_cast<std::size_t>(n));
+            ad_t obj_ad = objective_function(settings_, x_ad.data(), n);
             grad_f[column] = ad::derivative(obj_ad);
             ad::derivative(x_ad[column]) = 0.0;
         }
@@ -336,7 +272,7 @@ bool Seair_NLP::eval_grad_f_reverse(
         tape_->register_variable(x_ad[i]);
     }
 
-    ad_t obj_ad = objective_function(x_ad.data(), static_cast<std::size_t>(n));
+    ad_t obj_ad = objective_function(settings_, x_ad.data(), n);
     tape_->register_output_variable(obj_ad);
     ad::derivative(obj_ad) = 1.0;
 
@@ -387,8 +323,7 @@ bool Seair_NLP::eval_jac_g_forward(
             #pragma omp for
             for (Ipopt::Index column = 0; column < n; ++column) {
                 ad::derivative(x_ad[column]) = 1.0;
-                constraint_functions(x_ad.data(), static_cast<std::size_t>(n),
-                                     g_ad.data(), static_cast<std::size_t>(m));
+                constraint_functions(settings_, x_ad.data(), n, g_ad.data(), m);
 
                 for (Ipopt::Index row = 0; row < m; ++row) {
                     values[column * m + row] = ad::derivative(g_ad[row]);
@@ -437,7 +372,7 @@ bool Seair_NLP::eval_jac_g_reverse(
         }
 
         std::vector<ad_t> g_ad(m);
-        constraint_functions(x_ad.data(), n, g_ad.data(), m);
+        constraint_functions(settings_, x_ad.data(), n, g_ad.data(), m);
 
         for (Ipopt::Index i = 0; i < m; ++i) {
             tape_->register_output_variable(g_ad[i]);
@@ -467,122 +402,15 @@ void Seair_NLP::finalize_solution(
     const Ipopt::Number* lambda,
     Ipopt::Number obj_value,
     const Ipopt::IpoptData* ip_data,
-    Ipopt::IpoptCalculatedQuantities* /*ip_cq*/
+    Ipopt::IpoptCalculatedQuantities* ip_cq
 ) {
-    // Print the final objective value
     std::cout << "Final Objective Value: " << obj_value << "\n";
-
-    // // Print the final solution for x
-    // std::cout << "Optimal Solution (x): \n";
-    // for (Ipopt::Index i = 0; i < n; ++i) {
-    //     std::cout << "x[" << i << "] = " << x[i] << "\n";
-    // }
-
-    // // Optionally, print the constraints values and multipliers
-    // std::cout << "Constraints (g): \n";
-    // for (Ipopt::Index i = 0; i < m; ++i) {
-    //     std::cout << "g[" << i << "] = " << g[i] << "\n";
-    // }
 
     if (ip_data) {
         std::cout << "Number of iterations: " << ip_data->iter_count() << "\n";
     }
 
-    // Load the Data in a .csv file
+    save_solution(settings_, n, x, z_L, z_U, m, g, lambda, obj_value);
 
-    std::ofstream outputFile("output.csv");
-    if (!outputFile.is_open()) {
-        std::cerr << "Error opening output file!" << std::endl;
-        return;
-    }
-
-    // YOu can use settings_. to acces the settings
-    
-    outputFile << "Time,Infected,Recovered,Dead,Susceptible,Exposed,Asymptomatic\n";
-    mio::oseair::Model<double> model;
-    set_initial_values(model, settings_);
-
-    std::vector<double> grid(settings_.numIntervals + 1);
-    double grid_spacing = (settings_.tmax - settings_.t0) / settings_.numIntervals;
-    for (std::size_t i = 0; i < grid.size(); ++i) {
-        grid[i] = settings_.t0 + i * grid_spacing;
-    }
-
-    for (std::size_t controlIndex = 0; controlIndex < settings_.numControlIntervals; controlIndex++){
-        double socialDistancing = x[controlIndex * settings_.numControls + 0];
-        double quarantined      = x[controlIndex * settings_.numControls + 1];
-        double testingRate      = x[controlIndex * settings_.numControls + 2];
-        model.parameters.template get<mio::oseair::SocialDistancing<double>>() = socialDistancing;
-        model.parameters.template get<mio::oseair::Quarantined<double>>()      = quarantined;
-        model.parameters.template get<mio::oseair::TestingRate<double>>()      = testingRate;
-
-        for (std::size_t i = 0; i < settings_.pcResolution ; i++)
-        {
-            std::size_t gridindex = controlIndex * settings_.pcResolution + i;
-            auto result = mio::simulate<double, mio::oseair::Model<double>>(grid[gridindex], grid[gridindex + 1], settings_.dt, model);
-
-            for (int j = 0; j < (int)mio::oseair::InfectionState::Count; ++j) {
-                model.populations[mio::oseair::InfectionState(j)] = result.get_last_value()[j];
-            }
-            outputFile << grid[gridindex] << "," << result.get_last_value()[(int)mio::oseair::InfectionState::Infected] << ","
-                       << result.get_last_value()[(int)mio::oseair::InfectionState::Recovered] << ","
-                       << result.get_last_value()[(int)mio::oseair::InfectionState::Dead] << ","
-                       << result.get_last_value()[(int)mio::oseair::InfectionState::Susceptible] << ","
-                       << result.get_last_value()[(int)mio::oseair::InfectionState::Exposed] << ","
-                       << result.get_last_value()[(int)mio::oseair::InfectionState::Asymptomatic] << "\n";
-        }
-    }
-    outputFile.close();
-    std::cout << "Solution saved to output.csv\n";
-
-
-    // Next save the optimal control values
-    std::ofstream controlFile("control.csv");
-    if (!controlFile.is_open()) {
-        std::cerr << "Error opening control output file!" << std::endl;
-        return;
-    }
-    controlFile << "ControlInterval,SocialDistancing,Quarantined,TestingRate\n";
-    controlFile << std::scientific << std::setprecision(6);
-
-    for (std::size_t controlIndex = 0; controlIndex < settings_.numControlIntervals; controlIndex++){
-        controlFile << controlIndex << "," 
-                    << x[controlIndex * settings_.numControls + 0] << ","
-                    << x[controlIndex * settings_.numControls + 1] << ","
-                    << x[controlIndex * settings_.numControls + 2] << "\n";
-    }
-    controlFile.close();
-    std::cout << "Control values saved to control.csv\n";
-
-
+    return;
 }
-
-
-// struct ProblemSettings {
-//     int numControlIntervals = 20;
-//     int pcResolution = 5;
-//     double t0 = 0.0;
-//     double tmax = 100.0;
-//     int numIntervals = numControlIntervals * pcResolution;
-
-//     int integratorResolution = 5;
-//     double dt = (tmax - t0) / (numIntervals * integratorResolution);
-
-//     double N = 327'167'434; // total US population
-
-//     // Vector of control bounds: { name, {lower, upper} }
-//     std::vector<std::pair<std::string, std::pair<double, double>>> controlBounds = {
-//         {"SocialDistancing", {0.05, 0.5}},
-//         {"Quarantined",      {0.01, 0.3}},
-//         {"TestingRate",      {0.15, 0.3}}
-//     };
-    
-//     // Vector of path constraint bounds: { name, {lower, upper} }
-//     std::vector<std::pair<std::string, std::pair<double, double>>> pathConstraints = {
-//         {"Infections", {0.0, 1'000'000}}
-//     };
-
-//     int numControls = static_cast<int>(controlBounds.size());
-//     int numPathConstraints = static_cast<int>(pathConstraints.size());
-// };
-

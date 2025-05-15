@@ -1,10 +1,10 @@
 #pragma once
 
+#include <vector>
+
 #include "IpTNLP.hpp"
 #include "ad/ad.hpp"
 #include "settings.h"
-
-#include <vector>
 
 class Seair_NLP : public Ipopt::TNLP {
 public:
@@ -16,12 +16,6 @@ public:
     Seair_NLP& operator=(Seair_NLP&&) = delete;
     
     ~Seair_NLP() override;
-
-    template <typename FP>
-    FP objective_function(const FP* parameters, std::size_t n);
-    
-    template <typename FP>
-    void constraint_functions(const FP* parameters, std::size_t n, FP* constraints, std::size_t m);
 
     bool get_nlp_info(
         Ipopt::Index& n,
