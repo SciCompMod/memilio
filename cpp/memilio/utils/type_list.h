@@ -20,9 +20,9 @@
 #ifndef MIO_UTILS_TYPE_LIST_H_
 #define MIO_UTILS_TYPE_LIST_H_
 
-#include "memilio/io/io.h"
-#include "memilio/utils/index.h"
+#include "memilio/utils/metaprogramming.h"
 
+#include <cstddef>
 #include <tuple>
 #include <type_traits>
 #include <utility>

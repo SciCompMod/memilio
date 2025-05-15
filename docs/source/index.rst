@@ -50,6 +50,7 @@ Contents
    cpp/installation
    cpp/model_usage
    cpp/model_creation
+   cpp/performance_timers
 
 .. toctree::
    :maxdepth: 2
