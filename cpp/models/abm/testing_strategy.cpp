@@ -59,6 +59,7 @@ TestingScheme::TestingScheme(const TestingCriteria& testing_criteria, TimeSpan v
     , m_test_parameters(test_parameters)
     , m_probability(probability)
 {
+    assert(start_date <= end_date && "Start date must be before or equal to end date");
 }
 
 bool TestingScheme::operator==(const TestingScheme& other) const
@@ -132,29 +133,38 @@ bool TestingStrategy::run_strategy_and_check_if_entry_allowed(PersonalRandomNumb
 {
     // Early return if no scheme defined for this location or type
     auto loc_id = location.get_id().get();
-    if (loc_id >= m_testing_schemes_at_location_id.size() && (size_t)location.get_type() >= m_testing_schemes_at_location_type.size()) {
-        return true; // No scheme defined for this location or type, since the vector is not resized
+    auto loc_type = static_cast<size_t>(location.get_type());
+    
+    bool has_id_schemes = loc_id < m_testing_schemes_at_location_id.size() && 
+                         !m_testing_schemes_at_location_id[loc_id].schemes.empty();
+    
+    bool has_type_schemes = loc_type < m_testing_schemes_at_location_type.size() &&
+                           !m_testing_schemes_at_location_type[loc_type].schemes.empty();
+    
+    if (!has_id_schemes && !has_type_schemes) {
+        return true; // No applicable schemes
     }
-    if (m_testing_schemes_at_location_id[location.get_id().get()].schemes.empty() &&
-        m_testing_schemes_at_location_type[(size_t)location.get_type()].schemes.empty()) {
-        return true;
-    }
- 
     
     bool entry_allowed = true;
     // Check schemes for specific location id
-    for (const auto& scheme : m_testing_schemes_at_location_id.at(location.get_id().get()).schemes) {
-        if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
-            entry_allowed = false; // Deny entry 
+    if (has_id_schemes) {
+        for (const auto& scheme : m_testing_schemes_at_location_id[loc_id].schemes) {
+            if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
+                entry_allowed = false; // Deny entry 
+            }
         }
     }
+    
     // Check schemes for location type
-    for (const auto& scheme : m_testing_schemes_at_location_type.at((size_t)location.get_type()).schemes) {
-        if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
-            entry_allowed = false; // Deny entry 
+    if (has_type_schemes) {
+        for (const auto& scheme : m_testing_schemes_at_location_type[loc_type].schemes) {
+            if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
+                entry_allowed = false; // Deny entry 
+            }
         }
     }
-    return location.get_type() != LocationType::Home ? entry_allowed : true; // Home is always allowed, else deny entry if test is positive or not compliant
+    
+    return location.get_type() != LocationType::Home ? entry_allowed : true;
 }
 
 } // namespace abm
