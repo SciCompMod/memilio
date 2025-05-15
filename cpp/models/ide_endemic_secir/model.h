@@ -249,8 +249,6 @@ private:
                                1)}; ///< TimeSeries containing points of time and the corresponding portion
     // of people in defined #IndectionState%s.
 
-    ScalarType m_reproductionnumber_c; ///< The control Reproduction number
-
     ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the TransitionDistributions.
     ScalarType m_calctime{
         0}; ///< A ScalarType wit he calc time determined by the support max of the transition distributions.
@@ -265,8 +263,10 @@ private:
     std::vector<std::vector<ScalarType>> m_transitiondistributions_derivative{std::vector<std::vector<ScalarType>>(
         (int)InfectionTransition::Count, std::vector<ScalarType>(1, 0.))}; ///> A Vector containing
     // the approximated derivative for all TransitionDistributions for all necessary time points.
-    std::vector<ScalarType>
-        m_meaninfectivity; ///> a vector containing the approximated mean infectivity for all time points.
+    std::vector<ScalarType> m_meaninfectivity{
+        std::vector<ScalarType>(1, 0.)}; ///> a vector containing the approximated mean infectivity for all time points.
+
+    ScalarType m_reproductionnumber_c; ///< The control Reproduction number
 
     std::vector<ScalarType> m_equilibriumnormalizedcompartments{
         std::vector<ScalarType>(int(InfectionState::Count), 0.)}; ///< Vector containing

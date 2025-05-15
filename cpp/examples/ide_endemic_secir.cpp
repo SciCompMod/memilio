@@ -18,8 +18,8 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 300;
-    ScalarType dt   = 1;
+    ScalarType tmax = 100;
+    ScalarType dt   = 1.;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -29,13 +29,13 @@ int main()
 
     Vec vec_init(num_states);
 
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::Susceptible)]        = 15000.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::Exposed)]            = 0.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedNoSymptoms)] = 0.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSymptoms)]   = 40.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSevere)]     = 0.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedCritical)]   = 0.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::Recovered)]          = 0.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::Susceptible)]        = 9950.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::Exposed)]            = 25.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedNoSymptoms)] = 15.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSymptoms)]   = 8.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSevere)]     = 1.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedCritical)]   = 1.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::Recovered)]          = 5.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::Dead)]               = 0.;
 
     init.add_time_point(0, vec_init);
@@ -44,13 +44,13 @@ int main()
 
     //Set working parameters
 
-    // mio::ExponentialSurvivalFunction exp(7.0);
-    // mio::StateAgeFunctionWrapper delaydistribution(exp);
-    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
-
-    mio::SmootherCosine smoothcos(8.0);
-    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    mio::ExponentialSurvivalFunction exp(3.0);
+    mio::StateAgeFunctionWrapper delaydistribution(exp);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
+
+    // mio::SmootherCosine smoothcos(9.0);
+    // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
     model.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
 
@@ -61,10 +61,10 @@ int main()
     model.parameters.get<mio::endisecir::TransitionProbabilities>()                          = vec_prob;
 
     mio::ContactMatrixGroup contact_matrix                  = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 15.));
+    contact_matrix[0]                                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::endisecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::ConstantFunction constant(0.3);
+    mio::ConstantFunction constant(0.1);
     mio::StateAgeFunctionWrapper constant_prob(constant);
 
     model.parameters.get<mio::endisecir::TransmissionProbabilityOnContact>() = constant_prob;
@@ -76,7 +76,7 @@ int main()
     model.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
     model.parameters.set<mio::endisecir::NaturalBirthRate>(5e-3);
-    model.parameters.set<mio::endisecir::NaturalDeathRate>(2e-3);
+    model.parameters.set<mio::endisecir::NaturalDeathRate>(3e-3);
 
     // start the simulation.
     mio::endisecir::Simulation sim(model, dt);
