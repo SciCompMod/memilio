@@ -81,6 +81,9 @@ bool TestingScheme::run_scheme_and_check_if_test_positive(PersonalRandomNumberGe
     if(!is_active(t)) { // If the scheme is not active, do nothing
         return false;
     }
+    if(!person.is_compliant(rng, InterventionType::Testing)) { // If the person is not compliant with the testing intervention
+        return true; // Assume positive test result
+    }
     auto test_result = person.get_test_result(m_test_parameters.type);
     // If the agent has a test result valid until now, use the result directly
     if ((test_result.time_of_testing > TimePoint(std::numeric_limits<int>::min())) &&
@@ -110,11 +113,17 @@ TestingStrategy::TestingStrategy(const std::vector<LocalStrategy>& location_to_s
 
 void TestingStrategy::add_testing_scheme_location_id(const LocationId& loc_id, const TestingScheme& scheme)
 {
+    if(loc_id.get() >= m_testing_schemes_at_location_id.size()) {
+        m_testing_schemes_at_location_id.resize(loc_id.get() + 1);
+    }
     m_testing_schemes_at_location_id[loc_id.get()].schemes.push_back(scheme);
 }
 
 void TestingStrategy::add_testing_scheme_location_type(const LocationType& loc_type, const TestingScheme& scheme)
 {
+    if((size_t)loc_type >= m_testing_schemes_at_location_type.size()) {
+        m_testing_schemes_at_location_type.resize((size_t)loc_type + 1);
+    }
     m_testing_schemes_at_location_type[(size_t)loc_type].schemes.push_back(scheme);
 }
 
@@ -122,29 +131,30 @@ void TestingStrategy::add_testing_scheme_location_type(const LocationType& loc_t
 bool TestingStrategy::run_strategy_and_check_if_entry_allowed(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t)
 {
     // Early return if no scheme defined for this location or type
+    auto loc_id = location.get_id().get();
+    if (loc_id >= m_testing_schemes_at_location_id.size() && (size_t)location.get_type() >= m_testing_schemes_at_location_type.size()) {
+        return true; // No scheme defined for this location or type, since the vector is not resized
+    }
     if (m_testing_schemes_at_location_id[location.get_id().get()].schemes.empty() &&
         m_testing_schemes_at_location_type[(size_t)location.get_type()].schemes.empty()) {
         return true;
     }
-    // Early return if the person is not compliant with the testing intervention
-    if (!person.is_compliant(rng, InterventionType::Testing)) {
-        return false;
-    }
-
-    bool test_positive = false;
+ 
+    
+    bool entry_allowed = true;
     // Check schemes for specific location id
     for (const auto& scheme : m_testing_schemes_at_location_id.at(location.get_id().get()).schemes) {
         if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
-            test_positive = true; // Deny entry immediately
+            entry_allowed = false; // Deny entry 
         }
     }
     // Check schemes for location type
     for (const auto& scheme : m_testing_schemes_at_location_type.at((size_t)location.get_type()).schemes) {
         if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
-             test_positive = true; // Deny entry immediately
+            entry_allowed = false; // Deny entry 
         }
     }
-    return !test_positive; // Allow entry if no positive test
+    return location.get_type() != LocationType::Home ? entry_allowed : true; // Home is always allowed, else deny entry if test is positive or not compliant
 }
 
 } // namespace abm
