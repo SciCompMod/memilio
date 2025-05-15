@@ -76,13 +76,16 @@ bool TestingScheme::is_active(TimePoint t) const
     return (m_start_date <= t && t < m_end_date);
 }
 
-void TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
+bool TestingScheme::run_scheme_and_check_if_test_positive(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
+    if(!is_active(t)) { // If the scheme is not active, do nothing
+        return false;
+    }
     auto test_result = person.get_test_result(m_test_parameters.type);
     // If the agent has a test result valid until now, use the result directly
     if ((test_result.time_of_testing > TimePoint(std::numeric_limits<int>::min())) &&
         (test_result.time_of_testing + m_validity_period >= t)) {
-            return
+            return test_result.result; // If the test is positive, the entry is not allowed, and vice versa
     }
     // Otherwise, the time_of_testing in the past (i.e. the agent has already performed it).
     if (m_testing_criteria.evaluate(person, t - m_test_parameters.required_time)) {
@@ -90,45 +93,58 @@ void TestingScheme::run_scheme(PersonalRandomNumberGenerator& rng, Person& perso
         if (random < m_probability) {
             bool result = person.get_tested(rng, t - m_test_parameters.required_time, m_test_parameters);
             person.add_test_result(t, m_test_parameters.type, result);
+            return result; // If the test is positive, the entry is not allowed, and vice versa
         }
     }
+    // If the test is not performed, the entry is allowed
+    return false;
 }
 
-TestingStrategy::TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_map)
-    : m_location_to_schemes_map(location_to_schemes_map.begin(), location_to_schemes_map.end())
+TestingStrategy::TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_id,
+                                 const std::vector<LocalStrategy>& location_to_schemes_type)
+    : m_testing_schemes_at_location_id(location_to_schemes_id.begin(), location_to_schemes_id.end())
+    , m_testing_schemes_at_location_type(location_to_schemes_type.begin(), location_to_schemes_type.end())
 {
 }
 
-void TestingStrategy::add_testing_scheme(const LocationType& loc_type, const LocationId& loc_id,
-                                         const TestingScheme& scheme)
+
+void TestingStrategy::add_testing_scheme_location_id(const LocationId& loc_id, const TestingScheme& scheme)
 {
-    auto iter_schemes =
-        std::find_if(m_location_to_schemes_map.begin(), m_location_to_schemes_map.end(), [&](const auto& p) {
-            return p.type == loc_type && p.id == loc_id;
-        });
-    if (iter_schemes == m_location_to_schemes_map.end()) {
-        //no schemes for this location yet, add a new list with one scheme
-        m_location_to_schemes_map.push_back({loc_type, loc_id, std::vector<TestingScheme>(1, scheme)});
+    m_testing_schemes_at_location_id[loc_id.get()].schemes.push_back(scheme);
+}
+
+void TestingStrategy::add_testing_scheme_location_type(const LocationType& loc_type, const TestingScheme& scheme)
+{
+    m_testing_schemes_at_location_type[(size_t)loc_type].schemes.push_back(scheme);
+}
+
+
+bool TestingStrategy::run_strategy_and_check_if_entry_allowed(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t)
+{
+    // Early return if no scheme defined for this location or type
+    if (m_testing_schemes_at_location_id[location.get_id().get()].schemes.empty() &&
+        m_testing_schemes_at_location_type[(size_t)location.get_type()].schemes.empty()) {
+        return true;
     }
-    else {
-        //add scheme to existing vector if the scheme doesn't exist yet
-        auto& schemes = iter_schemes->schemes;
-        if (std::find(schemes.begin(), schemes.end(), scheme) == schemes.end()) {
-            schemes.push_back(scheme);
+    // Early return if the person is not compliant with the testing intervention
+    if (!person.is_compliant(rng, InterventionType::Testing)) {
+        return false;
+    }
+
+    bool test_positive = false;
+    // Check schemes for specific location id
+    for (const auto& scheme : m_testing_schemes_at_location_id.at(location.get_id().get()).schemes) {
+        if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
+            test_positive = true; // Deny entry immediately
         }
     }
-}
-
-void TestingStrategy::run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location,
-                                   TimePoint t)
-{
-    if (m_testing_schemes_per_location.at(location.get_id().get()).empty()) {
-        return;
+    // Check schemes for location type
+    for (const auto& scheme : m_testing_schemes_at_location_type.at((size_t)location.get_type()).schemes) {
+        if (scheme.run_scheme_and_check_if_test_positive(rng, person, t)) {
+             test_positive = true; // Deny entry immediately
+        }
     }
-
-    for (auto&& scheme : m_testing_schemes_per_location.at(location.get_id().get())) {
-        scheme.run_scheme(rng, person, t)
-    }
+    return !test_positive; // Allow entry if no positive test
 }
 
 } // namespace abm

@@ -122,10 +122,11 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
                         return false;
                     }
-                    // the Person cannot move if the performed TestingStrategy is positive
-                    if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                    // The person cannot move if he has a positive test result
+                    if(!m_testing_strategy.run_strategy_and_check_if_entry_allowed(personal_rng, person, target_location, t)){
                         return false;
                     }
+
                     // update worn mask to target location's requirements
                     if (target_location.is_mask_required()) {
                         // if the current MaskProtection level is lower than required, the Person changes mask
@@ -189,7 +190,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // skip the trip if the performed TestingStrategy is positive
-        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+        if (m_testing_strategy.run_strategy_and_check_if_entry_allowed(personal_rng, person, target_location, t)) {
             continue;
         }
         // all requirements are met, move to target location
@@ -295,8 +296,6 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
 
 void Model::begin_step(TimePoint t, TimeSpan dt)
 {
-    m_testing_strategy.update_activity_status(t);
-
     if (!m_is_local_population_cache_valid) {
         build_compute_local_population_cache();
         m_is_local_population_cache_valid = true;

@@ -135,7 +135,7 @@ public:
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
      */
-    void run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
+    bool run_scheme_and_check_if_test_positive(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -172,14 +172,12 @@ public:
      * A LocalStrategy with id of value LocationId::invalid_id() is used for all Locations with LocationType type.
      */
     struct LocalStrategy {
-        LocationType type;
-        LocationId id;
         std::vector<TestingScheme> schemes;
 
         /// This method is used by the default serialization feature.
         auto default_serialize()
         {
-            return Members("LocalStrategy").add("type", type).add("id", id).add("schemes", schemes);
+            return Members("LocalStrategy").add("schemes", schemes);
         }
     };
 
@@ -188,46 +186,56 @@ public:
      * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_map);
+    explicit TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_id,
+                             const std::vector<LocalStrategy>& location_to_schemes_type);
 
     /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
-     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location for a specific id.
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const LocationId& loc_id, const TestingScheme& scheme);
-
+    void add_testing_scheme_location_id(const LocationId& loc_id,
+                                         const TestingScheme& scheme);
     /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain LocationType.
-     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
-     * @param[in] loc_type LocationId key for TestingScheme to be added.
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_type LocationType key for TestingScheme to add.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
-    {
-        add_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
+    void add_testing_scheme_location_type(const LocationType& loc_type,
+                                         const TestingScheme& scheme);
+
+    /**
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_type Vector of LocationType key for TestingScheme to add.
+     * @param[in] scheme TestingScheme to be added.
+     */
+    void add_testing_scheme_location_type(const std::vector<LocationType>& loc_type,
+                                         const TestingScheme& scheme){
+        for (auto& type : loc_type) {
+            add_testing_scheme_location_type(type, scheme);
+        }
     }
 
     /**
-     * @brief Runs the TestingStrategy and potentially tests a Person.
+     * @brief Runs the TestingStrategy and potentially tests a Person when entering.
+     * @details The TestingStrategy runs the TestingSchemes in the order they are added but first IDs and then types. 
+     * It also decides if one can enter, if there are no positive tests.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      */
-    void run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+    bool run_strategy_and_check_if_entry_allowed(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("TestingStrategy").add("schemes", m_location_to_schemes_map);
+        return Members("TestingStrategy").add("schemes_id", m_testing_schemes_at_location_id).add("schemes_type", m_testing_schemes_at_location_type);
     }
 
 private:
-    std::vector<LocalStrategy> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
-    std::vector<mio::abm::TimePoint> m_testing_scheme_scheduler;
+    std::vector<LocalStrategy> m_testing_schemes_at_location_id; ///< Set of schemes that are checked for testing in specific locations.
+    std::vector<LocalStrategy> m_testing_schemes_at_location_type;
 };
 
 } // namespace abm

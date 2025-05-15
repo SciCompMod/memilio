@@ -129,8 +129,8 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     //                             mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
     for(auto& loc : model.get_locations()) {
-       model.get_testing_strategy().add_testing_scheme(
-        loc.get_type(),loc.get_id(),
+       model.get_testing_strategy().add_testing_scheme_location_id(
+        loc.get_id(),
         mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
                                 mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
     }
