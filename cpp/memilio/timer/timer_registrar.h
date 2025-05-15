@@ -71,14 +71,6 @@ public:
         m_registration_lock.unlock();
     }
 
-    // TODO:
-    // possible change to make managing BasicTimer lifetime easier. responsibilities may clash with add_timer:
-    // BasicTimer& manage_timer(BasicTimer&& new_timer)
-    //     {m_list_of_managed_timers.emplace_back(new_timer); return m_list_of_managed_timers.back();}
-    // (x)or maybe:
-    // BasicTimer& get_managed_timer()
-    //     {m_list_of_managed_timers.emplace_back(BasicTimer{}); return m_list_of_managed_timers.back();}
-
     /// @brief Returns a read only list of all TimerRegistration%s. Can be used to print or evaluate timers.
     const auto& get_register() const
     {
