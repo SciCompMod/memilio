@@ -152,13 +152,12 @@ private:
         }
 
         // check if a person makes a trip
-        bool weekend     = t.is_weekend();
-        size_t num_trips = Base::m_trip_list.num_trips(weekend);
+        size_t num_trips = Base::m_trip_list.num_trips();
 
         for (; Base::m_trip_list.get_current_index() < num_trips &&
-               Base::m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+               Base::m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds();
              Base::m_trip_list.increase_index()) {
-            auto& trip        = Base::m_trip_list.get_next_trip(weekend);
+            auto& trip        = Base::m_trip_list.get_next_trip();
             auto& person      = get_person(trip.person_id);
             auto person_index = Base::get_person_index(trip.person_id);
             auto personal_rng = PersonalRandomNumberGenerator(person);
@@ -192,7 +191,7 @@ private:
             }
             else { //person moves to other world
                 Base::m_activeness_statuses[person_index] = false;
-                person.set_location(trip.destination_type, abm::LocationId::invalid_id(),
+                person.set_location(get_location(trip.destination).get_type(), abm::LocationId::invalid_id(),
                                     std::numeric_limits<int>::max());
                 m_person_buffer.push_back(person_index);
                 m_are_exposure_caches_valid       = false;

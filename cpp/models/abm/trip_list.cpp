@@ -26,43 +26,25 @@ namespace mio
 namespace abm
 {
 
-TripList::TripList()
-    : m_trips_weekday({})
-    , m_trips_weekend({})
-    , m_current_index(0)
+const Trip& TripList::get_next_trip() const
 {
+    return m_trips[m_current_index];
 }
 
-const Trip& TripList::get_next_trip(bool weekend) const
+TimePoint TripList::get_next_trip_time() const
 {
-    return weekend ? m_trips_weekend[m_current_index] : m_trips_weekday[m_current_index];
+    return m_trips[m_current_index].time;
 }
 
-TimePoint TripList::get_next_trip_time(bool weekend) const
-{
-    return weekend ? m_trips_weekend[m_current_index].time : m_trips_weekday[m_current_index].time;
-}
-
-void TripList::use_weekday_trips_on_weekend()
-{
-    m_trips_weekend = m_trips_weekday;
-}
-
-void TripList::add_trip(Trip trip, bool weekend)
+void TripList::add_trips(std::vector<Trip> trip)
 {
     //Trips are sorted by time.
     //Also include the person id in the comparison so different persons can make trips at the same time.
     //The same person can only make one trip at the same time.
-    if (!weekend) {
-        insert_sorted_replace(m_trips_weekday, trip, [](auto& trip1, auto& trip2) {
-            return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
-        });
-    }
-    else {
-        insert_sorted_replace(m_trips_weekend, trip, [](auto& trip1, auto& trip2) {
-            return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
-        });
-    }
+    std::merge(m_trips.begin(), m_trips.end(), trip.begin(), trip.end(), std::back_inserter(m_trips),
+               [](auto& trip1, auto& trip2) {
+                   return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+               });
 }
 
 } // namespace abm
