@@ -671,6 +671,8 @@ def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
     local_outbreak = False
+    max_work_size = 40
+    max_school_size = 45
     # Timing for initialization, simulation and output writing
     total_init_time = 0.0
     total_simulation_time = 0.0
@@ -689,7 +691,7 @@ def run_abm_simulation(sim_num):
     # initialize model
     abm.initialize_model(sim.model, input_path + 'persons.csv', os.path.join(
         input_path, 'hospitals.csv'), os.path.join(
-        output_path, str(sim_num) + '_mapping.txt'))
+        output_path, str(sim_num) + '_mapping.txt'), max_work_size, max_school_size)
 
     # read infection parameters
     parameters = pd.read_csv(os.path.join(
@@ -701,6 +703,7 @@ def run_abm_simulation(sim_num):
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_16_to_34)
     abm.set_AgeGroupGoToWork(sim.model.parameters, age_group_35_to_59)
     # set age groups that go to shop
+    abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_0_to_4)
     abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_5_to_15)
     abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_16_to_34)
     abm.set_AgeGroupGoToShop(sim.model.parameters, age_group_35_to_59)
@@ -861,4 +864,4 @@ if __name__ == "__main__":
         sim_times.append(o[2])
         output_times.append(o[3])
     write_time_to_file(sim_nums, init_times, sim_times, output_times,
-                       sys.path[0] + '/output/timings/90days/timings.txt')
+                       sys.path[0] + '/output/timings.txt')

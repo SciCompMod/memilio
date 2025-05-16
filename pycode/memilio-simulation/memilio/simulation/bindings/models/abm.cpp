@@ -754,7 +754,8 @@ void set_wastewater_ids(std::string mapping_file, mio::abm::Model& model)
     model.set_wastewater_ids(loc_to_tan_id);
 }
 
-void initialize_model(mio::abm::Model& model, std::string person_file, std::string hosp_file, std::string outfile)
+void initialize_model(mio::abm::Model& model, std::string person_file, std::string hosp_file, std::string outfile,
+                      size_t max_work_size, size_t max_school_size)
 {
     // Mapping of ABM locations to traffic areas/cells
     // - each traffic area is mapped to a vector containing strings with LocationType and LocationId
@@ -770,6 +771,9 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
     std::map<std::pair<mio::abm::LocationType, mio::abm::LocationId>, mio::abm::LocationId> hosp_to_icu;
     std::vector<double> hospital_weights;
     std::vector<double> icu_weights;
+    // Mapping of assigned agents to school and work locations
+    std::map<int, std::map<mio::abm::LocationId, size_t>> school_sizes;
+    std::map<int, std::map<mio::abm::LocationId, size_t>> work_sizes;
 
     // Read in hospitals
     const boost::filesystem::path h = hosp_file;
@@ -975,6 +979,8 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
                 // schools with id -1 are individual locations each
                 if (school_id != -1) {
                     school_locations.insert({school_id, school});
+                    // Add school to size map
+                    school_sizes[school_id].insert({school, 1});
                 }
                 std::string loc = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::School)) +
                                   std::to_string(school.get());
@@ -988,6 +994,37 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
             }
             else {
                 school = school_locations[school_id];
+                if (school_sizes[school_id][school] == max_school_size) {
+                    // Check if a new school has to be open or if there still is a school that has capacity
+                    bool found = false;
+                    for (auto const& [key, val] : school_sizes[school_id]) {
+                        if (val < max_school_size) {
+                            found = true;
+                            school_sizes[school_id][key] += 1;
+                            school = key;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        // Create new school
+                        school = model.add_location(mio::abm::LocationType::School);
+                        school_locations.insert({school_id, school});
+                        // Add school to size map
+                        school_sizes[school_id].insert({school, 1});
+                        std::string loc = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::School)) +
+                                          std::to_string(school.get());
+                        auto zone_iter = loc_area_mapping.find(school_zone);
+                        if (zone_iter == loc_area_mapping.end()) {
+                            loc_area_mapping.insert({school_zone, {loc}});
+                        }
+                        else {
+                            loc_area_mapping[school_zone].push_back(loc);
+                        }
+                    }
+                }
+                else {
+                    school_sizes[school_id][school] += 1;
+                }
             }
             // Assign school location to person
             person.set_assigned_location(mio::abm::LocationType::School, school);
@@ -1011,6 +1048,8 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
                 // Locations with id -1 are individual locations each
                 if (work_id != -1) {
                     work_locations.insert({work_id, work});
+                    // Add work to size map
+                    work_sizes[work_id].insert({work, 1});
                 }
                 std::string loc =
                     "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Work)) + std::to_string(work.get());
@@ -1024,6 +1063,37 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
             }
             else {
                 work = work_locations[work_id];
+                if (work_sizes[work_id][work] == max_work_size) {
+                    // Check if a new work has to be opened or if there still is a school that has capacity
+                    bool found = false;
+                    for (auto const& [key, val] : work_sizes[work_id]) {
+                        if (val < max_work_size) {
+                            found = true;
+                            work_sizes[work_id][key] += 1;
+                            work = key;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        // Create new work
+                        work = model.add_location(mio::abm::LocationType::Work);
+                        work_locations.insert({work_id, work});
+                        // Add work to size map
+                        work_sizes[work_id].insert({work, 1});
+                        std::string loc = "0" + std::to_string(static_cast<int>(mio::abm::LocationType::Work)) +
+                                          std::to_string(work.get());
+                        auto zone_iter = loc_area_mapping.find(work_zone);
+                        if (zone_iter == loc_area_mapping.end()) {
+                            loc_area_mapping.insert({work_zone, {loc}});
+                        }
+                        else {
+                            loc_area_mapping[work_zone].push_back(loc);
+                        }
+                    }
+                }
+                else {
+                    work_sizes[work_id][work] += 1;
+                }
             }
             // Assign work location to person
             person.set_assigned_location(mio::abm::LocationType::Work, work);
