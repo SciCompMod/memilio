@@ -112,11 +112,10 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     };
 
     model.get_testing_strategy().add_testing_scheme_location_type(
-        {mio::abm::LocationType::School, mio::abm::LocationType::Work,
-         mio::abm::LocationType::SocialEvent, mio::abm::LocationType::Home},
+        {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+         mio::abm::LocationType::Home},
         mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
                                 mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 }
