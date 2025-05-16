@@ -88,8 +88,7 @@ struct Trip {
             .add("time", time)
             .add("destination", destination)
             .add("model_id", destination_model_id)
-            .add("trip_mode", trip_mode)
-            .add("cells", cells);
+            .add("trip_mode", trip_mode);
     }
 };
 

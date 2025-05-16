@@ -125,9 +125,9 @@ TEST(TestGraphAbm, test_apply_mobility)
     p4.set_assigned_location(event_2.get_type(), event_2.get_id(), event_2.get_model_id());
 
     mio::abm::TripList& trips = model1.get_trip_list();
-    mio::abm::Trip trip1(p3.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id, model1.get_id(),
+    mio::abm::Trip trip1(p3.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_1, model1.get_id(),
                          mio::abm::TransportMode::Unknown, {});
-    mio::abm::Trip trip2(p4.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), home_id, model1.get_id(),
+    mio::abm::Trip trip2(p4.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_2, model2.get_id(),
                          mio::abm::TransportMode::Unknown, {});
 
     auto tripsvec = std::vector<mio::abm::Trip>{trip1, trip2};

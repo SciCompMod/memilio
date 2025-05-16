@@ -350,9 +350,9 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips for persons between assigned locations.
     mio::abm::TripList& data = model.get_trip_list();
-    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), home_id);
-    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), home_id);
-    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), home_id);
+    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id);
+    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
+    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
 
     auto trips = std::vector<mio::abm::Trip>{trip1, trip2, trip3};
     data.add_trips(trips);
@@ -399,28 +399,6 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(work_id), 1);
     EXPECT_EQ(model.get_number_persons(home_id), 1);
     EXPECT_EQ(model.get_number_persons(hospital_id), 1);
-
-    // Move all persons back to their home location to prepare for weekend trips.
-    model.change_location(p1.get_id(), home_id);
-    model.change_location(p3.get_id(), home_id);
-    model.change_location(p2.get_id(), home_id);
-    model.change_location(p5.get_id(), home_id);
-
-    // Update the time to the weekend and reset the trip index.
-    t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
-    model.get_trip_list().reset_index();
-
-    // Evolve the model again to verify the weekend behavior.
-    model.evolve(t, dt);
-
-    EXPECT_EQ(p1.get_location(), work_id);
-    EXPECT_EQ(p2.get_location(), event_id);
-    EXPECT_EQ(p3.get_location(), home_id);
-    EXPECT_EQ(p4.get_location(), home_id);
-    EXPECT_EQ(p5.get_location(), event_id);
-    EXPECT_EQ(model.get_number_persons(event_id), 2);
-    EXPECT_EQ(model.get_number_persons(work_id), 1);
-    EXPECT_EQ(model.get_number_persons(home_id), 2);
 }
 
 #ifndef MEMILIO_ENABLE_OPENMP // TODO: Test can fail with parallel execution of mobility, as the capacity is not taken into account correctly at the moment (c. f. issue #640)
@@ -971,11 +949,11 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     // Using trip list
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, home_id);
-    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, home_id);
-    mio::abm::Trip trip3(p_no_mask.get_id(), t, home_id);
-    mio::abm::Trip trip4(p_no_test.get_id(), t, home_id);
-    mio::abm::Trip trip5(p_no_isolation.get_id(), t, home_id);
+    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id);
+    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id);
+    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id);
+    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id);
+    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id);
     trip_list.add_trips({trip1, trip2, trip3, trip4, trip5});
     model.use_mobility_rules(false);
     model.evolve(t, dt);

@@ -191,8 +191,7 @@ private:
             }
             else { //person moves to other world
                 Base::m_activeness_statuses[person_index] = false;
-                person.set_location(get_location(trip.destination).get_type(), abm::LocationId::invalid_id(),
-                                    std::numeric_limits<int>::max());
+                person.set_location(abm::LocationType::Count, trip.destination, std::numeric_limits<int>::max());
                 m_person_buffer.push_back(person_index);
                 m_are_exposure_caches_valid       = false;
                 m_is_local_population_cache_valid = false;
