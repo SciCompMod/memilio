@@ -164,7 +164,11 @@ bool TestingStrategy::run_strategy_and_check_if_entry_allowed(PersonalRandomNumb
         }
     }
     
-    return location.get_type() != LocationType::Home ? entry_allowed : true;
+    if (location.get_type() == LocationType::Home) {
+        return true;
+    } else {
+        return entry_allowed;
+    }
 }
 
 } // namespace abm
