@@ -611,31 +611,32 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     person.set_assigned_location(mio::abm::LocationType::Work, work_id, model.get_id());
 
     auto validity_period       = mio::abm::days(1);
-    const auto start_date      = mio::abm::TimePoint(20);
-    const auto end_date        = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto start_date      = mio::abm::TimePoint(0) + mio::abm::days(1);
+    const auto end_date        = mio::abm::TimePoint(0) + mio::abm::days(3);
     const auto probability     = 1.0;
     const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, test_time, mio::abm::TestType::Generic};
 
-    auto testing_criteria = mio::abm::TestingCriteria({},{mio::abm::InfectionState::InfectedSymptoms,mio::abm::InfectionState::InfectedNoSymptoms});
+    auto testing_criteria = mio::abm::TestingCriteria(
+        {}, {mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms});
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
     model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
-    EXPECT_EQ(model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
-              true); // no active testing scheme -> person can enter
-    current_time = mio::abm::TimePoint(30);
+    EXPECT_EQ(
+        model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
+        true); // no active testing scheme -> person can enter
+    current_time = mio::abm::TimePoint(0) + mio::abm::days(2);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(5))
+        .Times(testing::Exactly(4))
         .WillOnce(testing::Return(0.7)) // Person complies with testing
         .WillOnce(testing::Return(0.5)) // Probability for testing (is performed)
         .WillOnce(testing::Return(0.4)) // Test result is positive
-        .WillOnce(testing::Return(0.0)) // Draw for isolation compliance (doesn't matter in this test)
-        .WillOnce(
-            testing::Return(0.7)); // Person complies with testing (even though there is not testing strategy left)
-    EXPECT_EQ(model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
-              false); // Testing scheme active and restricts entry
+        .WillOnce(testing::Return(0.0)); // Draw for isolation compliance (doesn't matter in this test)
+    EXPECT_EQ(
+        model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
+        false); // Testing scheme active but person complies with testing
 }
 
 /**

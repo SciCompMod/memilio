@@ -128,7 +128,6 @@ public:
         return m_end_date;
     }
 
-
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
@@ -196,23 +195,21 @@ public:
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme_location_id(const LocationId& loc_id,
-                                         const TestingScheme& scheme);
+    void add_testing_scheme_location_id(const LocationId& loc_id, const TestingScheme& scheme);
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
      * @param[in] loc_type LocationType key for TestingScheme to add.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme_location_type(const LocationType& loc_type,
-                                         const TestingScheme& scheme);
+    void add_testing_scheme_location_type(const LocationType& loc_type, const TestingScheme& scheme);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
      * @param[in] loc_type Vector of LocationType key for TestingScheme to add.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme_location_type(const std::vector<LocationType>& loc_type,
-                                         const TestingScheme& scheme){
+    void add_testing_scheme_location_type(const std::vector<LocationType>& loc_type, const TestingScheme& scheme)
+    {
         for (auto& type : loc_type) {
             add_testing_scheme_location_type(type, scheme);
         }
@@ -227,17 +224,22 @@ public:
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      */
-    bool run_strategy_and_check_if_entry_allowed(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+    bool run_strategy_and_check_if_entry_allowed(PersonalRandomNumberGenerator& rng, Person& person,
+                                                 const Location& location, TimePoint t);
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("TestingStrategy").add("schemes_id", m_testing_schemes_at_location_id).add("schemes_type", m_testing_schemes_at_location_type);
+        return Members("TestingStrategy")
+            .add("schemes_id", m_testing_schemes_at_location_id)
+            .add("schemes_type", m_testing_schemes_at_location_type);
     }
 
 private:
-    std::vector<LocalStrategy> m_testing_schemes_at_location_id; ///< Set of schemes that are checked for testing in specific locations.
-    std::vector<LocalStrategy> m_testing_schemes_at_location_type;
+    std::vector<LocalStrategy>
+        m_testing_schemes_at_location_id; ///< Set of schemes that are checked for testing in specific locations.
+    std::vector<LocalStrategy>
+        m_testing_schemes_at_location_type; ///< Set of schemes that are checked for testing in overall locations types
 };
 
 } // namespace abm

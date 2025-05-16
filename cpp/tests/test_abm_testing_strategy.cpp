@@ -42,7 +42,7 @@ TEST_F(TestTestingCriteria, addRemoveAndEvaluateTestCriteria)
     // Add infection states to the criteria.
     std::vector<mio::abm::InfectionState> test_infection_states = {mio::abm::InfectionState::InfectedSymptoms,
                                                                    mio::abm::InfectionState::InfectedNoSymptoms};
-    std::vector<mio::AgeGroup> test_age_groups         = {age_group_35_to_59};
+    std::vector<mio::AgeGroup> test_age_groups                  = {age_group_35_to_59};
     auto testing_criteria_false_ag = mio::abm::TestingCriteria(test_age_groups, test_infection_states);
     // Age group mismatch, should evaluate to false.
     EXPECT_EQ(testing_criteria_false_ag.evaluate(person, t), false);
@@ -73,8 +73,8 @@ TEST_F(TestTestingScheme, runScheme)
     std::vector<mio::abm::TestingCriteria> testing_criterias = {testing_criteria1};
 
     auto validity_period       = mio::abm::days(1);
-    const auto start_date      = mio::abm::TimePoint(0);
-    const auto end_date        = mio::abm::TimePoint(60 * 60 * 24 * 3);
+    const auto start_date      = mio::abm::TimePoint(0) + mio::abm::seconds(1);
+    const auto end_date        = mio::abm::TimePoint(0) + mio::abm::days(3);
     const auto probability     = 0.8;
     const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(48), mio::abm::TestType::PCR};
 
@@ -90,7 +90,7 @@ TEST_F(TestTestingScheme, runScheme)
     EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(10)), true);
 
     // Deactivate the scheme after the end date.
-    EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200)), false);;
+    EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200)), false);
 
     // Setup a second scheme with different infection states.
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
@@ -112,19 +112,22 @@ TEST_F(TestTestingScheme, runScheme)
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(5))
+        .Times(testing::Exactly(8))
+        .WillOnce(testing::Return(0.1)) // Person 1 compliant to testing
         .WillOnce(testing::Return(0.7)) // Person 1 got test
         .WillOnce(testing::Return(0.7)) // Test is positive
         .WillOnce(testing::Return(0.5)) // Person 1 complies to isolation
+        .WillOnce(testing::Return(0.1)) // Person 2 compliant to testing
         .WillOnce(testing::Return(0.7)) // Person 2 got test
-        .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
+        .WillOnce(testing::Return(0.5)) // Person 2 tested negative and can enter
+        .WillOnce(testing::Return(0.1)); // Person 1 compliant to testing
 
     EXPECT_EQ(testing_scheme1.run_scheme_and_check_if_test_positive(rng_person1, person1, start_date),
-              false); // Person tests and tests positive
+              true); // Person tests and tests positive
     EXPECT_EQ(testing_scheme2.run_scheme_and_check_if_test_positive(rng_person2, person2, start_date),
-              true); // Person tests and tests negative
+              false); // Person tests and tests negative
     EXPECT_EQ(testing_scheme1.run_scheme_and_check_if_test_positive(rng_person1, person1, start_date),
-              false); // Person doesn't test but used the last result (false to enter)
+              true); // Person doesn't test but used the last result (false to enter)
 }
 
 /**
@@ -161,18 +164,22 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly((8)))
+        .Times(testing::Exactly((11)))
         .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
         .WillOnce(testing::Return(0.7)) // Person 1 is tested for scheme 1
         .WillOnce(testing::Return(0.7)) // Test of Person 1 is positive
         .WillOnce(testing::Return(0.7)) // Person 1 complies to isolation
+        .WillOnce(testing::Return(0.7)) // Would Person 1 be compliant to testing again(other Scheme)?
         .WillOnce(testing::Return(0.7)) // Person 2 complies to testing
         .WillOnce(testing::Return(0.7)) // Person 2 is tested for scheme 2
         .WillOnce(testing::Return(0.5)) // Test of Person 2 is negative
-        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing
+        .WillOnce(testing::Return(0.7)) // Would Person 2 be compliant to testing again (other Scheme)?
+        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
+        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing (again)
 
     mio::abm::TestingStrategy test_strategy =
-        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{},std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
+        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{},
+                                  std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
     test_strategy.add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme1);
     test_strategy.add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme2);
     EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person1, person1, loc_work, start_date),
