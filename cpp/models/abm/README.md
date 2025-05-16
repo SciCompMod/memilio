@@ -107,7 +107,7 @@ auto testing_criteria_work =
     std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
 auto testing_scheme_work =
     mio::abm::TestingScheme(testing_criteria_work, start_date, end_date, test_type, probability);
-model.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+model.get_testing_strategy().add_testing_scheme_location_type(testing_scheme_work);
 ```
 
 For some infections to happen during the simulation, we have to initialize people with infections.
