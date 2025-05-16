@@ -86,16 +86,11 @@ TEST_F(TestTestingScheme, runScheme)
         mio::abm::TestingScheme(testing_criteria1, validity_period, start_date, end_date, test_params_pcr, probability);
 
     // Check the initial activity status.
-    EXPECT_EQ(testing_scheme1.is_active(), false);
-    testing_scheme1.update_activity_status(mio::abm::TimePoint(10));
-    EXPECT_EQ(testing_scheme1.is_active(), true);
+    EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(0)), false);
+    EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(10)), true);
 
     // Deactivate the scheme after the end date.
-    testing_scheme1.update_activity_status(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200));
-    EXPECT_EQ(testing_scheme1.is_active(), false);
-
-    // Reactivate the scheme.
-    testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
+    EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200)), false);;
 
     // Setup a second scheme with different infection states.
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
@@ -124,11 +119,11 @@ TEST_F(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.7)) // Person 2 got test
         .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
 
-    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
+    EXPECT_EQ(testing_scheme1.run_scheme_and_check_if_test_positive(rng_person1, person1, start_date),
               false); // Person tests and tests positive
-    EXPECT_EQ(testing_scheme2.run_scheme(rng_person2, person2, start_date),
+    EXPECT_EQ(testing_scheme2.run_scheme_and_check_if_test_positive(rng_person2, person2, start_date),
               true); // Person tests and tests negative
-    EXPECT_EQ(testing_scheme1.run_scheme(rng_person1, person1, start_date),
+    EXPECT_EQ(testing_scheme1.run_scheme_and_check_if_test_positive(rng_person1, person1, start_date),
               false); // Person doesn't test but used the last result (false to enter)
 }
 
@@ -149,12 +144,10 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     auto testing_criteria1                                      = mio::abm::TestingCriteria({}, test_infection_states);
     auto testing_scheme1 =
         mio::abm::TestingScheme(testing_criteria1, validity_period, start_date, end_date, test_params_pcr, probability);
-    testing_scheme1.update_activity_status(mio::abm::TimePoint(0));
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
     auto testing_criteria2 = mio::abm::TestingCriteria({}, test_infection_states2);
     auto testing_scheme2 =
         mio::abm::TestingScheme(testing_criteria2, validity_period, start_date, end_date, test_params_pcr, probability);
-    testing_scheme2.update_activity_status(mio::abm::TimePoint(0));
     mio::abm::Location loc_work(mio::abm::LocationType::Work, 0);
     // Since tests are performed before start_date, the InfectionState of all the Person have to take into account the test's required_time
     auto person1 =
@@ -179,13 +172,13 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
         .WillOnce(testing::Return(0.7)); // Person 1 complies to testing
 
     mio::abm::TestingStrategy test_strategy =
-        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
-    test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme1);
-    test_strategy.add_testing_scheme(mio::abm::LocationType::Work, testing_scheme2);
-    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+        mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{},std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
+    test_strategy.add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme1);
+    test_strategy.add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme2);
+    EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person1, person1, loc_work, start_date),
               false); // Person tests and tests positive
-    EXPECT_EQ(test_strategy.run_strategy(rng_person2, person2, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    EXPECT_EQ(test_strategy.run_strategy(rng_person1, person1, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person1, person1, loc_work, start_date),
               false); // Person doesn't test but used the last result (false to enter)
 }

@@ -616,18 +616,15 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     const auto probability     = 1.0;
     const auto test_params_pcr = mio::abm::TestParameters{0.9, 0.99, test_time, mio::abm::TestType::Generic};
 
-    auto testing_criteria = mio::abm::TestingCriteria();
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedSymptoms);
-    testing_criteria.add_infection_state(mio::abm::InfectionState::InfectedNoSymptoms);
+    auto testing_criteria = mio::abm::TestingCriteria({},{mio::abm::InfectionState::InfectedSymptoms,mio::abm::InfectionState::InfectedNoSymptoms});
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
+    EXPECT_EQ(model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
               true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(30);
-    model.get_testing_strategy().update_activity_status(current_time);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::Exactly(5))
@@ -637,15 +634,8 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .WillOnce(testing::Return(0.0)) // Draw for isolation compliance (doesn't matter in this test)
         .WillOnce(
             testing::Return(0.7)); // Person complies with testing (even though there is not testing strategy left)
-    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
+    EXPECT_EQ(model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
               false); // Testing scheme active and restricts entry
-
-    // Try to re-add the same testing scheme and confirm it doesn't duplicate, then remove it.
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work,
-                                                    testing_scheme); //doesn't get added because of == operator
-    model.get_testing_strategy().remove_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
-    EXPECT_EQ(model.get_testing_strategy().run_strategy(rng_person, person, work, current_time),
-              true); // no more testing_schemes
 }
 
 /**
@@ -831,7 +821,7 @@ TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
@@ -948,7 +938,7 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme);
+    model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;

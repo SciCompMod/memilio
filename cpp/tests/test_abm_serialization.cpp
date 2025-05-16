@@ -147,7 +147,6 @@ TEST(TestAbmSerialization, TestingScheme)
     reference_json["end_date"]["seconds"]        = Json::Int(i++);
     reference_json["test_params"]                = test_parameters;
     reference_json["probability"]                = Json::Value((double)i++);
-    reference_json["is_active"]                  = Json::Value((bool)0);
 
     test_json_serialization<mio::abm::TestingScheme>(reference_json);
 }
@@ -155,13 +154,8 @@ TEST(TestAbmSerialization, TestingScheme)
 TEST(TestAbmSerialization, TestingStrategy)
 {
     // See test_json_serialization for info on this test.
-
-    unsigned i = 1; // counter s.t. members have different values
-
     Json::Value local_strategy;
-    local_strategy["id"]      = Json::UInt(i++);
     local_strategy["schemes"] = Json::Value(Json::arrayValue);
-    local_strategy["type"]    = Json::UInt(i++);
 
     Json::Value reference_json;
     reference_json["schemes"][0] = local_strategy;
