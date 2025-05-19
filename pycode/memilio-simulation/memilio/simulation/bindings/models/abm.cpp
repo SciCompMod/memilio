@@ -170,7 +170,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
-        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
+        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&,
+                      const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
 
     pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
