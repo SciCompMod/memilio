@@ -448,7 +448,7 @@ TEST(TestOdeSecir, testSettersAndGetters)
 {
     std::vector<mio::UncertainValue<double>> vec;
 
-    for (int i = 0; i < 22; i++) {
+    for (int i = 1; i < 23; i++) {
         mio::UncertainValue<double> val = mio::UncertainValue<double>(i);
         val.set_distribution(mio::ParameterDistributionNormal(i, 10 * i, 5 * i, i / 10.0));
         vec.push_back(val);

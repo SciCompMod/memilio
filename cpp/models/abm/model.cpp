@@ -21,6 +21,7 @@
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/intervention_type.h"
+#include "abm/model_functions.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/mobility_rules.h"
@@ -265,9 +266,10 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         const auto num_persons   = m_persons.size();
 
         // 1) reset all cached values
-        // Note: we cannot easily reuse values, as they are time dependant (get_infection_state)
+        // Note: we cannot easily reuse values, as they are time dependent (get_infection_state)
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; ++i) {
+            mio::abm::adjust_contact_rates(m_locations[i], parameters.get_num_groups());
             const auto index         = i;
             auto& local_air_exposure = m_air_exposure_rates_cache[index];
             std::for_each(local_air_exposure.begin(), local_air_exposure.end(), [](auto& r) {
