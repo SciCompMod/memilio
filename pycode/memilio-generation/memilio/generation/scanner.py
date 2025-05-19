@@ -148,7 +148,6 @@ class Scanner:
             binding_type = binding.get("type")
 
             if binding_type == "extern_function":
-                print("Gefunden")
                 binding_namespace = binding.get("namespace")
                 binding_return_type = binding.get("return_type")
                 binding_arg_types = binding.get("arg_types")
