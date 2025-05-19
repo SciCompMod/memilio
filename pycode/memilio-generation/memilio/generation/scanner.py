@@ -30,7 +30,7 @@ from clang.cindex import *
 from typing_extensions import Self
 
 from memilio.generation import IntermediateRepresentation, utility
-from memilio.generation.default_generation_dict import default_dict
+from memilio.generation.default_generation_dict import default_dict, general_bindings_dict
 
 
 if TYPE_CHECKING:
@@ -68,10 +68,103 @@ class Scanner:
             raise AssertionError("set a model name")
 
         intermed_repr = IntermediateRepresentation()
+        self.search_binding_target(
+            general_bindings_dict, root_cursor, intermed_repr)
+        self.get_extern_function(
+            intermed_repr, general_bindings_dict)
         self.find_node(root_cursor, intermed_repr)
         self.finalize(intermed_repr)
         self.check_parameter_space(intermed_repr)
         return intermed_repr
+
+    def search_binding_target(self: Self, binding_list: list[dict], node: Cursor,
+                              intermed_repr: IntermediateRepresentation) -> list:
+
+        for binding in binding_list:
+            binding_kind = binding.get("cursorkind")
+            binding_name = binding.get("name")
+            binding_type = binding.get("type")
+
+            arg_types, arg_names = self.get_function_arguments(node)
+
+            if binding_kind and hasattr(CursorKind, binding_kind):
+                expected_kind = getattr(CursorKind, binding_kind)
+
+            else:
+                expected_kind = None
+
+            if expected_kind is None:
+
+                continue
+
+            if node.kind == expected_kind and node.spelling == binding_name and binding_type == "function":
+
+                found_info = {
+                    "name": node.spelling,
+                    "kind": node.kind.name,
+                    "namespace": self.get_namespace(node),
+                    "return_type": node.result_type.spelling if node.kind.is_declaration() else "",
+                    "arg_types": arg_types,
+                    "arg_names": arg_names,
+                    "location": str(node.location),
+                }
+                intermed_repr.found_bindings.append(found_info)
+
+        for child in node.get_children():
+            self.search_binding_target(
+                binding_list, child, intermed_repr)
+
+        return intermed_repr.found_bindings
+
+    def get_namespace(self, cursor):
+        namespaces = []
+        current = cursor.semantic_parent
+
+        while current and current.kind.name in ("NAMESPACE", "CLASS_DECL", "STRUCT_DECL"):
+            if current.spelling:
+                namespaces.insert(0, current.spelling)
+            current = current.semantic_parent
+
+        return "::".join(namespaces)
+
+    def get_function_arguments(self, node: Cursor):
+        arg_types = []
+        arg_names = []
+
+        for child in node.get_children():
+            if child.kind == CursorKind.PARM_DECL:
+
+                arg_types.append(child.type.spelling)
+
+                arg_names.append(child.spelling)
+
+        return arg_types, arg_names
+
+    def get_extern_function(self: Self, intermed_repr: IntermediateRepresentation, binding_list: list[dict]) -> list:
+
+        for binding in binding_list:
+
+            binding_name = binding.get("name")
+            binding_type = binding.get("type")
+
+            if binding_type == "extern_function":
+                print("Gefunden")
+                binding_namespace = binding.get("namespace")
+                binding_return_type = binding.get("return_type")
+                binding_arg_types = binding.get("arg_types")
+                binding_py_args = binding.get("py_args")
+
+                found_info = {
+                    "type": binding_type,
+                    "name": binding_name,
+                    "namespace": binding_namespace,
+                    "return_type": binding_return_type,
+                    "arg_types": binding_arg_types,
+                    "py_args": binding_py_args
+                }
+                intermed_repr.found_bindings.append(found_info)
+
+        return intermed_repr.found_bindings
 
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """! Checks for parameter_space.cpp in the model folder and set has_draw_sample

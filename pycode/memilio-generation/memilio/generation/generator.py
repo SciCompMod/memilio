@@ -81,30 +81,12 @@ class Generator:
             "simulation": StringTemplates.simulation(intermed_repr),
             "ScalarType": StringTemplates.ScalarType(intermed_repr),
             "draw_sample": StringTemplates.draw_sample(intermed_repr),
-            "simulation_vector_definition": StringTemplates.simulation_vector_definition(intermed_repr)
+            "simulation_vector_definition": StringTemplates.simulation_vector_definition(intermed_repr),
+            "bind_functions": StringTemplates.bind_functions(intermed_repr),
+            "bind_extern_functions": StringTemplates.bind_extern_functions(intermed_repr)
         }
         self.substitutions_py = {
             "python_module_name": intermed_repr.python_module_name
-        }
-
-        self.substitutions_cpp = {
-            "namespace": intermed_repr.namespace,
-            "model_class_name": intermed_repr.model_class,
-            "model_base": intermed_repr.model_base[0],
-            "model_base_templates": intermed_repr.model_base_templates,
-            "python_module_name": intermed_repr.python_module_name,
-            "parameterset": intermed_repr.parameterset,
-            "includes": StringTemplates.includes(intermed_repr),
-            "pretty_name_function": StringTemplates.pretty_name_function(intermed_repr),
-            "population_enums": StringTemplates.population_enums(intermed_repr),
-            "model_init": StringTemplates.model_init(intermed_repr),
-            "population": StringTemplates.population(intermed_repr),
-            "parameterset_indexing": StringTemplates.parameterset_indexing(intermed_repr),
-            "parameterset_wrapper": StringTemplates.parameterset_wrapper(intermed_repr),
-            "simulation": StringTemplates.simulation(intermed_repr),
-            "ScalarType": StringTemplates.ScalarType(intermed_repr),
-            "draw_sample": StringTemplates.draw_sample(intermed_repr),
-            "simulation_vector_definition": StringTemplates.simulation_vector_definition(intermed_repr)
         }
 
     def generate_files(

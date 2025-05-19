@@ -43,7 +43,6 @@ class ASTHandler:
         self.ast_list = []
         self.source_files = []
         self.source_files.append(self.conf.source_file)
-        self.handle_ast_creation()
 
     def handle_ast_creation(self: T) -> None:
         """ Handle the creation of the ASTs. Single or Parallel.
@@ -69,7 +68,7 @@ class ASTHandler:
             logging.info(f"Adding source file: {added_file}")
 
     @staticmethod
-    def process_ast_file(ast_path: str, ast: AST) -> TranslationUnit:
+    def process_ast_file(ast_path: str, ast: AST) -> tuple[TranslationUnit, AST]:
         """ Process AST file and create the translation_unit.
 
         :param ast_path: Represents the path to the generated AST file created by the clang process.
@@ -81,7 +80,7 @@ class ASTHandler:
         ast._assing_ast_with_ids(tu.cursor)
         ast.set_translation_unit(tu)
         os.remove(ast_path)
-        return tu
+        return tu, ast
 
     def parallel_creation(self: T, conf: ScannerConfig) -> None:
         """ Create ASTs for all source files using multiprocessing.
@@ -100,10 +99,10 @@ class ASTHandler:
 
                 for ast_path, ast in results:
                     try:
-                        self.process_ast_file(
+                        process_ast = self.process_ast_file(
                             ast_path, ast)
 
-                        self.add_ast_to_list(ast)
+                        self.add_ast_to_list(process_ast[1])
 
                     except Exception as e:
                         logging.info(

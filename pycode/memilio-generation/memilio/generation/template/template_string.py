@@ -25,16 +25,83 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from memilio.generation import IntermediateRepresentation
 
 
-def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
-    """! Set the datatype for the bindings via. intermediate_representation.
-    @return string from intermediate_representation
-    """
-    scalartypestr = intermed_repr.scalartype
-    return scalartypestr
+def bind_functions(intermed_repr: IntermediateRepresentation) -> str:
+
+    result_dict = []
+    result = ""
+    for bindings in intermed_repr.found_bindings:
+        if bindings.get("kind") != "FUNCTION_TEMPLATE" and bindings.get("kind") != "CXX_METHOD":
+            continue
+        else:
+            name = bindings.get("name")
+            namespace = bindings.get("namespace")
+            arg_types = bindings.get("arg_types", [])
+            arg_names = bindings.get("arg_names", [])
+
+            direct_binding = True
+
+            if namespace and "::" in namespace:
+                if arg_types:
+                    first_arg = arg_types[0]
+                    if "Model" in first_arg:
+                        direct_binding = False
+
+                if direct_binding is False:
+                    lambda_args = ", ".join(
+                        f"{namespace}::{t.replace('FP', ScalarType(intermed_repr))} {n}" for t, n in zip(arg_types, arg_names)
+                    )
+                    call_args = ", ".join(arg_names)
+                    py_args = ", ".join(f'py::arg("{n}")' for n in arg_names)
+
+                    result += (
+                        f'\tm.def('
+                        f'\n\t\t"{name}",'
+                        f'\n\t\t[]({lambda_args}) {{'
+                        f'\n\t\t\treturn {namespace}::{name}({call_args});'
+                        f'\n\t}},'
+                        f'\n\t{py_args});\n\n'
+                    )
+
+                else:
+                    call_args = ", ".join(arg_names)
+                    py_args = ", ".join(f'py::arg("{n}")' for n in arg_names)
+
+                    result += (
+                        f'\tm.def('
+                        f'\n\t\t"{name}",'
+                        f'\n\t\t&{namespace}::{name}<' +
+                        ScalarType(intermed_repr) + '>,'
+                        f'\n\t\t{py_args}\n\t);\n\n'
+                    )
+
+    return result.strip()
+
+
+def bind_extern_functions(intermed_repr: IntermediateRepresentation) -> str:
+    result = ""
+    for bindings in intermed_repr.found_bindings:
+        if bindings.get("type") == "extern_function":
+            name = bindings.get("name")
+            namespace = bindings.get("namespace")
+            arg_types = ', '.join(bindings.get("arg_types", []))
+            return_type = bindings.get("return_type")
+            py_args = ", ".join(
+                f'py::arg("{n}")' for n in bindings.get("py_args", []))
+
+            result += (
+                f'\tm.def('
+                f'\n\t\t"{name}",'
+                f'\n\t\tstatic_cast<{return_type}<' +
+                ScalarType(intermed_repr) + f'> (*)({arg_types}) > ('
+                f'\n\t\t\t&{namespace}::{name}),'
+                f'\n\t\t{py_args}\n\t);\n\n'
+            )
+    return result.strip()
 
 
 def ScalarType(intermed_repr: IntermediateRepresentation) -> str:
@@ -102,7 +169,7 @@ def includes(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def pretty_name_function(intermed_repr: IntermediateRepresentation) -> str:
-    """ ! pretty_name_function 
+    """ ! pretty_name_function
     @param intermed_repr Dataclass holding the model features.
     @return Formatted string representing a part of the bindings.
     """
@@ -205,21 +272,10 @@ def population(intermed_repr: IntermediateRepresentation) -> str:
 
 
 def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
-    """! Sets the draw_sample function as part of the bindings.
-
-    @param intermed_repr Dataclass holding the model features.
-    @return Formatted string representing a part of the bindings.  
-    """
-    for value in intermed_repr.model_base[0:]:
-        if "Population" in value[0]:
-            return "Populations"
-
-
-def draw_sample(intermed_repr: IntermediateRepresentation) -> str:
     """ Sets the draw_sample function as part of the bindings.
 
     :param intermed_repr: Dataclass holding the model features.
-    :return: Formatted string representing a part of the bindings.  
+    :return: Formatted string representing a part of the bindings.
     """
     if not intermed_repr.has_draw_sample:
         return ""
@@ -237,7 +293,7 @@ def model_init(intermed_repr: IntermediateRepresentation) -> str:
     """
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation: 
+    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -263,7 +319,7 @@ def parameterset_indexing(intermed_repr: IntermediateRepresentation) -> str:
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation: 
+    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -280,7 +336,7 @@ def parameterset_wrapper(intermed_repr: IntermediateRepresentation) -> str:
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation: 
+    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -307,7 +363,7 @@ def simulation(intermed_repr: IntermediateRepresentation) -> str:
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation: 
+    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """
@@ -392,7 +448,7 @@ def simulation_vector_definition(
     Not used by every model.
 
     :param intermed_repr: Dataclass holding the model features.
-    :param intermed_repr: IntermediateRepresentation: 
+    :param intermed_repr: IntermediateRepresentation:
     :returns: Formatted string representing a part of the bindings.
 
     """

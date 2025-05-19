@@ -22,7 +22,12 @@ Example for the ode seir model.
 """
 import argparse
 import sys
+import time
+import matplotlib.pyplot as plt
+import statistics
+import json
 import os
+from clang.cindex import CursorKind
 
 if sys.version_info >= (3, 9):
     # For python 3.9 and newer
@@ -31,11 +36,16 @@ else:
     # For older python versions
     import importlib_resources
 
-from memilio.generation import Generator, Scanner, ScannerConfig, AST, ast_handler
+from memilio.generation import Generator, Scanner, ScannerConfig, AST, ASTHandler
 from memilio.generation.graph_visualization import Visualization
 
 
 def run_memilio_generation(print_ast=False):
+    """
+
+    :param print_ast:  (Default value = False)
+
+    """
     # Define ScannerConfig and initialize Scanner
     pkg = importlib_resources.files("memilio.generation")
     with importlib_resources.as_file(pkg.joinpath('../tools/config.json')) as path:
@@ -45,29 +55,40 @@ def run_memilio_generation(print_ast=False):
     file_path = os.path.dirname(os.path.abspath(__file__))
 
     conf.source_file = os.path.abspath(os.path.join(
-        file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp "))
-
+        file_path, "..", "..", "..", "..", "cpp", "models", "ode_secirvvs", "model.cpp"))
     # Could be any target folder
     conf.target_folder = file_path
 
     scanner = Scanner(conf)
-    ast = AST(conf)
+    ast_instance = AST(conf)
+    asts = ASTHandler(conf)
+    # asts.add_source_file("parameter_space.cpp")
+    asts.handle_ast_creation()
+
     aviz = Visualization()
 
     # Extract results of Scanner into a intermed_repr
+
+    ast = asts.get_ast_by_id(0)
+
     intermed_repr = scanner.extract_results(ast.root_cursor)
 
     # Generate code
     generator = Generator()
     generator.create_substitutions(intermed_repr)
     generator.generate_files(intermed_repr)
+    # gg = asts.val_to_id
+    # print(f"AST ID: {gg}")
 
     # Print the abstract syntax tree to a file
     if (print_ast):
-        aviz.output_ast_formatted(ast, ast.get_node_by_index(0))
+        print(f"ASTs {asts.ast_list}")
+        aviz.output_ast_formatted(
+            asts.get_ast_by_id(0), ast.get_node_by_index(0))
 
 
 if __name__ == "__main__":
+    start_front = time.time()
     arg_parser = argparse.ArgumentParser(
         'memilio_generation',
         description='Simple example demonstrating the memilio-generation package.')

@@ -33,6 +33,7 @@ class IntermediateRepresentation:
     """
     Dataclass storing the model features. Serves as interface between Scanner and Generator.
     """
+
     namespace: str = ""
     model_class: str = ""
     python_module_name: str = ""
@@ -53,6 +54,7 @@ class IntermediateRepresentation:
     population_groups: list = field(default_factory=list)
     include_list: list = field(default_factory=list)
     age_group: dict = field(default_factory=dict)
+    found_bindings: list[dict[str, str]] = field(default_factory=list)
 
     def set_attribute(self: Self, attribute_name: str, value: Any) -> None:
         """Setter for the attributes of this class.
