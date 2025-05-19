@@ -162,9 +162,8 @@ PYBIND11_MODULE(_simulation_abm, m)
                       const mio::abm::TestParameters&, double>(),
              py::arg("testing_criteria"), py::arg("testing_validity_period"), py::arg("start_date"),
              py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
-        .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
 
-    pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
+            pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
         .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("type"), py::arg("time"))
         .def_readwrite("type", &mio::abm::ProtectionEvent::type)
         .def_readwrite("time", &mio::abm::ProtectionEvent::time);
