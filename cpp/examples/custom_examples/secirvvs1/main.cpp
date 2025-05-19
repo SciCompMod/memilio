@@ -34,13 +34,13 @@ int main()
     std::vector<std::pair<std::string, std::pair<double, double>>> pathConstraints = {
         {"Infected+Confirmed Severe Critical", {0.0, 1'000'000.0}},
         {"Severe", {0.0, 80'000.0}},
-        {"Critical", {0.0, 10'000.0}}
+        {"Dead", {0.0, 10'000.0}}
     };
 
     std::vector<std::pair<std::string, std::pair<double, double>>> terminalConstraints = {
         {"Infected+Confirmed Severe Critical", {0.0, 700'000.0}},
         {"Severe", {0.0, 60'000.0}},
-        {"Critical", {0.0, 7'000.0}}
+        {"Critical", {0.0, 7'000.0}},
     };
 
     int num_age_groups = 1;
@@ -56,23 +56,23 @@ int main()
     settings.print(); // optional
 
 
+    std::vector<double> p(1000 * 1000);
+    std::vector<double> grad(1000 * 1000);
 
+    constraint_functions<double>(settings, p.data(), 1, grad.data(), 1);
 
-    constraint_functions<double>(settings, nullptr, 1, nullptr, 1);
-
-
-
-
-
-
+    save_solution<double>(settings, 1, nullptr, nullptr, nullptr, 1, nullptr,nullptr,0.0);
 
 
 
 
 
-    // auto states = query_infection_states("Infected+Confirmed Dead");
+
+
     // auto one_state = query_infection_states("ExposedNaive"); 
 
+
+    // auto states = query_infection_states("Dead+t Inf");
     // for (const auto& state : states) {
     //     std::cout << infection_state_to_string(state) << std::endl;
     // }

@@ -58,7 +58,7 @@ inline ControlParameter string_to_control(const std::string& control_name) {
 constexpr double INF = 1e19;
 
 struct ProblemSettings {
-    int numControlIntervals = 20;
+    int numControlIntervals = 800;
     int controlIntervalResolution = 5;
     double t0 = 0.0;
     double tmax = 100.0;
@@ -81,10 +81,10 @@ struct ProblemSettings {
     
     // Vector of path constraint bounds: { name, {lower, upper} }
     std::vector<std::pair<std::string, std::pair<double, double>>> pathConstraints = {
-          {"Exposed", {0.0, INF}}
-        , {"Asymptomatic", {0.0, INF}}
-        , {"Infected", {0.0, 1'000'000}}
-        , {"Recovered", {0.0, INF}}
+        //   {"Exposed", {0.0, INF}}
+        // , {"Asymptomatic", {0.0, INF}}
+        {"Infected", {0.0, 1'000'000}}
+        // , {"Recovered", {0.0, INF}}
         // Dead not a path constraint: "Dead" is monotonically increasing over time. Once someone dies, they remain dead.
     };
 

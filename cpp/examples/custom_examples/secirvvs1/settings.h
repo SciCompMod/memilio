@@ -9,7 +9,8 @@
 #include <stdexcept>
 #include <cassert>
 #include <limits>
-
+#include <fstream>
+#include <iomanip>
 
 
 
@@ -26,6 +27,10 @@
 
 #include "models/ode_secirvvs/model.h"
 #include "memilio/compartments/simulation.h"
+
+// ------------------------------ //
+// Handle InfectionStates Parsing //
+// ------------------------------ //
 
 using InfectionState = mio::osecirvvs::InfectionState;
 
@@ -114,21 +119,25 @@ inline std::vector<InfectionState> query_infection_states(const std::string& sta
 
     std::vector<InfectionState> result;
 
-    for (const auto& [name, state] : all_states) {
-        bool match_all = std::all_of(and_group_tokens.begin(), and_group_tokens.end(), [&](const std::string& token) {
-            return name.find(token) != std::string::npos;
-        });
-        if (match_all) {
-            result.push_back(state);
+    if (!and_group_tokens.empty()) {
+        for (const auto& [name, state] : all_states) {
+            bool match_all = std::all_of(and_group_tokens.begin(), and_group_tokens.end(), [&](const std::string& token) {
+                return name.find(token) != std::string::npos;
+            });
+            if (match_all) {
+                result.push_back(state);
+            }
         }
     }
 
-    for (const auto& [name, state] : all_states) {
-        bool match_any = std::any_of(or_group_tokens.begin(), or_group_tokens.end(), [&](const std::string& token) {
-            return name.find(token) != std::string::npos;
-        });
-        if (match_any && std::find(result.begin(), result.end(), state) == result.end()) {
-            result.push_back(state);
+    if (!or_group_tokens.empty()) {
+        for (const auto& [name, state] : all_states) {
+            bool match_any = std::any_of(or_group_tokens.begin(), or_group_tokens.end(), [&](const std::string& token) {
+                return name.find(token) != std::string::npos;
+            });
+            if (match_any && std::find(result.begin(), result.end(), state) == result.end()) {
+                result.push_back(state);
+            }
         }
     }
 
@@ -139,6 +148,9 @@ inline std::vector<InfectionState> query_infection_states(const std::string& sta
     return result;
 }
 
+// ------------------------------------------ //
+// Store Information in ProblemSettings Class //
+// ------------------------------------------ //
 
 class ProblemSettings {
 public:
@@ -250,16 +262,137 @@ std::vector<FP> make_time_grid(FP t0, FP tmax, size_t num_intervals) {
 template <typename FP>
 FP objective_function(const ProblemSettings& settings, const FP* parameters, size_t n) {
     FP objective = 0.0;
-    return objective;
-}
-
-template <typename FP>
-void constraint_functions(const ProblemSettings& settings, const FP* parameters, size_t n, FP* constraints, size_t m) {
 
     std::vector<FP> timeSteps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.numIntervals());
 
     mio::osecirvvs::Model<FP> model(settings.numAgeGroups());
+    set_initial_values(model, settings);
 
+    return objective;
+}
+
+
+template <typename FP>
+void update_path_constraints(
+    const mio::osecirvvs::Model<FP>& model, const ProblemSettings& settings, std::vector<FP>& max_path_values)
+{
+    assert(max_path_values.size() == settings.numPathConstraints());
+
+    for (size_t i = 0; i < settings.numPathConstraints(); ++i) {
+        const auto& constraint = settings.pathConstraints()[i];
+        auto states = query_infection_states(constraint.first);
+
+        FP value = 0.0;
+        for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+            for (const auto& state : states) {
+                value += model.populations[{age_group, state}];
+            }
+        }
+        max_path_values[i] = std::max(max_path_values[i], value);
+    }
+}
+
+template <typename FP>
+void update_terminal_constraints(
+    const mio::osecirvvs::Model<FP>& model, const ProblemSettings& settings, std::vector<FP>& terminal_values)
+{
+    assert(terminal_values.size() == settings.numTerminalConstraints());
+
+    for (size_t i = 0; i < settings.numTerminalConstraints(); ++i) {
+        const auto& constraint = settings.terminalConstraints()[i];
+        auto states = query_infection_states(constraint.first);
+
+        FP value = 0.0;
+        for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+            for (const auto& state : states) {
+                value += model.populations[{age_group, state}];
+            }
+        }
+        terminal_values[i] = value;
+    }
+}
+
+template <typename FP>
+void constraint_functions(const ProblemSettings& settings, const FP* parameters, size_t n, FP* constraints, size_t m) {
+    // ----------- // 
+    // Setup Model //
+    // ----------- // 
+    mio::osecirvvs::Model<FP> model(settings.numAgeGroups());
+    set_initial_values(model, settings);
+
+    assert(settings.numPathConstraints() + settings.numTerminalConstraints() == m);
+
+    std::vector<FP> max_path_values(settings.numPathConstraints(), FP(0.0));
+    std::vector<FP> terminal_values(settings.numTerminalConstraints(), FP(0.0));
+
+    std::vector<FP> timeSteps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.numIntervals());
+    size_t num_infection_states = static_cast<size_t>(InfectionState::Count);
+
+    // --------------------------------------------- //
+    // Initial Constraint Gathering at t = t0 Before //
+    // --------------------------------------------- //
+    update_path_constraints(model, settings, max_path_values);
+
+    for (size_t controlIndex = 0; controlIndex < settings.numControlIntervals(); controlIndex++) {
+
+        // ------------------------ //
+        // Gather Control Parameter //
+        // ------------------------ //
+        // FP socialDistancing = parameters[controlIndex * settings.numControls() + static_cast<int>(string_to_control("SocialDistancing"))];
+        // FP quarantined = parameters[controlIndex * settings.numControls() + static_cast<int>(string_to_control("Quarantined"))];
+        // FP testingRate = parameters[controlIndex * settings.numControls() + static_cast<int>(string_to_control("TestingRate"))];
+
+        // model.parameters.template get<mio::oseair::SocialDistancing<FP>>() = socialDistancing;
+        // model.parameters.template get<mio::oseair::Quarantined<FP>>()      = quarantined;
+        // model.parameters.template get<mio::oseair::TestingRate<FP>>()      = testingRate;
+
+        for (size_t substep = 0; substep < settings.controlIntervalResolution(); substep++) {
+
+            // -------------- //
+            // Run Simulation //
+            // -------------- //
+            size_t timeStepIndex = controlIndex * settings.controlIntervalResolution() + substep;
+
+            mio::TimeSeries<FP> result = mio::simulate<FP, mio::osecirvvs::Model<FP>>(
+                timeSteps[timeStepIndex], timeSteps[timeStepIndex + 1], settings.dt(), model
+            );
+            const auto& final_state = result.get_last_value();
+
+            for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+                for (size_t state_index = 0; state_index < num_infection_states; state_index++) {
+                    size_t idx = age_group.get() * num_infection_states + state_index;
+                    model.populations[{age_group, InfectionState(state_index)}] = final_state[idx];
+                }
+            }
+
+            // ----------------------------- // 
+            // Gather Constraint Information //
+            // ----------------------------- // 
+            update_path_constraints(model, settings, max_path_values);
+        }
+    }
+
+    update_terminal_constraints(model, settings, terminal_values);
+
+    // -------------------------- //
+    // Parse Constraints to IPOPT //
+    // -------------------------- //
+    for (size_t constraintIndex = 0; constraintIndex < settings.numPathConstraints(); constraintIndex++) {
+        constraints[constraintIndex] = max_path_values[constraintIndex];
+    }
+
+    size_t terminal_constraint_offset = settings.numPathConstraints();
+    for (size_t constraintIndex = 0; constraintIndex < settings.numTerminalConstraints(); constraintIndex++) {
+        constraints[terminal_constraint_offset + constraintIndex] = terminal_values[constraintIndex];
+    }
+
+}
+
+
+
+template <typename FP>
+void set_initial_values(mio::osecirvvs::Model<FP>& model, const ProblemSettings& settings)
+{
     const std::array<std::pair<InfectionState, FP>, 27> initial_population_distribution = {{
         {InfectionState::SusceptibleNaive, 0.0}, // Will be automatically adjusted to match total population size
         {InfectionState::SusceptiblePartialImmunity, 7.0},
@@ -336,7 +469,7 @@ void constraint_functions(const ProblemSettings& settings, const FP* parameters,
     // Contact matrix setup
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.5, mio::SimulationTime(5.0));
 
     // Durations (in days)
     params.template get<mio::osecirvvs::TimeExposed<FP>>()[age_0] = 3.33;
@@ -366,240 +499,8 @@ void constraint_functions(const ProblemSettings& settings, const FP* parameters,
     params.template get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[age_0] = 0.091;
     params.template get<mio::osecirvvs::ReducTimeInfectedMild<FP>>()[age_0] = 0.9;
 
-    contact_matrix[0].add_damping(0.3,mio::DampingLevel(69), mio::DampingType(42), mio::SimulationTime(5.0));
-
     // Enforce constraints after assignment
     model.apply_constraints();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    // // Set parameters
-    // model.parameters.template get<mio::osecirvvs::ICUCapacity<FP>>() = 100;
-    // model.parameters.template get<mio::osecirvvs::TestAndTraceCapacity<FP>>() = 0.0143;
-
-    // size_t num_time_steps = static_cast<size_t>(settings.tmax());
-    // model.parameters.template get<mio::osecirvvs::DailyPartialVaccinations<FP>>()
-    //     .resize(mio::SimulationDay(num_time_steps + 1));
-    // model.parameters.template get<mio::osecirvvs::DailyFullVaccinations<FP>>()
-    //     .resize(mio::SimulationDay(num_time_steps + 1));
-
-    // const size_t daily_vaccinations = 10;
-    // for (size_t i = 0; i < num_time_steps + 1; ++i) {
-    //     auto num_vaccinations = static_cast<FP>(i * daily_vaccinations);
-    //     model.parameters.template get<mio::osecirvvs::DailyPartialVaccinations<FP>>()
-    //         [{mio::AgeGroup(0), mio::SimulationDay(i)}] = num_vaccinations;
-    //     model.parameters.template get<mio::osecirvvs::DailyFullVaccinations<FP>>()
-    //         [{mio::AgeGroup(0), mio::SimulationDay(i)}] = num_vaccinations;
-    // }
-
-    // model.parameters.template get<mio::osecirvvs::DynamicNPIsImplementationDelay<FP>>() = 7;
-
-    // auto& contacts = model.parameters.template get <mio::osecirvvs::ContactPatterns<FP>>();
-    // auto& contact_matrix = contacts.get_cont_freq_mat();
-    // contact_matrix[0].get_baseline().setConstant(0.5);
-    // contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    // contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
-
-    // //times
-    // model.parameters.teplate get<mio::osecirvvs::TimeExposed<FP>>()[mio::AgeGroup(0)]            = 3.33;
-    // model.parameters.teplate get<mio::osecirvvs::TimeInfectedNoSymptoms<FP>>()[mio::AgeGroup(0)] = 1.87;
-    // model.parameters.teplate get<mio::osecirvvs::TimeInfectedSymptoms<FP>>()[mio::AgeGroup(0)]   = 7;
-    // model.parameters.teplate get<mio::osecirvvs::TimeInfectedSevere<FP>>()[mio::AgeGroup(0)]     = 6;
-    // model.parameters.teplate get<mio::osecirvvs::TimeInfectedCritical<FP>>()[mio::AgeGroup(0)]   = 7;
-
-    // //probabilities
-    // model.parameters.teplate get<mio::osecirvvs::TransmissionProbabilityOnContact<FP>>()[mio::AgeGroup(0)] = 0.15;
-    // model.parameters.teplate get<mio::osecirvvs::RelativeTransmissionNoSymptoms<FP>>()[mio::AgeGroup(0)]   = 0.5;
-    // // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
-    // // depends on incidence and test and trace capacity
-    // model.parameters.teplate get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<FP>>()[mio::AgeGroup(0)]    = 0.0;
-    // model.parameters.teplate get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<FP>>()[mio::AgeGroup(0)] = 0.4;
-    // model.parameters.teplate get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<FP>>()[mio::AgeGroup(0)]    = 0.2;
-    // model.parameters.teplate get<mio::osecirvvs::SeverePerInfectedSymptoms<FP>>()[mio::AgeGroup(0)]         = 0.1;
-    // model.parameters.teplate get<mio::osecirvvs::CriticalPerSevere<FP>>()[mio::AgeGroup(0)]                 = 0.1;
-    // model.parameters.teplate get<mio::osecirvvs::DeathsPerCritical<FP>>()[mio::AgeGroup(0)]                 = 0.1;
-
-    // model.parameters.teplate get<mio::osecirvvs::ReducExposedPartialImmunity<FP>>()[mio::AgeGroup(0)]           = 0.8;
-    // model.parameters.teplate get<mio::osecirvvs::ReducExposedImprovedImmunity<FP>>()[mio::AgeGroup(0)]          = 0.331;
-    // model.parameters.teplate get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<FP>>()[mio::AgeGroup(0)]  = 0.65;
-    // model.parameters.teplate get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<FP>>()[mio::AgeGroup(0)] = 0.243;
-    // model.parameters.teplate get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[mio::AgeGroup(0)] = 0.1;
-    // model.parameters.teplate get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[mio::AgeGroup(0)] = 0.091;
-    // model.parameters.teplate get<mio::osecirvvs::ReducTimeInfectedMild<FP>>()[mio::AgeGroup(0)] = 0.9;
-
-    // model.parameters.teplate get<mio::osecirvvs::Seasonality<FP>>() = 0.2;
-
-    // model.apply_constraints();
-
-
-
-
-
-
-
-
-// for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
-//     for (const auto& [infection_state, population] : initial_population_distribution) {
-//         model.populations[{age_group, infection_state}] = population;
-//     }
-// }
-
-// // Fill the remaining portion as SusceptibleNaive to reach the total of 1000
-// const FP total_population_size = 1'000.0;
-// for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
-//     if (std::isnan(model.populations[{age_group, InfectionState::SusceptibleNaive}])) {
-//         auto index = mio::Index<InfectionState>(age_group, InfectionState::SusceptibleNaive);
-//         model.populations.set_difference_from_group_total<mio::AgeGroup>(
-//             index, total_population_size
-//         );
-//     }
-// }
-
-    // for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
-    //     for (const auto& [infection_state, population] : initial_population_distribution) {
-    //         model.populations[{age_group, infection_state}] = population;
-    //     }
-    // }
-
-    // // Fill the remaining portion as SusceptibleNaive to reach the total of 1000
-    // const FP total_population_size = 1'000.0;
-    // for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
-    //     if (std::isnan(model.populations[{age_group, InfectionState::SusceptibleNaive}])) {
-    //         model.populations.set_difference_from_group_total<mio::AgeGroup>(
-    //             {age_group, InfectionState::SusceptibleNaive}, total_population_size
-    //         );
-    //     }
-    // }
-
-
-
-
-
-    // for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
-
-    //     for (const auto& [state, value] : init) {
-    //         model.populations[{mio::Index<InfectionState>(state)}] = value;
-    //     }
-
-    // Please do this but with my init structure?
-
-    // for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
-    //     model.populations[{i, InfectionState::ExposedNaive}]                                = 10;
-    //     model.populations[{i, InfectionState::ExposedImprovedImmunity}]                     = 11;
-    //     model.populations[{i, InfectionState::ExposedPartialImmunity}]                      = 12;
-    //     model.populations[{i, InfectionState::InfectedNoSymptomsNaive}]                     = 13;
-    //     model.populations[{i, InfectionState::InfectedNoSymptomsNaiveConfirmed}]            = 13;
-    //     model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}]           = 14;
-    //     model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}]  = 14;
-    //     model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}]          = 15;
-    //     model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] = 15;
-    //     model.populations[{i, InfectionState::InfectedSymptomsNaive}]                       = 5;
-    //     model.populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}]              = 5;
-    //     model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}]             = 6;
-    //     model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}]    = 6;
-    //     model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}]            = 7;
-    //     model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}]   = 7;
-    //     model.populations[{i, InfectionState::InfectedSevereNaive}]                         = 8;
-    //     model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}]              = 1;
-    //     model.populations[{i, InfectionState::InfectedSeverePartialImmunity}]               = 2;
-    //     model.populations[{i, InfectionState::InfectedCriticalNaive}]                       = 3;
-    //     model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}]             = 4;
-    //     model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}]            = 5;
-    //     model.populations[{i, InfectionState::SusceptibleImprovedImmunity}]                 = 6;
-    //     model.populations[{i, InfectionState::SusceptiblePartialImmunity}]                  = 7;
-    //     model.populations[{(mio::AgeGroup)0, InfectionState::DeadNaive}]                    = 0;
-    //     model.populations[{(mio::AgeGroup)0, InfectionState::DeadPartialImmunity}]          = 0;
-    //     model.populations[{(mio::AgeGroup)0, InfectionState::DeadImprovedImmunity}]         = 0;
-    //     model.populations.set_difference_from_group_total<mio::AgeGroup>(
-    //         {i, InfectionState::SusceptibleNaive}, 1000);
-    // }
-
-    // model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = 100;
-    // model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 0.0143;
-    // const size_t daily_vaccinations                                      = 10;
-    // model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(
-    //     mio::SimulationDay((size_t)tmax + 1));
-    // model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay((size_t)tmax + 1));
-    // for (size_t i = 0; i < tmax + 1; ++i) {
-    //     auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-    //     model.parameters
-    //         .get<mio::osecirvvs::DailyPartialVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-    //         num_vaccinations;
-    //     model.parameters
-    //         .get<mio::osecirvvs::DailyFullVaccinations<double>>()[{(mio::AgeGroup)0, mio::SimulationDay(i)}] =
-    //         num_vaccinations;
-    // }
-    // model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
-
-    // auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
-    // auto& contact_matrix = contacts.get_cont_freq_mat();
-    // contact_matrix[0].get_baseline().setConstant(0.5);
-    // contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    // contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
-
-    // //times
-    // model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.33;
-    // model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)] = 1.87;
-    // model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]   = 7;
-    // model.parameters.get<mio::osecirvvs::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]     = 6;
-    // model.parameters.get<mio::osecirvvs::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]   = 7;
-
-    // //probabilities
-    // model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)] = 0.15;
-    // model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]   = 0.5;
-    // // The precise value between Risk* (situation under control) and MaxRisk* (situation not under control)
-    // // depends on incidence and test and trace capacity
-    // model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)]    = 0.0;
-    // model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)] = 0.4;
-    // model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.2;
-    // model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]         = 0.1;
-    // model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[mio::AgeGroup(0)]                 = 0.1;
-    // model.parameters.get<mio::osecirvvs::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                 = 0.1;
-
-    // model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<double>>()[mio::AgeGroup(0)]           = 0.8;
-    // model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<double>>()[mio::AgeGroup(0)]          = 0.331;
-    // model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>()[mio::AgeGroup(0)]  = 0.65;
-    // model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>()[mio::AgeGroup(0)] = 0.243;
-    // model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[mio::AgeGroup(0)] =
-    //     0.1;
-    // model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[mio::AgeGroup(0)] =
-    //     0.091;
-    // model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)] = 0.9;
-
-    // model.parameters.get<mio::osecirvvs::Seasonality<double>>() = 0.2;
-
-    // model.apply_constraints();
-
-
-
-
-
-    // mio::oseair::Model<FP> model;
-    // set_initial_values(model, settings);
-
-
-}
-
-
-
-template <typename FP>
-void set_initial_values(mio::osecirvvs::Model<FP>& model, const ProblemSettings& settings)
-{
-
 }
 
 
@@ -609,7 +510,61 @@ void save_solution(
     size_t n, const FP* x, const FP* z_L, const FP* z_U,
     size_t m, const FP* g, const FP* lambda, FP obj_value
 ) {
+    // ----------- // 
+    // Setup Model //
+    // ----------- // 
+    mio::osecirvvs::Model<FP> model(settings.numAgeGroups());
+    set_initial_values(model, settings);
 
+    assert(settings.numPathConstraints() + settings.numTerminalConstraints() == m);
+
+    std::vector<FP> timeSteps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.numIntervals());
+    size_t num_infection_states = static_cast<size_t>(InfectionState::Count);
+
+    // Open CSV file and write header
+    std::ofstream csv_file("population_time_series.csv");
+    csv_file << "Time";
+    for (size_t i = 0; i < num_infection_states; ++i) {
+        csv_file << "," << infection_state_to_string(static_cast<InfectionState>(i));
+    }
+    csv_file << "\n";
+
+    for (size_t controlIndex = 0; controlIndex < settings.numControlIntervals(); controlIndex++) {
+        for (size_t substep = 0; substep < settings.controlIntervalResolution(); substep++) {
+            size_t timeStepIndex = controlIndex * settings.controlIntervalResolution() + substep;
+
+            // Simulate next step
+            mio::TimeSeries<FP> result = mio::simulate<FP, mio::osecirvvs::Model<FP>>(
+                timeSteps[timeStepIndex], timeSteps[timeStepIndex + 1], settings.dt(), model
+            );
+            const auto& final_state = result.get_last_value();
+
+            // Update model state
+            for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+                for (size_t state_index = 0; state_index < num_infection_states; state_index++) {
+                    size_t idx = age_group.get() * num_infection_states + state_index;
+                    model.populations[{age_group, InfectionState(state_index)}] = final_state[idx];
+                }
+            }
+
+            // Sum over all age groups per infection state
+            std::vector<FP> total_by_state(num_infection_states, FP(0.0));
+            for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+                for (size_t state_index = 0; state_index < num_infection_states; state_index++) {
+                    InfectionState state = static_cast<InfectionState>(state_index);
+                    total_by_state[state_index] += model.populations[{age_group, state}];
+                }
+            }
+
+            // Write to CSV
+            csv_file << std::fixed << std::setprecision(6) << timeSteps[timeStepIndex];
+            for (const auto& val : total_by_state) {
+                csv_file << "," << val;
+            }
+            csv_file << "\n";
+        }
+    }
+
+    // Close CSV file
+    csv_file.close();
 }
-
-
