@@ -42,10 +42,11 @@ namespace mio
  * shape of a rectangular matrix.
  * variable rows and cols.
  */
+template <typename FP = double>
 class RectMatrixShape
 {
 public:
-    using Matrix = Eigen::MatrixXd;
+    using Matrix = Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>;
 
     /**
      * construct the shape of a rectangular matrix.
@@ -138,10 +139,11 @@ private:
  * shape of a square matrix.
  * rows() == cols()
  */
+template <typename FP = double>
 class SquareMatrixShape
 {
 public:
-    using Matrix = Eigen::MatrixXd;
+    using Matrix = Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>;
 
     /**
      * construct a square matrix of dimensions r

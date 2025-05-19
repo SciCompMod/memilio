@@ -20,8 +20,10 @@
 #ifndef EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
 #define EPI_ODE_CONTACT_FREQUENCY_MATRIX_H
 
+#include "memilio/math/eigen.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/utils/stl_util.h"
+#include "ad/ad.hpp"
 
 #include <numeric>
 #include <ostream>
@@ -184,13 +186,15 @@ public:
      * @param t time in the simulation
      * @return matrix expression (num_groups x num_groups)
      */
-    auto get_matrix_at(SimulationTime t) const
+    template <typename FP = double>
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
         return m_baseline - (m_dampings.get_matrix_at(t).array() * (m_baseline - m_minimum).array()).matrix();
     }
-    auto get_matrix_at(double t) const
+    template <typename FP = double>
+    auto get_matrix_at(FP t) const
     {
-        return get_matrix_at(SimulationTime(t));
+        return get_matrix_at(SimulationTime<FP>(t));
     }
 
     /**
@@ -390,11 +394,13 @@ public:
     template <class T>
     auto get_matrix_at(T t) const
     {
-        return Eigen::MatrixXd::NullaryExpr(
+        return Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::NullaryExpr(
             get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
-                return std::accumulate(m_matrices.begin(), m_matrices.end(), 0.0, [t, i, j](double s, auto& m) {
-                    return s + m.get_matrix_at(t)(i, j);
-                });
+                T sum(0.0);
+                for (size_t k = 0; k < m_matrices.size(); ++k) {
+                    sum += m_matrices[k].get_matrix_at(t)(i, j);
+                }
+                return sum;
             });
     }
 
@@ -486,6 +492,9 @@ private:
     std::vector<value_type> m_matrices;
 };
 
+
+
+
 /**
  * represents time dependent contact frequencies between groups.
  * consists of constant baseline and irreducible minimum contacts.
@@ -499,10 +508,11 @@ private:
  * All these members are matrix valued, e.g. B_ij are the normal contacts
  * that one person in group i has with persons in group j.
  */
-class ContactMatrix : public DampingMatrixExpression<SquareDampings>
+template <typename FP = double>
+class ContactMatrix : public DampingMatrixExpression<SquareDampings<FP>>
 {
 public:
-    using Base = DampingMatrixExpression<SquareDampings>;
+    using Base = DampingMatrixExpression<SquareDampings<FP>>;
     using Base::Base;
 
     /**
@@ -529,10 +539,11 @@ public:
  * number of contacts.
  * can separate matrices of contacts in different contexts, e.g. work, leisure, etc. 
  */
-class ContactMatrixGroup : public DampingMatrixExpressionGroup<ContactMatrix>
+template <typename FP = double>
+class ContactMatrixGroup : public DampingMatrixExpressionGroup<ContactMatrix<FP>>
 {
 public:
-    using Base = DampingMatrixExpressionGroup<ContactMatrix>;
+    using Base = DampingMatrixExpressionGroup<ContactMatrix<FP>>;
     using Base::Base;
 
     /**

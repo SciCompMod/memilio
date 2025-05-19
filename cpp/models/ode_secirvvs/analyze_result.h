@@ -23,6 +23,10 @@
 #include "models/ode_secirvvs/infection_state.h"
 #include "models/ode_secirvvs/parameters.h"
 
+#include "memilio/data/analyze_result.h"
+#include <functional>
+#include <vector>
+
 namespace mio
 {
 namespace osecirvvs

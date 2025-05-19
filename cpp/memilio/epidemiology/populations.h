@@ -25,6 +25,8 @@
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
 
+#include <vector>
+#include <array>
 #include <numeric>
 
 namespace mio
@@ -112,11 +114,16 @@ public:
      * @return total population of the group
      */
     template <class T>
-    ScalarType get_group_total(mio::Index<T> group_idx) const
+    FP get_group_total(mio::Index<T> group_idx) const
     {
         auto const s = this->template slice<T>({(size_t)group_idx, 1});
-        return std::accumulate(s.begin(), s.end(), 0.);
+        auto op      = [](const FP& a, const UncertainValue<FP>& b) {
+            return a + b.value();
+        };
+        return std::accumulate(s.begin(), s.end(), FP(0.), op);
     }
+
+
 
     /**
      * @brief set_group_total sets the total population for a given group
@@ -130,9 +137,9 @@ public:
      * @param value the new value for the total population
      */
     template <class T>
-    void set_group_total(mio::Index<T> group_idx, ScalarType value)
+    void set_group_total(mio::Index<T> group_idx, FP value)
     {
-        ScalarType current_population = get_group_total(group_idx);
+        FP current_population = get_group_total(group_idx);
         auto s                        = this->template slice<T>({(size_t)group_idx, 1});
 
         if (fabs(current_population) < 1e-12) {
@@ -151,9 +158,9 @@ public:
      * @brief get_total returns the total population of all compartments
      * @return total population
      */
-    ScalarType get_total() const
+    FP get_total() const
     {
-        return this->array().template cast<ScalarType>().sum();
+        return this->array().template cast<FP>().sum();
     }
 
     /**
@@ -167,13 +174,13 @@ public:
      * @param group_idx The enum of the group within the category
      */
     template <class T>
-    void set_difference_from_group_total(Index const& midx, ScalarType total_group_population)
+    void set_difference_from_group_total(Index const& midx, FP total_group_population)
 
     {
         auto group_idx                = mio::get<T>(midx);
-        ScalarType current_population = get_group_total(group_idx);
+        FP current_population = get_group_total(group_idx);
         size_t idx                    = this->get_flat_index(midx);
-        current_population -= this->array()[idx];
+        current_population -= FP(this->array()[idx]);
 
         assert(current_population <= total_group_population + 1e-10);
 
@@ -189,7 +196,7 @@ public:
      *
      * @param value the new value for the total population
      */
-    void set_total(ScalarType value)
+    void set_total(FP value)
     {
         double current_population = get_total();
         if (fabs(current_population) < 1e-12) {
@@ -216,7 +223,7 @@ public:
     {
         double current_population = get_total();
         size_t idx                = this->get_flat_index(midx);
-        current_population -= this->array()[idx];
+        current_population -= FP(this->array()[idx]);
 
         assert(current_population <= total_population);
 
@@ -239,8 +246,8 @@ public:
     {
         bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i] < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
+            if (this->array()[i].value() < 0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i].value(),
                             0);
                 this->array()[i] = 0;
                 corrected        = true;
@@ -256,9 +263,9 @@ public:
     bool check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
-            FP value = this->array()[i];
+            FP value = this->array()[i].value();
             if (value < 0.) {
-                log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
+                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, ad::value(value), 0);
                 return true;
             }
         }

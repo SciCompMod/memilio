@@ -49,7 +49,7 @@ public:
      * @param groups weights of age groups.
      */
     template <class V>
-    DampingSampling(const UncertainValue<FP>& value, DampingLevel level, DampingType type, SimulationTime time,
+    DampingSampling(const UncertainValue<FP>& value, DampingLevel level, DampingType type, SimulationTime<FP> time,
                     const std::vector<size_t> matrices, const Eigen::MatrixBase<V>& groups)
         : m_value(value)
         , m_level(level)
@@ -124,7 +124,7 @@ public:
      * Get the time the damping becomes active.
      * @return the damping time.
      */
-    SimulationTime get_time() const
+    SimulationTime<FP> get_time() const
     {
         return m_time;
     }
@@ -133,7 +133,7 @@ public:
      * Set the time the damping becomes active.
      * @param t the damping time.
      */
-    void set_time(SimulationTime t)
+    void set_time(SimulationTime<FP> t)
     {
         m_time = t;
     }
@@ -162,7 +162,7 @@ public:
      * The groups correspond to e.g. age groups in the SECIR model.
      * @return weights of groups.
      */
-    const Eigen::VectorXd& get_group_weights() const
+    const Eigen::Matrix<FP, Eigen::Dynamic, 1>& get_group_weights() const
     {
         return m_groups;
     }
@@ -224,7 +224,7 @@ public:
     static IOResult<DampingSampling> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("DampingSampling");
-        auto ti  = obj.expect_element("Time", Tag<SimulationTime>{});
+        auto ti  = obj.expect_element("Time", Tag<SimulationTime<FP>>{});
         auto ty  = obj.expect_element("Type", Tag<DampingType>{});
         auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
         auto v   = obj.expect_element("Value", Tag<UncertainValue<FP>>{});
@@ -242,9 +242,9 @@ private:
     UncertainValue<FP> m_value;
     DampingLevel m_level;
     DampingType m_type;
-    SimulationTime m_time;
+    SimulationTime<FP> m_time;
     std::vector<size_t> m_matrices;
-    Eigen::VectorXd m_groups;
+    Eigen::Matrix<FP, Eigen::Dynamic, 1> m_groups;
 };
 
 /**
