@@ -322,11 +322,39 @@ The full list of labels that should be used to identify issues can be found at: 
 Agent-based model development 
 ------------------------------------------------
 
-If you add new features to the agent-based model, please make sure to run the benchmarks and check if the performance is acceptable. See the section on :ref:`performance-monitoring-cpp` for more information.
+If you add new features to the agent-based model, please make sure to run the benchmarks and check if the performance is 
+acceptable. See the section on :ref:`performance-monitoring-cpp` for more information.
 
 
 Documentation
 --------------------
 
+The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
+slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
+This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
+a pull request is merged into the main branch. Thus, we recommend building the documentation locally to test changes.
 
-For the documentation, please keep in mind that it is written in reStructuredText (RST) and uses a slightly different syntax than Markdown. A documentation can be found at `<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
+
+Please make sure to have a working python envirenment with a python version that is compatible with 
+our :doc:`memilio-python packages <python/python_packages>` as well as 
+all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`_ installed.
+
+First generate the doxygen output by running 
+
+.. code-block:: bash
+
+    cd docs
+    doxygen
+
+
+In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
+build times while testing we recommend to only use e.g. ``../cpp/models/abm``. PLEASE don't commit this change!
+
+Then sphinx can be used to build the documentation:
+
+.. code-block:: bash
+
+    cd docs
+    make html # sphinx-build source html
+
+The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).
