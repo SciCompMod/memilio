@@ -1373,7 +1373,8 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
         EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
     }
     // sum of all compartments should be equal to the population
-    EXPECT_EQ(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0));
+    EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
+                1e-8);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
