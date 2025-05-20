@@ -98,7 +98,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
 }
 
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
-                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
+                               const Person& person, const Location& location, const Parameters& params,
+                               const TimePoint t, const TimeSpan dt)
 {
     if (person.get_location() != location.get_id()) {
         mio::log_debug("In add_exposure_contribution: Person {} is not at Location {}", person.get_id().get(),
@@ -111,15 +112,21 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
         auto age        = person.get_age();
         // average infectivity over the time step to second order accuracy using midpoint rule
         for (CellIndex cell : person.get_cells()) {
+
+            local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);
+            local_air_exposure[{cell, virus}] += infection.get_infectivity(t + dt / 2);
+
             if (location.get_infection_parameters().get<UseLocationCapacityForTransmissions>()) {
-                local_air_exposure[{cell, virus}] +=
-                    infection.get_infectivity(t + dt / 2) *
+                local_contact_exposure[{cell, virus, age}] =
+                    local_contact_exposure[{cell, virus, age}] *
                     location.get_cells()[cell.get()].compute_space_per_person_relative();
             }
-            else {
-                local_air_exposure[{cell, virus}] += infection.get_infectivity(t + dt / 2);
+            if (person.is_in_quarantine(t, params)) {
+                local_air_exposure[{cell, virus}] =
+                    local_air_exposure[{cell, virus}] * params.get<QuarantineEffectiveness>();
+                local_contact_exposure[{cell, virus, age}] =
+                    local_air_exposure[{cell, virus}] * params.get<QuarantineEffectiveness>();
             }
-            local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);
         }
     }
 }
