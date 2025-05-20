@@ -191,7 +191,7 @@ struct DynamicNPIsImplementationDelay {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return 0.;
+        return Type(0.);
     }
     static std::string name()
     {

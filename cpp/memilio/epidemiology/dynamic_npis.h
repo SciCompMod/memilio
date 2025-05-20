@@ -54,7 +54,7 @@ public:
      * @return iterator (see get_thresholds()) to the exceeded threshold if found.
      *         get_thresholds().end() otherwise
      */
-    auto get_max_exceeded_threshold(double value)
+    auto get_max_exceeded_threshold(FP value)
     {
         //thresholds are sorted by value descending, so upper_bound returns the first threshold that is smaller using binary search
         auto iter_max_exceeded_threshold =
@@ -84,7 +84,7 @@ public:
      * get the duration of the NPIs.
      * @return the duration of the NPIs.
      */
-    SimulationTime get_duration() const
+    SimulationTime<FP> get_duration() const
     {
         return m_duration;
     }
@@ -93,7 +93,7 @@ public:
      * set the duration of the NPIs.
      * @param v the duration of the NPIs.
      */
-    void set_duration(SimulationTime v)
+    void set_duration(SimulationTime<FP> v)
     {
         m_duration = v;
     }
@@ -105,14 +105,14 @@ public:
     /**
      * @return the interval at which the NPIs are checked.
      */
-    SimulationTime get_interval() const
+    SimulationTime<FP> get_interval() const
     {
         return m_interval;
     }
     /**
      * @param interval The interval at which the NPIs are checked.
      */
-    void set_interval(SimulationTime interval)
+    void set_interval(SimulationTime<FP> interval)
     {
         m_interval = interval;
     }
@@ -175,8 +175,8 @@ public:
     {
         auto obj = io.expect_object("DynamicNPIs");
         auto t   = obj.expect_list("Thresholds", Tag<std::pair<double, std::vector<DampingSampling<FP>>>>{});
-        auto d   = obj.expect_element("Duration", Tag<SimulationTime>{});
-        auto i   = obj.expect_element("Interval", Tag<SimulationTime>{});
+        auto d   = obj.expect_element("Duration", Tag<SimulationTime<FP>>{});
+        auto i   = obj.expect_element("Interval", Tag<SimulationTime<FP>>{});
         auto b   = obj.expect_element("BaseValue", Tag<double>{});
         return apply(
             io,
@@ -195,8 +195,8 @@ public:
 
 private:
     std::vector<std::pair<double, std::vector<DampingSampling<FP>>>> m_thresholds;
-    SimulationTime m_duration{14.0};
-    SimulationTime m_interval{3.0};
+    SimulationTime<FP> m_duration{14.0};
+    SimulationTime<FP> m_interval{3.0};
     double m_base{1.0};
 };
 
@@ -212,15 +212,15 @@ private:
  * @param end end of the time span that contains the dampings.
  * @return list of indices in range damping_expr.get_dampings()
  */
-template <class DampingExpr>
+template <typename FP = double, class DampingExpr>
 std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, DampingLevel lvl, DampingType type,
-                                        SimulationTime begin, SimulationTime end)
+                                        SimulationTime<FP> begin, SimulationTime<FP> end)
 {
     std::vector<size_t> indices;
     for (size_t i = 0; i < damping_expr.get_dampings().size(); ++i) {
         const auto d = damping_expr.get_dampings()[i];
-        if (d.get_level() == lvl && d.get_type() == type && double(d.get_time()) > double(begin) &&
-            double(d.get_time()) < double(end)) {
+        if (d.get_level() == lvl && d.get_type() == type && FP(d.get_time()) > FP(begin) &&
+            FP(d.get_time()) < FP(end)) {
             indices.push_back(i);
         }
     }
@@ -238,13 +238,13 @@ std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, Damping
  * @return matrix of damping coefficients if active damping is found.
  *         zero matrix otherwise.
  */
-template <class DampingExpr>
+template <typename FP = double, class DampingExpr>
 Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingExpr& damping_expr, DampingLevel lvl,
-                                                                  DampingType type, SimulationTime t)
+                                                                  DampingType type, SimulationTime<FP> t)
 {
     auto ub =
         std::find_if(damping_expr.get_dampings().rbegin(), damping_expr.get_dampings().rend(), [lvl, type, t](auto& d) {
-            return d.get_level() == lvl && d.get_type() == type && double(d.get_time()) <= double(t);
+            return d.get_level() == lvl && d.get_type() == type && FP(d.get_time()) <= FP(t);
         });
     if (ub != damping_expr.get_dampings().rend()) {
         return ub->get_coeffs();
@@ -280,7 +280,7 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  */
 template <class DampingExprGroup, class MakeMatrix, typename FP = double>
 void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vector<DampingSampling<FP>>& npis,
-                            SimulationTime begin, SimulationTime end, MakeMatrix&& make_matrix)
+                            SimulationTime<FP> begin, SimulationTime<FP> end, MakeMatrix&& make_matrix)
 {
     for (auto& npi : npis) {
         for (auto& mat_idx : npi.get_matrix_indices()) {
@@ -291,7 +291,7 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
             auto active = get_active_damping(damping_expr, level, type, begin);
             auto active_end =
                 get_active_damping(damping_expr, level, type, end).eval(); //copy because it may be removed or changed
-            auto value = make_matrix(double(npi.get_value()) * npi.get_group_weights());
+            auto value = make_matrix(FP(npi.get_value()) * npi.get_group_weights());
 
             auto npi_implemented = false;
 

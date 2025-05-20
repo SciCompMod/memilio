@@ -107,13 +107,15 @@ private:
 /**
  * time dependent mobility coefficients.
  */
-using MobilityCoefficients = DampingMatrixExpression<VectorDampings>;
+template <typename FP = double>
+using MobilityCoefficients = DampingMatrixExpression<VectorDampings<FP>>;
 
 /**
  * sum of time dependent mobility coefficients.
  * differentiate between sources of mobility.
  */
-using MobilityCoefficientGroup = DampingMatrixExpressionGroup<MobilityCoefficients>;
+template <typename FP = double>
+using MobilityCoefficientGroup = DampingMatrixExpressionGroup<MobilityCoefficients<FP>>;
 
 /**
  * parameters that influence mobility.
@@ -127,7 +129,7 @@ public:
      * constructor from mobility coefficients.
      * @param coeffs mobility coefficients
      */
-    MobilityParameters(const MobilityCoefficientGroup& coeffs)
+    MobilityParameters(const MobilityCoefficientGroup<FP>& coeffs)
         : m_coefficients(coeffs)
         , m_saved_compartment_indices(0)
     {
@@ -137,8 +139,8 @@ public:
      * constructor from mobility coefficients.
      * @param coeffs mobility coefficients
      */
-    MobilityParameters(const Eigen::VectorXd& coeffs)
-        : m_coefficients({MobilityCoefficients(coeffs)})
+    MobilityParameters(const Eigen::Matrix<FP, Eigen::Dynamic, 1>& coeffs)
+        : m_coefficients({MobilityCoefficients<FP>(coeffs)})
         , m_saved_compartment_indices(0)
     {
     }
@@ -153,7 +155,7 @@ public:
      * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
      * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
      */
-    MobilityParameters(const MobilityCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+    MobilityParameters(const MobilityCoefficientGroup<FP>& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_coefficients(coeffs)
         , m_saved_compartment_indices(save_indices)
     {
@@ -168,8 +170,8 @@ public:
      * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
      * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
      */
-    MobilityParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
-        : m_coefficients({MobilityCoefficients(coeffs)})
+    MobilityParameters(const Eigen::Matrix<FP, Eigen::Dynamic, 1>& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+        : m_coefficients({MobilityCoefficients<FP>(coeffs)})
         , m_saved_compartment_indices(save_indices)
     {
     }
@@ -197,18 +199,18 @@ public:
     /**
      * @return the mobility coefficients.
      */
-    const MobilityCoefficientGroup& get_coefficients() const
+    const MobilityCoefficientGroup<FP>& get_coefficients() const
     {
         return m_coefficients;
     }
-    MobilityCoefficientGroup& get_coefficients()
+    MobilityCoefficientGroup<FP>& get_coefficients()
     {
         return m_coefficients;
     }
     /**
      * @param coeffs the mobility coefficients.
      */
-    void set_coefficients(const MobilityCoefficientGroup& coeffs)
+    void set_coefficients(const MobilityCoefficientGroup<FP>& coeffs)
     {
         m_coefficients = coeffs;
     }
@@ -273,7 +275,7 @@ public:
     static IOResult<MobilityParameters> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("MobilityParameters");
-        auto c   = obj.expect_element("Coefficients", Tag<MobilityCoefficientGroup>{});
+        auto c   = obj.expect_element("Coefficients", Tag<MobilityCoefficientGroup<FP>>{});
         auto d   = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs<FP>>{});
         return apply(
             io,
@@ -286,7 +288,7 @@ public:
     }
 
 private:
-    MobilityCoefficientGroup m_coefficients; //one per group and compartment
+    MobilityCoefficientGroup<FP> m_coefficients; //one per group and compartment
     DynamicNPIs<FP> m_dynamic_npis;
     std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
 };
@@ -318,7 +320,7 @@ public:
      * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment 
      * that change nodes in each time step.
      */
-    MobilityEdge(const Eigen::VectorXd& coeffs)
+    MobilityEdge(const Eigen::Matrix<FP, Eigen::Dynamic, 1>& coeffs)
         : m_parameters(coeffs)
         , m_mobile_population(coeffs.rows())
         , m_return_times(0)
@@ -354,7 +356,7 @@ public:
      * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments, while each 
      * inner vector represents a group of indices for compartments to be saved.
      */
-    MobilityEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
+    MobilityEdge(const Eigen::Matrix<FP, Eigen::Dynamic, 1>& coeffs, const std::vector<std::vector<size_t>>& save_indices)
         : m_parameters(coeffs)
         , m_mobile_population(coeffs.rows())
         , m_return_times(0)
@@ -407,7 +409,7 @@ private:
     TimeSeries<FP> m_return_times;
     bool m_return_mobile_population;
     FP m_t_last_dynamic_npi_check               = -std::numeric_limits<FP>::infinity();
-    std::pair<FP, SimulationTime> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime(0)};
+    std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime<FP>(FP(0.))};
     std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
     TimeSeries<FP> m_mobility_results; // save results from edges + entry for the total number of commuters
 
@@ -429,7 +431,7 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
     if (save_indices_size > 0) {
 
         const auto& last_value           = m_mobile_population.get_last_value();
-        Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
+        Eigen::Matrix<FP, Eigen::Dynamic, 1> condensed_values = Eigen::Matrix<FP, Eigen::Dynamic, 1>::Zero(save_indices_size + 1);
 
         // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
         std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
@@ -575,10 +577,10 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
              t > FP(m_dynamic_npi.second))) { //old NPI was weaker or is expired
-            auto t_end    = SimulationTime(t + FP(dyn_npis.get_duration()));
+            auto t_end    = SimulationTime<FP>(t + FP(dyn_npis.get_duration()));
             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
             implement_dynamic_npis(
-                m_parameters.get_coefficients(), exceeded_threshold->second, SimulationTime(t), t_end, [this](auto& g) {
+                m_parameters.get_coefficients(), exceeded_threshold->second, SimulationTime<FP>(t), t_end, [this](auto& g) {
                     return make_mobility_damping_vector(m_parameters.get_coefficients().get_shape(), g);
                 });
         }
@@ -596,7 +598,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
             //fix by subtracting the supernumerous returns from the biggest compartment of the age group.
-            Eigen::VectorXd remaining_after_return =
+            Eigen::Matrix<FP, Eigen::Dynamic, 1> remaining_after_return =
                 (node_to.get_result().get_last_value() - m_mobile_population[i]).eval();
             for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
                 if (remaining_after_return(j) < 0) {
@@ -644,8 +646,8 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
  * edge functor for mobility-based simulation.
  * @see SimulationNode::advance
  */
-template <class Sim>
-void advance_model(double t, double dt, SimulationNode<Sim>& node)
+template <typename FP, class Sim>
+void advance_model(FP t, FP dt, SimulationNode<Sim>& node)
 {
     node.advance(t, dt);
 }

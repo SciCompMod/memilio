@@ -49,28 +49,30 @@ DECL_TYPESAFE(int, DampingType);
 /**
  * double simulation time.
  */
-class MEMILIO_ENABLE_EBO SimulationTime : public TypeSafe<double, SimulationTime>,
-                                          public OperatorAdditionSubtraction<SimulationTime>,
-                                          public OperatorScalarMultiplicationDivision<SimulationTime, double>,
-                                          public OperatorComparison<SimulationTime>
+template <typename FP = double>
+ class MEMILIO_ENABLE_EBO SimulationTime : public TypeSafe<FP, SimulationTime<FP>>,
+                                          public OperatorAdditionSubtraction<SimulationTime<FP>>,
+                                          public OperatorScalarMultiplicationDivision<SimulationTime<FP>, FP>,
+                                          public OperatorComparison<SimulationTime<FP>>
 {
 public:
-    using TypeSafe<double, SimulationTime>::TypeSafe;
+    using TypeSafe<FP, SimulationTime<FP>>::TypeSafe;
 };
 
 /**
  * represent interventions or effects that affect contact frequencies between multiple groups.
  * Dampings have a level and a type and are active from a certain point in time forward.
  * Dampings are square matrix valued, coefficient d_ij affects the contacts from group i to group j.
+ * @tparam FP Floating point type, e.g., double
  * @tparam S Matrix shape type
  */
-template <class S>
-class Damping : public std::tuple<typename S::Matrix, DampingLevel, DampingType, SimulationTime>
+template <typename FP, class S>
+class Damping : public std::tuple<typename S::Matrix, DampingLevel, DampingType, SimulationTime<FP>>
 {
 public:
     using Shape  = S;
     using Matrix = typename Shape::Matrix;
-    using Base   = std::tuple<Matrix, DampingLevel, DampingType, SimulationTime>;
+    using Base   = std::tuple<Matrix, DampingLevel, DampingType, SimulationTime<FP>>;
 
     /**
      * create a default Damping.
@@ -92,10 +94,10 @@ public:
      * @tparam ME matrix expression, must be compatible with Shape
      */
     template <class ME>
-    Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime t)
+    Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime<FP> t)
         : Base(m, level, type, t)
     {
-        assert((get_coeffs().array() <= 1.).all() && "damping coefficient out of range");
+        assert((get_coeffs().array() <= FP(1.)).all() && "damping coefficient out of range");
     }
 
     /**
@@ -108,7 +110,7 @@ public:
      * @tparam T Shape constructor arguments.
      */
     template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
-    Damping(double d, DampingLevel level, DampingType type, SimulationTime t, T... shape_args)
+    Damping(FP d, DampingLevel level, DampingType type, SimulationTime<FP> t, T... shape_args)
         : Damping(Matrix::Constant(Shape(shape_args...).rows(), Shape(shape_args...).cols(), d), level, type, t)
     {
     }
@@ -120,7 +122,7 @@ public:
      * @tparam ME matrix expression, must be compatible with Damping::Matrix
      */
     template <class ME>
-    Damping(const Eigen::MatrixBase<ME>& m, SimulationTime t)
+    Damping(const Eigen::MatrixBase<ME>& m, SimulationTime<FP> t)
         : Damping(m, DampingLevel(0), DampingType(0), t)
     {
     }
@@ -133,7 +135,7 @@ public:
      * @tparam T Shape constructor arguments.
      */
     template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
-    Damping(double d, SimulationTime t, T... shape_args)
+    Damping(FP d, SimulationTime<FP> t, T... shape_args)
         : Damping(d, DampingLevel(0), DampingType(0), t, shape_args...)
     {
     }
@@ -141,13 +143,13 @@ public:
     /**
      * the time this damping becomes active.
      */
-    SimulationTime& get_time()
+    SimulationTime<FP>& get_time()
     {
-        return std::get<SimulationTime>(*this);
+        return std::get<SimulationTime<FP>>(*this);
     }
-    const SimulationTime& get_time() const
+    const SimulationTime<FP>& get_time() const
     {
-        return std::get<SimulationTime>(*this);
+        return std::get<SimulationTime<FP>>(*this);
     }
 
     /**
@@ -199,7 +201,7 @@ public:
      */
     friend void PrintTo(const Damping& self, std::ostream* os)
     {
-        *os << '[' << std::get<SimulationTime>(self) << ',' << std::get<DampingType>(self) << ','
+        *os << '[' << std::get<SimulationTime<FP>>(self) << ',' << std::get<DampingType>(self) << ','
             << std::get<DampingLevel>(self) << ']';
         *os << '\n' << std::get<Matrix>(self);
     }
@@ -226,7 +228,7 @@ public:
     static IOResult<Damping> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("Damping");
-        auto ti  = obj.expect_element("Time", Tag<SimulationTime>{});
+        auto ti  = obj.expect_element("Time", Tag<SimulationTime<FP>>{});
         auto ty  = obj.expect_element("Type", Tag<DampingType>{});
         auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
         auto c   = obj.expect_element("Coeffs", Tag<Matrix>{});
@@ -245,7 +247,7 @@ public:
  * @see get_matrix_at 
  * @tparam D an instance of Damping template or compatible type. 
  */
-template <class D>
+template <typename FP, class D>
 class Dampings
 {
 public:
@@ -349,23 +351,23 @@ public:
      * @param t time in the simulation
      * @return matrix expression 
      */
-    auto get_matrix_at(SimulationTime t) const
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
         assert(!m_accumulated_dampings_cached.empty() &&
                "Cache is not current. Did you disable the automatic cache update?");
         auto ub =
             std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),
                              std::make_tuple(t), [](auto&& tup1, auto&& tup2) {
-                                 return double(std::get<SimulationTime>(tup1)) < double(std::get<SimulationTime>(tup2));
+                                 return FP(std::get<SimulationTime<FP>>(tup1)) < FP(std::get<SimulationTime<FP>>(tup2));
                              });
         auto damping =
-            smoother_cosine(double(t), double(std::get<SimulationTime>(*ub)) - 1, double(std::get<SimulationTime>(*ub)),
+            smoother_cosine<FP>(FP(t), FP(std::get<SimulationTime<FP>>(*ub)) - FP(1.), FP(std::get<SimulationTime<FP>>(*ub)),
                             std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub));
         return damping;
     }
     auto get_matrix_at(double t) const
     {
-        return get_matrix_at(SimulationTime(t));
+        return get_matrix_at(SimulationTime<FP>(t));
     }
 
     /**
@@ -519,9 +521,7 @@ private:
     static void inclusive_exclusive_sum_rec(Iter b, Iter e, Matrix& sum)
     {
         if (b != e) {
-            auto& mat_b   = std::get<Matrix>(*b);
-            auto mat_prod = (sum.array() * mat_b.array()).matrix();
-            sum           = sum + mat_b - mat_prod;
+            sum = sum + std::get<Matrix>(*b) - (sum.array() * std::get<Matrix>(*b).array()).matrix();
             inclusive_exclusive_sum_rec(++b, e, sum);
         }
     }
@@ -529,7 +529,8 @@ private:
     static Matrix inclusive_exclusive_sum(const std::vector<Tuple>& v)
     {
         assert(!v.empty());
-        Matrix sum = std::get<Matrix>(v.front());
+        auto& m  = std::get<Matrix>(v.front());
+        auto sum = m.eval();
         inclusive_exclusive_sum_rec(v.begin() + 1, v.end(), sum);
         return sum;
     }
@@ -537,18 +538,18 @@ private:
 private:
     std::vector<value_type> m_dampings;
     Shape m_shape;
-    std::vector<std::tuple<Matrix, SimulationTime>> m_accumulated_dampings_cached;
+    std::vector<std::tuple<Matrix, SimulationTime<FP>>> m_accumulated_dampings_cached;
     bool m_automatic_cache_update = true;
 };
 
-template <class D>
-void Dampings<D>::update_cache()
+template <typename FP, class D>
+void Dampings<FP, D>::update_cache()
 {
     using std::get;
 
     if (m_accumulated_dampings_cached.empty()) {
         m_accumulated_dampings_cached.emplace_back(Matrix::Zero(m_shape.rows(), m_shape.cols()),
-                                                   SimulationTime(std::numeric_limits<double>::lowest()));
+                                                   SimulationTime<FP>(std::numeric_limits<double>::lowest()));
 
         std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>> active_by_type;
         std::vector<std::tuple<Matrix, DampingLevel>> sum_by_level;
@@ -557,22 +558,22 @@ void Dampings<D>::update_cache()
             update_active_dampings(damping, active_by_type, sum_by_level);
             auto combined_damping = inclusive_exclusive_sum(sum_by_level);
             assert((combined_damping.array() <= 1).all() && "unexpected error, accumulated damping out of range.");
-            if (floating_point_equal(double(get<SimulationTime>(damping)),
-                                     double(get<SimulationTime>(m_accumulated_dampings_cached.back())), 1e-15, 1e-15)) {
+            if (floating_point_equal<FP>(FP(get<SimulationTime<FP>>(damping)),
+                                         FP(get<SimulationTime<FP>>(m_accumulated_dampings_cached.back())), 1e-15, 1e-15)) {
                 std::get<Matrix>(m_accumulated_dampings_cached.back()) = combined_damping;
             }
             else {
-                m_accumulated_dampings_cached.emplace_back(combined_damping, get<SimulationTime>(damping));
+                m_accumulated_dampings_cached.emplace_back(combined_damping, get<SimulationTime<FP>>(damping));
             }
         }
 
         m_accumulated_dampings_cached.emplace_back(get<Matrix>(m_accumulated_dampings_cached.back()),
-                                                   SimulationTime(std::numeric_limits<double>::max()));
+                                                   SimulationTime<FP>(std::numeric_limits<double>::max()));
     }
 }
 
-template <class D>
-void Dampings<D>::add_(const value_type& damping)
+template <typename FP, class D>
+void Dampings<FP, D>::add_(const value_type& damping)
 {
     assert(damping.get_shape() == m_shape && "Inconsistent matrix shape.");
     insert_sorted_replace(m_dampings, damping, [](auto& tup1, auto& tup2) {
@@ -585,8 +586,8 @@ void Dampings<D>::add_(const value_type& damping)
     }
 }
 
-template <class S>
-void Dampings<S>::update_active_dampings(
+template <typename FP, class S>
+void Dampings<FP, S>::update_active_dampings(
     const value_type& damping,
     std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>>& active_by_type,
     std::vector<std::tuple<Matrix, DampingLevel>>& sum_by_level)
@@ -632,10 +633,14 @@ void Dampings<S>::update_active_dampings(
 /**
  * aliases for common damping specializations.
  */
-using SquareDamping  = Damping<SquareMatrixShape>;
-using SquareDampings = Dampings<SquareDamping>;
-using VectorDamping  = Damping<ColumnVectorShape>;
-using VectorDampings = Dampings<VectorDamping>;
+template <typename FP = double>
+using SquareDamping = Damping<FP, SquareMatrixShape<FP>>;
+template <typename FP = double>
+using SquareDampings = Dampings<FP, SquareDamping<FP>>;
+template <typename FP = double>
+using VectorDamping = Damping<FP, ColumnVectorShape>;
+template <typename FP = double>
+using VectorDampings = Dampings<FP, VectorDamping<FP>>;
 
 } // namespace mio
 

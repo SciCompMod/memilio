@@ -85,7 +85,7 @@ int main()
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, mio::SimulationTime<double>(5.0));
 
     //times
     model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.33;
@@ -138,5 +138,7 @@ int main()
         for (size_t j = 0; j < (size_t)mio::osecirvvs::InfectionState::Count; j++) {
             printf("compartment %d: %.14f\n", (int)j, result.get_last_value()[j]);
         }
+    //     printf("test: %.14f\n", model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)]);
+    //     printf("test: %.14f", model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)].value);
     }
 }

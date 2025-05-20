@@ -299,11 +299,11 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
         auto holiday_periods = regions::get_holidays(regions::get_state_id(id), start_date, end_date);
         auto& contacts       = nodes[node_idx].parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =
-            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
+            std::vector<std::pair<mio::SimulationTime<FP>, mio::SimulationTime<FP>>>(holiday_periods.size());
         std::transform(
             holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
-                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
+                return std::make_pair(mio::SimulationTime<FP>(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime<FP>(mio::get_offset_in_days(period.second, start_date)));
             });
 
         //uncertainty in populations
