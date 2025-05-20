@@ -336,7 +336,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
 {
     auto validity_period   = mio::abm::days(1);
     const auto start_date  = mio::abm::TimePoint(0);
-    const auto end_date    = mio::abm::TimePoint(500);
+    const auto end_date    = mio::abm::TimePoint(0) + mio::abm::days(5);
     const auto probability = 1.0; // Always test
 
     // Create PCR test parameters with high accuracy but long wait time
@@ -380,18 +380,21 @@ TEST_F(TestTestingScheme, differentTestTypes)
         .WillOnce(testing::Return(0.1)) // Infected person complies for rapid test
         .WillOnce(testing::Return(0.7)) // Rapid test is performed
         .WillOnce(testing::Return(0.3)) // Rapid test correctly identifies infection
-        .WillOnce(testing::Return(0.1)); // Healthy person complies for rapid test
+        .WillOnce(testing::Return(0.1)); // Infected person complies for isolation
 
     // Test PCR test with infected person
-    bool pcr_infected_result = testing_scheme_pcr.run_and_test(rng_infected, person_infected, start_date);
+    bool pcr_infected_result =
+        testing_scheme_pcr.run_and_test(rng_infected, person_infected, start_date + mio::abm::hours(1));
     EXPECT_EQ(pcr_infected_result, true); // PCR should detect infection
 
     // Test PCR test with healthy person
-    bool pcr_healthy_result = testing_scheme_pcr.run_and_test(rng_healthy, person_healthy, start_date);
+    bool pcr_healthy_result =
+        testing_scheme_pcr.run_and_test(rng_healthy, person_healthy, start_date + mio::abm::hours(1));
     EXPECT_EQ(pcr_healthy_result, false); // PCR should correctly identify no infection
 
     // Test rapid test with infected person
-    bool rapid_infected_result = testing_scheme_rapid.run_and_test(rng_infected, person_infected, start_date);
+    bool rapid_infected_result =
+        testing_scheme_rapid.run_and_test(rng_infected, person_infected, start_date + mio::abm::hours(1));
     EXPECT_EQ(rapid_infected_result, true); // Rapid test should detect infection
 }
 

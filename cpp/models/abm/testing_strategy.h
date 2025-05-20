@@ -133,6 +133,7 @@ public:
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
+     * @return Whether the Person is assumed to have a positive test result (could be not complying to the test).
      */
     bool run_and_test(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
@@ -218,7 +219,7 @@ public:
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person when entering.
      * @details The TestingStrategy runs the TestingSchemes in the order they are added but first IDs and then types. 
-     * It also decides if one can enter, if there are no positive tests, home is alwaays allowed.
+     * It also decides if one can enter, if there are no positive tests, home is always allowed.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
