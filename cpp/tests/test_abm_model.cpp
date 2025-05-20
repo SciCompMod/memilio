@@ -623,10 +623,9 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params_pcr, probability);
 
-    model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
-    EXPECT_EQ(
-        model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
-        true); // no active testing scheme -> person can enter
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme);
+    EXPECT_EQ(model.get_testing_strategy().run_and_check(rng_person, person, work, current_time),
+              true); // no active testing scheme -> person can enter
     current_time = mio::abm::TimePoint(0) + mio::abm::days(2);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
@@ -635,9 +634,8 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
         .WillOnce(testing::Return(0.5)) // Probability for testing (is performed)
         .WillOnce(testing::Return(0.4)) // Test result is positive
         .WillOnce(testing::Return(0.0)); // Draw for isolation compliance (doesn't matter in this test)
-    EXPECT_EQ(
-        model.get_testing_strategy().run_strategy_and_check_if_entry_allowed(rng_person, person, work, current_time),
-        false); // Testing scheme active but person complies with testing
+    EXPECT_EQ(model.get_testing_strategy().run_and_check(rng_person, person, work, current_time),
+              false); // Testing scheme active but person complies with testing
 }
 
 /**
@@ -870,7 +868,7 @@ TEST_F(TestModel, mobilityRulesWithAppliedNPIs)
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
-    model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
@@ -986,7 +984,7 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     auto testing_scheme =
         mio::abm::TestingScheme(testing_criteria, testing_frequency, start_date, end_date, test_params, probability);
-    model.get_testing_strategy().add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;

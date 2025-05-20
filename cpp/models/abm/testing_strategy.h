@@ -134,7 +134,7 @@ public:
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
      */
-    bool run_scheme_and_check_if_test_positive(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
+    bool run_and_test(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -195,23 +195,23 @@ public:
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme_location_id(const LocationId& loc_id, const TestingScheme& scheme);
+    void add_scheme(const LocationId& loc_id, const TestingScheme& scheme);
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
      * @param[in] loc_type LocationType key for TestingScheme to add.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme_location_type(const LocationType& loc_type, const TestingScheme& scheme);
+    void add_scheme(const LocationType& loc_type, const TestingScheme& scheme);
 
     /**
      * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
      * @param[in] loc_type Vector of LocationType key for TestingScheme to add.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme_location_type(const std::vector<LocationType>& loc_type, const TestingScheme& scheme)
+    void add_scheme(const std::vector<LocationType>& loc_type, const TestingScheme& scheme)
     {
         for (auto& type : loc_type) {
-            add_testing_scheme_location_type(type, scheme);
+            add_scheme(type, scheme);
         }
     }
 
@@ -224,8 +224,7 @@ public:
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
      */
-    bool run_strategy_and_check_if_entry_allowed(PersonalRandomNumberGenerator& rng, Person& person,
-                                                 const Location& location, TimePoint t);
+    bool run_and_check(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
     /// This method is used by the default serialization feature.
     auto default_serialize()

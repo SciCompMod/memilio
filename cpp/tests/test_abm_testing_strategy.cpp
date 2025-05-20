@@ -122,11 +122,11 @@ TEST_F(TestTestingScheme, runScheme)
         .WillOnce(testing::Return(0.5)) // Person 2 tested negative and can enter
         .WillOnce(testing::Return(0.1)); // Person 1 compliant to testing
 
-    EXPECT_EQ(testing_scheme1.run_scheme_and_check_if_test_positive(rng_person1, person1, start_date),
+    EXPECT_EQ(testing_scheme1.run_and_test(rng_person1, person1, start_date),
               true); // Person tests and tests positive
-    EXPECT_EQ(testing_scheme2.run_scheme_and_check_if_test_positive(rng_person2, person2, start_date),
+    EXPECT_EQ(testing_scheme2.run_and_test(rng_person2, person2, start_date),
               false); // Person tests and tests negative
-    EXPECT_EQ(testing_scheme1.run_scheme_and_check_if_test_positive(rng_person1, person1, start_date),
+    EXPECT_EQ(testing_scheme1.run_and_test(rng_person1, person1, start_date),
               true); // Person doesn't test but used the last result (false to enter)
 }
 
@@ -180,12 +180,12 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{},
                                   std::vector<mio::abm::TestingStrategy::LocalStrategy>{});
-    test_strategy.add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme1);
-    test_strategy.add_testing_scheme_location_type(mio::abm::LocationType::Work, testing_scheme2);
-    EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person1, person1, loc_work, start_date),
+    test_strategy.add_scheme(mio::abm::LocationType::Work, testing_scheme1);
+    test_strategy.add_scheme(mio::abm::LocationType::Work, testing_scheme2);
+    EXPECT_EQ(test_strategy.run_and_check(rng_person1, person1, loc_work, start_date),
               false); // Person tests and tests positive
-    EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person2, person2, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_and_check(rng_person2, person2, loc_work, start_date),
               true); // Person tests and tests negative
-    EXPECT_EQ(test_strategy.run_strategy_and_check_if_entry_allowed(rng_person1, person1, loc_work, start_date),
+    EXPECT_EQ(test_strategy.run_and_check(rng_person1, person1, loc_work, start_date),
               false); // Person doesn't test but used the last result (false to enter)
 }
