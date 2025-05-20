@@ -23,6 +23,8 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
 
+#include <likwid-marker.h>
+
 namespace mio
 {
 
@@ -96,23 +98,29 @@ class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, e
 public:
     void advance(Timepoint t_max = 1.0)
     {
+        // LIKWID_MARKER_START("Advance");
         auto dt = Base::m_dt;
         while (Base::m_t < t_max) {
             if (Base::m_t + dt > t_max) {
                 dt = t_max - Base::m_t;
             }
 
+            // LIKWID_MARKER_START("Node function");
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
+            // LIKWID_MARKER_STOP("Node function");
 
             Base::m_t += dt;
 
+            // LIKWID_MARKER_START("Apply mobility");
             for (auto& e : Base::m_graph.edges()) {
                 Base::m_edge_func(Base::m_t, dt, e.property, Base::m_graph.nodes()[e.start_node_idx].property,
                                   Base::m_graph.nodes()[e.end_node_idx].property);
             }
+            // LIKWID_MARKER_STOP("Apply mobility");
         }
+        // LIKWID_MARKER_STOP("Advance");
     }
 };
 

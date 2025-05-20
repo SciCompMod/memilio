@@ -36,6 +36,8 @@
 
 #include <cassert>
 
+#include <likwid-marker.h>
+
 namespace mio
 {
 
@@ -94,8 +96,10 @@ public:
 
     void advance(double t, double dt)
     {
+        LIKWID_MARKER_START("Inside advance model");
         m_simulation.advance(t + dt);
         m_last_state = m_simulation.get_result().get_last_value();
+        LIKWID_MARKER_STOP("Inside advance model");
     }
 
 private:
@@ -562,6 +566,7 @@ template <typename FP>
 template <class Sim>
 void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
+    LIKWID_MARKER_START("Inside apply mobility");
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
         m_t_last_dynamic_npi_check = node_from.get_t0();
@@ -638,6 +643,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         add_mobility_result_time_point(t);
     }
     m_return_mobile_population = !m_return_mobile_population;
+    LIKWID_MARKER_STOP("Inside apply mobility");
 }
 
 /**
