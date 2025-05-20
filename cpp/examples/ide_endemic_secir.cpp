@@ -18,8 +18,8 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 100;
-    ScalarType dt   = 1.;
+    ScalarType tmax = 10;
+    ScalarType dt   = 0.1;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -44,13 +44,13 @@ int main()
 
     //Set working parameters
 
-    mio::ExponentialSurvivalFunction exp(3.0);
-    mio::StateAgeFunctionWrapper delaydistribution(exp);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
-
-    // mio::SmootherCosine smoothcos(9.0);
-    // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    // mio::ExponentialSurvivalFunction exp(2.0);
+    // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
+
+    mio::SmootherCosine smoothcos(4.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
     model.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
 
@@ -94,7 +94,7 @@ int main()
     //     {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
 
     // Uncomment to print the normalized compartments.
-    sim.get_normalizedcompartments().print_table({"s", "e", "c", "i", "h", "u", "r", "d "}, 16, 8);
+    // sim.get_normalizedcompartments().print_table({"s", "e", "c", "i", "h", "u", "r", "d "}, 16, 8);
 
     // Uncomment to print the total population size.
     sim.get_totalpopulations().print_table({"N"}, 16, 9);
@@ -102,14 +102,14 @@ int main()
     // Uncomment to print the force of infection.
     sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
 
-    std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
-    std::cout << "Equilibrium normalized compartments: \n";
-    std::cout << "foi* " << sim.get_equilibrium_forceofinfection() << "\n";
-    std::cout << "s* " << equi[(int)mio::endisecir::InfectionState::Susceptible] << "\n";
-    std::cout << "e* " << equi[(int)mio::endisecir::InfectionState::Exposed] << "\n";
-    std::cout << "c* " << equi[(int)mio::endisecir::InfectionState::InfectedNoSymptoms] << "\n";
-    std::cout << "i* " << equi[(int)mio::endisecir::InfectionState::InfectedSymptoms] << "\n";
-    std::cout << "h* " << equi[(int)mio::endisecir::InfectionState::InfectedSevere] << "\n";
-    std::cout << "u* " << equi[(int)mio::endisecir::InfectionState::InfectedCritical] << "\n";
-    std::cout << "r* " << equi[(int)mio::endisecir::InfectionState::Recovered] << "\n";
+    // std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
+    // std::cout << "Equilibrium normalized compartments: \n";
+    // std::cout << "foi* " << sim.get_equilibrium_forceofinfection() << "\n";
+    // std::cout << "s* " << equi[(int)mio::endisecir::InfectionState::Susceptible] << "\n";
+    // std::cout << "e* " << equi[(int)mio::endisecir::InfectionState::Exposed] << "\n";
+    // std::cout << "c* " << equi[(int)mio::endisecir::InfectionState::InfectedNoSymptoms] << "\n";
+    // std::cout << "i* " << equi[(int)mio::endisecir::InfectionState::InfectedSymptoms] << "\n";
+    // std::cout << "h* " << equi[(int)mio::endisecir::InfectionState::InfectedSevere] << "\n";
+    // std::cout << "u* " << equi[(int)mio::endisecir::InfectionState::InfectedCritical] << "\n";
+    // std::cout << "r* " << equi[(int)mio::endisecir::InfectionState::Recovered] << "\n";
 }
