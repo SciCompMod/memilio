@@ -20,8 +20,9 @@ option(MEMILIO_ENABLE_MPI "Build memilio with MPI." OFF)
 option(MEMILIO_ENABLE_OPENMP "Enable Multithreading with OpenMP." OFF)
 option(MEMILIO_ENABLE_WARNINGS "Build memilio with warnings." ON)
 option(MEMILIO_ENABLE_WARNINGS_AS_ERRORS "Build memilio with warnings as errors." ON)
-option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler" OFF)
-option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio" OFF)
+option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires a Fortran compiler." OFF)
+option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio." OFF)
+option(MEMILIO_ENABLE_LIKWID_MARKER "Enable performance measuring with likwid markers." OFF)
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
@@ -90,6 +91,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
+            LCOV_ARGS --ignore-errors gcov,mismatch
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
@@ -128,10 +130,10 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Wno-stringop-overread;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
+        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;-Wno-stringop-overread;")
 endif()
 
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)

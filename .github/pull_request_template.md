@@ -14,17 +14,17 @@ If need be, add additional information and what the reviewer should look out for
 
 ## Merge Request - Guideline Checklist
 
-Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
+Please check our [git workflow](https://memilio.readthedocs.io/en/latest/development.html#git-workflow). Use the **draft** feature if the Pull Request is not yet ready to review.
 
 ### Checks by code author
 
 - [ ] Every addressed issue is linked (use the "Closes #ISSUE" keyword below)
-- [ ] New code adheres to [coding guidelines](https://github.com/SciCompMod/memilio/wiki/Coding-guidelines)
+- [ ] New code adheres to [coding guidelines](https://memilio.readthedocs.io/en/latest/development.html#coding-guidelines)
 - [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
 - [ ] Tests are added for new functionality and a local test run was successful (with and without OpenMP)
 - [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
 - [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
-- [ ] (For ABM development) Checked [benchmark results](https://github.com/SciCompMod/memilio/wiki/Agent-Based-Model-Development) and ran and posted a local test above from before and after development to ensure performance is monitored.
+- [ ] (For ABM development) Checked [benchmark results](https://memilio.readthedocs.io/en/latest/development.html#agent-based-model-development) and ran and posted a local test above from before and after development to ensure performance is monitored.
 
 ### Checks by code reviewer(s)
 

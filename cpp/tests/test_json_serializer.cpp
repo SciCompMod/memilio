@@ -21,6 +21,7 @@
 #include "distributions_helpers.h"
 
 #include "memilio/io/json_serializer.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
@@ -293,36 +294,149 @@ TEST(TestJsonSerializer, customindexarray)
 
 TEST(TestJsonSerializer, normal_distribution)
 {
-    auto dist = mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.1);
+    auto dist = mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.1, 2.5758);
+    dist.add_predefined_sample(1.);
+    auto json_array = [](std::vector<double> values) {
+        return mio::serialize_json(values).value();
+    };
     Json::Value expected_value;
     expected_value["Type"]              = "Normal";
     expected_value["Mean"]              = 0.5;
     expected_value["StandardDev"]       = 0.1;
     expected_value["LowerBound"]        = 0.0;
     expected_value["UpperBound"]        = 1.0;
-    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+    expected_value["Quantile"]          = 2.5758;
+    expected_value["PredefinedSamples"] = json_array({1.});
     auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
     EXPECT_EQ(js.value(), expected_value);
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
     EXPECT_THAT(print_wrap(r), IsSuccess());
     check_distribution(*r.value(), dist);
+
+    auto abstract_dist =
+        mio::AbstractParameterDistribution(mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.1, 2.5758));
+    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+
+    auto js_abstract = mio::serialize_json(static_cast<const mio::AbstractParameterDistribution&>(abstract_dist));
+    EXPECT_EQ(js_abstract.value(), expected_value);
+
+    auto r_abstract = mio::deserialize_json(expected_value, mio::Tag<mio::AbstractParameterDistribution>{});
+    EXPECT_THAT(print_wrap(r_abstract), IsSuccess());
 }
 
 TEST(TestJsonSerializer, uniform_distribution)
 {
     auto dist = mio::ParameterDistributionUniform(0.0, 1.0);
+    dist.add_predefined_sample(1.);
+    auto json_array = [](std::vector<double> values) {
+        return mio::serialize_json(values).value();
+    };
     Json::Value expected_value;
     expected_value["Type"]              = "Uniform";
     expected_value["LowerBound"]        = 0.0;
     expected_value["UpperBound"]        = 1.0;
-    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+    expected_value["PredefinedSamples"] = json_array({1.});
     auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
     EXPECT_EQ(js.value(), expected_value);
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
     EXPECT_THAT(print_wrap(r), IsSuccess());
     check_distribution(*r.value(), dist);
+
+    auto abstract_dist = mio::AbstractParameterDistribution(mio::ParameterDistributionUniform(0.0, 1.0));
+    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+
+    auto js_abstract = mio::serialize_json(static_cast<const mio::AbstractParameterDistribution&>(abstract_dist));
+    EXPECT_EQ(js_abstract.value(), expected_value);
+
+    auto r_abstract = mio::deserialize_json(expected_value, mio::Tag<mio::AbstractParameterDistribution>{});
+    EXPECT_THAT(print_wrap(r_abstract), IsSuccess());
+}
+
+TEST(TestJsonSerializer, lognormal_distribution)
+{
+    auto dist = mio::ParameterDistributionLogNormal(0.0, 0.25);
+    dist.add_predefined_sample(1.);
+    auto json_array = [](std::vector<double> values) {
+        return mio::serialize_json(values).value();
+    };
+    Json::Value expected_value;
+    expected_value["Type"]              = "LogNormal";
+    expected_value["LogMean"]           = 0.0;
+    expected_value["LogStddev"]         = 0.25;
+    expected_value["PredefinedSamples"] = json_array({1.});
+    auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
+    EXPECT_EQ(js.value(), expected_value);
+
+    auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
+    EXPECT_THAT(print_wrap(r), IsSuccess());
+    check_distribution(*r.value(), dist);
+
+    auto abstract_dist = mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(0.0, 0.25));
+    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+
+    auto js_abstract = mio::serialize_json(static_cast<const mio::AbstractParameterDistribution&>(abstract_dist));
+    EXPECT_EQ(js_abstract.value(), expected_value);
+
+    auto r_abstract = mio::deserialize_json(expected_value, mio::Tag<mio::AbstractParameterDistribution>{});
+    EXPECT_THAT(print_wrap(r_abstract), IsSuccess());
+}
+
+TEST(TestJsonSerializer, exponential_distribution)
+{
+    auto dist = mio::ParameterDistributionExponential(0.5);
+    dist.add_predefined_sample(1.);
+    auto json_array = [](std::vector<double> values) {
+        return mio::serialize_json(values).value();
+    };
+    Json::Value expected_value;
+    expected_value["Type"]              = "Exponential";
+    expected_value["Rate"]              = 0.5;
+    expected_value["PredefinedSamples"] = json_array({1.});
+    auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
+    EXPECT_EQ(js.value(), expected_value);
+
+    auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
+    EXPECT_THAT(print_wrap(r), IsSuccess());
+    check_distribution(*r.value(), dist);
+
+    auto abstract_dist = mio::AbstractParameterDistribution(mio::ParameterDistributionExponential(0.5));
+    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+
+    auto js_abstract = mio::serialize_json(static_cast<const mio::AbstractParameterDistribution&>(abstract_dist));
+    EXPECT_EQ(js_abstract.value(), expected_value);
+
+    auto r_abstract = mio::deserialize_json(expected_value, mio::Tag<mio::AbstractParameterDistribution>{});
+    EXPECT_THAT(print_wrap(r_abstract), IsSuccess());
+}
+
+TEST(TestJsonSerializer, constant_distribution)
+{
+    auto dist = mio::ParameterDistributionConstant(3.);
+    dist.add_predefined_sample(1.);
+    auto json_array = [](std::vector<double> values) {
+        return mio::serialize_json(values).value();
+    };
+    Json::Value expected_value;
+    expected_value["Type"]              = "Constant";
+    expected_value["Constant"]          = 3.;
+    expected_value["PredefinedSamples"] = json_array({1.});
+    auto js                             = mio::serialize_json(static_cast<const mio::ParameterDistribution&>(dist));
+    EXPECT_EQ(js.value(), expected_value);
+
+    auto r = mio::deserialize_json(expected_value, mio::Tag<std::shared_ptr<mio::ParameterDistribution>>{});
+    EXPECT_THAT(print_wrap(r), IsSuccess());
+    check_distribution(*r.value(), dist);
+
+    auto abstract_dist                  = mio::AbstractParameterDistribution(mio::ParameterDistributionConstant(3.));
+    expected_value["PredefinedSamples"] = Json::Value(Json::arrayValue);
+
+    auto js_abstract = mio::serialize_json(static_cast<const mio::AbstractParameterDistribution&>(abstract_dist));
+    EXPECT_EQ(js_abstract.value(), expected_value);
+
+    auto r_abstract = mio::deserialize_json(expected_value, mio::Tag<mio::AbstractParameterDistribution>{});
+    EXPECT_THAT(print_wrap(r_abstract), IsSuccess());
 }
 
 TEST(TestJsonSerializer, serialize_uv)
@@ -333,13 +447,14 @@ TEST(TestJsonSerializer, serialize_uv)
     auto js                 = mio::serialize_json(uv);
     EXPECT_EQ(js.value(), expected_value);
 
-    uv.set_distribution(mio::ParameterDistributionNormal(-1.0, 2.0, 0.5, 0.1));
+    uv.set_distribution(mio::ParameterDistributionNormal(-1.0, 2.0, 0.5, 0.1, 2.5758));
     js                                                  = mio::serialize_json(uv);
     expected_value["Distribution"]["Type"]              = "Normal";
     expected_value["Distribution"]["Mean"]              = 0.5;
     expected_value["Distribution"]["StandardDev"]       = 0.1;
     expected_value["Distribution"]["LowerBound"]        = -1.0;
     expected_value["Distribution"]["UpperBound"]        = 2.0;
+    expected_value["Distribution"]["Quantile"]          = 2.5758;
     expected_value["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     EXPECT_EQ(js.value(), expected_value);
 }
@@ -360,6 +475,7 @@ TEST(TestJsonSerializer, deserialize_uv)
     json_uv["Distribution"]["UpperBound"]        = 2.0;
     json_uv["Distribution"]["Mean"]              = 0.5;
     json_uv["Distribution"]["StandardDev"]       = 0.1;
+    json_uv["Distribution"]["Quantile"]          = 2.5758;
     json_uv["Distribution"]["PredefinedSamples"] = Json::Value(Json::arrayValue);
     {
         auto r = mio::deserialize_json(json_uv, mio::Tag<mio::UncertainValue<double>>{});

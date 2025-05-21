@@ -23,6 +23,7 @@
 #include "memilio/config.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
 #include <memory>
 #include <ostream>
 
@@ -150,7 +151,7 @@ public:
     FP draw_sample()
     {
         if (m_dist) {
-            m_value = m_dist->get_sample();
+            m_value = m_dist->get_sample(mio::thread_local_rng());
         }
 
         return m_value;
