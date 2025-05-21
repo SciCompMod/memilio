@@ -238,8 +238,22 @@ public:
 inline bool is_divi_data_available(const Date& date)
 {
     static const Date divi_data_start(2020, 4, 23);
-    static const Date divi_data_end(2024, 7, 21);
-    return date >= divi_data_start && date <= divi_data_end;
+    return date >= divi_data_start;
+}
+
+/**
+ * @brief Checks if vaccination data is available for any day within the given date interval, 
+ * only checking for overlap with the bounds of the simulation period.
+ * @param start_date The start date of the interval to check.
+ * @param end_date The end date of the interval to check.
+ * @return True if there is any overlap between the given date range and the vaccination data
+ *  availability period, false otherwise.
+ */
+inline bool is_vaccination_data_available(const Date& start_date, const Date& end_date)
+{
+    static const Date vaccination_data_start(2020, 12, 27);
+    static const Date vaccination_data_end(2024, 7, 9);
+    return !(end_date < vaccination_data_start || start_date > vaccination_data_end);
 }
 
 /**

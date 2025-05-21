@@ -300,10 +300,28 @@ TEST(TestEpiDataIo, read_divi_data)
 TEST(TestEpiDataIo, is_divi_data_available)
 {
     EXPECT_FALSE(mio::is_divi_data_available(mio::Date(2020, 4, 22))); // Before start
-    EXPECT_FALSE(mio::is_divi_data_available(mio::Date(2024, 7, 22))); // After end
     EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2020, 4, 23))); // Start date
-    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2022, 1, 1))); // Inside range
-    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2024, 7, 21))); // End date
+    EXPECT_TRUE(mio::is_divi_data_available(mio::Date(2022, 1, 1))); // Day after start
+}
+
+TEST(TestEpiDataIo, is_vaccination_data_available)
+{
+    // Single date tests
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2020, 12, 26), mio::Date(2020, 12, 26))); // Before start
+    EXPECT_TRUE(mio::is_vaccination_data_available(mio::Date(2020, 12, 27), mio::Date(2020, 12, 27))); // Start date
+    EXPECT_TRUE(mio::is_vaccination_data_available(mio::Date(2024, 7, 9), mio::Date(2024, 7, 9))); // End date
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2024, 7, 10), mio::Date(2024, 7, 10))); // After end
+
+    // Date range tests
+    EXPECT_TRUE(
+        mio::is_vaccination_data_available(mio::Date(2020, 12, 20), mio::Date(2020, 12, 28))); // Overlap with start
+    EXPECT_TRUE(mio::is_vaccination_data_available(mio::Date(2024, 7, 5), mio::Date(2024, 7, 15))); // Overlap with end
+    EXPECT_TRUE(
+        mio::is_vaccination_data_available(mio::Date(2021, 1, 1), mio::Date(2021, 12, 31))); // Completely within range
+    EXPECT_TRUE(
+        mio::is_vaccination_data_available(mio::Date(2020, 1, 1), mio::Date(2025, 1, 1))); // Contains entire range
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2019, 1, 1), mio::Date(2020, 12, 26))); // Before start
+    EXPECT_FALSE(mio::is_vaccination_data_available(mio::Date(2024, 7, 10), mio::Date(2025, 1, 1))); // After end
 }
 
 TEST(TestEpiDataIo, read_confirmed_cases_data)
