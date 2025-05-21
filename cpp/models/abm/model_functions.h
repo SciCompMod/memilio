@@ -93,6 +93,15 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
 bool change_location(Person& person, const Location& destination, const TransportMode mode = TransportMode::Unknown,
                      const std::vector<uint32_t>& cells = {0});
 
+/**
+ * @brief Adjust ContactRates of location by MaximumContacts.
+ * Every ContactRate is adjusted by the proportion MaximumContacts of the location has on the total 
+ * number of contacts according to the ContactRates.
+ * @param[in, out] location The location whose ContactRates are adjusted.
+ * @param[in] num_agegroup The number of AgeGroups in the model.
+ */
+void adjust_contact_rates(Location& location, size_t num_agegroups);
+
 } // namespace abm
 } // namespace mio
 

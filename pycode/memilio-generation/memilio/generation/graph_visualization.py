@@ -104,7 +104,7 @@ class Visualization:
             _output_cursor_and_children(cursor, ast,  file_writer)
 
         output_path = os.path.abspath(f"{output_file_name}")
-        logging.info(f"AST-formated written to {output_path}")
+        logging.info(f"AST-formatted written to {output_path}")
 
 
 def indent(level: int) -> str:
@@ -135,13 +135,14 @@ def _output_cursor_and_children(cursor: Cursor, ast: AST, writer: Callable[[int,
 
     cursor_kind = f"<CursorKind.{cursor.kind.name}>"
     file_path = cursor.location.file.name if cursor.location.file else ""
+    line_number = cursor.location.line if cursor.location.file else ""
 
     if cursor.spelling:
         cursor_label = (f'ID:{cursor_id} {cursor.spelling} '
                         f'{cursor_kind}   '
-                        f'{file_path}')
+                        f'{file_path}:{line_number}')
     else:
-        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}'
+        cursor_label = f'ID:{cursor_id} {cursor_kind} {file_path}:{line_number}'
 
     writer(level, cursor_label)
 
@@ -165,8 +166,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
     if current_d > max_d:
         return
 
-    node_label = f"{cursor.kind.name}{
-        newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
+    node_label = f"{cursor.kind.name}{newline()}({cursor.spelling})" if cursor.spelling else cursor.kind.name
 
     current_node = f"{cursor.kind.name}_{cursor.hash}"
 
@@ -176,8 +176,7 @@ def _output_cursor_and_children_graphviz_digraph(cursor: Cursor, graph: Digraph,
         graph.edge(parent_node, current_node)
 
     if cursor.kind.is_reference():
-        referenced_label = f"ref_to_{cursor.referenced.kind.name}{
-            newline()}({cursor.referenced.spelling})"
+        referenced_label = f"ref_to_{cursor.referenced.kind.name}{newline()}({cursor.referenced.spelling})"
         referenced_node = f"ref_{cursor.referenced.hash}"
         graph.node(referenced_node, label=referenced_label)
         graph.edge(current_node, referenced_node)
