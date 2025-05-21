@@ -22,6 +22,7 @@
 #include "matchers.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "temp_file_register.h"
 
 template <class T>
 using TestTimeSeries = ::testing::Test;
@@ -342,18 +343,136 @@ TYPED_TEST(TestTimeSeries, print_table)
 
     output.str("");
 
-    std::string expected_output_2 = "\nTime  #1     #2    \n   0.0    0.1    1.1\n   1.0    1.1    2.1\n";
+    std::string expected_output_2 = "\nTime   #1     #2    \n   0.0    0.1    1.1\n   1.0    1.1    2.1\n";
     ts.print_table({}, 6, 1, output);
     std::string actual_output_2 = output.str();
     EXPECT_EQ(expected_output_2, actual_output_2);
 
     output.str("");
 
-    std::string expected_output_3 = "\nTime        col_1        #2          \n      0.0000       0.1235       "
+    std::string expected_output_3 = "\nTime         col_1        #2          \n      0.0000       0.1235       "
                                     "1.1235\n      1.0000       1.1235       2.1235\n";
     ts.print_table({"col_1"}, 12, 4, output);
     std::string actual_output_3 = output.str();
     EXPECT_EQ(expected_output_3, actual_output_3);
+}
+
+TYPED_TEST(TestTimeSeries, export_csv)
+{
+    // Fill time series with test data
+    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            ts[i][j] = i + j + 0.123456789;
+        }
+    }
+    ts.get_time((Eigen::Index)0) = 0.0;
+    ts.get_time((Eigen::Index)1) = 1.0;
+
+    // Create a temp file for testing
+    TempFileRegister file_register;
+    auto csv_file_path = file_register.get_unique_path("test_csv-%%%%-%%%%.csv");
+
+    // Test export_csv function
+    bool success = ts.export_csv(csv_file_path, {"column1", "column2"});
+    ASSERT_TRUE(success);
+
+    // Read file and check data
+    std::ifstream file(csv_file_path);
+    ASSERT_TRUE(file.is_open());
+
+    std::string line;
+    std::getline(file, line);
+    EXPECT_EQ(line, "Time,column1,column2");
+
+    std::getline(file, line);
+    EXPECT_EQ(line, "0.000000,0.123457,1.123457");
+
+    std::getline(file, line);
+    EXPECT_EQ(line, "1.000000,1.123457,2.123457");
+
+    file.close();
+}
+
+TYPED_TEST(TestTimeSeries, export_csv_no_labels)
+{
+    // Fill time series with test data
+    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            ts[i][j] = i + j + 0.123456789;
+        }
+    }
+    ts.get_time((Eigen::Index)0) = 0.0;
+    ts.get_time((Eigen::Index)1) = 1.0;
+
+    // Create a temp file for testing
+    TempFileRegister file_register;
+    auto csv_file_path = file_register.get_unique_path("test_csv-%%%%-%%%%.csv");
+
+    // Test export_csv function without column names
+    bool success = ts.export_csv(csv_file_path);
+    ASSERT_TRUE(success);
+
+    // Read file and check data
+    std::ifstream file(csv_file_path);
+    ASSERT_TRUE(file.is_open());
+
+    std::string line;
+    std::getline(file, line);
+    EXPECT_EQ(line, "Time,#1,#2");
+
+    std::getline(file, line);
+    EXPECT_EQ(line, "0.000000,0.123457,1.123457");
+
+    std::getline(file, line);
+    EXPECT_EQ(line, "1.000000,1.123457,2.123457");
+
+    file.close();
+}
+
+TYPED_TEST(TestTimeSeries, export_csv_different_separator)
+{
+    // Fill time series with test data
+    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+            ts[i][j] = i + j + 0.123456789;
+        }
+    }
+    ts.get_time((Eigen::Index)0) = 0.0;
+    ts.get_time((Eigen::Index)1) = 1.0;
+
+    // Create a temp file for testing
+    TempFileRegister file_register;
+    auto csv_file_path = file_register.get_unique_path("test_csv-%%%%-%%%%.csv");
+
+    // Export using semicolon as separator and precision of 3
+    bool success = ts.export_csv(csv_file_path, {"col1", "col2"}, ';', 3);
+    ASSERT_TRUE(success);
+
+    // Read file and check data
+    std::ifstream file(csv_file_path);
+    ASSERT_TRUE(file.is_open());
+
+    std::string line;
+    std::getline(file, line);
+    EXPECT_EQ(line, "Time;col1;col2");
+
+    std::getline(file, line);
+    EXPECT_EQ(line, "0.000;0.123;1.123");
+
+    std::getline(file, line);
+    EXPECT_EQ(line, "1.000;1.123;2.123");
+
+    file.close();
+}
+
+TYPED_TEST(TestTimeSeries, export_csv_failed)
+{
+    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    bool success               = ts.export_csv("/test_false_dir/file.csv");
+    ASSERT_FALSE(success);
 }
 
 TEST(TestTimeSeries, printTo)
