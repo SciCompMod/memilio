@@ -1098,7 +1098,7 @@ TEST(TestOdeSECIRTS, set_vaccination_data_not_avail)
         }
     }
 
-    // call set_vaccination_data with an unavailable date
+    // Call set_vaccination_data with an unavailable date
     mio::Date unavailable_date(2019, 1, 1); // Date before vaccinations started
     std::vector<int> region = {1001};
     std::string any_path    = "dummy_vacc_path.json";
