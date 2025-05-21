@@ -179,7 +179,7 @@ public:
     }
 
     /** move ctor and assignment */
-    TimeSeries(TimeSeries&& other)            = default;
+    TimeSeries(TimeSeries&& other) = default;
     TimeSeries& operator=(TimeSeries&& other) = default;
 
     /// Check if the time is strictly monotonic increasing.
@@ -487,7 +487,7 @@ public:
     /**
      * @brief Print out the TimeSeries as a table.
      *
-     * All entries in the table are spaced separatedly with at least one space. The first row of the table starts with
+     * All entries in the table are spaced separated with a delimiter character. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
@@ -501,21 +501,23 @@ public:
      * @param width The number of characters reserved for each number.
      * @param precision The number of decimals.
      * @param out Which ostream to use. Prints to terminal by default.
+     * @param separator Delimiter character between columns.
+     * @param header_prefix Prefix before the header row.
      */
     void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
-                     std::ostream& out = std::cout) const
+                     std::ostream& out = std::cout, char separator = ' ', const char* header_prefix = "\n") const
     {
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
         const auto w = width, p = precision;
-        set_ostream_format(out, w, p) << std::left << "\nTime";
+        out << header_prefix;
+        set_ostream_format(out, w, p) << std::left << "Time";
         for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
+            out << separator;
             if (k < column_labels.size()) {
-                out << " ";
                 set_ostream_format(out, w, p) << std::left << column_labels[k];
             }
             else {
-                out << " ";
                 set_ostream_format(out, w, p) << std::left << "#" + std::to_string(k + 1);
             }
         }
@@ -526,7 +528,7 @@ public:
             set_ostream_format(out, w, p) << std::right << get_time(i);
             auto res_i = get_value(i);
             for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
-                out << " ";
+                out << separator;
                 set_ostream_format(out, w, p) << std::right << res_i[j];
             }
         }
@@ -552,33 +554,9 @@ public:
         if (!file.is_open()) {
             return false;
         }
-        file << std::fixed << std::setprecision(precision);
 
-        // Column headers
-        set_ostream_format(file, 1, precision) << std::left << "Time";
-        for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
-            file << separator;
-            if (k < column_labels.size()) {
-                set_ostream_format(file, 1, precision) << std::left << column_labels[k];
-            }
-            else {
-                set_ostream_format(file, 1, precision) << std::left << "#" << k + 1;
-            }
-        }
-        file << "\n";
-
-        // Data
-        const auto num_points = static_cast<size_t>(get_num_time_points());
-        for (size_t i = 0; i < num_points; i++) {
-            set_ostream_format(file, 1, precision) << std::right << get_time(i);
-            const auto& res_i = get_value(i);
-            for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
-                file << separator;
-                set_ostream_format(file, 1, precision) << std::right << res_i[j];
-            }
-            file << "\n";
-        }
-
+        // Use print_table to write the CSV file with width=1, "," separator, and no header prefix
+        print_table(column_labels, 1, precision, file, separator, "");
         return true;
     }
 
@@ -668,9 +646,8 @@ struct TimeSeriesIterTraits {
     }
     using Matrix      = typename TimeSeries<FP>::Matrix;
     using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
-    using VectorValue = typename decltype(std::declval<MatrixPtr>()
-                                              ->col(std::declval<Eigen::Index>())
-                                              .tail(std::declval<Eigen::Index>()))::PlainObject;
+    using VectorValue = typename decltype(
+        std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()))::PlainObject;
     using VectorReference =
         decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
     using TimeValue     = FP;

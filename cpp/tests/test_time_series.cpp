@@ -343,14 +343,14 @@ TYPED_TEST(TestTimeSeries, print_table)
 
     output.str("");
 
-    std::string expected_output_2 = "\nTime  #1     #2    \n   0.0    0.1    1.1\n   1.0    1.1    2.1\n";
+    std::string expected_output_2 = "\nTime   #1     #2    \n   0.0    0.1    1.1\n   1.0    1.1    2.1\n";
     ts.print_table({}, 6, 1, output);
     std::string actual_output_2 = output.str();
     EXPECT_EQ(expected_output_2, actual_output_2);
 
     output.str("");
 
-    std::string expected_output_3 = "\nTime        col_1        #2          \n      0.0000       0.1235       "
+    std::string expected_output_3 = "\nTime         col_1        #2          \n      0.0000       0.1235       "
                                     "1.1235\n      1.0000       1.1235       2.1235\n";
     ts.print_table({"col_1"}, 12, 4, output);
     std::string actual_output_3 = output.str();
