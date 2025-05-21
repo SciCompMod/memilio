@@ -242,7 +242,8 @@ inline bool is_divi_data_available(const Date& date)
 }
 
 /**
- * @brief Checks if vaccination data is available for any day within the given date interval.
+ * @brief Checks if vaccination data is available for any day within the given date interval, 
+ * only checking for overlap with the bounds of the simulation period.
  * @param start_date The start date of the interval to check.
  * @param end_date The end date of the interval to check.
  * @return True if there is any overlap between the given date range and the vaccination data
