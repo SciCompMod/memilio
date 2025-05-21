@@ -727,6 +727,17 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
     }
     auto max_date = max_date_entry->date;
 
+    auto min_date_entry = std::min_element(vacc_data.begin(), vacc_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    auto min_date       = min_date_entry->date;
+    if (min_date > date || max_date < offset_date_by_days(date, num_days)) {
+        log_warning("Vaccination data only available from {} to {}. "
+                    "For days before, vaccination data will be set to 0. For days after, "
+                    "vaccination data will be set to the last available date.",
+                    min_date, max_date);
+    }
+
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
             return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::CountyId(r)) ||

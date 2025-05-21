@@ -1121,6 +1121,43 @@ TEST(TestOdeSECIRTS, set_vaccination_data_not_avail)
     }
 }
 
+TEST(TestOdeSECIRTS, set_vaccination_data_min_date_not_avail)
+{
+    mio::set_log_level(mio::LogLevel::off);
+
+    // create model
+    const auto num_age_groups = 1;
+    const auto num_days       = 5;
+    mio::osecirts::Model<double> model(num_age_groups);
+    std::vector<mio::osecirts::Model<double>> model_vector = {model};
+    auto& params                                           = model_vector[0].parameters;
+
+    // create simple vaccination data
+    std::vector<mio::VaccinationDataEntry> vacc_data = {
+        mio::VaccinationDataEntry{10.0, 5.0, 2.0, 0.0, mio::Date(2021, 1, 15), mio::AgeGroup(0), {}, {}, {}}};
+
+    // simulation date before vaccination data
+    mio::Date earlier_date(2021, 1, 1);
+    std::vector<int> region = {0};
+
+    auto result = mio::osecirts::details::set_vaccination_data(model_vector, vacc_data, earlier_date, region, num_days);
+    ASSERT_THAT(result, IsSuccess());
+
+    // check that vaccinations are set to zero for all days and age groups
+    for (auto d = mio::SimulationDay(0); d < mio::SimulationDay(num_days + 1); ++d) {
+        for (auto a = mio::AgeGroup(0); a < mio::AgeGroup(num_age_groups); ++a) {
+            auto partial_vacc = params.get<mio::osecirts::DailyPartialVaccinations<double>>()[{a, d}];
+            auto full_vacc    = params.get<mio::osecirts::DailyFullVaccinations<double>>()[{a, d}];
+            auto booster_vacc = params.get<mio::osecirts::DailyBoosterVaccinations<double>>()[{a, d}];
+            EXPECT_NEAR(partial_vacc, 0.0, 1e-10);
+            EXPECT_NEAR(full_vacc, 0.0, 1e-10);
+            EXPECT_NEAR(booster_vacc, 0.0, 1e-10);
+        }
+    }
+
+    mio::set_log_level(mio::LogLevel::warn);
+}
+
 #endif
 
 TEST(TestOdeSECIRTS, parameter_percentiles)
