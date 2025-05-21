@@ -29,7 +29,6 @@
 #include <vector>
 #include <ostream>
 #include <fstream>
-#include <iomanip>
 
 namespace mio
 {
