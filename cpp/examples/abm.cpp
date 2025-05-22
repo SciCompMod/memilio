@@ -187,72 +187,14 @@ void create_model_from_statistical_data(mio::abm::Model& model)
      * The private Households are divided with respect to the amount of people living in each household. For a one person household we have the exact age distribution. For the rest we have data about which kind of family lives in them. The different kinds of families are: A family with two parents and the rest are children, a family with one parent and the rest are children and  "other" families with no exact data about their age.
     */
 
-    // Refugee
-    auto refugee = mio::abm::HouseholdMember(num_age_groups);
-    refugee.set_age_weight(age_group_0_to_4, 25);
-    refugee.set_age_weight(age_group_5_to_14, 12);
-    refugee.set_age_weight(age_group_15_to_34, 25);
-    refugee.set_age_weight(age_group_35_to_59, 9);
-    refugee.set_age_weight(age_group_60_to_79, 1);
-    refugee.set_age_weight(age_group_80_plus, 1);
-    int refugee_number_of_people     = 74;
-    int refugee_number_of_households = 12;
-    auto refugeeGroup = make_uniform_households(refugee, refugee_number_of_people, refugee_number_of_households);
-
-    add_household_group_to_model(model, refugeeGroup);
-
-    // Disabled
-    auto disabled = mio::abm::HouseholdMember(num_age_groups);
-    disabled.set_age_weight(age_group_0_to_4, 2);
-    disabled.set_age_weight(age_group_5_to_14, 6);
-    disabled.set_age_weight(age_group_15_to_34, 13);
-    disabled.set_age_weight(age_group_35_to_59, 42);
-    disabled.set_age_weight(age_group_60_to_79, 97);
-    disabled.set_age_weight(age_group_80_plus, 32);
-    int disabled_number_of_people     = 194;
-    int disabled_number_of_households = 8;
-
-    auto disabledGroup = make_uniform_households(disabled, disabled_number_of_people, disabled_number_of_households);
-
-    add_household_group_to_model(model, disabledGroup);
-
-    // Retirement
-    auto retired = mio::abm::HouseholdMember(num_age_groups);
-    retired.set_age_weight(age_group_15_to_34, 1);
-    retired.set_age_weight(age_group_35_to_59, 30);
-    retired.set_age_weight(age_group_60_to_79, 185);
-    retired.set_age_weight(age_group_80_plus, 530);
-    int retirement_number_of_people     = 744;
-    int retirement_number_of_households = 16;
-
-    auto retirementGroup =
-        make_uniform_households(retired, retirement_number_of_people, retirement_number_of_households);
-
-    add_household_group_to_model(model, retirementGroup);
-
-    // Others
-    auto other = mio::abm::HouseholdMember(num_age_groups);
-    other.set_age_weight(age_group_0_to_4, 30);
-    other.set_age_weight(age_group_5_to_14, 40);
-    other.set_age_weight(age_group_15_to_34, 72);
-    other.set_age_weight(age_group_35_to_59, 40);
-    other.set_age_weight(age_group_60_to_79, 30);
-    other.set_age_weight(age_group_80_plus, 10);
-    int others_number_of_people     = 222;
-    int others_number_of_households = 20;
-
-    auto otherGroup = make_uniform_households(other, others_number_of_people, others_number_of_households);
-
-    add_household_group_to_model(model, otherGroup);
-
     // One Person Household (we have exact age data about this)
     auto one_person_household_member = mio::abm::HouseholdMember(num_age_groups);
     one_person_household_member.set_age_weight(age_group_15_to_34, 4364);
     one_person_household_member.set_age_weight(age_group_35_to_59, 7283);
     one_person_household_member.set_age_weight(age_group_60_to_79, 4100);
     one_person_household_member.set_age_weight(age_group_80_plus, 1800);
-    int one_person_number_of_people     = 15387;
-    int one_person_number_of_households = 15387;
+    int one_person_number_of_people     = 1538;
+    int one_person_number_of_households = 1538;
 
     auto onePersonGroup = make_uniform_households(one_person_household_member, one_person_number_of_people,
                                                   one_person_number_of_households);
@@ -279,33 +221,33 @@ void create_model_from_statistical_data(mio::abm::Model& model)
     random.set_age_weight(age_group_80_plus, 5038);
 
     // Two person households
-    int two_person_full_families  = 11850;
-    int two_person_half_families  = 1765;
-    int two_person_other_families = 166;
+    int two_person_full_families  = 1185;
+    int two_person_half_families  = 176;
+    int two_person_other_families = 16;
     auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
                                                              two_person_half_families, two_person_other_families);
     add_household_group_to_model(model, twoPersonHouseholds);
 
     // Three person households
-    int three_person_full_families  = 4155;
-    int three_person_half_families  = 662;
-    int three_person_other_families = 175;
+    int three_person_full_families  = 415;
+    int three_person_half_families  = 66;
+    int three_person_other_families = 17;
     auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
                                                                three_person_half_families, three_person_other_families);
     add_household_group_to_model(model, threePersonHouseholds);
 
     // Four person households
-    int four_person_full_families  = 3551;
-    int four_person_half_families  = 110;
-    int four_person_other_families = 122;
+    int four_person_full_families  = 355;
+    int four_person_half_families  = 11;
+    int four_person_other_families = 12;
     auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
                                                               four_person_half_families, four_person_other_families);
     add_household_group_to_model(model, fourPersonHouseholds);
 
     // Five plus person households
-    int fiveplus_person_full_families  = 1245;
-    int fiveplus_person_half_families  = 80;
-    int fiveplus_person_other_families = 82;
+    int fiveplus_person_full_families  = 124;
+    int fiveplus_person_half_families  = 8;
+    int fiveplus_person_other_families = 8;
     auto fivePlusPersonHouseholds =
         make_homes_with_families(child, parent, random, 5, fiveplus_person_full_families, fiveplus_person_half_families,
                                  fiveplus_person_other_families);
@@ -329,7 +271,7 @@ void create_assign_locations_and_testing_schemes(mio::abm::Model& model)
     auto testing_criteria = mio::abm::TestingCriteria();
     auto validity_period  = mio::abm::days(2);
     auto start_date       = mio::abm::TimePoint(0);
-    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(20);
 
     auto probability = mio::UncertainValue<>();
     assign_uniform_distribution(probability, 0.5, 1.0);
@@ -629,20 +571,28 @@ mio::abm::Model create_sampled_model()
 void run()
 {
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(60);
+    auto tmax = t0 + mio::abm::days(20);
 
     // Create the sampled simulation with start time t0
     auto model = create_sampled_model();
 
     auto sim = mio::abm::Simulation(t0, std::move(model));
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        Eigen::Index(mio::abm::InfectionState::Count)};
-    sim.advance(tmax, historyTimeSeries);
+    sim.advance(tmax);
 
-    std::ofstream outfile("abm.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-    std::cout << "Results written to abm.txt" << std::endl;
+    // Save the simulation results
+    Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
+    for (auto& location : sim.get_model().get_locations()) {
+        for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+            sum[inf_state] +=
+                sim.get_model().get_subpopulation(location.get_id(), tmax, mio::abm::InfectionState(inf_state));
+        }
+    }
+    auto inf_states = std::vector<std::string>{"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"};
+    std::cout << "Infection states at simulation end:";
+    for (int i = 0; i < (int)mio::abm::InfectionState::Count; i++) {
+        std::cout << " " << inf_states[i] << ": " << sum[i];
+    }
+    std::cout << std::endl;
 }
 
 int main()
