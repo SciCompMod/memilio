@@ -399,8 +399,8 @@ void assign_infection_state_masks_and_compliance(mio::abm::Model& model)
         }
 
         //equal chance of (moderate) mask refusal and (moderate) mask eagerness
-        auto pct_compliance_values = std::array{0.05 /*0*/, 0.2 /*0.25*/, 0.5 /*0.5*/, 0.2 /*0.75*/, 0.05 /*1*/};
-        auto compliance_value = 0.25 * mio::DiscreteDistribution<double>::get_instance()(prng, pct_compliance_values);
+        auto pct_compliance_values = std::array{5, 20, 50, 20, 5};
+        auto compliance_value = 0.0025 * mio::DiscreteDistribution<size_t>::get_instance()(prng, pct_compliance_values);
         person.set_compliance(mio::abm::InterventionType::Mask, compliance_value);
     }
 
