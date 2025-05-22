@@ -156,8 +156,8 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
             std::cout << "num_persons = " << num_persons << "\n";
             for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
                 std::cout << "inf_state = " << inf_state << ", sum = "
-                          << sim.get_model().get_subpopulation_combined(sim.get_time(),
-                                                                        mio::abm::InfectionState(inf_state))
+                          << sim.get_model().get_subpopulation_inf_state_combined(sim.get_time(),
+                                                                                  mio::abm::InfectionState(inf_state))
                           << "\n";
             }
         }

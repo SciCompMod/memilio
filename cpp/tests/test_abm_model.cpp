@@ -124,15 +124,15 @@ TEST_F(TestModel, getSubpopulationCombined)
     add_test_person(model, home1, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
 
     // Verify the count of susceptible persons across all School locations.
-    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
-                                                                 mio::abm::LocationType::School),
+    EXPECT_EQ(model.get_subpopulation_inf_state_combined_per_location_type(t, mio::abm::InfectionState::Susceptible,
+                                                                           mio::abm::LocationType::School),
               3);
     // Verify the count of persons with no symptoms across all School locations.
-    EXPECT_EQ(model.get_subpopulation_combined_per_location_type(t, mio::abm::InfectionState::InfectedNoSymptoms,
-                                                                 mio::abm::LocationType::School),
+    EXPECT_EQ(model.get_subpopulation_inf_state_combined_per_location_type(
+                  t, mio::abm::InfectionState::InfectedNoSymptoms, mio::abm::LocationType::School),
               2);
     // Verify the total count of persons with no symptoms across all locations.
-    EXPECT_EQ(model.get_subpopulation_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
+    EXPECT_EQ(model.get_subpopulation_inf_state_combined(t, mio::abm::InfectionState::InfectedNoSymptoms), 3);
 }
 
 /**
