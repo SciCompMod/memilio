@@ -29,8 +29,6 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 
-namespace fs = boost::filesystem;
-
 // Assign the name to general age group.
 size_t num_age_groups         = 6;
 const auto age_group_0_to_4   = mio::AgeGroup(0);
