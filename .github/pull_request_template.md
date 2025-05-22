@@ -22,7 +22,7 @@ Please check our [git workflow](https://github.com/SciCompMod/memilio/wiki/git-w
 - [ ] New code adheres to [coding guidelines](https://github.com/SciCompMod/memilio/wiki/Coding-guidelines)
 - [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
 - [ ] Tests are added for new functionality and a local test run was successful (with and without OpenMP)
-- [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and Markdown files if necessary)
+- [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and explanations in the online documentation)
 - [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
 - [ ] (For ABM development) Checked [benchmark results](https://github.com/SciCompMod/memilio/wiki/Agent-Based-Model-Development) and ran and posted a local test above from before and after development to ensure performance is monitored.
 
