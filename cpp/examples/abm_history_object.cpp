@@ -139,16 +139,33 @@ int main()
                                                          test_parameters, probability);
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
-    // Assign infection state to each person.
-    // The infection states are chosen randomly.
-    auto persons = model.get_persons();
-    for (auto& person : persons) {
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
-        mio::abm::InfectionState infection_state =
-            (mio::abm::InfectionState)(rand() % ((uint32_t)mio::abm::InfectionState::Count - 1));
-        if (infection_state != mio::abm::InfectionState::Susceptible)
-            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                         model.parameters, start_date, infection_state));
+    for (auto& person : model.get_persons()) {
+        auto prng = mio::abm::PersonalRandomNumberGenerator(person);
+        //some % of people are infected, large enough to have some infection activity without everyone dying
+        auto pct_infected = 0.05;
+        if (mio::UniformDistribution<double>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
+            auto state = mio::abm::InfectionState(
+                mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
+            auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                 model.parameters, mio::abm::TimePoint(0), state);
+            person.add_new_infection(std::move(infection));
+        }
+
+        //equal chance of (moderate) mask refusal and (moderate) mask eagerness
+        auto pct_compliance_values = std::array{0.05 /*0*/, 0.2 /*0.25*/, 0.5 /*0.5*/, 0.2 /*0.75*/, 0.05 /*1*/};
+        auto compliance_value      = 0.25 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_compliance_values);
+        person.set_compliance(mio::abm::InterventionType::Mask, compliance_value);
+    }
+
+    //masks at locations
+    for (auto& loc : model.get_locations()) {
+        //some % of locations require masks
+        //skip homes so persons always have a place to go, simulation might break otherwise
+        auto pct_require_mask = 0.2;
+        if (loc.get_type() != mio::abm::LocationType::Home &&
+            mio::UniformDistribution<double>::get_instance()(model.get_rng()) < pct_require_mask) {
+            loc.set_required_mask(mio::abm::MaskType::Community);
+        }
     }
 
     // Assign locations to the people
