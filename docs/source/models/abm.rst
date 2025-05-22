@@ -56,9 +56,8 @@ Get Started
 -----------
 
 This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, you can find a full
-example in the `ABM minimal example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_minimal.cpp>`_ and a more detailed Doxygen documentation
-`here <https://scicompmod.github.io/memilio/documentation/index.html>`_. For a guide on installation and running the simulations and
-examples, see this `README <https://github.com/SciCompMod/memilio/blob/main/cpp/README.md>`_.
+example in the `ABM minimal example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_minimal.cpp>`_ as well as an more exhaustive example `ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm.cpp>`_here. A more detailed Doxygen documentation is found
+`here <https://scicompmod.github.io/memilio/documentation/index.html>`_. 
 
 Every person in the ABM belongs to an AgeGroup, which we can define as follows:
 
@@ -126,6 +125,43 @@ We then form households in two ways:
    twoPersonHousehold_full.add_members(parent, 1);
    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
    add_household_group_to_model(model, twoPersonHousehold_group);
+
+Testing Schemes
+---------------
+
+During the simulation, people can get tested according to specified schemes. You can define when, where, and how often testing occurs, as well as the type of test and the probability of testing.
+
+.. code-block:: cpp
+
+   auto probability      = 0.5;
+   auto start_date       = mio::abm::TimePoint(0);
+   auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(30);
+   auto test_type        = mio::abm::AntigenTest();
+   auto test_at_work     = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
+   auto testing_criteria_work =
+       std::vector<mio::abm::TestingCriteria>{mio::abm::TestingCriteria({}, test_at_work, {})};
+   auto testing_scheme_work =
+       mio::abm::TestingScheme(testing_criteria_work, start_date, end_date, test_type, probability);
+   model.get_testing_strategy().add_testing_scheme(testing_scheme_work);
+
+Mask Compliance
+---------------
+
+You can model mask compliance by assigning compliance levels to people and specifying which locations require masks. This allows you to simulate the effect of mask-wearing policies and individual behavior.
+
+.. code-block:: cpp
+
+   // Assign mask compliance to a person (e.g., 0.8 means 80% compliant)
+   person.set_compliance(mio::abm::InterventionType::Mask, 0.8);
+
+   // Require masks at a specific location
+   model.get_location(work_location_id).set_required_mask(mio::abm::MaskType::Community);
+
+   // Example: Assign random mask compliance to all persons
+   for (auto& person : model.get_persons()) {
+       double compliance = mio::UniformDistribution<double>::get_instance()(model.get_rng(), 0.0, 1.0);
+       person.set_compliance(mio::abm::InterventionType::Mask, compliance);
+   }
 
 During the simulation, people can get tested, and we have to specify the scheme for that:
 
