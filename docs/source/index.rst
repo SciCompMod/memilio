@@ -67,6 +67,5 @@ Contents
    :maxdepth: 1
    :caption: Code API 
 
-   models/index
    pythonapi/pythonapi
    api/library_root
