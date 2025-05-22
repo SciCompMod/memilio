@@ -28,7 +28,7 @@ C++ Coding guidelines
 
 C++ Standard:
 
- - C++ 17, higher standards are currently not allowed
+ - C++ 20, other standards are currently not supported.
 
 Namespaces:
 

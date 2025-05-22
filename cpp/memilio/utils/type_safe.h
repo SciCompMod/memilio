@@ -73,13 +73,13 @@ public:
     /**
      * equality operators.
      */
-    bool operator==(const Derived& other) const
+    friend bool operator==(const Derived& a, const Derived& b)
     {
-        return m_t == other.m_t;
+        return a.m_t == b.m_t;
     }
-    bool operator!=(const Derived& other) const
+    friend bool operator!=(const Derived& a, const Derived& b)
     {
-        return !(*this == other);
+        return !(a == b);
     }
 
     /**
