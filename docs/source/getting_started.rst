@@ -30,7 +30,9 @@ A few things are not represented in this documentation, but part of the `github 
 In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`_ folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
+.. collapse:: Details
 
+   For details, please read this documentations.
 
 Usage
 -----------------
@@ -61,12 +63,14 @@ For details on the possible compile flags, help with errors and general a more d
 
 For the installation of Python packages, e.g. ``memilio-epidata``, do
 
-.. code-block:: console
+.. collapse:: Linux:
 
-   cd memilio/pycode
-   cd memilio-epidata
-   pip install .
-
+   .. code-block:: console
+   
+      cd memilio/pycode
+      cd memilio-epidata
+      pip install .
+   
 For more information, we refere to the :ref:`Python Interace Part <Python_Installation>` of this documentation.
 
 
