@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Khoa Nguyen
+* Authors: Daniel Abele, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,128 +17,435 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/analyze_result.h"
+#include "abm/common_abm_loggers.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
-#include "abm/simulation.h"
-#include "abm/model.h"
-#include "abm/location_type.h"
+#include "memilio/config.h"
 #include "memilio/utils/abstract_parameter_distribution.h"
-#include "memilio/io/history.h"
+#include "memilio/config.h"
+#include "memilio/io/result_io.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/uncertain_value.h"
 
-#include <fstream>
-#include <string>
+namespace fs = boost::filesystem;
 
-std::string convert_loc_id_to_string(std::tuple<mio::abm::LocationType, uint32_t> tuple_id)
+// Assign the name to general age group.
+size_t num_age_groups         = 6;
+const auto age_group_0_to_4   = mio::AgeGroup(0);
+const auto age_group_5_to_14  = mio::AgeGroup(1);
+const auto age_group_15_to_34 = mio::AgeGroup(2);
+const auto age_group_35_to_59 = mio::AgeGroup(3);
+const auto age_group_60_to_79 = mio::AgeGroup(4);
+const auto age_group_80_plus  = mio::AgeGroup(5);
+
+/**
+ * Set a value and distribution of an UncertainValue.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
+ * @param p uncertain value to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
+void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, ScalarType max)
 {
-    return std::to_string(static_cast<std::uint32_t>(std::get<0>(tuple_id))) + "_" +
-           std::to_string(std::get<1>(tuple_id));
+    p = mio::UncertainValue<>(0.5 * (max + min));
+    p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
-template <typename T>
-void write_log_to_file(const T& history)
+/**
+ * Determine the infection state of a person at the beginning of the simulation.
+ * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
+ * @return random infection state
+ */
+mio::abm::InfectionState determine_infection_state(mio::abm::PersonalRandomNumberGenerator& rng, ScalarType exposed,
+                                                   ScalarType infected_no_symptoms, ScalarType infected_symptoms,
+                                                   ScalarType recovered)
 {
-    auto logg = history.get_log();
-    // Write the results to a file.
-    auto loc_id      = std::get<1>(logg);
-    auto time_points = std::get<0>(logg);
-    std::string input;
-    std::ofstream myfile("test_output.txt");
-    myfile << "Locations as numbers:\n";
-    for (auto&& id : loc_id[0]) {
-        myfile << convert_loc_id_to_string(id) << "\n";
+    ScalarType susceptible          = 1 - exposed - infected_no_symptoms - infected_symptoms - recovered;
+    std::vector<ScalarType> weights = {
+        susceptible,           exposed,  infected_no_symptoms, infected_symptoms / 3, infected_symptoms / 3,
+        infected_symptoms / 3, recovered};
+    if (weights.size() != (size_t)mio::abm::InfectionState::Count - 1) {
+        mio::log_error("Initialization in ABM wrong, please correct vector length.");
     }
-    myfile << "Timepoints:\n";
-
-    for (auto&& t : time_points) {
-        input += std::to_string(t) + " ";
-    }
-    myfile << input << "\n";
-
-    myfile.close();
+    auto state = mio::DiscreteDistribution<size_t>::get_instance()(rng, weights);
+    return (mio::abm::InfectionState)state;
 }
 
-int main()
+/**
+ * Calculates a vector in which each entry describes the amount of people living in the corresponding household.
+ * This is done with equal distribution and if the number of people is not divisible by number of households the last one gets the rest. E.g. number_of_people = 10, number_of_households = 3. Then the vector household_sizes = {3,3,4}.
+ * @param number_of_people The total amount of people to be distributed.
+ * @param number_of_households The total amount of households.
+ * @return A vector with the size of each household.
+ */
+std::vector<int> last_household_gets_the_rest(int number_of_people, int number_of_households)
 {
-    mio::set_log_level(mio::LogLevel::warn);
-    // This is a minimal example with children and adults < 60y.
-    // We divided them into 4 different age groups, which are defined as follows:
-    const size_t num_age_groups   = 4;
-    const auto age_group_0_to_4   = mio::AgeGroup(0);
-    const auto age_group_5_to_14  = mio::AgeGroup(1);
-    const auto age_group_15_to_34 = mio::AgeGroup(2);
-    const auto age_group_35_to_59 = mio::AgeGroup(3);
+    std::vector<int> household_sizes(number_of_households, 0);
+    int avarage_household_size_round_down = number_of_people / number_of_households; //int rounds down.
+    int people_left                       = number_of_people -
+                      avarage_household_size_round_down *
+                          number_of_households; // People left if everyone got the same rounded down amount of people.
+    for (auto i = 0; i < number_of_households - 1; i++) {
+        household_sizes.at(i) = avarage_household_size_round_down;
+    }
+    household_sizes.at(number_of_households - 1) =
+        avarage_household_size_round_down + people_left; // Last one gets the people which would've been left out.
+    return household_sizes;
+}
 
-    // Create the model with 4 age groups.
-    auto model = mio::abm::Model(num_age_groups);
-    mio::ParameterDistributionLogNormal log_norm(4., 1.);
-    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
+/**
+ * Constructs a household group which has a single member to represent them all, e.g. all people have the same age distribution.
+ * @param age_dist A vector with the amount of people in each age group
+ * @param number_of_people The total amount of people living in this household group.
+ * @param number_of_hh The number of households in this household group.
+ * @return householdGroup A Class Household Group.
+ */
+mio::abm::HouseholdGroup make_uniform_households(const mio::abm::HouseholdMember& member, int number_of_people,
+                                                 int number_of_hh)
+{
 
-    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
-    model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
-    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
-    model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
+    // The size of each household is calculated in a vector household_size_list.
+    auto households_size_list = last_household_gets_the_rest(number_of_people, number_of_hh);
 
-    // There are 3 households for each household group.
-    int n_households = 3;
+    auto householdGroup = mio::abm::HouseholdGroup();
+    for (auto& household_size : households_size_list) {
+        auto household = mio::abm::Household();
+        household.add_members(member, household_size); // Add members according to the amount of people in the list.
+        householdGroup.add_households(household, 1); // Add the household to the household group.
+
+        // assuming 22 square meters per person and 3 meters of room height
+        // see: https://doi.org/10.1371/journal.pone.0259037
+        household.set_space_per_member(66);
+    }
+    return householdGroup;
+}
+
+/**
+ * Constructs a household group with families.
+ * @param child Child Household Member.
+ * @param parent Parent Household Member.
+ * @param random Random Household Member. This is for the rest Group where no exact age distribution can be found.
+ * @param number_of_persons_in_household Amount of people in this household
+ * @param number_of_full_familes Amount of full families, e.g. two parents and (number_of_persons_in_household - 2) children.
+ * @param number_of_half_familes Amount of half families, e.g. one parent and (number_of_persons_in_household - 1) children.
+ * @param number_of_other_familes number_of_persons_in_household random persons.
+ * @return A Household group.
+ */
+mio::abm::HouseholdGroup make_homes_with_families(const mio::abm::HouseholdMember& child,
+                                                  const mio::abm::HouseholdMember& parent,
+                                                  const mio::abm::HouseholdMember& random,
+                                                  int number_of_persons_in_household, int number_of_full_familes,
+                                                  int number_of_half_familes, int number_of_other_familes)
+{
+
+    auto private_household_group = mio::abm::HouseholdGroup();
+
+    // Add full families.
+    auto household_full = mio::abm::Household();
+    household_full.add_members(child, number_of_persons_in_household - 2);
+    household_full.add_members(parent, 2);
+    private_household_group.add_households(household_full, number_of_full_familes);
+
+    // Add half families.
+    auto household_half = mio::abm::Household();
+    household_half.add_members(child, number_of_persons_in_household - 1);
+    household_half.add_members(parent, 1);
+    private_household_group.add_households(household_half, number_of_half_familes);
+
+    // Add other families.
+    if (number_of_persons_in_household < 5) {
+        auto household_others = mio::abm::Household();
+        household_others.add_members(random, number_of_persons_in_household);
+        private_household_group.add_households(household_others, number_of_other_familes);
+    }
+    else if (number_of_persons_in_household == 5) {
+        // For 5 and more people in one household we have to distribute the rest onto the left over households.
+        int people_left_size5 = 545;
+
+        auto households_size_list = last_household_gets_the_rest(people_left_size5, number_of_other_familes);
+
+        auto household_rest = mio::abm::HouseholdGroup();
+        for (auto& household_size : households_size_list) {
+            auto household = mio::abm::Household();
+            household.add_members(random, household_size); // Add members according to the amount of people in the list.
+            household_rest.add_households(household, 1); // Add the household to the household group.
+        }
+    }
+    return private_household_group;
+}
+
+void create_model_from_statistical_data(mio::abm::Model& model)
+{
+
+    /** The data is taken from
+     * https://www-genesis.destatis.de/genesis/online?operation=statistic&levelindex=0&levelid=1627908577036&code=12211#abreadcrumb
+     * All numbers are in 1000.
+     * Destatis divides the Households into community households and private households.
+     * Community Households are: Refugee, Disabled, Retirement and Others. We have an explicit age distribution, amount of households and amount of people for them but not the exact amount of people in each household.
+     * The private Households are divided with respect to the amount of people living in each household. For a one person household we have the exact age distribution. For the rest we have data about which kind of family lives in them. The different kinds of families are: A family with two parents and the rest are children, a family with one parent and the rest are children and  "other" families with no exact data about their age.
+    */
+
+    // Refugee
+    auto refugee = mio::abm::HouseholdMember(num_age_groups);
+    refugee.set_age_weight(age_group_0_to_4, 25);
+    refugee.set_age_weight(age_group_5_to_14, 12);
+    refugee.set_age_weight(age_group_15_to_34, 25);
+    refugee.set_age_weight(age_group_35_to_59, 9);
+    refugee.set_age_weight(age_group_60_to_79, 1);
+    refugee.set_age_weight(age_group_80_plus, 1);
+    int refugee_number_of_people     = 74;
+    int refugee_number_of_households = 12;
+    auto refugeeGroup = make_uniform_households(refugee, refugee_number_of_people, refugee_number_of_households);
+
+    add_household_group_to_model(model, refugeeGroup);
+
+    // Disabled
+    auto disabled = mio::abm::HouseholdMember(num_age_groups);
+    disabled.set_age_weight(age_group_0_to_4, 2);
+    disabled.set_age_weight(age_group_5_to_14, 6);
+    disabled.set_age_weight(age_group_15_to_34, 13);
+    disabled.set_age_weight(age_group_35_to_59, 42);
+    disabled.set_age_weight(age_group_60_to_79, 97);
+    disabled.set_age_weight(age_group_80_plus, 32);
+    int disabled_number_of_people     = 194;
+    int disabled_number_of_households = 8;
+
+    auto disabledGroup = make_uniform_households(disabled, disabled_number_of_people, disabled_number_of_households);
+
+    add_household_group_to_model(model, disabledGroup);
+
+    // Retirement
+    auto retired = mio::abm::HouseholdMember(num_age_groups);
+    retired.set_age_weight(age_group_15_to_34, 1);
+    retired.set_age_weight(age_group_35_to_59, 30);
+    retired.set_age_weight(age_group_60_to_79, 185);
+    retired.set_age_weight(age_group_80_plus, 530);
+    int retirement_number_of_people     = 744;
+    int retirement_number_of_households = 16;
+
+    auto retirementGroup =
+        make_uniform_households(retired, retirement_number_of_people, retirement_number_of_households);
+
+    add_household_group_to_model(model, retirementGroup);
+
+    // Others
+    auto other = mio::abm::HouseholdMember(num_age_groups);
+    other.set_age_weight(age_group_0_to_4, 30);
+    other.set_age_weight(age_group_5_to_14, 40);
+    other.set_age_weight(age_group_15_to_34, 72);
+    other.set_age_weight(age_group_35_to_59, 40);
+    other.set_age_weight(age_group_60_to_79, 30);
+    other.set_age_weight(age_group_80_plus, 10);
+    int others_number_of_people     = 222;
+    int others_number_of_households = 20;
+
+    auto otherGroup = make_uniform_households(other, others_number_of_people, others_number_of_households);
+
+    add_household_group_to_model(model, otherGroup);
+
+    // One Person Household (we have exact age data about this)
+    auto one_person_household_member = mio::abm::HouseholdMember(num_age_groups);
+    one_person_household_member.set_age_weight(age_group_15_to_34, 4364);
+    one_person_household_member.set_age_weight(age_group_35_to_59, 7283);
+    one_person_household_member.set_age_weight(age_group_60_to_79, 4100);
+    one_person_household_member.set_age_weight(age_group_80_plus, 1800);
+    int one_person_number_of_people     = 15387;
+    int one_person_number_of_households = 15387;
+
+    auto onePersonGroup = make_uniform_households(one_person_household_member, one_person_number_of_people,
+                                                  one_person_number_of_households);
+
+    add_household_group_to_model(model, onePersonGroup);
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
     child.set_age_weight(age_group_0_to_4, 1);
     child.set_age_weight(age_group_5_to_14, 1);
 
-    auto parent = mio::abm::HouseholdMember(num_age_groups); // A parent is 50/50% 15-34 or 35-59.
-    parent.set_age_weight(age_group_15_to_34, 1);
-    parent.set_age_weight(age_group_35_to_59, 1);
+    auto parent = mio::abm::HouseholdMember(num_age_groups); // A child is 40/40/20% 15-34, 35-59 or 60-79.
+    parent.set_age_weight(age_group_15_to_34, 2);
+    parent.set_age_weight(age_group_35_to_59, 2);
+    parent.set_age_weight(age_group_60_to_79, 1);
 
-    // Two-person household with one parent and one child.
-    auto twoPersonHousehold_group = mio::abm::HouseholdGroup();
-    auto twoPersonHousehold_full  = mio::abm::Household();
-    twoPersonHousehold_full.add_members(child, 1);
-    twoPersonHousehold_full.add_members(parent, 1);
-    twoPersonHousehold_group.add_households(twoPersonHousehold_full, n_households);
-    add_household_group_to_model(model, twoPersonHousehold_group);
+    auto random =
+        mio::abm::HouseholdMember(num_age_groups); // Randoms are distributed according to the left over persons.
+    random.set_age_weight(age_group_0_to_4, 5000);
+    random.set_age_weight(age_group_5_to_14, 6000);
+    random.set_age_weight(age_group_15_to_34, 14943);
+    random.set_age_weight(age_group_35_to_59, 22259);
+    random.set_age_weight(age_group_60_to_79, 11998);
+    random.set_age_weight(age_group_80_plus, 5038);
 
-    // Three-person household with two parent and one child.
-    auto threePersonHousehold_group = mio::abm::HouseholdGroup();
-    auto threePersonHousehold_full  = mio::abm::Household();
-    threePersonHousehold_full.add_members(child, 1);
-    threePersonHousehold_full.add_members(parent, 2);
-    threePersonHousehold_group.add_households(threePersonHousehold_full, n_households);
-    add_household_group_to_model(model, threePersonHousehold_group);
+    // Two person households
+    int two_person_full_families  = 11850;
+    int two_person_half_families  = 1765;
+    int two_person_other_families = 166;
+    auto twoPersonHouseholds      = make_homes_with_families(child, parent, random, 2, two_person_full_families,
+                                                             two_person_half_families, two_person_other_families);
+    add_household_group_to_model(model, twoPersonHouseholds);
 
-    // Add one social event with 5 maximum contacts.
+    // Three person households
+    int three_person_full_families  = 4155;
+    int three_person_half_families  = 662;
+    int three_person_other_families = 175;
+    auto threePersonHouseholds      = make_homes_with_families(child, parent, random, 3, three_person_full_families,
+                                                               three_person_half_families, three_person_other_families);
+    add_household_group_to_model(model, threePersonHouseholds);
+
+    // Four person households
+    int four_person_full_families  = 3551;
+    int four_person_half_families  = 110;
+    int four_person_other_families = 122;
+    auto fourPersonHouseholds      = make_homes_with_families(child, parent, random, 4, four_person_full_families,
+                                                              four_person_half_families, four_person_other_families);
+    add_household_group_to_model(model, fourPersonHouseholds);
+
+    // Five plus person households
+    int fiveplus_person_full_families  = 1245;
+    int fiveplus_person_half_families  = 80;
+    int fiveplus_person_other_families = 82;
+    auto fivePlusPersonHouseholds =
+        make_homes_with_families(child, parent, random, 5, fiveplus_person_full_families, fiveplus_person_half_families,
+                                 fiveplus_person_other_families);
+    add_household_group_to_model(model, fivePlusPersonHouseholds);
+}
+
+/**
+ * Add locations to the model and assign locations to the people.
+ */
+void create_assign_locations_and_testing_schemes(mio::abm::Model& model)
+{
+    // Add one social event with 100 maximum contacts.
     // Maximum contacs limit the number of people that a person can infect while being at this location.
+    // A high percentage of people (50-100%) have to get tested in the 2 days before the event
+    // For the capacity we assume an area of 1.25 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and a
+    // room height of 3 m
     auto event = model.add_location(mio::abm::LocationType::SocialEvent);
-    model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+    model.get_location(event).set_capacity(100, 375);
+
+    auto testing_criteria = mio::abm::TestingCriteria();
+    auto validity_period  = mio::abm::days(2);
+    auto start_date       = mio::abm::TimePoint(0);
+    auto end_date         = mio::abm::TimePoint(0) + mio::abm::days(60);
+
+    auto probability = mio::UncertainValue<>();
+    assign_uniform_distribution(probability, 0.5, 1.0);
+
+    auto test_params    = model.parameters.get<mio::abm::TestData>()[mio::abm::TestType::Antigen];
+    auto testing_scheme = mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params,
+                                                  probability.draw_sample());
+
+    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
+
     // Add hospital and ICU with 5 maximum contacs.
+    // For the number of agents in this example we assume a capacity of 584 persons (80 beds per 10000 residents in
+    // Germany (Statistisches Bundesamt, 2022) and a volume of 26242 m^3
+    // (https://doi.org/10.1016/j.buildenv.2021.107926))
+    // For the ICUs we assume a capacity of 30 agents and the same volume.
     auto hospital = model.add_location(mio::abm::LocationType::Hospital);
     model.get_location(hospital).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
+    model.get_location(hospital).set_capacity(584, 26242);
     auto icu = model.add_location(mio::abm::LocationType::ICU);
     model.get_location(icu).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
-    // Add one supermarket, maximum constacts are assumed to be 20.
+    model.get_location(icu).set_capacity(30, 1350);
+
+    // Add schools, workplaces and shops.
+    // At every school there are 600 students. The maximum contacs are 40.
+    // Students have to get tested once a week.
+    // We assume 2 m^2 per student (https://doi.org/10.1371/journal.pone.0259037) and a room height of 3 m.
+    // At every workplace work 100 people (needs to be varified), maximum contacts are 40.
+    // People can get tested at work (and do this with 0.5 probability).
+    // Per person we assume an area of 10 m^2 (https://doi.org/10.1371/journal.pone.0259037) and a room height of 3 m.
+    // Add one supermarked per 15.000 people, maximum constacts are assumed to be 20.
+    // A shop has a capacity of 240 persons (https://doi.org/10.1016/j.buildenv.2021.107926)
+    // and a volume of 7200 cubic meters (10 m^2 per person (https://doi.org/10.1371/journal.pone.0259037) and 3 m
+    // room height).
     auto shop = model.add_location(mio::abm::LocationType::BasicsShop);
     model.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every school, the maximum contacts are 20.
-    auto school = model.add_location(mio::abm::LocationType::School);
-    model.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
-    // At every workplace, maximum contacts are 10.
-    auto work = model.add_location(mio::abm::LocationType::Work);
-    model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(10);
+    model.get_location(shop).set_capacity(240, 7200);
 
-    // People can get tested at work (and do this with 0.5 probability) from time point 0 to day 30.
-    auto validity_period       = mio::abm::days(1);
-    auto probability           = 0.5;
-    auto start_date            = mio::abm::TimePoint(0);
-    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto test_type             = mio::abm::TestType::Antigen;
-    auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
+    auto school = model.add_location(mio::abm::LocationType::School);
+    model.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+    model.get_location(school).set_capacity(600, 3600);
+
+    auto work = model.add_location(mio::abm::LocationType::Work);
+    model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+    model.get_location(work).set_capacity(100, 3000);
+
+    int counter_event  = 0;
+    int counter_school = 0;
+    int counter_work   = 0;
+    int counter_shop   = 0;
+    //Assign locations to the people
+    auto persons = model.get_persons();
+    for (auto& person : persons) {
+        const auto id = person.get_id();
+        //assign shop and event
+        model.assign_location(id, event);
+        counter_event++;
+        model.assign_location(id, shop);
+        counter_shop++;
+        //assign hospital and ICU
+        model.assign_location(id, hospital);
+        model.assign_location(id, icu);
+        //assign work/school to people depending on their age
+        if (person.get_age() == age_group_5_to_14) {
+            model.assign_location(id, school);
+            counter_school++;
+        }
+        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
+            model.assign_location(id, work);
+            counter_work++;
+        }
+        //add new school/work/shop if needed
+        if (counter_event == 1000) {
+            counter_event = 0;
+            event         = model.add_location(mio::abm::LocationType::SocialEvent);
+            model.get_location(event).set_capacity(100, 375);
+            model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(100);
+        }
+        if (counter_school == 600) {
+            counter_school = 0;
+            school         = model.add_location(mio::abm::LocationType::School);
+            model.get_location(school).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+            model.get_location(school).set_capacity(600, 3600);
+        }
+        if (counter_work == 100) {
+            counter_work = 0;
+            work         = model.add_location(mio::abm::LocationType::Work);
+            model.get_location(work).get_infection_parameters().set<mio::abm::MaximumContacts>(40);
+            model.get_location(work).set_capacity(100, 3000);
+        }
+        if (counter_shop == 15000) {
+            counter_shop = 0;
+            shop         = model.add_location(mio::abm::LocationType::BasicsShop);
+            model.get_location(shop).get_infection_parameters().set<mio::abm::MaximumContacts>(20);
+            model.get_location(shop).set_capacity(240, 7200);
+        }
+    }
+
+    // add the testing schemes for school and work
+    auto testing_criteria_school = mio::abm::TestingCriteria();
+    validity_period              = mio::abm::days(7);
+    auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, validity_period, start_date, end_date,
+                                                         test_params, probability.draw_sample());
+    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
+
+    auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                         test_parameters, probability);
+                                                         test_params, probability.draw_sample());
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+}
 
+/**
+ * Assign an infection state to each person.
+ */
+void assign_infection_state_masks_and_compliance(mio::abm::Model& model)
+{
     for (auto& person : model.get_persons()) {
         auto prng = mio::abm::PersonalRandomNumberGenerator(person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
@@ -167,55 +474,183 @@ int main()
             loc.set_required_mask(mio::abm::MaskType::Community);
         }
     }
+}
 
-    // Assign locations to the people
-    for (auto& person : model.get_persons()) {
-        const auto pid = person.get_id();
-        //assign shop and event
-        model.assign_location(pid, event);
-        model.assign_location(pid, shop);
-        //assign hospital and ICU
-        model.assign_location(pid, hospital);
-        model.assign_location(pid, icu);
-        //assign work/school to people depending on their age
-        if (person.get_age() == age_group_5_to_14) {
-            model.assign_location(pid, school);
-        }
-        if (person.get_age() == age_group_15_to_34 || person.get_age() == age_group_35_to_59) {
-            model.assign_location(pid, work);
-        }
+std::pair<double, double> get_my_and_sigma(std::pair<double, double> mean_and_std)
+{
+    auto mean    = mean_and_std.first;
+    auto stddev  = mean_and_std.second;
+    double my    = log(mean * mean / sqrt(mean * mean + stddev * stddev));
+    double sigma = sqrt(log(1 + stddev * stddev / (mean * mean)));
+    return {my, sigma};
+}
+
+void set_parameters(mio::abm::Parameters& params)
+{
+    // Set the Time parameters for the infection same for every age group for now
+
+    // Incubation period (Exposed to No Symptoms)
+    auto incubation_period_my_sigma = get_my_and_sigma({4.5, 1.5});
+    params.get<mio::abm::TimeExposedToNoSymptoms>() =
+        mio::ParameterDistributionLogNormal(incubation_period_my_sigma.first, incubation_period_my_sigma.second);
+
+    // Infected No Symptoms to Symptoms
+    auto infected_no_symptoms_to_symptoms_my_sigma           = get_my_and_sigma({1.1, 0.9});
+    params.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>() = mio::ParameterDistributionLogNormal(
+        infected_no_symptoms_to_symptoms_my_sigma.first, infected_no_symptoms_to_symptoms_my_sigma.second);
+
+    // Infected No Symptoms to Recovered
+    auto infected_no_symptoms_to_recovered_my_sigma           = get_my_and_sigma({8.0, 2.0});
+    params.get<mio::abm::TimeInfectedNoSymptomsToRecovered>() = mio::ParameterDistributionLogNormal(
+        infected_no_symptoms_to_recovered_my_sigma.first, infected_no_symptoms_to_recovered_my_sigma.second);
+
+    // Infected Symptoms to Severe
+    auto infected_symptoms_to_severe_my_sigma            = get_my_and_sigma({6.6, 4.9});
+    params.get<mio::abm::TimeInfectedSymptomsToSevere>() = mio::ParameterDistributionLogNormal(
+        infected_symptoms_to_severe_my_sigma.first, infected_symptoms_to_severe_my_sigma.second);
+
+    // Infected Symptoms to Recovered
+    auto infected_symptoms_to_recovered_my_sigma            = get_my_and_sigma({8.0, 2.0});
+    params.get<mio::abm::TimeInfectedSymptomsToRecovered>() = mio::ParameterDistributionLogNormal(
+        infected_symptoms_to_recovered_my_sigma.first, infected_symptoms_to_recovered_my_sigma.second);
+
+    // Infected Severe to Critical
+    auto infected_severe_to_critical_my_sigma            = get_my_and_sigma({1.5, 2.0});
+    params.get<mio::abm::TimeInfectedSevereToCritical>() = mio::ParameterDistributionLogNormal(
+        infected_severe_to_critical_my_sigma.first, infected_severe_to_critical_my_sigma.second);
+
+    // Infected Severe to Recovered
+    auto infected_severe_to_recovered_my_sigma            = get_my_and_sigma({18.1, 6.3});
+    params.get<mio::abm::TimeInfectedSevereToRecovered>() = mio::ParameterDistributionLogNormal(
+        infected_severe_to_recovered_my_sigma.first, infected_severe_to_recovered_my_sigma.second);
+
+    // Infected Critical to Dead
+    auto infected_critical_to_dead_my_sigma            = get_my_and_sigma({10.7, 4.8});
+    params.get<mio::abm::TimeInfectedCriticalToDead>() = mio::ParameterDistributionLogNormal(
+        infected_critical_to_dead_my_sigma.first, infected_critical_to_dead_my_sigma.second);
+
+    // Infected Critical to Recovered
+    auto infected_critical_to_recovered_my_sigma            = get_my_and_sigma({18.1, 6.3});
+    params.get<mio::abm::TimeInfectedCriticalToRecovered>() = mio::ParameterDistributionLogNormal(
+        infected_critical_to_recovered_my_sigma.first, infected_critical_to_recovered_my_sigma.second);
+
+    // Set percentage parameters (unchanged)
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]  = 0.50;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}] = 0.55;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] =
+        0.60;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] =
+        0.70;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] =
+        0.83;
+    params.get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}] = 0.90;
+
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.02;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.03;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.04;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.07;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.17;
+    params.get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.24;
+
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.1;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.11;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.12;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.14;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.33;
+    params.get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.62;
+
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_0_to_4}]   = 0.12;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_5_to_14}]  = 0.13;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_15_to_34}] = 0.15;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_35_to_59}] = 0.26;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_60_to_79}] = 0.40;
+    params.get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, age_group_80_plus}]  = 0.48;
+
+    // Set other parameters
+    params.get<mio::abm::AerosolTransmissionRates>() = 0.0;
+}
+/**
+ * Create a sampled model with start time t0.
+ * @param t0 the start time of the simulation
+*/
+mio::abm::Model create_sampled_model()
+{
+
+    // Set the random number generator seed
+    mio::thread_local_rng().seed({123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
+
+    // mio::thread_local_rng().seed(
+    //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
+    printf("Parameter Sample Seeds: ");
+    for (auto s : mio::thread_local_rng().get_seeds()) {
+        printf("%u, ", s);
     }
+    printf("\n");
 
-    // During the lockdown, social events are closed for 90% of people.
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
+    //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the model
+    auto model = mio::abm::Model(num_age_groups);
+
+    set_parameters(model.parameters);
+
+    // model.get_rng().seed(
+    //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
+    printf("ABM Simulation Seeds: ");
+    for (auto s : model.get_rng().get_seeds()) {
+        printf("%u, ", s);
+    }
+    printf("\n");
+
+    // Create the model object from statistical data.
+    create_model_from_statistical_data(model);
+
+    // Assign an infection state to each person.
+    assign_infection_state_masks_and_compliance(model);
+
+    // Add locations and assign locations to the people.
+    create_assign_locations_and_testing_schemes(model);
+
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
+
+    // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
+    // Social events are very rare.
+    mio::abm::set_home_office(t_lockdown, 0.25, model.parameters);
+    mio::abm::set_school_closure(t_lockdown, 0.9, model.parameters);
     mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
+    return model;
+}
+
+/**
+ * Run the ABM simulation.
+ * @param result_dir Directory where all results will be stored.
+ * @param num_runs Number of runs.
+ * @param save_single_runs If true, single run results are written to disk.
+ */
+void run()
+{
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(30);
-    auto sim  = mio::abm::Simulation(t0, std::move(model));
+    auto tmax = t0 + mio::abm::days(60);
 
-    struct LogTimePoint : mio::LogAlways {
-        using Type = double;
-        static Type log(const mio::abm::Simulation<>& sim)
-        {
-            return sim.get_time().hours();
-        }
-    };
-    struct LogLocationIds : mio::LogOnce {
-        using Type = std::vector<std::tuple<mio::abm::LocationType, uint32_t>>;
-        static Type log(const mio::abm::Simulation<>& sim)
-        {
-            Type location_ids{};
-            for (auto& location : sim.get_model().get_locations()) {
-                location_ids.push_back(std::make_tuple(location.get_type(), location.get_id().get()));
-            }
-            return location_ids;
-        }
-    };
+    // Create the sampled simulation with start time t0
+    auto model = create_sampled_model();
 
-    mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
+    auto sim = mio::abm::Simulation(t0, std::move(model));
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+    sim.advance(tmax, historyTimeSeries);
 
-    sim.advance(tmax, history);
+    std::ofstream outfile("abm.txt");
+    std::get<0>(historyTimeSeries.get_log())
+        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+    std::cout << "Results written to abm.txt" << std::endl;
+}
 
-    write_log_to_file(history);
+int main()
+{
+    mio::set_log_level(mio::LogLevel::warn);
+
+    std::cout << "Starting ABM simulation..." << std::endl;
+    run();
+    std::cout << "ABM simulation finished." << std::endl;
+    return 0;
 }
