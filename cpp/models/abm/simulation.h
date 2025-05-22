@@ -97,7 +97,6 @@ public:
     }
 
 private:
-    void store_result_at(TimePoint t);
     void evolve_model(TimePoint tmax)
     {
         auto dt = std::min(m_dt, tmax - m_t);

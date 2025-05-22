@@ -292,6 +292,12 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                                                     get_location(person.get_location()), t, dt);
             }
         } // implicit taskloop barrier
+
+        // 3) normalize the exposure caches
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; ++i) {
+        }
+
     } // implicit single barrier
 }
 
@@ -341,19 +347,20 @@ LocationId Model::find_location(LocationType type, const PersonId person) const
     return find_location(type, get_person(person));
 }
 
-size_t Model::get_subpopulation_combined(TimePoint t, InfectionState s) const
+size_t Model::get_subpopulation_inf_state_combined(TimePoint t, InfectionState s) const
 {
     return std::accumulate(m_locations.begin(), m_locations.end(), (size_t)0,
                            [t, s, this](size_t running_sum, const Location& loc) {
-                               return running_sum + get_subpopulation(loc.get_id(), t, s);
+                               return running_sum + get_subpopulation_inf_state(loc.get_id(), t, s);
                            });
 }
 
-size_t Model::get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const
+size_t Model::get_subpopulation_inf_state_combined_per_location_type(TimePoint t, InfectionState s,
+                                                                     LocationType type) const
 {
     return std::accumulate(
         m_locations.begin(), m_locations.end(), (size_t)0, [t, s, type, this](size_t running_sum, const Location& loc) {
-            return loc.get_type() == type ? running_sum + get_subpopulation(loc.get_id(), t, s) : running_sum;
+            return loc.get_type() == type ? running_sum + get_subpopulation_inf_state(loc.get_id(), t, s) : running_sum;
         });
 }
 
