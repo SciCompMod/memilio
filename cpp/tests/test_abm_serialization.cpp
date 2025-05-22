@@ -26,6 +26,7 @@
 #include "abm/protection_event.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/json_serializer.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/uncertain_value.h"
 #include "models/abm/location.h"

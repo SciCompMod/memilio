@@ -21,6 +21,7 @@
 #define EPI_SECIR_DAMPING_SAMPLING_H
 
 #include "memilio/epidemiology/damping.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/uncertain_value.h"
 #include <memory>
 

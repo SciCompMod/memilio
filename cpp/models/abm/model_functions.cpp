@@ -77,11 +77,10 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
                 VirusVariant virus = static_cast<VirusVariant>(v);
                 ScalarType local_indiv_trans_prob_v =
-                    (std::min(local_parameters.get<MaximumContacts>(),
-                              daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
-                                                              local_parameters)) +
+                    (daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
+                                                     local_parameters) +
                      daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *
-                    dt.days() * (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
+                    (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
 
                 local_indiv_trans_prob[v] = std::make_pair(virus, local_indiv_trans_prob_v);
             }
@@ -143,6 +142,27 @@ bool change_location(Person& person, const Location& destination, const Transpor
         mio::log_debug("In change_location: Person {} already is at Location {}", person.get_id().get(),
                        destination.get_id().get());
         return false;
+    }
+}
+
+void adjust_contact_rates(Location& location, size_t num_agegroups)
+{
+    if (location.get_infection_parameters().get<MaximumContacts>() == std::numeric_limits<ScalarType>::max()) {
+        return;
+    }
+    for (auto contact_from = AgeGroup(0); contact_from < AgeGroup(num_agegroups); contact_from++) {
+        ScalarType total_contacts = 0.;
+        // slizing would be preferred but is problematic since both Tags of ContactRates are AgeGroup
+        for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
+            total_contacts += location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}];
+        }
+        if (total_contacts > location.get_infection_parameters().get<MaximumContacts>()) {
+            for (auto contact_to = AgeGroup(0); contact_to < AgeGroup(num_agegroups); contact_to++) {
+                location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}] =
+                    location.get_infection_parameters().get<ContactRates>()[{contact_from, contact_to}] *
+                    location.get_infection_parameters().get<MaximumContacts>() / total_contacts;
+            }
+        }
     }
 }
 
