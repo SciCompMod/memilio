@@ -5,7 +5,6 @@ project(memilio VERSION 1.0.0)
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
-option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
@@ -91,7 +90,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
             NAME coverage
             EXECUTABLE memilio-test
             LCOV_ARGS --ignore-errors gcov,mismatch
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
     endif()
@@ -176,10 +175,6 @@ endif()
 
 if(MEMILIO_BUILD_TESTS)
     add_subdirectory(tests)
-endif()
-
-if(MEMILIO_BUILD_SIMULATIONS)
-    add_subdirectory(simulations)
 endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)
