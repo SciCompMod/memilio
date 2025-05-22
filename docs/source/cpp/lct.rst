@@ -4,9 +4,8 @@ Linear Chain Trick model
 Introduction
 -------------
 
-The Linear Chain Trick provides the option to use Erlang-distributed stay times in the compartments through the use of subcompartments. 
-The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
-The LCT model can still be described by an ordinary differential equation system.
+The Linear Chain Trick (LCT) provides the option to use Erlang distributed stay times in the compartments through the use of subcompartments whereas simple ODE models have (possibly unrealistic) exponentially distributed stay times.
+Note that LCT-based models can still be described by an ordinary differential equation system.
 
 The eight compartments 
 
@@ -20,8 +19,8 @@ The eight compartments
 - `Dead` (:math:`D`)
 
 are used to simulate the spread of the disease. 
-It is possible to include subcompartments for the five compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
-You can divide the population according to different groups, e.g. AgeGroups or gender and choose parameters according to groups.
+It is possible to include subcompartments for the five compartments `Exposed`, `InfectedNoSymptoms`, `InfectedSymptoms`, `InfectedSevere` and `InfectedCritical`.
+You can divide the population according to different groups, e.g. by age or gender and choose parameters according to groups.
 
 Simulation
 -----------
@@ -38,7 +37,7 @@ How to: Set up and run a simulation of the LCT-SECIR model
 
 In the following, we will demonstrate how to run a simulation using the LCT-SECIR model. This examples uses one age group/category.
 
-We start by defining the number of subcompartments and constructing the model. We can choose the number of subcompartments individually for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
+We start by defining the number of subcompartments and constructing the model. We can choose the number of subcompartments individually for the compartments `Exposed`, `InfectedNoSymptoms`, `InfectedSymptoms`, `InfectedSevere` and `InfectedCritical`.
 
 .. code-block:: cpp
     
@@ -70,14 +69,14 @@ If we do not want to use the default parameters, they can be set as follows.
     model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
 Here, we set the contact matrix used in the simulation. One can define multiple matrices for different locations. The size of each of these matrices is defined by the number of age groups. 
-In our example below we use only one contact matrix for one location. We only consider one age group and set the contact rate to 10. 
+Below, we use only one contact matrix for one location. In our example, we only consider one age group and set the contact rate to 10. 
 
 .. code-block:: cpp
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
 
-To simulate the implementation of nonpharmaceutical interventions, we add dampings to the contact rate. Here, we apply a damping of :math:`0.7` after :math:`5`` days, meaning that the contact rate is reduced to 30% of the initial value. 
+To simulate the implementation of nonpharmaceutical interventions, we add dampings to the contact rate. Here, we apply a damping of :math:`0.7` after :math:`5` days, meaning that the contact rate is reduced to :math:`30%` of the initial value. 
 
 .. code-block:: cpp
 
@@ -92,7 +91,7 @@ We start with constructing a vector ``initial_populations`` that we will pass on
         std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-We assert that vector has the correct size by checking that the number of ``InfectionStates`` and the number of subcompartments are correct.
+We assert that vector has the correct size by checking that the number of ``InfectionStates`` and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -140,7 +139,7 @@ We can simulate using the defined model from :math:`t_0` to :math:`t_{\max}` wit
     ScalarType dt = 0.5;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model);
 
-The simulation result is divided by subcompartments. We can call the function calculate_compartments to get a result according to the ``InfectionStates``.
+The simulation result is divided by subcompartments. We can call the function ``calculate_compartments()`` to get a result according to the ``InfectionStates`` .
 
 .. code-block:: cpp
 
@@ -160,7 +159,7 @@ Remarks
 Above, we have defined the vector of initial values ``initial_populations`` directly. There also exists a function, that computes an intial value vector for the compartments based on a ``TimeSeries`` with flows that are given for a big enough time window before the simulation start. We will demonstarte this below. 
 Here, we assume that a model was already constructedas above. 
 
-We start with defining the vectors ``total_population``, ``deaths`` and ``total_confirmed_cases``that contain the respective values per age group.
+We start with defining the vectors ``total_population``, ``deaths`` and ``total_confirmed_cases`` that contain the respective values per age group.
 
 .. code-block:: cpp
 
@@ -176,7 +175,7 @@ We start by defining the time step size :math:`dt` that determines the distance 
 
 .. code-block:: cpp
 
-        ScalarType dt                                    = 0.001;
+        ScalarType dt = 0.001;
 
 We proceed by creating a time series ``flows`` that contains a vector with the size of the number of transitions that the model allows. 
 
