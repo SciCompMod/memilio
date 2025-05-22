@@ -32,6 +32,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx_copybutton',
+    'sphinx_toolbox.collapse',
     'sphinx_design',
     'breathe',
     'exhale',

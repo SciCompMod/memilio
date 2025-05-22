@@ -4,6 +4,7 @@ IDE models
 In MEmilio, two models based on integro-differential equations are implemented. They have different infection states and are solved with different numerical solvers. Their respective usage is described below.
 
 
+
 IDE-SECIR model
 ----------------
 
@@ -11,16 +12,18 @@ Introduction
 ~~~~~~~~~~~~~
 
 This model is based on integro-differential equations.
-The eight compartments 
+The eight compartments
 
-- `Susceptible` (:math:`S`), may become Exposed at any time
-- `Exposed` (:math:`E`), becomes InfectedNoSymptoms after some time
-- `InfectedNoSymptoms` (:math:`I_{NS}`), becomes InfectedSymptoms or Recovered after some time
-- `InfectedSymptoms` (:math:`I_{Sy}`), becomes InfectedSevere or Recovered after some time
-- `InfectedSevere` (:math:`I_{Sev}`), becomes InfectedCritical or Recovered after some time
-- `InfectedCritical` (:math:`I_{Cr}`), becomes Recovered or Dead after some time
-- `Recovered` (:math:`R`)
-- `Dead` (:math:`D`)
+.. code-block::
+
+    `Susceptible` (:math:`S`), may become Exposed at any time
+    `Exposed` (:math:`E`), becomes InfectedNoSymptoms after some time
+    `InfectedNoSymptoms` (:math:`I_{NS}`), becomes InfectedSymptoms or Recovered after some time
+    `InfectedSymptoms` (:math:`I_{Sy}`), becomes InfectedSevere or Recovered after some time
+    `InfectedSevere` (:math:`I_{Sev}`), becomes InfectedCritical or Recovered after some time
+    `InfectedCritical` (:math:`I_{Cr}`), becomes Recovered or Dead after some time
+    `Recovered` (:math:`R`)
+    `Dead` (:math:`D`)
 
 are used to simulate the spread of the disease and corresponding transition distributions can be set in a flexible way. 
 

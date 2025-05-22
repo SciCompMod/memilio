@@ -4,7 +4,7 @@ Graph-based metapopulation model
 Introduction
 -------------
 
-This model realizes a metapopulation model using a directed graph with instances of an ODE-based model as graph nodes. Any ODE-based model implemented in MEmilio can be used in the graph nodes, see :doc:`<ode>`, representing one geographical region. Currently, only ODE-based models are supported as nodes, but support for other models will be added soon. Mobility between graph nodes is modelled via graph edges. There are two different types of mobility edges implemented in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first one implements a deterministic instant mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
+This model realizes a metapopulation model using a directed graph with instances of an ODE-based model as graph nodes. Any ODE-based model implemented in MEmilio can be used in the graph nodes, see :doc:`ode`, representing one geographical region. Currently, only ODE-based models are supported as nodes, but support for other models will be added soon. Mobility between graph nodes is modelled via graph edges. There are two different types of mobility edges implemented in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first one implements a deterministic instant mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
 
 Simulation
 -----------
@@ -135,7 +135,8 @@ The following steps detail how to configure and execute a graph simulation:
            g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
            g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
 
-    For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as edge type for the graph. The rates or mibility coefficients can be set as follows:
+
+For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as edge type for the graph. The rates or mibility coefficients can be set as follows:
 
     .. code-block:: cpp
 
