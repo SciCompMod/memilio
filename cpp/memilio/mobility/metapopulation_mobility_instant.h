@@ -403,13 +403,13 @@ public:
 
 private:
     MobilityParameters<FP> m_parameters;
-    TimeSeries<double> m_mobile_population;
-    TimeSeries<double> m_return_times;
+    TimeSeries<FP> m_mobile_population;
+    TimeSeries<FP> m_return_times;
     bool m_return_mobile_population;
-    double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
+    FP m_t_last_dynamic_npi_check               = -std::numeric_limits<FP>::infinity();
+    std::pair<FP, SimulationTime> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime(0)};
     std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
-    TimeSeries<double> m_mobility_results; // save results from edges + entry for the total number of commuters
+    TimeSeries<FP> m_mobility_results; // save results from edges + entry for the total number of commuters
 
     /**
      * @brief Computes a condensed version of `m_mobile_population` and stores it in `m_mobility_results`.
@@ -419,11 +419,11 @@ private:
      *
      * @param[in] t The current time.
      */
-    void add_mobility_result_time_point(const double t);
+    void add_mobility_result_time_point(const FP t);
 };
 
 template <typename FP>
-void MobilityEdge<FP>::add_mobility_result_time_point(const double t)
+void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
 {
     const size_t save_indices_size = this->m_saved_compartment_indices.size();
     if (save_indices_size > 0) {
@@ -435,7 +435,7 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const double t)
         std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
                        condensed_values.data(), [&last_value](const auto& indices) {
                            return std::accumulate(indices.begin(), indices.end(), 0.0,
-                                                  [&last_value](double sum, auto i) {
+                                                  [&last_value](FP sum, auto i) {
                                                       return sum + last_value[i];
                                                   });
                        });
@@ -563,7 +563,7 @@ template <class Sim>
 void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     //check dynamic npis
-    if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
+    if (m_t_last_dynamic_npi_check == -std::numeric_limits<FP>::infinity()) {
         m_t_last_dynamic_npi_check = node_from.get_t0();
     }
 
@@ -574,8 +574,8 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
-             t > double(m_dynamic_npi.second))) { //old NPI was weaker or is expired
-            auto t_end    = SimulationTime(t + double(dyn_npis.get_duration()));
+             t > FP(m_dynamic_npi.second))) { //old NPI was weaker or is expired
+            auto t_end    = SimulationTime(t + FP(dyn_npis.get_duration()));
             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
             implement_dynamic_npis(
                 m_parameters.get_coefficients(), exceeded_threshold->second, SimulationTime(t), t_end, [this](auto& g) {
@@ -673,8 +673,8 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
  */
 template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
-                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
-                void (*)(double, double, mio::SimulationNode<Sim>&)>
+                void (*)(FP, FP, mio::MobilityEdge<FP>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(FP, FP, mio::SimulationNode<Sim>&)>
 make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
 {
     return make_graph_sim(t0, dt, graph, static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
@@ -684,14 +684,48 @@ make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdge<FP
 
 template <typename FP, class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
-                void (*)(double, double, mio::MobilityEdge<>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
-                void (*)(double, double, mio::SimulationNode<Sim>&)>
+                void (*)(FP, FP, mio::MobilityEdge<FP>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                void (*)(FP, FP, mio::SimulationNode<Sim>&)>
 make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
 {
     return make_graph_sim(t0, dt, std::move(graph),
                           static_cast<void (*)(FP, FP, SimulationNode<Sim>&)>(&advance_model<Sim>),
                           static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
                               &apply_mobility<FP, Sim>));
+}
+
+/** @} */
+
+/**
+ * Create a graph simulation without mobility.
+ * 
+ * Note that we set the time step of the graph simulation to infinity since we do not require any exchange between the 
+ * nodes. Hence, in each node, the simulation runs until tmax when advancing the simulation without interruption.
+ *
+ * @param t0 Start time of the simulation.
+ * @param graph Set up for graph-based simulation.
+ * @{
+ */
+ template <typename FP, class Sim>
+ auto make_no_mobility_sim(FP t0, Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
+ {
+     using GraphSim =
+         GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                         void (*)(FP, FP, mio::MobilityEdge<FP>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                         void (*)(FP, FP, mio::SimulationNode<Sim>&)>;
+     return GraphSim(t0, std::numeric_limits<FP>::infinity(), graph, &advance_model<Sim>,
+                     [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
+ }
+
+template <typename FP, class Sim>
+auto make_no_mobility_sim(FP t0, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
+{
+    using GraphSim =
+        GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                        void (*)(FP, FP, mio::MobilityEdge<FP>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                        void (*)(FP, FP, mio::SimulationNode<Sim>&)>;
+    return GraphSim(t0, std::numeric_limits<FP>::infinity(), std::move(graph), &advance_model<Sim>,
+                    [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
 }
 
 /** @} */

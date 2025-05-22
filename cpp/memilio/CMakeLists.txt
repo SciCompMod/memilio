@@ -79,6 +79,7 @@ add_library(memilio
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
+    utils/abstract_parameter_distribution.h
     utils/time_series.h
     utils/time_series.cpp
     utils/span.h
@@ -127,4 +128,9 @@ endif()
 
 if(MEMILIO_ENABLE_OPENMP)
     target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+if(MEMILIO_ENABLE_LIKWID_MARKER)
+    target_link_libraries(memilio PUBLIC likwid)
+    target_compile_definitions(memilio PUBLIC "-DLIKWID_PERFMON")
 endif()
