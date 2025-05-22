@@ -518,30 +518,10 @@ void set_parameters(mio::abm::Parameters& params)
 mio::abm::Model create_sampled_model()
 {
 
-    // Set the random number generator seed
-    mio::thread_local_rng().seed({123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
-
-    // mio::thread_local_rng().seed(
-    //     {123144124, 835345345, 123123123, 99123}); //set seeds, e.g., for debugging
-    printf("Parameter Sample Seeds: ");
-    for (auto s : mio::thread_local_rng().get_seeds()) {
-        printf("%u, ", s);
-    }
-    printf("\n");
-
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the model
     auto model = mio::abm::Model(num_age_groups);
 
     set_parameters(model.parameters);
-
-    // model.get_rng().seed(
-    //    {23144124, 1835345345, 9343763, 9123}); //set seeds, e.g., for debugging
-    printf("ABM Simulation Seeds: ");
-    for (auto s : model.get_rng().get_seeds()) {
-        printf("%u, ", s);
-    }
-    printf("\n");
-
     // Create the model object from statistical data.
     create_model_from_statistical_data(model);
 
@@ -550,14 +530,6 @@ mio::abm::Model create_sampled_model()
 
     // Add locations and assign locations to the people.
     create_assign_locations_and_testing_schemes(model);
-
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(20);
-
-    // During the lockdown, 25% of people work from home and schools are closed for 90% of students.
-    // Social events are very rare.
-    mio::abm::set_home_office(t_lockdown, 0.25, model.parameters);
-    mio::abm::set_school_closure(t_lockdown, 0.9, model.parameters);
-    mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
     return model;
 }
@@ -579,7 +551,7 @@ void run()
     auto sim = mio::abm::Simulation(t0, std::move(model));
     sim.advance(tmax);
 
-    // Save the simulation results
+    // Print the infection states at the end of the simulation
     Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
     for (auto& location : sim.get_model().get_locations()) {
         for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
