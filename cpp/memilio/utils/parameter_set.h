@@ -225,7 +225,7 @@ public:
      */
     template <class Dummy = void,
               class       = std::enable_if_t<
-                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+                        details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
     ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {
@@ -348,7 +348,7 @@ private:
      * third parameter are needed for an empty ParameterSet<>, to disable this constructor and avoid equivalence to
      * other constructors, respectively.
      */
-    template <class Dummy = void, class = std::enable_if_t<(sizeof...(Tags)), Dummy>, class = Dummy>
+    template <class Dummy = void, class = std::enable_if_t<(sizeof...(Tags) > 0), Dummy>, class = Dummy>
     ParameterSet(const typename Tags::Type&... t)
         : m_tup(t...)
     {
