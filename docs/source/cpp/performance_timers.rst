@@ -39,7 +39,7 @@ Let's say you have set up a Simulation, and want to measure how long it takes, w
         ... // evaluate results
     }
 
-and will see a table printed at the end of your programm, that lists the time it took to :code:`advance` next to the
+and will see a table printed at the end of your program, that lists the time it took to :code:`advance` next to the
 timer named "my simulation". That's it!
 
 You can add more timers like this, but make sure you use unique names, otherwise the same timer will be reused, and the
@@ -51,7 +51,7 @@ Timing in the library
 ~~~~~~~~~~~~~~~~~~~~~
 
 Adding timers in the library is not much different to adding timers in main, but avoiding name collisions can be more
-difficult. Hence, we use the optional second tempalte argument of AutoTimer to specify its scope, as shown in the
+difficult. Hence, we use the optional second template argument of AutoTimer to specify its scope, as shown in the
 following examples.
 
 To measure the time a class member function takes, add a timer like this:
@@ -80,7 +80,7 @@ Or, when timing a free function:
 
     namespace foo {
 
-    void bar {
+    void bar() {
         AutoTimer<"bar", "foo"> timer;
             
         ... // rest of the function
@@ -138,7 +138,7 @@ specific component, view its API documentation.
 - **BasicTimer**:
   The foundation of the timing framework. BasicTimer is a very simple class, that defines the methods start, stop,
   reset, and get_elapsed_time. These are used by all other classes in this framework. Uses a wall clock, so if compute
-  resources are shared with other tasks, the timing results may be higher than expexted. In debug builds, it will log
+  resources are shared with other tasks, the timing results may be higher than expected. In debug builds, it will log
   errors whenever a member function was used incorrectly, e.g. when start was called twice.
 
 - **TimerRegistration**:
