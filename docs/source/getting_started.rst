@@ -7,7 +7,7 @@ Overview
 .. note:: This project is under active development.
 
 
-MEmilio is an extensive framework for tasks around infectious disease modelling. It supports various model types 
+MEmilio is an extensive framework for tasks around infectious disease modelling. It supports various :ref:`model <model-faq>` types 
 including :doc:`equation-based<cpp/aggregated_models>`, :doc:`agent-based <cpp/individual_models>`, 
 and :doc:`hybrid graph-ODE-based models <cpp/graph_metapop>` as well as data integration and visualizations. 
 Among the equation-based models, we provide models based on :doc:`ordinary differential equations <cpp/ode>`,

@@ -1,6 +1,8 @@
 FAQ
 ====
 
+.. _model-faq:
+
 What do you mean when talking about a *model* (implementation)?
 --------------------------------------------------------------------
 
