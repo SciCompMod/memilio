@@ -50,6 +50,7 @@ Contents
    cpp/installation
    cpp/model_usage
    cpp/model_creation
+   cpp/development
 
 .. toctree::
    :maxdepth: 2
@@ -66,6 +67,5 @@ Contents
    :maxdepth: 1
    :caption: Code API 
 
-   models/index
    pythonapi/pythonapi
    api/library_root

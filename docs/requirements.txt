@@ -10,3 +10,4 @@ pycode/memilio-plot
 pycode/memilio-simulation
 pycode/memilio-surrogatemodel
 exhale
+sphinx_toolbox

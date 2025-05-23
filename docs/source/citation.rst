@@ -3,7 +3,7 @@ Citing MEmilio
 
 If you use MEmilio, please cite our work
 
-- Kühn, Martin Joachim et al. (2024). *MEmilio - a High Performance Modular Epidemics Simulation Software (2022)*. Available at `https://github.com/SciCompMod/memilio <https://github.com/SciCompMod/memilio>`_ and `https://elib.dlr.de/209739/ <https://elib.dlr.de/209739/>`_.
+- Kühn, Martin Joachim et al. (2025). *MEmilio - a High Performance Modular Epidemics Simulation Software (2022)*. Available at `https://github.com/SciCompMod/memilio <https://github.com/SciCompMod/memilio>`_ and `https://elib.dlr.de/213614/ <https://elib.dlr.de/213614/>`_.
 
 and, in particular, for
 

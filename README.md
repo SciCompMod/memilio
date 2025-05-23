@@ -35,10 +35,9 @@ In pycode, different MEmilio python packages are defined. Via our [memilio-simul
 
 Each important part of the project described above is described in detail in the README in the corresponding directory. The README contains e.g. configuration and usage instructions for users and developers.
 
-Also, the code is documented with doxygen and instructions on how to obtain it can be found in the docs folder.
-The documentation of the code of the main branch can be found at the following URL:
+Also, the code is documented with doxygen and a documentation with explanations and examples is provided using Sphinx. It can be found at 
 
-https://scicompmod.github.io/memilio/documentation/index.html
+https://memilio.readthedocs.io/en/latest/index.html
 
 **Installation, Usage and Requirements**
 
