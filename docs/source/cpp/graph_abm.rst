@@ -27,7 +27,7 @@ First, the models (corresponding to the graph nodes) have to be created and init
     auto model1 = mio::GraphABModel(num_age_groups, 0);
     auto model2 = mio::GraphABModel(num_age_groups, 1);
 
-For all models/nodes, the infection parameters have to be set. If this is not done, the default values are used. For information on what parameters the mobility-based agent-based model ``abm::Model`` has and how to set them, see :doc:`<mobility_based_abm>`. Below, only the age groups that go to school and work are set:
+For all models/nodes, the infection parameters have to be set. If this is not done, the default values are used. For information on what parameters the mobility-based agent-based model ``abm::Model`` has and how to set them, see :doc:`mobility_based_abm`. Below, only the age groups that go to school and work are set:
 
 .. code-block:: cpp
 
