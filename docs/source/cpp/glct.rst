@@ -272,3 +272,12 @@ We can interpolate the simulation results to a ``TimeSeries`` containing only fu
     
     auto interpolated_result = mio::interpolate_simulation_result(population_no_subcompartments, 0.1);
     interpolated_result.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 10, 4);
+
+
+List of models
+=====================
+
+.. toctree::
+    :titlesonly:
+    
+    models/glsecir

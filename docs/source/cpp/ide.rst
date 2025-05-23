@@ -319,3 +319,13 @@ Finally, we can print our results.
 .. code-block:: cpp
 
     result.print_table({"S", "E", "I", "R"});
+
+
+List of models
+=====================
+
+.. toctree::
+    :titlesonly:
+    
+    models/iseir
+    models/isecir
