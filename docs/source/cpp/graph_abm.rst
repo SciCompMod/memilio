@@ -4,7 +4,7 @@ Graph-based agent-based model
 Introduction
 -------------
 
-This model realizes multiple instances of the mobility-based agent-based model ``abm::Model`` (see :doc:`<mobility_based_abm>` for documentation) as nodes in a directed graph. One local model represents a geographical region. The regions are connected by the graph edges. Mobility within one node and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. Therefore this graph-based agent-based model can be reduced to a single mobility-based agent-based if simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal.
+This model realizes multiple instances of the mobility-based agent-based model ``abm::Model`` (see :doc:`mobility_based_abm` for documentation) as nodes in a directed graph. One local model represents a geographical region. The regions are connected by the graph edges. Mobility within one node and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. Therefore this graph-based agent-based model can be reduced to a single mobility-based agent-based if simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal.
 
 Simulation
 -----------
@@ -122,7 +122,7 @@ Assigning infection states and locations to persons in all models can be done vi
     adult2.set_assigned_location(mio::abm::LocationType::Work, work, model2.get_id());
     adult3.set_assigned_location(mio::abm::LocationType::Work, work, model2.get_id());
 
-For initializing the graph nodes and edges a ``mio::Graph`` is created which gets ``mio::ABMSimulationNode`` and ``mio::ABMMobilityEdge`` as templates. Additionally, every node needs a ``mio::History`` object to log its results during the simulation. See :doc:`<io>` for information on how to use ``mio::History``. Below, ``mio::abm::LogInfectionState`` is used as logger.
+For initializing the graph nodes and edges a ``mio::Graph`` is created which gets ``mio::ABMSimulationNode`` and ``mio::ABMMobilityEdge`` as templates. Additionally, every node needs a ``mio::History`` object to log its results during the simulation. See :doc:`io` for information on how to use ``mio::History``. Below, ``mio::abm::LogInfectionState`` is used as logger.
 
 .. code-block:: cpp
 

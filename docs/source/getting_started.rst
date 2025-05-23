@@ -82,7 +82,7 @@ In short, the executables for different model instatiations are build as describ
 
 Out of the box this works for all examples in the ``cpp/examples`` folder of our `github repository <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`_,
 that do not depend on user-provided external libraries. 
-Additional explanations for our models can be found in the :doc:`Models section <models/index>` of this documentation.
+Additional explanations for our models are linked at the corresponding sites of this documentation.
 
 For the Python interface, you can find a short introduction in the :doc:`Python Interface <python/memilio_simulation>` section.
 
