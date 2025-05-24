@@ -14,94 +14,267 @@ namespace mio
 namespace examples
 {
 
-// create model with explicit commuter compartments
+// Enum class for dynamic commuter groups
+enum class CommuterType
+{
+    NonCommuter = 0,
+    CommuterBase,
+};
 
 enum class InfectionStateExplicit
 {
-    S_NonCommuter = 0,
-    E_NonCommuter,
-    I_NonCommuter,
-    R_NonCommuter,
-    S_Commuter,
-    E_Commuter,
-    I_Commuter,
-    R_Commuter,
-
+    S = 0,
+    E,
+    I,
+    R,
     Count
 };
 
 using ParametersExplicit = mio::oseir::Parameters<ScalarType>;
 
-// clang‑format off
-using FlowsExplicit =
-    mio::TypeList<mio::Flow<InfectionStateExplicit::S_NonCommuter, InfectionStateExplicit::E_NonCommuter>,
-                  mio::Flow<InfectionStateExplicit::E_NonCommuter, InfectionStateExplicit::I_NonCommuter>,
-                  mio::Flow<InfectionStateExplicit::I_NonCommuter, InfectionStateExplicit::R_NonCommuter>,
-                  mio::Flow<InfectionStateExplicit::S_Commuter, InfectionStateExplicit::E_Commuter>,
-                  mio::Flow<InfectionStateExplicit::E_Commuter, InfectionStateExplicit::I_Commuter>,
-                  mio::Flow<InfectionStateExplicit::I_Commuter, InfectionStateExplicit::R_Commuter>>;
-// clang‑format on
+// Helper struct to dynamically create flows for multiple commuter groups
+template <typename FP = ScalarType>
+struct ExplicitFlowsCreator {
+    static auto create_flows()
+    {
+        // Base flows for SEIR model (same for all commuter types)
+        using BaseFlows = mio::TypeList<mio::Flow<InfectionStateExplicit::S, InfectionStateExplicit::E>,
+                                        mio::Flow<InfectionStateExplicit::E, InfectionStateExplicit::I>,
+                                        mio::Flow<InfectionStateExplicit::I, InfectionStateExplicit::R>>;
+
+        return BaseFlows{};
+    }
+};
+
+// Define flows using the helper struct
+using FlowsExplicit = decltype(ExplicitFlowsCreator<>::create_flows());
 
 template <typename FP = ScalarType>
-class ModelExplicit
-    : public mio::FlowModel<FP, InfectionStateExplicit, mio::Populations<FP, mio::AgeGroup, InfectionStateExplicit>,
-                            ParametersExplicit, FlowsExplicit>
+class ModelExplicit : public mio::FlowModel<FP, InfectionStateExplicit,
+                                            mio::Populations<FP, mio::AgeGroup, CommuterType, InfectionStateExplicit>,
+                                            ParametersExplicit, FlowsExplicit>
 {
-    using Base = mio::FlowModel<FP, InfectionStateExplicit, mio::Populations<FP, mio::AgeGroup, InfectionStateExplicit>,
+    using Base = mio::FlowModel<FP, InfectionStateExplicit,
+                                mio::Populations<FP, mio::AgeGroup, CommuterType, InfectionStateExplicit>,
                                 ParametersExplicit, FlowsExplicit>;
 
 public:
     using typename Base::ParameterSet;
     using typename Base::Populations;
+    using CommuterIndex = CommuterType;
 
-    ModelExplicit(int num_agegroups)
-        : Base(Populations({mio::AgeGroup(num_agegroups), InfectionStateExplicit::Count}),
+private:
+    int m_num_commuter_groups;
+
+public:
+    ModelExplicit(int num_agegroups, int num_commuter_groups)
+        : Base(Populations({mio::AgeGroup(num_agegroups), CommuterIndex(num_commuter_groups + 1),
+                            InfectionStateExplicit::Count}),
                ParametersExplicit(num_agegroups))
+        , m_num_commuter_groups(num_commuter_groups)
     {
+    }
+
+    int get_num_commuter_groups() const
+    {
+        return m_num_commuter_groups;
+    }
+
+    // overwrite initial version
+    Eigen::VectorX<FP> get_initial_flows() const
+    {
+        size_t num_flows = 3 * static_cast<size_t>(this->parameters.get_num_groups()) * (m_num_commuter_groups + 1);
+        return Eigen::VectorX<FP>::Zero(num_flows);
     }
 
     void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
         const auto& params = this->parameters;
-        mio::AgeGroup g(0);
 
-        const size_t SN = this->populations.get_flat_index({g, InfectionStateExplicit::S_NonCommuter});
-        const size_t EN = this->populations.get_flat_index({g, InfectionStateExplicit::E_NonCommuter});
-        const size_t IN = this->populations.get_flat_index({g, InfectionStateExplicit::I_NonCommuter});
-        const size_t RN = this->populations.get_flat_index({g, InfectionStateExplicit::R_NonCommuter});
-        const size_t SC = this->populations.get_flat_index({g, InfectionStateExplicit::S_Commuter});
-        const size_t EC = this->populations.get_flat_index({g, InfectionStateExplicit::E_Commuter});
-        const size_t IC = this->populations.get_flat_index({g, InfectionStateExplicit::I_Commuter});
-        const size_t RC = this->populations.get_flat_index({g, InfectionStateExplicit::R_Commuter});
+        // Calculate total population across all commuter types
+        FP N = 0;
+        for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
+            // Start with non-commuter group
+            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::S})];
+            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::E})];
+            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::I})];
+            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::R})];
 
-        FP N    = pop[SN] + pop[EN] + pop[IN] + pop[RN] + pop[SC] + pop[EC] + pop[IC] + pop[RC];
+            // Handle commuter groups
+            for (int i = 0; i < m_num_commuter_groups; ++i) {
+                CommuterType commuter_type =
+                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + i);
+                for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                    N += pop[this->populations.get_flat_index(
+                        {g, commuter_type, static_cast<InfectionStateExplicit>(state)})];
+                }
+            }
+        }
+
         FP invN = (N < mio::Limits<FP>::zero_tolerance()) ? FP(0) : FP(1) / N;
 
-        FP beta    = params.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>()[g];
-        FP Te      = params.template get<mio::oseir::TimeExposed<FP>>()[g];
-        FP Ti      = params.template get<mio::oseir::TimeInfected<FP>>()[g];
-        auto contM = params.template get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t);
+        // Calculate total infected population
+        FP total_infected = 0;
+        for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
+            // Add infected from non-commuter group
+            total_infected +=
+                pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::I})];
 
-        FP lambda = contM(g.get(), g.get()) * beta * (pop[IN] + pop[IC]) * invN;
+            // Add infected from commuter groups
+            for (int i = 0; i < m_num_commuter_groups; ++i) {
+                CommuterType commuter_type =
+                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + i);
+                total_infected += pop[this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::I})];
+            }
+        }
 
-        // S→E flows
-        flows[Base::template get_flat_flow_index<InfectionStateExplicit::S_NonCommuter,
-                                                 InfectionStateExplicit::E_NonCommuter>(g)] = lambda * y[SN];
-        flows[Base::template get_flat_flow_index<InfectionStateExplicit::S_Commuter,
-                                                 InfectionStateExplicit::E_Commuter>(g)]    = lambda * y[SC];
+        // Calculate and apply flows for each age group and commuter type
+        for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
+            // Process E->I and I->R flows for non-commuter group first
+            {
+                CommuterType commuter_type = CommuterType::NonCommuter;
+                const size_t E_idx = this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::E});
+                const size_t I_idx = this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::I});
 
-        // E→I flows
-        flows[Base::template get_flat_flow_index<InfectionStateExplicit::E_NonCommuter,
-                                                 InfectionStateExplicit::I_NonCommuter>(g)] = (FP(1) / Te) * y[EN];
-        flows[Base::template get_flat_flow_index<InfectionStateExplicit::E_Commuter,
-                                                 InfectionStateExplicit::I_Commuter>(g)]    = (FP(1) / Te) * y[EC];
+                // E->I flows
+                flows[Base::template get_flat_flow_index<InfectionStateExplicit::E, InfectionStateExplicit::I>(
+                    {g, commuter_type})] = (FP(1) / params.template get<mio::oseir::TimeExposed<FP>>()[g]) * y[E_idx];
 
-        // I→R flows
-        flows[Base::template get_flat_flow_index<InfectionStateExplicit::I_NonCommuter,
-                                                 InfectionStateExplicit::R_NonCommuter>(g)] = (FP(1) / Ti) * y[IN];
-        flows[Base::template get_flat_flow_index<InfectionStateExplicit::I_Commuter,
-                                                 InfectionStateExplicit::R_Commuter>(g)]    = (FP(1) / Ti) * y[IC];
+                // I->R flows
+                flows[Base::template get_flat_flow_index<InfectionStateExplicit::I, InfectionStateExplicit::R>(
+                    {g, commuter_type})] = (FP(1) / params.template get<mio::oseir::TimeInfected<FP>>()[g]) * y[I_idx];
+            }
+
+            // Process E->I and I->R flows for commuter groups
+            for (int c = 0; c < m_num_commuter_groups; ++c) {
+                CommuterType commuter_type =
+                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
+
+                const size_t E_idx = this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::E});
+                const size_t I_idx = this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::I});
+
+                // E->I flows
+                flows[Base::template get_flat_flow_index<InfectionStateExplicit::E, InfectionStateExplicit::I>(
+                    {g, commuter_type})] = (FP(1) / params.template get<mio::oseir::TimeExposed<FP>>()[g]) * y[E_idx];
+
+                // I->R flows
+                flows[Base::template get_flat_flow_index<InfectionStateExplicit::I, InfectionStateExplicit::R>(
+                    {g, commuter_type})] = (FP(1) / params.template get<mio::oseir::TimeInfected<FP>>()[g]) * y[I_idx];
+            }
+        }
+
+        for (mio::AgeGroup i(0); i < mio::AgeGroup(params.get_num_groups()); ++i) {
+            // For each commuter type of age group i
+            // First non-commuter
+            CommuterType commuter_type_i = CommuterType::NonCommuter;
+            const size_t Si = this->populations.get_flat_index({i, commuter_type_i, InfectionStateExplicit::S});
+            auto S_to_E_flow_idx =
+                Base::template get_flat_flow_index<InfectionStateExplicit::S, InfectionStateExplicit::E>(
+                    {i, commuter_type_i});
+
+            // Initialize flow to zero
+            flows[S_to_E_flow_idx] = 0;
+
+            // Sum up contributions from all age groups j
+            for (mio::AgeGroup j(0); j < mio::AgeGroup(params.get_num_groups()); ++j) {
+                // Calculate total N_j for group j (across all commuter types)
+                FP N_j = 0;
+
+                // Add non-commuter population for group j
+                for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                    N_j += pop[this->populations.get_flat_index(
+                        {j, CommuterType::NonCommuter, static_cast<InfectionStateExplicit>(state)})];
+                }
+
+                // Add commuter populations for group j
+                for (int c = 0; c < m_num_commuter_groups; ++c) {
+                    CommuterType commuter_type_j =
+                        static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
+                    for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                        N_j += pop[this->populations.get_flat_index(
+                            {j, commuter_type_j, static_cast<InfectionStateExplicit>(state)})];
+                    }
+                }
+
+                // Calculate divN_j (1/N_j) with safety check
+                const FP divN_j = (N_j < mio::Limits<FP>::zero_tolerance()) ? 0.0 : FP(1.0) / N_j;
+
+                // Get transmission coefficient
+                const FP coeffStoE =
+                    params.template get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
+                        i.get(), j.get()) *
+                    params.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>()[i] * divN_j;
+
+                // Sum up infected from all commuter types in group j
+                FP total_infected_j =
+                    pop[this->populations.get_flat_index({j, CommuterType::NonCommuter, InfectionStateExplicit::I})];
+                for (int c = 0; c < m_num_commuter_groups; ++c) {
+                    CommuterType commuter_type_j =
+                        static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
+                    total_infected_j +=
+                        pop[this->populations.get_flat_index({j, commuter_type_j, InfectionStateExplicit::I})];
+                }
+
+                // Add contribution to S->E flow
+                flows[S_to_E_flow_idx] += coeffStoE * y[Si] * total_infected_j;
+            }
+
+            // Now do the same for each commuter type
+            for (int c = 0; c < m_num_commuter_groups; ++c) {
+                CommuterType commuter_type_i =
+                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
+                const size_t Si = this->populations.get_flat_index({i, commuter_type_i, InfectionStateExplicit::S});
+                auto S_to_E_flow_idx =
+                    Base::template get_flat_flow_index<InfectionStateExplicit::S, InfectionStateExplicit::E>(
+                        {i, commuter_type_i});
+
+                // Initialize flow to zero
+                flows[S_to_E_flow_idx] = 0;
+
+                // Sum up contributions from all age groups j
+                for (mio::AgeGroup j(0); j < mio::AgeGroup(params.get_num_groups()); ++j) {
+                    // Calculate total N_j for group j (across all commuter types)
+                    FP N_j = 0;
+
+                    // Add non-commuter population for group j
+                    for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                        N_j += pop[this->populations.get_flat_index(
+                            {j, CommuterType::NonCommuter, static_cast<InfectionStateExplicit>(state)})];
+                    }
+
+                    // Add commuter populations for group j
+                    for (int c2 = 0; c2 < m_num_commuter_groups; ++c2) {
+                        CommuterType commuter_type_j =
+                            static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c2);
+                        for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
+                            N_j += pop[this->populations.get_flat_index(
+                                {j, commuter_type_j, static_cast<InfectionStateExplicit>(state)})];
+                        }
+                    }
+
+                    const FP divN_j = (N_j < mio::Limits<FP>::zero_tolerance()) ? 0.0 : FP(1.0) / N_j;
+
+                    const FP coeffStoE =
+                        params.template get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(
+                            i.get(), j.get()) *
+                        params.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>()[i] * divN_j;
+
+                    // Sum up infected from all commuter types in group j
+                    FP total_infected_j = pop[this->populations.get_flat_index(
+                        {j, CommuterType::NonCommuter, InfectionStateExplicit::I})];
+                    for (int c2 = 0; c2 < m_num_commuter_groups; ++c2) {
+                        CommuterType commuter_type_j =
+                            static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c2);
+                        total_infected_j +=
+                            pop[this->populations.get_flat_index({j, commuter_type_j, InfectionStateExplicit::I})];
+                    }
+
+                    // Add contribution to S->E flow
+                    flows[S_to_E_flow_idx] += coeffStoE * y[Si] * total_infected_j;
+                }
+            }
+        }
     }
 };
 
@@ -212,35 +385,35 @@ void apply_flows_to_mobile_population(Eigen::Ref<Eigen::VectorXd> mobile_populat
     const size_t num_groups = static_cast<size_t>(model.parameters.get_num_groups());
     using InfState          = mio::oseir::InfectionState;
 
-    for (mio::AgeGroup group(0); group < mio::AgeGroup(num_groups); ++group) {
-        size_t flow_base_idx = static_cast<size_t>(group) * 3;
-        size_t S_i           = model.populations.get_flat_index({group, InfState::Susceptible});
-        size_t E_i           = model.populations.get_flat_index({group, InfState::Exposed});
-        size_t I_i           = model.populations.get_flat_index({group, InfState::Infected});
-        size_t R_i           = model.populations.get_flat_index({group, InfState::Recovered});
+    std::vector<size_t> S_idx(num_groups), E_idx(num_groups), I_idx(num_groups), R_idx(num_groups);
+    for (size_t g = 0; g < num_groups; ++g) {
+        mio::AgeGroup group(g);
+        S_idx[g] = model.populations.get_flat_index({group, InfState::Susceptible});
+        E_idx[g] = model.populations.get_flat_index({group, InfState::Exposed});
+        I_idx[g] = model.populations.get_flat_index({group, InfState::Infected});
+        R_idx[g] = model.populations.get_flat_index({group, InfState::Recovered});
+    }
 
-        // Calculate compartment-specific scaling factors.
-        double scale_S = (total[S_i] > 1e-10) ? (mobile_population[S_i] / total[S_i]) : 0.0;
-        double scale_E = (total[E_i] > 1e-10) ? (mobile_population[E_i] / total[E_i]) : 0.0;
-        double scale_I = (total[I_i] > 1e-10) ? (mobile_population[I_i] / total[I_i]) : 0.0;
+    for (size_t g = 0; g < num_groups; ++g) {
+        size_t flow_base_idx = g * 3;
+
+        double scale_S = (total[S_idx[g]] > 1e-10) ? (mobile_population[S_idx[g]] / total[S_idx[g]]) : 0.0;
+        double scale_E = (total[E_idx[g]] > 1e-10) ? (mobile_population[E_idx[g]] / total[E_idx[g]]) : 0.0;
+        double scale_I = (total[I_idx[g]] > 1e-10) ? (mobile_population[I_idx[g]] / total[I_idx[g]]) : 0.0;
 
         scale_S = std::max(0.0, std::min(1.0, scale_S));
         scale_E = std::max(0.0, std::min(1.0, scale_E));
         scale_I = std::max(0.0, std::min(1.0, scale_I));
 
-        // Estimate flows for the mobile population using compartment-specific scaling
         double flow_SE_mobile = diff[flow_base_idx] * scale_S;
         double flow_EI_mobile = diff[flow_base_idx + 1] * scale_E;
         double flow_IR_mobile = diff[flow_base_idx + 2] * scale_I;
 
-        // Apply the estimated flows to mobile population
-        mobile_population[S_i] -= flow_SE_mobile;
-        mobile_population[E_i] += flow_SE_mobile - flow_EI_mobile;
-        mobile_population[I_i] += flow_EI_mobile - flow_IR_mobile;
-        mobile_population[R_i] += flow_IR_mobile;
+        mobile_population[S_idx[g]] -= flow_SE_mobile;
+        mobile_population[E_idx[g]] += flow_SE_mobile - flow_EI_mobile;
+        mobile_population[I_idx[g]] += flow_EI_mobile - flow_IR_mobile;
+        mobile_population[R_idx[g]] += flow_IR_mobile;
     }
-    // Ensure no negative populations due to numerical issues
-    mobile_population = mobile_population.cwiseMax(0.0);
 }
 
 void flow_based_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, const SimType& sim,
