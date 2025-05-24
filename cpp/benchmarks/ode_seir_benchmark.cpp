@@ -58,7 +58,7 @@ void setup_model_benchmark(ModelType& model, size_t num_agegroups = 6)
 const ScalarType t0               = 0.0;
 const ScalarType t_max            = 50.0;
 const ScalarType dt               = 0.5;
-const size_t num_age_groups_bench = 6;
+const size_t num_age_groups_bench = 1;
 
 // Benchmark for Euler integration method
 void benchmark_state_euler(::benchmark::State& state)
@@ -150,6 +150,36 @@ void benchmark_state_flow_based(::benchmark::State& state)
     }
 }
 
+void benchmark_state_flow_based_model_specific(::benchmark::State& state)
+{
+    mio::set_log_level(mio::LogLevel::critical);
+    ModelType model(num_age_groups_bench);
+    setup_model_benchmark(model);
+
+    SimType sim(model, t0, dt);
+    sim.advance(t_max);
+    const auto& seir_res = sim.get_result();
+
+    Eigen::VectorXd initial_mobile_pop = seir_res.get_value(0) * 0.1;
+    const auto step_size_ref           = seir_res.get_time(1) - seir_res.get_time(0);
+
+    for (auto _ : state) {
+        Eigen::VectorXd mobile_pop = initial_mobile_pop;
+        for (ScalarType t = t0; t < t_max; t += dt) {
+            if (t + dt > t_max + 1e-10) {
+                break;
+            }
+            const auto closest_idx_total = static_cast<size_t>(std::round(t / step_size_ref));
+            if (closest_idx_total >= static_cast<size_t>(seir_res.get_num_time_points())) {
+                break;
+            }
+            const auto& total_pop = seir_res.get_value(closest_idx_total);
+            mio::examples::apply_flows_to_mobile_population(mobile_pop, sim.get_model(), total_pop,
+                                                            sim.get_flows().get_value(closest_idx_total));
+        }
+    }
+}
+
 // Benchmark for Probabilistic mobility returns method
 void benchmark_state_probabilistic(::benchmark::State& state)
 {
@@ -186,6 +216,7 @@ void benchmark_state_probabilistic(::benchmark::State& state)
 BENCHMARK(mio::benchmark::benchmark_state_euler)->Name("Euler");
 BENCHMARK(mio::benchmark::benchmark_state_high_order)->Name("High-order");
 BENCHMARK(mio::benchmark::benchmark_state_flow_based)->Name("Flow-based");
+BENCHMARK(mio::benchmark::benchmark_state_flow_based_model_specific)->Name("Flow-based Model Specific");
 BENCHMARK(mio::benchmark::benchmark_state_probabilistic)->Name("Probabilistic");
 
 // run all benchmarks

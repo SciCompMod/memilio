@@ -126,8 +126,7 @@ void flowless_sim(::benchmark::State& state)
     mio::benchmark::setup_model(model);
     // create simulation
     std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
@@ -149,8 +148,7 @@ void flow_sim_comp_only(::benchmark::State& state)
     mio::benchmark::setup_model(model);
     // create simulation
     std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
@@ -172,8 +170,7 @@ void flow_sim(::benchmark::State& state)
     mio::benchmark::setup_model(model);
     // create simulation
     std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
     mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
