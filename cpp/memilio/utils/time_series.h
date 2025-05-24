@@ -852,7 +852,7 @@ public:
  * @param rel_tol relative floating point tolerance for equality of time values
  * @return TimeSeries::reverse_iterator that points to ts[t_search] or ts.rend()
  */
-template <class TS, class FP>
+template <class FP, class TS>
 decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP abs_tol = 0, FP rel_tol = 0)
 {
     auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
