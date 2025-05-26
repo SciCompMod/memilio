@@ -15,13 +15,13 @@
 #include <vector>
 
 /**
-*    @brief Get the filename
-*
-*    @param filepath A path including the filename
-*
-*    Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input 
-*    file without file ending. 
-**/
+ * @brief Get the filename
+ *
+ * @param filepath A path including the filename
+ *
+ * Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input 
+ * file without file ending. 
+*/
 std::string get_filename(const char* filepath)
 {
     boost::filesystem::path p(filepath);
@@ -29,15 +29,15 @@ std::string get_filename(const char* filepath)
 }
 
 /**
-*    @brief Get the path to a folder
-*
-*    @param folder_name The name of the folder to be searched for
-*    @return IOResult<std::string> The path to the folder or an error code
-*
-*    This function tries to find the folder called `folder_name`. It checks whether it is in the current directory or any
-*    of the two parent directories. It makes sure that it does not accidently use the folder with the same name in the 
-*    build directory. This function is thus tailored to find the folder for the sbml generated model files.
-*    If the folder is not found, it returns an error code. 
+ * @brief Get the path to a folder
+ *
+ * @param folder_name The name of the folder to be searched for
+ * @return IOResult<std::string> The path to the folder or an error code
+ *
+ * This function tries to find the folder called `folder_name`. It checks whether it is in the current directory or any
+ * of the two parent directories. It makes sure that it does not accidently use the folder with the same name in the 
+ * build directory. This function is thus tailored to find the folder for the sbml generated model files.
+ * If the folder is not found, it returns an error code. 
 */
 mio::IOResult<std::string> get_path(std::string folder_name)
 {
@@ -64,14 +64,14 @@ mio::IOResult<std::string> get_path(std::string folder_name)
 }
 
 /**
-*    @brief Creates a folder with the given name to store the generated model files
-*
-*    @param filename The name of the folder to be created
-*    @param path The path where the folder should be created
-*
-*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
-*    a folder with the resulting name at the location given by `path` using `boost::filesystem`.
-**/
+ * @brief Creates a folder with the given name to store the generated model files
+ *
+ * @param filename The name of the folder to be created
+ * @param path The path where the folder should be created
+ *
+ * Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
+ * a folder with the resulting name at the location given by `path` using `boost::filesystem`.
+*/
 void create_folder(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -81,16 +81,16 @@ void create_folder(const std::string& filename, const std::string& path)
 }
 
 /**
-*   @brief Strips leading and trailing brackets and minus signs from a formula
-*
-*   @param leading_bracket The string to store leading brackets and minus signs
-*   @param trailing_bracket The string to store trailing brackets
-*   @param formula The formula to be processed
-*
-*   This function goes through the formula and removes leading brackets and minus signs. It also removes trailing
-*   brackets and commas. The leading brackets and minus signs are stored in the leading_bracket string, the trailing
-*   brackets in the trailing_bracket string. The formula is modified in place. This function can be reversed by calling
-*   :cpp:func:`append_brackets(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
+ * @brief Strips leading and trailing brackets and minus signs from a formula
+ *
+ * @param leading_bracket The string to store leading brackets and minus signs
+ * @param trailing_bracket The string to store trailing brackets
+ * @param formula The formula to be processed
+ *
+ * This function goes through the formula and removes leading brackets and minus signs. It also removes trailing
+ * brackets and commas. The leading brackets and minus signs are stored in the leading_bracket string, the trailing
+ * brackets in the trailing_bracket string. The formula is modified in place. This function can be reversed by calling
+ * :cpp:func:`append_brackets(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
 */
 void strip_formula(std::string& leading_bracket, std::string& trailing_bracket, std::string& formula)
 {
@@ -110,15 +110,15 @@ void strip_formula(std::string& leading_bracket, std::string& trailing_bracket, 
 }
 
 /**
-*   @brief Appends leading and trailing brackets to a formula
-*
-*   @param leading_bracket The string storing leading brackets and minus signs
-*   @param trailing_bracket The string storing trailing brackets
-*   @param formula The formula to be processed
-*
-*   This function adds the content of the ``leading_bracket`` string to the beginning of the formula and the content of
-*   the ``trailing_bracket`` string to the end of the formula. This function can be used to reverse the effect of
-*   :cpp:func:`strip_formula(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
+ * @brief Appends leading and trailing brackets to a formula
+ *
+ * @param leading_bracket The string storing leading brackets and minus signs
+ * @param trailing_bracket The string storing trailing brackets
+ * @param formula The formula to be processed
+ *
+ * This function adds the content of the ``leading_bracket`` string to the beginning of the formula and the content of
+ * the ``trailing_bracket`` string to the end of the formula. This function can be used to reverse the effect of
+ * :cpp:func:`strip_formula(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
 */
 void append_brackets(std::string& leading_bracket, std::string& trailing_bracket, std::string& formula)
 {
@@ -131,19 +131,19 @@ void append_brackets(std::string& leading_bracket, std::string& trailing_bracket
 }
 
 /**
-*    @brief Formats a formula for the example.cpp file
-*
-*    @param model The model where the formula stems from
-*    @param math_string The formula to be processed, preprocessed as char*
-*    @param name_namespace The namespace of the model
-*
-*    This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing 
-*    braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a 
-*    parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the 
-*    corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is
-*    pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then 
-*    re-added to the part and the parts are joined together.
-**/
+ * @brief Formats a formula for the example.cpp file
+ *
+ * @param model The model where the formula stems from
+ * @param math_string The formula to be processed, preprocessed as char*
+ * @param name_namespace The namespace of the model
+ *
+ * This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing 
+ * braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a 
+ * parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the 
+ * corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is
+ * pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then 
+ * re-added to the part and the parts are joined together.
+*/
 std::string format_main_formula(Model& model, char* math_string, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -176,22 +176,22 @@ std::string format_main_formula(Model& model, char* math_string, std::string* na
 }
 
 /**
-*    @brief Returns the initial assignment of a species for the example.cpp file
-*
-*    @param species The species to be processed
-*    @param model The model where the species stems from
-*    @param name_namespace The namespace of the model
-*
-*    First it checks whether an initial amount is given for the species. Then it checks the other possibilites for 
-*    initial assignements:
-*    - If an initial concentration is given, it is used
-*    - If an initial assignment is given, it is used. This could be
-*        - a values
-*        - a other parameter
-*        - a formula, which would then be parsed using :cpp:func:`format_main_formula(Model * model, char* math_string, std::string * name_namespace)`
-*
-*    If none of these are given, it returns "NAN", otherwise the identified value.
-**/
+ * @brief Returns the initial assignment of a species for the example.cpp file
+ *
+ * @param species The species to be processed
+ * @param model The model where the species stems from
+ * @param name_namespace The namespace of the model
+ *
+ * First it checks whether an initial amount is given for the species. Then it checks the other possibilites for 
+ * initial assignements:
+ * - If an initial concentration is given, it is used
+ * - If an initial assignment is given, it is used. This could be
+ *   - a values
+ *   - a other parameter
+ *   - a formula, which would then be parsed using :cpp:func:`format_main_formula(Model * model, char* math_string, std::string * name_namespace)`
+ *
+ * If none of these are given, it returns "NAN", otherwise the identified value.
+*/
 std::string get_initial_assignment(Species* species, Model& model, std::string* name_namespace)
 {
     double base_value = species->getInitialAmount();
@@ -218,15 +218,15 @@ std::string get_initial_assignment(Species* species, Model& model, std::string* 
 }
 
 /**
-*    @brief Returns the string to change variables inside an event for the example.cpp file
-*
-*    @param formula The formula to be processed
-*    @param model The model where the formula stems from
-*    @param name_namespace The namespace of the model
-*
-*    Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to
-*    get the corresponding values, in the last case it prints an error message. 
-**/
+ * @brief Returns the string to change variables inside an event for the example.cpp file
+ *
+ * @param formula The formula to be processed
+ * @param model The model where the formula stems from
+ * @param name_namespace The namespace of the model
+ *
+ * Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to
+ * get the corresponding values, in the last case it prints an error message. 
+*/
 mio::IOResult<std::string> format_event_variable(std::string formula, Model& model, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -247,19 +247,19 @@ mio::IOResult<std::string> format_event_variable(std::string formula, Model& mod
 }
 
 /**
-*    @brief Formats the formula for an event for use in the example.cpp file
-*
-*    @param formula The formula to be processed
-*    @param model The model where the formula stems from
-*    @param name_namespace The namespace of the model
-*
-*    Goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading
-*    minus signs. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is 
-*    replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding 
-*    species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is 
-*    replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the 
-*    part and the parts are joined together.
-**/
+ * @brief Formats the formula for an event for use in the example.cpp file
+ *
+ * @param formula The formula to be processed
+ * @param model The model where the formula stems from
+ * @param name_namespace The namespace of the model
+ *
+ * Goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading
+ * minus signs. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is 
+ * replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding 
+ * species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is 
+ * replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the 
+ * part and the parts are joined together.
+*/
 mio::IOResult<std::string> format_event_formulas(std::string formula, Model& model, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -295,22 +295,22 @@ mio::IOResult<std::string> format_event_formulas(std::string formula, Model& mod
 }
 
 /**
-*    @brief Formats the trigger formula for an event for use in the example.cpp file
-*
-*    @param formula The formula to be processed
-*    @param model The model where the formula stems from
-*    @param name_namespace The namespace of the model
-*
-*    Goes through the parts of the formula as identified by spaces.
-*    - It first strips leading/trailing braces and leading minus sings. 
-*    - Then it checks if the part is a parameter, species or compartment. 
-*        - If it is a parameter, it is replaced by the corresponding parameter in the model. 
-*        - If it is a species, it prints an error. 
-*        - If it is a compartment, it is replaced by the size of the compartment. 
-*    - If it is pi, it is replaced by M_PI. 
-*    - If it is time, it prints an error. 
-*    The leading and trailing braces are then re-added to the part and the parts are joined together.
-**/
+ * @brief Formats the trigger formula for an event for use in the example.cpp file
+ *
+ * @param formula The formula to be processed
+ * @param model The model where the formula stems from
+ * @param name_namespace The namespace of the model
+ *
+ * Goes through the parts of the formula as identified by spaces.
+ * - It first strips leading/trailing braces and leading minus sings. 
+ * - Then it checks if the part is a parameter, species or compartment. 
+ *   - If it is a parameter, it is replaced by the corresponding parameter in the model. 
+ *   - If it is a species, it prints an error. 
+ *   - If it is a compartment, it is replaced by the size of the compartment. 
+ * - If it is pi, it is replaced by M_PI. 
+ * - If it is time, it prints an error. 
+ * The leading and trailing braces are then re-added to the part and the parts are joined together.
+*/
 mio::IOResult<std::string> format_event_trigger(std::string formula, Model& model, std::string* name_namespace)
 {
     std::string return_string = "";
@@ -344,19 +344,19 @@ mio::IOResult<std::string> format_event_trigger(std::string formula, Model& mode
 }
 
 /**
-*    @brief Returns the maximal time mentioned in a formula or an error code
-*
-*    @param trigger The formula to be processed as ASTNode*
-*    @param model The model where the formula stems from
-*    @param name_namespace The namespace of the model
-*
-*    This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two 
-*    values. If that is not the case, it prints an error. Then it expects one of the two nodes to be a time node. The 
-*    other node has the comparison value and is returned. It is always assumed, but never checked, that we have a 
-*    positive comparison, i.e. the time is indeed the maximum time.
-*    This function is used to find the maximum time until which an event runs. It is used for the generation of the     
-*    example.cpp file.
-**/
+ * @brief Returns the maximal time mentioned in a formula or an error code
+ *
+ * @param trigger The formula to be processed as ASTNode*
+ * @param model The model where the formula stems from
+ * @param name_namespace The namespace of the model
+ *
+ * This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two 
+ * values. If that is not the case, it prints an error. Then it expects one of the two nodes to be a time node. The 
+ * other node has the comparison value and is returned. It is always assumed, but never checked, that we have a 
+ * positive comparison, i.e. the time is indeed the maximum time.
+ * This function is used to find the maximum time until which an event runs. It is used for the generation of the     
+ * example.cpp file.
+*/
 mio::IOResult<std::string> find_tmax(const ASTNode* trigger, Model& model, std::string* name_namespace)
 {
     auto trigger_type                      = trigger->getType();
@@ -390,13 +390,13 @@ mio::IOResult<std::string> find_tmax(const ASTNode* trigger, Model& model, std::
 }
 
 /**
-*    @brief Checks that a model is suitable, i.e. only uses one compartment
-*
-*    @param model The model to be checked
-*
-*    This function checks whether the model has exactly one compartment. If it does not, it returns false and prints an 
-*    error. 
-**/
+ * @brief Checks that a model is suitable, i.e. only uses one compartment
+ *
+ * @param model The model to be checked
+ *
+ * This function checks whether the model has exactly one compartment. If it does not, it returns false and prints an 
+ * error. 
+*/
 bool verify_model_suitability(Model& model)
 {
     if (model.getNumCompartments() != 1) {
@@ -407,16 +407,16 @@ bool verify_model_suitability(Model& model)
 }
 
 /**
-*    @brief Creates the infection_states.h file
-*
-*    @param model The model to be processed
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
-*    a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the 
-*    species in the model as infection states to the file.
-**/
+ * @brief Creates the infection_states.h file
+ *
+ * @param model The model to be processed
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
+ * a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the 
+ * species in the model as infection states to the file.
+*/
 bool create_infection_state(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -452,17 +452,17 @@ bool create_infection_state(Model& model, const std::string& filename, const std
 }
 
 /**
-*    @brief Creates the parameters.h file
-*
-*    @param model The model to be processed
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
-*    a file with the resulting name using `boost::filesystem` at the location given by `path`. 
-*    Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as 
-*    default value. (This may be overwritten in the example.cpp file.)
-**/
+ * @brief Creates the parameters.h file
+ *
+ * @param model The model to be processed
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
+ * a file with the resulting name using `boost::filesystem` at the location given by `path`. 
+ * Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as 
+ * default value. (This may be overwritten in the example.cpp file.)
+*/
 bool create_parameters(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -522,13 +522,13 @@ bool create_parameters(Model& model, const std::string& filename, const std::str
 }
 
 /**
-*    @brief Create the model.cpp file
-*
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Creates the generic model.cpp file. The file location is generated using the filename and the `path`.
-**/
+ * @brief Create the model.cpp file
+ *
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Creates the generic model.cpp file. The file location is generated using the filename and the `path`.
+*/
 bool create_model_cpp(const std::string& filename, const std::string& path)
 {
 
@@ -550,21 +550,21 @@ bool create_model_cpp(const std::string& filename, const std::string& path)
 }
 
 /**
-*    @brief Create the model.h file
-*
-*    @param model The model to be processed
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Creates the model.h file based on the filename and `path`. First some generic input is written to the file. Then the 
-*   `get_derivatives`-function is generated. It
-*    - creates an index variable for every species
-*    - creates a lambda function for every function definition in the model to have it at hand
-*    - goes through every reaction in the model and generates the corresponding code. This is done in local scopes to make sure local parameters don't cause errors.
-*    - checks every rule whether it is a RateRule and generates code for it if it is.
-*    
-*    In the end it appends a generic serialization function.
-**/
+ * @brief Create the model.h file
+ *
+ * @param model The model to be processed
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Creates the model.h file based on the filename and `path`. First some generic input is written to the file. Then the 
+ * `get_derivatives`-function is generated. It
+ * - creates an index variable for every species
+ * - creates a lambda function for every function definition in the model to have it at hand
+ * - goes through every reaction in the model and generates the corresponding code. This is done in local scopes to make sure local parameters don't cause errors.
+ * - checks every rule whether it is a RateRule and generates code for it if it is.
+ * 
+ * In the end it appends a generic serialization function.
+*/
 bool create_model_h(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -770,15 +770,15 @@ bool create_model_h(Model& model, const std::string& filename, const std::string
 }
 
 /**
-*    @brief Create the CMakeLists.txt file for the model folder
-*
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this 
-*    program are needed. The file location is generated using filename and path and the file is stored in the generated 
-*    folder.
-**/
+ * @brief Create the CMakeLists.txt file for the model folder
+ *
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this 
+ * program are needed. The file location is generated using filename and path and the file is stored in the generated 
+ * folder.
+*/
 bool create_cmake(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -806,17 +806,17 @@ bool create_cmake(const std::string& filename, const std::string& path)
 }
 
 /**
-*    @brief Creates the corresponding file to example.cpp
-*
-*    @param model The model to be processed
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    The filename is based on the given filename and path. 
-*    The file first contains generic input, then the model, it's parameters and specis are initialized. 
-*    The model is simulated in steps to add events that are triggered by a specific time. In the end the model is 
-*    simulated for another 50 days. The results are printed to the console and saved in a file as a table.
-**/
+ * @brief Creates the corresponding file to example.cpp
+ *
+ * @param model The model to be processed
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * The filename is based on the given filename and path. 
+ * The file first contains generic input, then the model, it's parameters and specis are initialized. 
+ * The model is simulated in steps to add events that are triggered by a specific time. In the end the model is 
+ * simulated for another 50 days. The results are printed to the console and saved in a file as a table.
+*/
 bool create_example_cpp(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -920,13 +920,13 @@ bool create_example_cpp(Model& model, const std::string& filename, const std::st
 }
 
 /**
-*    @brief Create the additional lines for the CmakeLists.txt file
-*
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Appends the necessary commands for compilation to the CMakeLists.txt file in path using the filename.
-**/
+ * @brief Create the additional lines for the CmakeLists.txt file
+ *
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Appends the necessary commands for compilation to the CMakeLists.txt file in path using the filename.
+*/
 bool modify_cmakelists(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -950,14 +950,14 @@ bool modify_cmakelists(const std::string& filename, const std::string& path)
 }
 
 /** 
-*    @brief Calls clang-format to format the generated files
-*
-*    @param filename The name of the file to be processed
-*    @param path The path where the file should be created
-*
-*    Calls clang-format using the `system` command. The command is generated using filename and path. Depending on the
-*    return code, an error or info message is printed.
-**/
+ * @brief Calls clang-format to format the generated files
+ *
+ * @param filename The name of the file to be processed
+ * @param path The path where the file should be created
+ *
+ * Calls clang-format using the `system` command. The command is generated using filename and path. Depending on the
+ * return code, an error or info message is printed.
+*/
 void format_files(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -974,14 +974,14 @@ void format_files(const std::string& filename, const std::string& path)
 }
 
 /** 
-*    @brief Runs the program
-*    @param argc The number of command line arguments
-*    @param argv The command line arguments, here the name of the file that should be processed
-*
-*    This function expects exaclty one parameter which should be the path to the file that should be processed. If more 
-*    or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file 
-*    as a SBML file and generates the MEmilio code for it.
-**/
+ * @brief Runs the program
+ * @param argc The number of command line arguments
+ * @param argv The command line arguments, here the name of the file that should be processed
+ *
+ * This function expects exaclty one parameter which should be the path to the file that should be processed. If more 
+ * or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file 
+ * as a SBML file and generates the MEmilio code for it.
+*/
 int main(int argc, char* argv[])
 {
     mio::set_log_level(mio::LogLevel::debug);
