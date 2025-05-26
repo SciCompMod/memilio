@@ -41,7 +41,7 @@ namespace mio
  * replaced by drawing a new sample from the the distribution
  * @tparam FP underlying floating point type, e.g., double
  */
-template <typename FP = ScalarType>
+template <typename FP>
 class UncertainValue
 {
 public:
@@ -231,7 +231,7 @@ private:
 /**
  * @brief Format UncertainValues using their value for logging with spdlog.
  */
-template <class FP>
+template <typename FP>
 const FP& format_as(const UncertainValue<FP>& uv)
 {
     // uses UncertainValue<FP>::operator const FP&() const
@@ -240,7 +240,7 @@ const FP& format_as(const UncertainValue<FP>& uv)
 
 // gtest printer
 // TODO: should be extended when UncertainValue gets operator== that compares distributions as well
-template <typename FP = double>
+template <typename FP>
 inline void PrintTo(const UncertainValue<FP>& uv, std::ostream* os)
 {
     (*os) << uv.value();
