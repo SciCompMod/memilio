@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import pickle
+
 import pandas as pd
 import time
 from sklearn.model_selection import KFold
@@ -11,7 +12,7 @@ import memilio.surrogatemodel.ode_secir_simple.model as md
 # Function to train and evaluate the model using cross-validation
 
 
-def train_and_evaluate_model(param, inputs, labels, training_parameter, Print=False):
+def train_and_evaluate_model(param, inputs, labels, training_parameter, show_results=False):
     """ Training and evaluating a model with given architecture using 5-fold cross validation, returning a dictionary with the main training statistics. 
 
     :param param: tuple of parameters describing the model architecture, it should be of the form 
@@ -21,7 +22,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, Print=Fa
     :param training_parameter: tuple of parameters used for the training process, it should be of the form
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
-    :param Print:  Boolean, whether or not the evaluation results are printed. 
+    :param show_results:  Boolean, whether or not the evaluation results are printed. 
     :returns: a dictionary of training statistics of the form 
         {"model", "activation","optimizer","mean_train_loss_kfold","mean_val_loss_kfold","training_time", "train_losses", "val_losses"}
 
@@ -72,7 +73,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, Print=Fa
     elapsed = time.perf_counter() - start
 
     # Print out the results
-    if Print:
+    if show_results:
         print(f"Best train losses: {train_losses}")
         print(f"Best validation losses: {val_losses}")
         print("--------------------------------------------")
@@ -109,7 +110,7 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
     :param training_parameters: List of tuples of parameters used for the training process, each should be of the form
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
-    :param filename_df: String, giving name of the file, where the data is stored, actual filename is given by filename_df + ".csv"
+    :param filename_df: String, giving name of the file, where the data is stored, actual filename is given by filename_df + ".pickle"
     :param path: String representing the path, where dataframe should be stored
     """
     # Create a DataFrame to store the results
@@ -134,8 +135,9 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
                 results["val_losses"]
             ]
 
-    # Save the results in .csv file
+    # Save the results in file
     folder_name = 'secir_simple_grid_search'
+
     if path is None:
         path = os.path.dirname(os.path.realpath(__file__))
         file_path = os.path.join(os.path.dirname(os.path.realpath(path)),
@@ -145,5 +147,8 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
 
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
-    file_path = os.path.join(file_path, filename_df)
-    df_results.to_csv(file_path)
+
+    file_path = os.path.join(file_path, filename_df + ".pickle")
+
+    with open(file_path, "wb") as f:
+        pickle.dump(df_results, f)

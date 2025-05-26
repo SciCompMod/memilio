@@ -68,16 +68,16 @@ def initialize_model(parameters):
 
 
 def network_fit(model, inputs, labels, training_parameter, plot=True):
-    """ Training and evaluation of a given model with given training parameters.
+    """ Training and evaluation of a given model under given training parameters.
 
     :param model: Keras sequential model.
-    :param inputs: Training input data 
-    :param labels: Training label data 
+    :param inputs: Input data used for training  
+    :param labels: Output data (labels) used for training
     :param training_parameter: tuple of parameters used for the training process, it should be of the form
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
-    :param plot:  (Default value = True)
-
+    :param plot: Default: True] 
+    :returns: trained model with training history (output of model.fit())
     """
     early_stop, max_epochs, loss, optimizer, metrics = training_parameter
     data_splitted = split_data(inputs, labels)
@@ -161,14 +161,15 @@ def plot_compartment_prediction_model(
     """ Plot prediction of the model and label for one compartment.
 
     If model is none, we just plot the inputs and labels for the selected compartment without any predictions.
+    Plots are saved in directory ./plots/evaluation_secir_simple_{compartment}.png
 
     :param inputs: test inputs for model prediction.
     :param labels: test labels.
-    :param model: trained model. (Default value = None)
+    :param model: Default: None] trained model. 
     :param plot_col: string name of compartment to be plotted, 
-    :param max_subplots: Number of the simulation runs to be plotted and compared against. (Default value = 8)
+    :param max_subplots: Default: 8] Number of the simulation runs to be plotted and compared against. 
     :param plot_compartment: possible compartment names "Susceptible", "Exposed",
-        "infectedNoSymptoms", "InfectedSevere", "InfectedCritical", "Recovered", "Dead" 
+        "InfectedNoSymptoms", "InfectedSevere", "InfectedCritical", "Recovered", "Dead" 
     """
 
     input_width = inputs.shape[1]
@@ -215,7 +216,7 @@ def plot_compartment_prediction_model(
 
 
 def plot_losses(history):
-    """ Plots the losses of the model training.
+    """ Plotting the losses of the model training.
 
     :param history: model training history.
 
@@ -238,7 +239,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     :param test_inputs: inputs from test data.
     :param test_labels: labels (output) from test data.
     :param model: trained model.
-
+    :returns: Dataframe with the corresponding MAPEs of the different compartments 
     """
 
     pred = model(test_inputs)
@@ -269,7 +270,7 @@ if __name__ == "__main__":
     num_outputs = 8
     # General parameters for the training process:
     early_stop = [100]
-    max_epochs = [3]
+    max_epochs = [200]
     losses = [tf.keras.losses.MeanAbsolutePercentageError()]
     optimizers = ['AdamW']
     metrics = [[tf.keras.metrics.MeanAbsoluteError(),

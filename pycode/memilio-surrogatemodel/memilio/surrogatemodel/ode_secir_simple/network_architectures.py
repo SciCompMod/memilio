@@ -29,6 +29,7 @@ def mlp_multi_input_single_output(num_outputs=8, num_hidden_layers=3, num_neuron
     :param num_hidden_layers: Number of hidden dense layers in the MLP architecture 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: name of the used activation function
+    :returns: tensorflow keras model with the desired MLP architecture
     """
 
     # Catching unallowed inputs
@@ -68,6 +69,7 @@ def mlp_multi_input_multi_output(label_width, num_outputs=8, num_hidden_layers=3
     :param num_hidden_layers: Number of hidden dense layers in the MLP architecture 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: name of the used activation function
+    :returns: tensorflow keras model with the desired MLP architecture
     """
     # Catching unallowed inputs
     if label_width < 1:
@@ -108,7 +110,7 @@ def lstm_network_multi_input_single_output(num_outputs=8, internal_dimension=32,
     :param num_hidden_layers: Number of hidden layers in the dense network. 
     :param num_neurons_per_layer: Number of neurons per hidden layer.
     :param activation: Name of the used activation function. 
-
+    :returns: tensorflow keras model with the desired LSTM architecture
     """
     # Catching unallowed inputs
     if num_outputs < 1:
@@ -148,12 +150,13 @@ def cnn_multi_input_multi_output(label_width, conv_size=3, num_outputs=8, num_fi
     We also use the parameter in combination with a lambda layer to transform the input to shape [batch, CONV_WIDTH, features].
 
     :param label_width: Number of time steps in the output.
-    :param conv_size: Default: 3 Convolution kernel width which is 3 per default.
-    :param num_outputs: Default: 8 Number of compartments. Default value is reached when aggregating the confirmed compartments.
+    :param conv_size: Default: 3] Convolution kernel width which is 3 per default.
+    :param num_outputs: Default: 8] Number of compartments. Default value is reached when aggregating the confirmed compartments.
     :param num_filters: Number of different filters used in the Conv1D-Layer
     :param num_hidden_layers: Number of layers in the dense network following the convolution layer 
     :param num_neurons_per_layer: Number of neurons in each of the hidden layers (except the output layer)
     :param activation: activation function used in the hidden MLP-layers. 
+    :returns: tensorflow keras model with the desired CNN architecture
     """
 
     # Catching unallowed inputs
@@ -207,6 +210,7 @@ def lstm_multi_input_multi_output(label_width, num_outputs=8, internal_dimension
     :param num_hidden_layers: Number of hidden layers in the dense network 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: Name of the used activation function
+    :returns: tensorflow keras model with the desired LSTM architecture
     """
     # Catching unallowed inputs
     if label_width < 1:

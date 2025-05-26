@@ -1,5 +1,3 @@
-# from memilio.surrogatemodel.ode_secir_simple import network_architectures
-# from memilio.surrogatemodel.ode_secir_simple.model import split_data, get_test_statistic
 import os
 import tensorflow as tf
 import pickle
@@ -10,6 +8,8 @@ import numpy as np
 import memilio.surrogatemodel.ode_secir_simple.grid_search as grid_search
 import memilio.surrogatemodel.ode_secir_simple.model as md
 
+# Setting random seed
+np.random.seed(42)
 
 label_width = 30
 num_outputs = 8
@@ -23,7 +23,7 @@ filename_df = "dataframe_optimizer_paper.csv"
 
 # General grid search parameters for the training process:
 early_stop = [100]
-max_epochs = [2]
+max_epochs = [200]
 losses = [tf.keras.losses.MeanAbsolutePercentageError()]
 optimizers = ['Adam', 'AdamW', 'Nadam', 'SGD', 'Adagrad', 'RMSProp']
 metrics = [[tf.keras.metrics.MeanAbsoluteError(
@@ -70,6 +70,7 @@ grid_search.perform_grid_search(
     model_parameters, inputs_grid_search, labels_grid_search, training_parameters, filename_df)
 
 elapsed_hyper = time.perf_counter() - start_hyper
+
 print(
     "Time for hyperparameter testing: {:.4f} minutes".format(
         elapsed_hyper / 60))

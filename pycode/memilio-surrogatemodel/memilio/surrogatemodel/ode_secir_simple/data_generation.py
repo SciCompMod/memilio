@@ -29,28 +29,35 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
-                                UncertainContactMatrix, set_log_level)
+from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
-                                       InfectionState, Model, Simulation,
+                                       InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 
 
 def remove_confirmed_compartments(result_array):
-    """
-
     """Aggregates the confirmed and non-confirmed infection compartments.
-    
+
     :param result_array: Array containing simulation results with compartment populations
     :returns: Modified array with aggregated compartments
     """
 
-    """
-    sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    sum_inf_symp = np.sum(result_array[:, [4, 5]], axis=1)
-    result_array[:, 2] = sum_inf_no_symp
-    result_array[:, 4] = sum_inf_symp
-    return np.delete(result_array, [3, 5], axis=1)
+    # Defining relevant indices
+    indices_inf_no_symp = [2, 3]
+    index_inf_no_symp = 2
+    indices_inf_symp = [4, 5]
+    index_inf_symp = 4
+    indices_removed = [3, 5]
+
+    # Calculating the values for the merged compartments
+    sum_inf_no_symp = np.sum(result_array[:, indices_inf_no_symp], axis=1)
+    sum_inf_symp = np.sum(result_array[:, indices_inf_symp], axis=1)
+
+    # Seting the new values
+    result_array[:, index_inf_no_symp] = sum_inf_no_symp
+    result_array[:, index_inf_symp] = sum_inf_symp
+
+    return np.delete(result_array, indices_removed, axis=1)
 
 
 def run_secir_simple_simulation(days):
@@ -132,8 +139,6 @@ def run_secir_simple_simulation(days):
 
     result_array = remove_confirmed_compartments(
         result_array[1:, :].transpose())
-
-    dataset = []
 
     dataset_entries = copy.deepcopy(result_array)
 
