@@ -48,10 +48,20 @@ We use different types of parameters to represent epidemiological parameters suc
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a
 value for each sociodemographic group. To model different contact rates between different sociodemographic groups, we
-use a parameter of type **ContactMatrix** that can be adjusted during the simulation, e.g., through implementing 
+use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. The **UncertainContactMatrix** contains
+a set of contact matrices of arbitrary length and which can represent the different contact locations in the model like 
+schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
+In the **ContactPatterns**, each matrix element stores baseline contact rates `c_{i,j}` between sociodemographic 
+group `i` to group `j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
+to one value if no stratifcation is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
-Parameters can get accessed via ``model.parameters.get<Param>()`` and set via ``model.parameters.set<Param>(value)``.
+Parameters can get accessed via ``model.parameters.get<Param<double>>()`` and set via either 
+``model.parameters.get<Param<double>>() = value`` or ``model.parameters.set<Param<double>>(value)``. 
 
+Expert's view:
+In the above description, `double` has been used for the template parameter `FP`. `FP` could also be replaced by an
+object type for automatic differentiation and, perspectively, should allow the computation in lower precision to 
+reduce the computational runtime.
 
 Initial conditions
 ------------------
@@ -67,10 +77,12 @@ Nonpharmaceutical Interventions
 -------------------------------
 
 Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, 
-school closures, or social distancing. This is done by adding **Damping**\s to the **ContactMatrix** of the model. A 
+school closures, or social distancing. This is done by adding **Damping**\s to the **ContactPatterns** of the model. A 
 **Damping** is defined by a time point at which the intervention starts and a matrix of the same size as the 
-**ContactMatrix** giving a factor for each combination of sociodemographic groups by which the corresponding contact 
-rate is reduced.
+**ContactMatrix**. While in many cases, the reduction matrix is given by a constant matrix with factor `r`, also 
+group-specific reductions are possible through setting particular rows or columns differently. With a constant 
+reduction factor `r`, the reduced contact rate is `r * c_{i,j}`.
+
 
 
 Simulation
@@ -90,10 +102,11 @@ Output
 
 The output of the **Simulation** is a ``TimeSeries`` containing the sizes of each compartment at each time point. A 
 simple table can be printed using the ``print_table()`` function of the ``TimeSeries`` class. The output of the 
-**FlowSimulation** additionally contains the flows between compartments at each time point. The compartment sizes can be
-printed with ``result[0].print_table()`` and the flows with ``result[1].print_table()``. 
-As adaptive step size methods may be used, you can interpolate the results to days or any other series of times points
-with ``mio::interpolate_simulation_result()``.
+**FlowSimulation** additionally contains the flows between compartments at each time point. The compartment sizes can 
+be printed with ``result[0].print_table()`` and the flows with ``result[1].print_table()``. 
+As adaptive step size methods are used by default, the output will not be available on equidistant time points like `dt`
+or days. To obtain outputs on days or user-defined time points, you can interpolate the results to days or
+any other series of times points with ``mio::interpolate_simulation_result()``.
 
 
 Visualization
