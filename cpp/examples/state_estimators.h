@@ -92,43 +92,6 @@ public:
     {
         const auto& params = this->parameters;
 
-        // Calculate total population across all commuter types
-        FP N = 0;
-        for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
-            // Start with non-commuter group
-            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::S})];
-            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::E})];
-            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::I})];
-            N += pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::R})];
-
-            // Handle commuter groups
-            for (int i = 0; i < m_num_commuter_groups; ++i) {
-                CommuterType commuter_type =
-                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + i);
-                for (size_t state = 0; state < static_cast<size_t>(InfectionStateExplicit::Count); ++state) {
-                    N += pop[this->populations.get_flat_index(
-                        {g, commuter_type, static_cast<InfectionStateExplicit>(state)})];
-                }
-            }
-        }
-
-        FP invN = (N < mio::Limits<FP>::zero_tolerance()) ? FP(0) : FP(1) / N;
-
-        // Calculate total infected population
-        FP total_infected = 0;
-        for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
-            // Add infected from non-commuter group
-            total_infected +=
-                pop[this->populations.get_flat_index({g, CommuterType::NonCommuter, InfectionStateExplicit::I})];
-
-            // Add infected from commuter groups
-            for (int i = 0; i < m_num_commuter_groups; ++i) {
-                CommuterType commuter_type =
-                    static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + i);
-                total_infected += pop[this->populations.get_flat_index({g, commuter_type, InfectionStateExplicit::I})];
-            }
-        }
-
         // Calculate and apply flows for each age group and commuter type
         for (mio::AgeGroup g(0); g < mio::AgeGroup(params.get_num_groups()); ++g) {
             // Process E->I and I->R flows for non-commuter group first
@@ -222,15 +185,16 @@ public:
 
             // Now do the same for each commuter type
             for (int c = 0; c < m_num_commuter_groups; ++c) {
-                CommuterType commuter_type_i =
+                CommuterType commuter_type_i_inner =
                     static_cast<CommuterType>(static_cast<int>(CommuterType::CommuterBase) + c);
-                const size_t Si = this->populations.get_flat_index({i, commuter_type_i, InfectionStateExplicit::S});
-                auto S_to_E_flow_idx =
+                const size_t Si_inner =
+                    this->populations.get_flat_index({i, commuter_type_i_inner, InfectionStateExplicit::S});
+                auto S_to_E_flow_idx_inner =
                     Base::template get_flat_flow_index<InfectionStateExplicit::S, InfectionStateExplicit::E>(
-                        {i, commuter_type_i});
+                        {i, commuter_type_i_inner});
 
                 // Initialize flow to zero
-                flows[S_to_E_flow_idx] = 0;
+                flows[S_to_E_flow_idx_inner] = 0;
 
                 // Sum up contributions from all age groups j
                 for (mio::AgeGroup j(0); j < mio::AgeGroup(params.get_num_groups()); ++j) {
@@ -271,7 +235,7 @@ public:
                     }
 
                     // Add contribution to S->E flow
-                    flows[S_to_E_flow_idx] += coeffStoE * y[Si] * total_infected_j;
+                    flows[S_to_E_flow_idx_inner] += coeffStoE * y[Si_inner] * total_infected_j;
                 }
             }
         }

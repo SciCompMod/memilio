@@ -34,7 +34,7 @@ namespace benchmark
 using ModelType = mio::oseir::Model<ScalarType>;
 using SimType   = mio::FlowSimulation<ScalarType, ModelType>;
 
-void setup_model_benchmark(ModelType& model, size_t num_agegroups = 6)
+void setup_model_benchmark(ModelType& model, size_t num_agegroups)
 {
     const double total_population = 10000.0;
     for (mio::AgeGroup i = 0; i < model.parameters.get_num_groups(); i++) {
@@ -55,18 +55,21 @@ void setup_model_benchmark(ModelType& model, size_t num_agegroups = 6)
     model.apply_constraints();
 }
 
-const ScalarType t0               = 0.0;
-const ScalarType t_max            = 50.0;
-const ScalarType dt               = 0.5;
-const size_t num_age_groups_bench = 1;
+const ScalarType t0    = 0.0;
+const ScalarType t_max = 50.0;
+const ScalarType dt    = 0.5;
+
+// Define different numbers of age groups for benchmarking
+const std::vector<size_t> age_group_counts = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
 // Benchmark for Euler integration method
 void benchmark_state_euler(::benchmark::State& state)
 {
+    const size_t num_age_groups = age_group_counts[state.range(0)];
     mio::set_log_level(mio::LogLevel::critical);
-    ModelType model(num_age_groups_bench);
-    setup_model_benchmark(model);
-    SimType sim(model, t0, dt / 10.0);
+    ModelType model(num_age_groups);
+    setup_model_benchmark(model, num_age_groups);
+    SimType sim(model, t0, dt);
     sim.advance(t_max);
     const auto& seir_res = sim.get_result();
 
@@ -92,11 +95,12 @@ void benchmark_state_euler(::benchmark::State& state)
 // Benchmark for high order integration method
 void benchmark_state_high_order(::benchmark::State& state)
 {
+    const size_t num_age_groups = age_group_counts[state.range(0)];
     mio::set_log_level(mio::LogLevel::critical);
-    ModelType model(num_age_groups_bench);
-    setup_model_benchmark(model);
+    ModelType model(num_age_groups);
+    setup_model_benchmark(model, num_age_groups);
 
-    SimType sim(model, t0, dt / 10.0);
+    SimType sim(model, t0, dt);
     sim.advance(t_max);
     const auto& seir_res = sim.get_result();
 
@@ -122,9 +126,10 @@ void benchmark_state_high_order(::benchmark::State& state)
 // Benchmark for Flow-based mobility returns method
 void benchmark_state_flow_based(::benchmark::State& state)
 {
+    const size_t num_age_groups = age_group_counts[state.range(0)];
     mio::set_log_level(mio::LogLevel::critical);
-    ModelType model(num_age_groups_bench);
-    setup_model_benchmark(model);
+    ModelType model(num_age_groups);
+    setup_model_benchmark(model, num_age_groups);
 
     SimType sim(model, t0, dt);
     sim.advance(t_max);
@@ -144,17 +149,17 @@ void benchmark_state_flow_based(::benchmark::State& state)
                 break;
             }
             const auto& total_pop = seir_res.get_value(closest_idx_total);
-            mio::examples::apply_flows_to_mobile_population_generic(mobile_pop, sim.get_model(), total_pop,
-                                                                    sim.get_flows().get_value(closest_idx_total));
+            mio::examples::flow_based_mobility_returns(mobile_pop, sim, total_pop, t, dt);
         }
     }
 }
 
 void benchmark_state_flow_based_model_specific(::benchmark::State& state)
 {
+    const size_t num_age_groups = age_group_counts[state.range(0)];
     mio::set_log_level(mio::LogLevel::critical);
-    ModelType model(num_age_groups_bench);
-    setup_model_benchmark(model);
+    ModelType model(num_age_groups);
+    setup_model_benchmark(model, num_age_groups);
 
     SimType sim(model, t0, dt);
     sim.advance(t_max);
@@ -183,11 +188,12 @@ void benchmark_state_flow_based_model_specific(::benchmark::State& state)
 // Benchmark for Probabilistic mobility returns method
 void benchmark_state_probabilistic(::benchmark::State& state)
 {
+    const size_t num_age_groups = age_group_counts[state.range(0)];
     mio::set_log_level(mio::LogLevel::critical);
-    ModelType model(num_age_groups_bench);
-    setup_model_benchmark(model);
+    ModelType model(num_age_groups);
+    setup_model_benchmark(model, num_age_groups);
 
-    SimType sim(model, t0, dt / 10.0);
+    SimType sim(model, t0, dt);
     sim.advance(t_max);
     const auto& seir_res = sim.get_result();
 
@@ -213,11 +219,30 @@ void benchmark_state_probabilistic(::benchmark::State& state)
 } // namespace benchmark
 } // namespace mio
 
-BENCHMARK(mio::benchmark::benchmark_state_euler)->Name("Euler");
-BENCHMARK(mio::benchmark::benchmark_state_high_order)->Name("High-order");
-BENCHMARK(mio::benchmark::benchmark_state_flow_based)->Name("Flow-based");
-BENCHMARK(mio::benchmark::benchmark_state_flow_based_model_specific)->Name("Flow-based Model Specific");
-BENCHMARK(mio::benchmark::benchmark_state_probabilistic)->Name("Probabilistic");
+BENCHMARK(mio::benchmark::benchmark_state_euler)
+    ->DenseRange(0, mio::benchmark::age_group_counts.size() - 1)
+    ->Name("Euler")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark::benchmark_state_high_order)
+    ->DenseRange(0, mio::benchmark::age_group_counts.size() - 1)
+    ->Name("High-order")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark::benchmark_state_flow_based)
+    ->DenseRange(0, mio::benchmark::age_group_counts.size() - 1)
+    ->Name("Flow-based")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark::benchmark_state_flow_based_model_specific)
+    ->DenseRange(0, mio::benchmark::age_group_counts.size() - 1)
+    ->Name("Flow-based Model Specific")
+    ->Unit(::benchmark::kMicrosecond);
+
+BENCHMARK(mio::benchmark::benchmark_state_probabilistic)
+    ->DenseRange(0, mio::benchmark::age_group_counts.size() - 1)
+    ->Name("Probabilistic")
+    ->Unit(::benchmark::kMicrosecond);
 
 // run all benchmarks
 BENCHMARK_MAIN();

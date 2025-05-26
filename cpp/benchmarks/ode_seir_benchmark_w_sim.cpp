@@ -193,8 +193,7 @@ static void bench_flow_based_by_groups(::benchmark::State& state)
             const auto& flows     = sim.get_flows().get_value(closest_idx_total);
 
             for (int i = 0; i < num_commuter_groups; ++i) {
-                mio::examples::apply_flows_to_mobile_population_generic(mobile_pops[i], sim.get_model(), total_pop,
-                                                                        flows);
+                mio::examples::flow_based_mobility_returns(mobile_pops[i], sim, total_pop, t, dt);
             }
         }
         benchmark::DoNotOptimize(mobile_pops);
