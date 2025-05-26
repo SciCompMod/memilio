@@ -33,11 +33,11 @@ namespace mio
 /**
  * Function template to be integrated.
  */
-template <typename FP = double>
+template <typename FP>
 using DerivFunction =
     std::function<void(Eigen::Ref<const Eigen::VectorX<FP>> y, FP t, Eigen::Ref<Eigen::VectorX<FP>> dydt)>;
 
-template <typename FP = double>
+template <typename FP>
 class IntegratorCore
 {
 public:
@@ -54,7 +54,7 @@ public:
     {
     }
 
-    virtual ~IntegratorCore(){};
+    virtual ~IntegratorCore() {};
 
     /**
      * @brief Make a single integration step.
@@ -123,7 +123,7 @@ private:
  * @brief Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
  * @tparam FP a floating point type accepted by Eigen
  */
-template <typename FP = double>
+template <typename FP>
 class OdeIntegrator
 {
 public:
