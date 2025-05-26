@@ -150,6 +150,7 @@ public:
     Eigen::Ref<Eigen::VectorX<FP>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
+        using std::ceil;
         using std::fabs;
         using std::max;
         using std::min;
