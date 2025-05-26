@@ -20,7 +20,7 @@
 #ifndef MIO_UTIL_OPENMP_H
 #define MIO_UTIL_OPENMP_H
 
-#include "memilio/config.h"
+#include "memilio/config.h" // included for MEMILIO_ENABLE_OPENMP
 #include "memilio/utils/compiler_diagnostics.h"
 
 #ifdef MEMILIO_ENABLE_OPENMP
@@ -44,5 +44,22 @@
 #define PRAGMA_OMP(x)
 
 #endif
+
+namespace mio
+{
+namespace omp
+{
+
+/// @brief Get an id for the current OpenMP thread. When OpenMP is disabled, this is always 0.
+int get_thread_id();
+
+/// @brief Get the current number of OpenMP threads. When OpenMP is disabled, this is always 1.
+int get_num_threads();
+
+/// @brief Get an upper bound to the number of OpenMP threads. When OpenMP is disabled, this is always 1.
+int get_max_threads();
+
+} // namespace omp
+} // namespace mio
 
 #endif

@@ -607,8 +607,8 @@ inline Eigen::Index next_pow2(Eigen::Index i)
 }
 
 /**
-     * type traits for time series iterators
-     */
+ * type traits for time series iterators
+ */
 template <class FP, bool IsConst>
 struct TimeSeriesIterTraits {
     static bool is_const()
@@ -627,12 +627,12 @@ struct TimeSeriesIterTraits {
 };
 
 /** base class for TimeSeries iterators that iterate by time point (i.e. column) 
-     * @tparam Derived Iterator derived type, provides get_reference member function
-     * @tparam FP floating point type of the TimeSeries
-     * @tparam IsConstIter true for const_iterator
-     * @tparam ValueType define iterator::value_type
-     * @tparam ReferenceType define iterator::reference, must be the same type as returned by Derived::get_reference
-    */
+ * @tparam Derived Iterator derived type, provides get_reference member function
+ * @tparam FP floating point type of the TimeSeries
+ * @tparam IsConstIter true for const_iterator
+ * @tparam ValueType define iterator::value_type
+ * @tparam ReferenceType define iterator::reference, must be the same type as returned by Derived::get_reference
+ */
 template <class Derived, class FP, bool IsConstIter, class ValueType, class ReferenceType>
 class TimeSeriesIteratorBase
 {
@@ -643,6 +643,8 @@ protected:
     Eigen::Index m_col_idx = -1;
 
 public:
+    TimeSeriesIteratorBase() = default;
+
     TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
         : m_matrix(m)
         , m_col_idx(col_idx)
@@ -654,9 +656,14 @@ public:
     using iterator_category = std::random_access_iterator_tag;
     using reference         = ReferenceType;
     using value_type        = ValueType;
+
+    /**
+     * @brief Dereferencable type with a copy of a reference.
+     * This is needed in case Derived::get_reference returns a temporary object, like Eigen::Ref.
+     */
     struct pointer {
         reference m_ref;
-        reference* operator->()
+        auto operator->()
         {
             return &m_ref;
         }
