@@ -39,7 +39,11 @@ from memilio.simulation.osecir import (Index_InfectionState,
 def remove_confirmed_compartments(result_array):
     """
 
-    :param result_array:
+    """Aggregates the confirmed and non-confirmed infection compartments.
+    
+    :param result_array: Array containing simulation results with compartment populations
+    :returns: Modified array with aggregated compartments
+    """
 
     """
     sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)

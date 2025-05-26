@@ -1,5 +1,3 @@
-# from memilio.surrogatemodel.ode_secir_simple import network_architectures
-# from memilio.surrogatemodel.ode_secir_simple.model import split_data, get_test_statistic
 import os
 import tensorflow as tf
 import pickle
@@ -75,7 +73,6 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, Print=Fa
 
     # Print out the results
     if Print:
-        elapsed = time.perf_counter() - start
         print(f"Best train losses: {train_losses}")
         print(f"Best validation losses: {val_losses}")
         print("--------------------------------------------")
