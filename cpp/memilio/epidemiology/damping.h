@@ -58,6 +58,11 @@ class MEMILIO_ENABLE_EBO SimulationTime : public TypeSafe<FP, SimulationTime<FP>
 {
 public:
     using TypeSafe<FP, SimulationTime<FP>>::TypeSafe;
+    // Important for AD and implicit conversions
+    operator FP() const
+    {
+        return this->get();
+    }
 };
 
 /**
@@ -357,14 +362,13 @@ public:
     {
         assert(!m_accumulated_dampings_cached.empty() &&
                "Cache is not current. Did you disable the automatic cache update?");
-        auto ub =
-            std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),
-                             std::make_tuple(t), [](auto&& tup1, auto&& tup2) {
-                                 return FP(std::get<SimulationTime<FP>>(tup1)) < FP(std::get<SimulationTime<FP>>(tup2));
-                             });
-        Matrix damping = smoother_cosine<FP>(FP(t), FP(std::get<SimulationTime<FP>>(*ub)) - 1.0,
-                                             FP(std::get<SimulationTime<FP>>(*ub)), std::get<Matrix>(*(ub - 1)),
-                                             std::get<Matrix>(*ub));
+        auto ub = std::upper_bound(m_accumulated_dampings_cached.begin(), m_accumulated_dampings_cached.end(),
+                                   std::make_tuple(t), [](auto&& tup1, auto&& tup2) {
+                                       return std::get<SimulationTime<FP>>(tup1) < std::get<SimulationTime<FP>>(tup2);
+                                   });
+        Matrix damping =
+            smoother_cosine<FP>(t, std::get<SimulationTime<FP>>(*ub) - mio::SimulationTime<FP>(1.0),
+                                std::get<SimulationTime<FP>>(*ub), std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub));
         return damping;
     }
     Matrix get_matrix_at(FP t) const
@@ -560,10 +564,10 @@ void Dampings<FP, D>::update_cache()
             //update active damping
             update_active_dampings(damping, active_by_type, sum_by_level);
             auto combined_damping = inclusive_exclusive_sum(sum_by_level);
-            assert((combined_damping.array() <= 1).all() && "unexpected error, accumulated damping out of range.");
-            if (floating_point_equal<FP>(FP(get<SimulationTime<FP>>(damping)),
-                                         FP(get<SimulationTime<FP>>(m_accumulated_dampings_cached.back())), 1e-15,
-                                         1e-15)) {
+            assert((combined_damping.array() <= FP(1.0)).all() &&
+                   "unexpected error, accumulated damping out of range.");
+            if (floating_point_equal<FP>(get<SimulationTime<FP>>(damping),
+                                         get<SimulationTime<FP>>(m_accumulated_dampings_cached.back()), 1e-15, 1e-15)) {
                 std::get<Matrix>(m_accumulated_dampings_cached.back()) = combined_damping;
             }
             else {
