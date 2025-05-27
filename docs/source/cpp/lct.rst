@@ -226,7 +226,7 @@ Finally, we can compute the initialization vector. This is based on the knowledg
 
 
 List of models
-=====================
+-----------------------
 
 .. toctree::
     :titlesonly:

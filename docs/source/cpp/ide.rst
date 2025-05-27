@@ -322,7 +322,7 @@ Finally, we can print our results.
 
 
 List of models
-=====================
+-----------------------
 
 .. toctree::
     :titlesonly:

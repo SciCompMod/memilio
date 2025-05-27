@@ -117,7 +117,7 @@ and its documentation.
 
 
 List of models
-=====================
+-----------------------
 
 .. toctree::
     :titlesonly:

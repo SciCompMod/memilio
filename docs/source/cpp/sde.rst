@@ -8,7 +8,7 @@ SDE Models
 
 
 List of models
-==========
+-----------------------------
 
 .. toctree::
     :titlesonly:

@@ -275,7 +275,7 @@ We can interpolate the simulation results to a ``TimeSeries`` containing only fu
 
 
 List of models
-=====================
+-----------------------------
 
 .. toctree::
     :titlesonly:
