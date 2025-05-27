@@ -20,8 +20,6 @@ import matplotlib.lines as mlines
 import h5py
 from datetime import datetime
 from matplotlib.dates import DateFormatter
-from scipy.ndimage import gaussian_filter1d
-from scipy.signal import savgol_filter
 
 fontsize = 20
 

@@ -20,8 +20,6 @@ import matplotlib.lines as mlines
 import h5py
 from datetime import datetime
 from matplotlib.dates import DateFormatter
-from scipy.ndimage import gaussian_filter1d
-from scipy.signal import savgol_filter
 
 fontsize = 20
 
@@ -254,5 +252,5 @@ if __name__ == "__main__":
         n_runs = len([entry for entry in os.listdir(path)
                      if os.path.isfile(os.path.join(path, entry))])
     
-    # plot_infection_states_results(path)
-    # plot_infections_loc_types_avarage(path)
+    plot_infection_states_results(path)
+    plot_infections_loc_types_avarage(path)
