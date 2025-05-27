@@ -40,6 +40,7 @@ transmissions, infections, and hospitalizations explicitly in every time step in
 compartment values. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
+  
     `Susceptible,                 Exposed`
     `Exposed,                     InfectedNoSymptoms`
     `InfectedNoSymptoms,          InfectedSymptoms`
