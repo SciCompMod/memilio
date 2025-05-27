@@ -232,15 +232,8 @@ public:
         bool converged     = false; // carry for convergence criterion
         bool dt_is_invalid = false;
 
-        // Resize m_kt_values and fill new values with 0.0
-        Eigen::Index R0 = m_kt_values.rows(), C0 = m_kt_values.cols(), R1 = yt.size(),
-                     C1 = m_tab_final.entries_low.size();
-        m_kt_values.conservativeResize(R1, C1);
-        if (R1 > R0)
-            m_kt_values.bottomRows(R1 - R0).setZero();
-        if (C1 > C0)
-            m_kt_values.rightCols(C1 - C0).setZero();
-
+        // Resize m_kt_values and error estimates
+        m_kt_values.resize(yt.size(), m_tab_final.entries_low.size());
         m_error_estimate.resize(yt.size());
         m_eps.resize(yt.size());
 
