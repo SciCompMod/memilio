@@ -186,7 +186,7 @@ public:
      * @param t time in the simulation
      * @return matrix expression (num_groups x num_groups)
      */
-    auto get_matrix_at(SimulationTime<FP> t) const
+    Matrix get_matrix_at(SimulationTime<FP> t) const
     {
         assert(Shape::get_shape_of(m_minimum.get_matrix_at(t)) == Shape::get_shape_of(m_baseline));
 
