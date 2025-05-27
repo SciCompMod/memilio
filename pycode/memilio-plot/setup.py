@@ -73,6 +73,7 @@ setup(
         'pyxlsb',
         'wget',
         'folium',
+        'scipy.ndimage',
         'matplotlib',
         'mapclassify',
         'geopandas',
