@@ -62,7 +62,7 @@ Sociodemographic Stratification
 
 In the ODE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
 **AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, 
-see :doc:`Model Creation <ode_creation>`.
+see :doc:`Model Creation <../ode_creation>`.
 
 
 Parameters
