@@ -51,17 +51,19 @@ value for each sociodemographic group. To model different contact rates between 
 use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. The **UncertainContactMatrix** contains
 a set of contact matrices of arbitrary length and which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
-In the **ContactPatterns**, each matrix element stores baseline contact rates `c_{i,j}` between sociodemographic 
-group `i` to group `j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
+In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
+group :math:`i` to group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
 to one value if no stratifcation is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
 Parameters can get accessed via ``model.parameters.get<Param<double>>()`` and set via either 
 ``model.parameters.get<Param<double>>() = value`` or ``model.parameters.set<Param<double>>(value)``. 
 
-Expert's view:
-In the above description, `double` has been used for the template parameter `FP`. `FP` could also be replaced by an
-object type for automatic differentiation and, perspectively, should allow the computation in lower precision to 
-reduce the computational runtime.
+.. dropdown:: :fa:`gears` Expert's settings
+
+    In the above description, ``double`` has been used for the template parameter ``FP``. ``FP`` could also be replaced by an
+    object type for automatic differentiation and, perspectively, should allow the computation in lower precision to 
+    reduce the computational runtime.
+
 
 Initial conditions
 ------------------
@@ -79,10 +81,22 @@ Nonpharmaceutical Interventions
 Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, 
 school closures, or social distancing. This is done by adding **Damping**\s to the **ContactPatterns** of the model. A 
 **Damping** is defined by a time point at which the intervention starts and a matrix of the same size as the 
-**ContactMatrix**. While in many cases, the reduction matrix is given by a constant matrix with factor `r`, also 
+**ContactMatrix**. While in many cases, the reduction matrix is given by a constant matrix with factor :math:`r`, also 
 group-specific reductions are possible through setting particular rows or columns differently. With a constant 
-reduction factor `r`, the reduced contact rate is `r * c_{i,j}`.
+reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
 
+.. dropdown:: :fa:`gears` Expert's settings
+
+    In some settings, contact rates cannot be reduced to zero to keep essential sectors of the society running. In this 
+    case, we distinguish between a baseline contact matrix which we denote by :math:`B` and a minimum contact matrix 
+    which we denote by :math:`M`. With a damping matrix :math:`D` the reduced contact matrix is then given by 
+    :math:`B - D * (B - M)`, where the multiplication is element-wise.
+    You can set the minimum and baseline contact matrices via 
+
+    .. code-block:: cpp
+
+        model.parameters.get<ContactPatterns>().get_cont_freq_mat()[0].get_baseline() = baseline_matrix;
+        model.parameters.get<ContactPatterns>().get_cont_freq_mat()[0].get_minimum() = minimum_matrix;
 
 
 Simulation
@@ -117,7 +131,7 @@ and its documentation.
 
 
 List of models
------------------------
+--------------
 
 .. toctree::
     :titlesonly:
