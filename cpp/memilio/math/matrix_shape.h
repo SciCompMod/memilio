@@ -45,8 +45,6 @@ namespace mio
 class RectMatrixShape
 {
 public:
-    using Matrix = Eigen::MatrixXd;
-
     /**
      * construct the shape of a rectangular matrix.
      * @param r number of rows.
@@ -141,8 +139,6 @@ private:
 class SquareMatrixShape
 {
 public:
-    using Matrix = Eigen::MatrixXd;
-
     /**
      * construct a square matrix of dimensions r
      * @param r number of rows and columns
@@ -241,10 +237,7 @@ private:
  */
 class ColumnVectorShape
 {
-
 public:
-    using Matrix = Eigen::VectorXd;
-
     /**
      * construct the shape of a column vector.
      * @param r number of rows.
