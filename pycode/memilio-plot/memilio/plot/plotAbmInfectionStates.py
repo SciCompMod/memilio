@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2024 MEmilio
 #
-# Authors: Daniel Abele, Martin J. Kuehn
+# Authors: Sascha Korf
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -30,77 +30,74 @@ from datetime import datetime
 from scipy.ndimage import gaussian_filter1d
 
 
-""" Module for plotting infection states and location types from ABM results.
-This module provides functions to load and visualize infection states and
-location types from simulation results stored in HDF5 format and are output
-by the MEmilio agent-based model (ABM).
-The used  Loggers are:
-struct LogInfectionStatePerAgeGroup : mio::LogAlways {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
-    /** 
-     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
-     * @param[in] sim The simulation of the abm.
-     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
-     */
-    static Type log(const mio::abm::Simulation& sim)
-    {
-
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
-            Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
-        const auto curr_time = sim.get_time();
-        const auto persons   = sim.get_world().get_persons();
-
-        // PRAGMA_OMP(parallel for)
-        for (auto i = size_t(0); i < persons.size(); ++i) {
-            auto& p = persons[i];
-            if (p.get_should_be_logged()) {
-                auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
-                             ((uint32_t)p.get_infection_state(curr_time));
-                // PRAGMA_OMP(atomic)
-                sum[index] += 1;
-            }
-        }
-        return std::make_pair(curr_time, sum);
-    }
-};
-
-struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
-    /** 
-     * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
-     * @param[in] sim The simulation of the abm.
-     * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
-     */
-    static Type log(const mio::abm::Simulation& sim)
-    {
-
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(
-            Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
-        auto curr_time     = sim.get_time();
-        auto prev_time     = sim.get_prev_time();
-        const auto persons = sim.get_world().get_persons();
-
-        // PRAGMA_OMP(parallel for)
-        for (auto i = size_t(0); i < persons.size(); ++i) {
-            auto& p = persons[i];
-            if (p.get_should_be_logged()) {
-                // PRAGMA_OMP(atomic)
-                if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
-                    (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
-                    auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
-                                 ((uint32_t)p.get_location().get_type());
-                    sum[index] += 1;
-                }
-            }
-        }
-        return std::make_pair(curr_time, sum);
-    }
-};
-
-The output of several Loggers is stored in HDF5 files, with the memilio funciton mio::save_results in mio/io/result_io.h.
-"""
-
-
+# Module for plotting infection states and location types from ABM results.
+# This module provides functions to load and visualize infection states and
+# location types from simulation results stored in HDF5 format and are output
+# by the MEmilio agent-based model (ABM).
+# The used  Loggers are:
+# struct LogInfectionStatePerAgeGroup : mio::LogAlways {
+#     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+#     /** 
+#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+#      * @param[in] sim The simulation of the abm.
+#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+#      */
+#     static Type log(const mio::abm::Simulation& sim)
+#     {
+# 
+#         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+#             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
+#         const auto curr_time = sim.get_time();
+#         const auto persons   = sim.get_world().get_persons();
+# 
+#         // PRAGMA_OMP(parallel for)
+#         for (auto i = size_t(0); i < persons.size(); ++i) {
+#             auto& p = persons[i];
+#             if (p.get_should_be_logged()) {
+#                 auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+#                              ((uint32_t)p.get_infection_state(curr_time));
+#                 // PRAGMA_OMP(atomic)
+#                 sum[index] += 1;
+#             }
+#         }
+#         return std::make_pair(curr_time, sum);
+#     }
+# };
+# 
+# struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
+#     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+#     /** 
+#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+#      * @param[in] sim The simulation of the abm.
+#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+#      */
+#     static Type log(const mio::abm::Simulation& sim)
+#     {
+# 
+#         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+#             Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
+#         auto curr_time     = sim.get_time();
+#         auto prev_time     = sim.get_prev_time();
+#         const auto persons = sim.get_world().get_persons();
+# 
+#         // PRAGMA_OMP(parallel for)
+#         for (auto i = size_t(0); i < persons.size(); ++i) {
+#             auto& p = persons[i];
+#             if (p.get_should_be_logged()) {
+#                 // PRAGMA_OMP(atomic)
+#                 if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+#                     (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+#                     auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+#                                  ((uint32_t)p.get_location().get_type());
+#                     sum[index] += 1;
+#                 }
+#             }
+#         }
+#         return std::make_pair(curr_time, sum);
+#     }
+# };
+# 
+# The output of the loggers of several runs is stored in HDF5 files, with the memilio funciton mio::save_results in mio/io/result_io.h.
 
 
 def load_h5_results(base_path, percentile):
@@ -122,7 +119,7 @@ def plot_infections_loc_types_average(
         smooth_sigma=1,
         rolling_window=24,
         xtick_step=150):
-    """ Plots average infections per location type.
+    """ Plots rolling average infections per location type for the median run.
 
     @param[in] base_path Path to results directory.
     @param[in] start_date Start date as string.
@@ -133,13 +130,11 @@ def plot_infections_loc_types_average(
     """
     # Load data
     p50 = load_h5_results(path_to_loc_types, "p50")
-    p25 = load_h5_results(path_to_loc_types, "p05")
-    p75 = load_h5_results(path_to_loc_types, "p95")
     time = p50['Time']
     total_50 = p50['Total']
 
     plt.figure('Infection_location_types')
-    plt.title('At which location type an infection happened, averaged over all runs')
+    plt.title('Infection per location type for the median run, rolling sum over 24 hours')
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
     # If you define further location types, you need to adjust this list
     states_plot = [0, 1, 2, 3, 4, 5 , 6] 
@@ -200,13 +195,16 @@ def plot_infection_states(
     @param[in] xtick_step Step size for x-axis ticks.
     """
     plt.figure('Infection_states with 50% percentile')
-    plt.title('Infection states')
+    plt.title('Infection states with 50% percentile')
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
     states_plot = [1, 2, 3, 4, 5, 7]
     legend_plot = ['E', 'I_NSymp', 'I_Symp', 'I_Sev', 'I_Crit', 'Dead']
 
     for i in states_plot:
         plt.plot(x, y50[:, i], color=color_plot[i])
+    plt.legend(legend_plot) # Needs to be done here, otherwise the percentage fill_between will not work correctly
+
+    for i in states_plot:
         plt.fill_between(x, y50[:, i], y25[:, i], alpha=0.5, color=color_plot[i])
         plt.fill_between(x, y50[:, i], y75[:, i], alpha=0.5, color=color_plot[i])
 
@@ -277,14 +275,31 @@ def _format_x_axis(x, start_date, xtick_step):
 def main():
     """ Main function for CLI usage. """
     parser = argparse.ArgumentParser(description="Plot infection state and location type results.")
-    # parser.add_argument("path", type=str, help="Path to the results folder")
+    parser.add_argument("--path-to-infection-states", help="Path to infection states results")
+    parser.add_argument("--path-to-loc-types", help="Path to location types results")
     parser.add_argument("--start-date", type=str, default='2021-03-01', help="Simulation start date (YYYY-MM-DD)")
     parser.add_argument("--colormap", type=str, default='Set1', help="Matplotlib colormap")
     parser.add_argument("--xtick-step", type=int, default=150, help="Step for x-axis ticks")
     args = parser.parse_args()
 
-    plot_infection_states_results("/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_state_per_age_group/0", args.start_date, args.colormap, args.xtick_step)
-    # plot_infections_loc_types_average("/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_per_location_type_per_age_group/0", args.start_date, args.colormap, xtick_step=args.xtick_step)
+    if  args.path_to_infection_states:
+        plot_infection_states_results(
+            args.path_to_infection_states,
+            start_date=args.start_date,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step)
+    if args.path_to_loc_types:
+        plot_infections_loc_types_average(
+            args.path_to_loc_types,
+            start_date=args.start_date,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step)
+        
+    if not args.path_to_infection_states and not args.path_to_loc_types:
+        print("Please provide a path to infection states or location types results.")
+        sys.exit(1)
+    plt.show()
 
+    
 if __name__ == "__main__":
     main()
