@@ -23,6 +23,7 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/math/matrix_shape.h"
 #include "memilio/utils/stl_util.h"
+#include "memilio/utils/logging.h"
 
 #include <numeric>
 #include <ostream>
@@ -191,13 +192,14 @@ public:
         assert(Shape::get_shape_of(m_minimum.get_matrix_at(t)) == Shape::get_shape_of(m_baseline));
 
         Matrix damping_at_t = m_dampings.get_matrix_at(t);
-        if (damping_at_t.rows() == m_baseline.rows() && damping_at_t.cols() == m_baseline.cols()) {
-            return (m_baseline - damping_at_t.cwiseProduct(m_baseline - m_minimum)).eval();
+
+        if (damping_at_t.rows() != m_baseline.rows() || damping_at_t.cols() != m_baseline.cols()) {
+            mio::log_error("DampingMatrixExpression::get_matrix_at: Damping matrix at time {} has shape ({}, {}), "
+                           "expected ({}, {}). ",
+                           t.get(), damping_at_t.rows(), damping_at_t.cols(), m_baseline.rows(), m_baseline.cols());
         }
-        else {
-            FP scalar = static_cast<FP>(damping_at_t(0, 0));
-            return (m_baseline - scalar * (m_baseline - m_minimum)).eval();
-        }
+
+        return (m_baseline - damping_at_t.cwiseProduct(m_baseline - m_minimum)).eval();
     }
 
     /**
@@ -337,7 +339,7 @@ public:
     }
 
     /**
-     * get the number of groups.
+     * dimensions of the matrices.
      */
     Shape get_shape() const
     {
