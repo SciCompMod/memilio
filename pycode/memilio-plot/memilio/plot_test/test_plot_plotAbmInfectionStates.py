@@ -85,13 +85,23 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
         y50 = np.ones((10, 8))
         y25 = np.zeros((10, 8))
         y75 = np.ones((10, 8))*2
+        y05 = np.ones((10, 8))*-1
+        y95 = np.ones((10, 8))*3
         mock_matplotlib.colormaps.get_cmap.return_value.colors = [(1, 0, 0)]*8
 
         # Patch plt.gca().plot and fill_between
         with patch.object(abm.plt, 'gca') as mock_gca:
             mock_ax = MagicMock()
             mock_gca.return_value = mock_ax
-            abm.plot_infection_states(x, y50, y25, y75)
+            abm.plot_infection_states(
+                x, y50, y25, y75,
+                start_date='2021-03-01',
+                colormap='Set1',
+                xtick_step=2,
+                y05=y05,
+                y95=y95,
+                show_90=True
+            )
             assert mock_ax.plot.called
             assert mock_ax.fill_between.called
             assert mock_ax.set_xticks.called
@@ -107,6 +117,10 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
             'Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']}
         p75_bs = {g: group_data for g in [
             'Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']}
+        p05_bs = {g: group_data*-1 for g in [
+            'Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']}
+        p95_bs = {g: group_data*3 for g in [
+            'Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']}
         mock_matplotlib.colormaps.get_cmap.return_value.colors = [(1, 0, 0)]*8
 
         # Patch plt.subplots to return a grid of MagicMock axes (as np.array with dtype=object)
@@ -117,7 +131,13 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                 for j in range(7):
                     ax_mock[i, j] = MagicMock()
             mock_subplots.return_value = (fig_mock, ax_mock)
-            abm.plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs)
+            abm.plot_infection_states_individual(
+                x, p50_bs, p25_bs, p75_bs,
+                colormap='Set1',
+                p05_bs=p05_bs,
+                p95_bs=p95_bs,
+                show90=True
+            )
             # Check that at least one ax's plot was called
             assert any(ax_mock[i, j].plot.called for i in range(6)
                        for j in range(7))
