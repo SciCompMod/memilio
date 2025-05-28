@@ -357,19 +357,15 @@ def main():
     parser.add_argument("--90percentile", action="store_true",
                         help="If set, plot 90% percentile as well")
     args = parser.parse_args()
-
-    path_to_infection_states = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_per_location_type_per_age_group/0"
-    path_to_loc_types = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_state_per_age_group/0"
-
     plot_infection_states_results(
-        path_to_loc_types,
+        args.path_to_infection_states,
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step,
         show90=True
     )
     plot_infections_loc_types_average(
-        path_to_infection_states,
+        args.path_to_loc_types,
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step)
