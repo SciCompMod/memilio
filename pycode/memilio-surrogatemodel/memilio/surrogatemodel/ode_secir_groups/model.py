@@ -42,7 +42,7 @@ def plot_compartment_prediction_model(
     :param plot_col: string name of compartment to be plotted.
     :param max_subplots: Number of the simulation runs to be plotted and compared against. (Default value = 8)
     :param plot_compartment:  (Default value = 'InfectedSymptoms')
-
+    :returns: No return 
     """
     num_groups = 6
     num_compartments = 8
@@ -151,7 +151,6 @@ def calc_split_index(n, split_train=0.7,
     :param split_train: value between 0 and 1
     :param split_valid: value between 0 and 1
     :param split_test: value between 0 and 1
-
     :returns: a list of the form [i_train, i_valid, i_test]
     """
     if split_train + split_valid + split_test > 1 + 1e-10:
@@ -167,7 +166,8 @@ def calc_split_index(n, split_train=0.7,
 def flat_input(input):
     """ Flatten input dimension
 
-    :param input: input array
+    :param input: input array of size (n,k,l)
+    :returns: reshaped array of size (n, k*l)
 
     """
     dim = tf.reduce_prod(tf.shape(input)[1:])
@@ -181,8 +181,7 @@ def prepare_data_classic(data):
     :param data: dictionary produces by data_generation
     :returns: dictionary with entries {
         "train_inputs", "train_labels", "valid_inputs",
-        "valid_labels", "test_inputs", "test_labels"
-    }
+        "valid_labels", "test_inputs", "test_labels"}
     """
     # Getting number of samples
     n = data["inputs"].shape[0]
@@ -374,7 +373,7 @@ def network_fit(
     :param path: path of the dataset.
     :param filename: name of the file containing the data 
     :param plot:  (Default value = True)
-
+    :returns: training history as returned by the keras fit() method. 
     """
     # Unpacking training parameters
     early_stop, max_epochs, loss, optimizer, metrics = training_parameter
@@ -431,7 +430,7 @@ def plot_losses(history):
     """ Plots the losses of the model training.
 
     :param history: model training history.
-
+    :returns: No return 
     """
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
@@ -451,7 +450,7 @@ def get_test_statistic(test_inputs, test_labels, model):
     :param test_inputs: inputs from test data.
     :param test_labels: labels (output) from test data.
     :param model: trained model.
-
+    :returns: dataframe containing the MAPE for the different compartments  
     """
 
     pred = model(test_inputs)

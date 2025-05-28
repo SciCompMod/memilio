@@ -30,6 +30,7 @@ def mlp_multi_input_single_output(num_age_groups=6, num_outputs=8, num_hidden_la
     :param num_hidden_layers: Number of hidden dense layers in the MLP architecture 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: name of the used activation function
+    :returns: Tensorflow keras model with given architecture
     """
 
     # Catching unallowed inputs
@@ -65,7 +66,7 @@ def mlp_multi_input_single_output(num_age_groups=6, num_outputs=8, num_hidden_la
 
 
 def mlp_multi_input_multi_output(label_width, num_age_groups=6, num_outputs=8, num_hidden_layers=3, num_neurons_per_layer=32, activation='relu'):
-    """ Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for multiple time step.
+    """ Simple MLP Network which takes the compartments for multiple time steps as input and returns the compartments for multiple time step.
 
     Reshaping adds an extra dimension to the output, so the shape of the output is label_widthx(num_age_groups*num_outputs). This makes the shape comparable to that of the multi-output models.
 
@@ -75,6 +76,7 @@ def mlp_multi_input_multi_output(label_width, num_age_groups=6, num_outputs=8, n
     :param num_hidden_layers: Number of hidden dense layers in the MLP architecture 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: name of the used activation function
+    :returns: MLP network with given architecture 
     """
 
     # Catching unallowed inputs
@@ -124,6 +126,7 @@ def cnn_multi_input_multi_output(label_width, num_age_groups=6, num_outputs=8, c
     :param num_hidden_layers: Number of layers in the dense network following the convolution layer 
     :param num_neurons_per_layer: Number of neurons in each of the hidden layers (except the output layer)
     :param activation: activation function used in the hidden MLP-layers. 
+    :returns: Tensorflow keras CNN model with given architecture
     """
     # Catching unallowed inputs
     if label_width < 1:
@@ -180,6 +183,7 @@ def lstm_multi_input_multi_output(label_width, num_age_groups=6, num_outputs=8, 
     :param num_hidden_layers: Number of hidden layers in the dense network 
     :param num_neurons_per_layer: Number of neurons per hidden layer 
     :param activation: Name of the used activation function
+    :retruns: Tensorflow keras LSTM model with given architecture
     """
     # Catching unallowed inputs
     if label_width < 1:
