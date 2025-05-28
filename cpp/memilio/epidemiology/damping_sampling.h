@@ -162,7 +162,7 @@ public:
      * The groups correspond to e.g. age groups in the SECIR model.
      * @return weights of groups.
      */
-    const Eigen::VectorXd& get_group_weights() const
+    const Eigen::VectorX<FP>& get_group_weights() const
     {
         return m_groups;
     }
@@ -244,7 +244,7 @@ private:
     DampingType m_type;
     SimulationTime<FP> m_time;
     std::vector<size_t> m_matrices;
-    Eigen::VectorXd m_groups;
+    Eigen::VectorX<FP> m_groups;
 };
 
 /**
