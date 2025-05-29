@@ -499,6 +499,7 @@ protected:
  * GammaSurvivalFunction is derived from StateAgeFunction.
  * The shape parameter of the Gamma function is the parameter of the StateAgeFunction.
  * If shape is an unsigned integer, the Gamma distribution simplifies to an Erlang distribution.
+ * Does not support automatic differentiation.
  */
 template <typename FP>
 struct GammaSurvivalFunction : public StateAgeFunction<FP> {
@@ -568,6 +569,7 @@ protected:
 /**
  * @brief Class that defines an LognormSurvivalFunction function depending on the state age.
  * A survival function is defined as 1 - cumulative density function.
+ * Does not support automatic differentiation.
  */
 template <typename FP>
 struct LognormSurvivalFunction : public StateAgeFunction<FP> {
