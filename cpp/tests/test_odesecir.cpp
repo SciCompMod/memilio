@@ -1447,6 +1447,22 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
     mio::set_log_level(mio::LogLevel::warn);
 }
 
+TEST(TestOdeSecir, set_divi_data_empty_data)
+{
+    // Create an empty DIVI data vector
+    std::vector<mio::DiviEntry> empty_data;
+    std::vector<int> regions = {0, 1};
+    std::vector<double> num_icu(regions.size(), 0.0);
+    mio::Date date(2020, 4, 1);
+
+    auto result = mio::compute_divi_data(empty_data, regions, date, num_icu);
+
+    // Expect failure due to empty DIVI data
+    EXPECT_FALSE(result);
+    EXPECT_EQ(result.error().code(), mio::StatusCode::InvalidValue);
+    EXPECT_EQ(result.error().message(), "DIVI data is empty.");
+}
+
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 {
     // set params
@@ -1490,6 +1506,20 @@ TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
             model_vector[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
         EXPECT_NEAR(actual_value, expected_value, 1e-10);
     }
+}
+
+TEST(TestOdeSecir, read_population_data_failure)
+{
+    // Create invalid population data entry without county_id or district_id
+    std::vector<mio::PopulationDataEntry> invalid_data;
+    mio::PopulationDataEntry invalid_entry;
+    invalid_data.push_back(invalid_entry);
+
+    // Test that read_population_data returns failure with correct message
+    auto result = mio::read_population_data(invalid_data, {1001});
+    EXPECT_FALSE(result);
+    EXPECT_EQ(result.error().code(), mio::StatusCode::InvalidFileFormat);
+    EXPECT_EQ(result.error().message(), "File with county population expected.");
 }
 
 #endif
