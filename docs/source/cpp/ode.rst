@@ -1,4 +1,4 @@
-ODE Models
+ODE models
 ==========
 
 MEmilio implements various models based on ordinary differential equations (ODEs). ODE-based models are a subclass of 
@@ -10,7 +10,7 @@ In the following, we present the general structure for all simple ODE-based mode
 Chain Trick and Erlang distributed stay times, see :doc:`here <lct>`. For spatially resolved Graph-ODE models, 
 see :doc:`here <graph_metapop>`. The particular model documentations with examples are linked at the bottom of this page.
 
-Infection States
+Infection states
 ----------------
 
 Every model contains a list of **InfectionState**\s that define particular features of the subpopulations in the particular state.
@@ -22,7 +22,7 @@ Every model contains a list of **InfectionState**\s that define particular featu
     `...`
 
 
-Infection State Transitions
+Infection state transitions
 ---------------------------
 
 Our ODE-based models are either implemented as **FlowModel** or as **CompartmentalModel**. In a **FlowModel**, flows 
@@ -32,7 +32,7 @@ between states and directly enables users to access new transmissions or hospita
 The simpler class **CompartmentalModel** only considers the states of the system and not the flows.
 
 
-Sociodemographic Stratification
+Sociodemographic stratification
 -------------------------------
 
 For most models, the population can also be stratified by one sociodemographic dimension. This dimension is denoted 
@@ -75,7 +75,7 @@ each **InfectionState** and sociodemographic group.
 
 
 .. _Nonpharmaceutical Interventions:
-Nonpharmaceutical Interventions
+Nonpharmaceutical interventions
 -------------------------------
 
 Contact rates can be adjusted during the simulation to model nonpharmaceutical interventions (NPIs) such as lockdowns, 
