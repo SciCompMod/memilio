@@ -496,15 +496,15 @@ public:
      * (starting at 1, as "Time" is used for column 0). Labels in the column_labels vector that go beyond the TimeSeries column
      * numbers are ignored.
      *
-     * @param column_labels Vector of custom labels for each column.
-     * @param width The number of characters reserved for each number.
-     * @param precision The number of decimals.
-     * @param out Which ostream to use. Prints to terminal by default.
-     * @param separator Delimiter character between columns.
-     * @param header_prefix Prefix before the header row.
+     * @param[in] column_labels Vector of custom labels for each column.
+     * @param[in] width The number of characters reserved for each number.
+     * @param[in] precision The number of decimals.
+     * @param[in,out] out Which ostream to use. Prints to terminal by default.
+     * @param[in] separator Delimiter character between columns.
+     * @param[in] header_prefix Prefix before the header row.
      */
     void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
-                     std::ostream& out = std::cout, char separator = ' ', const char* header_prefix = "\n") const
+                     std::ostream& out = std::cout, char separator = ' ', const std::string header_prefix = "\n") const
     {
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
@@ -517,7 +517,7 @@ public:
                 set_ostream_format(out, w, p) << std::left << column_labels[k];
             }
             else {
-                set_ostream_format(out, w, p) << std::left << "#" + std::to_string(k + 1);
+                set_ostream_format(out, w, p) << std::left << "C" + std::to_string(k + 1);
             }
         }
         // print values as table
@@ -539,24 +539,29 @@ public:
      *
      * The first column of the CSV file contains the time points. The remaining columns
      * contain the values at each time point. Column headers can be specified with column_labels.
+     * This function utilizes the print_table method with a width of 1, the 
+     * specified separator, and an empty string as header prefix.
      *
-     * @param filepath Path to the CSV file.
-     * @param column_labels [Default: {}] Vector of labels for each column after the time column.
-     * @param separator [Default: ','] Separator character.
-     * @param precision [Default: 6] Number of decimals for floating point values.
-     * @return bool Indicates success or failure.
+     * @param[in] filepath Path to the CSV file.
+     * @param[in] column_labels [Default: {}] Vector of labels for each column after the time column.
+     * @param[in] separator [Default: ','] Separator character.
+     * @param[in] precision [Default: 6] Number of decimals for floating point values.
+     * @return IOResult<void> indicating success or failure.
      */
-    bool export_csv(const std::string& filename, const std::vector<std::string>& column_labels = {},
-                    char separator = ',', int precision = 6) const
+    IOResult<void> export_csv(const std::string& filename, const std::vector<std::string>& column_labels = {},
+                              char separator = ',', int precision = 6) const
     {
         std::ofstream file(filename);
         if (!file.is_open()) {
-            return false;
+            return mio::failure(mio::StatusCode::InvalidValue, "cannot write csv to " + filename);
         }
 
-        // Use print_table to write the CSV file with width=1, "," separator, and no header prefix
         print_table(column_labels, 1, precision, file, separator, "");
-        return true;
+
+        if (!file.good()) {
+            return mio::failure(mio::StatusCode::UnknownError, "Error writing data to " + filename);
+        }
+        return mio::success();
     }
 
     /**
