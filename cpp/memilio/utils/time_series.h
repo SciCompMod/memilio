@@ -557,10 +557,6 @@ public:
         }
 
         print_table(column_labels, 1, precision, file, separator, "");
-
-        if (!file.good()) {
-            return mio::failure(mio::StatusCode::UnknownError, "Error writing data to " + filename);
-        }
         return mio::success();
     }
 
