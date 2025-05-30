@@ -486,7 +486,7 @@ public:
     /**
      * @brief Print out the TimeSeries as a table.
      *
-     * All entries in the table are spaced separated with a delimiter character. The first row of the table starts with
+     * All row entries in the table are separated by the given separator, followed by additional spaces filling the width of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
@@ -540,7 +540,7 @@ public:
      * The first column of the CSV file contains the time points. The remaining columns
      * contain the values at each time point. Column headers can be specified with column_labels.
      *
-     * @param filename Path to the CSV file
+     * @param filepath Path to the CSV file.
      * @param column_labels [Default: {}] Vector of labels for each column after the time column.
      * @param separator [Default: ','] Separator character.
      * @param precision [Default: 6] Number of decimals for floating point values.
