@@ -139,7 +139,6 @@ def lstm_network_multi_input_single_output(num_outputs=8, internal_dimension=32,
     # Adding output layer and reshaping
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=num_outputs))
-    # model.add(tf.keras.layers.Reshape([1, -1]))
     return model
 
 
