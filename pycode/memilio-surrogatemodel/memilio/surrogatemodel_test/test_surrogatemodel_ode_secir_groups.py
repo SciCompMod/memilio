@@ -490,7 +490,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
-        optimizer = "AdamW"
+        optimizer = "Adam"
         metric = [tf.keras.metrics.MeanAbsoluteError(),
                   tf.keras.metrics.MeanAbsolutePercentageError()]
 
