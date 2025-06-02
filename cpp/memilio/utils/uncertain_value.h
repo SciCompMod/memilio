@@ -51,18 +51,18 @@ public:
     {
     }
 
-    UncertainValue(FP v = static_cast<FP>(0.))
+    UncertainValue(FP v = 0.0)
         : m_value(v)
     {
     }
 
-    UncertainValue(UncertainValue&& other) = default;
+    UncertainValue(UncertainValue<FP>&& other) = default;
 
     /**
     * @brief Create an UncertainValue by cloning scalar value 
     *        and distribution of another UncertainValue
     */
-    UncertainValue(const UncertainValue& other)
+    UncertainValue(const UncertainValue<FP>& other)
         : m_value(other.m_value)
     {
         if (other.m_dist) {
@@ -74,9 +74,9 @@ public:
     * @brief Set an UncertainValue from another UncertainValue
     *        containing a scalar and a distribution
     */
-    UncertainValue& operator=(const UncertainValue& other)
+    UncertainValue<FP>& operator=(const UncertainValue<FP>& other)
     {
-        UncertainValue tmp(other);
+        UncertainValue<FP> tmp(other);
         m_value = tmp.m_value;
         std::swap(m_dist, tmp.m_dist);
         return *this;
@@ -105,9 +105,29 @@ public:
     /**
      * @brief Set an UncertainValue from a scalar, distribution remains unchanged.
      */
-    UncertainValue& operator=(FP v)
+    UncertainValue<FP>& operator=(const FP& v)
     {
         m_value = v;
+        return *this;
+    }
+    UncertainValue<FP>& operator+=(const FP& v)
+    {
+        m_value += v;
+        return *this;
+    }
+    UncertainValue<FP>& operator-=(const FP& v)
+    {
+        m_value -= v;
+        return *this;
+    }
+    UncertainValue<FP>& operator*=(const FP& v)
+    {
+        m_value *= v;
+        return *this;
+    }
+    UncertainValue<FP>& operator/=(const FP& v)
+    {
+        m_value /= v;
         return *this;
     }
 
@@ -178,7 +198,7 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<UncertainValue> deserialize(IOContext& io)
+    static IOResult<UncertainValue<FP>> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("UncertainValue");
         if (!(io.flags() & IOF_OmitValues) && !(io.flags() & IOF_OmitDistributions)) {
@@ -187,7 +207,7 @@ public:
             return apply(
                 io,
                 [](auto&& v_, auto&& d_) {
-                    auto uv = UncertainValue(v_);
+                    auto uv = UncertainValue<FP>(v_);
                     if (d_) {
                         uv.set_distribution(**d_);
                     }
@@ -200,7 +220,7 @@ public:
             return apply(
                 io,
                 [](auto&& v_) {
-                    return UncertainValue(v_);
+                    return UncertainValue<FP>(v_);
                 },
                 v);
         }
@@ -209,7 +229,7 @@ public:
             return apply(
                 io,
                 [](auto&& d_) {
-                    auto uv = UncertainValue();
+                    auto uv = UncertainValue<FP>();
                     if (d_) {
                         uv.set_distribution(**d_);
                     }
