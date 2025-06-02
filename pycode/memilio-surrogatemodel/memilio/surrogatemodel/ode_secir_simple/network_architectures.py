@@ -53,14 +53,14 @@ def mlp_multi_input_single_output(num_outputs=8, num_hidden_layers=3, num_neuron
             units=num_neurons_per_layer, activation=activation))
 
     # Adding output layer and reshaping output
+    model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=num_outputs))
-    model.add(tf.keras.layers.Reshape([1, -1]))
 
     return model
 
 
 def mlp_multi_input_multi_output(label_width, num_outputs=8, num_hidden_layers=3, num_neurons_per_layer=32, activation='relu'):
-    """ Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for multiple time step.
+    """ Simple MLP Network which takes the compartments for multiple time steps as input and returns the 8 compartments for multiple time steps.
 
     Reshaping adds an extra dimension to the output, so the shape of the output is 1xnum_outputs. This makes the shape comparable to that of the multi-output models.
 
@@ -137,8 +137,9 @@ def lstm_network_multi_input_single_output(num_outputs=8, internal_dimension=32,
             units=num_neurons_per_layer, activation=activation))
 
     # Adding output layer and reshaping
+    model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=num_outputs))
-    model.add(tf.keras.layers.Reshape([1, -1]))
+    # model.add(tf.keras.layers.Reshape([1, -1]))
     return model
 
 

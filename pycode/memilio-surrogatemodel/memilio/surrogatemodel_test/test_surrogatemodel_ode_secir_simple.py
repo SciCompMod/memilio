@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2025 MEmilio
 #
-# Authors:
+# Authors: Manuel Heger
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -47,7 +47,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def test_simulation_run(self):
-        """ """
+        """ Checking if simulated data for one sample using run_secir_simple_simulation has the desired length"""
 
         days_1 = 10
         days_2 = 30
@@ -62,7 +62,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(simulation_3), days_3+1)
 
     def test_data_generation_runs(self):
-        """ """
+        """ Testing if data_generation produces data with desired dimensions """
 
         input_width_1 = 1
         input_width_2 = 3
@@ -94,7 +94,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(data_2['labels'][0][0]), 8)
 
     def test_data_generation_save(self):
-        """ """
+        """ Checking if saving results as pickle-file is possible """
 
         input_width = 2
         label_width = 3
@@ -107,10 +107,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path),
                          ['data_secir_simple_3days_1.pickle'])
 
-    # Testing network_architectures.py
-
-    # Testing mlp_multi_input_single_output
     def test_mlp_multi_single(self):
+        """" testing initialization of MLP architectures works correctly """
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_single_output(
                 0, 1, 1
@@ -133,15 +131,16 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         model = network_architectures.mlp_multi_input_single_output(3, 4, 84)
+        # Layers: Flatten layer + hidden layers + flatten layer + output layer
         self.assertEqual(len(model.layers), 7)
         input_zero = np.zeros((1, 5, 8))
         output_zeros = model(input_zero)
+        # Output has shape (1, num_outputs)
         self.assertEqual(output_zeros.shape[0], 1)
-        self.assertEqual(output_zeros.shape[1], 1)
-        self.assertEqual(output_zeros.shape[2], 3)
+        self.assertEqual(output_zeros.shape[1], 3)
 
-# Testing mlp_multi_input_multi_output
-    def test_mlp_multi_single(self):
+    def test_mlp_multi_multi(self):
+        """" testing initialization of MLP architectures works correctly """
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_multi_output(
                 0, 12, 12, 12
@@ -172,15 +171,17 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
         model = network_architectures.mlp_multi_input_multi_output(
             12, 3, 4, 84)
+        # Layers: flatten layers + hidden layers + output layer + reshape layer
         self.assertEqual(len(model.layers), 7)
-        input_zero = np.zeros((1, 5, 8))
+        input_zero = np.zeros((2, 5, 8))
         output_zeros = model(input_zero)
-        self.assertEqual(output_zeros.shape[0], 1)
+        # Output has shape (Number of samples, label width, number of outputs)
+        self.assertEqual(output_zeros.shape[0], 2)
         self.assertEqual(output_zeros.shape[1], 12)
         self.assertEqual(output_zeros.shape[2], 3)
 
-# testing lstm_network_multi_input_single_output
     def test_lstm_multi_single(self):
+        """" testing initialization of LSTM architectures works correctly """
         with self.assertRaises(ValueError) as error:
             network_architectures.lstm_network_multi_input_single_output(
                 0, 12, 12, 12
@@ -208,18 +209,18 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             )
         error_message = "Number of neurons per layer must be at least 1, here 0"
         self.assertEqual(str(error.exception), error_message)
-
         model = network_architectures.lstm_network_multi_input_single_output(
-            num_outputs=12, num_hidden_layers=4)
+            num_outputs=5, num_hidden_layers=4)
+        # model: LSTM-layer + hidden layers + output layer + reshape layer, here 1+4+1+1
         self.assertEqual(len(model.layers), 7)
         input_zero = np.zeros((1, 5, 3))
         output_zeros = model(input_zero)
+        # Dimensionality output (1, Number of outputs), here (1,5)
         self.assertEqual(output_zeros.shape[0], 1)
-        self.assertEqual(output_zeros.shape[1], 1)
-        self.assertEqual(output_zeros.shape[2], 60)
+        self.assertEqual(output_zeros.shape[1], 5)
 
-# testing lstm_multi_input_multi_output
     def test_lstm_multi_multi(self):
+        """" testing initialization of LSTM architectures works correctly """
         with self.assertRaises(ValueError) as error:
             network_architectures.lstm_multi_input_multi_output(
                 0, 12, 12, 12, 12
@@ -257,15 +258,17 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
         model = network_architectures.lstm_multi_input_multi_output(
             3, 84, 4, 12)
+        # model: LSTM-layer + hidden layers + output layer + reshape layer, here 1+12+1+1
         self.assertEqual(len(model.layers), 15)
         input_zero = np.zeros((1, 5, 8))
         output_zeros = model(input_zero)
+        # Dimensionality output (Number of samples, label width, Number of outputs per day), here (1,3,84)
         self.assertEqual(output_zeros.shape[0], 1)
         self.assertEqual(output_zeros.shape[1], 3)
         self.assertEqual(output_zeros.shape[2], 84)
 
-# testing cnn_multi_input_multi_output
     def test_cnn_multi_multi(self):
+        """" testing initialization of CNN architectures works correctly """
         with self.assertRaises(ValueError) as error:
             network_architectures.cnn_multi_input_multi_output(
                 label_width=0, conv_size=3, num_outputs=8, num_filters=12,
@@ -310,18 +313,18 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             label_width=3, conv_size=3, num_outputs=42, num_filters=2,
             num_hidden_layers=23, num_neurons_per_layer=12
         )
+        # lambda layer + conv layer + hidden layers + output layer + reshape layer -> 1+1+23+1+1 = 27
         self.assertEqual(len(model.layers), 27)
         input_zero = np.zeros((1, 5, 8))
         output_zeros = model(input_zero)
+        # Dimensionality output (Number of samples, label width, Number of outputs per day), here (1,3,42)
         self.assertEqual(output_zeros.shape[0], 1)
         self.assertEqual(output_zeros.shape[1], 3)
         self.assertEqual(output_zeros.shape[2], 42)
 
-# testing nmodel.py
-# testing initalize_model
-
     def test_initialize_model(self):
-
+        """" Testing wheter initialization via initialize_model works correctly """
+        # Deleting any automatically added numbering like ("Dense_01" -> "Dense")
         def normalize_config(config):
             config.pop('name', None)
             for layer in config["layers"]:
@@ -373,9 +376,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
                         normalize_config(model.get_config()),
                         normalize_config(model_cnn.get_config()))
 
-    # testing network_fit
-
     def test_network_fit(self):
+        """ Test for training of network """
         max_epochs = 1
 
         early_stop = 100
@@ -387,7 +389,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         training_parameter = (
             early_stop, max_epochs, loss, optimizer, metric)
 
-        # generate dataset with multiple output
+        # generate dataset with multiple outputs
         label_width = 10
 
         inputs = tf.ones([5, 5, 8])
@@ -416,10 +418,8 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(
             len(lstm_output.history['val_loss']), max_epochs)
 
-    # testing grid_search.py
-    # testing train_and_evaluate_model
     def test_train_and_evaluate_model(self):
-        # generate dataset with multiple output
+        """ Testing evaluation procedure """
         inputs = tf.ones([5, 5, 8])
         labels = tf.ones([5, 10, 8])
         max_epochs = 1
@@ -443,6 +443,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.surrogatemodel.ode_secir_simple.grid_search.train_and_evaluate_model')
     def test_perform_grid_search(self, mock_train_and_evaluate_model):
+        """ Testing gridsearch along a sequence of possible parameter values"""
         mock_train_and_evaluate_model.return_value = {
             "model": "._.",
             "activation": "relu",
@@ -453,7 +454,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             "train_losses": [3],
             "val_losses": [6]
         }
-        filename_df = "dataframe_optimizer.csv"
+        filename_df = "dataframe_optimizer"
         os.mkdir(self.path)
 
         # General grid search parameters for the training process:
@@ -494,11 +495,13 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(os.path.join(self.path,  'secir_simple_grid_search')),
-                         [filename_df])
+                         [filename_df+".pickle"])
 
         # testing size of the output
         path_name = os.path.join(self.path,  'secir_simple_grid_search')
-        df = pd.read_csv(os.path.join(path_name, filename_df))
+        with open(os.path.join(path_name, filename_df + ".pickle"), "rb") as f:
+            d = pickle.load(f)
+        df = pd.DataFrame(d)
         self.assertEqual(len(df['model']), 4)
 
 
