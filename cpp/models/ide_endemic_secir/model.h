@@ -120,7 +120,7 @@ private:
 
     void update_compartment_with_sum(InfectionState infectionState,
                                      std::vector<InfectionTransition> const& IncomingFlows, bool NaturalDeathispossible,
-                                     ScalarType dt);
+                                     bool Transitionispossible, ScalarType dt);
     /**
      * @brief Updates the values of one compartment, specified in infectionState, using the transitions.
      * 
@@ -265,6 +265,12 @@ private:
     TimeSeries<ScalarType> m_totalpopulationupdate{TimeSeries<ScalarType>(
         1)}; ///< TimeSeries containing the total population size of the considered region for each time point.
     //In this case we use the compartments from populations_update.
+    // TimeSeries<ScalarType> m_totalpopulationincludingD{TimeSeries<ScalarType>(
+    //     1)}; ///< TimeSeries containing the total population size + the all persons who died of the disease
+    // // of the considered region for each time point.
+    // TimeSeries<ScalarType> m_totalpopulationupdateincludingD{TimeSeries<ScalarType>(
+    //     1)}; ///< TimeSeries containing the total population size + the all persons who died of the disease
+    // // of the considered region for each time point. In this case we use the compartments from populations_update.
     TimeSeries<ScalarType> m_normalizedpopulations{
         TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count) -
                                1)}; ///< TimeSeries containing points of time and the corresponding portion
@@ -277,10 +283,10 @@ private:
         std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< A vector containing the support_max
     // for all TransitionDistributions.
     std::vector<std::vector<ScalarType>> m_transitiondistributions{std::vector<std::vector<ScalarType>>(
-        (int)InfectionTransition::Count,
+        (int)InfectionState::Count,
         std::vector<ScalarType>(1, 0.))}; ///> A vector containing the weighted TransitionDistributions.
     std::vector<std::vector<ScalarType>> m_transitiondistributions_derivative{std::vector<std::vector<ScalarType>>(
-        (int)InfectionState::Count, std::vector<ScalarType>(1, 0.))}; ///> A Vector containing
+        (int)InfectionTransition::Count, std::vector<ScalarType>(1, 0.))}; ///> A Vector containing
     // the approximated derivative for all TransitionDistributions for all necessary time points.
     std::vector<ScalarType> m_meaninfectivity{
         std::vector<ScalarType>(1, 0.)}; ///> a vector containing the approximated mean infectivity for all time points.

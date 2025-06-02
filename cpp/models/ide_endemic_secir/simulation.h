@@ -35,6 +35,11 @@ public:
         return m_model->populations;
     }
 
+    TimeSeries<ScalarType> get_compartments_update()
+    {
+        return m_model->populations_update;
+    }
+
     TimeSeries<ScalarType> get_normalizedcompartments()
     {
         return m_model->m_normalizedpopulations;
@@ -47,6 +52,11 @@ public:
     TimeSeries<ScalarType>& get_compartments() const
     {
         return m_model->populations;
+    }
+
+    TimeSeries<ScalarType>& get_compartments_update() const
+    {
+        return m_model->populations_update;
     }
 
     TimeSeries<ScalarType>& get_normalizedcompartments() const
@@ -62,15 +72,40 @@ public:
         return m_model->transitions;
     }
 
+    TimeSeries<ScalarType> const& get_transitions_update()
+    {
+        return m_model->transitions_update;
+    }
+
     TimeSeries<ScalarType> const& get_forceofinfections()
     {
         return m_model->m_forceofinfection;
+    }
+
+    TimeSeries<ScalarType> const& get_forceofinfections_update()
+    {
+        return m_model->m_forceofinfectionupdate;
     }
 
     TimeSeries<ScalarType> const& get_totalpopulations()
     {
         return m_model->m_totalpopulation;
     }
+
+    TimeSeries<ScalarType> const& get_totalpopulations_update()
+    {
+        return m_model->m_totalpopulationupdate;
+    }
+
+    // TimeSeries<ScalarType> const& get_totalpopulations_includingD()
+    // {
+    //     return m_model->m_totalpopulationincludingD;
+    // }
+
+    // TimeSeries<ScalarType> const& get_totalpopulations_update_includingD()
+    // {
+    //     return m_model->m_totalpopulationupdateincludingD;
+    // }
 
     ScalarType const& get_reproductionnumber_c()
     {

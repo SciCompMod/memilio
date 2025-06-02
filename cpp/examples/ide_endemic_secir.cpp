@@ -19,7 +19,7 @@ int main()
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     ScalarType tmax = 10;
-    ScalarType dt   = 0.1;
+    ScalarType dt   = 1.;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -75,8 +75,10 @@ int main()
     model.parameters.get<mio::endisecir::RelativeTransmissionNoSymptoms>() = exponential_prob;
     model.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    model.parameters.set<mio::endisecir::NaturalBirthRate>(5e-3);
-    model.parameters.set<mio::endisecir::NaturalDeathRate>(3e-3);
+    model.parameters.set<mio::endisecir::NaturalBirthRate>(0.);
+    model.parameters.set<mio::endisecir::NaturalDeathRate>(0.);
+
+    //model.set_tol_for_support_max(1e-6);
 
     // start the simulation.
     mio::endisecir::Simulation sim(model, dt);
@@ -86,6 +88,9 @@ int main()
 
     interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 
+    auto interpolated_results_update = mio::interpolate_simulation_result(sim.get_compartments_update(), dt / 2.);
+
+    // interpolated_results_update.print_table({"US", "UE", "UC", "UI", "UH", "UU", "UR", "UD"}, 16, 8);
     // Uncomment to print the reproduction number
     std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
 
@@ -100,7 +105,8 @@ int main()
     sim.get_totalpopulations().print_table({"N"}, 16, 9);
 
     // Uncomment to print the force of infection.
-    sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
+    //sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
+    //sim.get_forceofinfections_update().print_table({"FoIUpdate"}, 16, 8);
 
     // std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
     // std::cout << "Equilibrium normalized compartments: \n";
