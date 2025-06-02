@@ -12,6 +12,9 @@ changes to create a more pythonic interface. We will follow the example of an
 ODE SEIR model starting with a comparison of the model initialization between
 Python and C++.
 
+Define Model
+------------
+
 .. grid:: 1 1 2 2
 
    .. grid-item::
@@ -19,7 +22,7 @@ Python and C++.
       Python:
 
       .. code-block:: python
-
+         
          import memilio.simulation.oseir as oseir
 
          num_groups = 1
@@ -34,17 +37,23 @@ Python and C++.
 
          #include "ode_seir/model.h"
 
-         mio::oseir::Model<ScalarType> model(1);
+         int num_groups = 1;
+         mio::oseir::Model<ScalarType> model(num_groups);
 
 
 Next, the parameters should be defined of the scenario you want to model. The model has the 
-possibility to incorporate age stratification, which leads to many of the parameters to have 
-values for each age group. The AgeGroup is used for indexing, which leads for the example model
-with a single group defined by num_groups to the parameter definitions.
+possibility to incorporate age stratification, which leads to many of the parameters having 
+values for each age group. The AgeGroup is used for indexing. For the example model
+with a single age group defined by num_groups the parameter definitions follow as
+
+Initialize Parameters
+---------------------
 
 .. code-block:: python
 
-   A0 = AgeGroup(0)
+   import memilio.simulation as mio
+
+   A0 = mio.AgeGroup(0)
 
    # Compartment transition duration
    model.parameters.TimeExposed[A0] = 5.2
@@ -56,54 +65,74 @@ with a single group defined by num_groups to the parameter definitions.
 AgeGroup(0) defines the first age group. For a model with more than one age group,
 we could index the other groups with AgeGroup(1), AgeGroup(2), ....
 
-We also need to define the inital states of the population. As they are not only divided through an age group,
-but also an infection state, we need to add an index of the enum InfectionState.
+Initial Conditions
+-------------------
+
+We also need to define the inital states of the population. They are not only divided through an age group,
+but also an infection state, such that an additional index of the enum InfectionState has to be provided.
 
 .. code-block:: python
 
    total_population = 83_000
 
-   model.populations[A0, InfectionState.Exposed] = 100
-   model.populations[A0, InfectionState.Infected] = 50
-   model.populations[A0, InfectionState.Recovered] = 10
+   model.populations[A0, oseir.InfectionState.Exposed] = 100
+   model.populations[A0, oseir.InfectionState.Infected] = 50
+   model.populations[A0, oseir.InfectionState.Recovered] = 10
    model.populations.set_difference_from_total(
-      (A0, InfectionState.Susceptible), total_population)
+      (A0, oseir.InfectionState.Susceptible), total_population)
 
 The function model.populations.set_difference_from_total hepls by setting the last compartment with
 a total population size of the scenario and will take the difference to the combined other compartments
 of the age group.
 
+Nonpharmaceutical interventions
+-------------------------------
 
-Now we could simulate with:
+Simulation
+----------
+
+Now we could simulate the infectious diesease dynamic by calling simulate:
 
 .. code-block:: python
 
-   result = simulate(0, days, dt, model)
+   result = oseir.simulate(0, t_max, dt, model)
 
 Similar to the MEmilio C++ library, the python interface provides the option of adjusting the solver.
 Currently available:
--
--
+
+* Euler
+* RungeKuttaCashKarp54 (default)
+* RungeKutta-Fehlberg45
+
+The integrator can be changed as the last parameter of the simulate function.
 
 .. code-block:: python
 
-   result = simulate(0, days, dt, model)
+   integrator = mio.RKIntegratorCore(dt_max=1)
+   result = oseir.simulate(0, days, dt, model, integrator)
 
-parameter setting with spatial resolution
+Output and Visualization
+-------------------------
 
-simulation
-redefining the solver
+The result returned from the simulation is a TimeSeries object containing the number of people per age group in each infection state at each time step.
+The TimeSeries provides alot of interfaces to interact with it, but can also be transformed into a multidimensional numpy matrix for a more
+pythonic interface.
 
-Working with the output
+.. code-block:: python
+   
+   result_array = result.as_ndarray()
 
-Expanding to graph model
+Now you can use the usual data handling options and make us of the easy visualization tools that are part of Python.
+Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <memilio_plot>`.
 
-More examples:
+Additional Ressources
+---------------------
 
-- `examples/ode_secir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir.cpp>`_
-- `examples/ode_secir_ageres.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_ageres.cpp>`_
-- `examples/ode_secir_parameter_study.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_parameter_study.cpp>`_
+Further examples are provided at `examples/simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation/>`_. 
+They include the usage of a FlowModel, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
 
+Limitations
+-----------
 
 Lastly Limitations with introduction of model creation
 
