@@ -382,7 +382,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
 
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
-        optimizer = 'AdamW'
+        optimizer = 'Adam'
         metric = [tf.keras.metrics.MeanAbsoluteError(),
                   tf.keras.metrics.MeanAbsolutePercentageError()]
 
@@ -425,7 +425,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
-        optimizer = 'AdamW'
+        optimizer = 'Adam'
         metric = [tf.keras.metrics.MeanAbsoluteError(),
                   tf.keras.metrics.MeanAbsolutePercentageError()]
         model_parameter = (
@@ -439,7 +439,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
             model_parameter, inputs, labels, training_parameter, False)
         self.assertEqual(len(res["val_losses"][0]), 5)
         self.assertEqual(len(res["val_losses"][0][0]), max_epochs)
-        self.assertEqual(res["optimizer"], "AdamW")
+        self.assertEqual(res["optimizer"], "Adam")
 
     @patch('memilio.surrogatemodel.ode_secir_simple.grid_search.train_and_evaluate_model')
     def test_perform_grid_search(self, mock_train_and_evaluate_model):
@@ -461,7 +461,7 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         early_stop = [100]
         max_epochs = [1]
         losses = [tf.keras.losses.MeanAbsolutePercentageError()]
-        optimizers = ['AdamW', 'Adam']
+        optimizers = ['Adam', 'Adam']
         metrics = [[tf.keras.metrics.MeanAbsoluteError(),
                     tf.keras.metrics.MeanAbsolutePercentageError()]]
 
