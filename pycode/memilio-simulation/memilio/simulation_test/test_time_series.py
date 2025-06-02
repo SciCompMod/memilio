@@ -93,7 +93,7 @@ class Test_TimeSeries(unittest.TestCase):
         ts.export_csv(temp_filename, ["Col1", "Col2"], ',', 2)
 
         # Read and verify the file contents
-        with open(temp_filename, 'r') as f:
+        with open(temp_filename) as f:
             content = f.read()
 
         expected = "Time,Col1,Col2\n1.00,10.00,20.00\n2.50,15.00,25.00\n"
