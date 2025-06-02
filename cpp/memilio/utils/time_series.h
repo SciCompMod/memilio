@@ -496,15 +496,19 @@ public:
      * (starting at 1, as "Time" is used for column 0). Labels in the column_labels vector that go beyond the TimeSeries column
      * numbers are ignored.
      *
+     * This method can be called in two ways:
+     * 1. With an output stream as the first parameter: print_table(out, column_labels, width, precision, separator, header_prefix)
+     * 2. Without specifying an output stream (defaults to std::cout): print_table(column_labels, width, precision, separator, header_prefix)
+     *
+     * @param[in,out] out Which ostream to use (optional, see above).
      * @param[in] column_labels Vector of custom labels for each column.
      * @param[in] width The number of characters reserved for each number.
      * @param[in] precision The number of decimals.
-     * @param[in,out] out Which ostream to use. Prints to terminal by default.
      * @param[in] separator Delimiter character between columns.
      * @param[in] header_prefix Prefix before the header row.
      */
-    void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
-                     std::ostream& out = std::cout, char separator = ' ', const std::string header_prefix = "\n") const
+    void print_table(std::ostream& out, const std::vector<std::string>& column_labels = {}, size_t width = 16,
+                     size_t precision = 5, char separator = ' ', const std::string header_prefix = "\n") const
     {
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
@@ -535,6 +539,15 @@ public:
     }
 
     /**
+     * @brief Overload of print_table that uses std::cout as the output stream per default.
+     */
+    void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
+                     char separator = ' ', const std::string header_prefix = "\n") const
+    {
+        print_table(std::cout, column_labels, width, precision, separator, header_prefix);
+    }
+
+    /**
      * @brief Exports a TimeSeries object into a CSV file.
      *
      * The first column of the CSV file contains the time points. The remaining columns
@@ -556,7 +569,7 @@ public:
             return mio::failure(mio::StatusCode::InvalidValue, "cannot write csv to " + filename);
         }
 
-        print_table(column_labels, 1, precision, file, separator, "");
+        print_table(file, column_labels, 1, precision, separator, "");
         return mio::success();
     }
 
