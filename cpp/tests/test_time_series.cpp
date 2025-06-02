@@ -357,6 +357,13 @@ TYPED_TEST(TestTimeSeries, print_table)
     EXPECT_EQ(expected_output_3, actual_output_3);
 }
 
+TYPED_TEST(TestTimeSeries, print_table_cout_overload)
+{
+    // Just test that the call doesnt throw any exceptions
+    mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(1, 1);
+    ASSERT_NO_FATAL_FAILURE(ts.print_table());
+}
+
 TYPED_TEST(TestTimeSeries, export_csv)
 {
     // Fill time series with test data
