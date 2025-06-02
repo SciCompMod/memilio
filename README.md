@@ -23,27 +23,11 @@ and, in particular, for
 
 **Getting started**
 
-MEmilio builds upon different model types, equation-based and agent-based. Furthermore, there are hybrid, graph-ODE-based models. Among the equation-based models, we provide ordinary differential equation (ODE) and integro-differential equation (IDE) based models. In order to provide highly efficient model implementations, MEmilio builds upon a C++ backend for its model and simulation-related content. Data acquisition, plotting, and machine-learnt models are provided in Python.
 
-Details of the C++ implementation of the epidemiological models can be found in the cpp directory (see the [README](cpp/README.md) there). 
-
-Some regularly used data for simulations of a pathogen's spread in Germany, like contact and inter-county mobility, can be found in [data](data/README.md).
-
-In pycode, different MEmilio python packages are defined. Via our [memilio-simulation](pycode/memilio-simulation) package, you can run our C++ backend from python; this package uses [pybind11](https://github.com/pybind/pybind11) to bind our C++ model code. The [memilio-epidata](pycode/memilio-epidata) package provides tools to download and structure important data such as infection or mobility data. More about the python packages can be found in [Python README](pycode/README.rst).
-
-**Documentation**
-
-Each important part of the project described above is described in detail in the README in the corresponding directory. The README contains e.g. configuration and usage instructions for users and developers.
-
-Also, the code is documented with doxygen and a documentation with explanations and examples is provided using Sphinx. It can be found at 
-
+The documentation for MEmilio can be found at 
 https://memilio.readthedocs.io/en/latest/index.html
-
-**Installation, Usage and Requirements**
-
-Each part has different requirements and usage. Detailed instruction can be found in the corresponding READMEs.
 
 **Development**
 
-* [Git workflow and change process](https://github.com/SciCompMod/memilio/wiki/git-workflow)
-* [Coding Guidelines](https://github.com/SciCompMod/memilio/wiki/coding-guidelines)
+The coding guidelines and git workflow description can be found in the documentation at 
+https://memilio.readthedocs.io/en/latest/development.html
