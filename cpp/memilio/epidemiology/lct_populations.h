@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -34,25 +34,25 @@ namespace mio
 /**
  * @brief A class template for compartment populations of LCT models.
  *
- * Populations can be split up into different categories, e.g. by age group, yearly income group, gender etc. 
- * In LCT models, we want to use different numbers of subcompartments, i.e. different LctStates, 
+ * Populations can be split up into different categories, e.g. by age group, yearly income group, gender etc.
+ * In LCT models, we want to use different numbers of subcompartments, i.e. different LctStates,
  * for each group of a category.
  * (Therefore, we can't use the normal Populations class because it expects the same InfectionStates for each group.)
- * 
- * This template must be instantiated with one LctState for each group of a category. 
+ *
+ * This template must be instantiated with one LctState for each group of a category.
  * The purpose of the LctStates is to define the number of subcompartments for each InfectionState.
- * The number of LctStates also determines the number of groups. 
- * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders 
- * LctStates, because the number of subcompartments can be different 
+ * The number of LctStates also determines the number of groups.
+ * If you want to use more than one category, e.g. age and gender, you have to define num_age_groups * num_genders
+ * LctStates, because the number of subcompartments can be different
  * even for (female, A05-A14) and (female, A80+) or (male, A05-A14).
  *
- * The class created from this template contains a "flat array" of compartment populations and some functions for 
- * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the 
+ * The class created from this template contains a "flat array" of compartment populations and some functions for
+ * retrieving or setting the populations. The order in the flat array is: First, all (sub-)compartments of the
  * first group, afterwards all (sub-)compartments of the second group and so on.
  *
  */
 
-template <typename FP = ScalarType, class... LctStates>
+template <typename FP, class... LctStates>
 class LctPopulations
 {
 public:
@@ -66,7 +66,7 @@ public:
     LctPopulations()
     {
         set_count();
-        m_y = InternalArrayType::Constant(m_count, 1, 0.);
+        m_y = InternalArrayType::Constant(m_count, UncertainValue<FP>(0.0));
     }
 
     /**
@@ -119,7 +119,7 @@ public:
         }
     }
     /**
-     * @brief Returns an Eigen copy of the vector of populations. 
+     * @brief Returns an Eigen copy of the vector of populations.
      * This can be used as initial conditions for the ODE solver.
      * @return Eigen::VectorXd of populations.
      */
@@ -152,11 +152,11 @@ public:
     }
 
     /**
-     * @brief Checks whether all compartments have non-negative values. 
-     * This function can be used to prevent slightly negative function values in compartment sizes that are produced 
+     * @brief Checks whether all compartments have non-negative values.
+     * This function can be used to prevent slightly negative function values in compartment sizes that are produced
      * due to rounding errors if, e.g., population sizes were computed in a complex way.
      *
-     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.
@@ -167,10 +167,10 @@ public:
     {
         bool corrected = false;
         for (int i = 0; i < m_y.array().size(); i++) {
-            if (m_y.array()[i] < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y.array()[i],
-                            0);
-                m_y.array()[i] = 0.;
+            if (m_y.array()[i].value() < 0.0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i,
+                            m_y.array()[i].value(), 0);
+                m_y.array()[i] = 0.0;
                 corrected      = true;
             }
         }
@@ -183,7 +183,10 @@ public:
      */
     bool check_constraints() const
     {
-        if ((m_y.array() < 0.).any()) {
+        if (m_y.unaryExpr([](const Type& v) {
+                   return v.value() < 0.0;
+               })
+                .any()) {
             log_error("Constraint check: At least one compartment size is smaller {}.", 0);
             return true;
         }
