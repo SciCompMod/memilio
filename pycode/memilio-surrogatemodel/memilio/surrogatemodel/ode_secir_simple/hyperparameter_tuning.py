@@ -19,7 +19,6 @@ filename = "data_secir_simple_30days_10k.pickle"
 
 # Saving grid search results
 filename_df = "dataframe_optimizer_paper.csv"
-# filename_df = "dataframe_30days_10k_nodamp.csv"
 
 # General grid search parameters for the training process:
 early_stop = [100]
