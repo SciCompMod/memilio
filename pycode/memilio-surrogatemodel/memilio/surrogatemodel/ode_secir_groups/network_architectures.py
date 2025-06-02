@@ -59,8 +59,8 @@ def mlp_multi_input_single_output(num_age_groups=6, num_outputs=8, num_hidden_la
             units=num_neurons_per_layer, activation=activation))
 
     # Adding output layer and reshaping output
+    model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=num_outputs*num_age_groups))
-    model.add(tf.keras.layers.Reshape([1, -1]))
 
     return model
 
