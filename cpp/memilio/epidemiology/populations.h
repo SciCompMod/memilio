@@ -242,10 +242,10 @@ public:
     {
         bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i].value() < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
-                            0);
-                this->array()[i] = 0;
+            if (this->array()[i].value() < 0.0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i,
+                            this->array()[i].value(), 0);
+                this->array()[i] = FP(0.0);
                 corrected        = true;
             }
         }
@@ -260,7 +260,7 @@ public:
     {
         for (int i = 0; i < this->array().size(); i++) {
             FP value = this->array()[i].value();
-            if (value < 0.) {
+            if (value < 0.0) {
                 log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
                 return true;
             }
