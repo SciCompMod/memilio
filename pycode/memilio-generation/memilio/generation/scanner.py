@@ -54,13 +54,14 @@ class Scanner:
         self.python_module_name = "o" + from_folder.split("_")[1]
         self.namespace = default_dict["mio"] + \
             "::" + self.python_module_name + "::"
+        self.handled_bindings = set()
 
     def extract_results(self: Self, root_cursor: Cursor) -> IntermediateRepresentation:
         """ Extract the information of the abstract syntax tree and save them in the dataclass intermed_repr.
         Call find_node to visit all nodes of abstract syntax tree and finalize to finish the extraction.
 
         :param root_cursor: Represents the root node of the abstract syntax tree as a Cursor object from libclang.
-        :param self: Self: 
+        :param self: Self:
         :returns: Information extracted from the model saved as an IntermediateRepresentation.
 
         """
@@ -68,66 +69,78 @@ class Scanner:
             raise AssertionError("set a model name")
 
         intermed_repr = IntermediateRepresentation()
-        self.search_binding_target(
-            general_bindings_dict, root_cursor, intermed_repr)
+
         self.get_extern_function(
             intermed_repr, general_bindings_dict)
-        self.find_node(root_cursor, intermed_repr)
+        self.find_node(root_cursor, intermed_repr, general_bindings_dict)
         self.finalize(intermed_repr)
         self.check_parameter_space(intermed_repr)
         return intermed_repr
 
     def search_binding_target(self: Self, binding_list: list[dict], node: Cursor,
-                              intermed_repr: IntermediateRepresentation) -> list:
+                              intermed_repr: IntermediateRepresentation, namespace: str) -> list:  # search_function_target
+        """ Search for a binding target in the current node.
+        If the node matches the binding, set the information in intermed_repr.
+        :param binding_list: List of dictionaries containing the bindings.
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param namespace: Namespace of the current node."""
 
         for binding in binding_list:
-            binding_kind = binding.get("cursorkind")
+            kind_name = binding.get("cursorkind")  # name of the CursorKind
+            # name of the function or class that is going to be bound
             binding_name = binding.get("name")
+            # type of the binding, e.g. "class", "function"
             binding_type = binding.get("type")
 
-            arg_types, arg_names = self.get_function_arguments(node)
-
-            if binding_kind and hasattr(CursorKind, binding_kind):
-                expected_kind = getattr(CursorKind, binding_kind)
-
-            else:
-                expected_kind = None
-
-            if expected_kind is None:
-
+            if not kind_name or not binding_name:
                 continue
 
-            if node.kind == expected_kind and node.spelling == binding_name and binding_type == "function":
+            try:
+                expected_kind = getattr(CursorKind, kind_name)
+            except AttributeError:
+                continue
 
-                found_info = {
-                    "name": node.spelling,
-                    "kind": node.kind.name,
-                    "namespace": self.get_namespace(node),
-                    "return_type": node.result_type.spelling if node.kind.is_declaration() else "",
-                    "arg_types": arg_types,
-                    "arg_names": arg_names,
-                    "location": str(node.location),
-                }
-                intermed_repr.found_bindings.append(found_info)
+            arg_types, arg_names = self.get_function_arguments(node)
+            key = (binding_name, kind_name, tuple(arg_types), tuple(arg_names))
 
-        for child in node.get_children():
-            self.search_binding_target(
-                binding_list, child, intermed_repr)
+            if key in self.handled_bindings:
+                continue
+
+            if node.kind == expected_kind and node.spelling == binding_name:
+                self.set_info(intermed_repr, node, arg_types,
+                              arg_names, binding_type, namespace)
+                self.handled_bindings.add(key)
 
         return intermed_repr.found_bindings
 
-    def get_namespace(self, cursor):
-        namespaces = []
-        current = cursor.semantic_parent
+    def set_info(self: Self, intermed_repr: IntermediateRepresentation, node: Cursor, arg_types: list[str], arg_names: list[str], binding_type, namespace: str) -> None:
+        """ Set the information of the current node into the intermed_repr.
 
-        while current and current.kind.name in ("NAMESPACE", "CLASS_DECL", "STRUCT_DECL"):
-            if current.spelling:
-                namespaces.insert(0, current.spelling)
-            current = current.semantic_parent
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param arg_types: List of argument types of the current node.
+        :param arg_names: List of argument names of the current node.
+        :param binding_type: Type of the binding, e.g. "class", "function", "extern_function".
+        :param namespace: Namespace of the current node.
+        """
 
-        return "::".join(namespaces)
+        found_info = {
+            "type": binding_type,
+            "name": node.spelling,
+            "kind": node.kind.name,
+            "namespace": namespace,
+            "return_type": node.result_type.spelling if node.kind.is_declaration() else "",
+            "arg_types": arg_types,
+            "arg_names": arg_names,
+        }
+
+        intermed_repr.found_bindings.append(found_info)
 
     def get_function_arguments(self, node: Cursor):
+        """! Get the argument types and names of a function node.
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :returns: A tuple containing a list of argument types and a list of argument names."""
         arg_types = []
         arg_names = []
 
@@ -142,20 +155,20 @@ class Scanner:
 
     def get_extern_function(self: Self, intermed_repr: IntermediateRepresentation, binding_list: list[dict]) -> list:
 
-        for binding in binding_list:
+        for input in binding_list:
 
-            binding_name = binding.get("name")
-            binding_type = binding.get("type")
+            input_name = input.get("name")
+            binding_type = input.get("type")
 
             if binding_type == "extern_function":
-                binding_namespace = binding.get("namespace")
-                binding_return_type = binding.get("return_type")
-                binding_arg_types = binding.get("arg_types")
-                binding_py_args = binding.get("py_args")
+                binding_namespace = input.get("namespace")
+                binding_return_type = input.get("return_type")
+                binding_arg_types = input.get("arg_types")
+                binding_py_args = input.get("py_args")
 
                 found_info = {
                     "type": binding_type,
-                    "name": binding_name,
+                    "name": input_name,
                     "namespace": binding_namespace,
                     "return_type": binding_return_type,
                     "arg_types": binding_arg_types,
@@ -179,7 +192,7 @@ class Scanner:
             intermed_repr.has_draw_sample = True
 
     def find_node(self: Self, node: Cursor,
-                  intermed_repr: IntermediateRepresentation, namespace: str = "") -> None:
+                  intermed_repr: IntermediateRepresentation, binding_list: list[dict], namespace: str = "") -> None:
         """ Recursively walk over every node of an abstract syntax tree. Save the namespace the node is in.
         Call check_node_kind for extracting information from the nodes.
 
@@ -191,11 +204,14 @@ class Scanner:
         """
         if node.kind == CursorKind.NAMESPACE:
             namespace = (namespace + node.spelling + "::")
+
         elif namespace == self.namespace:
+            self.search_binding_target(
+                binding_list, node, intermed_repr, namespace)
             self.switch_node_kind(node.kind)(node, intermed_repr)
 
         for n in node.get_children():
-            self.find_node(n, intermed_repr, namespace)
+            self.find_node(n, intermed_repr, binding_list, namespace)
 
     def switch_node_kind(self: Self, kind: CursorKind) -> Callable[[Any,
                                                                    IntermediateRepresentation],

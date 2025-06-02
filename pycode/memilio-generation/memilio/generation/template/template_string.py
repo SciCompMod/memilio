@@ -31,55 +31,134 @@ if TYPE_CHECKING:
 
 
 def bind_functions(intermed_repr: IntermediateRepresentation) -> str:
+    """ Bind the functions found in the intermediate representation.
+    :param intermed_repr: Dataclass holding the model features.
+    :return: Formatted string representing a part of the bindings."""
 
-    result_dict = []
     result = ""
     for bindings in intermed_repr.found_bindings:
         if bindings.get("kind") != "FUNCTION_TEMPLATE" and bindings.get("kind") != "CXX_METHOD":
             continue
         else:
-            name = bindings.get("name")
-            namespace = bindings.get("namespace")
-            arg_types = bindings.get("arg_types", [])
-            arg_names = bindings.get("arg_names", [])
+            name = bindings.get("name", "")
+            namespace = bindings.get("namespace", "")
+            arg_types = ensure_list(bindings.get("arg_types", []))
+            arg_names = ensure_list(bindings.get("arg_names", []))
+            call_args = ", ".join(arg_names)
+            py_args = ", ".join(f'py::arg("{n}")' for n in arg_names)
+            scalartype = ScalarType(intermed_repr)
 
-            direct_binding = True
+            if is_overloaded_function(bindings, intermed_repr.found_bindings):
+
+                result += overloaded_function_bindings(
+                    name, namespace, scalartype, arg_types, py_args, bindings)
+
+                continue
 
             if namespace and "::" in namespace:
-                if arg_types:
-                    first_arg = arg_types[0]
-                    if "Model" in first_arg:
-                        direct_binding = False
 
-                if direct_binding is False:
+                first_arg = arg_types[0]
+
+                if "Model" in first_arg:
                     lambda_args = ", ".join(
-                        f"{namespace}::{t.replace('FP', ScalarType(intermed_repr))} {n}" for t, n in zip(arg_types, arg_names)
+                        f"{namespace}::{t.replace('FP', scalartype)} {n}" for t, n in zip(arg_types, arg_names)
                     )
-                    call_args = ", ".join(arg_names)
-                    py_args = ", ".join(f'py::arg("{n}")' for n in arg_names)
-
-                    result += (
-                        f'\tm.def('
-                        f'\n\t\t"{name}",'
-                        f'\n\t\t[]({lambda_args}) {{'
-                        f'\n\t\t\treturn {namespace}::{name}({call_args});'
-                        f'\n\t}},'
-                        f'\n\t{py_args});\n\n'
-                    )
+                    result += lambda_binding(name, namespace, lambda_args,
+                                             call_args, py_args)
 
                 else:
-                    call_args = ", ".join(arg_names)
-                    py_args = ", ".join(f'py::arg("{n}")' for n in arg_names)
-
-                    result += (
-                        f'\tm.def('
-                        f'\n\t\t"{name}",'
-                        f'\n\t\t&{namespace}::{name}<' +
-                        ScalarType(intermed_repr) + '>,'
-                        f'\n\t\t{py_args}\n\t);\n\n'
-                    )
+                    result += direct_binding(
+                        name, namespace, scalartype, py_args)
 
     return result.strip()
+
+
+def lambda_binding(name: str, namespace: str, lambda_args: str, call_args: str, py_args: str) -> str:
+    """ Generate a lambda binding for a function.
+    :param name: Name of the function.
+    :param namespace: Namespace of the function.
+    :param lambda_args: Arguments for the lambda function.
+    :param call_args: Arguments to call the function.
+    :param py_args: Python arguments for the function.
+    :return: Formatted string representing a part of the bindings."""
+
+    return (
+        f'm.def(\n'
+        f'    "{name}",\n'
+        f'    []({lambda_args}) {{\n'
+        f'        return {namespace}::{name}({call_args});\n'
+        f'    }},\n'
+        f'    {py_args}\n'
+        f');\n'
+    )
+
+
+def direct_binding(name: str, namespace: str, scalartype: str, py_args: str) -> str:
+    """! Generate a direct binding for a function.
+    :param name: Name of the function.
+    :param namespace: Namespace of the function.
+    :param scalartype: Scalar type used in the function.
+    :param py_args: Python arguments for the function.
+    :return: Formatted string representing a part of the bindings.
+    """
+    return (
+        f'\tm.def('
+        f'\n\t\t"{name}",'
+        f'\n\t\t&{namespace}::{name}<{scalartype}>,'
+        f'\n\t\t{py_args}\n\t);\n\n'
+    )
+
+
+def is_overloaded_function(binding: dict, found_bindings: list) -> bool:
+    """ Check if a function binding is overloaded.
+    :param binding: The binding dictionary containing function details.
+    :param found_bindings: List of all found bindings.
+    :return: True if the function is overloaded, False otherwise."""
+
+    name = binding.get("name", "")
+    namespace = binding.get("namespace", "")
+    count = sum(
+        1 for b in found_bindings
+        if b.get("name", "") == name and b.get("namespace", "") == namespace
+    )
+    return count > 1
+
+
+def overloaded_function_bindings(name: str, namespace: str, scalartype: str, arg_types: list, py_args: str, bindings: dict) -> str:
+    """ Generate bindings for overloaded functions.
+    :param name: Name of the function.
+    :param namespace: Namespace of the function.
+    :param scalartype: Scalar type used in the function.
+    :param arg_types: List of argument types for the function.
+    :param py_args: Python arguments for the function.
+    :param bindings: The binding dictionary containing function details.
+    :return: Formatted string representing a part of the bindings."""
+
+    formatted_arg_types = [
+        t.replace("FP", scalartype) for t in arg_types]
+    return_type = bindings.get(
+        "return_type", "void").replace("FP", scalartype)
+    func_ptr = f"{return_type} (*)({', '.join(formatted_arg_types)})"
+    return (
+        f'm.def(\n'
+        f'    "{name}",\n'
+        f'    static_cast<{func_ptr}>(&{namespace}::{name}),\n'
+        f'    {py_args}\n'
+        f');\n\n'
+    )
+
+
+def ensure_list(value) -> list:
+    """Ensure the value is a list. If not, wrap it in a list.
+    :param value: The input value, possibly a list.
+    :return: A list containing the value(s).
+    """
+    if isinstance(value, list):
+        return value
+    elif value is None:
+        return []
+    else:
+        return [value]
 
 
 def bind_extern_functions(intermed_repr: IntermediateRepresentation) -> str:
