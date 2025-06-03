@@ -486,7 +486,8 @@ public:
     /**
      * @brief Print out the TimeSeries as a table.
      *
-     * All row entries in the table are separated by the given separator, followed by additional spaces filling the width of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
+    * All row entries in the table are separated by the given separator, followed by additional spaces filling the width
+    * of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
@@ -504,8 +505,10 @@ public:
      * @param[in] column_labels Vector of custom labels for each column.
      * @param[in] width The number of characters reserved for each number.
      * @param[in] precision The number of decimals.
-     * @param[in] separator Delimiter character between columns.
+     * @param[in] separator Separator character between columns.
      * @param[in] header_prefix Prefix before the header row.
+     *
+     * @{
      */
     void print_table(std::ostream& out, const std::vector<std::string>& column_labels = {}, size_t width = 16,
                      size_t precision = 5, char separator = ' ', const std::string header_prefix = "\n") const
@@ -538,14 +541,12 @@ public:
         out << "\n";
     }
 
-    /**
-     * @brief Overload of print_table that uses std::cout as the output stream per default.
-     */
     void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
                      char separator = ' ', const std::string header_prefix = "\n") const
     {
         print_table(std::cout, column_labels, width, precision, separator, header_prefix);
     }
+    /** @} */
 
     /**
      * @brief Exports a TimeSeries object into a CSV file.
@@ -566,7 +567,7 @@ public:
     {
         std::ofstream file(filename);
         if (!file.is_open()) {
-            return mio::failure(mio::StatusCode::InvalidValue, "cannot write csv to " + filename);
+            return mio::failure(mio::StatusCode::FileNotFound, "Failed to export TimeSeries as CSV to " + filename);
         }
 
         print_table(file, column_labels, 1, precision, separator, "");
