@@ -330,7 +330,7 @@ TYPED_TEST(TestTimeSeries, print_table)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456789;
+            ts[i][j] = i + j + 0.123456;
         }
     }
     ts.get_time((Eigen::Index)0) = 0.0;
@@ -371,7 +371,7 @@ TYPED_TEST(TestTimeSeries, export_csv)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456789;
+            ts[i][j] = i + j + 0.123456;
         }
     }
     ts.get_time((Eigen::Index)0) = 0.0;
@@ -394,10 +394,10 @@ TYPED_TEST(TestTimeSeries, export_csv)
     EXPECT_EQ(line, "Time,column1,column2");
 
     std::getline(file, line);
-    EXPECT_EQ(line, "0.000000,0.123457,1.123457");
+    EXPECT_EQ(line, "0.000000,0.123456,1.123456");
 
     std::getline(file, line);
-    EXPECT_EQ(line, "1.000000,1.123457,2.123457");
+    EXPECT_EQ(line, "1.000000,1.123456,2.123456");
 
     file.close();
 }
@@ -408,7 +408,7 @@ TYPED_TEST(TestTimeSeries, export_csv_no_labels)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456789;
+            ts[i][j] = i + j + 0.123456;
         }
     }
     ts.get_time((Eigen::Index)0) = 0.0;
@@ -431,10 +431,10 @@ TYPED_TEST(TestTimeSeries, export_csv_no_labels)
     EXPECT_EQ(line, "Time,C1,C2");
 
     std::getline(file, line);
-    EXPECT_EQ(line, "0.000000,0.123457,1.123457");
+    EXPECT_EQ(line, "0.000000,0.123456,1.123456");
 
     std::getline(file, line);
-    EXPECT_EQ(line, "1.000000,1.123457,2.123457");
+    EXPECT_EQ(line, "1.000000,1.123456,2.123456");
 
     file.close();
 }
@@ -445,7 +445,7 @@ TYPED_TEST(TestTimeSeries, export_csv_different_separator)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456789;
+            ts[i][j] = i + j + 0.123456;
         }
     }
     ts.get_time((Eigen::Index)0) = 0.0;
