@@ -189,9 +189,8 @@ public:
      */
     Matrix get_matrix_at(SimulationTime<FP> t) const
     {
-        assert(Shape::get_shape_of(m_minimum.get_matrix_at(t)) == Shape::get_shape_of(m_baseline));
-
         Matrix damping_at_t = m_dampings.get_matrix_at(t);
+        assert(Shape::get_shape_of(damping_at_t) == Shape::get_shape_of(m_baseline));
 
         if (damping_at_t.rows() != m_baseline.rows() || damping_at_t.cols() != m_baseline.cols()) {
             mio::log_error("DampingMatrixExpression::get_matrix_at: Damping matrix at time {} has shape ({}, {}), "
