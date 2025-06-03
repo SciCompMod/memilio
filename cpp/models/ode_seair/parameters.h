@@ -36,7 +36,7 @@ namespace oseair
 /**
  * @brief Social distancing.
  */
-template <typename FP = double>
+template <typename FP>
 struct SocialDistancing {
     using Type = FP;
     static Type get_default()
@@ -52,7 +52,7 @@ struct SocialDistancing {
 /**
  * @brief Quarantining.
  */
-template <typename FP = double>
+template <typename FP>
 struct Quarantined {
     using Type = FP;
     static Type get_default()
@@ -68,7 +68,7 @@ struct Quarantined {
 /**
  * @brief Rate of testing.
  */
-template <typename FP = double>
+template <typename FP>
 struct TestingRate {
     using Type = FP;
     static Type get_default()
@@ -84,7 +84,7 @@ struct TestingRate {
 /**
  * @brief Recovery rate.
  */
-template <typename FP = double>
+template <typename FP>
 struct RecoveryRate {
     using Type = FP;
     static Type get_default()
@@ -100,7 +100,7 @@ struct RecoveryRate {
 /**
  * @brief Death Rate.
  */
-template <typename FP = double>
+template <typename FP>
 struct DeathRate {
     using Type = FP;
     static Type get_default()
@@ -116,7 +116,7 @@ struct DeathRate {
 /**
  * @brief Inverse of the latent period of the virus.
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeExposed {
     using Type = FP;
     static Type get_default()
@@ -132,7 +132,7 @@ struct TimeExposed {
 /**
  * @brief Infectious period for unconfirmed infected people.
  */
-template <typename FP = double>
+template <typename FP>
 struct RecoveryRateFromAsymptomatic {
     using Type = FP;
     static Type get_default()
@@ -148,7 +148,7 @@ struct RecoveryRateFromAsymptomatic {
 /**
  * @brief Rate recovered people become susceptible again.
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeRecoveredInv {
     using Type = FP;
     static Type get_default()
@@ -161,7 +161,7 @@ struct TimeRecoveredInv {
     }
 };
 
-template <typename FP = double>
+template <typename FP>
 using ParametersBase =
     ParameterSet<SocialDistancing<FP>, Quarantined<FP>, TestingRate<FP>, RecoveryRate<FP>, DeathRate<FP>,
                  TimeExposed<FP>, RecoveryRateFromAsymptomatic<FP>, TimeRecoveredInv<FP>>;
@@ -169,7 +169,7 @@ using ParametersBase =
 /**
  * @brief Parameters of an SEAIR model.
  */
-template <typename FP = double>
+template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
