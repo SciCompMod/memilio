@@ -316,13 +316,6 @@ jobs:
           package: surrogatemodel
           coverage: ON
 
-  test-docs:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/test-docs
-
   codecov:
     if: github.event.pull_request.draft == false
     needs: merge-test-artifacts
@@ -348,71 +341,3 @@ jobs:
           directory: ./coverage_python
           files: ./coverage_python/**,./coverage.info
           verbose: true
-
-  pages:
-    if: github.event.pull_request.draft == false
-    permissions:
-      contents: write
-    needs: [test-docs, merge-test-artifacts]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install git
-      - name: Download python coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: test-py-coverage-reports-surrogatemodel
-      - name: Download cpp coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: test-cpp-coverage-reports
-      - name: Download pylint report
-        #if an error occurs here, the pylint report was not built, probably manually trigger epidata-ci
-        uses: dawidd6/action-download-artifact@v6
-        with:
-            github_token: ${{secrets.GITHUB_TOKEN}}
-            workflow: epidata_main.yml
-            name: pylint-report-epidata
-            path: pycode/build_pylint
-      - name: Download documentation
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation
-          path: docs/html
-      - name: Prepare basic Pages sites
-        run: |
-          mkdir -p public
-          cp docs/style.css public/style.css
-          cp docs/index.html public/index.html
-      - name: Prepare pylint reports
-        run: |
-            mkdir -p public/pylint
-            cp pycode/build_pylint/pylint.html public/pylint/index.html
-      - name: Prepare documentation
-        run: |
-          mkdir -p public/documentation
-          cp -r docs/html/* public/documentation
-      - name: Prepare coverage reports
-        run: |
-          mkdir -p public/coverage
-          mkdir -p public/coverage/cpp
-          mkdir -p public/coverage/python
-          cp -r coverage_python/* public/coverage/python/
-          cp -r coverage/* public/coverage/cpp/
-      - name: Upload pages as artifact
-        uses: actions/upload-artifact@v4
-        if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
-        with:
-          name: pages
-          path: public
-          if-no-files-found: error
-          retention-days: 1
-      - name: Deploy to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v3
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public

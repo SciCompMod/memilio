@@ -19,12 +19,20 @@
 #############################################################################
 
 import os
+import sys
 import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
 
 from memilio.generation import Generator, Scanner, ScannerConfig, AST
+
+if sys.version_info >= (3, 9):
+    # For python 3.9 and newer
+    import importlib.resources as importlib_resources
+else:
+    # For older python versions
+    import importlib_resources
 
 
 class TestOseirGeneration(unittest.TestCase):
@@ -61,22 +69,22 @@ class TestOseirGeneration(unittest.TestCase):
         """
         try_get_compilation_database_path_mock.return_value = self.build_dir.name
         config_json = {
-            "source_file": self.project_path + "/cpp/models/ode_seir/model.cpp",
-            "namespace": "mio::oseir::",
-            "python_module_name": "test_oseir",
-            "skbuild_path_to_database": "",
+
             "python_generation_module_path": self.project_path + "/pycode/memilio-generation",
-            "target_folder": self.test_dir.name,
-            "optional": {
-                "libclang_library_path": "",
-                "simulation_name": "",
-                "age_group": False,
-                "parameterset_wrapper": True
-            }
+            "skbuild_path_to_database": "",
+            "libclang_library_path": ""
+
         }
 
         conf = ScannerConfig.from_dict(config_json)
+
+        conf.source_file = self.project_path + \
+            "/cpp/models/ode_seir/model.cpp"
+
+        # Could be any target folder
+        conf.target_folder = self.test_dir.name
         self.scanner = Scanner(conf)
+        self.scanner.python_module_name = "test_oseir"
         self.ast = AST(conf)
 
     @unittest.skip("Skip test until resolved")
@@ -87,6 +95,8 @@ class TestOseirGeneration(unittest.TestCase):
         generator = Generator()
         generator.create_substitutions(irdata)
         generator.generate_files(irdata)
+
+        self.maxDiff = None
 
         with open(os.path.join(irdata.target_folder, "test_oseir.py")) as result:
             self.assertEqual(result.read(), self.expected_test_oseir_py)
