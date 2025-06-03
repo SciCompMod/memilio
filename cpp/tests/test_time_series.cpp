@@ -330,11 +330,11 @@ TYPED_TEST(TestTimeSeries, print_table)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456;
+            ts[i][j] = static_cast<TypeParam>(i + j + 0.123456);
         }
     }
-    ts.get_time((Eigen::Index)0) = 0.0;
-    ts.get_time((Eigen::Index)1) = 1.0;
+    ts.get_time((Eigen::Index)0) = static_cast<TypeParam>(0.0);
+    ts.get_time((Eigen::Index)1) = static_cast<TypeParam>(1.0);
 
     std::string expected_output_1 = "\nTime col_1 col_2\n0.00 0.12 1.12\n1.00 1.12 2.12\n";
     ts.print_table(output, {"col_1", "col_2"}, 4, 2);
@@ -371,11 +371,11 @@ TYPED_TEST(TestTimeSeries, export_csv)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456;
+            ts[i][j] = static_cast<TypeParam>(i + j + 0.123456);
         }
     }
-    ts.get_time((Eigen::Index)0) = 0.0;
-    ts.get_time((Eigen::Index)1) = 1.0;
+    ts.get_time((Eigen::Index)0) = static_cast<TypeParam>(0.0);
+    ts.get_time((Eigen::Index)1) = static_cast<TypeParam>(1.0);
 
     // Create a temp file for testing
     TempFileRegister file_register;
@@ -408,11 +408,11 @@ TYPED_TEST(TestTimeSeries, export_csv_no_labels)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456;
+            ts[i][j] = static_cast<TypeParam>(i + j + 0.123456);
         }
     }
-    ts.get_time((Eigen::Index)0) = 0.0;
-    ts.get_time((Eigen::Index)1) = 1.0;
+    ts.get_time((Eigen::Index)0) = static_cast<TypeParam>(0.0);
+    ts.get_time((Eigen::Index)1) = static_cast<TypeParam>(1.0);
 
     // Create a temp file for testing
     TempFileRegister file_register;
@@ -445,11 +445,11 @@ TYPED_TEST(TestTimeSeries, export_csv_different_separator)
     mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
-            ts[i][j] = i + j + 0.123456;
+            ts[i][j] = static_cast<TypeParam>(i + j + 0.123456);
         }
     }
-    ts.get_time((Eigen::Index)0) = 0.0;
-    ts.get_time((Eigen::Index)1) = 1.0;
+    ts.get_time((Eigen::Index)0) = static_cast<TypeParam>(0.0);
+    ts.get_time((Eigen::Index)1) = static_cast<TypeParam>(1.0);
 
     // Create a temp file for testing
     TempFileRegister file_register;
