@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
@@ -95,8 +95,8 @@ public:
      * Which flows are used by the model is defined by the Flows template argument for the FlowModel.
      * To get the correct index for the flow between two compartments use FlowModel::get_flat_flow_index.
      *
-     * @return A TimeSeries to represent a numerical solution for the flows in the model. 
-     * For each simulated time step, the TimeSeries contains the value of each flow. 
+     * @return A TimeSeries to represent a numerical solution for the flows in the model.
+     * For each simulated time step, the TimeSeries contains the value of each flow.
      * @{
      */
     TimeSeries<FP>& get_flows()

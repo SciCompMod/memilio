@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -31,7 +31,7 @@ namespace mio
 {
 /**
  * @brief Daily local ICU occupancy per age group.
- * 
+ *
  * This parameter stores all historic (local) ICU occupancy values normalized per 100,000 inhabitants.
  * The values are extracted from the simulation results based on the provided ICU compartment indices
  * and are updated at each feedback step.
@@ -200,7 +200,7 @@ public:
      *
      * The simulation is advanced in steps of dt_feedback. At each step, feedback
      * is applied, then the simulation is advanced, and afterwards the current ICU occupancy is stored.
-     * 
+     *
      * Note that the simulation may make additional substeps depending on its own
      * timestep dt. When using fixed-step integrators, dt_feedback should be an integer multiple of
      * the simulation timestep dt.
@@ -211,9 +211,10 @@ public:
      */
     auto advance(const FP tmax, const FP dt_feedback = 1.0)
     {
+        using std::min;
         FP t = m_simulation.get_result().get_last_time();
         while (t < tmax) {
-            FP dt_eff = std::min(dt_feedback, tmax - t);
+            FP dt_eff = min<FP>(dt_feedback, tmax - t);
             apply_feedback(t + dt_eff);
             m_simulation.advance(t + dt_eff);
             add_icu_occupancy(t + dt_eff);
@@ -268,17 +269,21 @@ public:
      */
     FP calc_risk_perceived()
     {
+        using std::exp;
+        using std::min;
+        using std::pow;
+        using std::tgamma;
         const auto& icu_occ    = m_feedback_parameters.template get<ICUOccupancyHistory<FP>>();
         size_t num_time_points = icu_occ.get_num_time_points();
-        size_t n = std::min(static_cast<size_t>(num_time_points), m_feedback_parameters.template get<GammaCutOff>());
+        size_t n = min<FP>(static_cast<size_t>(num_time_points), m_feedback_parameters.template get<GammaCutOff>());
         FP perceived_risk = 0.0;
         const auto& a     = m_feedback_parameters.template get<GammaShapeParameter<FP>>();
         const auto& b     = m_feedback_parameters.template get<GammaScaleParameter<FP>>();
         for (size_t i = num_time_points - n; i < num_time_points; ++i) {
             size_t day   = i - (num_time_points - n);
-            FP gamma     = std::pow(b, a) * std::pow(day, a - 1) * std::exp(-b * day) / std::tgamma(a);
+            FP gamma     = pow(b, a) * pow(day, a - 1) * exp(-b * day) / tgamma(a);
             FP perc_risk = icu_occ.get_value(i).sum() / m_feedback_parameters.template get<NominalICUCapacity<FP>>();
-            perc_risk    = std::min(perc_risk, 1.0);
+            perc_risk    = min(perc_risk, FP(1.0));
             perceived_risk += perc_risk * gamma;
         }
         return perceived_risk;
@@ -298,7 +303,7 @@ public:
         auto& model             = m_simulation.get_model();
         size_t num_groups       = static_cast<size_t>(model.parameters.get_num_groups());
         const auto& last_values = m_simulation.get_result().get_last_value();
-        Eigen::VectorXd icu_occ(num_groups);
+        Eigen::VectorX<FP> icu_occ(num_groups);
         for (size_t i = 0; i < m_icu_indices.size(); ++i) {
             icu_occ[i] = last_values[m_icu_indices[i]];
         }
@@ -317,6 +322,10 @@ public:
      */
     void apply_feedback(FP t)
     {
+        using std::log;
+        using std::min;
+        using std::pow;
+
         // get model parameters
         auto& params          = m_simulation.get_model().parameters;
         const auto num_groups = (size_t)params.get_num_groups();
@@ -332,9 +341,9 @@ public:
         FP perceived_risk = calc_risk_perceived();
 
         // add the perceived risk to the time series
-        m_perceived_risk.add_time_point(t, Eigen::VectorXd::Constant(num_groups, perceived_risk));
+        m_perceived_risk.add_time_point(t, Eigen::VectorX<FP>::Constant(num_groups, perceived_risk));
 
-        auto group_weights_all = Eigen::VectorXd::Constant(num_groups, 1.0);
+        auto group_weights_all = Eigen::VectorX<FP>::Constant(num_groups, 1.0);
 
         // define a lambda function to create a damping sampling object given a reduction factor and location
         auto set_contact_reduction = [=](FP val, size_t location) {
@@ -349,12 +358,12 @@ public:
         for (size_t loc = 0; loc < num_locations; ++loc) {
 
             // compute the effective reduction factor using a softplus function.
-            ScalarType reduc_fac = (contactReductionMax[loc] - contactReductionMin[loc]) * epsilon *
-                                       std::log(std::exp(perceived_risk / epsilon) + 1.0) +
-                                   contactReductionMin[loc];
+            FP reduc_fac = (contactReductionMax[loc] - contactReductionMin[loc]) * epsilon *
+                               log(exp(perceived_risk / epsilon) + 1.0) +
+                           contactReductionMin[loc];
 
             // clamp the reduction factor to the maximum allowed value.
-            reduc_fac = std::min(reduc_fac, contactReductionMax[loc]);
+            reduc_fac = min<FP>(reduc_fac, contactReductionMax[loc]);
 
             // generate the damping for the current location.
             auto damping = set_contact_reduction(reduc_fac, loc);
@@ -370,7 +379,7 @@ private:
     Sim m_simulation; ///< The simulation instance.
     std::vector<size_t> m_icu_indices; ///< The ICU compartment indices from the model.
     FeedbackSimulationParameters<FP> m_feedback_parameters; ///< The feedback parameters.
-    mio::TimeSeries<ScalarType> m_perceived_risk; ///< The perceived risk time series.
+    mio::TimeSeries<FP> m_perceived_risk; ///< The perceived risk time series.
 };
 
 } // namespace mio
