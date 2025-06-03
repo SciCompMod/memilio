@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -29,7 +29,7 @@
 namespace mio
 {
 
-template <typename FP = ScalarType>
+template <typename FP>
 using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
 /**
@@ -188,8 +188,8 @@ template <typename FP, class Sim>
 using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
 
 /**
- * Template meta function to check if a type is a compartment model simulation. 
- * Defines a static constant of name `value`. 
+ * Template meta function to check if a type is a compartment model simulation.
+ * Defines a static constant of name `value`.
  * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP floating point type, e.g., double
