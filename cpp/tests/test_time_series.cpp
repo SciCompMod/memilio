@@ -315,7 +315,7 @@ TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)
 
 TYPED_TEST(TestTimeSeries, create)
 {
-    auto ts = mio::TimeSeries<double>::zero(5, 10);
+    auto ts = mio::TimeSeries<TypeParam>::zero(5, 10);
     for (int i = 0; i < 5; i++) {
         ASSERT_EQ(ts.get_time(i), 0.0);
         for (int j = 0; j < 10; j++) {
@@ -327,7 +327,7 @@ TYPED_TEST(TestTimeSeries, create)
 TYPED_TEST(TestTimeSeries, print_table)
 {
     std::stringstream output;
-    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             ts[i][j] = i + j + 0.123456789;
@@ -368,7 +368,7 @@ TYPED_TEST(TestTimeSeries, print_table_cout_overload)
 TYPED_TEST(TestTimeSeries, export_csv)
 {
     // Fill time series with test data
-    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             ts[i][j] = i + j + 0.123456789;
@@ -405,7 +405,7 @@ TYPED_TEST(TestTimeSeries, export_csv)
 TYPED_TEST(TestTimeSeries, export_csv_no_labels)
 {
     // Fill time series with test data
-    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             ts[i][j] = i + j + 0.123456789;
@@ -442,7 +442,7 @@ TYPED_TEST(TestTimeSeries, export_csv_no_labels)
 TYPED_TEST(TestTimeSeries, export_csv_different_separator)
 {
     // Fill time series with test data
-    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
+    mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
     for (int i = 0; i < 2; i++) {
         for (int j = 0; j < 2; j++) {
             ts[i][j] = i + j + 0.123456789;
@@ -478,15 +478,15 @@ TYPED_TEST(TestTimeSeries, export_csv_different_separator)
 
 TYPED_TEST(TestTimeSeries, export_csv_failed)
 {
-    mio::TimeSeries<double> ts = mio::TimeSeries<double>::zero(2, 2);
-    auto result                = ts.export_csv("/test_false_dir/file.csv");
+    mio::TimeSeries<TypeParam> ts = mio::TimeSeries<TypeParam>::zero(2, 2);
+    auto result                   = ts.export_csv("/test_false_dir/file.csv");
     ASSERT_FALSE(result);
 }
 
-TEST(TestTimeSeries, printTo)
+TYPED_TEST(TestTimeSeries, printTo)
 {
     //PrintTo is test code, so we don't check the exact output, just that it exists and doesn't fail
-    auto ts = mio::TimeSeries<double>::zero(3, 2);
+    auto ts = mio::TimeSeries<TypeParam>::zero(3, 2);
     std::stringstream ss;
     PrintTo(ts, &ss);
     ASSERT_FALSE(ss.str().empty());
