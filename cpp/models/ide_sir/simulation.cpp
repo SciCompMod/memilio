@@ -46,7 +46,7 @@ void Simulation::advance(ScalarType tmax)
         m_model->compute_S_deriv(m_dt, i + t0_index);
     }
 
-    std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
+    std::cout << "Total pop start: " << m_model->populations.get_last_value().sum() << std::endl;
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
         // Add new time points to populations and flows.
@@ -54,6 +54,8 @@ void Simulation::advance(ScalarType tmax)
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
         m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
+
+        // std::cout << "Current time: " << m_model->populations.get_last_time() << std::endl;
 
         // Compute Susceptibles.
         m_model->compute_S(m_model->populations.get_last_value()[(size_t)InfectionState::Susceptible], m_dt,
@@ -63,10 +65,10 @@ void Simulation::advance(ScalarType tmax)
         m_model->compute_S_deriv(m_dt);
 
         // Compute Infected and Recovered.
-        m_model->compute_I_and_R(m_dt, t0_index);
-
-        std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
+        m_model->compute_I_and_R(m_dt, t0_index, false);
     }
+    std::cout << "Total pop end: " << m_model->populations.get_last_value().sum() << std::endl;
+
     m_model->compute_susceptible_difference(m_dt, t0_index);
 }
 
@@ -78,7 +80,7 @@ void Simulation::advance2(ScalarType tmax)
 
     size_t t0_index = m_model->m_finite_difference_order;
 
-    std::cout << "Total pop: " << m_model->populations.get_last_value().sum() << std::endl;
+    std::cout << "Total pop start: " << m_model->populations.get_last_value().sum() << std::endl;
     // Compute only values for S until tmax.
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
@@ -105,10 +107,10 @@ void Simulation::advance2(ScalarType tmax)
         if (i >= m_model->get_gregory_order()) {
             // Compute Infected and Recovered.
             size_t time_point_index_flows = m_model->flows.get_num_time_points() - 1;
-            m_model->compute_I_and_R_centered(m_dt, t0_index, time_point_index_flows);
+            m_model->compute_I_and_R_centered(m_dt, t0_index, time_point_index_flows, false);
         }
-        // std::cout << "Total pop: " << m_model->populations[time_point_index_populations].sum() << std::endl;
     }
+    std::cout << "Total pop end: " << m_model->populations.get_last_value().sum() << std::endl;
 
     m_model->compute_susceptible_difference(m_dt, t0_index);
 }

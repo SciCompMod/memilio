@@ -30,10 +30,10 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax                = 2.;
-    ScalarType dt                  = 0.1;
+    ScalarType tmax                = 10.;
+    ScalarType dt                  = 1;
     size_t gregory_order           = 1;
-    size_t finite_difference_order = 4;
+    size_t finite_difference_order = 1; // Possibilities are 1 or 4
 
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
     vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 9910.;
@@ -68,9 +68,9 @@ int main()
     mio::isir::Simulation sim(model, dt);
     sim.advance(tmax);
 
-    sim.get_result().print_table({"S", "I", "R"}, 16, 8);
+    sim.get_result().print_table({"S", "I", "R"}, 16, 18);
 
-    sim.get_flows().print_table();
+    // sim.get_flows().print_table();
 
-    sim.get_susceptibles_difference().print_table();
+    sim.get_susceptibles_difference().print_table({}, 16, 18);
 }

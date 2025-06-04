@@ -223,13 +223,23 @@ void Model::compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_
 void Model::compute_S_deriv(ScalarType dt, size_t time_point_index)
 {
     // Compute S' with finite difference scheme of fourth order, flow from S to I is then given by -S'.
-    flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-        -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
-          16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
-          36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
-          48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
-          25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
-        (12 * dt);
+    if (m_finite_difference_order == 4) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
+              16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
+              36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
+            (12 * dt);
+    }
+
+    // Linear finite difference scheme
+    if (m_finite_difference_order == 1) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
+            dt;
+    }
 }
 
 void Model::compute_S_deriv(ScalarType dt)
@@ -258,11 +268,16 @@ void Model::compute_I_and_R(ScalarType dt, size_t t0_index, bool enforce_mass_co
 
         ScalarType state_age = (num_time_points_simulated - j) * dt;
 
-        sum_part1_I += sum_part1_term(row_index, column_index, state_age,
-                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
+        sum_part1_I += sum_part1_term(
+            row_index, column_index, state_age,
+            flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected] +
+                populations[populations.get_num_time_points() - 2][(Eigen::Index)InfectionState::Infected]);
 
-        sum_part1_R += sum_part1_term(row_index, column_index, state_age,
-                                      flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
+        sum_part1_R += sum_part1_term(
+            row_index, column_index, state_age,
+            flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected] +
+                populations[populations.get_num_time_points() - 2][(Eigen::Index)InfectionState::Infected],
+            true);
     }
 
     ScalarType sum_part2_I = 0;

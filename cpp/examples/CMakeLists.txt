@@ -120,6 +120,10 @@ add_executable(ide_sir_example ide_sir.cpp)
 target_link_libraries(ide_sir_example PRIVATE memilio ide_sir)
 target_compile_options(ide_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ide_sir_convergence_example ide_sir_convergence.cpp)
+target_link_libraries(ide_sir_convergence_example PRIVATE memilio ide_sir)
+target_compile_options(ide_sir_convergence_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
