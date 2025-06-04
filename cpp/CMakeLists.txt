@@ -24,8 +24,8 @@ option(MEMILIO_ENABLE_PROFILING "Enable runtime performance profiling of memilio
 
 mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
-# try to treat AppleClang as Clang, but warn about missing support 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+# try to treat AppleClang as Clang, but warn about missing support
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     message(WARNING "The compiler ID \"AppleClang\" is not supported, trying to compile with \"Clang\" options.")
     set(CMAKE_CXX_COMPILER_ID "Clang")
 endif()
@@ -82,6 +82,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
+
         # In addition to standard flags, disable elision and inlining to prevent e.g. closing brackets being marked as
         # uncovered.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-elide-constructors -fno-default-inline")
@@ -146,6 +147,7 @@ endif()
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
+add_subdirectory(munich_preprocessing)
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
