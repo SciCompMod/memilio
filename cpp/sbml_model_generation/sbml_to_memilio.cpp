@@ -348,7 +348,7 @@ mio::IOResult<std::string> format_event_trigger(const std::string& formula, Mode
 }
 
 /**
- * @brief Returns the maximal time mentioned in a formula or an error code.
+ * @brief Returns the maximum time mentioned in a formula or an error.
  *
  * @param[in] trigger The formula to be processed as ASTNode*.
  * @param[in] model The model where the formula stems from.
