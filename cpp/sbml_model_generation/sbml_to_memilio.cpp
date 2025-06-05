@@ -23,7 +23,7 @@
  * Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input 
  * file without file ending. 
  */
-std::string get_filename(const char* filepath)
+std::string get_filename(const std::string& filepath)
 {
     boost::filesystem::path p(filepath);
     return p.stem().string();
@@ -67,15 +67,15 @@ mio::IOResult<std::string> get_path(std::string folder_name)
 /**
  * @brief Creates a folder with the given name to store the generated model files.
  *
- * @param[in] filename The name of the folder to be created.
- * @param[in] path The path where the folder should be created.
+ * @param[in] foldername The name of the folder to be created.
+ * @param[in] path The path where the folder should be created -this needs to exist.
  *
- * Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
+ * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
  * a folder with the resulting name at the location given by `path` using `boost::filesystem`.
  */
-void create_folder(const std::string& filename, const std::string& path)
+void create_folder(const std::string& foldername, const std::string& path)
 {
-    std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
+    std::string lowercase_name = boost::to_lower_copy<std::string>(foldername);
     boost::filesystem::path p(path + "/" + lowercase_name);
     boost::filesystem::create_directory(p);
     mio::log_info("Creating folder at ./{}", p.string());
@@ -422,7 +422,7 @@ bool verify_model_suitability(Model& model)
  * @param[in] path The path where the file should be created.
  * @return bool Whether the writing process was successful.
  *
- * Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
+ * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
  * a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the 
  * species in the model as infection states to the file.
  */
@@ -468,7 +468,7 @@ bool create_infection_state(Model& model, const std::string& filename, const std
  * @param[in] path The path where the file should be created.
  * @return bool Whether the writing process was successful.
  *
- * Extracts the filename using :cpp:func:`get_filename(const char* filename)`, converts it to lower case and creates 
+ * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
  * a file with the resulting name using `boost::filesystem` at the location given by `path`. 
  * Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as 
  * default value. (This may be overwritten in the example.cpp file.)
@@ -1006,7 +1006,7 @@ int main(int argc, char* argv[])
         mio::log_error("Please provide a SBML file at startup!");
         return 1;
     }
-    const char* filename = argv[1];
+    std::string filename = argv[1];
     SBMLReader reader;
 
     std::unique_ptr<SBMLDocument> document(reader.readSBML(filename));
