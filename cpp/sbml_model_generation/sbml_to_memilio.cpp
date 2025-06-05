@@ -916,7 +916,7 @@ bool create_example_cpp(Model& model, const std::string& filename, const std::st
         example << "if (!file) {  mio::log_error(\"Could not open file for writing: {}\", file_name); return 1; }"
                 << std::endl;
         example << "mio::log_info(\"Writing output to {}\", file_name);" << std::endl;
-        example << "sir.print_table({" << table << "}, 10, 3, file);" << std::endl;
+        example << "sir.print_table(file, {" << table << "}, 10, 3);" << std::endl;
         example << "file.close();" << std::endl;
 
         example << "}";
