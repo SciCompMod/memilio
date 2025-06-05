@@ -34,7 +34,7 @@ The following table lists the dependencies that are used. Most of them are requi
 | JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
-| LibSBML | 5.18.0 | No | No |  https://sbml.org/software/libsbml/ (For SBML integration only) |
+| LibSBML | 5.20.4 | No | No |  https://sbml.org/software/libsbml/ (For SBML integration only) |
 
 See the [thirdparty](thirdparty/README.md) directory for more details.
 
