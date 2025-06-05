@@ -131,7 +131,7 @@ void append_brackets(std::string& leading_bracket, std::string& trailing_bracket
  * @brief Formats a formula for the example.cpp file.
  *
  * @param[in] model The model where the formula stems from.
- * @param[in] math_string The formula to be processed, preprocessed as char*.
+ * @param[in] math_string The formula to be processed, preprocessed into a string.
  * @param[in] model_namespace The namespace of the model.
  * @return std::string The formatted formula.
  *
