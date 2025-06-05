@@ -146,8 +146,7 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     endif()
 endif()
 
-set(MEMILIO_CXX_FLAGS_SBML_GENERATED "${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS};")
-string(APPEND MEMILIO_CXX_FLAGS_SBML_GENERATED "-Wno-unused-parameter;-Wno-unused-variable;-Wno-unused-but-set-variable;")
+
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
