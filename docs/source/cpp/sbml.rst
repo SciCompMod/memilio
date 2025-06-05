@@ -28,7 +28,7 @@ Call the executable on a given SBML file as
 
 .. attention:: 
 
-    You have to call the executable from somewhere either ``cpp`` or ``cpp/build`` or ``cpp/build/bin``. Otherwise it will not find the ``sbml_model_generation`` folder.
+    You have to call the executable from either ``cpp`` or ``cpp/build`` or ``cpp/build/bin``. Otherwise it will not find the ``sbml_model_generation`` folder.
 
 If `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ is not installed, it will end with an error, but produce the necessary files nevertheless.
 
@@ -39,13 +39,13 @@ It will produce
  - an implementation-file called ``ex_<sbml-file-name>.cpp`` that contains the generated code for the model.
  - the necessary additions to the ``CMakeLists.txt`` file in the ``cpp/sbml_model_generation``-directory.
 
-Now, calling the general build function will also build an executable for the new model. For more information on building memilio, we refer to :doc:`../getting_started`.
+Now, using the general build command with target "all" or "ex_<sbml-file-name>" will build an executable for the new model. For more information on building memilio, we refer to :doc:`../getting_started`.
  
 
 Changing parameters
 ----------------------
 As some parameters (mainly the duration of simulation) are not part of the SBML file, they are set to generic values in 
-the generated example file. They can also be changed there.
+the generated example file ``cpp/sbml_model_generation/ex_<sbml-file-name>.cpp``. They can also be changed there.
 
 
 Limitations
