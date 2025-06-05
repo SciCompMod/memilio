@@ -255,7 +255,7 @@ mio::IOResult<std::string> format_event_variable(const std::string& formula, Mod
  * @param[in] model_namespace The namespace of the model.
  * @return mio::IOResult<std::string> The resulting string.
  *
- * Goes through the parts of the formula as identified by spaces. It first strips leading/trailing braces and leading
+ * Goes through the parts of the formula delimited by spaces. It first strips leading/trailing braces and leading
  * minus signs. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is 
  * replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding 
  * species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is 
@@ -305,10 +305,10 @@ mio::IOResult<std::string> format_event_formulas(std::string& formula, Model& mo
  * @return mio::IOResult<std::string> The resulting string.
  *
  * Goes through the parts of the formula as identified by spaces.
- * - It first strips leading/trailing braces and leading minus sings. 
+ * - It first strips leading/trailing braces and leading minus signs. 
  * - Then it checks if the part is a parameter, species or compartment. 
  *   - If it is a parameter, it is replaced by the corresponding parameter in the model. 
- *   - If it is a species, it prints an error. 
+ *   - If it is a species, it prints an error as they are not supported.
  *   - If it is a compartment, it is replaced by the size of the compartment. 
  * - If it is pi, it is replaced by M_PI. 
  * - If it is time, it prints an error. 
