@@ -617,7 +617,7 @@ bool create_model_h(Model& model, const std::string& filename, const std::string
         }
         // Create lambda functions for every function definition
         for (size_t i = 0; i < model.getListOfFunctionDefinitions()->size(); i++) {
-            FunctionDefinition function_def = *(FunctionDefinition*)model.getListOfFunctionDefinitions()->get(i);
+            FunctionDefinition function_def = *model.getListOfFunctionDefinitions()->get(i);
             std::string lambda_string       = SBML_formulaToL3String(function_def.getMath());
             std::string variable_string     = "";
             std::string formula_string      = "";
@@ -804,8 +804,8 @@ bool create_cmake(const std::string& filename, const std::string& path)
                    << " PUBLIC\n$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/"
                       "..>\n$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>\n)"
                    << std::endl;
-        cmakelists << "target_compile_options(" << lowercase_name
-                   << " PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})" << std::endl;
+        cmakelists << "target_compile_options(" << lowercase_name << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})"
+                   << std::endl;
         cmakelists.close();
     }
     else {
