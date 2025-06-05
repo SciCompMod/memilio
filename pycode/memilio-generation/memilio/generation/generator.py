@@ -82,8 +82,7 @@ class Generator:
             "ScalarType": StringTemplates.ScalarType(intermed_repr),
             "draw_sample": StringTemplates.draw_sample(intermed_repr),
             "simulation_vector_definition": StringTemplates.simulation_vector_definition(intermed_repr),
-            "bind_functions": StringTemplates.bind_functions(intermed_repr),
-            "bind_extern_functions": StringTemplates.bind_extern_functions(intermed_repr)
+            "bind_functions": StringTemplates.bind_functions(intermed_repr)
         }
         self.substitutions_py = {
             "python_module_name": intermed_repr.python_module_name

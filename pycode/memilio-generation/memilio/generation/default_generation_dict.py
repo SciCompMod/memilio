@@ -23,7 +23,7 @@ general_bindings_dict = [
     {
         "type": "function",
         "name": "draw_sample",
-        "cursorkind": "FUNCTION_TEMPLATE"
+        "cursorkind": "FUNCTION_TEMPLATE",
     },
     {
         "type": "function",
@@ -34,6 +34,11 @@ general_bindings_dict = [
         "type": "function",
         "name": "simulate",
         "cursorkind": "FUNCTION_TEMPLATE"
+    },
+    {
+        "type": "function",
+        "name": "check_constraints",
+        "cursorkind": "CXX_METHOD"
     },
     {
         "type": "extern_function",

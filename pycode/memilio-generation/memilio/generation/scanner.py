@@ -70,15 +70,13 @@ class Scanner:
 
         intermed_repr = IntermediateRepresentation()
 
-        self.get_extern_function(
-            intermed_repr, general_bindings_dict)
         self.find_node(root_cursor, intermed_repr, general_bindings_dict)
         self.finalize(intermed_repr)
         self.check_parameter_space(intermed_repr)
         return intermed_repr
 
     def search_binding_target(self: Self, binding_list: list[dict], node: Cursor,
-                              intermed_repr: IntermediateRepresentation, namespace: str) -> list:  # search_function_target
+                              intermed_repr: IntermediateRepresentation, namespace: str) -> list:
         """ Search for a binding target in the current node.
         If the node matches the binding, set the information in intermed_repr.
         :param binding_list: List of dictionaries containing the bindings.
@@ -101,20 +99,23 @@ class Scanner:
             except AttributeError:
                 continue
 
-            arg_types, arg_names = self.get_function_arguments(node)
-            key = (binding_name, kind_name, tuple(arg_types), tuple(arg_names))
+            function_arguments = self.get_function_arguments(
+                node)
+
+            key = (binding_name, kind_name, tuple(function_arguments.get(
+                "arg_types", [])), tuple(function_arguments.get("arg_names", [])))
 
             if key in self.handled_bindings:
                 continue
 
             if node.kind == expected_kind and node.spelling == binding_name:
-                self.set_info(intermed_repr, node, arg_types,
-                              arg_names, binding_type, namespace)
+                self.set_info(intermed_repr, node, binding_type,
+                              namespace, function_arguments)
                 self.handled_bindings.add(key)
 
         return intermed_repr.found_bindings
 
-    def set_info(self: Self, intermed_repr: IntermediateRepresentation, node: Cursor, arg_types: list[str], arg_names: list[str], binding_type, namespace: str) -> None:
+    def set_info(self: Self, intermed_repr: IntermediateRepresentation, node: Cursor, binding_type, namespace: str, function_arguments: dict) -> None:
         """ Set the information of the current node into the intermed_repr.
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
@@ -131,14 +132,17 @@ class Scanner:
             "kind": node.kind.name,
             "namespace": namespace,
             "return_type": node.result_type.spelling if node.kind.is_declaration() else "",
-            "arg_types": arg_types,
-            "arg_names": arg_names,
+            "arg_types": function_arguments.get("arg_types", []),
+            "arg_names": function_arguments.get("arg_names", []),
+            "parent_name": function_arguments.get("parent_name", ""),
+            "is_const": function_arguments.get("is_const", False),
+            "is_member": function_arguments.get("is_member", False)
         }
 
         intermed_repr.found_bindings.append(found_info)
 
-    def get_function_arguments(self, node: Cursor):
-        """! Get the argument types and names of a function node.
+    def get_function_arguments(self, node: Cursor) -> dict:
+        """ Get the argument types and names of a function node.
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :returns: A tuple containing a list of argument types and a list of argument names."""
         arg_types = []
@@ -151,32 +155,45 @@ class Scanner:
 
                 arg_names.append(child.spelling)
 
-        return arg_types, arg_names
+        is_const = node.is_const_method() if hasattr(node, 'is_const_method') else False
+        is_member, parent_name = self.is_member(node)
 
-    def get_extern_function(self: Self, intermed_repr: IntermediateRepresentation, binding_list: list[dict]) -> list:
+        return {
+            "arg_types": arg_types,
+            "arg_names": arg_names,
+            "parent_name": parent_name,
+            "is_const": is_const,
+            "is_member": is_member
+        }
 
-        for input in binding_list:
+    def is_member(self, node: Cursor) -> tuple[bool, str]:
+        """Check if the node is a member function (also for function templates).
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :returns: True if the node is a member function, False otherwise.
+        """
 
-            input_name = input.get("name")
-            binding_type = input.get("type")
+        if node.kind not in (
+            CursorKind.CXX_METHOD,
+            CursorKind.FUNCTION_TEMPLATE,
+            CursorKind.CONSTRUCTOR,
+            CursorKind.DESTRUCTOR,
+        ):
+            return False, ""
 
-            if binding_type == "extern_function":
-                binding_namespace = input.get("namespace")
-                binding_return_type = input.get("return_type")
-                binding_arg_types = input.get("arg_types")
-                binding_py_args = input.get("py_args")
+        parent = node.semantic_parent
 
-                found_info = {
-                    "type": binding_type,
-                    "name": input_name,
-                    "namespace": binding_namespace,
-                    "return_type": binding_return_type,
-                    "arg_types": binding_arg_types,
-                    "py_args": binding_py_args
-                }
-                intermed_repr.found_bindings.append(found_info)
+        if parent is None:
+            return False, ""
 
-        return intermed_repr.found_bindings
+        if parent.kind in (
+            CursorKind.CLASS_DECL,
+            CursorKind.STRUCT_DECL,
+            CursorKind.CLASS_TEMPLATE,
+        ):
+            parent_name = parent.spelling
+            return True, parent_name
+
+        return False, ""
 
     def check_parameter_space(self: Self, intermed_repr: IntermediateRepresentation) -> None:
         """! Checks for parameter_space.cpp in the model folder and set has_draw_sample
