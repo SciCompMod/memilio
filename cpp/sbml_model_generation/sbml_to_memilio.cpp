@@ -60,8 +60,8 @@ mio::IOResult<std::string> get_path(std::string folder_name)
         current_path.stem().string() != "build") {
         return mio::success(folder_path.string());
     }
-    mio::log_error("Could not find the folder {} in the current path or its parent directories.", folder_name);
-    return mio::failure(mio::StatusCode::FileNotFound);
+    return mio::failure(mio::StatusCode::FileNotFound,
+                        "Could not find the folder " + folder_name + "in the current path or its parent directories.");
 }
 
 /**
@@ -222,7 +222,7 @@ std::string get_initial_assignment(Species& species, Model& model, const std::st
  * @param[in] formula The formula to be processed.
  * @param[in] model The model where the formula stems from.
  * @param[in] model_namespace The namespace of the model.
- * @return mio::IOResult<std::string> The resulting string.
+ * @return mio::IOResult<std::string> The resulting string or an error code.
  *
  * Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to
  * get the corresponding values, in the last case it prints an error message. 
@@ -241,8 +241,8 @@ mio::IOResult<std::string> format_event_variable(const std::string& formula, Mod
             "::InfectionState::" + formula + ")]";
     }
     else if (model.getListOfCompartments()->getElementBySId(formula) != NULL) {
-        mio::log_error("Unfortunately compartments can not be changed at the moment.");
-        return mio::failure(mio::StatusCode::InvalidValue);
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Unfortunately compartments can not be changed at the moment.");
     }
     return mio::success(return_string);
 }
@@ -398,18 +398,17 @@ mio::IOResult<std::string> find_tmax(const ASTNode& trigger, Model& model, const
  * @brief Checks that a model is suitable, i.e. only uses one compartment.
  *
  * @param[in] model The model to be checked.
- * @return bool The check's result.
+ * @return mio::IOResult<void> Succes or error code.
  *
- * This function checks whether the model has exactly one compartment. If it does not, it returns false and prints an 
- * error. 
+ * This function checks whether the model has exactly one compartment. If it does not, it returns an error code.
  */
-bool verify_model_suitability(const Model& model)
+mio::IOResult<void> verify_model_suitability(const Model& model)
 {
     if (model.getNumCompartments() != 1) {
-        mio::log_error("Currently only models with exactly 1 compartment are supported!");
-        return false;
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Currently only models with exactly 1 compartment are supported!");
     }
-    return true;
+    return mio::success();
 }
 
 /**
@@ -418,13 +417,13 @@ bool verify_model_suitability(const Model& model)
  * @param[in] model The model to be processed.
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Succes or error code.
  *
  * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
  * a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the 
  * species in the model as infection states to the file.
  */
-bool create_infection_state(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_infection_state(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     size_t number_species      = model.getListOfSpecies()->size();
@@ -451,11 +450,10 @@ bool create_infection_state(Model& model, const std::string& filename, const std
         infection_state.close();
     }
     else {
-        mio::log_error("Could not open file for writing: infection_state.h");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: infection_state.h");
     }
 
-    return true;
+    return mio::success();
 }
 
 /**
@@ -464,14 +462,14 @@ bool create_infection_state(Model& model, const std::string& filename, const std
  * @param[in] model The model to be processed.
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Succes or error code.
  *
  * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
  * a file with the resulting name using `boost::filesystem` at the location given by `path`. 
  * Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as 
  * default value. (This may be overwritten in the example.cpp file.)
  */
-bool create_parameters(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_parameters(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
@@ -522,11 +520,10 @@ bool create_parameters(Model& model, const std::string& filename, const std::str
         parameters.close();
     }
     else {
-        mio::log_error("Could not open file for writing: parameters.h");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: parameters.h");
     }
 
-    return true;
+    return mio::success();
 }
 
 /**
@@ -534,11 +531,11 @@ bool create_parameters(Model& model, const std::string& filename, const std::str
  *
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Success or error code.
  *
  * Creates the generic model.cpp file. The file location is generated using the filename and the `path`.
  */
-bool create_model_cpp(const std::string& filename, const std::string& path)
+mio::IOResult<void> create_model_cpp(const std::string& filename, const std::string& path)
 {
 
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -552,10 +549,9 @@ bool create_model_cpp(const std::string& filename, const std::string& path)
         model_cpp.close();
     }
     else {
-        mio::log_error("Could not open file for writing: model.cpp");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: model.cpp");
     }
-    return true;
+    return mio::success();
 }
 
 /**
@@ -564,7 +560,7 @@ bool create_model_cpp(const std::string& filename, const std::string& path)
  * @param[in] model The model to be processed.
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Success or error code.
  *
  * Creates the model.h file based on the filename and `path`. First some generic input is written to the file. Then the 
  * `get_derivatives`-function is generated. It
@@ -575,7 +571,7 @@ bool create_model_cpp(const std::string& filename, const std::string& path)
  * 
  * In the end it appends a generic serialization function.
  */
-bool create_model_h(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_model_h(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::string uppercase_name = boost::to_upper_copy<std::string>(filename);
@@ -772,11 +768,10 @@ bool create_model_h(Model& model, const std::string& filename, const std::string
         model_h.close();
     }
     else {
-        mio::log_error("Could not open file for writing: model.h");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: model.h");
     }
 
-    return true;
+    return mio::success();
 }
 
 /**
@@ -784,13 +779,13 @@ bool create_model_h(Model& model, const std::string& filename, const std::string
  *
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Success or error code.
  *
  * Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this 
  * program are needed. The file location is generated using filename and path and the file is stored in the generated 
  * folder.
  */
-bool create_cmake(const std::string& filename, const std::string& path)
+mio::IOResult<void> create_cmake(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
 
@@ -809,11 +804,10 @@ bool create_cmake(const std::string& filename, const std::string& path)
         cmakelists.close();
     }
     else {
-        mio::log_error("Could not open file for writing: CMakeLists.txt");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: CMakeLists.txt");
     }
 
-    return true;
+    return mio::success();
 }
 
 /**
@@ -822,14 +816,14 @@ bool create_cmake(const std::string& filename, const std::string& path)
  * @param[in] model The model to be processed.
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Success or error code.
  *
  * The filename is based on the given filename and path. 
  * The file first contains generic input, then the model, it's parameters and specis are initialized. 
  * The model is simulated in steps to add events that are triggered by a specific time. In the end the model is 
  * simulated for another 50 days. The results are printed to the console and saved in a file as a table.
  */
-bool create_example_cpp(Model& model, const std::string& filename, const std::string& path)
+mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     size_t number_species      = model.getListOfSpecies()->size();
@@ -897,7 +891,9 @@ bool create_example_cpp(Model& model, const std::string& filename, const std::st
                     mio::IOResult<std::string> formatted_variable =
                         format_event_variable(variable, model, lowercase_name);
                     if (!formatted_variable) {
-                        return false;
+                        return mio::failure(mio::StatusCode::InvalidValue,
+                                            "Could not format event variable; error message: " +
+                                                formatted_variable.error().formatted_message());
                     }
                     std::string formula = SBML_formulaToL3String(assignment->getMath());
                     mio::IOResult<std::string> formatted_formula =
@@ -923,11 +919,10 @@ bool create_example_cpp(Model& model, const std::string& filename, const std::st
         example.close();
     }
     else {
-        mio::log_error("Could not open file for writing: example.cpp");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: example.cpp");
     }
 
-    return true;
+    return mio::success();
 }
 
 /**
@@ -935,11 +930,11 @@ bool create_example_cpp(Model& model, const std::string& filename, const std::st
  *
  * @param[in] filename The name of the file to be processed.
  * @param[in] path The path where the file should be created.
- * @return bool Whether the writing process was successful.
+ * @return mio::IOResult<void> Success or error code.
  *
  * Appends the necessary commands for compilation to the CMakeLists.txt file in path using the filename.
  */
-bool modify_cmakelists(const std::string& filename, const std::string& path)
+mio::IOResult<void> modify_cmakelists(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::ifstream cmakefile(path + "/CMakeLists.txt");
@@ -970,10 +965,9 @@ bool modify_cmakelists(const std::string& filename, const std::string& path)
         }
     }
     else {
-        mio::log_error("Could not open file for writing: CMakelists.txt");
-        return false;
+        return mio::failure(mio::StatusCode::FileNotFound, "Could not open file for writing: CMakeLists.txt");
     }
-    return true;
+    return mio::success();
 }
 
 /** 
@@ -1033,7 +1027,9 @@ int main(int argc, char* argv[])
 
     Model& model = *document->getModel();
 
-    if (!verify_model_suitability(model)) {
+    auto result = verify_model_suitability(model);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 4;
     }
 
@@ -1042,39 +1038,55 @@ int main(int argc, char* argv[])
 
     auto folder_location = get_path(folder_name);
     if (!folder_location) {
+        mio::log_error(folder_location.error().formatted_message());
         return 5;
     }
     std::string path = folder_location.value();
 
     create_folder(core_filename, path);
 
-    if (!create_infection_state(model, core_filename, path)) {
+    result = create_infection_state(model, core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 6;
     }
 
-    if (!create_parameters(model, core_filename, path)) {
+    result = create_parameters(model, core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 7;
     }
 
-    if (!create_model_cpp(core_filename, path)) {
+    result = create_model_cpp(core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 8;
     }
 
-    if (!create_model_h(model, core_filename, path)) {
+    result = create_model_h(model, core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 9;
     }
 
-    if (!create_cmake(core_filename, path)) {
+    result = create_cmake(core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 10;
     }
 
-    if (!create_example_cpp(model, core_filename, path)) {
+    result = create_example_cpp(model, core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 11;
     }
 
-    if (!modify_cmakelists(core_filename, path)) {
+    result = modify_cmakelists(core_filename, path);
+    if (!result) {
+        mio::log_error(result.error().formatted_message());
         return 12;
     }
+
     mio::log_info("Created all files.");
     mio::log_info("Formatting files.");
     format_files(core_filename, path);
