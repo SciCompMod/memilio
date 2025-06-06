@@ -1,38 +1,50 @@
-Mobility
-========
+Graph-based metapopulation model
+================================
 
-In order to extend the local models with spatial resolution, we provide a module to loosely couple multiple simulation instances and model the mobility between them. Each instance can represent a different geographical region. The regions are stored as nodes in a multi-edge graph as proposed in Kühn et al. (2021), with edges between them representing the mobility between the regions. 
-We assume that :math:`n` different geographic units (denoted as *regions*) are given. The mobility extension can contain a arbitrary number of regions. The number of edges is limited by the number of regions squared. 
-A pair of nodes is connected via multi edges, where each edge represents the mobility of a specific group of individuals. The number of edges between a pair of nodes is given as the product of the number of age groups and number of compartments in the (local) model.
+Introduction
+-------------
 
+This model realizes a metapopulation model using a directed graph with instances of an ODE-based model as graph nodes. Any ODE-based model implemented in MEmilio can be used in the graph nodes, see :doc:`ode`, representing one geographical region. Currently, only ODE-based models are supported as nodes, but support for other models will be added soon. Mobility between graph nodes is modelled via graph edges. There are two different types of mobility edges implemented in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first one implements a deterministic instant mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
 
-Currently, only ODE models are supported as nodes; support for other models will be added soon.
+Simulation
+-----------
+
+During the simulation, graph nodes are advanced independently from each other according to their local solver until the next time point where mobility via the edges takes place. The concrete exchange of individuals or subpopulations via the graph edges depends on the chosen edge type.
+
+**Instant mobility approach**
+
+The instant mobility approach was introduced by Kühn et al. (2021) and mainly represents daily instant commuting activities between different regions. Using realistic commuting data, such as the absolute number of commuters between regions, we can model realistic exchanges of individuals in the metapopulation context.
+
+In this approach, the commuters are exchanged twice daily in an instantaneous manner, allowing the integration of age-specific mobility restrictions. The implementation also allows the restriction of mobility activities for certain infection states, such as symptomatic infected individuals. An important feature implemented in Kühn et al. (2022) is the testing of commuters, which enables the detection and potential isolation of asymptomatic or symptomatic infected individuals before they can infect people in other regions.
+
+The instant mobility approach assumes instant exchange between regions without considering travel times. The length of stay is fixed to half a day.
+Since all regions exchange commuters simultaneously, this scheme offers great properties for parallelization and has fewer constraints on the integration time step compared to more detailed mobility approaches.
+
+For further details, please refer to:
+
+- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `<https://doi.org/10.1016/j.mbs.2021.108648>`_
+- Kühn MJ, Abele D, Binder S, Rack K, Klitz M, et al. (2022). *Regional opening strategies with commuter testing and containment of new SARS-CoV-2 variants in Germany*. *BMC Infectious Diseases* 22(1): 333. `DOI:10.1186/s12879-022-07302-9 <https://doi.org/10.1186/s12879-022-07302-9>`_
+
+**Detailed mobility approach**
+
+The detailed mobility scheme was introduced in Zunker et al. (2024) and further develops the instant approach. The detailed mobility model addresses some of the constraints of the instant approach by adding realistic travel and stay times.
+
+The core idea of this detailed approach is that each region has a second, local model, which can be parameterized independently from the existing model, to represent mobility within the region. This allows for more detailed modeling of population movement.
+
+To have a realistic representation of the exchange process, we calculate the centroids of each region, which is represented by a polygon. When modeling travel between two non-adjacent regions (nodes k and l), the model creates a path connecting their centroids, which may pass through other regions. The predefined travel time between regions is then distributed across all regions along this path.
+Commuters move along these paths and pass through various mobility models during their trip. This allows for potential interactions with other commuters during transit. The detailed mobility approach enables modeling of scenarios that cannot be addressed with the instant approach, such as the impact of different mask type usage in public transport. However, this increased realism comes at the cost of greater computational effort and requires more detailed input data.
 
 For further details, please refer to:
 
 - Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `<https://doi.org/10.1371/journal.pcbi.1012630>`_
-- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `<https://doi.org/10.1016/j.mbs.2021.108648>`_
 
-Simulation process
-------------------
-The mobility can contain a different scale of complexity.  One option is the "instant" mobility scheme, where we implement two daily exchanges of commuters that occur instantaneously, at the beginning of the day and after half a day. With this approach,
-commuters can change their infection state during the half-day stay. Theres also another more "detailed" mobility scheme, where travel times and stay durations are considered; see Zunker et al. (2024) for more details.
+**Stochastic mobility approach**
 
-Basicallly, the graph simulation consists of two phases:
+In the stochastic mobility approach, transitions of individuals between regions, i.e. graph nodes, are modeled as stochastic jumps. The frequency of individuals transitioning from region i to region j is determined by a rate :math:`\lambda_{ij}` which can be interpreted as the (expected) fraction of the population in region i that commutes to region j within one day. In contrast to the instant and detailed mobility approach, the time points and the number of transitions between two regions are stochastic.
 
-1. **Advance the Simulation:**
-   
-   - Each node progresses independently according to its model.
-
-2. **Exchange of Population:**
-   
-   - Individuals are exchanged between nodes along the graph edges.
-   - The number of exchanged individuals is determined by coefficients.
-   - Number of daily commuters may include time-dependent damping factors, similar to the dampings used in contact matrices.
-   - While located in another node, the individuals can change their infection state. Therefore, we need to estimate the infection state of the commuters at the time of the return.
 
 How to: Set up a graph and run a graph simulation
----------------------------------------------
+-------------------------------------------------
 
 The graph simulation couples multiple simulation instances representing different geographic regions via a graph-based approach. In this example, a compartment model based on ODEs (ODE-SECIR) is used for each region. The simulation proceeds by advancing each region independently and then exchanging portions of the population between regions along the graph edges.
 
@@ -122,6 +134,25 @@ The following steps detail how to configure and execute a graph simulation:
            g.add_node(1002, model_group2, t0);
            g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
            g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
+
+
+For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as edge type for the graph. The rates or mibility coefficients can be set as follows:
+
+    .. code-block:: cpp
+
+        mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> graph;
+        graph.add_node(1001, model_group1, t0);
+        graph.add_node(1002, model_group2, t0);
+
+        auto transition_rates = mio::MobilityCoefficients(model.populations.numel());
+
+        for (auto compartment = mio::Index<mio::osecir::InfectionState>(0); compartment < model.populations.size<mio::osecir::InfectionState>(); compartment++) {
+            auto coeff_idx = model.populations.get_flat_index({mio::AgeGroup(0), compartment});
+            transition_rates.get_baseline()[coeff_idx] = 0.01;
+        }
+
+        graph.add_edge(0, 1, std::move(transition_rates));
+        graph.add_edge(1, 0, std::move(transition_rates));
 
 5. **Initialize and Advance the Mobility Simulation:**
 

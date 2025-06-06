@@ -4,7 +4,7 @@ Aggregated models
 There are different equation-based models implemented in MEmilio that consider an aggregated population.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     Ordinary differential equations <ode>
     Linear Chain Trick <lct>
