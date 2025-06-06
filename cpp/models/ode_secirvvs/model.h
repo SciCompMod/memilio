@@ -598,17 +598,18 @@ public:
     */
     void apply_variant(const FP t, const CustomIndexArray<UncertainValue<FP>, AgeGroup> base_infectiousness)
     {
+        using std::min;
         auto start_day             = this->get_model().parameters.template get<StartDay>();
         auto start_day_new_variant = this->get_model().parameters.template get<StartDayNewVariant>();
 
         if (start_day + t >= start_day_new_variant - 1e-10) {
             const FP days_variant      = t - (start_day_new_variant - start_day);
-            const FP share_new_variant = std::min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
+            const FP share_new_variant = min(1.0, 0.01 * pow(2, (1. / 7) * days_variant));
             const auto num_groups          = this->get_model().parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; ++i) {
                 FP new_transmission =
-                    (1 - share_new_variant) * base_infectiousness[i] +
-                    share_new_variant * base_infectiousness[i] *
+                    (1 - share_new_variant) * base_infectiousness[i].value() +
+                    share_new_variant * base_infectiousness[i].value() *
                         this->get_model().parameters.template get<InfectiousnessNewVariant<FP>>()[i];
                 this->get_model().parameters.template get<TransmissionProbabilityOnContact<FP>>()[i] = new_transmission;
             }
@@ -674,6 +675,8 @@ public:
      */
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
+        using std::floor;
+        using std::min;
         auto& t_end_dyn_npis   = this->get_model().parameters.get_end_dynamic_npis();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
@@ -688,7 +691,7 @@ public:
         const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
         while (t < tmax) {
 
-            auto dt_eff = std::min(std::min(dt, tmax - t), m_t_last_npi_check + dt - t);
+            auto dt_eff = min(min(dt, tmax - t), m_t_last_npi_check + dt - t);
             if (dt_eff >= 1.0) {
                 dt_eff = 1.0;
             }
@@ -698,7 +701,7 @@ public:
                 this->apply_variant(t, base_infectiousness);
             }
             BaseT::advance(t + dt_eff);
-            if (t + 0.5 + dt_eff - std::floor(t + 0.5) >= 1) {
+            if (t + 0.5 + dt_eff - floor(t + 0.5) >= 1) {
                 this->apply_vaccination(t + 0.5 + dt_eff);
                 this->apply_variant(t, base_infectiousness);
             }
