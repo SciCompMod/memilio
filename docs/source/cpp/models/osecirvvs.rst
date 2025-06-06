@@ -297,7 +297,7 @@ Basic dampings can be added to the contact matrix as follows:
 
 For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings as in the SECIR model. The SECIRVVS model supports the same contact locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
-Example of defining locations and interventions for a detailed COVID-19 scenario:
+Example of defining locations and interventions for a detailed scenario:
 
 .. code-block:: cpp
 
@@ -324,8 +324,12 @@ The model also supports dynamic NPIs based on epidemic thresholds:
 
 .. code-block:: cpp
 
-    // Configure dynamic NPIs with implementation delay
-    model.parameters.get<mio::osecirvvs::DynamicNPIsImplementationDelay<double>>() = 7;
+    // Configure dynamic NPIs
+    auto& dynamic_npis = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
+    dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check every 3 days
+    dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply for 14 days
+    dynamic_npis.set_base_value(100'000);                // Per 100,000 population
+    dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
 Simulation
 ----------
