@@ -88,7 +88,7 @@ The model implements the following parameters.
      - ``RelativeTransmissionNoSymptoms``
      - Proportion of nonsymptomatically infected people who are not isolated.
    * - :math:`\xi_{I_{Sy}}`
-     - ``riskFromInfectedSymptomatic``
+     - ``RiskOfInfectionFromSymptomatic``
      - Proportion of infected people with symptoms who are not isolated (time-dependent if ``TestAndTraceCapacity`` used).
    * - :math:`N_j`
      - ``Nj``
@@ -128,32 +128,249 @@ The model implements the following parameters.
 Initial conditions
 ------------------
 
-TODO...
+The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, you need to set the initial values for each compartment:
+
+.. code-block:: cpp
+
+    // Set total population size
+    model.populations.set_total(nb_total_t0); 
+    
+    // Set values for each InfectionState in the specific age group
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = nb_exp_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] = nb_hosp_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] = nb_rec_t0;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}] = nb_dead_t0;
+    
+    // Set the susceptible population as difference to ensure correct total population
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, nb_total_t0);
+
+For age-resolved models, you need to set the initial conditions for each age group. Additionally, you can use ``set_difference_from_group_total`` to set the susceptible compartment as the difference between the total group size and all other compartments:
+
+.. code-block:: cpp
+
+    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
+        model.populations[{i, mio::osecir::InfectionState::Exposed}] = fact * nb_exp_t0;
+        // ...other states...
+        model.populations.set_difference_from_group_total<mio::AgeGroup>(
+            {i, mio::osecir::InfectionState::Susceptible}, fact * nb_total_t0);
+    }
 
 
 .. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 
-TODO...
+In the SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions.
+
+Basic dampings can be added to the contact matrix as follows:
+
+.. code-block:: cpp
+
+    // Create a contact matrix with constant contact rates between all groups
+    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    
+    // Add a damping that reduces contacts by 70% starting at day 30
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+
+For age-resolved models, you can apply different dampings to different groups:
+
+.. code-block:: cpp
+
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    
+    // Add a uniform damping across all age groups
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                             mio::SimulationTime(30.));
+
+The SECIR model also supports dynamic NPIs based on epidemic thresholds. These are implemented in the model specific Simulation class and are automatically triggered based on predefined criteria, such as the percentage of infected individuals in the population.
+
+For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+
+Example for defining different contact locations:
+
+.. code-block:: cpp
+
+    // Define different contact locations
+    enum class ContactLocation
+    {
+        Home = 0,
+        School,
+        Work,
+        Other,
+        Count,
+    };
+    
+    // Map contact locations to strings for loading data files
+    const std::map<ContactLocation, std::string> contact_locations = {
+        {ContactLocation::Home, "home"},
+        {ContactLocation::School, "school_pf_eig"},
+        {ContactLocation::Work, "work"},
+        {ContactLocation::Other, "other"}
+    };
+
+You can create intervention types that target specific locations with different intensities:
+
+.. code-block:: cpp
+
+    // Different types of NPI
+    enum class Intervention
+    {
+        Home,
+        SchoolClosure,
+        HomeOffice,
+        GatheringBanFacilitiesClosure,
+        PhysicalDistanceAndMasks,
+        SeniorAwareness,
+    };
+    
+    // Different levels of NPI
+    enum class InterventionLevel
+    {
+        Main,
+        PhysicalDistanceAndMasks,
+        SeniorAwareness,
+        Holidays,
+    };
+
+For example, to implement a complex lockdown scenario with multiple interventions starting on a specific date:
+
+.. code-block:: cpp
+
+    auto start_lockdown_date = mio::Date(2020, 3, 18);
+    auto start_lockdown = mio::SimulationTime(mio::get_offset_in_days(start_lockdown_date, start_date));
+    
+    // Apply different dampings for each intervention type
+    contact_dampings.push_back(contacts_at_home(start_lockdown, 0.6, 0.8));
+    contact_dampings.push_back(school_closure(start_lockdown, 1.0, 1.0));
+    contact_dampings.push_back(home_office(start_lockdown, 0.2, 0.3));
+    contact_dampings.push_back(social_events(start_lockdown, 0.6, 0.8));
+    contact_dampings.push_back(physical_distancing(start_lockdown, 0.4, 0.6));
+
+For dynamic NPIs that activate automatically based on thresholds:
+
+.. code-block:: cpp
+
+    // Configure dynamic NPIs with thresholds
+    auto& dynamic_npis = params.get<mio::osecir::DynamicNPIsInfectedSymptoms<double>>();
+    dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check every 3 days
+    dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply for 14 days
+    dynamic_npis.set_base_value(100'000);                // Per 100,000 population
+    dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
 
 Simulation
 ----------
 
-TODO...
+The SECIR model offers two simulation functions:
+
+1. **simulate**: Standard simulation that tracks the compartment sizes over time
+2. **simulate_flows**: Extended simulation that additionally tracks the flows between compartments
+
+Basic simulation:
+
+.. code-block:: cpp
+
+    double t0 = 0;       // Start time
+    double tmax = 50;    // End time
+    double dt = 0.1;     // Time step
+    
+    // Run a standard simulation
+    mio::TimeSeries<double> secir = mio::osecir::simulate(t0, tmax, dt, model);
+
+Flow simulation for tracking transitions between compartments:
+
+.. code-block:: cpp
+
+    // Run a flow simulation to additionally track transitions between compartments
+    auto result = mio::osecir::simulate_flows(t0, tmax, dt, model);
+    // result[0] contains compartment sizes, result[1] contains flows
+
+For both simulation types, you can also specify a custom integrator:
+
+.. code-block:: cpp
+
+    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    integrator->set_dt_min(0.3);
+    integrator->set_dt_max(1.0);
+    integrator->set_rel_tolerance(1e-4);
+    integrator->set_abs_tolerance(1e-1);
+    
+    mio::TimeSeries<double> secir = mio::osecir::simulate(t0, tmax, dt, model, integrator);
 
 
 Output
 ------
 
-TODO...
+The output of the simulation is a `TimeSeries` object containing the sizes of each compartment at each time point. For a basic simulation, you can access the results as follows:
+
+.. code-block:: cpp
+
+    // Get the number of time points
+    auto num_points = static_cast<size_t>(secir.get_num_time_points());
+    
+    // Access data at a specific time point
+    Eigen::VectorXd value_at_time_i = secir.get_value(i);
+    double time_i = secir.get_time(i);
+    
+    // Access the last time point
+    Eigen::VectorXd last_value = secir.get_last_value();
+    double last_time = secir.get_last_time();
+
+For flow simulations, the result consists of two `TimeSeries` objects, one for compartment sizes and one for flows:
+
+.. code-block:: cpp
+
+    auto result = mio::osecir::simulate_flows(t0, tmax, dt, model);
+    
+    // Access compartment sizes
+    auto compartments = result[0];
+    
+    // Access flows between compartments
+    auto flows = result[1];
+
+You can print the simulation results as a formatted table:
+
+.. code-block:: cpp
+
+    // Print results to console with default formatting
+    secir.print_table();
+    
+    // Print with custom column labels
+    std::vector<std::string> labels = {"S", "E", "C", "C_confirmed", "I", "I_confirmed", "H", "U", "R", "D"};
+    secir.print_table(labels);
+
+Additionally, you can export the results to a CSV file:
+
+.. code-block:: cpp
+
+    // Export results to CSV with default settings
+    secir.export_csv("simulation_results.csv");
+
+The SECIR model also provides utility functions to extract specific measures, such as the reproduction number:
+
+.. code-block:: cpp
+
+    // Calculate R value at a specific time index
+    auto r_at_index = mio::osecir::get_reproduction_number(time_idx, sim);
+    
+    // Calculate R values for the entire simulation
+    Eigen::VectorXd r_values = mio::osecir::get_reproduction_numbers(sim);
 
 
 Visualization
 -------------
 
-TODO...
+To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
+and its documentation.
+
+You can export your simulation results to CSV format as described above.
+
 
     
 Examples
@@ -169,27 +386,3 @@ Overview of the ``osecir`` namespace:
 -----------------------------------------
 
 .. doxygennamespace:: mio::osecir
-
-
-
-
-OLD Structure
----------
-
-
-3. **Dampings**: A ``Damping`` object is the combination of a particular day and a multiplicative factor that changes the contact patterns. Dampings can be overwritten by or combined with dampings at later times. In order to avoid discontinuities in pattern changes, the transition is smoothed by a cosine S-type function over an interval of maximum length one day. The resulting contact rate satisfies C^1-smoothness between two consecutive dampings.
-4. **SECIR**: Implements an *age-resolved ODE-model*, based on the non-age-resolved model as described in
-   `https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v1 <https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v1>`_. It uses the compartments ``Susceptible (S)``, ``Exposed (E)``, ``InfectedNoSymptoms (I_NS)``, ``InfectedSymptoms (I_Sy)``, ``InfectedSevere (I_Sev)``, ``InfectedCritical (I_Cr)``, ``Recovered (R)`` and ``Dead``. The final model has been published in
-   `https://doi.org/10.1016/j.mbs.2021.108648 <https://doi.org/10.1016/j.mbs.2021.108648>`_. ``Exposed`` individuals are not infectious and it is assumed that subsequent infections can occur at random during the infectious period before the onset of symptoms, i.e., from state ``InfectedNoSymptoms (I_NS)``. Recovered people remain immune. Severely or critically infected individuals are assumed to be isolated. The ``Model`` uses ``Populations`` to model different 'groups' of a particular age range (first dimension) and an ``InfectionState`` (second dimension). Parameters are set as ``Parameters``; they contain contact patterns in the form of an ``UncertainContactMatrix`` and an extended set of pathogen-dependent parameters.
-5. **Parameter Space**: Factory class for the ``Parameters`` to set distributions for the different parameters and to provide the opportunity to sample from this parameter set containing random distributions.
-6. **Parameter Studies**: Method to be called on a set of ``Parameters`` with a given set of random distributions to sample from the distributions and run ensemble simulations with the obtained samples.
-
-
-Simulation
-----------
-
-The simulation runs in discrete time steps using a numerical integration scheme. At each time step, a portion of the population in each age-aware compartment moves from the current compartment to a new one. Different numerical integration schemes are available (see the ``math`` folder). The Simulation class handles the parameters and the numerical integrator, and it also stores the result. Ensemble runs can be performed using the Parameter Studies class as soon as random distributions are set for all parameters. This can be done using the Parameter Space class.
-
-
-
-
