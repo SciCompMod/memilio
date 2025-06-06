@@ -943,27 +943,31 @@ bool modify_cmakelists(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
     std::ifstream cmakefile(path + "/CMakeLists.txt");
-    if(cmakefile.is_open()){
+    if (cmakefile.is_open()) {
         std::string line;
         bool found = false;
-        while (std::getline(file, line)) {
-        if (line == "add_subdirectory(" << lowercase_name << ")") {
-            found = true;
-            break;
+        while (std::getline(cmakefile, line)) {
+            if (line == "add_subdirectory(" + lowercase_name + ")") {
+                found = true;
+                break;
+            }
         }
-    }
-    }
-    std::ofstream modifications;
-    modifications.open(path + "/CMakeLists.txt", std::ios::app);
-    if (modifications) {
-        modifications << "add_subdirectory(" << lowercase_name << ")" << std::endl;
-        modifications << "add_executable(ex_" << lowercase_name << " " << lowercase_name << ".cpp)" << std::endl;
-        modifications << "target_link_libraries(ex_" << lowercase_name << " PRIVATE memilio " << lowercase_name << ")"
-                      << std::endl;
-        modifications << "target_compile_options(ex_" << lowercase_name
-                      << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n"
-                      << std::endl;
-        modifications.close();
+        cmakefile.close();
+        if (!found) {
+            std::ofstream modifications;
+            modifications.open(path + "/CMakeLists.txt", std::ios::app);
+            if (modifications) {
+                modifications << "add_subdirectory(" << lowercase_name << ")" << std::endl;
+                modifications << "add_executable(ex_" << lowercase_name << " " << lowercase_name << ".cpp)"
+                              << std::endl;
+                modifications << "target_link_libraries(ex_" << lowercase_name << " PRIVATE memilio " << lowercase_name
+                              << ")" << std::endl;
+                modifications << "target_compile_options(ex_" << lowercase_name
+                              << " PRIVATE ${MEMILIO_CXX_FLAGS_SBML_GENERATED})\n"
+                              << std::endl;
+                modifications.close();
+            }
+        }
     }
     else {
         mio::log_error("Could not open file for writing: CMakelists.txt");
