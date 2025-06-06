@@ -89,8 +89,8 @@ void create_folder(const std::string& foldername, const std::string& path)
  * @param[inout] formula The formula to be processed.
  *
  * This function goes through the formula and removes leading brackets and minus signs. It also removes trailing
- * brackets and commas. The leading brackets and minus signs are stored in the leading_bracket string, the trailing
- * brackets in the trailing_bracket string. The formula is modified in place. This function can be reversed by calling
+ * brackets and commas. The leading brackets and minus signs are appended to the leading_bracket string, the trailing
+ * brackets to the trailing_bracket string. The formula is modified in place. This function can be reversed by calling
  * :cpp:func:`append_brackets(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`.
  */
 void strip_formula(std::string& leading_bracket, std::string& trailing_bracket, std::string& formula)
@@ -942,6 +942,17 @@ bool create_example_cpp(Model& model, const std::string& filename, const std::st
 bool modify_cmakelists(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
+    std::ifstream cmakefile(path + "/CMakeLists.txt");
+    if(cmakefile.is_open()){
+        std::string line;
+        bool found = false;
+        while (std::getline(file, line)) {
+        if (line == "add_subdirectory(" << lowercase_name << ")") {
+            found = true;
+            break;
+        }
+    }
+    }
     std::ofstream modifications;
     modifications.open(path + "/CMakeLists.txt", std::ios::app);
     if (modifications) {
