@@ -28,7 +28,7 @@ C++ Coding guidelines
 
 C++ Standard:
 
- - C++ 17, higher standards are currently not allowed
+ - C++ 20, other standards are currently not supported.
 
 Namespaces:
 
@@ -358,3 +358,5 @@ Then sphinx can be used to build the documentation:
     make html # sphinx-build source html
 
 The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).
+
+For the documentation, please keep in mind that it is written in reStructuredText (RST) and uses a slightly different syntax than Markdown. A documentation can be found at `<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
