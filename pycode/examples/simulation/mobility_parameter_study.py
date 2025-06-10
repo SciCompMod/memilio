@@ -26,6 +26,7 @@ import memilio.simulation.osecir as osecir
 
 
 def run_mobility_parameter_study():
+    """ """
     mio.set_log_level(mio.LogLevel.Warning)
 
     # setup basic parameters
@@ -96,6 +97,12 @@ def run_mobility_parameter_study():
 
     # process the result of one run
     def handle_result(graph, run_idx):
+        """
+
+        :param graph: 
+        :param run_idx: 
+
+        """
         print(f'run {handle_result.c}')
         handle_result.c = handle_result.c + 1
         for node_idx in range(graph.num_nodes):
@@ -115,7 +122,8 @@ def run_mobility_parameter_study():
     handle_result.c = 0
 
     # study with unknown number of undetected InfectedNoSymptoms
-    carrier_distribution = mio.ParameterDistributionNormal(50, 2000, 200, 100)
+    carrier_distribution = mio.ParameterDistributionNormal(
+        50, 2000, 200, 100, 2.5758)
     graph.get_node(0).property.populations[mio.AgeGroup(
         0), osecir.InfectionState.InfectedNoSymptoms].set_distribution(carrier_distribution)
 

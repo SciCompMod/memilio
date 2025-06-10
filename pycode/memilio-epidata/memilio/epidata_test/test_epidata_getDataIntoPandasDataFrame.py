@@ -34,6 +34,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
+    """ """
 
     path = '/home/x/'
 
@@ -62,13 +63,20 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     test_string_file = json.dumps(dict_object)
 
     def setUp(self):
+        """ """
         self.setUpPyfakefs()
 
     def write_data(self, path_to_file):
+        """
+
+        :param path_to_file: 
+
+        """
         with open(path_to_file, 'w') as f:
             f.write(self.test_string_file)
 
     def test_cli_correct_default(self):
+        """ """
 
         out_path_default = dd.defaultDict['out_folder']
 
@@ -154,6 +162,11 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
     @patch('sys.stderr', new_callable=StringIO)
     def test_cli_correct_raise_exit(self, mock_stderr):
+        """
+
+        :param mock_stderr: 
+
+        """
 
         with self.assertRaises(ValueError) as error:
             gd.cli("wrong_key")
@@ -204,6 +217,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                 gd.cli("divi")
 
     def test_cli_set_different_values(self):
+        """ """
 
         folder = "some_folder"
 
@@ -307,6 +321,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             assert impute_dates == dd.defaultDict['impute_dates']
 
     def test_append_filename(self):
+        """ """
         test_moving_average = 2
         test_impute_dates = True
         testfilename1 = "FileName_ma2"
@@ -328,6 +343,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                 "FileName", test_impute_dates, test_moving_average))
 
     def test_check_dir(self):
+        """ """
 
         self.assertFalse(os.path.exists(self.path))
 
@@ -340,6 +356,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         """[{"Date":"2020-11-26","col2":"d1"},{"Date":"2020-07-26","col2":"d2"}]""")
 
     def test_write_dataframe(self):
+        """ """
 
         gd.check_dir(self.path)
 
@@ -398,6 +415,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         # self.assertEqual(os.listdir(self.path), [file])
 
     def test_write_dataframe_error(self):
+        """ """
 
         gd.check_dir(self.path)
 
@@ -424,6 +442,15 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     def test_call_functions(
             self, mock_jh, mock_vaccination, mock_popul,
             mock_cases, mock_divi):
+        """
+
+        :param mock_jh: 
+        :param mock_vaccination: 
+        :param mock_popul: 
+        :param mock_cases: 
+        :param mock_divi: 
+
+        """
 
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],
@@ -477,6 +504,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_jh.assert_called_with(**arg_dict_jh)
 
     def test_get_file_read(self):
+        """ """
         # first test with read_data = True. get_file should return the json file as dataframe
         filepath = os.path.join(self.path, 'test_file.json')
         url = ''
@@ -495,6 +523,11 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
     @patch('pandas.read_json')
     def test_get_file_empty_df(self, mock_json):
+        """
+
+        :param mock_json: 
+
+        """
 
         filepath = os.path.join(self.path, 'test_file.json')
         url = ''
@@ -515,6 +548,13 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('builtins.input')
     @patch('pandas.read_json')
     def test_get_file_user_input(self, mock_json, mock_in, mock_request):
+        """
+
+        :param mock_json: 
+        :param mock_in: 
+        :param mock_request: 
+
+        """
 
         filepath = os.path.join(self.path, 'test_file.json')
         url = 'test_url.com'

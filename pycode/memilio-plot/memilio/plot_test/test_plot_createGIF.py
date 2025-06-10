@@ -25,12 +25,21 @@ from memilio.plot import createGIF
 
 
 class TestCreateGif(unittest.TestCase):
+    """ """
 
     @patch('memilio.plot.createGIF.pm.extract_data')
     @patch('pandas.read_json')
     @patch('memilio.plot.createGIF.pm.scale_dataframe_relative')
     @patch('memilio.plot.createGIF.pm.plot_map')
     def test_create_plot_map(self, mock_plot_map, mock_scale_dataframe_relative, mock_read_json, mock_extract_data):
+        """
+
+        :param mock_plot_map: 
+        :param mock_scale_dataframe_relative: 
+        :param mock_read_json: 
+        :param mock_extract_data: 
+
+        """
         # Mock the return values of the functions
         mock_extract_data.return_value = pd.DataFrame(
             {'Region': [0, 1], 'Value': [1, 2]})
@@ -72,6 +81,15 @@ class TestCreateGif(unittest.TestCase):
     @patch('imageio.v2.imread')
     @patch('imageio.mimsave')
     def test_create_gif_map_plot(self, mock_mimsave, mock_imread, mock_tempdir, mock_create_plot_map, mock_extract_time_steps):
+        """
+
+        :param mock_mimsave: 
+        :param mock_imread: 
+        :param mock_tempdir: 
+        :param mock_create_plot_map: 
+        :param mock_extract_time_steps: 
+
+        """
         # Mock the return values of the functions
         mock_extract_time_steps.return_value = 10
         mock_tempdir.return_value.__enter__.return_value = 'tempdir'

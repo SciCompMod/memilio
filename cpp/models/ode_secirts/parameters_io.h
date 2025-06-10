@@ -421,9 +421,9 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
             }
         }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
-            log_warning("No infections for unvaccinated reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                        std::to_string(region[county]) + ". Population data has not been set.");
+            log_warning(
+                "No infections for unvaccinated reported on date {} for region {}. Population data has not been set.",
+                date, region[county]);
         }
     }
 
@@ -478,9 +478,9 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 num_timm1[county][i];
         }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
-            log_warning("No infections for partially vaccinated reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                        std::to_string(region[county]) + ". Population data has not been set.");
+            log_warning("No infections for partially vaccinated reported on date {} for region {}. "
+                        "Population data has not been set.",
+                        date, region[county]);
         }
     }
 
@@ -536,9 +536,9 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 num_timm2[county][i];
         }
         if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
-            log_warning("No infections for vaccinated reported on date " + std::to_string(date.year) + "-" +
-                        std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                        std::to_string(region[county]) + ". Population data has not been set.");
+            log_warning("No infections for vaccinated reported on date {} for region {}. "
+                        "Population data has not been set.",
+                        date, region[county]);
         }
     }
     return success();
@@ -663,8 +663,9 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
     if (!is_divi_data_available(date)) {
-        log_warning("No DIVI data available for date: {}-{}-{}", date.year, date.month, date.day,
-                    ". ICU compartment will be set based on Case data.");
+        log_warning("No DIVI data available for date: {}. "
+                    "ICU compartment will be set based on Case data.",
+                    date);
         return success();
     }
     std::vector<FP> sum_mu_I_U(vregion.size(), 0);
@@ -861,10 +862,15 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
     if (max_date_entry == vacc_data.end()) {
         return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
     }
-    auto max_date = max_date_entry->date;
-    if (max_date < offset_date_by_days(date, num_days)) {
-        log_error("Vaccination data does not contain all dates. After the last day the data, vaccinations per day are "
-                  "set to 0.");
+    auto max_date       = max_date_entry->date;
+    auto min_date_entry = std::min_element(vacc_data.begin(), vacc_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    auto min_date       = min_date_entry->date;
+    if (min_date > date || max_date < offset_date_by_days(date, num_days)) {
+        log_warning("Vaccination data only available from {} to {}. "
+                    "For days before and after, vaccinations will be set to 0.",
+                    min_date, max_date);
     }
 
     for (auto&& vacc_data_entry : vacc_data) {
@@ -951,6 +957,27 @@ template <typename FP = double>
 IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::string& path, Date date,
                                     const std::vector<int>& vregion, int num_days)
 {
+    // Check if vaccination data is available for the given date range
+    auto end_date = offset_date_by_days(date, num_days);
+    if (!is_vaccination_data_available(date, end_date)) {
+        log_warning("No vaccination data available in range from {} to {}. "
+                    "Vaccination data will be set to 0.",
+                    date, end_date);
+        // Set vaccination data to 0 for all models
+        for (auto& m : model) {
+            m.parameters.template get<DailyPartialVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+            m.parameters.template get<DailyFullVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+            m.parameters.template get<DailyBoosterVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+            for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
+                for (auto a = AgeGroup(0); a < m.parameters.get_num_groups(); ++a) {
+                    m.parameters.template get<DailyPartialVaccinations<FP>>()[{a, d}] = 0.0;
+                    m.parameters.template get<DailyFullVaccinations<FP>>()[{a, d}]    = 0.0;
+                    m.parameters.template get<DailyBoosterVaccinations<FP>>()[{a, d}] = 0.0;
+                }
+            }
+        }
+        return success();
+    }
     BOOST_OUTCOME_TRY(auto&& vacc_data, read_vaccination_data(path));
     BOOST_OUTCOME_TRY(set_vaccination_data(model, vacc_data, date, vregion, num_days));
     return success();
@@ -1071,7 +1098,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std
  * @param[in] county Vector of county IDs for which the data is read.
  * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
  * @param[in] scaling_factor_icu Scaling factor for ICU data.
- * @param[in] dir Path to the directory containing input data files.
+ * @param[in] pydata_dir Path to the directory containing input data files.
  * @param[in] num_days The number of days for which the simulation runs.
  * @param[in] immunity_population Vector of vectors representing immunity proportions for each age group and immunity layer.
  * @param[in] export_time_series Boolean flag indicating whether to export time series of extrapolated data (default: false).
@@ -1081,23 +1108,22 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std
 template <class Model>
 IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                       const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                      const std::string& dir, int num_days,
+                                      const std::string& pydata_dir, int num_days,
                                       const std::vector<std::vector<double>> immunity_population,
                                       bool export_time_series = false)
 {
-    BOOST_OUTCOME_TRY(details::set_vaccination_data(
-        model, path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json"), date, county, num_days));
+    BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(pydata_dir, "vacc_county_ageinf_ma7.json"), date,
+                                                    county, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"), county,
-                                             date, scaling_factor_icu));
-
     BOOST_OUTCOME_TRY(
-        details::set_confirmed_cases_data(model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
-                                          county, date, scaling_factor_inf, immunity_population));
-    BOOST_OUTCOME_TRY(details::set_population_data(
-        model, path_join(dir, "pydata/Germany", "county_current_population.json"), county, immunity_population));
+        details::set_divi_data(model, path_join(pydata_dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
+
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_county_age_ma7.json"),
+                                                        county, date, scaling_factor_inf, immunity_population));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, "county_current_population.json"),
+                                                   county, immunity_population));
 
     if (export_time_series) {
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
@@ -1106,11 +1132,10 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
         log_info("Exporting time series of extrapolated real data. This may take some minutes. "
                  "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
-            path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
-            path_join(dir, "pydata/Germany", "county_current_population.json"), immunity_population,
-            path_join(dir, "pydata/Germany", "all_county_ageinf_vacc_ma7.json")));
+            model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
+            path_join(pydata_dir, "county_divi_ma7.json"), path_join(pydata_dir, "cases_all_county_age_ma7.json"),
+            path_join(pydata_dir, "county_current_population.json"), immunity_population,
+            path_join(pydata_dir, "vacc_county_ageinf_ma7.json")));
     }
 
     return success();
@@ -1128,7 +1153,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
  * @param[in] node_ids Vector of IDs of the units for which data is read.
  * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
  * @param[in] scaling_factor_icu Scaling factor for ICU cases.
- * @param[in] data_dir Directory containing the input data files.
+ * @param[in] pydata_dir Directory containing the input data files.
  * @param[in] num_days Number of days to simulate.
  * @param[in] immunity_population Matrix containing immunity proportions for each age group and immunity layer.
  * @param[in] export_time_series Boolean flag indicating whether to export time series of extrapolated data (default: false).
@@ -1138,22 +1163,22 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 template <class Model>
 IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::vector<int>& node_ids,
                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                               const std::string& data_dir, int num_days,
+                               const std::string& pydata_dir, int num_days,
                                const std::vector<std::vector<double>> immunity_population,
                                bool export_time_series = false)
 {
 
     BOOST_OUTCOME_TRY(
-        details::set_vaccination_data(model, path_join(data_dir, "vaccination_data.json"), date, node_ids, num_days));
+        details::set_vaccination_data(model, path_join(pydata_dir, "vaccination_data.json"), date, node_ids, num_days));
 
     // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
     // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    BOOST_OUTCOME_TRY(
-        details::set_divi_data(model, path_join(data_dir, "critical_cases.json"), node_ids, date, scaling_factor_icu));
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, "critical_cases.json"), node_ids, date,
+                                             scaling_factor_icu));
 
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(data_dir, "confirmed_cases.json"), node_ids,
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "confirmed_cases.json"), node_ids,
                                                         date, scaling_factor_inf, immunity_population));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(data_dir, "population_data.json"), node_ids,
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, "population_data.json"), node_ids,
                                                    immunity_population));
 
     if (export_time_series) {
@@ -1163,10 +1188,10 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
         log_info("Exporting time series of extrapolated real data. This may take some minutes. "
                  "For simulation runs over the same time period, deactivate it.");
         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, data_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(data_dir, "critical_cases.json"), path_join(data_dir, "confirmed_cases.json"),
-            path_join(data_dir, "population_data.json"), immunity_population,
-            path_join(data_dir, "vaccination_data.json")));
+            model, pydata_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
+            path_join(pydata_dir, "critical_cases.json"), path_join(pydata_dir, "confirmed_cases.json"),
+            path_join(pydata_dir, "population_data.json"), immunity_population,
+            path_join(pydata_dir, "vaccination_data.json")));
     }
 
     return success();

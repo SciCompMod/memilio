@@ -28,6 +28,7 @@
 
 int main()
 {
+    mio::set_log_level(mio::LogLevel::warn);
     const auto t0   = 0.;
     const auto tmax = 30.;
     const auto dt   = 0.5; //time step of Mobility, daily Mobility every second step

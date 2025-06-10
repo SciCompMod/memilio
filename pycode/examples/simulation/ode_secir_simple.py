@@ -32,9 +32,11 @@ from memilio.simulation.osecir import (Model, Simulation,
 
 
 def run_ode_secir_simulation(show_plot=True):
-    """
-    Runs the c++ ODE SECIHURD model using one age group 
+    """Runs the c++ ODE SECIHURD model using one age group
     and plots the results
+
+    :param show_plot:  (Default value = True)
+
     """
 
     # Define Comartment names

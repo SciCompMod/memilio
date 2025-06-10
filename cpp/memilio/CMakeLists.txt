@@ -18,6 +18,7 @@ add_library(memilio
     epidemiology/dynamic_npis.cpp
     epidemiology/lct_infection_state.h
     epidemiology/lct_populations.h
+    epidemiology/adoption_rate.h
     geography/regions.h
     geography/regions.cpp
     epidemiology/simulation_day.h
@@ -69,6 +70,15 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    timer/auto_timer.h
+    timer/basic_timer.cpp
+    timer/basic_timer.h
+    timer/definitions.cpp
+    timer/definitions.h
+    timer/list_printer.h
+    timer/named_timer.h
+    timer/registration.h
+    timer/timer_registrar.h
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp
@@ -78,6 +88,7 @@ add_library(memilio
     utils/custom_index_array.h
     utils/memory.h
     utils/parameter_distributions.h
+    utils/abstract_parameter_distribution.h
     utils/time_series.h
     utils/time_series.cpp
     utils/span.h
@@ -93,6 +104,8 @@ add_library(memilio
     utils/miompi.h
     utils/miompi.cpp
     utils/mioomp.h
+    utils/mioomp.cpp
+    utils/string_literal.h
     utils/type_list.h
 )
 
@@ -102,7 +115,6 @@ target_include_directories(memilio PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(memilio PUBLIC cxx_std_17)
 target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123 AD::AD)
 target_compile_options(memilio
     PRIVATE
@@ -126,4 +138,9 @@ endif()
 
 if(MEMILIO_ENABLE_OPENMP)
     target_link_libraries(memilio PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+if(MEMILIO_ENABLE_LIKWID_MARKER)
+    target_link_libraries(memilio PUBLIC likwid)
+    target_compile_definitions(memilio PUBLIC "-DLIKWID_PERFMON")
 endif()

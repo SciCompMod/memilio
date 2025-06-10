@@ -21,6 +21,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/common_abm_loggers.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
 
 #include <fstream>
 
@@ -28,6 +29,7 @@ int main()
 {
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
+    mio::set_log_level(mio::LogLevel::warn);
     size_t num_age_groups         = 4;
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_14  = mio::AgeGroup(1);
@@ -36,9 +38,8 @@ int main()
 
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
-
-    // Set same infection parameter for all age groups. For example, the incubation period is 4 days.
-    model.parameters.get<mio::abm::IncubationPeriod>() = 4.;
+    // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
+    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
@@ -112,7 +113,7 @@ int main()
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
     auto testing_scheme_work   = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
-                                                         test_parameters, probability);
+                                                       test_parameters, probability);
     model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 
     // Assign infection state to each person.
@@ -168,7 +169,7 @@ int main()
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
     std::ofstream outfile("abm_minimal.txt");
     std::get<0>(historyTimeSeries.get_log())
-        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 
     return 0;

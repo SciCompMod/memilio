@@ -47,7 +47,9 @@ set(TESTSOURCES
     test_contact_matrix.cpp
     test_type_safe.cpp
     test_custom_index_array.cpp
+    test_d_abm_model.cpp
     test_flows.cpp
+    test_feedback.cpp
     test_parameter_set.cpp
     test_matrix_shape.cpp
     test_damping_sampling.cpp
@@ -62,6 +64,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
+    test_timers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
     test_ide_secir_ageres.cpp
@@ -70,6 +73,7 @@ set(TESTSOURCES
     test_lct_initializer_flows.cpp
     test_glct_secir.cpp
     test_ad.cpp
+    test_smm_model.cpp
     abm_helpers.h
     abm_helpers.cpp
     actions.h
@@ -81,6 +85,7 @@ set(TESTSOURCES
     sanitizers.cpp
     temp_file_register.h
     test_graph_abm.cpp
+    test_abstract_parameter_dist.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
@@ -101,7 +106,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm d_abm smm)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

@@ -21,6 +21,7 @@
 #define EPI_UTILS_DATE_H
 
 #include "memilio/io/io.h"
+#include "memilio/utils/logging.h"
 #include <string>
 #include <iostream>
 #include <tuple>
@@ -106,11 +107,27 @@ struct Date {
     //@}
 
     /**
-     * gtest printer.
+     * Formats the date into a string in ISO 8601 format (YYYY-MM-DD).
+     * @return A string representing the date in ISO 8601 format.
      */
-    friend void PrintTo(const Date& self, std::ostream* os)
+    std::string to_iso_string() const
     {
-        *os << self.year << "." << self.month << "." << self.day;
+        // the format after ":" reads as
+        // 1) '0' -> fill with zeros
+        // 2) '>' -> align text right
+        // 3) '4' or '2' -> specify the width (4 for year, 2 for month and day)
+        return fmt::format("{:0>4}-{:0>2}-{:0>2}", year, month, day);
+    }
+
+    /**
+     * Overload for stream operator to use the ISO 8601 format.
+     * @param os Output stream.
+     * @param date Date to output.
+     * @return Reference to the output stream.
+     */
+    friend std::ostream& operator<<(std::ostream& os, const Date& date)
+    {
+        return os << date.to_iso_string();
     }
 
     /**
@@ -155,6 +172,15 @@ struct Date {
     static constexpr std::array<int, 12> month_lengths           = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     static constexpr std::array<int, 12> month_lengths_leap_year = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 };
+
+/**
+ * @brief Format date objects using the ISO notation for logging with spdlog.
+ * @param d date object.
+ */
+inline std::string format_as(const mio::Date& d)
+{
+    return d.to_iso_string();
+}
 
 /**
  * @brief Computes the length of a month for a given date.

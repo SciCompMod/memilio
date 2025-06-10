@@ -18,10 +18,11 @@
 # limitations under the License.
 #############################################################################
 """
-@file getDataIntoPandasDataFrame.py
-@brief Tools to convert data to pandas dataframes
+:strong:`getDataIntoPandasDataFrame.py`
+Tools to convert data to pandas dataframes
 
 This tool contains
+
 - load excel format
 - load csv format
 - organizes the command line interface
@@ -50,6 +51,7 @@ from memilio.epidata import progress_indicator
 
 
 class VerbosityLevel(Enum):
+    """ """
     Off = 0
     Critical = 1
     Error = 2
@@ -145,11 +147,23 @@ class Conf:
 
 
 def default_print(verbosity_level, message):
+    """
+
+    :param verbosity_level: 
+    :param message: 
+
+    """
     if VerbosityLevel[verbosity_level].value <= VerbosityLevel[Conf.v_level].value:
         print(verbosity_level + ": " + message)
 
 
 def user_choice(message, default=False):
+    """
+
+    :param message: 
+    :param default:  (Default value = False)
+
+    """
     while True:
         user_input = input(message + " (y/n): ")[0].lower()
         if user_input == "y":
@@ -163,22 +177,23 @@ def user_choice(message, default=False):
 def download_file(
         url, chunk_size=1024, timeout=None, progress_function=None,
         verify=True):
-    """! Download a file using GET over HTTP.
+    """ Download a file using GET over HTTP.
 
-    @param url Full url of the file to download.
-    @param chunk_size Number of Bytes downloaded at once. Only used when a
+    :param url: Full url of the file to download.
+    :param chunk_size: Number of Bytes downloaded at once. Only used when a
         progress_function is specified. For a good display of progress, this
         size should be about the speed of your internet connection in Bytes/s.
         Can be set to None to let the server decide the chunk size (may be
-        equal to the file size).
-    @param timeout Timeout in seconds for the GET request.
-    @param progress_function Function called regularly, with the current
-        download progress in [0,1] as a float argument.
-    @param verify bool or "interactive". If False, ignores the connection's
+        equal to the file size). (Default value = 1024)
+    :param timeout: Timeout in seconds for the GET request. (Default value = None)
+    :param progress_function: Function called regularly, with the current
+        download progress in [0,1] as a float argument. (Default value = None)
+    :param verify: bool or "interactive". If False, ignores the connection's
         security. If True, only starts downloads from secure connections, and
         insecure connections raise a FileNotFoundError. If "interactive",
-        prompts the user whether or not to allow insecure connections.
-    @return File as BytesIO
+        prompts the user whether or not to allow insecure connections. (Default value = True)
+    :returns: File as BytesIO
+
     """
     if verify not in [True, False, "interactive"]:
         warnings.warn('Invalid input for argument verify. Expected True, False, or'
@@ -231,13 +246,13 @@ def download_file(
 
 
 def extract_zip(file, **param_dict):
-    """! reads a zip file and returns a list of dataframes for every file in the zip folder.
+    """ reads a zip file and returns a list of dataframes for every file in the zip folder.
     If only one file is readable for func_to_use a single dataframe is returned instead of a list with one entry.
 
-    @param file String. Path to Zipfile to read.
-    @param param_dict Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    :param file: String. Path to Zipfile to read.
+    :param param_dict: Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
+    :returns: list od all dataframes (one for each file).
 
-    @return list od all dataframes (one for each file).
     """
     with ZipFile(file, 'r') as zipObj:
         names = zipObj.namelist()
@@ -257,17 +272,17 @@ def get_file(
         filepath='', url='', read_data=dd.defaultDict['read_data'],
         param_dict={},
         interactive=False):
-    """! Loads data from filepath and stores it in a pandas dataframe.
+    """ Loads data from filepath and stores it in a pandas dataframe.
     If data can't be read from given filepath the user is asked whether the file should be downloaded from the given url or not.
     Uses the progress indicator to give feedback.
 
-    @param filepath String. Filepath from where the data is read.
-    @param url String. URL to download the dataset.
-    @param read_data True or False. Defines if item is opened from directory (True) or downloaded (False).
-    @param param_dct Dict. Additional information for download functions (e.g. engine, sheet_name, header...)
-    @param interactive bool. Whether to ask for user input. If False, raises Errors instead.
+    :param filepath: String. Filepath from where the data is read. (Default value = '')
+    :param url: String. URL to download the dataset. (Default value = '')
+    :param read_data: True or False. Defines if item is opened from directory (True) or downloaded (False). (Default value = dd.defaultDict['read_data'])
+    :param param_dict: Dict. Additional information for download functions (e.g. engine, sheet_name, header...) (Default value = {})
+    :param interactive: bool. Whether to ask for user input. If False, raises Errors instead. (Default value = False)
+    :returns: pandas dataframe
 
-    @return pandas dataframe
     """
     param_dict_excel = {"sheet_name": 0,
                         "header": 0, "engine": Conf.excel_engine}
@@ -335,7 +350,7 @@ def get_file(
 
 
 def cli(what):
-    """! Defines command line interface
+    """ Defines command line interface
 
     The function parameter "what" is used as a dictionary key.
     The return of the dictionary is either a list of a string and a list of keywords.
@@ -366,7 +381,8 @@ def cli(what):
     - no_raw
     - to_dataset
 
-    @param what Defines what packages calls and thus what kind of command line arguments should be defined.
+    :param what: Defines what packages calls and thus what kind of command line arguments should be defined.
+
     """
 
     # TODO: may it would be easier to make a dict like the following one together with a function to get key:
@@ -516,7 +532,14 @@ def cli(what):
 def append_filename(
         filename='', impute_dates=False, moving_average=0, split_berlin=False,
         rep_date=False):
-    """! Creates consistent file names for all output.
+    """ Creates consistent file names for all output.
+
+    :param filename:  (Default value = '')
+    :param impute_dates:  (Default value = False)
+    :param moving_average:  (Default value = 0)
+    :param split_berlin:  (Default value = False)
+    :param rep_date:  (Default value = False)
+
     """
     # split_berlin and repdate especially for case data
     if split_berlin:
@@ -533,12 +556,13 @@ def append_filename(
 
 
 def check_dir(directory):
-    """! Checks existence and creates folder
+    """ Checks existence and creates folder
 
     It is checked if the folder given in the parameter "directory" exists.
     If it does not exist it is created.
 
-    @param directory directory which should exist
+    :param directory: directory which should exist
+
     """
 
     # check if directory exists or create it
@@ -547,7 +571,7 @@ def check_dir(directory):
 
 
 def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
-    """! Writes pandas dataframe to file
+    """ Writes pandas dataframe to file
 
     This routine writes a pandas dataframe to a file in a given format.
     The filename is given without ending.
@@ -561,11 +585,11 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     The file format can be json, hdf5, csv or txt.
     For this option the column Date is converted from datetime to string.
 
-    @param df pandas dataframe (pandas DataFrame)
-    @param directory directory where to safe (string)
-    @param file_prefix filename without ending (string)
-    @param file_type defines ending (string)
-    @param param_dict defines parameters for to_csv/txt(dictionary)
+    :param df: pandas dataframe (pandas DataFrame)
+    :param directory: directory where to safe (string)
+    :param file_prefix: filename without ending (string)
+    :param file_type: defines ending (string)
+    :param param_dict: defines parameters for to_csv/txt(dictionary) (Default value = {})
 
     """
 
@@ -603,5 +627,5 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
 
 
 class DataError(Exception):
-    """ Error for handling incomplete or unexpected Data """
+    """Error for handling incomplete or unexpected Data"""
     pass

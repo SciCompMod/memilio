@@ -6,6 +6,10 @@ add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(performance_timer_example performance_timers.cpp)
+target_link_libraries(performance_timer_example PRIVATE memilio)
+target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
 target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_parameter_sampling_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -72,6 +76,10 @@ add_executable(ode_secir_contact_changes ode_secir_contact_changes.cpp)
 target_link_libraries(ode_secir_contact_changes PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_contact_changes PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_secir_feedback ode_secir_feedback.cpp)
+target_link_libraries(ode_secir_feedback PRIVATE memilio ode_secir)
+target_compile_options(ode_secir_feedback PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secirvvs_example ode_secirvvs.cpp)
 target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs)
 target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -99,10 +107,6 @@ target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WA
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)
 target_compile_options(abm_history_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
-add_executable(twitter_mobility_example twitter_mobility.cpp)
-target_link_libraries(twitter_mobility_example PRIVATE memilio ode_secir)
-target_compile_options(twitter_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(ide_seir_example ide_seir.cpp)
 target_link_libraries(ide_seir_example PRIVATE memilio ide_seir)
@@ -144,6 +148,14 @@ add_executable(graph_abm_example graph_abm.cpp)
 target_link_libraries(graph_abm_example PRIVATE memilio graph_abm abm)
 target_compile_options(graph_abm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(dabm_example d_abm.cpp)
+target_link_libraries(dabm_example PRIVATE memilio d_abm)
+target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(smm_example smm.cpp)
+target_link_libraries(smm_example PRIVATE memilio smm)
+target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
     target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
@@ -152,13 +164,13 @@ if(MEMILIO_HAS_JSONCPP)
 endif()
 
 if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
-  add_executable(ode_secir_parameter_study_example ode_secir_parameter_study.cpp)
-  target_link_libraries(ode_secir_parameter_study_example PRIVATE memilio ode_secir)
-  target_compile_options(ode_secir_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_secir_parameter_study_example ode_secir_parameter_study.cpp)
+    target_link_libraries(ode_secir_parameter_study_example PRIVATE memilio ode_secir)
+    target_compile_options(ode_secir_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-  add_executable(ode_secir_parameter_study_graph ode_secir_parameter_study_graph.cpp)
-  target_link_libraries(ode_secir_parameter_study_graph PRIVATE memilio ode_secir)
-  target_compile_options(ode_secir_parameter_study_graph PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_secir_parameter_study_graph ode_secir_parameter_study_graph.cpp)
+    target_link_libraries(ode_secir_parameter_study_graph PRIVATE memilio ode_secir)
+    target_compile_options(ode_secir_parameter_study_graph PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 if(MEMILIO_HAS_JSONCPP)

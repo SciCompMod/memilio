@@ -29,28 +29,45 @@ import tensorflow as tf
 from progress.bar import Bar
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.simulation import (AgeGroup, ContactMatrix, Damping, LogLevel,
-                                UncertainContactMatrix, set_log_level)
+from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
-                                       InfectionState, Model, Simulation,
+                                       InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 
 
 def remove_confirmed_compartments(result_array):
-    sum_inf_no_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    sum_inf_symp = np.sum(result_array[:, [2, 3]], axis=1)
-    result_array[:, 2] = sum_inf_no_symp
-    result_array[:, 4] = sum_inf_symp
-    return np.delete(result_array, [3, 5], axis=1)
+    """Aggregates the confirmed and non-confirmed infection compartments.
+
+    :param result_array: Array containing simulation results with compartment populations
+    :returns: Modified array with aggregated compartments
+    """
+
+    # Defining relevant indices
+    indices_inf_no_symp = [2, 3]
+    index_inf_no_symp = 2
+    indices_inf_symp = [4, 5]
+    index_inf_symp = 4
+    indices_removed = [3, 5]
+
+    # Calculating the values for the merged compartments
+    sum_inf_no_symp = np.sum(result_array[:, indices_inf_no_symp], axis=1)
+    sum_inf_symp = np.sum(result_array[:, indices_inf_symp], axis=1)
+
+    # Seting the new values
+    result_array[:, index_inf_no_symp] = sum_inf_no_symp
+    result_array[:, index_inf_symp] = sum_inf_symp
+
+    return np.delete(result_array, indices_removed, axis=1)
 
 
 def run_secir_simple_simulation(days):
-    """! Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
+    """ Uses an ODE SECIR model allowing for asymptomatic infection. The model is not stratified by region or demographic properties such as age.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
-    @param Days Describes how many days we simulate within a single run.
-    @return List containing the populations in each compartment for each day of the simulation.
-   """
+    :param days: Describes how many days we simulate within a single run.
+    :returns: List containing the populations in each compartment for each day of the simulation.
+
+    """
     set_log_level(LogLevel.Off)
 
     populations = [50_000]
@@ -123,8 +140,6 @@ def run_secir_simple_simulation(days):
     result_array = remove_confirmed_compartments(
         result_array[1:, :].transpose())
 
-    dataset = []
-
     dataset_entries = copy.deepcopy(result_array)
 
     return dataset_entries.tolist()
@@ -133,23 +148,24 @@ def run_secir_simple_simulation(days):
 def generate_data(
         num_runs, path, input_width, label_width, normalize=True,
         save_data=True):
-    """! Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
+    """ Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
 
     In general, we have 10 different compartments. However, we aggregate the InfectedNoSymptoms and InfectedSymptomsNoConfirmed compartments. The same
-    holds for the InfectedSymptoms and InfectedSymptomsConfirmed compartments. So, we end up with only 8 different compartments. If we choose, 
-    input_width = 5 and label_width = 20, the dataset has 
+    holds for the InfectedSymptoms and InfectedSymptomsConfirmed compartments. So, we end up with only 8 different compartments. If we choose,
+    input_width = 5 and label_width = 20, the dataset has
     - input with dimension 5 x 8
     - labels with dimension 20 x 8
 
-   @param num_runs Number of times, the function run_secir_simple_simulation is called.
-   @param path Path, where the dataset is saved to.
-   @param input_width Int value that defines the number of time series used for the input.
-   @param label_width Int value that defines the size of the labels.
-   @param normalize [Default: true] Option to transform dataset by logarithmic normalization.
-   @param save_data [Default: true] Option to save the dataset.
-   @return Data dictionary of input and label data sets.
-   """
+    :param num_runs: Number of times, the function run_secir_simple_simulation is called.
+    :param path: Path, where the dataset is saved to.
+    :param input_width: Int value that defines the number of time series used for the input.
+    :param label_width: Int value that defines the size of the labels.
+    :param normalize: Default: true] Option to transform dataset by logarithmic normalization.
+    :param save_data: Default: true] Option to save the dataset.
+    :returns: Data dictionary of input and label data sets.
+
+    """
     data = {
         "inputs": [],
         "labels": []
@@ -192,7 +208,13 @@ def generate_data(
             os.mkdir(path)
 
         # save dict to json file
-        with open(os.path.join(path, 'data_secir_simple.pickle'), 'wb') as f:
+        if num_runs > 1000:
+            filename = "data_secir_simple_%ddays_%dk.pickle" % (
+                label_width, num_runs//1000)
+        else:
+            filename = "data_secir_simple_%ddays_%d.pickle" % (
+                label_width, num_runs)
+        with open(os.path.join(path, filename), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -205,6 +227,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 1000
+    num_runs = 10000
     data = generate_data(num_runs, path_data, input_width,
                          label_width)

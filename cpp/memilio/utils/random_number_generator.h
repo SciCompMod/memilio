@@ -663,6 +663,13 @@ template <class Real>
 using ExponentialDistribution = DistributionAdapter<std::exponential_distribution<Real>>;
 
 /**
+ * adapted std::normal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using NormalDistribution = DistributionAdapter<std::normal_distribution<Real>>;
+
+/**
  * adapted std::uniform_int_distribution.
  * @see DistributionAdapter
  */
@@ -710,6 +717,27 @@ IOResult<UniformDistributionParams> deserialize_internal(IOContext& io, Tag<Unif
  */
 template <class Int>
 using PoissonDistribution = DistributionAdapter<std::poisson_distribution<Int>>;
+
+/**
+ * adapted lognormal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using LogNormalDistribution = DistributionAdapter<std::lognormal_distribution<Real>>;
+
+/**
+ * adapted gamma_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using GammaDistribution = DistributionAdapter<std::gamma_distribution<Real>>;
+
+/**
+ * adapted normal_distribution.
+ * @see DistributionAdapter
+ */
+template <class Real>
+using NormalDistribution = DistributionAdapter<std::normal_distribution<Real>>;
 
 } // namespace mio
 

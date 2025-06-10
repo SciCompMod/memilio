@@ -18,9 +18,10 @@
 # limitations under the License.
 #############################################################################
 """
-@file ast.py
-@brief Create the ast and assign ids. Get ids and nodes. 
+:strong:`ast.py`
+Create the ast and assign ids. Get ids and nodes. 
 """
+from typing_extensions import Self
 import subprocess
 import tempfile
 import logging
@@ -32,12 +33,12 @@ from memilio.generation import utility
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
 
-from typing_extensions import Self
-
 
 class AST:
-    """! Create the ast and assign ids.
+    """ Create the ast and assign ids.
     Functions for getting nodes and node ids.
+
+
     """
 
     def __init__(self: Self, conf: "ScannerConfig") -> None:
@@ -49,8 +50,11 @@ class AST:
         self.translation_unit = self.create_ast()
 
     def create_ast(self: Self) -> TranslationUnit:
-        """! Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
+        """ Create an abstract syntax tree for the main model.cpp file with a corresponding CompilationDatabase.
         A compile_commands.json is required (automatically generated in the build process).
+
+        :param self: Self: 
+
         """
         self.cursor_id = -1
         self.id_to_val.clear()
@@ -75,8 +79,8 @@ class AST:
         file_args = file_args[1:-4]
 
         clang_cmd = [
-            "clang-14", self.config.source_file,
-            "-std=c++17", '-emit-ast', '-o', '-']
+            "clang-18", self.config.source_file,
+            "-std=c++20", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
         try:
@@ -103,11 +107,13 @@ class AST:
         return translation_unit
 
     def _assing_ast_with_ids(self, cursor: Cursor) -> None:
-        """! Traverse the AST and assign a unique ID to each node during traversal.
+        """ Traverse the AST and assign a unique ID to each node during traversal.
 
-        @param cursor: The current node (Cursor) in the AST to traverse.
+        :param cursor: The current node (Cursor) in the AST to traverse.
+        :param cursor: Cursor: 
+
         """
-        # assing_ids umschreiben -> mapping
+
         self.cursor_id += 1
         id = self.cursor_id
         self.id_to_val[id] = cursor
@@ -125,14 +131,17 @@ class AST:
 
     @property
     def root_cursor(self):
+        """ """
         return self.translation_unit.cursor
 
     def get_node_id(self, cursor: Cursor) -> int:
-        """! Returns the id of the current node.
+        """ Returns the id of the current node.
 
-        Extracs the key from the current cursor from the dictonary id_to_val
+        Extracts the key from the current cursor from the dictonary id_to_val
 
-        @param cursor: The current node of the AST as a cursor object from libclang.
+        :param cursor: The current node of the AST as a cursor object from libclang.
+        :param cursor: Cursor: 
+
         """
         for cursor_id in self.val_to_id[cursor.hash]:
 
@@ -142,9 +151,11 @@ class AST:
         raise IndexError(f"Cursor {cursor} is out of bounds.")
 
     def get_node_by_index(self, index: int) -> Cursor:
-        """! Returns the node at the specified index position.
+        """ Returns the node at the specified index position.
 
-        @param index: Node_id from the ast.
+        :param index: Node_id from the ast.
+        :param index: int: 
+
         """
 
         if index < 0 or index >= len(self.id_to_val):

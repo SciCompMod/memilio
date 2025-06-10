@@ -30,7 +30,10 @@ num_age_groups = 6
 
 
 class TestAbm(unittest.TestCase):
+    """ """
+
     def test_model(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
         model = sim.model
@@ -38,6 +41,7 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(len(model.locations), 1)
 
     def test_locations(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
         model = sim.model
@@ -62,6 +66,7 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(testing_scheme.active, False)
 
     def test_persons(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, 6)
         model = sim.model
@@ -83,6 +88,7 @@ class TestAbm(unittest.TestCase):
         self.assertEqual(model.persons[1], p2)
 
     def test_simulation(self):
+        """ """
         t0 = abm.TimePoint(0)
         sim = abm.Simulation(t0, num_age_groups)
         model = sim.model
@@ -97,11 +103,6 @@ class TestAbm(unittest.TestCase):
         for loc_id in [home_id, social_event_id, work_id]:
             model.assign_location(p1_id, loc_id)
             model.assign_location(p2_id, loc_id)
-
-        model.parameters.InfectedSymptomsToSevere[abm.VirusVariant.Wildtype, mio.AgeGroup(
-            0)] = 0.0
-        model.parameters.InfectedSymptomsToRecovered[abm.VirusVariant.Wildtype, mio.AgeGroup(
-            0)] = 0.0
 
         # trips
         trip_list = abm.TripList()

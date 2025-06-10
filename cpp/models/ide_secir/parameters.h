@@ -47,6 +47,10 @@ namespace isecir
 /**
  * @brief Transition distribution for each transition in #InfectionTransition.
  *
+ * For each transition, the corresponding transition distribution can be chosen independently. 
+ * The choice of distributions determines how many initial time points are required to initialize the model, see
+ * get_global_support_max() in models/ide_secir/model.h.
+ *
  * As a default we use SmootherCosine functions for all transitions with m_parameter=2.
  */
 struct TransitionDistributions {

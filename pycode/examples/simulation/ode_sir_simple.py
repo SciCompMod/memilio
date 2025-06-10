@@ -29,9 +29,7 @@ from memilio.simulation.osir import (Model, interpolate_simulation_result,
 
 
 def run_ode_sir_simulation():
-    """
-    Runs the c++ ODE SIR model
-    """
+    """Runs the c++ ODE SIR model"""
 
     # Define population of age groups
     populations = [83000]
