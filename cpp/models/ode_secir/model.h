@@ -124,7 +124,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 FP season_val = (1 + params.template get<Seasonality<FP>>().value() *
                                          sin(3.14159265358979323846264338327950288 *
-                                             ((params.template get<StartDay>() + t) / 182.5 + 0.5)));
+                                             ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
                 FP cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(t))(
                                      static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));
@@ -311,8 +311,9 @@ public:
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
                     if (t < t_end_dyn_npis) {
-                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
+                        auto inf_rel =
+                            get_infections_relative<FP, BaseT>(*this, t, this->get_result().get_last_value()) *
+                            dyn_npis.get_base_value();
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                             (exceeded_threshold->first > m_dynamic_npi.first ||
@@ -429,8 +430,8 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
                                  total_infected_compartments); //Initialize matrices F and V with zeroes
     V = Eigen::MatrixX<FP>::Zero(total_infected_compartments, total_infected_compartments);
 
-    auto test_and_trace_required = 0.0;
-    auto icu_occupancy           = 0.0;
+    FP test_and_trace_required = 0.0;
+    FP icu_occupancy           = 0.0;
     for (auto i = AgeGroup(0); i < (mio::AgeGroup)num_groups; ++i) {
         test_and_trace_required +=
             (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value()) /
@@ -442,10 +443,11 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
     }
 
     FP season_val =
-        (1 + params.template get<Seasonality<FP>>().value() *
-                 sin(pi *
-                     ((sim.get_model().parameters.template get<StartDay>() + sim.get_result().get_time(t_idx)) / 182.5 +
-                      0.5)));
+        (1 +
+         params.template get<Seasonality<FP>>().value() *
+             sin(pi *
+                 ((sim.get_model().parameters.template get<StartDay<FP>>() + sim.get_result().get_time(t_idx)) / 182.5 +
+                  0.5)));
     ContactMatrixGroup<FP> const& contact_matrix = sim.get_model().parameters.template get<ContactPatterns<FP>>();
 
     Eigen::MatrixX<FP> cont_freq_eff(num_groups, num_groups);
@@ -513,7 +515,7 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
         J(i, i) = 1 / (params.template get<TimeInfectedCritical<FP>>()[(mio::AgeGroup)i]);
 
         if (!(icu_occupancy < 0.9 * params.template get<ICUCapacity<FP>>().value() ||
-              icu_occupancy > (FP)(params.template get<ICUCapacity<FP>>().value()))) {
+              icu_occupancy > params.template get<ICUCapacity<FP>>().value())) {
             for (size_t j = 0; j < num_groups; j++) {
                 J(i, j) -= sim.get_result().get_value(t_idx)[sim.get_model().populations.get_flat_index(
                                {(mio::AgeGroup)i, InfectionState::InfectedSevere})] /
@@ -595,22 +597,25 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 
     //Compute F*V
     Eigen::MatrixX<FP> NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
-    NextGenMatrix = F * V;
+    NextGenMatrix.noalias() = F * V;
 
-    //Compute the largest eigenvalue in absolute value
-    Eigen::ComplexEigenSolver<Eigen::MatrixX<FP>> ces;
+    Eigen::MatrixXd NextGenMatrix_dbl = NextGenMatrix.unaryExpr([](const FP& x) {
+        return ad::value(x);
+    });
 
-    ces.compute(NextGenMatrix);
-    const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
+    Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+    ces.compute(NextGenMatrix_dbl);
 
-    Eigen::VectorX<FP> eigen_vals_abs;
-    eigen_vals_abs.resize(eigen_vals.size());
-
-    for (int i = 0; i < eigen_vals.size(); i++) {
-        eigen_vals_abs[i] = abs(eigen_vals[i]);
+    const Eigen::VectorXcd eigvals_complex = ces.eigenvalues();
+    Eigen::VectorXd eigvals_abs(eigvals_complex.size());
+    for (int i = 0; i < eigvals_complex.size(); ++i) {
+        eigvals_abs[i] = std::abs(eigvals_complex[i]);
     }
-    return mio::success(eigen_vals_abs.maxCoeff());
+
+    FP rho = static_cast<FP>(eigvals_abs.maxCoeff());
+    return mio::success(rho);
 }
+
 /**
 *@brief Computes the reproduction number for all time points of the Model output obtained by the Simulation.
 *@param sim The Model Simulation.
@@ -671,7 +676,7 @@ IOResult<FP> get_reproduction_number(FP t_value, const Simulation<FP, Base>& sim
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
 template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
-auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
+auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
@@ -688,9 +693,9 @@ auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Re
             .sum();
     auto test_and_trace_capacity          = FP(params.template get<TestAndTraceCapacity<FP>>().value());
     auto test_and_trace_capacity_max_risk = FP(params.template get<TestAndTraceCapacityMaxRisk<FP>>().value());
-    auto riskFromInfectedSymptomatic =
-        smoother_cosine(test_and_trace_required, test_and_trace_capacity,
-                        test_and_trace_capacity * test_and_trace_capacity_max_risk, p_inf.matrix(), p_inf_max.matrix());
+    auto riskFromInfectedSymptomatic      = smoother_cosine<FP>(test_and_trace_required, test_and_trace_capacity,
+                                                                test_and_trace_capacity * test_and_trace_capacity_max_risk,
+                                                                p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();
