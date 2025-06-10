@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
@@ -48,7 +48,7 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
                        Flow<InfectionState::Exposed,     InfectionState::Infected>,
                        Flow<InfectionState::Infected,    InfectionState::Recovered>>;
 // clang-format on
-template <typename FP = ScalarType>
+template <typename FP>
 class Model
     : public FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>
 {
@@ -85,11 +85,11 @@ public:
                 const size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 const size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const ScalarType Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
-                const ScalarType divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / Nj;
-                const ScalarType coeffStoE =
-                    params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(i.get(), j.get()) *
-                    params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
+                const FP Nj        = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj];
+                const FP divNj     = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+                const FP coeffStoE = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                                         SimulationTime<FP>(t))(i.get(), j.get()) *
+                                     params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] +=
                     coeffStoE * y[Si] * pop[Ij];
@@ -107,7 +107,7 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided index time.
     */
-    IOResult<ScalarType> get_reproduction_number(size_t t_idx, const mio::TimeSeries<ScalarType>& y)
+    IOResult<FP> get_reproduction_number(size_t t_idx, const mio::TimeSeries<FP>& y)
     {
         if (!(t_idx < static_cast<size_t>(y.get_num_time_points()))) {
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
@@ -119,10 +119,10 @@ public:
         constexpr size_t num_infected_compartments = 2;
         const size_t total_infected_compartments   = num_infected_compartments * num_groups;
 
-        ContactMatrixGroup const& contact_matrix = params.template get<ContactPatterns<ScalarType>>();
+        ContactMatrixGroup<FP> const& contact_matrix = params.template get<ContactPatterns<ScalarType>>();
 
-        Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
-        Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
+        Eigen::MatrixX<FP> F = Eigen::MatrixX<FP>::Zero(total_infected_compartments, total_infected_compartments);
+        Eigen::MatrixX<FP> V = Eigen::MatrixX<FP>::Zero(total_infected_compartments, total_infected_compartments);
 
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
@@ -131,36 +131,39 @@ public:
                 const ScalarType Nj    = this->populations.get_group_total(j);
                 const ScalarType divNj = (Nj < 1e-12) ? 0.0 : 1.0 / Nj;
 
-                ScalarType coeffStoE = contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
-                                       params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * divNj;
+                FP coeffStoE = contact_matrix.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(i.get(), j.get()) *
+                               params.template get<TransmissionProbabilityOnContact<FP>>()[i] * divNj;
                 F((size_t)i, (size_t)j + num_groups) = coeffStoE * y.get_value(t_idx)[Si];
             }
 
-            ScalarType T_Ei                      = params.template get<mio::oseir::TimeExposed<ScalarType>>()[i];
-            ScalarType T_Ii                      = params.template get<mio::oseir::TimeInfected<ScalarType>>()[i];
-            V((size_t)i, (size_t)i)              = 1.0 / T_Ei;
-            V((size_t)i + num_groups, (size_t)i) = -1.0 / T_Ei;
+            FP T_Ei                                           = params.template get<mio::oseir::TimeExposed<FP>>()[i];
+            FP T_Ii                                           = params.template get<mio::oseir::TimeInfected<FP>>()[i];
+            V((size_t)i, (size_t)i)                           = 1.0 / T_Ei;
+            V((size_t)i + num_groups, (size_t)i)              = -1.0 / T_Ei;
             V((size_t)i + num_groups, (size_t)i + num_groups) = 1.0 / T_Ii;
         }
 
         V = V.inverse();
 
-        Eigen::MatrixXd NextGenMatrix = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
-        NextGenMatrix                 = F * V;
+        //Compute F*V
+        Eigen::MatrixX<FP> NextGenMatrix(total_infected_compartments, total_infected_compartments);
+        NextGenMatrix.noalias() = F * V;
 
-        //Compute the largest eigenvalue in absolute value
+        Eigen::MatrixXd NextGenMatrix_dbl = NextGenMatrix.unaryExpr([](const FP& x) {
+            return ad::value(x);
+        });
+
         Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
+        ces.compute(NextGenMatrix_dbl);
 
-        ces.compute(NextGenMatrix);
-        const Eigen::VectorXcd eigen_vals = ces.eigenvalues();
-
-        Eigen::VectorXd eigen_vals_abs;
-        eigen_vals_abs.resize(eigen_vals.size());
-
-        for (int i = 0; i < eigen_vals.size(); i++) {
-            eigen_vals_abs[i] = std::abs(eigen_vals[i]);
+        const Eigen::VectorXcd eigvals_complex = ces.eigenvalues();
+        Eigen::VectorXd eigvals_abs(eigvals_complex.size());
+        for (int i = 0; i < eigvals_complex.size(); ++i) {
+            eigvals_abs[i] = std::abs(eigvals_complex[i]);
         }
-        return mio::success(eigen_vals_abs.maxCoeff());
+
+        FP rho = static_cast<FP>(eigvals_abs.maxCoeff());
+        return mio::success(rho);
     }
 
     /**
@@ -168,10 +171,10 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns vector containing all reproduction numbers
     */
-    Eigen::VectorXd get_reproduction_numbers(const mio::TimeSeries<ScalarType>& y)
+    Eigen::VectorX<FP> get_reproduction_numbers(const mio::TimeSeries<FP>& y)
     {
         auto num_time_points = y.get_num_time_points();
-        Eigen::VectorXd temp(num_time_points);
+        Eigen::VectorX<FP> temp(num_time_points);
         for (size_t i = 0; i < static_cast<size_t>(num_time_points); i++) {
             temp[i] = get_reproduction_number(i, y).value();
         }
@@ -184,7 +187,7 @@ public:
     *@param y The TimeSeries obtained from the Model Simulation.
     *@returns The computed reproduction number at the provided time point, potentially using linear interpolation.
     */
-    IOResult<ScalarType> get_reproduction_number(ScalarType t_value, const mio::TimeSeries<ScalarType>& y)
+    IOResult<FP> get_reproduction_number(FP t_value, const mio::TimeSeries<FP>& y)
     {
         if (t_value < y.get_time(0) || t_value > y.get_last_time()) {
             return mio::failure(mio::StatusCode::OutOfRange,
@@ -195,19 +198,19 @@ public:
             return mio::success(get_reproduction_number((size_t)0, y).value());
         }
 
-        auto times = std::vector<ScalarType>(y.get_times().begin(), y.get_times().end());
+        auto times = std::vector<FP>(y.get_times().begin(), y.get_times().end());
 
         auto time_late = std::distance(times.begin(), std::lower_bound(times.begin(), times.end(), t_value));
 
-        ScalarType y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), y).value();
-        ScalarType y2 = get_reproduction_number(static_cast<size_t>(time_late), y).value();
+        FP y1 = get_reproduction_number(static_cast<size_t>(time_late - 1), y).value();
+        FP y2 = get_reproduction_number(static_cast<size_t>(time_late), y).value();
 
         auto result = linear_interpolation(t_value, y.get_time(time_late - 1), y.get_time(time_late), y1, y2);
-        return mio::success(static_cast<ScalarType>(result));
+        return mio::success(static_cast<FP>(result));
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
