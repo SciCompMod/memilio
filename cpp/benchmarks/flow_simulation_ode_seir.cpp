@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Daniel Abele, Martin J. Kuehn
@@ -73,8 +73,8 @@ public:
 
                 const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
                 const double coeffStoE =
-                    params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(t)(i.get(),
-                                                                                                            j.get()) *
+                    params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(
+                        SimulationTime<ScalarType>(t))(i.get(), j.get()) *
                     params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * Nj_inv;
 
                 dydt[Si] -= y[Si] * pop[Ij] * coeffStoE;
@@ -106,7 +106,8 @@ void setup_model(Model& model)
     model.parameters.template set<mio::oseir::TimeExposed<ScalarType>>(5.2);
     model.parameters.template set<mio::oseir::TimeInfected<ScalarType>>(6);
     model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(10.);
 }
 

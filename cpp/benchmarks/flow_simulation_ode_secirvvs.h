@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Daniel Abele, Martin J. Kuehn
@@ -25,7 +25,7 @@ namespace mio
 namespace benchmark
 {
 
-using FlowModel = osecirvvs::Model<>;
+using FlowModel = osecirvvs::Model<ScalarType>;
 
 // For comparison benchmarks, an old model version that does not provide computation of flows has been reimplemented here.
 // For more details see the original implementation in:
@@ -40,8 +40,8 @@ class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::Infection
 {
     using InfectionState = osecirvvs::InfectionState;
     using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
-                                    mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
-                                    osecirvvs::Parameters<ScalarType>>;
+                                              mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                              osecirvvs::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)
@@ -61,7 +61,7 @@ public:
         auto const& params   = this->parameters;
         AgeGroup n_agegroups = params.get_num_groups();
 
-        ContactMatrixGroup const& contact_matrix = params.get<osecirvvs::ContactPatterns<ScalarType>>();
+        ContactMatrixGroup<ScalarType> const& contact_matrix = params.get<osecirvvs::ContactPatterns<ScalarType>>();
 
         auto icu_occupancy           = 0.0;
         auto test_and_trace_required = 0.0;
@@ -142,16 +142,16 @@ public:
             double reducTimeInfectedMild = params.get<osecirvvs::ReducTimeInfectedMild<ScalarType>>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-            auto riskFromInfectedSymptomatic =
-                smoother_cosine(test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>(),
-                                params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>() * 15,
-                                params.get<osecirvvs::RiskOfInfectionFromSymptomatic<ScalarType>>()[i],
-                                params.get<osecirvvs::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[i]);
+            auto riskFromInfectedSymptomatic = smoother_cosine<ScalarType>(
+                test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>(),
+                params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>() * 15,
+                params.get<osecirvvs::RiskOfInfectionFromSymptomatic<ScalarType>>()[i],
+                params.get<osecirvvs::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[i]);
 
-            auto riskFromInfectedNoSymptoms =
-                smoother_cosine(test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>(),
-                                params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>() * 2,
-                                params.get<osecirvvs::RelativeTransmissionNoSymptoms<ScalarType>>()[i], 1.0);
+            auto riskFromInfectedNoSymptoms = smoother_cosine<ScalarType>(
+                test_and_trace_required, params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>(),
+                params.get<osecirvvs::TestAndTraceCapacity<ScalarType>>() * 2,
+                params.get<osecirvvs::RelativeTransmissionNoSymptoms<ScalarType>>()[i], 1.0);
 
             for (auto j = AgeGroup(0); j < n_agegroups; j++) {
                 size_t SNj    = this->populations.get_flat_index({j, InfectionState::SusceptibleNaive});
@@ -191,12 +191,12 @@ public:
                     this->populations.get_flat_index({j, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                double season_val =
-                    (1 + params.get<osecirvvs::Seasonality<ScalarType>>() *
-                             sin(3.141592653589793 * ((params.get<osecirvvs::StartDay>() + t) / 182.5 + 0.5)));
+                double season_val = (1 + params.get<osecirvvs::Seasonality<ScalarType>>() *
+                                             sin(3.141592653589793 *
+                                                 ((params.get<osecirvvs::StartDay<ScalarType>>() + t) / 182.5 + 0.5)));
                 double cont_freq_eff =
-                    season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
-                                                                 static_cast<Eigen::Index>((size_t)j));
+                    season_val * contact_matrix.get_matrix_at(SimulationTime<ScalarType>(t))(
+                                     static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));
                 // without died people
                 double Nj = pop[SNj] + pop[ENj] + pop[INSNj] + pop[ISyNj] + pop[ISevNj] + pop[ICrNj] + pop[INSNCj] +
                             pop[ISyNCj] + pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] +
@@ -232,9 +232,9 @@ public:
             // is different for different vaccination status. This is not the case here and in addition, ICUCapacity
             // is set to infinity and this functionality is deactivated, so this is OK for the moment.
             double criticalPerSevereAdjusted =
-                smoother_cosine(icu_occupancy, 0.90 * params.get<osecirvvs::ICUCapacity<ScalarType>>(),
-                                params.get<osecirvvs::ICUCapacity<ScalarType>>(),
-                                params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i], 0);
+                smoother_cosine<ScalarType>(icu_occupancy, 0.90 * params.get<osecirvvs::ICUCapacity<ScalarType>>(),
+                                            params.get<osecirvvs::ICUCapacity<ScalarType>>(),
+                                            params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i], 0);
 
             double deathsPerSevereAdjusted =
                 params.get<osecirvvs::CriticalPerSevere<ScalarType>>()[i] - criticalPerSevereAdjusted;
@@ -398,7 +398,7 @@ public:
     }
 
     /**
-    * serialize this. 
+    * serialize this.
     * @see mio::serialize
     */
     template <class IOContext>
@@ -450,8 +450,9 @@ public:
 
     void apply_variant(const double t, const CustomIndexArray<UncertainValue<ScalarType>, AgeGroup> base_infectiousness)
     {
-        auto start_day             = this->get_model().parameters.template get<osecirvvs::StartDay>();
-        auto start_day_new_variant = this->get_model().parameters.template get<osecirvvs::StartDayNewVariant>();
+        auto start_day = this->get_model().parameters.template get<osecirvvs::StartDay<ScalarType>>();
+        auto start_day_new_variant =
+            this->get_model().parameters.template get<osecirvvs::StartDayNewVariant<ScalarType>>();
 
         if (start_day + t >= start_day_new_variant - 1e-10) {
             const double days_variant      = t - (start_day_new_variant - start_day);
@@ -578,8 +579,8 @@ public:
                             (exceeded_threshold->first > m_dynamic_npi.first ||
                              t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_npi_implementation);
-                            auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
+                            auto t_start = SimulationTime<double>(t + delay_npi_implementation);
+                            auto t_end   = t_start + SimulationTime<double>(dyn_npis.get_duration());
                             this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
                             this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
                             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
@@ -605,7 +606,8 @@ public:
 
 private:
     double m_t_last_npi_check;
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
+    std::pair<double, SimulationTime<double>> m_dynamic_npi = {-std::numeric_limits<double>::max(),
+                                                               SimulationTime<double>(0)};
 };
 
 template <class Base>
@@ -677,7 +679,7 @@ void setup_model(Model& model)
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, SimulationTime<double>(5.0));
 
     //times
     model.parameters.template get<osecirvvs::TimeExposed<ScalarType>>()[AgeGroup(0)]            = 3.33;
