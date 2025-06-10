@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -55,13 +55,14 @@ int main()
         model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[i] = 0.04;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7),
+                               mio::SimulationTime<double>(30.));
 
     model.apply_constraints();
 
-    auto seir = simulate(t0, tmax, dt, model);
+    auto seir = mio::simulate<double>(t0, tmax, dt, model);
 
     std::vector<std::string> vars = {"S", "E", "I", "R"};
     printf("Number of time points :%d\n", static_cast<int>(seir.get_num_time_points()));

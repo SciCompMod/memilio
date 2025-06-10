@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -38,7 +38,7 @@ int main()
 
     mio::osecir::Model<double> model(1);
 
-    model.parameters.template set<mio::osecir::StartDay>(60);
+    model.parameters.template set<mio::osecir::StartDay<double>>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
     model.parameters.get<mio::osecir::TimeExposed<double>>()            = 3.2;
@@ -47,9 +47,9 @@ int main()
     model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()     = 9.5;
     model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()   = 7.1;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(30.));
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
@@ -77,7 +77,7 @@ int main()
     model.apply_constraints();
 
     // Using default Integrator
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<double> secir = mio::osecir::simulate<double>(t0, tmax, dt, model);
 
     /*
     Example of using a different integrator

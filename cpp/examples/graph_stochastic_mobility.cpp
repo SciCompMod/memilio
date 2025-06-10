@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -74,11 +74,11 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     //add contact pattern and contact damping
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
-                               mio::SimulationTime(5.));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0]                               = mio::ContactMatrix<double>(
+        Eigen::MatrixX<double>::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
+    contact_matrix.add_damping(Eigen::MatrixX<double>::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
+                               mio::SimulationTime<double>(5.));
 
     model.apply_constraints();
 
@@ -94,12 +94,13 @@ int main(int /*argc*/, char** /*argv*/)
                                                                           fact * num_total);
     }
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic>
+    mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::osecir::Model<double>>>,
+               mio::MobilityEdgeStochastic<double>>
         graph;
     graph.add_node(1001, model, t0);
     graph.add_node(1002, model2, t0);
 
-    auto transition_rates = mio::MobilityCoefficients(model.populations.numel());
+    auto transition_rates = mio::MobilityCoefficients<double>(model.populations.numel());
     ScalarType kappa      = 0.01;
 
     for (auto age = mio::AgeGroup(0); age < num_age_groups; age++) {
@@ -134,7 +135,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_edge(0, 1, std::move(transition_rates));
     graph.add_edge(1, 0, std::move(transition_rates));
 
-    auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
+    auto sim = mio::make_mobility_sim<double>(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 

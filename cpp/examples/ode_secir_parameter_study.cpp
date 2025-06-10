@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -32,7 +32,7 @@
  */
 mio::IOResult<void> write_single_run_result(
     const size_t run,
-    const mio::Graph<mio::SimulationNode<mio::osecir::Simulation<>>, mio::MobilityEdge<double>>& graph)
+    const mio::Graph<mio::SimulationNode<double, mio::osecir::Simulation<double>>, mio::MobilityEdge<double>>& graph)
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(auto&& created, mio::create_directory("results", abs_path));
@@ -95,7 +95,7 @@ int main()
     auto& params = model.parameters;
 
     params.set<mio::osecir::ICUCapacity<double>>(std::numeric_limits<double>::max());
-    params.set<mio::osecir::StartDay>(0);
+    params.set<mio::osecir::StartDay<double>>(0);
     params.set<mio::osecir::Seasonality<double>>(0);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
@@ -126,11 +126,11 @@ int main()
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::osecir::set_params_distributions_normal<double>(model, t0, tmax, 0.2);
 
     auto write_parameters_status = mio::write_json("parameters.json", model);
     if (!write_parameters_status) {
@@ -140,7 +140,7 @@ int main()
 
     //create study
     auto num_runs = size_t(1);
-    mio::ParameterStudy<mio::osecir::Simulation<>> parameter_study(model, t0, tmax, num_runs);
+    mio::ParameterStudy<double, mio::osecir::Simulation<double>> parameter_study(model, t0, tmax, num_runs);
 
     //run study
     auto sample_graph = [](auto&& graph) {

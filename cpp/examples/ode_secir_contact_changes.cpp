@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -22,11 +22,11 @@
 #include "memilio/utils/logging.h"
 #include "memilio/math/euler.h"
 
-/* 
+/*
  * This example demonstrates how to realize contact behavior changes with any of our ordinary differential
  * equation-based models. This example can thus easily be adapted for other models like osecirvvs, oseir, osir etc.
  * We print out the flows (i.e., new transmissions, infections, hospitalizations etc. per time point.) As we use an
- * fixed-time step Explicit Euler, we can compare them. 
+ * fixed-time step Explicit Euler, we can compare them.
 */
 int main()
 {
@@ -40,10 +40,10 @@ int main()
 
     double nb_total_t0 = 1000, nb_inf_t0 = 10;
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
+    auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     // default model run to be compared against
-    mio::osecir::Model model_a(1);
+    mio::osecir::Model<double> model_a(1);
     const auto indx_flow_SE =
         model_a.get_flat_flow_index<mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed>(
             {mio::AgeGroup(0)});
@@ -51,12 +51,12 @@ int main()
     model_a.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_a.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
-    mio::ContactMatrixGroup& contact_matrix_a = model_a.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix_a[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<double>& contact_matrix_a = model_a.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix_a[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     // set probability of transmission and risk of infection to 1.
-    model_a.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>() = 1.0;
-    model_a.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()   = 1.0;
-    auto result_a = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_a, integrator);
+    model_a.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>() = 1.0;
+    model_a.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()   = 1.0;
+    auto result_a = mio::simulate_flows<double>(t0, tmax, dt, model_a, integrator);
     result_a[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},
@@ -65,15 +65,15 @@ int main()
               << result_a[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // The contacts are halfed: reduced transmission through damping with value 0.5
-    mio::osecir::Model model_b{model_a};
+    mio::osecir::Model<double> model_b{model_a};
     model_b.populations.set_total(nb_total_t0);
     model_b.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_b.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
-    mio::ContactMatrixGroup& contact_matrix_b = model_b.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix_b[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    contact_matrix_b[0].add_damping(0.5, mio::SimulationTime(0.)); // contact reduction happens here!
-    auto result_b = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_b, integrator);
+    mio::ContactMatrixGroup<double>& contact_matrix_b = model_b.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix_b[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix_b[0].add_damping(0.5, mio::SimulationTime<double>(0.)); // contact reduction happens here!
+    auto result_b = mio::simulate_flows<double>(t0, tmax, dt, model_b, integrator);
     result_b[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},
@@ -83,15 +83,15 @@ int main()
               << result_b[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // No contacts at all: no transmission through damping with value 1.
-    mio::osecir::Model model_c{model_a};
+    mio::osecir::Model<double> model_c{model_a};
     model_c.populations.set_total(nb_total_t0);
     model_c.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_c.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
-    mio::ContactMatrixGroup& contact_matrix_c = model_c.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix_c[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    contact_matrix_c[0].add_damping(1., mio::SimulationTime(0.)); // contact reduction happens here!
-    auto result_c = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_c, integrator);
+    mio::ContactMatrixGroup<double>& contact_matrix_c = model_c.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix_c[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix_c[0].add_damping(1., mio::SimulationTime<double>(0.)); // contact reduction happens here!
+    auto result_c = mio::simulate_flows<double>(t0, tmax, dt, model_c, integrator);
     result_c[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},
@@ -106,10 +106,10 @@ int main()
     model_d.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_d.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
-    mio::ContactMatrixGroup& contact_matrix_d = model_d.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
-    contact_matrix_d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    contact_matrix_d[0].add_damping(-1., mio::SimulationTime(0.)); // contact increase happens here!
-    auto result_d = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_d, integrator);
+    mio::ContactMatrixGroup<double>& contact_matrix_d = model_d.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix_d[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix_d[0].add_damping(-1., mio::SimulationTime<double>(0.)); // contact increase happens here!
+    auto result_d = mio::simulate_flows<double>(t0, tmax, dt, model_d, integrator);
     result_d[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
@@ -41,7 +41,7 @@ int main()
     auto& params = model.parameters;
 
     params.set<mio::osecir::ICUCapacity<double>>(std::numeric_limits<double>::max());
-    params.set<mio::osecir::StartDay>(0);
+    params.set<mio::osecir::StartDay<double>>(0);
     params.set<mio::osecir::Seasonality<double>>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
@@ -74,10 +74,10 @@ int main()
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(0.3, mio::SimulationTime(30.));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix.add_damping(0.3, mio::SimulationTime<double>(30.));
 
     auto result_from_sim                                  = mio::osecir::simulate<double>(t0, tmax, dt, model);
     std::vector<mio::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
@@ -34,7 +34,7 @@ int main()
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::ssirs::Model model;
+    mio::ssirs::Model<double> model;
 
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}] = 1000;
@@ -42,11 +42,11 @@ int main()
         total_population -
         model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}];
-    model.parameters.set<mio::ssirs::TimeInfected>(10);
-    model.parameters.set<mio::ssirs::TimeImmune>(100);
-    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact>(1);
-    model.parameters.get<mio::ssirs::ContactPatterns>().get_baseline()(0, 0) = 20.7;
-    model.parameters.get<mio::ssirs::ContactPatterns>().add_damping(0.6, mio::SimulationTime(12.5));
+    model.parameters.set<mio::ssirs::TimeInfected<double>>(10);
+    model.parameters.set<mio::ssirs::TimeImmune<double>>(100);
+    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(1);
+    model.parameters.get<mio::ssirs::ContactPatterns<double>>().get_baseline()(0, 0) = 20.7;
+    model.parameters.get<mio::ssirs::ContactPatterns<double>>().add_damping(0.6, mio::SimulationTime<double>(12.5));
 
     model.check_constraints();
 

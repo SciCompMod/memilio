@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors:  Lena Ploetzke, Anna Wendler
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     if (filename.empty()) {
         std::cout << "You did not provide a valid filename. A default initialization is used." << std::endl;
 
-        using Vec = mio::TimeSeries<ScalarType>::Vector;
+        using Vec = Eigen::VectorX<ScalarType>;
         mio::TimeSeries<ScalarType> init(num_agegroups * (size_t)mio::isecir::InfectionTransition::Count);
         init.add_time_point<Eigen::VectorXd>(-7.,
                                              Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));

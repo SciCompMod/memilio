@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     auto& params = model.parameters;
 
     params.set<mio::osecir::ICUCapacity<FP>>(std::numeric_limits<double>::max());
-    params.set<mio::osecir::StartDay>(0);
+    params.set<mio::osecir::StartDay<FP>>(0);
     params.set<mio::osecir::Seasonality<FP>>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
@@ -104,9 +104,9 @@ int main(int argc, char** argv)
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<FP>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<FP>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = mio::ParameterStudy<mio::osecir::Simulation<>>(graph_read, t0, tmax, 0.5, 2);
+    auto study = mio::ParameterStudy<FP, mio::osecir::Simulation<FP>>(graph_read, t0, tmax, 0.5, 2);
     std::cout << "Done" << std::endl;
 
     return 0;
