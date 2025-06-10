@@ -147,7 +147,7 @@ endif()
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
 add_subdirectory(memilio)
-add_subdirectory(munich_preprocessing)
+add_subdirectory(munich_postprocessing)
 
 if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
