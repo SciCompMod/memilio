@@ -179,7 +179,7 @@ std::string format_main_formula(Model& model, const std::string& math_string, co
  * @param[in] species The species to be processed.
  * @param[in] model The model where the species stems from.
  * @param[in] model_namespace The namespace of the model.
- * @return st::string The formatted initial assignement.
+ * @return std::string The formatted initial assignement.
  *
  * First it checks whether an initial amount is given for the species. Then it checks the other possibilites for 
  * initial assignements:
