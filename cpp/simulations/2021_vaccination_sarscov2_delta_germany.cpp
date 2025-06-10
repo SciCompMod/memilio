@@ -240,7 +240,7 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters<double>& par
     assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality<double>>(), seasonality_min, seasonality_max);
 
     // Delta specific parameter
-    params.get<mio::osecirvvs::StartDayNewVariant>() = mio::get_day_in_year(mio::Date(2021, 6, 6));
+    params.get<mio::osecirvvs::StartDayNewVariant<double>>() = mio::get_day_in_year(mio::Date(2021, 6, 6));
 
     return mio::success();
 }
@@ -260,7 +260,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params)
 {
     //TODO: io error handling
-    auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
+    auto contact_matrices = mio::ContactMatrixGroup<double>(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(
             auto&& baseline,
@@ -378,7 +378,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     auto start_year = mio::Date(2021, 1, 1);
     double narrow   = 0.05;
     if (start_year < end_date) {
-        auto static_open_scenario_spring = mio::SimulationTime(mio::get_offset_in_days(start_year, start_date));
+        auto static_open_scenario_spring = mio::SimulationTime<double>(mio::get_offset_in_days(start_year, start_date));
         contact_dampings.push_back(contacts_at_home(static_open_scenario_spring, 0.0, 0.0));
         contact_dampings.push_back(school_closure(static_open_scenario_spring, 0.0, 0.0));
         contact_dampings.push_back(home_office(static_open_scenario_spring, 0.0, 0.0));
@@ -417,7 +417,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     }
     auto start_open = mio::Date(2021, month_open, 1);
     if (start_open < end_date) {
-        auto start_summer = mio::SimulationTime(mio::get_offset_in_days(start_open, start_date));
+        auto start_summer = mio::SimulationTime<double>(mio::get_offset_in_days(start_open, start_date));
         contact_dampings.push_back(contacts_at_home(start_summer, 0.0, 0.0));
         contact_dampings.push_back(school_closure(start_summer, 0.0, 0.0));
         contact_dampings.push_back(home_office(start_summer, 0.0, 0.0));
@@ -433,7 +433,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
         contact_dampings.push_back(senior_awareness(start_summer, 0.0, 0.0));
     }
 
-    auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2021, 10, 1), start_date));
+    auto start_autumn = mio::SimulationTime<double>(mio::get_offset_in_days(mio::Date(2021, 10, 1), start_date));
     contact_dampings.push_back(contacts_at_home(start_autumn, 0.0, 0.0));
     contact_dampings.push_back(school_closure(start_autumn, 0.3 + narrow, 0.5 - narrow));
     // contact_dampings.push_back(home_office(start_autumn, 0.3 + narrow, 0.5 - narrow)); // S3F only
@@ -452,33 +452,40 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfectedSymptoms<double>>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling<double>>();
 
-    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
-    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.2 + narrow,
+    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime<double>(0), 0.1 + narrow, 0.3 - narrow));
+    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime<double>(0), 0.2 + narrow,
                                                   0.4 - narrow)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
-    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
+    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime<double>(0), 0.1 + narrow, 0.3 - narrow));
+    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime<double>(0), 0.0, 0.0));
+    dynamic_npi_dampings.push_back(physical_distancing_home(mio::SimulationTime<double>(0), 0.0, 0.0));
+    dynamic_npi_dampings.push_back(
+        physical_distancing_school(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(
+        physical_distancing_work(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(
+        physical_distancing_other(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime<double>(0), 0.0, 0.0));
 
     auto dynamic_npi_dampings2 = std::vector<mio::DampingSampling<double>>();
-    dynamic_npi_dampings2.push_back(contacts_at_home(mio::SimulationTime(0), 0.5 + narrow, 0.7 - narrow));
-    dynamic_npi_dampings2.push_back(school_closure(mio::SimulationTime(0), 0.4 + narrow,
+    dynamic_npi_dampings2.push_back(contacts_at_home(mio::SimulationTime<double>(0), 0.5 + narrow, 0.7 - narrow));
+    dynamic_npi_dampings2.push_back(school_closure(mio::SimulationTime<double>(0), 0.4 + narrow,
                                                    0.6 - narrow)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings2.push_back(home_office(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(social_events(mio::SimulationTime(0), 0.7 + narrow, 0.9 - narrow));
-    dynamic_npi_dampings2.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings2.push_back(physical_distancing_home(mio::SimulationTime(0), 0.0 + narrow, 0.2 - narrow));
-    dynamic_npi_dampings2.push_back(physical_distancing_school(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(physical_distancing_work(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(physical_distancing_other(mio::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
-    dynamic_npi_dampings2.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
+    dynamic_npi_dampings2.push_back(home_office(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(social_events(mio::SimulationTime<double>(0), 0.7 + narrow, 0.9 - narrow));
+    dynamic_npi_dampings2.push_back(social_events_work(mio::SimulationTime<double>(0), 0.0, 0.0));
+    dynamic_npi_dampings2.push_back(
+        physical_distancing_home(mio::SimulationTime<double>(0), 0.0 + narrow, 0.2 - narrow));
+    dynamic_npi_dampings2.push_back(
+        physical_distancing_school(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(
+        physical_distancing_work(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(
+        physical_distancing_other(mio::SimulationTime<double>(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(senior_awareness(mio::SimulationTime<double>(0), 0.0, 0.0));
 
-    dynamic_npis.set_interval(mio::SimulationTime(1.0));
-    dynamic_npis.set_duration(mio::SimulationTime(14.0));
+    dynamic_npis.set_interval(mio::SimulationTime<double>(1.0));
+    dynamic_npis.set_duration(mio::SimulationTime<double>(14.0));
     dynamic_npis.set_base_value(100'000);
     dynamic_npis.set_threshold(35.0, dynamic_npi_dampings);
     dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
@@ -486,10 +493,10 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osec
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = mio::UncertainValue<double>();
     assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
-    contacts.get_school_holiday_damping() =
-        mio::DampingSampling<double>(school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
-                                     mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime(0.0),
-                                     {size_t(ContactLocation::School)}, group_weights_all);
+    contacts.get_school_holiday_damping() = mio::DampingSampling<double>(
+        school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)),
+        mio::DampingType(int(Intervention::SchoolClosure)), mio::SimulationTime<double>(0.0),
+        {size_t(ContactLocation::School)}, group_weights_all);
 
     return mio::success();
 }
@@ -540,8 +547,8 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     // global parameters
     const int num_age_groups = 6;
     mio::osecirvvs::Parameters<double> params(num_age_groups);
-    params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
-    params.get_end_dynamic_npis()          = mio::get_offset_in_days(start_date, summer_date);
+    params.get<mio::osecirvvs::StartDay<double>>() = mio::get_day_in_year(start_date);
+    params.get_end_dynamic_npis()                  = mio::get_offset_in_days(start_date, summer_date);
     BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks, test));
@@ -550,17 +557,17 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 1.43 / 100000.;
     auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                mio::osecirvvs::InfectionState::ExposedNaive,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                    mio::osecirvvs::InfectionState::ExposedNaive,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
 
     // graph of counties with populations and local parameters
     // and mobility between counties
@@ -574,12 +581,13 @@ get_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bo
     const auto pydata_dir         = mio::path_join(data_dir_Germany, "pydata");
 
     const auto& set_node_function =
-        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+        mio::set_nodes<double, mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
                        mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+        mio::set_edges<double, ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
+                       mio::MobilityCoefficientGroup<double>, mio::osecirvvs::InfectionState,
+                       decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(set_node_function(
         params, start_date, end_date, pydata_dir, mio::path_join(pydata_dir, "county_current_population.json"), true,
         params_graph, read_function_nodes, node_id_function, scaling_factor_infected, scaling_factor_icu,
@@ -602,14 +610,14 @@ enum class RunMode
 
 /**
  * Run the parameter study.
- * Load a previously stored graph or create a new one from data. 
+ * Load a previously stored graph or create a new one from data.
  * The graph is the input for the parameter study.
  * A newly created graph is saved and can be reused.
  * @param mode Mode for running the parameter study.
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
- * @param save_single_runs [Default: true] Defines if single run results are written to the disk. 
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @returns any io error that occurs during reading or writing of files.
  */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
@@ -646,7 +654,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 
     //run parameter study
     auto parameter_study =
-        mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+        mio::ParameterStudy<double, mio::osecirvvs::Simulation<double>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
 
     // parameter_study.get_rng().seed(
     //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
@@ -668,7 +676,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
             auto params              = std::vector<mio::osecirvvs::Model<double>>();
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
