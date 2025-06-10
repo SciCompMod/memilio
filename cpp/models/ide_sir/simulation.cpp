@@ -22,7 +22,9 @@
 #include "ide_sir/model.h"
 #include "ide_sir/simulation.h"
 #include "memilio/config.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/utils/time_series.h"
+#include <cmath>
 
 namespace mio
 {
@@ -30,6 +32,30 @@ namespace isir
 {
 
 using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+// In this advance function, we only consider S as in the paper by Messina et al.
+void SimulationMessina::advance_messina(ScalarType tmax)
+{
+
+    mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {}.", m_model->populations.get_last_time(),
+                  tmax, m_dt);
+
+    size_t t0_index = m_model->get_gregory_order();
+
+    while (m_model->populations.get_last_time() < tmax - 1e-10) {
+        if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
+            std::cout << "Time: " << m_model->populations.get_last_time() << std::endl;
+        }
+
+        // Add new time points to populations.
+        m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
+                                            Vec::Constant((size_t)InfectionState::Count, 0.));
+
+        // Compute Susceptibles.
+        m_model->compute_S(m_model->populations.get_last_value()[(size_t)InfectionState::Susceptible], m_dt,
+                           m_model->get_totalpop(), t0_index);
+    }
+}
 
 void Simulation::advance(ScalarType tmax)
 {

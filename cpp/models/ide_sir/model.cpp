@@ -28,7 +28,8 @@ namespace mio
 {
 namespace isir
 {
-
+// Gregory weights corresponding to gregory_order where gregory_order corresponds to n0. The expected order of
+// convergence is gregory_order+1.
 std::vector<Eigen::MatrixX<ScalarType>> get_gregoryweights(size_t gregory_order)
 {
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma(gregory_order, gregory_order);
@@ -62,6 +63,165 @@ std::vector<Eigen::MatrixX<ScalarType>> get_gregoryweights(size_t gregory_order)
 
 using Vec = mio::TimeSeries<ScalarType>::Vector;
 
+ModelMessina::ModelMessina(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order)
+    : parameters{Parameters()}
+    , populations{std::move(populations_init)}
+    , m_N{N_init}
+    , m_gregory_order(gregory_order)
+
+{
+}
+
+ScalarType ModelMessina::get_totalpop() const
+{
+    return m_N;
+}
+
+ScalarType ModelMessina::sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input,
+                                        bool recovered)
+{
+
+    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
+    Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
+
+    ScalarType sum_part1_term;
+    if (!recovered) {
+        sum_part1_term =
+            gregoryWeights_sigma(row_index, column_index) *
+            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                state_age) *
+            input;
+    }
+    else {
+        sum_part1_term =
+            gregoryWeights_sigma(row_index, column_index) *
+            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                     state_age)) *
+            input;
+    }
+
+    // std::cout << "Gregory weight in sum1: " << gregoryWeights_sigma(row_index, column_index) << std::endl;
+
+    return sum_part1_term;
+}
+
+ScalarType ModelMessina::sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input, bool recovered)
+{
+    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
+    Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
+
+    ScalarType sum_part2_term;
+    if (!recovered) {
+        sum_part2_term =
+            gregoryWeights_omega(weight_index) * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                state_age) *
+            input;
+    }
+    else {
+        sum_part2_term =
+            gregoryWeights_omega(weight_index) * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
+                     state_age)) *
+            input;
+    }
+    // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) << std::endl;
+
+    return sum_part2_term;
+}
+
+ScalarType ModelMessina::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N, size_t t0_index)
+{
+    // TODO: Do this in a private function of Simulation class? Or solver class?
+    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
+    Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
+    Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
+
+    ScalarType S_init = populations.get_value(t0_index)[(Eigen::Index)InfectionState::Susceptible];
+
+    ScalarType current_time = populations.get_last_time() - dt;
+
+    ScalarType prefactor = dt * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0);
+
+    ScalarType sum_init = gregoryWeights_omega(0) * parameters.get<TransmissionProbabilityOnContact>().eval(0.) *
+                          parameters.get<RiskOfInfectionFromSymptomatic>().eval(0.) * (N - s) / N;
+    // std::cout << "Gregory weight in sum_init: " << gregoryWeights_omega(0) << std::endl;
+
+    size_t num_time_points_simulated = populations.get_num_time_points() - t0_index - 2;
+
+    ScalarType sum_part1 = 0;
+    size_t row_index, column_index;
+    for (size_t j = 0; j < m_gregory_order; j++) {
+        if (num_time_points_simulated - m_gregory_order < m_gregory_order) {
+            row_index = num_time_points_simulated - m_gregory_order;
+        }
+        else {
+            row_index = m_gregory_order - 1;
+        }
+        column_index = j;
+
+        ScalarType state_age = (num_time_points_simulated - j) * dt;
+
+        sum_part1 +=
+            sum_part1_term(row_index, column_index, state_age,
+                           (N - populations.get_value(j + t0_index)[(Eigen::Index)InfectionState::Susceptible]));
+    }
+
+    ScalarType sum_part2 = 0;
+    size_t weight_index;
+    for (size_t j = m_gregory_order; j < num_time_points_simulated; j++) {
+        if (num_time_points_simulated - j + t0_index <= m_gregory_order) {
+            weight_index = num_time_points_simulated - j + t0_index;
+        }
+        else {
+            weight_index = m_gregory_order;
+        }
+
+        ScalarType state_age = (num_time_points_simulated - j) * dt;
+
+        sum_part2 +=
+            sum_part2_term(weight_index, state_age,
+                           (N - populations.get_value(j + t0_index)[(Eigen::Index)InfectionState::Susceptible]));
+    }
+
+    return S_init * std::exp(-prefactor * (sum_init + sum_part1 + sum_part2));
+}
+
+void ModelMessina::compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_index, ScalarType tol,
+                             size_t max_iterations)
+{
+    size_t iter_counter = 0;
+    while (iter_counter < max_iterations) {
+
+        ScalarType s_estimated = fixed_point_function(s_init, dt, N, t0_index);
+
+        if (std::fabs(s_init - s_estimated) < tol) {
+            break;
+        }
+
+        s_init = s_estimated;
+        iter_counter++;
+    }
+
+    if (iter_counter == max_iterations) {
+        std::cout << "Max number of iterations reached without convergence. Results may not be accurate." << std::endl;
+    }
+
+    // std::cout << "Num iterations: " << iter_counter << std::endl;
+
+    // Set S.
+
+    populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
+}
+
+/*********************************************************************************************************************/
+
 Model::Model(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
              size_t finite_difference_order)
     : parameters{Parameters()}
@@ -90,6 +250,7 @@ ScalarType Model::sum_part1_term(size_t row_index, size_t column_index, ScalarTy
     if (!recovered) {
         sum_part1_term =
             gregoryWeights_sigma(row_index, column_index) *
+            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
             parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
                 state_age) *
@@ -98,6 +259,7 @@ ScalarType Model::sum_part1_term(size_t row_index, size_t column_index, ScalarTy
     else {
         sum_part1_term =
             gregoryWeights_sigma(row_index, column_index) *
+            parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
             parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
             (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
                      state_age)) *
@@ -117,14 +279,16 @@ ScalarType Model::sum_part2_term(size_t weight_index, ScalarType state_age, Scal
     ScalarType sum_part2_term;
     if (!recovered) {
         sum_part2_term =
-            gregoryWeights_omega(weight_index) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            gregoryWeights_omega(weight_index) * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
             parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
                 state_age) *
             input;
     }
     else {
         sum_part2_term =
-            gregoryWeights_omega(weight_index) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
+            gregoryWeights_omega(weight_index) * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
             (1 - parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
                      state_age)) *
             input;
@@ -145,12 +309,10 @@ ScalarType Model::fixed_point_function(ScalarType s, ScalarType dt, ScalarType N
 
     ScalarType current_time = populations.get_last_time() - dt;
 
-    ScalarType prefactor = dt *
-                           parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) *
-                           parameters.get<TransmissionProbabilityOnContact>().eval(current_time) / N;
+    ScalarType prefactor = dt * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0);
 
-    ScalarType sum_init =
-        gregoryWeights_omega(0) * parameters.get<RiskOfInfectionFromSymptomatic>().eval(0.) * (N - s) / N;
+    ScalarType sum_init = gregoryWeights_omega(0) * parameters.get<TransmissionProbabilityOnContact>().eval(0.) *
+                          parameters.get<RiskOfInfectionFromSymptomatic>().eval(0.) * (N - s) / N;
     // std::cout << "Gregory weight in sum_init: " << gregoryWeights_omega(0) << std::endl;
 
     size_t num_time_points_simulated = populations.get_num_time_points() - t0_index - 2;
@@ -215,7 +377,7 @@ void Model::compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_
 
     // std::cout << "Num iterations: " << iter_counter << std::endl;
 
-    // Add new time point to populations and set S accordingly.
+    // Set S.
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
 }

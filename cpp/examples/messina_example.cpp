@@ -35,64 +35,7 @@ size_t num_agegroups = 1;
 
 ScalarType t0   = 0.;
 ScalarType tmax = 1.;
-
-ScalarType TimeInfected                     = 1.4;
-ScalarType TransmissionProbabilityOnContact = 1.;
-ScalarType RiskOfInfectionFromSymptomatic   = 1.;
-ScalarType Seasonality                      = 0.;
-ScalarType cont_freq                        = 1.;
-
-ScalarType S0 = 9910.;
-ScalarType I0 = 90.;
-ScalarType R0 = 0.;
 } // namespace params
-
-mio::IOResult<void> simulate_ode(ScalarType ode_exponent, std::string save_dir = "")
-{
-    using namespace params;
-
-    ScalarType dt_ode = pow(10, -ode_exponent);
-
-    mio::log_info("Simulating ODE-SIR; t={} ... {} with dt = {}.", t0, tmax, dt_ode);
-
-    mio::osir::Model<ScalarType> model(num_agegroups);
-
-    // ScalarType total_population = 10000;
-
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] = S0;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]    = I0;
-    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Recovered}]   = R0;
-
-    model.parameters.set<mio::osir::TimeInfected<ScalarType>>(TimeInfected);
-    model.parameters.set<mio::osir::TransmissionProbabilityOnContact<ScalarType>>(TransmissionProbabilityOnContact);
-
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    model.parameters.get<mio::osir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
-
-    model.check_constraints();
-
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            1e-10, 1e-5, dt_ode, dt_ode);
-    // integrator->set_dt_min(dt_ode);
-    // integrator->set_dt_max(dt_ode);
-    auto sir = simulate(t0, tmax, dt_ode, model, integrator);
-
-    if (!save_dir.empty()) {
-        // Save compartments.
-        mio::TimeSeries<ScalarType> compartments = sir;
-        auto save_result_status_ode =
-            mio::save_result({compartments}, {0}, num_agegroups,
-                             save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
-
-        if (!save_result_status_ode) {
-            return mio::failure(mio::StatusCode::InvalidValue,
-                                "Error occured while saving the ODE simulation results.");
-        }
-    }
-    return mio::success();
-}
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
                                  size_t finite_difference_order, std::string save_dir = "")
@@ -101,17 +44,17 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
-    vec_init[(size_t)mio::isir::InfectionState::Susceptible] = S0;
+    vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 90.;
     // Scheme currently only works if Infected=0 in the beginning.
-    vec_init[(size_t)mio::isir::InfectionState::Infected]  = I0;
-    vec_init[(size_t)mio::isir::InfectionState::Recovered] = R0;
+    vec_init[(size_t)mio::isir::InfectionState::Infected]  = 10.;
+    vec_init[(size_t)mio::isir::InfectionState::Recovered] = 0.;
 
-    ScalarType total_population = vec_init.sum();
+    ScalarType total_population = 100.;
 
     for (ScalarType ide_exponent : ide_exponents) {
 
         ScalarType dt = pow(10, -ide_exponent);
-        std::cout << "Simulation with " << dt << std::endl;
+        std::cout << "Simulate with dt=" << dt << std::endl;
 
         // TODO: it would be sufficient to have finite_difference_order of time steps before gregory_order
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
@@ -123,21 +66,21 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         // Initialize model.
         mio::isir::ModelMessina model(std::move(init_populations), total_population, gregory_order);
 
-        mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
-        mio::StateAgeFunctionWrapper dist(exp);
+        mio::NormalDistributionDensity normaldensity(0.4, 0.6);
+        mio::StateAgeFunctionWrapper dist(normaldensity);
         std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
-        mio::ConstantFunction transmissiononcontact(TransmissionProbabilityOnContact);
+        mio::ConstantFunction transmissiononcontact(1.5);
         mio::StateAgeFunctionWrapper transmissiononcontact_wrapper(transmissiononcontact);
         model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = transmissiononcontact_wrapper;
 
-        mio::ConstantFunction riskofinfection(RiskOfInfectionFromSymptomatic);
+        mio::ConstantFunction riskofinfection(1.);
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(transmissiononcontact);
         model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = riskofinfection_wrapper;
 
         mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0.001 * total_population));
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // Carry out simulation.
@@ -164,24 +107,27 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
 int main()
 {
-    /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
-    distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-    std::string save_dir = "../../simulation_results/exponential_tmax=1/";
+    std::string result_dir = "../../simulation_results/messina/";
     // Make folder if not existent yet.
-    boost::filesystem::path dir(save_dir);
+    boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
 
     size_t finite_difference_order = 1;
 
-    std::vector<ScalarType> ide_exponents = {1, 2, 3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {1, 2, 3};
 
     for (size_t gregory_order : gregory_orders) {
-        mio::IOResult<void> result = simulate_ide(ide_exponents, gregory_order, finite_difference_order, save_dir);
+
+        std::cout << "Using Gregory order =" << gregory_order << std::endl;
+        mio::IOResult<void> result = simulate_ide(ide_exponents, gregory_order, finite_difference_order, result_dir);
     }
 
-    // Get groundtruth with gregory_order = 3
-    ScalarType ode_exponent = 6;
+    // Compute groundtruth.
 
-    auto result = simulate_ode(ode_exponent, save_dir);
+    size_t gregory_order = 3;
+    ide_exponents        = {5};
+
+    std::cout << "Using Gregory order = " << gregory_order << std::endl;
+    mio::IOResult<void> result = simulate_ide(ide_exponents, gregory_order, finite_difference_order, result_dir);
 }

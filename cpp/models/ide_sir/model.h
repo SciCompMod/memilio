@@ -37,11 +37,7 @@ public:
     /**
     * @brief Constructor to create an IDE-SIR model.
     *
-    * @param[in, out] transitions_init TimeSeries with the initial values of the number of individuals, 
-    *   which transit within one timestep dt from one compartment to another.
-    *   Possible transitions are specified in #InfectionTransition%s.
-    *   Considered time points should have the distance dt. The last time point determines the start time t0 of the 
-    *   simulation. 
+    * @param[in, out] populations_init 
     * @param[in] N_init Total population.
     */
     Model(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
@@ -76,13 +72,48 @@ public:
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
-    // Attention: populations and transitions do not necessarily have the same number of time points due to the
+    // Attention: populations and flows do not necessarily have the same number of time points due to the
     // initialization part.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
         // people in defined #InfectionState%s for every AgeGroup.
     TimeSeries<ScalarType> flows;
     size_t m_finite_difference_order;
     TimeSeries<ScalarType> susceptibles_difference = TimeSeries<ScalarType>(1);
+
+private:
+    // ---- Private parameters. ----
+    ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    size_t m_gregory_order;
+};
+
+// We define a separate class to recreate the numerical scheme of Messina where we only consider S and not the other compartments.
+class ModelMessina
+{
+    using ParameterSet = Parameters;
+
+public:
+    ModelMessina(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order);
+
+    ScalarType get_totalpop() const;
+
+    size_t get_gregory_order() const
+    {
+        return m_gregory_order;
+    }
+
+    ScalarType sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input,
+                              bool recovered = false);
+    ScalarType sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input, bool recovered = false);
+
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, ScalarType N, size_t t0_index);
+
+    void compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_index, ScalarType tol = 1e-10,
+                   size_t max_iterations = 100);
+
+    // ---- Public parameters. ----
+    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
+        // people in defined #InfectionState%s for every AgeGroup.
 
 private:
     // ---- Private parameters. ----

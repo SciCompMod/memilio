@@ -30,6 +30,7 @@
 
 #include "boost/math/distributions/gamma.hpp"
 #include "boost/math/distributions/lognormal.hpp"
+#include <cmath>
 
 namespace mio
 {
@@ -790,6 +791,63 @@ protected:
     StateAgeFunction* clone_impl() const override
     {
         return new ErlangDensity(*this);
+    }
+};
+
+/**
+ * @brief Class that defines the survival function corresponding to the exponential distribution depending on the state age.
+ */
+struct NormalDistributionDensity : public StateAgeFunction {
+
+    /**
+     * @brief Constructs a new ExponentialSurvivalFunction object.
+     * 
+     * @param[in] init_location Location parameter to shift the NormalDistributionDensity function. 
+     * @param[in] init_shape Location parameter to shift the NormalDistributionDensity function. 
+     */
+    NormalDistributionDensity(ScalarType init_location = 0., ScalarType init_shape = 1.)
+        : StateAgeFunction(0., init_location, init_shape)
+    {
+    }
+
+    /**
+     * @brief TODO
+     * 
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age. 
+     */
+    ScalarType eval(ScalarType state_age) override
+    {
+        const ScalarType pi = boost::math::constants::pi<ScalarType>();
+        return (1 / (std::sqrt(2 * pi) * m_scale)) * std::exp(-std::pow((state_age - m_location) / m_scale, 2) / 2.);
+    }
+
+    /**
+     * @brief Computes the mean value of the function. 
+     * 
+     * For the exponential distribution, the mean value is the reciprocal of the distribution parameter and shifted with respect to the location parameter.
+     *
+     * @param[in] dt Time step size used for the numerical integration (unused for ExponentialSurvivalFunction). 
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance 
+     *  (unused for ExponentialSurvivalFunction). 
+     * @return ScalarType mean value.
+     */
+    ScalarType get_mean(ScalarType dt = 1., ScalarType tol = 1e-10) override
+    {
+        unused(dt);
+        unused(tol);
+        return m_location;
+    }
+
+protected:
+    /**
+     * @brief Implements clone for ExponentialSurvivalFunction.
+     * 
+     * @return Pointer to StateAgeFunction.
+     */
+    StateAgeFunction* clone_impl() const override
+    {
+        return new NormalDistributionDensity(*this);
     }
 };
 
