@@ -250,6 +250,8 @@ auto DoStep()
 
 class MockIntegratorCore : public mio::IntegratorCore<double, 1>
 {
+    using deriv_fs = const mio::DerivFunction<double> (&)[1];
+
 public:
     MockIntegratorCore()
         : MockIntegratorCore(0.0, 0.0)
@@ -262,7 +264,7 @@ public:
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
     MOCK_METHOD(bool, step,
-                (const mio::DerivFunction<double> (&f)[1], Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                (deriv_fs f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
 };
