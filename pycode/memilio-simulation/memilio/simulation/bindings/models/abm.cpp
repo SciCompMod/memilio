@@ -38,6 +38,7 @@
 #include "boost/algorithm/string/split.hpp"
 #include "boost/algorithm/string/classification.hpp"
 #include "memilio/io/hdf5_cpp.h"
+#include "munich_postprocessing/output_processing.h"
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
@@ -1605,6 +1606,17 @@ PYBIND11_MODULE(_simulation_abm, m)
             else {
                 return 1;
             }
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "calculate_infections_per_quantity",
+        [](std::string sim_result_folder, std::string save_folder, int num_sims) {
+            std::string save_file_loctype_infections = save_folder + "num_agents_infections_loctype.txt";
+            std::string save_file_ww_area_infections = save_folder + "num_agents_infections_area.txt";
+            calculate_infections_per_quantity(sim_result_folder, save_file_loctype_infections, "locType", "v5",
+                                              num_sims);
+            calculate_infections_per_quantity(sim_result_folder, save_file_ww_area_infections, "area", "v4", num_sims);
         },
         py::return_value_policy::reference_internal);
 #endif
