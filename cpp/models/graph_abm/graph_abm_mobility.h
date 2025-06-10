@@ -125,8 +125,12 @@ public:
         for (int i = int(persons_to_change.size()) - 1; i >= 0; --i) {
             auto& person     = model_from.get_persons()[persons_to_change[i]];
             auto target_type = person.get_location_type();
+            if (target_type == abm::LocationType::Count) {
+                target_type = model_to.get_location(person.get_location()).get_type();
+            }
             //check if Person uses this edge
             if (person.get_assigned_location_model_id(target_type) == model_to.get_id()) {
+
                 auto target_id = person.get_assigned_location(target_type);
                 //set correct location for person
                 person.set_location(target_type, target_id, model_to.get_id());
