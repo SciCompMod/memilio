@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding
@@ -520,7 +520,7 @@ IOResult<void> write_parameters_to_file(const Set& parameters, const std::string
  * @brief Read parameters from the specified file into the given parameter set.
  * @param[in, out] parameters An instance of Set<Parameters...>.
  * @param[in] filepath The file to read the parameters from.
- * @tparam Parameters A list of parameter types. 
+ * @tparam Parameters A list of parameter types.
  * @tparam Set A parameter set template. Will be used as Set<Parameters...>.
  */
 template <class... Parameters, template <class...> class Set>
@@ -542,7 +542,7 @@ IOResult<void> read_parameters_from_file(Set<Parameters...>& parameters, const s
 
 /**
  * @brief A cli that takes json values and stores them in a parameter set.
- * 
+ *
  * Note that the first element of argv will always be skipped, assuming it is the name of the executable
  * as called from the command line. executable_name simply allows to "clean up" this name, as it may contain a path.
  *
@@ -624,7 +624,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
 
 /**
  * @brief A cli that takes json values and stores them in a parameter set.
- * 
+ *
  * Note that the first element of argv will always be skipped, assuming it is the name of the executable
  * as called from the command line. executable_name simply allows to "clean up" this name, as it may contain a path.
  *
@@ -641,7 +641,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
  * @param[in] argc Argument count, must be the length of argv. Can be directly passed from main.
  * @param[in] argv Argument list for the Programm. Can be directly passed from main.
  * @param[in] os Output stream to write to. Default: std::cout.
- * @tparam Parameters A list of parameter types. 
+ * @tparam Parameters A list of parameter types.
  * @tparam Set A parameter set template. Will be used as Set<Parameters...>. Default: mio::ParameterSet.
  * @return An instance of Set<Parameters...> if no errors occured, the error code otherwise.
  */
