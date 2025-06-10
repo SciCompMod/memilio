@@ -134,7 +134,7 @@ int Person::get_assigned_location_model_id(LocationType type) const
 
 bool Person::goes_to_work(TimePoint t, const Parameters& params) const
 {
-    return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
+    return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(SimulationTime<ScalarType>(t.days()))[0];
 }
 
 TimeSpan Person::get_go_to_work_time(const Parameters& params) const
@@ -157,7 +157,7 @@ TimeSpan Person::get_go_to_school_time(const Parameters& params) const
 
 bool Person::goes_to_school(TimePoint t, const Parameters& params) const
 {
-    return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
+    return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(SimulationTime<ScalarType>(t.days()))[0];
 }
 
 void Person::remove_quarantine()
