@@ -348,7 +348,7 @@ public:
         // define a lambda function to create a damping sampling object given a reduction factor and location
         auto set_contact_reduction = [=](FP val, size_t location) {
             auto v = mio::UncertainValue(val);
-            return mio::DampingSampling(v, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(t),
+            return mio::DampingSampling(v, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<FP>(t),
                                         std::vector<size_t>{location}, group_weights_all);
         };
 
