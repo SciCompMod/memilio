@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -42,7 +42,7 @@ namespace osecirts
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_demographics(Model<FP>& model)
 {
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
@@ -119,13 +119,13 @@ void draw_sample_demographics(Model<FP>& model)
 }
 
 /**
- * Draws a sample from the specified distributions for all parameters 
+ * Draws a sample from the specified distributions for all parameters
  * related to the infection.
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups.
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_infection(Model<FP>& model)
 {
     model.parameters.template get<Seasonality<FP>>().draw_sample();
@@ -191,15 +191,15 @@ void draw_sample_infection(Model<FP>& model)
 /**
  * Draws a sample from model parameter distributions and stores sample values
  * as parameters values (cf. UncertainValue and Parameters classes).
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups.
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample(Model<FP>& model)
 {
-    draw_sample_infection(model);
-    draw_sample_demographics(model);
+    draw_sample_infection<FP>(model);
+    draw_sample_demographics<FP>(model);
     model.parameters.template get<ContactPatterns<FP>>().draw_sample();
     model.apply_constraints();
 }
@@ -207,19 +207,19 @@ void draw_sample(Model<FP>& model)
 /**
  * Draws samples for each model node in a graph.
  * Some parameters are shared between nodes and are only sampled once.
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param graph Graph to be sampled.
  * @return Graph with nodes and edges from the input graph sampled.
  */
-template <typename FP = double>
+template <typename FP>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
     Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
     //sample global parameters
     auto& shared_params_model = graph.nodes()[0].property;
-    draw_sample_infection(shared_params_model);
+    draw_sample_infection<FP>(shared_params_model);
     auto& shared_contacts = shared_params_model.parameters.template get<ContactPatterns<FP>>();
     shared_contacts.draw_sample_dampings();
     auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfectedSymptoms<FP>>();
@@ -229,7 +229,7 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
         auto& node_model = params_node.property;
 
         //sample local parameters
-        draw_sample_demographics(params_node.property);
+        draw_sample_demographics<FP>(params_node.property);
 
         //copy global parameters
         //save demographic parameters so they aren't overwritten
