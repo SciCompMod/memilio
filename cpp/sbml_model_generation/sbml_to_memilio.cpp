@@ -39,7 +39,7 @@ std::string get_filename(const std::string& filepath)
  * of the two parent directories. It makes sure that it does not accidently use the folder with the same name in the 
  * build directory. This function is thus tailored to find the folder for the sbml generated model files.
  * If the folder is not found, it returns an error code. 
-*/
+ */
 mio::IOResult<std::string> get_path(std::string folder_name)
 {
     boost::filesystem::path current_path = boost::filesystem::absolute(boost::filesystem::current_path());
@@ -119,7 +119,7 @@ void strip_formula(std::string& leading_bracket, std::string& trailing_bracket, 
  *
  * This function adds the content of the ``leading_bracket`` string to the beginning of the formula and the content of
  * the ``trailing_bracket`` string to the end of the formula. This function can be used to reverse the effect of
- * :cpp:func:`strip_formula(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)` with 
+ * :cpp:func:`strip_formula(std::string & leading_bracket, std::string & trailing_bracket, std::string & formula)`
  * with respect to the formula string.
  */
 void append_brackets(std::string& leading_bracket, std::string& trailing_bracket, std::string& formula)
@@ -350,7 +350,7 @@ mio::IOResult<std::string> format_event_trigger(const std::string& formula, Mode
 /**
  * @brief Returns the maximum time mentioned in a formula or an error.
  *
- * @param[in] trigger The formula to be processed as ASTNode*.
+ * @param[in] trigger The formula to be processed, given as an ASTNode.
  * @param[in] model The model where the formula stems from.
  * @param[in] model_namespace The namespace of the model.
  * @return mio::IOResult<std::string> The resulting string.
@@ -849,7 +849,7 @@ mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename
         example << "auto& params = model.parameters;" << std::endl;
         std::string table = "";
         for (size_t i = 0; i < number_species; i++) {
-            Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
+            Species curr_species = *model.getListOfSpecies()->get(i);
             std::string number   = get_initial_assignment(curr_species, model, lowercase_name);
             example << "model.populations[{mio::" << lowercase_name << "::InfectionState::" << curr_species.getId()
                     << "}] = " << number << ";" << std::endl;
@@ -979,7 +979,7 @@ mio::IOResult<void> modify_cmakelists(const std::string& filename, const std::st
  *
  * Calls clang-format using the `system` command. The command is generated using filename and path. Depending on the
  * return code, an error or info message is printed.
-*/
+ */
 void format_files(const std::string& filename, const std::string& path)
 {
     std::string lowercase_name = boost::to_lower_copy<std::string>(filename);
@@ -1003,7 +1003,7 @@ void format_files(const std::string& filename, const std::string& path)
  * This function expects exaclty one parameter which should be the path to the file that should be processed. If more 
  * or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file 
  * as a SBML file and generates the MEmilio code for it.
-*/
+ */
 int main(int argc, char* argv[])
 {
     mio::set_log_level(mio::LogLevel::debug);
