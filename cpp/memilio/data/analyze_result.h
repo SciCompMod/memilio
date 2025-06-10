@@ -22,6 +22,7 @@
 
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/math/interpolation.h"
 
 #include <functional>
 #include <vector>
@@ -233,9 +234,9 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
             simulation_result.get_time(sim_idx + 1) >= interpolation_times[interp_idx]) {
             interpolated.add_time_point(
                 interpolation_times[interp_idx],
-                linear_interpolation(interpolation_times[interp_idx], simulation_result.get_time(sim_idx),
-                                     simulation_result.get_time(sim_idx + 1), simulation_result[sim_idx],
-                                     simulation_result[sim_idx + 1]));
+                linear_interpolation<FP>(interpolation_times[interp_idx], simulation_result.get_time(sim_idx),
+                                         simulation_result.get_time(sim_idx + 1), simulation_result[sim_idx],
+                                         simulation_result[sim_idx + 1]));
             ++interp_idx;
         }
         else {
