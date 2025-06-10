@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker
@@ -41,7 +41,7 @@ class AbstractParameterDistribution
 
 public:
     /**
-     * The implementation handed to the constructor should have get_sample function 
+     * The implementation handed to the constructor should have get_sample function
      * overloaded with mio::RandomNumberGenerator and mio::abm::PersonalRandomNumberGenerator as input arguments
      */
     template <class Impl>
@@ -112,7 +112,7 @@ public:
 
     /**
      * @brief Returns a value sampled with the given distribution.
-     * @param[in] rng RandomNumberGenerator used for sampling. 
+     * @param[in] rng RandomNumberGenerator used for sampling.
      */
     double get(RandomNumberGenerator& rng) const
     {
@@ -121,7 +121,7 @@ public:
 
     /**
      * @brief Returns a value sampled with the given distribution.
-     * @param[in] rng abm::PersonalRandomNumberGenerator used for sampling. 
+     * @param[in] rng abm::PersonalRandomNumberGenerator used for sampling.
      */
     double get(abm::PersonalRandomNumberGenerator& rng) const
     {

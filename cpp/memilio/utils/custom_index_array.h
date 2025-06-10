@@ -159,6 +159,14 @@ public:
     using Index             = ::mio::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
 
+    template <class U>
+    CustomIndexArray& operator=(const U& value)
+    {
+        for (auto& x : *this)
+            x = value;
+        return *this;
+    }
+
     /// @brief Create an empty CustomIndexArray with size 0. Use the resize member function to add entries.
     explicit CustomIndexArray()
         : m_dimensions(Index::Zero())
