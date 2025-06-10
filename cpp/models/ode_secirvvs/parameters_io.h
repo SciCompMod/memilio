@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -683,7 +683,7 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::string&
 
 /**
  * @brief Sets vaccination data for models stored in a vector.
- * 
+ *
  * @tparam FP Floating point type used in the Model objects.
  * @param[in, out] model Vector of Model objects in which the vaccination data is set.
  * @param[in] vacc_data Vector of VaccinationDataEntry objects containing the vaccination data.
@@ -821,7 +821,7 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
 
 /**
  * @brief Reads vaccination data from a file and sets it for each model.
- * 
+ *
  * @tparam FP Floating point type used in the Model objects.
  * @param[in, out] model Vector of Model objects in which the vaccination data is set.
  * @param[in] path Path to vaccination data file.
@@ -843,7 +843,7 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
 #ifdef MEMILIO_HAS_HDF5
 
 /**
-* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day. 
+* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day.
 * The initialisation is applied for a predefined number of days and finally saved in a timeseries for each region. In the end,
 * we save the files "Results_rki.h5" and "Results_rki_sum.h5" in the results_dir.
 * Results_rki.h5 contains a time series for each region and Results_rki_sum.h5 contains the sum of all regions.
@@ -932,7 +932,7 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std
 
 /**
     * Reads compartments for German counties at a specified date from data files.
-    * Estimates all compartments from available data using the model parameters, so the 
+    * Estimates all compartments from available data using the model parameters, so the
     * model parameters must be set before calling this function.
     * Uses data files that contain centered 7-day moving average.
     * @param[in, out] model Vector of SECIRVVS models, one per county.
@@ -981,7 +981,7 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 
 /**
     * Reads compartments for German counties at a specified date from data files.
-    * Estimates all compartments from available data using the model parameters, so the 
+    * Estimates all compartments from available data using the model parameters, so the
     * model parameters must be set before calling this function.
     * Uses data files that contain centered 7-day moving average.
     * @param[in, out] model Vector of SECIRVVS models, one per county.
