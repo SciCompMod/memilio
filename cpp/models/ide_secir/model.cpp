@@ -630,8 +630,8 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                 Eigen::Index state_age_index = num_time_points - 1 - l;
                 ScalarType state_age         = state_age_index * dt;
                 sum += season_val * parameters.get<TransmissionProbabilityOnContact>()[i].eval(state_age) *
-                       parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(
-                           static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
+                       parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(SimulationTime<ScalarType>(
+                           current_time))(static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
                        (m_transitiondistributions_in_forceofinfection[j][0][num_time_points - l - 1] *
                             transitions[l + 1][EtINSj] *
                             parameters.get<RelativeTransmissionNoSymptoms>()[j].eval(state_age) +
