@@ -154,7 +154,7 @@ TEST(TestDABMSimulation, advance)
     QuadWellModel<InfectionState>::Agent a1{Eigen::Vector2d{-1, 1}, InfectionState::S};
     QuadWellModel<InfectionState>::Agent a2{Eigen::Vector2d{-1, 1}, InfectionState::R};
     QuadWellModel<InfectionState>::Agent a3{Eigen::Vector2d{-1, 1}, InfectionState::I};
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<double, InfectionState>> adoption_rates;
     //Add adoption rates for every region
     for (size_t region = 0; region < 4; ++region) {
         adoption_rates.push_back({InfectionState::S,

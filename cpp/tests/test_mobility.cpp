@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -48,10 +48,10 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
 
     // Define graph simulation that inherently allows mobility but edges are defined such that there is no mobility
     // between nodes.
-    auto graph_sim_mobility =
-        mio::make_mobility_sim(t0, dt,
-                               mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>,
-                                          mio::MobilityEdge<double>>());
+    auto graph_sim_mobility = mio::make_mobility_sim<double>(
+        t0, dt,
+        mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::oseir::Model<double>>>,
+                   mio::MobilityEdge<double>>());
 
     auto& g_mobility = graph_sim_mobility.get_graph();
     g_mobility.add_node(0, model1, t0);
@@ -67,10 +67,9 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
     g_mobility.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
     // Define graph simulation that doesn't consider mobility even if we have edges that allow mobility.
-    auto graph_sim_no_mobility =
-        mio::make_no_mobility_sim(t0, 
-                                  mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseir::Model<double>>>,
-                                             mio::MobilityEdge<double>>());
+    auto graph_sim_no_mobility = mio::make_no_mobility_sim(
+        t0, mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::oseir::Model<double>>>,
+                       mio::MobilityEdge<double>>());
 
     auto& g_no_mobility = graph_sim_no_mobility.get_graph();
 
@@ -133,7 +132,8 @@ TEST(TestMobility, nodeAdvance)
     Model model(1);
     auto& params = model.parameters;
 
-    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
+    auto& cm =
+        static_cast<mio::ContactMatrixGroup<double>&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
     cm[0].get_minimum()(0, 0) = 5.0;
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = 100;
@@ -145,7 +145,7 @@ TEST(TestMobility, nodeAdvance)
     double t0 = 2.835;
     double dt = 0.5;
 
-    mio::SimulationNode<mio::Simulation<double, Model>> node(model, t0);
+    mio::SimulationNode<double, mio::Simulation<double, Model>> node(model, t0);
     node.advance(t0, dt);
     ASSERT_DOUBLE_EQ(node.get_result().get_last_time(), t0 + dt);
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));
@@ -158,7 +158,8 @@ TEST(TestMobility, edgeApplyMobility)
     //setup nodes
     Model model(1);
     auto& params = model.parameters;
-    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
+    auto& cm =
+        static_cast<mio::ContactMatrixGroup<double>&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 10;
@@ -173,8 +174,8 @@ TEST(TestMobility, edgeApplyMobility)
     params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]           = 1.;
     params.apply_constraints();
     double t = 3.125;
-    mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
-    mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
+    mio::SimulationNode<double, mio::osecir::Simulation<double>> node1(model, t);
+    mio::SimulationNode<double, mio::osecir::Simulation<double>> node2(model, t);
 
     //setup edge
     mio::MobilityEdge<double> edge(Eigen::VectorXd::Constant(10, 0.1));
@@ -221,7 +222,8 @@ TEST(TestMobility, add_mobility_result_time_point)
     const size_t num_groups = 1;
     Model model(num_groups);
     auto& params = model.parameters;
-    auto& cm     = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
+    auto& cm =
+        static_cast<mio::ContactMatrixGroup<double>&>(model.parameters.get<mio::osecir::ContactPatterns<double>>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 10;
@@ -260,9 +262,9 @@ TEST(TestMobility, add_mobility_result_time_point)
 
     //setup different edges
     double t = 0.;
-    mio::SimulationNode<mio::osecir::Simulation<>> node1(model, t);
-    mio::SimulationNode<mio::osecir::Simulation<>> node2(model, t);
-    mio::MobilityEdge edge1(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
+    mio::SimulationNode<double, mio::osecir::Simulation<double>> node1(model, t);
+    mio::SimulationNode<double, mio::osecir::Simulation<double>> node2(model, t);
+    mio::MobilityEdge<double> edge1(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
     edge1.apply_mobility(t, 0.0, node1, node2);
     auto mobility = edge1.get_mobility_results().get_last_value();
     EXPECT_NEAR(mobility[0], 1.0, 1e-12);
@@ -271,9 +273,9 @@ TEST(TestMobility, add_mobility_result_time_point)
 
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 100;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 30;
-    mio::SimulationNode<mio::osecir::Simulation<>> node3(model, t);
-    mio::SimulationNode<mio::osecir::Simulation<>> node4(model, t);
-    mio::MobilityEdge edge2(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
+    mio::SimulationNode<double, mio::osecir::Simulation<double>> node3(model, t);
+    mio::SimulationNode<double, mio::osecir::Simulation<double>> node4(model, t);
+    mio::MobilityEdge<double> edge2(Eigen::VectorXd::Constant(10, 0.1), indices_save_edges);
     edge2.apply_mobility(t, 0.5, node3, node4);
     mobility = edge2.get_mobility_results().get_last_value();
     EXPECT_NEAR(mobility[0], 11.0, 1e-12);

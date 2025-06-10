@@ -65,12 +65,12 @@ protected:
 
         model = new mio::iseir::Model<double>(std::move(result), dt, N);
 
-        model->parameters.set<mio::iseir::LatencyTime>(3.3);
-        model->parameters.set<mio::iseir::InfectiousTime>(8.2);
-        model->parameters.set<mio::iseir::TransmissionRisk>(0.015);
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-        contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
+        model->parameters.set<mio::iseir::LatencyTime<double>>(3.3);
+        model->parameters.set<mio::iseir::InfectiousTime<double>>(8.2);
+        model->parameters.set<mio::iseir::TransmissionRisk<double>>(0.015);
+        mio::ContactMatrixGroup<double> contact_matrix = mio::ContactMatrixGroup<double>(1, 1);
+        contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixX<double>::Constant(1, 1, 10.));
+        contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(10.));
         model->parameters.get<mio::iseir::ContactFrequency<double>>() =
             mio::UncertainContactMatrix<double>(contact_matrix);
     }
