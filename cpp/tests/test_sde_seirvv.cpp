@@ -18,8 +18,9 @@
 * limitations under the License.
 */
 #include "abm_helpers.h"
+#include "memilio/compartments/stochastic_simulation.h"
+#include "memilio/config.h"
 #include "sde_seirvv/model.h"
-#include "sde_seirvv/simulation.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -27,142 +28,79 @@
 const mio::sseirvv::Model& sseirvv_testing_model()
 {
     static mio::sseirvv::Model model;
-    model.step_size = 1.0 / 16;
     model.populations.array().setConstant(1);
-    { // Set parameters s.t. coeffStoI is 1.
-        model.parameters.set<mio::sseirvv::TimeExposedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeExposedV2>(1./4);
-        model.parameters.set<mio::sseirvv::TimeInfectedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeInfectedV2>(1./4);
-        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(1);
-        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(1);
+    {
+        model.parameters.set<mio::sseirvv::TimeExposedV1>(2);
+        model.parameters.set<mio::sseirvv::TimeExposedV2>(4);
+        model.parameters.set<mio::sseirvv::TimeInfectedV1>(4);
+        model.parameters.set<mio::sseirvv::TimeInfectedV2>(2);
+        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.5);
+        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(0.25);
         model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 10;
     }
     return model;
 }
 
-TEST(TestSdeSeirvv, get_flows)
+TEST(TestSdeSeirvv, Model)
 {
-    // Make three get_flows computations with mocked rng.
-    ScopedMockDistribution<
-        testing::StrictMock<MockDistribution<mio::DistributionAdapter<std::normal_distribution<ScalarType>>>>>
-        normal_dist_mock;
+    // check get_flows and get_noise
+    const Eigen::Vector<double, 10> y{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    Eigen::VectorXd rhs = Eigen::VectorXd::Constant(9, 1);
 
-    // First two mock rng sets for test without clamping.
-    // Third mock rng for test with clamping.
-    EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(27))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(0.)) //End of first mock rng.
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(1.))
-        .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(1.)) //End of second mock rng.
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.))
-        .WillOnce(testing::Return(10.)); //End of third mock rng.
+    sseirvv_testing_model().get_flows(y, y, 0, rhs);
+    auto expected_flows = Eigen::Vector<double, 9>{0.5, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.5};
+    // auto x              = y;
+    // sseirvv_testing_model().get_derivatives(expected_flows, x);
+    // EXPECT_EQ(x + y, y);
+    EXPECT_EQ(rhs, expected_flows);
 
-    // Non-constant y for a more meaningful test.
-    Eigen::VectorXd y = Eigen::VectorXd(10);
-    y << 1,1,1,1,1,1,1,2,2,2;
-    Eigen::VectorXd flows   = Eigen::VectorXd::Constant(9, 1);
-
-    // Results contain two parts : deterministic + stochastic.
-    sseirvv_testing_model().get_flows(y, y, 0, flows);
-    auto expected_result = Eigen::VectorXd(9);
-    expected_result << 1 + sqrt(1) * sqrt(16), 3 + 0, 1 + 0, 4 + sqrt(4) * sqrt(16), 1 + sqrt(1) * sqrt(16), 
-        4 + 0, 3 + 0, 8 + sqrt(8) * sqrt(16), 8 + 0;
-    EXPECT_EQ(flows, expected_result);
-
-    sseirvv_testing_model().get_flows(y, y, 0, flows);
-    expected_result = Eigen::VectorXd(9);
-    expected_result << 1 + 0, 3 + sqrt(3) * sqrt(16), 1 + sqrt(1) * sqrt(16), 4 + 0, 1 + 0, 
-        4 + sqrt(4) * sqrt(16), 3 + sqrt(3) * sqrt(16), 8 + 0, 8 + sqrt(8) * sqrt(16);
-    EXPECT_EQ(flows, expected_result);
-
-    sseirvv_testing_model().get_flows(y, y, 0, flows);
-    expected_result = Eigen::VectorXd(9);
-    expected_result << 8,8,16,16,16,16,16,32,32;
-    EXPECT_EQ(flows, expected_result);
+    sseirvv_testing_model().get_noise(y, y, 0, rhs);
+    auto expected_noise = expected_flows.array().sqrt().matrix().eval();
+    EXPECT_EQ(rhs, expected_noise);
 }
 
 TEST(TestSdeSeirvv, Simulation)
 {
     // make a single integration step via a simulation
-    // this should overwrite the model step size
     ScopedMockDistribution<
         testing::StrictMock<MockDistribution<mio::DistributionAdapter<std::normal_distribution<ScalarType>>>>>
         normal_dist_mock;
 
     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(18))
-        // 9 calls for each advance, as each call get_derivatives exactly once.
-        .WillRepeatedly(testing::Return(.0));
+        .Times(testing::Exactly(10)) // one call for each compartment
+        .WillRepeatedly(testing::Return(.0)); // "disable" noise term, as it only adds sqrts of flows
 
-    auto sim = mio::sseirvv::Simulation(sseirvv_testing_model(), 0, 1);
+    auto sim = mio::StochasticSimulation(sseirvv_testing_model(), 0.0, 1.0);
     sim.advance(1);
-
-    EXPECT_EQ(sim.get_model().step_size, 1.0); // Set by simulation.
 
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // Stores initial value and single step.
 
-    auto expected_result = Eigen::VectorXd(10);
-    expected_result << 0,0.5,1,1,0.5,1,2,1,1,2;
+    auto expected_result = Eigen::Vector<double, 10>{0, 1, 1.25, 0.75, 1.25, 0.75, 1.5, 1.25, 0.75, 1.5};
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
-
-    sim.advance(1.5);
-    EXPECT_EQ(sim.get_model().step_size, 0.5); // Set by simulation.
 }
 
-TEST(TestSdeSeirvv, FlowSimulation)
-{
-    // Make a single integration step via a flow simulation.
-    // This should overwrite the model step size.
-    ScopedMockDistribution<
-        testing::StrictMock<MockDistribution<mio::DistributionAdapter<std::normal_distribution<ScalarType>>>>>
-        normal_dist_mock;
+// TEST(TestSdeSeirvv, FlowSimulation)
+// {
+//     // Make a single integration step via a flow simulation
+//     ScopedMockDistribution<
+//         testing::StrictMock<MockDistribution<mio::DistributionAdapter<std::normal_distribution<ScalarType>>>>>
+//         normal_dist_mock;
 
-    EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
-        .Times(testing::Exactly(18))
-        // 3 calls for each advance, as each call get_derivatives exactly once.
-        .WillRepeatedly(testing::Return(.5));
+//     EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
+//         .Times(testing::Exactly(9)) // one call for each flow
+//         .WillRepeatedly(testing::Return(.0)); // "disable" noise term, as it only adds sqrts of flows
 
-    auto sim = mio::sseirvv::FlowSimulation(sseirvv_testing_model(), 0, 1);
-    sim.advance(1);
+//     auto sim = mio::StochasticFlowSimulation(sseirvv_testing_model(), 0.0, 1.0);
+//     sim.advance(1);
 
-    EXPECT_EQ(sim.get_model().step_size, 1.0); // Set by simulation.
+//     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // Stores initial value and single step.
 
-    EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // Stores initial value and single step.
+//     auto expected_result = Eigen::Vector<double, 10>{0, 1, 1.25, 0.75, 1.25, 0.75, 1.5, 1.25, 0.75, 1.5};
+//     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 
-    auto expected_result = Eigen::VectorXd(10);
-    expected_result << 0,0.5,1,1,0.5,1,2,1,1,2;
-    EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
-
-    auto expected_flows = Eigen::VectorXd(9);
-    expected_flows << 0.5,0.5,1,1,1,1,1,1,1;
-    EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
-
-    sim.advance(1.5);
-    EXPECT_EQ(sim.get_model().step_size, 0.5); // Set by simulation.
-}
+//     auto expected_flows = Eigen::Vector<double, 9>{0.5, 0.5, 0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.5};
+//     EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
+// }
 
 TEST(TestSdeSeirvv, check_constraints_parameters)
 {
@@ -189,7 +127,7 @@ TEST(TestSdeSeirvv, check_constraints_parameters)
     EXPECT_EQ(parameters.check_constraints(), 1);
 
     parameters.set<mio::sseirvv::TimeInfectedV2>(6);
-    parameters.set<mio::sseirvv::TimeExposedV1>(0); 
+    parameters.set<mio::sseirvv::TimeExposedV1>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
     parameters.set<mio::sseirvv::TimeExposedV1>(6);

@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <iostream>
 #include <cmath>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
@@ -46,7 +45,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
     for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        mio::EulerIntegratorCore().step(f, y[i], t, dt, y[i + 1]);
+        mio::EulerIntegratorCore<double>().step({f}, y[i], t, dt, y[i + 1]);
 
         printf("\n %.8f\t %.8f", y[i + 1][0], sol[i + 1][0]);
         // printf("\n approx: %.4e, sol: %.4e, error %.4e", y[i+1][0], sol[i+1][0], err);

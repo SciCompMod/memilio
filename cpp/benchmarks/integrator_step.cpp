@@ -47,7 +47,7 @@ void integrator_step(::benchmark::State& state)
         // This code gets timed
         t  = cfg.t_init;
         dt = cfg.dt_init;
-        I.step(f, cfg.yt, t, dt, cfg.ytp1);
+        I.step({f}, cfg.yt, t, dt, cfg.ytp1);
     }
 }
 
