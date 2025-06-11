@@ -48,7 +48,7 @@ class Test_Integrators(unittest.TestCase):
         dt = 0.1
         ytp1 = np.zeros_like(yt)
 
-        result = integrator.step({deriv_function}, yt, t, dt, ytp1)
+        result = integrator.step(deriv_function, yt, t, dt, ytp1)
         self.assertTrue(result)
         self.assertTrue((ytp1 == [0.9, 1.8]).all())
 
