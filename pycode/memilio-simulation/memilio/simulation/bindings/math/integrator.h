@@ -48,18 +48,18 @@ void bind_Integrator_Core(pybind11::module_& m)
                           self.get_dt_min() = dt_min;
                       });
 
-    pymio::bind_class<mio::EulerIntegratorCore<double, 1>, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
-                      std::shared_ptr<mio::EulerIntegratorCore<double, 1>>>(m, "EulerIntegratorCore")
+    pymio::bind_class<mio::EulerIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
+                      std::shared_ptr<mio::EulerIntegratorCore<double>>>(m, "EulerIntegratorCore")
         .def(pybind11::init<>())
         .def(
             "step",
-            [](const mio::EulerIntegratorCore<double, 1>& self, pybind11::function f,
-               Eigen::Ref<const Eigen::VectorXd> yt, double t, double dt, Eigen::Ref<Eigen::VectorXd> ytp1) {
-                bool result = self.step(
-                    [f](Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) {
-                        f(y, t, dydt);
-                    },
-                    yt, t, dt, ytp1);
+            [](const mio::EulerIntegratorCore<double>& self, pybind11::function f, Eigen::Ref<const Eigen::VectorXd> yt,
+               double t, double dt, Eigen::Ref<Eigen::VectorXd> ytp1) {
+                bool result =
+                    self.step({[f](Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) {
+                                  f(y, t, dydt);
+                              }},
+                              yt, t, dt, ytp1);
                 return result;
             },
             pybind11::arg("f"), pybind11::arg("yt"), pybind11::arg("t"), pybind11::arg("dt"), pybind11::arg("ytp1"));
@@ -74,14 +74,14 @@ void bind_Integrator_Core(pybind11::module_& m)
         .def("set_abs_tolerance", &RungeKuttaCashKarp54Integrator::set_abs_tolerance, pybind11::arg("tol"))
         .def("set_rel_tolerance", &RungeKuttaCashKarp54Integrator::set_rel_tolerance, pybind11::arg("tol"));
 
-    pymio::bind_class<mio::RKIntegratorCore<double, 1>, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
-                      std::shared_ptr<mio::RKIntegratorCore<double, 1>>>(m, "RKIntegratorCore")
+    pymio::bind_class<mio::RKIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
+                      std::shared_ptr<mio::RKIntegratorCore<double>>>(m, "RKIntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<double, double, double, double>(), pybind11::arg("abs_tol") = 1e-10,
              pybind11::arg("rel_tol") = 1e-5, pybind11::arg("dt_min") = std::numeric_limits<double>::min(),
              pybind11::arg("dt_max") = std::numeric_limits<double>::max())
-        .def("set_abs_tolerance", &mio::RKIntegratorCore<double, 1>::set_abs_tolerance, pybind11::arg("tol"))
-        .def("set_rel_tolerance", &mio::RKIntegratorCore<double, 1>::set_rel_tolerance, pybind11::arg("tol"));
+        .def("set_abs_tolerance", &mio::RKIntegratorCore<double>::set_abs_tolerance, pybind11::arg("tol"))
+        .def("set_rel_tolerance", &mio::RKIntegratorCore<double>::set_rel_tolerance, pybind11::arg("tol"));
 }
 } // namespace pymio
 
