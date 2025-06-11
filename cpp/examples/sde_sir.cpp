@@ -21,60 +21,6 @@
 #include "memilio/compartments/stochastic_simulation.h"
 #include "sde_sir/model.h"
 
-// template <typename FP>
-// class Model : public mio::StochasticModel<
-//                   FP, mio::CompartmentalModel<FP, mio::ssir::InfectionState,
-//                                               mio::Populations<FP, mio::ssir::InfectionState>, mio::ssir::Parameters>>
-// {
-// public:
-//     using Base = mio::StochasticModel<
-//         FP, mio::CompartmentalModel<FP, mio::ssir::InfectionState, mio::Populations<FP, mio::ssir::InfectionState>,
-//                                     mio::ssir::Parameters>>;
-
-//     Model()
-//         : Base(typename Base::Populations({mio::ssir::InfectionState::Count}, 0.), typename Base::ParameterSet())
-//     {
-//     }
-
-//     void get_derivatives(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
-//                          Eigen::Ref<Eigen::VectorX<FP>> dydt) const
-//     {
-//         using std::sqrt;
-//         auto& params = Base::parameters;
-//         FP coeffStoI = params.template get<mio::ssir::ContactPatterns>().get_matrix_at(t)(0, 0) *
-//                        params.template get<mio::ssir::TransmissionProbabilityOnContact>() /
-//                        Base::populations.get_total();
-
-//         FP f_S_I = coeffStoI * y[(size_t)mio::ssir::InfectionState::Susceptible] *
-//                    pop[(size_t)mio::ssir::InfectionState::Infected];
-//         FP f_I_R =
-//             (1.0 / params.template get<mio::ssir::TimeInfected>()) * y[(size_t)mio::ssir::InfectionState::Infected];
-
-//         dydt[(size_t)mio::ssir::InfectionState::Susceptible] = -f_S_I;
-//         dydt[(size_t)mio::ssir::InfectionState::Infected]    = +f_S_I - f_I_R;
-//         dydt[(size_t)mio::ssir::InfectionState::Recovered]   = +f_I_R;
-//     }
-
-//     void get_noise(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
-//                    Eigen::Ref<Eigen::VectorX<FP>> noise) const
-//     {
-//         using std::sqrt;
-//         auto& params = Base::parameters;
-//         FP coeffStoI = params.template get<mio::ssir::ContactPatterns>().get_matrix_at(t)(0, 0) *
-//                        params.template get<mio::ssir::TransmissionProbabilityOnContact>() /
-//                        Base::populations.get_total();
-
-//         FP n_S_I = sqrt(coeffStoI * y[(size_t)mio::ssir::InfectionState::Susceptible] *
-//                         pop[(size_t)mio::ssir::InfectionState::Infected]);
-//         FP n_I_R = sqrt((1.0 / params.template get<mio::ssir::TimeInfected>()) *
-//                         y[(size_t)mio::ssir::InfectionState::Infected]);
-
-//         noise[(size_t)mio::ssir::InfectionState::Susceptible] = -n_S_I;
-//         noise[(size_t)mio::ssir::InfectionState::Infected]    = +n_S_I - n_I_R;
-//         noise[(size_t)mio::ssir::InfectionState::Recovered]   = +n_I_R;
-//     }
-// };
-
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);

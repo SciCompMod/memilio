@@ -39,15 +39,12 @@ namespace ssir
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
-class Model
-    : public mio::StochasticModel<
-          ScalarType,
-          mio::FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>>
+class Model : public mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
+                                          Parameters, Flows>
 {
 public:
-    using Base = mio::StochasticModel<
-        ScalarType,
-        mio::FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>>;
+    using Base = mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
+                                      Parameters, Flows>;
 
     Model()
         : Base(typename Base::Populations({InfectionState::Count}, 0.), typename Base::ParameterSet())

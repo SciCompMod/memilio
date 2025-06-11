@@ -1,0 +1,160 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Jan Kleinert, Daniel Abele, Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#ifndef MIO_COMPARTMENTS_SIMULATION_BASE_H
+#define MIO_COMPARTMENTS_SIMULATION_BASE_H
+
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/math/integrator.h"
+#include "memilio/utils/time_series.h"
+
+namespace mio
+{
+
+/**
+ * @brief Base class to define a Simulation.
+ * Provides a protected advance method that accepts Order DerivFunction%s, which must be implemented by the Derived
+ * class. Also defines all relevant members and accessors for a Simulation.
+ * @tparam FP A floating point type, e.g. double.
+ * @tparam M An implementation of CompartmentalModel.
+ * @tparam Order The number of DerivFunction%s used by the integrator.
+ */
+template <typename FP, class M, size_t Order>
+class SimulationBase
+{
+    static_assert(is_compartment_model<FP, M>::value, "Template parameter must be a compartment model.");
+
+public:
+    using Model = M;
+
+    /**
+     * @brief Create a SimulationBase.
+     * @param[in] model An instance of a compartmental model
+     * @param[in] t0 Start time.
+     * @param[in] dt Initial step size of integration
+     */
+    SimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Order>> integrator, FP t0, FP dt)
+        : m_integratorCore(integrator)
+        , m_model(std::make_unique<Model>(model))
+        , m_integrator(m_integratorCore)
+        , m_result(t0, m_model->get_initial_values())
+        , m_dt(dt)
+    {
+    }
+
+    /**
+     * @brief Set the integrator core used in the simulation.
+     * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
+     */
+    void set_integrator(std::shared_ptr<IntegratorCore<FP, Order>> integrator)
+    {
+        m_integratorCore = std::move(integrator);
+        m_integrator.set_integrator(m_integratorCore);
+    }
+
+    /**
+     * @brief Access the integrator core used in the simulation.
+     * @return A reference to the integrator core used in the simulation
+     * @{
+     */
+    IntegratorCore<FP, Order>& get_integrator()
+    {
+        return *m_integratorCore;
+    }
+    const IntegratorCore<FP, Order>& get_integrator() const
+    {
+        return *m_integratorCore;
+    }
+    /** @} */
+
+    /**
+     * @brief Returns the simulation result describing the model population in each time step.
+     *
+     * Which compartments are used by the model is defined by the Comp template argument for the CompartmentalModel
+     * (usually an enum named InfectionState).
+     *
+     * @return A TimeSeries to represent a numerical solution for the population of the model.
+     * For each simulated time step, the TimeSeries contains the population size in each compartment.
+     * @{
+     */
+    TimeSeries<FP>& get_result()
+    {
+        return m_result;
+    }
+    const TimeSeries<FP>& get_result() const
+    {
+        return m_result;
+    }
+    /** @} */
+
+    /**
+     * @brief Get a reference to the model owned and used by the simulation.
+     * @return The simulation model.
+     * @{
+     */
+    const Model& get_model() const
+    {
+        return *m_model;
+    }
+    Model& get_model()
+    {
+        return *m_model;
+    }
+    /** @} */
+
+    /**
+     * @brief Returns the step size used by the integrator.
+     * When using a integration scheme with adaptive time stepping, the integrator will store its estimate for the
+     * next step size in this value.
+     * @{
+     */
+    FP& get_dt()
+    {
+        return m_dt;
+    }
+    const FP& get_dt() const
+    {
+        return m_dt;
+    }
+    /** @} */
+
+protected:
+    /**
+     * @brief advance simulation to tmax
+     * tmax must be greater than get_result().get_last_time_point()
+     * @param tmax next stopping point of simulation
+     */
+    Eigen::Ref<Eigen::VectorX<FP>> advance(const DerivFunction<FP> (&fs)[Order], FP tmax, TimeSeries<FP>& results)
+    {
+        return m_integrator.advance(fs, tmax, m_dt, results);
+    }
+
+private:
+    std::shared_ptr<IntegratorCore<FP, Order>>
+        m_integratorCore; ///< Defines the integration scheme via its step function.
+    std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
+    XdeIntegrator<FP, Order>
+        m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
+    TimeSeries<FP> m_result; ///< The simulation results.
+    FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
+};
+
+} // namespace mio
+
+#endif // MIO_COMPARTMENTS_SIMULATION_BASE_H

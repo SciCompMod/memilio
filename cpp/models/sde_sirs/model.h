@@ -40,15 +40,12 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infecte
                        Flow<InfectionState::Infected, InfectionState::Recovered>,
                        Flow<InfectionState::Recovered, InfectionState::Susceptible>>;
 
-class Model
-    : public mio::StochasticModel<
-          ScalarType,
-          mio::FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>>
+class Model : public mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
+                                          Parameters, Flows>
 {
 public:
-    using Base = mio::StochasticModel<
-        ScalarType,
-        mio::FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>>;
+    using Base = mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
+                                      Parameters, Flows>;
 
     Model()
         : Base(typename Base::Populations({InfectionState::Count}, 0.), typename Base::ParameterSet())
