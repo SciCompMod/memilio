@@ -19,7 +19,7 @@ MEmilio C++ uses CMake as a build configuration system (https://cmake.org/)
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 - GCC, versions 11 and 13
 - Clang, version 14 and 17
-- MSVC, versions 19.29 (Visual Studio 2022) - 19.38 (Visual Studio 2022)
+- MSVC, version 19.43 (Visual Studio 2022)
 
 MEmilio C++ is regularly tested on gitlub runners using Ubuntu 22.04 and 24.04 and Windows Server 2022 and 2025. It is expected to run on any comparable Linux or Windows system. It is currently not tested on MacOS.
 
