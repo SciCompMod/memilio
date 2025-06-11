@@ -33,6 +33,7 @@ from memilio.simulation import (AgeGroup, Damping, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
+import memilio.surrogatemodel.ode_secir_groups.dampings as dampings
 
 
 def interpolate_age_groups(data_entry):
@@ -77,21 +78,29 @@ def transform_data(data, transformer, num_runs):
     :returns: Transformed data.
 
     """
-    data = np.asarray(data).transpose(2, 0, 1).reshape(48, -1)
+    num_groups = 6
+    num_compartments = 8
+
+    data = np.asarray(data).transpose(2, 0, 1).reshape(
+        num_groups*num_compartments, -1)
     scaled_data = transformer.transform(data)
-    return tf.convert_to_tensor(scaled_data.transpose().reshape(num_runs, -1, 48))
+    return tf.convert_to_tensor(scaled_data.transpose().reshape(num_runs, -1, num_groups*num_compartments))
 
 
-def run_secir_groups_simulation(days, damping_day, populations):
+def run_secir_groups_simulation(days, damping_days, damping_factors, populations):
     """ Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
     :param days: Describes how many days we simulate within a single run.
-    :param damping_day: The day when damping is applied.
+    :param damping_days: The days when damping is applied.
+    :param damping_factors: damping factors associated to the damping days.
     :param populations: List containing the population in each age group.
     :returns: List containing the populations in each compartment used to initialize the run.
 
     """
+    if len(damping_days) != len(damping_factors):
+        raise ValueError("Length of damping_days and damping_factors differ!")
+
     set_log_level(LogLevel.Off)
 
     start_day = 1
@@ -166,14 +175,16 @@ def run_secir_groups_simulation(days, damping_day, populations):
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = minimum
 
     # Generate a damping matrix and assign it to the model
-    damping = np.ones((num_groups, num_groups)
-                      ) * np.float16(random.uniform(0, 0.5))
+    damped_matrices = []
 
-    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-        coeffs=(damping), t=damping_day, level=0, type=0))
-
-    damped_contact_matrix = model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
-        damping_day+1)
+    for i in np.arange(len(damping_days)):
+        damping = damping = np.ones((num_groups, num_groups)
+                                    ) * damping_factors[i]
+        day = damping_days[i]
+        model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+            coeffs=(damping), t=day, level=0, type=0))
+        damped_matrices.append(model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
+            day+1))
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
@@ -184,19 +195,19 @@ def run_secir_groups_simulation(days, damping_day, populations):
     # Interpolate simulation result on days time scale
     result = interpolate_simulation_result(result)
 
+    # Omit first column, as the time points are not of interest here.
     result_array = remove_confirmed_compartments(
         np.transpose(result.as_ndarray()[1:, :]))
 
-    # Omit first column, as the time points are not of interest here.
     dataset_entries = copy.deepcopy(result_array)
 
-    return dataset_entries.tolist(), damped_contact_matrix
+    return dataset_entries.tolist(), damped_matrices
 
 
 def generate_data(
         num_runs, path_out, path_population, input_width, label_width,
-        normalize=True, save_data=True):
-    """ Generate data sets of num_runs many equation-based model simulations and transforms the computed results by a log(1+x) transformation.
+        normalize=True, save_data=True, damping_method="active", max_number_damping=5):
+    """ Generate data sets of num_runs many equation-based model simulations and possibly transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
     In general, we have 8 different compartments and 6 age groups.  If we choose,
     input_width = 5 and label_width = 20, the dataset has
@@ -210,14 +221,17 @@ def generate_data(
     :param label_width: Int value that defines the size of the labels.
     :param normalize: Default: true Option to transform dataset by logarithmic normalization.
     :param save_data: Default: true Option to save the dataset.
+    :param damping_method: String specifying the damping method, that should be used. Possible values "classic", "active", "random".
+    :param max_number_damping: Maximal number of possible dampings. 
     :returns: Data dictionary of input and label data sets.
 
     """
     data = {
         "inputs": [],
         "labels": [],
-        "contact_matrix": [],
-        "damping_day": []
+        "contact_matrices": [],
+        "damping_factors": [],
+        "damping_days": []
     }
 
     # The number of days is the same as the sum of input and label width.
@@ -232,16 +246,17 @@ def generate_data(
     bar = Bar('Number of Runs done', max=num_runs)
     for _ in range(0, num_runs):
 
-        # Generate a random damping day
-        damping_day = random.randrange(
-            input_width, input_width+label_width)
+        # Generate random damping days
+        damping_days, damping_factors = dampings.generate_dampings(
+            days, max_number_damping, method=damping_method)
 
-        data_run, damped_contact_matrix = run_secir_groups_simulation(
-            days, damping_day, population[random.randint(0, len(population) - 1)])
+        data_run, damped_matrices = run_secir_groups_simulation(
+            days, damping_days, damping_factors, population[random.randint(0, len(population) - 1)])
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
-        data['contact_matrix'].append(np.array(damped_contact_matrix))
-        data['damping_day'].append([damping_day])
+        data['contact_matrices'].append(damped_matrices)
+        data['damping_factors'].append(damping_factors)
+        data['damping_days'].append(damping_days)
         bar.next()
     bar.finish()
 
@@ -261,8 +276,15 @@ def generate_data(
         if not os.path.isdir(path_out):
             os.mkdir(path_out)
 
-        # save dict to json file
-        with open(os.path.join(path_out, 'data_secir_groups.pickle'), 'wb') as f:
+        # save dict to pickle file
+        if num_runs < 1000:
+            filename = 'data_secir_groups_%ddays_%d_' % (
+                label_width, num_runs) + damping_method+'.pickle'
+        else:
+            filename = 'data_secir_groups_%ddays_%dk_' % (
+                label_width, num_runs//1000) + damping_method+'.pickle'
+
+        with open(os.path.join(path_out, filename), 'wb') as f:
             pickle.dump(data, f)
     return data
 
@@ -291,13 +313,13 @@ def getMinimumMatrix():
     """ loads the minimum matrix"""
 
     minimum_contact_matrix0 = os.path.join(
-        "./data/contacts/minimum_home.txt")
+        "./data/Germany/contacts/minimum_home.txt")
     minimum_contact_matrix1 = os.path.join(
-        "./data/contacts/minimum_school_pf_eig.txt")
+        "./data/Germany/contacts/minimum_school_pf_eig.txt")
     minimum_contact_matrix2 = os.path.join(
-        "./data/contacts/minimum_work.txt")
+        "./data/Germany/contacts/minimum_work.txt")
     minimum_contact_matrix3 = os.path.join(
-        "./data/contacts/minimum_other.txt")
+        "./data/Germany/contacts/minimum_other.txt")
 
     minimum = np.loadtxt(minimum_contact_matrix0) \
         + np.loadtxt(minimum_contact_matrix1) + \
