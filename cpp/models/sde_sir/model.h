@@ -21,7 +21,7 @@
 #ifndef MIO_SDE_SIR_MODEL_H
 #define MIO_SDE_SIR_MODEL_H
 
-#include "memilio/compartments/sde_model.h"
+#include "memilio/compartments/stochastic_model.h"
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "sde_sir/infection_state.h"

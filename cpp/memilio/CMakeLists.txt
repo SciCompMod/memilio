@@ -25,10 +25,12 @@ add_library(memilio
     geography/holiday_data.ipp
     compartments/compartmentalmodel.h
     compartments/flow_model.h
+    compartments/flow_simulation_base.h
     compartments/flow_simulation.h
-    compartments/sde_model.h
+    compartments/simulation_base.h
     compartments/simulation.h
     compartments/stochastic_simulation.h
+    compartments/stochastic_model.h
     compartments/parameter_studies.h
     io/default_serialize.h
     io/default_serialize.cpp

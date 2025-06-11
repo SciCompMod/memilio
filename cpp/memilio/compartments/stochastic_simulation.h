@@ -20,7 +20,7 @@
 #ifndef MIO_COMPARTMENTS_STOCHASTIC_SIMULATION_H
 #define MIO_COMPARTMENTS_STOCHASTIC_SIMULATION_H
 
-#include "memilio/compartments/sde_model.h"
+#include "memilio/compartments/stochastic_model.h"
 #include "memilio/compartments/simulation_base.h"
 #include "memilio/math/euler_maruyama.h"
 #include "memilio/utils/time_series.h"
