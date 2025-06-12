@@ -9,6 +9,6 @@ Here we collect information on how to create models.
    Common structure <structure>
    Ordinary differential equations <ode_creation>
    Linear Chain Trick <lct_creation>
-   stochastic-differential equations <sde_creation>
-   integro-differenatial equations <ide_creation>
+   Stochastic-differential equations <sde_creation>
+   Integro-differenatial equations <ide_creation>
     
