@@ -38,6 +38,12 @@ In the ODE-SIR model, the population can be stratified by one sociodemographic d
 **AgeGroup** but can also used for other interpretations. For stratifications with two or more dimensions, see 
 :doc:`Model Creation <../ode_creation>`.
 
+The number of age groups is specified in the model constructor and the model can be initialized with:
+
+.. code-block:: cpp
+
+  mio::oseir::Model model(nb_groups)
+
 
 Parameters 
 ----------
@@ -75,7 +81,7 @@ each compartment:
 .. code-block:: cpp
 
    // Set total population size
-   model.populaions.set_total(nb_total_t0);
+   model.populations.set_total(nb_total_t0);
 
    // Set values for each InfectionState in the specific age group
    model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}] = nb_inf_t0;
@@ -128,7 +134,7 @@ time:
    double dt = 0.1; // Time step
 
    // Run a standard simulation
-   mio::TimeSeries<double> sir = mio::simulate(t0, tmax, dt, model);
+   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model);
 
 You can also specify a custom integrator:
 
@@ -140,7 +146,7 @@ You can also specify a custom integrator:
    integrator->set_rel_tolerance(1e-4);
    integrator->set_abs_tolerance(1e-1);
 
-   mio::TimeSeries<double> sir = mio::simulate(t0, tmax, dt, model, integrator);
+   mio::TimeSeries<double> result = mio::simulate(t0, tmax, dt, model, integrator);
 
 
 Output
@@ -152,33 +158,33 @@ basic simulation, you can access the results as follows:
 .. code-block:: cpp
 
    // Get the number of time points
-   auto num_points = static_cast<size_t>(sir.get_num_time_points());
+   auto num_points = static_cast<size_t>(result.get_num_time_points());
 
    // Access data at specific time point 
-   Eigen::VectorXd value_at_time_i = sir.get_value(i);
-   double time_i = sir.get_time(i);
+   Eigen::VectorXd value_at_time_i = result.get_value(i);
+   double time_i = result.get_time(i);
 
    // Access the last time point
-   Eigen::VectorXd last_value = sir.get_last_value();
-   double last_time = sir.get_last_time();
+   Eigen::VectorXd last_value = result.get_last_value();
+   double last_time = result.get_last_time();
 
 You can print the simulation results as a formatted table:
 
 .. code-block:: cpp
 
    // Print results to console with default formatting
-   sir.print_table();
+   result.print_table();
 
    // Print with custom column labels
    std::vector<std::string> labels = {"S", "I", "R"};
-   sir.print_table(labels);
+   result.print_table(labels);
 
 Additionally, you can export the results to a CSV file:
 
 .. code-block:: cpp
 
    // Export results to CSV with default settings
-   sir.export_csv("simulation_results.csv");
+   result.export_csv("simulation_results.csv");
 
 
 Visualization
@@ -191,7 +197,7 @@ and its documentation.
 Examples
 --------
 
-An example can be found `here <https://github.com/SciCompMod/memilio/tree/main/cpp/examples/ode_sir.cpp>`_.
+An example can be found at `examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/tree/main/cpp/examples/ode_sir.cpp>`_.
 
 
 Overview of the ``osir`` namespace:
