@@ -207,9 +207,15 @@ void Model::update_compartment_with_sum(InfectionState infectionState,
 {
     Eigen::Index current_time_index = populations.get_num_time_points() - 1;
     ScalarType current_time_age     = (ScalarType)current_time_index * dt;
-    ScalarType sum                  = 0;
+    Eigen::Index calc_time_index    = current_time_index;
+    if (Transitionispossible) {
+        calc_time_index = m_transitiondistributions[(int)infectionState].size() - 1;
+    }
 
-    for (int i = 0; i < current_time_index; i++) {
+    ScalarType sum = 0;
+
+    Eigen::Index starting_point = std::max(0, (int)current_time_index - (int)calc_time_index);
+    for (int i = starting_point; i < current_time_index; i++) {
         ScalarType state_age_i = (ScalarType)i * dt;
         ScalarType sum_inflows = 0;
         for (const InfectionTransition& inflow : IncomingFlows) {
@@ -227,10 +233,15 @@ void Model::update_compartment_with_sum(InfectionState infectionState,
         }
     }
     if (NaturalDeathispossible && Transitionispossible) {
-        populations.get_last_value()[(int)infectionState] =
-            dt * sum + m_transitiondistributions[(int)infectionState][current_time_index] *
-                           populations[0][(int)infectionState] *
-                           std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age));
+        if (current_time_index <= calc_time_index) {
+            populations.get_last_value()[(int)infectionState] =
+                dt * sum + m_transitiondistributions[(int)infectionState][current_time_index] *
+                               populations[0][(int)infectionState] *
+                               std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age));
+        }
+        else {
+            populations.get_last_value()[(int)infectionState] = dt * sum;
+        }
     }
     else if (NaturalDeathispossible && !Transitionispossible) {
         populations.get_last_value()[(int)infectionState] =
@@ -250,19 +261,16 @@ void Model::update_compartment_from_flow(InfectionState infectionState,
 {
     Eigen::Index num_time_points = populations.get_num_time_points();
 
-    ScalarType updated_compartment = 0;
-    if (NaturalDeathispossible) {
-        updated_compartment = populations_update[num_time_points - 2][static_cast<int>(infectionState)] *
-                              (1 - dt * parameters.get<NaturalDeathRate>());
-    }
-    else {
-        updated_compartment = populations_update[num_time_points - 2][static_cast<int>(infectionState)];
-    }
+    ScalarType updated_compartment = populations_update[num_time_points - 2][static_cast<int>(infectionState)];
+
     for (const InfectionTransition& inflow : IncomingFlows) {
         updated_compartment += dt * transitions_update.get_last_value()[(int)inflow];
     }
     for (const InfectionTransition& outflow : OutgoingFlows) {
         updated_compartment -= dt * transitions_update.get_last_value()[(int)outflow];
+    }
+    if (NaturalDeathispossible) {
+        updated_compartment = updated_compartment / (1 + dt * parameters.get<NaturalDeathRate>());
     }
     populations_update.get_last_value()[(int)infectionState] = updated_compartment;
 }
