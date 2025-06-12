@@ -641,9 +641,9 @@ public:
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {
-                auto corrected = 0.99 * last_value(count * i + S);
-                log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", t, first_vacc,
-                            corrected);
+                FP corrected = 0.99 * last_value(count * i + S);
+                log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", ad::value(t),
+                            ad::value(first_vacc), ad::value(corrected));
                 first_vacc = corrected;
             }
 
@@ -651,9 +651,9 @@ public:
             last_value(count * i + SV) += first_vacc;
 
             if (last_value(count * i + SV) - full_vacc < 0) {
-                auto corrected = 0.99 * last_value(count * i + SV);
-                log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", t, full_vacc,
-                            corrected);
+                FP corrected = 0.99 * last_value(count * i + SV);
+                log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", ad::value(t),
+                            ad::value(full_vacc), ad::value(corrected));
                 full_vacc = corrected;
             }
 
@@ -713,7 +713,7 @@ public:
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
+                if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
                     if (t < t_end_dyn_npis) {
                         auto inf_rel =
                             get_infections_relative<FP, BaseT>(*this, t, this->get_result().get_last_value()) *

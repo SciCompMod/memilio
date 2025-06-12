@@ -136,7 +136,7 @@ public:
      * @tparam T Shape constructor arguments.
      */
     template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
-    Damping(double d, SimulationTime<FP> t, T... shape_args)
+    Damping(FP d, SimulationTime<FP> t, T... shape_args)
         : Damping(d, DampingLevel(0), DampingType(0), t, shape_args...)
     {
     }
@@ -301,7 +301,7 @@ public:
         add_(value_type(std::forward<T>(t)...));
     }
     template <class... T>
-    void add(double d, T... t)
+    void add(ScalarType d, T... t)
     {
         add_(value_type(d, std::forward<T>(t)..., m_shape));
     }
@@ -579,7 +579,7 @@ template <typename FP, class D>
 void Dampings<FP, D>::add_(const value_type& damping)
 {
     assert(damping.get_shape() == m_shape && "Inconsistent matrix shape.");
-    insert_sorted_replace(m_dampings, damping, [](auto& tup1, auto& tup2) {
+    insert_sorted_replace<value_type>(m_dampings, damping, [](auto& tup1, auto& tup2) {
         return std::make_tuple(tup1.get_time(), int(tup1.get_type()), int(tup1.get_level())) <
                std::make_tuple(tup2.get_time(), int(tup2.get_type()), int(tup2.get_level()));
     });

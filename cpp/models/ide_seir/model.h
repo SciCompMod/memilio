@@ -149,14 +149,13 @@ private:
     FP generalized_beta_distribution(FP tau, FP p = 3.0, FP q = 10.0) const
     {
         using std::pow;
-        using std::tgamma;
 
         if ((parameters.template get<LatencyTime<FP>>() < tau) &&
             (parameters.template get<InfectiousTime<FP>>() + parameters.template get<LatencyTime<FP>>() > tau)) {
-            return tgamma(p + q) * pow(tau - parameters.template get<LatencyTime<FP>>(), p - 1) *
+            return std::tgamma(p + q) * pow(tau - parameters.template get<LatencyTime<FP>>(), p - 1) *
                    pow(parameters.template get<InfectiousTime<FP>>() + parameters.template get<LatencyTime<FP>>() - tau,
                        q - 1) /
-                   (tgamma(p) * tgamma(q) * pow(parameters.template get<InfectiousTime<FP>>(), p + q - 1));
+                   (std::tgamma(p) * std::tgamma(q) * pow(parameters.template get<InfectiousTime<FP>>(), p + q - 1));
         }
         return 0.0;
     }

@@ -398,13 +398,14 @@ public:
      */
     auto get_matrix_at(SimulationTime<FP> t) const
     {
-        return Eigen::MatrixX<FP>::NullaryExpr(
-            get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
-                return std::accumulate(m_matrices.begin(), m_matrices.end(), FP(0.0),
-                                       [t, i, j](FP sum, auto& matrices) {
-                                           return sum + matrices.get_matrix_at(t)(i, j);
-                                       });
-            });
+        return Eigen::MatrixX<FP>::NullaryExpr(get_shape().rows(), get_shape().cols(),
+                                               [t, this](Eigen::Index i, Eigen::Index j) {
+                                                   FP sum = FP(0.0); // Explicitly initialize AD type
+                                                   for (const auto& matrix : m_matrices) {
+                                                       sum += matrix.get_matrix_at(t)(i, j);
+                                                   }
+                                                   return sum;
+                                               });
     }
 
     /**

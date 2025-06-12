@@ -570,7 +570,7 @@ public:
             t = t + dt_eff;
 
             if (dyn_npis.get_thresholds().size() > 0) {
-                if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
+                if (floating_point_greater_equal<double>(t, m_t_last_npi_check + dt)) {
                     if (t < t_end_dyn_npis) {
                         auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
                                        dyn_npis.get_base_value();

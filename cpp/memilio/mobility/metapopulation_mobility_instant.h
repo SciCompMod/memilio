@@ -430,23 +430,20 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
 {
     const size_t save_indices_size = this->m_saved_compartment_indices.size();
     if (save_indices_size > 0) {
+        const auto& last_value = m_mobile_population.get_last_value();
 
-        const auto& last_value              = m_mobile_population.get_last_value();
+        // Explicitly initialize ALL values to zero
         Eigen::VectorX<FP> condensed_values = Eigen::VectorX<FP>::Zero(save_indices_size + 1);
 
-        // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
-        std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
-                       condensed_values.data(), [&last_value](const auto& indices) {
-                           return std::accumulate(indices.begin(), indices.end(), FP(0.0),
-                                                  [&last_value](FP sum, auto i) {
-                                                      return sum + last_value[i];
-                                                  });
-                       });
+        for (size_t i = 0; i < save_indices_size; ++i) {
+            FP sum = FP(0.0); // Explicit per-group initialization
+            for (auto index : this->m_saved_compartment_indices[i]) {
+                sum += last_value[index];
+            }
+            condensed_values[i] = sum;
+        }
 
-        // the last value is the sum of commuters
         condensed_values[save_indices_size] = m_mobile_population.get_last_value().sum();
-
-        // Move the condensed values to the m_mobility_results time series
         m_mobility_results.add_time_point(t, std::move(condensed_values));
     }
 }
@@ -617,8 +614,8 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
                     auto group        = Eigen::Index(j / num_comparts);
                     auto compart      = j % num_comparts;
                     log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
-                        "Underflow during mobility returns at time {}, compartment {}, age group {}: {}", t, compart,
-                        group, remaining_after_return(j));
+                        "Underflow during mobility returns at time {}, compartment {}, age group {}: {}", ad::value(t),
+                        compart, group, ad::value(remaining_after_return(j)));
                     Eigen::Index max_index;
                     slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
                     log_info("Transferring to compartment {}", max_index);
