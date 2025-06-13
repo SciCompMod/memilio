@@ -177,7 +177,7 @@ ScalarType ModelMessina::fixed_point_function(ScalarType susceptibles, ScalarTyp
             sum_part2 += sum_part2_term(weight_index, state_age,
                                         m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
         }
-        // In case of j=n, the number of Susceptibles is not already known and stroed in populations but is determined
+        // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
         // by the fixed point iteration.
         else {
             sum_part2 += sum_part2_term(weight_index, state_age, m_N - susceptibles);
