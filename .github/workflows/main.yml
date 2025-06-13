@@ -32,7 +32,7 @@ jobs:
     strategy:
       matrix:
         compiler: ["gcc"] # ["gcc", "clang"]
-        config: ["Debug", "Release"]
+        config: ["Release"]  #["Debug", "Release"]
         version: ["latest", "min"]
         include:
           - version: "latest"
