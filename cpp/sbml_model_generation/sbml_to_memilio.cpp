@@ -645,13 +645,7 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
             auto educts        = curr_reaction.getListOfReactants();
             auto modifiers     = curr_reaction.getListOfModifiers();
             auto formula       = curr_reaction.getKineticLaw();
-            if (formula->getListOfLocalParameters()->size() != 0) { // for SBML Level 3
-                for (size_t j = 0; j < formula->getListOfLocalParameters()->size(); j++) {
-                    auto param = *(Parameter*)formula->getListOfLocalParameters()->get(j);
-                    model_h << "double " << param.getId() << " = " << param.getValue() << ";" << std::endl;
-                }
-            }
-            if (formula->getListOfParameters()->size() != 0) { // for outdated SBML
+            if (formula->getListOfParameters()->size() != 0) {
                 for (size_t j = 0; j < formula->getListOfParameters()->size(); j++) {
                     auto param = *(Parameter*)formula->getListOfParameters()->get(j);
                     model_h << "double " << param.getId() << " = " << param.getValue() << ";" << std::endl;
