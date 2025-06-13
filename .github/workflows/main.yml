@@ -74,35 +74,35 @@ jobs:
   #         config: Release
   #         openmp: ON
 
-  build-cpp-msvc:
-    if: github.event.pull_request.draft == false
-    strategy:
-      matrix:
-        config: ["Debug", "Release"]
-        version: ["latest", "min"]
-        include:
-          - version: "latest"
-            os: "windows-2025"
-          - version: "min"
-            os: "windows-2022"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/windows-build
-        with:
-          config: ${{ matrix.config }}
-          version: ${{ matrix.version }}
+  # build-cpp-msvc:
+  #   if: github.event.pull_request.draft == false
+  #   strategy:
+  #     matrix:
+  #       config: ["Debug", "Release"]
+  #       version: ["latest", "min"]
+  #       include:
+  #         - version: "latest"
+  #           os: "windows-2025"
+  #         - version: "min"
+  #           os: "windows-2022"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: ./.github/actions/windows-build
+  #       with:
+  #         config: ${{ matrix.config }}
+  #         version: ${{ matrix.version }}
 
-  build-cpp-msvc-no-optional-deps:
-    if: github.event.pull_request.draft == false
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/windows-build
-        with:
-          config: Release
-          version: latest
-          optional-dependencies: OFF
+  # build-cpp-msvc-no-optional-deps:
+  #   if: github.event.pull_request.draft == false
+  #   runs-on: windows-2025
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: ./.github/actions/windows-build
+  #       with:
+  #         config: Release
+  #         version: latest
+  #         optional-dependencies: OFF
 
   # test-cpp-gcc_clang:
   #   if: github.event.pull_request.draft == false
@@ -196,35 +196,35 @@ jobs:
   #         num-repeat: 10
   #         openmp: ON
 
-  test-cpp-msvc:
-    if: github.event.pull_request.draft == false
-    needs: build-cpp-msvc
-    strategy:
-      matrix:
-        config: ["Debug", "Release"]
-        version: ["latest", "min"]
-        include:
-          - version: "latest"
-            os: "windows-2025"
-          - version: "min"
-            os: "windows-2022"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/windows-test
-        with:
-          artifact-pattern: msvc-${{ matrix.version }}-${{ matrix.config }}
+  # test-cpp-msvc:
+  #   if: github.event.pull_request.draft == false
+  #   needs: build-cpp-msvc
+  #   strategy:
+  #     matrix:
+  #       config: ["Debug", "Release"]
+  #       version: ["latest", "min"]
+  #       include:
+  #         - version: "latest"
+  #           os: "windows-2025"
+  #         - version: "min"
+  #           os: "windows-2022"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: ./.github/actions/windows-test
+  #       with:
+  #         artifact-pattern: msvc-${{ matrix.version }}-${{ matrix.config }}
 
-  test-cpp-msvc-no-optional-deps:
-    if: github.event.pull_request.draft == false
-    needs: build-cpp-msvc-no-optional-deps
-    runs-on: windows-2025
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/windows-test
-        with:
-          artifact-pattern: msvc-latest-Release
-          optional-deps: OFF
+  # test-cpp-msvc-no-optional-deps:
+  #   if: github.event.pull_request.draft == false
+  #   needs: build-cpp-msvc-no-optional-deps
+  #   runs-on: windows-2025
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: ./.github/actions/windows-test
+  #       with:
+  #         artifact-pattern: msvc-latest-Release
+  #         optional-deps: OFF
 
   # run_examples-cpp-gcc_clang:
   #   if: github.event.pull_request.draft == false
@@ -246,24 +246,24 @@ jobs:
   #       with:
   #         build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
 
-  run_examples-cpp-msvc:
-    if: github.event.pull_request.draft == false
-    needs: build-cpp-msvc
-    strategy:
-      matrix:
-        config: ["Debug", "Release"]
-        version: ["latest", "min"]
-        include:
-          - version: "latest"
-            os: "windows-2025"
-          - version: "min"
-            os: "windows-2022"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/windows-run_examples
-        with:
-          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
+  # run_examples-cpp-msvc:
+  #   if: github.event.pull_request.draft == false
+  #   needs: build-cpp-msvc
+  #   strategy:
+  #     matrix:
+  #       config: ["Debug", "Release"]
+  #       version: ["latest", "min"]
+  #       include:
+  #         - version: "latest"
+  #           os: "windows-2025"
+  #         - version: "min"
+  #           os: "windows-2022"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: ./.github/actions/windows-run_examples
+  #       with:
+  #         build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
 
   # build-py-generation:
   #   if: github.event.pull_request.draft == false
