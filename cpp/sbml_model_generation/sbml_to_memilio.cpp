@@ -289,7 +289,7 @@ mio::IOResult<std::string> format_event_formulas(std::string& formula, Model& mo
             formula_parts[i] = "M_PI";
         }
         if (formula_parts[i] == "time") {
-            formula_parts[i] = "t";
+            formula_parts[i] = "tmax";
         }
         append_brackets(leading_bracket, trailing_bracket, formula_parts[i]);
     }
