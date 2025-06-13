@@ -11,15 +11,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Download libsbml
-      shell: bash
-      run: gh run download --repo sbmlteam/libsbml --pattern "Ubuntu * stable*" --dir /libsbml
     - name: Install Dependencies
       shell: bash
       run: |
         sudo apt-get -qq update
         sudo apt-get -qq -y install gcc-13
         sudo apt-get -qq -y install g++-13
+        sudo apt-get -qq -y install libsbml
         sudo apt-get -qq update
     - name: Download built test directory
       uses: actions/download-artifact@v4
@@ -35,7 +33,7 @@ runs:
       shell: bash
       run: |
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/libsbml/lib/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/local/lib/cmake ..
         cmake --build . -j 4
     # - name: Run unit tests
     #   shell: bash
