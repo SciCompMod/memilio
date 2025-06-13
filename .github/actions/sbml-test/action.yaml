@@ -41,7 +41,7 @@ runs:
         realpath .
         ls
         echo "Old code:"
-        cd build
+        cd cpp/build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/local/lib/cmake ..
         cmake --build . -j 4
     # - name: Run unit tests
