@@ -29,6 +29,10 @@ runs:
       run: |
         cd cpp
         tar -xzf build.tar.gz
+        ls 
+        ls ..
+        realpath .
+        ls build
     - name: Build SBML converter
       shell: bash
       run: |
