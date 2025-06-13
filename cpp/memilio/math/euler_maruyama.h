@@ -22,6 +22,7 @@
 
 #include "memilio/config.h"
 #include "memilio/math/integrator.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 
 namespace mio
@@ -81,8 +82,16 @@ public:
                 v = FP{0.0};
             }
         }
+
         if (negative > Limits<FP>::zero_tolerance()) {
-            x = x * (1 + negative / positive);
+            if (positive < Limits<FP>::zero_tolerance()) {
+                log_error("Failed to rescale values in Euler Maruyama step, all values are negative. "
+                          "Redistributing absolute values evenly.");
+                x.array() = negative / x.size();
+            }
+            else {
+                x = x * (1 + negative / positive);
+            }
         }
     }
 

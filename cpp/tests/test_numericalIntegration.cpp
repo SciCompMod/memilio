@@ -17,12 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm_helpers.h"
 #include "actions.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/euler_maruyama.h"
 #include "memilio/math/integrator.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/logging.h"
+#include "utils.h"
 
 #include "boost/numeric/odeint/stepper/modified_midpoint.hpp"
 #include <gtest/gtest.h>
@@ -398,4 +401,69 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
     for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
         EXPECT_DOUBLE_EQ(mock_result.get_time(i), std::min(i * dt_min, t_max));
     }
+}
+
+TEST(TestStochasticIntegrator, EulerMaruyamaIntegratorCore)
+{
+    using X = Eigen::Vector2d;
+
+    const auto f = [](Eigen::Ref<const X> _, double t, Eigen::Ref<X> y) {
+        mio::unused(_);
+        y[0] = std::sin(t);
+        y[1] = 0;
+    };
+    const auto noise = [&f](Eigen::Ref<const X> x, double t, Eigen::Ref<X> y) {
+        f(x, t, y);
+        y = y.array().sqrt();
+    };
+
+    ScopedMockDistribution<
+        testing::StrictMock<MockDistribution<mio::DistributionAdapter<std::normal_distribution<double>>>>>
+        normal_dist_mock;
+
+    EXPECT_CALL(normal_dist_mock.get_mock(), invoke)
+        .Times(testing::Exactly(8)) // two calls for each step
+        .WillOnce(testing::Return(1)) // positive noise
+        .WillRepeatedly(testing::Return(-1)); // negative noise and result -> causes rescale
+
+    X x = {0, 1}, y;
+    double t, dt = 1;
+
+    const double ref_val   = std::sin(1);
+    const double ref_noise = std::sqrt(ref_val);
+
+    mio::RedirectLogger logger;
+    logger.capture();
+
+    mio::EulerMaruyamaIntegratorCore<double> integrator;
+
+    t = 1;
+    integrator.step({f, noise}, x, t, dt, y); // no negative value, no rescaling
+    EXPECT_NEAR(y[0], ref_val + ref_noise, mio::Limits<double>::zero_tolerance());
+    EXPECT_NEAR(y[1], 1, mio::Limits<double>::zero_tolerance());
+
+    t = 1;
+    integrator.step({f, noise}, x, t, dt, y); // rescale succeeds
+    EXPECT_NEAR(y[0], 0, mio::Limits<double>::zero_tolerance());
+    EXPECT_NEAR(y[1], 1 + (ref_noise - ref_val), mio::Limits<double>::zero_tolerance());
+
+    EXPECT_TRUE(logger.read().empty());
+
+    x[1] = 0;
+    t    = 1;
+    integrator.step({f, noise}, x, t, dt, y); // no positive values, rescale fails
+    EXPECT_GT(y[0], 0);
+    EXPECT_NEAR(y[0], y[1], mio::Limits<double>::zero_tolerance());
+
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[error] Failed to rescale values"));
+    EXPECT_EQ(logger.read(), "");
+
+    t = 0;
+    integrator.step({f, noise}, x, t, dt, y); // everything is 0, rescale does nothing
+    EXPECT_EQ(y[0], 0);
+    EXPECT_EQ(y[1], 0);
+
+    EXPECT_EQ(logger.read(), "");
+
+    logger.release();
 }
