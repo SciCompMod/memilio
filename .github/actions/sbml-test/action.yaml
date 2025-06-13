@@ -29,13 +29,18 @@ runs:
       run: |
         cd cpp
         tar -xzf build.tar.gz
+        echo "Ls curr dir: "
         ls 
+        echo "LS upper dir: "
         ls ..
         realpath .
         ls build
     - name: Build SBML converter
       shell: bash
       run: |
+        realpath .
+        ls
+        echo "Old code:"
         cd build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/local/lib/cmake ..
         cmake --build . -j 4
