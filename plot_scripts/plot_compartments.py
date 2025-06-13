@@ -103,13 +103,14 @@ if __name__ == '__main__':
 
     # Path where simulation results (generated with ide_changepoints.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
-        __file__),  "../simulation_results/exponential_tmax=1/")
+        __file__),  "../simulation_results/messina_new/")
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
-        __file__),  "../plots/exponential_tmax=1/")
+        __file__),  "../plots/messina_new/")
 
     gregory_orders = ["1", "2", "3"]
-    dt_ide = "3"
+    ide_exponent = "1"
+    groundtruth_exponent = "5"
 
     # for gregory_order in gregory_orders:
     #     plot_susceptibles([os.path.join(result_dir, f"result_ide_dt=1e-4_gregoryorder=3_finitedifforder=1"),
@@ -117,6 +118,6 @@ if __name__ == '__main__':
     #                       fileending=f"dt=1e-{dt_exp}_gregory={gregory_order}", save_dir=plot_dir)
 
     for gregory_order in gregory_orders:
-        plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-6"),
-                           os.path.join(result_dir, f"result_ide_dt=1e-{dt_ide}_gregoryorder={gregory_order}")],
-                          fileending=f"dt=1e-{dt_ide}_gregory={gregory_order}", save_dir=plot_dir)
+        plot_susceptibles([os.path.join(result_dir, f"result_ide_dt=1e-{groundtruth_exponent}_gregoryorder=3"),
+                           os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
+                          fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)

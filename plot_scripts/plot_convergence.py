@@ -28,7 +28,7 @@ from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
 
 
-def read_groundtruth(data_dir, groundtruth_exponent, gregory_order, finite_difference_order, flows=False):
+def read_groundtruth(data_dir, groundtruth_exponent, gregory_order):
     """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
 
     @param[in] data_dir Directory where h5 files are stored.
@@ -39,13 +39,9 @@ def read_groundtruth(data_dir, groundtruth_exponent, gregory_order, finite_diffe
     """
     model = 'ide'
     results = {model: []}
-    if flows:
-        pass
-        # h5file = h5py.File(os.path.join(
-        #     data_dir, f'result_{model}_flows_dt=1e-{ode_exponent:.0f}_savefrequency{save_exponent:.0f}.h5'), 'r')
-    else:
-        h5file = h5py.File(os.path.join(
-            data_dir, f'result_{model}_dt=1e-{groundtruth_exponent:.0f}_gregoryorder={gregory_order}.h5'), 'r')
+
+    h5file = h5py.File(os.path.join(
+        data_dir, f'result_{model}_dt=1e-{groundtruth_exponent:.0f}_gregoryorder={gregory_order}.h5'), 'r')
 
     if (len(list(h5file.keys())) > 1):
         raise gd.DataError("File should contain one dataset.")
@@ -54,17 +50,12 @@ def read_groundtruth(data_dir, groundtruth_exponent, gregory_order, finite_diffe
 
     data = h5file[list(h5file.keys())[0]]
 
-    if flows:
-        pass
-        # # Flows are already scaled to one day.
-        # results[model].append(data['Total'][:, :])
+    if len(data['Total'][0]) == 3:
+        # As there should be only one Group, total is the simulation result
+        results[model].append(data['Total'][:, :])
     else:
-        if len(data['Total'][0]) == 3:
-            # As there should be only one Group, total is the simulation result
-            results[model].append(data['Total'][:, :])
-        else:
-            raise gd.DataError(
-                'Expected a different size of vector in time series.')
+        raise gd.DataError(
+            'Expected a different size of vector in time series.')
 
     dates = data['Time'][:]
 
@@ -73,7 +64,7 @@ def read_groundtruth(data_dir, groundtruth_exponent, gregory_order, finite_diffe
     return results
 
 
-def read_data(data_dir, exponents_ide, gregory_order, finite_difference_order, flows=False):
+def read_data(data_dir, exponents_ide, gregory_order):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There, we have an array that contains all results
     obtained with the IDE model for all time points for each time step size that is investigated. The results can
@@ -90,45 +81,25 @@ def read_data(data_dir, exponents_ide, gregory_order, finite_difference_order, f
     results = {models[0]: []}
     for model in models:
         for exponent in exponents_ide:
-            if flows:
-                pass
-                # h5file = h5py.File(os.path.join(
-                #     data_dir, f'result_{model}_flows_dt=1e-{exponent:.0f}_init_dt_ode=1e-{ode_exponent:.0f}.h5'), 'r')
-            else:
-                h5file = h5py.File(os.path.join(
-                    data_dir, f'result_{model}_dt=1e-{exponent:.0f}_gregoryorder={gregory_order}.h5'), 'r')
+
+            h5file = h5py.File(os.path.join(
+                data_dir, f'result_{model}_dt=1e-{exponent:.0f}_gregoryorder={gregory_order}.h5'), 'r')
 
             data = h5file[list(h5file.keys())[0]]
 
-            if flows:
-                pass
-                # # Flows are already scaled to one day.
-                # results[model].append(data['Total'][:, :])
+            if len(data['Total'][0]) == 3:
+                # As there should be only one Group, total is the simulation result.
+                results[model].append(data['Total'][:, :])
             else:
-                if len(data['Total'][0]) == 3:
-                    # As there should be only one Group, total is the simulation result.
-                    results[model].append(data['Total'][:, :])
-                else:
-                    raise gd.DataError(
-                        "Expected a different size of vector in time series.")
+                raise gd.DataError(
+                    "Expected a different size of vector in time series.")
 
             h5file.close()
 
     return results
 
 
-def compute_l2_norm(timeseries, timestep):
-    """ Computes L2 norm of a time series.
-
-    @param[in] timeseries Considered timeseries.
-    @param[in] timestep Time step size.
-    @returns Norm.
-    """
-    norm = np.sqrt(timestep * np.sum(timeseries**2))
-    return norm
-
-
-def compute_relerror_norm_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, finite_difference_order, flows=False):
+def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gregory_order):
     """ Computes relative L2 norm of the difference between time series from ODE and time series
     from IDE for all compartments/flows.
 
@@ -139,33 +110,23 @@ def compute_relerror_norm_l2(groundtruth, results, groundtruth_exponent, timeste
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
     @param[in] Array that contains computed errors.
     """
-    # if flows:
-    #     pass
-    #     # num_errors = 10
-    # else:
-
     # For now, only compute error of S compartment.
-    num_errors = 1
     errors = []
 
-    # Compute error.
+    # Compute error. Here, we define the error by the absolute value of the difference at the last time point between
+    # groundtruth and simulation results.
     for i in range(len(results['ide'])):
         errors.append([])
-        for compartment in range(num_errors):
-            timestep = timesteps_ide[i]
-            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
-            num_timepoints = len(results['ide'][i])
 
-            difference = np.abs(groundtruth['ide'][0][int(
-                finite_difference_order + 1)::int(scale_timesteps)][-1, compartment]-results['ide'][i][-1, compartment])
-            # norm_groundtruth = compute_l2_norm(groundtruth['ide'][0][int(
-            #     (finite_difference_order + 1)):: int(scale_timesteps)][:, compartment], timestep)
-            errors[i].append(difference)
+        difference = np.abs(
+            groundtruth['ide'][0][-1, 0]-results['ide'][i][-1, 0])
+
+        errors[i].append(difference)
 
     return np.array(errors)
 
 
-def plot_convergence(errors, timesteps_ide, gregory_order, flows=False, save_dir=""):
+def plot_convergence(errors, timesteps_ide, gregory_order, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
@@ -219,82 +180,14 @@ def plot_convergence(errors, timesteps_ide, gregory_order, flows=False, save_dir
                         dpi=500)
 
 
-def plot_convergence_oneplot(errors, timesteps_ide, flows=False, save_dir=""):
-    """ Plot errors against timesteps. This function creates one plot to depict all compartments/flows, respectively.
-
-    @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
-    @param[in] timesteps_ide List of time steps used in IDE simulations.
-    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
-    @param[in] save_dir Directory where plot will be stored. Default is an empty string leading to the plot not being
-        saved.
-    """
-    plt.figure()
-
-    if flows:
-        secir_dict = {0: r"$\sigma_S^E$", 1: r"$\sigma_E^C$", 2: r"$\sigma_C^I$", 3: r"$\sigma_C^R$", 4: r"$\sigma_I^H$",
-                      5: r"$\sigma_I^R$", 6: r"$\sigma_H^U$", 7: r"$\sigma_H^R$", 8: r"$\sigma_U^D$", 9: r"$\sigma_U^R$"}
-        plt.ylabel(
-            r"$err_{\text{rel}}$", fontsize=10)
-    else:
-        secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
-                      5: 'ICU', 6: 'Recovered', 7: 'Dead'}
-        plt.ylabel(
-            r"$err_{\text{rel}}$", fontsize=10)
-
-    if flows:
-        num_lines = 2
-    else:
-        num_lines = 1
-
-    colors = [plt.cm.viridis(x) for x in np.linspace(0, 1, num_lines)]
-
-    # Angles to rotate markers of the plot.
-    angles = [0, 45, 0, 45, 0, 45, 0, 45, 0, 45]
-
-    for i in range(num_lines):
-        # Plot results.
-        rotation = Affine2D().rotate_deg(angles[i])
-        plt.plot(timesteps_ide,
-                 errors[:, i], '-', marker=MarkerStyle('x', 'full', rotation), markersize=5, color=colors[i], label=secir_dict[i])
-
-    # Plot comparison line for linear convergence.
-    comparison = [dt for dt in timesteps_ide]
-    plt.plot(timesteps_ide, comparison, '--', color='gray',
-             label=r"$\mathcal{O}(\Delta t)$")
-
-    # Adapt plots.
-    plt.xscale("log", base=10)
-    plt.yscale("log", base=10)
-    plt.gca().invert_xaxis()
-
-    plt.xlabel(r'Time step $\Delta t$', fontsize=10)
-
-    plt.legend(fontsize=10, framealpha=0.5, ncol=2)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.tight_layout()
-
-    if save_dir != "":
-        if not os.path.isdir(save_dir):
-            os.makedirs(save_dir)
-        if flows:
-            plt.savefig(f'{save_dir}/convergence_flows.png', format='png',
-                        dpi=500)
-        else:
-            plt.savefig(f'{save_dir}/convergence_compartments.png', format='png',
-                        dpi=500)
-
-
-def compute_order_of_convergence(errors, timesteps_ide, flows=False):
+def compute_order_of_convergence(errors, timesteps_ide):
     """ Compute order of convergence between two consecutive time step sizes.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
-    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
     """
-    if flows:
-        num_orders = 2
-    else:
-        num_orders = 1
+
+    num_orders = 1
 
     order = []
     for compartment in range(num_orders):
@@ -309,17 +202,16 @@ def main():
 
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
-        __file__),  "../simulation_results/messina/")
+        __file__),  "../simulation_results/messina_new/")
 
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
-        __file__),  "../plots/messina/")
+        __file__),  "../plots/messina_new/")
 
     groundtruth_exponent = 5
-
     gregory_order_groundtruth = 3
-    gregory_order_simulation = 1
-    finite_difference_order = 1
+
+    gregory_orders_simulation = [1, 2, 3]
 
     # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
     ide_exponents = [1, 2, 3]
@@ -328,34 +220,29 @@ def main():
     for exp in ide_exponents:
         timesteps_ide.append(pow(10, -exp))
 
-    # Plot compartments and flows.
-    flow_bools = [False]
+    # Read groundtruth.
+    groundtruth = read_groundtruth(
+        result_dir, groundtruth_exponent, gregory_order_groundtruth)
 
-    for flow_bool in flow_bools:
-        # Read groundtruth (from ODE model).
-        groundtruth = read_groundtruth(
-            result_dir, groundtruth_exponent, gregory_order_groundtruth, finite_difference_order, flow_bool)
-
+    for gregory_order_simulation in gregory_orders_simulation:
         # Read results from IDE simulations.
-        results = read_data(result_dir, ide_exponents, gregory_order_simulation, finite_difference_order,
-                            flow_bool)
+        results = read_data(result_dir, ide_exponents,
+                            gregory_order_simulation)
 
-        # Compute relative L2 error norm of IDE results compared to groundtruth.
-        relerrors_l2 = compute_relerror_norm_l2(
-            groundtruth, results, groundtruth_exponent, timesteps_ide, finite_difference_order, flow_bool)
+        # Compute errors of IDE results compared to groundtruth.
+        errors = compute_errors(
+            groundtruth, results, groundtruth_exponent, timesteps_ide, gregory_order_simulation)
 
-        # # Plot convergence of all compartments/flows in one plot, respectively.
-        # plot_convergence_oneplot(
-        #     relerrors_l2, timesteps_ide, flow_bool, plot_dir)
         # # Plot convergence of all compartments/flows separately.
-        plot_convergence(relerrors_l2, timesteps_ide,
-                         gregory_order_simulation, flow_bool, plot_dir)
+        # plot_convergence(relerrors_l2, timesteps_ide,
+        #                  gregory_order_simulation, plot_dir)
 
         # Determine order of convergence
         order = compute_order_of_convergence(
-            relerrors_l2, timesteps_ide, flow_bool)
+            errors, timesteps_ide)
 
-        print('Orders of convergence: ', order)
+        print(
+            f'Orders of convergence (Gregory order {gregory_order_simulation}): ', order[0])
 
 
 if __name__ == '__main__':
