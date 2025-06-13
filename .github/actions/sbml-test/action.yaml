@@ -12,9 +12,8 @@ runs:
   using: "composite"
   steps:
     - name: Download libsbml
+      shell: bash
       run: gh run download --repo sbmlteam/libsbml --pattern "Ubuntu * stable*" --dir /libsbml
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Install Dependencies
       shell: bash
       run: |
