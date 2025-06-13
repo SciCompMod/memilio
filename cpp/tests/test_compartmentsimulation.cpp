@@ -18,9 +18,15 @@
 * limitations under the License.
 */
 
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
-#include "gtest/gtest.h"
+#include "memilio/compartments/stochastic_simulation.h"
+#include "memilio/config.h"
+#include "memilio/math/integrator.h"
+#include "memilio/utils/time_series.h"
+
 #include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 TEST(TestCompartmentSimulation, integrator_uses_model_reference)
 {
@@ -47,4 +53,137 @@ TEST(TestCompartmentSimulation, integrator_uses_model_reference)
     sim.advance(2.0);
 
     ASSERT_NEAR(sim.get_result().get_last_value()[0], 3.0, 1e-5);
+}
+
+struct MockSimulateSim { // looks just enough like a simulation for the simulate functions to not notice
+    // this "model" converts to and from int implicitly, exposing its value after calling chech_constraints
+    // this enables us to check whether check_constraints is called before the simulation is constructed
+    struct Model {
+        Model(int val_in)
+            : hidden_val(val_in)
+            , val(0)
+        {
+        }
+
+        void check_constraints() const
+        {
+            val = hidden_val;
+        }
+
+        operator int() const
+        {
+            return val;
+        }
+
+        int hidden_val;
+        mutable int val;
+    };
+
+    MockSimulateSim(int model_in, double t0_in, double dt_in)
+    {
+        model = model_in;
+        t0    = t0_in;
+        dt    = dt_in;
+    }
+
+    template <size_t Order>
+    void set_integrator(std::shared_ptr<mio::IntegratorCore<double, Order>> integrator_in)
+    {
+        integrator = (int)(size_t)integrator_in.get(); // no, do not use this elsewhere. do not even look at this
+    }
+
+    auto get_result()
+    {
+        // basically, return 17
+        mio::TimeSeries<double> ts(0);
+        ts.add_time_point(17);
+        return ts;
+    }
+
+    auto get_flows()
+    {
+        return get_result();
+    }
+
+    void advance(double tmax_in) // wrong return type, but simulate functions do not use it anyways
+    {
+        tmax = tmax_in;
+    }
+
+    static void clear() // reset variables
+    {
+        model = integrator = t0 = dt = tmax = 0;
+    }
+
+    inline static int model, integrator;
+    inline static double t0, dt, tmax;
+};
+
+TEST(TestCompartmentSimulation, simulate_functions)
+{
+    // this checks that the (not model-specific) simulate functions makes all calls as expected, like "advance(tmax)"
+
+    // this works by misusing a simulate function on the MockSimulateSim to write out 1,2,3,4,5 and return 17
+
+    // the lambdas in this test help deal with the integrator pointer and TimeSeries used and returned by a simulate
+    // function, by misusing these types to store simple values
+
+    const int t0 = 1, dt = 2, tmax = 3, model = 4, integrator = 5;
+
+    using Sim = MockSimulateSim;
+
+    // evaluate the timeseries
+    // we expect 17 as result stored as the first time, but just in case we also check for the number of time points
+    const auto eval_ts = [](auto&& ts) {
+        return ts.get_num_time_points() == 0 ? 0 : ts.get_num_time_points() * ts.get_time(0);
+    };
+    // this handles flows (or any Vector of TimeSeries) as well, using an average to immitate a logical "and"
+    const auto eval_vts = [](auto&& vts) {
+        double sum = 0;
+        for (auto& ts : vts) {
+            sum += ts.get_num_time_points() == 0 ? 0 : ts.get_num_time_points() * ts.get_time(0);
+        }
+        return sum / vts.size();
+    };
+
+    // helpers to deal with different orders of cores. do not reuse this or something similar in actual code
+    const auto evil_pointer_cast_1 = [](int i) {
+        return std::shared_ptr<mio::IntegratorCore<double, 1>>({
+            (mio::IntegratorCore<double, 1>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
+            [](auto&&) {} // this too
+        });
+    };
+    const auto evil_pointer_cast_2 = [](int i) {
+        return std::shared_ptr<mio::IntegratorCore<double, 2>>({
+            (mio::IntegratorCore<double, 2>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
+            [](auto&&) {} // this too
+        });
+    };
+
+    // helper function to compose a "simulate" function
+    const auto compose = [](auto&& f, auto&& g, auto&& h) {
+        return [f, g, h](double t0_, double tmax_, double dt_, int model_, int i_) {
+            return f(g(t0_, tmax_, dt_, model_, h(i_)));
+        };
+    };
+
+    // list of functions to test, with helpers attached
+    // note that std::functions only work with lambdas that do not use captures
+    std::vector<std::function<double(double, double, double, int, int)>> simulate_fcts = {
+        compose(eval_ts, mio::simulate<double, Sim::Model, Sim>, evil_pointer_cast_1),
+        compose(eval_vts, mio::simulate_flows<double, Sim::Model, Sim>, evil_pointer_cast_1),
+        compose(eval_ts, mio::simulate_stochastic<double, Sim::Model, Sim>, evil_pointer_cast_2)};
+
+    // test all simulate functions
+    for (auto&& f : simulate_fcts) {
+        Sim::clear();
+        auto result = f(t0, tmax, dt, model, integrator);
+
+        EXPECT_NEAR(result, 17, mio::Limits<double>::zero_tolerance());
+        EXPECT_EQ(Sim::t0, t0);
+        EXPECT_EQ(Sim::dt, dt);
+        EXPECT_EQ(Sim::tmax, tmax);
+        EXPECT_EQ(Sim::model, model);
+        EXPECT_EQ(Sim::integrator, integrator);
+    }
 }

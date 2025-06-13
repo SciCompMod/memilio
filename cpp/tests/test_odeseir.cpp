@@ -375,13 +375,13 @@ TEST(TestSeir, get_flows_two_agegroups)
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
-    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible},
-                                                                     total_first_population);
+    model.populations.set_difference_from_group_total<mio::AgeGroup>(
+        {mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}, total_first_population);
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Exposed}]   = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Infected}]  = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Recovered}] = 10;
-    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible},
-                                                                     total_second_population);
+    model.populations.set_difference_from_group_total<mio::AgeGroup>(
+        {mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible}, total_second_population);
 
     for (auto i = mio::AgeGroup(0); i <= mio::AgeGroup(1); i++) {
         model.parameters.get<mio::oseir::TimeExposed<double>>()[i]                      = 2;
@@ -432,7 +432,7 @@ TEST(TestSeir, Simulation)
 
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    std::shared_ptr<mio::IntegratorCore<double, 1>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     auto sim = simulate(t0, tmax, dt, model, integrator);
 
@@ -471,7 +471,7 @@ TEST(TestSeir, FlowSimulation)
 
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    std::shared_ptr<mio::IntegratorCore<double, 1>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     auto sim = simulate_flows(t0, tmax, dt, model, integrator);
 
