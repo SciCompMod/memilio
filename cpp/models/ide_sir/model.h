@@ -101,14 +101,12 @@ public:
         return m_gregory_order;
     }
 
-    ScalarType sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input,
-                              bool recovered = false);
-    ScalarType sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input, bool recovered = false);
+    ScalarType sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input);
+    ScalarType sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input);
 
-    ScalarType fixed_point_function(ScalarType s, ScalarType dt, ScalarType N, size_t t0_index);
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 
-    void compute_S(ScalarType s_init, ScalarType dt, ScalarType N, size_t t0_index, ScalarType tol = 1e-10,
-                   size_t max_iterations = 100);
+    void compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.

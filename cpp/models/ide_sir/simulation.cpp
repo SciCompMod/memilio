@@ -40,20 +40,23 @@ void SimulationMessina::advance_messina(ScalarType tmax)
     mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {}.", m_model->populations.get_last_time(),
                   tmax, m_dt);
 
-    size_t t0_index = m_model->get_gregory_order();
-
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
         if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
             std::cout << "Time: " << m_model->populations.get_last_time() << std::endl;
         }
 
-        // Add new time points to populations.
+        // Add new time point to populations.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
 
         // Compute Susceptibles.
-        m_model->compute_S(m_model->populations.get_last_value()[(size_t)InfectionState::Susceptible], m_dt,
-                           m_model->get_totalpop(), t0_index);
+        size_t num_time_points = m_model->populations.get_num_time_points();
+        // std::cout << "S_init "
+        //           << m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible]
+        //           << " at time " << m_model->populations.get_time(num_time_points - 2) << std::endl;
+        m_model->compute_S(m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible],
+                           m_dt);
+        // m_model->populations.print_table();
     }
 }
 
