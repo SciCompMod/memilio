@@ -1,5 +1,5 @@
 #############################################################################
-# Copyright (C) 2020-2024 MEmilio
+# Copyright (C) 2020-2025 MEmilio
 #
 # Authors: Sascha Korf
 #
@@ -30,17 +30,17 @@ from datetime import datetime
 from scipy.ndimage import gaussian_filter1d
 
 
-# Module for plotting infection states and location types from ABM results.
+# Module for plotting number of agents per infection state and number of infected agents per location type from ABM results.
 # This module provides functions to load and visualize infection states and
-# location types from simulation results stored in HDF5 format and are output
-# by the MEmilio agent-based model (ABM).
+# location types from simulation results of the agent-based model (ABM) stored in HDF5 format.
+
 # The used  Loggers are:
 # struct LogInfectionStatePerAgeGroup : mio::LogAlways {
 #     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
 #     /**
-#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState for every age group.
 #      * @param[in] sim The simulation of the abm.
-#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState for every age group.
 #      */
 #     static Type log(const mio::abm::Simulation& sim)
 #     {
