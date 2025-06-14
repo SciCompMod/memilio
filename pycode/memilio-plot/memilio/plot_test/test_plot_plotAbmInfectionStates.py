@@ -131,7 +131,7 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                 for j in range(7):
                     ax_mock[i, j] = MagicMock()
             mock_subplots.return_value = (fig_mock, ax_mock)
-            abm.plot_infection_states_individual(
+            abm.plot_infection_states_by_age_group(
                 x, p50_bs, p25_bs, p75_bs,
                 colormap='Set1',
                 p05_bs=p05_bs,

@@ -53,12 +53,10 @@ from scipy.ndimage import gaussian_filter1d
 #         // PRAGMA_OMP(parallel for)
 #         for (auto i = size_t(0); i < persons.size(); ++i) {
 #             auto& p = persons[i];
-#             if (p.get_should_be_logged()) {
-#                 auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
-#                              ((uint32_t)p.get_infection_state(curr_time));
-#                 // PRAGMA_OMP(atomic)
-#                 sum[index] += 1;
-#             }
+#             auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+#                 ((uint32_t)p.get_infection_state(curr_time));
+# // PRAGMA_OMP(atomic)
+#              sum[index] += 1;
 #         }
 #         return std::make_pair(curr_time, sum);
 #     }
@@ -97,10 +95,9 @@ from scipy.ndimage import gaussian_filter1d
 #     }
 # };
 #
-# The output of the loggers of several runs is stored in HDF5 files, with the memilio funciton mio::save_results in mio/io/result_io.h.
+# The output of the loggers of several runs is stored in HDF5 files using mio::save_results in mio/io/result_io.h.
 
 # Adjust these as needed.
-# States and location type numbers need to match the infection states used in your simulation.
 state_labels = {
     1: 'Exposed',
     2: 'I_Asymp',
@@ -139,7 +136,9 @@ def load_h5_results(base_path, percentile):
 
     @param[in] base_path Path to results directory.
     @param[in] percentile Subdirectory for percentile (e.g. 'p50').
-    @return Dictionary with data arrays.
+    @return Dictionary with data arrays. Keys are dataset names from the HDF5 file 
+            (e.g., 'Time', 'Total', age group names like 'Group1', 'Group2', etc.).
+            Values are numpy arrays containing the corresponding time series data.
     """
     file_path = os.path.join(base_path, percentile, "Results.h5")
     with h5py.File(file_path, 'r') as f:
@@ -170,7 +169,7 @@ def plot_infections_loc_types_average(
 
     plt.figure('Infection_location_types')
     plt.title(
-        'Infection per location type for the median run, rolling sum over 24 hours')
+        'Number of new infections per location type for the median run, rolling sum over 24 hours')
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
 
     for idx, i in enumerate(location_type_labels.keys()):
@@ -216,7 +215,7 @@ def plot_infection_states_results(
         p95 = total_95['Total']
         p05 = total_05['Total']
 
-    plot_infection_states_individual(
+    plot_infection_states_by_age_group(
         time, p50, p25, p75, colormap,
         p05_bs=total_05 if show90 else None,
         p95_bs=total_95 if show90 else None,
@@ -254,9 +253,7 @@ def plot_infection_states(
                  linestyle='dashdot', linewidth=1.2, alpha=0.7)
         plt.plot(x, y75[:, i], color=color_plot[i],
                  linestyle='dashdot', linewidth=1.2, alpha=0.7)
-        plt.fill_between(x, y50[:, i], y25[:, i],
-                         alpha=0.2, color=color_plot[i])
-        plt.fill_between(x, y50[:, i], y75[:, i],
+        plt.fill_between(x, y25[:, i], y75[:, i],
                          alpha=0.2, color=color_plot[i])
         # Optional: 90% percentile
         if show_90 and y05 is not None and y95 is not None:
@@ -274,7 +271,7 @@ def plot_infection_states(
     plt.show()
 
 
-def plot_infection_states_individual(
+def plot_infection_states_by_age_group(
     x, p50_bs, p25_bs, p75_bs, colormap='Set1',
     p05_bs=None, p95_bs=None, show90=False
 ):
@@ -318,8 +315,7 @@ def _plot_state(ax, x, y50, y25, y75, color, title, y05=None, y95=None, show90=F
     """ Helper to plot a single state with fill_between and optional 90% percentile. """
     ax.set_xlabel('time (days)')
     ax.plot(x, y50, color=color, label='Median')
-    ax.fill_between(x, y50, y25, alpha=0.5, color=color)
-    ax.fill_between(x, y50, y75, alpha=0.5, color=color)
+    ax.fill_between(x, y25, y75, alpha=0.5, color=color)
     if show90 and y05 is not None and y95 is not None:
         ax.plot(x, y05, color=color, linestyle='dotted',
                 linewidth=1.0, alpha=0.4)
@@ -353,10 +349,11 @@ def main():
     parser.add_argument("--colormap", type=str,
                         default='Set1', help="Matplotlib colormap")
     parser.add_argument("--xtick-step", type=int,
-                        default=150, help="Step for x-axis ticks")
+                        default=150, help="Step for x-axis ticks (usually hours)")
     parser.add_argument("--90percentile", action="store_true",
                         help="If set, plot 90% percentile as well")
     args = parser.parse_args()
+
     plot_infection_states_results(
         args.path_to_infection_states,
         start_date=args.start_date,
