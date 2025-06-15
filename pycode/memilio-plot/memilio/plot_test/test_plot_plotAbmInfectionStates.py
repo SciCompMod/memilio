@@ -165,7 +165,8 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
     def test_plot_infection_states_individual(self, mock_matplotlib):
         x = np.arange(10)
         group_data = np.ones((10, 8))
-        groups = ['Group1', 'Group2', 'Group3', 'Group4', 'Group5', 'Group6', 'Total']
+        groups = ['Group1', 'Group2', 'Group3',
+                  'Group4', 'Group5', 'Group6', 'Total']
         p50_bs = {g: group_data for g in groups}
         p25_bs = {g: group_data for g in groups}
         p75_bs = {g: group_data for g in groups}
@@ -178,7 +179,7 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
             fig_mock = MagicMock()
             ax_mock = MagicMock()  # Let the function determine the actual structure
             mock_subplots.return_value = (fig_mock, ax_mock)
-            
+
             abm.plot_infection_states_by_age_group(
                 x, p50_bs, p25_bs, p75_bs,
                 colormap='Set1',
@@ -186,23 +187,23 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                 p95_bs=p95_bs,
                 show90=True
             )
-            
+
             # Verify subplot was called (without assuming specific dimensions)
             mock_subplots.assert_called_once()
             subplot_call = mock_subplots.call_args
-            
+
             # Verify that subplots was called with reasonable dimensions
             if subplot_call and len(subplot_call[0]) >= 2:
                 rows, cols = subplot_call[0][:2]
                 self.assertGreater(rows, 0, "Should have at least one row")
                 self.assertGreater(cols, 0, "Should have at least one column")
-                
+
                 # The dimensions should be related to our data structure
                 total_subplots = rows * cols
                 expected_min_subplots = len(groups) * group_data.shape[1]
-                self.assertGreaterEqual(total_subplots, expected_min_subplots, 
-                                    f"Should have at least {expected_min_subplots} subplots for {len(groups)} groups and {group_data.shape[1]} infection states")
-        
+                self.assertGreaterEqual(total_subplots, expected_min_subplots,
+                                        f"Should have at least {expected_min_subplots} subplots for {len(groups)} groups and {group_data.shape[1]} infection states")
+
         # Verify figure title is set
         fig_mock.suptitle.assert_called_once()
 
