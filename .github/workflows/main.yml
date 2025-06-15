@@ -82,9 +82,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "windows-2022"
+            os: "windows-2025"
           - version: "min"
-            os: "windows-2019"
+            os: "windows-2022"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
 
   build-cpp-msvc-no-optional-deps:
     if: github.event.pull_request.draft == false
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-build
@@ -185,9 +185,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "windows-2022"
+            os: "windows-2025"
           - version: "min"
-            os: "windows-2019"
+            os: "windows-2022"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -198,7 +198,7 @@ jobs:
   test-cpp-msvc-no-optional-deps:
     if: github.event.pull_request.draft == false
     needs: build-cpp-msvc-no-optional-deps
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/windows-test
@@ -235,9 +235,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "windows-2022"
+            os: "windows-2025"
           - version: "min"
-            os: "windows-2019"
+            os: "windows-2022"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
