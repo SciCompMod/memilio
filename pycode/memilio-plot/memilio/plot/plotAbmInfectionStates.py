@@ -65,7 +65,7 @@ from scipy.ndimage import gaussian_filter1d
 # struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
 #     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
 #     /**
-#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
+#      * @brief Log the TimeSeries of the number of newly infected Person%s for each Location Type and each age.
 #      * @param[in] sim The simulation of the abm.
 #      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
 #      */
@@ -81,7 +81,6 @@ from scipy.ndimage import gaussian_filter1d
 #         // PRAGMA_OMP(parallel for)
 #         for (auto i = size_t(0); i < persons.size(); ++i) {
 #             auto& p = persons[i];
-#             if (p.get_should_be_logged()) {
 #                 // PRAGMA_OMP(atomic)
 #                 if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
 #                     (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
@@ -89,7 +88,6 @@ from scipy.ndimage import gaussian_filter1d
 #                                  ((uint32_t)p.get_location().get_type());
 #                     sum[index] += 1;
 #                 }
-#             }
 #         }
 #         return std::make_pair(curr_time, sum);
 #     }
@@ -153,7 +151,7 @@ def plot_infections_loc_types_average(
         smooth_sigma=1,
         rolling_window=24,
         xtick_step=150):
-    """ Plots rolling average infections per location type for the median run.
+    """ Plots rolling average new infections per location type for the median run.
 
     @param[in] base_path Path to results directory.
     @param[in] start_date Start date as string.
@@ -179,7 +177,7 @@ def plot_infections_loc_types_average(
         indexer = pd.api.indexers.FixedForwardWindowIndexer(
             window_size=rolling_window)
         y = pd.DataFrame(total_50[:, i]).rolling(
-            window=indexer, min_periods=1).sum().to_numpy()
+            window=indexer, min_periods=1).mean().to_numpy()
         y = y[0::rolling_window].flatten()
         y = gaussian_filter1d(y, sigma=smooth_sigma, mode='nearest')
         plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5)
@@ -198,7 +196,15 @@ def plot_infection_states_results(
         xtick_step=150,
         show90=False
 ):
-    """ Loads and plots infection state results. """
+    """ Loads and plots infection state results. 
+
+    @param[in] path_to_infection_states Path to results directory containing infection state data.
+    @param[in] start_date Start date as string (YYYY-MM-DD format).
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] show90 If True, plot 90% percentile (5% and 95%) in addition to 50% percentile.
+    """
+
     # Load data
     p50 = load_h5_results(path_to_infection_states, "p50")
     p25 = load_h5_results(path_to_infection_states, "p25")
@@ -275,7 +281,17 @@ def plot_infection_states_by_age_group(
     x, p50_bs, p25_bs, p75_bs, colormap='Set1',
     p05_bs=None, p95_bs=None, show90=False
 ):
-    """ Plots infection states for each age group, with optional 90% percentile. """
+    """ Plots infection states for each age group, with optional 90% percentile. 
+
+    @param[in] x Time array for x-axis.
+    @param[in] p50_bs Dictionary containing 50th percentile data for all age groups.
+    @param[in] p25_bs Dictionary containing 25th percentile data for all age groups.
+    @param[in] p75_bs Dictionary containing 75th percentile data for all age groups.
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] p05_bs Dictionary containing 5th percentile data for all age groups (optional).
+    @param[in] p95_bs Dictionary containing 95th percentile data for all age groups (optional).
+    @param[in] show90 If True, plot 90% percentile bands in addition to 50% percentile.
+    """
 
     color_plot = matplotlib.colormaps.get_cmap(colormap).colors
     n_states = len(state_labels)
@@ -313,7 +329,6 @@ def plot_infection_states_by_age_group(
 
 def _plot_state(ax, x, y50, y25, y75, color, title, y05=None, y95=None, show90=False):
     """ Helper to plot a single state with fill_between and optional 90% percentile. """
-    ax.set_xlabel('time (days)')
     ax.plot(x, y50, color=color, label='Median')
     ax.fill_between(x, y25, y75, alpha=0.5, color=color)
     if show90 and y05 is not None and y95 is not None:
@@ -369,7 +384,7 @@ def main():
 
     if not args.path_to_infection_states and not args.path_to_loc_types:
         print("Please provide a path to infection states or location types results.")
-        sys.exit(1)
+
     plt.show()
 
 
