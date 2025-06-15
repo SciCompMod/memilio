@@ -151,7 +151,7 @@ def plot_infections_loc_types_average(
         smooth_sigma=1,
         rolling_window=24,
         xtick_step=150):
-    """ Plots rolling average new infections per location type for the median run.
+    """ Plots rolling sum of new infections per 24 hours location type for the median run.
 
     @param[in] base_path Path to results directory.
     @param[in] start_date Start date as string.
@@ -177,7 +177,7 @@ def plot_infections_loc_types_average(
         indexer = pd.api.indexers.FixedForwardWindowIndexer(
             window_size=rolling_window)
         y = pd.DataFrame(total_50[:, i]).rolling(
-            window=indexer, min_periods=1).mean().to_numpy()
+            window=indexer, min_periods=1).sum().to_numpy()
         y = y[0::rolling_window].flatten()
         y = gaussian_filter1d(y, sigma=smooth_sigma, mode='nearest')
         plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5)
@@ -319,9 +319,17 @@ def plot_infection_states_by_age_group(
                 ['Median', f'{perc_string} perc.'],
                 loc='upper left', fontsize=8)
 
+            # Add y label for leftmost column
+            if col_idx == 0:
+                ax[row_idx, col_idx].set_ylabel('Number of individuals')
+
+            # Add x label for bottom row
+            if row_idx == n_states - 1:
+                ax[row_idx, col_idx].set_xlabel('Time (days)')
+
     string_short = ' and 90%' if show90 else ''
     fig.suptitle(
-        'Infection states per age group with 50' + string_short + ' percentile',
+        'Infection states per age group with 50%' + string_short + ' percentile',
         fontsize=16)
 
     plt.show()
@@ -370,14 +378,14 @@ def main():
     args = parser.parse_args()
 
     plot_infection_states_results(
-        args.path_to_infection_states,
+        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_state_per_age_group/0",
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step,
         show90=True
     )
     plot_infections_loc_types_average(
-        args.path_to_loc_types,
+        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_per_location_type_per_age_group/0",
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step)

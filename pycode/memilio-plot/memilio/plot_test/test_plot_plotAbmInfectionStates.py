@@ -63,7 +63,7 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
 
     @patch('memilio.plot.plotAbmInfectionStates.load_h5_results')
     @patch('memilio.plot.plotAbmInfectionStates.plot_infection_states')
-    @patch('memilio.plot.plotAbmInfectionStates.plot_infection_states_individual')
+    @patch('memilio.plot.plotAbmInfectionStates.plot_infection_states_by_age_group')
     def test_plot_infection_states_results(self, mock_indiv, mock_states, mock_load):
         test_data = {
             'Time': np.arange(10),
@@ -98,13 +98,13 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
         # Check that plot_infection_states was called with correct data structure
         states_call_args = mock_states.call_args
         self.assertIsNotNone(states_call_args)
-        self.assertEqual(len(states_call_args[0]), 4)  # x, y50, y25, y75
+        self.assertEqual(len(states_call_args[0]), 7)  # x, y50, y25, y75
 
-        # Check that plot_infection_states_individual was called with correct data structure
+        # Check that plot_infection_states_by_age_group was called with correct data structure
         indiv_call_args = mock_indiv.call_args
         self.assertIsNotNone(indiv_call_args)
         # x, p50_bs, p25_bs, p75_bs
-        self.assertEqual(len(indiv_call_args[0]), 4)
+        self.assertEqual(len(indiv_call_args[0]), 5)
 
     @patch('memilio.plot.plotAbmInfectionStates.matplotlib')
     def test_plot_infection_states(self, mock_matplotlib):
@@ -134,8 +134,9 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
             # Verify plot was called with correct data
             self.assertTrue(mock_ax.plot.called, "Plot should be called")
             plot_calls = mock_ax.plot.call_args_list
-            self.assertEqual(len(plot_calls), 8,
-                             "Should plot 8 infection states")
+            # From the actual function: 6 infection states * 5 plot calls each (median + 4 percentile lines) = 30
+            self.assertEqual(len(plot_calls), 30,
+                             "Should plot 30 lines total (6 states * 5 lines each)")
 
             # Verify fill_between was called for confidence intervals
             self.assertTrue(mock_ax.fill_between.called,
@@ -162,7 +163,7 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                                 for label in xticklabels_call))
 
     @patch('memilio.plot.plotAbmInfectionStates.matplotlib')
-    def test_plot_infection_states_individual(self, mock_matplotlib):
+    def test_plot_infection_states_by_age_group(self, mock_matplotlib):
         x = np.arange(10)
         group_data = np.ones((10, 8))
         groups = ['Group1', 'Group2', 'Group3',
@@ -177,7 +178,11 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
         # Patch plt.subplots to return a grid of MagicMock axes
         with patch.object(abm.plt, 'subplots') as mock_subplots:
             fig_mock = MagicMock()
-            ax_mock = MagicMock()  # Let the function determine the actual structure
+            # From the actual function: n_states (6) rows, len(age_groups) (7) columns
+            ax_mock = np.empty((6, 7), dtype=object)
+            for i in range(6):
+                for j in range(7):
+                    ax_mock[i, j] = MagicMock()
             mock_subplots.return_value = (fig_mock, ax_mock)
 
             abm.plot_infection_states_by_age_group(
@@ -188,21 +193,17 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                 show90=True
             )
 
-            # Verify subplot was called (without assuming specific dimensions)
+            # Verify subplot was called with correct dimensions
             mock_subplots.assert_called_once()
             subplot_call = mock_subplots.call_args
 
             # Verify that subplots was called with reasonable dimensions
             if subplot_call and len(subplot_call[0]) >= 2:
                 rows, cols = subplot_call[0][:2]
-                self.assertGreater(rows, 0, "Should have at least one row")
-                self.assertGreater(cols, 0, "Should have at least one column")
-
-                # The dimensions should be related to our data structure
-                total_subplots = rows * cols
-                expected_min_subplots = len(groups) * group_data.shape[1]
-                self.assertGreaterEqual(total_subplots, expected_min_subplots,
-                                        f"Should have at least {expected_min_subplots} subplots for {len(groups)} groups and {group_data.shape[1]} infection states")
+                self.assertEqual(
+                    rows, 6, "Should have 6 rows (number of infection states)")
+                self.assertEqual(
+                    cols, 7, "Should have 7 columns (number of age groups)")
 
         # Verify figure title is set
         fig_mock.suptitle.assert_called_once()
@@ -218,8 +219,9 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
 
             abm._format_x_axis(test_x, test_start_date, test_xtick_step)
 
-            # Verify that gca was called to get current axis
-            mock_plt.gca.assert_called_once()
+            # Verify that gca was called to get current axis (it's called twice in the function)
+            self.assertEqual(mock_plt.gca.call_count, 2,
+                             "gca should be called twice")
 
             # Verify that gcf was called to get current figure
             mock_plt.gcf.assert_called_once()
