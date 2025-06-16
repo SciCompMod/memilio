@@ -200,6 +200,7 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
         np.transpose(result.as_ndarray()[1:, :]))
 
     dataset_entries = copy.deepcopy(result_array)
+    dataset_entries = np.nan_to_num(dataset_entries)
 
     return dataset_entries.tolist(), damped_matrices
 

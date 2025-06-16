@@ -406,9 +406,10 @@ def network_fit(
     if (plot_stats):
         plot_losses(history)
         plot_compartment_prediction_model(
-            test_inputs, test_labels, modeltype, model=model,
+            data_prep["test_inputs"], data_prep["test_labels"], modeltype, model=model,
             plot_compartment='InfectedSymptoms', max_subplots=3)
-        df = get_test_statistic(test_inputs, test_labels, model)
+        df = get_test_statistic(
+            data_prep["test_inputs"], data_prep["test_labels"], model)
         print(df)
     return history
 
@@ -465,13 +466,13 @@ def get_test_statistic(test_inputs, test_labels, model):
     return mean_percentage
 
 
-def get_input_dim_lstm(path):
+def get_input_dim_lstm(path_to_file):
     """ Extract the dimension of the input data
 
-    :param path: path to the data
+    :param path_to_file: path to the data
 
     """
-    file = open(os.path.join(path, 'data_secir_groups.pickle'), 'rb')
+    file = open(path_to_file, 'rb')
 
     data = pickle.load(file)
     input_dim = data['inputs'].shape[2] + np.asarray(
@@ -493,7 +494,7 @@ if __name__ == "__main__":
     neurons_in_hidden_layer = 512
     activation_function = 'relu'
     modelname = "Dense"
-    modeltype = "classic"  # or "classic"
+    modeltype = "timeseries"  # or "classic"
 
     model_parameters = (label_width, number_age_groups, number_compartments,
                         hidden_layers, neurons_in_hidden_layer, activation_function, modelname)

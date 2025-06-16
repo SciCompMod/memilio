@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2025 MEmilio
 #
-# Authors:
+# Authors: Manuel Heger, Henrik Zunker
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
