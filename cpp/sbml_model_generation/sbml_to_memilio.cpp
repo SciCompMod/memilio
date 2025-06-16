@@ -158,8 +158,8 @@ std::string format_main_formula(Model& model, const std::string& math_string, co
                 "model.populations[{mio::" + model_namespace + "::InfectionState::" + formula_parts[i] + "}]";
         }
         else if (model.getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
-            double size =
-                Compartment_getSize((Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[i]));
+            double size = Compartment_getSize(
+                dynamic_cast<Compartment*>(model.getListOfCompartments()->getElementBySId(formula_parts[i])));
             formula_parts[i] = std::to_string(size);
         }
         if (formula_parts[i] == "pi") {
@@ -281,8 +281,8 @@ mio::IOResult<std::string> format_event_formulas(std::string& formula, Model& mo
                 "::InfectionState::" + formula_parts[i] + ")]";
         }
         else if (model.getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
-            double size =
-                Compartment_getSize((Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[i]));
+            double size = Compartment_getSize(
+                dynamic_cast<Compartment*>(model.getListOfCompartments()->getElementBySId(formula_parts[i])));
             formula_parts[i] = std::to_string(size);
         }
         if (formula_parts[i] == "pi") {
@@ -332,8 +332,8 @@ mio::IOResult<std::string> format_event_trigger(const std::string& formula, Mode
             return mio::failure(mio::StatusCode::InvalidValue);
         }
         else if (model.getListOfCompartments()->getElementBySId(formula_parts[i]) != NULL) {
-            double size =
-                Compartment_getSize((Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[i]));
+            double size = Compartment_getSize(
+                dynamic_cast<Compartment*>(model.getListOfCompartments()->getElementBySId(formula_parts[i])));
             formula_parts[i] = std::to_string(size);
         }
         if (formula_parts[i] == "pi") {
@@ -691,7 +691,7 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
                 }
                 else if (model.getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
                     double size = Compartment_getSize(
-                        (Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[j]));
+                        dynamic_cast<Compartment*>(model.getListOfCompartments()->getElementBySId(formula_parts[j])));
                     formula_parts[j] = std::to_string(size);
                 }
                 if (formula_parts[j] == "pi") {
@@ -731,8 +731,8 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
                         formula_parts[j] = "y[" + formula_parts[j] + "i]";
                     }
                     else if (model.getListOfCompartments()->getElementBySId(formula_parts[j]) != NULL) {
-                        double size = Compartment_getSize(
-                            (Compartment*)model.getListOfCompartments()->getElementBySId(formula_parts[j]));
+                        double size      = Compartment_getSize(dynamic_cast<Compartment*>(
+                            model.getListOfCompartments()->getElementBySId(formula_parts[j])));
                         formula_parts[j] = std::to_string(size);
                     }
                     if (formula_parts[j] == "pi") {
