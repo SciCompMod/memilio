@@ -72,8 +72,26 @@ ModelMessina::ModelMessina(TimeSeries<ScalarType>&& populations_init, ScalarType
 {
 }
 
-ScalarType ModelMessina::sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input)
+ScalarType ModelMessina::sum_part1_term(size_t n, size_t j, ScalarType dt, ScalarType input)
 {
+    // Depending on the Gregory order and the current time step, we determine the required row index of gregoryWeights_sigma.
+    // This is necessary because we implemented gregoryWeights_sigma in a reduced way.
+
+    size_t row_index, column_index;
+
+    // If n == gregory_order, then the row_index corresponds to n - gregory_order.
+    if (n <= m_gregory_order + m_gregory_order - 2) {
+        row_index = n - m_gregory_order;
+    }
+    // Else, for n >= m_gregory_order - 1, the entries in gregoryWeights_sigma do not change anymore and the
+    // corresponding row_index is given by m_gregory_order - 1.
+    else {
+        row_index = m_gregory_order - 1;
+    }
+    // The column index only depends on the current index of the sum j.
+    column_index = j;
+
+    ScalarType state_age = (n - j) * dt;
 
     std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
@@ -93,8 +111,21 @@ ScalarType ModelMessina::sum_part1_term(size_t row_index, size_t column_index, S
     return sum_part1_term;
 }
 
-ScalarType ModelMessina::sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input)
+ScalarType ModelMessina::sum_part2_term(size_t n, size_t j, ScalarType dt, ScalarType input)
 {
+    size_t weight_index;
+
+    // Depending on the Gregory order and the current time step, we determine the required weight index of gregoryWeights_omega.
+    // This is necessary because we implemented gregoryWeights_omega in a reduced way.
+    if (n - j <= m_gregory_order) {
+        weight_index = n - j;
+    }
+    else {
+        weight_index = m_gregory_order;
+    }
+
+    ScalarType state_age = (n - j) * dt;
+
     std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
     Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
 
@@ -131,56 +162,30 @@ ScalarType ModelMessina::fixed_point_function(ScalarType susceptibles, ScalarTyp
 
     // Compute first part of sum where already known initial values of Susceptibles are used.
     ScalarType sum_part1 = 0;
-    size_t row_index, column_index;
+
     for (size_t j = 0; j < m_gregory_order; j++) {
-        // Depending on the Gregory order and the current time step, we determine the required row index of gregoryWeights_sigma.
-        // This is necessary because we implemented gregoryWeights_sigma in a reduced way.
-
-        // If n < m_gregory_order - 1, then the row_index corresponds to n_index.
-        if (n < m_gregory_order - 1) {
-            row_index = n;
-        }
-        // Else, for n >= m_gregory_order - 1, the entries in gregoryWeights_sigma do not change anymore and the
-        // corresponding row_index is given by m_gregory_order - 1.
-        else {
-            row_index = m_gregory_order - 1;
-        }
-        // The column index only depends on the current index of the sum j.
-        column_index = j;
-
-        ScalarType state_age = (n - j) * dt;
 
         // For each index, the corresponding summand is computed here.
-        sum_part1 += sum_part1_term(row_index, column_index, state_age,
-                                    (m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]));
+        sum_part1 +=
+            sum_part1_term(n, j, dt, (m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]));
     }
     // std::cout << "Sum part 1: " << sum_part1 << std::endl;
 
     // Compute second part of sum where simulated values of Susceptibles are used.
     ScalarType sum_part2 = 0;
-    size_t weight_index;
+
     // In this loop, we compute all summands for j=n0,...,n-1. The summand for j=n is added separately below.
     for (size_t j = m_gregory_order; j <= n; j++) {
-        // Depending on the Gregory order and the current time step, we determine the required weight index of gregoryWeights_omega.
-        // This is necessary because we implemented gregoryWeights_omega in a reduced way.
-        if (n - j <= m_gregory_order) {
-            weight_index = n - j;
-        }
-        else {
-            weight_index = m_gregory_order;
-        }
-
-        ScalarType state_age = (n - j) * dt;
 
         // For each index, the corresponding summand is computed here.
         if (j < n) {
-            sum_part2 += sum_part2_term(weight_index, state_age,
-                                        m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
+            sum_part2 +=
+                sum_part2_term(n, j, dt, m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
         }
         // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
         // by the fixed point iteration.
         else {
-            sum_part2 += sum_part2_term(weight_index, state_age, m_N - susceptibles);
+            sum_part2 += sum_part2_term(n, j, dt, m_N - susceptibles);
         }
     }
     // std::cout << "Sum part 2: " << sum_part2 << std::endl;

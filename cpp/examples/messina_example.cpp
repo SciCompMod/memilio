@@ -140,7 +140,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
 int main()
 {
-    std::string result_dir = "../../simulation_results/messina_new_groundtruth=1e-4/";
+    std::string result_dir = "../../simulation_results/messina_160625/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
@@ -148,7 +148,7 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {4};
+    std::vector<ScalarType> ide_exponents_groundtruth = {5};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
@@ -156,7 +156,7 @@ int main()
 
     // Simulate with larger timesteps and use result_groundtruth for initialization.
     std::vector<size_t> gregory_orders    = {1, 2, 3};
-    std::vector<ScalarType> ide_exponents = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
 
     for (size_t gregory_order : gregory_orders) {
         std::cout << "Using Gregory order = " << gregory_order << std::endl;

@@ -28,6 +28,7 @@ namespace mio
 {
 namespace isir
 {
+std::vector<Eigen::MatrixX<ScalarType>> get_gregoryweights(size_t gregory_order);
 
 class Model
 {
@@ -101,8 +102,8 @@ public:
         return m_gregory_order;
     }
 
-    ScalarType sum_part1_term(size_t row_index, size_t column_index, ScalarType state_age, ScalarType input);
-    ScalarType sum_part2_term(size_t weight_index, ScalarType state_age, ScalarType input);
+    ScalarType sum_part1_term(size_t n, size_t j, ScalarType dt, ScalarType input);
+    ScalarType sum_part2_term(size_t n, size_t j, ScalarType dt, ScalarType input);
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 

@@ -202,11 +202,11 @@ def main():
 
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
-        __file__),  "../simulation_results/messina_new/")
+        __file__),  "../simulation_results/messina_160625/")
 
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
-        __file__),  "../plots/messina_new/")
+        __file__),  "../plots/messina_160625/")
 
     groundtruth_exponent = 5
     gregory_order_groundtruth = 3
@@ -214,7 +214,7 @@ def main():
     gregory_orders_simulation = [1, 2, 3]
 
     # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-    ide_exponents = [1, 2, 3]
+    ide_exponents = [1, 2, 3, 4]
     # Calculate time steps resulting from exponents_ide.
     timesteps_ide = []
     for exp in ide_exponents:
