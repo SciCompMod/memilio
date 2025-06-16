@@ -56,6 +56,7 @@ TEST(TestCompartmentSimulation, integrator_uses_model_reference)
 }
 
 struct MockSimulateSim { // looks just enough like a simulation for the simulate functions to not notice
+
     // this "model" converts to and from int implicitly, exposing its value after calling chech_constraints
     // this enables us to check whether check_constraints is called before the simulation is constructed
     struct Model {
@@ -112,23 +113,24 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
 
     static void clear() // reset variables
     {
-        model = integrator = t0 = dt = tmax = 0;
+        t0 = dt = tmax = model = integrator = 0;
     }
 
-    inline static int model, integrator;
     inline static double t0, dt, tmax;
+    inline static int model, integrator;
 };
 
 TEST(TestCompartmentSimulation, simulate_functions)
 {
-    // this checks that the (not model-specific) simulate functions makes all calls as expected, like "advance(tmax)"
+    // this checks that the (not model-specific) simulate functions make all calls as expected, like "advance(tmax)"
 
     // this works by misusing a simulate function on the MockSimulateSim to write out 1,2,3,4,5 and return 17
 
     // the lambdas in this test help deal with the integrator pointer and TimeSeries used and returned by a simulate
     // function, by misusing these types to store simple values
 
-    const int t0 = 1, dt = 2, tmax = 3, model = 4, integrator = 5;
+    const double t0 = 1, dt = 2, tmax = 3;
+    const int model = 4, integrator = 5;
 
     using Sim = MockSimulateSim;
 
@@ -179,7 +181,8 @@ TEST(TestCompartmentSimulation, simulate_functions)
         Sim::clear();
         auto result = f(t0, tmax, dt, model, integrator);
 
-        EXPECT_NEAR(result, 17, mio::Limits<double>::zero_tolerance());
+        EXPECT_NEAR(result, 17.0, mio::Limits<double>::zero_tolerance());
+        // use equal (instead of near) since there is no math happening in this test
         EXPECT_EQ(Sim::t0, t0);
         EXPECT_EQ(Sim::dt, dt);
         EXPECT_EQ(Sim::tmax, tmax);
