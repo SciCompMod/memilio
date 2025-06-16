@@ -103,7 +103,7 @@ class Scanner:
                 node)
 
             key = (binding_name, kind_name, tuple(function_arguments.get(
-                "arg_types", [])), tuple(function_arguments.get("arg_names", [])))
+                "arg_types", [])), tuple(function_arguments.get("arg_names", [])), function_arguments.get("parent_name", ""))
 
             if key in self.handled_bindings:
                 continue
@@ -113,7 +113,96 @@ class Scanner:
                               namespace, function_arguments)
                 self.handled_bindings.add(key)
 
+                if binding_type == "class":
+                    self.handle_class_binding(
+                        binding, node, intermed_repr, namespace)
+
         return intermed_repr.found_bindings
+
+    def handle_class_binding(self: Self, binding, node: Cursor, intermed_repr: IntermediateRepresentation, namespace: str):
+        """ Handle the methods of a class.
+        :param binding: The binding dictionary containing the class information
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :param intermed_repr: Dataclass used for saving the extracted model features.
+        :param namespace: Namespace of the current node.
+        :param methods: List of methods to be handled for the class binding.
+        """
+
+        current_entry: dict[str, Any] = intermed_repr.found_bindings[-1]
+        current_entry.setdefault("methods", [])
+        methods = binding.get("methods", [])
+
+        base_classes = []
+        for child in node.get_children():
+            if child.kind == CursorKind.CXX_BASE_SPECIFIER:
+                base_type = child.type.spelling
+                base_classes.append(base_type)
+
+            if child.kind == CursorKind.CONSTRUCTOR:
+                constructor_params = []
+                for param in child.get_children():
+                    if param.kind == CursorKind.PARM_DECL:
+                        param_type = param.type.spelling
+                        param_name = param.spelling
+                        constructor_params.append(
+                            {"name": param_name, "type": param_type})
+
+                current_entry["init"] = constructor_params
+                break
+
+        if base_classes:
+            current_entry["base_classes"] = base_classes
+
+        for method in methods:
+            method_name = method.get("name")
+            method_kind = method.get("cursorkind")
+
+            matching_child = next(
+                (child for child in node.get_children()
+                 if child.spelling == method_name),
+                None
+            )
+
+            if matching_child is None:
+                continue
+
+            method_args = self.get_function_arguments(matching_child)
+
+            key = (
+                method_name,
+                method_kind,
+                tuple(method_args.get("arg_types", [])),
+                tuple(method_args.get("arg_names", [])),
+                method_args.get("parent_name", "")
+            )
+
+            if key in self.handled_bindings:
+                continue
+
+            method_info = {
+                "type": "method",
+                "name": method_name,
+                "kind": matching_child.kind.name,
+                "namespace": namespace,
+                "return_type": matching_child.result_type.spelling if matching_child.kind.is_declaration() else "",
+                "arg_types": method_args.get("arg_types", []),
+                "arg_names": method_args.get("arg_names", []),
+                "parent_name": method_args.get("parent_name", ""),
+                "is_const": method_args.get("is_const", False),
+                "is_member": method_args.get("is_member", False)
+            }
+
+            current_entry["methods"].append(method_info)
+            self.handled_bindings.add(key)
+
+    def get_base_specifier(self: Self, node: Cursor) -> str:
+        """ Get the base specifier of a class node.
+        :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
+        :returns: The base specifier of the class node as a string."""
+        for child in node.get_children():
+            if child.kind == CursorKind.CXX_BASE_SPECIFIER:
+                return child.type.spelling
+        return ""
 
     def set_info(self: Self, intermed_repr: IntermediateRepresentation, node: Cursor, binding_type, namespace: str, function_arguments: dict) -> None:
         """ Set the information of the current node into the intermed_repr.
@@ -136,10 +225,16 @@ class Scanner:
             "arg_names": function_arguments.get("arg_names", []),
             "parent_name": function_arguments.get("parent_name", ""),
             "is_const": function_arguments.get("is_const", False),
-            "is_member": function_arguments.get("is_member", False)
-        }
+            "is_member": function_arguments.get("is_member", False),
 
-        intermed_repr.found_bindings.append(found_info)
+            "methods": []
+
+        }
+        key = (node.spelling, node.kind.name, tuple(function_arguments.get("arg_types", [])), tuple(
+            function_arguments.get("arg_names", [])), function_arguments.get("parent_name", ""))
+        if key not in self.handled_bindings:
+            intermed_repr.found_bindings.append(found_info)
+            self.handled_bindings.add(key)
 
     def get_function_arguments(self, node: Cursor) -> dict:
         """ Get the argument types and names of a function node.
@@ -216,7 +311,7 @@ class Scanner:
         :param node: Represents the current node of the abstract syntax tree as a Cursor object from libclang.
         :param intermed_repr: Dataclass used for saving the extracted model features.
         :param namespace: Default = ""] Namespace of the current node.
-        :param self: Self: 
+        :param self: Self:
 
         """
         if node.kind == CursorKind.NAMESPACE:
@@ -236,8 +331,8 @@ class Scanner:
         """ Dictionary to map CursorKind to methods. Works like a switch.
 
         :param Underlying: kind of the current node.
-        :param self: Self: 
-        :param kind: CursorKind: 
+        :param self: Self:
+        :param kind: CursorKind:
         :returns: Appropriate method for the given kind.
 
         """
@@ -263,7 +358,7 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
+        :param self: Self:
 
         """
         if node.spelling.strip() != default_dict["emptystring"]:
@@ -341,9 +436,9 @@ class Scanner:
         Inspect nodes which represent base specifier.
         For now this is handled by the parent node, which represents the class.
 
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
+        :param self: Self:
+        :param node: Cursor:
+        :param intermed_repr: IntermediateRepresentation:
 
         """
         pass
@@ -355,7 +450,7 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
+        :param self: Self:
 
         """
         filepath = node.location.file.name
@@ -391,7 +486,7 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
+        :param self: Self:
         """
         for base in node.get_children():
             if base.kind != CursorKind.CXX_BASE_SPECIFIER:
@@ -416,7 +511,7 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
+        :param self: Self:
 
         """
         if intermed_repr.model_class == default_dict["model"]:
@@ -438,7 +533,7 @@ class Scanner:
 
         :param node: Current node represented as a Cursor object.
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
+        :param self: Self:
 
         """
         if node.spelling == self.config.parameterset:
@@ -449,9 +544,9 @@ class Scanner:
             intermed_repr: IntermediateRepresentation) -> None:
         """Not used yet.
 
-        :param self: Self: 
-        :param node: Cursor: 
-        :param intermed_repr: IntermediateRepresentation: 
+        :param self: Self:
+        :param node: Cursor:
+        :param intermed_repr: IntermediateRepresentation:
 
         """
         pass
@@ -462,7 +557,7 @@ class Scanner:
         delet unnecesary enums and check for missing model features.
 
         :param intermed_repr: Dataclass used for saving the extracted model features.
-        :param self: Self: 
+        :param self: Self:
         """
 
         population_groups = []
