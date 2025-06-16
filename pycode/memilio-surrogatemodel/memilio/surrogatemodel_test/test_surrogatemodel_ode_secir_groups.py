@@ -688,13 +688,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         : param mock_baseline:
         : param mock_minimum:
         """
-        # Helper function to normalize the .getconfig() output
-        def normalize_config(config):
-            config.pop('name', None)
-            for layer in config["layers"]:
-                layer["config"].pop("name", None)
-            return config
-
         input_width = 5
         label_width = 10
         num_runs = 2
