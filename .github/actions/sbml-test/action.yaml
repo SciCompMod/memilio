@@ -17,7 +17,7 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install gcc-13
         sudo apt-get -qq -y install g++-13
-        sido apt-get -qq -y install libbz2-dev libbz2-1.0
+        sudo apt-get -qq -y install libbz2-dev libbz2-1.0
         sudo apt-get -qq -y install libsbml5t64 libsbml5-dev
         sudo apt-get -qq -y install ccache
         sudo apt-get -qq update
