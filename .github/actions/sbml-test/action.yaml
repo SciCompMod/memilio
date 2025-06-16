@@ -56,6 +56,17 @@ runs:
         cd cpp/build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
+    - name: Run sbml importer
+      shell: bash
+      run: | 
+        cd cpp
+        ./build/bin/sbml_to_memilio tests/data/sbml_test.sbml
+    - name: Compile result
+      shell: bash
+      run: |
+        cd cpp/build
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake --build . -j 4
     # - name: Run unit tests
     #   shell: bash
     #   # always run tests as cmake target coverage
