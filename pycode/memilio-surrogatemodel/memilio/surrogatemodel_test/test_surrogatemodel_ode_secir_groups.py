@@ -222,7 +222,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
 # # Testing network_architectures.py
 
-
     def test_mlp_multi_single(self):
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_single_output(
@@ -714,9 +713,9 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         model.save_model(mlp1.model,
                          self.path, "mlp_multi_multi")
-        print(os.listdir(self.path))
 
-        path = f"{self.path}/mlp_multi_multi.keras"
+        path = os.path.join(self.path, "mlp_multi_multi.keras")
+        print(path)
         mlp2 = model.load_model(path)
         self.assertEqual(mlp1.model.summary(), mlp2.summary())
 
