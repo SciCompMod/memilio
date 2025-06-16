@@ -7,7 +7,7 @@ set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.6")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
-set(MEMILIO_SBML_VERSION "5.20.4")
+set(MEMILIO_SBML_VERSION "5.20.2")
 
 # Gperftools for profiling; must be first, so that libraries are included in the profile
 if(MEMILIO_ENABLE_PROFILING)
