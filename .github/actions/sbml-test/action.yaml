@@ -17,8 +17,24 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install gcc-13
         sudo apt-get -qq -y install g++-13
-        sudo apt-get -qq -y install libsbml
+        sudo apt-get -qq -y install libsbml5t64 libsbml5-dev
+        sudo apt-get -qq -y install ccache
         sudo apt-get -qq update
+    - name: ccache
+      id: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        # free total space for cache available on github is limited to 10GB, so only save on main branch;
+        # other branches will try to use cache from main, but branches that are too old won't benefit;
+        save: ${{ github.ref_name == 'main' }} 
+        # set enough space per build cache to keep a few previous versions to be used by older branches
+        # debug builds require more space
+        max-size: ${{ inputs.config == 'Release' && '200M' || '1G' }} 
+        # saves cache as `ccache-<key>-<timestamp>` (timestamp added automatically, key must be unique, github caches are never overwritten)
+        # key should be a composite of all options that affect the compilation
+        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-covOFF-depON-ompOFF-sanOFF
+        # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
+        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-covOFF-depON-ompOFF-sanOFF
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
@@ -29,12 +45,8 @@ runs:
       run: |
         cd cpp
         tar -xzf build.tar.gz
-        echo "Ls curr dir: "
-        ls 
-        echo "LS upper dir: "
-        ls ..
-        realpath .
-        ls build
+        echo "Ld dpkg "
+        dpkg -L libsbml5-dev
     - name: Build SBML converter
       shell: bash
       run: |
@@ -42,7 +54,7 @@ runs:
         ls
         echo "Old code:"
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/local/lib/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
     # - name: Run unit tests
     #   shell: bash
