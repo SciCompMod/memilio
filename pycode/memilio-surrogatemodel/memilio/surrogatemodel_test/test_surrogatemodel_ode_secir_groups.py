@@ -714,8 +714,9 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         model.save_model(mlp1.model,
                          self.path, "mlp_multi_multi")
+        print(os.listdir(self.path))
 
-        path = "/home/mlp_multi_multi.keras"
+        path = f"{self.path}/mlp_multi_multi.keras"
         mlp2 = model.load_model(path)
         self.assertEqual(mlp1.model.summary(), mlp2.summary())
 
