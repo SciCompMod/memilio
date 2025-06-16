@@ -222,6 +222,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
 # # Testing network_architectures.py
 
+
     def test_mlp_multi_single(self):
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_single_output(
@@ -657,6 +658,52 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         training_parameter = (
             early_stop, max_epochs, loss, optimizer, metric)
 
+        model_mlp_multi_input_multi_output = model.network_fit(
+            model=network_architectures.mlp_multi_input_multi_output(
+                label_width),
+            training_parameter=training_parameter,
+            path=self.path,
+            filename="data_secir_groups_10days_2_active.pickle",
+            modeltype='classic',  plot_stats=False)
+
+        model.save_model(model_mlp_multi_input_multi_output.model,
+                         self.path, "mlp_multi_multi")
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+
+        self.assertEqual(os.listdir(self.path),
+                         ['data_secir_groups_10days_2_active.pickle', 'mlp_multi_multi.keras'])
+
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
+           return_value=0.1 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getBaselineMatrix',
+           return_value=0.6 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.get_population',
+           return_value=[[5256.0, 10551, 32368.5,
+                         43637.833333333336, 22874.066666666666, 8473.6]])
+    def test_load_model(
+            self, mock_population, mock_baseline, mock_minimum):
+        """
+        : param mock_population:
+        : param mock_baseline:
+        : param mock_minimum:
+        """
+        input_width = 5
+        label_width = 10
+        num_runs = 2
+
+        data_generation.generate_data(num_runs, self.path, "", input_width,
+                                      label_width)
+        max_epochs = 1
+        early_stop = 100
+        loss = tf.keras.losses.MeanAbsolutePercentageError()
+        optimizer = "Adam"
+        metric = [tf.keras.metrics.MeanAbsoluteError(),
+                  tf.keras.metrics.MeanAbsolutePercentageError()]
+
+        training_parameter = (
+            early_stop, max_epochs, loss, optimizer, metric)
+
         mlp1 = model.network_fit(
             model=network_architectures.mlp_multi_input_multi_output(
                 label_width),
@@ -668,12 +715,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         model.save_model(mlp1.model,
                          self.path, "mlp_multi_multi")
 
-        self.assertEqual(len(os.listdir(self.path)), 2)
-
-        self.assertEqual(os.listdir(self.path),
-                         ['data_secir_groups_10days_2_active.pickle', 'mlp_multi_multi.keras'])
-
-        path = os.path.join(self.path, "mlp_multi_multi.keras")
+        path = "/home/mlp_multi_multi.keras"
         mlp2 = model.load_model(path)
         self.assertEqual(mlp1.model.summary(), mlp2.summary())
 
