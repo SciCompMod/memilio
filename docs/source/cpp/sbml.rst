@@ -58,7 +58,7 @@ the generated example file ``cpp/sbml_model_generation/ex_<sbml-file-name>.cpp``
 
 Limitations
 -------------
-Be careful about your naming, as some names like e.g. ``Inf`` are be ambiguous.
+Be careful about your naming, as some names like e.g. ``Inf`` are ambiguous.
 
 Not every feature implemented in SBML is also supported by memilio.
 The following features are the most important not supported features:
