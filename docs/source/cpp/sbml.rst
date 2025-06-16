@@ -3,7 +3,7 @@ Creating models using SBML
 
 The `SBML <https://sbml.org/>`_ integration into memilio works via the ``sbml_to_memilio`` executable. 
 Building it requires the installation of `libsbml <https://sbml.org/software/libsbml/>`_ . Then the general build command
- will produce the executable at ``build/bin/sbml_to_memilio``. 
+will produce the executable at ``build/bin/sbml_to_memilio``. 
 
 Building the converter
 ---------------------------------
@@ -37,7 +37,7 @@ Call the executable on a given SBML file as
     the ``sbml_model_generation`` folder.
 
 If `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ is not installed, it will end with an error, but produce
- the necessary files nevertheless.
+the necessary files nevertheless.
 
 
 It will produce 
@@ -66,8 +66,7 @@ The following features are the most important not supported features:
     - Events not triggered by time
     - Usage of multiple SBML-compartments
     - Rules (unless they are RateRules)
-    - The ``^`` operator for exponentiation in functions. This will produce errors during compilation of the generated 
-        code, but can then be changed manually.
+    - The ``^`` operator for exponentiation in functions. This will produce errors during compilation of the generated code, but can then be changed manually.
 
 As in an SBML file all species have to be given seperately, it is unfortunately also not possible to automatically use 
 the Population in MEmilio to stratify the population into different compartments.
