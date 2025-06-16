@@ -187,7 +187,7 @@ std::string format_main_formula(Model& model, const std::string& math_string, co
  * - If an initial assignment is given, it is used. This could be
  *   - a values
  *   - a other parameter
- *   - a formula, which would then be parsed using :cpp:func:`format_main_formula(Model& model, const std::string& math_string, const std::string& model_namespace)`
+ *   - a formula, which would then be parsed using @see format_main_formula
  *
  * If none of these are given, it returns "NAN", otherwise the identified value.
  */
