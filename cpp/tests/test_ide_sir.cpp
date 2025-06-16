@@ -34,7 +34,7 @@ TEST(IdeSir, checkGregoryWeights)
     size_t n_max = 6;
 
     // Define Gregory orders that we test.
-    std::vector<size_t> gregory_orders = {2, 3};
+    std::vector<size_t> gregory_orders = {1, 2, 3};
 
     for (size_t gregory_order : gregory_orders) {
 
@@ -46,7 +46,8 @@ TEST(IdeSir, checkGregoryWeights)
         std::cout << "gregory order: " << gregory_order << std::endl;
         switch (gregory_order) {
         case 1:
-            // TODO
+            gregoryWeights_sigma_expected = {{1. / 2.}, {1. / 2.}, {1. / 2.}, {1. / 2.}, {1. / 2.}, {1. / 2.}};
+            gregoryWeights_omega_expected = {1. / 2., 1., 1., 1., 1., 1.};
             break;
         case 2:
             std::cout << "case 2 \n";
