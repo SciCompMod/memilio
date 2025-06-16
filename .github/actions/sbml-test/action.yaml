@@ -46,14 +46,9 @@ runs:
       run: |
         cd cpp
         tar -xzf build.tar.gz
-        echo "Ld dpkg "
-        dpkg -L libsbml5-dev
     - name: Build SBML converter
       shell: bash
       run: |
-        realpath .
-        ls
-        echo "Old code:"
         cd cpp/build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
@@ -68,36 +63,3 @@ runs:
         cd cpp/build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
-    # - name: Run unit tests
-    #   shell: bash
-    #   # always run tests as cmake target coverage
-    #   # does not return an error if a test fails
-    #   run: |
-    #     cd cpp/build/bin
-    #     sudo chmod a+x memilio-test
-    #     ./memilio-test  --gtest_output="xml:report.xml" --gtest_repeat=${{ inputs.num-repeat }}
-    # - name: Compute code coverage
-    #   shell: bash
-    #   # compute code coverage
-    #   run: |
-    #     if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-    #       cd cpp/build
-    #       cmake --build . --target coverage/fast
-    #     fi
-    # - name: Upload test report
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: test-cpp-linux-report-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
-    #     path: cpp/build/bin/report.xml
-    #     if-no-files-found: error
-    #     retention-days: 1
-    # - name: Upload coverage reports
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: test-cpp-coverage-reports-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
-    #     path: |
-    #       cpp/build/coverage.info
-    #       cpp/build/coverage
-    #     # coverage is only calculated from latest gcc debug build
-    #     if-no-files-found: ${{ inputs.coverage == 'OFF' && 'ignore' || 'error' }}
-    #     retention-days: 1
