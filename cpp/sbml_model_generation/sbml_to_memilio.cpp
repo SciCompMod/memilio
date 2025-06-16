@@ -443,7 +443,7 @@ mio::IOResult<void> create_infection_state(Model& model, const std::string& file
         infection_state << "enum class InfectionState" << std::endl;
         infection_state << "{" << std::endl;
         for (size_t i = 0; i < number_species; i++) {
-            Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
+            Species curr_species = *model.getListOfSpecies()->get(i);
             infection_state << "  " << curr_species.getId() << "," << std::endl;
         }
         infection_state << "  Count\n};\n}\n}\n\n#endif" << std::endl;
@@ -496,7 +496,7 @@ mio::IOResult<void> create_parameters(Model& model, const std::string& filename,
             if (i != 0) {
                 parameterset_initializer += ", ";
             }
-            Parameter param  = *(Parameter*)model.getListOfParameters()->get(i);
+            Parameter param  = *model.getListOfParameters()->get(i);
             double value     = param.getValue();
             std::string name = param.getId();
             parameters << "template <typename FP = ScalarType>" << std::endl;
@@ -606,7 +606,7 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
         model_h << "auto& params = this->parameters;" << std::endl;
         // Create index variables for every species
         for (size_t i = 0; i < number_species; i++) {
-            Species curr_species = *(Species*)model.getListOfSpecies()->get(i);
+            Species curr_species = *model.getListOfSpecies()->get(i);
             model_h << "    size_t " << curr_species.getId()
                     << "i = this->populations.get_flat_index({InfectionState::" << curr_species.getId() << "});"
                     << std::endl;
@@ -640,14 +640,14 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
         // Create reactions
         for (size_t i = 0; i < number_reactions; i++) {
             model_h << "{" << std::endl;
-            auto curr_reaction = *(Reaction*)model.getListOfReactions()->get(i);
+            auto curr_reaction = *model.getListOfReactions()->get(i);
             auto products      = curr_reaction.getListOfProducts();
             auto educts        = curr_reaction.getListOfReactants();
             auto modifiers     = curr_reaction.getListOfModifiers();
             auto formula       = curr_reaction.getKineticLaw();
             if (formula->getListOfParameters()->size() != 0) {
                 for (size_t j = 0; j < formula->getListOfParameters()->size(); j++) {
-                    auto param = *(Parameter*)formula->getListOfParameters()->get(j);
+                    auto param = *formula->getListOfParameters()->get(j);
                     model_h << "double " << param.getId() << " = " << param.getValue() << ";" << std::endl;
                 }
             }
@@ -705,12 +705,12 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
 
             std::string output_formula = boost::algorithm::join(formula_parts, " ");
             for (size_t j = 0; j < educts->size(); j++) {
-                auto educt = *(SpeciesReference*)educts->get(j);
-                model_h << "dydt[" << educt.getSpecies() << "i] -= " << output_formula << ";" << std::endl;
+                auto educt = educts->get(j);
+                model_h << "dydt[" << educt->getSpecies() << "i] -= " << output_formula << ";" << std::endl;
             }
             for (size_t j = 0; j < products->size(); j++) {
-                auto product = *(SpeciesReference*)products->get(j);
-                model_h << "dydt[" << product.getSpecies() << "i] += " << output_formula << ";" << std::endl;
+                auto product = products->get(j);
+                model_h << "dydt[" << product->getSpecies() << "i] += " << output_formula << ";" << std::endl;
             }
             model_h << "}" << std::endl;
         }
