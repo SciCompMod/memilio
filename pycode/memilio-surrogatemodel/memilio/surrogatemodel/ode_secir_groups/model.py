@@ -414,6 +414,34 @@ def network_fit(
     return history
 
 
+def save_model(model, path, modelname):
+    """
+    Saving a trained model. 
+
+    :param model: trained tensorflow keras model 
+    :param path: path where the model should be stored 
+    :param modelname: the name of the model 
+    """
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    path_to_file = os.path.join(path, modelname + ".keras")
+    model.save(path_to_file)
+    print("Model successfully saved")
+
+
+def load_model(path):
+    """
+    Loading a trained model. 
+
+    :param path: path to the .keras file containing the desired model
+    :returns: trained tf.keras model 
+    """
+    if not os.path.isfile(path):
+        raise FileExistsError(
+            "There is no .keras model stored at the given directory.")
+    return tf.keras.models.load_model(path)
+
+
 #####################
 # Plots etc.
 #####################
