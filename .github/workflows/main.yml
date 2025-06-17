@@ -128,21 +128,13 @@ jobs:
   test-cpp-gcc-sbml:
       if: github.event.pull_request.draft == false
       needs: build-cpp-gcc_clang
-      strategy:
-        matrix:
-          compiler: ["gcc"]
-          config: ["Release"]
-          version: ["latest"]
-          include:
-            - version: "latest"
-              os: "ubuntu-latest"
-      runs-on: ${{ matrix.os }}
+      runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
         - uses: ./.github/actions/sbml-test
           with:
-            artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
-            coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
+            artifact-pattern: gcc-latest-Release
+            coverage: "OFF"
   
 
   merge-test-artifacts:

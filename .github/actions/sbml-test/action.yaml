@@ -1,13 +1,5 @@
 name: "SBML Compile and Run Test"
 description: "Compile the SBML integrator, run it on a test example and compile the result."
-inputs:
-  artifact-pattern:
-    description: "Name of the build artifact that contains the unit test binary, and coverage artifacts that will be uploaded."
-    required: true
-  optional-deps:
-    description: "Optional dependencies of unit test binary (ON or OFF, default ON). If OFF, adds `-nodep` to the artifact name."
-    required: false
-    default: "ON"
 runs:
   using: "composite"
   steps:
@@ -26,16 +18,16 @@ runs:
         save: ${{ github.ref_name == 'main' }} 
         # set enough space per build cache to keep a few previous versions to be used by older branches
         # debug builds require more space
-        max-size: ${{ inputs.config == 'Release' && '200M' || '1G' }} 
+        max-size: 200M
         # saves cache as `ccache-<key>-<timestamp>` (timestamp added automatically, key must be unique, github caches are never overwritten)
         # key should be a composite of all options that affect the compilation
-        key: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-covOFF-depON-ompOFF-sanOFF
+        key: linux-gcc-latest-Release-covOFF-depON-ompOFF-sanOFF
         # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
-        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-covOFF-depON-ompOFF-sanOFF
+        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-Release-covOFF-depON-ompOFF-sanOFF
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-linux-${{ inputs.artifact-pattern }}${{ inputs.optional-deps == 'OFF' && '-nodep' || ''}}
+        name: build-cpp-linux-${{ inputs.artifact-pattern }}
         path: cpp
     - name: extract build archive
       shell: bash
@@ -46,7 +38,7 @@ runs:
       shell: bash
       run: |
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
     - name: Run SBML importer
       shell: bash
@@ -57,5 +49,5 @@ runs:
       shell: bash
       run: |
         cd cpp/build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_ENABLE_IPOPT=ON -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
         cmake --build . -j 4
