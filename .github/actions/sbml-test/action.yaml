@@ -7,7 +7,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install gcc-13 g++-13 libbz2-dev libbz2-1.0 libsbml5t64 libsbml5-dev ccache
+        sudo apt-get -qq -y install gcc-13 g++-13 libbz2-dev libbz2-1.0 libsbml5t64 libsbml5-dev ccache libhdf5-dev
         sudo apt-get -qq update
     - name: ccache
       id: ccache
