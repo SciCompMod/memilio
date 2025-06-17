@@ -33,7 +33,8 @@
 namespace mio
 {
 /**
- * @brief Gets the region ID (county, state, or district) of an EpiDataEntry.
+ * @brief Gets the region ID (county, state, or district) of an EpiDataEntry. If none are available, 
+ * it defaults to 0 which is representing the whole country.
  * 
  * If none are available, it defaults to 0 which is representing the whole country.
  * 
@@ -121,8 +122,8 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>&,
-                                                                const std::vector<int>&);
+IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
+                                                                const std::vector<int>&) vregion;
 
 /**
  * @brief Reads population data from census data.
@@ -132,7 +133,8 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string&, const std::vector<int>&);
+IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
+                                                                const std::vector<int>& vregion);
 
 } // namespace mio
 
