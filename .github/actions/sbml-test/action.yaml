@@ -15,7 +15,7 @@ runs:
       with:
         # free total space for cache available on github is limited to 10GB, so only save on main branch;
         # other branches will try to use cache from main, but branches that are too old won't benefit;
-        save: ${{ github.ref_name == 'main' }} 
+        save: false
         # set enough space per build cache to keep a few previous versions to be used by older branches
         # debug builds require more space
         max-size: 200M
@@ -23,7 +23,7 @@ runs:
         # key should be a composite of all options that affect the compilation
         key: linux-gcc-latest-Release-covOFF-depON-ompOFF-sanOFF
         # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
-        restore-keys: linux-${{ inputs.compiler }}-${{ inputs.version }}-Release-covOFF-depON-ompOFF-sanOFF
+        restore-keys: linux-gcc-latest-Release-covOFF-depON-ompOFF-sanOFF
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
