@@ -58,7 +58,7 @@ int get_region_id(const EpiDataEntry& data_entry)
  * @param[in] divi_data Vector of DIVI data entries containing date, region, and ICU information.
  * @param[in] vregion Vector of region IDs for which the data is computed.
  * @param[in] date Date for which the ICU data is computed.
- * @param[out] vnum_icu Output vector containing the number of ICU cases for each region.
+ * @param[in, out] vnum_icu Output vector containing the number of ICU cases for each region.
  *
  * @return An IOResult indicating success or failure.
  */
@@ -101,7 +101,7 @@ IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const 
  * @param[in] path Path to the file containing DIVI data.
  * @param[in] vregion Vector of region IDs for which the data is computed.
  * @param[in] date Date for which the ICU data is computed.
- * @param[out] vnum_icu Output vector containing the number of ICU cases for each region.
+ * @param[in, out] vnum_icu Output vector containing the number of ICU cases for each region.
  *
  * @return An IOResult indicating success or failure.
  */
