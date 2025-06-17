@@ -123,7 +123,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>&) vregion;
+                                                                const std::vector<int>& vregion);
 
 /**
  * @brief Reads population data from census data.
