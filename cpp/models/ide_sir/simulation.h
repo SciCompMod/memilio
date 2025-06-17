@@ -42,6 +42,7 @@ public:
         : m_model(std::make_unique<ModelMessina>(model))
         , m_dt(dt)
     {
+        assert(m_dt > 0);
     }
 
     /** 

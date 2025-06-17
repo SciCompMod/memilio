@@ -21,6 +21,7 @@
 #include "ide_sir/parameters.h"
 #include "ide_sir/infection_state.h"
 #include "memilio/config.h"
+#include "memilio/math/floating_point.h"
 #include "memilio/utils/time_series.h"
 #include <cmath>
 
@@ -72,7 +73,30 @@ ModelMessina::ModelMessina(TimeSeries<ScalarType>&& populations_init, ScalarType
 {
 }
 
-ScalarType ModelMessina::sum_part1_term(size_t n, size_t j, ScalarType dt, ScalarType input)
+void ModelMessina::set_transitiondistribution_vector(ScalarType dt, ScalarType tmax)
+{
+    m_transitiondistribution_vector = std::vector<ScalarType>(size_t(std::round(tmax / dt)) + 1, 0.);
+
+    for (size_t i = 0; i <= size_t(std::round(tmax / dt)); i++) {
+        ScalarType state_age = (ScalarType)i * dt;
+        m_transitiondistribution_vector[i] =
+            parameters.get<TransitionDistributions>()[(size_t)InfectionTransition::InfectedToRecovered].eval(state_age);
+    }
+}
+
+void ModelMessina::set_parameter_vectors(ScalarType dt, ScalarType tmax)
+{
+    m_transmissionproboncontact_vector = std::vector<ScalarType>(size_t(std::round(tmax / dt)) + 1, 0.);
+    m_riskofinffromsymptomatic_vector  = std::vector<ScalarType>(size_t(std::round(tmax / dt)) + 1, 0.);
+
+    for (size_t i = 0; i <= size_t(std::round(tmax / dt)); i++) {
+        ScalarType state_age                  = (ScalarType)i * dt;
+        m_transmissionproboncontact_vector[i] = parameters.get<TransmissionProbabilityOnContact>().eval(state_age);
+        m_riskofinffromsymptomatic_vector[i]  = parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age);
+    }
+}
+
+ScalarType ModelMessina::sum_part1_term(size_t n, size_t j, ScalarType input)
 {
     // Depending on the Gregory order and the current time step, we determine the required row index of gregoryWeights_sigma.
     // This is necessary because we implemented gregoryWeights_sigma in a reduced way.
@@ -91,27 +115,18 @@ ScalarType ModelMessina::sum_part1_term(size_t n, size_t j, ScalarType dt, Scala
     // The column index only depends on the current index of the sum j.
     column_index = j;
 
-    ScalarType state_age = (n - j) * dt;
-
     std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
 
     ScalarType sum_part1_term;
 
-    sum_part1_term =
-        gregoryWeights_sigma(row_index, column_index) *
-        parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
-        parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
-        parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-            state_age) *
-        input;
-
-    // std::cout << "Gregory weight in sum1: " << gregoryWeights_sigma(row_index, column_index) * 24 << std::endl;
+    sum_part1_term = gregoryWeights_sigma(row_index, column_index) * m_transmissionproboncontact_vector[n - j] *
+                     m_riskofinffromsymptomatic_vector[n - j] * m_transitiondistribution_vector[n - j] * input;
 
     return sum_part1_term;
 }
 
-ScalarType ModelMessina::sum_part2_term(size_t n, size_t j, ScalarType dt, ScalarType input)
+ScalarType ModelMessina::sum_part2_term(size_t n, size_t j, ScalarType input)
 {
     size_t weight_index;
 
@@ -124,21 +139,13 @@ ScalarType ModelMessina::sum_part2_term(size_t n, size_t j, ScalarType dt, Scala
         weight_index = m_gregory_order;
     }
 
-    ScalarType state_age = (n - j) * dt;
-
     std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
     Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
 
     ScalarType sum_part2_term;
 
-    sum_part2_term =
-        gregoryWeights_omega(weight_index) * parameters.get<TransmissionProbabilityOnContact>().eval(state_age) *
-        parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age) *
-        parameters.get<TransitionDistributions>()[(Eigen::Index)InfectionTransition::InfectedToRecovered].eval(
-            state_age) *
-        input;
-
-    // std::cout << "Gregory weight in sum2: " << gregoryWeights_omega(weight_index) * 24 << std::endl;
+    sum_part2_term = gregoryWeights_omega(weight_index) * m_transmissionproboncontact_vector[n - j] *
+                     m_riskofinffromsymptomatic_vector[n - j] * m_transitiondistribution_vector[n - j] * input;
 
     return sum_part2_term;
 }
@@ -166,8 +173,7 @@ ScalarType ModelMessina::fixed_point_function(ScalarType susceptibles, ScalarTyp
     for (size_t j = 0; j < m_gregory_order; j++) {
 
         // For each index, the corresponding summand is computed here.
-        sum_part1 +=
-            sum_part1_term(n, j, dt, (m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]));
+        sum_part1 += sum_part1_term(n, j, (m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]));
     }
     // std::cout << "Sum part 1: " << sum_part1 << std::endl;
 
@@ -180,12 +186,12 @@ ScalarType ModelMessina::fixed_point_function(ScalarType susceptibles, ScalarTyp
         // For each index, the corresponding summand is computed here.
         if (j < n) {
             sum_part2 +=
-                sum_part2_term(n, j, dt, m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
+                sum_part2_term(n, j, m_N - populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
         }
         // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
         // by the fixed point iteration.
         else {
-            sum_part2 += sum_part2_term(n, j, dt, m_N - susceptibles);
+            sum_part2 += sum_part2_term(n, j, m_N - susceptibles);
         }
     }
     // std::cout << "Sum part 2: " << sum_part2 << std::endl;

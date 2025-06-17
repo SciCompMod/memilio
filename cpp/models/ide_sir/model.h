@@ -22,6 +22,7 @@
 #define IDESIR_MODEL_H
 
 #include "ide_sir/parameters.h"
+#include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
 namespace mio
@@ -102,12 +103,15 @@ public:
         return m_gregory_order;
     }
 
-    ScalarType sum_part1_term(size_t n, size_t j, ScalarType dt, ScalarType input);
-    ScalarType sum_part2_term(size_t n, size_t j, ScalarType dt, ScalarType input);
+    ScalarType sum_part1_term(size_t n, size_t j, ScalarType input);
+    ScalarType sum_part2_term(size_t n, size_t j, ScalarType input);
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 
     void compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
+
+    void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
+    void set_parameter_vectors(ScalarType dt, ScalarType tmax);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
@@ -118,6 +122,9 @@ private:
     // ---- Private parameters. ----
     ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
     size_t m_gregory_order;
+    std::vector<ScalarType> m_transitiondistribution_vector;
+    std::vector<ScalarType> m_transmissionproboncontact_vector;
+    std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
 };
 
 } // namespace isir

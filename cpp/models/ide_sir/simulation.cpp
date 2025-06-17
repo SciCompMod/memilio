@@ -36,6 +36,8 @@ using Vec = mio::TimeSeries<ScalarType>::Vector;
 // In this advance function, we only consider S as in the paper by Messina et al.
 void SimulationMessina::advance_messina(ScalarType tmax)
 {
+    m_model->set_transitiondistribution_vector(m_dt, tmax);
+    m_model->set_parameter_vectors(m_dt, tmax);
 
     mio::log_info("Simulating IDE-SIR from t0 = {} until tmax = {} with dt = {}.", m_model->populations.get_last_time(),
                   tmax, m_dt);
