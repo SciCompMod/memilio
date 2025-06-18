@@ -7,6 +7,7 @@ set(MEMILIO_MINIMAL_BOOST_VERSION "1.76.0")
 set(MEMILIO_JSONCPP_VERSION "1.9.6")
 set(MEMILIO_RANDOM123_VERSION "v1.14.0")
 set(MEMILIO_IPOPT_VERSION "3.14.12")
+set(MEMILIO_SBML_VERSION "5.20.2")
 
 # Gperftools for profiling; must be first, so that libraries are included in the profile
 if(MEMILIO_ENABLE_PROFILING)
@@ -194,6 +195,14 @@ else()
     message(WARNING "JsonCpp was not found. Memilio will be built without some IO features. 
         Set CMake variable MEMILIO_USE_BUNDLED_JSONCPP to ON or install JsonCpp and set the jsoncpp_DIR cmake variable 
         to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
+endif()
+
+find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
+if(sbml_FOUND)
+    set(MEMILIO_HAS_SBML ON)
+    message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")
+else()
+    message(WARNING "LibSBML was not found. The SBML importer will not be build.")
 endif()
 
 if(MEMILIO_ENABLE_MPI)
