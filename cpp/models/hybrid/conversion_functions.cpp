@@ -41,14 +41,16 @@ void convert_model(const dabm::Simulation<SingleWell<InfectionState>>& current_m
 {
     auto& current_result = current_model.get_result();
     auto& target_result  = target_model.get_result();
-    assert(current_result.get_last_time() >= target_result.get_last_time() &&
-           "Conversion from dabm to smm not possible because last smm time point is bigger than last dabm time point.");
+    if (current_result.get_last_time() < target_result.get_last_time()) {
+        mio::log_error(
+            "Conversion from dabm to smm not possible because last smm time point is bigger than last dabm time point");
+    }
     if (target_result.get_last_time() < current_result.get_last_time()) {
         target_result.add_time_point(current_result.get_last_time());
     }
-    //update result timeseries
+    // Update result timeseries
     target_result.get_last_value() = current_result.get_last_value();
-    //update model populations
+    // Update model populations
     for (int i = 0; i < (int)InfectionState::Count; ++i) {
         target_model.get_model().populations[{regions::Region(0), InfectionState(i)}] =
             current_result.get_last_value()[target_model.get_model().populations.get_flat_index(
@@ -62,15 +64,17 @@ void convert_model(const smm::Simulation<1, InfectionState>& current_model,
 {
     auto& current_result = current_model.get_result();
     auto& target_result  = target_model.get_result();
-    assert(current_result.get_last_time() >= target_result.get_last_time() &&
-           "Conversion from smm to dabm not possible because last dabm time point is bigger than last smm time point.");
+    if (current_result.get_last_time() < target_result.get_last_time()) {
+        mio::log_error("Conversion from smm to dabm not possible because last dabm time point is bigger than last smm "
+                       "time point.");
+    }
     if (target_result.get_last_time() < current_result.get_last_time()) {
         target_result.add_time_point(current_result.get_last_time());
     }
-    //Update result timeseries
+    // Update result timeseries
     target_result.get_last_value() = current_result.get_last_value();
 
-    //Update agents' infection state and sample agents position
+    // Update agents' infection state and sample agents position
     auto current_pop = current_result.get_last_value().eval();
     double total_pop = std::accumulate(current_pop.begin(), current_pop.end(), 0.0);
     SWPositionSampler pos_rng{{-1, -1}, {1, 1}, 0.1};
@@ -104,18 +108,19 @@ void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& c
 {
     auto& current_result = current_model.get_result();
     auto& target_result  = target_model.get_result();
-    assert(current_result.get_last_time() >= target_result.get_last_time() &&
-           "Conversion from dabm to ode-secir not possible because last ode-secir time point is bigger than last dabm "
-           "time point.");
+    if (current_result.get_last_time() < target_result.get_last_time()) {
+        mio::log_error("Conversion from dabm to ode-secir not possible because last ode-secir time point is bigger "
+                       "than last dabm time point.");
+    }
     if (target_result.get_last_time() < current_result.get_last_time()) {
         target_result.add_time_point(current_result.get_last_time());
     }
-    //If the secir model has more than one age group, the compartments from the dabm are equally distributed to all age groups
+    // If the secir model has more than one age group, the compartments from the dabm are equally distributed to all age groups
     size_t num_age_groups = target_result.get_last_value().size() / (int)mio::osecir::InfectionState::Count;
     for (int i = 0; i < (int)mio::osecir::InfectionState::Count; ++i) {
         for (size_t age_group = 0; age_group < num_age_groups; ++age_group) {
             double pop_value;
-            //set confirmed compartments to zero
+            // Set confirmed compartments to zero
             if (mio::osecir::InfectionState(i) == mio::osecir::InfectionState::InfectedNoSymptomsConfirmed ||
                 mio::osecir::InfectionState(i) == mio::osecir::InfectionState::InfectedSymptomsConfirmed) {
                 pop_value = 0.;
@@ -129,10 +134,10 @@ void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& c
             else {
                 pop_value = current_result.get_last_value()[(int)hybrid::InfectionState(i)] / num_age_groups;
             }
-            //update result timeseries
+            // Update result timeseries
             target_result.get_last_value()[target_model.get_model().populations.get_flat_index(
                 {mio::AgeGroup(age_group), mio::osecir::InfectionState(i)})] = pop_value;
-            //Update model populations
+            // Update model populations
             target_model.get_model().populations[{mio::AgeGroup(age_group), mio::osecir::InfectionState(i)}] =
                 pop_value;
         }
@@ -145,17 +150,18 @@ void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& cu
 {
     auto& current_result = current_model.get_result();
     auto& target_result  = target_model.get_result();
-    assert(current_result.get_last_time() >= target_result.get_last_time() &&
-           "Conversion from ode-secir to dabm not possible because last dabm time point is bigger than last ode-secir "
-           "time point.");
+    if (current_result.get_last_time() < target_result.get_last_time()) {
+        mio::log_error("Conversion from ode-secir to dabm not possible because last dabm time point is bigger than "
+                       "last ode-secir time point.");
+    }
     if (target_result.get_last_time() < current_result.get_last_time()) {
         target_result.add_time_point(current_result.get_last_time());
     }
 
     size_t num_age_groups = current_result.get_last_value().size() / (int)mio::osecir::InfectionState::Count;
     target_result.get_last_value().setZero();
-    //Update dabm time series
-    //Ode-secir model's age groups are aggregated as dabm does not have age groups
+    // Update dabm time series
+    // Ode-secir model's age groups are aggregated as dabm does not have age groups
     for (size_t age_group = 0; age_group < num_age_groups; ++age_group) {
         target_result.get_last_value()[(int)hybrid::InfectionState::Susceptible] +=
             current_result.get_last_value()[current_model.get_model().populations.get_flat_index(
@@ -187,7 +193,7 @@ void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& cu
                 {mio::AgeGroup(age_group), mio::osecir::InfectionState::Dead})];
     }
 
-    //Update agents' infection state and sample agents position
+    // Update agents' infection state and sample agents position
     auto current_pop = target_result.get_last_value().eval();
     double total_pop = std::accumulate(current_pop.begin(), current_pop.end(), 0.0);
     SWPositionSampler pos_rng{{-1, -1}, {1, 1}, 0.1};

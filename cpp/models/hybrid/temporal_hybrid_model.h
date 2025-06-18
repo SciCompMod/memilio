@@ -45,6 +45,7 @@ void convert_model(const CurrentModel&, TargetModel&) = delete;
  * @tparam Model1 (Simulation) Type of the first model used.
  * @tparam Model2 (Simulation) Type of the second model used.
  * @tparam ResultType1 Result type of the first model. The results of both models are needed to evalute the switching condition.
+ * @tparam ResultType2 Result type of the second model. The results of both models are needed to evalute the switching condition.
  */
 
 template <class Model1, class Model2, class ResultType1, class ResultType2>

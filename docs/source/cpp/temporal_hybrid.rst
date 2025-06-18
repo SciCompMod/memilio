@@ -4,7 +4,7 @@ Temporal-hybrid model
 Introduction
 ------------
 
-The temporal-hybrid model switches between two models during the course of the simulation according to a given condition. Both models have to be initialized with their corresponding parameters and are handed to the class ``TemporalHybridSimulation``. 
+The temporal-hybrid model switches between two models during the course of the simulation according to a given condition. The switching condition can in general be chosen arbitrarily e.g. a fixed time point or a case number threshold can be used for the switch. What condition suits best depends on the used models and the concrete application. Both models have to be initialized with their corresponding parameters and are handed to the class ``TemporalHybridSimulation``. 
 
 The ``TemporalHybridSimulation`` class needs the used model types as well as their result types as template arguments. The results of the models are used to evaluate the switching condition. Additionally, conversion functions to convert the first model to the second model and vice versa have to be implemented for the used model types.
 We implemented conversion functions for the following model combinations:

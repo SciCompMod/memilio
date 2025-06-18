@@ -4,7 +4,7 @@ This model is a hybrid model combining two models of different types. The motiva
 
 ## Temporal Hybridization
 
-The temporal-hybrid model switches between two models during the course of the simulation according to a given condition. Both models have to be initialized with their corresponding parameters and are handed to the class TemporalHybridSimulation. 
+The temporal-hybrid model switches between two models during the course of the simulation according to a given condition. The switching condition can in general be chosen arbitrarily e.g. a fixed time point or a case number threshold can be used for the switch. What condition suits best depends on the used models and the concrete application. Both models have to be initialized with their corresponding parameters and are handed to the class TemporalHybridSimulation.
 
 The TemporalHybridSimulation class needs the used model types as well as their result types as template arguments. The results of the models are used to evaluate the switching condition. Additionally, conversion functions to convert the first model to the second model and vice versa have to be implemented for the used model types.
 We implemented conversion function for the following model combinations:
@@ -14,7 +14,7 @@ We implemented conversion function for the following model combinations:
 
 ### Simulation
 
-The simulation runs in discrete time steps. In every step, we first check whether we need to switch the model by evaluating the switching condition. If the condition is fulfilled, we convert the currently used model into the target model i.e. we use its current state/result to update the state for the target model. Then we advance the (new) currently used model until the next time step.
+The simulation runs in discrete time steps. In every step, we first check whether we need to switch the model by evaluating the switching condition. If the condition is fulfilled, we convert the currently used model into the target model i.e. we use its current state/result to update the state of the target model. Then we advance the (new) currently used model until the next time step.
 
 For a detailed description and application of the model, see:
 

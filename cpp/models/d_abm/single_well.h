@@ -21,12 +21,11 @@
 #ifndef MIO_D_ABM_SINGLE_WELL_H
 #define MIO_D_ABM_SINGLE_WELL_H
 
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "d_abm/parameters.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/epidemiology/adoption_rate.h"
-
-using Position = Eigen::Vector2d;
 
 /**
  * @brief A Sampler for sampling a position for the singlewell potential F(x,y) = (x^4 + y^4)/2, see SingleWell.
@@ -34,6 +33,8 @@ using Position = Eigen::Vector2d;
 class SWPositionSampler
 {
 public:
+    using Position = Eigen::Vector2d;
+
     /**
      * @brief Create a sampler.
      * @param[in] bottom_left Coordinates of the bottom left corner of the range in which should be samples.
@@ -76,7 +77,8 @@ template <class InfectionState>
 class SingleWell
 {
 public:
-    using Status = InfectionState;
+    using Position = Eigen::Vector2d;
+    using Status   = InfectionState;
 
     struct Agent {
         Position position;
@@ -92,7 +94,7 @@ public:
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
     SingleWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
-               double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
+               ScalarType contact_radius = 0.4, ScalarType sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
         , m_sigma(sigma)
@@ -123,9 +125,9 @@ public:
      * @param[in] new_status Target infection state of the adoption rate, see mio::AdoptionRate.to.
      * @return Value of agent-dependent AdoptionRate.
      */
-    double adoption_rate(const Agent& agent, const Status& new_status) const
+    ScalarType adoption_rate(const Agent& agent, const Status& new_status) const
     {
-        double rate = 0;
+        ScalarType rate = 0;
         // get the correct adoption rate
         const size_t well = 0;
         auto map_itr      = m_adoption_rates.find({well, agent.status, new_status});
@@ -166,7 +168,7 @@ public:
      * @param[in] dt Step size.
      * @param[in] agent Agent to be moved.
      */
-    void move(const double /*t*/, const double dt, Agent& agent)
+    void move(const ScalarType /*t*/, const ScalarType dt, Agent& agent)
     {
         if (std::find(m_non_moving_states.begin(), m_non_moving_states.end(), agent.status) ==
             m_non_moving_states.end()) {
@@ -237,16 +239,17 @@ private:
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.
     */
-    bool is_in_domain(const Position& p) const
+    bool is_in_domain(const Position& p, double lower_domain_border = -2, double upper_domain_border = 2) const
     {
-        // restrict domain to [-2, 2]^2 where "escaping" is impossible, i.e. it holds x <= grad_U(x) for dt <= 0.1
-        return -2 <= p[0] && p[0] <= 2 && -2 <= p[1] && p[1] <= 2;
+        // restrict domain to [lower_domain_border, upper_domain_border]^2 where "escaping" is impossible, i.e. it holds x <= grad_U(x) for dt <= 0.1
+        return lower_domain_border <= p[0] && p[0] <= upper_domain_border && lower_domain_border <= p[1] &&
+               p[1] <= upper_domain_border;
     }
 
     std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>
         m_adoption_rates; ///< Map of AdoptionRates according to their region index and their from -> to infection states.
-    double m_contact_radius; ///< Agents' interaction radius. Within this radius agents are considered as contacts.
-    double m_sigma; ///< Noise term of the diffusion process.
+    ScalarType m_contact_radius; ///< Agents' interaction radius. Within this radius agents are considered as contacts.
+    ScalarType m_sigma; ///< Noise term of the diffusion process.
     std::vector<Status> m_non_moving_states; ///< Infection states within which agents do not change their location.
     mio::RandomNumberGenerator m_rng; ///< Model's random number generator.
 };

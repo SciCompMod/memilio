@@ -34,7 +34,7 @@ namespace mio
 namespace hybrid
 {
 
-//This header contains template specilizations for the convert_model function, see mio::hybrid::TemporalHybridSimulation.
+// This header contains template specilizations for the convert_model function, see mio::hybrid::TemporalHybridSimulation. This function is needed to convert one model to another when the switching condition in the temporal-hybrid model is fulfilled. The TemporalHybridSimulation can be used with any combination of two models, but the template specilizations of the convert_model function have to be provided here.
 
 template <>
 void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& current_model,
