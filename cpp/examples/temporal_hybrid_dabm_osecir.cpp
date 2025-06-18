@@ -62,7 +62,7 @@ int main()
             static_cast<mio::hybrid::InfectionState>(stat_sampler(mio::thread_local_rng(), infection_state_dist));
     }
     //Transmission parameters used for both models
-    double contact_frequency = 10, trans_prob_on_contact = 0.06, time_E = 3., time_Ins = 2.5, time_Isy = 5.2,
+    const double contact_frequency = 10, trans_prob_on_contact = 0.06, time_E = 3., time_Ins = 2.5, time_Isy = 5.2,
            time_Isev = 9., time_Icri = 7.2, mu_Ins_R = 0.2, mu_Isy_Isev = 0.1, mu_Isev_Icri = 0.1, mu_Icri_D = 0.2;
     //Initialize ABM adoption rates
     std::vector<mio::AdoptionRate<mio::hybrid::InfectionState>> adoption_rates;
@@ -175,7 +175,7 @@ int main()
                                           mio::TimeSeries<double>>
         hybrid_sim(sim_abm, sim_ode, result_fct_abm, result_fct_ode, true, t0, dt_switch);
 
-    //Define switching conditiond
+    //Define switching condition
     const auto condition = [](const mio::TimeSeries<double>& result_abm, const mio::TimeSeries<double>& result_ode,
                               bool abm_used) {
         if (abm_used) {

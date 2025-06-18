@@ -7,7 +7,7 @@ Introduction
 The temporal-hybrid model switches between two models during the course of the simulation according to a given condition. Both models have to be initialized with their corresponding parameters and are handed to the class ``TemporalHybridSimulation``. 
 
 The ``TemporalHybridSimulation`` class needs the used model types as well as their result types as template arguments. The results of the models are used to evaluate the switching condition. Additionally, conversion functions to convert the first model to the second model and vice versa have to be implemented for the used model types.
-We implemented conversion function for the following model combinations:
+We implemented conversion functions for the following model combinations:
 
 - Diffusive agent-based model, see ``mio::dabm``, using the singlewell potential and the stochastic metapopulation model, see ``mio::smm``.
 - Diffusive agent-based model, see ``mio::dabm``, using the singlewell potential, and the ODE-based SECIR-type model, see ``mio::osecir``.
@@ -73,11 +73,11 @@ Initializing the temporal-hybrid simulation with a given step size `dt_switch` w
                                           mio::TimeSeries<double>>
         hybrid_sim(sim_abm, sim_ode, result_fct_abm, result_fct_ode, true, t0, dt_switch);
 
-Before for advancing the simulation until `tmax`, a switching condition has to be defined. In the example below, the temporal-hybrid model should switch from ABM to ODE if the number of infected individuals is bigger than 20 and it should switch back if the number is below 20.
+Before advancing the simulation until `tmax`, a switching condition has to be defined. In the example below, the temporal-hybrid model should switch from ABM to ODE if the number of infected individuals is bigger than 20 and it should switch back if the number is below 20.
 
 .. code-block:: cpp
 
-        //Define switching conditiond
+        //Define switching condition
     const auto condition = [](const mio::TimeSeries<double>& result_abm, const mio::TimeSeries<double>& result_ode,
                               bool abm_used) {
         if (abm_used) {
@@ -106,10 +106,10 @@ Before for advancing the simulation until `tmax`, a switching condition has to b
     };
 
     //Simulate for 30 days
-    double tmax = 30.
+    double tmax = 30.;
     hybrid_sim.advance(tmax, condition);
 
-The result ``mio::TimeSeries`` objects of the two models used (which are returned by the above defined result functions) can be accesses and printed via
+The result ``mio::TimeSeries`` objects of the two models used (which are returned by the above defined result functions) can be accessed and printed via
 
 .. code-block:: cpp
 

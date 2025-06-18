@@ -25,7 +25,7 @@
 /**
  * @brief Returns path to the repo directory.
 */
-std::string mio::base_dir()
+constexpr std::string mio::base_dir()
 {
     return MEMILIO_BASE_DIR;
 }

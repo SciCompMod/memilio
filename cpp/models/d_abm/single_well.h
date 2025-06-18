@@ -209,7 +209,7 @@ public:
 
 private:
     /**
-     * @brief Claculate the gradient of the potential at a given position.
+     * @brief Calculate the gradient of the potential at a given position.
      * @param[in] p Position at which the gradient is evaluated.
      * @return Value of potential gradient.
      */

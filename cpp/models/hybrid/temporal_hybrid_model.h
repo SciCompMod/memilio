@@ -118,7 +118,7 @@ public:
      * @brief Get the result of model 1.
      * @return Result of model 1 using the function m_result1.
      */
-    ResultType1 get_result_model1()
+    ResultType1 get_result_model1() const
     {
         return m_result1(m_model1, m_t);
     }
@@ -127,7 +127,7 @@ public:
      * @brief Get the result of model 2.
      * @return Result of model 2 using the function m_result1.
      */
-    ResultType2 get_result_model2()
+    ResultType2 get_result_model2() const
     {
         return m_result2(m_model2, m_t);
     }
