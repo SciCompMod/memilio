@@ -27,13 +27,15 @@ runs:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-linux-${{ inputs.artifact-pattern }}
+        name: build-cpp-linux-gcc-latest-Release
         path: cpp
     - name: extract build archive
       shell: bash
+      # extract and touch all build files so make sees them as up-to-date
       run: |
         cd cpp
         tar -xzf build.tar.gz
+        find build/ -type f -exec touch {} +
     - name: Build SBML converter
       shell: bash
       run: |
