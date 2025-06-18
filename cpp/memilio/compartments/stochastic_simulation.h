@@ -36,7 +36,7 @@ namespace mio
 template <typename FP, class M>
 class StochasticSimulation : public SimulationBase<FP, M, 2>
 {
-    static_assert(is_stochsatic_model<FP, M>::value, "Template parameter must be a stochastic model.");
+    static_assert(is_stochastic_model<FP, M>::value, "Template parameter must be a stochastic model.");
 
 public:
     using Base  = SimulationBase<FP, M, 2>;

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef FEEDBACK_SIMULATION_H
-#define FEEDBACK_SIMULATION_H
+#ifndef MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H
+#define MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H
 
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/time_series.h"
@@ -375,4 +375,4 @@ private:
 
 } // namespace mio
 
-#endif // FEEDBACK_SIMULATION_H
+#endif // MIO_COMPARTMENTS_FEEDBACK_SIMULATION_H

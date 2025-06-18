@@ -45,7 +45,7 @@ namespace details
 {
 template <typename FP, class M>
 using get_noise_expr_t =
-    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
+    decltype(std::declval<const M&>().get_noise(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
                                                 std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
                                                 std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
 }
@@ -59,7 +59,7 @@ using get_noise_expr_t =
  * @tparam Model A type that may or may not be a flow model.
  */
 template <typename FP, class Model>
-using is_stochsatic_model =
+using is_stochastic_model =
     std::integral_constant<bool, (is_expression_valid<details::get_noise_expr_t, FP, Model>::value &&
                                   is_compartment_model<FP, Model>::value)>;
 
