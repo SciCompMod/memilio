@@ -222,7 +222,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
 # # Testing network_architectures.py
 
-
     def test_mlp_multi_single(self):
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_single_output(
@@ -720,7 +719,11 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         path = os.path.join(self.path, "mlp_multi_multi.keras")
         mlp2 = model.load_model(path)
-        self.assertEqual(mlp1.model.summary(), mlp2.summary())
+
+        weights1 = mlp1.model.get_weights()
+        weights2 = mlp2.get_weights()
+        for w1, w2 in zip(weights1, weights2):
+            np.testing.assert_allclose(w1, w2)
 
 
 if __name__ == '__main__':
