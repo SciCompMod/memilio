@@ -41,7 +41,7 @@ enum class InfectionState
 int main()
 {
     //Example how to run a simulation of the diffusive ABM using the quadwell potential
-    using Model = mio::dabm::Model<QuadWellModel<InfectionState>>;
+    using Model = mio::dabm::Model<QuadWell<InfectionState>>;
     std::vector<Model::Agent> agents(1000);
     //Random variables for initialization of agents' position and infection state
     auto& pos_rng = mio::UniformDistribution<double>::get_instance();
