@@ -27,7 +27,7 @@ runs:
     - name: Download built test directory
       uses: actions/download-artifact@v4
       with:
-        name: build-cpp-linux-${{ inputs.artifact-pattern }}
+        name: build-cpp-linux-gcc-latest-Release
         path: cpp
     - name: extract build archive
       shell: bash

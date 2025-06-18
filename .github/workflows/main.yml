@@ -132,10 +132,6 @@ jobs:
       steps:
         - uses: actions/checkout@v4
         - uses: ./.github/actions/sbml-test
-          with:
-            artifact-pattern: gcc-latest-Release
-            coverage: "OFF"
-  
 
   merge-test-artifacts:
     needs: [test-cpp-gcc_clang, test-cpp-msvc, test-py-surrogatemodel]
