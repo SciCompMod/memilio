@@ -48,7 +48,7 @@ namespace mio
  *
  */
 
-template <typename FP = ScalarType, class... Categories>
+template <typename FP, class... Categories>
 class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
@@ -176,7 +176,7 @@ public:
         auto group_idx                = mio::get<T>(midx);
         FP current_population = get_group_total(group_idx);
         size_t idx                    = this->get_flat_index(midx);
-        current_population -= FP(this->array()[idx]);
+        current_population -= this->array()[idx].value();
 
         assert(current_population <= total_group_population + FP(1e-10));
 
@@ -219,7 +219,7 @@ public:
     {
         double current_population = get_total();
         size_t idx                = this->get_flat_index(midx);
-        current_population -= FP(this->array()[idx]);
+        current_population -= this->array()[idx].value();
 
         assert(current_population <= total_population);
 

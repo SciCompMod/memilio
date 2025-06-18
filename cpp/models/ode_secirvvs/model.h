@@ -86,7 +86,7 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::SusceptibleImprovedImmunity>>;
 // clang-format on
 
-template <typename FP = ScalarType>
+template <typename FP>
 class Model
     : public FlowModel<FP, InfectionState, mio::Populations<FP, AgeGroup, InfectionState>, Parameters<FP>, Flows>
 {
@@ -117,7 +117,10 @@ public:
         FP icu_occupancy           = 0.0;
         FP test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
-            test_and_trace_required +=
+
+            // const FP& RecoveredPerInfectedNoSymptoms = params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i];
+            // const FP& TimeInfectedNoSymptoms = params.template get<TimeInfectedNoSymptoms<FP>>()[i];
+            test_and_trace_required += 
                 (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value()) /
                 params.template get<TimeInfectedNoSymptoms<FP>>()[i].value() *
                 (this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptomsNaive}) +
@@ -168,17 +171,17 @@ public:
 
             size_t SIIi = this->populations.get_flat_index({i, InfectionState::SusceptibleImprovedImmunity});
 
-            FP reducExposedPartialImmunity  = params.template get<ReducExposedPartialImmunity<FP>>()[i].value();
-            FP reducExposedImprovedImmunity = params.template get<ReducExposedImprovedImmunity<FP>>()[i].value();
-            FP reducInfectedSymptomsPartialImmunity =
-                params.template get<ReducInfectedSymptomsPartialImmunity<FP>>()[i].value();
-            FP reducInfectedSymptomsImprovedImmunity =
-                params.template get<ReducInfectedSymptomsImprovedImmunity<FP>>()[i].value();
-            FP reducInfectedSevereCriticalDeadPartialImmunity =
-                params.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[i].value();
-            FP reducInfectedSevereCriticalDeadImprovedImmunity =
-                params.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[i].value();
-            FP reducTimeInfectedMild = params.template get<ReducTimeInfectedMild<FP>>()[i].value();
+            const FP& reducExposedPartialImmunity  = params.template get<ReducExposedPartialImmunity<FP>>()[i];
+            const FP& reducExposedImprovedImmunity = params.template get<ReducExposedImprovedImmunity<FP>>()[i];
+            const FP& reducInfectedSymptomsPartialImmunity =
+                params.template get<ReducInfectedSymptomsPartialImmunity<FP>>()[i];
+            const FP& reducInfectedSymptomsImprovedImmunity =
+                params.template get<ReducInfectedSymptomsImprovedImmunity<FP>>()[i];
+            const FP& reducInfectedSevereCriticalDeadPartialImmunity =
+                params.template get<ReducInfectedSevereCriticalDeadPartialImmunity<FP>>()[i];
+            const FP& reducInfectedSevereCriticalDeadImprovedImmunity =
+                params.template get<ReducInfectedSevereCriticalDeadImprovedImmunity<FP>>()[i];
+            const FP& reducTimeInfectedMild = params.template get<ReducTimeInfectedMild<FP>>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             FP riskFromInfectedSymptomatic =

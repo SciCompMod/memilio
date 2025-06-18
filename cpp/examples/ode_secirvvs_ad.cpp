@@ -10,6 +10,7 @@
 #include "memilio/io/result_io.h"
 #include "memilio/math/eigen.h"
 #include "memilio/data/analyze_result.h"
+#include "ode_secirvvs/analyze_result.h"
 
 #include "boost/outcome/try.hpp"
 #include "boost/outcome/result.hpp"
@@ -63,8 +64,8 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
                                                                          {ContactLocation::Other, "other"}
                                                                         };
 
-// using FP = double;
-using FP = typename ad::gt1s<double>::type; // algorithmic differentiation data type: scalar tangent-linear mode
+using FP = double;
+// using FP = typename ad::ga1s<double>::type; // algorithmic differentiation data type: scalar tangent-linear mode
 
 mio::TimeSeries<FP> aggregate_result(mio::TimeSeries<FP> results, int num_groups)
 {
@@ -307,7 +308,7 @@ mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP tmax)
 mio::IOResult<void> run(const fs::path& data_dir)
 {
     FP t0   = 0;
-    FP tmax = 90;
+    FP tmax = 56;
     FP dt   = 0.1;
     size_t num_age_groups = 6;
 
@@ -317,7 +318,7 @@ mio::IOResult<void> run(const fs::path& data_dir)
     
     BOOST_OUTCOME_TRY(set_covid_parameters(params, tmax));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    BOOST_OUTCOME_TRY(set_npis(params, tmax));
+    // BOOST_OUTCOME_TRY(set_npis(params, tmax));
 
 
     mio::osecirvvs::Model<FP> model(num_age_groups);
@@ -328,7 +329,13 @@ mio::IOResult<void> run(const fs::path& data_dir)
     model.apply_constraints();
 
     // use default Cash-Karp adaptive integrator
-    mio::TimeSeries<FP> result = mio::osecirvvs::simulate<FP>(t0, tmax, dt, model);
+    mio::osecirvvs::Simulation<FP> sim(model, t0, dt);
+    BOOST_OUTCOME_TRY(set_npis(sim.get_model().parameters, tmax));
+
+    sim.advance(tmax);
+    mio::TimeSeries<FP> result = sim.get_result();
+
+    // mio::TimeSeries<FP> result = mio::osecirvvs::simulate<FP>(t0, tmax, dt, model);
 
     // bool print_to_terminal = true;
 
@@ -347,12 +354,24 @@ mio::IOResult<void> run(const fs::path& data_dir)
 
     // auto result_interpolated = mio::interpolate_simulation_result(result);
 
-    std::ofstream outFileResult("OptResult.csv");
-    std::vector<std::string> vars = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i", "C_confirmed",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
-    mio::TimeSeries<FP> result_aggregated = aggregate_result(result, num_age_groups);
+    std::ofstream outFileResult("Result.csv");
+    std::vector<std::string> vars = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
+    mio::TimeSeries<FP> result_interpolated = mio::interpolate_simulation_result(result);
+    mio::TimeSeries<FP> result_aggregated = aggregate_result(result_interpolated, num_age_groups);
     result_aggregated.print_table(vars, 21, 10, outFileResult);
     outFileResult.close();
 
+    FP constraint = 0;
+    for (int t = 0; t < tmax; t++) {
+        // current_constraint += result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed] + 
+        //     result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed];
+        FP current_constraint = result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity] + 
+            result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedSymptomsNaive] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity] + result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity];
+        
+        std::cout << "Value at " << t << " is " << result_aggregated.get_value(t)[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive] << "\n";
+        constraint = std::max(constraint, current_constraint);
+    }
+    std::cout << "Max: " << constraint << "\n";
     return mio::success();
 }
 

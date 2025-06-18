@@ -46,6 +46,7 @@
 #include "IpTNLP.hpp"
 #include "IpIpoptApplication.hpp"
 #include <fstream>
+#include <type_traits>
 
 // This program implements direct single shooting for the optimal control of
 // nonpharmazeutical intervation in pandemic ordinary differential equation (ODE) models.
@@ -106,12 +107,17 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 class Secirvvs_NLP : public Ipopt::TNLP
 {
 public:
-    Secirvvs_NLP()                 = default;
+
+    using internal_type = double;
+    using gt1s_type = ad::gt1s<internal_type>::type;
+    using ga1s_type = ad::ga1s<internal_type>::type;
+
+    Secirvvs_NLP();
     Secirvvs_NLP(const Secirvvs_NLP&) = delete;
     Secirvvs_NLP(Secirvvs_NLP&&)      = delete;
     Secirvvs_NLP& operator=(const Secirvvs_NLP&) = delete;
     Secirvvs_NLP& operator=(Secirvvs_NLP&&) = delete;
-    ~Secirvvs_NLP()                      = default;
+    ~Secirvvs_NLP() override;
 
     /** Method to request the initial information about the problem.
     *
@@ -324,8 +330,8 @@ public:
  * @param constraints are the constraints of the NLP
  * @param objective is the objectie of the NLP
  */
-    template <typename FP = double>
-    void eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective);
+    template <typename FP>
+    void eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective, const mio::osecirvvs::Model<FP>& model);
 
 public:
     int getN()
@@ -338,15 +344,26 @@ public:
     }
 
 private:
-    const int numControlIntervals_ =
-        20; // number of piecewise constants interval for controls (same for all control variables)
+    const double t0_ = 0;
+    const double tmax_ = 56;
+    const int num_age_groups_ = 6;
+
+    const int controlInterval_ = 7;
+    const int numControlIntervals_ = ((int)tmax_ - 1) / controlInterval_ + 1; // number of piecewise constants interval for controls (same for all control variables)
+    const int pcresolution_ = 7; // the resultion of path constraints is by this factor higher than the control discretization
+
     const int numControls_        = 5; // number of control variables
     const int numPathConstraints_ = 1; // number of path constraints
-    const int pcresolution_ =
-        5; // the resultion of path constraints is by this factor higher than the control discretization
     const int numIntervals_ = pcresolution_ * numControlIntervals_; // number of integration intervals
     const int n_            = numControlIntervals_ * numControls_; // number of optimization variables in the NLP
-    const int m_            = numIntervals_ * numPathConstraints_; // number of constraints in the NLP
+    const int m_            = numPathConstraints_; // number of constraints in the NLP
+
+    std::unique_ptr<mio::osecirvvs::Model<internal_type>> m_model;
+    std::unique_ptr<mio::osecirvvs::Model<gt1s_type>> m_model_ad_gt1s;
+    std::unique_ptr<mio::osecirvvs::Model<ga1s_type>> m_model_ad_ga1s;
+
+    using tape_t = ad::ga1s<double>::tape_t;
+    tape_t* m_tape;
 };
 
 template <typename FP>
@@ -409,7 +426,6 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters<FP>& params,
 template <typename FP>
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters<FP>& params)
 {
-    //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup<FP>(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(auto&& baseline,
@@ -427,7 +443,6 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvv
 template <typename FP>
 mio::IOResult<void> set_population_data(const fs::path& filename, mio::osecirvvs::Model<FP>& model)
 {  
-    // BOOST_OUTCOME_TRY(auto&& num_lines, mio::count_lines((filename).string()));
 
     std::fstream file;
     file.open(filename, std::ios::in);
@@ -457,9 +472,62 @@ mio::IOResult<void> set_population_data(const fs::path& filename, mio::osecirvvs
     return mio::success();
 }
 
+/**
+ * @brief set_initial_values sets the initial values of the pandemic ODE
+ * @param model an instance of the pandemic model
+ */
+template <typename FP>
+mio::IOResult<void> set_initial_values(mio::osecirvvs::Model<FP>& model, FP tmax, int num_age_groups)
+{
+
+    mio::osecirvvs::Parameters<FP> params(num_age_groups);
+    const fs::path data_dir = "/home/mab/ProjectMemilio/memilio/data/Germany/";
+
+    BOOST_OUTCOME_TRY(set_covid_parameters<FP>(params, tmax));
+    BOOST_OUTCOME_TRY(set_contact_matrices<FP>(data_dir, params));
+    model.parameters = params;
+
+    // BOOST_OUTCOME_TRY(set_synthetic_population_data(model));
+    BOOST_OUTCOME_TRY(set_population_data<FP>((data_dir / ".." / "compartment_initialization_2025-05-26" / "initialization_sum.txt"), model));
+    model.apply_constraints();
+
+    return mio::success();
+}
+
+Secirvvs_NLP::Secirvvs_NLP()
+{
+    double tmax = tmax_;
+    double num_age_groups = num_age_groups_;
+
+    mio::osecirvvs::Model<ga1s_type> model_ad_ga1s(num_age_groups);
+    auto out = set_initial_values<ga1s_type>(model_ad_ga1s, ga1s_type(tmax), num_age_groups);
+    m_model_ad_ga1s = std::make_unique<mio::osecirvvs::Model<ga1s_type>>(model_ad_ga1s);
+
+    mio::osecirvvs::Model<gt1s_type> model_ad_gt1s(num_age_groups);
+    out = set_initial_values<gt1s_type>(model_ad_gt1s, gt1s_type(tmax), num_age_groups);
+    m_model_ad_gt1s = std::make_unique<mio::osecirvvs::Model<gt1s_type>>(model_ad_gt1s);
+
+    mio::osecirvvs::Model<internal_type> model(num_age_groups);
+    out = set_initial_values<internal_type>(model, tmax, num_age_groups);
+    m_model = std::make_unique<mio::osecirvvs::Model<internal_type>>(model);
+
+    if (!ad::ga1s<double>::global_tape) {
+        ad::ga1s<double>::global_tape = tape_t::create();
+    }
+    m_tape = ad::ga1s<double>::global_tape;
+}
+
+Secirvvs_NLP::~Secirvvs_NLP() {
+    if (m_tape) {
+        tape_t::remove(m_tape);
+        m_tape = nullptr;
+    }
+}
+
 template <typename FP>
 mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP tmax, const std::vector<FP>& x, const int numControlIntervals)
 {
+    // mio::unused(t0, x, numControlIntervals);
     auto damping_helper = [=](mio::SimulationTime<FP> t, FP min, FP max, mio::DampingLevel damping_level, mio::DampingType damping_type, const std::vector<size_t> location,
                 Eigen::VectorX<FP> group_weights) {
         auto p = mio::UncertainValue<FP>(0.5 * (max + min));
@@ -503,11 +571,11 @@ mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP t
     for (int controlIndex = 0; controlIndex < numControlIntervals; ++controlIndex)
     {
         t = ad::value(t0) + controlIndex * step_size;
-        contact_dampings.push_back(school_closure(mio::SimulationTime<FP>(t), 1. * x[controlIndex]));
-        contact_dampings.push_back(home_office(mio::SimulationTime<FP>(t), 0.25 * x[controlIndex + numControlIntervals]));
-        contact_dampings.push_back(physical_distancing_school(mio::SimulationTime<FP>(t), 0.25 * x[controlIndex + 2 * numControlIntervals]));
-        contact_dampings.push_back(physical_distancing_work(mio::SimulationTime<FP>(t), 0.25 * x[controlIndex + 3 * numControlIntervals]));
-        contact_dampings.push_back(physical_distancing_other(mio::SimulationTime<FP>(t), 0.35 * x[controlIndex + 4 * numControlIntervals]));
+        contact_dampings.push_back(school_closure(mio::SimulationTime<FP>(t), (1. * x.at(controlIndex))));
+        contact_dampings.push_back(home_office(mio::SimulationTime<FP>(t), (0.25 * x.at(controlIndex + numControlIntervals))));
+        contact_dampings.push_back(physical_distancing_school(mio::SimulationTime<FP>(t), (0.25 * x.at(controlIndex + 2 * numControlIntervals))));
+        contact_dampings.push_back(physical_distancing_work(mio::SimulationTime<FP>(t), (0.25 * x.at(controlIndex + 3 * numControlIntervals))));
+        contact_dampings.push_back(physical_distancing_other(mio::SimulationTime<FP>(t), (0.35 * x.at(controlIndex + 4 * numControlIntervals))));
     }
     contacts.make_matrix();
 
@@ -515,80 +583,86 @@ mio::IOResult<void> set_npis(mio::osecirvvs::Parameters<FP>& params, FP t0, FP t
 }
 
 /**
- * @brief set_initial_values sets the initial values of the pandemic ODE
+ * @brief set control values of the pandemic ODE
  * @param model an instance of the pandemic model
  */
 template <typename FP>
-mio::IOResult<void> set_initial_values(mio::osecirvvs::Model<FP>& model, FP t0, FP tmax, int num_age_groups, const std::vector<FP>& x, const int numControlIntervals)
+mio::IOResult<void> set_control_values(mio::osecirvvs::Model<FP>& model, FP t0, FP tmax, const std::vector<FP>& x, const int numControlIntervals)
 {
-
-    mio::osecirvvs::Parameters<FP> params(num_age_groups);
-    const fs::path data_dir = "/home/mab/ProjectMemilio/memilio/data/Germany/";
-
-    BOOST_OUTCOME_TRY(set_covid_parameters<FP>(params, tmax));
-    BOOST_OUTCOME_TRY(set_contact_matrices<FP>(data_dir, params));
+    auto& params = model.parameters;
     BOOST_OUTCOME_TRY(set_npis<FP>(params, t0, tmax, x, numControlIntervals));
-    model.parameters = params;
-
-    // BOOST_OUTCOME_TRY(set_synthetic_population_data(model));
-    BOOST_OUTCOME_TRY(set_population_data<FP>((data_dir / ".." / "compartment_initialization_2025-05-26" / "initialization_sum.txt"), model));
-    model.apply_constraints();
 
     return mio::success();
 }
 
-// template <typename FP>
-// void set_control_variables(mio::osecirvvs::Model<FP>& model)
-// {
-
-// }
-
 template <typename FP>
-void Secirvvs_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective)
+void Secirvvs_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective, const mio::osecirvvs::Model<FP>& model)
 {
+    using std::max;
+    using std::tanh;
 
-    FP t0   = 0; // initial time
-    FP tmax = 100; // stop time
+    FP t0   = t0_; // initial time
+    FP tmax = tmax_; // stop time
     FP dt   = 0.2; // hint for initial step size for the integrator
-    int num_age_groups = 6;
+    auto num_age_groups = num_age_groups_;
 
     std::vector<FP> grid(numIntervals_ + 1);
     for (int i = 0; i < numIntervals_ + 1; ++i) {
         grid[i] = (tmax / numIntervals_) * i + (t0 / numIntervals_) * (numIntervals_ - i);
     }
-    std::cout << "Initialize Model\n";
-    mio::osecirvvs::Model<FP> model(num_age_groups);
 
-    auto out = set_initial_values<FP>(model, t0, tmax, num_age_groups, x, numControlIntervals_);
+    auto transform_control_variable = [](FP v) {
+        FP out = 0.5 * (tanh(10 * (v - 0.5)) + 1);
+        return out;
+    };
+
+    std::vector<FP> xx(n_);
+    for (int i = 0; i < n_; ++i) {
+        xx[i] = transform_control_variable(x[i]);
+    }
+
+    mio::osecirvvs::Simulation<FP> sim(model, t0, dt);
+    //sim.set_integrator(std::make_shared<mio::ExplicitStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>());
+    auto out = set_control_values<FP>(sim.get_model(), t0, tmax, xx, numControlIntervals_);
+
+    auto weight_function = [&tmax](FP t) {
+        FP weighted_v = ((tmax - t) / tmax);
+        weighted_v = 1;
+        return weighted_v;
+    };
+    
     int gridindex = 0;
     objective     = 0.0;
-    
-    mio::osecirvvs::Simulation<FP> sim(model, t0, dt);
-
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
 
         // the objective is the weighted integral of the controls, since we use a piecewise constant dicretization
         // we just can add the values
-        objective += pcresolution_ * (x[controlIndex] + x[controlIndex + numControlIntervals_] + x[controlIndex + 2 * numControlIntervals_] + x[controlIndex + 3 * numControlIntervals_] + x[controlIndex + 4 * numControlIntervals_]);
-
+        FP obj_value = (xx[controlIndex] + xx[controlIndex + numControlIntervals_] + xx[controlIndex + 2 * numControlIntervals_] + xx[controlIndex + 3 * numControlIntervals_] + xx[controlIndex + 4 * numControlIntervals_]);
+        objective += pcresolution_ * weight_function(grid[gridindex]) * obj_value;
+        // sim.get_dt() = dt;
+        
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
             
-            sim.get_dt() = dt;
             sim.advance(grid[gridindex + 1]);
-            constraints[0] = 0;
-            // auto result = sim.get_result().get_last_value();
-            // constraints[gridindex] = 0;
+            auto result = sim.get_result().get_last_value();
+            FP current_constraint = 0;
 
-            // for (int agegroup = 0; agegroup < num_age_groups; agegroup++)
-            // {
-            //     auto age_group_offset = agegroup * (int)mio::osecirvvs::InfectionState::Count;
+            for (int agegroup = 0; agegroup < num_age_groups; agegroup++)
+            {
+                auto age_group_offset = agegroup * (int)mio::osecirvvs::InfectionState::Count;
 
-            //     constraints[gridindex] += result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed + age_group_offset] +
-            //                                 result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed + age_group_offset];
-            // }
+                // current_constraint += result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed + age_group_offset] + 
+                //     result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed + age_group_offset];
+                current_constraint += result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity + age_group_offset] + 
+                    result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsNaive + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity + age_group_offset] + result[(int)mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity + age_group_offset];
+                
+            }
+            // std::cout << constraints[0] << ", " << current_constraint << "\n";
+
+            constraints[0] = max(constraints[0], current_constraint);
         }
     }
-
+    
     return;
 }
 
@@ -633,7 +707,7 @@ bool Secirvvs_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Nu
     // path constraints
     for (int i = 0; i < m_; ++i) {
         g_l[i] = 0.0;
-        g_u[i] = 1e6;
+        g_u[i] = 1e5;
     }
     return true;
 }
@@ -646,7 +720,7 @@ bool Secirvvs_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number
     assert(init_lambda == false);
 
     for (int i = 0; i < n; ++i) {
-        x[i] = 0.2;
+        x[i] = 0.1;
     }
     return true;
 }
@@ -658,7 +732,7 @@ bool Secirvvs_NLP::eval_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ip
     std::vector<double> constraints(getM());
     for (int i = 0; i < n; ++i)
         xx[i] = x[i];
-    eval_objective_constraints(xx, constraints, obj_value);
+    eval_objective_constraints(xx, constraints, obj_value, *m_model);
     return true;
 }
 
@@ -673,12 +747,39 @@ bool Secirvvs_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_
         ad::value(xx[i]) = x[i];
     for (int i = 0; i < n; ++i) {
         ad::derivative(xx[i]) = 1.0;
-        eval_objective_constraints(xx, constraints, objective);
+        eval_objective_constraints(xx, constraints, objective, *m_model_ad_gt1s);
         grad_f[i]             = ad::derivative(objective);
         ad::derivative(xx[i]) = 0.0;
     }
     return true;
 }
+
+// bool Secirvvs_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f)
+// {
+//     mio::unused(new_x);
+//     using FP = ad::ga1s<double>::type;
+//     m_tape->reset();
+
+//     std::vector<FP> xx(getN());
+//     std::vector<FP> constraints(getM());
+//     FP objective;
+//     for (int i = 0; i < n; ++i)
+//     {
+//         ad::value(xx[i]) = x[i];
+//         ad::derivative(xx[i]) = 0.0;
+//         m_tape->register_variable(xx[i]);
+//     }
+    
+//     eval_objective_constraints(xx, constraints, objective, *m_model_ad_ga1s);
+//     m_tape->register_output_variable(objective);
+//     ad::derivative(objective) = 1.0;
+//     m_tape->interpret_adjoint();
+
+//     for (int i = 0; i < n; ++i) {
+//         grad_f[i]             = ad::derivative(xx[i]);
+//     }
+//     return true;
+// }
 
 bool Secirvvs_NLP::eval_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Number* g)
 {
@@ -688,7 +789,7 @@ bool Secirvvs_NLP::eval_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ip
     double obj_value = 0;
     for (int i = 0; i < n; ++i)
         xx[i] = x[i];
-    eval_objective_constraints(xx, constraints, obj_value);
+    eval_objective_constraints(xx, constraints, obj_value, *m_model);
     for (int i = 0; i < m; ++i)
         g[i] = constraints[i];
     return true;
@@ -698,6 +799,7 @@ bool Secirvvs_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x
                            Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values)
 {
     mio::unused(new_x, nele_jac);
+
     if (values == nullptr) {
         int jac_index = 0;
         for (int i = 0; i < n; ++i) {
@@ -718,10 +820,11 @@ bool Secirvvs_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x
             ad::value(xx[i]) = x[i];
         for (int i = 0; i < n; ++i) {
             ad::derivative(xx[i]) = 1.0;
-            eval_objective_constraints(xx, constraints, objective);
+            eval_objective_constraints(xx, constraints, objective, *m_model_ad_gt1s);
             for (int j = 0; j < m; ++j) {
                 values[jac_index] = ad::derivative(constraints[j]);
                 ++jac_index;
+                // std::cout << values[jac_index] << "\n";
             }
             ad::derivative(xx[i]) = 0.0;
         }
@@ -737,20 +840,43 @@ bool Secirvvs_NLP::eval_h(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ip
     return true;
 }
 
+template <typename FP>
+mio::TimeSeries<FP> aggregate_result(mio::TimeSeries<FP> results, int num_groups)
+{
+    // Aggregate results for each compartment
+    size_t num_days = results.get_num_time_points();
+    mio::TimeSeries<FP> results_aggregated = mio::TimeSeries<FP>::zero(num_days, (size_t)mio::osecirvvs::InfectionState::Count);
+
+    size_t day = 0;
+    for (auto t : results.get_times()) {
+        results_aggregated.get_time(day) = t;
+        for (size_t infection_state = 0; infection_state < (size_t)mio::osecirvvs::InfectionState::Count; infection_state++){
+            for (size_t age = 0; age < (size_t)num_groups; age++) {
+
+                auto age_group_offset = age * (size_t)mio::osecirvvs::InfectionState::Count;
+                results_aggregated[day](infection_state) += results[day](infection_state + age_group_offset);
+            }
+        }
+        day++;
+    }
+    return results_aggregated;
+}
+
+
 void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number* x,
                                   const Ipopt::Number* z_L, const Ipopt::Number* z_U, Ipopt::Index m,
                                   const Ipopt::Number* g, const Ipopt::Number* lambda, Ipopt::Number obj_value,
                                   const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq)
 {
-    mio::unused(status, n, z_L, z_U, m, g, lambda, obj_value, ip_data, ip_cq);
+    mio::unused(status, z_L, z_U, m, g, lambda, obj_value, ip_data, ip_cq);
     std::cout << "optimal solution is\n";
     std::cout << "Writing output to text files" << std::endl;
     using FP  = double;
 
-    FP t0   = 0;
-    FP tmax = 100;
+    FP t0   = t0_;
+    FP tmax = tmax_;
     FP dt   = 0.2;
-    int num_age_groups = 6;
+    int num_age_groups = num_age_groups_;
 
     std::vector<FP> grid(numIntervals_ + 1);
     for (int i = 0; i < numIntervals_ + 1; ++i) {
@@ -758,38 +884,55 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
     }
     mio::osecirvvs::Model<FP> model(num_age_groups);
 
-    //open files for parameter output
-    std::ofstream outFileTransmissionProbabilityOnContact("TransmissionProbabilityOnContact.txt");
+    auto out = set_initial_values<FP>(model, tmax, num_age_groups);
 
-    std::ofstream outFileResults("OptResult.csv");
+    std::vector<FP> xx(n);
+    auto transform_control_variable = [](FP v) {
+        FP transformed_v = 0.5 * (tanh(100 * (v - 0.5)) + 1);
+        return transformed_v;
+    };
 
-    std::vector<FP> xx(getN());
     for (int i = 0; i < n; ++i)
-        xx[i] = x[i];
-    auto out = set_initial_values<FP>(model, t0, tmax, num_age_groups, xx, numControlIntervals_);
-    int gridindex = 0;
+        xx[i] = transform_control_variable(x[i]);
+
+    out = set_control_values<FP>(model, t0, tmax, xx, numControlIntervals_);
 
     mio::osecirvvs::Simulation<FP> sim(model, t0, dt);
 
+    //open files for parameter output
+    std::ofstream outFileControlVariable("ControlVariables.csv");
+    std::ofstream outFileResults("OptResult.csv");
+    
+    mio::TimeSeries<FP> resultControlVariables = mio::TimeSeries<FP>(numControls_);
+    Eigen::VectorX<FP> currentControlVariables(numControls_); 
+
+    int gridindex = 0;
     for (int controlIndex = 0; controlIndex < numControlIntervals_; ++controlIndex) {
 
-        outFileTransmissionProbabilityOnContact << grid[gridindex] << " " << x[controlIndex] << "\n";
+        for (int controlVariableIndex = 0; controlVariableIndex < numControls_; controlVariableIndex++) {
+            currentControlVariables[controlVariableIndex] = xx[controlIndex + controlVariableIndex * numControlIntervals_];
+        }
+        resultControlVariables.add_time_point(grid[gridindex], currentControlVariables);
 
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
             sim.get_dt() = dt;
             sim.advance(grid[gridindex + 1]);
         }
 
-        outFileTransmissionProbabilityOnContact << grid[gridindex] << " " << x[controlIndex] << "\n";
+        resultControlVariables.add_time_point(grid[gridindex], currentControlVariables);
     } 
     
     auto results = sim.get_result();
-    auto result_interpolated = mio::interpolate_simulation_result(results, grid);
-    std::vector<std::string> vars = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i", "C_confirmed",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
-    result_interpolated.print_table(vars, 21, 10, outFileResults);
+    auto resultInterpolated = mio::interpolate_simulation_result(results, grid);
+    auto resultAggregated = aggregate_result(resultInterpolated, num_age_groups);
+    std::vector<std::string> names_comp = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
+    resultAggregated.print_table(names_comp, 21, 10, outFileResults);
+
+    std::vector<std::string> names_controls = {"SchoolClosure", "HomeOffice", "PhysicalDistancingSchool", "PhysicalDistancingWork", "PhysicalDistancingOther"};
+    resultControlVariables.print_table(names_controls, 21, 10, outFileControlVariable);
 
     //close files
-    outFileTransmissionProbabilityOnContact.close();
+    outFileControlVariable.close();
     outFileResults.close();
 
     return;
@@ -826,9 +969,9 @@ int main()
     //       suitable for your optimization problem.
     app->Options()->SetNumericValue("tol", 1e-6);
     app->Options()->SetStringValue("mu_strategy", "adaptive");
-    app->Options()->SetStringValue("output_file", "ipopt.out");
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("limited_memory_update_type", "bfgs");
+    // app->Options()->SetIntegerValue("max_iter", 100);
 
     // Initialize the IpoptApplication and process the options
     Ipopt::ApplicationReturnStatus status;

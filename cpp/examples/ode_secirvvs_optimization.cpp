@@ -327,7 +327,7 @@ void set_initial_values(mio::osecirvvs::Model<FP>& model)
         model.populations[{i, mio::osecirvvs::InfectionState::DeadPartialImmunity}]          = 0;
         model.populations[{i, mio::osecirvvs::InfectionState::DeadImprovedImmunity}]         = 0;
         model.populations.template set_difference_from_group_total<mio::AgeGroup>(
-            {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, N);
+            {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, FP(N));
     }
 }
 
@@ -551,7 +551,7 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
     
     auto results = sim.get_result();
     auto result_interpolated = mio::interpolate_simulation_result(results, grid);
-    std::vector<std::string> vars = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i", "C_confirmed",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
+    std::vector<std::string> vars = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
     result_interpolated.print_table(vars, 21, 10, outFileResults);
 
     //close files
