@@ -210,7 +210,7 @@ def generate_data(
         normalize=True, save_data=True, damping_method="active", max_number_damping=5):
     """ Generate data sets of num_runs many equation-based model simulations and possibly transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
-    In general, we have 8 different compartments and 6 age groups.  If we choose,
+    In general, we have 8 different compartments and 6 age groups.  If we choose
     input_width = 5 and label_width = 20, the dataset has
     - input with dimension 5 x 8 x 6
     - labels with dimension 20 x 8 x 6
@@ -334,6 +334,7 @@ def get_population(path):
     """ read population data in list from dataset
 
     :param path: Path to the dataset containing the population data
+    :returns: List of interpolated age grouped population data
 
     """
 

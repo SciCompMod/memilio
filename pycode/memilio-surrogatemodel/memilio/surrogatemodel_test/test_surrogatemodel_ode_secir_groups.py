@@ -213,14 +213,15 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 1
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width)
+                                      label_width, damping_method="random")
         self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(self.path),
-                         ['data_secir_groups_30days_1_active.pickle'])
+                         ['data_secir_groups_30days_1_random.pickle'])
 
 
 # # Testing network_architectures.py
+
 
     def test_mlp_multi_single(self):
         with self.assertRaises(ValueError) as error:
@@ -301,8 +302,11 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(model.layers), 5)
         input_zero = np.zeros((5, 3, 7))
         output_zeros = model(input_zero)
+        # Number of time series
         self.assertEqual(output_zeros.shape[0], 5)
+        # Number of days per predicted time series
         self.assertEqual(output_zeros.shape[1], 12)
+        # Size of feature space per day
         self.assertEqual(output_zeros.shape[2], 21)
 
     def test_cnn_multi_multi(self):
@@ -356,7 +360,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         model = network_architectures.cnn_multi_input_multi_output(
-            21, 4, 3, 3, 256, 2)
+            21, 4, 4, 3, 256, 2)
         self.assertEqual(len(model.layers), 6)
         input_zero = np.zeros((12, 5, 7))
         output_zeros = model(input_zero)
@@ -364,8 +368,8 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(output_zeros.shape[0], 12)
         # length of one time series
         self.assertEqual(output_zeros.shape[1], 21)
-        # Dimension of one time step
-        self.assertEqual(output_zeros.shape[2], 12)
+        # Dimension of one time step (16 = 4*4)
+        self.assertEqual(output_zeros.shape[2], 16)
 
     def test_lstm_multi_multi(self):
         with self.assertRaises(ValueError) as error:
@@ -411,7 +415,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         model = network_architectures.lstm_multi_input_multi_output(
-            21, 4, 3, 12, 3, 12)
+            21, 4, 4, 12, 3, 12)
         self.assertEqual(len(model.layers), 6)
         input_zero = np.zeros((12, 5, 7))
         output_zeros = model(input_zero)
@@ -419,8 +423,8 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(output_zeros.shape[0], 12)
         # length of one time series
         self.assertEqual(output_zeros.shape[1], 21)
-        # Dimension of one time step
-        self.assertEqual(output_zeros.shape[2], 12)
+        # Dimension of one time step (16 = 4*4)
+        self.assertEqual(output_zeros.shape[2], 16)
 
 # Testing model.py
     def test_calc_split_index(self):
@@ -715,7 +719,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                          self.path, "mlp_multi_multi")
 
         path = os.path.join(self.path, "mlp_multi_multi.keras")
-        print(path)
         mlp2 = model.load_model(path)
         self.assertEqual(mlp1.model.summary(), mlp2.summary())
 

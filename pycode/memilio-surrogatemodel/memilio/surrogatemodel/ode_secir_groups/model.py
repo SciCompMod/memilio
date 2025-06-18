@@ -240,7 +240,7 @@ def prod_time_series(obj, n, length_input):
 
 def prepare_data_timeseries(data):
     """
-    Transforming data to be processable by "time_series" network, simply repeating static values, flattening and concatenating for each data instance.
+    Transforming data to be processable by "timeseries" network, simply repeating static values, flattening and concatenating for each data instance.
 
     :param data: dictionary produces by data_generation
     :returns: dictionary with entries {
@@ -522,7 +522,7 @@ if __name__ == "__main__":
     neurons_in_hidden_layer = 512
     activation_function = 'relu'
     modelname = "Dense"
-    modeltype = "timeseries"  # or "classic"
+    modeltype = "classic"  # or "classic"
 
     model_parameters = (label_width, number_age_groups, number_compartments,
                         hidden_layers, neurons_in_hidden_layer, activation_function, modelname)
