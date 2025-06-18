@@ -21,6 +21,7 @@
 :strong:`ast.py`
 Create the ast and assign ids. Get ids and nodes. 
 """
+from typing_extensions import Self
 import subprocess
 import tempfile
 import logging
@@ -31,8 +32,6 @@ from memilio.generation import utility
 
 if TYPE_CHECKING:
     from memilio.generation import ScannerConfig
-
-from typing_extensions import Self
 
 
 class AST:
@@ -80,8 +79,8 @@ class AST:
         file_args = file_args[1:-4]
 
         clang_cmd = [
-            "clang-14", self.config.source_file,
-            "-std=c++17", '-emit-ast', '-o', '-']
+            "clang-18", self.config.source_file,
+            "-std=c++20", '-emit-ast', '-o', '-']
         clang_cmd.extend(file_args)
 
         try:
@@ -114,7 +113,7 @@ class AST:
         :param cursor: Cursor: 
 
         """
-        # assing_ids umschreiben -> mapping
+
         self.cursor_id += 1
         id = self.cursor_id
         self.id_to_val[id] = cursor
@@ -138,7 +137,7 @@ class AST:
     def get_node_id(self, cursor: Cursor) -> int:
         """ Returns the id of the current node.
 
-        Extracs the key from the current cursor from the dictonary id_to_val
+        Extracts the key from the current cursor from the dictonary id_to_val
 
         :param cursor: The current node of the AST as a cursor object from libclang.
         :param cursor: Cursor: 

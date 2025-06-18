@@ -94,32 +94,32 @@ inline void set_log_level(LogLevel level)
 template <typename... Args>
 inline void log_info(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->info(fmt, args...);
+    spdlog::default_logger_raw()->info(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_error(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->error(fmt, args...);
+    spdlog::default_logger_raw()->error(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_critical(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->critical(fmt, args...);
+    spdlog::default_logger_raw()->critical(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_warning(spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->warn(fmt, args...);
+    spdlog::default_logger_raw()->warn(fmt::runtime(fmt), args...);
 }
 
 template <typename... Args>
 inline void log_debug(spdlog::string_view_t fmt, const Args&... args)
 {
 #ifndef NDEBUG
-    spdlog::default_logger_raw()->debug(fmt, args...);
+    spdlog::default_logger_raw()->debug(fmt::runtime(fmt), args...);
 #else
     unused(fmt, args...);
 #endif
@@ -128,7 +128,7 @@ inline void log_debug(spdlog::string_view_t fmt, const Args&... args)
 template <typename... Args>
 inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
 {
-    spdlog::default_logger_raw()->log(details::get_spdlog_level(level), fmt, args...);
+    spdlog::default_logger_raw()->log(details::get_spdlog_level(level), fmt::runtime(fmt), args...);
 }
 
 } // namespace mio

@@ -18,6 +18,8 @@
 # limitations under the License.
 #############################################################################
 import unittest
+import os
+import tempfile
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -66,6 +68,40 @@ class Test_TimeSeries(unittest.TestCase):
         output = ts.print_table(["a", "b"], 2, 2)
         self.assertEqual(
             output, '\nTime a \n2.00 1.00\n3.50 2.00\n')
+
+    def test_print_table_with_separator(self):
+        """Test print_table with custom separator"""
+        ts = mio.TimeSeries(1)
+        ts.add_time_point(2, np.r_[1])
+        ts.add_time_point(3.5, np.r_[2])
+        output = ts.print_table(["a"], 4, 1, ',', "# ")
+        self.assertEqual(
+            output, '# Time,a   \n 2.0, 1.0\n 3.5, 2.0\n')
+
+    def test_export_csv(self):
+        """Test export_csv functionality"""
+
+        ts = mio.TimeSeries(2)
+        ts.add_time_point(1.0, np.r_[10.0, 20.0])
+        ts.add_time_point(2.5, np.r_[15.0, 25.0])
+
+        # Create a temporary file for testing
+        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp:
+            temp_filename = temp.name
+
+        # Export to the temporary CSV file
+        ts.export_csv(temp_filename, ["Col1", "Col2"], ',', 2)
+
+        # Read and verify the file contents
+        with open(temp_filename) as f:
+            content = f.read()
+
+        expected = "Time,Col1,Col2\n1.00,10.00,20.00\n2.50,15.00,25.00\n"
+        self.assertEqual(content, expected)
+
+        # Clean up the temporary file
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
 
 
 if __name__ == '__main__':
