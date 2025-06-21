@@ -42,7 +42,7 @@ namespace abm
 struct Trip {
     PersonId person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     Model, where all Person%s are saved.*/
-    TimePoint time; ///< Daytime at which a Person changes the Location.
+    TimePoint trip_time; ///< Daytime at which a Person changes the Location.
     LocationId destination; ///< Location where the Person changes to.
     int destination_model_id; ///< Model id of destination Location.
     TransportMode trip_mode; ///< Mode of transportation. See TransportMode for all possible modes of transportation.
@@ -52,18 +52,18 @@ struct Trip {
     /**
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
-     * @param[in] time Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
+     * @param[in] trip_time Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
      * @param[in] destination Location where the Person changes to.
      * @param[in] destination_model_id Model the Person changes to.
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] origin_model_id Model the Person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(PersonId id, const TimePoint time, const LocationId dest, const int dest_model_id = 0,
+    Trip(PersonId id, const TimePoint trip_time, const LocationId dest, const int dest_model_id = 0,
          const TransportMode mode_of_transport    = mio::abm::TransportMode::Unknown,
          const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
-        , time(mio::abm::TimePoint(time.time_since_midnight().seconds()))
+        , trip_time(mio::abm::TimePoint(trip_time.time_since_midnight().seconds()))
         , destination(dest)
         , destination_model_id(dest_model_id)
         , trip_mode(mode_of_transport)
@@ -77,7 +77,7 @@ struct Trip {
      */
     bool operator==(const Trip& other) const
     {
-        return (person_id == other.person_id) && (time == other.time) && (destination == other.destination) &&
+        return (person_id == other.person_id) && (trip_time == other.trip_time) && (destination == other.destination) &&
                (destination_model_id == other.destination_model_id) && (trip_mode == other.trip_mode);
     }
 
@@ -85,7 +85,7 @@ struct Trip {
     {
         return Members("Trip")
             .add("person_id", person_id)
-            .add("time", time)
+            .add("trip_time", trip_time)
             .add("destination", destination)
             .add("model_id", destination_model_id)
             .add("trip_mode", trip_mode);
@@ -110,7 +110,7 @@ public:
     const Trip& get_next_trip() const;
 
     /**
-     * @brief Get the time at which the next Trip will happen.
+     * @brief Get the trip_time at which the next Trip will happen.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
     TimePoint get_next_trip_time() const;

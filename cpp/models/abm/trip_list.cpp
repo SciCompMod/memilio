@@ -33,7 +33,7 @@ const Trip& TripList::get_next_trip() const
 
 TimePoint TripList::get_next_trip_time() const
 {
-    return m_trips[m_current_index].time;
+    return m_trips[m_current_index].trip_time;
 }
 
 void TripList::add_trips(std::vector<Trip> trip)
@@ -43,7 +43,7 @@ void TripList::add_trips(std::vector<Trip> trip)
     //The same person can only make one trip at the same time.
     std::merge(m_trips.begin(), m_trips.end(), trip.begin(), trip.end(), std::back_inserter(m_trips),
                [](auto& trip1, auto& trip2) {
-                   return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+                   return std::tie(trip1.trip_time, trip1.person_id) < std::tie(trip2.trip_time, trip2.person_id);
                });
 }
 
