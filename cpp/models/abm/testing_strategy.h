@@ -111,24 +111,6 @@ public:
     bool is_active(TimePoint t) const;
 
     /**
-     * @brief Gets the start date of the scheme.
-     * @return The start date of the scheme.
-     */
-    mio::abm::TimePoint get_start_date() const
-    {
-        return m_start_date;
-    }
-
-    /**
-     * @brief Gets the end date of the scheme.
-     * @return The end date of the scheme.
-     */
-    mio::abm::TimePoint get_end_date() const
-    {
-        return m_end_date;
-    }
-
-    /**
      * @brief Runs the TestingScheme and potentially tests a Person.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
@@ -152,6 +134,24 @@ public:
 private:
     friend DefaultFactory<TestingScheme>;
     TestingScheme() = default;
+
+    /**
+     * @brief Gets the start date of the scheme.
+     * @return The start date of the scheme.
+     */
+    mio::abm::TimePoint get_start_date() const
+    {
+        return m_start_date;
+    }
+
+    /**
+     * @brief Gets the end date of the scheme.
+     * @return The end date of the scheme.
+     */
+    mio::abm::TimePoint get_end_date() const
+    {
+        return m_end_date;
+    }
 
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_validity_period; ///< The valid TimeSpan of the test.

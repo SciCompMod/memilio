@@ -79,12 +79,12 @@ bool TestingScheme::is_active(TimePoint t) const
 
 bool TestingScheme::run_and_test(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const
 {
-    if (!is_active(t)) { // If the scheme is not active, do nothing
+    if (!is_active(t)) { // If the scheme is not active, do nothing; early return
         return false;
     }
     if (!person.is_compliant(
             rng, InterventionType::Testing)) { // If the person is not compliant with the testing intervention
-        return true; // Assume positive test result
+        return true; // Assume positive test result as this should not allow entry although it is not the same
     }
     auto test_result = person.get_test_result(m_test_parameters.type);
     // If the agent has a test result valid until now, use the result directly
@@ -145,7 +145,7 @@ bool TestingStrategy::run_and_check(PersonalRandomNumberGenerator& rng, Person& 
         return true; // No applicable schemes
     }
 
-    bool entry_allowed = true;
+    bool entry_allowed = true; // Assume entry is allowed unless a scheme denies it
     // Check schemes for specific location id
     if (has_id_schemes) {
         for (const auto& scheme : m_testing_schemes_at_location_id[loc_id].schemes) {
@@ -164,6 +164,7 @@ bool TestingStrategy::run_and_check(PersonalRandomNumberGenerator& rng, Person& 
         }
     }
 
+    // If the location is a home, entry is always allowed regardless of testing, no early return here because we still need to test
     if (location.get_type() == LocationType::Home) {
         return true;
     }

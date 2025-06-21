@@ -279,10 +279,6 @@ TEST_F(TestTestingScheme, testingSchemeTimeValidity)
     EXPECT_EQ(testing_scheme.is_active(mio::abm::TimePoint(499)), true); // Just before end
     EXPECT_EQ(testing_scheme.is_active(mio::abm::TimePoint(500)), false); // At end
     EXPECT_EQ(testing_scheme.is_active(mio::abm::TimePoint(501)), false); // After end
-
-    // Test getter methods
-    EXPECT_EQ(testing_scheme.get_start_date(), start_date);
-    EXPECT_EQ(testing_scheme.get_end_date(), end_date);
 }
 
 /**
