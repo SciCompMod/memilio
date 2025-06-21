@@ -6,6 +6,10 @@ add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(performance_timer_example performance_timers.cpp)
+target_link_libraries(performance_timer_example PRIVATE memilio)
+target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
 target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_parameter_sampling_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

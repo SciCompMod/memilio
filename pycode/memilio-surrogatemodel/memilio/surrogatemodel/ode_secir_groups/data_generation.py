@@ -241,7 +241,7 @@ def generate_data(
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         data['contact_matrix'].append(np.array(damped_contact_matrix))
-        data['damping_day'].append(damping_day)
+        data['damping_day'].append([damping_day])
         bar.next()
     bar.finish()
 
@@ -271,13 +271,13 @@ def getBaselineMatrix():
     """ loads the baselinematrix"""
 
     baseline_contact_matrix0 = os.path.join(
-        "./data/contacts/baseline_home.txt")
+        "./data/Germany/contacts/baseline_home.txt")
     baseline_contact_matrix1 = os.path.join(
-        "./data/contacts/baseline_school_pf_eig.txt")
+        "./data/Germany/contacts/baseline_school_pf_eig.txt")
     baseline_contact_matrix2 = os.path.join(
-        "./data/contacts/baseline_work.txt")
+        "./data/Germany/contacts/baseline_work.txt")
     baseline_contact_matrix3 = os.path.join(
-        "./data/contacts/baseline_other.txt")
+        "./data/Germany/contacts/baseline_other.txt")
 
     baseline = np.loadtxt(baseline_contact_matrix0) \
         + np.loadtxt(baseline_contact_matrix1) + \
@@ -329,7 +329,7 @@ if __name__ == "__main__":
         os.path.dirname(os.path.realpath(path)))), 'data')
 
     path_population = os.path.abspath(
-        r"data//pydata//Germany//county_population.json")
+        r"data//Germany//pydata//county_current_population.json")
 
     input_width = 5
     label_width = 30
