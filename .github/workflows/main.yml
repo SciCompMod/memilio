@@ -173,7 +173,7 @@ jobs:
       - uses: ./.github/actions/linux-test
         with:
           artifact-pattern: gcc-latest-Release
-          num-repeat: 2
+          num-repeat: 10
           openmp: ON
 
   test-cpp-msvc:
