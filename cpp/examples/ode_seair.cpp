@@ -89,7 +89,7 @@ int main()
     const std::string file_name = "seair-compare.csv";
     std::ofstream file(file_name);
     std::cout << "Writing output to " << file_name << std::endl;
-    seair1.print_table({}, 21, 10, file);
+    seair1.print_table(file, {}, 21, 10);
     file.close();
 
     auto last1 = seair1.get_last_value();

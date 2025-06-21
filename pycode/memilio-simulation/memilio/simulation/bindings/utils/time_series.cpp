@@ -63,13 +63,28 @@ void bind_time_series(py::module_& m, std::string const& name)
                 }
             },
             py::is_operator(), py::arg("index"), py::arg("v"))
-        .def("print_table",
-             [](const mio::TimeSeries<double>& self, const std::vector<std::string>& column_labels, size_t width,
-                size_t precision) {
-                 std::ostringstream oss;
-                 self.print_table(column_labels, width, precision, oss);
-                 return oss.str();
-             })
+        .def(
+            "print_table",
+            [](const mio::TimeSeries<double>& self, const std::vector<std::string>& column_labels, size_t width,
+               size_t precision, char separator, const std::string& header_prefix) {
+                std::ostringstream oss;
+                self.print_table(oss, column_labels, width, precision, separator, header_prefix);
+                return oss.str();
+            },
+            py::arg("column_labels") = std::vector<std::string>{}, py::arg("width") = 16, py::arg("precision") = 5,
+            py::arg("separator") = ' ', py::arg("header_prefix") = "\n")
+
+        .def(
+            "export_csv",
+            [](const mio::TimeSeries<double>& self, const std::string& filename,
+               const std::vector<std::string>& column_labels, char separator, int precision) {
+                auto result = self.export_csv(filename, column_labels, separator, precision);
+                if (!result) {
+                    throw py::value_error(result.error().message());
+                }
+            },
+            py::arg("filename"), py::arg("column_labels") = std::vector<std::string>{}, py::arg("separator") = ',',
+            py::arg("precision") = 6)
         .def("add_time_point",
              [](mio::TimeSeries<double>& self) {
                  return self.add_time_point();
