@@ -52,14 +52,52 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
             (48, 1))
         mock_matplotlib.colormaps.get_cmap.return_value.colors = [(1, 0, 0)]*7
 
-        # Patch plt.gca().plot to a MagicMock
-        with patch.object(abm.plt, 'gca') as mock_gca:
+        # Patch plt methods
+        with patch.object(abm.plt, 'gca') as mock_gca, \
+                patch.object(abm.plt, 'figure') as mock_figure, \
+                patch.object(abm.plt, 'title') as mock_title, \
+                patch.object(abm.plt, 'legend') as mock_legend, \
+                patch.object(abm.plt, 'xlabel') as mock_xlabel, \
+                patch.object(abm.plt, 'ylabel') as mock_ylabel, \
+                patch.object(abm.plt, 'show') as mock_show:
+
             mock_ax = MagicMock()
             mock_gca.return_value = mock_ax
+
             abm.plot_infections_loc_types_average('dummy_path')
+
+            # Test basic plotting functionality
             assert mock_ax.plot.called
             assert mock_ax.set_xticks.called
             assert mock_ax.set_xticklabels.called
+
+            # Test figure settings
+            self.assertEqual(mock_figure.call_count, 2,
+                             "figure should be called twice")
+            # Verify first call is with the figure name
+            mock_figure.assert_any_call('Infection_location_types')
+            # Verify second call is without arguments (for autofmt_xdate)
+            mock_figure.assert_any_call()
+            mock_title.assert_called_once_with(
+                'Number of new infections per location type for the median run, rolling sum over 24 hours')
+            mock_legend.assert_called_once()
+            mock_xlabel.assert_called_once_with('Date')
+            mock_ylabel.assert_called_once_with('Number of individuals')
+            mock_show.assert_called_once()
+
+            # Verify legend was called with location type labels
+            legend_call_args = mock_legend.call_args
+            if legend_call_args and legend_call_args[0]:
+                legend_labels = legend_call_args[0][0]
+                # Should contain the location type labels from the function
+                expected_labels = list(abm.location_type_labels.values())
+                self.assertEqual(legend_labels, expected_labels)
+
+            # Verify that plot was called for each location type
+            plot_calls = mock_ax.plot.call_args_list
+            # Should plot 7 location types
+            self.assertEqual(len(plot_calls), 7,
+                             "Should plot all 7 location types")
 
     @patch('memilio.plot.plotAbmInfectionStates.load_h5_results')
     @patch('memilio.plot.plotAbmInfectionStates.plot_infection_states')
@@ -98,12 +136,13 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
         # Check that plot_infection_states was called with correct data structure
         states_call_args = mock_states.call_args
         self.assertIsNotNone(states_call_args)
-        self.assertEqual(len(states_call_args[0]), 7)  # x, y50, y25, y75
+        # x, y50, y25, y75, y05, y95, show_90
+        self.assertEqual(len(states_call_args[0]), 7)
 
         # Check that plot_infection_states_by_age_group was called with correct data structure
         indiv_call_args = mock_indiv.call_args
         self.assertIsNotNone(indiv_call_args)
-        # x, p50_bs, p25_bs, p75_bs
+        # x, p50_bs, p25_bs, p75_bs, p05_bs
         self.assertEqual(len(indiv_call_args[0]), 5)
 
     @patch('memilio.plot.plotAbmInfectionStates.matplotlib')
@@ -143,7 +182,8 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                             "fill_between should be called for confidence intervals")
             fill_calls = mock_ax.fill_between.call_args_list
             # Should have calls for both 50% and 90% confidence intervals if show_90=True
-            self.assertGreater(len(fill_calls), 0)
+            self.assertEqual(len(fill_calls), 12,
+                             "Should have 12 fill_between calls (6 states * 2 confidence intervals each)")
 
             # Verify axis formatting with correct parameters
             mock_ax.set_xticks.assert_called_once()

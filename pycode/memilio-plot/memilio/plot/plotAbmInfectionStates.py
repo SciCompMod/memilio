@@ -67,7 +67,7 @@ from scipy.ndimage import gaussian_filter1d
 #     /**
 #      * @brief Log the TimeSeries of the number of newly infected Person%s for each Location Type and each age.
 #      * @param[in] sim The simulation of the abm.
-#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
+#      * @return A pair of the TimePoint and the TimeSeries of newly infected Person%s for each Location Type and each age.
 #      */
 #     static Type log(const mio::abm::Simulation& sim)
 #     {
@@ -238,7 +238,20 @@ def plot_infection_states(
         colormap='Set1',
         xtick_step=150,
         y05=None, y95=None, show_90=False):
-    """ Plots infection states with percentiles and improved styling. """
+    """ Plots infection states with percentile bands.
+
+    @param[in] x Time array for x-axis.
+    @param[in] y50 50th percentile data array.
+    @param[in] y25 25th percentile data array.
+    @param[in] y75 75th percentile data array.
+    @param[in] start_date Start date as string (YYYY-MM-DD format).
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] y05 5th percentile data array (optional).
+    @param[in] y95 95th percentile data array (optional).
+    @param[in] show_90 If True, plot 90% percentile bands in addition to 50% percentile.
+    """
+
     plt.figure('Infection_states')
 
     plt.title('Infection states with 50% percentile')
@@ -378,14 +391,14 @@ def main():
     args = parser.parse_args()
 
     plot_infection_states_results(
-        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_state_per_age_group/0",
+        path_to_infection_states=args.path_to_infection_states,
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step,
         show90=True
     )
     plot_infections_loc_types_average(
-        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/data/cluster_results/final_results/results_2024-09-20192904_best/infection_per_location_type_per_age_group/0",
+        path_to_loc_types=args.path_to_loc_types,
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step)
