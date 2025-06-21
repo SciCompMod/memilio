@@ -111,22 +111,19 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
         auto virus      = infection.get_virus_variant();
         auto age        = person.get_age();
         // average infectivity over the time step to second order accuracy using midpoint rule
-        for (CellIndex cell : person.get_cells()) {
+        const auto infectivity       = infection.get_infectivity(t + dt / 2);
+        const auto quarantine_factor = person.is_in_quarantine(t, params) ? params.get<QuarantineEffectiveness>() : 1.0;
 
-            local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);
-            local_air_exposure[{cell, virus}] += infection.get_infectivity(t + dt / 2);
+        for (CellIndex cell : person.get_cells()) {
+            auto air_contribution     = infectivity * quarantine_factor;
+            auto contact_contribution = infectivity * quarantine_factor;
 
             if (location.get_infection_parameters().get<UseLocationCapacityForTransmissions>()) {
-                local_contact_exposure[{cell, virus, age}] =
-                    local_contact_exposure[{cell, virus, age}] *
-                    location.get_cells()[cell.get()].compute_space_per_person_relative();
+                air_contribution *= location.get_cells()[cell.get()].compute_space_per_person_relative();
             }
-            if (person.is_in_quarantine(t, params)) {
-                local_air_exposure[{cell, virus}] =
-                    local_air_exposure[{cell, virus}] * params.get<QuarantineEffectiveness>();
-                local_contact_exposure[{cell, virus, age}] =
-                    local_air_exposure[{cell, virus}] * params.get<QuarantineEffectiveness>();
-            }
+
+            local_air_exposure[{cell, virus}] += air_contribution;
+            local_contact_exposure[{cell, virus, age}] += contact_contribution;
         }
     }
 }
