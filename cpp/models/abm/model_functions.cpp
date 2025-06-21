@@ -115,8 +115,8 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
         const auto quarantine_factor = person.is_in_quarantine(t, params) ? params.get<QuarantineEffectiveness>() : 1.0;
 
         for (CellIndex cell : person.get_cells()) {
-            auto air_contribution     = infectivity * quarantine_factor;
-            auto contact_contribution = infectivity * quarantine_factor;
+            auto air_contribution     = infectivity * (1.0 - quarantine_factor);
+            auto contact_contribution = infectivity * (1.0 - quarantine_factor);
 
             if (location.get_infection_parameters().get<UseLocationCapacityForTransmissions>()) {
                 air_contribution *= location.get_cells()[cell.get()].compute_space_per_person_relative();

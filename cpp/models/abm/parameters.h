@@ -531,13 +531,13 @@ struct QuarantineDuration {
 };
 
 /**
- * @brief Effectiveness of quarantine.
+ * @brief Effectiveness of quarantine. 0.0 meaning no effect (precentual reduction of viral shed emmition), 1.0 meaning full effect.
  */
 struct QuarantineEffectiveness {
     using Type = ScalarType;
     static auto get_default(AgeGroup /*size*/)
     {
-        return 1.0;
+        return 0.0;
     }
     static std::string name()
     {

@@ -96,7 +96,6 @@ TEST_F(TestLocation, interact)
     params.set_default<mio::abm::InfectivityDistributions>(num_age_groups);
     params.get<mio::abm::InfectivityDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
                                                                         mio::ParameterDistributionConstant(1.)};
-    params.get<mio::abm::UseLocationCapacityForTransmissions>()      = true;
 
     // Set incubtion period to two days so that the newly infected person is still exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;
