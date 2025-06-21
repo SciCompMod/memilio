@@ -180,8 +180,8 @@ struct LogInfectionState : mio::LogAlways {
         PRAGMA_OMP(for)
         for (auto& location : sim.get_model().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                sum[inf_state] += sim.get_model().get_subpopulation(location.get_id(), curr_time,
-                                                                    mio::abm::InfectionState(inf_state));
+                sum[inf_state] += sim.get_model().get_subpopulation_inf_state(location.get_id(), curr_time,
+                                                                              mio::abm::InfectionState(inf_state));
             }
         }
         return std::make_pair(curr_time, sum);

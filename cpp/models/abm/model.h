@@ -259,7 +259,7 @@ public:
      * @param[in] t Specified #TimePoint.
      * @param[in] s Specified #InfectionState.
      */
-    size_t get_subpopulation_combined(TimePoint t, InfectionState s) const;
+    size_t get_subpopulation_inf_state_combined(TimePoint t, InfectionState s) const;
 
     /**
      * @brief Get the number of Persons in one #InfectionState at all Location%s of a type.
@@ -267,7 +267,8 @@ public:
      * @param[in] s Specified #InfectionState.
      * @param[in] type Specified #LocationType.
      */
-    size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
+    size_t get_subpopulation_inf_state_combined_per_location_type(TimePoint t, InfectionState s,
+                                                                  LocationType type) const;
 
     /**
      * @brief Get the mobility data.
@@ -379,11 +380,25 @@ public:
      * @param[in] state #InfectionState of interest.
      * @return Amount of Person%s of the #InfectionState in all Cell%s of the Location.
      */
-    size_t get_subpopulation(LocationId location, TimePoint t, InfectionState state) const
+    size_t get_subpopulation_inf_state(LocationId location, TimePoint t, InfectionState state) const
     {
         return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
             return p.get_location_model_id() == m_id && p.get_location() == location &&
                    p.get_infection_state(t) == state;
+        });
+    }
+
+    /**
+     * @brief Get the number of Person%s of a particular #AgeGrou for all Cell%s.
+     * @param[in] location A LocationId from the Model.
+     * @param[in] t TimePoint of querry.
+     * @param[in] agegroup #AgeGroup of interest.
+     * @return Amount of Person%s of the #InfectionState in all Cell%s of the Location.
+     */
+    size_t get_subpopulation_age(LocationId location, AgeGroup age) const
+    {
+        return std::count_if(m_persons.begin(), m_persons.end(), [&](auto&& p) {
+            return p.get_location_model_id() == m_id && p.get_location() == location && p.get_age() == age;
         });
     }
 
