@@ -78,11 +78,11 @@ TEST(TestAbmSerialization, Trip)
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value reference_json;
-    reference_json["person_id"]       = Json::UInt(i++);
-    reference_json["time"]["seconds"] = Json::Int(i++);
-    reference_json["destination"]     = Json::UInt(i++);
-    reference_json["model_id"]        = Json::Int(i++);
-    reference_json["trip_mode"]       = Json::UInt(i++);
+    reference_json["person_id"]            = Json::UInt(i++);
+    reference_json["trip_time"]["seconds"] = Json::Int(i++);
+    reference_json["destination"]          = Json::UInt(i++);
+    reference_json["model_id"]             = Json::Int(i++);
+    reference_json["trip_mode"]            = Json::UInt(i++);
 
     test_json_serialization<mio::abm::Trip>(reference_json);
 }
