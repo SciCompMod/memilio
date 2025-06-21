@@ -196,11 +196,20 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
             xticklabels_call = mock_ax.set_xticklabels.call_args[0][0]
             self.assertEqual(len(xticklabels_call), len(expected_ticks))
 
+            # Verify that the xticklabels contain the correct date formatting
+            expected_dates = ['2021-03-01', '2021-03-03',
+                              '2021-03-05', '2021-03-07', '2021-03-09']
+            for i, label in enumerate(xticklabels_call):
+                self.assertEqual(str(label), expected_dates[i],
+                                 f"Label at position {i} should be {expected_dates[i]}")
+
             # Verify that start_date is used in label formatting
             if len(xticklabels_call) > 0:
-                # Labels should contain date strings when start_date is provided
+                # All labels should contain date strings when start_date is provided
                 self.assertTrue(all('2021' in str(label)
                                 for label in xticklabels_call))
+                # First label should match the start_date
+                self.assertEqual(str(xticklabels_call[0]), '2021-03-01')
 
     @patch('memilio.plot.plotAbmInfectionStates.matplotlib')
     def test_plot_infection_states_by_age_group(self, mock_matplotlib):
@@ -233,7 +242,7 @@ class TestPlotAbmInfectionStates(unittest.TestCase):
                 show90=True
             )
 
-            # Verify subplot was called with correct dimensions
+            # Verify that subplots was called to create a grid of axes
             mock_subplots.assert_called_once()
             subplot_call = mock_subplots.call_args
 
