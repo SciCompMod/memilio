@@ -191,17 +191,15 @@ PYBIND11_MODULE(_simulation_abm, m)
              py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
              py::arg("type_of_activity"), py::arg("cells") = std::vector<uint32_t>())
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
-        .def_readwrite("time", &mio::abm::Trip::time)
+        .def_readwrite("trip_time", &mio::abm::Trip::time)
         .def_readwrite("destination", &mio::abm::Trip::destination)
-        .def_readwrite("origin", &mio::abm::Trip::origin)
-        .def_readwrite("destination_type", &mio::abm::Trip::destination_type)
         .def_readwrite("cells", &mio::abm::Trip::cells);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
-        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
-        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
+        .def("add_trips", &mio::abm::TripList::add_trips, py::arg("trips") = std::vector<mio::abm::Trip>())
+        .def("next_trip", &mio::abm::TripList::get_next_trip)
+        .def("num_trips", &mio::abm::TripList::num_trips);
 
     pymio::bind_class<mio::abm::Model, pymio::EnablePickling::Never>(m, "Model")
         .def(py::init<int32_t>())
