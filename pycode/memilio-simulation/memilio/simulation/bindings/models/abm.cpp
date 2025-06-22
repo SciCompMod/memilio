@@ -186,14 +186,11 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<uint64_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId, mio::abm::LocationType,
-                      std::vector<uint32_t>>(),
-             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
-             py::arg("type_of_activity"), py::arg("cells") = std::vector<uint32_t>())
+        .def(py::init<uint64_t, mio::abm::TimePoint, mio::abm::LocationId>, py::arg("person_id"), py::arg("time"),
+             py::arg("destination"))
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
-        .def_readwrite("trip_time", &mio::abm::Trip::time)
-        .def_readwrite("destination", &mio::abm::Trip::destination)
-        .def_readwrite("cells", &mio::abm::Trip::cells);
+        .def_readwrite("trip_time", &mio::abm::Trip::trip_time)
+        .def_readwrite("destination", &mio::abm::Trip::destination);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
         .def(py::init<>())
