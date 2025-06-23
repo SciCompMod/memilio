@@ -67,22 +67,22 @@ add_pymio_module(_simulation
     memilio/simulation/bindings/utils/uncertain_value.cpp
 )
 
-# add_pymio_module(_simulation_osir
-#     LINKED_LIBRARIES memilio ode_sir
-#     SOURCES memilio/simulation/bindings/models/osir.cpp
-# )
+add_pymio_module(_simulation_osir
+    LINKED_LIBRARIES memilio ode_sir
+    SOURCES memilio/simulation/bindings/models/osir.cpp
+)
 
-# add_pymio_module(_simulation_oseir
-#     LINKED_LIBRARIES memilio ode_seir
-#     SOURCES memilio/simulation/bindings/models/oseir.cpp
-# )
+add_pymio_module(_simulation_oseir
+    LINKED_LIBRARIES memilio ode_seir
+    SOURCES memilio/simulation/bindings/models/oseir.cpp
+)
 
-# add_pymio_module(_simulation_osecir
-#     LINKED_LIBRARIES memilio ode_secir
-#     SOURCES memilio/simulation/bindings/models/osecir.cpp
-# )
+add_pymio_module(_simulation_osecir
+    LINKED_LIBRARIES memilio ode_secir
+    SOURCES memilio/simulation/bindings/models/osecir.cpp
+)
 
-# add_pymio_module(_simulation_osecirvvs
-#     LINKED_LIBRARIES memilio ode_secirvvs
-#     SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
-# )
+add_pymio_module(_simulation_osecirvvs
+    LINKED_LIBRARIES memilio ode_secirvvs
+    SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
+)
