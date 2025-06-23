@@ -3,7 +3,8 @@ IDE-based SEIR-type model
 
 The IDE-based SEIR type module models and simulates an epidemic using integro-differential equations. The model is 
 particularly suited for pathogens a latent infection state. The model assumes perfect immunity after recovery and is 
-thus only suited for epidemic use cases.In the following, we present the model in detail.
+thus only suited for epidemic use cases. In the following, we present the model in detail. Note that this model is 
+solved differently tha the IDE-SECIR model and the structure presented in :doc:`IDE models <../ide>` applies only partially.
 
 The simulation runs in discrete time steps using a trapezoidal rule. The model and the numerical scheme is based on the paper 
 Keimer A, Pflug L. (2020). *Modeling infectious diseases using integro-differential equations: Optimal
