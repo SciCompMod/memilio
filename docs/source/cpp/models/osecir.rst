@@ -1,8 +1,8 @@
 ODE-based SECIR-type model
 ===========================
 
-The ODE-based SECIR-type module models and simulates the epidemic using an ODE-based SECIR-type model approach. 
-The model is particularly suited for pathogen with pre- or asymptomatic infection states and when severe or critical
+The ODE-SECIR module models and simulates an epidemic using an approach based on ordinary differential equations.
+The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical
 states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
 In the following, we present the model in detail.
 
@@ -184,8 +184,8 @@ For age-resolved models, you can apply different dampings to different groups:
 
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     
-    // Add a uniform damping across all age groups
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+    // Add a damping that reduces contacts within the same age group by 70% starting at day 30
+    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant((size_t)nb_groups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
 The SECIR model also supports dynamic NPIs based on epidemic thresholds. These are implemented in the model specific Simulation class and are automatically triggered based on predefined criteria, such as the percentage of infected individuals in the population.
