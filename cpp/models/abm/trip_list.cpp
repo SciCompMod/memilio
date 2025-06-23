@@ -41,6 +41,12 @@ void TripList::add_trips(std::vector<Trip> trip)
     //Trips are sorted by time.
     //Also include the person id in the comparison so different persons can make trips at the same time.
     //The same person can only make one trip at the same time.
+
+    // Sort the incoming trips first
+    std::sort(trip.begin(), trip.end(), [](auto& trip1, auto& trip2) {
+        return std::tie(trip1.trip_time, trip1.person_id) < std::tie(trip2.trip_time, trip2.person_id);
+    });
+
     std::vector<Trip> merged_trips;
     merged_trips.reserve(m_trips.size() + trip.size());
     std::merge(m_trips.begin(), m_trips.end(), trip.begin(), trip.end(), std::back_inserter(merged_trips),
