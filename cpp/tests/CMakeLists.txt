@@ -49,6 +49,7 @@ set(TESTSOURCES
     test_custom_index_array.cpp
     test_d_abm_model.cpp
     test_flows.cpp
+    test_feedback.cpp
     test_parameter_set.cpp
     test_matrix_shape.cpp
     test_damping_sampling.cpp
@@ -63,6 +64,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
+    test_timers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
     test_ide_secir_ageres.cpp

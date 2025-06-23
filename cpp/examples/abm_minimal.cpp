@@ -169,7 +169,7 @@ int main()
     // I_Crit = InfectedCritical, R = Recovered, D = Dead
     std::ofstream outfile("abm_minimal.txt");
     std::get<0>(historyTimeSeries.get_log())
-        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
+        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
     std::cout << "Results written to abm_minimal.txt" << std::endl;
 
     return 0;

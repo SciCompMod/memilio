@@ -107,9 +107,9 @@ A simple example can be found at the
 Initialization
 --------------
 
-- The file ``parameters_io`` (``parameters_io.h``) provides functionality to compute an initial value vector for the LCT-SECIR model based on real data.
+- The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/parameters_io.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on real data.
 
-- The file ``initializer_flows`` (``initializer_flows.h``) provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a TimeSeries of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the real data is in the form of flows.
+- The file `initializer_flows <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/initializer_flows.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a TimeSeries of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the real data is in the form of flows.
 
 Overview of the ``lsecir`` namespace:
 -----------------------------------------
