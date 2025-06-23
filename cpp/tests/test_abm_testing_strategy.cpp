@@ -338,8 +338,8 @@ TEST_F(TestTestingScheme, differentTestTypes)
     // Create PCR test parameters with high accuracy but long wait time
     const auto test_params_pcr = mio::abm::TestParameters{0.95, 0.99, mio::abm::hours(24), mio::abm::TestType::PCR};
 
-    // Create rapid test parameters with lower accuracy but quick results
-    const auto test_params_rapid = mio::abm::TestParameters{0.8, 0.9, mio::abm::hours(0), mio::abm::TestType::Antigen};
+    // Create rapid test parameters with lower accuracy but quick results (we need to set this to 24 hours to avoid the person getting healthy randomly)
+    const auto test_params_rapid = mio::abm::TestParameters{0.8, 0.9, mio::abm::hours(24), mio::abm::TestType::Antigen};
 
     auto testing_criteria = mio::abm::TestingCriteria();
 
@@ -363,30 +363,40 @@ TEST_F(TestTestingScheme, differentTestTypes)
     auto rng_healthy = mio::abm::PersonalRandomNumberGenerator(person_healthy);
 
     // Mock uniform distribution to control test results
+    // Mock uniform distribution to control test results for PCR test with infected person
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(11))
+        .Times(testing::Exactly(4))
         .WillOnce(testing::Return(0.1)) // Infected person complies for PCR test
         .WillOnce(testing::Return(0.7)) // PCR test is performed
-        .WillOnce(testing::Return(0.05)) // PCR test correctly identifies infection
-        .WillOnce(testing::Return(0.5)) // Person complies to isolation
-        .WillOnce(testing::Return(0.1)) // Healthy person complies for PCR test
-        .WillOnce(testing::Return(0.7)) // PCR test is performed
-        .WillOnce(testing::Return(0.98)) // PCR test correctly identifies no infection
-        .WillOnce(testing::Return(0.1)) // Infected person complies for rapid test
-        .WillOnce(testing::Return(0.7)) // Rapid test is performed
-        .WillOnce(testing::Return(0.3)) // Rapid test correctly identifies infection
-        .WillOnce(testing::Return(0.1)); // Infected person complies for isolation
+        .WillOnce(testing::Return(0.05)) // PCR test correctly identifies infection (< sensitivity 0.95)
+        .WillOnce(testing::Return(0.5)); // Person complies to isolation
 
     // Test PCR test with infected person
     bool pcr_infected_result =
         testing_scheme_pcr.run_and_test(rng_infected, person_infected, start_date + mio::abm::hours(1));
     EXPECT_EQ(pcr_infected_result, true); // PCR should detect infection
 
+    // Reset mock for PCR test with healthy person
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(3))
+        .WillOnce(testing::Return(0.1)) // Healthy person complies for PCR test
+        .WillOnce(testing::Return(0.7)) // PCR test is performed
+        .WillOnce(testing::Return(0.98)); // PCR test correctly identifies no infection (< specificity 0.99)
+
     // Test PCR test with healthy person
     bool pcr_healthy_result =
         testing_scheme_pcr.run_and_test(rng_healthy, person_healthy, start_date + mio::abm::hours(1));
     EXPECT_EQ(pcr_healthy_result, false); // PCR should correctly identify no infection
+
+    // Reset mock for rapid test with infected person
+
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(4))
+        .WillOnce(testing::Return(0.1)) // Infected person complies for rapid test
+        .WillOnce(testing::Return(0.7)) // Rapid test is performed
+        .WillOnce(testing::Return(0.0)) // Rapid test correctly identifies infection (< sensitivity 0.8)
+        .WillOnce(testing::Return(0.1)); // Infected person complies for isolation
 
     // Test rapid test with infected person
     bool rapid_infected_result =
