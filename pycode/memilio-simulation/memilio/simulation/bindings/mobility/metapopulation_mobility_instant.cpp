@@ -52,10 +52,7 @@ void bind_mobility_parameter_edge(py::module_& m, std::string const& name)
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property",
-            [](const mio::Edge<mio::MobilityEdge<double>>& self) -> auto& {
-                return self.property;
-            },
+            "property", [](const mio::Edge<mio::MobilityEdge<double>>& self) -> auto& { return self.property; },
             py::return_value_policy::reference_internal);
 }
 
@@ -65,10 +62,11 @@ void bind_mobility(py::module_& m, std::string const& name)
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const mio::MobilityParameters<double>&>(), py::arg("params"))
         .def_property_readonly(
-            "parameters",
-            [](const mio::MobilityEdge<double>& self) -> auto& {
-                return self.get_parameters();
-            },
+            "parameters", [](const mio::MobilityEdge<double>& self) -> auto& { return self.get_parameters(); },
+            py::return_value_policy::reference_internal)
+        .def_property_readonly(
+            "mobility_results",
+            [](const mio::MobilityEdge<double>& self) -> auto& { return self.get_mobility_results(); },
             py::return_value_policy::reference_internal);
 }
 
@@ -84,10 +82,7 @@ void bind_mobility_edge(py::module_& m, std::string const& name)
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property",
-            [](const mio::Edge<mio::MobilityEdge<double>>& self) -> auto& {
-                return self.property;
-            },
+            "property", [](const mio::Edge<mio::MobilityEdge<double>>& self) -> auto& { return self.property; },
             py::return_value_policy::reference_internal);
 }
 

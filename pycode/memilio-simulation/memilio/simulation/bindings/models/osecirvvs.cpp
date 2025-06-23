@@ -314,46 +314,43 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         py::return_value_policy::move);
 
-
     m.def(
         "set_nodes_cached",
         [](const mio::osecirvvs::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
-        const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
-        mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph,
-        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
-        int num_days = 0, bool export_time_series = false, bool rki_age_groups = true,
-        const std::vector<mio::ConfirmedCasesDataEntry>& case_data = {},
-        const std::vector<std::vector<double>>& population_data = {},
-        const std::vector<mio::VaccinationDataEntry>& vacc_data = {},
-        const std::vector<mio::DiviEntry>& divi_data = {}) {
+           const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
+           mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
+           int num_days = 0, bool export_time_series = false, bool rki_age_groups = true,
+           const std::vector<mio::ConfirmedCasesDataEntry>& case_data = {},
+           const std::vector<std::vector<double>>& population_data    = {},
+           const std::vector<mio::VaccinationDataEntry>& vacc_data    = {},
+           const std::vector<mio::DiviEntry>& divi_data               = {}) {
             auto read_func = mio::osecirvvs::read_input_data_county_cached<mio::osecirvvs::Model<double>>;
             auto node_func = mio::get_node_ids;
-            
-            auto result = mio::set_nodes_cached<
-                mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
-                mio::osecirvvs::Model<double>, mio::MobilityParameters<double>, mio::osecirvvs::Parameters<double>>(
+
+            auto result = mio::set_nodes_cached<mio::osecirvvs::TestAndTraceCapacity<double>,
+                                                mio::osecirvvs::ContactPatterns<double>, mio::osecirvvs::Model<double>,
+                                                mio::MobilityParameters<double>, mio::osecirvvs::Parameters<double>>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                read_func, node_func, scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, 
+                read_func, node_func, scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days,
                 export_time_series, rki_age_groups, case_data, population_data, vacc_data, divi_data);
-            
+
             return pymio::check_and_throw(result);
         },
         py::arg("params"), py::arg("start_date"), py::arg("end_date"), py::arg("data_dir"),
         py::arg("population_data_path"), py::arg("is_node_for_county"), py::arg("params_graph"),
         py::arg("scaling_factor_inf"), py::arg("scaling_factor_icu"), py::arg("tnt_capacity_factor"),
         py::arg("num_days") = 0, py::arg("export_time_series") = false, py::arg("rki_age_groups") = true,
-        py::arg("case_data") = std::vector<mio::ConfirmedCasesDataEntry>{},
+        py::arg("case_data")       = std::vector<mio::ConfirmedCasesDataEntry>{},
         py::arg("population_data") = std::vector<std::vector<double>>{},
-        py::arg("vacc_data") = std::vector<mio::VaccinationDataEntry>{},
-        py::arg("divi_data") = std::vector<mio::DiviEntry>{}, py::return_value_policy::move);
-
-
+        py::arg("vacc_data")       = std::vector<mio::VaccinationDataEntry>{},
+        py::arg("divi_data")       = std::vector<mio::DiviEntry>{}, py::return_value_policy::move);
 
     m.def(
         "set_edges",
         [](const std::string& data_dir,
            mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph,
-           size_t contact_locations_size) {
+           size_t contact_locations_size, py::list indices_of_saved_edges = py::list()) {
             auto mobile_comp = {mio::osecirvvs::InfectionState::SusceptibleNaive,
                                 mio::osecirvvs::InfectionState::ExposedNaive,
                                 mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
@@ -367,13 +364,23 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                 mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
                                 mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
-            auto result      = mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>,
-                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
-                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
-                data_dir, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, weights);
+            std::vector<std::vector<size_t>> cpp_indices;
+            for (auto item : indices_of_saved_edges) {
+                std::vector<size_t> inner;
+                for (auto idx : item.cast<py::list>()) {
+                    inner.push_back(idx.cast<size_t>());
+                }
+                cpp_indices.push_back(std::move(inner));
+            }
+            auto result = mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>,
+                                         mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
+                                         mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
+                data_dir, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, weights,
+                cpp_indices);
             return pymio::check_and_throw(result);
         },
-        py::return_value_policy::move);
+        py::arg("data_dir"), py::arg("params_graph"), py::arg("contact_locations_size"),
+        py::arg("indices_of_saved_edges") = py::list(), py::return_value_policy::move);
 
 #ifdef MEMILIO_HAS_HDF5
     pymio::bind_save_results<mio::osecirvvs::Model<double>>(m);
@@ -392,16 +399,15 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         py::return_value_policy::move);
 
-    
     m.def(
         "read_input_data_county_cached",
         [](std::vector<mio::osecirvvs::Model<double>>& model, mio::Date date, const std::vector<int>& county,
-        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
-        int num_days = 0, bool export_time_series = false,
-        const std::vector<mio::ConfirmedCasesDataEntry>& case_data = {},
-        const std::vector<std::vector<double>>& population_data = {},
-        const std::vector<mio::VaccinationDataEntry>& vacc_data = {},
-        const std::vector<mio::DiviEntry>& divi_data = {}) {
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
+           int num_days = 0, bool export_time_series = false,
+           const std::vector<mio::ConfirmedCasesDataEntry>& case_data = {},
+           const std::vector<std::vector<double>>& population_data    = {},
+           const std::vector<mio::VaccinationDataEntry>& vacc_data    = {},
+           const std::vector<mio::DiviEntry>& divi_data               = {}) {
             auto result = mio::osecirvvs::read_input_data_county_cached<mio::osecirvvs::Model<double>>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series,
                 case_data, population_data, vacc_data, divi_data);
@@ -409,10 +415,10 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         py::arg("model"), py::arg("date"), py::arg("county"), py::arg("scaling_factor_inf"),
         py::arg("scaling_factor_icu"), py::arg("dir"), py::arg("num_days") = 0, py::arg("export_time_series") = false,
-        py::arg("case_data") = std::vector<mio::ConfirmedCasesDataEntry>{},
+        py::arg("case_data")       = std::vector<mio::ConfirmedCasesDataEntry>{},
         py::arg("population_data") = std::vector<std::vector<double>>{},
-        py::arg("vacc_data") = std::vector<mio::VaccinationDataEntry>{},
-        py::arg("divi_data") = std::vector<mio::DiviEntry>{}, py::return_value_policy::move);
+        py::arg("vacc_data")       = std::vector<mio::VaccinationDataEntry>{},
+        py::arg("divi_data")       = std::vector<mio::DiviEntry>{}, py::return_value_policy::move);
 
     m.def(
         "set_vaccination_data",
@@ -441,13 +447,12 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         .def_readwrite("county_id", &mio::VaccinationDataEntry::county_id)
         .def_readwrite("district_id", &mio::VaccinationDataEntry::district_id);
 
-
     py::class_<mio::ConfirmedCasesDataEntry>(m, "ConfirmedCasesDataEntry")
         .def(py::init<double, double, double, mio::Date, mio::AgeGroup, boost::optional<mio::regions::StateId>,
-                    boost::optional<mio::regions::CountyId>, boost::optional<mio::regions::DistrictId>>(),
-            py::arg("num_confirmed"), py::arg("num_recovered"), py::arg("num_deaths"), py::arg("date"),
-            py::arg("age_group"), py::arg("state_id") = py::none(), py::arg("county_id") = py::none(),
-            py::arg("district_id") = py::none())
+                      boost::optional<mio::regions::CountyId>, boost::optional<mio::regions::DistrictId>>(),
+             py::arg("num_confirmed"), py::arg("num_recovered"), py::arg("num_deaths"), py::arg("date"),
+             py::arg("age_group"), py::arg("state_id") = py::none(), py::arg("county_id") = py::none(),
+             py::arg("district_id") = py::none())
         .def_readwrite("num_confirmed", &mio::ConfirmedCasesDataEntry::num_confirmed)
         .def_readwrite("num_recovered", &mio::ConfirmedCasesDataEntry::num_recovered)
         .def_readwrite("num_deaths", &mio::ConfirmedCasesDataEntry::num_deaths)
@@ -459,22 +464,23 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
     py::class_<mio::PopulationDataEntry>(m, "PopulationDataEntry")
         .def(py::init<>())
-        .def("__init__", [](mio::PopulationDataEntry& self, double population_value, mio::AgeGroup age_group, 
-                        boost::optional<mio::regions::StateId> state_id,
-                        boost::optional<mio::regions::CountyId> county_id,
-                        boost::optional<mio::regions::DistrictId> district_id) {
-            new (&self) mio::PopulationDataEntry();
-            self.population = mio::CustomIndexArray<double, mio::AgeGroup>(mio::AgeGroup(1), population_value);
-            self.state_id = state_id;
-            self.county_id = county_id;
-            self.district_id = district_id;
-        }, py::arg("num_people"), py::arg("age_group"), py::arg("state_id") = py::none(),
-        py::arg("county_id") = py::none(), py::arg("district_id") = py::none())
+        .def(
+            "__init__",
+            [](mio::PopulationDataEntry& self, double population_value, mio::AgeGroup age_group,
+               boost::optional<mio::regions::StateId> state_id, boost::optional<mio::regions::CountyId> county_id,
+               boost::optional<mio::regions::DistrictId> district_id) {
+                new (&self) mio::PopulationDataEntry();
+                self.population  = mio::CustomIndexArray<double, mio::AgeGroup>(mio::AgeGroup(1), population_value);
+                self.state_id    = state_id;
+                self.county_id   = county_id;
+                self.district_id = district_id;
+            },
+            py::arg("num_people"), py::arg("age_group"), py::arg("state_id") = py::none(),
+            py::arg("county_id") = py::none(), py::arg("district_id") = py::none())
         .def_readwrite("population", &mio::PopulationDataEntry::population)
         .def_readwrite("state_id", &mio::PopulationDataEntry::state_id)
         .def_readwrite("county_id", &mio::PopulationDataEntry::county_id)
         .def_readwrite("district_id", &mio::PopulationDataEntry::district_id);
-
 
     m.def(
         "read_vaccination_data",
@@ -543,13 +549,14 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         },
         py::return_value_policy::move);
 
-    m.def("read_population_data",
-          [](const std::string& path) {
-              auto result = mio::read_population_data(path);
-              pymio::check_and_throw(result);
-              return result.value();
-          },
-          py::return_value_policy::move);
+    m.def(
+        "read_population_data",
+        [](const std::string& path) {
+            auto result = mio::read_population_data(path);
+            pymio::check_and_throw(result);
+            return result.value();
+        },
+        py::return_value_policy::move);
 
     m.def(
         "read_population_data_from_entries",
