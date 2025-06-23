@@ -515,7 +515,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertIn(error_message_part2, str(error.exception))
         self.assertIn(error_message_part3, str(error.exception))
 
-
         # generate dataset with multiple output
         input_width = 5
         label_width = 10
