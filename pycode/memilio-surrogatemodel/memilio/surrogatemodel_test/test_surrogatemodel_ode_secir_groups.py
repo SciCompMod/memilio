@@ -505,7 +505,6 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             model.network_fit(
                 path=self.path, model=md,
                 modeltype='classic', training_parameter=training_parameter, filename="data_secir_groups.pickle")
-            
         # check error message
         error_message_part1 = "[Errno 2] No such file or directory"
         error_message_part2 = self.path
