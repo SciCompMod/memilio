@@ -176,7 +176,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         data_1 = data_generation.generate_data(
             num_runs_1, self.path, "", input_width_1, label_width_1,
-            save_data=False)
+            save_data=False, max_number_damping=2)
         self.assertEqual(len(data_1['inputs']), num_runs_1)
         self.assertEqual(len(data_1['inputs'][0]), input_width_1)
         self.assertEqual(len(data_1['inputs'][0][0]), 48)
@@ -186,7 +186,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         data_2 = data_generation.generate_data(
             num_runs_2, self.path, "", input_width_2, label_width_2,
-            save_data=False)
+            save_data=False, max_number_damping=2)
         self.assertEqual(len(data_2['inputs']), num_runs_2)
         self.assertEqual(len(data_2['inputs'][0]), input_width_2)
         self.assertEqual(len(data_2['inputs'][0][0]), 48)
@@ -213,7 +213,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 1
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width, damping_method="random")
+                                      label_width, damping_method="random", max_number_damping=2)
         self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(self.path),
@@ -595,7 +595,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                 label_width),
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups_10days_5_active.pickle",
+            filename="data_secir_groups_10days_5_random.pickle",
             modeltype='classic',  plot_stats=False)
         self.assertEqual(
             model_mlp_multi_input_multi_output.model.output_shape[1],
@@ -610,7 +610,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             modeltype='timeseries',
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups_10days_5_active.pickle",
+            filename="data_secir_groups_10days_5_random.pickle",
             plot_stats=False)
         self.assertEqual(
             model_lstm_multi_output.model.output_shape[1], label_width)
@@ -623,7 +623,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             modeltype='timeseries',
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups_10days_5_active.pickle",
+            filename="data_secir_groups_10days_5_random.pickle",
             plot_stats=False)
         self.assertEqual(
             cnn_output.model.output_shape[1], label_width)
@@ -649,7 +649,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 2
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width)
+                                      label_width, max_number_damping=2)
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
@@ -665,7 +665,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                 label_width),
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups_10days_2_active.pickle",
+            filename="data_secir_groups_10days_2_random.pickle",
             modeltype='classic',  plot_stats=False)
 
         model.save_model(model_mlp_multi_input_multi_output.model,
@@ -674,7 +674,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 2)
 
         self.assertEqual(os.listdir(self.path),
-                         ['data_secir_groups_10days_2_active.pickle', 'mlp_multi_multi.keras'])
+                         ['data_secir_groups_10days_2_random.pickle', 'mlp_multi_multi.keras'])
 
     @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
            return_value=0.1 * np.ones((6, 6)))
@@ -695,7 +695,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 2
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width)
+                                      label_width, max_number_damping=2)
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
@@ -711,7 +711,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                 label_width),
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups_10days_2_active.pickle",
+            filename="data_secir_groups_10days_2_random.pickle",
             modeltype='classic',  plot_stats=False)
 
         model.save_model(mlp1.model,

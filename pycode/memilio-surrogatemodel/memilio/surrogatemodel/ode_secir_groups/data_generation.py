@@ -207,7 +207,7 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
 
 def generate_data(
         num_runs, path_out, path_population, input_width, label_width,
-        normalize=True, save_data=True, damping_method="active", max_number_damping=5):
+        normalize=True, save_data=True, damping_method="random", max_number_damping=5):
     """ Generate data sets of num_runs many equation-based model simulations and possibly transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
     In general, we have 8 different compartments and 6 age groups.  If we choose

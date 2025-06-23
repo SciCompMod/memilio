@@ -271,7 +271,7 @@ def dampings_random(days, max_number_damping):
     # Reducing due to minimal distance restriction
     reduced_distance = distance_between_days - min_distance_damping_day
 
-    if reduced_distance < 0:
+    if reduced_distance <= 0:
         raise ValueError("Invalid input: It's not possible to generate this number of damping"
                          "in the desired time interval.")
 
