@@ -33,13 +33,13 @@ namespace abm
  */
 enum class TransportMode : uint32_t
 {
+    Unknown = 0,
     Bike,
     CarDriver,
     CarPassenger,
     PublicTransport,
     Walking,
     Other,
-    Unknown,
     Count //last!!
 };
 

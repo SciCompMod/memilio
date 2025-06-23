@@ -78,10 +78,11 @@ TEST(TestAbmSerialization, Trip)
     unsigned i = 1; // counter s.t. members have different values
 
     Json::Value reference_json;
-    reference_json["person_id"]       = Json::UInt(i++);
-    reference_json["time"]["seconds"] = Json::Int(i++);
-    reference_json["destination"]     = Json::UInt(i++);
-    reference_json["origin"]          = Json::UInt(i++);
+    reference_json["person_id"]            = Json::UInt(i++);
+    reference_json["trip_time"]["seconds"] = Json::Int(i++);
+    reference_json["destination"]          = Json::UInt(i++);
+    reference_json["model_id"]             = Json::Int(i++);
+    reference_json["trip_mode"]            = Json::UInt(i++);
 
     test_json_serialization<mio::abm::Trip>(reference_json);
 }
@@ -267,8 +268,7 @@ TEST(TestAbmSerialization, Model)
     reference_json["rng"]["seeds"]                = json_uint_array({i++, i++, i++, i++, i++, i++});
     reference_json["testing_strategy"]["schemes"] = Json::Value(Json::arrayValue);
     reference_json["trip_list"]["index"]          = Json::UInt(i++);
-    reference_json["trip_list"]["trips_weekday"]  = Json::Value(Json::arrayValue);
-    reference_json["trip_list"]["trips_weekend"]  = Json::Value(Json::arrayValue);
+    reference_json["trip_list"]["trips"]          = Json::Value(Json::arrayValue);
     reference_json["use_mobility_rules"]          = Json::Value(false);
 
     test_json_serialization<mio::abm::Model>(reference_json);
