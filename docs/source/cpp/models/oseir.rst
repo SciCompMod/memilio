@@ -134,9 +134,9 @@ For age-resolved models, you can apply different dampings to different age group
 .. code-block:: cpp
 
     contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 1/nb_groups * cont_freq));
-    
-    // Add a uniform damping across all age groups
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.7),
+
+    // Add a damping that reduces contacts within the same age group by 70% starting at day 30
+    contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant((size_t)nb_groups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
 
