@@ -354,8 +354,10 @@ TEST_F(TestModel, evolveMobilityTrips)
     mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
     mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
 
-    auto trips = std::vector<mio::abm::Trip>{trip1, trip2, trip3};
-    data.add_trips(trips);
+    auto trips_part1 = std::vector<mio::abm::Trip>{trip2, trip3};
+    auto trips_part2 = std::vector<mio::abm::Trip>{trip1};
+    data.add_trips(trips_part1);
+    data.add_trips(trips_part2); //to see if merge works
 
     // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist2;
