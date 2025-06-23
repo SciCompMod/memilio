@@ -736,14 +736,16 @@ class Simulation:
         for day in range(1, num_days_sim + 1):
             day_data = []
             for edge_indx in range(len(ensemble_edges_percentiles)):
-                start_node, end_node = edge_indx_pair[edge_indx]
+                start_node_indx, end_node_indx = edge_indx_pair[edge_indx]
+                start_node_id = graph.get_node(start_node_indx).id
+                end_node_id = graph.get_node(end_node_indx).id
                 for percentile_indx, percentile in enumerate(percentiles):
                     # since we use dt=0.5, we need to multiply the day by 2 to get the correct index
                     day_indx = (day * 2) - 1
                     day_data.append({
                         "day": day,
-                        "start_node": start_node,
-                        "end_node": end_node,
+                        "start_node": start_node_id,
+                        "end_node": end_node_id,
                         "percentile": percentile,
                         "mild_infected": int(ensemble_edges_percentiles[edge_indx][percentile_indx][1][day_indx]),
                         "total": int(ensemble_edges_percentiles[edge_indx][percentile_indx][2][day_indx])
