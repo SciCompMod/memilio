@@ -106,10 +106,10 @@ class TestAbm(unittest.TestCase):
 
         # trips
         trip_list = abm.TripList()
-        trip_list.add_trip(abm.Trip(0, abm.TimePoint(
-            0) + abm.hours(8), social_event_id, home_id, abm.LocationType.SocialEvent))
-        trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
-                           abm.hours(8), work_id, home_id, abm.LocationType.Work))
+        trip_list.add_trips(
+            [abm.Trip(abm.PersonId(0), abm.TimePoint(0) + abm.hours(8), social_event_id)])
+        trip_list.add_trips(
+            [abm.Trip(abm.PersonId(1), abm.TimePoint(0) + abm.hours(8), work_id)])
         model.trip_list = trip_list
         model.use_mobility_rules = False
         self.assertEqual(model.trip_list.num_trips(), 2)
