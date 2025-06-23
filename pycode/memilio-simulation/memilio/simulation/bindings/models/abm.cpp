@@ -186,8 +186,8 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<uint64_t, mio::abm::TimePoint, mio::abm::LocationId>, py::arg("person_id"), py::arg("time"),
-             py::arg("destination"))
+        .def(py::init<mio::abm::PersonId, mio::abm::TimePoint, mio::abm::LocationId>(), py::arg("person_id"),
+             py::arg("time"), py::arg("destination"))
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
         .def_readwrite("trip_time", &mio::abm::Trip::trip_time)
         .def_readwrite("destination", &mio::abm::Trip::destination);
