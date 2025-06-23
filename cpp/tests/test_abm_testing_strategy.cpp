@@ -112,15 +112,12 @@ TEST_F(TestTestingScheme, runScheme)
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(8))
-        .WillOnce(testing::Return(0.1)) // Person 1 compliant to testing
+        .Times(testing::Exactly(5))
         .WillOnce(testing::Return(0.7)) // Person 1 got test
         .WillOnce(testing::Return(0.7)) // Test is positive
         .WillOnce(testing::Return(0.5)) // Person 1 complies to isolation
-        .WillOnce(testing::Return(0.1)) // Person 2 compliant to testing
         .WillOnce(testing::Return(0.7)) // Person 2 got test
-        .WillOnce(testing::Return(0.5)) // Person 2 tested negative and can enter
-        .WillOnce(testing::Return(0.1)); // Person 1 compliant to testing
+        .WillOnce(testing::Return(0.5)); // Person 2 tested negative and can enter
 
     EXPECT_EQ(testing_scheme1.run_and_test(rng_person1, person1, start_date),
               true); // Person tests and tests positive
@@ -164,18 +161,12 @@ TEST_F(TestTestingScheme, initAndRunTestingStrategy)
     // Mock uniform distribution to control random behavior in testing.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly((11)))
-        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
+        .Times(testing::Exactly((5)))
         .WillOnce(testing::Return(0.7)) // Person 1 is tested for scheme 1
         .WillOnce(testing::Return(0.7)) // Test of Person 1 is positive
         .WillOnce(testing::Return(0.7)) // Person 1 complies to isolation
-        .WillOnce(testing::Return(0.7)) // Would Person 1 be compliant to testing again(other Scheme)?
-        .WillOnce(testing::Return(0.7)) // Person 2 complies to testing
         .WillOnce(testing::Return(0.7)) // Person 2 is tested for scheme 2
-        .WillOnce(testing::Return(0.5)) // Test of Person 2 is negative
-        .WillOnce(testing::Return(0.7)) // Would Person 2 be compliant to testing again (other Scheme)?
-        .WillOnce(testing::Return(0.7)) // Person 1 complies to testing
-        .WillOnce(testing::Return(0.7)); // Person 1 complies to testing (again)
+        .WillOnce(testing::Return(0.5)); // Test of Person 2 is negative
 
     mio::abm::TestingStrategy test_strategy =
         mio::abm::TestingStrategy(std::vector<mio::abm::TestingStrategy::LocalStrategy>{},
@@ -305,11 +296,9 @@ TEST_F(TestTestingScheme, testingSchemeResultCaching)
     // Mock uniform distribution to control test results
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .WillOnce(testing::Return(0.1)) // Person is compliant
         .WillOnce(testing::Return(0.7)) // Test is performed
         .WillOnce(testing::Return(0.8)) // First test is positive
-        .WillOnce(testing::Return(0.5)) // Isolation compliance
-        .WillOnce(testing::Return(0.1)); // Person is compliant again
+        .WillOnce(testing::Return(0.5)); // Isolation compliance
 
     // First test at t=10
     auto t1      = mio::abm::TimePoint(10);
@@ -366,8 +355,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
     // Mock uniform distribution to control test results for PCR test with infected person
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(4))
-        .WillOnce(testing::Return(0.1)) // Infected person complies for PCR test
+        .Times(testing::Exactly(3))
         .WillOnce(testing::Return(0.7)) // PCR test is performed
         .WillOnce(testing::Return(0.05)) // PCR test correctly identifies infection (< sensitivity 0.95)
         .WillOnce(testing::Return(0.5)); // Person complies to isolation
@@ -379,8 +367,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
 
     // Reset mock for PCR test with healthy person
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(3))
-        .WillOnce(testing::Return(0.1)) // Healthy person complies for PCR test
+        .Times(testing::Exactly(2))
         .WillOnce(testing::Return(0.7)) // PCR test is performed
         .WillOnce(testing::Return(0.98)); // PCR test correctly identifies no infection (< specificity 0.99)
 
@@ -392,8 +379,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
     // Reset mock for rapid test with infected person
 
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(4))
-        .WillOnce(testing::Return(0.1)) // Infected person complies for rapid test
+        .Times(testing::Exactly(3))
         .WillOnce(testing::Return(0.7)) // Rapid test is performed
         .WillOnce(testing::Return(0.0)) // Rapid test correctly identifies infection (< sensitivity 0.8)
         .WillOnce(testing::Return(0.1)); // Infected person complies for isolation
@@ -462,15 +448,12 @@ TEST_F(TestTestingScheme, multipleSchemesCombination)
     // Mock uniform distribution to control test results
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(8))
-        .WillOnce(testing::Return(0.1)) // Child complies for school test
+        .Times(testing::Exactly(5))
         .WillOnce(testing::Return(0.7)) // Child gets tested at school
         .WillOnce(testing::Return(0.95)) // Child tests negative
-        .WillOnce(testing::Return(0.1)) // Adult complies for work test
         .WillOnce(testing::Return(0.7)) // Adult gets tested at work
         .WillOnce(testing::Return(0.999)) // Adult tests (false) positive
-        .WillOnce(testing::Return(0.5)) // Adult complies to isolation
-        .WillOnce(testing::Return(0.1)); // Adult complies for shop test
+        .WillOnce(testing::Return(0.5)); // Adult complies to isolation
 
     // Test child at school - should pass the test
     bool school_result = test_strategy.run_and_check(rng_child, child, loc_school, start_date);
@@ -518,8 +501,7 @@ TEST_F(TestTestingScheme, testingStrategyHomeAccess)
     // Mock uniform distribution to control random behavior in testing
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(4))
-        .WillOnce(testing::Return(0.1)) // Person complies for testing
+        .Times(testing::Exactly(3))
         .WillOnce(testing::Return(0.7)) // Person gets tested
         .WillOnce(testing::Return(0.05)) // Test is positive
         .WillOnce(testing::Return(0.5)); // Person complies to isolation
@@ -564,8 +546,7 @@ TEST_F(TestTestingScheme, locationSpecificSchemes)
     // Mock uniform distribution to control test results
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(4))
-        .WillOnce(testing::Return(0.1)) // Person complies for testing at shop1
+        .Times(testing::Exactly(3))
         .WillOnce(testing::Return(0.7)) // Person gets tested at shop1
         .WillOnce(testing::Return(0.995)) // Test is positive
         .WillOnce(testing::Return(0.5)); // Person complies to isolation
@@ -578,4 +559,44 @@ TEST_F(TestTestingScheme, locationSpecificSchemes)
     // No need to mock RNG calls here as no test should be performed
     bool result2 = test_strategy.run_and_check(rng, person, shop2, start_date);
     EXPECT_EQ(result2, true); // Person should be allowed to enter as no test is required
+}
+
+TEST_F(TestTestingScheme, testCompliance)
+{
+    auto validity_period   = mio::abm::days(1);
+    const auto start_date  = mio::abm::TimePoint(0);
+    const auto end_date    = mio::abm::TimePoint(500);
+    const auto probability = 0.8;
+    const auto test_params = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(2), mio::abm::TestType::PCR};
+
+    // Create a testing scheme
+    auto testing_criteria = mio::abm::TestingCriteria();
+    auto testing_scheme =
+        mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params, probability);
+
+    // Create TestingStrategy
+    mio::abm::TestingStrategy test_strategy;
+
+    // Add scheme to a specific location by ID
+    mio::abm::LocationId specific_shop_id(42);
+    test_strategy.add_scheme(specific_shop_id, testing_scheme);
+
+    // Create locations with different IDs but same type
+    mio::abm::Location shop1(mio::abm::LocationType::BasicsShop, 42, num_age_groups); // Has the specific ID
+
+    // Create a test person
+    auto person =
+        make_test_person(this->get_rng(), shop1, age_group_15_to_34, mio::abm::InfectionState::Susceptible, start_date);
+    auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+    person.set_compliance(mio::abm::InterventionType::Testing, 0.1); // Set compliance for testing
+
+    // Mock uniform distribution to control test results
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::Exactly(1))
+        .WillOnce(testing::Return(0.2)); // Person is not compliant for testing
+
+    // Test at shop with specific ID - should run the scheme
+    bool result1 = test_strategy.run_and_check(rng, person, shop1, start_date);
+    EXPECT_EQ(result1, false); // Person should not be allowed to enter after positive test
 }

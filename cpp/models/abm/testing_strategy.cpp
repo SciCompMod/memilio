@@ -82,7 +82,9 @@ bool TestingScheme::run_and_test(PersonalRandomNumberGenerator& rng, Person& per
     if (!is_active(t)) { // If the scheme is not active, do nothing; early return
         return false;
     }
-    if (!person.is_compliant(
+    if (person.get_compliance(InterventionType::Testing) <
+            1.0 && // Dont need to draw a random number if the person is compliant either way
+        !person.is_compliant(
             rng, InterventionType::Testing)) { // If the person is not compliant with the testing intervention
         return true; // Assume positive test result as this should not allow entry although it is not the same
     }

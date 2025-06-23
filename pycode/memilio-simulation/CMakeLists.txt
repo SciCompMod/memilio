@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(memilio-python)
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
 mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
 
@@ -66,22 +67,22 @@ add_pymio_module(_simulation
     memilio/simulation/bindings/utils/uncertain_value.cpp
 )
 
-add_pymio_module(_simulation_osir
-    LINKED_LIBRARIES memilio ode_sir
-    SOURCES memilio/simulation/bindings/models/osir.cpp
-)
+# add_pymio_module(_simulation_osir
+#     LINKED_LIBRARIES memilio ode_sir
+#     SOURCES memilio/simulation/bindings/models/osir.cpp
+# )
 
-add_pymio_module(_simulation_oseir
-    LINKED_LIBRARIES memilio ode_seir
-    SOURCES memilio/simulation/bindings/models/oseir.cpp
-)
+# add_pymio_module(_simulation_oseir
+#     LINKED_LIBRARIES memilio ode_seir
+#     SOURCES memilio/simulation/bindings/models/oseir.cpp
+# )
 
-add_pymio_module(_simulation_osecir
-    LINKED_LIBRARIES memilio ode_secir
-    SOURCES memilio/simulation/bindings/models/osecir.cpp
-)
+# add_pymio_module(_simulation_osecir
+#     LINKED_LIBRARIES memilio ode_secir
+#     SOURCES memilio/simulation/bindings/models/osecir.cpp
+# )
 
-add_pymio_module(_simulation_osecirvvs
-    LINKED_LIBRARIES memilio ode_secirvvs
-    SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
-)
+# add_pymio_module(_simulation_osecirvvs
+#     LINKED_LIBRARIES memilio ode_secirvvs
+#     SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
+# )

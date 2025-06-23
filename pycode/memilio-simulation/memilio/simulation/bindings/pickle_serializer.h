@@ -68,6 +68,16 @@ template <>
 struct PickleType<uint64_t> : std::true_type {
 };
 
+// Add support for long (Eigen::Index is typically long)
+template <>
+struct PickleType<long> : std::true_type {
+};
+
+// Add support for size_t
+template <>
+struct PickleType<size_t> : std::true_type {
+};
+
 //double
 template <>
 struct PickleType<double> : std::true_type {

@@ -629,8 +629,7 @@ TEST_F(TestModelTestingCriteria, testAddingAndUpdatingAndRunningTestingSchemes)
     current_time = mio::abm::TimePoint(0) + mio::abm::days(2);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(4))
-        .WillOnce(testing::Return(0.7)) // Person complies with testing
+        .Times(testing::Exactly(3))
         .WillOnce(testing::Return(0.5)) // Probability for testing (is performed)
         .WillOnce(testing::Return(0.4)) // Test result is positive
         .WillOnce(testing::Return(0.0)); // Draw for isolation compliance (doesn't matter in this test)
