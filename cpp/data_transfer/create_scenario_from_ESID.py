@@ -20,6 +20,7 @@ import json
 import time
 import datetime
 import numpy as np
+import pandas as pd
 from enum import Enum
 import os
 import requests
@@ -185,6 +186,7 @@ class Simulation:
 
             ensemble_results = []
             ensemble_params = []
+            # ensemble_edges = []
             for run in range(num_runs):
                 graph_run = ensemble[run]
                 ensemble_results.append(
@@ -192,11 +194,17 @@ class Simulation:
                 ensemble_params.append(
                     [graph_run.get_node(node_indx).property.model
                      for node_indx in range(graph.num_nodes)])
+                # ensemble_edges.append(
+                #     [graph_run.get_edge(edge_indx).property.mobility_results
+                #      for edge_indx in range(graph.num_edges)])
 
             node_ids = [graph.get_node(i).id for i in range(graph.num_nodes)]
 
             save_percentiles = True
             save_single_runs = False
+
+            # save edge results
+            # self.save_results_edges(graph, ensemble_edges, num_days_sim)
 
             res_dir_scenario = os.path.join(
                 self.results_dir,
@@ -622,6 +630,38 @@ class Simulation:
 
         params.ContactPatterns.dampings = dampings
 
+    def get_edge_indices(self, graph):
+        edge_indices = []
+        pop_object = graph.get_node(0).property.populations
+        infection_states_mild = [
+            osecirvvs.InfectionState.ExposedNaive,
+            osecirvvs.InfectionState.ExposedPartialImmunity,
+            osecirvvs.InfectionState.ExposedImprovedImmunity,
+            osecirvvs.InfectionState.InfectedNoSymptomsNaive,
+            osecirvvs.InfectionState.InfectedNoSymptomsPartialImmunity,
+            osecirvvs.InfectionState.InfectedNoSymptomsImprovedImmunity,
+            osecirvvs.InfectionState.InfectedNoSymptomsNaiveConfirmed,
+            osecirvvs.InfectionState.InfectedNoSymptomsPartialImmunityConfirmed,
+            osecirvvs.InfectionState.InfectedNoSymptomsImprovedImmunityConfirmed,
+            osecirvvs.InfectionState.InfectedSymptomsNaive,
+            osecirvvs.InfectionState.InfectedSymptomsPartialImmunity,
+            osecirvvs.InfectionState.InfectedSymptomsImprovedImmunity,
+            osecirvvs.InfectionState.InfectedSymptomsNaiveConfirmed,
+            osecirvvs.InfectionState.InfectedSymptomsPartialImmunityConfirmed,
+            osecirvvs.InfectionState.InfectedSymptomsImprovedImmunityConfirmed,
+        ]
+
+        indicies_mild = []
+
+        for age_group in range(self.num_groups):
+            for infection_state in infection_states_mild:
+                indicies_mild.append(pop_object.get_flat_index(osecirvvs.MultiIndex_PopulationsArray(
+                    mio.AgeGroup(age_group), infection_state)))
+
+        edge_indices.append(indicies_mild)
+
+        return edge_indices
+
     def get_graph(self, extrapolate, scenario_data):
         model = osecirvvs.Model(self.num_groups)
         self.set_covid_parameters(model, scenario_data)
@@ -656,10 +696,62 @@ class Simulation:
             end_date - start_date - 1, extrapolate, True, self.case_data, self.population_data,
             self.vacc_data)
 
+        # get indices for the edges
+        # edge_indices = self.get_edge_indices(graph)
+        edge_indices = []
+
         osecirvvs.set_edges(
-            self.data_dir, graph, len(Location))
+            self.data_dir, graph, len(Location), edge_indices)
 
         return graph
+
+    def save_results_edges(self, graph, ensemble_edges, num_days_sim):
+        edge_indx_pair = {}
+        for edge_indx in range(graph.num_edges):
+            edge = graph.get_edge(edge_indx)
+            edge_indx_pair[edge_indx] = (
+                edge.start_node_idx, edge.end_node_idx)
+
+        # save edges with one file per day
+        # convert time series into numpy arrays
+        for run_indx in range(len(ensemble_edges)):
+            for edge_indx in range(len(ensemble_edges[0])):
+                ensemble_edges[run_indx][edge_indx] = ensemble_edges[run_indx][edge_indx].as_ndarray(
+                )
+
+        percentiles = [25, 50, 75]
+        # calc percentiles for each edge
+        ensemble_edges_percentiles = []
+        for edge_indx in range(len(ensemble_edges[0])):
+            edge_percentiles = []
+            for percentile in percentiles:
+                edge_percentile = np.percentile(
+                    [ensemble_edges[run_indx][edge_indx]
+                     for run_indx in range(len(ensemble_edges))],
+                    percentile, axis=0)
+                edge_percentiles.append(edge_percentile)
+            ensemble_edges_percentiles.append(edge_percentiles)
+
+        # create one file per day
+        for day in range(1, num_days_sim + 1):
+            day_data = []
+            for edge_indx in range(len(ensemble_edges_percentiles)):
+                start_node, end_node = edge_indx_pair[edge_indx]
+                for percentile_indx, percentile in enumerate(percentiles):
+                    # since we use dt=0.5, we need to multiply the day by 2 to get the correct index
+                    day_indx = (day * 2) - 1
+                    day_data.append({
+                        "day": day,
+                        "start_node": start_node,
+                        "end_node": end_node,
+                        "percentile": percentile,
+                        "mild_infected": int(ensemble_edges_percentiles[edge_indx][percentile_indx][1][day_indx]),
+                        "total": int(ensemble_edges_percentiles[edge_indx][percentile_indx][2][day_indx])
+                    })
+            # save to csv
+            df = pd.DataFrame(day_data)
+            df.to_csv(
+                f"{self.results_dir}/edges_day_{day}.csv", index=False)
 
     def run(self, num_runs=10, max_workers=10):
         mio.set_log_level(mio.LogLevel.Warning)
