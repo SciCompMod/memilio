@@ -35,7 +35,7 @@ runs:
         cd cpp
         tar -xzf build.tar.gz
         # mark files so they are not recompiled
-        find . -path build -prune -or -type f -name "*.h" -exec make -o {} +
+        find . -path ./build -prune -or -type f -name "*.h" -exec make -o {} +
     - name: Build SBML converter
       shell: bash
       run: |
