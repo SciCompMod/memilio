@@ -129,19 +129,19 @@ public:
                 std::min(test_and_trace_required / params.template get<TestAndTraceCapacity<FP>>(), 1.0);
 
             // exposed to exposed isolated
-            const auto detection_rate_exposed = (params.template get<DetectionRateExposedMaxRisk<FP>>() -
-                                                 params.template get<DetectionRateExposedMinRisk<FP>>()) *
+            const auto detection_rate_exposed = (params.template get<DetectionRateExposedMinRisk<FP>>() -
+                                                 params.template get<DetectionRateExposedMaxRisk<FP>>()) *
                                                     tnt_capacity_utilization +
-                                                params.template get<DetectionRateExposedMinRisk<FP>>();
+                                                params.template get<DetectionRateExposedMaxRisk<FP>>();
 
             flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::ExposedIsolated>(i)] =
                 detection_rate_exposed * y[Ei];
 
             // infected to infected isolated
-            const auto detection_rate_infected = (params.template get<DetectionRateInfectedMaxRisk<FP>>() -
-                                                  params.template get<DetectionRateInfectedMinRisk<FP>>()) *
+            const auto detection_rate_infected = (params.template get<DetectionRateInfectedMinRisk<FP>>() -
+                                                  params.template get<DetectionRateInfectedMaxRisk<FP>>()) *
                                                      tnt_capacity_utilization +
-                                                 params.template get<DetectionRateInfectedMinRisk<FP>>();
+                                                 params.template get<DetectionRateInfectedMaxRisk<FP>>();
 
             flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Infectedisolated>(i)] =
                 detection_rate_infected * y[Ii];

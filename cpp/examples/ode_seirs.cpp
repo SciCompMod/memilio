@@ -53,9 +53,9 @@ int main()
     model.parameters.set<mio::oseirs::TransmissionProbabilityOnContact<ScalarType>>(0.1);
     model.parameters.set<mio::oseirs::ShareContagionsIsolated<ScalarType>>(0.1);
     model.parameters.set<mio::oseirs::TestAndTraceCapacity<ScalarType>>(10);
-    model.parameters.set<mio::oseirs::DetectionRateExposedMinRisk<ScalarType>>(0.1);
+    model.parameters.set<mio::oseirs::DetectionRateExposedMinRisk<ScalarType>>(0.3);
     model.parameters.set<mio::oseirs::DetectionRateExposedMaxRisk<ScalarType>>(0.2);
-    model.parameters.set<mio::oseirs::DetectionRateInfectedMinRisk<ScalarType>>(0.1);
+    model.parameters.set<mio::oseirs::DetectionRateInfectedMinRisk<ScalarType>>(0.3);
     model.parameters.set<mio::oseirs::DetectionRateInfectedMaxRisk<ScalarType>>(0.2);
 
     // mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseirs::ContactPatterns<ScalarType>>();
