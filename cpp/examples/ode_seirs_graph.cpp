@@ -24,16 +24,11 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
 
-int main()
+#include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/compartments/simulation.h"
+
+auto setup_model()
 {
-    mio::set_log_level(mio::LogLevel::debug);
-
-    ScalarType t0   = 0;
-    ScalarType tmax = 50.;
-    ScalarType dt   = 1.0;
-
-    mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
-
     mio::oseirs::Model<ScalarType> model(1);
 
     ScalarType total_population                                                          = 10000;
@@ -64,8 +59,39 @@ int main()
 
     model.check_constraints();
 
-    auto seir = simulate(t0, tmax, dt, model);
+    return model;
+}
 
-    seir.print_table({"S", "E", "E_I", "I", "I_I", "R"});
-    std::cout << "\nnumber total: " << seir.get_last_value().sum() << "\n";
+int main()
+{
+    mio::set_log_level(mio::LogLevel::debug);
+
+    ScalarType t0   = 0;
+    ScalarType tmax = 50.;
+    ScalarType dt   = 0.5;
+
+    mio::log_info("Simulating ODE SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+
+    auto model1 = setup_model();
+    auto model2 = setup_model();
+
+    model1.populations[{mio::AgeGroup(0), mio::oseirs::InfectionState::Exposed}]  = 250;
+    model1.populations[{mio::AgeGroup(0), mio::oseirs::InfectionState::Infected}] = 500;
+
+    // mio::Graph<mio::Simulation<double, mio::oseirs::Model<double>>, mio::MobilityEdge<ScalarType>> g;
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::oseirs::Model<double>>>, mio::MobilityEdge<ScalarType>>
+        g;
+
+    g.add_node(1001, model1, t0);
+    g.add_node(1002, model2, t0);
+    g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)mio::oseirs::InfectionState::Count, 0.1));
+    g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::oseirs::InfectionState::Count, 0.1));
+
+    auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
+
+    sim.advance(tmax);
+
+    const auto& results_m1 = sim.get_graph().nodes()[0].property.get_result();
+
+    results_m1.print_table({"S", "E", "E_I", "I", "I_I", "R"});
 }
