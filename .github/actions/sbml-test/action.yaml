@@ -31,11 +31,11 @@ runs:
         path: cpp
     - name: extract build archive
       shell: bash
-      # extract and touch all build files so make sees them as up-to-date
       run: |
         cd cpp
         tar -xzf build.tar.gz
-        find build/ -type f -exec touch {} +
+        # mark files so they are not recompiled
+        find . -path build -prune -or -type f -name "*.h" -exec make -o {} +
     - name: Build SBML converter
       shell: bash
       run: |
