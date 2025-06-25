@@ -249,7 +249,8 @@ def generate_data(
 
         # Generate random damping days
         damping_days, damping_factors = dampings.generate_dampings(
-            days, max_number_damping, method=damping_method)
+            days, max_number_damping, method=damping_method, min_distance=2,
+            min_damping_day=2)
 
         data_run, damped_matrices = run_secir_groups_simulation(
             days, damping_days, damping_factors, population[random.randint(0, len(population) - 1)])
@@ -359,4 +360,4 @@ if __name__ == "__main__":
     label_width = 30
     num_runs = 10000
     data = generate_data(num_runs, path_output, path_population, input_width,
-                         label_width)
+                         label_width, damping_method="classic")
