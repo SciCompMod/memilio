@@ -288,25 +288,42 @@ def preprocess_population_data(df_pop_raw: pd.DataFrame,
     """
     column_names = list(df_pop_raw.columns)
     # rename columns
-    rename_columns = {
-        column_names[0]: dd.EngEng['date'],
-        column_names[1]: dd.EngEng['idCounty'],
-        column_names[2]: dd.EngEng['county'],
-        column_names[3]: dd.EngEng['ageRKI'],
-        column_names[4]: dd.EngEng['number'],
-        column_names[5]: dd.EngEng['male'],
-        column_names[6]: dd.EngEng['female']
-    }
+    if len(column_names) == 7:
+        rename_columns = {
+            column_names[0]: dd.EngEng['date'],
+            column_names[1]: dd.EngEng['idCounty'],
+            column_names[2]: dd.EngEng['county'],
+            column_names[3]: dd.EngEng['ageRKI'],
+            column_names[4]: dd.EngEng['number'],
+            column_names[5]: dd.EngEng['male'],
+            column_names[6]: dd.EngEng['female']
+        }
+    else:
+        rename_columns = {
+            column_names[0]: dd.EngEng['idCounty'],
+            column_names[1]: dd.EngEng['county'],
+            column_names[2]: dd.EngEng['ageRKI'],
+            column_names[3]: dd.EngEng['number'],
+            column_names[4]: dd.EngEng['male'],
+            column_names[5]: dd.EngEng['female']
+        }
     df_pop_raw.rename(columns=rename_columns, inplace=True)
-    # remove date and explanation rows at end of table
-    df_pop_raw = df_pop_raw[:np.where(df_pop_raw[dd.EngEng['date']].str.contains(
-        '__') == True)[0][0]].reset_index(drop=True)
+
+    # remove date and explanation rows at end of table. If length of column_names is 7,
+    # the explanation is in the date column, otherwise in the idCounty column
+    if len(column_names) == 7:
+        df_pop_raw = df_pop_raw[:np.where(df_pop_raw[dd.EngEng['date']].str.contains(
+            '__') == True)[0][0]].reset_index(drop=True)
+    else:
+        df_pop_raw = df_pop_raw[:np.where(df_pop_raw[dd.EngEng['idCounty']].str.contains(
+            '__') == True)[0][0]].reset_index(drop=True)
     # get indices of counties first lines
     idCounty_idx = df_pop_raw.groupby(
         dd.EngEng['idCounty']).head(1).index.tolist()
 
     # Delete column dd.EngEng[‘date’] as it was added to the data later and is not needed
-    df_pop_raw.drop(columns=[dd.EngEng['date']], inplace=True)
+    if len(column_names) == 7:
+        df_pop_raw.drop(columns=[dd.EngEng['date']], inplace=True)
 
     # read county list and create output data frame
     counties = np.array(geoger.get_county_names_and_ids(
