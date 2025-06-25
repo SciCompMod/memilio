@@ -1,10 +1,22 @@
-# Python script to analyze bs runs
-# input is a bs run folder with the following structure:
-# bs_run_folder has a txt file for each bs run
-# each txt file has a line for each time step
-# each line has a column for each compartment as well as the timestep
-# each column has the number of individuals in that compartment
-# the first line of each txt file is the header
+#############################################################################
+# Copyright (C) 2020-2025 MEmilio
+#
+# Authors: Sascha Korf
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 
 import sys
 import argparse
@@ -13,1120 +25,389 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
-import matplotlib.patches as mpatches
-import matplotlib.lines as mlines
 import h5py
 from datetime import datetime
-from matplotlib.dates import DateFormatter
 from scipy.ndimage import gaussian_filter1d
-from scipy.signal import savgol_filter
-
-fontsize = 20
 
 
-def plot_infections_loc_types_avarage(path):
-    # 50-percentile
-    f_p50 = h5py.File(
-        path+"/infection_per_location_type_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
+# Module for plotting number of agents per infection state and number of infected agents per location type from ABM results.
+# This module provides functions to load and visualize infection states and
+# location types from simulation results of the agent-based model (ABM) stored in HDF5 format.
 
-    # 25-percentile
-    f_p25 = h5py.File(
-        path+"/infection_per_location_type_per_age_group/0/p05/Results.h5", 'r')
-    p25_bs = f_p25['0']
-    total_25 = p25_bs['Total'][()]
+# The used  Loggers are:
+# struct LogInfectionStatePerAgeGroup : mio::LogAlways {
+#     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+#     /**
+#      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState for every age group.
+#      * @param[in] sim The simulation of the abm.
+#      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState for every age group.
+#      */
+#     static Type log(const mio::abm::Simulation& sim)
+#     {
+#
+#         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+#             Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups()));
+#         const auto curr_time = sim.get_time();
+#         const auto persons   = sim.get_world().get_persons();
+#
+#         // PRAGMA_OMP(parallel for)
+#         for (auto i = size_t(0); i < persons.size(); ++i) {
+#             auto& p = persons[i];
+#             auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+#                 ((uint32_t)p.get_infection_state(curr_time));
+# // PRAGMA_OMP(atomic)
+#              sum[index] += 1;
+#         }
+#         return std::make_pair(curr_time, sum);
+#     }
+# };
+#
+# struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
+#     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+#     /**
+#      * @brief Log the TimeSeries of the number of newly infected Person%s for each Location Type and each age.
+#      * @param[in] sim The simulation of the abm.
+#      * @return A pair of the TimePoint and the TimeSeries of newly infected Person%s for each Location Type and each age.
+#      */
+#     static Type log(const mio::abm::Simulation& sim)
+#     {
+#
+#         Eigen::VectorXd sum = Eigen::VectorXd::Zero(
+#             Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups()));
+#         auto curr_time     = sim.get_time();
+#         auto prev_time     = sim.get_prev_time();
+#         const auto persons = sim.get_world().get_persons();
+#
+#         // PRAGMA_OMP(parallel for)
+#         for (auto i = size_t(0); i < persons.size(); ++i) {
+#             auto& p = persons[i];
+#                 // PRAGMA_OMP(atomic)
+#                 if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+#                     (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+#                     auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+#                                  ((uint32_t)p.get_location().get_type());
+#                     sum[index] += 1;
+#                 }
+#         }
+#         return std::make_pair(curr_time, sum);
+#     }
+# };
+#
+# The output of the loggers of several runs is stored in HDF5 files using mio::save_results in mio/io/result_io.h.
 
-    # 75-percentile
-    f_p75 = h5py.File(
-        path + "/infection_per_location_type_per_age_group/0/p95/Results.h5", 'r')
-    p75_bs = f_p75['0']
-    total_75 = p75_bs['Total'][()]
+# Adjust these as needed.
+state_labels = {
+    1: 'Exposed',
+    2: 'I_Asymp',
+    3: 'I_Symp',
+    4: 'I_Severe',
+    5: 'I_Critical',
+    7: 'Dead'
+}
 
-    time = p50_bs['Time'][()]
+age_groups = ['Group1', 'Group2', 'Group3', 'Group4',
+              'Group5', 'Group6', 'Total']
 
-   
+age_groups_dict = {
+    'Group1': 'Ages 0-4',
+    'Group2': 'Ages 5-14',
+    'Group3': 'Ages 15-34',
+    'Group4': 'Ages 35-59',
+    'Group5': 'Ages 60-79',
+    'Group6': 'Ages 80+',
+    'Total': 'All Ages'
+}
+
+location_type_labels = {
+    0: 'Home',
+    1: 'School',
+    2: 'Work',
+    3: 'SocialEvent',
+    4: 'BasicsShop',
+    5: 'Hospital',
+    6: 'ICU'
+}
 
 
-    plot_infection_per_location_type_mean(
-        time, total_50, total_25, total_75)
+def load_h5_results(base_path, percentile):
+    """ Reads HDF5 results for a given group and percentile.
 
-def plot_infection_per_location_type_mean(x, y50, y25, y75):
+    @param[in] base_path Path to results directory.
+    @param[in] percentile Subdirectory for percentile (e.g. 'p50').
+    @return Dictionary with data arrays. Keys are dataset names from the HDF5 file 
+            (e.g., 'Time', 'Total', age group names like 'Group1', 'Group2', etc.).
+            Values are numpy arrays containing the corresponding time series data.
+    """
+    file_path = os.path.join(base_path, percentile, "Results.h5")
+    with h5py.File(file_path, 'r') as f:
+        data = {k: v[()] for k, v in f['0'].items()}
+    return data
+
+
+def plot_infections_loc_types_average(
+        path_to_loc_types,
+        start_date='2021-03-01',
+        colormap='Set1',
+        smooth_sigma=1,
+        rolling_window=24,
+        xtick_step=150):
+    """ Plots rolling sum of new infections per 24 hours location type for the median run.
+
+    @param[in] base_path Path to results directory.
+    @param[in] start_date Start date as string.
+    @param[in] colormap Matplotlib colormap.
+    @param[in] smooth_sigma Sigma for Gaussian smoothing.
+    @param[in] rolling_window Window size for rolling sum.
+    @param[in] xtick_step Step size for x-axis ticks.
+    """
+    # Load data
+    p50 = load_h5_results(path_to_loc_types, "p50")
+    time = p50['Time']
+    total_50 = p50['Total']
 
     plt.figure('Infection_location_types')
-    plt.title('At which location type an infection happened, avaraged over all runs')
+    plt.title(
+        'Number of new infections per location type for the median run, rolling sum over 24 hours')
+    color_plot = matplotlib.colormaps.get_cmap(colormap).colors
 
-    color_plot = matplotlib.colormaps.get_cmap('Set1').colors
+    for idx, i in enumerate(location_type_labels.keys()):
+        color = color_plot[i % len(color_plot)] if i < len(
+            color_plot) else "black"
+        # Sum up every 24 hours, then smooth
+        indexer = pd.api.indexers.FixedForwardWindowIndexer(
+            window_size=rolling_window)
+        y = pd.DataFrame(total_50[:, i]).rolling(
+            window=indexer, min_periods=1).sum().to_numpy()
+        y = y[0::rolling_window].flatten()
+        y = gaussian_filter1d(y, sigma=smooth_sigma, mode='nearest')
+        plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5)
 
-    states_plot = [0, 1, 2, 3, 4, 10]
-    legend_plot = ['Home', 'School', 'Work',
-                   'SocialEvent', 'BasicsShop','Event']
-
-    for i in states_plot:
-        # rolling average#
-        ac_color = color_plot[i%len(color_plot)]
-        if(i > len(color_plot)):
-            ac_color = "black"
-        
-        # we need to sum up every 24 hours
-        indexer = pd.api.indexers.FixedForwardWindowIndexer(window_size=24)
-        np_y50 = pd.DataFrame(y50[:, i]).rolling(window=indexer, min_periods=1).sum().to_numpy()
-        np_y50=np_y50[0::24].flatten()
-        # now smoothen this with a gaussian filter
-        np_y50 = gaussian_filter1d(np_y50, sigma=1, mode='nearest')
-        
-        plt.plot(x[0::24], np_y50, color=ac_color)
-    
-    # We also print which percentage of the population was infected total, for the 50 percent interval
-    # we need to sum up just the last timepoint
-    # and divide it by the populat
-
-    plt.legend(legend_plot)
-
-    # currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in x]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-    # but just take every 10th date to make it more readable
-    plt.gca().set_xticks(x[::150])
-    plt.gca().set_xticklabels(xx[::150])
-    plt.gcf().autofmt_xdate()
-    # these are matplotlib.patch.Patch properties
-    # place a text box in upper left in axes coords
-
-    plt.title('Infection location types')
-    plt.gca().set_ylim(bottom=0)
+    plt.legend(list(location_type_labels.values()))
+    _format_x_axis(time, start_date, xtick_step)
     plt.xlabel('Date')
     plt.ylabel('Number of individuals')
     plt.show()
 
-def plot_infection_states_results(path):
-    # 50-percentile
-    f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
-    # 25-percentile
-    f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
-    p25_bs = f_p25['0']
-    total_25 = p25_bs['Total'][()]
-    # 75-percentile
-    f_p75 = h5py.File(
-        path + "/infection_state_per_age_group/0/p95/Results.h5", 'r')
-    p75_bs = f_p75['0']
-    total_75 = p75_bs['Total'][()]
 
-    time = p50_bs['Time'][()]
+def plot_infection_states_results(
+        path_to_infection_states,
+        start_date='2021-03-01',
+        colormap='Set1',
+        xtick_step=150,
+        show90=False
+):
+    """ Loads and plots infection state results. 
 
-    # plot_infection_states_individual(
-    #     time, p50_bs, p25_bs, p75_bs)
-    plot_infection_states(time, total_50, total_25, total_75)
+    @param[in] path_to_infection_states Path to results directory containing infection state data.
+    @param[in] start_date Start date as string (YYYY-MM-DD format).
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] show90 If True, plot 90% percentile (5% and 95%) in addition to 50% percentile.
+    """
 
-def plot_infection_states(x, y50, y25, y75, y_real=None):
+    # Load data
+    p50 = load_h5_results(path_to_infection_states, "p50")
+    p25 = load_h5_results(path_to_infection_states, "p25")
+    p75 = load_h5_results(path_to_infection_states, "p75")
+    time = p50['Time']
+    total_50 = p50['Total']
+    total_25 = p25['Total']
+    total_75 = p75['Total']
+    p05 = p95 = None
+    total_05 = total_95 = None
+    if show90:
+        total_95 = load_h5_results(path_to_infection_states, "p95")
+        total_05 = load_h5_results(path_to_infection_states, "p05")
+        p95 = total_95['Total']
+        p05 = total_05['Total']
+
+    plot_infection_states_by_age_group(
+        time, p50, p25, p75, colormap,
+        p05_bs=total_05 if show90 else None,
+        p95_bs=total_95 if show90 else None,
+        show90=show90
+    )
+    plot_infection_states(time, total_50, total_25,
+                          total_75, start_date, colormap, xtick_step,
+                          y05=p05, y95=p95, show_90=show90)
+
+
+def plot_infection_states(
+        x, y50, y25, y75,
+        start_date='2021-03-01',
+        colormap='Set1',
+        xtick_step=150,
+        y05=None, y95=None, show_90=False):
+    """ Plots infection states with percentile bands.
+
+    @param[in] x Time array for x-axis.
+    @param[in] y50 50th percentile data array.
+    @param[in] y25 25th percentile data array.
+    @param[in] y75 75th percentile data array.
+    @param[in] start_date Start date as string (YYYY-MM-DD format).
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] y05 5th percentile data array (optional).
+    @param[in] y95 95th percentile data array (optional).
+    @param[in] show_90 If True, plot 90% percentile bands in addition to 50% percentile.
+    """
+
     plt.figure('Infection_states')
-    plt.title('Infection states')
 
-    color_plot = matplotlib.colormaps.get_cmap('Set1').colors
+    plt.title('Infection states with 50% percentile')
+    if show_90:
+        plt.title('Infection states with 50% and 90% percentiles')
 
-    states_plot = [1, 2, 3, 4, 5, 7]
-    legend_plot = ['E', 'I_NSymp', 'I_Symp',
-                   'I_Sev', 'I_Crit', 'Dead', 'Sm. re. pos.']
+    color_plot = matplotlib.colormaps.get_cmap(colormap).colors
+
+    states_plot = list(state_labels.keys())
 
     for i in states_plot:
-        plt.plot(x, y50[:, i], color=color_plot[i])
-
-
-    plt.legend(legend_plot)
+        plt.plot(x, y50[:, i], color=color_plot[i],
+                 linewidth=2.5, label=state_labels[i])
+    # needs to be after the plot calls
+    plt.legend([state_labels[i] for i in states_plot])
     for i in states_plot:
-        plt.fill_between(x, y50[:, i], y25[:, i],
-                         alpha=0.5, color=color_plot[i])
-        plt.fill_between(x, y50[:, i], y75[:, i],
-                         alpha=0.5, color=color_plot[i])
-        
-    # We also print which percentage of the population was infected total, for the 50 percent interval
-    # we need to sum up just the last timepoint
+        plt.plot(x, y25[:, i], color=color_plot[i],
+                 linestyle='dashdot', linewidth=1.2, alpha=0.7)
+        plt.plot(x, y75[:, i], color=color_plot[i],
+                 linestyle='dashdot', linewidth=1.2, alpha=0.7)
+        plt.fill_between(x, y25[:, i], y75[:, i],
+                         alpha=0.2, color=color_plot[i])
+        # Optional: 90% percentile
+        if show_90 and y05 is not None and y95 is not None:
+            plt.plot(x, y05[:, i], color=color_plot[i],
+                     linestyle='dashdot', linewidth=1.0, alpha=0.4)
+            plt.plot(x, y95[:, i], color=color_plot[i],
+                     linestyle='dashdot', linewidth=1.0, alpha=0.4)
+            plt.fill_between(x, y05[:, i], y95[:, i],
+                             # More transparent
+                             alpha=0.25, color=color_plot[i])
 
-    population = 1000
-    # we need to sum up just the last timepoint
-    total_infected = y50[-1, 1] + y50[-1, 2] + y50[-1, 3] + \
-        y50[-1, 4] + y50[-1, 5] + y50[-1, 7]
-    # and divide it by the population
-    total_infected = total_infected / population * 100
-    # and print it
-    
-        
-
-    # currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in x]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-    # but just take every 10th date to make it more readable
-    plt.gca().set_xticks(x[::150])
-    plt.gca().set_xticklabels(xx[::150])
-    plt.gcf().autofmt_xdate()
-
-    plt.xlabel('Time')
+    _format_x_axis(x, start_date, xtick_step)
+    plt.xlabel('Date')
     plt.ylabel('Number of individuals')
     plt.show()
 
-def plot_infection_states_individual(x, p50_bs, p25_bs, p75_bs):
 
+def plot_infection_states_by_age_group(
+    x, p50_bs, p25_bs, p75_bs, colormap='Set1',
+    p05_bs=None, p95_bs=None, show90=False
+):
+    """ Plots infection states for each age group, with optional 90% percentile. 
 
-    age_group_access = ['Group1', 'Group2', 'Group3',
-                        'Group4', 'Group5', 'Group6', 'Total']
+    @param[in] x Time array for x-axis.
+    @param[in] p50_bs Dictionary containing 50th percentile data for all age groups.
+    @param[in] p25_bs Dictionary containing 25th percentile data for all age groups.
+    @param[in] p75_bs Dictionary containing 75th percentile data for all age groups.
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] p05_bs Dictionary containing 5th percentile data for all age groups (optional).
+    @param[in] p95_bs Dictionary containing 95th percentile data for all age groups (optional).
+    @param[in] show90 If True, plot 90% percentile bands in addition to 50% percentile.
+    """
 
-    color_plot = matplotlib.colormaps.get_cmap('Set1').colors
+    color_plot = matplotlib.colormaps.get_cmap(colormap).colors
+    n_states = len(state_labels)
+    fig, ax = plt.subplots(
+        n_states, len(age_groups), constrained_layout=True, figsize=(20, 3 * n_states))
 
-    fig, ax = plt.subplots(6, len(age_group_access), constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    for j, count in zip(age_group_access, range(len(age_group_access))):
-        y50 = p50_bs[j][()]
-        y25 = p25_bs[j][()]
-        y75 = p75_bs[j][()]
+    for col_idx, group in enumerate(age_groups):
+        y50 = p50_bs[group]
+        y25 = p25_bs[group]
+        y75 = p75_bs[group]
+        y05 = p05_bs[group] if (show90 and p05_bs is not None) else None
+        y95 = p95_bs[group] if (show90 and p95_bs is not None) else None
+        for row_idx, (state_idx, label) in enumerate(state_labels.items()):
+            _plot_state(
+                ax[row_idx, col_idx], x, y50[:, state_idx], y25[:,
+                                                                state_idx], y75[:, state_idx],
+                color_plot[col_idx], f'#{label}, {age_groups_dict[group]}',
+                y05=y05[:, state_idx] if y05 is not None else None,
+                y95=y95[:, state_idx] if y95 is not None else None,
+                show90=show90
+            )
+            # The legend should say: solid line = median, dashed line = 25% and 75% perc. and if show90 is True, dotted line = 5%, 25%, 75%, 95% perc.
+            perc_string = '25/75%' if not show90 else '5/25/75/95%'
+            ax[row_idx, col_idx].legend(
+                ['Median', f'{perc_string} perc.'],
+                loc='upper left', fontsize=8)
 
+            # Add y label for leftmost column
+            if col_idx == 0:
+                ax[row_idx, col_idx].set_ylabel('Number of individuals')
 
-        # infeced no symptoms
-        ax_infected_no_symptoms = ax[0, count]
-        ax_infected_no_symptoms.set_xlabel('time (days)')
-        ax_infected_no_symptoms.plot(
-            x, y50[:, 1], color=color_plot[count], label='y50')
-        ax_infected_no_symptoms.fill_between(
-            x, y50[:, 1], y25[:, 1], alpha=0.5, color=color_plot[count])
-        ax_infected_no_symptoms.fill_between(
-            x, y50[:, 1], y75[:, 1], alpha=0.5, color=color_plot[count])
-        ax_infected_no_symptoms.tick_params(axis='y')
-        ax_infected_no_symptoms.title.set_text(
-            '#Infected_no_symptoms, Age{}'.format(j))
-        ax_infected_no_symptoms.legend(['Simulation'])
+            # Add x label for bottom row
+            if row_idx == n_states - 1:
+                ax[row_idx, col_idx].set_xlabel('Time (days)')
 
-        # Infected_symptoms
-        ax_infected_symptoms = ax[1, count]
-        ax_infected_symptoms.set_xlabel('time (days)')
-        ax_infected_symptoms.plot(
-            x, y50[:, 2], color=color_plot[count], label='y50')
-        ax_infected_symptoms.fill_between(
-            x, y50[:, 2], y25[:, 2], alpha=0.5, color=color_plot[count])
-        ax_infected_symptoms.fill_between(
-            x, y50[:, 2], y75[:, 2], alpha=0.5, color=color_plot[count])
-        ax_infected_symptoms.tick_params(axis='y')
-        ax_infected_symptoms.title.set_text(
-            '#Infected_symptoms, Age{}'.format(j))
-        ax_infected_symptoms.legend(['Simulation'])
+    string_short = ' and 90%' if show90 else ''
+    fig.suptitle(
+        'Infection states per age group with 50%' + string_short + ' percentile',
+        fontsize=16)
 
-        # Severe
-        ax_severe = ax[2, count]
-        ax_severe.set_xlabel('time (days)')
-        ax_severe.plot(x, y50[:, 4], color=color_plot[count], label='y50')
-        ax_severe.fill_between(
-            x, y50[:, 4], y25[:, 4], alpha=0.5, color=color_plot[count])
-        ax_severe.fill_between(
-            x, y50[:, 4], y75[:, 4], alpha=0.5, color=color_plot[count])
-        ax_severe.tick_params(axis='y')
-        ax_severe.title.set_text('#Severe, Age{}'.format(j))
-        ax_severe.legend(['Simulation'])
-
-        # Critical
-        ax_critical = ax[3, count]
-        ax_critical.set_xlabel('time (days)')
-        ax_critical.plot(x, y50[:, [5]], color=color_plot[count], label='y50')
-        ax_critical.fill_between(
-            x, y50[:, 5], y25[:, 5], alpha=0.5, color=color_plot[count])
-        ax_critical.fill_between(
-            x, y50[:, 5], y75[:, 5], alpha=0.5, color=color_plot[count])
-        ax_critical.tick_params(axis='y')
-        ax_critical.title.set_text('#Critical, Age{}'.format(j))
-        ax_critical.legend(['Simulation'])
-
-        # Dead
-        ax_dead = ax[4, count]
-        ax_dead.set_xlabel('time (days)')
-        ax_dead.plot(x, y50[:, [7]], color=color_plot[count], label='y50')
-        ax_dead.fill_between(x, y50[:, 7], y25[:, 7],
-                             alpha=0.5, color=color_plot[count])
-        ax_dead.fill_between(x, y50[:, 7], y75[:, 7],
-                             alpha=0.5, color=color_plot[count])
-        ax_dead.tick_params(axis='y')
-        ax_dead.title.set_text('#Dead, Age{}'.format(j))
-        ax_dead.legend(['Simulation'])
-
-        # Recovered
-        ax_dead = ax[5, count]
-        ax_dead.set_xlabel('time (days)')
-        ax_dead.plot(x, y50[:, [6]], color=color_plot[count], label='y50')
-        ax_dead.fill_between(x, y50[:, 6], y25[:, 6],
-                             alpha=0.5, color=color_plot[count])
-        ax_dead.fill_between(x, y50[:, 6], y75[:, 6],
-                             alpha=0.5, color=color_plot[count])
-        ax_dead.tick_params(axis='y')
-        ax_dead.title.set_text('#Recovered, Age{}'.format(j))
-        ax_dead.legend(['Simulation'])
-
-    # fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.show()
 
-def plot_dead(path):
-    # we will have a seperate plot the cumulative infected individuals, cumulative symptomatic individuals and cumulative dead individual
-    # we need to load the data
-    f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
 
-    # do the same for 25 and 75 percentile
-    f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
-    p25_bs = f_p25['0']
-
-    f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
-    p75_bs = f_p75['0']
-
-    # do the same for 05 and 95 percentile
-    f_p05 = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
-    p05_bs = f_p05['0']
-
-    f_p95 = h5py.File(
-        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
-    p95_bs = f_p95['0']
-
-    age_group_access = ['Group1', 'Group2', 'Group3',
-                        'Group4', 'Group5', 'Group6', 'Total']
-
-
-    time = p50_bs['Time'][()]
-    time = time[::24]
-    time = time[0:90]
-
-
-    # we need the amount of dead persons for each age group: These are A00-A04, A05-A14, A15-A34, A35-A59, A60-A79, A80+
-    age_groups = ['A00-A04', 'A05-A14', 'A15-A34', 'A35-A59', 'A60-A79', 'A80+']
-    age_grous_string = ['Age 0-4', 'Age 5-14', 'Age 15-34', 'Age 35-59', 'Age 60-79', 'Age 80+']
-    # we need to sum up the amount of dead persons for each age group
-
-
-    # we want a plot with 2 rows. Second row has a plot with each age group and the simulated and real dead persons
-    # First row has the cumulative dead persons
-    fig = plt.figure('Deaths')
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    gs = fig.add_gridspec(2,6)
-
-    # we need the cumulative dead persons
-    ax = fig.add_subplot(gs[0, :])
-    # we need to substract the first value from the rest
-
-    y_sim = p50_bs['Total'][()][:, 7][::24][0:90]
-    y_sim = y_sim - y_sim[0]
-
-    y_sim25 = p25_bs['Total'][()][:,7][::24][0:90]
-    y_sim25 = y_sim25 - y_sim25[0]
-
-    y_sim75 = p75_bs['Total'][()][:,7][::24][0:90]
-    y_sim75 = y_sim75 - y_sim75[0]
-
-    y_sim05 = p05_bs['Total'][()][:,7][::24][0:90]
-    y_sim05 = y_sim05 - y_sim05[0]
-    
-    y_sim95 = p95_bs['Total'][()][:, 7][::24][0:90]
-    y_sim95 = y_sim95 - y_sim95[0]
-
-
-
-   
-    # we need to plot the cumulative dead persons from the real world and from the simulation
-   
-    ax.plot(time, y_sim, color='tab:blue',label='Simulated deaths')
-    ax.fill_between(time, y_sim75, y_sim25, alpha=0.5, color='tab:blue', label='50% Confidence interval')
-    ax.fill_between(time, y_sim95, y_sim05, alpha=0.25, color='tab:blue', label='90% Confidence interval')
-    # ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_dead))), horizontalalignment='center',
-    #         verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
-    ax.set_label('Number of individuals')
-    ax.set_title('Cumulative Deaths', fontsize=fontsize)
-    ax.set_ylabel('Number of individuals', fontsize=fontsize-8)
-    ax.legend(fontsize=fontsize-8)
-
-    # # now for each age group
-    # for i, age_group in zip(range(6), age_group_access):
-    #     ax = fig.add_subplot(gs[1, i])
-    #     # we need the amount of dead persons for each age group 
-    #     df_abb_age_group = df_abb[df_abb['Age_RKI'] == age_groups[i]][0:90]
-    #     y_real =  np.round(df_abb_age_group['Deaths'].to_numpy())
-    #     # we need to plot the dead persons from the real world and from the simulation
-    #     ax.plot(df_abb_age_group['Date'], y_real-y_real[0], color='tab:red')
-    #     ax.plot(df_abb_age_group['Date'], p50_bs[age_group_access[i]][()][:, 7][::24][0:90]-p50_bs[age_group_access[i]][()][:, 7][::24][0], color='tab:blue')
-    #     ax.fill_between(df_abb_age_group['Date'], p75_bs[age_group_access[i]][()][:, 7][::24][0:90]-p75_bs[age_group_access[i]][()][:, 7][::24][0], p25_bs[age_group_access[i]][()][:, 7][::24][0:90]-p25_bs[age_group_access[i]][()][:, 7][::24][0],
-    #                         alpha=0.5, color='tab:blue')
-    #     ax.set_title('Deaths, '+age_grous_string[i])
-    #     ax.set_ybound(lower=0)
-    #     ax.set_xticks(df_abb_age_group['Date'][::50])
-    #     ax.tick_params(axis='both', which='major', labelsize=fontsize-10)
-    #     ax.tick_params(axis='both', which='minor', labelsize=fontsize-10)
-    #     if i == 0:
-    #         ax.set_ylabel('Number of individuals',fontsize=fontsize-8)
-    #         ax.set_ybound(upper=1)
-    
-    plt.show()
-   
-def plot_icu(path):
-    
-    df_abb = pd.read_json(path+"/../../../pydata/Germany/county_divi.json")
-
-    perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.56,0.54,0.46]
-    perc_of_critical_in_icu=0.55
-
-    age_group_access = ['Group1', 'Group2', 'Group3',
-                        'Group4', 'Group5', 'Group6', 'Total']
-
-
-    # we just need the columns ICU_low and ICU_hig
-    df_abb = df_abb[['ID_County', 'ICU', 'Date']]
-
-    df_abb = df_abb[df_abb['ID_County'] == 3101]
-    # we need just the dates bewteen 2021-03-01 and 2021-06-01
-    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') &
-                    (df_abb['Date'] <= '2021-06-01')]
-
-    # we plot this against this the Amount of persons in the ICU from our model
-    f_p50 = h5py.File(
-        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    total_50 = f_p50['0']['Total'][()][::24][0:90]
-
-    total_50_age = f_p50['0'][age_group_access[0]][()]
-    for i in range(6):
-              total_50_age += f_p50['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_50_age = total_50_age[::24][0:90]
-
-
-     # we plot this against this the Amount of persons in the ICU from our model
-    f_p75 = h5py.File(
-        path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
-    # total_75 = f_p75['0']['Total'][()][::24][0:90]
-    total_75_age = f_p75['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_75_age += f_p75['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_75_age = total_75_age[::24][0:90]
-
-    # same with 25 percentile
-    f_p25 = h5py.File(
-        path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
-    # total_25 = f_p25['0']['Total'][()][::24][0:90]
-    total_25_age = f_p25['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_25_age += f_p25['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_25_age = total_25_age[::24][0:90]
-
-    # same with 05 and 95 percentile
-    f_p05 = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
-    # total_05 = f_p05['0']['Total'][()][::24][0:90]
-    total_05_age = f_p05['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_05_age += f_p05['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_05_age = total_05_age[::24][0:90]
-
-    f_p95 = h5py.File(
-        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
-    # total_95 = f_p95['0']['Total'][()][::24][0:90]
-    total_95_age = f_p95['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_95_age += f_p95['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_95_age = total_95_age[::24][0:90]
-
-    
-    ICU_Simulation_one_percentile = np.floor(total_50[:, 5]*perc_of_critical_in_icu)
-    ICU_Simulation = np.round(total_50_age[:, 5])
-    ICU_Simulation75 = np.round(total_75_age[:, 5])
-    ICU_Simulation25 = np.round(total_25_age[:, 5])
-    ICU_Simulation05 = np.round(total_05_age[:, 5])
-    ICU_Simulation95 = np.round(total_95_age[:, 5])
-    ICU_Real = df_abb['ICU'][0:90]
-
-    #smooth the data
-    # ICU_Real = gaussian_filter1d(ICU_Real, sigma=1, mode='nearest')
-    # ICU_Simulation = gaussian_filter1d(ICU_Simulation, sigma=1, mode='nearest')
-
-
-
-    # we calculate the RMSE
-    rmse_ICU = np.sqrt(((ICU_Real - ICU_Simulation_one_percentile)**2).mean())
-
-    # plot the ICU beds and the ICU beds taken
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    fig.set_figwidth(12)
-    fig.set_figheight(9)
-    # we plot the ICU_low and the ICU_high
-    ax.plot(df_abb['Date'][0:90], ICU_Real,'x', color='tab:red', linewidth=10, label='Data')
-    ax.plot(df_abb['Date'][0:90], ICU_Simulation, color='tab:blue', label='Simulation')
-    # ax.plot(df_abb['Date'][0:90], ICU_Simulation_one_percentile, color='tab:green', label='Simulated ICU beds')
-    ax.fill_between(df_abb['Date'][0:90],ICU_Simulation75, ICU_Simulation25,
-                         alpha=0.5, color='tab:blue', label='50% Confidence interval')
-    ax.fill_between(df_abb['Date'][0:90],ICU_Simulation05, ICU_Simulation95,
-                         alpha=0.25, color='tab:blue', label='90% Confidence interval')
-    
-
-    # we also write the rmse
-    # ax.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_ICU))), horizontalalignment='center',
-    #         verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
-    ax.tick_params(axis='both', which='major', labelsize=fontsize-4)
-    ax.tick_params(axis='both', which='minor', labelsize=fontsize-4)
-    ax.set_ylabel('Occupied ICU beds', fontsize=fontsize)
-    ax.set_title('ICU beds', fontsize=fontsize+4)
-    ax.legend(fontsize=fontsize-4)
-    plt.show()
-
-def plot_tests(path):
-
-    df_abb = pd.read_excel(
-        path+"/pydata/Germany/SARS-CoV-2-PCR-Testungen_in_Deutschland.xlsx")
-    # in the week row the format is YYYY-WX where X is the week number and Y is the year number
-    # We need the week number and the year number and just take 2021-W9 to 2021-W21
-    # we just Take the rows where YYYY is 2021 and X is between 9 and 21
-    df_abb['Year'] = df_abb['date'].str.split('-').str[0]
-    df_abb['Week'] = df_abb['date'].str.split('-').str[1]
-    df_abb['Week'] = df_abb['Week'].str.split('W').str[1]
-    df_abb['Week'] = df_abb['Week'].astype(int)
-    df_abb['Year'] = df_abb['Year'].astype(int)
-    # we just take the rows where the year is 2021 and the week is between 9 and 21
-    df_abb = df_abb[(df_abb['Year'] == 2021) & (
-        df_abb['Week'] >= 9) & (df_abb['Week'] <= 21)]
-    # We just need the columns tests total, tests accumulated, tests positive
-    df_abb = df_abb[['date', 'tests_total', 'tests_total_accumulated',
-                     'tests_positive', 'tests_positive_accumulated', 'tests_positive_ratio']]
-    # we assumethe tests get distributed over the week, so we divide the tests by 7 for each day, but we also need to infer the amount of tests in brunswick
-    # as brunswick has around 250.000 persons, we take the 250.000/80.000.000 = 1/320 of the tests
-    df_abb[['tests_total', 'tests_total_accumulated', 'tests_positive', 'tests_positive_accumulated']] = df_abb[[
-        'tests_total', 'tests_total_accumulated', 'tests_positive', 'tests_positive_accumulated']]/320
-
-    # we model this the following way
-    # we know the amount of people who PCR test themselves positive and in general the amount of people who test themselves positive
-    # as well as the amount of people who test themselves through other means
-    # now we assume: the majority of people who are symptomatic (I_Isymp, I_Sev, I_Crit) will test themselves (80%)
-    # the majority of people who are asymptomatic (I_NSymp) will not test themselves (8%)
-    # and there is an amount of recently infected, which test themselves netherless (1%)
-
-    # first thing we can do, is that we PCR test an amount of
-    # we divide the persons into 2 groups: asymptomatic and symptomatic
-    # we assume that the symptomatic persons will test themselves with an x time higher probability than the asymptomatic persons
-
-    ratio_testing_symptomatic_vs_asymptomatic = 0.1
-
-    f_p50 = h5py.File(
-        path+"/results_last_run/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
-    total_50 = total_50[::24]
-    total_50 = total_50[0:90]
-
-    # we make a np array with the amount of symptomatic and asymptomatic persons
-    # first we calculate the amount of positive tests, and assume PCR is perfect
-    # the amount of tests done on each day is;
-    PCR_tests = df_abb['tests_total'].to_numpy()
-    PCR_tests = np.repeat(PCR_tests, 7)
-    PCR_tests = PCR_tests/7
-    PCR_tests = PCR_tests[0:90]
-
-    PCR_tests_positive = df_abb['tests_positive'].to_numpy()
-    PCR_tests_positive = np.repeat(PCR_tests_positive, 7)
-    PCR_tests_positive = PCR_tests_positive/7
-    PCR_tests_positive = PCR_tests_positive[0:90]
-
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in range(90)]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-
-    # plot these
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    # we plot the tests positive and the real cases
-    ax.plot(xx, PCR_tests, color='tab:red')
-    ax.plot(xx, PCR_tests_positive, color='tab:blue')
-    ax.set_xlabel('Date')
-
-    # The amount of persons, who do tests on  a day is:
-    PCR_tests_symptomatic = np.zeros(90)
-    PCR_tests_asymptomatic = np.zeros(90)
-    PCR_tests_symptomatic = PCR_tests * \
-        (1/(1+(1/ratio_testing_symptomatic_vs_asymptomatic)))
-    PCR_tests_asymptomatic = PCR_tests - PCR_tests_symptomatic
-
-    # the real amount of positive tested persons is:
-    # likelihood of being poisiitve is (E+I_NSymp)/(S+E+I_NSymp)
-    lik_being_positive_asymptomatic = (
-        total_50[:, 1]+total_50[:, 2])/(total_50[:, 0]+total_50[:, 1]+total_50[:, 2])
-
-    tests_positive = (lik_being_positive_asymptomatic *
-                      PCR_tests_asymptomatic)+PCR_tests_symptomatic
-    # we need to plot this
-    ax.plot(xx, tests_positive, color='tab:green')
-    ax.set_ylabel('Number of tests')
-    ax.title.set_text(
-        'Tests positive PCR and real confirmedcases from any source')
-    ax.legend(['Tests', 'Tests positive', 'Tests positive inferred'])
-    plt.show()
-
-    # new plot which is showing the amount of symptomatic persons
-    sympt_persons = total_50[:, 3]+total_50[:, 4]+total_50[:, 5]
-    # we plot this
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    # we plot the tests positive and the real cases
-    ax.plot(xx, sympt_persons, color='tab:red')
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Number of symptomatic persons')
-    ax.title.set_text('Symptomatic persons')
-    ax.legend(['Symptomatic persons'])
-    plt.show()
-
-    # also the amount of asymptomatic persons with the amount of persons infected
-    asympt_persons = total_50[:, 2]+total_50[:, 1]+total_50[:, 0]
-    asympt_positive = total_50[:, 2]+total_50[:, 1]
-    # we plot this
-    fig, ax = plt.subplots(1, 1, constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    # we plot the tests positive and the real cases
-    ax.plot(xx, asympt_persons, color='tab:red')
-    ax.plot(xx, asympt_positive, color='tab:blue')
-    ax.set_xlabel('time (days)')
-    ax.set_ylabel('Number of asymptomatic persons')
-    ax.title.set_text('Asymptomatic persons')
-    ax.legend(['Asymptomatic persons', 'Asymptomatic persons positive'])
-    plt.show()
-
-def calc_positive_tests_overall(infection_states, sensitivity, specificity, r_sns, lt_sympt):
-
-    lt_asympt = lt_sympt/r_sns
-    inferred_positive_tests_sympt = (
-        infection_states[:, 3]*lt_sympt+infection_states[:, 4]*lt_sympt+infection_states[:, 5]*lt_sympt)*sensitivity
-    # asymptomatic persons
-    inferred_positive_tests_asympt = (infection_states[:, 0]*lt_asympt)*(
-        1-specificity)+((infection_states[:, 1]+infection_states[:, 2])*lt_asympt)*sensitivity
-    return inferred_positive_tests_sympt+inferred_positive_tests_asympt, inferred_positive_tests_sympt, inferred_positive_tests_asympt
-
-def plot_estimated_reproduction_number(path):
-    f_p50 = h5py.File(
-        path+"/estimated_reproduction_number/0/p50/Results.h5", 'r')
-    p50_bs = f_p50['0']
-    total_50 = p50_bs['Total'][()]
-    total_50 = total_50[::24]
-    total_50 = total_50[0:90].flatten()
-    # we smooth this with a gaussian filter
-    total_50 = gaussian_filter1d(total_50, sigma=1, mode='nearest')
-    time = p50_bs['Time'][()]
-    time = time[::24]
-    time = time[0:90]
-
-    # we plot this
-    # we plot the tests positive and the real cases
-    plt.plot(time, total_50, color='tab:red')
-    plt.xlabel('time (days)')
-    plt.ylabel('Estimated reproduction number')
-    plt.title('Estimated reproduction number')
-    plt.show()
-
-def plot_cumulative_detected_infections(path):
-
-    df_abb = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma1.json")
-    # we need the 
-    df_abb = df_abb[['Date', 'Confirmed', 'ID_County']]
-    df_abb = df_abb[(df_abb['Date'] >= '2021-03-01') & (df_abb['Date'] <= '2021-06-01')]
-    df_abb = df_abb[df_abb['ID_County'] == 3101]
-    df_substract = np.round(df_abb['Confirmed'][0:1])
-    df_abb =   np.round(df_abb['Confirmed'][0:90])
-    df_abb = df_abb - df_substract.values[0]
-    df_diff = df_abb.diff()
-    # we also want to plot the amount of new detected infections on a 7 day rolling average
-    df_abb_rolling = df_diff.rolling(window=7, min_periods=1, center=True).mean()
- 
-    
-
-
-    f_p50 = h5py.File(
-        path+"/cumulative_detected_infections/0/p50/Results.h5", 'r')
-    total_50 = np.round(f_p50['0']['Total'][()][::24][0:90].flatten())
-    # we smooth this with a gaussian filter
-
-    f_p95 = h5py.File(
-        path+"/cumulative_detected_infections/0/p95/Results.h5", 'r')
-    total_95 = np.round(f_p95['0']['Total'][()][::24][0:90].flatten())
-
-    f_p05 = h5py.File(
-        path+"/cumulative_detected_infections/0/p05/Results.h5", 'r')
-    total_05 = np.round(f_p05['0']['Total'][()][::24][0:90].flatten())
-
-    f_p25 = h5py.File(
-        path+"/cumulative_detected_infections/0/p25/Results.h5", 'r')
-    total_25 = np.round(f_p25['0']['Total'][()][::24][0:90].flatten())
-
-    f_p75 = h5py.File(
-        path+"/cumulative_detected_infections/0/p75/Results.h5", 'r')
-    total_75 = np.round(f_p75['0']['Total'][()][::24][0:90].flatten())
-
-
-    # we do the same for the new infecitons (same as above but folder   new_detected_infections)
-    f_p50_diff = h5py.File(
-        path+"/new_detected_infections/0/p50/Results.h5", 'r')
-    total_50_diff = np.round(f_p50_diff['0']['Total'][()].flatten())
-
-    f_p95_diff = h5py.File(
-        path+"/new_detected_infections/0/p95/Results.h5", 'r')
-    total_95_diff = np.round(f_p95_diff['0']['Total'][()].flatten())
-    
-    f_p05_diff = h5py.File(
-        path+"/new_detected_infections/0/p05/Results.h5", 'r')
-    total_05_diff = np.round(f_p05_diff['0']['Total'][()].flatten())
-
-    f_p25_diff = h5py.File(
-        path+"/new_detected_infections/0/p25/Results.h5", 'r')
-    total_25_diff = np.round(f_p25_diff['0']['Total'][()].flatten())
-
-    f_p75_diff = h5py.File(
-        path+"/new_detected_infections/0/p75/Results.h5", 'r')
-    total_75_diff = np.round(f_p75_diff['0']['Total'][()].flatten())
-
-    # we need to sum every 24 entries to get the daily amount
-    total_50_diff = np.cumsum(total_50_diff, axis=0)
-    total_50_diff = np.diff(total_50_diff)[0:90]
-
-    total_95_diff = np.cumsum(total_95_diff, axis=0)
-    total_95_diff = np.diff(total_95_diff)[0:90]
-
-    total_05_diff = np.cumsum(total_05_diff, axis=0)
-    total_05_diff = np.diff(total_05_diff)[0:90]
-
-    total_75_diff = np.cumsum(total_75_diff, axis=0)
-    total_75_diff = np.diff(total_75_diff)[0:90]
-
-    total_25_diff = np.cumsum(total_25_diff, axis=0)
-    total_25_diff = np.diff(total_25_diff)[0:90]
-
-
-
-
-
-    # we smooth this with a gaussian filter
-    time = f_p50['0']['Time'][()]
-    time = time[::24]
-    time = time[0:90]
-
-    # we calculate the RMSE
-    rmse_detected = np.sqrt(((df_abb - total_50)**2).mean())
-
-
-
-    # we plot this
-    # we plot the tests positive and the real cases
-    fig = plt.figure('Cumulative detected infections', constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    plt.plot(time, total_50, color='tab:blue', label='Simulation')
-    plt.plot(time, df_abb, 'x', color='tab:red', label='Data', linewidth=4)
-    plt.fill_between(time, total_75, total_25,
-                            alpha=0.5, color='tab:blue', label='90% Confidence interval')
-    plt.fill_between(time, total_95, total_05,
-                            alpha=0.25, color='tab:blue', label='50% Confidence interval')
-
-    
-    plt.ylabel('Cumulative detected infections', fontsize=fontsize-8)
-    plt.title('Cumulative detected infections', fontsize=fontsize)
-    plt.legend(fontsize=fontsize-8)
-    # currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in time]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(90)]
-    # but just take every 10th date to make it more readable
-    plt.gca().set_xticks(time[::14])
-    plt.gca().set_xticklabels(xx[::14])
-    plt.gcf().autofmt_xdate()
-    #rmse
-    # plt.text(0.25, 0.8, 'RMSE: '+str(float("{:.2f}".format(rmse_detected))), horizontalalignment='center',
-    #         verticalalignment='center', transform=plt.gca().transAxes, color='pink', fontsize=15)
-    
-    plt.show()
-
-    test_p_pos_p50_normal = h5py.File(
-        path+"/positive_test_per_location_type_per_age_group/"+"0"+"/p50/Results.h5", 'r')
-    p50_bs_test_p_pos_normal = test_p_pos_p50_normal['0']['Total'][()]
-
-    # we need to sum every 24 entries to get the daily amount
-    total_50_positive = np.sum(p50_bs_test_p_pos_normal, axis=1)
-    total_50_positive = np.cumsum(total_50_positive, axis=0)
-    total_50_positive = total_50_positive[::24]
-    total_50_positive = total_50_positive[0:90] # we still need to take the difference to get the daily amount
-    total_50_positive = np.diff(total_50_positive, axis=0).flatten()
-
-
-
-    # also the amount of new detected infections
-    fig = plt.figure('New detected infections', constrained_layout=True)
-    fig.set_figwidth(20)
-    fig.set_figheight(9)
-    # we plot the tests positive and the real cases
-    plt.plot(time[0:89], total_50_diff, color='tab:blue', label='Simulation')
-    # we dont plot the real curve as a line but as x points and not every day but every 2nd day
-    plt.plot(time[0:89], df_diff[0:89], 'x', color='tab:red', label='Data', linewidth=4)
-    plt.plot(time[0:89], total_50_positive, color='tab:green', label='Data 7 day rolling average', linewidth=3, linestyle='dashed')
-    # also the rolling average
-    plt.plot(time[0:89], df_abb_rolling[0:89], color='tab:red', label='Data 7 day rolling average', linewidth=3, linestyle='dashed')
-    plt.fill_between(time[0:89], total_75_diff, total_25_diff,
-                            alpha=0.5, color='tab:blue', label='90% Confidence interval')   
-    plt.fill_between(time[0:89], total_95_diff, total_05_diff,
-                            alpha=0.25, color='tab:blue', label='50% Confidence interval')
-  
-    plt.ylabel('New detected infections', fontsize=fontsize-8)
-    plt.title('Daily detected infections', fontsize=fontsize)
-    plt.legend(fontsize=fontsize-5)
-    # currently the x axis has the values of the time steps, we need to convert them to dates and set the x axis to dates
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in time]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(90)]
-    # but just take every 10th date to make it more readable
-    plt.gca().set_xticks(time[0:89][::14])
-    plt.gca().set_xticklabels(xx[::14])
+def _plot_state(ax, x, y50, y25, y75, color, title, y05=None, y95=None, show90=False):
+    """ Helper to plot a single state with fill_between and optional 90% percentile. """
+    ax.plot(x, y50, color=color, label='Median')
+    ax.fill_between(x, y25, y75, alpha=0.5, color=color)
+    if show90 and y05 is not None and y95 is not None:
+        ax.plot(x, y05, color=color, linestyle='dotted',
+                linewidth=1.0, alpha=0.4)
+        ax.plot(x, y95, color=color, linestyle='dotted',
+                linewidth=1.0, alpha=0.4)
+        ax.fill_between(x, y05, y95, alpha=0.15, color=color)
+    ax.tick_params(axis='y')
+    ax.set_title(title)
+
+
+def _format_x_axis(x, start_date, xtick_step):
+    """ Helper to format x-axis as dates. """
+    start = datetime.strptime(start_date, '%Y-%m-%d')
+    xx = [start + pd.Timedelta(days=int(i)) for i in x]
+    xx_str = [dt.strftime('%Y-%m-%d') for dt in xx]
+    plt.gca().set_xticks(x[::xtick_step])
+    plt.gca().set_xticklabels(xx_str[::xtick_step])
     plt.gcf().autofmt_xdate()
 
+
+def main():
+    """ Main function for CLI usage. """
+    parser = argparse.ArgumentParser(
+        description="Plot infection state and location type results.")
+    parser.add_argument("--path-to-infection-states",
+                        help="Path to infection states results")
+    parser.add_argument("--path-to-loc-types",
+                        help="Path to location types results")
+    parser.add_argument("--start-date", type=str, default='2021-03-01',
+                        help="Simulation start date (YYYY-MM-DD)")
+    parser.add_argument("--colormap", type=str,
+                        default='Set1', help="Matplotlib colormap")
+    parser.add_argument("--xtick-step", type=int,
+                        default=150, help="Step for x-axis ticks (usually hours)")
+    parser.add_argument("--90percentile", action="store_true",
+                        help="If set, plot 90% percentile as well")
+    args = parser.parse_args()
+
+    plot_infection_states_results(
+        path_to_infection_states=args.path_to_infection_states,
+        start_date=args.start_date,
+        colormap=args.colormap,
+        xtick_step=args.xtick_step,
+        show90=True
+    )
+    plot_infections_loc_types_average(
+        path_to_loc_types=args.path_to_loc_types,
+        start_date=args.start_date,
+        colormap=args.colormap,
+        xtick_step=args.xtick_step)
+
+    if not args.path_to_infection_states and not args.path_to_loc_types:
+        print("Please provide a path to infection states or location types results.")
+
     plt.show()
-
-def plot_positive_and_done_test(path):
-    f_p50_positive = h5py.File(
-        path+"/positive_test_per_location_type_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs_positive = f_p50_positive['0']
-    total_50_positive = p50_bs_positive['Total'][()]
-
-    f_p50_done = h5py.File(
-        path+"/test_per_location_type_per_age_group/0/p50/Results.h5", 'r')
-    p50_bs_done = f_p50_done['0']
-    total_50_done = p50_bs_done['Total'][()]
-
-    time = p50_bs_positive['Time'][()][::24][0:90]
-
-    # weas one entry is one hour we take the sum every 24 entries to get the daily amount, we do this with cumsum
-    # first we need to sum up over all age groups
-    total_50_positive = np.sum(total_50_positive, axis=1)
-    total_50_positive = np.cumsum(total_50_positive, axis=0)
-    total_50_positive = total_50_positive[::24]
-    total_50_positive = total_50_positive[0:91] # we still need to take the difference to get the daily amount
-    total_50_positive = np.diff(total_50_positive, axis=0).flatten()
-    # we smooth this with a gaussian filter
-    total_50_positive = gaussian_filter1d(total_50_positive, sigma=1, mode='nearest')
-
-    #same for the done tests
-    total_50_done = np.sum(total_50_done, axis=1)
-    total_50_done = np.cumsum(total_50_done, axis=0)
-    total_50_done = total_50_done[::24]
-    total_50_done = total_50_done[0:91] # we still need to take the difference to get the daily amount
-    total_50_done = np.diff(total_50_done, axis=0).flatten()
-    # we smooth this with a gaussian filter
-    total_50_done = gaussian_filter1d(total_50_done, sigma=2, mode='nearest')
-
-    # we plot this
-    # we plot the tests positive and the real cases
-    start_date = datetime.strptime('2021-03-01', '%Y-%m-%d')
-    xx = [start_date + pd.Timedelta(days=int(i)) for i in range(90)]
-    xx = [xx[i].strftime('%Y-%m-%d') for i in range(len(xx))]
-    plt.gca().set_xticks(time[::5])
-    plt.gca().set_xticklabels(xx[::5])
-    plt.gcf().autofmt_xdate()
-
-    plt.plot(xx, total_50_positive, color='tab:green')
-    plt.plot(xx, total_50_done, color='tab:red')
-    plt.xlabel('time (days)')
-    plt.ylabel('Number of tests')
-    plt.legend(['Positive tests', 'Done tests'])
-    plt.title('Positive and done tests')
-    plt.show()
-
-
-def plot_fitting_plots(path):
-
-    # We want to have the fitting for the four things we fittet against: Cumulative deaths, ICU, Cumulative detected infections and new detected infections
-    # readin of the data
-    db_abb_deaths = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_age_ma1.json")
-
-    db_abb_icu = pd.read_json(
-        path+"/../../../pydata/Germany/county_divi.json")
-
-    db_abb_detected = pd.read_json(
-        path+"/../../../pydata/Germany/cases_all_county_repdate_ma1.json")
-
-    # we want to plot the plots in a 4x1 grid and we want to have the same x axis for all of them
-    # the first plot has also the legend
-    # in each plot we want to plot the real data and the simulated data, as well as the confidence intervals 50% and 90%
-
-    fig, axs = plt.subplots(2, 2, figsize=(25, 15), constrained_layout=True)
-
-    # we want to plot the cumulative deaths
-    # we need the cumulative dead persons
-    df_total_dead = db_abb_deaths
-    df_total_dead['Date'] = df_total_dead['Date']+pd.DateOffset(days=18)
-    df_total_dead = df_total_dead[(df_total_dead['Date'] >= '2021-03-01') &
-                    (df_total_dead['Date'] <= '2021-06-01')]
-    df_total_dead = df_total_dead[df_total_dead['ID_County'] == 3101]
-    df_total_dead = df_total_dead.groupby('Date').sum()[0:90]
-    deaths_real = df_total_dead['Deaths'].to_numpy()
-    mse_death = deaths_real
-    deaths_real = deaths_real[0:90] - deaths_real[0]
-    
-
-    # simulation deaths and confidence intervals
-    f_p50_deaths = h5py.File(
-        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    total_50_deaths = f_p50_deaths['0']['Total'][()][:, 7][::24][0:90]  
-    mse_sim_dead = total_50_deaths
-    total_50_deaths = total_50_deaths - total_50_deaths[0]
-
-    f_p75_deaths = h5py.File(
-        path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
-    total_75_deaths = f_p75_deaths['0']['Total'][()][:, 7][::24][0:90]
-    total_75_deaths = total_75_deaths - total_75_deaths[0]
-
-    f_p25_deaths = h5py.File(
-        path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
-    total_25_deaths = f_p25_deaths['0']['Total'][()][:, 7][::24][0:90]
-    total_25_deaths = total_25_deaths - total_25_deaths[0]
-
-    f_p05_deaths = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
-    total_05_deaths = f_p05_deaths['0']['Total'][()][:, 7][::24][0:90]
-    total_05_deaths = total_05_deaths - total_05_deaths[0]
-
-    f_p95_deaths = h5py.File(
-        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
-    total_95_deaths = f_p95_deaths['0']['Total'][()][:, 7][::24][0:90]
-    total_95_deaths = total_95_deaths - total_95_deaths[0]
-
-    # we plot the deaths
-    axs[0,0].plot(df_total_dead.index, deaths_real, 'v', color='tab:red',linewidth=4, label='Extrapolated deaths from reported infection case data')
-    axs[0,0].plot(df_total_dead.index, total_50_deaths, color='tab:blue', label='Simulated deaths')
-    axs[0,0].fill_between(df_total_dead.index, total_75_deaths, total_25_deaths,
-                            alpha=0.5, color='tab:blue', label='50% Confidence interval')   
-    axs[0,0].fill_between(df_total_dead.index, total_95_deaths, total_05_deaths,
-                            alpha=0.25, color='tab:blue', label='90% Confidence interval')
-    axs[0,0].set_ylabel('Cumulative deaths', fontsize=fontsize)
-    axs[0,0].set_title('Cumulative deaths', fontsize=fontsize+4)
-    axs[0,0].tick_params(axis='both', which='major', labelsize=fontsize-4)
-    axs[0,0].tick_params(axis='both', which='minor', labelsize=fontsize-4)
-    axs[0,0].legend(fontsize=fontsize-4, loc='upper left')
-
-    # we want to plot the ICU
-    
-    perc_of_critical_in_icu_age = [0.55,0.55,0.55,0.56,0.54,0.46]
-    age_group_access = ['Group1', 'Group2', 'Group3',
-                        'Group4', 'Group5', 'Group6', 'Total']
-    df_abb_icu = db_abb_icu[['ID_County', 'ICU', 'Date']]
-    df_abb_icu = df_abb_icu[df_abb_icu['ID_County'] == 3101]
-    df_abb_icu = df_abb_icu[(df_abb_icu['Date'] >= '2021-03-01') &
-                    (df_abb_icu['Date'] <= '2021-06-01')]
-    ICU_real = df_abb_icu['ICU'].to_numpy()
-
-    # we need to get the simulated ICU values
-    f_p50_icu = h5py.File(
-        path+"/infection_state_per_age_group/0/p50/Results.h5", 'r')
-    total_50_icu = f_p50_icu['0']['Total'][()]
-    total_50_icu = total_50_icu[::24][0:90]
-    total_50_age = f_p50_icu['0'][age_group_access[0]][()]
-    for i in range(6):
-              total_50_age += f_p50_icu['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_50_age = total_50_age[::24][0:90]
-
-    # we plot this against this the Amount of persons in the ICU from our model
-    f_p75_icu = h5py.File(
-        path+"/infection_state_per_age_group/0/p75/Results.h5", 'r')
-    # total_75 = f_p75['0']['Total'][()][::24][0:90]
-    total_75_age = f_p75_icu['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_75_age += f_p75_icu['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_75_age = total_75_age[::24][0:90]
-
-    # same with 25 percentile
-    f_p25_icu = h5py.File(
-        path+"/infection_state_per_age_group/0/p25/Results.h5", 'r')
-    # total_25 = f_p25['0']['Total'][()][::24][0:90]
-    total_25_age = f_p25_icu['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_25_age += f_p25_icu['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_25_age = total_25_age[::24][0:90]
-
-    # same with 05 and 95 percentile
-    f_p05_icu = h5py.File(
-        path+"/infection_state_per_age_group/0/p05/Results.h5", 'r')
-    # total_05 = f_p05['0']['Total'][()][::24][0:90]
-    total_05_age = f_p05_icu['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_05_age += f_p05_icu['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_05_age = total_05_age[::24][0:90]
-
-    f_p95_icu = h5py.File(
-        path+"/infection_state_per_age_group/0/p95/Results.h5", 'r')
-    # total_95 = f_p95['0']['Total'][()][::24][0:90]
-    total_95_age = f_p95_icu['0'][age_group_access[0]][()]
-    for i in range(6):
-        total_95_age += f_p95_icu['0'][age_group_access[i]][()]*perc_of_critical_in_icu_age[i]
-    total_95_age = total_95_age[::24][0:90]
-
-    ICU_Simulation = np.round(total_50_age[:, 5])
-    ICU_Simulation75 = np.round(total_75_age[:, 5])
-    ICU_Simulation25 = np.round(total_25_age[:, 5])
-    ICU_Simulation05 = np.round(total_05_age[:, 5])
-    ICU_Simulation95 = np.round(total_95_age[:, 5])
-
-    # we plot the ICU beds and the ICU beds taken
-    axs[1,0].plot(df_abb_icu['Date'][0:90], ICU_real[0:90], 'v', color='tab:red', linewidth=10, label='Reported ICU beds taken')
-    axs[1,0].plot(df_abb_icu['Date'][0:90], ICU_Simulation[0:90], color='tab:blue', label='Simulation')
-    axs[1,0].fill_between(df_abb_icu['Date'][0:90], ICU_Simulation75, ICU_Simulation25,
-                            alpha=0.5, color='tab:blue', label='50% Confidence interval')
-    axs[1,0].fill_between(df_abb_icu['Date'][0:90], ICU_Simulation05, ICU_Simulation95, 
-                            alpha=0.25, color='tab:blue', label='90% Confidence interval')
-    axs[1,0].set_ylabel('Occupied ICU beds', fontsize=fontsize)
-    axs[1,0].set_title('ICU beds', fontsize=fontsize+4)
-    axs[1,0].tick_params(axis='both', which='major', labelsize=fontsize-4)
-    axs[1,0].tick_params(axis='both', which='minor', labelsize=fontsize-4)
-    axs[1,0].legend(fontsize=fontsize-4)
-
-    # we want to plot the cumulative detected infections
-    df_total_detected = db_abb_detected[['Date', 'Confirmed', 'ID_County']]
-    df_total_detected = df_total_detected[(df_total_detected['Date'] >= '2021-03-01') &
-                    (df_total_detected['Date'] <= '2021-06-01')]
-    df_total_detected = df_total_detected[df_total_detected['ID_County'] == 3101]
-    df_substract = np.round(df_total_detected['Confirmed'][0:1])
-    df_total_detected = np.round(df_total_detected['Confirmed'][0:90])
-    df_total_detected = df_total_detected - df_substract.values[0]
-    df_detected_diff = df_total_detected.diff()
-    df_detected_rolling_diff = df_detected_diff.rolling(window=7, min_periods=1, center=True).mean()
-
-    # simulation deaths and confidence intervals
-    f_p50_detected = h5py.File(
-        path+"/cumulative_detected_infections/0/p50/Results.h5", 'r')
-    total_50_detected = np.round(f_p50_detected['0']['Total'][()][:, 0][::24][0:90].flatten())
-
-    f_p75_detected = h5py.File(
-        path+"/cumulative_detected_infections/0/p75/Results.h5", 'r')
-    total_75_detected = np.round(f_p75_detected['0']['Total'][()][:, 0][::24][0:90].flatten())
-    
-    f_p25_detected = h5py.File(
-        path+"/cumulative_detected_infections/0/p25/Results.h5", 'r')
-    total_25_detected = np.round(f_p25_detected['0']['Total'][()][:, 0][::24][0:90].flatten())
-
-    f_p05_detected = h5py.File(
-        path+"/cumulative_detected_infections/0/p05/Results.h5", 'r')
-    total_05_detected = np.round(f_p05_detected['0']['Total'][()][:, 0][::24][0:90].flatten())
-
-    f_p95_detected = h5py.File(
-        path+"/cumulative_detected_infections/0/p95/Results.h5", 'r')
-    total_95_detected = np.round(f_p95_detected['0']['Total'][()][:, 0][::24][0:90].flatten())
-
-    # we do the same for the new infecitons (same as above but folder   new_detected_infections)
-    f_p50_diff_detected = h5py.File(
-        path+"/new_detected_infections/0/p50/Results.h5", 'r')
-    total_50_diff_detected = np.round(f_p50_diff_detected['0']['Total'][()].flatten())
-
-    f_p95_diff_detected = h5py.File(
-        path+"/new_detected_infections/0/p95/Results.h5", 'r')
-    total_95_diff_detected = np.round(f_p95_diff_detected['0']['Total'][()].flatten())
-
-    f_p05_diff_detected = h5py.File(
-        path+"/new_detected_infections/0/p05/Results.h5", 'r')
-    total_05_diff_detected = np.round(f_p05_diff_detected['0']['Total'][()].flatten())
-
-    f_p25_diff_detected = h5py.File(
-        path+"/new_detected_infections/0/p25/Results.h5", 'r')
-    total_25_diff_detected = np.round(f_p25_diff_detected['0']['Total'][()].flatten())
-    
-    f_p75_diff_detected = h5py.File(
-        path+"/new_detected_infections/0/p75/Results.h5", 'r')
-    total_75_diff_detected = np.round(f_p75_diff_detected['0']['Total'][()].flatten())
-
-    # we need to sum every 24 entries to get the daily amount
-    total_50_detected = np.cumsum(total_50_detected, axis=0)
-    total_50_detected = np.diff(total_50_detected)[0:90]
-
-    total_95_detected = np.cumsum(total_95_detected, axis=0)
-    total_95_detected = np.diff(total_95_detected)[0:90]
-
-    total_05_detected = np.cumsum(total_05_detected, axis=0)
-    total_05_detected = np.diff(total_05_detected)[0:90]
-
-    total_75_detected = np.cumsum(total_75_detected, axis=0)
-    total_75_detected = np.diff(total_75_detected)[0:90]
-
-    total_25_detected = np.cumsum(total_25_detected, axis=0)
-    total_25_detected = np.diff(total_25_detected)[0:90]
-
-    time = f_p50_detected['0']['Time'][()]
-    time = time[::24]
-    time = time[0:90]
-
-    # we plot the cumulative detected infections
-    axs[0,1].plot(df_abb_icu['Date'][0:89], total_50_detected, color='tab:blue', label='Simulation')
-    axs[0,1].plot(df_abb_icu['Date'][0:89], df_total_detected[0:89], 'v', color='tab:red', label='Cumulative reported detected infections', linewidth=4)
-    axs[0,1].fill_between(df_abb_icu['Date'][0:89], total_75_detected, total_25_detected,
-                            alpha=0.5, color='tab:blue', label='50% Confidence interval')
-    axs[0,1].fill_between(df_abb_icu['Date'][0:89], total_95_detected, total_05_detected,
-                            alpha=0.25, color='tab:blue', label='90% Confidence interval')
-    axs[0,1].set_ylabel('Cumulative detected infections', fontsize=fontsize)
-    axs[0,1].set_title('Cumulative detected infections', fontsize=fontsize+4)
-    axs[0,1].tick_params(axis='both', which='major', labelsize=fontsize-4) 
-    axs[0,1].tick_params(axis='both', which='minor', labelsize=fontsize-4)
-    axs[0,1].legend(fontsize=fontsize-4)
-    
-
-    # we want to plot the new detected infections
-    axs[1,1].plot(df_abb_icu['Date'][0:90], total_50_diff_detected, color='tab:blue', label='Simulation')
-    axs[1,1].plot(df_abb_icu['Date'][0:90], df_detected_diff[0:90], 'v', color='tab:red', label='Daily reported detected infections', linewidth=4)
-    axs[1,1].plot(df_abb_icu['Date'][0:90], df_detected_rolling_diff, '--', color='tab:red', label='Reported detected infections 7 day rolling average', linewidth=4)
-    axs[1,1].fill_between(df_abb_icu['Date'][0:90], total_75_diff_detected, total_25_diff_detected,
-                            alpha=0.5, color='tab:blue', label='50% Confidence interval')
-    axs[1,1].fill_between(df_abb_icu['Date'][0:90], total_95_diff_detected, total_05_diff_detected,
-                            alpha=0.25, color='tab:blue', label='90% Confidence interval')
-    axs[1,1].set_ylabel('New detected infections', fontsize=fontsize)
-    axs[1,1].set_title('New detected infections', fontsize=fontsize+4)
-    axs[1,1].tick_params(axis='both', which='major', labelsize=fontsize-4)
-    axs[1,1].tick_params(axis='both', which='minor', labelsize=fontsize-4)
-    axs[1,1].legend(fontsize=fontsize-4)
-
-    # we also need to calculate the MSE for the fitting
-    mse_deaths = ((mse_death - mse_sim_dead)**2).mean()
-    mse_icu = ((ICU_real[0:90] - ICU_Simulation[0:90])**2).mean()
-    mse_detected = ((df_total_detected[0:89] - total_50_detected)**2).mean()
-
-    mse_final = mse_deaths + mse_icu*0.1 + mse_detected*0.01*0.01*3
-    print('MSE Deaths: ', mse_deaths)
-    print('MSE ICU: ', mse_icu) 
-    print('MSE Detected: ', mse_detected)
-    print('MSE Final: ', mse_final)
-
-
-   
-    plt.savefig('fitting_plots.png', dpi=300)
-   
-   
 
 
 if __name__ == "__main__":
-    # path = "/Users/david/Documents/HZI/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/results_last_run"
-    # path = "/Users/saschakorf/Documents/Arbeit.nosynch/memilio/memilio/data/cluster_results/vorlaufige_ergebnisse/results_2024-08-28113051"
-    path = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/results/results_last_run"
-
-    if (len(sys.argv) > 1):
-        n_runs = sys.argv[1]
-    else:
-        n_runs = len([entry for entry in os.listdir(path)
-                     if os.path.isfile(os.path.join(path, entry))])
-    plot_infection_states_results(path)
-    plot_infections_loc_types_avarage(path)
-    # plot_icu(path)
-    # plot_dead(path)
-    # plot_cumulative_detected_infections(path)
-    # plot_positive_and_done_test(path)
-
-    # plot_estimated_reproduction_number(path)
-    # plot_fitting_plots(path)
+    main()
