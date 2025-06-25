@@ -1,5 +1,0 @@
-variation_id	label	infected
-0	No masks	15
-1	50% masked (infected unmasked)	8
-2	50% masked (infected masked)	0
-3	All masked	0

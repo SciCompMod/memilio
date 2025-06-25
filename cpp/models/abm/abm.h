@@ -22,22 +22,40 @@
 #ifndef EPI_ABM_H
 #define EPI_ABM_H
 
+// Core ABM components
 #include "abm/parameters.h"
 #include "abm/simulation.h"
 #include "abm/world.h"
 #include "abm/person.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
-#include "memilio/math/interpolation.h"
-#include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
-#include "abm/testing_strategy.h"
 #include "abm/infection.h"
 #include "abm/infection_state.h"
 #include "abm/virus_variant.h"
-#include "abm/vaccine.h"
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
-#include "abm/analyze_result.h"
+#include "abm/time.h"
 
+// Movement and migration
+#include "abm/migration_rules.h"
+#include "abm/trip_list.h"
+#include "abm/movement_data.h"
+
+// Testing and interventions
+#include "abm/testing_strategy.h"
+#include "abm/test_type.h"
+#include "abm/vaccine.h"
+#include "abm/mask.h"
+#include "abm/mask_type.h"
+#include "abm/lockdown_rules.h"
+
+// Social structures
+#include "abm/household.h"
+
+// Analysis and utilities
+#include "abm/analyze_result.h"
+#include "abm/random_events.h"
+#include "abm/config.h"
+
+// Mathematical utilities
+#include "memilio/math/interpolation.h"
+#include "memilio/utils/random_number_generator.h"
 #endif

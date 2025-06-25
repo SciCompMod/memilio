@@ -90,10 +90,6 @@ add_executable(micro_abm micro_abm.cpp)
 target_link_libraries(micro_abm PRIVATE memilio abm)
 target_compile_options(micro_abm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(panvXabm panvXabmSim.cpp)
-target_link_libraries(panvXabm PRIVATE memilio abm abm Boost::filesystem)
-target_compile_options(panvXabm PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
 
 if(MEMILIO_HAS_JSONCPP)
   add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
@@ -125,3 +121,6 @@ if(MEMILIO_HAS_HDF5)
   target_link_libraries(ode_secir_save_results_example PRIVATE memilio ode_secir)
   target_compile_options(ode_secir_save_results_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
+
+
+add_subdirectory(panvXabmSim)
