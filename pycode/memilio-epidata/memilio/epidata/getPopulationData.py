@@ -53,7 +53,7 @@ def read_population_data(ref_year):
             download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv&zeiten=' + \
                 str(ref_year)
             req = requests.get(download_url)
-            df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
+            df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=5)
         except pd.errors.ParserError:
             gd.default_print('Warning', 'Data for year '+str(ref_year) +
                              ' is not available; downloading newest data instead.')
@@ -61,7 +61,7 @@ def read_population_data(ref_year):
     if ref_year is None:
         download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
         req = requests.get(download_url)
-        df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=6)
+        df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=5)
 
     return df_pop_raw, ref_year
 
