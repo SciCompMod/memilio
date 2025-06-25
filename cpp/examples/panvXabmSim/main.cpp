@@ -1,110 +1,78 @@
-#include <fstream>
-#include <vector>
 #include <iostream>
-#include <chrono>
 #include <string>
-#include <map>
-#include "abm/abm.h"
-#include "memilio/io/result_io.h"
-#include "memilio/utils/uncertain_value.h"
+#include <chrono>
+#include <fstream>
 #include "boost/filesystem.hpp"
-#include "boost/algorithm/string/split.hpp"
-#include "boost/algorithm/string/classification.hpp"
-#include "memilio/utils/miompi.h"
-#include "memilio/io/binary_serializer.h"
-#include "memilio/io/epi_data.h"
-#include "memilio/io/io.h"
-#include "abm/common_abm_loggers.h"
-#include "memilio/utils/random_number_generator.h"
+#include "memilio/io/result_io.h"
 
-#include "include/constants.h"
-#include "include/custom_loggers.h"
-#include "include/world_creator.h"
+// Your project includes
+#include "include/config_manager.h"
+#include "include/simulation_runner.h"
 #include "include/file_utils.h"
 
 namespace fs     = boost::filesystem;
 using ScalarType = double;
 
-mio::IOResult<void> main_flow()
+mio::IOResult<void> main_flow(int argc, char* argv[])
 {
-    // Default infection data file path
-    std::string infection_data_file =
-        "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/PanVadere/restaurant/simulation_runs/"
-        "lu-2020_airflow_inlet_right_outlet_left/infections.txt";
-    std::string input_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/results";
+    auto start_time = std::chrono::high_resolution_clock::now();
 
-    std::string precomputed_dir = input_dir + "/results";
-    std::string result_dir      = input_dir + "/results_" + currentDateTime();
-    auto created                = create_result_folders(result_dir);
+    // Load configuration
+    auto config = ConfigManager::load_config_from_args(argc, argv);
+    mio::set_log_level(mio::LogLevel::err);
 
-    std::cout << "Creating restaurant simulation from: " << infection_data_file << std::endl;
+    // Quick validation
+    if (config.n_persons <= 0 || config.simulation_days <= 0) {
+        return mio::failure(mio::StatusCode::InvalidValue, "Invalid simulation parameters");
+    }
 
-    int n_persons = 1000;
+    if (!boost::filesystem::exists(config.infection_data_file)) {
+        return mio::failure(mio::StatusCode::InvalidFileFormat,
+                            "Infection data file not found: " + config.infection_data_file);
+    }
 
-    // Create the simulation world
-    auto world = create_world_from_file(infection_data_file, n_persons);
+    std::cout << "=== Simulation Setup ===" << std::endl;
+    std::cout << "Input file: " << config.infection_data_file << std::endl;
+    std::cout << "Persons: " << config.n_persons << std::endl;
+    std::cout << "Days: " << config.simulation_days << std::endl;
 
-    // Set up simulation timeframe
-    auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(20);
+    std::cout << "\n[1/4] Setting up directories..." << std::endl;
+    // Setup result directories
+    std::string result_dir = config.input_dir + "/results_" + currentDateTime();
+    BOOST_OUTCOME_TRY(create_result_folders(result_dir));
 
-    auto ensemble_infection_per_loc_type =
-        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection per location type results
-    ensemble_infection_per_loc_type.reserve(size_t(1));
+    std::cout << "[2/4] Running simulation..." << std::endl;
+    // Run simulation
+    BOOST_OUTCOME_TRY(auto results, SimulationRunner::run_simulation(config));
 
-    auto ensemble_infection_state_per_age_group =
-        std::vector<std::vector<mio::TimeSeries<ScalarType>>>{}; // Vector of infection state per age group results
-    ensemble_infection_state_per_age_group.reserve(size_t(1));
+    std::cout << "[3/4] Saving results..." << std::endl;
+    // Save results
+    BOOST_OUTCOME_TRY(SimulationRunner::save_simulation_results(results, result_dir));
 
-    auto ensemble_params = std::vector<std::vector<mio::abm::World>>{}; // Vector of all worlds
-    ensemble_params.reserve(size_t(1));
+    std::cout << "[4/4] Finalizing..." << std::endl;
+    // Copy to last run directory
+    std::string last_run_dir = config.input_dir + "/results_last_run";
+    BOOST_OUTCOME_TRY(copy_result_folder(result_dir, last_run_dir));
 
-    // Initialize simulation
-    auto sim = mio::abm::Simulation(t0, std::move(world));
+    std::string summary_file = result_dir + "/panvXabm_results.txt";
+    BOOST_OUTCOME_TRY(SimulationRunner::write_summary_output(results, summary_file));
 
-    mio::History<mio::abm::TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup> historyInfectionPerLocationType{
-        Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
-    mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
-        Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        Eigen::Index(mio::abm::InfectionState::Count)};
+    auto end_time       = std::chrono::high_resolution_clock::now();
+    auto total_duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
 
-    // Run simulation and collect data
-    sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyTimeSeries);
-
-    auto temp_sim_infection_per_loc_tpye =
-        std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
-    auto temp_sim_infection_state_per_age_group =
-        std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
-    // Push result of the simulation back to the result vector
-    ensemble_infection_per_loc_type.emplace_back(temp_sim_infection_per_loc_tpye);
-    ensemble_infection_state_per_age_group.emplace_back(temp_sim_infection_state_per_age_group);
-    ensemble_params.emplace_back(std::vector<mio::abm::World>{sim.get_world()});
-
-    BOOST_OUTCOME_TRY(save_results(ensemble_infection_state_per_age_group, ensemble_params, {0},
-                                   (fs::path)result_dir / "infection_state_per_age_group" / "0", true));
-    BOOST_OUTCOME_TRY(save_results(ensemble_infection_per_loc_type, ensemble_params, {0},
-                                   (fs::path)result_dir / "infection_per_location_type_per_age_group" / "0", true));
-
-    // copy results into a fixed name folder to have easier access
-    std::string last_run_dir = input_dir + "/results_last_run";
-    auto copied              = copy_result_folder(result_dir, last_run_dir);
-
-    // Write results to file
-    std::ofstream outfile("panvXabm_results.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-
-    std::cout << "Results written to panvXabm_results.txt" << std::endl;
+    std::cout << "\n✓ Simulation completed successfully!" << std::endl;
+    std::cout << "Total time: " << total_duration.count() << "s" << std::endl;
+    std::cout << "Results: " << result_dir << std::endl;
 
     return mio::success();
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    auto result = main_flow();
+    auto result = main_flow(argc, argv);
     if (result.has_error()) {
-        std::cerr << "Error: " << result.error().message() << std::endl;
+        std::cerr << "Simulation failed: " << result.error().message() << std::endl;
+        std::cerr << "Try --help for usage information" << std::endl;
         return 1;
     }
     return 0;
