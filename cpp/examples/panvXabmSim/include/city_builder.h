@@ -18,7 +18,7 @@ struct CityConfig {
 class CityBuilder
 {
 public:
-    static mio::IOResult<mio::abm::World> build_city(const CityConfig& config);
+    static mio::IOResult<mio::abm::World> build_world(const CityConfig& config);
 
 private:
     static std::vector<mio::abm::LocationId> create_households(mio::abm::World& world, int num_households);

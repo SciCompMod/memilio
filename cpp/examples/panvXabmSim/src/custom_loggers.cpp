@@ -9,12 +9,10 @@ LogInfectionStatePerAgeGroup::Type LogInfectionStatePerAgeGroup::log(const mio::
     const auto persons = sim.get_world().get_persons();
 
     for (auto i = size_t(0); i < persons.size(); ++i) {
-        auto& p = persons[i];
-        if (p.get_should_be_logged()) {
-            auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
-                         ((uint32_t)p.get_infection_state(curr_time));
-            sum[index] += 1;
-        }
+        auto& p    = persons[i];
+        auto index = (((size_t)(mio::abm::InfectionState::Count)) * ((uint32_t)p.get_age().get())) +
+                     ((uint32_t)p.get_infection_state(curr_time));
+        sum[index] += 1;
     }
     return std::make_pair(curr_time, sum);
 }
@@ -30,13 +28,11 @@ LogInfectionPerLocationTypePerAgeGroup::log(const mio::abm::Simulation& sim)
 
     for (auto i = size_t(0); i < persons.size(); ++i) {
         auto& p = persons[i];
-        if (p.get_should_be_logged()) {
-            if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
-                (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
-                auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
-                             ((uint32_t)p.get_location().get_type());
-                sum[index] += 1;
-            }
+        if ((p.get_infection_state(prev_time) != mio::abm::InfectionState::Exposed) &&
+            (p.get_infection_state(curr_time) == mio::abm::InfectionState::Exposed)) {
+            auto index = (((size_t)(mio::abm::LocationType::Count)) * ((uint32_t)p.get_age().get())) +
+                         ((uint32_t)p.get_location().get_type());
+            sum[index] += 1;
         }
     }
     return std::make_pair(curr_time, sum);

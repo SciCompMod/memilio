@@ -61,12 +61,8 @@ bool parse_sim_type(const std::string& sim_type, MultiRunConfig& config)
 {
     auto it = SIM_TYPE_MAP.find(sim_type);
     if (it != SIM_TYPE_MAP.end()) {
-        config.event_config.simulation_type = it->second;
-
-        // Set appropriate file paths based on simulation type
-        if (it->second == SimType::Panvadere || it->second == SimType::Both) {
-            config.event_config.panvadere_file = "./data/restaurant/infections.txt";
-        }
+        config.simulation_type = it->second;
+        // Note: panvadere_file is now automatically determined based on event type
         return true;
     }
 
@@ -80,12 +76,11 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     MultiRunConfig config;
 
     // Set defaults
-    config.city_config                  = CityConfig{};
-    config.event_config.type            = EventType::Restaurant_Table_Equals_Household;
-    config.event_config.simulation_type = SimType::Both;
-    config.event_config.panvadere_file  = "./data/restaurant_scenario/infections.txt";
-    config.num_runs                     = 10;
-    config.simulation_days              = 30;
+    config.city_config       = CityConfig{};
+    config.event_config.type = EventType::Restaurant_Table_Equals_Household;
+    config.simulation_type   = SimType::Both;
+    config.num_runs          = 10;
+    config.simulation_days   = 30;
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -158,19 +153,7 @@ void print_config_summary(const MultiRunConfig& config)
 {
     std::cout << "\n=== Multi-Run Simulation Setup ===" << std::endl;
     std::cout << "Event Type: " << EventSimulator::event_type_to_string(config.event_config.type) << std::endl;
-    std::cout << "Simulation Type: ";
-    switch (config.event_config.simulation_type) {
-    case SimType::Panvadere:
-        std::cout << "Panvadere";
-        break;
-    case SimType::Memilio:
-        std::cout << "Memilio";
-        break;
-    case SimType::Both:
-        std::cout << "Both";
-        break;
-    }
-    std::cout << std::endl;
+    std::cout << "Simulation Type: " << EventSimulator::simulation_type_to_string(config.simulation_type) << std::endl;
     std::cout << "Number of runs: " << config.num_runs << std::endl;
     std::cout << "Population: " << config.city_config.total_population << std::endl;
     std::cout << "Simulation days: " << config.simulation_days << std::endl;
@@ -181,20 +164,8 @@ void print_summary(const MultiRunResults& results)
 {
     std::cout << "\n=== Simulation Summary ===" << std::endl;
     std::cout << "Event Type: " << EventSimulator::event_type_to_string(results.event_type) << std::endl;
-    std::cout << "Simulation Type: ";
-    switch (results.simulation_type) {
-    case SimType::Panvadere:
-        std::cout << "Panvadere";
-        break;
-    case SimType::Memilio:
-        std::cout << "Memilio";
-        break;
-    case SimType::Both:
-        std::cout << "Both";
-        break;
-    }
+    std::cout << "Simulation Type: " << EventSimulator::simulation_type_to_string(results.simulation_type) << std::endl;
     std::cout << "Infection Parameter K: " << results.infection_parameter_k << std::endl;
-    std::cout << "Successful Runs: " << results.successful_runs << std::endl;
     std::cout << "=========================" << std::endl;
 }
 

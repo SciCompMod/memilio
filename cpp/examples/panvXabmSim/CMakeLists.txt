@@ -6,7 +6,6 @@ add_executable(panvXabm
     src/file_utils.cpp
     src/world_creator.cpp
     src/simulation_runner.cpp
-    src/config_manager.cpp
     src/city_builder.cpp
     src/event_simulator.cpp
     src/multi_run_simulator.cpp

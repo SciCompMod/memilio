@@ -7,6 +7,7 @@
 struct MultiRunConfig {
     CityConfig city_config;
     EventSimulationConfig event_config;
+    SimType simulation_type     = SimType::Both;
     int num_runs                = 100;
     int simulation_days         = 30;
     std::string output_base_dir = "./results";
@@ -17,6 +18,7 @@ struct MultiRunResults {
     EventType event_type;
     SimType simulation_type;
     double infection_parameter_k;
+    int successful_runs = 0;
 };
 
 class MultiRunSimulator

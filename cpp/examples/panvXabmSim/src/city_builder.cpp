@@ -4,7 +4,7 @@
 #include <random>
 #include <algorithm>
 
-mio::IOResult<mio::abm::World> CityBuilder::build_city(const CityConfig& config)
+mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config)
 {
     auto world = mio::abm::World(num_age_groups);
     set_parameters(world.parameters);

@@ -4,6 +4,30 @@
 #include <fstream>
 #include <iostream>
 
+std::string EventSimulationConfig::get_panvadere_file() const
+{
+    auto result = EventSimulator::get_panvadere_file_for_event_type(type);
+    if (result.has_error()) {
+        // Fallback to default if there's an error
+        return "./data/default/infections.txt";
+    }
+    return result.value();
+}
+
+mio::IOResult<std::string> EventSimulator::get_panvadere_file_for_event_type(EventType type)
+{
+    auto it = EVENT_TYPE_TO_FILE.find(type);
+    if (it != EVENT_TYPE_TO_FILE.end()) {
+        return mio::success(it->second);
+    }
+
+    // No fallback return error handling
+    std::cerr << "Error: No Panvadere file defined for event type " << event_type_to_string(type) << std::endl;
+    std::cerr << "Please define a Panvadere file for this event type in EVENT_TYPE_TO_FILE." << std::endl;
+
+    return mio::IOStatus(std::make_error_code(std::errc::invalid_argument), "No Panvadere file defined for event type");
+}
+
 mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const EventSimulationConfig& config)
 {
     // TODO: Simulate the specific event type to calculate optimal K parameter
@@ -11,122 +35,146 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
     // 1. Create a small world with event location
     // 2. Run simulation with different K values
     // 3. Find K that matches expected transmission rates
-    
+
     double k_value = 1.0;
-    
+
     switch (config.type) {
-        case EventType::Restaurant:
-            k_value = 1.2; // Higher transmission in close dining
-            break;
-        case EventType::WorkMeeting:
-            k_value = 0.8; // Lower transmission in meeting room
-            break;
-        case EventType::Choir:
-            k_value = 2.0; // Very high transmission due to singing
-            break;
+    case EventType::Restaurant_Table_Equals_Household:
+        k_value = 1.2; // Higher transmission in close dining
+        break;
+    case EventType::Restaurant_Table_Equals_Half_Household:
+        k_value = 1.1; // Slightly lower than full household tables
+        break;
+    case EventType::WorkMeeting_Many_Meetings:
+        k_value = 0.8; // Lower transmission in meeting room
+        break;
+    case EventType::WorkMeeting_Few_Meetings:
+        k_value = 0.9; // Slightly higher with fewer, longer meetings
+        break;
     }
-    
+
     return mio::success(k_value);
 }
 
-mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvadere(const std::string& panvadere_file, 
-                                                                                 EventType event_type)
+mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvadere(EventType event_type)
 {
+    // Get the appropriate file for this event type
+    BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
+
     // Read Panvadere infection data
     auto panvadere_data = read_infection_data(panvadere_file);
-    
+
     // Map to households based on event type
     std::map<uint32_t, bool> household_infections;
-    
+
     switch (event_type) {
-        case EventType::Restaurant:
-            household_infections = map_restaurant_tables_to_households(panvadere_data);
-            break;
-        case EventType::WorkMeeting:
-            household_infections = map_work_meeting_to_households(panvadere_data);
-            break;
-        case EventType::Choir:
-            household_infections = map_choir_to_households(panvadere_data);
-            break;
+    case EventType::Restaurant_Table_Equals_Household:
+    case EventType::Restaurant_Table_Equals_Half_Household:
+        household_infections = map_restaurant_tables_to_households(panvadere_data);
+        break;
+    case EventType::WorkMeeting_Many_Meetings:
+    case EventType::WorkMeeting_Few_Meetings:
+        household_infections = map_work_meeting_to_households(panvadere_data);
+        break;
     }
-    
+
     return mio::success(household_infections);
 }
 
-mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& config,
-                                                                                        const mio::abm::World& city)
+mio::IOResult<std::map<uint32_t, bool>>
+EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& config, const mio::abm::World& city)
 {
     // Create event-specific world
     BOOST_OUTCOME_TRY(auto event_world, create_event_world(config));
-    
+
     // Simulate event transmission
     auto infected_people = simulate_event_transmission(event_world, config);
-    
+
     return mio::success(infected_people);
 }
 
 std::string EventSimulator::event_type_to_string(EventType type)
 {
     switch (type) {
-        case EventType::Restaurant: return "Restaurant";
-        case EventType::WorkMeeting: return "Work Meeting";
-        case EventType::Choir: return "Choir";
-        default: return "Unknown";
+    case EventType::Restaurant_Table_Equals_Household:
+        return "Restaurant (Table = Household)";
+    case EventType::Restaurant_Table_Equals_Half_Household:
+        return "Restaurant (Table = Half Household)";
+    case EventType::WorkMeeting_Many_Meetings:
+        return "Work Meeting (Many Meetings)";
+    case EventType::WorkMeeting_Few_Meetings:
+        return "Work Meeting (Few Meetings)";
+    default:
+        return "Unknown";
     }
 }
 
-std::map<uint32_t, bool> EventSimulator::map_restaurant_tables_to_households(const std::map<uint32_t, bool>& panvadere_data)
+std::string EventSimulator::simulation_type_to_string(SimType type)
+{
+    switch (type) {
+    case SimType::Panvadere:
+        return "Panvadere";
+    case SimType::Memilio:
+        return "Memilio";
+    case SimType::Both:
+        return "Both";
+    default:
+        return "Unknown";
+    }
+}
+
+std::map<uint32_t, bool>
+EventSimulator::map_restaurant_tables_to_households(const std::map<uint32_t, bool>& panvadere_data)
 {
     std::map<uint32_t, bool> household_infections;
-    
+
     // TODO: Implement mapping logic
     // For restaurant: each table represents a household
     // Interchange households - half of each household at each table
-    
+
     for (const auto& [person_id, is_infected] : panvadere_data) {
         if (is_infected) {
             // Map person to household (simple: person_id / 4 = household_id)
-            uint32_t household_id = person_id / 4;
+            uint32_t household_id              = person_id / 4;
             household_infections[household_id] = true;
         }
     }
-    
+
     return household_infections;
 }
 
 std::map<uint32_t, bool> EventSimulator::map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data)
 {
     std::map<uint32_t, bool> household_infections;
-    
+
     // TODO: Implement mapping logic
     // For work meeting: one person per household in each room
     // Distribute according to household proportion in population
-    
+
     for (const auto& [person_id, is_infected] : panvadere_data) {
         if (is_infected) {
             // Each person represents a different household
-            uint32_t household_id = person_id;
+            uint32_t household_id              = person_id;
             household_infections[household_id] = true;
         }
     }
-    
+
     return household_infections;
 }
 
 std::map<uint32_t, bool> EventSimulator::map_choir_to_households(const std::map<uint32_t, bool>& panvadere_data)
 {
+    // This function is kept for potential future use but not currently used
+    // with the current EventType enum
     std::map<uint32_t, bool> household_infections;
-    
-    // TODO: Implement mapping logic for choir event
-    // Similar to work meeting but potentially different household distribution
-    
+
     for (const auto& [person_id, is_infected] : panvadere_data) {
         if (is_infected) {
-            uint32_t household_id = person_id / 2; // Families might attend together
+            uint32_t household_id              = person_id / 2; // Families might attend together
             household_infections[household_id] = true;
         }
     }
-    
+
     return household_infections;
 }
 
@@ -134,33 +182,34 @@ mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSim
 {
     // TODO: Create a specialized world for event simulation
     // This would be a smaller world focused on the specific event type
-    
+
     auto world = mio::abm::World(num_age_groups);
-    
+
     // Add event location
     auto event_location = world.add_location(mio::abm::LocationType::SocialEvent);
-    
+
     // Add people to event
-    for (int i = 0; i < config.max_attendees; ++i) {
+    for (int i = 0; i < config.num_persons; ++i) {
         auto person_id = mio::abm::PersonId(i);
         auto age_group = mio::AgeGroup(i % num_age_groups);
-        auto person = mio::abm::Person(world.get_individualized_location(mio::abm::LocationType::Home, person_id), age_group);
+        auto person =
+            mio::abm::Person(world.get_individualized_location(mio::abm::LocationType::Home, person_id), age_group);
         world.add_person(person_id, std::move(person));
     }
-    
+
     return mio::success(std::move(world));
 }
 
-std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const mio::abm::World& event_world, 
-                                                                    const EventSimulationConfig& config)
+std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const mio::abm::World& event_world,
+                                                                     const EventSimulationConfig& config)
 {
     std::map<uint32_t, bool> infected_people;
-    
+
     // TODO: Run event simulation to determine who gets infected
     // 1. Place one initially infected person
     // 2. Run simulation for event duration
     // 3. Return list of infected people
-    
+
     // For now, simple random infection
     for (const auto& [person_id, person] : event_world.get_persons()) {
         // Simple placeholder: 10% infection rate
@@ -168,6 +217,6 @@ std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const mio::
             infected_people[person_id.get()] = true;
         }
     }
-    
+
     return infected_people;
 }

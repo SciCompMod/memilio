@@ -7,15 +7,19 @@
 mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const MultiRunConfig& config)
 {
     MultiRunResults results;
-    results.event_type          = config.event_config.type;
-    results.used_panvadere_init = config.event_config.use_panvadere_init;
-    results.successful_runs     = 0;
+    results.event_type      = config.event_config.type;
+    results.simulation_type = config.event_config.simulation_type;
 
     // Step 1: Build city (done once)
     std::cout << "Building city..." << std::endl;
-    BOOST_OUTCOME_TRY(auto base_world, CityBuilder::create_city_from_census(config.city_config));
+    BOOST_OUTCOME_TRY(auto base_world, CityBuilder::build_world(config.city_config));
 
-    // Step 2: Calculate K parameter
+    // Step 2: Get map from specific event to ids of persons in simulation
+    std::cout << "Mapping events to person IDs..." << std::endl;
+    BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config));
+    results.event_person_map = event_map;
+
+    // Step 3: Calculate K parameter
     std::cout << "Calculating infection parameter K..." << std::endl;
     BOOST_OUTCOME_TRY(auto k_value, EventSimulator::calculate_infection_parameter_k(config.event_config));
     results.infection_parameter_k = k_value;
@@ -86,7 +90,6 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         summary << "Event Type: " << EventSimulator::event_type_to_string(results.event_type) << "\n";
         summary << "Initialization: " << init_method << "\n";
         summary << "Infection Parameter K: " << results.infection_parameter_k << "\n";
-        summary << "Successful Runs: " << results.successful_runs << "\n";
         summary << "Total Runs: " << results.all_runs.size() << "\n";
         summary.close();
     }
