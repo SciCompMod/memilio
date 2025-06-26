@@ -63,7 +63,7 @@ struct TransitionDistributions {
  * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
 struct ContactPatterns {
-    using Type = UncertainContactMatrix<double>;
+    using Type = UncertainContactMatrix<ScalarType>;
 
     static Type get_default()
     {
@@ -75,6 +75,18 @@ struct ContactPatterns {
     static std::string name()
     {
         return "ContactPatterns";
+    }
+};
+
+struct beta {
+    using Type = ScalarType;
+    static Type get_default()
+    {
+        return 0.001;
+    }
+    static std::string name()
+    {
+        return "beta";
     }
 };
 
@@ -111,7 +123,7 @@ struct RiskOfInfectionFromSymptomatic {
 };
 
 // Define Parameterset for IDE-SECIR model.
-using ParametersBase = ParameterSet<TransitionDistributions, ContactPatterns, TransmissionProbabilityOnContact,
+using ParametersBase = ParameterSet<TransitionDistributions, ContactPatterns, beta, TransmissionProbabilityOnContact,
                                     RiskOfInfectionFromSymptomatic>;
 
 /**

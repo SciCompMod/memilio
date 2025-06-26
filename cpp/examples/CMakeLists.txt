@@ -132,6 +132,10 @@ add_executable(messina_example messina_example.cpp)
 target_link_libraries(messina_example PRIVATE memilio ide_sir)
 target_compile_options(messina_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(messina_example_extended messina_example_extended.cpp)
+target_link_libraries(messina_example_extended PRIVATE memilio ide_sir)
+target_compile_options(messina_example_extended PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

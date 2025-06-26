@@ -64,6 +64,42 @@ def read_groundtruth(data_dir, groundtruth_exponent, gregory_order):
     return results
 
 
+def read_groundtruth_ode(data_dir, groundtruth_exponent):
+    """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
+
+    @param[in] data_dir Directory where h5 files are stored.
+    @param[in] ode_exponent Exponent that determines time step size via dt =10^{-ode_exponent}.
+    @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
+    @returns Dict with results of ODE model.
+    """
+    model = 'ode'
+    results = {model: []}
+
+    h5file = h5py.File(os.path.join(
+        data_dir, f'result_{model}_dt=1e-{groundtruth_exponent:.0f}.h5'), 'r')
+
+    if (len(list(h5file.keys())) > 1):
+        raise gd.DataError("File should contain one dataset.")
+    if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
+        raise gd.DataError("Expected only one group.")
+
+    data = h5file[list(h5file.keys())[0]]
+
+    if len(data['Total'][0]) == 3:
+        # As there should be only one Group, total is the simulation result
+        results[model].append(data['Total'][:, :])
+    else:
+        raise gd.DataError(
+            'Expected a different size of vector in time series.')
+
+    dates = data['Time'][:]
+
+    h5file.close()
+
+    return results
+
+
 def read_data(data_dir, exponents_ide, gregory_order):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There, we have an array that contains all results
@@ -118,8 +154,10 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
     for i in range(len(results['ide'])):
         errors.append([])
 
+        model = list(groundtruth.keys())[0]
+
         difference = np.abs(
-            groundtruth['ide'][0][-1, 0]-results['ide'][i][-1, 0])
+            groundtruth[model][0][-1, 0]-results['ide'][i][-1, 0])
 
         errors[i].append(difference)
 
@@ -200,15 +238,18 @@ def compute_order_of_convergence(errors, timesteps_ide):
 
 def main():
 
+    dir_name = "messina_model_extended"
+    print(dir_name)
+
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
-        __file__),  "../simulation_results/messina_160625/")
+        __file__),  f"../simulation_results/{dir_name}/")
 
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
-        __file__),  "../plots/messina_160625/")
+        __file__),  f"../plots/{dir_name}/")
 
-    groundtruth_exponent = 5
+    groundtruth_exponent = 4
     gregory_order_groundtruth = 3
 
     gregory_orders_simulation = [1, 2, 3]
@@ -221,6 +262,8 @@ def main():
         timesteps_ide.append(pow(10, -exp))
 
     # Read groundtruth.
+    # groundtruth = read_groundtruth_ode(
+    #     result_dir, groundtruth_exponent)
     groundtruth = read_groundtruth(
         result_dir, groundtruth_exponent, gregory_order_groundtruth)
 

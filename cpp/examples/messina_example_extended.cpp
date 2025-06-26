@@ -37,6 +37,13 @@ size_t num_agegroups = 1;
 
 ScalarType t0   = 0.;
 ScalarType tmax = 1.;
+
+ScalarType S0 = 90.;
+ScalarType I0 = 10.;
+ScalarType R0 = 0.;
+
+ScalarType total_population = S0 + I0 + R0;
+ScalarType cont_freq        = 0.001 * total_population;
 } // namespace params
 
 // This function returns a TimeSeries containing the
@@ -93,7 +100,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         }
 
         // Initialize model.
-        mio::isir::ModelMessina model(std::move(init_populations), total_population, gregory_order);
+        mio::isir::ModelMessinaExtended model(std::move(init_populations), total_population, gregory_order);
 
         mio::NormalDistributionDensity normaldensity(0.4, 0.6);
         mio::StateAgeFunctionWrapper dist(normaldensity);
@@ -110,10 +117,12 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
         model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = riskofinfection_wrapper;
 
-        model.parameters.get<mio::isir::beta>() = 0.001;
+        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq / total_population));
+        model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // Carry out simulation.
-        mio::isir::SimulationMessina sim(model, dt);
+        mio::isir::SimulationMessinaExtended sim(model, dt);
         sim.advance_messina(tmax);
 
         // If no groundtruth is gibven as input, we set the here computed results as groundtruth.
@@ -143,7 +152,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
 int main()
 {
-    std::string result_dir = "../../simulation_results/messina_paper_example/";
+    std::string result_dir = "../../simulation_results/messina_model_extended/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
@@ -151,7 +160,7 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {6};
+    std::vector<ScalarType> ide_exponents_groundtruth = {5};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =

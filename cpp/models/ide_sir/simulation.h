@@ -103,6 +103,80 @@ private:
 
 /*********************************************************************************************************************/
 
+class SimulationMessinaExtended
+{
+
+public:
+    /**
+     * @brief setup the Simulation for an IDE model.
+     * @param[in] model An instance of the IDE model.
+     * @param[in] dt Step size of numerical solver.
+     */
+    SimulationMessinaExtended(ModelMessinaExtended const& model, ScalarType dt)
+        : m_model(std::make_unique<ModelMessinaExtended>(model))
+        , m_dt(dt)
+    {
+        assert(m_dt > 0);
+    }
+
+    /** 
+     * Run the simulation from the current time to tmax.
+     * @param tmax Time to stop.
+     */
+    void advance_messina(ScalarType tmax);
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    TimeSeries<ScalarType> get_result()
+    {
+        return m_model->populations;
+    }
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    const TimeSeries<ScalarType>& get_result() const
+    {
+        return m_model->populations;
+    }
+
+    /**
+     * @brief returns the simulation model used in simulation.
+     */
+    const ModelMessinaExtended& get_model() const
+    {
+        return *m_model;
+    }
+
+    /**
+     * @brief returns the simulation model used in simulation.
+     */
+    ModelMessinaExtended& get_model()
+    {
+        return *m_model;
+    }
+
+    /**
+     * @brief get the time step of the simulation.
+     * 
+     */
+    ScalarType get_dt()
+    {
+        return m_dt;
+    }
+
+private:
+    std::unique_ptr<ModelMessinaExtended> m_model; ///< Unique pointer to the Model simulated.
+    ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+};
+
+/*********************************************************************************************************************/
+
 /**
  * run the simulation in discrete steps and report results.
  */

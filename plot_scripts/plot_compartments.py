@@ -45,7 +45,7 @@ def plot_susceptibles(files, fileending, save_dir=""):
     fig, axs = plt.subplots(1, num_plots, sharex='all', num='Compare files')
 
     colors = ["C0", "limegreen"]
-    linestyles = ['-', '-']
+    linestyles = ['-', '--']
     linewidth = 1
     labels = ["Groundtruth", "IDE result"]
 
@@ -101,15 +101,17 @@ def plot_susceptibles(files, fileending, save_dir=""):
 
 if __name__ == '__main__':
 
+    dir_name = "exponential_newparams"
+
     # Path where simulation results (generated with ide_changepoints.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
-        __file__),  "../simulation_results/messina_new/")
+        __file__),  f"../simulation_results/{dir_name}/")
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
-        __file__),  "../plots/messina_new/")
+        __file__),  f"../plots/{dir_name}/")
 
     gregory_orders = ["1", "2", "3"]
-    ide_exponent = "1"
+    ide_exponent = "3"
     groundtruth_exponent = "5"
 
     # for gregory_order in gregory_orders:
@@ -117,7 +119,14 @@ if __name__ == '__main__':
     #                        os.path.join(result_dir, f"result_ide_dt=1e-{dt_exp}_gregoryorder={gregory_order}_finitedifforder=1")],
     #                       fileending=f"dt=1e-{dt_exp}_gregory={gregory_order}", save_dir=plot_dir)
 
+    # for gregory_order in gregory_orders:
+    #     plot_susceptibles([os.path.join(result_dir, f"result_ide_dt=1e-{groundtruth_exponent}_gregoryorder={3}"),
+    #                        os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
+    #                       fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)
+    # for ODE
+
+    groundtruth_exponent = "6"
     for gregory_order in gregory_orders:
-        plot_susceptibles([os.path.join(result_dir, f"result_ide_dt=1e-{groundtruth_exponent}_gregoryorder=3"),
+        plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-{groundtruth_exponent}"),
                            os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
                           fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)

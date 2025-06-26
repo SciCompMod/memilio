@@ -23,6 +23,7 @@
 #include "ide_sir/parameters.h"
 #include "ide_sir/simulation.h"
 #include "memilio/config.h"
+#include "memilio/utils/time_series.h"
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -74,9 +75,9 @@ TEST(IdeSir, checkGregoryWeights)
 
         size_t row_index, column_index;
         for (size_t n = gregory_order; n <= n_max; n++) {
-            std::cout << "n: " << n << std::endl;
+            // std::cout << "n: " << n << std::endl;
             for (size_t j = 0; j < gregory_order; j++) {
-                std::cout << "j: " << j << std::endl;
+                // std::cout << "j: " << j << std::endl;
 
                 // Check sigma.
 
@@ -127,5 +128,85 @@ TEST(IdeSir, checkGregoryWeights)
             // Define weight_indices that we want to check the values for in gregoryWeights_omega.
             std::vector<size_t> weight_indices = {0, 1, 2, 3};
         }
+    }
+}
+
+TEST(IdeSir, compareModelMessinaAndModelMessinaExtended)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+    // Define simulation parameters.
+    ScalarType t0   = 0.;
+    ScalarType tmax = 1.;
+    ScalarType dt   = 0.1;
+
+    ScalarType S0               = 90.;
+    ScalarType I0               = 10.;
+    ScalarType R0               = 0.;
+    ScalarType total_population = S0 + I0 + R0;
+
+    // We want to check in particular that choosing beta based on cont_freq and the total_population leads to the same results.
+
+    ScalarType cont_freq = 0.1;
+    ScalarType beta      = cont_freq / total_population;
+
+    size_t gregory_order = 2;
+
+    // Define init_populations.
+    mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
+    mio::TimeSeries<ScalarType> init_populations_extended((size_t)mio::isir::InfectionState::Count);
+    // Initialize first (gregory_order-1) time points with constant values.
+    // Only set S because this is the only compartment we consider at the moment.
+    Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
+    vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 90.;
+    // Add time points S_0, S_1, S_{n0-1} to init_populations as these values are assumed to be known in the groundtruth.
+    init_populations.add_time_point(t0, vec_init);
+    init_populations_extended.add_time_point(t0, vec_init);
+    while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
+        init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+        init_populations_extended.add_time_point(init_populations_extended.get_last_time() + dt, vec_init);
+    }
+
+    // Set up ModelMessina and ModelMessinaextended.
+    mio::isir::ModelMessina model(std::move(init_populations), total_population, gregory_order);
+    mio::isir::ModelMessinaExtended model_extended(std::move(init_populations_extended), total_population,
+                                                   gregory_order);
+
+    mio::NormalDistributionDensity normaldensity(0.4, 0.6);
+    mio::StateAgeFunctionWrapper dist(normaldensity);
+    std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
+    model.parameters.get<mio::isir::TransitionDistributions>()          = vec_dist;
+    model_extended.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
+
+    mio::ConstantFunction transmissiononcontact(1.5);
+    mio::StateAgeFunctionWrapper transmissiononcontact_wrapper(transmissiononcontact);
+    model.parameters.get<mio::isir::TransmissionProbabilityOnContact>()          = transmissiononcontact_wrapper;
+    model_extended.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = transmissiononcontact_wrapper;
+
+    mio::ConstantFunction riskofinfection(1.);
+    mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
+    model.parameters.get<mio::isir::TransmissionProbabilityOnContact>()          = riskofinfection_wrapper;
+    model_extended.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = riskofinfection_wrapper;
+
+    // In ModelMessina we use beta fpr the contact rate, in ModelMessinaextended we define the contacts via the contact
+    // matrix and the total population.
+    model.parameters.get<mio::isir::beta>() = beta;
+
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    model_extended.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+
+    // Simulate.
+    mio::isir::SimulationMessina sim(model, dt);
+    sim.advance_messina(tmax);
+    mio::TimeSeries<ScalarType> results = sim.get_result();
+
+    mio::isir::SimulationMessinaExtended sim_extended(model_extended, dt);
+    sim_extended.advance_messina(tmax);
+    mio::TimeSeries<ScalarType> results_extended = sim_extended.get_result();
+
+    // Compare results.
+    for (size_t i = 0; i < (size_t)results.get_num_time_points(); i++) {
+        EXPECT_NEAR(results[i][(Eigen::Index)mio::isir::InfectionState::Susceptible],
+                    results_extended[i][(Eigen::Index)mio::isir::InfectionState::Susceptible], 1e-6);
     }
 }
