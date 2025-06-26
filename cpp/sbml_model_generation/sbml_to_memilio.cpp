@@ -582,7 +582,7 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
     if (model_h) {
         //Add generic code
         model_h << "#ifndef " << uppercase_name << "_MODEL_H\n#define " << uppercase_name << "_MODEL_H" << std::endl;
-        model_h << "\n#include <cmath>\n#include \"memilio/compartments/compartmentalmodel.h\"\n#include "
+        model_h << "\n#include <cmath>\n#include \"memilio/compartments/compartmental_model.h\"\n#include "
                    "\"memilio/epidemiology/age_group.h\"\n#include \"memilio/epidemiology/populations.h\"\n#include "
                    "\"memilio/epidemiology/contact_matrix.h\""
                 << std::endl;

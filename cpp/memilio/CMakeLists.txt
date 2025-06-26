@@ -23,7 +23,7 @@ add_library(memilio
     geography/regions.cpp
     epidemiology/simulation_day.h
     geography/holiday_data.ipp
-    compartments/compartmentalmodel.h
+    compartments/compartmental_model.h
     compartments/flow_model.h
     compartments/simulation.h
     compartments/flow_simulation.h
