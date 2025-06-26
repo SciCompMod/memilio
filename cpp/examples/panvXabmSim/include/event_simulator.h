@@ -16,7 +16,7 @@ struct EventSimulationConfig {
     EventType type;
     std::string panvadere_file;
     double infection_parameter_k = 1.0;
-    bool use_panvadere_init      = true;
+    SimType simulation_type      = SimType::Both;
     int event_duration_hours     = 2;
     int max_attendees            = 50;
 };

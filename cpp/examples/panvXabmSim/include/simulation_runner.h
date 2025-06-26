@@ -7,10 +7,18 @@
 
 using ScalarType = double;
 
+enum class SimType
+{
+    Panvadere,
+    Memilio,
+    Both
+};
+
 class SimulationRunner
 {
 public:
     struct SimulationConfig {
+        SimType simulation_type = SimType::Both;
         std::string infection_data_file;
         std::string input_dir;
         int n_persons       = 1000;

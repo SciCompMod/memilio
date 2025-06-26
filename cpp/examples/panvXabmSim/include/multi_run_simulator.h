@@ -15,7 +15,7 @@ struct MultiRunConfig {
 struct MultiRunResults {
     std::vector<SimulationRunner::SimulationResults> all_runs;
     EventType event_type;
-    bool used_panvadere_init;
+    SimType simulation_type;
     double infection_parameter_k;
 };
 
