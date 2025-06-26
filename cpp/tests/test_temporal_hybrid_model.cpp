@@ -278,7 +278,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
 }
 
 /**
- * @brief Test conversion from dABM to ode-secir and vice versa.
+ * @brief Test conversion from dABM to ODE-SECIR and vice versa.
  */
 TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
 {
@@ -355,7 +355,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
         .WillOnce(testing::Return(3)) // agent3
         .WillRepeatedly(testing::Return(1));
 
-    //Convert ode-secir simulation to dabm simulation
+    //Convert ODE-SECIR simulation to dabm simulation
     mio::hybrid::convert_model(sim_osecir, sim_dabm2);
 
     EXPECT_EQ(sim_dabm2.get_model().populations.size(), 3);
@@ -396,7 +396,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
         .WillOnce(testing::Return(0)) // agent3
         .WillRepeatedly(testing::Return(1));
 
-    //Convert ode-secir simulation to dabm simulation
+    //Convert ODE-SECIR simulation to dabm simulation
     mio::hybrid::convert_model(sim_osecir, sim_dabm2);
 
     EXPECT_EQ(sim_dabm.get_model().populations.size(), 3);

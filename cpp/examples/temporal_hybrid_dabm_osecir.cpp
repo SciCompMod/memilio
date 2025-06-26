@@ -19,6 +19,7 @@
 */
 
 #include "d_abm/model.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
@@ -51,7 +52,7 @@ int main()
     auto& pos_sampler  = mio::UniformDistribution<double>::get_instance();
     auto& stat_sampler = mio::DiscreteDistribution<size_t>::get_instance();
     //Infection state distribution
-    std::vector<double> infection_state_dist{0.995, 0.005, 0., 0., 0., 0.};
+    std::vector<double> infection_state_dist{0.99, 0.01, 0., 0., 0., 0.};
     //Sample agents' position and infection state
     for (auto& a : agents) {
         //Agents' positions are equally distributed in [-2, 2] x [-2, 2]
@@ -63,7 +64,8 @@ int main()
     }
     //Transmission parameters used for both models
     const double contact_frequency = 10, trans_prob_on_contact = 0.06, time_E = 3., time_Ins = 2.5, time_Isy = 5.2,
-           time_Isev = 9., time_Icri = 7.2, mu_Ins_R = 0.2, mu_Isy_Isev = 0.1, mu_Isev_Icri = 0.1, mu_Icri_D = 0.2;
+                 time_Isev = 9., time_Icri = 7.2, mu_Ins_R = 0.2, mu_Isy_Isev = 0.1, mu_Isev_Icri = 0.1,
+                 mu_Icri_D = 0.2;
     //Initialize ABM adoption rates
     std::vector<mio::AdoptionRate<mio::hybrid::InfectionState>> adoption_rates;
     //Second-order adoption rate (S->E)
@@ -203,12 +205,12 @@ int main()
         return false;
     };
 
-    //Simulate for 30 days
-    hybrid_sim.advance(30., condition);
+    //Simulate for 10 days
+    hybrid_sim.advance(10., condition);
 
     //Print result time series of both models
-    auto ts_abm = hybrid_sim.get_result_model1();
-    auto ts_ode = hybrid_sim.get_result_model2();
+    auto ts_abm = mio::interpolate_simulation_result(hybrid_sim.get_result_model1());
+    auto ts_ode = mio::interpolate_simulation_result(hybrid_sim.get_result_model2());
 
     ts_abm.print_table({"S", "E", "Ins", "Isy", "Isev", "Icri", "R", "D"});
     ts_ode.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});

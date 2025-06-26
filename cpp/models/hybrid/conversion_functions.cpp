@@ -109,7 +109,7 @@ void convert_model(const dabm::Simulation<SingleWell<hybrid::InfectionState>>& c
     auto& current_result = current_model.get_result();
     auto& target_result  = target_model.get_result();
     if (current_result.get_last_time() < target_result.get_last_time()) {
-        mio::log_error("Conversion from dabm to ode-secir not possible because last ode-secir time point is bigger "
+        mio::log_error("Conversion from dabm to ODE-SECIR not possible because last ODE-SECIR time point is bigger "
                        "than last dabm time point.");
     }
     if (target_result.get_last_time() < current_result.get_last_time()) {
@@ -151,8 +151,8 @@ void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& cu
     auto& current_result = current_model.get_result();
     auto& target_result  = target_model.get_result();
     if (current_result.get_last_time() < target_result.get_last_time()) {
-        mio::log_error("Conversion from ode-secir to dabm not possible because last dabm time point is bigger than "
-                       "last ode-secir time point.");
+        mio::log_error("Conversion from ODE-SECIR to dabm not possible because last dabm time point is bigger than "
+                       "last ODE-SECIR time point.");
     }
     if (target_result.get_last_time() < current_result.get_last_time()) {
         target_result.add_time_point(current_result.get_last_time());
@@ -161,7 +161,7 @@ void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& cu
     size_t num_age_groups = current_result.get_last_value().size() / (int)mio::osecir::InfectionState::Count;
     target_result.get_last_value().setZero();
     // Update dabm time series
-    // Ode-secir model's age groups are aggregated as dabm does not have age groups
+    // ODE-SECIR model's age groups are aggregated as dabm does not have age groups
     for (size_t age_group = 0; age_group < num_age_groups; ++age_group) {
         target_result.get_last_value()[(int)hybrid::InfectionState::Susceptible] +=
             current_result.get_last_value()[current_model.get_model().populations.get_flat_index(
@@ -200,7 +200,7 @@ void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& cu
     auto& state_rng = DiscreteDistribution<size_t>::get_instance();
     auto& abm_pop   = target_model.get_model().populations;
     if (abm_pop.size() == 0) {
-        log_info("Diffusive ABM does not contain any agents. Population is initialized from ode-secir compartments.");
+        log_info("Diffusive ABM does not contain any agents. Population is initialized from ODE-SECIR compartments.");
         int num_agents = 0;
         while (num_agents < total_pop) {
             auto position        = pos_rng();
@@ -212,7 +212,7 @@ void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& cu
         }
     }
     else {
-        assert(int(total_pop) == int(abm_pop.size()) && "Population sizes of dabm and ode-secir do not match.");
+        assert(int(total_pop) == int(abm_pop.size()) && "Population sizes of dabm and ODE-SECIR do not match.");
         for (auto& a : abm_pop) {
             auto infection_state         = state_rng(thread_local_rng(), current_pop);
             a.position                   = pos_rng();

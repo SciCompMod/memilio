@@ -9,8 +9,8 @@ The temporal-hybrid model switches between two models during the course of the s
 The ``TemporalHybridSimulation`` class needs the used model types as well as their result types as template arguments. The results of the models are used to evaluate the switching condition. Additionally, conversion functions to convert the first model to the second model and vice versa have to be implemented for the used model types.
 We implemented conversion functions for the following model combinations:
 
-- Diffusive agent-based model, see ``mio::dabm``, using the singlewell potential and the stochastic metapopulation model, see ``mio::smm``.
-- Diffusive agent-based model, see ``mio::dabm``, using the singlewell potential, and the ODE-based SECIR-type model, see ``mio::osecir``.
+- The stochastic metapopulation model, see ``mio::smm`` and the diffusive agent-based model, see ``mio::dabm``, using the singlewell potential.
+- The ODE-based SECIR-type model, see ``mio::osecir`` and the diffusive agent-based model, see ``mio::dabm``, using the singlewell potential.
 
 Simulation
 ----------
@@ -24,14 +24,14 @@ For a detailed description and application of the model, see:
 How to: Set up and run a simulation of the temporal-hybrid model
 ----------------------------------------------------------------
 
-The following example shows how to run a temporal-hybrid simulation of the diffusive agent-based model using the singlewell potential and the ODE-secir model.
+The following example shows how to run a temporal-hybrid simulation of the diffusive agent-based model using the singlewell potential and the ODE-SECIR model.
 
 .. code-block:: cpp
 
     using ABM = mio::dabm::Model<SingleWell<mio::hybrid::InfectionState>>;
     using ODE = mio::osecir::Model<double>;
 
-First, both models have to be initialized. Please see the documentation of the corresponding models for information about their parameters and how to initialize them. In the following example code block, we initialize a ode-secir model with one age group and a diffusive ABM. We assume that the parameters of the diffusive ABM were created and initialized before and the parameters of the ode-secir model are set such that they match the ABM parameters.
+First, both models have to be initialized. Please see the documentation of the corresponding models for information about their parameters and how to initialize them. In the following example code block, we initialize a ODE-SECIR model with one age group and a diffusive ABM. We assume that the parameters of the diffusive ABM were created and initialized before and the parameters of the ODE-SECIR model are set such that they match the ABM parameters.
 
 .. code-block:: cpp
 
