@@ -179,8 +179,15 @@ if(MEMILIO_HAS_HDF5)
     target_compile_options(ode_secir_save_results_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
+
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ide_initialization_example ide_initialization.cpp)
     target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
     target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
+
+if(MEMILIO_HAS_HDF5)
+    add_executable(ide_endemic_secir_save_results_example ide_endemic_secir_save_results.cpp)
+    target_link_libraries(ide_endemic_secir_save_results_example PRIVATE memilio ide_endemic_secir)
+    target_compile_options(ide_endemic_secir_save_results_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()

@@ -2,7 +2,6 @@
 #include "ide_endemic_secir/infection_state.h"
 #include "ide_endemic_secir/parameters.h"
 #include "ide_endemic_secir/simulation.h"
-#include "ide_endemic_secir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/custom_index_array.h"
@@ -18,8 +17,8 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 100;
-    ScalarType dt   = 1.;
+    ScalarType tmax = 30;
+    ScalarType dt   = 0.1;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -29,7 +28,7 @@ int main()
 
     Vec vec_init(num_states);
 
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::Susceptible)]        = 10000.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::Susceptible)]        = 100000.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::Exposed)]            = 10.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedNoSymptoms)] = 0.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSymptoms)]   = 10.;
@@ -64,7 +63,7 @@ int main()
     contact_matrix[0]                                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::endisecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::ConstantFunction constant(0.1);
+    mio::ConstantFunction constant(0.5);
     mio::StateAgeFunctionWrapper constant_prob(constant);
 
     model.parameters.get<mio::endisecir::TransmissionProbabilityOnContact>() = constant_prob;
@@ -96,20 +95,20 @@ int main()
     std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
 
     // Uncomment to print the transitions.
-    sim.get_transitions().print_table(
-        {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
+    //sim.get_transitions().print_table(
+    //    {"S->E 1", "E->C 1", "C->I 1", "C->R 1", "I->H 1", "I->R 1", "H->U 1", "H->R 1", "U->D 1", "U->R 1"}, 16, 8);
     // sim.get_transitions_update().print_table(
     //     {"US->E 1", "UE->C 1", "UC->I 1", "UC->R 1", "UI->H 1", "UI->R 1", "UH->U 1", "uH->R 1", "UU->D 1", "UU->R 1"},
     //     16, 8);
 
     // Uncomment to print the normalized compartments.
-    sim.get_normalizedcompartments().print_table({"s", "e", "c", "i", "h", "u", "r", "d "}, 16, 8);
+    //sim.get_normalizedcompartments().print_table({"s", "e", "c", "i", "h", "u", "r", "d "}, 16, 8);
 
     // Uncomment to print the total population size.
-    // sim.get_totalpopulations().print_table({"N"}, 16, 9);
+    sim.get_totalpopulations().print_table({"N"}, 16, 9);
 
     // Uncomment to print the force of infection.
-    sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
+    //sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
     // sim.get_forceofinfections_update().print_table({"FoIUpdate"}, 16, 8);
 
     std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
