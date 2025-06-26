@@ -40,7 +40,7 @@ namespace mio
 template <typename FP,
           template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
           class ControlledStepper>
-class ControlledStepperWrapper : public mio::IntegratorCore<FP>
+class ControlledStepperWrapper : public mio::IntegratorCore<FP, 1>
 {
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
         ControlledStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, boost::numeric::odeint::vector_space_algebra,
@@ -62,7 +62,7 @@ public:
     ControlledStepperWrapper(double abs_tol = 1e-10, double rel_tol = 1e-5,
                              double dt_min = std::numeric_limits<double>::min(),
                              double dt_max = std::numeric_limits<double>::max())
-        : IntegratorCore<FP>(dt_min, dt_max)
+        : IntegratorCore<FP, 1>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
         , m_stepper(create_stepper())
@@ -77,7 +77,7 @@ public:
      * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
      * @param[out] ytp1 The approximated value of y(t').
      */
-    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+    bool step(const DerivFunction<FP> (&fs)[1], Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         using boost::numeric::odeint::fail;
@@ -110,7 +110,7 @@ public:
                 step_result = m_stepper.try_step(
                     // reorder arguments of the DerivFunction f for the stepper
                     [&](const Eigen::VectorX<FP>& x, Eigen::VectorX<FP>& dxds, FP s) {
-                        f(x, s, dxds);
+                        fs[0](x, s, dxds);
                     },
                     m_yt, t, m_ytp1, dt);
             }
@@ -181,7 +181,7 @@ private:
 template <typename FP,
           template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
           class ExplicitStepper>
-class ExplicitStepperWrapper : public mio::IntegratorCore<FP>
+class ExplicitStepperWrapper : public mio::IntegratorCore<FP, 1>
 {
 public:
     using Stepper =
@@ -193,7 +193,7 @@ public:
      * @brief Set up the integrator.
      */
     ExplicitStepperWrapper()
-        : mio::IntegratorCore<FP>(FP{}, FP{})
+        : mio::IntegratorCore<FP, 1>(FP{}, FP{})
     {
     }
 
@@ -205,7 +205,7 @@ public:
      * @param[in] dt Current time step size h=dt.
      * @param[out] ytp1 The approximated value of y(t+dt).
      */
-    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+    bool step(const mio::DerivFunction<FP> (&fs)[1], Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         // copy the values from y(t) to ytp1, since we use the scheme do_step(sys, inout, t, dt) with
@@ -214,7 +214,7 @@ public:
         m_stepper.do_step(
             // reorder arguments of the DerivFunction f for the stepper
             [&](const Eigen::VectorX<FP>& x, Eigen::VectorX<FP>& dxds, FP s) {
-                f(x, s, dxds);
+                fs[0](x, s, dxds);
             },
             ytp1, t, dt);
         // update time (it is not modified by do_step)

@@ -17,13 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
-#include <iostream>
 #include <cmath>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
@@ -40,7 +38,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
         dydt[0] = std::cos(t);
     };
 
-    mio::RKIntegratorCore<> rkf45;
+    mio::RKIntegratorCore<double> rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
     rkf45.set_dt_min(1e-3);
@@ -60,7 +58,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
             y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
-        rkf45.step(sine_deriv, y[i], t_eval, dt, y[i + 1]); //
+        rkf45.step({sine_deriv}, y[i], t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 
