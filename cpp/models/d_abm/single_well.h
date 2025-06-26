@@ -239,7 +239,7 @@ private:
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.
     */
-    bool is_in_domain(const Position& p, double lower_domain_border = -2, double upper_domain_border = 2) const
+    bool is_in_domain(const Position& p, const double lower_domain_border = -2, const double upper_domain_border = 2) const
     {
         // restrict domain to [lower_domain_border, upper_domain_border]^2 where "escaping" is impossible, i.e. it holds x <= grad_U(x) for dt <= 0.1
         return lower_domain_border <= p[0] && p[0] <= upper_domain_border && lower_domain_border <= p[1] &&
