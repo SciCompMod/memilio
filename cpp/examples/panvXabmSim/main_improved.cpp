@@ -5,6 +5,7 @@
 #include "boost/filesystem.hpp"
 #include "memilio/io/result_io.h"
 
+#include "include/config_validation.h"
 #include "include/multi_run_simulator.h"
 #include "include/event_simulator.h"
 #include "include/file_utils.h"
@@ -34,10 +35,16 @@ void print_help(const char* program_name)
     std::cout << "                                    restaurant_table_equals_half_household,\n";
     std::cout << "                                    work_meeting_many, work_meeting_few\n";
     std::cout << "  --sim <type>          Set the simulation type (panvadere, memilio, both)\n";
-    std::cout << "  --runs <number>       Set the number of runs (default: 10)\n";
-    std::cout << "  --days <number>       Set the number of simulation days (default: 30)\n";
-    std::cout << "  --n_persons <number>  Set the total population\n";
+    std::cout << "  --runs <number>       Set the number of runs (default: " << Config::DEFAULT_RUNS
+              << ", range: " << Config::MIN_RUNS << "-" << Config::MAX_RUNS << ")\n";
+    std::cout << "  --days <number>       Set the number of simulation days (default: " << Config::DEFAULT_DAYS
+              << ", range: " << Config::MIN_DAYS << "-" << Config::MAX_DAYS << ")\n";
+    std::cout << "  --n_persons <number>  Set the total population (default: " << Config::DEFAULT_POPULATION
+              << ", range: " << Config::MIN_POPULATION << "-" << Config::MAX_POPULATION << ")\n";
     std::cout << "  --help                Show this help message\n";
+    std::cout << "\nExamples:\n";
+    std::cout << "  " << program_name << " --event restaurant_table_equals_household --runs 50\n";
+    std::cout << "  " << program_name << " --sim panvadere --days 14 --n_persons 10000\n";
 }
 
 bool parse_event_type(const std::string& event_type, MultiRunConfig& config)
@@ -76,11 +83,14 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     MultiRunConfig config;
 
     // Set defaults
-    config.city_config       = CityConfig{};
-    config.event_config.type = EventType::Restaurant_Table_Equals_Household;
-    config.simulation_type   = SimType::Both;
-    config.num_runs          = 10;
-    config.simulation_days   = 30;
+    config.city_config                        = CityConfig{};
+    config.city_config.total_population       = Config::DEFAULT_POPULATION;
+    config.event_config.type                  = EventType::Restaurant_Table_Equals_Household;
+    config.event_config.infection_parameter_k = Config::DEFAULT_INFECTION_K;
+    config.event_config.event_duration_hours  = Config::DEFAULT_EVENT_HOURS;
+    config.simulation_type                    = SimType::Both;
+    config.num_runs                           = Config::DEFAULT_RUNS;
+    config.simulation_days                    = Config::DEFAULT_DAYS;
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -99,39 +109,43 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
         else if (arg == "--runs" && i + 1 < argc) {
             try {
                 config.num_runs = std::stoi(argv[++i]);
-                if (config.num_runs <= 0) {
-                    std::cerr << "Error: Number of runs must be positive\n";
+                if (config.num_runs < Config::MIN_RUNS || config.num_runs > Config::MAX_RUNS) {
+                    std::cerr << "Error: Number of runs must be between " << Config::MIN_RUNS << " and "
+                              << Config::MAX_RUNS << "\n";
                     exit(1);
                 }
             }
             catch (const std::exception& e) {
-                std::cerr << "Error: Invalid number for --runs\n";
+                std::cerr << "Error: Invalid number for --runs: " << argv[i] << "\n";
                 exit(1);
             }
         }
         else if (arg == "--days" && i + 1 < argc) {
             try {
                 config.simulation_days = std::stoi(argv[++i]);
-                if (config.simulation_days <= 0) {
-                    std::cerr << "Error: Number of days must be positive\n";
+                if (config.simulation_days < Config::MIN_DAYS || config.simulation_days > Config::MAX_DAYS) {
+                    std::cerr << "Error: Number of days must be between " << Config::MIN_DAYS << " and "
+                              << Config::MAX_DAYS << "\n";
                     exit(1);
                 }
             }
             catch (const std::exception& e) {
-                std::cerr << "Error: Invalid number for --days\n";
+                std::cerr << "Error: Invalid number for --days: " << argv[i] << "\n";
                 exit(1);
             }
         }
         else if (arg == "--n_persons" && i + 1 < argc) {
             try {
                 config.city_config.total_population = std::stoi(argv[++i]);
-                if (config.city_config.total_population <= 0) {
-                    std::cerr << "Error: Population must be positive\n";
+                if (config.city_config.total_population < Config::MIN_POPULATION ||
+                    config.city_config.total_population > Config::MAX_POPULATION) {
+                    std::cerr << "Error: Population must be between " << Config::MIN_POPULATION << " and "
+                              << Config::MAX_POPULATION << "\n";
                     exit(1);
                 }
             }
             catch (const std::exception& e) {
-                std::cerr << "Error: Invalid number for --n_persons\n";
+                std::cerr << "Error: Invalid number for --n_persons: " << argv[i] << "\n";
                 exit(1);
             }
         }
@@ -147,6 +161,34 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     }
 
     return config;
+}
+
+bool validate_config(const MultiRunConfig& config)
+{
+    // Validate event configuration
+    if (!config.event_config.is_valid()) {
+        std::cerr << "Error: Invalid event configuration\n";
+        return false;
+    }
+
+    // Validate simulation parameters
+    if (config.num_runs < Config::MIN_RUNS || config.num_runs > Config::MAX_RUNS) {
+        std::cerr << "Error: Invalid number of runs\n";
+        return false;
+    }
+
+    if (config.simulation_days < Config::MIN_DAYS || config.simulation_days > Config::MAX_DAYS) {
+        std::cerr << "Error: Invalid number of simulation days\n";
+        return false;
+    }
+
+    if (config.city_config.total_population < Config::MIN_POPULATION ||
+        config.city_config.total_population > Config::MAX_POPULATION) {
+        std::cerr << "Error: Invalid population size\n";
+        return false;
+    }
+
+    return true;
 }
 
 void print_config_summary(const MultiRunConfig& config)
@@ -175,6 +217,12 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
 
     // Parse configuration
     auto config = parse_multi_run_config(argc, argv);
+
+    // Validate complete configuration
+    if (!validate_config(config)) {
+        return mio::failure(mio::StatusCode::InvalidValue, "Configuration validation failed");
+    }
+
     print_config_summary(config);
 
     // Run multi-simulation
@@ -189,9 +237,11 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     auto total_duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
 
     print_summary(results);
-    std::cout << "\n✓ Multi-run simulation completed!" << std::endl;
-    std::cout << "⏱️  Total time: " << total_duration.count() << "s" << std::endl;
-    std::cout << "📁 Results: " << result_dir << std::endl;
+
+    std::cout << "\n✓ Multi-run simulation completed successfully!" << std::endl;
+    std::cout << "⏱️  Total execution time: " << total_duration.count() << " seconds" << std::endl;
+    std::cout << "📁 Results saved to: " << result_dir << std::endl;
+    std::cout << "📊 Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
 
     return mio::success();
 }
