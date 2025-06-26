@@ -24,14 +24,11 @@ struct EventSimulationConfig {
 class EventSimulator
 {
 public:
-    // Step 2: Berechne K-Parameter für Event
     static mio::IOResult<double> calculate_infection_parameter_k(const EventSimulationConfig& config);
 
-    // Step 3.1: Initialisierung von Panvadere
     static mio::IOResult<std::map<uint32_t, bool>> initialize_from_panvadere(const std::string& panvadere_file,
                                                                              EventType event_type);
 
-    // Step 3.2: Initialisierung durch eigene Event-Simulation
     static mio::IOResult<std::map<uint32_t, bool>> initialize_from_event_simulation(const EventSimulationConfig& config,
                                                                                     const mio::abm::World& city);
 

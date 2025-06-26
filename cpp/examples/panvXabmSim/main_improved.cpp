@@ -16,7 +16,7 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
 
     // Set defaults
     config.city_config                     = CityConfig{};
-    config.event_config.type               = EventType::Restaurant;
+    config.event_config.type               = EventType::Restaurant_Table_Equals_Household;
     config.event_config.use_panvadere_init = true;
     config.event_config.panvadere_file     = "./data/restaurant/infections.txt";
     config.num_runs                        = 100;
