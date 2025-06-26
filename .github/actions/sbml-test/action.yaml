@@ -1,0 +1,53 @@
+name: "SBML Compile and Run Test"
+description: "Compile the SBML integrator, run it on a test example and compile the result."
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install gcc-13 g++-13 libbz2-dev libbz2-1.0 libsbml5t64 libsbml5-dev ccache libhdf5-dev
+        sudo apt-get -qq update
+    - name: ccache
+      id: ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        # free total space for cache available on github is limited to 10GB, so only save on main branch;
+        # other branches will try to use cache from main, but branches that are too old won't benefit;
+        save: false
+        # set enough space per build cache to keep a few previous versions to be used by older branches
+        # debug builds require more space
+        max-size: 200M
+        # saves cache as `ccache-<key>-<timestamp>` (timestamp added automatically, key must be unique, github caches are never overwritten)
+        # key should be a composite of all options that affect the compilation
+        key: linux-gcc-latest-Release-covOFF-depON-ompOFF-sanOFF
+        # load most recent cache where a prefix of the key matches a restore-key, e.g. from the most recent nightly run of the same build
+        restore-keys: linux-gcc-latest-Release-covOFF-depON-ompOFF-sanOFF
+    - name: Download built test directory
+      uses: actions/download-artifact@v4
+      with:
+        name: build-cpp-linux-gcc-latest-Release
+        path: cpp
+    - name: extract build archive
+      shell: bash
+      run: |
+        cd cpp
+        tar -xzf build.tar.gz
+    - name: Build SBML converter
+      shell: bash
+      run: |
+        cd cpp/build
+        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake --build . -j 4
+    - name: Run SBML importer
+      shell: bash
+      run: | 
+        cd cpp
+        ./build/bin/sbml_to_memilio tests/data/sbml_test.sbml
+    - name: Compile result
+      shell: bash
+      run: |
+        cd cpp/build
+        cmake -DCMAKE_BUILD_TYPE=Release -Dsbml_DIR=/usr/lib/x86_64-linux-gnu/cmake ..
+        cmake --build . -j 4
