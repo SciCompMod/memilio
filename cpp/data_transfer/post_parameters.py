@@ -7,19 +7,21 @@ from itertools import combinations
 import numpy as np
 import memilio.epidata.geoModificationGermany as gMG
 
-header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+# header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
-def delete_scenarios(url):
-    response = requests.get(url + "scenarios/", headers=header)
+
+def delete_scenarios(url, headers):
+
+    response = requests.get(url + "scenarios/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
-            url + "scenarios/" + id, headers=header)
+            url + "scenarios/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "scenarios/", headers=header).json())
+    print(requests.get(url + "scenarios/", headers=headers).json())
 
 
 def read_mcmc_data(data_dir):
@@ -59,15 +61,15 @@ def get_mcmc_data_at_t(t, data_dir):
     return data_at_t
 
 
-def get_mcmc_model_params(url, t, data_dir):
+def get_mcmc_model_params(url, t, data_dir, headers):
     """!Reads MCMC data for a specific date t and creates an entry for the model parameters.
     """
     modelparameters_entry = []
     data_t = get_mcmc_data_at_t(t, data_dir)
     parameter_list = requests.get(
-        url + "parameterdefinitions/", headers=header).json()
-    
-    get_groups = requests.get(url + "groups/", headers=header)
+        url + "parameterdefinitions/", headers=headers).json()
+
+    get_groups = requests.get(url + "groups/", headers=headers)
     group_ids = []
     for i, group in enumerate(get_groups.json()):
         if group["name"] == f"age_{i}":
@@ -87,7 +89,7 @@ def get_mcmc_model_params(url, t, data_dir):
 
     for parameter in data_t_parameters:
         # seach the parameter in the parameter_list
-        parameter_id = None     
+        parameter_id = None
         for entry in parameter_list:
             if entry["name"] == parameter:
                 parameter_id = entry["id"]
@@ -99,31 +101,36 @@ def get_mcmc_model_params(url, t, data_dir):
         param_val = []
 
         # For 'Seasonality use default parameters, as this is not estimated by mcmc
-        seasonality_default = [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]]
-        if parameter =='Seasonality':
+        seasonality_default = [[0.1, 0.1, 0.1, 0.1, 0.1, 0.1], [
+            0.3, 0.3, 0.3, 0.3, 0.3, 0.3]]
+        if parameter == 'Seasonality':
             for group in range(len(data_t)):
-                param_val.append([seasonality_default[0][group],seasonality_default[1][group]])
+                param_val.append(
+                    [seasonality_default[0][group], seasonality_default[1][group]])
 
         # use data from mcmc
         else:
             for group in data_t:
                 for entry in data_t[group]:
                     if entry["Name"] == parameter:
-                        param_val.append([float(entry["hdi_25%"]),float(entry["hdi_75%"])])
+                        param_val.append(
+                            [float(entry["hdi_25%"]), float(entry["hdi_75%"])])
             if len(param_val) != len(data_t):
                 print("Parameter " + parameter +
-                    " has not the correct number of groups.")
+                      " has not the correct number of groups.")
                 continue
 
-        # Append parameter value for age group "total". This is done by weighting the other parameter values according to 
-        # their share of the total population of Germany (using data from regionalstatistik). 
-        share_of_agegroup = [0.04773178, 0.09029715, 0.22754236, 0.34473159, 0.21830716, 0.07138996]
+        # Append parameter value for age group "total". This is done by weighting the other parameter values according to
+        # their share of the total population of Germany (using data from regionalstatistik).
+        share_of_agegroup = [0.04773178, 0.09029715,
+                             0.22754236, 0.34473159, 0.21830716, 0.07138996]
         min_vector = [values[0] for values in param_val]
         max_vector = [values[1] for values in param_val]
-        param_val.append([np.dot(share_of_agegroup,min_vector), np.dot(share_of_agegroup, max_vector)])
+        param_val.append([np.dot(share_of_agegroup, min_vector),
+                         np.dot(share_of_agegroup, max_vector)])
 
         # Get sorted list of groups
-        get_groups = requests.get(url + "groups/", headers=header)
+        get_groups = requests.get(url + "groups/", headers=headers)
         group_ids = []
         for i, group in enumerate(get_groups.json()):
             if group["name"] == f"age_{i}":
@@ -143,31 +150,37 @@ def get_mcmc_model_params(url, t, data_dir):
     return modelparameters_entry
 
 
-def post_mcmc_parameters(url, t, data_dir):
+def post_mcmc_parameters(url, t, data_dir, headers):
+
+    modelparameters_entry = []
+    data_t = get_mcmc_data_at_t(t, data_dir)
+    parameter_list = requests.get(
+        url + "parameterdefinitions/", headers=headers).json()
+
     # Get mcmc parameters and put it into the right format for the API.
     parameters_mcmc = get_mcmc_model_params(
-        url, t, data_dir)
-    
+        url, t, data_dir, headers)
+
     # # list all scenarios
-    scenarios = requests.get(url + "scenarios/", headers=header).json()
-    
+    scenarios = requests.get(url + "scenarios/", headers=headers).json()
+
     new_scenarios = []
-    
+
     for scenario in scenarios:
         # load full set of scenario data
         scenario_data = requests.get(
-            url + "scenarios/" + scenario['id'], headers=header)
+            url + "scenarios/" + scenario['id'], headers=headers)
 
         if (scenario_data.status_code != 200):
-                print(scenario_data.status_code)
-                print(scenario_data.reason)
+            print(scenario_data.status_code)
+            print(scenario_data.reason)
 
         # Upload the model parameters to the scenario
         scenario_data.json()['modelParameters'] = parameters_mcmc
 
         new_scenarios.append(scenario_data.json())
 
-    #     # put 
+    #     # put
     #     # response = requests.put(
     #     #     url + f"scenarios/{scenario['id']}",
     #     #     headers=header,
@@ -185,32 +198,53 @@ def post_mcmc_parameters(url, t, data_dir):
     #     # )
 
     # delete scenarios with old parameters
-    delete_scenarios(url)
+    delete_scenarios(url, headers)
 
     # post scenarios with updated parameters
     for scenario in new_scenarios:
         response = requests.post(
             url + "scenarios/",
-            headers=header,
+            headers=headers,
             json=scenario
         )
 
         if response.status_code == 200:
             print(f"Scenario {scenario['id']} updated successfully.")
         else:
-            print(f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
-
+            print(
+                f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
 
 
 def main():
-    url = "http://localhost:8123/"
+    url = "https://zam10063.zam.kfa-juelich.de/api-new/"
     cwd = os.getcwd()
     mcmc_dir = os.path.join(cwd, "mcmc data")
     # date_today = datetime.datetime.now().strftime("%Y-%m-%d")
-    date_today = '2025-01-13'
+    date_today = "2025-02-11"
+
+    # Information needed for authentication.
+    service_realm = ""
+    client_id = ""
+    username = ""
+    password = ""
+
+    # Request access token from idp.
+    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+
+    # Raise error if response not ok.
+    req_auth.raise_for_status()
+
+    # Parse response and get access token.
+    res = req_auth.json()
+    token = res['access_token']
+
+    # Set up headers with token.
+    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
     # Update scenarios with mcmc parameters.
-    post_mcmc_parameters(url, date_today, mcmc_dir)
+    post_mcmc_parameters(url, date_today, mcmc_dir,
+                         headers)
 
 
 if __name__ == "__main__":

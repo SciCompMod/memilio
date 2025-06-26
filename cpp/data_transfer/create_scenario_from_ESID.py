@@ -56,9 +56,10 @@ class InterventionLevel(Enum):
     Holidays = 3
 
 
-def get_invervention_list(url, header):
+def get_invervention_list(url, headers):
+
     get_interventions = requests.get(
-        url + "interventions/templates/", headers=header)
+        url + "interventions/templates/", headers=headers)
 
     school_closure_id = [intervention["id"] for intervention in get_interventions.json(
     ) if intervention["name"] == "School closure"]
@@ -119,13 +120,14 @@ def get_invervention_list(url, header):
 
 class Simulation:
 
-    def __init__(self, data_dir, results_dir, run_data_url):
+    def __init__(self, data_dir, results_dir, run_data_url, headers):
         self.num_groups = 6
         self.data_dir = data_dir
         self.results_dir = results_dir
         self.intervention_list = []
         self.parameter_list = []
         self.run_data_url = run_data_url
+        self.headers = headers
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
@@ -141,7 +143,7 @@ class Simulation:
         self.population_data = osecirvvs.read_population_data(
             path_population_data, node_ids)
 
-    def _process_scenario(self, scenario, header, num_runs):
+    def _process_scenario(self, scenario, num_runs):
         scenario_data_run = None
         print("Processing scenario: ", scenario['name'])
         try:
@@ -159,7 +161,7 @@ class Simulation:
             for attempt in range(max_retries):
                 try:
                     scenario_data_run = requests.get(
-                        self.run_data_url + "scenarios/" + scenario['id'], headers=header).json()
+                        self.run_data_url + "scenarios/" + scenario['id'], headers=self.headers).json()
                     break
                 except requests.exceptions.RequestException as e:
                     if attempt < max_retries - 1:
@@ -758,24 +760,24 @@ class Simulation:
     def run(self, num_runs=10, max_workers=10):
         mio.set_log_level(mio.LogLevel.Warning)
 
-        header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+        # header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
         # list all scenarios
         scenarios = requests.get(
-            self.run_data_url + "scenarios/", headers=header).json()
+            self.run_data_url + "scenarios/", headers=self.headers).json()
 
         self.parameter_list = requests.get(
-            self.run_data_url + "parameterdefinitions/", headers=header).json()
+            self.run_data_url + "parameterdefinitions/", headers=self.headers).json()
 
         # read intervention list
         self.intervention_list = requests.get(
-            self.run_data_url + "interventions/templates/", headers=header).json()
+            self.run_data_url + "interventions/templates/", headers=self.headers).json()
 
         print(
             f"Processing {len(scenarios)} scenarios with {max_workers} workers.")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(self._process_scenario, scenario, header, num_runs)
+            futures = [executor.submit(self._process_scenario, scenario, self.headers, num_runs)
                        for scenario in scenarios]
 
             for future in concurrent.futures.as_completed(futures):
@@ -791,7 +793,28 @@ class Simulation:
 if __name__ == "__main__":
     cwd = os.getcwd()
     run_data_url = "https://zam10063.zam.kfa-juelich.de/api-new/"
+
+    # Information needed for authentication.
+    service_realm = ""
+    client_id = ""
+    username = ""
+    password = ""
+
+    # Request access token from idp.
+    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+
+    # Raise error if response not ok.
+    req_auth.raise_for_status()
+
+    # Parse response and get access token.
+    res = req_auth.json()
+    token = res['access_token']
+
+    # Set up headers with token.
+    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
+
     sim = Simulation(
         data_dir=os.path.join(cwd, "data"),
-        results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url)
+        results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url, headers=headers)
     sim.run(num_runs=3, max_workers=1)

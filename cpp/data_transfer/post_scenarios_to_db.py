@@ -5,125 +5,127 @@ from itertools import combinations
 import numpy as np
 import memilio.epidata.geoModificationGermany as gMG
 
-header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+# header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
-url = "https://zam10063.zam.kfa-juelich.de/api-new/"
+url = "https://zam10063.zam.kfa-juelich.de/api-dev/"
 
 
-def delete_scenarios():
-    response = requests.get(url + "scenarios/", headers=header)
+def delete_scenarios(headers):
+    response = requests.get(url + "scenarios/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
-            url + "scenarios/" + id, headers=header)
+            url + "scenarios/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "scenarios/", headers=header).json())
+    print(requests.get(url + "scenarios/", headers=headers).json())
 
 
-def delete_interventions():
-    response = requests.get(url + "interventions/templates/", headers=header)
+def delete_interventions(headers):
+    response = requests.get(url + "interventions/templates/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
-            url + "interventions/templates/" + id, headers=header)
+            url + "interventions/templates/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "interventions/templates/", headers=header).json())
+    print(requests.get(url + "interventions/templates/", headers=headers).json())
 
 
-def delete_models():
-    response = requests.get(url + "models/", headers=header)
+def delete_models(headers):
+    response = requests.get(url + "models/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
-        delete_response = requests.delete(url + "models/" + id, headers=header)
+        delete_response = requests.delete(
+            url + "models/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "models/", headers=header).json())
+    print(requests.get(url + "models/", headers=headers).json())
 
 
-def delete_parameters():
-    response = requests.get(url + "parameterdefinitions/", headers=header)
+def delete_parameters(headers):
+    response = requests.get(url + "parameterdefinitions/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
-            url + "parameterdefinitions/" + id, headers=header)
+            url + "parameterdefinitions/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "parameterdefinitions/", headers=header).json())
+    print(requests.get(url + "parameterdefinitions/", headers=headers).json())
 
 
-def delete_nodelists():
-    response = requests.get(url + "nodelists/", headers=header)
+def delete_nodelists(headers):
+    response = requests.get(url + "nodelists/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
-            url + "nodelists/" + id, headers=header)
+            url + "nodelists/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
             print(delete_response.json())
 
-    print(requests.get(url + "nodelists/", headers=header).json())
+    print(requests.get(url + "nodelists/", headers=headers).json())
 
 
-def delete_nodes():
-    response = requests.get(url + "nodes/", headers=header)
+def delete_nodes(headers):
+    response = requests.get(url + "nodes/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
-        delete_response = requests.delete(url + "nodes/" + id, headers=header)
+        delete_response = requests.delete(url + "nodes/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "nodes/", headers=header).json())
+    print(requests.get(url + "nodes/", headers=headers).json())
 
 
-def delete_compartments():
-    response = requests.get(url + "compartments/", headers=header)
+def delete_compartments(headers):
+    response = requests.get(url + "compartments/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
         delete_response = requests.delete(
-            url + "compartments/" + id, headers=header)
+            url + "compartments/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "compartments/", headers=header).json())
+    print(requests.get(url + "compartments/", headers=headers).json())
 
 
-def delete_groups():
-    response = requests.get(url + "groups/", headers=header)
+def delete_groups(headers):
+    response = requests.get(url + "groups/", headers=headers)
     ids = [compartment["id"] for compartment in response.json()]
     for id in ids:
-        delete_response = requests.delete(url + "groups/" + id, headers=header)
+        delete_response = requests.delete(
+            url + "groups/" + id, headers=headers)
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
 
-    print(requests.get(url + "groups/", headers=header).json())
+    print(requests.get(url + "groups/", headers=headers).json())
 
 
-def delete_everything_from_db():
-    delete_scenarios()
-    delete_interventions()
-    delete_models()
-    delete_parameters()
-    delete_nodelists()
-    delete_nodes()
-    delete_compartments()
-    delete_groups()
+def delete_everything_from_db(headers):
+    delete_scenarios(headers)
+    delete_interventions(headers)
+    delete_models(headers)
+    delete_parameters(headers)
+    delete_nodelists(headers)
+    delete_nodes(headers)
+    delete_compartments(headers)
+    delete_groups(headers)
 
 
-def post_to_db_compartments():
+def post_to_db_compartments(headers):
     compartment_data = [
         {"name": "MildInfections",
          "description": "MildInfections",
@@ -145,12 +147,12 @@ def post_to_db_compartments():
     # POST all compartments
     for compartment in compartment_data:
         post_response = requests.post(
-            url + "compartments/", json=compartment, headers=header)
+            url + "compartments/", json=compartment, headers=headers)
         if (post_response.status_code != 200):
             print(post_response.status_code)
 
 
-def post_to_db_groups():
+def post_to_db_groups(headers):
     group_data = [
         {"name": "Group1", "description": "0-4", "category": "age"},  # 0 bis 4
         {"name": "Group2", "description": "5-14", "category": "age"},  # 5-14
@@ -163,12 +165,12 @@ def post_to_db_groups():
 
     for group in group_data:
         post_response = requests.post(
-            url + "groups/", json=group, headers=header)
+            url + "groups/", json=group, headers=headers)
         if (post_response.status_code != 200):
             print(post_response.status_code)
 
 
-def post_to_db_interventions():
+def post_to_db_interventions(headers):
     intervention_data = [
         {
             "name": "School closure",
@@ -199,12 +201,12 @@ def post_to_db_interventions():
 
     for intervention in intervention_data:
         post_response = requests.post(
-            url + "interventions/templates/", json=intervention, headers=header)
+            url + "interventions/templates/", json=intervention, headers=headers)
         if (post_response.status_code != 200):
             print(post_response.status_code)
 
 
-def post_to_db_parameters():
+def post_to_db_parameters(headers):
     parameter_data = [
         {"name": "TimeExposed",
          "description": "TimeExposed"},
@@ -252,21 +254,21 @@ def post_to_db_parameters():
 
     for parameter in parameter_data:
         post_response = requests.post(
-            url + "parameterdefinitions/", json=parameter, headers=header)
+            url + "parameterdefinitions/", json=parameter, headers=headers)
         if (post_response.status_code != 200):
             print(post_response.status_code)
 
 
-def post_to_db_model():
-    get_compartments = requests.get(url + "compartments/", headers=header)
+def post_to_db_model(headers):
+    get_compartments = requests.get(url + "compartments/", headers=headers)
     compartments = [compartment["id"]
                     for compartment in get_compartments.json()]
 
-    get_groups = requests.get(url + "groups/", headers=header)
+    get_groups = requests.get(url + "groups/", headers=headers)
     groups = [group["id"] for group in get_groups.json()]
 
     get_parameters = requests.get(
-        url + "parameterdefinitions/", headers=header)
+        url + "parameterdefinitions/", headers=headers)
     parameter_ids = [parameter["id"] for parameter in get_parameters.json()]
 
     model_data = {
@@ -278,12 +280,12 @@ def post_to_db_model():
     }
 
     post_response = requests.post(
-        url + "models/", json=model_data, headers=header)
+        url + "models/", json=model_data, headers=headers)
     if (post_response.status_code != 200):
         print(post_response.status_code)
 
 
-def post_to_db_nodes():
+def post_to_db_nodes(headers):
     nodes_init = gMG.get_county_ids()
     nodes_init.insert(0, '00000')
     # every county ID should have 5 digits
@@ -296,13 +298,13 @@ def post_to_db_nodes():
 
     for node in node_data:
         post_response = requests.post(
-            url + "nodes/", json=node, headers=header)
+            url + "nodes/", json=node, headers=headers)
         if (post_response.status_code != 200):
             print(post_response.status_code)
 
 
-def post_to_db_nodelist():
-    get_nodes = requests.get(url + "nodes/", headers=header)
+def post_to_db_nodelist(headers):
+    get_nodes = requests.get(url + "nodes/", headers=headers)
     nodes = [node["id"] for node in get_nodes.json()]
 
     nodelist_data = {
@@ -312,34 +314,34 @@ def post_to_db_nodelist():
     }
 
     post_response = requests.post(
-        url + "nodelists/", json=nodelist_data, headers=header)
+        url + "nodelists/", json=nodelist_data, headers=headers)
     if (post_response.status_code != 200):
         print(post_response.status_code)
 
 
-def post_to_db_scenarios(start_date_scenarios, days_simulated_scenarios=30, days_computed_casedata=10, modelparameters_entry={}, post=True):
-    # Define start and end date for casedata scenario. Here, we assume that last day of the casedata scenario 
-    # corresponds to the first day of the simulated scenarios. 
-    start_date_casedata = (datetime.datetime.strptime(start_date_scenarios,"%Y-%m-%d") -
+def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios=30, days_computed_casedata=10, modelparameters_entry={}, post=True):
+    # Define start and end date for casedata scenario. Here, we assume that last day of the casedata scenario
+    # corresponds to the first day of the simulated scenarios.
+    start_date_casedata = (datetime.datetime.strptime(start_date_scenarios, "%Y-%m-%d") -
                            datetime.timedelta(days=days_computed_casedata-2)).strftime("%Y-%m-%d")
     end_date_casedata = start_date_scenarios
     # Define start and end date of simulation.
     start_date_simulation = start_date_scenarios
-    end_date_simulation = (datetime.datetime.strptime(start_date_scenarios,"%Y-%m-%d") +
+    end_date_simulation = (datetime.datetime.strptime(start_date_scenarios, "%Y-%m-%d") +
                            datetime.timedelta(days=days_simulated_scenarios)).strftime("%Y-%m-%d")
 
     # Get ids of model, nodelist and interventions.
-    get_models = requests.get(url + "models/", headers=header)
+    get_models = requests.get(url + "models/", headers=headers)
     model_id = [model["id"]
                 for model in get_models.json() if model["name"] == "secirvvs"]
 
-    get_nodelists = requests.get(url+"nodelists/", headers=header)
+    get_nodelists = requests.get(url+"nodelists/", headers=headers)
     nodelist_id = [nodelist["id"] for nodelist in get_nodelists.json(
     ) if nodelist["name"] == "all_counties"]
 
     # Get sorted list of groups
     # TODO: Do this more carefully.
-    get_groups = requests.get(url + "groups/", headers=header)
+    get_groups = requests.get(url + "groups/", headers=headers)
     group_ids = []
     for i, group in enumerate(get_groups.json()):
         if group["name"] == f"Group{i+1}":
@@ -390,7 +392,7 @@ def post_to_db_scenarios(start_date_scenarios, days_simulated_scenarios=30, days
 
         append_parameter_for_agegroup_total(parameter_dict_default)
         get_parameters = requests.get(
-            url + "parameterdefinitions/", headers=header)
+            url + "parameterdefinitions/", headers=headers)
 
         modelparameters_entry = []
         for parameter in get_parameters.json():
@@ -407,7 +409,7 @@ def post_to_db_scenarios(start_date_scenarios, days_simulated_scenarios=30, days
             })
 
     get_interventions = requests.get(
-        url + "interventions/templates/", headers=header)
+        url + "interventions/templates/", headers=headers)
 
     school_closure_id = [intervention["id"] for intervention in get_interventions.json(
     ) if intervention["name"] == "School closure"]
@@ -512,7 +514,7 @@ def post_to_db_scenarios(start_date_scenarios, days_simulated_scenarios=30, days
     if post:
         for scenario in scenario_data:
             post_response = requests.post(
-                url + "scenarios/", json=scenario, headers=header)
+                url + "scenarios/", json=scenario, headers=headers)
             if (post_response.status_code != 200):
                 print(post_response.status_code)
                 print(post_response.reason)
@@ -533,30 +535,52 @@ def append_parameter_for_agegroup_total(param_dict):
             np.dot(param_dict[key][1], share_of_agegroup))
 
 
-def post_to_db(start_date_scenarios, days_simulated_scenarios, days_computed_casedata):
+def post_to_db(headers, start_date_scenarios, days_simulated_scenarios, days_computed_casedata):
     # Define all necessary data and post.
-    post_to_db_compartments()
-    post_to_db_groups()
-    post_to_db_interventions()
-    post_to_db_parameters()
-    post_to_db_model()
-    post_to_db_nodes()
-    post_to_db_nodelist()
-    post_to_db_scenarios(start_date_scenarios, days_simulated_scenarios, days_computed_casedata)
+    post_to_db_compartments(headers)
+    post_to_db_groups(headers)
+    post_to_db_interventions(headers)
+    post_to_db_parameters(headers)
+    post_to_db_model(headers)
+    post_to_db_nodes(headers)
+    post_to_db_nodelist(headers)
+    post_to_db_scenarios(headers, start_date_scenarios,
+                         days_simulated_scenarios, days_computed_casedata)
 
 
 def main():
     """ With this script, we first delete all scenarios that are in the database and then post them again to the database.
     For the used parameters, see the functions above. """
 
+    # Information needed for authentication.
+    service_realm = ""
+    client_id = ""
+    username = ""
+    password = ""
+
+    # Request access token from idp.
+    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+
+    # Raise error if response not ok.
+    req_auth.raise_for_status()
+
+    # Parse response and get access token.
+    res = req_auth.json()
+    token = res['access_token']
+
+    # Set up headers with token.
+    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
+
     print("Delete everything from db.")
-    delete_everything_from_db()
+    delete_everything_from_db(headers)
     print("Fill db.")
-    
-    start_date_scenarios = "2021-11-18"
+
+    start_date_scenarios = "2025-05-25"
     days_simulated_scenarios = 30
     days_computed_casedata = 30
-    post_to_db(start_date_scenarios, days_simulated_scenarios, days_computed_casedata)
+    post_to_db(headers, start_date_scenarios, days_simulated_scenarios,
+               days_computed_casedata)
 
 
 if __name__ == "__main__":

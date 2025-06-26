@@ -8,7 +8,7 @@ import time
 
 log = logging.getLogger(__file__)
 
-header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
+# header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
 
 def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=False):
@@ -46,22 +46,22 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
     return zipfile
 
 
-def put_scenario(scenario_id, zip_file, url, delay):
+def put_scenario(scenario_id, zip_file, url, delay, headers):
     # https://stackoverflow.com/questions/18208109/python-requests-post-a-zip-file-with-multipart-form-data
     fileobj = open(zip_file, 'rb')
-    put_response = requests.put(url + "scenarios/" + scenario_id, headers=header,
+    put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
                                 files={"file": (zip_file, fileobj)})
     print(
         f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
-    
-    if put_response.status_code!=200:
+
+    if put_response.status_code != 200:
         print(put_response.text)
 
     print(f'Waiting for {delay} seconds before uploading next scenario')
     time.sleep(delay)
 
     get_scenario_response = requests.get(
-        url + "scenarios/" + scenario_id, headers=header).json()
+        url + "scenarios/" + scenario_id, headers=headers).json()
     if get_scenario_response["timestampSimulated"] != None:
         print(
             f'Upload of scenario {get_scenario_response["id"]} was successful, timestampSimulated is not None.')
@@ -70,7 +70,7 @@ def put_scenario(scenario_id, zip_file, url, delay):
             f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
 
 
-def put_scenarios(path_to_scenario_results, url, delay=420):
+def put_scenarios(path_to_scenario_results, url, delay, headers):
     """ Puts scenarios into database.
 
     @param[in] path_to_scenario_results Directory from where we can access simulation results and where the zips for 
@@ -82,15 +82,15 @@ def put_scenarios(path_to_scenario_results, url, delay=420):
     @param[in] url URL of API.
     """
     print(f'Uploading scenarios to {url} from {path_to_scenario_results}')
-    scenarios = requests.get(url + "scenarios/", headers=header)
+    scenarios = requests.get(url + "scenarios/", headers=headers)
     print(f'scenarios response code was {scenarios.status_code}')
     print(f'scenarios response was {scenarios.content}')
     scenarios = scenarios.json()
     for scenario in scenarios:
         if scenario["name"] == "casedata":
-            if not os.path.exists(path_to_scenario_results):
+            if not os.path.exists(os.path.join(path_to_scenario_results+"Results.h5")):
                 log.error(
-                    f'Path {path_to_scenario_results} does not exist')
+                    f'Path {os.path.join(path_to_scenario_results+"Results.h5")} does not exist')
                 continue
 
             percentiles = ['p50']
@@ -111,13 +111,39 @@ def put_scenarios(path_to_scenario_results, url, delay=420):
                                  case_data=False)
 
         print(f'Uploading {scenario["name"]} with id {scenario["id"]}')
-        put_scenario(scenario['id'], zip_file=zip_file, url=url, delay=delay)
+        put_scenario(scenario['id'], zip_file=zip_file, url=url, delay=delay,
+                     headers=headers)
 
 
 def main():
-    url = 'https://zam10063.zam.kfa-juelich.de/api-new/'
+    url = 'https://zam10063.zam.kfa-juelich.de/api-dev/'
+
+    # Delay for time between upload of scenarios.
+    delay = 420
+
+    # Information needed for authentication.
+    service_realm = ""
+    client_id = ""
+    username = ""
+    password = ""
+
+    # Request access token from idp.
+    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+
+    # Raise error if response not ok.
+    req_auth.raise_for_status()
+
+    # Parse response and get access token.
+    res = req_auth.json()
+    token = res['access_token']
+
+    # Set up headers with token.
+    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
+
     # put_scenarios(os.path.join('/home/jadebeck/', "results_osecirvvs/"), url)
-    put_scenarios(os.path.join(os.getcwd(), "results_retros_adapted_deaths/"), url)
+    put_scenarios(os.path.join(
+        os.getcwd(), "results_retros_test/"), url, delay, headers)
 
 
 if __name__ == '__main__':
