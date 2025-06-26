@@ -24,7 +24,7 @@ For a detailed description and application of the model, see:
 How to: Set up and run a simulation of the temporal-hybrid model
 ----------------------------------------------------------------
 
-The following example shows how to run a temporal-hybrid simulation of the diffusive agent-based model using the singlewell potential and the ode-secir model.
+The following example shows how to run a temporal-hybrid simulation of the diffusive agent-based model using the singlewell potential and the ODE-secir model.
 
 .. code-block:: cpp
 
