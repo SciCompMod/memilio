@@ -7,13 +7,6 @@
 
 using ScalarType = double;
 
-enum class SimType
-{
-    Panvadere,
-    Memilio,
-    Both
-};
-
 class SimulationRunner
 {
 public:
@@ -40,5 +33,4 @@ public:
 
     static mio::IOResult<SimulationResults> run_simulation(const SimulationConfig& config);
     static mio::IOResult<void> save_simulation_results(const SimulationResults& results, const std::string& result_dir);
-    static mio::IOResult<void> write_summary_output(const SimulationResults& results, const std::string& filename);
 };

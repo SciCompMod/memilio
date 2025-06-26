@@ -1,18 +1,8 @@
 #include "../include/event_simulator.h"
-#include "../include/world_creator.h"
 #include "../include/constants.h"
 #include <fstream>
 #include <iostream>
-
-std::string EventSimulationConfig::get_panvadere_file() const
-{
-    auto result = EventSimulator::get_panvadere_file_for_event_type(type);
-    if (result.has_error()) {
-        // Fallback to default if there's an error
-        return "./data/default/infections.txt";
-    }
-    return result.value();
-}
+#include <sstream>
 
 mio::IOResult<std::string> EventSimulator::get_panvadere_file_for_event_type(EventType type)
 {
@@ -26,6 +16,20 @@ mio::IOResult<std::string> EventSimulator::get_panvadere_file_for_event_type(Eve
     std::cerr << "Please define a Panvadere file for this event type in EVENT_TYPE_TO_FILE." << std::endl;
 
     return mio::IOStatus(std::make_error_code(std::errc::invalid_argument), "No Panvadere file defined for event type");
+}
+
+std::string EventSimulationConfig::get_panvadere_file() const
+{
+    auto result = EventSimulator::get_panvadere_file_for_event_type(type);
+    if (result.has_error()) {
+        // Fallback to default if there's an error
+        std::cerr << "Error getting Panvadere file for event type " << EventSimulator::event_type_to_string(type)
+                  << ": " << result.error().message() << std::endl;
+        std::cerr << "Using default infections file: ./data/default/infections.txt" << std::endl;
+        // Return default file path
+        return "./data/default/infections.txt";
+    }
+    return result.value();
 }
 
 mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const EventSimulationConfig& config)
@@ -56,13 +60,40 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
     return mio::success(k_value);
 }
 
+mio::IOResult<std::map<uint32_t, bool>> EventSimulator::read_infection_data(const std::string& filename)
+{
+    std::map<uint32_t, bool> infected_status;
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return mio::failure(mio::StatusCode::InvalidFileFormat, "Failed to open file: " + filename);
+    }
+
+    std::string line;
+    std::getline(file, line); // Skip header
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        uint32_t id;
+        std::string table;
+        int infected;
+
+        if (iss >> id >> table >> infected) {
+            infected_status[id] = (infected == 1);
+        }
+    }
+
+    file.close();
+    return mio::success(infected_status);
+}
+
 mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvadere(EventType event_type)
 {
     // Get the appropriate file for this event type
     BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
 
     // Read Panvadere infection data
-    auto panvadere_data = read_infection_data(panvadere_file);
+    BOOST_OUTCOME_TRY(auto panvadere_data, read_infection_data(panvadere_file));
 
     // Map to households based on event type
     std::map<uint32_t, bool> household_infections;
@@ -88,7 +119,7 @@ EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& co
     BOOST_OUTCOME_TRY(auto event_world, create_event_world(config));
 
     // Simulate event transmission
-    auto infected_people = simulate_event_transmission(event_world, config);
+    auto infected_people = simulate_event_transmission(config, city);
 
     return mio::success(infected_people);
 }
@@ -182,28 +213,30 @@ mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSim
 {
     // TODO: Create a specialized world for event simulation
     // This would be a smaller world focused on the specific event type
-
+    mio::unused(config); // Prevent unused warning
     auto world = mio::abm::World(num_age_groups);
 
     // Add event location
-    auto event_location = world.add_location(mio::abm::LocationType::SocialEvent);
+    // auto event_location = world.add_location(mio::abm::LocationType::SocialEvent);
 
     // Add people to event
-    for (int i = 0; i < config.num_persons; ++i) {
-        auto person_id = mio::abm::PersonId(i);
-        auto age_group = mio::AgeGroup(i % num_age_groups);
-        auto person =
-            mio::abm::Person(world.get_individualized_location(mio::abm::LocationType::Home, person_id), age_group);
-        world.add_person(person_id, std::move(person));
-    }
+    // for (int i = 0; i < config.num_persons; ++i) {
+    //     auto person_id = size_t(i);
+    //     auto age_group = mio::AgeGroup(i % num_age_groups);
+    //     auto person =
+    //         mio::abm::Person(world.get_individualized_location(mio::abm::LocationType::Home, person_id), age_group);
+    //     world.add_person(person_id, std::move(person));
+    // }
 
     return mio::success(std::move(world));
 }
 
-std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const mio::abm::World& event_world,
-                                                                     const EventSimulationConfig& config)
+std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const EventSimulationConfig& config,
+                                                                     const mio::abm::World& event_world)
 {
     std::map<uint32_t, bool> infected_people;
+
+    mio::unused(event_world, config); // Prevent unused warning
 
     // TODO: Run event simulation to determine who gets infected
     // 1. Place one initially infected person
@@ -211,12 +244,12 @@ std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const mio::
     // 3. Return list of infected people
 
     // For now, simple random infection
-    for (const auto& [person_id, person] : event_world.get_persons()) {
-        // Simple placeholder: 10% infection rate
-        if (person_id.get() % 10 == 0) {
-            infected_people[person_id.get()] = true;
-        }
-    }
+    // for (const auto& [person_id, person] : event_world.get_persons()) {
+    //     // Simple placeholder: 10% infection rate
+    //     if (person_id.get() % 10 == 0) {
+    //         infected_people[person_id.get()] = true;
+    //     }
+    // }
 
     return infected_people;
 }

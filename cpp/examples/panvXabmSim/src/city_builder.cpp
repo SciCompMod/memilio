@@ -90,30 +90,26 @@ mio::IOResult<void> CityBuilder::assign_people_to_locations(mio::abm::World& wor
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-
+    mio::unused(households, workplaces, schools, world); // Suppress unused warnings
     for (int i = 0; i < total_population; ++i) {
-        auto person_id = mio::abm::PersonId(i);
         auto age_group = assign_age_group_from_demographics(i);
 
         // Assign to household
         auto household_id = households[i % households.size()];
-        auto person =
-            mio::abm::Person(world.get_individualized_location(mio::abm::LocationType::Home, person_id), age_group);
+        auto person       = world.add_person(household_id, age_group);
+        person.set_assigned_location(household_id);
 
-        // TODO: Assign work/school based on age group and census data
         // For now, simple assignment
         if (age_group == age_group_5_to_14 && !schools.empty()) {
             // School age - assign to school
             auto school_id = schools[i % schools.size()];
-            person.set_assigned_location(mio::abm::LocationType::School);
+            person.set_assigned_location(school_id);
         }
         else if ((age_group == age_group_15_to_34 || age_group == age_group_35_to_59) && !workplaces.empty()) {
             // Working age - assign to workplace
             auto workplace_id = workplaces[i % workplaces.size()];
-            person.set_assigned_location(mio::abm::LocationType::Work);
+            person.set_assigned_location(workplace_id);
         }
-
-        world.add_person(person_id, std::move(person));
     }
 
     return mio::success();
@@ -123,7 +119,7 @@ mio::AgeGroup CityBuilder::assign_age_group_from_demographics(int person_index)
 {
     // TODO: Use real census data to assign age groups
     // For now, simple distribution
-    std::vector<double> age_distribution = {0.05, 0.15, 0.25, 0.35, 0.15, 0.05}; // 0-4, 5-14, 15-34, 35-59, 60-79, 80+
+    // std::vector<double> age_distribution = {0.05, 0.15, 0.25, 0.35, 0.15, 0.05}; // 0-4, 5-14, 15-34, 35-59, 60-79, 80+
 
     int age_group_index = person_index % 6;
     return mio::AgeGroup(age_group_index);

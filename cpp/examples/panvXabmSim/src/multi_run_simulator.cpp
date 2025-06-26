@@ -8,7 +8,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 {
     MultiRunResults results;
     results.event_type      = config.event_config.type;
-    results.simulation_type = config.event_config.simulation_type;
+    results.simulation_type = config.simulation_type;
 
     // Step 1: Build city (done once)
     std::cout << "Building city..." << std::endl;
@@ -16,28 +16,36 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 
     // Step 2: Get map from specific event to ids of persons in simulation
     std::cout << "Mapping events to person IDs..." << std::endl;
-    BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config));
-    results.event_person_map = event_map;
+    //TODO: Implement this function to map events to persons
+    // BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config));
+    // results.event_person_map = event_map;
 
     // Step 3: Calculate K parameter
     std::cout << "Calculating infection parameter K..." << std::endl;
+    //TODO: Implement this function to calculate K parameter based on event type
     BOOST_OUTCOME_TRY(auto k_value, EventSimulator::calculate_infection_parameter_k(config.event_config));
     results.infection_parameter_k = k_value;
 
     // Step 3: Get initial infections
-    std::map<uint32_t, bool> initial_infections;
-    if (config.event_config.use_panvadere_init) {
-        std::cout << "Loading infections from Panvadere..." << std::endl;
-        BOOST_OUTCOME_TRY(auto infections, EventSimulator::initialize_from_panvadere(config.event_config.panvadere_file,
-                                                                                     config.event_config.type));
-        initial_infections = infections;
+    std::map<uint32_t, bool> initial_infections{};
+    initial_infections = {}; // Initialize empty map
+    // TODO: Implement this.
+    // For now just infect the first 10 persons in the base world
+    for (uint32_t i = 0; i < 10 && i < base_world.get_persons().size(); ++i) {
+        initial_infections[base_world.get_persons()[i].get_person_id()] = true; // Infect first 10 persons
     }
-    else {
-        std::cout << "Simulating event infections..." << std::endl;
-        BOOST_OUTCOME_TRY(auto infections,
-                          EventSimulator::initialize_from_event_simulation(config.event_config, base_world));
-        initial_infections = infections;
-    }
+    // if (config.event_config.use_panvadere_init) {
+    //     std::cout << "Loading infections from Panvadere..." << std::endl;
+    //     BOOST_OUTCOME_TRY(auto infections, EventSimulator::initialize_from_panvadere(config.event_config.panvadere_file,
+    //                                                                                  config.event_config.type));
+    //     initial_infections = infections;
+    // }
+    // else {
+    //     std::cout << "Simulating event infections..." << std::endl;
+    //     BOOST_OUTCOME_TRY(auto infections,
+    //                       EventSimulator::initialize_from_event_simulation(config.event_config, base_world));
+    //     initial_infections = infections;
+    // }
 
     // Step 4: Run multiple simulations
     std::cout << "Running " << config.num_runs << " simulations..." << std::endl;
@@ -59,16 +67,6 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
             std::cerr << "Run " << run << " failed: " << single_result.error().message() << std::endl;
         }
     }
-
-    // Step 5: Calculate percentiles
-    if (results.successful_runs > 0) {
-        auto final_results =
-            calculate_percentiles(results.all_runs, results.event_type, results.used_panvadere_init, k_value);
-        results.percentile_25 = final_results.percentile_25;
-        results.percentile_50 = final_results.percentile_50;
-        results.percentile_75 = final_results.percentile_75;
-    }
-
     return mio::success(results);
 }
 
@@ -77,7 +75,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
 {
     // Create directory structure
     std::string event_dir   = base_dir + "/" + EventSimulator::event_type_to_string(results.event_type);
-    std::string init_method = results.used_panvadere_init ? "panvadere" : "simulation";
+    std::string init_method = EventSimulator::simulation_type_to_string(results.simulation_type);
     std::string full_dir    = event_dir + "_" + init_method;
 
     BOOST_OUTCOME_TRY(create_result_folders(full_dir));
@@ -94,13 +92,13 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         summary.close();
     }
 
-    // TODO: Save detailed percentile data
-    // Save percentile 25, 50, 75 time series data
+    //Save percentile results
+    //TODO: Add percentile calculation like in paper Simulation
 
     return mio::success();
 }
 
-mio::IOResult<SimulationRunner::SimulationResults>
+mio::IOResult<SimulationResults>
 MultiRunSimulator::run_single_simulation_with_infections(const mio::abm::World& base_world,
                                                          const std::map<uint32_t, bool>& initial_infections,
                                                          double k_parameter, int simulation_days)
@@ -111,8 +109,11 @@ MultiRunSimulator::run_single_simulation_with_infections(const mio::abm::World& 
     // 3. Set infection parameter K
     // 4. Run simulation for specified days
     // 5. Return results
-
-    SimulationRunner::SimulationResults results;
+    SimulationResults results;
+    mio::unused(base_world); // Placeholder to avoid unused variable warning
+    mio::unused(initial_infections); // Placeholder to avoid unused variable warning
+    mio::unused(k_parameter); // Placeholder to avoid unused variable warning
+    mio::unused(simulation_days); // Placeholder to avoid unused variable warning
 
     // Placeholder implementation
     return mio::success(results);

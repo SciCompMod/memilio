@@ -1,5 +1,4 @@
 #include "../include/simulation_runner.h"
-#include "../include/world_creator.h"
 #include "../include/file_utils.h"
 #include "boost/filesystem.hpp"
 #include "abm/common_abm_loggers.h"
@@ -10,9 +9,6 @@ namespace fs = boost::filesystem;
 mio::IOResult<SimulationRunner::SimulationResults> SimulationRunner::run_simulation(const SimulationConfig& config)
 {
     SimulationResults results;
-
-    // Create the simulation world
-    auto world = create_world_from_file(config.infection_data_file, config.n_persons);
 
     // Set up simulation timeframe
     auto t0   = mio::abm::TimePoint(0);
@@ -61,20 +57,6 @@ mio::IOResult<void> SimulationRunner::save_simulation_results(const SimulationRe
 
     BOOST_OUTCOME_TRY(save_results(results.infection_per_loc_type, results.ensemble_params, {0},
                                    (fs::path)result_dir / "infection_per_location_type_per_age_group" / "0", true));
-
-    return mio::success();
-}
-
-mio::IOResult<void> SimulationRunner::write_summary_output(const SimulationResults& results,
-                                                           const std::string& filename)
-{
-    std::ofstream outfile(filename);
-    if (!outfile.is_open()) {
-        return mio::failure(mio::StatusCode::InvalidFileFormat, "Could not open output file: " + filename);
-    }
-
-    results.time_series.print_table({"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4, outfile);
-    outfile.close();
 
     return mio::success();
 }

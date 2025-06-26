@@ -15,7 +15,7 @@ std::string currentDateTime()
     return std::string(timeString);
 }
 
-mio::IOResult<void> create_result_folders(const std::string& result_dir, int n_params)
+mio::IOResult<void> create_result_folders(const std::string& result_dir)
 {
     // Define subdirectory paths
     const std::string inf_per_location_type_per_age_group = result_dir + "/infection_per_location_type_per_age_group";
@@ -25,15 +25,6 @@ mio::IOResult<void> create_result_folders(const std::string& result_dir, int n_p
     BOOST_OUTCOME_TRY(mio::create_directory(result_dir));
     BOOST_OUTCOME_TRY(mio::create_directory(inf_per_location_type_per_age_group));
     BOOST_OUTCOME_TRY(mio::create_directory(inf_state_per_age_group));
-
-    // Create parameter-specific subdirectories if needed
-    if (n_params > 0) {
-        for (int i = 0; i < n_params; ++i) {
-            const std::string param_suffix = "/" + std::to_string(i);
-            BOOST_OUTCOME_TRY(mio::create_directory(inf_per_location_type_per_age_group + param_suffix));
-            BOOST_OUTCOME_TRY(mio::create_directory(inf_state_per_age_group + param_suffix));
-        }
-    }
 
     return mio::success();
 }

@@ -6,7 +6,7 @@
 std::string currentDateTime();
 
 // Create result directory structure for simulation outputs
-mio::IOResult<void> create_result_folders(const std::string& result_dir, int n_params = 1);
+mio::IOResult<void> create_result_folders(const std::string& result_dir);
 
 // Copy a directory and its contents recursively
 mio::IOResult<void> copy_result_folder(const std::string& from_dir, const std::string& to_dir);
