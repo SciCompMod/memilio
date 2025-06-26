@@ -39,13 +39,7 @@ Model::Model(TimeSeries<ScalarType>&& states_init)
         std::accumulate(populations[0].begin(), populations[0].end(), 0) - populations[0][(int)InfectionState::Dead];
     m_totalpopulation.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize));
     m_totalpopulationupdate.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize));
-    // m_totalpopulationincludingD.add_time_point(
-    //     0,
-    //     TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize + populations[0][(int)InfectionState::Dead]));
-    // m_totalpopulationupdateincludingD.add_time_point(
-    //     0,
-    //     TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize + populations[0][(int)InfectionState::Dead]));
-    // Set the force of infection at start time t0.
+
     m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0));
     m_forceofinfectionupdate.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0));
 
@@ -110,10 +104,12 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
         ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
         sum1 += transitions[i + 1][idx_IncomingFlow] *
                 std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
+                parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
                 m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index - i];
         //For the update formula version of the model:
         sum2 += transitions_update[i + 1][idx_IncomingFlow] *
                 std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
+                parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
                 m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index - i];
     }
     if (current_time_index <= calc_time_index) {

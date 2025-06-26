@@ -17,7 +17,7 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 30;
+    ScalarType tmax = 100;
     ScalarType dt   = 0.1;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
@@ -29,9 +29,9 @@ int main()
     Vec vec_init(num_states);
 
     vec_init[static_cast<int>(mio::endisecir::InfectionState::Susceptible)]        = 100000.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::Exposed)]            = 10.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedNoSymptoms)] = 0.;
-    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSymptoms)]   = 10.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::Exposed)]            = 0.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedNoSymptoms)] = 10.;
+    vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSymptoms)]   = 20.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedSevere)]     = 0.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::InfectedCritical)]   = 0.;
     vec_init[static_cast<int>(mio::endisecir::InfectionState::Recovered)]          = 0.;
@@ -57,13 +57,14 @@ int main()
     // The following probabilities must be 1, as there is no other way to go.
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]      = 0.1;
     model.parameters.get<mio::endisecir::TransitionProbabilities>()                          = vec_prob;
 
     mio::ContactMatrixGroup contact_matrix                  = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     model.parameters.get<mio::endisecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-    mio::ConstantFunction constant(0.5);
+    mio::ConstantFunction constant(0.1);
     mio::StateAgeFunctionWrapper constant_prob(constant);
 
     model.parameters.get<mio::endisecir::TransmissionProbabilityOnContact>() = constant_prob;
@@ -74,8 +75,8 @@ int main()
     model.parameters.get<mio::endisecir::RelativeTransmissionNoSymptoms>() = exponential_prob;
     model.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    model.parameters.set<mio::endisecir::NaturalBirthRate>(4e-4);
-    model.parameters.set<mio::endisecir::NaturalDeathRate>(3e-4);
+    model.parameters.set<mio::endisecir::NaturalBirthRate>(3e-4);
+    model.parameters.set<mio::endisecir::NaturalDeathRate>(4e-4);
 
     //model.set_tol_for_support_max(1e-6);
 
@@ -105,20 +106,20 @@ int main()
     //sim.get_normalizedcompartments().print_table({"s", "e", "c", "i", "h", "u", "r", "d "}, 16, 8);
 
     // Uncomment to print the total population size.
-    sim.get_totalpopulations().print_table({"N"}, 16, 9);
+    // sim.get_totalpopulations().print_table({"N"}, 16, 9);
 
     // Uncomment to print the force of infection.
     //sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
     // sim.get_forceofinfections_update().print_table({"FoIUpdate"}, 16, 8);
 
-    std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
-    std::cout << "Equilibrium normalized compartments: \n";
-    std::cout << "foi* " << sim.get_equilibrium_forceofinfection() << "\n";
-    std::cout << "s* " << equi[(int)mio::endisecir::InfectionState::Susceptible] << "\n";
-    std::cout << "e* " << equi[(int)mio::endisecir::InfectionState::Exposed] << "\n";
-    std::cout << "c* " << equi[(int)mio::endisecir::InfectionState::InfectedNoSymptoms] << "\n";
-    std::cout << "i* " << equi[(int)mio::endisecir::InfectionState::InfectedSymptoms] << "\n";
-    std::cout << "h* " << equi[(int)mio::endisecir::InfectionState::InfectedSevere] << "\n";
-    std::cout << "u* " << equi[(int)mio::endisecir::InfectionState::InfectedCritical] << "\n";
-    std::cout << "r* " << equi[(int)mio::endisecir::InfectionState::Recovered] << "\n";
+    // std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
+    // std::cout << "Equilibrium normalized compartments: \n";
+    // std::cout << "foi* " << sim.get_equilibrium_forceofinfection() << "\n";
+    // std::cout << "s* " << equi[(int)mio::endisecir::InfectionState::Susceptible] << "\n";
+    // std::cout << "e* " << equi[(int)mio::endisecir::InfectionState::Exposed] << "\n";
+    // std::cout << "c* " << equi[(int)mio::endisecir::InfectionState::InfectedNoSymptoms] << "\n";
+    // std::cout << "i* " << equi[(int)mio::endisecir::InfectionState::InfectedSymptoms] << "\n";
+    // std::cout << "h* " << equi[(int)mio::endisecir::InfectionState::InfectedSevere] << "\n";
+    // std::cout << "u* " << equi[(int)mio::endisecir::InfectionState::InfectedCritical] << "\n";
+    // std::cout << "r* " << equi[(int)mio::endisecir::InfectionState::Recovered] << "\n";
 }

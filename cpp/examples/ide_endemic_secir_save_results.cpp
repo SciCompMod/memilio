@@ -19,19 +19,19 @@ std::map<std::string, ScalarType> simulation_parameter = {{"dt", 0.1},
                                                           {"t0", 0.},
                                                           {"Susceptibles", 10000.},
                                                           {"Exposed", 0},
-                                                          {"InfectedNoSymptoms", 10.},
-                                                          {"InfectedSymptoms", 20},
+                                                          {"InfectedNoSymptoms", 0.},
+                                                          {"InfectedSymptoms", 0.},
                                                           {"InfectedSevere", 0.},
                                                           {"InfectedCritical", 0.},
                                                           {"Recovered", 0.},
                                                           {"Dead", 0.},
-                                                          {"TransmissionProbabilityOnContact", 0.4},
+                                                          {"TransmissionProbabilityOnContact", 0.5},
                                                           {"RelativeTransmissionNoSymptoms", 0.5},
                                                           {"RiskOfInfectionFromSymptomatic", 0.5},
                                                           {"InfectedSymptomsPerInfectedNoSymptoms", 0.5},
-                                                          {"SeverePerInfectedSymptoms", 0.2},
+                                                          {"SeverePerInfectedSymptoms", 0.5},
                                                           {"CriticalPerSevere", 0.5},
-                                                          {"DeathsPerCritical", 0.2},
+                                                          {"DeathsPerCritical", 0.1},
                                                           {"BirthRate1", 4e-5},
                                                           {"DeathRate1", 3e-5},
                                                           {"BirthRate2", 3e-5},
@@ -141,12 +141,12 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     mio::TimeSeries<ScalarType> init_copy3(init);
     mio::endisecir::Model model_endide3(std::move(init_copy3));
 
-    model_endide2.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
+    model_endide3.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
 
     // Set other parameters.
-    model_endide2.parameters.set<mio::endisecir::TransitionProbabilities>(vec_prob);
+    model_endide3.parameters.set<mio::endisecir::TransitionProbabilities>(vec_prob);
 
-    model_endide2.parameters.get<mio::endisecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    model_endide3.parameters.get<mio::endisecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::ConstantFunction constfunc3(simulation_parameter["TransmissionProbabilityOnContact"]);
     mio::StateAgeFunctionWrapper StateAgeFunctionWrapperide3(constfunc);
@@ -213,14 +213,9 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     return mio::success();
 }
 
-int main(int argc, char** argv)
+int main()
 {
     std::string result_dir = "/localdata1/trit_ha/code/memilio-1/PythonPlotsEndIDE/simulation_results/";
-
-    // Set result_dir via command line.
-    if (argc == 2) {
-        result_dir = argv[1];
-    }
 
     // Define tmax for both scenarios.
     ScalarType tmax = 500;
