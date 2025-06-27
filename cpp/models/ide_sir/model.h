@@ -144,13 +144,18 @@ public:
         return m_gregory_order;
     }
 
-    ScalarType sum_part1_term(size_t n, size_t j, ScalarType dt, ScalarType input);
-    ScalarType sum_part2_term(size_t n, size_t j, ScalarType dt, ScalarType input);
+    ScalarType sum_part1_weight(size_t n, size_t j);
+    ScalarType sum_part2_weight(size_t n, size_t j);
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 
     // Returns the number of iterations needed in fixed point iteration.
     size_t compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
+
+    void compute_S_deriv(ScalarType dt, size_t time_point_index);
+    void compute_S_deriv(ScalarType dt);
+
+    void compute_I_and_R(ScalarType dt);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax);
@@ -158,12 +163,14 @@ public:
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
-        // people in defined #InfectionState%s for every AgeGroup.
+    // people in defined #InfectionState%s for every AgeGroup.
+    TimeSeries<ScalarType> flows;
 
 private:
     // ---- Private parameters. ----
     ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
     size_t m_gregory_order;
+    size_t m_finite_difference_order;
     std::vector<ScalarType> m_transitiondistribution_vector;
     std::vector<ScalarType> m_transmissionproboncontact_vector;
     std::vector<ScalarType> m_riskofinffromsymptomatic_vector;

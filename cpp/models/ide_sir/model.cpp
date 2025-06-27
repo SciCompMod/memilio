@@ -260,6 +260,7 @@ ModelMessinaExtended::ModelMessinaExtended(TimeSeries<ScalarType>&& populations_
                                            size_t gregory_order)
     : parameters{Parameters()}
     , populations{std::move(populations_init)}
+    , flows{TimeSeries<ScalarType>((size_t)InfectionTransition::Count)}
     , m_N{N_init}
     , m_gregory_order(gregory_order)
 {
@@ -288,12 +289,12 @@ void ModelMessinaExtended::set_parameter_vectors(ScalarType dt, ScalarType tmax)
     }
 }
 
-ScalarType ModelMessinaExtended::sum_part1_term(size_t n, size_t j, ScalarType dt, ScalarType input)
+ScalarType ModelMessinaExtended::sum_part1_weight(size_t n, size_t j)
 {
     // Depending on the Gregory order and the current time step, we determine the required row index of gregoryWeights_sigma.
     // This is necessary because we implemented gregoryWeights_sigma in a reduced way.
 
-    size_t row_index, column_index;
+    size_t row_index;
 
     // If n <= m_gregory_order + m_gregory_order - 2, then the row_index corresponds to n - gregory_order.
     if (n <= m_gregory_order + m_gregory_order - 2) {
@@ -305,26 +306,15 @@ ScalarType ModelMessinaExtended::sum_part1_term(size_t n, size_t j, ScalarType d
         row_index = m_gregory_order - 1;
     }
     // The column index only depends on the current index of the sum j.
-    column_index = j;
+    size_t column_index = j;
 
     std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
 
-    ScalarType current_time = populations.get_last_time();
-    ScalarType state_age    = (n - j) * dt;
-
-    ScalarType sum_part1_term;
-
-    sum_part1_term =
-        gregoryWeights_sigma(row_index, column_index) * m_transmissionproboncontact_vector[n - j] *
-        m_riskofinffromsymptomatic_vector[n - j] * m_transitiondistribution_vector[n - j] *
-        (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(state_age)(0, 0) -
-         (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N) * input);
-
-    return sum_part1_term;
+    return gregoryWeights_sigma(row_index, column_index);
 }
 
-ScalarType ModelMessinaExtended::sum_part2_term(size_t n, size_t j, ScalarType dt, ScalarType input)
+ScalarType ModelMessinaExtended::sum_part2_weight(size_t n, size_t j)
 {
     size_t weight_index;
 
@@ -340,27 +330,16 @@ ScalarType ModelMessinaExtended::sum_part2_term(size_t n, size_t j, ScalarType d
     std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
     Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
 
-    ScalarType current_time = populations.get_last_time();
-    ScalarType state_age    = (n - j) * dt;
-
-    ScalarType sum_part2_term;
-
-    sum_part2_term =
-        gregoryWeights_omega(weight_index) * m_transmissionproboncontact_vector[n - j] *
-        m_riskofinffromsymptomatic_vector[n - j] * m_transitiondistribution_vector[n - j] *
-        (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(state_age)(0, 0) -
-         parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N * input);
-
-    return sum_part2_term;
+    return gregoryWeights_omega(weight_index);
 }
 
 ScalarType ModelMessinaExtended::fixed_point_function(ScalarType susceptibles, ScalarType dt)
 {
-    // Get Gregory weights.
-    // TODO: Do this in a private function of Simulation class? Or solver class?
-    std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
-    Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
-    Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
+    // // Get Gregory weights.
+    // // TODO: Do this in a private function of Simulation class? Or solver class?
+    // std::vector<Eigen::MatrixX<ScalarType>> vec_gregoryweights = get_gregoryweights(m_gregory_order);
+    // Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
+    // Eigen::MatrixX<ScalarType> gregoryWeights_omega            = vec_gregoryweights[1];
 
     // Get S0.
     ScalarType S0 = populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible];
@@ -375,9 +354,17 @@ ScalarType ModelMessinaExtended::fixed_point_function(ScalarType susceptibles, S
     ScalarType sum_part1 = 0;
 
     for (size_t j = 0; j < m_gregory_order; j++) {
+        ScalarType current_time = populations.get_last_time();
+        ScalarType state_age    = (n - j) * dt;
+
+        ScalarType gregory_weight = sum_part1_weight(n, j);
 
         // For each index, the corresponding summand is computed here.
-        sum_part1 += sum_part1_term(n, j, dt, populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
+        sum_part1 += gregory_weight * m_transmissionproboncontact_vector[n - j] *
+                     m_riskofinffromsymptomatic_vector[n - j] * m_transitiondistribution_vector[n - j] *
+                     (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(state_age)(0, 0) -
+                      (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N) *
+                          populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
     }
     // std::cout << "Sum part 1: " << sum_part1 << std::endl;
 
@@ -386,16 +373,29 @@ ScalarType ModelMessinaExtended::fixed_point_function(ScalarType susceptibles, S
 
     // In this loop, we compute all summands for j=n0,...,n-1. The summand for j=n is added separately below.
     for (size_t j = m_gregory_order; j <= n; j++) {
+        ScalarType current_time = populations.get_last_time();
+        ScalarType state_age    = (n - j) * dt;
+
+        ScalarType gregory_weight = sum_part2_weight(n, j);
 
         // For each index, the corresponding summand is computed here.
+
+        ScalarType relevant_susceptibles;
+        // If j<n, we take the Susceptibles at the corresponding index that we have already computed.
         if (j < n) {
-            sum_part2 += sum_part2_term(n, j, dt, populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]);
+            relevant_susceptibles = populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
         }
         // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
-        // by the fixed point iteration.
+        // by the input to the fixed point iteration.
         else {
-            sum_part2 += sum_part2_term(n, j, dt, susceptibles);
+            relevant_susceptibles = susceptibles;
         }
+
+        sum_part2 += gregory_weight * m_transmissionproboncontact_vector[n - j] *
+                     m_riskofinffromsymptomatic_vector[n - j] * m_transitiondistribution_vector[n - j] *
+                     (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(state_age)(0, 0) -
+                      parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0) / m_N *
+                          relevant_susceptibles);
     }
     // std::cout << "Sum part 2: " << sum_part2 << std::endl;
 
@@ -429,6 +429,40 @@ size_t ModelMessinaExtended::compute_S(ScalarType s_init, ScalarType dt, ScalarT
     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
 
     return iter_counter;
+}
+
+void ModelMessinaExtended::compute_S_deriv(ScalarType dt, size_t time_point_index)
+{
+    // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 4) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
+              16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
+              36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
+            (12 * dt);
+    }
+
+    // Linear backwards finite difference scheme.
+    if (m_finite_difference_order == 1) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
+            dt;
+    }
+}
+
+void ModelMessinaExtended::compute_S_deriv(ScalarType dt)
+{
+    // Use the number of time points to determine time_point_index, hence we are calculating S deriv for last time point.
+    size_t time_point_index = populations.get_num_time_points() - 1;
+    compute_S_deriv(dt, time_point_index);
+}
+
+void ModelMessinaExtended::compute_I_and_R(ScalarType dt)
+{
+    unused(dt);
 }
 
 /*********************************************************************************************************************/
