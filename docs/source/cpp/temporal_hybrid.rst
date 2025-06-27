@@ -28,7 +28,7 @@ The following example shows how to run a temporal-hybrid simulation of the diffu
 
 .. code-block:: cpp
 
-    using ABM = mio::dabm::Model<SingleWell<mio::hybrid::InfectionState>>;
+    using ABM = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
     using ODE = mio::osecir::Model<double>;
 
 First, both models have to be initialized. Please see the documentation of the corresponding models for information about their parameters and how to initialize them. In the following example code block, we initialize a ODE-SECIR model with one age group and a diffusive ABM. We assume that the parameters of the diffusive ABM were created and initialized before and the parameters of the ODE-SECIR model are set such that they match the ABM parameters.
@@ -37,8 +37,8 @@ First, both models have to be initialized. Please see the documentation of the c
 
     //Initialize ABM
     ABM abm(agents, adoption_rates, interaction_radius, noise,
-            {mio::hybrid::InfectionState::InfectedSevere, mio::hybrid::InfectionState::InfectedCritical,
-             mio::hybrid::InfectionState::Dead});
+            {mio::osecir::InfectionState::InfectedSevere, mio::osecir::InfectionState::InfectedCritical,
+             mio::osecir::InfectionState::Dead});
     //Initialize ODE Model
     ODE ode(1);
 
@@ -54,7 +54,7 @@ After initializing the models, the corresponding simulations have to be created 
     auto sim_abm = mio::dabm::Simulation(abm, t0, dt);
     auto sim_ode = mio::Simulation(ode, t0, dt);
 
-    const auto result_fct_abm = [](const mio::dabm::Simulation<SingleWell<mio::hybrid::InfectionState>>& sim,
+    const auto result_fct_abm = [](const mio::dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& sim,
                                    double /*t*/) {
         return sim.get_result();
     };
@@ -82,11 +82,11 @@ Before advancing the simulation until `tmax`, a switching condition has to be de
                               bool abm_used) {
         if (abm_used) {
             auto& last_value = result_abm.get_last_value().eval();
-            if ((last_value[(int)mio::hybrid::InfectionState::Exposed] +
-                 last_value[(int)mio::hybrid::InfectionState::InfectedNoSymptoms] +
-                 last_value[(int)mio::hybrid::InfectionState::InfectedSymptoms] +
-                 last_value[(int)mio::hybrid::InfectionState::InfectedSevere] +
-                 last_value[(int)mio::hybrid::InfectionState::InfectedCritical]) > 20) {
+            if ((last_value[(int)mio::osecir::InfectionState::Exposed] +
+                 last_value[(int)mio::osecir::InfectionState::InfectedNoSymptoms] +
+                 last_value[(int)mio::osecir::InfectionState::InfectedSymptoms] +
+                 last_value[(int)mio::osecir::InfectionState::InfectedSevere] +
+                 last_value[(int)mio::osecir::InfectionState::InfectedCritical]) > 20) {
                 return true;
             }
         }
@@ -119,3 +119,11 @@ The result ``mio::TimeSeries`` objects of the two models used (which are returne
 
     ts_abm.print_table({"S", "E", "Ins", "Isy", "Isev", "Icri", "R", "D"});
     ts_ode.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});
+
+Additionally, the individual results of the models can be merged to one joint ``mio::TimeSeries``:
+
+.. code-block:: cpp
+
+    //Print joint result time series
+    auto ts = mio::interpolate_simulation_result(mio::hybrid::merge_time_series(ts_abm, ts_ode));
+    ts.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});

@@ -71,7 +71,7 @@ public:
      * @param[in] t0 Start time of the simulation.
      * @param[in] dt Timestep with which the switching is checked.
      */
-    TemporalHybridSimulation(Model1& model1, Model2& model2, const result1_function& result1,
+    TemporalHybridSimulation(Model1&& model1, Model2&& model2, const result1_function& result1,
                              const result2_function& result2, bool initially_use_model1, double t0 = 0, double dt = 0.1)
         : m_model1(std::move(model1))
         , m_model2(std::move(model2))

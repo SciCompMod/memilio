@@ -21,7 +21,6 @@
 #include "d_abm/model.h"
 #include "d_abm/simulation.h"
 #include "d_abm/single_well.h"
-#include "hybrid/infection_state.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/geography/regions.h"
 #include "memilio/utils/random_number_generator.h"
@@ -111,7 +110,7 @@ TEST(TestTemporalHybrid, test_advance)
     MockModel2 m2;
 
     mio::hybrid::TemporalHybridSimulation<MockModel1, MockModel2, std::vector<double>, double> hybrid_sim(
-        m1, m2, &result_fct_m1, &result_fct_m2, true, 0., 0.5);
+        std::move(m1), std::move(m2), &result_fct_m1, &result_fct_m2, true, 0., 0.5);
 
     //If the total population is bigger than 1, model2 should be used and otherwise model1 should be used
     const auto condition = [](const std::vector<double>& result_m1, const double result_m2, bool model1_used) {
@@ -151,25 +150,25 @@ TEST(TestTemporalHybrid, test_advance)
  */
 TEST(TestTemporalHybrid, test_conversion_dabm_smm)
 {
-    using Model1 = mio::dabm::Model<SingleWell<mio::hybrid::InfectionState>>;
-    using Model2 = mio::smm::Model<1, mio::hybrid::InfectionState>;
+    using Model1 = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
+    using Model2 = mio::smm::Model<1, mio::osecir::InfectionState>;
 
     //Initialize agents for dabm
-    SingleWell<mio::hybrid::InfectionState>::Agent a1{Eigen::Vector2d{-0.5, 0},
-                                                      mio::hybrid::InfectionState::Susceptible};
-    SingleWell<mio::hybrid::InfectionState>::Agent a2{Eigen::Vector2d{0.5, 0},
-                                                      mio::hybrid::InfectionState::Susceptible};
-    SingleWell<mio::hybrid::InfectionState>::Agent a3{Eigen::Vector2d{0.5, 0.5},
-                                                      mio::hybrid::InfectionState::InfectedSymptoms};
+    SingleWell<mio::osecir::InfectionState>::Agent a1{Eigen::Vector2d{-0.5, 0},
+                                                      mio::osecir::InfectionState::Susceptible};
+    SingleWell<mio::osecir::InfectionState>::Agent a2{Eigen::Vector2d{0.5, 0},
+                                                      mio::osecir::InfectionState::Susceptible};
+    SingleWell<mio::osecir::InfectionState>::Agent a3{Eigen::Vector2d{0.5, 0.5},
+                                                      mio::osecir::InfectionState::InfectedSymptoms};
 
     Model1 model1({a1, a2, a3}, {});
     Model2 model2;
-    model2.parameters.get<mio::smm::AdoptionRates<mio::hybrid::InfectionState>>().push_back(
-        {mio::hybrid::InfectionState::Susceptible,
-         mio::hybrid::InfectionState::Exposed,
+    model2.parameters.get<mio::smm::AdoptionRates<mio::osecir::InfectionState>>().push_back(
+        {mio::osecir::InfectionState::Susceptible,
+         mio::osecir::InfectionState::Exposed,
          mio::regions::Region(0),
          0.1,
-         {{mio::hybrid::InfectionState::InfectedNoSymptoms, 1}, {mio::hybrid::InfectionState::InfectedSymptoms, 0.5}}});
+         {{mio::osecir::InfectionState::InfectedNoSymptoms, 1}, {mio::osecir::InfectionState::InfectedSymptoms, 0.5}}});
 
     //Parameters for simulation
     double t0 = 0;
@@ -182,11 +181,11 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
     mio::hybrid::convert_model(sim_dabm, sim_smm);
 
     EXPECT_EQ(sim_smm.get_result().get_last_time(), t0);
-    EXPECT_NEAR(sim_smm.get_result().get_last_value()[(int)mio::hybrid::InfectionState::Susceptible], 2, 1e-10);
-    EXPECT_NEAR(sim_smm.get_result().get_last_value()[(int)mio::hybrid::InfectionState::InfectedSymptoms], 1, 1e-10);
-    auto pop_S = sim_smm.get_model().populations[{mio::regions::Region(0), mio::hybrid::InfectionState::Susceptible}];
+    EXPECT_NEAR(sim_smm.get_result().get_last_value()[(int)mio::osecir::InfectionState::Susceptible], 2, 1e-10);
+    EXPECT_NEAR(sim_smm.get_result().get_last_value()[(int)mio::osecir::InfectionState::InfectedSymptoms], 1, 1e-10);
+    auto pop_S = sim_smm.get_model().populations[{mio::regions::Region(0), mio::osecir::InfectionState::Susceptible}];
     auto pop_ISy =
-        sim_smm.get_model().populations[{mio::regions::Region(0), mio::hybrid::InfectionState::InfectedSymptoms}];
+        sim_smm.get_model().populations[{mio::regions::Region(0), mio::osecir::InfectionState::InfectedSymptoms}];
     EXPECT_NEAR(pop_S, 2, 1e-10);
     EXPECT_NEAR(pop_ISy, 1, 1e-10);
 
@@ -215,7 +214,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
         .Times(testing::AtLeast(3))
         .WillOnce(testing::Return(0)) // agent1
         .WillOnce(testing::Return(0)) // agent2
-        .WillOnce(testing::Return(3)) // agent3
+        .WillOnce(testing::Return(4)) // agent3
         .WillRepeatedly(testing::Return(1));
 
     //Convert smm simulation to dabm simulation
@@ -225,15 +224,15 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
     //agent1
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.5);
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0);
-    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::osecir::InfectionState::Susceptible);
     //agent2
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.5);
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], 0);
-    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::osecir::InfectionState::Susceptible);
     //agent3
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.5);
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.5);
-    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::osecir::InfectionState::InfectedSymptoms);
 
     //Test if conversion also works if agents should just be overwritten
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist1;
@@ -266,15 +265,15 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
     //agent1
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.1);
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0.1);
-    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::osecir::InfectionState::InfectedNoSymptoms);
     //agent2
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.1);
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], -0.1);
-    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::osecir::InfectionState::InfectedNoSymptoms);
     //agent3
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.1);
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.1);
-    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::osecir::InfectionState::Susceptible);
 }
 
 /**
@@ -282,16 +281,16 @@ TEST(TestTemporalHybrid, test_conversion_dabm_smm)
  */
 TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
 {
-    using Model1 = mio::dabm::Model<SingleWell<mio::hybrid::InfectionState>>;
+    using Model1 = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
     using Model2 = mio::osecir::Model<double>;
 
     //Initialize agents for dabm
-    SingleWell<mio::hybrid::InfectionState>::Agent a1{Eigen::Vector2d{-0.5, 0},
-                                                      mio::hybrid::InfectionState::Susceptible};
-    SingleWell<mio::hybrid::InfectionState>::Agent a2{Eigen::Vector2d{0.5, 0},
-                                                      mio::hybrid::InfectionState::Susceptible};
-    SingleWell<mio::hybrid::InfectionState>::Agent a3{Eigen::Vector2d{0.5, 0.5},
-                                                      mio::hybrid::InfectionState::InfectedSymptoms};
+    SingleWell<mio::osecir::InfectionState>::Agent a1{Eigen::Vector2d{-0.5, 0},
+                                                      mio::osecir::InfectionState::Susceptible};
+    SingleWell<mio::osecir::InfectionState>::Agent a2{Eigen::Vector2d{0.5, 0},
+                                                      mio::osecir::InfectionState::Susceptible};
+    SingleWell<mio::osecir::InfectionState>::Agent a3{Eigen::Vector2d{0.5, 0.5},
+                                                      mio::osecir::InfectionState::InfectedSymptoms};
 
     Model1 model1({a1, a2, a3}, {});
     Model2 model2(2);
@@ -352,7 +351,7 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
         .Times(testing::AtLeast(3))
         .WillOnce(testing::Return(0)) // agent1
         .WillOnce(testing::Return(0)) // agent2
-        .WillOnce(testing::Return(3)) // agent3
+        .WillOnce(testing::Return(4)) // agent3
         .WillRepeatedly(testing::Return(1));
 
     //Convert ODE-SECIR simulation to dabm simulation
@@ -362,15 +361,15 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
     //agent1
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.5);
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0);
-    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::osecir::InfectionState::Susceptible);
     //agent2
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.5);
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], 0);
-    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::osecir::InfectionState::Susceptible);
     //agent3
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.5);
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.5);
-    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::InfectedSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::osecir::InfectionState::InfectedSymptoms);
 
     //Test if conversion also works if agents should just be overwritten
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist1;
@@ -403,13 +402,13 @@ TEST(TestTemporalHybrid, test_conversion_dabm_osecir)
     //agent1
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[0], -0.1);
     EXPECT_EQ(sim_dabm2.get_model().populations[0].position[1], 0.1);
-    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[0].status, mio::osecir::InfectionState::InfectedNoSymptoms);
     //agent2
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[0], 0.1);
     EXPECT_EQ(sim_dabm2.get_model().populations[1].position[1], -0.1);
-    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::hybrid::InfectionState::InfectedNoSymptoms);
+    EXPECT_EQ(sim_dabm2.get_model().populations[1].status, mio::osecir::InfectionState::InfectedNoSymptoms);
     //agent3
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[0], 0.1);
     EXPECT_EQ(sim_dabm2.get_model().populations[2].position[1], 0.1);
-    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::hybrid::InfectionState::Susceptible);
+    EXPECT_EQ(sim_dabm2.get_model().populations[2].status, mio::osecir::InfectionState::Susceptible);
 }

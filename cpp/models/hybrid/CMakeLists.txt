@@ -3,7 +3,7 @@ add_library(hybrid
     temporal_hybrid_model.cpp
     conversion_functions.h
     conversion_functions.cpp
-    infection_state.h
+    analyze_result.h
 )
 target_link_libraries(hybrid PUBLIC memilio)
 target_include_directories(hybrid PUBLIC
