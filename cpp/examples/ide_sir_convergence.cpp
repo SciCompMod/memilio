@@ -176,7 +176,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         mio::ConstantFunction riskofinfection(RiskOfInfectionFromSymptomatic);
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(transmissiononcontact);
-        model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = riskofinfection_wrapper;
+        model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
         model.parameters.get<mio::isir::beta>() = beta;
         // Carry out simulation.

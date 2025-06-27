@@ -45,7 +45,8 @@ ScalarType beta             = 0.001;
 ScalarType cont_freq        = beta * total_population;
 } // namespace params
 
-// This function returns a TimeSeries containing the
+// This function returns a TimeSeries containing the groundtruth, which is either the one given to this function or the
+// one computed here.
 mio::IOResult<mio::TimeSeries<ScalarType>>
 simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::string save_dir = "",
              mio::TimeSeries<ScalarType> result_groundtruth =
@@ -62,7 +63,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         // we are setting init_populations differently.
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
 
-        std::cout << "Num time points groundtruth: " << result_groundtruth.get_num_time_points() << std::endl;
+        // std::cout << "Num time points groundtruth: " << result_groundtruth.get_num_time_points() << std::endl;
 
         if (result_groundtruth.get_num_time_points() == 0) {
             // Initialize first (gregory_order-1) time points with constant values.
@@ -112,7 +113,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
         mio::ConstantFunction riskofinfection(1.);
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
-        model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = riskofinfection_wrapper;
+        model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
         mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq / total_population));
@@ -149,7 +150,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
 int main()
 {
-    std::string result_dir = "../../simulation_results/messina_model_extended/";
+    std::string result_dir = "../../simulation_results/messina_model_extended_test/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
@@ -157,7 +158,7 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {5};
+    std::vector<ScalarType> ide_exponents_groundtruth = {4};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
