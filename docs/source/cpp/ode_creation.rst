@@ -106,7 +106,7 @@ Finally, define a type :code:`Parameters` by listing all parameter structs as te
                                          TransmissionRisk<FP>>;
 
 For more complex models, :code:`Parameters` allows passing arguments from its constructor to the :code:`get_default`
-functions. Make sure that all of these functions take the exakt types as function arguments that you want to pass to
+functions. Make sure that all of these functions take the exact types as function arguments that you want to pass to
 the constructor.
 
 Population
@@ -120,7 +120,7 @@ The population will be stored in a vector, with a component for each infection s
     template <typename FP>
     using Population = mio::Populations<FP, InfectionState>;
 
-Importantly, this class allows further stratifing the population vector, with the most common
+Importantly, this class allows further stratifying the population vector, with the most common
 example being adding :code:`mio::AgeGroups`.
 
 Define a compartmental model
@@ -182,7 +182,7 @@ Note that all other possible flows, like :math:`f_{I \rightarrow S}`, are consta
 Flows
 ~~~~~
 
-To use a flow model, we to create a list of all flows. These are used by the model to automatically assemble the
+To use a flow model, we need to create a list of all flows. These are used by the model to automatically assemble the
 compartments. We use a :code:`mio::TypeList` with a :code:`mio::Flow` for each mathematical flow. For the SIRD model
 we get:
 
