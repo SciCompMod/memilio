@@ -35,9 +35,11 @@ namespace params
 size_t num_agegroups = 1;
 
 ScalarType t0   = 0.;
-ScalarType tmax = 1.;
+ScalarType tmax = 5.;
 
-ScalarType TimeInfected                     = 2.;
+ScalarType TimeInfected = 2.;
+// This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
+// Instead we scale the contact frequency with a factor of 1.5.
 ScalarType TransmissionProbabilityOnContact = 1.;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
@@ -49,7 +51,8 @@ ScalarType R0 = 0.;
 ScalarType total_population = S0 + I0 + R0;
 // Note that the contacts are currently differently defined in ODE and IDE model, which is why they are set differently
 // according to the contact frequency.
-ScalarType cont_freq = 0.001 * total_population;
+ScalarType cont_freq = 1.5 * 0.1;
+ScalarType beta      = cont_freq / total_population;
 } // namespace params
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, std::string save_dir = "")
@@ -175,10 +178,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(transmissiononcontact);
         model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = riskofinfection_wrapper;
 
-        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq / total_population));
-        model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
-
+        model.parameters.get<mio::isir::beta>() = beta;
         // Carry out simulation.
         mio::isir::SimulationMessina sim(model, dt);
         sim.advance_messina(tmax);
@@ -205,7 +205,7 @@ int main()
 {
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-    std::string save_dir = "../../simulation_results/exponential_newparams/";
+    std::string save_dir = "../../simulation_results/exponential_paper_example/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
@@ -217,7 +217,7 @@ int main()
 
     // Do IDE simulations.
 
-    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (size_t gregory_order : gregory_orders) {

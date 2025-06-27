@@ -98,10 +98,12 @@ def plot_susceptibles(files, fileending, save_dir=""):
         plt.savefig(save_dir + f"compare_compartments_{fileending}.png",
                     bbox_inches='tight', dpi=500)
 
+    plt.clf()
+
 
 if __name__ == '__main__':
 
-    dir_name = "exponential_newparams"
+    dir_name = "exponential_paper_example"
 
     # Path where simulation results (generated with ide_changepoints.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
@@ -111,7 +113,7 @@ if __name__ == '__main__':
         __file__),  f"../plots/{dir_name}/")
 
     gregory_orders = ["1", "2", "3"]
-    ide_exponent = "3"
+    ide_exponent = "0"
     groundtruth_exponent = "5"
 
     # for gregory_order in gregory_orders:

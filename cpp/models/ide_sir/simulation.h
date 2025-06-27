@@ -99,6 +99,8 @@ public:
 private:
     std::unique_ptr<ModelMessina> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+    size_t m_max_number_iterations =
+        0; ///< Get maximal number of iterations that was necessary throughout the simulation.
 };
 
 /*********************************************************************************************************************/
@@ -173,6 +175,8 @@ public:
 private:
     std::unique_ptr<ModelMessinaExtended> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+    size_t m_max_number_iterations =
+        0; ///< Get maximal number of iterations that was necessary throughout the simulation.
 };
 
 /*********************************************************************************************************************/

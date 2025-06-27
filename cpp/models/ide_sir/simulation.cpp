@@ -56,10 +56,15 @@ void SimulationMessina::advance_messina(ScalarType tmax)
         // std::cout << "S_init "
         //           << m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible]
         //           << " at time " << m_model->populations.get_time(num_time_points - 2) << std::endl;
-        m_model->compute_S(m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible],
-                           m_dt);
+        size_t num_iterations = m_model->compute_S(
+            m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible], m_dt);
         // m_model->populations.print_table();
+
+        if (num_iterations > m_max_number_iterations) {
+            m_max_number_iterations = num_iterations;
+        }
     }
+    std::cout << "Max number of iterations throughout simulation was " << m_max_number_iterations << std::endl;
 }
 
 // In this advance function, we only consider S as in the paper by Messina et al.
@@ -85,10 +90,15 @@ void SimulationMessinaExtended::advance_messina(ScalarType tmax)
         // std::cout << "S_init "
         //           << m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible]
         //           << " at time " << m_model->populations.get_time(num_time_points - 2) << std::endl;
-        m_model->compute_S(m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible],
-                           m_dt);
+        size_t num_iterations = m_model->compute_S(
+            m_model->populations.get_value(num_time_points - 2)[(size_t)InfectionState::Susceptible], m_dt);
         // m_model->populations.print_table();
+        if (num_iterations > m_max_number_iterations) {
+            m_max_number_iterations = num_iterations;
+        }
     }
+
+    std::cout << "Max number of iterations throughout simulation was " << m_max_number_iterations << std::endl;
 }
 
 void Simulation::advance(ScalarType tmax)

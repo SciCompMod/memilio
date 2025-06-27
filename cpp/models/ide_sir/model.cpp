@@ -225,7 +225,7 @@ ScalarType ModelMessina::fixed_point_function(ScalarType susceptibles, ScalarTyp
     return S0 * std::exp(-prefactor * (sum_part1 + sum_part2));
 }
 
-void ModelMessina::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
+size_t ModelMessina::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
 {
     size_t iter_counter = 0;
     while (iter_counter < max_iterations) {
@@ -250,6 +250,8 @@ void ModelMessina::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, s
 
     // Set S in corresponding TimeSeries.
     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
+
+    return iter_counter;
 }
 
 /*********************************************************************************************************************/
@@ -309,8 +311,7 @@ ScalarType ModelMessinaExtended::sum_part1_term(size_t n, size_t j, ScalarType d
     Eigen::MatrixX<ScalarType> gregoryWeights_sigma            = vec_gregoryweights[0];
 
     ScalarType current_time = populations.get_last_time();
-    unused(current_time);
-    ScalarType state_age = (n - j) * dt;
+    ScalarType state_age    = (n - j) * dt;
 
     ScalarType sum_part1_term;
 
@@ -401,20 +402,20 @@ ScalarType ModelMessinaExtended::fixed_point_function(ScalarType susceptibles, S
     return S0 * std::exp(-dt * (sum_part1 + sum_part2));
 }
 
-void ModelMessinaExtended::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
+size_t ModelMessinaExtended::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
 {
     size_t iter_counter = 0;
     while (iter_counter < max_iterations) {
 
-        ScalarType s_estimated = fixed_point_function(s_init, dt);
+        ScalarType s_new = fixed_point_function(s_init, dt);
         // std::cout << "s_estimated: " << s_estimated << std::endl;
 
         // std::cout << "Diff: " << std::fabs(s_init - s_estimated) << "; tol: " << tol << std::endl;
-        if (std::fabs(s_init - s_estimated) < tol) {
+        if (std::fabs(s_init - s_new) < tol) {
             break;
         }
 
-        s_init = s_estimated;
+        s_init = s_new;
         iter_counter++;
     }
 
@@ -426,6 +427,8 @@ void ModelMessinaExtended::compute_S(ScalarType s_init, ScalarType dt, ScalarTyp
 
     // Set S in corresponding TimeSeries.
     populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] = s_init;
+
+    return iter_counter;
 }
 
 /*********************************************************************************************************************/

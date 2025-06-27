@@ -108,7 +108,7 @@ public:
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 
-    void compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
+    size_t compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax);
@@ -127,7 +127,9 @@ private:
     std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
 };
 
-// In this class, we extend ModelMessina by a contact rate that i8s not constant as before but can change with time.
+// In this class, we extend ModelMessina by a contact rate that is not constant as before but can change with time.
+// For this, we model the contacts by $\phi(t)/N$ instead of the constant $\beta$ as in ModelMessina.
+// Here, we also compute the remaining compartments I and R where we use an approximation of the derivative S'.
 class ModelMessinaExtended
 {
     using ParameterSet = Parameters;
@@ -147,7 +149,8 @@ public:
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 
-    void compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
+    // Returns the number of iterations needed in fixed point iteration.
+    size_t compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax);

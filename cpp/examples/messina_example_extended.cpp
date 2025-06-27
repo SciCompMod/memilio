@@ -33,8 +33,6 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-// ScalarType cont_freq = 1.;
-
 ScalarType t0   = 0.;
 ScalarType tmax = 1.;
 
@@ -43,7 +41,8 @@ ScalarType I0 = 10.;
 ScalarType R0 = 0.;
 
 ScalarType total_population = S0 + I0 + R0;
-ScalarType cont_freq        = 0.001 * total_population;
+ScalarType beta             = 0.001;
+ScalarType cont_freq        = beta * total_population;
 } // namespace params
 
 // This function returns a TimeSeries containing the
@@ -54,8 +53,6 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
-
-    ScalarType total_population = 100.;
 
     for (ScalarType ide_exponent : ide_exponents) {
         ScalarType dt = pow(10, -ide_exponent);
