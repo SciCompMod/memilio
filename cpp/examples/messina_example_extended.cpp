@@ -67,9 +67,10 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
         if (result_groundtruth.get_num_time_points() == 0) {
             // Initialize first (gregory_order-1) time points with constant values.
-            // Only set S because this is the only compartment we consider at the moment.
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
-            vec_init[(size_t)mio::isir::InfectionState::Susceptible] = 90.;
+            vec_init[(size_t)mio::isir::InfectionState::Susceptible] = S0;
+            vec_init[(size_t)mio::isir::InfectionState::Infected]    = I0;
+            vec_init[(size_t)mio::isir::InfectionState::Recovered]   = R0;
             // Add time points S_0, S_1, S_{n0-1} to init_populations as these values are assumed to be known in the groundtruth.
             init_populations.add_time_point(0, vec_init);
             while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
@@ -84,15 +85,24 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             // std::cout << "groundtruth_index: " << groundtruth_index << std::endl;
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
-            vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
-                result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Susceptible];
 
+            std::vector<size_t> compartments = {(size_t)mio::isir::InfectionState::Susceptible,
+                                                (size_t)mio::isir::InfectionState::Infected,
+                                                (size_t)mio::isir::InfectionState::Recovered};
+
+            // Add values for t=0.
+            for (size_t compartment : compartments) {
+                vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
+            }
             init_populations.add_time_point(0, vec_init);
+
+            // Add values for t_1,...,t_{n0-1}.
             while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
-                // std::cout << size_t(init_populations.get_num_time_points() * groundtruth_index) << std::endl;
-                vec_init[(size_t)mio::isir::InfectionState::Susceptible] = result_groundtruth.get_value(
-                    size_t(init_populations.get_num_time_points() *
-                           groundtruth_index))[(size_t)mio::isir::InfectionState::Susceptible];
+                // std::cout << "Init time: " << init_populations.get_last_time() << std::endl;
+                for (size_t compartment : compartments) {
+                    vec_init[compartment] = result_groundtruth.get_value(
+                        size_t(init_populations.get_num_time_points() * groundtruth_index))[compartment];
+                }
                 init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
             }
         }
@@ -166,7 +176,7 @@ int main()
 
     // Simulate with larger timesteps and use result_groundtruth for initialization.
     std::vector<size_t> gregory_orders    = {1, 2, 3};
-    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+    std::vector<ScalarType> ide_exponents = {1, 2, 3};
 
     for (size_t gregory_order : gregory_orders) {
         std::cout << "Using Gregory order = " << gregory_order << std::endl;

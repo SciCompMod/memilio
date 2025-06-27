@@ -146,7 +146,8 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
     @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
     @param[in] Array that contains computed errors.
     """
-    # For now, only compute error of S compartment.
+    num_errors = 3
+
     errors = []
 
     # Compute error. Here, we define the error by the absolute value of the difference at the last time point between
@@ -154,12 +155,14 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
     for i in range(len(results['ide'])):
         errors.append([])
 
-        model = list(groundtruth.keys())[0]
+        for compartment in range(num_errors):
 
-        difference = np.abs(
-            groundtruth[model][0][-1, 0]-results['ide'][i][-1, 0])
+            model = list(groundtruth.keys())[0]
 
-        errors[i].append(difference)
+            difference = np.abs(
+                groundtruth[model][0][-1, compartment]-results['ide'][i][-1, compartment])
+
+            errors[i].append(difference)
 
     return np.array(errors)
 
@@ -175,7 +178,7 @@ def plot_convergence(errors, timesteps_ide, gregory_order, save_dir=""):
     """
     # Define subplots and labels.
 
-    num_plots = 1
+    num_plots = 3
     fig, axs = plt.subplots(1, num_plots, sharex=True, figsize=(10, 8))
     secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
     labels = [f"Gregory order {gregory_order}", r"$\mathcal{O}(\Delta t)$"]
@@ -185,27 +188,27 @@ def plot_convergence(errors, timesteps_ide, gregory_order, save_dir=""):
 
     for i in range(num_plots):
         # Plot results.
-        axs.plot(timesteps_ide,
-                 errors[:, i], '-o', color=colors[1])
+        axs[i].plot(timesteps_ide,
+                    errors[:, i], '-o', color=colors[1])
 
         # Plot comparison line for linear convergence.
         comparison = [dt for dt in timesteps_ide]
-        axs.plot(timesteps_ide, comparison,
-                 '--', color='gray', linewidth=1.2)
+        axs[i].plot(timesteps_ide, comparison,
+                    '--', color='gray', linewidth=1.2)
 
         # Adapt plots.
-        axs.set_xscale("log", base=10)
-        axs.set_yscale("log", base=10)
+        axs[i].set_xscale("log", base=10)
+        axs[i].set_yscale("log", base=10)
 
-        axs.set_title(secir_dict[i], fontsize=10)
-        axs.grid(True, linestyle='--', alpha=0.6)
+        axs[i].set_title(secir_dict[i], fontsize=10)
+        axs[i].grid(True, linestyle='--', alpha=0.6)
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
     fig.supylabel(
         r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_{2}$", fontsize=12)
 
     # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
-    axs.invert_xaxis()
+    axs[0].invert_xaxis()
 
     legend = fig.legend(labels, ncol=2,  loc='outside lower center',
                         fontsize=14, bbox_to_anchor=(0.5, -0.06), bbox_transform=fig.transFigure)
@@ -224,8 +227,7 @@ def compute_order_of_convergence(errors, timesteps_ide):
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
     @param[in] timesteps_ide List of time steps used in IDE simulations.
     """
-
-    num_orders = 1
+    num_orders = 3
 
     order = []
     for compartment in range(num_orders):
@@ -238,7 +240,7 @@ def compute_order_of_convergence(errors, timesteps_ide):
 
 def main():
 
-    dir_name = "messina_model_extended"
+    dir_name = "messina_model_extended_test"
     print(dir_name)
 
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
@@ -255,13 +257,13 @@ def main():
     gregory_orders_simulation = [1, 2, 3]
 
     # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-    ide_exponents = [1, 2, 3, 4]
+    ide_exponents = [1, 2, 3]
     # Calculate time steps resulting from exponents_ide.
     timesteps_ide = []
     for exp in ide_exponents:
         timesteps_ide.append(pow(10, -exp))
 
-    # Read groundtruth.
+    # # Read groundtruth.
     # groundtruth = read_groundtruth_ode(
     #     result_dir, groundtruth_exponent)
     groundtruth = read_groundtruth(
@@ -285,7 +287,8 @@ def main():
             errors, timesteps_ide)
 
         print(
-            f'Orders of convergence (Gregory order {gregory_order_simulation}): ', order[0])
+            f'Orders of convergence (Gregory order {gregory_order_simulation}): ')
+        print(order)
 
 
 if __name__ == '__main__':

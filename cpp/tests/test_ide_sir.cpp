@@ -184,7 +184,7 @@ TEST(IdeSir, compareModelMessinaAndModelMessinaExtended)
 
     mio::ConstantFunction riskofinfection(1.);
     mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
-    model.parameters.get<mio::isir::TransmissionProbabilityOnContact>()        = riskofinfection_wrapper;
+    model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>()          = riskofinfection_wrapper;
     model_extended.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
     // In ModelMessina we use beta fpr the contact rate, in ModelMessinaextended we define the contacts via the contact
