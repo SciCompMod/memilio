@@ -1,8 +1,10 @@
 #pragma once
-#include "abm/abm.h"
 #include "memilio/io/result_io.h"
 #include <vector>
 #include <map>
+#include "abm/world.h"
+#include "abm/location.h"
+#include "abm/person.h"
 
 // We hardcode this configuration for the city simulation for now.
 struct CityConfig {
@@ -29,6 +31,7 @@ private:
                                                           const std::vector<mio::abm::LocationId>& households,
                                                           const std::vector<mio::abm::LocationId>& workplaces,
                                                           const std::vector<mio::abm::LocationId>& schools,
-                                                          int total_population);
+                                                          const mio::abm::LocationId& hospital,
+                                                          const mio::abm::LocationId& icu, int total_population);
     static mio::AgeGroup assign_age_group_from_demographics(int person_index);
 };

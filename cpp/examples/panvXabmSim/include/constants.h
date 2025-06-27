@@ -1,5 +1,5 @@
 #pragma once
-#include "abm/abm.h"
+#include "memilio/epidemiology/age_group.h"
 
 // Number of age groups and their definitions - DECLARATIONS ONLY
 extern size_t num_age_groups;

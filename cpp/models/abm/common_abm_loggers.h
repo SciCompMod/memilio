@@ -24,8 +24,8 @@
 #include "memilio/io/history.h"
 #include "models/abm/location_type.h"
 #include "abm/movement_data.h"
-#include "abm/abm.h"
 #include "memilio/utils/mioomp.h"
+#include "abm/infection_state.h"
 namespace mio
 {
 namespace abm
@@ -47,7 +47,7 @@ struct movement_data {
     mio::abm::InfectionState infection_state;
 };
 
-mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
+inline mio::abm::ActivityType guess_activity_type(mio::abm::LocationType current_location)
 {
     switch (current_location) {
     case mio::abm::LocationType::Home:

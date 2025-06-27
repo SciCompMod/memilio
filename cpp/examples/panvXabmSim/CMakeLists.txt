@@ -1,5 +1,5 @@
 add_executable(panvXabm 
-    main.cpp
+    main_improved.cpp
     src/constants.cpp
     src/custom_loggers.cpp
     src/parameter_setter.cpp

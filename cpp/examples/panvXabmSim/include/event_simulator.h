@@ -1,9 +1,10 @@
 #pragma once
-#include "abm/abm.h"
 #include "memilio/io/result_io.h"
 #include <string>
 #include <map>
 #include <unordered_map>
+#include "abm/world.h"
+#include "abm/location_type.h"
 
 enum class EventType
 {

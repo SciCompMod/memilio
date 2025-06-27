@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <chrono>
-#include <unordered_map>
 #include "boost/filesystem.hpp"
 #include "memilio/io/result_io.h"
 
@@ -41,6 +40,9 @@ void print_help(const char* program_name)
               << ", range: " << Config::MIN_DAYS << "-" << Config::MAX_DAYS << ")\n";
     std::cout << "  --n_persons <number>  Set the total population (default: " << Config::DEFAULT_POPULATION
               << ", range: " << Config::MIN_POPULATION << "-" << Config::MAX_POPULATION << ")\n";
+    std::cout << "  --output_dir <path>   Set the output directory (default: " << Config::DEFAULT_OUTPUT_DIR << ")\n";
+    std::cout << "                        The directory will be created if it does not exist.\n";
+    std::cout << "                        If not set, results will be saved in the current directory.\n";
     std::cout << "  --help                Show this help message\n";
     std::cout << "\nExamples:\n";
     std::cout << "  " << program_name << " --event restaurant_table_equals_household --runs 50\n";
@@ -91,6 +93,7 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     config.simulation_type                    = SimType::Both;
     config.num_runs                           = Config::DEFAULT_RUNS;
     config.simulation_days                    = Config::DEFAULT_DAYS;
+    config.output_base_dir                    = Config::DEFAULT_OUTPUT_DIR;
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -147,6 +150,16 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
             catch (const std::exception& e) {
                 std::cerr << "Error: Invalid number for --n_persons: " << argv[i] << "\n";
                 exit(1);
+            }
+        }
+        else if (arg == "--output_dir" && i + 1 < argc) {
+            config.output_base_dir = argv[++i];
+            // Ensure the output directory exists
+            if (!fs::exists(config.output_base_dir)) {
+                if (!fs::create_directories(config.output_base_dir)) {
+                    std::cerr << "Error: Could not create output directory '" << config.output_base_dir << "'\n";
+                    exit(1);
+                }
             }
         }
         else if (arg == "--help") {
@@ -239,9 +252,9 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     print_summary(results);
 
     std::cout << "\n✓ Multi-run simulation completed successfully!" << std::endl;
-    std::cout << "⏱️  Total execution time: " << total_duration.count() << " seconds" << std::endl;
-    std::cout << "📁 Results saved to: " << result_dir << std::endl;
-    std::cout << "📊 Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
+    std::cout << "Total execution time: " << total_duration.count() << " seconds" << std::endl;
+    std::cout << "Results saved to: " << result_dir << std::endl;
+    std::cout << "Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
 
     return mio::success();
 }
@@ -250,7 +263,7 @@ int main(int argc, char* argv[])
 {
     auto result = main_flow(argc, argv);
     if (result.has_error()) {
-        std::cerr << "❌ Multi-run simulation failed: " << result.error().message() << std::endl;
+        std::cerr << "Multi-run simulation failed: " << result.error().message() << std::endl;
         return 1;
     }
     return 0;

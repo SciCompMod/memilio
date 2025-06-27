@@ -1,5 +1,8 @@
 #pragma once
-#include "abm/abm.h"
+#include "memilio/io/result_io.h"
+#include "abm/simulation.h"
+#include "abm/time.h"
+#include "abm/world.h"
 #include <Eigen/Dense>
 
 struct LogInfectionStatePerAgeGroup : mio::LogAlways {

@@ -9,6 +9,10 @@ mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config
     auto world = mio::abm::World(num_age_groups);
     set_parameters(world.parameters);
 
+    // Basics:
+    auto hospital = world.add_location(mio::abm::LocationType::Hospital);
+    auto icu      = world.add_location(mio::abm::LocationType::ICU);
+
     // Create all location types
     auto households = create_households(world, config.num_households);
     auto workplaces = create_workplaces(world, config.num_workplaces);
@@ -16,7 +20,8 @@ mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config
     auto events     = create_events(world, config.num_large_events, config.num_small_events);
 
     // Assign people to locations
-    BOOST_OUTCOME_TRY(assign_people_to_locations(world, households, workplaces, schools, config.total_population));
+    BOOST_OUTCOME_TRY(
+        assign_people_to_locations(world, households, workplaces, schools, hospital, icu, config.total_population));
 
     set_local_parameters(world);
 
@@ -86,18 +91,21 @@ mio::IOResult<void> CityBuilder::assign_people_to_locations(mio::abm::World& wor
                                                             const std::vector<mio::abm::LocationId>& households,
                                                             const std::vector<mio::abm::LocationId>& workplaces,
                                                             const std::vector<mio::abm::LocationId>& schools,
-                                                            int total_population)
+                                                            const mio::abm::LocationId& hospital,
+                                                            const mio::abm::LocationId& icu, int total_population)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    mio::unused(households, workplaces, schools, world); // Suppress unused warnings
+
     for (int i = 0; i < total_population; ++i) {
         auto age_group = assign_age_group_from_demographics(i);
 
         // Assign to household
         auto household_id = households[i % households.size()];
-        auto person       = world.add_person(household_id, age_group);
+        auto& person      = world.add_person(household_id, age_group);
         person.set_assigned_location(household_id);
+        person.set_assigned_location(hospital);
+        person.set_assigned_location(icu);
 
         // For now, simple assignment
         if (age_group == age_group_5_to_14 && !schools.empty()) {

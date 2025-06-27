@@ -1,5 +1,6 @@
 #include "../include/multi_run_simulator.h"
 #include "../include/file_utils.h"
+#include "abm/time.h"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -31,8 +32,14 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
     initial_infections = {}; // Initialize empty map
     // TODO: Implement this.
     // For now just infect the first 10 persons in the base world
-    for (uint32_t i = 0; i < 10 && i < base_world.get_persons().size(); ++i) {
-        initial_infections[base_world.get_persons()[i].get_person_id()] = true; // Infect first 10 persons
+    const auto& persons = base_world.get_persons();
+    uint32_t count      = 0;
+    for (const auto& person : persons) {
+        initial_infections[person.get_person_id()] = true;
+        count++;
+        if (count >= 10) {
+            break; // Limit to first 10 persons
+        }
     }
     // if (config.event_config.use_panvadere_init) {
     //     std::cout << "Loading infections from Panvadere..." << std::endl;
@@ -73,20 +80,15 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResults& results,
                                                               const std::string& base_dir)
 {
-    // Create directory structure
-    std::string event_dir   = base_dir + "/" + EventSimulator::event_type_to_string(results.event_type);
-    std::string init_method = EventSimulator::simulation_type_to_string(results.simulation_type);
-    std::string full_dir    = event_dir + "_" + init_method;
-
-    BOOST_OUTCOME_TRY(create_result_folders(full_dir));
+    BOOST_OUTCOME_TRY(create_result_folders(base_dir));
 
     // Save percentile results
-    std::string summary_file = full_dir + "/summary.txt";
+    std::string summary_file = base_dir + "/summary.txt";
     std::ofstream summary(summary_file);
     if (summary.is_open()) {
         summary << "Multi-Run Simulation Summary\n";
         summary << "Event Type: " << EventSimulator::event_type_to_string(results.event_type) << "\n";
-        summary << "Initialization: " << init_method << "\n";
+        summary << "Initialization: " << EventSimulator::simulation_type_to_string(results.simulation_type) << "\n";
         summary << "Infection Parameter K: " << results.infection_parameter_k << "\n";
         summary << "Total Runs: " << results.all_runs.size() << "\n";
         summary.close();
@@ -96,6 +98,19 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     //TODO: Add percentile calculation like in paper Simulation
 
     return mio::success();
+}
+
+void assign_infection_state(mio::abm::World& world, const std::map<uint32_t, bool>& initial_infections,
+                            mio::abm::TimePoint t)
+{
+    for (const auto& [person_id, infected] : initial_infections) {
+        if (infected) {
+            auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), world.get_person(person_id));
+            world.get_person(person_id).add_new_infection(
+                mio::abm::Infection(rng, mio::abm::VirusVariant::Alpha, world.get_person(person_id).get_age(),
+                                    world.parameters, t, mio::abm::InfectionState::Exposed));
+        }
+    }
 }
 
 mio::IOResult<SimulationResults>
@@ -110,10 +125,24 @@ MultiRunSimulator::run_single_simulation_with_infections(const mio::abm::World& 
     // 4. Run simulation for specified days
     // 5. Return results
     SimulationResults results;
-    mio::unused(base_world); // Placeholder to avoid unused variable warning
-    mio::unused(initial_infections); // Placeholder to avoid unused variable warning
-    mio::unused(k_parameter); // Placeholder to avoid unused variable warning
-    mio::unused(simulation_days); // Placeholder to avoid unused variable warning
+    auto t0   = mio::abm::TimePoint(0); // Start time per simulation
+    auto tmax = mio::abm::TimePoint(0) + mio::abm::days(simulation_days); // End time per simulation
+
+    auto world = base_world; // Copy the base world
+    // Apply initial infections
+    assign_infection_state(world, initial_infections, t0);
+    // Set infection parameter K
+    world.parameters.get<mio::abm::InfectionRateFromViralShed>() = k_parameter;
+
+    auto sim = mio::abm::Simulation(t0, std::move(world));
+
+    mio::History<mio::abm::TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup> historyInfectionPerLocationType{
+        Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
+
+    sim.advance(tmax, historyInfectionPerLocationType);
+
+    results.infection_per_loc_type =
+        std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
 
     // Placeholder implementation
     return mio::success(results);

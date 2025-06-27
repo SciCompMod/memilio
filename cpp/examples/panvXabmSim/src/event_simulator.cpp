@@ -164,13 +164,13 @@ std::string EventSimulator::event_type_to_string(EventType type)
 {
     switch (type) {
     case EventType::Restaurant_Table_Equals_Household:
-        return "Restaurant (Table = Household)";
+        return "RestaurantEqualHH";
     case EventType::Restaurant_Table_Equals_Half_Household:
-        return "Restaurant (Table = Half Household)";
+        return "RestaurantNotEqualHH";
     case EventType::WorkMeeting_Many_Meetings:
-        return "Work Meeting (Many Meetings)";
+        return "WorkMeetingMany";
     case EventType::WorkMeeting_Few_Meetings:
-        return "Work Meeting (Few Meetings)";
+        return "WorkMeetingFew";
     default:
         return "Unknown";
     }
@@ -198,6 +198,7 @@ EventSimulator::map_restaurant_tables_to_households(const std::map<uint32_t, boo
     // TODO: Implement mapping logic
     // For restaurant: each table represents a household
     // Interchange households - half of each household at each table
+    // REMEMBER TO ASSIGN PERSONS TO THE SSME WORKPLACE IN LATER SIMUALATION
 
     for (const auto& [person_id, is_infected] : panvadere_data) {
         if (is_infected) {

@@ -1,4 +1,6 @@
 #pragma once
+#include "custom_loggers.h"
+#include "abm/common_abm_loggers.h"
 #include "city_builder.h"
 #include "event_simulator.h"
 #include <vector>
@@ -8,12 +10,12 @@ struct MultiRunConfig {
     EventSimulationConfig event_config;
     SimType simulation_type     = SimType::Both;
     int num_runs                = 100;
-    int simulation_days         = 30;
-    std::string output_base_dir = "./results";
+    int simulation_days         = 1;
+    std::string output_base_dir = "/results";
 };
 
 struct SimulationResults {
-    std::vector<std::vector<mio::TimeSeries<ScalarType>>> infection_per_loc_type;
+    std::vector<mio::TimeSeries<ScalarType>> infection_per_loc_type;
     std::vector<std::vector<mio::TimeSeries<ScalarType>>> infection_state_per_age_group;
     std::vector<std::vector<mio::abm::World>> ensemble_params;
     mio::TimeSeries<ScalarType> time_series;

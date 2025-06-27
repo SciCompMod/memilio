@@ -841,25 +841,25 @@ void set_local_parameters(mio::abm::World& world)
         switch (loc.get_type()) {
         case mio::abm::LocationType::Home:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_home;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.6*1; //15 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.6 * 1; //15 hours
             break;
         case mio::abm::LocationType::School:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_school;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 12.0*0; //2 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 12.0 * 0; //2 hours
             break;
         case mio::abm::LocationType::Work:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 8.0*0; // 3 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 8.0 * 0; // 3 hours
             break;
         case mio::abm::LocationType::SocialEvent:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.2;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 8.0*0; // 3 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 8.0 * 0; // 3 hours
             break;
         case mio::abm::LocationType::BasicsShop:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.8;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 12.0*0; // 2 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 12.0 * 0; // 2 hours
             break;
         default:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_random;
@@ -2481,8 +2481,8 @@ int main(int argc, char** argv)
         //     {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {2, 5, 8, 11, 14}, {0.5}};
         // std::vector<std::vector<double>> parameters = {
         //     {1.596}, {4.171}, {0.7125}, {0.02472}, {4.83}, {2, 5, 8, 11, 14}, {0.0, 0.25, 0.5, 0.75, 1.0}};
-        std::vector<std::vector<double>> parameters = {
-            {1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06}, {4.83}, {10.0}, {0.5},{0.2, 0.225, 0.25, 0.275, 0.3}};
+        std::vector<std::vector<double>> parameters = {{1.596}, {4.171}, {0.7125}, {0.012, 0.024, 0.036, 0.048, 0.06},
+                                                       {4.83},  {10.0},  {0.5},    {0.2, 0.225, 0.25, 0.275, 0.3}};
 
         auto every_combination = every_combination_of_parameters(parameters);
         if (rank == 0) {
