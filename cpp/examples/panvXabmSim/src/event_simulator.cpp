@@ -35,18 +35,13 @@ std::string EventSimulationConfig::get_panvadere_file() const
 mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const EventSimulationConfig& config)
 {
     // Validate configuration first
-    if (!config.is_valid()) {
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "Invalid configuration: infection_parameter_k must be > 0 and <= 10, "
-                            "event_duration_hours must be > 0 and <= 24");
-    }
 
     // Calculate K parameter based on event type and duration
     double base_k_value = 1.0;
 
     switch (config.type) {
     case EventType::Restaurant_Table_Equals_Household:
-        base_k_value = 1.2; // Higher transmission in close dining
+        base_k_value = 20.0; // Higher transmission in close dining
         break;
     case EventType::Restaurant_Table_Equals_Half_Household:
         base_k_value = 1.1; // Slightly lower than full household tables

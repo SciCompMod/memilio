@@ -179,10 +179,10 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
 bool validate_config(const MultiRunConfig& config)
 {
     // Validate event configuration
-    if (!config.event_config.is_valid()) {
-        std::cerr << "Error: Invalid event configuration\n";
-        return false;
-    }
+    // if (!config.event_config.is_valid()) {
+    //     std::cerr << "Error: Invalid event configuration\n";
+    //     return false;
+    // }
 
     // Validate simulation parameters
     if (config.num_runs < Config::MIN_RUNS || config.num_runs > Config::MAX_RUNS) {

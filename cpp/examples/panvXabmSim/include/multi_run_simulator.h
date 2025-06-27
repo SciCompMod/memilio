@@ -16,15 +16,8 @@ struct MultiRunConfig {
 
 struct SimulationResults {
     std::vector<mio::TimeSeries<ScalarType>> infection_per_loc_type;
-    std::vector<std::vector<mio::TimeSeries<ScalarType>>> infection_state_per_age_group;
-    std::vector<std::vector<mio::abm::World>> ensemble_params;
-    mio::TimeSeries<ScalarType> time_series;
-
-    // Add a constructor to initialize time_series
-    SimulationResults()
-        : time_series(Eigen::Index(mio::abm::InfectionState::Count))
-    {
-    }
+    std::vector<mio::TimeSeries<ScalarType>> infection_state_per_age_group;
+    std::vector<mio::abm::World> ensemble_params;
 };
 
 struct MultiRunResults {

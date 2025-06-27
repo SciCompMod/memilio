@@ -1,6 +1,8 @@
 #include "../include/multi_run_simulator.h"
 #include "../include/file_utils.h"
 #include "abm/time.h"
+#include "memilio/io/io.h"
+#include "abm/analyze_result.h"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -97,6 +99,17 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     //Save percentile results
     //TODO: Add percentile calculation like in paper Simulation
 
+    auto ensembl_inf     = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
+    auto ensemble_params = std::vector<std::vector<mio::abm::World>>{};
+
+    for (const auto& run : results.all_runs) {
+        ensembl_inf.push_back(run.infection_per_loc_type);
+        ensemble_params.push_back(run.ensemble_params);
+    }
+
+    BOOST_OUTCOME_TRY(save_results(ensembl_inf, ensemble_params, {0},
+                                   base_dir + "/infection_per_location_type_per_age_group", false, true));
+
     return mio::success();
 }
 
@@ -143,6 +156,7 @@ MultiRunSimulator::run_single_simulation_with_infections(const mio::abm::World& 
 
     results.infection_per_loc_type =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
+    results.ensemble_params = std::vector<mio::abm::World>{sim.get_world()};
 
     // Placeholder implementation
     return mio::success(results);

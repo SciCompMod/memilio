@@ -35,13 +35,6 @@ struct EventSimulationConfig {
 
     // Get the appropriate panvadere file for this event type
     std::string get_panvadere_file() const;
-
-    // Validate configuration parameters
-    bool is_valid() const
-    {
-        return infection_parameter_k > 0.0 && infection_parameter_k <= 10.0 && event_duration_hours > 0 &&
-               event_duration_hours <= 24;
-    }
 };
 
 /**
