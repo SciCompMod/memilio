@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2025 MEmilio
 #
-# Authors:
+# Authors: Manuel Heger, Henrik Zunker
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -20,7 +20,8 @@
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
-                                                     network_architectures)
+                                                     network_architectures, dampings)
+import memilio.surrogatemodel.surrogate_utils as utils
 from unittest.mock import patch
 import os
 import unittest
@@ -43,31 +44,88 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         """ """
         self.setUpPyfakefs()
 
+    def test_dampings_active(self):
+        # length of generated sequence
+        factors1 = dampings.calc_factors_active(10)
+        factors2 = dampings.calc_factors_active(18)
+
+        self.assertEqual(len(factors1), 10)
+        self.assertEqual(len(factors2), 18)
+
+        with self.assertRaises(ValueError) as error:
+            dampings.dampings_active(10, 200, 3)
+        error_message = "It's not possible to arrange this number of dampings in the desired interval with the given minimal distance."
+        self.assertEqual(str(error.exception), error_message)
+
+        # Combine days and factors
+        days1, factors1 = dampings.dampings_active(30, 5, 4)
+        days2, factors2 = dampings.dampings_active(40, 10, 4)
+
+        self.assertEqual(len(days1), 5)
+        self.assertEqual(len(factors1), len(days1))
+        self.assertEqual(len(days2), 10)
+        self.assertEqual(len(days2), len(factors2))
+
+    def test_dampings_classic(self):
+
+        days1 = dampings.generate_dampings_withshadowdamp(4, 30, 3, 4, 1)
+        days2 = dampings.generate_dampings_withshadowdamp(10, 90, 2, 10, 1)
+        self.assertEqual(len(days1[0]), 4)
+        self.assertEqual(len(days2[0]), 10)
+
+        with self.assertRaises(ValueError) as error:
+            dampings.dampings_classic(10, 200)
+        error_message = "It's not possible to arrange this number of dampings in the desired interval with the given minimal distance."
+        self.assertEqual(str(error.exception), error_message)
+
+        # Combine days and factors
+        days1, factors1 = dampings.dampings_classic(30, 5)
+        days2, factors2 = dampings.dampings_classic(40, 5)
+
+        self.assertEqual(len(days1), 5)
+        self.assertEqual(len(factors1), len(days1))
+        self.assertEqual(len(days2), 5)
+        self.assertEqual(len(days2), len(factors2))
+
+    def test_dampings_random(self):
+        with self.assertRaises(ValueError) as error:
+            dampings.dampings_random(10, 200)
+        error_message = "It's not possible to arrange this number of dampings in the desired interval with the given minimal distance."
+        self.assertEqual(str(error.exception), error_message)
+
+        days1, factors1 = dampings.dampings_random(30, 5)
+        days2, factors2 = dampings.dampings_random(40, 5)
+
+        self.assertEqual(len(days1), 5)
+        self.assertEqual(len(factors1), len(days1))
+        self.assertEqual(len(days2), 5)
+        self.assertEqual(len(days2), len(factors2))
+
     @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
            return_value=0.1 * np.ones((6, 6)))
     @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getBaselineMatrix',
            return_value=0.6 * np.ones((6, 6)))
     def test_simulation_run(self, mock_baseline, mock_minimum):
         """
-
         :param mock_baseline:
         :param mock_minimum:
-
         """
+
         days_1 = 10
         days_2 = 30
         days_3 = 50
 
-        damping_date = 5
+        damping_days = [3, 5]
+        damping_factors = [0.3, 0.4]
         population = [5256.0, 10551, 32368.5,
                       43637.833333333336, 22874.066666666666, 8473.6]
 
         simulation_1 = data_generation.run_secir_groups_simulation(
-            days_1, damping_date, population)
+            days_1, damping_days, damping_factors,  population)
         simulation_2 = data_generation.run_secir_groups_simulation(
-            days_2, damping_date, population)
+            days_2, damping_days, damping_factors, population)
         simulation_3 = data_generation.run_secir_groups_simulation(
-            days_3, damping_date, population)
+            days_3, damping_days, damping_factors, population)
 
         # result length
         self.assertEqual(len(simulation_1[0]), days_1+1)
@@ -76,23 +134,23 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         # damping
         self.assertEqual(
-            simulation_1[1].size,
+            simulation_1[1][0].size,
             len(population) * len(population))
         self.assertEqual(
-            simulation_2[1].size,
+            simulation_2[1][0].size,
             len(population) * len(population))
         self.assertEqual(
-            simulation_3[1].size,
+            simulation_3[1][0].size,
             len(population) * len(population))
 
-        self.assertLessEqual(simulation_1[1].max(), 1)
-        self.assertGreaterEqual(simulation_1[1].max(), 0)
+        self.assertLessEqual(simulation_1[1][0].max(), 1)
+        self.assertGreaterEqual(simulation_1[1][0].max(), 0)
 
-        self.assertLessEqual(simulation_2[1].max(), 1)
-        self.assertGreaterEqual(simulation_2[1].max(), 0)
+        self.assertLessEqual(simulation_2[1][0].max(), 1)
+        self.assertGreaterEqual(simulation_2[1][0].max(), 0)
 
-        self.assertLessEqual(simulation_3[1].max(), 1)
-        self.assertGreaterEqual(simulation_3[1].max(), 0)
+        self.assertLessEqual(simulation_3[1][0].max(), 1)
+        self.assertGreaterEqual(simulation_3[1][0].max(), 0)
 
     @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
            return_value=0.1 * np.ones((6, 6)))
@@ -104,17 +162,13 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
     def test_data_generation_runs(
             self, mock_population, mock_baseline, mock_minimum):
         """
-
         :param mock_population:
         :param mock_baseline:
         :param mock_minimum:
-
         """
-
-        input_width_1 = 1
+        input_width_1 = 10
         input_width_2 = 5
-
-        label_width_1 = 1
+        label_width_1 = 20
         label_width_2 = 10
 
         num_runs_1 = 1
@@ -122,7 +176,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         data_1 = data_generation.generate_data(
             num_runs_1, self.path, "", input_width_1, label_width_1,
-            save_data=False)
+            save_data=False, max_number_damping=2)
         self.assertEqual(len(data_1['inputs']), num_runs_1)
         self.assertEqual(len(data_1['inputs'][0]), input_width_1)
         self.assertEqual(len(data_1['inputs'][0][0]), 48)
@@ -132,7 +186,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         data_2 = data_generation.generate_data(
             num_runs_2, self.path, "", input_width_2, label_width_2,
-            save_data=False)
+            save_data=False, max_number_damping=2)
         self.assertEqual(len(data_2['inputs']), num_runs_2)
         self.assertEqual(len(data_2['inputs'][0]), input_width_2)
         self.assertEqual(len(data_2['inputs'][0][0]), 48)
@@ -150,25 +204,24 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
     def test_data_generation_save(
             self, mock_population, mock_baseline, mock_minimum):
         """
-
-        :param mock_population:
-        :param mock_baseline:
-        :param mock_minimum:
-
+        : param mock_population:
+        : param mock_baseline:
+        : param mock_minimum:
         """
-
-        input_width = 2
-        label_width = 3
+        input_width = 5
+        label_width = 30
         num_runs = 1
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width)
+                                      label_width, damping_method="random", max_number_damping=2)
         self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(self.path),
-                         ['data_secir_groups.pickle'])
+                         ['data_secir_groups_30days_1_random.pickle'])
 
-# Testing network_architectures.py
+
+# # Testing network_architectures.py
+
     def test_mlp_multi_single(self):
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_single_output(
@@ -248,8 +301,11 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(model.layers), 5)
         input_zero = np.zeros((5, 3, 7))
         output_zeros = model(input_zero)
+        # Number of time series
         self.assertEqual(output_zeros.shape[0], 5)
+        # Number of days per predicted time series
         self.assertEqual(output_zeros.shape[1], 12)
+        # Size of feature space per day
         self.assertEqual(output_zeros.shape[2], 21)
 
     def test_cnn_multi_multi(self):
@@ -303,7 +359,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         model = network_architectures.cnn_multi_input_multi_output(
-            21, 4, 3, 3, 256, 2)
+            21, 4, 4, 3, 256, 2)
         self.assertEqual(len(model.layers), 6)
         input_zero = np.zeros((12, 5, 7))
         output_zeros = model(input_zero)
@@ -311,8 +367,8 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(output_zeros.shape[0], 12)
         # length of one time series
         self.assertEqual(output_zeros.shape[1], 21)
-        # Dimension of one time step
-        self.assertEqual(output_zeros.shape[2], 12)
+        # Dimension of one time step (16 = 4*4)
+        self.assertEqual(output_zeros.shape[2], 16)
 
     def test_lstm_multi_multi(self):
         with self.assertRaises(ValueError) as error:
@@ -358,7 +414,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
         model = network_architectures.lstm_multi_input_multi_output(
-            21, 4, 3, 12, 3, 12)
+            21, 4, 4, 12, 3, 12)
         self.assertEqual(len(model.layers), 6)
         input_zero = np.zeros((12, 5, 7))
         output_zeros = model(input_zero)
@@ -366,53 +422,69 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(output_zeros.shape[0], 12)
         # length of one time series
         self.assertEqual(output_zeros.shape[1], 21)
-        # Dimension of one time step
-        self.assertEqual(output_zeros.shape[2], 12)
+        # Dimension of one time step (16 = 4*4)
+        self.assertEqual(output_zeros.shape[2], 16)
 
-# Testing model.py
     def test_calc_split_index(self):
         with self.assertRaises(ValueError) as error:
-            model.calc_split_index(
+            utils.calc_split_index(
                 10, 0.9, 0.1, 0.1
             )
         error_message = "Summed data set shares are greater than 1. Please adjust the values."
         self.assertEqual(str(error.exception), error_message)
-        split_index = model.calc_split_index(10, 0.7, 0.1, 0.2)
+        split_index = utils.calc_split_index(10, 0.7, 0.1, 0.2)
         self.assertEqual(split_index, [7, 1, 2])
+
+    def test_flat_input(self):
+        A = np.zeros((12, 12))
+        a1 = [A for _ in np.arange(5)]
+        a2 = np.zeros((5, 144))
+        a1_flatten = utils.flat_input(a1)
+        b = a2 == a1_flatten
+        self.assertTrue(np.asarray(b).all())
 
     def test_prepare_data_classic(self):
         data = {
-            "inputs": np.zeros((10, 5, 1)),
-            "labels": np.zeros((10, 2)),
-            "contact_matrix": [np.zeros((2, 2)) for _ in np.arange(10)],
-            "damping_day": [[1] for _ in np.arange(10)]
+            "inputs": np.zeros((10, 5, 48)),
+            "labels": np.zeros((10, 25, 48)),
+            "contact_matrices": [[np.zeros((6, 6)) for _ in np.arange(2)] for _ in np.arange(10)],
+            "damping_days": [[1, 2] for _ in np.arange(10)]
         }
 
         data_new = model.prepare_data_classic(data)
-        res = tf.cast([0, 0, 0, 0, 0, 0, 0, 0, 0, 1], tf.float32)
-        self.assertTrue(all(res == data_new["train_inputs"][0]))
-        self.assertEqual(data_new["train_inputs"].shape, (7, 10))
-        self.assertEqual(data_new["valid_labels"].shape, (2, 2))
+        a = np.zeros(5*48 + 2*36)
+        b = np.array([1, 2])
+        res = tf.cast(np.hstack((a, b)).reshape(
+            (1, 5*48 + 2*36+2)), tf.float32)
+        self.assertTrue(np.asarray(res == data_new["train_inputs"][0]).all())
+        self.assertEqual(data_new["train_inputs"].shape, (7, 5*48 + 2*36 + 2))
+        self.assertEqual(data_new["valid_labels"].shape, (2, 25, 48))
 
     def test_prod_time_series(self):
-        obj = [1, 0, 2]
+        A = np.ones((2, 3))
+        obj = [i*A for i in np.arange(3)]
         ts = model.prod_time_series(obj, 3, 2)
+        res = [[0*A, 0*A], [A, A], [2*A, 2*A]]
         bl = (ts == tf.reshape(
-            tf.stack([[1, 1], [0, 0], [2, 2]]), [3, 2, 1]))
+            tf.stack(res), [3, 2, -1]))
         self.assertTrue(tf.math.reduce_all(bl))
 
-    """
     def test_prepare_data_timeseries(self):
         data = {
-            "inputs": np.zeros((10, 5, 1)),
-            "labels": np.zeros((10, 2)),
-            "contact_matrix": [np.zeros((2, 2)) for _ in np.arange(10)],
-            "damping_day": [[1] for _ in np.arange(10)]
+            "inputs": np.zeros((10, 5, 48)),
+            "labels": np.zeros((10, 25, 48)),
+            "contact_matrices": [[np.zeros((6, 6)) for _ in np.arange(2)] for _ in np.arange(10)],
+            "damping_days": [[1, 2] for _ in np.arange(10)]
         }
         data_new = model.prepare_data_timeseries(data)
-        res = tf.cast([[0, 0, 0, 0, 0, 1] for _ in np.arange(5)], tf.float16)
+        a = np.zeros(48 + 2*36)
+        b = np.array([1, 2])
+        res = tf.cast(np.hstack((a, b)).reshape(
+            (1, 48 + 2*36+2)), tf.float32)
+        res = tf.cast([res for _ in np.arange(5)], tf.float32)
+        self.assertTrue(tf.math.reduce_all(
+            data_new["train_inputs"].shape == (7, 5, 48 + 2*36 + 2)))
         self.assertTrue(tf.math.reduce_all(res == data_new["train_inputs"][0]))
-    """
 
     def test_initialize_model(self):
         # Helper function to normalize the .getconfig() output
@@ -519,7 +591,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         label_width = 10
         num_runs = 5
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width)
+                                      label_width, max_number_damping=1)
 
         # models with multiple outputs
         model_mlp_multi_input_multi_output = model.network_fit(
@@ -527,8 +599,8 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
                 label_width),
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups.pickle",
-            modeltype='classic',  plot=False)
+            filename="data_secir_groups_10days_5_random.pickle",
+            modeltype='classic',  plot_stats=False)
         self.assertEqual(
             model_mlp_multi_input_multi_output.model.output_shape[1],
             label_width)
@@ -542,8 +614,8 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             modeltype='timeseries',
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups.pickle",
-            plot=False)
+            filename="data_secir_groups_10days_5_random.pickle",
+            plot_stats=False)
         self.assertEqual(
             model_lstm_multi_output.model.output_shape[1], label_width)
         self.assertEqual(
@@ -555,12 +627,107 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             modeltype='timeseries',
             training_parameter=training_parameter,
             path=self.path,
-            filename="data_secir_groups.pickle",
-            plot=False)
+            filename="data_secir_groups_10days_5_random.pickle",
+            plot_stats=False)
         self.assertEqual(
             cnn_output.model.output_shape[1], label_width)
         self.assertEqual(
             len(cnn_output.history['val_loss']), max_epochs)
+
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
+           return_value=0.1 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getBaselineMatrix',
+           return_value=0.6 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.get_population',
+           return_value=[[5256.0, 10551, 32368.5,
+                         43637.833333333336, 22874.066666666666, 8473.6]])
+    def test_save_model(
+            self, mock_population, mock_baseline, mock_minimum):
+        """
+        : param mock_population:
+        : param mock_baseline:
+        : param mock_minimum:
+        """
+        input_width = 5
+        label_width = 10
+        num_runs = 2
+
+        data_generation.generate_data(num_runs, self.path, "", input_width,
+                                      label_width, max_number_damping=2)
+        max_epochs = 1
+        early_stop = 100
+        loss = tf.keras.losses.MeanAbsolutePercentageError()
+        optimizer = "Adam"
+        metric = [tf.keras.metrics.MeanAbsoluteError(),
+                  tf.keras.metrics.MeanAbsolutePercentageError()]
+
+        training_parameter = (
+            early_stop, max_epochs, loss, optimizer, metric)
+
+        model_mlp_multi_input_multi_output = model.network_fit(
+            model=network_architectures.mlp_multi_input_multi_output(
+                label_width),
+            training_parameter=training_parameter,
+            path=self.path,
+            filename="data_secir_groups_10days_2_random.pickle",
+            modeltype='classic',  plot_stats=False)
+
+        utils.save_model(model_mlp_multi_input_multi_output.model,
+                         self.path, "mlp_multi_multi")
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+
+        self.assertEqual(os.listdir(self.path),
+                         ['data_secir_groups_10days_2_random.pickle', 'mlp_multi_multi.keras'])
+
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getMinimumMatrix',
+           return_value=0.1 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.getBaselineMatrix',
+           return_value=0.6 * np.ones((6, 6)))
+    @patch('memilio.surrogatemodel.ode_secir_groups.data_generation.get_population',
+           return_value=[[5256.0, 10551, 32368.5,
+                         43637.833333333336, 22874.066666666666, 8473.6]])
+    def test_load_model(
+            self, mock_population, mock_baseline, mock_minimum):
+        """
+        : param mock_population:
+        : param mock_baseline:
+        : param mock_minimum:
+        """
+        input_width = 5
+        label_width = 10
+        num_runs = 2
+
+        data_generation.generate_data(num_runs, self.path, "", input_width,
+                                      label_width, max_number_damping=2)
+        max_epochs = 1
+        early_stop = 100
+        loss = tf.keras.losses.MeanAbsolutePercentageError()
+        optimizer = "Adam"
+        metric = [tf.keras.metrics.MeanAbsoluteError(),
+                  tf.keras.metrics.MeanAbsolutePercentageError()]
+
+        training_parameter = (
+            early_stop, max_epochs, loss, optimizer, metric)
+
+        mlp1 = model.network_fit(
+            model=network_architectures.mlp_multi_input_multi_output(
+                label_width),
+            training_parameter=training_parameter,
+            path=self.path,
+            filename="data_secir_groups_10days_2_random.pickle",
+            modeltype='classic',  plot_stats=False)
+
+        utils.save_model(mlp1.model,
+                         self.path, "mlp_multi_multi")
+
+        path = os.path.join(self.path, "mlp_multi_multi.keras")
+        mlp2 = utils.load_model(path)
+
+        weights1 = mlp1.model.get_weights()
+        weights2 = mlp2.get_weights()
+        for w1, w2 in zip(weights1, weights2):
+            np.testing.assert_allclose(w1, w2)
 
 
 if __name__ == '__main__':
