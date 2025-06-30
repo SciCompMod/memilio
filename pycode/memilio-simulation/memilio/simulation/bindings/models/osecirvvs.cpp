@@ -281,7 +281,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
           py::arg("model"), py::arg("integrator") = py::none());
 
     pymio::bind_ModelNode<mio::osecirvvs::Model<double>>(m, "ModelNode");
-    pymio::bind_SimulationNode<double, mio::osecirvvs::Simulation<double>>(m, "SimulationNode");
+    pymio::bind_SimulationNode<mio::osecirvvs::Simulation<double>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecirvvs::Model<double>>(m, "ModelGraph");
     pymio::bind_MobilityGraph<mio::osecirvvs::Simulation<double>>(m, "MobilityGraph");
     pymio::bind_GraphSimulation<MobilityGraph>(m, "MobilitySimulation");
@@ -290,7 +290,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
     py::bind_vector<std::vector<MobilityGraph>>(m, "EnsembleGraphResults");
-    bind_ParameterStudy<double, mio::osecirvvs::Simulation<double>>(m, "ParameterStudy");
+    bind_ParameterStudy<mio::osecirvvs::Simulation<double>>(m, "ParameterStudy");
 
     m.def(
         "draw_sample",
@@ -341,7 +341,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP,
                                               ContactLocation, mio::osecirvvs::Model<double>,
-                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup,
+                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
                                               mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
                 mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain,
                 weights);
