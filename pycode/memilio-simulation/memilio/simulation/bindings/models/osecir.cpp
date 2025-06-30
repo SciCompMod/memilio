@@ -185,8 +185,8 @@ PYBIND11_MODULE(_simulation_osecir, m)
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
-    m.def("ensemble_mean", &mio::ensemble_mean);
-    m.def("ensemble_percentile", &mio::ensemble_percentile);
+    m.def("ensemble_mean", &mio::ensemble_mean<double>);
+    m.def("ensemble_percentile", &mio::ensemble_percentile<double>);
 
     pymio::iterable_enum<mio::osecir::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::osecir::InfectionState::Susceptible)
@@ -288,7 +288,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP
                                               ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
-                                              mio::MobilityCoefficientGroup, mio::osecir::InfectionState,
+                                              mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState,
                                               decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
                                                                                   mobile_comp, contact_locations_size,
                                                                                   mio::read_mobility_plain, weights);
@@ -315,9 +315,9 @@ PYBIND11_MODULE(_simulation_osecir, m)
 #endif // MEMILIO_HAS_JSONCPP
 
     m.def("interpolate_simulation_result", py::overload_cast<const MobilityGraph&>(
-                                               &mio::interpolate_simulation_result<mio::osecir::Simulation<double>>));
+                                               &mio::interpolate_simulation_result<double, mio::osecir::Simulation<double>>));
 
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<double, MobilityGraph>);
 
     m.attr("__version__") = "dev";
 }
