@@ -46,10 +46,10 @@ TimeSeries<FP> merge_time_series(TimeSeries<FP>& ts1, TimeSeries<FP>& ts2, bool 
         log_error("TimeSeries have a different number of elements.");
     }
     else {
-        int t1_iterator  = 0;
-        int t2_iterator  = 0;
-        bool t1_finished = false;
-        bool t2_finished = false;
+        Eigen::Index t1_iterator = 0;
+        Eigen::Index t2_iterator = 0;
+        bool t1_finished         = false;
+        bool t2_finished         = false;
         while (!t1_finished || !t2_finished) {
             if (!t1_finished) {
                 if (ts1.get_time(t1_iterator) < ts2.get_time(t2_iterator) ||
