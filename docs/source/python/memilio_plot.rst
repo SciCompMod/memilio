@@ -59,6 +59,7 @@ Coverage report for actual master:
 
 Inspection via pylint
 ---------------------
+
 The following packages have to be installed to run pylint:
 
 * pylint

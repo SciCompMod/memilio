@@ -1,7 +1,6 @@
 MEmilio Generation Package
 ==========================
 
-
 This package provides an automatic code generator for python bindings of the MEmilio C++ library. 
 It enables the automatic generation of a part of the :doc:`Python Bindings <memilio_simulation>` that is common across multiple models. 
 For a particular example, see the SEIR model with its files `oseir.cpp` and `oseir.py`.
@@ -18,6 +17,12 @@ Dependencies
 The package uses the `Clang C++ library <https://clang.llvm.org/>`_ and the `LibClang Python library <https://libclang.readthedocs.io/en/latest/index.html>`_ to analyze the C++ code of a model. Both need to be installed and share the same version.
 
 Required python packages:
+
+* scikit-build
+* dataclasses
+* dataclasses_json
+* graphviz
+* importlib-resources
 
 Usage
 -----
@@ -43,7 +48,8 @@ When working on a new model you can copy the example script and add an additiona
 Testing
 -------
 
-The package provides a test suite in `memilio/generation_test <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-surrogatemodel/memilio/generation_test>`_. To run the tests, simply run the following command:
+The package provides a test suite in `memilio/generation_test <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-surrogatemodel/memilio/generation_test>`_. 
+To run the tests, simply run the following command:
 
 .. code-block:: console 
 

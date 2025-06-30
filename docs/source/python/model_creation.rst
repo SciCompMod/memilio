@@ -28,6 +28,7 @@ then the following steps should give an overview of what needs to be done:
 #. (Add the package to the documentation and stubs generation)
 
 - talk about memilio generation :doc:`memilio-generation <memilio_generation>`
+
 Expanding the simulation packages
 ---------------------------------
 
