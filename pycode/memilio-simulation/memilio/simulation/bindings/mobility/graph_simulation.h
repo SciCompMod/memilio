@@ -35,7 +35,7 @@ namespace pymio
 template <class Graph>
 void bind_GraphSimulation(pybind11::module_& m, std::string const& name)
 {
-    using GS = mio::GraphSimulation<double, Graph>;
+    using GS = mio::GraphSimulation<double, Graph, double, double>;
     bind_class<GS, EnablePickling::Never>(m, name.c_str())
         .def(pybind11::init([](Graph& graph, double t0, double dt) {
                  return std::make_unique<GS>(mio::make_mobility_sim(t0, dt, std::move(graph)));
