@@ -61,7 +61,7 @@ void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
             [](mio::UncertainContactMatrix<double>& self, const std::vector<std::pair<double, double>>& v) {
                 self.get_school_holidays().resize(v.size());
                 std::transform(v.begin(), v.end(), self.get_school_holidays().begin(), [](auto& p) {
-                    return std::make_pair(mio::SimulationTime(p.first), mio::SimulationTime(p.second));
+                    return std::make_pair(mio::SimulationTime<double>(p.first), mio::SimulationTime<double>(p.second));
                 });
             })
         .def_property("school_holiday_damping",
