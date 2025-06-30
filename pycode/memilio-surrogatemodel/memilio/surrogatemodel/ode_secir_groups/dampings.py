@@ -41,13 +41,13 @@ def calc_dist_days(days, min_day, n_dampings, min_distance=1):
     return res
 
 
-def generate_dampings(days, max_number_damping, method, min_distance=2,
+def generate_dampings(days, number_dampings, method, min_distance=2,
                       min_damping_day=2):
     """
     Producing dampings for timeseries of length days according to the used method. 
 
     :param days: Number of days per time series 
-    :param max_number_damping: Number of days on which damping can occur.
+    :param number_dampings: Number of days on which damping can occur.
     :param method: Method used to generate the dampings, possible values "classic", "active", "random"
     :param min_distance: Minimal distance between two dampings 
     :min_damping_day: First day, where a damping can be applied 
@@ -55,13 +55,13 @@ def generate_dampings(days, max_number_damping, method, min_distance=2,
     """
     if method == "classic":
         damp_days, damp_factors = dampings_classic(
-            days, max_number_damping, min_distance, min_damping_day)
+            days, number_dampings, min_distance, min_damping_day)
     elif method == "active":
         damp_days, damp_factors = dampings_active(
-            days, max_number_damping, min_damping_day)
+            days, number_dampings, min_damping_day)
     elif method == "random":
         damp_days, damp_factors = dampings_random(
-            days, max_number_damping, min_distance, min_damping_day)
+            days, number_dampings, min_distance, min_damping_day)
     else:
         raise ValueError(
             "The method argument has to be one of the following: 'classic', 'active' or 'random'.")
@@ -70,14 +70,14 @@ def generate_dampings(days, max_number_damping, method, min_distance=2,
 
 
 # Active Damping
-def dampings_active(days, max_number_damping, min_damping_day):
+def dampings_active(days, number_dampings, min_damping_day):
     """"
     Generating list of damping days and corresponding damping factors using the active method. 
 
     The damping days are created with equal distance on the interval [1, days-3].
 
     :param days: Number of simulated days 
-    :param max_number_damping: Maximal number of dampings per simulation
+    :param number_dampings: Maximal number of dampings per simulation
     :param min_damping_day: First day, where a damping can be applied 
     :returns: list of days and damping factors
     """
@@ -93,13 +93,13 @@ def dampings_active(days, max_number_damping, min_damping_day):
 
     # Defining possible damping days
     distance_between_days = calc_dist_days(
-        days, min_damping_day, max_number_damping)
+        days, min_damping_day, number_dampings)
     damp_days = [min_damping_day + distance_between_days*(i+1)
-                 for i in np.arange(max_number_damping)]
+                 for i in np.arange(number_dampings)]
 
     # Generate damping factors
     dampings = calc_factors_active(
-        max_number_damping, gamma_pos, alpha, p0, t1_max, t1_min, t2_max, t2_min)
+        number_dampings, gamma_pos, alpha, p0, t1_max, t1_min, t2_max, t2_min)
 
     return damp_days, dampings
 
@@ -153,28 +153,32 @@ def calc_factors_active(n_ddays, gamma_pos=0, alpha=-1, p0=0.5, t1_max=-0.3, t1_
 
 
 # Classic Damping
-def dampings_classic(days, max_number_damping,  min_distance=2,
+def dampings_classic(days, number_dampings,  min_distance=2,
                      min_damping_day=2):
     """
     Generate the damping days using shadow damping and picking days uniformly with a given minimal distance. 
 
+    The idea behind shadow damping is the following: Days are picked randomly in the interval between min_damping_day and days. 
+    After picking one day a fixed number of days before and after the chosen day is blocked. 
+    The procedure is repeated till number_damping many days are chosen. To overcome the problem of higher probability at the boundary, 
+    the interval is artificially increased, artificial days are not counted. 
     The corresponding factors are drawn uniformly from the interval (0,0.5)
 
     :param days: Number of days simulated per run. 
-    :param max_number_damping: Number of damping days generated. 
+    :param number_dampings: Number of damping days generated. 
     :param min_distance: Minimal distance between two dampings 
     :param min_damping_day: First day, where a damping can be applied 
-    :returns: Two lists of length max_number_dampings containing the days and the factors.
+    :returns: Two lists of length number_dampingss containing the days and the factors.
     """
     # Checking, if the given parameters are compatible
-    calc_dist_days(days, min_damping_day, max_number_damping, min_distance)
+    calc_dist_days(days, min_damping_day, number_dampings, min_distance)
 
     # Generating damping days
     damp_days = generate_dampings_withshadowdamp(
-        max_number_damping, days, min_distance, min_damping_day, 1)[0]
+        number_dampings, days, min_distance, min_damping_day, 1)[0]
 
     # Generating damping factors
-    damp_factors = np.random.uniform(0, 0.5, max_number_damping).tolist()
+    damp_factors = np.random.uniform(0, 0.5, number_dampings).tolist()
 
     return damp_days, damp_factors
 
@@ -267,7 +271,7 @@ def generate_dampings_withshadowdamp(number_of_dampings, days, min_distance, min
 
 # Random Damping
 
-def dampings_random(days, max_number_damping, min_damping_day=2,
+def dampings_random(days, number_dampings, min_damping_day=2,
                     min_distance_damping_day=2):
     """
     Generate random damping days according to the following rule. 
@@ -277,24 +281,24 @@ def dampings_random(days, max_number_damping, min_damping_day=2,
     between 0 and 0.5.
 
     :param days: Number of days simulated per run. 
-    :param max_number_damping: Number of damping days generated. 
+    :param number_dampings: Number of damping days generated. 
     :param min_distance: Minimal distance between two dampings 
     :param min_damping_day: First day, where a damping can be applied 
-    :returns: Two lists of length max_number_dampings containing the days and the factors.
+    :returns: Two lists of length number_dampingss containing the days and the factors.
     """
     # Setting parameters
 
     # Calculating the expected distance between two dampings
     distance_between_days = calc_dist_days(
-        days, min_damping_day, max_number_damping, min_distance_damping_day)
+        days, min_damping_day, number_dampings, min_distance_damping_day)
     # Reducing due to minimal distance restriction
     reduced_distance = distance_between_days - min_distance_damping_day
 
     # Try till one admissible configuration of waiting times is produced
     running = True
     while running:
-        dist = np.random.geometric(1/reduced_distance, max_number_damping)
-        if np.sum(dist) + min_damping_day + max_number_damping*min_distance_damping_day < days:
+        dist = np.random.geometric(1/reduced_distance, number_dampings)
+        if np.sum(dist) + min_damping_day + number_dampings*min_distance_damping_day < days:
             running = False
 
     # Reconstructing the days using the waiting times
@@ -306,6 +310,6 @@ def dampings_random(days, max_number_damping, min_damping_day=2,
         day = day + min_distance_damping_day
 
     # Generating the associated damping factors
-    damping_factors = np.random.uniform(0, 0.5, max_number_damping)
+    damping_factors = np.random.uniform(0, 0.5, number_dampings)
 
     return ddays, damping_factors

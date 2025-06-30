@@ -42,16 +42,14 @@ def interpolate_age_groups(data_entry):
     return [age_groups[key] for key in age_groups]
 
 
-def remove_confirmed_compartments(result_array):
+def remove_confirmed_compartments(result_array, delete_indices):
     """ Removes the confirmed compartments which are not used in the data generation.
 
     :param result_array: Array containing the simulation results.
+    :param delete_indices: flat indices indicating position containing data from confirmed compartments. 
     :returns: Array containing the simulation results without the confirmed compartments.
 
     """
-    num_groups = int(result_array.shape[1] / 10)
-    delete_indices = [index for i in range(
-        num_groups) for index in (3+10*i, 5+10*i)]
     return np.delete(result_array, delete_indices, axis=1)
 
 
@@ -61,7 +59,7 @@ def transform_data(data, transformer, num_runs, num_groups=6, num_compartments=8
 
     :param data: Data to be transformed.
     :param transformer: Transformer used for the transformation.
-    :param num_runs: Number of samples represented by the data. 
+    :param num_runs: Number of samples represented by the data.
     :param num_groups: Number of age groups represented by data.
     :param num_compartments: Number of compartments. 
     :returns: Transformed data.
@@ -86,9 +84,6 @@ def save_model(model, path, modelname):
         os.mkdir(path)
     path_to_file = os.path.join(path, modelname + ".keras")
     model.save(path_to_file)
-    # Wird noch gelöscht
-    print(path_to_file)
-    #####
     print("Model successfully saved")
 
 

@@ -33,32 +33,9 @@ from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
-from memilio.surrogatemodel.surrogate_utils import (transform_data)
-
-
-def remove_confirmed_compartments(result_array):
-    """Aggregates the confirmed and non-confirmed infection compartments.
-
-    :param result_array: Array containing simulation results with compartment populations
-    :returns: Modified array with aggregated compartments
-    """
-
-    # Defining relevant indices
-    indices_inf_no_symp = [2, 3]
-    index_inf_no_symp = 2
-    indices_inf_symp = [4, 5]
-    index_inf_symp = 4
-    indices_removed = [3, 5]
-
-    # Calculating the values for the merged compartments
-    sum_inf_no_symp = np.sum(result_array[:, indices_inf_no_symp], axis=1)
-    sum_inf_symp = np.sum(result_array[:, indices_inf_symp], axis=1)
-
-    # Seting the new values
-    result_array[:, index_inf_no_symp] = sum_inf_no_symp
-    result_array[:, index_inf_symp] = sum_inf_symp
-
-    return np.delete(result_array, indices_removed, axis=1)
+from memilio.surrogatemodel.surrogate_utils import (
+    interpolate_age_groups, remove_confirmed_compartments, transform_data)
+import memilio.simulation.osecir as osecir
 
 
 def run_secir_simple_simulation(days):
@@ -127,6 +104,13 @@ def run_secir_simple_simulation(days):
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones(
         (num_groups, num_groups)) * 0
 
+    # Collecting deletable indices
+    index_no_sym_conf = model.populations.get_flat_index(
+        osecir.MultiIndex_PopulationsArray(A0, osecir.InfectionState.InfectedNoSymptomsConfirmed))
+    index_sym_conf = model.populations.get_flat_index(
+        osecir.MultiIndex_PopulationsArray(A0, osecir.InfectionState.InfectedSymptomsConfirmed))
+    del_indices = (index_no_sym_conf, index_sym_conf)
+
     # Apply mathematical constraints to parameters
     model.apply_constraints()
 
@@ -139,7 +123,7 @@ def run_secir_simple_simulation(days):
     result_array = result.as_ndarray()
 
     result_array = remove_confirmed_compartments(
-        result_array[1:, :].transpose())
+        result_array[1:, :].transpose(), del_indices)
 
     dataset_entries = copy.deepcopy(result_array)
 

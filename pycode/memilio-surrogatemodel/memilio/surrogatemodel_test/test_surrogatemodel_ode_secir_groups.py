@@ -176,7 +176,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         data_1 = data_generation.generate_data(
             num_runs_1, self.path, "", input_width_1, label_width_1,
-            save_data=False, max_number_damping=2)
+            save_data=False, number_dampings=2)
         self.assertEqual(len(data_1['inputs']), num_runs_1)
         self.assertEqual(len(data_1['inputs'][0]), input_width_1)
         self.assertEqual(len(data_1['inputs'][0][0]), 48)
@@ -186,7 +186,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         data_2 = data_generation.generate_data(
             num_runs_2, self.path, "", input_width_2, label_width_2,
-            save_data=False, max_number_damping=2)
+            save_data=False, number_dampings=2)
         self.assertEqual(len(data_2['inputs']), num_runs_2)
         self.assertEqual(len(data_2['inputs'][0]), input_width_2)
         self.assertEqual(len(data_2['inputs'][0][0]), 48)
@@ -213,7 +213,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 1
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width, damping_method="random", max_number_damping=2)
+                                      label_width, damping_method="random", number_dampings=2)
         self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(self.path),
@@ -591,7 +591,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         label_width = 10
         num_runs = 5
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width, max_number_damping=1)
+                                      label_width, number_dampings=1)
 
         # models with multiple outputs
         model_mlp_multi_input_multi_output = model.network_fit(
@@ -653,7 +653,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 2
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width, max_number_damping=2)
+                                      label_width, number_dampings=2)
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()
@@ -699,7 +699,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         num_runs = 2
 
         data_generation.generate_data(num_runs, self.path, "", input_width,
-                                      label_width, max_number_damping=2)
+                                      label_width, number_dampings=2)
         max_epochs = 1
         early_stop = 100
         loss = tf.keras.losses.MeanAbsolutePercentageError()

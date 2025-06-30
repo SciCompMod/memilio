@@ -36,6 +36,8 @@ from memilio.simulation.osecir import (Index_InfectionState,
 import memilio.surrogatemodel.ode_secir_groups.dampings as dampings
 from memilio.surrogatemodel.surrogate_utils import (
     interpolate_age_groups, remove_confirmed_compartments, transform_data)
+import memilio.simulation as mio
+import memilio.simulation.osecir as osecir
 
 
 def run_secir_groups_simulation(days, damping_days, damping_factors, populations):
@@ -49,6 +51,9 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
     :returns: List containing the populations in each compartment used to initialize the run.
 
     """
+    # Collect indices of confirmed compartments
+    del_indices = []
+
     if len(damping_days) != len(damping_factors):
         raise ValueError("Length of damping_days and damping_factors differ!")
 
@@ -114,6 +119,14 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
         # twice the value of RiskOfInfectionFromSymptomatic
         model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
 
+        # Collecting deletable indices
+        index_no_sym_conf = model.populations.get_flat_index(
+            osecir.MultiIndex_PopulationsArray(mio.AgeGroup(i), osecir.InfectionState.InfectedNoSymptomsConfirmed))
+        index_sym_conf = model.populations.get_flat_index(
+            osecir.MultiIndex_PopulationsArray(mio.AgeGroup(i), osecir.InfectionState.InfectedSymptomsConfirmed))
+        del_indices.append(index_no_sym_conf)
+        del_indices.append(index_sym_conf)
+
     # StartDay is the n-th day of the year
     model.parameters.StartDay = (
         date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
@@ -148,7 +161,7 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
 
     # Omit first column, as the time points are not of interest here.
     result_array = remove_confirmed_compartments(
-        np.transpose(result.as_ndarray()[1:, :]))
+        np.transpose(result.as_ndarray()[1:, :]), del_indices)
 
     dataset_entries = copy.deepcopy(result_array)
     dataset_entries = np.nan_to_num(dataset_entries)
@@ -158,7 +171,7 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
 
 def generate_data(
         num_runs, path_out, path_population, input_width, label_width,
-        normalize=True, save_data=True, damping_method="random", max_number_damping=5):
+        normalize=True, save_data=True, damping_method="random", number_dampings=5):
     """ Generate data sets of num_runs many equation-based model simulations and possibly transforms the computed results by a log(1+x) transformation.
     Divides the results in input and label data sets and returns them as a dictionary of two TensorFlow Stacks.
     In general, we have 8 different compartments and 6 age groups.  If we choose
@@ -174,7 +187,7 @@ def generate_data(
     :param normalize: Default: true Option to transform dataset by logarithmic normalization.
     :param save_data: Default: true Option to save the dataset.
     :param damping_method: String specifying the damping method, that should be used. Possible values "classic", "active", "random".
-    :param max_number_damping: Maximal number of possible dampings. 
+    :param number_dampings: Maximal number of possible dampings. 
     :returns: Data dictionary of input and label data sets.
 
     """
@@ -200,7 +213,7 @@ def generate_data(
 
         # Generate random damping days
         damping_days, damping_factors = dampings.generate_dampings(
-            days, max_number_damping, method=damping_method, min_distance=2,
+            days, number_dampings, method=damping_method, min_distance=2,
             min_damping_day=2)
 
         data_run, damped_matrices = run_secir_groups_simulation(
@@ -309,6 +322,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 1
+    num_runs = 10000
     data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width, damping_method="classic")
