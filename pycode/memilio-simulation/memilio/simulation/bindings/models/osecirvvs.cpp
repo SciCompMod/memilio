@@ -369,7 +369,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MobilityGraph&>(
-              &mio::interpolate_simulation_result<mio::osecirvvs::Simulation<double>>));
+              &mio::interpolate_simulation_result<double, mio::osecirvvs::Simulation<double>>));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
 
