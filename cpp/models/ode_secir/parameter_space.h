@@ -54,7 +54,7 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
         auto upper_bound =
             min<FP>(max<FP>(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<ScalarType>::max());
 
-        if (mio::floating_point_equal(lower_bound, upper_bound, mio::Limits<FP>::zero_tolerance())) {
+        if (mio::floating_point_equal<FP>(lower_bound, upper_bound, mio::Limits<FP>::zero_tolerance())) {
             //MSVC has problems if standard deviation for normal distribution is zero
             mio::log_debug("Bounded ParameterDistribution has standard deviation close to zero. Therefore constant "
                            "distribution is used.");

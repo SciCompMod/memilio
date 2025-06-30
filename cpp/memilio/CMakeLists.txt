@@ -96,6 +96,7 @@ add_library(memilio
     utils/miompi.cpp
     utils/mioomp.h
     utils/type_list.h
+    ad/include/ad/ad_spdlog_formatter.h
 )
 
 target_include_directories(memilio PUBLIC

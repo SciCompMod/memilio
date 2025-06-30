@@ -856,7 +856,7 @@ template <class FP, class TS>
 decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP abs_tol = 0, FP rel_tol = 0)
 {
     auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
-        return floating_point_equal(t, t_search, abs_tol, rel_tol);
+        return floating_point_equal<FP>(t, t_search, abs_tol, rel_tol);
     });
     if (iter_t != ts.get_reverse_times().end()) {
         return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());

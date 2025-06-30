@@ -80,7 +80,7 @@
 #endif
 
 #ifndef AD_DEFAULT_TAPE_SIZE
-#define AD_DEFAULT_TAPE_SIZE (1024 * 1024 * 1000) // 1.000 MB
+#define AD_DEFAULT_TAPE_SIZE (1024 * 1024 * 200) // 200 MB
 #endif
 
 #define ADi_INLINEDEF inline

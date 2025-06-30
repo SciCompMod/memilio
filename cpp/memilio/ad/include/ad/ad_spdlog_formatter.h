@@ -12,7 +12,7 @@ struct fmt::formatter<ad::gt1s<double>::type> {
         return ctx.end();
     }
     template <typename FormatContext>
-    auto format(const ad::gt1s<double>::type& input, FormatContext& ctx) -> decltype(ctx.out())
+    auto format(const ad::gt1s<double>::type& input, FormatContext& ctx) const -> decltype(ctx.out())
     {
         return format_to(ctx.out(), "{}", ad::value(input));
     }
@@ -25,7 +25,7 @@ struct fmt::formatter<ad::ga1s<double>::type> {
         return ctx.end();
     }
     template <typename FormatContext>
-    auto format(const ad::ga1s<double>::type& input, FormatContext& ctx) -> decltype(ctx.out())
+    auto format(const ad::ga1s<double>::type& input, FormatContext& ctx) const -> decltype(ctx.out())
     {
         return format_to(ctx.out(), "{}", ad::value(input));
     }
@@ -38,7 +38,8 @@ struct fmt::formatter<mio::UncertainValue<ad::gt1s<double>::type>> {
         return ctx.end();
     }
     template <typename FormatContext>
-    auto format(const mio::UncertainValue<ad::gt1s<double>::type>& input, FormatContext& ctx) -> decltype(ctx.out())
+    auto format(const mio::UncertainValue<ad::gt1s<double>::type>& input, FormatContext& ctx) const
+        -> decltype(ctx.out())
     {
         return format_to(ctx.out(), "{}", ad::value(input.value()));
     }
@@ -51,7 +52,8 @@ struct fmt::formatter<mio::UncertainValue<ad::ga1s<double>::type>> {
         return ctx.end();
     }
     template <typename FormatContext>
-    auto format(const mio::UncertainValue<ad::ga1s<double>::type>& input, FormatContext& ctx) -> decltype(ctx.out())
+    auto format(const mio::UncertainValue<ad::ga1s<double>::type>& input, FormatContext& ctx) const
+        -> decltype(ctx.out())
     {
         return format_to(ctx.out(), "{}", ad::value(input.value()));
     }
