@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/compartments/feedback_simulation.h"

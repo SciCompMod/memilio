@@ -660,12 +660,17 @@ TEST(TestMergeTimeSeries, joint_tp_add)
     mio::TimeSeries<double> ts2(2);
     ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
     ts2.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts1.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts2.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 3.));
 
     auto merged_ts = mio::merge_time_series(ts1, ts2, true);
-    ASSERT_EQ(merged_ts.get_num_time_points(), 1);
+    ASSERT_EQ(merged_ts.get_num_time_points(), 2);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[0], 3., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[1], 3., 1e-12);
+    EXPECT_NEAR(merged_ts.get_time(1), 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[0], 5., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[1], 5., 1e-12);
 }
 
 TEST(TestMergeTimeSeries, joint_tp)
@@ -674,10 +679,15 @@ TEST(TestMergeTimeSeries, joint_tp)
     mio::TimeSeries<double> ts2(2);
     ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
     ts2.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts1.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts2.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 3.));
 
     auto merged_ts = mio::merge_time_series(ts1, ts2, false);
-    ASSERT_EQ(merged_ts.get_num_time_points(), 1);
+    ASSERT_EQ(merged_ts.get_num_time_points(), 2);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[1], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_time(1), 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[0], 2., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[1], 2., 1e-12);
 }
