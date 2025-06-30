@@ -80,12 +80,12 @@ PYBIND11_MODULE(_simulation, m)
     auto contact_matrix_class =
         pymio::bind_class<mio::ContactMatrix<double>, pymio::EnablePickling::Required>(m, "ContactMatrix");
     pymio::bind_damping_expression_members(contact_matrix_class);
-    contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix::get_num_groups);
+    contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix<double>::get_num_groups);
 
     auto contact_matrix_group_class =
         pymio::bind_class<mio::ContactMatrixGroup<double>, pymio::EnablePickling::Required>(m, "ContactMatrixGroup");
     pymio::bind_damping_expression_group_members(contact_matrix_group_class);
-    contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
+    contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup<double>::get_num_groups);
 
     pymio::bind_damping_sampling(m, "DampingSampling");
 
