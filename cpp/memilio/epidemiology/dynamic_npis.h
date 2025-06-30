@@ -195,8 +195,8 @@ public:
 
 private:
     std::vector<std::pair<FP, std::vector<DampingSampling<FP>>>> m_thresholds;
-    SimulationTime<FP> m_duration = 14.0;
-    SimulationTime<FP> m_interval = 3.0;
+    SimulationTime<FP> m_duration = SimulationTime<FP>(14.0);
+    SimulationTime<FP> m_interval = SimulationTime<FP>( 3.0);
     FP m_base = 1.0;
 };
 
