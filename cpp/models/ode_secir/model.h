@@ -503,7 +503,7 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 
         for (Eigen::Index l = 0; l < (Eigen::Index)num_groups; l++) {
             cont_freq_eff(l, (size_t)k) =
-                season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(t_idx))(
+                season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(static_cast<FP>(t_idx)))(
                                  static_cast<Eigen::Index>((size_t)l), static_cast<Eigen::Index>((size_t)k));
         }
     }
