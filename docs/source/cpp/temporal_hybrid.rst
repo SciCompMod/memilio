@@ -125,5 +125,5 @@ Additionally, the individual results of the models can be merged to one joint ``
 .. code-block:: cpp
 
     //Print joint result time series
-    auto ts = mio::interpolate_simulation_result(mio::hybrid::merge_time_series(ts_abm, ts_ode));
+    auto ts = mio::interpolate_simulation_result(mio::merge_time_series(ts_abm, ts_ode));
     ts.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});

@@ -26,7 +26,6 @@
 #include "memilio/utils/time_series.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/model.h"
-#include "hybrid/analyze_result.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -644,7 +643,7 @@ TEST(TestMergeTimeSeries, no_joint_tp)
     ts2.add_time_point(0.3, mio::TimeSeries<double>::Vector::Constant(2, 2.));
     ts2.add_time_point(0.4, mio::TimeSeries<ScalarType>::Vector::Constant(2, 3.));
 
-    auto merged_ts = mio::hybrid::merge_time_series(ts1, ts2);
+    auto merged_ts = mio::merge_time_series(ts1, ts2);
     ASSERT_EQ(merged_ts.get_num_time_points(), 4);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_time(2), 0.3, 1e-12);
@@ -662,7 +661,7 @@ TEST(TestMergeTimeSeries, joint_tp_add)
     ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
     ts2.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 2.));
 
-    auto merged_ts = mio::hybrid::merge_time_series(ts1, ts2, true);
+    auto merged_ts = mio::merge_time_series(ts1, ts2, true);
     ASSERT_EQ(merged_ts.get_num_time_points(), 1);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[0], 3., 1e-12);
@@ -676,7 +675,7 @@ TEST(TestMergeTimeSeries, joint_tp)
     ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
     ts2.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 2.));
 
-    auto merged_ts = mio::hybrid::merge_time_series(ts1, ts2, false);
+    auto merged_ts = mio::merge_time_series(ts1, ts2, false);
     ASSERT_EQ(merged_ts.get_num_time_points(), 1);
     EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
     EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
