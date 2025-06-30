@@ -274,15 +274,15 @@ public:
         using std::pow;
         const auto& icu_occ    = m_feedback_parameters.template get<ICUOccupancyHistory<FP>>();
         size_t num_time_points = icu_occ.get_num_time_points();
-        size_t n = min<FP>(static_cast<size_t>(num_time_points), m_feedback_parameters.template get<GammaCutOff>());
-        FP perceived_risk = 0.0;
-        const auto& a     = m_feedback_parameters.template get<GammaShapeParameter<FP>>();
-        const auto& b     = m_feedback_parameters.template get<GammaScaleParameter<FP>>();
+        size_t n               = std::min(num_time_points, m_feedback_parameters.template get<GammaCutOff>());
+        FP perceived_risk      = 0.0;
+        const auto& a          = m_feedback_parameters.template get<GammaShapeParameter<FP>>();
+        const auto& b          = m_feedback_parameters.template get<GammaScaleParameter<FP>>();
         for (size_t i = num_time_points - n; i < num_time_points; ++i) {
             size_t day   = i - (num_time_points - n);
             FP gamma     = pow(b, a) * pow(day, a - 1) * exp(-b * day) / std::tgamma(a);
             FP perc_risk = icu_occ.get_value(i).sum() / m_feedback_parameters.template get<NominalICUCapacity<FP>>();
-            perc_risk    = min(perc_risk, FP(1.0));
+            perc_risk    = min<FP>(perc_risk, 1.0);
             perceived_risk += perc_risk * gamma;
         }
         return perceived_risk;
