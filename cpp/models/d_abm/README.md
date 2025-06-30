@@ -7,7 +7,7 @@ This agent-based model uses a Markov process to simulate disease dynamics. The f
 ```
 The operator $G$ defines the infection state adoptions and only acts on $Z$, while $L$ defines location changes, only acting on $X$. Infection state adoptions are modeled with independent Poisson processes given by adoption rate functions. Movement is modeled with independent diffusion processes. A temporal Gillespie algorithm is used for simulation, a direct method without rejection sampling. Therefore, $G$ and $L$ are not implemented explicitly, instead their effects are sampled via the `move` and `adoption_rate` functions, respectively.
 
-The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. We here implemented a quadwell potential given in the class QuadWellModel, but any other suitable potential can be used as implementation. 
+The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. We here implemented a quadwell and a singlewell potential given in the class QuadWell and SingleWell, but any other suitable potential can be used as implementation. 
 
 ## Simulation
 
