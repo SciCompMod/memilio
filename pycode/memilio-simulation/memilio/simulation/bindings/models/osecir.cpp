@@ -230,7 +230,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
           py::arg("model"), py::arg("integrator") = py::none());
 
     pymio::bind_ModelNode<mio::osecir::Model<double>>(m, "ModelNode");
-    pymio::bind_SimulationNode<double, mio::osecir::Simulation<double>>(m, "SimulationNode");
+    pymio::bind_SimulationNode<mio::osecir::Simulation<double>>(m, "SimulationNode");
     pymio::bind_ModelGraph<mio::osecir::Model<double>>(m, "ModelGraph");
     pymio::bind_MobilityGraph<mio::osecir::Simulation<double>>(m, "MobilityGraph");
     pymio::bind_GraphSimulation<MobilityGraph>(m, "MobilitySimulation");
