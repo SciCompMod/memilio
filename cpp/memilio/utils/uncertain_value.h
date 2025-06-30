@@ -78,8 +78,8 @@ public:
     }
 
     // Copy and Move
-
-    UncertainValue(UncertainValue<FP>&& other) = default;
+    UncertainValue(UncertainValue<FP>&& other) noexcept  = default;
+    UncertainValue& operator=(UncertainValue&&) noexcept = default;
 
     /**
      * @brief Copy-construct from another UncertainValue.
@@ -305,7 +305,7 @@ public:
 
 private:
     FP m_value;
-    std::unique_ptr<ParameterDistribution> m_dist;
+    std::unique_ptr<ParameterDistribution> m_dist = nullptr;
 };
 
 // Helper to format as scalar for spdlog
@@ -422,68 +422,97 @@ inline bool operator!=(const UncertainValue<FP>& lhs, const UncertainValue<FP>& 
 
 // Arithmetic between two UncertainValue (returns FP)
 template <typename FP>
-inline auto operator*(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+inline FP operator*(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs.value() * rhs.value();
 }
 template <typename FP>
-inline auto operator/(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+inline FP operator/(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs.value() / rhs.value();
 }
 template <typename FP>
-inline auto operator+(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+inline FP operator+(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs.value() + rhs.value();
 }
 template <typename FP>
-inline auto operator-(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+inline FP operator-(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs.value() - rhs.value();
 }
 
 // Arithmetic with scalar on right
 template <typename FP, typename T>
-inline auto operator*(const UncertainValue<FP>& lhs, const T& rhs)
+inline FP operator*(const UncertainValue<FP>& lhs, const T& rhs)
 {
     return lhs.value() * rhs;
 }
 template <typename FP, typename T>
-inline auto operator/(const UncertainValue<FP>& lhs, const T& rhs)
+inline FP operator/(const UncertainValue<FP>& lhs, const T& rhs)
 {
     return lhs.value() / rhs;
 }
 template <typename FP, typename T>
-inline auto operator+(const UncertainValue<FP>& lhs, const T& rhs)
+inline FP operator+(const UncertainValue<FP>& lhs, const T& rhs)
 {
     return lhs.value() + rhs;
 }
 template <typename FP, typename T>
-inline auto operator-(const UncertainValue<FP>& lhs, const T& rhs)
+inline FP operator-(const UncertainValue<FP>& lhs, const T& rhs)
 {
     return lhs.value() - rhs;
 }
 
 // Arithmetic with scalar on left
 template <typename FP, typename T>
-inline auto operator*(const T& lhs, const UncertainValue<FP>& rhs)
+inline FP operator*(const T& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs * rhs.value();
 }
 template <typename FP, typename T>
-inline auto operator/(const T& lhs, const UncertainValue<FP>& rhs)
+inline FP operator/(const T& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs / rhs.value();
 }
 template <typename FP, typename T>
-inline auto operator+(const T& lhs, const UncertainValue<FP>& rhs)
+inline FP operator+(const T& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs + rhs.value();
 }
 template <typename FP, typename T>
-inline auto operator-(const T& lhs, const UncertainValue<FP>& rhs)
+inline FP operator-(const T& lhs, const UncertainValue<FP>& rhs)
 {
     return lhs - rhs.value();
+}
+
+// Compound assignment operators for FP and UncertainValue<FP>
+template <typename FP>
+FP& operator+=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs += rhs.value();
+    return lhs;
+}
+
+template <typename FP>
+FP& operator-=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs -= rhs.value();
+    return lhs;
+}
+
+template <typename FP>
+FP& operator*=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs *= rhs.value();
+    return lhs;
+}
+
+template <typename FP>
+FP& operator/=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs /= rhs.value();
+    return lhs;
 }
 
 /**

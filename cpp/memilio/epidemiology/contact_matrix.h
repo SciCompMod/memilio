@@ -185,7 +185,7 @@ public:
      * Applies dampings to compute the real contact frequency at a point in time.
      * Uses lazy evaluation, coefficients are calculated on indexed access.
      * @param t time in the simulation
-     * @return matrix expression (num_groups x num_groups)
+     * @return matrix of size num_groups x num_groups
      */
     Matrix get_matrix_at(SimulationTime<FP> t) const
     {
@@ -394,18 +394,16 @@ public:
      * get the real contact frequency at a point in time.
      * sum of all contained matrices.
      * @param t point in time
-     * @return matrix expression of size num_groups x num_groups
+     * @return matrix of size num_groups x num_groups
      */
-    auto get_matrix_at(SimulationTime<FP> t) const
+    Matrix get_matrix_at(SimulationTime<FP> t) const
     {
-        return Eigen::MatrixX<FP>::NullaryExpr(get_shape().rows(), get_shape().cols(),
-                                               [t, this](Eigen::Index i, Eigen::Index j) {
-                                                   FP sum = FP(0.0); // Explicitly initialize AD type
-                                                   for (const auto& matrix : m_matrices) {
-                                                       sum += matrix.get_matrix_at(t)(i, j);
-                                                   }
-                                                   return sum;
-                                               });
+        const auto shape = get_shape();
+        Matrix result    = Matrix::Zero(shape.rows(), shape.cols());
+        for (const auto& m : m_matrices) {
+            result += m.get_matrix_at(t);
+        }
+        return result;
     }
 
     /**
