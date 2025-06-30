@@ -26,6 +26,7 @@
 
 #include "ode_secirvvs/model.h"
 #include "memilio/io/epi_data.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
 #include "memilio/utils/date.h"
@@ -400,21 +401,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 }
 
 /**
-        * @brief reads number of ICU patients from DIVI register into Parameters
-        * @param[in] path Path to transformed DIVI file
-        * @param[in] vregion Keys of the region of interest
-        * @param[in] date Date for which the arrays are initialized
-        * @param[in, out] vnum_icu number of ICU patients
-        * @see mio::read_divi_data
-        * @{
-        */
-IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
-                              std::vector<double>& vnum_icu);
-IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
-                              std::vector<double>& vnum_icu);
-/**@}*/
-
-/**
         * @brief sets populations data from DIVI register into Model
         * @param[in, out] model vector of objects in which the data is set
         * @param[in] path Path to transformed DIVI file
@@ -457,19 +443,6 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
 
     return success();
 }
-
-/**
-        * @brief reads population data from census data.
-        * @param[in] path Path to population data file.
-        * @param[in] vregion vector of keys of the regions of interest
-        * @see mio::read_population_data
-        * @{
-        */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion);
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion);
-/**@}*/
 
 /**
 * @brief sets population data from census data which has been read into num_population
@@ -674,7 +647,7 @@ template <class Model>
 IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path, const std::string& path_rki,
                                    const std::vector<int>& vregion, Date date)
 {
-    BOOST_OUTCOME_TRY(auto&& num_population, details::read_population_data(path, vregion));
+    BOOST_OUTCOME_TRY(auto&& num_population, read_population_data(path, vregion));
     BOOST_OUTCOME_TRY(auto&& rki_data, mio::read_confirmed_cases_data(path_rki));
 
     BOOST_OUTCOME_TRY(set_population_data(model, num_population, rki_data, vregion, date));
@@ -726,6 +699,17 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
         return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
     }
     auto max_date = max_date_entry->date;
+
+    auto min_date_entry = std::min_element(vacc_data.begin(), vacc_data.end(), [](auto&& a, auto&& b) {
+        return a.date < b.date;
+    });
+    auto min_date       = min_date_entry->date;
+    if (min_date > date || max_date < offset_date_by_days(date, num_days)) {
+        log_warning("Vaccination data only available from {} to {}. "
+                    "For days before, vaccination data will be set to 0. For days after, "
+                    "vaccination data will be set to the last available date.",
+                    min_date, max_date);
+    }
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
@@ -833,6 +817,26 @@ template <typename FP = double>
 IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::string& path, Date date,
                                     const std::vector<int>& vregion, int num_days)
 {
+    // Check if vaccination data is available for the given date range
+    auto end_date = offset_date_by_days(date, num_days);
+    if (!is_vaccination_data_available(date, end_date)) {
+        log_warning("No vaccination data available in range from {} to {}. "
+                    "Vaccination data will be set to 0.",
+                    date, end_date);
+        // Set vaccination data to 0 for all models
+        for (auto& m : model) {
+            m.parameters.template get<DailyPartialVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+            m.parameters.template get<DailyFullVaccinations<FP>>().resize(SimulationDay(num_days + 1));
+
+            for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
+                for (auto a = AgeGroup(0); a < m.parameters.get_num_groups(); ++a) {
+                    m.parameters.template get<DailyPartialVaccinations<FP>>()[{a, d}] = 0.0;
+                    m.parameters.template get<DailyFullVaccinations<FP>>()[{a, d}]    = 0.0;
+                }
+            }
+        }
+        return success();
+    }
     BOOST_OUTCOME_TRY(auto&& vacc_data, read_vaccination_data(path));
     BOOST_OUTCOME_TRY(set_vaccination_data(model, vacc_data, date, vregion, num_days));
     return success();
@@ -874,7 +878,7 @@ IOResult<void> export_input_data_county_timeseries(
         models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_groups));
 
     BOOST_OUTCOME_TRY(auto&& case_data, read_confirmed_cases_data(confirmed_cases_path));
-    BOOST_OUTCOME_TRY(auto&& population_data, details::read_population_data(population_data_path, counties));
+    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(population_data_path, counties));
 
     // empty vector if set_vaccination_data is not set
     std::vector<VaccinationDataEntry> vacc_data;

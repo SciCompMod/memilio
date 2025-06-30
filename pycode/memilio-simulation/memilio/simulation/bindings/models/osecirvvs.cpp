@@ -23,7 +23,7 @@
 #include "utils/parameter_set.h"
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
-#include "compartments/compartmentalmodel.h"
+#include "compartments/compartmental_model.h"
 #include "mobility/graph_simulation.h"
 #include "mobility/metapopulation_mobility_instant.h"
 #include "epidemiology/age_group.h"

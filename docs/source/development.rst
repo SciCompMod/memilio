@@ -1,5 +1,5 @@
-Development
-===========
+Development guidelines
+========================
 
 We are always happy about contributions to the project! Here you can find more information on our coding guidelines, our git workflow, benchmarking our models and writing documentation. 
 
@@ -28,7 +28,7 @@ C++ Coding guidelines
 
 C++ Standard:
 
- - C++ 17, higher standards are currently not allowed
+ - C++ 20, other standards are currently not supported.
 
 Namespaces:
 
@@ -38,7 +38,7 @@ Naming rules:
 
   - Classes begin with large Letters , e.g. ``class MyClass``
   - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function`` 
-  - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading "m_", e.g. ``m_my_member``.
+  - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading ``m_``, e.g. ``m_my_member``.
 
 Return Values:
 
@@ -322,76 +322,41 @@ The full list of labels that should be used to identify issues can be found at: 
 Agent-based model development 
 ------------------------------------------------
 
-Benchmarks
-~~~~~~~~~~~~~~~~~~~~~
-
-There is a suite of benchmarks for the ABM that can be used to check performance. The suite contains setups of different sizes. If you added a new feature (i.e., you didn't just fix a bug in an existing feature), make sure the feature is actually used by the benchmark. Add it to the benchmark if necessary, then run the benchmark to see if the cost for the new feature is acceptable and as expected.
-
-Most new features will add some overhead, but this needs to be limited and in proportion to the added value of the feature so runtime doesn't grow out of control. Optional features that can be disabled should only incur minimal overhead. If you did not add any new feature, just run the benchmark before and after your changes to make sure there are no performance regressions. This process will hopefully be automated soon by running benchmarks in the CI.
-
-Build the benchmarks by defining the CMake variable ``MEMILIO_BUILD_BENCHMARKS=ON`` in the build. Make sure to use a **Release** build to test performance.
-
-.. code-block:: bash
-
-    cmake .. -DMEMILIO_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
-    cmake --build .
-
-Run the benchmark executable:
-
-.. code-block:: bash
-
-    ./build/bin/abm_benchmark
-
-Each benchmark is run for a number of iterations and the average time is reported.
-
-.. code-block:: text
-
-    Benchmark                                 Time             CPU   Iterations
-    ---------------------------------------------------------------------------
-    abm_benchmark/abm_benchmark_50k        7583 ms         7583 ms            1
-    abm_benchmark/abm_benchmark_100k      18216 ms        18214 ms            1
-    abm_benchmark/abm_benchmark_200k      41492 ms        41489 ms            1
-
-You may get a warning:
-
-.. code-block:: text
-
-    ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
-
-If possible, disable CPU scaling to improve the consistency of results. See the Google Benchmark documentation here:
-https://google.github.io/benchmark/reducing_variance.html
-
-Also, try to reduce other system load during the benchmark run.
-
-If it is not possible to disable frequency scaling, increase the runtime of the benchmark using the commands below. Constant CPU frequency is necessary to get the most reliable results and to measure small differences.
-
-**REMINDER:** Don't forget to re-enable CPU scaling after you ran the benchmarks to save energy. Rebooting may restore the settings as well.
-
-The benchmark executable has a number of command line arguments that customize execution. Use ``--help`` to list them all.
-
-Two important options for consistency and stability:
-
-- ``--benchmark_min_time=<T>``: Iterate each benchmark so that the total runtime is at least ``T`` seconds.  
-  Default is 1 second, which may not be enough.  
-  Try 60 seconds for better stability (you may need to experiment).
-
-- ``--benchmark_repetitions=<N>``: Repeat each benchmark ``N`` times and report mean, median, and variance.  
-  (Repetitions are **not** iterations; a benchmark can be repeated 10 times with 5 iterations each. Each repetition runs for at least the minimum time.)
-
-``benchmark_repetitions`` is useful to check timing consistency, as it reports variance.  
-However, it can be expensive because long-running benchmarks are repeated.  
-``benchmark_min_time`` increases iterations only for fast-running benchmarks, which tend to be less stable.
-
-**Suggested workflow:**
-
-1. Run with 5–10 repetitions to check variance.
-2. Increase ``benchmark_min_time`` until variance is acceptable.
-3. Continue benchmarking with 1 repetition and the adjusted minimum time.
-
+If you add new features to the agent-based model, please make sure to run the benchmarks and check if the performance is 
+acceptable. See the section on :ref:`performance-monitoring-cpp` for more information.
 
 
 Documentation
 --------------------
 
+The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
+slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
+This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
+a pull request is merged into the main branch. Thus, we recommend building the documentation locally to test changes.
+
+
+Please make sure to have a working python envirenment with a python version that is compatible with 
+our :doc:`memilio-python packages <python/python_packages>` as well as 
+all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`_ installed.
+
+First generate the doxygen output by running 
+
+.. code-block:: bash
+
+    cd docs
+    doxygen
+
+
+In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
+build times while testing we recommend to only use e.g. ``../cpp/models/abm``. PLEASE don't commit this change!
+
+Then sphinx can be used to build the documentation:
+
+.. code-block:: bash
+
+    cd docs
+    make html # sphinx-build source html
+
+The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).
 
 For the documentation, please keep in mind that it is written in reStructuredText (RST) and uses a slightly different syntax than Markdown. A documentation can be found at `<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.

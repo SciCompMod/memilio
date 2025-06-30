@@ -23,7 +23,7 @@ add_library(memilio
     geography/regions.cpp
     epidemiology/simulation_day.h
     geography/holiday_data.ipp
-    compartments/compartmentalmodel.h
+    compartments/compartmental_model.h
     compartments/flow_model.h
     compartments/simulation.h
     compartments/flow_simulation.h
@@ -40,6 +40,8 @@ add_library(memilio
     io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
+    io/parameters_io.h
+    io/parameters_io.cpp
     io/result_io.h
     io/result_io.cpp
     io/epi_data.h
@@ -70,6 +72,15 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    timer/auto_timer.h
+    timer/basic_timer.cpp
+    timer/basic_timer.h
+    timer/definitions.cpp
+    timer/definitions.h
+    timer/list_printer.h
+    timer/named_timer.h
+    timer/registration.h
+    timer/timer_registrar.h
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp
@@ -95,6 +106,8 @@ add_library(memilio
     utils/miompi.h
     utils/miompi.cpp
     utils/mioomp.h
+    utils/mioomp.cpp
+    utils/string_literal.h
     utils/type_list.h
     ad/include/ad/ad_spdlog_formatter.h
 )
@@ -105,7 +118,6 @@ target_include_directories(memilio PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(memilio PUBLIC cxx_std_17)
 target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking Random123 AD::AD)
 target_compile_options(memilio
     PRIVATE

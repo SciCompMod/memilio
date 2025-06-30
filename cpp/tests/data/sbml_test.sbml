@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2">
+  <model>
+<listOfFunctionDefinitions>
+      <functionDefinition id="Rate_Law_for_reaction_1" metaid="COPASI18" name="Rate Law for reaction_1">
+        <annotation>
+          <COPASI xmlns="http://www.copasi.org/static/sbml">
+            <rdf:RDF xmlns:dcterms="http://purl.org/dc/terms/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+              <rdf:Description rdf:about="#COPASI18">
+                <dcterms:created>
+                  <rdf:Description>
+                    <dcterms:W3CDTF>2020-11-03T07:45:10Z</dcterms:W3CDTF>
+                  </rdf:Description>
+                </dcterms:created>
+              </rdf:Description>
+            </rdf:RDF>
+          </COPASI>
+        </annotation>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">        
+          <lambda>
+            <bvar>
+              <ci> beta </ci>
+            </bvar>
+            <bvar>
+              <ci> S </ci>
+            </bvar>
+            <bvar>
+              <ci> I </ci>
+            </bvar>
+            <bvar>
+              <ci> N </ci>
+            </bvar>
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <ci> beta </ci>
+                <ci> S </ci>
+                <ci> I </ci>
+              </apply>
+              <ci> N </ci>
+            </apply>
+          </lambda>
+        </math>
+            </functionDefinition>
+    </listOfFunctionDefinitions>
+    <listOfCompartments>
+      <compartment id="Comp1" name="Comp1" size="1" units="dimensionless" constant="false"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="Sus" name="Sus" compartment="Comp1" initialAmount="9998" substanceUnits="dimensionless" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="Infected" name="Infected" compartment="Comp1" initialAmount="2" substanceUnits="dimensionless" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="Rec" name="Rec" compartment="Comp1" initialAmount="0" substanceUnits="dimensionless" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="Water" name="Water" compartment="Comp1" initialAmount="10" substanceUnits="dimensionless" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="Air" name="Air" compartment="Comp1" initialConcentration="10" substanceUnits="dimensionless" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="param1" name="param1" value="0.5" units="dimensionless" constant="true"/>
+      <parameter id="recovery_rate" name="recovery_rate" value="0.1" units="dimensionless" constant="true"/>
+      <parameter id="identity" name="identity" value="1" units="dimensionless" constant="true"/>
+      <parameter id="num_infected" name="num_infected" value="2" units="dimensionless" constant="true"/>
+    </listOfParameters>
+    <listOfInitialAssignments>
+      <initialAssignment name="setparam1" symbol="param1">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <times/>
+            <cn> 0.2 </cn>
+            <apply>
+              <plus/>
+              <cn> 0.2 </cn>
+              <cn> 0.05 </cn>
+            </apply>
+          </apply>
+        </math>
+      </initialAssignment>
+      <initialAssignment name="setAir" symbol="Air">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <plus/>
+            <apply>
+              <minus/>
+              <apply>
+                <plus/>
+                <apply>
+                  <times/>
+                  <cn> 0.2 </cn>
+                  <apply>
+                    <plus/>
+                    <cn> 0.2 </cn>
+                    <cn> 0.05 </cn>
+                  </apply>
+                  <pi/>
+                </apply>
+                <ci> Comp1 </ci>
+              </apply>
+              <apply>
+                <times/>
+                <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+                <ci> identity </ci>
+              </apply>
+            </apply>
+            <ci> Rec </ci>
+          </apply>
+        </math>
+      </initialAssignment>
+      <initialAssignment name="setsus" symbol="Sus">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <cn type="integer"> 20 </cn>
+        </math>
+      </initialAssignment>
+      <initialAssignment name="setInfected" symbol="Infected">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <ci> num_infected </ci>
+        </math>
+      </initialAssignment>
+    </listOfInitialAssignments>
+    <listOfRules>
+      <rateRule variable="Water">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <plus/>
+            <apply>
+              <times/>
+              <cn> 0.99 </cn>
+              <ci> identity </ci>
+            </apply>
+            <apply>
+              <times/>
+              <apply>
+                <minus/>
+                <ci> Sus </ci>
+                <ci> Sus </ci>
+              </apply>
+              <ci> Comp1 </ci>
+            </apply>
+            <apply>
+              <times/>
+              <apply>
+                <minus/>
+                <pi/>
+                <pi/>
+              </apply>
+              <apply>
+                <minus/>
+                <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+                <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+              </apply>
+            </apply>
+          </apply>
+        </math>
+      </rateRule>
+    </listOfRules>
+    <listOfReactions>
+      <reaction id="Infection" reversible="false">
+        <listOfReactants>
+          <speciesReference species="Sus" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Infected" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> param1 </ci>
+              <cn> 0.1 </cn>
+              <ci> Sus </ci>
+              <ci> Infected </ci>
+              <ci> Comp1 </ci>
+              <pi/>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Recovery" reversible="false">
+        <listOfReactants>
+          <speciesReference species="Infected" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Rec" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="Water"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> Infected </ci>
+              <ci> recovery_rate </ci>
+              <cn> 0.1 </cn>
+              <ci> Water </ci>
+            </apply>
+          </math>
+          <listOfLocalParameters>
+            <localParameter id="localParam" value="0.1"/>
+          </listOfLocalParameters>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+    <listOfEvents>
+      <event id="spontaneous_recovery" name="spontaneous_recovery" useValuesFromTriggerTime="true">
+        <trigger initialValue="false" persistent="true">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <gt/>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+              <cn type="integer"> 1 </cn>
+            </apply>
+          </math>
+        </trigger>
+        <listOfEventAssignments>
+          <eventAssignment variable="Rec">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <apply>
+                <times/>
+                <cn type="integer"> 20 </cn>
+                <ci> Rec </ci>
+              </apply>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+      <event id="event1" name="event1" useValuesFromTriggerTime="true">
+        <trigger initialValue="false" persistent="true">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <gt/>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+              <cn type="integer"> 20 </cn>
+            </apply>
+          </math>
+        </trigger>
+        <listOfEventAssignments>
+          <eventAssignment variable="Water">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <apply>
+                <times/>
+                <apply>
+                  <minus/>
+                  <cn type="integer"> 20 </cn>
+                </apply>
+                <apply>
+                  <minus/>
+                  <cn type="integer"> 1 </cn>
+                </apply>
+                <ci> Comp1 </ci>
+                <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+                <pi/>
+                <ci> recovery_rate </ci>
+              </apply>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+      <event id="event2" name="event2" useValuesFromTriggerTime="true">
+        <trigger initialValue="false" persistent="true">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <lt/>
+              <cn type="integer"> 30 </cn>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+            </apply>
+          </math>
+        </trigger>
+        <listOfEventAssignments>
+          <eventAssignment variable="recovery_rate">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <apply>
+                <times/>
+                <ci> Comp1 </ci>
+                <cn type="integer"> 10 </cn>
+              </apply>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+      <event id="event3" name="event3" useValuesFromTriggerTime="true">
+        <trigger initialValue="false" persistent="true">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <gt/>
+              <apply>
+                <times/>
+                <ci> Comp1 </ci>
+                <ci> identity </ci>
+                <cn type="integer"> 40 </cn>
+                <pi/>
+              </apply>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+            </apply>
+          </math>
+        </trigger>
+        <listOfEventAssignments>
+          <eventAssignment variable="Water">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <cn type="integer"> 20 </cn>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+      <event id="nonfunctioning_event" name="nonfunctioning_event" useValuesFromTriggerTime="true">
+        <trigger initialValue="false" persistent="true">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <gt/>
+              <apply>
+                <times/>
+                <ci> Comp1 </ci>
+                <ci> identity </ci>
+                <cn type="integer"> 40 </cn>
+                <pi/>
+              </apply>
+              <ci> Sus </ci>
+            </apply>
+          </math>
+        </trigger>
+        <listOfEventAssignments>
+          <eventAssignment variable="Water">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <cn type="integer"> 20 </cn>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+    </listOfEvents>
+  </model>
+</sbml>

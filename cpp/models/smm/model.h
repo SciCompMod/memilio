@@ -23,7 +23,7 @@
 
 #include "memilio/config.h"
 #include "smm/parameters.h"
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/geography/regions.h"
 

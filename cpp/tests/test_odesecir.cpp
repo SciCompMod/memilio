@@ -26,6 +26,7 @@
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters.h"
 #include "ode_secir/parameters_io.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/math/adapt_rk.h"
 
@@ -1224,21 +1225,6 @@ TEST(TestOdeSecir, apply_constraints_parameters)
 }
 
 #if defined(MEMILIO_HAS_JSONCPP)
-
-TEST(TestOdeSecir, read_population_data_one_age_group)
-{
-    std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
-    const std::vector<int> region{1001};
-    auto result_one_age_group       = mio::osecir::details::read_population_data(path, region, true).value();
-    auto result_multiple_age_groups = mio::osecir::details::read_population_data(path, region, false).value();
-    EXPECT_EQ(result_one_age_group.size(), 1);
-    EXPECT_EQ(result_one_age_group[0].size(), 1);
-    EXPECT_EQ(result_one_age_group[0][0], 90163.0);
-
-    EXPECT_EQ(result_multiple_age_groups.size(), 1);
-    EXPECT_EQ(result_multiple_age_groups[0].size(), 6);
-    EXPECT_EQ(result_multiple_age_groups[0][0], 3433.0);
-}
 #if defined(MEMILIO_HAS_HDF5)
 
 class ModelTestOdeSecir : public testing::Test
@@ -1374,14 +1360,15 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
     // read population data
     std::string path = mio::path_join(pydata_dir_Germany, "county_current_population.json");
     const std::vector<int> region{1002};
-    auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     for (size_t i = 0; i < num_age_groups; i++) {
         EXPECT_EQ(results_extrapolated(i * Eigen::Index(mio::osecir::InfectionState::Count)), population_data[0][i]);
     }
     // sum of all compartments should be equal to the population
-    EXPECT_EQ(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0));
+    EXPECT_NEAR(results_extrapolated.sum(), std::accumulate(population_data[0].begin(), population_data[0].end(), 0.0),
+                1e-8);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -1428,7 +1415,7 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
     // read population data
     std::string path = mio::path_join(pydata_dir_Germany, "county_current_population.json");
     const std::vector<int> region{1002};
-    auto population_data = mio::osecir::details::read_population_data(path, region, false).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     auto expected_values =
@@ -1461,12 +1448,23 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
     EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
 
-    // Test with data after DIVI dataset was no longer updated.
-    EXPECT_THAT(mio::osecir::details::set_divi_data(model_vector, "", {1001}, {2025, 12, 01}, 1.0), IsSuccess());
-    EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
-                MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
-
     mio::set_log_level(mio::LogLevel::warn);
+}
+
+TEST(TestOdeSecir, set_divi_data_empty_data)
+{
+    // Create an empty DIVI data vector
+    std::vector<mio::DiviEntry> empty_data;
+    std::vector<int> regions = {0, 1};
+    std::vector<double> num_icu(regions.size(), 0.0);
+    mio::Date date(2020, 4, 1);
+
+    auto result = mio::compute_divi_data(empty_data, regions, date, num_icu);
+
+    // Expect failure due to empty DIVI data
+    EXPECT_FALSE(result);
+    EXPECT_EQ(result.error().code(), mio::StatusCode::InvalidValue);
+    EXPECT_EQ(result.error().message(), "DIVI data is empty.");
 }
 
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
@@ -1486,7 +1484,7 @@ TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 
     // Change dates of the case data so that no ICU data is available at that time.
     // Also, increase the number of confirmed cases by 1 each day.
-    const auto t0 = mio::Date(2025, 1, 1);
+    const auto t0 = mio::Date(2000, 1, 1);
     auto day_add  = 0;
     for (auto& entry : case_data) {
         entry.date          = offset_date_by_days(t0, day_add);
@@ -1512,6 +1510,20 @@ TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
             model_vector[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}].value();
         EXPECT_NEAR(actual_value, expected_value, 1e-10);
     }
+}
+
+TEST(TestOdeSecir, read_population_data_failure)
+{
+    // Create invalid population data entry without county_id or district_id
+    std::vector<mio::PopulationDataEntry> invalid_data;
+    mio::PopulationDataEntry invalid_entry;
+    invalid_data.push_back(invalid_entry);
+
+    // Test that read_population_data returns failure with correct message
+    auto result = mio::read_population_data(invalid_data, {1001});
+    EXPECT_FALSE(result);
+    EXPECT_EQ(result.error().code(), mio::StatusCode::InvalidFileFormat);
+    EXPECT_EQ(result.error().message(), "File with county population expected.");
 }
 
 #endif

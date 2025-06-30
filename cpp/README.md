@@ -5,6 +5,7 @@ The MEmilio C++ library contains the implementation of the epidemiological model
 Directory structure:
 - memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
 - models: implementation of concrete models (ODE, IDE, LCT and ABM)
+- sbml_model_generation: Code for the SBML integration and models that were generated using it
 - simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
@@ -19,9 +20,9 @@ MEmilio C++ uses CMake as a build configuration system (https://cmake.org/)
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 - GCC, versions 11 and 13
 - Clang, version 14 and 17
-- MSVC, versions 19.29 (Visual Studio 2019) - 19.38 (Visual Studio 2022)
+- MSVC, version 19.43 (Visual Studio 2022)
 
-MEmilio C++ is regularly tested on gitlub runners using Ubuntu 22.04 and 24.04 and Windows Server 2019 and 2022. It is expected to run on any comparable Linux or Windows system. It is currently not tested on MacOS.
+MEmilio C++ is regularly tested on gitlub runners using Ubuntu 22.04 and 24.04 and Windows Server 2022 and 2025. It is expected to run on any comparable Linux or Windows system. It is currently not tested on MacOS.
 
 The following table lists the dependencies that are used. Most of them are required, but some are optional. The library can be used without them but with slightly reduced features. CMake will warn about them during configuration. Most of them are bundled with this library and do not need to be installed manually. Bundled libraries are either included with this project or loaded from the web on demand. For each dependency, there is a CMake option to use an installed version instead. Version compatibility needs to be ensured by the user, the version we currently use is included in the table.
 
@@ -33,6 +34,7 @@ The following table lists the dependencies that are used. Most of them are requi
 | JsonCpp | 1.9.6    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
 | GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
+| LibSBML | 5.20.2 | No | No |  https://sbml.org/software/libsbml/ (For SBML integration only) |
 
 See the [thirdparty](thirdparty/README.md) directory for more details.
 
@@ -51,6 +53,7 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_BUILD_EXAMPLES`: build the example applications in the examples directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_MODELS`: build the separate model libraries in the models directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_SIMULATIONS`: build the simulation applications in the simulations directory, ON or OFF, default ON.
+- `MEMILIO_BUILD_SBML_MODELS`: build the SBML importer and imported models, i.e. everythin in the folder `sbml_model_generation`, ON or OFF, default ON.
 - `MEMILIO_USE_BUNDLED_SPDLOG/_BOOST/_EIGEN/_JSONCPP`: use the corresponding dependency bundled with this project, ON or OFF, default ON.
 - `MEMILIO_BUILD_BENCHMARKS`: build the benchmarks for this project, ON or OFF, default OFF.
 - `MEMILIO_SANITIZE_ADDRESS/_UNDEFINED`: compile with specified sanitizers to check correctness, ON or OFF, default OFF.
@@ -59,6 +62,7 @@ Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `b
 - `MEMILIO_ENABLE_WARNINGS`: enable compilation warnings (beyond those enabled in the compiler by default). ON or OFF, default ON.
 - `MEMILIO_ENABLE_WARNINGS_AS_ERRORS`: compilation warnings are treated as compilation errors. ON or OFF, default ON.
 - `MEMILIO_ENABLE_PROFILING`: compile with runtime profiling support. ON or OFF, default OFF. See [here](benchmarks/profiling.md) for information.
+- `MEMILIO_ENABLE_LIKWID_MARKER`: compile MEmilio with likwid markers. ON or OFF, default OFF.
 
 Other important options may need:
 - `CMAKE_BUILD_TYPE`: controls compiler optimizations and diagnostics, Debug, Release, or RelWithDebInfo; not available for Multi-Config CMake Generators like Visual Studio, set the build type in the IDE or when running the compiler.

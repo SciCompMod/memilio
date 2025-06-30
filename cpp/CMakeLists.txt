@@ -2,11 +2,15 @@ cmake_minimum_required(VERSION 3.13)
 
 project(memilio VERSION 1.0.0)
 
+set(CMAKE_CXX_STANDARD "20")
+set(CMAKE_CXX_STANDARD_REQUIRED "20")
+
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
+option(MEMILIO_BUILD_SBML_MODELS "Build the SBML importer and imported models." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -126,15 +130,29 @@ if(MEMILIO_ENABLE_WARNINGS)
             "-Wall;-Wextra;-Wshadow;--pedantic;")
     endif()
 endif()
-
+# exclude some warnings we accept
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;-Wno-stringop-overread;")
+        "-Wno-unknown-warning;-Wno-pragmas;-Wno-deprecated-copy;-Wno-expansion-to-defined;")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;-Wno-stringop-overread;")
+        "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
 endif()
-
+# woyrkarounds for compiler bugs or overzealous optimization/analysis
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+               "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+               "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
+               "-Wno-stringop-overread;"
+        )
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+            "-Wno-stringop-overread;"
+        )
+    endif()
+endif()
+# finalize string by setting warnings as errors
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
@@ -144,6 +162,8 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
             "-Werror")
     endif()
 endif()
+
+
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
@@ -184,6 +204,10 @@ endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
+endif()
+
+if(MEMILIO_BUILD_SBML_MODELS)
+    add_subdirectory(sbml_model_generation)
 endif()
 
 install(TARGETS memilio

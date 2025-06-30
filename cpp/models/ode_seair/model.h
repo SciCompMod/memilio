@@ -21,7 +21,7 @@
 #ifndef ODESEAIR_MODEL_H
 #define ODESEAIR_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/populations.h"
 #include "ode_seair/infection_state.h"

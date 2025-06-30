@@ -21,7 +21,7 @@
 #ifndef ODESIR_MODEL_H
 #define ODESIR_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/contact_matrix.h"
