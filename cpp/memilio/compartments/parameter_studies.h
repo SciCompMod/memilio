@@ -104,7 +104,7 @@ public:
          * @param tmax end time of simulations
          * @param num_runs number of runs in ensemble run
          */
-    ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, size_t num_runs)
+    ParameterStudy(typename Simulation::Model const& model, FP t0, FP tmax, size_t num_runs)
         : ParameterStudy({}, t0, tmax, tmax - t0, num_runs)
     {
         m_graph.add_node(0, model);

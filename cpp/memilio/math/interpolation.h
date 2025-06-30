@@ -95,7 +95,7 @@ Y linear_interpolation_of_data_set(std::vector<std::pair<X, Y>> vector, const X&
 
     // Find the corresponding upper position of the node in the data set
     size_t upper_pos = std::upper_bound(vector.begin(), vector.end(), x_eval,
-                                        [](double value, const std::pair<X, Y>& node) {
+                                        [](X value, const std::pair<X, Y>& node) {
                                             return value <= node.first;
                                         }) -
                        vector.begin();
