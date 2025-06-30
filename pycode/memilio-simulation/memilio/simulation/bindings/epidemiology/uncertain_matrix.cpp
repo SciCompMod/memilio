@@ -35,10 +35,10 @@ void bind_uncertain_contact_matrix(py::module_& m, std::string const& name)
 {
     bind_class<mio::UncertainContactMatrix<double>, EnablePickling::Required>(m, name.c_str())
         .def(py::init<>())
-        .def(py::init<const mio::ContactMatrixGroup&>())
+        .def(py::init<const mio::ContactMatrixGroup<double>&>())
         .def_property(
             "cont_freq_mat", py::overload_cast<>(&mio::UncertainContactMatrix<double>::get_cont_freq_mat),
-            [](mio::UncertainContactMatrix<double>& self, const mio::ContactMatrixGroup& c) {
+            [](mio::UncertainContactMatrix<double>& self, const mio::ContactMatrixGroup<double>& c) {
                 self.get_cont_freq_mat() = c;
             },
             py::return_value_policy::reference_internal)
