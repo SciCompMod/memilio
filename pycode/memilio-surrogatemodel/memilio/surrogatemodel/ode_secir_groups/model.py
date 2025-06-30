@@ -19,6 +19,8 @@
 #############################################################################
 from memilio.surrogatemodel.ode_secir_groups import network_architectures
 from memilio.simulation.osecir import InfectionState
+from memilio.surrogatemodel.surrogate_utils import (
+    calc_split_index, flat_input)
 import os
 import pickle
 
@@ -119,7 +121,7 @@ def plot_compartment_prediction_model(
             input_series = tf.expand_dims(inputs[n], axis=0)
             pred = model(input_series)
             pred = pred.numpy()
-            pred = pred.reshape((30, 48))
+            pred = pred.reshape((label_width, number_groups*num_compartments))
 
             mean_per_day_pred = []
             for i in pred:
@@ -142,39 +144,6 @@ def plot_compartment_prediction_model(
 ####################
 # Helper functions #
 ####################
-def calc_split_index(n, split_train=0.7,
-                     split_valid=0.2, split_test=0.1):
-    """
-    Calculating the indixes for a split_train:split_valid:split_test decomposition of a set with size n 
-
-    It must hold split_train + split_valid + split_test = 1
-
-    :param n: integer value 
-    :param split_train: value between 0 and 1
-    :param split_valid: value between 0 and 1
-    :param split_test: value between 0 and 1
-    :returns: a list of the form [i_train, i_valid, i_test]
-    """
-    if split_train + split_valid + split_test > 1 + 1e-10:
-        raise ValueError(
-            "Summed data set shares are greater than 1. Please adjust the values.")
-    n_train = int(n * split_train)
-    n_valid = int(n * split_valid)
-    n_test = n - n_train - n_valid
-
-    return [n_train, n_valid, n_test]
-
-
-def flat_input(input):
-    """ Flatten input dimension
-
-    :param input: input array of size (n,k,l)
-    :returns: reshaped array of size (n, k*l)
-
-    """
-    dim = tf.reduce_prod(tf.shape(input)[1:])
-    return tf.reshape(input, [-1, dim])
-
 
 def prepare_data_classic(data):
     """
@@ -413,38 +382,10 @@ def network_fit(
         print(df)
     return history
 
-
-def save_model(model, path, modelname):
-    """
-    Saving a trained model. 
-
-    :param model: trained tensorflow keras model 
-    :param path: path where the model should be stored 
-    :param modelname: the name of the model 
-    """
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    path_to_file = os.path.join(path, modelname + ".keras")
-    model.save(path_to_file)
-    print("Model successfully saved")
-
-
-def load_model(path):
-    """
-    Loading a trained model. 
-
-    :param path: path to the .keras file containing the desired model
-    :returns: trained tf.keras model 
-    """
-    if not os.path.isfile(path):
-        raise FileExistsError(
-            "There is no .keras model stored at the given directory.")
-    return tf.keras.models.load_model(path)
-
-
 #####################
 # Plots etc.
 #####################
+
 
 def plot_losses(history):
     """ Plots the losses of the model training.
@@ -494,21 +435,6 @@ def get_test_statistic(test_inputs, test_labels, model):
     return mean_percentage
 
 
-def get_input_dim_lstm(path_to_file):
-    """ Extract the dimension of the input data
-
-    :param path_to_file: path to the data
-
-    """
-    file = open(path_to_file, 'rb')
-
-    data = pickle.load(file)
-    input_dim = data['inputs'].shape[2] + np.asarray(
-        data['contact_matrix']).shape[1] * np.asarray(data['contact_matrix']).shape[2]+1
-
-    return input_dim
-
-
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
@@ -522,7 +448,7 @@ if __name__ == "__main__":
     neurons_in_hidden_layer = 512
     activation_function = 'relu'
     modelname = "Dense"
-    modeltype = "classic"  # or "classic"
+    modeltype = "classic"  # or "timeseries"
 
     model_parameters = (label_width, number_age_groups, number_compartments,
                         hidden_layers, neurons_in_hidden_layer, activation_function, modelname)
@@ -535,7 +461,6 @@ if __name__ == "__main__":
     metrics = [tf.keras.metrics.MeanAbsoluteError()]
     training_parameters = (early_stop, max_epochs, loss, optimizer, metrics)
 
-    # input_dim = get_input_dim_lstm(path_data) -> Warum?
     model = initialize_model(model_parameters)
 
     model_output = network_fit(

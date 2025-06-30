@@ -34,57 +34,8 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 import memilio.surrogatemodel.ode_secir_groups.dampings as dampings
-
-
-def interpolate_age_groups(data_entry):
-    """ Interpolates the age groups from the population data into the age groups used in the simulation.
-    We assume that the people in the age groups are uniformly distributed.
-
-    :param data_entry: Data entry containing the population data.
-    :returns: List containing the population in each age group used in the simulation.
-
-    """
-    age_groups = {
-        "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,
-        "A05-A14": data_entry['3-5 years'] * 1 / 3 + data_entry['6-14 years'],
-        "A15-A34": data_entry['15-17 years'] + data_entry['18-24 years'] + data_entry['25-29 years'] + data_entry['30-39 years'] * 1 / 2,
-        "A35-A59": data_entry['30-39 years'] * 1 / 2 + data_entry['40-49 years'] + data_entry['50-64 years'] * 2 / 3,
-        "A60-A79": data_entry['50-64 years'] * 1 / 3 + data_entry['65-74 years'] + data_entry['>74 years'] * 1 / 5,
-        "A80+": data_entry['>74 years'] * 4 / 5
-    }
-    return [age_groups[key] for key in age_groups]
-
-
-def remove_confirmed_compartments(result_array):
-    """ Removes the confirmed compartments which are not used in the data generation.
-
-    :param result_array: Array containing the simulation results.
-    :returns: Array containing the simulation results without the confirmed compartments.
-
-    """
-    num_groups = int(result_array.shape[1] / 10)
-    delete_indices = [index for i in range(
-        num_groups) for index in (3+10*i, 5+10*i)]
-    return np.delete(result_array, delete_indices, axis=1)
-
-
-def transform_data(data, transformer, num_runs):
-    """ Transforms the data by a logarithmic normalization.
-    Reshaping is necessary, because the transformer needs an array with dimension <= 2.
-
-    :param data: Data to be transformed.
-    :param transformer: Transformer used for the transformation.
-    :param num_runs: 
-    :returns: Transformed data.
-
-    """
-    num_groups = 6
-    num_compartments = 8
-
-    data = np.asarray(data).transpose(2, 0, 1).reshape(
-        num_groups*num_compartments, -1)
-    scaled_data = transformer.transform(data)
-    return tf.convert_to_tensor(scaled_data.transpose().reshape(num_runs, -1, num_groups*num_compartments))
+from memilio.surrogatemodel.surrogate_utils import (
+    interpolate_age_groups, remove_confirmed_compartments, transform_data)
 
 
 def run_secir_groups_simulation(days, damping_days, damping_factors, populations):
@@ -358,6 +309,6 @@ if __name__ == "__main__":
 
     input_width = 5
     label_width = 30
-    num_runs = 10000
+    num_runs = 1
     data = generate_data(num_runs, path_output, path_population, input_width,
                          label_width, damping_method="classic")

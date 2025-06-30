@@ -21,6 +21,7 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
                                                      network_architectures, dampings)
+import memilio.surrogatemodel.surrogate_utils as utils
 from unittest.mock import patch
 import os
 import unittest
@@ -52,13 +53,13 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(factors2), 18)
 
         with self.assertRaises(ValueError) as error:
-            dampings.dampings_active(10, 200)
-        error_message = "Number of dampings must be smaller than total number of days!"
+            dampings.dampings_active(10, 200, 3)
+        error_message = "It's not possible to arrange this number of dampings in the desired interval with the given minimal distance."
         self.assertEqual(str(error.exception), error_message)
 
         # Combine days and factors
-        days1, factors1 = dampings.dampings_active(30, 5)
-        days2, factors2 = dampings.dampings_active(40, 10)
+        days1, factors1 = dampings.dampings_active(30, 5, 4)
+        days2, factors2 = dampings.dampings_active(40, 10, 4)
 
         self.assertEqual(len(days1), 5)
         self.assertEqual(len(factors1), len(days1))
@@ -66,6 +67,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(days2), len(factors2))
 
     def test_dampings_classic(self):
+
         days1 = dampings.generate_dampings_withshadowdamp(4, 30, 3, 4, 1)
         days2 = dampings.generate_dampings_withshadowdamp(10, 90, 2, 10, 1)
         self.assertEqual(len(days1[0]), 4)
@@ -73,8 +75,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
         with self.assertRaises(ValueError) as error:
             dampings.dampings_classic(10, 200)
-        error_message = "Invalid input: It's not possible to generate this number of damping" \
-            "in the desired time interval."
+        error_message = "It's not possible to arrange this number of dampings in the desired interval with the given minimal distance."
         self.assertEqual(str(error.exception), error_message)
 
         # Combine days and factors
@@ -89,8 +90,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
     def test_dampings_random(self):
         with self.assertRaises(ValueError) as error:
             dampings.dampings_random(10, 200)
-        error_message = "Invalid input: It's not possible to generate this number of damping" \
-            "in the desired time interval."
+        error_message = "It's not possible to arrange this number of dampings in the desired interval with the given minimal distance."
         self.assertEqual(str(error.exception), error_message)
 
         days1, factors1 = dampings.dampings_random(30, 5)
@@ -425,22 +425,21 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         # Dimension of one time step (16 = 4*4)
         self.assertEqual(output_zeros.shape[2], 16)
 
-# Testing model.py
     def test_calc_split_index(self):
         with self.assertRaises(ValueError) as error:
-            model.calc_split_index(
+            utils.calc_split_index(
                 10, 0.9, 0.1, 0.1
             )
         error_message = "Summed data set shares are greater than 1. Please adjust the values."
         self.assertEqual(str(error.exception), error_message)
-        split_index = model.calc_split_index(10, 0.7, 0.1, 0.2)
+        split_index = utils.calc_split_index(10, 0.7, 0.1, 0.2)
         self.assertEqual(split_index, [7, 1, 2])
 
     def test_flat_input(self):
         A = np.zeros((12, 12))
         a1 = [A for _ in np.arange(5)]
         a2 = np.zeros((5, 144))
-        a1_flatten = model.flat_input(a1)
+        a1_flatten = utils.flat_input(a1)
         b = a2 == a1_flatten
         self.assertTrue(np.asarray(b).all())
 
@@ -673,7 +672,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             filename="data_secir_groups_10days_2_random.pickle",
             modeltype='classic',  plot_stats=False)
 
-        model.save_model(model_mlp_multi_input_multi_output.model,
+        utils.save_model(model_mlp_multi_input_multi_output.model,
                          self.path, "mlp_multi_multi")
 
         self.assertEqual(len(os.listdir(self.path)), 2)
@@ -719,11 +718,11 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             filename="data_secir_groups_10days_2_random.pickle",
             modeltype='classic',  plot_stats=False)
 
-        model.save_model(mlp1.model,
+        utils.save_model(mlp1.model,
                          self.path, "mlp_multi_multi")
 
         path = os.path.join(self.path, "mlp_multi_multi.keras")
-        mlp2 = model.load_model(path)
+        mlp2 = utils.load_model(path)
 
         weights1 = mlp1.model.get_weights()
         weights2 = mlp2.get_weights()

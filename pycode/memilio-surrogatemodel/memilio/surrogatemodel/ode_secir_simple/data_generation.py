@@ -33,6 +33,7 @@ from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
+from memilio.surrogatemodel.surrogate_utils import (transform_data)
 
 
 def remove_confirmed_compartments(result_array):
@@ -188,19 +189,13 @@ def generate_data(
     if normalize:
         # logarithmic normalization
         transformer = FunctionTransformer(np.log1p, validate=True)
-        inputs = np.asarray(data['inputs']).transpose(2, 0, 1).reshape(8, -1)
-        scaled_inputs = transformer.transform(inputs)
-        scaled_inputs = scaled_inputs.transpose().reshape(num_runs, input_width, 8)
-        scaled_inputs_list = scaled_inputs.tolist()
-
-        labels = np.asarray(data['labels']).transpose(2, 0, 1).reshape(8, -1)
-        scaled_labels = transformer.transform(labels)
-        scaled_labels = scaled_labels.transpose().reshape(num_runs, label_width, 8)
-        scaled_labels_list = scaled_labels.tolist()
-
-        # cast dfs to tensors
-        data['inputs'] = tf.stack(scaled_inputs_list)
-        data['labels'] = tf.stack(scaled_labels_list)
+        data['inputs'] = transform_data(
+            data['inputs'], transformer, num_runs, 1)
+        data['labels'] = transform_data(
+            data['labels'], transformer, num_runs, 1)
+    else:
+        data['inputs'] = tf.convert_to_tensor(data['inputs'])
+        data['labels'] = tf.convert_to_tensor(data['labels'])
 
     if save_data:
         # check if data directory exists. If necessary, create it.
