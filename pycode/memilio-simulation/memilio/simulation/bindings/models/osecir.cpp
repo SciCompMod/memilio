@@ -239,7 +239,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
     py::bind_vector<std::vector<MobilityGraph>>(m, "EnsembleGraphResults");
-    bind_ParameterStudy<double, mio::osecir::Simulation<double>>(m, "ParameterStudy");
+    bind_ParameterStudy<mio::osecir::Simulation<double>>(m, "ParameterStudy");
 
     m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal<double>, py::arg("model"),
           py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"));
@@ -317,7 +317,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
     m.def("interpolate_simulation_result", py::overload_cast<const MobilityGraph&>(
                                                &mio::interpolate_simulation_result<double, mio::osecir::Simulation<double>>));
 
-    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<double, MobilityGraph>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MobilityGraph>);
 
     m.attr("__version__") = "dev";
 }
