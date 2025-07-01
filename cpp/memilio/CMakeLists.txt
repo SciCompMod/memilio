@@ -110,6 +110,7 @@ add_library(memilio
     utils/string_literal.h
     utils/type_list.h
     ad/include/ad/ad_spdlog_formatter.h
+    utils/base_dir.h
 )
 
 target_include_directories(memilio PUBLIC

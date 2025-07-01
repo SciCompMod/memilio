@@ -8,7 +8,7 @@ The features of an agent are its position and its infection state. The evolution
 
 with :math:`X` the vector of all agents' positions and :math:`Z` the vector of all agents' infection states. The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, while :math:`L` defines movement, i.e. location changes, only acting on :math:`X`. Infection state adoptions are modeled with independent Poisson processes given by adoption rate functions. Movement is modeled with independent diffusion processes. A temporal Gillespie algorithm (a direct method without rejection sampling) is used for simulation. Therefore, :math:`G` and :math:`L` are not implemented explicitly, instead their effects are sampled via the `move` and `adoption_rate` functions, respectively.
 
-The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential given in the class **QuadWellModel** is implemented, but any other suitable potential can be used as implementation. 
+The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential and a singlewell potential given in the classes **QuadWell** and **SingleWell** respectively are implemented, but any other suitable potential can be used as implementation. 
 
 Infection states
 ----------------
@@ -30,7 +30,7 @@ Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (
 
     };
 
-    using Model = mio::dabm::Model<QuadWellModel<InfectionState>>;
+    using Model = mio::dabm::Model<QuadWell<InfectionState>>;
 
 Infection state transitions
 ---------------------------

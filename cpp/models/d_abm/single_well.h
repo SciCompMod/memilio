@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
-* Authors: René Schmieding, Julia Bicker
+* Authors: Julia Bicker, René Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,62 +18,87 @@
 * limitations under the License.
 */
 
-#ifndef MIO_D_ABM_QUAD_WELL_H
-#define MIO_D_ABM_QUAD_WELL_H
+#ifndef MIO_D_ABM_SINGLE_WELL_H
+#define MIO_D_ABM_SINGLE_WELL_H
 
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "d_abm/parameters.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/epidemiology/adoption_rate.h"
-#include <string>
-#include <vector>
-
-using Position = Eigen::Vector2d;
-
-/// @brief Get the index of the well containing the given position.
-inline size_t well_index(const Position& p)
-{
-    // 0|1
-    // -+-
-    // 2|3
-    return (p.x() >= 0) + 2 * (p.y() < 0);
-}
 
 /**
- * @brief Implementation of diffusive ABM, see dabm::Model.
- * This implementation defines a diffusion process for the potential F(x,y) = (x^2 -1)^2+(y^2-1)^2.
+ * @brief A Sampler for sampling a position for the singlewell potential F(x,y) = (x^4 + y^4)/2, see SingleWell.
+ */
+class SWPositionSampler
+{
+public:
+    using Position = Eigen::Vector2d;
+
+    /**
+     * @brief Create a sampler.
+     * @param[in] bottom_left Coordinates of the bottom left corner of the range in which should be samples.
+     * @param[in] top_right Coordinates of the top right corner of the range in which should be samples.
+     * @param[in] margin Margin defining the distance that should be kept from the borders defined by bottom_left and top_right when sampling a position.
+     */
+    SWPositionSampler(const Position& bottom_left, const Position& top_right, double margin)
+    {
+        auto assign_range = [&](Position range_x, Position range_y) {
+            range_x += Position{margin, -margin};
+            range_y += Position{margin, -margin};
+            m_range = {range_x, range_y};
+        };
+
+        assign_range({bottom_left.x(), top_right.x()}, {bottom_left.y(), top_right.y()});
+    }
+
+    /**
+     * @brief Sampling a position within [bottom_left.x + margin, bottom_left.y + margin] x [top_right.x - margin, top_right.y - margin]
+     */
+    Position operator()() const
+    {
+        return {mio::UniformDistribution<double>::get_instance()(mio::thread_local_rng(), m_range.first[0],
+                                                                 m_range.first[1]),
+                mio::UniformDistribution<double>::get_instance()(mio::thread_local_rng(), m_range.second[0],
+                                                                 m_range.second[1])};
+    }
+
+private:
+    // stores pairs of (x-range, y-range)
+    std::pair<Position, Position> m_range;
+};
+
+/**
+ * @brief Implementation of diffusive ABM, see dabm::Model. 
+ * This implementation defines a diffusion process for the potential F(x,y) = (x^4 + y^4)/2.
  * @tparam InfectionState An infection state enum.
  */
 template <class InfectionState>
-class QuadWell
+class SingleWell
 {
-
 public:
-    using Status = InfectionState;
+    using Position = Eigen::Vector2d;
+    using Status   = InfectionState;
 
-    /**
-     * @brief Struct defining an agent for the diffusive ABM.
-     */
     struct Agent {
         Position position;
         Status status;
     };
 
     /**
-     * @brief Set up a diffusive ABM using the quadwell potential F(x,y) = (x^2 -1)^2+(y^2-1)^2.
+     * @brief Set up a diffusive ABM using the quadwell potential F(x,y) = (x^4 + y^4)/2.
      * @param[in] agents A vector of Agent%s representing the population.
      * @param[in] rates AdoptionRate%s defining InfectionState adoptions, see mio::AdoptionRate.
      * @param[in] contact_radius Contact radius for second-order adoptions.
      * @param[in] sigma Noise term for the diffusion process.
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
-    QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
-             double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
+    SingleWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
+               ScalarType contact_radius = 0.4, ScalarType sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
         , m_sigma(sigma)
         , m_non_moving_states(non_moving_states)
-        , m_number_transitions(static_cast<size_t>(Status::Count), Eigen::MatrixXd::Zero(4, 4))
     {
         for (auto& agent : populations) {
             mio::unused(agent);
@@ -104,7 +129,7 @@ public:
     {
         ScalarType rate = 0;
         // get the correct adoption rate
-        const size_t well = well_index(agent.position);
+        const size_t well = 0;
         auto map_itr      = m_adoption_rates.find({well, agent.status, new_status});
         if (map_itr != m_adoption_rates.end()) {
             const auto& adoption_rate = map_itr->second;
@@ -145,70 +170,32 @@ public:
      */
     void move(const ScalarType /*t*/, const ScalarType dt, Agent& agent)
     {
-        const auto old_well = well_index(agent.position);
         if (std::find(m_non_moving_states.begin(), m_non_moving_states.end(), agent.status) ==
-                m_non_moving_states.end() &&
-            std::find(m_non_moving_regions.begin(), m_non_moving_regions.end(), old_well) ==
-                m_non_moving_regions.end()) {
-            Position p = {
-                mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0),
-                mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0)};
+            m_non_moving_states.end()) {
+            Position p = {mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0),
+                          mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
 
-            agent.position      = agent.position - dt * grad_U(agent.position) + (m_sigma * std::sqrt(dt)) * p;
-            const auto new_well = well_index(agent.position);
-            if (old_well != new_well) {
-                m_number_transitions[static_cast<size_t>(agent.status)](old_well, new_well)++;
-            }
+            agent.position = agent.position - dt * grad_U(agent.position) + (m_sigma * std::sqrt(dt)) * p;
         }
-        //else{agent has non-moving status or region}
+        //else{agent has non-moving status}
     }
 
     /**
-     * @brief Calculate the current system state i.e. the populations for each region and infection state.
-     * @return Vector containing the number of agents per infection state for each region.
+     * @brief Calculate the current system state i.e. the populations for each infection state.
+     * @return Vector containing the number of agents per infection state.
      */
     Eigen::VectorXd time_point() const
     {
-        Eigen::VectorXd val = Eigen::VectorXd::Zero(4 * static_cast<size_t>(Status::Count));
+        Eigen::VectorXd val = Eigen::VectorXd::Zero(static_cast<size_t>(Status::Count));
         for (auto& agent : populations) {
-            // split population into the wells given by grad_U
-            auto position =
-                static_cast<size_t>(agent.status) + well_index(agent.position) * static_cast<size_t>(Status::Count);
-            val[position] += 1;
+            val[static_cast<size_t>(agent.status)] += 1;
         }
         return val;
     }
 
-    /**
-     * @brief Get the  number of spatial transitions that happened until the current system state.
-     * @return Matrix with entries (from_well, to_well) for every infection state.
-     */
-    const std::vector<Eigen::MatrixXd>& number_transitions() const
-    {
-        return m_number_transitions;
-    }
-
-    std::vector<Eigen::MatrixXd>& number_transitions()
-    {
-        return m_number_transitions;
-    }
-
-    /**
-     * @brief Get AdoptionRate mapping.
-     * @return Map of AdoptionRates based on their region index and source and target infection state.
-     */
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>&
-    get_adoption_rates()
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>& get_adoption_rates()
     {
         return m_adoption_rates;
-    }
-
-    /**
-     * @brief Set regions where no movement happens.
-     */
-    void set_non_moving_regions(std::vector<size_t> non_moving_regions)
-    {
-        m_non_moving_regions = non_moving_regions;
     }
 
     /**
@@ -224,15 +211,15 @@ public:
 
 private:
     /**
-     * @brief Claculate the gradient of the potential at a given position.
-     * @param[in] x Position at which the gradient is evaluated.
+     * @brief Calculate the gradient of the potential at a given position.
+     * @param[in] p Position at which the gradient is evaluated.
      * @return Value of potential gradient.
      */
-    static Position grad_U(const Position x)
+    static Position grad_U(const Position p)
     {
-        // U is a quad well potential
-        // U(x0,x1) = (x0^2 - 1)^2 + (x1^2 - 1)^2
-        return {4 * x[0] * (x[0] * x[0] - 1), 4 * x[1] * (x[1] * x[1] - 1)};
+        // U is a single well potential
+        // U(x0,x1) = (x0^4 + x1^4)/2
+        return {2 * p[0] * p[0] * p[0], 2 * p[1] * p[1] * p[1]};
     }
 
     /**
@@ -244,29 +231,27 @@ private:
     bool is_contact(const Agent& agent, const Agent& contact) const
     {
         //      test if contact is in the contact radius                     and test if agent and contact are different objects
-        return (agent.position - contact.position).norm() < m_contact_radius && (&agent != &contact) &&
-               well_index(agent.position) == well_index(contact.position);
+        return (agent.position - contact.position).norm() < m_contact_radius && (&agent != &contact);
     }
 
-    /**
+    /** 
      * @brief Restrict domain to [-2, 2]^2 where "escaping" is impossible.
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.
     */
-    bool is_in_domain(const Position& p) const
+    bool is_in_domain(const Position& p, const double lower_domain_border = -2, const double upper_domain_border = 2) const
     {
-        return -2 <= p[0] && p[0] <= 2 && -2 <= p[1] && p[1] <= 2;
+        // restrict domain to [lower_domain_border, upper_domain_border]^2 where "escaping" is impossible, i.e. it holds x <= grad_U(x) for dt <= 0.1
+        return lower_domain_border <= p[0] && p[0] <= upper_domain_border && lower_domain_border <= p[1] &&
+               p[1] <= upper_domain_border;
     }
 
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>
         m_adoption_rates; ///< Map of AdoptionRates according to their region index and their from -> to infection states.
     ScalarType m_contact_radius; ///< Agents' interaction radius. Within this radius agents are considered as contacts.
     ScalarType m_sigma; ///< Noise term of the diffusion process.
     std::vector<Status> m_non_moving_states; ///< Infection states within which agents do not change their location.
-    std::vector<size_t> m_non_moving_regions{}; ///< Regions without movement.
-    std::vector<Eigen::MatrixXd>
-        m_number_transitions; ///< Vector that contains for every infection state a matrix with entry (k,l) the number of spatial transitions from Region k to Regionl.
     mio::RandomNumberGenerator m_rng; ///< Model's random number generator.
 };
 
-#endif
+#endif //MIO_D_ABM_SINGLE_WELL_H

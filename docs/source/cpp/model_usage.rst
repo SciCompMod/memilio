@@ -10,3 +10,4 @@ Model Usage
    individual_models
    metapop
    io
+   hybrid_models
