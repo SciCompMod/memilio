@@ -57,7 +57,7 @@ struct Logger : mio::LogAlways {
             for (size_t i = 0; i < static_cast<size_t>(mio::abm::InfectionState::Count); ++i) {
                 auto inf_state = mio::abm::InfectionState(i);
                 persons_per_infection_state.insert(
-                    {inf_state, sim.get_model().get_subpopulation(loc.get_id(), t, inf_state)});
+                    {inf_state, sim.get_model().get_subpopulation_inf_state(loc.get_id(), t, inf_state)});
             }
             location_information.push_back(std::make_tuple(loc.get_model_id(), loc.get_type(), loc.get_id(),
                                                            sim.get_model().get_number_persons(loc.get_id()),
