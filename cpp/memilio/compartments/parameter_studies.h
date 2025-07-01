@@ -90,7 +90,7 @@ public:
          * @param num_runs number of runs
          */
     ParameterStudy(const ParametersGraph& graph, FP t0, FP tmax, FP dev_rel, FP graph_sim_dt, size_t num_runs)
-        : ParameterStudy(graph, t0, tmax, graph_sim_dt, num_runs)
+        : ParameterStudy<FP, Simulation>(graph, t0, tmax, graph_sim_dt, num_runs)
     {
         for (auto& params_node : m_graph.nodes()) {
             set_params_distributions_normal(params_node, t0, tmax, dev_rel);
@@ -105,7 +105,7 @@ public:
          * @param num_runs number of runs in ensemble run
          */
     ParameterStudy(typename Simulation::Model const& model, FP t0, FP tmax, size_t num_runs)
-        : ParameterStudy({}, t0, tmax, tmax - t0, num_runs)
+        : ParameterStudy<FP, Simulation>({}, t0, tmax, tmax - t0, num_runs)
     {
         m_graph.add_node(0, model);
     }
