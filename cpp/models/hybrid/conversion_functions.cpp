@@ -58,7 +58,7 @@ void convert_model(const dabm::Simulation<SingleWell<mio::osecir::InfectionState
 }
 
 template <>
-void convert_model(const smm::Simulation<1, mio::osecir::InfectionState>& current_model,
+void convert_model(const smm::Simulation<ScalarType, 1, mio::osecir::InfectionState>& current_model,
                    dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& target_model)
 {
     auto& current_result = current_model.get_result();

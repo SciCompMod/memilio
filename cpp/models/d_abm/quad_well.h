@@ -67,7 +67,7 @@ public:
      * @param[in] sigma Noise term for the diffusion process.
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
-    QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
+    QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<ScalarType, Status>>& rates,
              double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)

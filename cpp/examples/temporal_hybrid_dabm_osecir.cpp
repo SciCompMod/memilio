@@ -66,7 +66,7 @@ int main()
                  time_Isev = 9., time_Icri = 7.2, mu_Ins_R = 0.2, mu_Isy_Isev = 0.1, mu_Isev_Icri = 0.1,
                  mu_Icri_D = 0.2;
     //Initialize ABM adoption rates
-    std::vector<mio::AdoptionRate<mio::osecir::InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<ScalarType, mio::osecir::InfectionState>> adoption_rates;
     //Second-order adoption rate (S->E)
     adoption_rates.push_back(
         {mio::osecir::InfectionState::Susceptible,
@@ -150,8 +150,8 @@ int main()
     ode.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]              = mu_Isev_Icri;
     ode.parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(0)]              = mu_Icri_D;
     ode.apply_constraints();
-    mio::ContactMatrixGroup& contact_matrix = ode.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_frequency));
+    mio::ContactMatrixGroup<double>& contact_matrix = ode.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, contact_frequency));
 
     //Set t0 and internal dt for each model
     double t0 = 0;
