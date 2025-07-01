@@ -213,6 +213,6 @@ int main()
     auto ts_ode = hybrid_sim.get_result_model2();
 
     //Print result time series
-    auto ts = mio::interpolate_simulation_result(mio::merge_time_series(ts_abm, ts_ode));
+    auto ts = mio::interpolate_simulation_result(mio::merge_time_series(ts_abm, ts_ode).value());
     ts.print_table({"S", "E", "Ins", "Ins_confirmed", "Isy", "Isy_confirmed", "Isev", "Icri", "R", "D"});
 }

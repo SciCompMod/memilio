@@ -22,6 +22,7 @@
 
 #include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/io/io.h"
 
 #include <functional>
 #include <vector>
@@ -179,11 +180,12 @@ double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1
  * @return A TimeSeries containing all time points and values from both input TimeSeries.
  */
 template <class FP>
-TimeSeries<FP> merge_time_series(TimeSeries<FP>& ts1, TimeSeries<FP>& ts2, bool add_values = false)
+IOResult<TimeSeries<FP>> merge_time_series(TimeSeries<FP>& ts1, TimeSeries<FP>& ts2, bool add_values = false)
 {
     TimeSeries<FP> merged_ts(ts1.get_num_elements());
     if (ts1.get_num_elements() != ts2.get_num_elements()) {
         log_error("TimeSeries have a different number of elements.");
+        return failure(mio::StatusCode::InvalidValue);
     }
     else {
         Eigen::Index t1_iterator = 0;
@@ -255,7 +257,7 @@ TimeSeries<FP> merge_time_series(TimeSeries<FP>& ts1, TimeSeries<FP>& ts2, bool 
             }
         }
     }
-    return merged_ts;
+    return success(merged_ts);
 }
 
 } // namespace mio
