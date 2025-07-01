@@ -638,7 +638,7 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
         m_mobile_population.add_time_point(
             t, (node_from.get_last_state().array() *
                 m_parameters.get_coefficients().get_matrix_at(SimulationTime<FP>(t)).array() *
-                get_mobility_factors<FP, Sim>(node_from, t, node_from.get_last_state()).array())
+                get_mobility_factors<FP>(node_from, t, node_from.get_last_state()).array())
                    .matrix());
         m_return_times.add_time_point(t + dt);
 
@@ -692,7 +692,7 @@ make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<FP, Sim>, MobilityEdg
     return make_graph_sim<FP>(
         t0, dt, graph, static_cast<void (*)(FP, FP, SimulationNode<FP, Sim>&)>(&advance_model<FP, Sim>),
         static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<FP, Sim>&, SimulationNode<FP, Sim>&)>(
-            &apply_mobility<FP, Sim>));
+            &apply_mobility<FP>));
 }
 
 template <typename FP, class Sim>
@@ -704,7 +704,7 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<FP, Sim>, MobilityEdge<FP>>
     return make_graph_sim<FP>(
         t0, dt, std::move(graph), static_cast<void (*)(FP, FP, SimulationNode<FP, Sim>&)>(&advance_model<FP, Sim>),
         static_cast<void (*)(FP, FP, MobilityEdge<FP>&, SimulationNode<FP, Sim>&, SimulationNode<FP, Sim>&)>(
-            &apply_mobility<FP, Sim>));
+            &apply_mobility<FP>));
 }
 
 /** @} */
