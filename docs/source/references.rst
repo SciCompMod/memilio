@@ -1,21 +1,27 @@
 References
 ===========
 
+The following gives an overview on (peer-reviewed) publications extending or using MEmilio. If you would like to add a publication, `contact us <mailto:Martin.Kuehn@DLR.de>`.
+
 Recently Submitted Publications
 --------------------------------------
 
 - Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. arXiv. `arXiv:2502.14428 <https://arxiv.org/abs/2502.14428>`_
 - Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2024). *Towards Graph Neural Network Surrogates Leveraging Mechanistic Expert Knowledge for Pandemic Response*. arXiv. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
 - Wendler AC, Plötzke L, Tritzschak H, Kühn MJ. (2024). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. Submitted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
-- Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2024). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. arXiv. `arXiv:2410.08050 <https://arxiv.org/abs/2410.08050>`_
 - Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Submitted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
-- Schmid N, Bicker J, Hofmann AF, Wallrafen-Sam K, Kerkmann D, et al. (2024). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. medRxiv. `DOI:10.1101/2024.11.10.24317057 <https://doi.org/10.1101/2024.11.10.24317057>`_
 
 
 Peer-Reviewed Publications
 --------------------------
 
 **2025**
+
+- Schmid N, Bicker J , Hofmann AF, Wallrafen-Sam K, Kerkmann D, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
+ 
+- Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
+ 
+- Diallo D, Schoenfeld J, Schmieding R, Korf S, Kühn MJ, Hecking T (2025). *Integrating Human Mobility Models with Epidemic Modeling: A Framework for Generating Synthetic Temporal Contact Networks*. *Entropy* 27(5), 507. `DOI:10.3390/e27050507 <https://doi.org/10.3390/e27050507>`_
 
 - Bicker J, Schmieding R, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `DOI:10.1016/j.idm.2024.12.015 <https://doi.org/10.1016/j.idm.2024.12.015>`_
 

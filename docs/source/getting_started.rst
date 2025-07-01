@@ -7,21 +7,23 @@ Overview
 .. note:: This project is under active development.
 
 
-MEmilio is an extensive framework for tasks around infectious disease modelling. It supports various :ref:`model <model-faq>` types 
+MEmilio is an extensive framework for tasks around infectious disease modeling. It supports a multitude of :ref:`model <model-faq>` types 
 including :doc:`equation-based<cpp/aggregated_models>`, :doc:`agent-based <cpp/individual_models>`, 
-and :doc:`hybrid graph-ODE-based models <cpp/graph_metapop>` as well as data integration and visualizations. 
+and :doc:`hybrid graph-ODE-based models <cpp/graph_metapop>`. It furthermore provides ready-to-use tools for data integration and visualizations. 
 Among the equation-based models, we provide models based on :doc:`ordinary differential equations <cpp/ode>`,
-:doc:`the linear chain trick, <cpp/lct>` and its :doc:`generalisation <cpp/glct>`, :doc:`integro-differential equations <cpp/ide>` 
-and :doc:`stochastic differential equations <cpp/sde>`. The MEmilio framework is written in two languages: C++ and Python. 
+:doc:`the linear chain trick (LCT), <cpp/lct>` and a recent :doc:`generalized LCT <cpp/glct>`, :doc:`integro-differential equations <cpp/ide>` 
+and :doc:`stochastic differential equations <cpp/sde>`. With simple definitions, models can be spatially or demograpically resolved.
 
-- The C++ backend powers the model and simulation components for optimal efficiency.
-- Data acquisition, plotting, and machine-learning models are handled via Python.
+The MEmilio framework is written in two languages: C++ and Python. 
 
-For more details on the C++ implementation, see the sections on :doc:`model usage <cpp/model_usage>` if you are interested 
-in using or applying our models and :doc:`model creation <cpp/model_creation>` if you want to write new models inside our framework.
+- The C++ backend contains efficient and optimized model implementations that further use parallelization to speed up execution and reduce waiting times.
+- Python is used for data acquisition, plotting, and machine-learning models.
+- We, furthermore, provide Python interfaces to selected models (implemented in C++) to allow the use and study of advanced models by users less experience in programming or computer science.
 
-If you prefer using Python, you can use our :doc:`memilio-simulation <python/memilio_simulation>` package to run simulations 
-in our C++ backend; this package uses ``pybind11`` to bind our C++ model code. 
+For more details on using models implemented in C++ directly, see the sections on :doc:`model usage <cpp/model_usage>`.
+For more details on implementing new infection dynamics models that could then be combined with, e.g., our mobility patterns, see :doc:`model creation <cpp/model_creation>`.
+
+If you prefer using Python to call or run our models, you can use our :doc:`memilio-simulation <python/memilio_simulation>` package to run simulations.
 The :doc:`memilio-epidata <python/memilio_epidata>` package provides tools to download and structure important data such 
 as infection or mobility data. More about this and our other Python packages can be found in the :doc:`Python Interface Section <python/python_packages>` 
 of this documentation.
@@ -39,12 +41,15 @@ Usage
 Installation
 ~~~~~~~~~~~~
 
-There are two main ways to set up MEmilio on your computer, depending on what you want to do:
+There are two main ways to set up MEmilio on your computer or on a remote cluster or supercomputer, depending on what you want to do:
 
-1. **Using the Python packages:** This is the recommended path for most users. You can run simulations using python bindings, download epidemiological data, and create plots all from Python, without needing to compile any C++ code yourself.
+1. **Using the Python packages:** This is the recommended path for many users not familiar with C++. Here, you can run simulations using python bindings.
 2. **Directly building the C++ Core:** This is for developers who want to modify the functionality, contribute new models etc. by running C++ code directly.
 
-Below, we will give you a step-by-step guide for both methods. If you're new to MEmilio, we recommend starting with the Python packages, as they are easier to use.
+In addition, we provide several Python packages to download epidemiological data or create plots from Python.
+
+Below, we will give you a step-by-step guide for both methods. If you are new to MEmilio and more familiar with Python, Julia, or R than with C++, we recommend starting with the Python packages, 
+as they provide an easy access to simulate infection dynamics models from and collect experiences with MEmilio.
 
 Required Tools
 *****************
@@ -53,23 +58,23 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Git:** This is a version control system used to download the project's source code.
 
-    *   **Windows:** Here, Git is not installed by default. Download and install it from `git-scm.com <https://git-scm.com/downloads/win>`_.
-    *   **macOS & Linux:** Git is usually pre-installed. You can check by opening a terminal and typing ``git --version``.
+    *   **Windows:** By default, Git is not installed. Download and install it from `git-scm.com <https://git-scm.com/downloads/win>`_.
+    *   **macOS & Linux:** Git is usually preinstalled. You can check by opening a terminal and typing ``git --version``.
 
 *   **Python:** Required for the Python packages.
 
-    *   We recommend installing the latest version from the official website `python.org <https://www.python.org/>`_.
+    *   MEmilio is tested daily with Python 3.8 and 3.11. While other versions might also work, we recommend installing the latest version tested daily from the official website `python.org <https://www.python.org/>`_.
 
 *   **C++ Compiler and CMake:**
 
     *   **Windows:** The easiest way is to install **Visual Studio Community**. This includes a C++ compiler, CMake, and Git all in one.
     *   **macOS:** One option is installing the **Xcode Command Line Tools** by running ``xcode-select --install`` in your terminal.
-    *   **Linux:** Install the essential build tools and CMake. On Debian/Ubuntu, you can do this with by running ``sudo apt-get install cmake gcc g++`` in your terminal.
+    *   **Linux:** On Linux, essential build tools and CMake might be preinstalled. Otherwise, on Debian/Ubuntu, you could execute the installation by running ``sudo apt-get install cmake gcc g++`` in your terminal.
 
 Step 1: Download the MEmilio Source Code
 *****************************************
 
-Once the required tools are installed, open a terminaland download the MEmilio code with this command:
+Once the required tools are installed, open a terminal and download the MEmilio code with this command:
 
 .. code-block:: console
 
@@ -92,7 +97,7 @@ Now, navigate into that folder:
 
 From here, choose one of the following options.
 
-Option A: Installing the Python Packages (Recommended)
+Option A: Installing the Python Packages (Recommended for nonexperienced users or for data download and visualizations)
 ****************************************************
 
 If you want to run simulations, download data, or create plots using Python, you only need to install our Python packages.
