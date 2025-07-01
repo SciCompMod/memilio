@@ -338,7 +338,8 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
                                         params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                                         scaling_factor_icu, tnt_capacity_factor, num_days, false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
-                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
+                                        std::vector<std::vector<size_t>>{}));
 
     // add initial deaths to the DeadNaive compartment
     BOOST_OUTCOME_TRY(auto&& node_ids, mio::get_node_ids(population_data_path, true));
