@@ -180,7 +180,8 @@ double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1
  * @return A TimeSeries containing all time points and values from both input TimeSeries.
  */
 template <class FP>
-IOResult<TimeSeries<FP>> merge_time_series(TimeSeries<FP>& ts1, TimeSeries<FP>& ts2, bool add_values = false)
+IOResult<TimeSeries<FP>> merge_time_series(const TimeSeries<FP>& ts1, const TimeSeries<FP>& ts2,
+                                           bool add_values = false)
 {
     TimeSeries<FP> merged_ts(ts1.get_num_elements());
     if (ts1.get_num_elements() != ts2.get_num_elements()) {
