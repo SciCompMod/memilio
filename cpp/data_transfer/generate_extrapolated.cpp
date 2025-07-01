@@ -276,17 +276,17 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 0.0;
     auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                    mio::osecirvvs::InfectionState::ExposedNaive,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                mio::osecirvvs::InfectionState::ExposedNaive,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
     mio::Date end_date           = offset_date_by_days(start_date, num_days);
 
     const auto& set_node_function =
@@ -302,7 +302,8 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
                           true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                           scaling_factor_icu, tnt_capacity_factor, num_days, false, true));
     BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
-                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
+                                        read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.},
+                                        std::vector<std::vector<size_t>>{}));
 
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
