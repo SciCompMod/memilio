@@ -100,7 +100,7 @@ From here, choose one of the following options.
 Option A: Installing the Python Packages (Recommended for nonexperienced users or for data download and visualizations)
 ****************************************************
 
-If you want to run simulations, download data, or create plots using Python, you only need to install our Python packages.
+You can run simulations, download data, or create plots, by only installing our Python packages.
 
 1.  Navigate to the directory containing our Python code:
 
@@ -108,10 +108,18 @@ If you want to run simulations, download data, or create plots using Python, you
 
        cd pycode
 
-2.  From here, you can install the packages you need. For example, to install the ``memilio-epidata`` package for data downloading and handling, run:
+2.  To install the simulation package ``memilio-simulation``, from here you can do:
 
     .. code-block:: console
 
+       cd memilio-simulation
+       pip install -e .
+
+3.  For afterwards installing the ``memilio-epidata`` package for data downloading and handling, run:
+
+    .. code-block:: console
+
+       cd ..  # Go back to the pycode directory
        cd memilio-epidata
        pip install -e .
 
@@ -127,21 +135,12 @@ If you want to run simulations, download data, or create plots using Python, you
 
    For regular use, the simple ``pip install -e .`` is sufficient.
 
-
-3.  To install other packages, like ``memilio-simulation``, repeat the process:
-
-    .. code-block:: console
-
-       cd ..  # Go back to the pycode directory
-       cd memilio-simulation
-       pip install -e .
-
-
+To install other packages, see the items below *Python Interface* in the menu on the left hand side.
 
 Option B: Building the C++ Core (Advanced)
 ****************************************
 
-If you are a developer and want to build the C++ executables yourself, follow these instructions.
+For experienced developers and C++ programmers, we offer the C++ backend to fully benefit from all functionality and parallel performance.
 
 1.  Navigate to the C++ source code directory:
 
@@ -172,7 +171,7 @@ For more detailed instructions, help with errors, and a list of compile options,
 Running simulations
 ~~~~~~~~~~~~~~~~~~~~~
 You can run simulations either via the C++ interface where they are originally implemented or via the python bindings. 
-For the C++ Interface you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <cpp/model_usage>` section.
+For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <cpp/model_usage>` section.
 In short, the executables for different model instatiations are build as described above and can be run via 
 
 .. code-block:: console
@@ -202,10 +201,10 @@ the :doc:`C++ model creation <cpp/model_creation>` section of this documentation
 Visualizations
 ~~~~~~~~~~~~~~~~~~~~~
 
-For visualizations we first of all recommend our :doc:`python package <python/memilio_plot>`. Apart from that we have 
+For visualizations, we provide our :doc:`python package MEmilio-plot <python/memilio_plot>`. Apart from that, we have 
 collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`_. 
-For the latter we don't take any responsibilities!
+For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`.
 
 Further questions
 ~~~~~~~~~~~~~~~~~~~~~
-If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `github <https://github.com/ICB-DCM/orga/discussions/categories/q-a>`_.
+If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `e-mail <mailto:Martin.Kuehn@DLR.de>` or open an issue or discusion on `github <https://github.com/SciCompMod/memilio/>`
