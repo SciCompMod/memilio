@@ -36,7 +36,7 @@ public:
 
 private:
     static mio::IOResult<SimulationResults>
-    run_single_simulation_with_infections(const mio::abm::World& base_world,
+    run_single_simulation_with_infections(mio::abm::World& base_world,
                                           const std::map<uint32_t, bool>& initial_infections, double k_parameter,
                                           int simulation_days);
 };

@@ -19,10 +19,11 @@ constexpr int MIN_EVENT_HOURS = 1;
 constexpr int MAX_EVENT_HOURS = 24;
 
 // Default values
-constexpr int DEFAULT_RUNS               = 1;
-constexpr int DEFAULT_DAYS               = 10;
-constexpr int DEFAULT_POPULATION         = 1000;
-constexpr double DEFAULT_INFECTION_K     = 20.0;
-constexpr int DEFAULT_EVENT_HOURS        = 2;
-constexpr const char* DEFAULT_OUTPUT_DIR = "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/panvXabmSim";
+constexpr int DEFAULT_RUNS           = 1;
+constexpr int DEFAULT_DAYS           = 10;
+constexpr int DEFAULT_POPULATION     = 1000;
+constexpr double DEFAULT_INFECTION_K = 20.0;
+constexpr int DEFAULT_EVENT_HOURS    = 2;
+constexpr const char* DEFAULT_OUTPUT_DIR =
+    "/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/panvXabmSim/results";
 } // namespace Config

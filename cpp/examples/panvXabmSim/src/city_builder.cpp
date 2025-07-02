@@ -17,7 +17,7 @@ mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config
     auto households = create_households(world, config.num_households);
     auto workplaces = create_workplaces(world, config.num_workplaces);
     auto schools    = create_schools(world, config.num_schools);
-    auto events     = create_events(world, config.num_large_events, config.num_small_events);
+    // auto events     = create_events(world, config.num_large_events, config.num_small_events);
 
     // Assign people to locations
     BOOST_OUTCOME_TRY(

@@ -105,9 +105,9 @@ ScalarType Location::transmission_contacts_per_day(uint32_t cell_index, VirusVar
 ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant virus,
                                               const Parameters& global_params) const
 {
-    auto rate=m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
-    global_params.get<AerosolTransmissionRates>()[{virus}];
-    if (rate>0) {
+    auto rate = m_cells[cell_index].m_cached_exposure_rate_air[{virus}] *
+                global_params.get<AerosolTransmissionRates>()[{virus}];
+    if (rate > 0) {
         std::cout << "Warning: Airborne transmission rate is larger than 0. This should not happen." << std::endl;
     }
     return rate;
@@ -175,22 +175,22 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
                         const Parameters& global_params) const
 {
 
-    if (m_hourly_contact_matrices[0].size() != 0) {
-        if (m_dynamic_assignment) {
-            size_t i = 0;
-            for (; i < m_persons.size() && i < m_assigned_persons.size(); i++) {
-                m_assigned_persons[i] = m_persons[i]->get_person_id();
-            }
-            for (; i < m_assigned_persons.size(); i++) {
-                m_assigned_persons[i] = INVALID_PERSON_ID;
-            }
-        }
-        interact_micro(rng, person, t, dt, global_params);
-        return;
-    }
+    // if (m_hourly_contact_matrices[0].size() != 0) {
+    //     if (m_dynamic_assignment) {
+    //         size_t i = 0;
+    //         for (; i < m_persons.size() && i < m_assigned_persons.size(); i++) {
+    //             m_assigned_persons[i] = m_persons[i]->get_person_id();
+    //         }
+    //         for (; i < m_assigned_persons.size(); i++) {
+    //             m_assigned_persons[i] = INVALID_PERSON_ID;
+    //         }
+    //     }
+    //     interact_micro(rng, person, t, dt, global_params);
+    //     return;
+    // }
     // TODO: we need to define what a cell is used for, as the loop may lead to incorrect results for multiple cells
-    auto age_receiver                  = person.get_age();
-    ScalarType mask_protection         = person.get_mask_protective_factor(global_params);
+    auto age_receiver          = person.get_age();
+    ScalarType mask_protection = person.get_mask_protective_factor(global_params);
     assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
     for (auto cell_index :
          person.get_cells()) { // TODO: the logic here is incorrect in case a person is in multiple cells
@@ -198,9 +198,9 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
         for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
             VirusVariant virus = static_cast<VirusVariant>(v);
             ScalarType exposed_viral_shed =
-            (transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups()) +
-             transmission_air_per_day(cell_index, virus, global_params)) *
-            (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_params));
+                (transmission_contacts_per_day(cell_index, virus, age_receiver, global_params.get_num_groups()) +
+                 transmission_air_per_day(cell_index, virus, global_params)) *
+                (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_params));
             ScalarType infection_rate = global_params.get<InfectionRateFromViralShed>()[{virus}] * exposed_viral_shed;
             local_indiv_expected_trans[v] = std::make_pair(virus, infection_rate);
         }

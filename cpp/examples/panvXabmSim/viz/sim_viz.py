@@ -391,7 +391,7 @@ def main():
     args = parser.parse_args()
 
     plot_infection_states_results(
-        path_to_infection_states="/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/panvXabmSim/results_2025-06-27155119/infection_per_location_type_per_age_group",
+        path_to_infection_states="/Users/saschakorf/Nosynch/Arbeit/memilio/memilio/cpp/examples/panvXabmSim/results/results_2025-07-02210845/infection_per_location_type_per_age_group",
         start_date=args.start_date,
         colormap=args.colormap,
         xtick_step=args.xtick_step,

@@ -62,12 +62,11 @@ Person Person::copy_person(Location& location)
 
 void Person::interact(RandomNumberGenerator& rng, TimePoint t, TimeSpan dt, const Parameters& params)
 {
-    
+
     if (get_infection_state(t) == InfectionState::Susceptible) { // Susceptible or Recovered people can be (re)infected
         m_location->interact(rng, *this, t, dt, params);
     }
-    
-    
+
     m_time_at_location += dt;
 }
 
@@ -220,7 +219,7 @@ bool Person::get_tested(RandomNumberGenerator& rng, TimePoint t, const TestParam
         // false positive
         else {
             m_quarantine_start = t;
-            m_tested_positive = true;
+            m_tested_positive  = true;
             return true;
         }
     }
