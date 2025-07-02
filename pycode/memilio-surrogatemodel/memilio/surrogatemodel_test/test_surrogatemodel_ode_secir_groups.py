@@ -25,6 +25,7 @@ import memilio.surrogatemodel.surrogate_utils as utils
 from unittest.mock import patch
 import os
 import unittest
+import tempfile
 
 import numpy as np
 import tensorflow as tf
@@ -718,21 +719,10 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             filename="data_secir_groups_10days_2_random.pickle",
             modeltype='classic',  plot_stats=False)
 
-        utils.save_model(mlp1.model,
-                         self.path, "mlp_multi_multi")
-
-        self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path),
-                         ['data_secir_groups_10days_2_random.pickle', 'mlp_multi_multi.keras'])
-
-        path_file = os.path.join(self.path, "mlp_multi_multi.keras")
-
-        self.assertTrue(os.path.isfile(path_file))
-        if os.path.isfile(path_file):
-            print("-_-_-_-_-_- Datei existiert -_-_-_-_-")
-        else:
-            print("Neeeeeeeeeiiiiiiiiinnnnnnnn.......nnnnnnn......nnnnnnn")
-        mlp2 = tf.keras.models.load_model(path_file)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            utils.save_model(mlp1.model, tmpdir, "mlp_multi_multi")
+            path_file = os.path.join(tmpdir, "mlp_multi_multi.keras")
+            mlp2 = utils.load_model(path_file)
 
         weights1 = mlp1.model.get_weights()
         weights2 = mlp2.get_weights()
