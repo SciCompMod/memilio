@@ -732,7 +732,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             print("-_-_-_-_-_- Datei existiert -_-_-_-_-")
         else:
             print("Neeeeeeeeeiiiiiiiiinnnnnnnn.......nnnnnnn......nnnnnnn")
-        mlp2 = tf.keras.models.load_model(path)
+        mlp2 = tf.keras.models.load_model(path_file)
 
         weights1 = mlp1.model.get_weights()
         weights2 = mlp2.get_weights()
