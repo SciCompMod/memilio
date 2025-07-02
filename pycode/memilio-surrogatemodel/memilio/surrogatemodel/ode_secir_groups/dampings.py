@@ -83,13 +83,13 @@ def dampings_active(days, number_dampings, min_damping_day):
     """
 
     # Setting parameters
-    gamma_pos = 0
-    alpha = -1
-    p0 = 0.5
-    t1_max = -0.3
-    t1_min = -1.2
-    t2_max = 2
-    t2_min = -0.5
+    gamma_pos = -2
+    alpha = -4
+    p0 = 0.4
+    t1_max = -1
+    t1_min = -2.5
+    t2_max = 0.95
+    t2_min = -0.25
 
     # Defining possible damping days
     distance_between_days = calc_dist_days(
