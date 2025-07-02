@@ -222,6 +222,7 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
 
 # # Testing network_architectures.py
 
+
     def test_mlp_multi_single(self):
         with self.assertRaises(ValueError) as error:
             network_architectures.mlp_multi_input_single_output(
@@ -725,10 +726,14 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path),
                          ['data_secir_groups_10days_2_random.pickle', 'mlp_multi_multi.keras'])
 
-        path = os.path.join(self.path, "mlp_multi_multi.keras")
+        path_file = os.path.join(self.path, "mlp_multi_multi.keras")
 
-        self.assertTrue(os.path.isfile(path))
-        mlp2 = utils.load_model(path)
+        self.assertTrue(os.path.isfile(path_file))
+        if os.path.isfile(path_file):
+            print("-_-_-_-_-_- Datei existiert -_-_-_-_-")
+        else:
+            print("Neeeeeeeeeiiiiiiiiinnnnnnnn.......nnnnnnn......nnnnnnn")
+        mlp2 = utils.load_model(path_file)
 
         weights1 = mlp1.model.get_weights()
         weights2 = mlp2.get_weights()
