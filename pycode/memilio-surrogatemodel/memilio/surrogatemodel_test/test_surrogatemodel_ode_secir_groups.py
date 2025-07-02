@@ -721,7 +721,13 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         utils.save_model(mlp1.model,
                          self.path, "mlp_multi_multi")
 
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path),
+                         ['data_secir_groups_10days_2_random.pickle', 'mlp_multi_multi.keras'])
+
         path = os.path.join(self.path, "mlp_multi_multi.keras")
+
+        self.assertTrue(os.path.isfile(path))
         mlp2 = utils.load_model(path)
 
         weights1 = mlp1.model.get_weights()
