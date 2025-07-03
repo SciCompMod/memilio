@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <filesystem>
 
 mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const MultiRunConfig& config)
 {
@@ -45,8 +47,8 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         for (const auto& person : persons) {
             initial_infections[person.get_person_id()] = true;
             count++;
-            if (count >= 600) {
-                break; // Limit to first 1000 persons
+            if (count >= 10) {
+                break;
             }
         }
         // if (config.event_config.use_panvadere_init) {
@@ -98,18 +100,30 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     }
 
     //Save percentile results
-    //TODO: Add percentile calculation like in paper Simulation
+    auto ensembl_inf_per_loc_type  = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
+    auto ensembl_inf_per_age_group = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
 
-    auto ensembl_inf     = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
     auto ensemble_params = std::vector<std::vector<mio::abm::World>>{};
 
     for (const auto& run : results.all_runs) {
-        ensembl_inf.push_back(run.infection_per_loc_type);
+        ensembl_inf_per_loc_type.push_back(run.infection_per_loc_type);
+        ensembl_inf_per_age_group.push_back(run.infection_state_per_age_group);
         ensemble_params.push_back(run.ensemble_params);
     }
 
-    BOOST_OUTCOME_TRY(save_results(ensembl_inf, ensemble_params, {0},
+    BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_loc_type, ensemble_params, {0},
                                    base_dir + "/infection_per_location_type_per_age_group", false, true));
+    BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_age_group, ensemble_params, {0},
+                                   base_dir + "/infection_state_per_age_group", false, true));
+
+    //See if last_result folder exists in parent directory
+    fs::path parent_dir      = fs::path(base_dir).parent_path();
+    fs::path last_result_dir = parent_dir / "last_result";
+
+    if (fs::exists(last_result_dir)) {
+        // If it exists, copy the current result folder to last_result
+        BOOST_OUTCOME_TRY(copy_result_folder(base_dir, last_result_dir));
+    }
 
     return mio::success();
 }
@@ -151,11 +165,15 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
 
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionPerLocationTypePerAgeGroup> historyInfectionPerLocationType{
         Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
+    mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
+        Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
 
-    sim.advance(tmax, historyInfectionPerLocationType);
+    sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup);
 
     results.infection_per_loc_type =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
+    results.infection_state_per_age_group =
+        std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
     results.ensemble_params = std::vector<mio::abm::World>{sim.get_world()};
 
     // Placeholder implementation

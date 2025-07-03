@@ -9,4 +9,4 @@ std::string currentDateTime();
 mio::IOResult<void> create_result_folders(const std::string& result_dir);
 
 // Copy a directory and its contents recursively
-mio::IOResult<void> copy_result_folder(const std::string& from_dir, const std::string& to_dir);
+mio::IOResult<void> copy_result_folder(const fs::path& from_dir, const fs::path& to_dir);

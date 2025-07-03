@@ -17,6 +17,7 @@ std::string currentDateTime()
 
 mio::IOResult<void> create_result_folders(const std::string& result_dir)
 {
+
     // Define subdirectory paths
     const std::string inf_per_location_type_per_age_group = result_dir + "/infection_per_location_type_per_age_group";
     const std::string inf_state_per_age_group             = result_dir + "/infection_state_per_age_group";
@@ -29,11 +30,9 @@ mio::IOResult<void> create_result_folders(const std::string& result_dir)
     return mio::success();
 }
 
-mio::IOResult<void> copy_result_folder(const std::string& from_dir, const std::string& to_dir)
+mio::IOResult<void> copy_result_folder(const fs::path& from_dir, const fs::path& to_dir)
 {
     // Create destination directory
-    BOOST_OUTCOME_TRY(mio::create_directory(to_dir));
-
     try {
         // Copy directory recursively with overwrite
         fs::copy(from_dir, to_dir, fs::copy_options::overwrite_existing | fs::copy_options::recursive);
