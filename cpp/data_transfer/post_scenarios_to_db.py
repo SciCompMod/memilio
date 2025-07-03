@@ -468,7 +468,7 @@ def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios
     # Define Baseline scenario without any interventions and extrapolated scenario
     scenario_data = [{
         "name": "casedata",
-        "description": "Extrapolated RKI data",
+        "description": "Extrapolierte Daten des RKI.",
         "startDate": f"{start_date_casedata}",
         "endDate": f"{end_date_casedata}",
         "modelId": model_id[0],
@@ -479,7 +479,7 @@ def post_to_db_scenarios(headers, start_date_scenarios, days_simulated_scenarios
     },
         {
         "name": "baseline",
-        "description": "Baseline scenario without any interventions",
+        "description": "Basisszenario ohne Interventionen.",
         "startDate": f"{start_date_simulation}",
         "endDate": f"{end_date_simulation}",
         "modelId": model_id[0],
