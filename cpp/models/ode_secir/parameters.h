@@ -477,140 +477,139 @@ public:
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         int corrected = false;
-        if (this->template get<Seasonality<FP>>().value() < 0.0 ||
-            this->template get<Seasonality<FP>>().value() > 0.5) {
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
             log_warning("Constraint check: Parameter Seasonality changed from {:0.4f} to {:d}",
-                        this->template get<Seasonality<FP>>().value(), 0);
+                        this->template get<Seasonality<FP>>(), 0);
             this->template set<Seasonality<FP>>(0);
             corrected = true;
         }
 
-        if (this->template get<ICUCapacity<FP>>().value() < 0.0) {
+        if (this->template get<ICUCapacity<FP>>() < 0.0) {
             log_warning("Constraint check: Parameter ICUCapacity changed from {:0.4f} to {:d}",
-                        this->template get<ICUCapacity<FP>>().value(), 0);
+                        this->template get<ICUCapacity<FP>>(), 0);
             this->template set<ICUCapacity<FP>>(0);
             corrected = true;
         }
 
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>().value() < 0.0) {
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
             log_warning("Constraint check: Parameter DynamicNPIsImplementationDelay changed from {} to {}",
-                        this->template get<DynamicNPIsImplementationDelay<FP>>().value(), 0);
+                        this->template get<DynamicNPIsImplementationDelay<FP>>(), 0);
             this->template set<DynamicNPIsImplementationDelay<FP>>(0);
             corrected = true;
         }
 
-        if (this->template get<TestAndTraceCapacity<FP>>().value() < 0.0) {
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
             log_warning("Constraint check: Parameter TestAndTraceCapacity changed from {:0.4f} to {:d}",
-                        this->template get<TestAndTraceCapacity<FP>>().value(), 0);
+                        this->template get<TestAndTraceCapacity<FP>>(), 0);
             this->template get<TestAndTraceCapacity<FP>>() = 0;
             corrected                                      = true;
         }
 
-        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>().value() < 0.0) {
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
             log_warning("Constraint check: Parameter TestAndTraceCapacityMaxRisk changed from {:0.4f} to {:d}",
-                        this->template get<TestAndTraceCapacityMaxRisk<FP>>().value(), 0);
+                        this->template get<TestAndTraceCapacityMaxRisk<FP>>(), 0);
             this->template get<TestAndTraceCapacityMaxRisk<FP>>() = 0;
             corrected                                             = true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
-            if (this->template get<TimeExposed<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
                             "Consider to cancel and reset parameters.",
-                            this->template get<TimeExposed<FP>>()[i].value(), tol_times);
+                            this->template get<TimeExposed<FP>>()[i], tol_times);
                 this->template get<TimeExposed<FP>>()[i] = tol_times;
                 corrected                                = true;
             }
 
-            if (this->template get<TimeInfectedNoSymptoms<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeInfectedNoSymptoms changed from {:.4f} to {:.4f}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
                             "Consider to cancel and reset parameters.",
-                            this->template get<TimeInfectedNoSymptoms<FP>>()[i].value(), tol_times);
+                            this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);
                 this->template get<TimeInfectedNoSymptoms<FP>>()[i] = tol_times;
                 corrected                                           = true;
             }
 
-            if (this->template get<TimeInfectedSymptoms<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedSymptoms<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeInfectedSymptoms changed from {:.4f} to {:.4f}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
                             "Consider to cancel and reset parameters.",
-                            this->template get<TimeInfectedSymptoms<FP>>()[i].value(), tol_times);
+                            this->template get<TimeInfectedSymptoms<FP>>()[i], tol_times);
                 this->template get<TimeInfectedSymptoms<FP>>()[i] = tol_times;
                 corrected                                         = true;
             }
 
-            if (this->template get<TimeInfectedSevere<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedSevere<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeInfectedSevere changed from {:.4f} to {:.4f}. Please note "
                             "that unreasonably small compartment stays lead to massively increased run time. Consider "
                             "to cancel and reset parameters.",
-                            this->template get<TimeInfectedSevere<FP>>()[i].value(), tol_times);
+                            this->template get<TimeInfectedSevere<FP>>()[i], tol_times);
                 this->template get<TimeInfectedSevere<FP>>()[i] = tol_times;
                 corrected                                       = true;
             }
 
-            if (this->template get<TimeInfectedCritical<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedCritical<FP>>()[i] < tol_times) {
                 log_warning("Constraint check: Parameter TimeInfectedCritical changed from {:.4f} to {:.4f}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
                             "Consider to cancel and reset parameters.",
-                            this->template get<TimeInfectedCritical<FP>>()[i].value(), tol_times);
+                            this->template get<TimeInfectedCritical<FP>>()[i], tol_times);
                 this->template get<TimeInfectedCritical<FP>>()[i] = tol_times;
                 corrected                                         = true;
             }
 
-            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i].value() < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact<FP>>()[i].value() > 1.0) {
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
                 log_warning(
                     "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                    this->template get<TransmissionProbabilityOnContact<FP>>()[i].value(), 0.0);
+                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
                 corrected                                                     = true;
             }
 
-            if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i].value() < 0.0) {
+            if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] < 0.0) {
                 log_warning("Constraint check: Parameter RelativeTransmissionNoSymptoms changed from {:0.4f} to {:d} ",
-                            this->template get<RelativeTransmissionNoSymptoms<FP>>()[i].value(), 0);
+                            this->template get<RelativeTransmissionNoSymptoms<FP>>()[i], 0);
                 this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] = 0;
                 corrected                                                   = true;
             }
 
-            if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value() < 0.0 ||
-                this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value() > 1.0) {
+            if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter RecoveredPerInfectedNoSymptoms changed from {:0.4f} to {:d} ",
-                            this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value(), 0);
+                            this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i], 0);
                 this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] = 0;
                 corrected                                                   = true;
             }
 
-            if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i].value() < 0.0 ||
-                this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i].value() > 1.0) {
+            if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] < 0.0 ||
+                this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter RiskOfInfectionFromSymptomatic changed from {:0.4f} to {:d}",
-                            this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i].value(), 0);
+                            this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i], 0);
                 this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] = 0;
                 corrected                                                   = true;
             }
 
-            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i].value() < 0.0 ||
-                this->template get<SeverePerInfectedSymptoms<FP>>()[i].value() > 1.0) {
+            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter SeverePerInfectedSymptoms changed from {:0.4f} to {:d}",
-                            this->template get<SeverePerInfectedSymptoms<FP>>()[i].value(), 0);
+                            this->template get<SeverePerInfectedSymptoms<FP>>()[i], 0);
                 this->template get<SeverePerInfectedSymptoms<FP>>()[i] = 0;
                 corrected                                              = true;
             }
 
-            if (this->template get<CriticalPerSevere<FP>>()[i].value() < 0.0 ||
-                this->template get<CriticalPerSevere<FP>>()[i].value() > 1.0) {
+            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter CriticalPerSevere changed from {:0.4f} to {:d}",
-                            this->template get<CriticalPerSevere<FP>>()[i].value(), 0);
+                            this->template get<CriticalPerSevere<FP>>()[i], 0);
                 this->template get<CriticalPerSevere<FP>>()[i] = 0;
                 corrected                                      = true;
             }
 
-            if (this->template get<DeathsPerCritical<FP>>()[i].value() < 0.0 ||
-                this->template get<DeathsPerCritical<FP>>()[i].value() > 1.0) {
+            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_warning("Constraint check: Parameter DeathsPerCritical changed from {:0.4f} to {:d}",
-                            this->template get<DeathsPerCritical<FP>>()[i].value(), 0);
+                            this->template get<DeathsPerCritical<FP>>()[i], 0);
                 this->template get<DeathsPerCritical<FP>>()[i] = 0;
                 corrected                                      = true;
             }
@@ -625,28 +624,27 @@ public:
      */
     bool check_constraints() const
     {
-        if (this->template get<Seasonality<FP>>().value() < 0.0 ||
-            this->template get<Seasonality<FP>>().value() > 0.5) {
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
             log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:d}", 0, 0.5);
             return true;
         }
 
-        if (this->template get<ICUCapacity<FP>>().value() < 0.0) {
+        if (this->template get<ICUCapacity<FP>>() < 0.0) {
             log_error("Constraint check: Parameter ICUCapacity smaller {:d}", 0);
             return true;
         }
 
-        if (this->template get<TestAndTraceCapacity<FP>>().value() < 0.0) {
+        if (this->template get<TestAndTraceCapacity<FP>>() < 0.0) {
             log_error("Constraint check: Parameter TestAndTraceCapacity smaller {:d}", 0);
             return true;
         }
 
-        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>().value() < 0.0) {
+        if (this->template get<TestAndTraceCapacityMaxRisk<FP>>() < 0.0) {
             log_error("Constraint check: Parameter TestAndTraceCapacityMaxRisk smaller {:d}", 0);
             return true;
         }
 
-        if (this->template get<DynamicNPIsImplementationDelay<FP>>().value() < 0.0) {
+        if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
             log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
             return true;
         }
@@ -654,86 +652,86 @@ public:
         const double tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
-            if (this->template get<TimeExposed<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->template get<TimeExposed<FP>>()[i].value(), tol_times);
+                          this->template get<TimeExposed<FP>>()[i], tol_times);
                 return true;
             }
 
-            if (this->template get<TimeInfectedNoSymptoms<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
                 log_error("Constraint check: Parameter TimeInfectedNoSymptoms {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->template get<TimeInfectedNoSymptoms<FP>>()[i].value(), tol_times);
+                          this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);
                 return true;
             }
 
-            if (this->template get<TimeInfectedSymptoms<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedSymptoms<FP>>()[i] < tol_times) {
                 log_error("Constraint check: Parameter TimeInfectedSymptoms {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->template get<TimeInfectedSymptoms<FP>>()[i].value(), tol_times);
+                          this->template get<TimeInfectedSymptoms<FP>>()[i], tol_times);
                 return true;
             }
 
-            if (this->template get<TimeInfectedSevere<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedSevere<FP>>()[i] < tol_times) {
                 log_error("Constraint check: Parameter TimeInfectedSevere {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->template get<TimeInfectedSevere<FP>>()[i].value(), tol_times);
+                          this->template get<TimeInfectedSevere<FP>>()[i], tol_times);
                 return true;
             }
 
-            if (this->template get<TimeInfectedCritical<FP>>()[i].value() < tol_times) {
+            if (this->template get<TimeInfectedCritical<FP>>()[i] < tol_times) {
                 log_error("Constraint check: Parameter TimeInfectedCritical {:.4f} smaller {:.4f}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
-                          this->template get<TimeInfectedCritical<FP>>()[i].value(), tol_times);
+                          this->template get<TimeInfectedCritical<FP>>()[i], tol_times);
                 return true;
             }
 
-            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i].value() < 0.0 ||
-                this->template get<TransmissionProbabilityOnContact<FP>>()[i].value() > 1.0) {
+            if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
+                this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
                           1);
                 return true;
             }
 
-            if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i].value() < 0.0) {
+            if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] < 0.0) {
                 log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d}", 0);
                 return true;
             }
 
-            if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value() < 0.0 ||
-                this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i].value() > 1.0) {
+            if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
                           1);
                 return true;
             }
 
-            if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i].value() < 0.0 ||
-                this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i].value() > 1.0) {
+            if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] < 0.0 ||
+                this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
                           1);
                 return true;
             }
 
-            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i].value() < 0.0 ||
-                this->template get<SeverePerInfectedSymptoms<FP>>()[i].value() > 1.0) {
+            if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 ||
+                this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
 
-            if (this->template get<CriticalPerSevere<FP>>()[i].value() < 0.0 ||
-                this->template get<CriticalPerSevere<FP>>()[i].value() > 1.0) {
+            if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
+                this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
 
-            if (this->template get<DeathsPerCritical<FP>>()[i].value() < 0.0 ||
-                this->template get<DeathsPerCritical<FP>>()[i].value() > 1.0) {
+            if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
+                this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
                 log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
                 return true;
             }
