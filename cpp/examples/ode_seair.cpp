@@ -56,16 +56,25 @@ void set_initial_values(mio::oseair::Model<FP>& model)
 
 int main()
 {
-
     mio::set_log_level(mio::LogLevel::debug);
 
     using FP = typename ad::gt1s<double>::type; // algorithmic differentiation data type: scalar tangent-linear mode
 
     FP t0   = 0;
     FP tmax = 10;
-    FP dt   = 0.3;
+    FP dt   = 0.1;
 
-    mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", ad::value(t0), ad::value(tmax), ad::value(dt));
+    mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+
+    // ----------------- //
+    // Define integrator //
+    // ----------------- //
+    auto FP_integrator =
+        std::make_shared<mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>(
+            1e-12, 1e-8, std::numeric_limits<ScalarType>::min(), dt);
+    auto double_integrator =
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>(
+            1e-12, 1e-8, std::numeric_limits<ScalarType>::min(), ad::value(dt));
 
     // Compute derivative of the final states of the model with respect to the initial value of the suscetible population
     mio::oseair::Model<FP> model1;
@@ -74,17 +83,17 @@ int main()
     ad::derivative(value)                                                                                   = 1.0;
     model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = value;
     model1.check_constraints();
-    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1);
+    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1, FP_integrator);
 
     // We want to compare the derivatives computed ba algorithmic differention with difference quotient.
     // To this end we perturbe the corresponding initial value of the by an increment h and simulate again.
     mio::oseair::Model<double> model2;
     set_initial_values(model2);
-    double h = 1e-4;
+    double h = 1e-3;
     model2.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] += h;
     model2.check_constraints();
-    mio::TimeSeries<double> seair2 =
-        mio::simulate<double, mio::oseair::Model<double>>(ad::value(t0), ad::value(tmax), ad::value(dt), model2);
+    mio::TimeSeries<double> seair2 = mio::simulate<double, mio::oseair::Model<double>>(
+        ad::value(t0), ad::value(tmax), ad::value(dt), model2, double_integrator);
 
     const std::string file_name = "seair-compare.csv";
     std::ofstream file(file_name);
