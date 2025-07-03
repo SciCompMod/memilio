@@ -353,7 +353,7 @@ public:
      * @param t time in the simulation
      * @return matrix expression 
      */
-    Matrix get_matrix_at(SimulationTime<FP> t) const
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
         assert(!m_accumulated_dampings_cached.empty() &&
                "Cache is not current. Did you disable the automatic cache update?");
@@ -363,7 +363,7 @@ public:
                                        return std::get<SimulationTime<FP>>(tup1) < std::get<SimulationTime<FP>>(tup2);
                                    });
 
-        Matrix damping = smoother_cosine<FP>(
+        auto damping = smoother_cosine<FP>(
             t.get(), (std::get<SimulationTime<FP>>(*ub) - mio::SimulationTime<FP>(1.0)).get(),
             std::get<SimulationTime<FP>>(*ub).get(), std::get<Matrix>(*(ub - 1)), std::get<Matrix>(*ub));
 

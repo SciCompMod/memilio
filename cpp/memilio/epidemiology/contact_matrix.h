@@ -185,20 +185,12 @@ public:
      * Applies dampings to compute the real contact frequency at a point in time.
      * Uses lazy evaluation, coefficients are calculated on indexed access.
      * @param t time in the simulation
-     * @return matrix of size num_groups x num_groups
+     * @return matrix expression (num_groups x num_groups)
      */
-    Matrix get_matrix_at(SimulationTime<FP> t) const
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
-        Matrix damping_at_t = m_dampings.get_matrix_at(t);
-        assert(Shape::get_shape_of(damping_at_t) == Shape::get_shape_of(m_baseline));
-
-        if (damping_at_t.rows() != m_baseline.rows() || damping_at_t.cols() != m_baseline.cols()) {
-            mio::log_error("DampingMatrixExpression::get_matrix_at: Damping matrix at time {} has shape ({}, {}), "
-                           "expected ({}, {}). ",
-                           t.get(), damping_at_t.rows(), damping_at_t.cols(), m_baseline.rows(), m_baseline.cols());
-        }
-
-        return (m_baseline - damping_at_t.cwiseProduct(m_baseline - m_minimum)).eval();
+        assert(Shape::get_shape_of(m_dampings.get_matrix_at(t)) == Shape::get_shape_of(m_baseline));
+        return m_baseline - (m_dampings.get_matrix_at(t).array() * (m_baseline - m_minimum).array()).matrix();
     }
 
     /**
@@ -394,16 +386,16 @@ public:
      * get the real contact frequency at a point in time.
      * sum of all contained matrices.
      * @param t point in time
-     * @return matrix of size num_groups x num_groups
+     * @return matrix expression of size num_groups x num_groups
      */
-    Matrix get_matrix_at(SimulationTime<FP> t) const
+    auto get_matrix_at(SimulationTime<FP> t) const
     {
-        const auto shape = get_shape();
-        Matrix result    = Matrix::Zero(shape.rows(), shape.cols());
-        for (const auto& m : m_matrices) {
-            result += m.get_matrix_at(t);
-        }
-        return result;
+        return Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>::NullaryExpr(
+            get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
+                return std::accumulate(m_matrices.begin(), m_matrices.end(), FP(0.0), [t, i, j](FP s, auto& m) {
+                    return static_cast<FP>(s + m.get_matrix_at(t)(i, j));
+                });
+            });
     }
 
     /**
