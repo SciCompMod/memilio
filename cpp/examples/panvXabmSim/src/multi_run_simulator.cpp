@@ -24,6 +24,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // Step 1: Build city (done once)
         std::cout << "Building city..." << std::endl;
         BOOST_OUTCOME_TRY(auto base_world, CityBuilder::build_world(config.city_config));
+        CityBuilder::print_city_summary(config.city_config);
 
         // Step 2: Get map from specific event to ids of persons in simulation
         std::cout << "Mapping events to person IDs..." << std::endl;
