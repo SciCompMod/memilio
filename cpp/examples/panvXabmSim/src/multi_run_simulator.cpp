@@ -29,7 +29,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // Step 2: Get map from specific event to ids of persons in simulation
         std::cout << "Mapping events to person IDs..." << std::endl;
         //TODO: Implement this function to map events to persons
-        // BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config));
+        BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config.type));
         // results.event_person_map = event_map;
 
         // Step 3: Calculate K parameter
@@ -148,11 +148,10 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
                                                          double k_parameter, int simulation_days)
 {
     // TODO: Implement single simulation run with initial infections
-    // 1. Copy base world
-    // 2. Apply initial infections to specified people/households
-    // 3. Set infection parameter K
-    // 4. Run simulation for specified days
-    // 5. Return results
+    // 1. Apply initial infections to specified people/households
+    // 2. Set infection parameter K
+    // 3. Run simulation for specified days
+    // 4. Return results
     SimulationResults results;
     auto t0   = mio::abm::TimePoint(0); // Start time per simulation
     auto tmax = mio::abm::TimePoint(0) + mio::abm::days(simulation_days); // End time per simulation

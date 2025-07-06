@@ -61,9 +61,10 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
     return mio::success(adjusted_k_value);
 }
 
-mio::IOResult<std::map<uint32_t, bool>> EventSimulator::read_infection_data(const std::string& filename)
+mio::IOResult<std::vector<std::tuple<uint32_t, std::string, bool>>>
+EventSimulator::read_panv_file_restaurant(const std::string& filename)
 {
-    std::map<uint32_t, bool> infected_status;
+    std::vector<std::tuple<uint32_t, std::string, bool>> infected_status;
 
     // Check if filename is empty
     if (filename.empty()) {
@@ -79,33 +80,67 @@ mio::IOResult<std::map<uint32_t, bool>> EventSimulator::read_infection_data(cons
     std::string line;
     size_t line_number = 0;
 
-    // Skip header if present
+    // Skip header line (pedestrianId	table	infected)
     if (std::getline(file, line)) {
         line_number++;
+        // Verify it's actually a header by checking for expected column names
+        if (line.find("pedestrianId") == std::string::npos || line.find("table") == std::string::npos ||
+            line.find("infected") == std::string::npos) {
+            std::cerr << "Warning: Expected header line not found. Processing first line as data." << std::endl;
+            // Reset file to beginning if header verification fails
+            file.clear();
+            file.seekg(0);
+            line_number = 0;
+        }
     }
 
     while (std::getline(file, line)) {
         line_number++;
-        if (line.empty())
-            continue; // Skip empty lines
 
+        // Skip empty lines
+        if (line.empty() || line.find_first_not_of(" \t\r\n") == std::string::npos) {
+            continue;
+        }
+
+        // Parse tab-delimited data
         std::istringstream iss(line);
-        uint32_t id;
-        std::string table;
-        int infected;
+        std::string pedestrian_id_str, table_str, infected_str;
 
-        if (iss >> id >> table >> infected) {
-            if (infected < 0 || infected > 1) {
-                std::cerr << "Warning: Invalid infection status " << infected << " at line " << line_number
-                          << ", treating as not infected" << std::endl;
-                infected_status[id] = false;
+        // Extract fields using tab delimiter
+        if (std::getline(iss, pedestrian_id_str, '\t') && std::getline(iss, table_str, '\t') &&
+            std::getline(iss, infected_str)) {
+
+            try {
+                // Parse pedestrian ID
+                uint32_t pedestrian_id = static_cast<uint32_t>(std::stoul(pedestrian_id_str));
+
+                // Parse table (remove any trailing whitespace)
+                table_str.erase(table_str.find_last_not_of(" \t\r\n") + 1);
+
+                // Parse infection status
+                infected_str.erase(infected_str.find_last_not_of(" \t\r\n") + 1);
+                int infected_int = std::stoi(infected_str);
+
+                if (infected_int < 0 || infected_int > 1) {
+                    std::cerr << "Warning: Invalid infection status " << infected_int << " for pedestrian "
+                              << pedestrian_id << " at line " << line_number << ", treating as not infected"
+                              << std::endl;
+                    infected_status.emplace_back(pedestrian_id, table_str, false);
+                }
+                else {
+                    bool is_infected = (infected_int == 1);
+                    infected_status.emplace_back(pedestrian_id, table_str, is_infected);
+                }
             }
-            else {
-                infected_status[id] = (infected == 1);
+            catch (const std::exception& e) {
+                std::cerr << "Warning: Failed to parse line " << line_number << ": '" << line << "' - " << e.what()
+                          << std::endl;
+                continue;
             }
         }
         else {
-            std::cerr << "Warning: Failed to parse line " << line_number << ": '" << line << "'" << std::endl;
+            std::cerr << "Warning: Failed to parse line " << line_number << " (expected 3 tab-separated fields): '"
+                      << line << "'" << std::endl;
         }
     }
 
@@ -113,7 +148,10 @@ mio::IOResult<std::map<uint32_t, bool>> EventSimulator::read_infection_data(cons
 
     if (infected_status.empty()) {
         std::cerr << "Warning: No valid infection data found in file: " << filename << std::endl;
+        return mio::failure(mio::StatusCode::InvalidFileFormat, "No valid data found in file");
     }
+
+    std::cout << "Successfully read " << infected_status.size() << " persons from " << filename << std::endl;
 
     return mio::success(infected_status);
 }
@@ -124,7 +162,7 @@ mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvader
     BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
 
     // Read Panvadere infection data
-    BOOST_OUTCOME_TRY(auto panvadere_data, read_infection_data(panvadere_file));
+    BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
 
     // Map to households based on event type
     std::map<uint32_t, bool> household_infections;
@@ -132,11 +170,12 @@ mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvader
     switch (event_type) {
     case EventType::Restaurant_Table_Equals_Household:
     case EventType::Restaurant_Table_Equals_Half_Household:
-        household_infections = map_restaurant_tables_to_households(panvadere_data);
-        break;
     case EventType::WorkMeeting_Many_Meetings:
     case EventType::WorkMeeting_Few_Meetings:
-        household_infections = map_work_meeting_to_households(panvadere_data);
+    default:
+        // Map events to households
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Event type not supported for Panvadere data mapping: " + event_type_to_string(event_type));
         break;
     }
 
@@ -185,25 +224,105 @@ std::string EventSimulator::simulation_type_to_string(SimType type)
     }
 }
 
-std::map<uint32_t, bool>
-EventSimulator::map_restaurant_tables_to_households(const std::map<uint32_t, bool>& panvadere_data)
+mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_tables_to_households(mio::abm::World& city)
 {
-    std::map<uint32_t, bool> household_infections;
+    // This funciton maps a simulation id to a household id in the world simulation.
 
-    // TODO: Implement mapping logic
-    // For restaurant: each table represents a household
-    // Interchange households - half of each household at each table
-    // REMEMBER TO ASSIGN PERSONS TO THE SSME WORKPLACE IN LATER SIMUALATION
+    // First we read in the infection data from the Panvadere simulation
+    BOOST_OUTCOME_TRY(auto panvadere_file,
+                      get_panvadere_file_for_event_type(EventType::Restaurant_Table_Equals_Household));
+    BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
 
-    for (const auto& [person_id, is_infected] : panvadere_data) {
-        if (is_infected) {
-            // Map person to household (simple: person_id / 4 = household_id)
-            uint32_t household_id              = person_id / 4;
-            household_infections[household_id] = true;
+    std::map<uint32_t, uint32_t> household_map;
+
+    // For this we want to map each table to a full household. For this we look at a table and assign the first household with that
+    // amount of people to the table. If the table has more than 5 people we devide it into two households: one household for the first 5 people and one for the rest.
+
+    //First we calculate how many person are at each table and save the ids for each table
+    std::vector<std::pair<std::string, uint32_t>> tables;
+    std::vector<std::tuple<std::string, std::vector<uint32_t>>> table_person_ids; // Store person IDs for each table
+    for (const auto& entry : panvadere_data) {
+        const std::string& table = std::get<1>(entry);
+        // Find the table in the vector or create a new entry
+        auto it = std::find_if(tables.begin(), tables.end(), [&table](const std::pair<std::string, uint32_t>& entry) {
+            return entry.first == table;
+        });
+        if (it != tables.end()) {
+            it->second++; // Increment count for existing table
+            // Also add the person ID to the table_person_ids vector
+            auto person_id = std::get<0>(entry);
+            auto person_it = std::find_if(table_person_ids.begin(), table_person_ids.end(),
+                                          [&table](const std::tuple<std::string, std::vector<uint32_t>>& entry) {
+                                              return std::get<0>(entry) == table;
+                                          });
+            if (person_it != table_person_ids.end()) {
+                std::get<1>(*person_it).push_back(person_id); // Add person ID
+            }
+            else {
+                // If the table is not found, create a new entry with the person ID, this should not happen
+                std::cerr << "Warning: Table " << table << " not found in table_person_ids, creating new entry."
+                          << std::endl;
+                table_person_ids.emplace_back(table, std::vector<uint32_t>{person_id}); // Add new entry with person ID
+            }
+        }
+        else {
+            tables.emplace_back(table, 1); // Add new table with count 1
+            // Also add the person ID to the table_person_ids vector
+            table_person_ids.emplace_back(table, std::vector<uint32_t>{std::get<0>(entry)});
         }
     }
 
-    return household_infections;
+    // Secondly we now assign each table a vector of household sizes
+    std::map<std::string, std::vector<uint32_t>> table_household_sizes;
+    for (const auto& [table, count] : tables) {
+        if (count <= 5) {
+            // If the table has 5 or less people, we assign it to one household
+            table_household_sizes[table].push_back(count);
+        }
+        else if (count > 5 && count <= 10) {
+            // If the table has more than 5 people, we divide it into two households
+            uint32_t household_size1 = 5; // First household takes 5 people
+            uint32_t household_size2 = count - 5; // Second household takes the rest
+            table_household_sizes[table].push_back(household_size1);
+            table_household_sizes[table].push_back(household_size2);
+        }
+        else {
+            // If the table has more than 10 people, we divide it into multiple households of 5 people each
+            uint32_t num_households = count / 5;
+            for (uint32_t i = 0; i < num_households; ++i) {
+                table_household_sizes[table].push_back(5);
+            }
+            if (count % 5 != 0) {
+                // Add remaining people as a smaller household
+                table_household_sizes[table].push_back(count % 5);
+            }
+        }
+    }
+
+    // Now we search for the households in the city world and assign them to the tables
+    std::map<uint32_t, std::vector<std::tuple<uint32_t, uint32_t>>> household_map; // Maps a table to
+    for (const auto& [table, household_sizes] : table_household_sizes) {
+        for (const auto& household_size : household_sizes) {
+            // Find a household in the city world with the same size
+            auto household_it = std::find_if(city.get_locations().begin(), city.get_locations().end(),
+                                             [&household_size](const auto& location) {
+                                                 return location.get_persons().size() == household_size;
+                                             });
+            if (household_it != city.get_locations().end()) {
+                // If we found a household, map the table to the household id
+                uint32_t household_id       = household_it->get_index(); // Get the household id from the location index
+                household_map[household_id] = table; // Map household id to table
+            }
+            else {
+                // If we didn't find a household, we can either skip this table or create a new household
+                std::cerr << "Warning: No household found for table " << table << " with size " << household_size
+                          << ". Skipping this table." << std::endl;
+            }
+        }
+    }
+
+    mio::unused(city); // Prevent unused warning for the city world
+    return mio::success(household_map);
 }
 
 std::map<uint32_t, bool> EventSimulator::map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data)
@@ -284,4 +403,27 @@ std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const Event
     // }
 
     return infected_people;
+}
+
+mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_persons(const mio::abm::World& city,
+                                                                                  EventType event_type)
+{
+    switch (event_type) {
+    case EventType::Restaurant_Table_Equals_Household: {
+        BOOST_OUTCOME_TRY(auto household_map,
+                          EventSimulator::map_restaurant_tables_to_households(const_cast<mio::abm::World&>(city)));
+        return mio::success(household_map);
+    }
+    case EventType::Restaurant_Table_Equals_Half_Household:
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Restaurant_Table_Equals_Half_Household is not implemented yet");
+    case EventType::WorkMeeting_Many_Meetings:
+        return mio::failure(mio::StatusCode::InvalidValue, "WorkMeeting_Many_Meetings is not implemented yet");
+    case EventType::WorkMeeting_Few_Meetings:
+        return mio::failure(mio::StatusCode::InvalidValue, "WorkMeeting_Few_Meetings is not implemented yet");
+    default:
+        std::cerr << "Error: Unknown event type " << EventSimulator::event_type_to_string(event_type) << std::endl;
+        // Return an error result
+        return mio::failure(mio::StatusCode::InvalidValue, "Unknown event type");
+    }
 }

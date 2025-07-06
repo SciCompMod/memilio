@@ -155,8 +155,8 @@ mio::IOResult<void> CityBuilder::assign_people_to_locations(
         person.set_assigned_location(household_id);
 
         // Assign healthcare locations
-        person.set_assigned_location(hospitals[hospital_dist(world_rng)]);
-        person.set_assigned_location(icus[icu_dist(world_rng)]);
+        person.set_assigned_location(hospitals[0]);
+        person.set_assigned_location(icus[0]);
 
         // Assign to school based on German school attendance rates
         if (should_attend_school(age_group, world_rng)) {

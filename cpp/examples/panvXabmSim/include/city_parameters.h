@@ -95,9 +95,9 @@ struct InfrastructureRatios {
  */
 const std::map<int, double> SCHOOL_ATTENDANCE_RATES = {
     {0, 0.0}, // 0-4 years: 0% (some kindergarten, but not modeled)
-    {1, 0.98}, // 5-14 years: 98% school attendance
-    {2, 0.45}, // 15-34 years: 45% in education/training
-    {3, 0.02}, // 35-59 years: 2% in continuing education
+    {1, 1.0}, // 5-14 years: 100% school attendance
+    {2, 0.0}, // 15-34 years: 0% in education/training
+    {3, 0.0}, // 35-59 years: 0% in continuing education
     {4, 0.0}, // 60-79 years: 0%
     {5, 0.0} // 80+ years: 0%
 };
@@ -109,9 +109,9 @@ const std::map<int, double> SCHOOL_ATTENDANCE_RATES = {
 const std::map<int, double> EMPLOYMENT_RATES = {
     {0, 0.0}, // 0-4 years: 0%
     {1, 0.0}, // 5-14 years: 0%
-    {2, 0.78}, // 15-34 years: 78%
-    {3, 0.85}, // 35-59 years: 85%
-    {4, 0.32}, // 60-79 years: 32% (part-time, retirement transition)
+    {2, 1.0}, // 15-34 years: 78%
+    {3, 1.0}, // 35-59 years: 85%
+    {4, 0.0}, // 60-79 years: 32% (part-time, retirement transition)
     {5, 0.0} // 80+ years: 0%
 };
 

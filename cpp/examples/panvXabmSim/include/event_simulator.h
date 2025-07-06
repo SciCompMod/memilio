@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "abm/world.h"
 #include "abm/location_type.h"
+#include "config_validation.h"
 
 enum class EventType
 {
@@ -23,10 +24,14 @@ enum class SimType
 
 // Mapping from EventType to corresponding Panvadere data file
 const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
-    {EventType::Restaurant_Table_Equals_Household, "./data/restaurant_scenario/infections.txt"},
-    {EventType::Restaurant_Table_Equals_Half_Household, "./data/restaurant_scenario_half/infections.txt"},
-    {EventType::WorkMeeting_Many_Meetings, "./data/work_meeting_many/infections.txt"},
-    {EventType::WorkMeeting_Few_Meetings, "./data/work_meeting_few/infections.txt"}};
+    {EventType::Restaurant_Table_Equals_Household,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
+    {EventType::Restaurant_Table_Equals_Half_Household,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
+    {EventType::WorkMeeting_Many_Meetings,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_meeting_many/infections.txt"},
+    {EventType::WorkMeeting_Few_Meetings,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_meeting_few/infections.txt"}};
 
 struct EventSimulationConfig {
     EventType type;
@@ -80,8 +85,8 @@ public:
     /**
      * @brief Map events to persons (placeholder for future implementation)
      */
-    static mio::IOResult<std::map<uint32_t, bool>> map_events_to_persons(const mio::abm::World& city,
-                                                                         EventType event_type);
+    static mio::IOResult<std::map<uint32_t, uint32_t>> map_events_to_persons(const mio::abm::World& city,
+                                                                             EventType event_type);
 
     /**
      * @brief Convert EventType to human-readable string
@@ -101,10 +106,20 @@ public:
     /**
      * @brief Read infection data from a Panvadere file
      */
-    static mio::IOResult<std::map<uint32_t, bool>> read_infection_data(const std::string& filename);
+    static mio::IOResult<std::vector<std::tuple<uint32_t, std::string, bool>>>
+    read_panv_file_restaurant(const std::string& filename);
+
+    /**
+     * @brief Read infection data from a Panvadere file
+     */
+    static mio::IOResult<std::map<uint32_t, bool>> read_panv_file_work(const std::string& filename);
+
+    /**
+     * @brief Map restaurant tables to households for infection tracking
+     */
+    static mio::IOResult<std::map<uint32_t, uint32_t>> map_restaurant_tables_to_households(mio::abm::World& city);
 
 private:
-    static std::map<uint32_t, bool> map_restaurant_tables_to_households(const std::map<uint32_t, bool>& panvadere_data);
     static std::map<uint32_t, bool> map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data);
     static std::map<uint32_t, bool> map_choir_to_households(const std::map<uint32_t, bool>& panvadere_data);
 
