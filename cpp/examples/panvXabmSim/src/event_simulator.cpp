@@ -300,7 +300,7 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
     }
 
     // Now we search for the households in the city world and assign them to the tables
-    std::map<uint32_t, std::vector<std::tuple<uint32_t, uint32_t>>> household_map; // Maps a table to
+    std::map<uint32_t, uint32_t> household_map; // Maps panv id to household id in the world simulation
     for (const auto& [table, household_sizes] : table_household_sizes) {
         for (const auto& household_size : household_sizes) {
             // Find a household in the city world with the same size
@@ -310,8 +310,15 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
                                              });
             if (household_it != city.get_locations().end()) {
                 // If we found a household, map the table to the household id
-                uint32_t household_id       = household_it->get_index(); // Get the household id from the location index
-                household_map[household_id] = table; // Map household id to table
+                for (size_t i = 0; i < household_size; i++) {
+                    // Get the household id from the location index
+                    uint32_t household_id = household_it->get_index();
+                    // Map household id to table
+                    household_map[household_id] = table;
+                }
+                {
+                    /* code */
+                }
             }
             else {
                 // If we didn't find a household, we can either skip this table or create a new household
