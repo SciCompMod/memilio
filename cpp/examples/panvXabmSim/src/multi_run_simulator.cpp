@@ -35,42 +35,30 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // Step 3: Calculate K parameter
         std::cout << "Calculating infection parameter K..." << std::endl;
         //TODO: Implement this function to calculate K parameter based on event type
-        BOOST_OUTCOME_TRY(auto k_value, EventSimulator::calculate_infection_parameter_k(config.event_config));
-        results.infection_parameter_k = k_value;
+        BOOST_OUTCOME_TRY(results.infection_parameter_k,
+                          EventSimulator::calculate_infection_parameter_k(config.event_config));
 
         // Step 3: Get initial infections
-        std::map<uint32_t, bool> initial_infections{};
-        initial_infections = {}; // Initialize empty map
-        // TODO: Implement this.
-        // For now just infect the first 10 persons in the base world
-        const auto& persons = base_world.get_persons();
-        uint32_t count      = 0;
-        for (const auto& person : persons) {
-            initial_infections[person.get_person_id()] = true;
-            count++;
-            if (count >= 10) {
-                break;
-            }
+        std::vector<uint32_t> initial_infections;
+        if (config.simulation_type == SimType::Panvadere) {
+            std::cout << "Loading infections from Panvadere..." << std::endl;
+            BOOST_OUTCOME_TRY(auto infections,
+                              EventSimulator::initialize_from_panvadere(config.event_config.type, event_map));
+            initial_infections = infections;
         }
-        // if (config.event_config.use_panvadere_init) {
-        //     std::cout << "Loading infections from Panvadere..." << std::endl;
-        //     BOOST_OUTCOME_TRY(auto infections, EventSimulator::initialize_from_panvadere(config.event_config.panvadere_file,
-        //                                                                                  config.event_config.type));
-        //     initial_infections = infections;
-        // }
-        // else {
-        //     std::cout << "Simulating event infections..." << std::endl;
-        //     BOOST_OUTCOME_TRY(auto infections,
-        //                       EventSimulator::initialize_from_event_simulation(config.event_config, base_world));
-        //     initial_infections = infections;
-        // }
+        else if (config.simulation_type == SimType::Memilio) {
+            std::cout << "Simulating event infections..." << std::endl;
+            BOOST_OUTCOME_TRY(auto infections,
+                              EventSimulator::initialize_from_event_simulation(config.event_config, base_world));
+            initial_infections = infections;
+        }
 
         // Step 4: Run multiple simulations
         std::cout << "Running " << config.num_runs << " simulations..." << std::endl;
         results.all_runs.reserve(config.num_runs);
 
-        auto single_result =
-            run_single_simulation_with_infections(base_world, initial_infections, k_value, config.simulation_days);
+        auto single_result = run_single_simulation_with_infections(
+            base_world, initial_infections, results.infection_parameter_k, config.simulation_days);
 
         if (single_result.has_value()) {
             results.all_runs.push_back(single_result.value());
@@ -129,22 +117,20 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     return mio::success();
 }
 
-void assign_infection_state(mio::abm::World& world, const std::map<uint32_t, bool>& initial_infections,
+void assign_infection_state(mio::abm::World& world, const std::vector<uint32_t>& initial_infections,
                             mio::abm::TimePoint t)
 {
-    for (const auto& [person_id, infected] : initial_infections) {
-        if (infected) {
-            auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), world.get_person(person_id));
-            world.get_person(person_id).add_new_infection(
-                mio::abm::Infection(rng, mio::abm::VirusVariant::Alpha, world.get_person(person_id).get_age(),
-                                    world.parameters, t, mio::abm::InfectionState::Exposed));
-        }
+    for (const auto& person_id : initial_infections) {
+        auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), world.get_person(person_id));
+        world.get_person(person_id).add_new_infection(
+            mio::abm::Infection(rng, mio::abm::VirusVariant::Alpha, world.get_person(person_id).get_age(),
+                                world.parameters, t, mio::abm::InfectionState::Exposed));
     }
 }
 
 mio::IOResult<SimulationResults>
 MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_world,
-                                                         const std::map<uint32_t, bool>& initial_infections,
+                                                         const std::vector<uint32_t>& initial_infections,
                                                          double k_parameter, int simulation_days)
 {
     // TODO: Implement single simulation run with initial infections

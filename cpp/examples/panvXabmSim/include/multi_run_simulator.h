@@ -8,7 +8,7 @@
 struct MultiRunConfig {
     CityConfig city_config;
     EventSimulationConfig event_config;
-    SimType simulation_type     = SimType::Both;
+    SimType simulation_type     = SimType::Panvadere;
     int num_runs                = 100;
     int simulation_days         = 1;
     std::string output_base_dir = "/results";
@@ -36,7 +36,6 @@ public:
 
 private:
     static mio::IOResult<SimulationResults>
-    run_single_simulation_with_infections(mio::abm::World& base_world,
-                                          const std::map<uint32_t, bool>& initial_infections, double k_parameter,
-                                          int simulation_days);
+    run_single_simulation_with_infections(mio::abm::World& base_world, const std::vector<uint32_t>& initial_infections,
+                                          double k_parameter, int simulation_days);
 };

@@ -35,7 +35,7 @@ const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
 
 struct EventSimulationConfig {
     EventType type;
-    double infection_parameter_k = 1.0;
+    double infection_parameter_k = 0.0;
     int event_duration_hours     = 2;
 
     // Get the appropriate panvadere file for this event type
@@ -69,7 +69,8 @@ public:
      * @param event_type Type of event to process
      * @return IOResult containing household infection mapping
      */
-    static mio::IOResult<std::map<uint32_t, bool>> initialize_from_panvadere(EventType event_type);
+    static mio::IOResult<std::vector<uint32_t>> initialize_from_panvadere(EventType event_type,
+                                                                          std::map<uint32_t, uint32_t>& event_map);
 
     /**
      * @brief Initialize infections from event simulation
@@ -77,8 +78,8 @@ public:
      * @param city The city world for context
      * @return IOResult containing infected person mapping
      */
-    static mio::IOResult<std::map<uint32_t, bool>> initialize_from_event_simulation(const EventSimulationConfig& config,
-                                                                                    const mio::abm::World& city);
+    static mio::IOResult<std::vector<uint32_t>> initialize_from_event_simulation(const EventSimulationConfig& config,
+                                                                                 const mio::abm::World& city);
 
     // === Utility Functions ===
 
@@ -119,11 +120,17 @@ public:
      */
     static mio::IOResult<std::map<uint32_t, uint32_t>> map_restaurant_tables_to_households(mio::abm::World& city);
 
-private:
-    static std::map<uint32_t, bool> map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data);
-    static std::map<uint32_t, bool> map_choir_to_households(const std::map<uint32_t, bool>& panvadere_data);
+    /**
+     * @brief Map restaurant tables to households for infection tracking
+     */
+    static mio::IOResult<std::map<uint32_t, uint32_t>>
+    map_random_restaurant_tables_to_households(mio::abm::World& city);
 
+    static mio::IOResult<std::map<uint32_t, uint32_t>>
+    map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data);
+
+private:
     static mio::IOResult<mio::abm::World> create_event_world(const EventSimulationConfig& config);
-    static std::map<uint32_t, bool> simulate_event_transmission(const EventSimulationConfig& config,
-                                                                const mio::abm::World& city);
+    static std::vector<uint32_t> simulate_event_transmission(const EventSimulationConfig& config,
+                                                             const mio::abm::World& city);
 };

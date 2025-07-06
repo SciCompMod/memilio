@@ -41,7 +41,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
 
     switch (config.type) {
     case EventType::Restaurant_Table_Equals_Household:
-        base_k_value = 20.0; // Higher transmission in close dining
+        base_k_value = 2.0; // Higher transmission in close dining
         break;
     case EventType::Restaurant_Table_Equals_Half_Household:
         base_k_value = 1.1; // Slightly lower than full household tables
@@ -54,11 +54,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
         break;
     }
 
-    // Adjust K value based on event duration (longer events = higher transmission)
-    double duration_factor  = 1.0 + (config.event_duration_hours - 2) * 0.1; // 10% increase per extra hour
-    double adjusted_k_value = base_k_value * duration_factor * config.infection_parameter_k;
-
-    return mio::success(adjusted_k_value);
+    return mio::success(base_k_value);
 }
 
 mio::IOResult<std::vector<std::tuple<uint32_t, std::string, bool>>>
@@ -156,20 +152,73 @@ EventSimulator::read_panv_file_restaurant(const std::string& filename)
     return mio::success(infected_status);
 }
 
-mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvadere(EventType event_type)
+mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(EventType event_type,
+                                                                               std::map<uint32_t, uint32_t>& event_map)
 {
-    // Get the appropriate file for this event type
-    BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
-
-    // Read Panvadere infection data
-    BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
 
     // Map to households based on event type
-    std::map<uint32_t, bool> household_infections;
+    std::vector<uint32_t> household_infections;
+
+    // Get the appropriate file for this event type
 
     switch (event_type) {
-    case EventType::Restaurant_Table_Equals_Household:
-    case EventType::Restaurant_Table_Equals_Half_Household:
+    case EventType::Restaurant_Table_Equals_Household: {
+        BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
+
+        // Read Panvadere infection data
+        BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+
+        for (const auto& entry : panvadere_data) {
+            uint32_t person_id = std::get<0>(entry);
+            std::string table  = std::get<1>(entry);
+            bool is_infected   = std::get<2>(entry);
+
+            // Map person ID to household ID
+            if (is_infected) {
+                // Check if the table is already mapped to a household
+                auto it = event_map.find(person_id);
+                if (it != event_map.end()) {
+                    // If already mapped, add to household infections
+                    household_infections.push_back(it->second);
+                }
+                else {
+                    return mio::failure(mio::StatusCode::InvalidValue, "Person ID " + std::to_string(person_id) +
+                                                                           " not found in event map for table " +
+                                                                           table);
+                }
+            }
+        }
+        return mio::success(household_infections);
+    }
+
+    case EventType::Restaurant_Table_Equals_Half_Household: {
+        BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
+
+        // Read Panvadere infection data
+        BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+
+        for (const auto& entry : panvadere_data) {
+            uint32_t person_id = std::get<0>(entry);
+            std::string table  = std::get<1>(entry);
+            bool is_infected   = std::get<2>(entry);
+
+            // Map person ID to household ID
+            if (is_infected) {
+                // Check if the table is already mapped to a household
+                auto it = event_map.find(person_id);
+                if (it != event_map.end()) {
+                    // If already mapped, add to household infections
+                    household_infections.push_back(it->second);
+                }
+                else {
+                    return mio::failure(mio::StatusCode::InvalidValue, "Person ID " + std::to_string(person_id) +
+                                                                           " not found in event map for table " +
+                                                                           table);
+                }
+            }
+        }
+        return mio::success(household_infections);
+    }
     case EventType::WorkMeeting_Many_Meetings:
     case EventType::WorkMeeting_Few_Meetings:
     default:
@@ -182,7 +231,7 @@ mio::IOResult<std::map<uint32_t, bool>> EventSimulator::initialize_from_panvader
     return mio::success(household_infections);
 }
 
-mio::IOResult<std::map<uint32_t, bool>>
+mio::IOResult<std::vector<uint32_t>>
 EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& config, const mio::abm::World& city)
 {
     // Create event-specific world
@@ -232,8 +281,6 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
     BOOST_OUTCOME_TRY(auto panvadere_file,
                       get_panvadere_file_for_event_type(EventType::Restaurant_Table_Equals_Household));
     BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
-
-    std::map<uint32_t, uint32_t> household_map;
 
     // For this we want to map each table to a full household. For this we look at a table and assign the first household with that
     // amount of people to the table. If the table has more than 5 people we devide it into two households: one household for the first 5 people and one for the rest.
@@ -301,23 +348,39 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
 
     // Now we search for the households in the city world and assign them to the tables
     std::map<uint32_t, uint32_t> household_map; // Maps panv id to household id in the world simulation
-    for (const auto& [table, household_sizes] : table_household_sizes) {
+    std::vector<uint32_t> household_ids_reserved; // Store household IDs which have been assigned to tables
+    for (const auto& table_entry : table_household_sizes) {
+        const std::string& table                     = table_entry.first;
+        const std::vector<uint32_t>& household_sizes = table_entry.second;
+        int table_global_counter                     = 0;
         for (const auto& household_size : household_sizes) {
-            // Find a household in the city world with the same size
-            auto household_it = std::find_if(city.get_locations().begin(), city.get_locations().end(),
-                                             [&household_size](const auto& location) {
-                                                 return location.get_persons().size() == household_size;
-                                             });
+            // Find a household in the city world with the same size which hasnt been assigned yet
+            auto household_it =
+                std::find_if(city.get_locations().begin(), city.get_locations().end(),
+                             [&household_size, &household_ids_reserved](const auto& location) {
+                                 return location.get_persons().size() == household_size &&
+                                        std::find(household_ids_reserved.begin(), household_ids_reserved.end(),
+                                                  location.get_index()) == household_ids_reserved.end();
+                             });
+            // add to reserved household ids
+            household_ids_reserved.push_back(household_it->get_index());
             if (household_it != city.get_locations().end()) {
                 // If we found a household, map the table to the household id
                 for (size_t i = 0; i < household_size; i++) {
-                    // Get the household id from the location index
-                    uint32_t household_id = household_it->get_index();
-                    // Map household id to table
-                    household_map[household_id] = table;
-                }
-                {
-                    /* code */
+                    // Get the person ID from the table_person_ids vector
+                    auto person_it =
+                        std::find_if(table_person_ids.begin(), table_person_ids.end(), [&table](const auto& entry) {
+                            return std::get<0>(entry) == table;
+                        });
+                    if (person_it != table_person_ids.end() && i < std::get<1>(*person_it).size()) {
+                        uint32_t person_id = std::get<1>(*person_it)[table_global_counter++];
+                        household_map[person_id] =
+                            household_it->get_persons().at(i).get()->get_person_id(); // Map person ID to household ID
+                    }
+                    else {
+                        std::cerr << "Warning: Not enough persons for table " << table << " with size "
+                                  << household_size << ". Skipping this person." << std::endl;
+                    }
                 }
             }
             else {
@@ -328,13 +391,151 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
         }
     }
 
-    mio::unused(city); // Prevent unused warning for the city world
+    // Summarize the household map
+    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
+    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+    //               << std::endl;
+    // }
+
     return mio::success(household_map);
 }
 
-std::map<uint32_t, bool> EventSimulator::map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data)
+mio::IOResult<std::map<uint32_t, uint32_t>>
+EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city)
 {
-    std::map<uint32_t, bool> household_infections;
+    // This funciton maps a simulation id to a household id in the world simulation.
+
+    // First we read in the infection data from the Panvadere simulation
+    BOOST_OUTCOME_TRY(auto panvadere_file,
+                      get_panvadere_file_for_event_type(EventType::Restaurant_Table_Equals_Household));
+    BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+
+    // For this we want to map each two seats to a new household. For this we look at a table and assign the first household with that
+    // amount of people to the table. If the table has more than 5 people we devide it into two households: one household for the first 5 people and one for the rest.
+
+    //First we calculate how many person are at each table and save the ids for each table
+    std::vector<std::pair<std::string, uint32_t>> tables;
+    std::vector<std::tuple<std::string, std::vector<uint32_t>>> table_person_ids; // Store person IDs for each table
+    for (const auto& entry : panvadere_data) {
+        const std::string& table = std::get<1>(entry);
+        // Find the table in the vector or create a new entry
+        auto it = std::find_if(tables.begin(), tables.end(), [&table](const std::pair<std::string, uint32_t>& entry) {
+            return entry.first == table;
+        });
+        if (it != tables.end()) {
+            it->second++; // Increment count for existing table
+            // Also add the person ID to the table_person_ids vector
+            auto person_id = std::get<0>(entry);
+            auto person_it = std::find_if(table_person_ids.begin(), table_person_ids.end(),
+                                          [&table](const std::tuple<std::string, std::vector<uint32_t>>& entry) {
+                                              return std::get<0>(entry) == table;
+                                          });
+            if (person_it != table_person_ids.end()) {
+                std::get<1>(*person_it).push_back(person_id); // Add person ID
+            }
+            else {
+                // If the table is not found, create a new entry with the person ID, this should not happen
+                std::cerr << "Warning: Table " << table << " not found in table_person_ids, creating new entry."
+                          << std::endl;
+                table_person_ids.emplace_back(table, std::vector<uint32_t>{person_id}); // Add new entry with person ID
+            }
+        }
+        else {
+            tables.emplace_back(table, 1); // Add new table with count 1
+            // Also add the person ID to the table_person_ids vector
+            table_person_ids.emplace_back(table, std::vector<uint32_t>{std::get<0>(entry)});
+        }
+    }
+
+    // Secondly we now assign each table a vector of household sizes, we want to assign two seats at each table to a household
+    std::map<std::string, std::vector<uint32_t>> table_household_sizes;
+    for (const auto& [table, count] : tables) {
+        if (count <= 2) {
+            // If the table has 2 or less people, we assign it to one household
+            table_household_sizes[table].push_back(count);
+        }
+        else if (count > 2 && count <= 4) {
+            // If the table has more than 2 people, we divide it into two households
+            uint32_t household_size1 = 2; // First household takes 2 people
+            uint32_t household_size2 = count - 2; // Second household takes the rest
+            table_household_sizes[table].push_back(household_size1);
+            table_household_sizes[table].push_back(household_size2);
+        }
+        else {
+            // If the table has more than 4 people, we divide it into multiple households of 2 people each
+            uint32_t num_households = count / 2;
+            for (uint32_t i = 0; i < num_households; ++i) {
+                table_household_sizes[table].push_back(2);
+            }
+            if (count % 2 != 0) {
+                // Add remaining person as a smaller household
+                table_household_sizes[table].push_back(count % 2);
+            }
+        }
+    }
+
+    // Now we search for the households in the city world and assign them to the tables
+    std::map<uint32_t, uint32_t> household_map; // Maps panv id to household id in the world simulation
+    std::vector<uint32_t> household_ids_reserved; // Store household IDs which have been assigned to tables
+    for (const auto& table_entry : table_household_sizes) {
+        const std::string& table                     = table_entry.first;
+        const std::vector<uint32_t>& household_sizes = table_entry.second;
+        int table_global_counter                     = 0;
+        for (const auto& household_size : household_sizes) {
+            // Find a household in the city world with the same size which hasnt been assigned yet
+            auto household_it =
+                std::find_if(city.get_locations().begin(), city.get_locations().end(),
+                             [&household_size, &household_ids_reserved](const auto& location) {
+                                 return location.get_persons().size() == household_size &&
+                                        std::find(household_ids_reserved.begin(), household_ids_reserved.end(),
+                                                  location.get_index()) == household_ids_reserved.end();
+                             });
+            // add to reserved household ids
+            household_ids_reserved.push_back(household_it->get_index());
+            if (household_it != city.get_locations().end()) {
+                // If we found a household, map the table to the household id
+                for (size_t i = 0; i < household_size; i++) {
+                    // Get the person ID from the table_person_ids vector
+                    auto person_it =
+                        std::find_if(table_person_ids.begin(), table_person_ids.end(), [&table](const auto& entry) {
+                            return std::get<0>(entry) == table;
+                        });
+                    if (person_it != table_person_ids.end() && i < std::get<1>(*person_it).size()) {
+                        uint32_t person_id = std::get<1>(*person_it)[table_global_counter++];
+                        household_map[person_id] =
+                            household_it->get_persons().at(i).get()->get_person_id(); // Map person ID to household ID
+                    }
+                    else {
+                        std::cerr << "Warning: Not enough persons for table " << table << " with size "
+                                  << household_size << ". Skipping this person." << std::endl;
+                    }
+                }
+            }
+            else {
+                // If we didn't find a household, we can either skip this table or create a new household
+                std::cerr << "Warning: No household found for table " << table << " with size " << household_size
+                          << ". Skipping this table." << std::endl;
+            }
+        }
+    }
+
+    // Summarize the household map
+    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    for (const auto& [person_id_pre, person_id_sim] : household_map) {
+        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+                  << std::endl;
+    }
+
+    return mio::success(household_map);
+}
+
+mio::IOResult<std::map<uint32_t, uint32_t>>
+EventSimulator::map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data)
+{
+    std::map<uint32_t, uint32_t> household_infections;
 
     // TODO: Implement mapping logic
     // For work meeting: one person per household in each room
@@ -348,23 +549,7 @@ std::map<uint32_t, bool> EventSimulator::map_work_meeting_to_households(const st
         }
     }
 
-    return household_infections;
-}
-
-std::map<uint32_t, bool> EventSimulator::map_choir_to_households(const std::map<uint32_t, bool>& panvadere_data)
-{
-    // This function is kept for potential future use but not currently used
-    // with the current EventType enum
-    std::map<uint32_t, bool> household_infections;
-
-    for (const auto& [person_id, is_infected] : panvadere_data) {
-        if (is_infected) {
-            uint32_t household_id              = person_id / 2; // Families might attend together
-            household_infections[household_id] = true;
-        }
-    }
-
-    return household_infections;
+    return mio::success(household_infections);
 }
 
 mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSimulationConfig& config)
@@ -389,10 +574,10 @@ mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSim
     return mio::success(std::move(world));
 }
 
-std::map<uint32_t, bool> EventSimulator::simulate_event_transmission(const EventSimulationConfig& config,
-                                                                     const mio::abm::World& event_world)
+std::vector<uint32_t> EventSimulator::simulate_event_transmission(const EventSimulationConfig& config,
+                                                                  const mio::abm::World& event_world)
 {
-    std::map<uint32_t, bool> infected_people;
+    std::vector<uint32_t> infected_people;
 
     mio::unused(event_world, config); // Prevent unused warning
 
@@ -421,9 +606,11 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_person
                           EventSimulator::map_restaurant_tables_to_households(const_cast<mio::abm::World&>(city)));
         return mio::success(household_map);
     }
-    case EventType::Restaurant_Table_Equals_Half_Household:
-        return mio::failure(mio::StatusCode::InvalidValue,
-                            "Restaurant_Table_Equals_Half_Household is not implemented yet");
+    case EventType::Restaurant_Table_Equals_Half_Household: {
+        BOOST_OUTCOME_TRY(auto household_map, EventSimulator::map_random_restaurant_tables_to_households(
+                                                  const_cast<mio::abm::World&>(city)));
+        return mio::success(household_map);
+    }
     case EventType::WorkMeeting_Many_Meetings:
         return mio::failure(mio::StatusCode::InvalidValue, "WorkMeeting_Many_Meetings is not implemented yet");
     case EventType::WorkMeeting_Few_Meetings:

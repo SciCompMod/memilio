@@ -380,7 +380,7 @@ def main():
                         help="Path to infection states results")
     parser.add_argument("--path-to-loc-types",
                         help="Path to location types results")
-    parser.add_argument("--start-date", type=str, default='2021-03-01',
+    parser.add_argument("--start-date"2, type=str, default='2021-03-01',
                         help="Simulation start date (YYYY-MM-DD)")
     parser.add_argument("--colormap", type=str,
                         default='Set1', help="Matplotlib colormap")
