@@ -517,9 +517,9 @@ ModelMessinaExtendedDetailedInit::ModelMessinaExtendedDetailedInit(TimeSeries<Sc
 void ModelMessinaExtendedDetailedInit::set_transitiondistribution_vector(ScalarType dt, ScalarType tmax,
                                                                          size_t t0_index)
 {
-    m_transitiondistribution_vector = std::vector<ScalarType>(2 * t0_index + size_t(std::round(tmax / dt)) + 1, 0.);
+    m_transitiondistribution_vector = std::vector<ScalarType>(t0_index + size_t(std::round(tmax / dt)) + 1, 0.);
 
-    for (size_t i = 0; i <= 2 * t0_index + size_t(std::round(tmax / dt)); i++) {
+    for (size_t i = 0; i <= t0_index + size_t(std::round(tmax / dt)); i++) {
         ScalarType state_age = (ScalarType)i * dt;
         m_transitiondistribution_vector[i] =
             parameters.get<TransitionDistributions>()[(size_t)InfectionTransition::InfectedToRecovered].eval(state_age);
@@ -528,10 +528,10 @@ void ModelMessinaExtendedDetailedInit::set_transitiondistribution_vector(ScalarT
 
 void ModelMessinaExtendedDetailedInit::set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index)
 {
-    m_transmissionproboncontact_vector = std::vector<ScalarType>(2 * t0_index + size_t(std::round(tmax / dt)) + 1, 0.);
-    m_riskofinffromsymptomatic_vector  = std::vector<ScalarType>(2 * t0_index + size_t(std::round(tmax / dt)) + 1, 0.);
+    m_transmissionproboncontact_vector = std::vector<ScalarType>(t0_index + size_t(std::round(tmax / dt)) + 1, 0.);
+    m_riskofinffromsymptomatic_vector  = std::vector<ScalarType>(t0_index + size_t(std::round(tmax / dt)) + 1, 0.);
 
-    for (size_t i = 0; i <= 2 * t0_index + size_t(std::round(tmax / dt)); i++) {
+    for (size_t i = 0; i <= t0_index + size_t(std::round(tmax / dt)); i++) {
         ScalarType state_age                  = (ScalarType)i * dt;
         m_transmissionproboncontact_vector[i] = parameters.get<TransmissionProbabilityOnContact>().eval(state_age);
         m_riskofinffromsymptomatic_vector[i]  = parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age);
@@ -618,14 +618,10 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
                                                                   size_t t0_index, size_t iter_counter)
 {
     unused(iter_counter);
-    // Get S0.
-    // ScalarType S0 = populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible];
 
     // Get the index of the current time step.
     size_t current_time_index = populations.get_num_time_points() - 1;
     ScalarType current_time   = populations.get_last_time();
-
-    // std::cout << "n: " << current_time_index - t0_index << std::endl;
 
     // Compute first part of sum where already known initial values of Susceptibles are used.
     ScalarType sum_first_integral = 0., sum_second_integral = 0.;
@@ -637,37 +633,24 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 
         // For each index, the corresponding summand is computed here.
         sum_first_integral += gregory_weight_first_integral *
-                              m_transmissionproboncontact_vector[current_time_index - j] *
-                              m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                              m_transitiondistribution_vector[current_time_index - j] *
+                              m_transmissionproboncontact_vector[current_time_index - t0_index - j] *
+                              m_riskofinffromsymptomatic_vector[current_time_index - t0_index - j] *
+                              m_transitiondistribution_vector[current_time_index - t0_index - j] *
                               populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
     }
 
     for (size_t j = 0; j < std::min(current_time_index - t0_index, m_gregory_order); j++) {
 
-        // std::cout << "j: " << j << std::endl;
-
         // Compute first part of sum of second integral (from 0 to t)
         ScalarType gregory_weight_second_integral = sum_part1_weight(current_time_index - t0_index, j);
-        // std::cout << "gregory_weight 1: " << gregory_weight_second_integral << std::endl;
-        // std::cout << populations.get_value(t0_index + j)[(Eigen::Index)InfectionState::Susceptible] << std::endl;
 
         // For each index, the corresponding summand is computed here.
         sum_second_integral +=
             gregory_weight_second_integral *
-            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((t0_index + j) * dt)(0, 0) *
-            m_transmissionproboncontact_vector[t0_index + j] * m_riskofinffromsymptomatic_vector[t0_index + j] *
-            m_transitiondistribution_vector[t0_index + j] *
-            populations.get_value(t0_index + j)[(Eigen::Index)InfectionState::Susceptible];
-
-        // std::cout << "Contacts: "
-        //           << parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((t0_index + j) * dt)(0, 0)
-        //           << std::endl;
-        // std::cout << "trabsmission prob: " << m_transmissionproboncontact_vector[t0_index + j] << std::endl;
-        // std::cout << "riskofinf: " << m_riskofinffromsymptomatic_vector[t0_index + j] << std::endl;
-        // std::cout << "transition distribution: " << m_transitiondistribution_vector[t0_index + j] << std::endl;
-        // std::cout << "susceptibles: " << populations.get_value(t0_index + j)[(Eigen::Index)InfectionState::Susceptible]
-        //           << std::endl;
+            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((current_time_index - j) * dt)(0, 0) *
+            m_transmissionproboncontact_vector[current_time_index - j] *
+            m_riskofinffromsymptomatic_vector[current_time_index - j] *
+            m_transitiondistribution_vector[current_time_index - j];
     }
 
     // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
@@ -677,7 +660,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     for (size_t j = m_gregory_order; j <= current_time_index; j++) {
 
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
-        // std::cout << "gregory_weight 2: " << gregory_weight << std::endl;
 
         // For each index, the corresponding summand is computed here.
 
@@ -692,59 +674,26 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             relevant_susceptibles = susceptibles;
         }
 
-        sum_first_integral += gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
-                              m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                              m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
+        sum_first_integral += gregory_weight * m_transmissionproboncontact_vector[current_time_index - t0_index - j] *
+                              m_riskofinffromsymptomatic_vector[current_time_index - t0_index - j] *
+                              m_transitiondistribution_vector[current_time_index - t0_index - j] *
+                              relevant_susceptibles;
     }
 
     for (size_t j = std::min(current_time_index - t0_index, m_gregory_order); j <= current_time_index; j++) {
-        // if (j == std::min(current_time_index - t0_index, m_gregory_order)) {
-        //     // std::cout << "j_2: " << j << std::endl;
-        // }
-        // std::cout << "j: " << j << std::endl;
 
         // Compute second part of second integral here as the second integral is a subintegral of the first integral.
 
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
-        // std::cout << "gregory_weight 2: " << gregory_weight << std::endl;
-
-        ScalarType relevant_susceptibles;
-        // If j<n, we take the Susceptibles at the corresponding index that we have already computed.
-        if (j < current_time_index) {
-            relevant_susceptibles = populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
-        }
-        // In case of j=n, the number of Susceptibles is not already known and stored in populations but is determined
-        // by the input to the fixed point iteration.
-        else {
-            relevant_susceptibles = susceptibles;
-        }
-
-        // ScalarType tmax = 1.;
-        // if (floating_point_equal(std::remainder(10 * populations.get_last_time(), tmax), 0., 1e-7)) {
-        //     if (iter_counter == 0) {
-        //         std::cout << "transmission prob: " << m_transmissionproboncontact_vector[j + t0_index] << std::endl;
-        //         std::cout << "riskofinf: " << m_riskofinffromsymptomatic_vector[j + t0_index] << std::endl;
-        //         std::cout << "transmission distribution: " << m_transitiondistribution_vector[j + t0_index]
-        //                   << std::endl;
-        //         std::cout << "susceptibles: " << relevant_susceptibles << std::endl;
-        //     }
-        // }
 
         // For each index, the corresponding summand is computed here.
         sum_second_integral +=
-            gregory_weight * parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0) *
-            m_transmissionproboncontact_vector[j + t0_index] * m_riskofinffromsymptomatic_vector[j + t0_index] *
-            m_transitiondistribution_vector[j + t0_index] * relevant_susceptibles;
+            gregory_weight *
+            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((current_time_index - j) * dt)(0, 0) *
+            m_transmissionproboncontact_vector[current_time_index - j] *
+            m_riskofinffromsymptomatic_vector[current_time_index - j] *
+            m_transitiondistribution_vector[current_time_index - j];
     }
-
-    // ScalarType tmax = 1.;
-    // if (floating_point_equal(std::remainder(10 * populations.get_last_time(), tmax), 0., 1e-7)) {
-    //     if (iter_counter == 0) {
-
-    //         std::cout << "first sum: " << sum_first_integral << std::endl;
-    //         std::cout << "second sum: " << sum_second_integral << std::endl;
-    //     }
-    // }
 
     return m_N *
            std::exp(-dt *
@@ -760,9 +709,7 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
     while (iter_counter < max_iterations) {
 
         ScalarType s_new = fixed_point_function(s_init, dt, t0_index, iter_counter);
-        // std::cout << "s_estimated: " << s_estimated << std::endl;
 
-        // std::cout << "Diff: " << std::fabs(s_init - s_estimated) << "; tol: " << tol << std::endl;
         if (std::fabs(s_init - s_new) < tol) {
             break;
         }
