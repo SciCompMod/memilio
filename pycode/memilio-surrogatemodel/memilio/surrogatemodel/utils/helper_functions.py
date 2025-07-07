@@ -95,7 +95,7 @@ def load_model(path):
     :returns: trained tf.keras model 
     """
     if not os.path.isfile(path):
-        raise FileExistsError(
+        raise FileNotFoundError(
             "There is no .keras model stored at the given directory.")
     return tf.keras.models.load_model(path)
 
