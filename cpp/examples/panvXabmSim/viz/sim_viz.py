@@ -392,13 +392,13 @@ def main():
 
     path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result"
 
-    plot_infection_states_results(
-        path_to_infection_states=path + "/infection_state_per_age_group",
-        start_date=args.start_date,
-        colormap=args.colormap,
-        xtick_step=args.xtick_step,
-        show90=True
-    )
+    # plot_infection_states_results(
+    #     path_to_infection_states=path + "/infection_state_per_age_group",
+    #     start_date=args.start_date,
+    #     colormap=args.colormap,
+    #     xtick_step=args.xtick_step,
+    #     show90=True
+    # )
     plot_infections_loc_types_average(
         path_to_loc_types=path + "/infection_per_location_type_per_age_group",
         start_date=args.start_date,

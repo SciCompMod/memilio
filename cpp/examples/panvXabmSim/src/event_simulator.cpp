@@ -41,10 +41,10 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
 
     switch (config.type) {
     case EventType::Restaurant_Table_Equals_Household:
-        base_k_value = 2.0; // Higher transmission in close dining
+        base_k_value = 20.0; // Higher transmission in close dining
         break;
     case EventType::Restaurant_Table_Equals_Half_Household:
-        base_k_value = 1.1; // Slightly lower than full household tables
+        base_k_value = 20.0; // Slightly lower than full household tables
         break;
     case EventType::WorkMeeting_Many_Meetings:
         base_k_value = 0.8; // Lower transmission in meeting room

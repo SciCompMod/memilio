@@ -287,21 +287,21 @@ void set_local_parameters(mio::abm::World& world)
             break;
         case mio::abm::LocationType::School:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_school;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 12.0; //2 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.0; //2 hours
             break;
         case mio::abm::LocationType::Work:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_work;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 8.0; // 3 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.0; // 3 hours
             break;
         case mio::abm::LocationType::SocialEvent:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.2;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 8.0; // 3 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.0; // 3 hours
             break;
         case mio::abm::LocationType::BasicsShop:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_other;
             loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 1.8;
-            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 12.0; // 2 hours
+            loc.get_infection_parameters().get<mio::abm::ContactRates>().array() *= 0.0; // 2 hours
             break;
         default:
             loc.get_infection_parameters().get<mio::abm::ContactRates>() = contacts_random;
