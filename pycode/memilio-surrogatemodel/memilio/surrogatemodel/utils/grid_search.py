@@ -34,7 +34,7 @@ import memilio.surrogatemodel.ode_secir_groups.model as md_groups
 # Function to train and evaluate the model using cross-validation
 
 
-def train_and_evaluate_model(param, inputs, labels, training_parameter, show_results=False, modeltype="simple"):
+def train_and_evaluate_model(param, inputs, labels, training_parameter, show_results=False, modeltype="simple", n_kfold=5):
     """ Training and evaluating a model with given architecture using 5-fold cross validation, returning a dictionary with the main training statistics. 
 
     :param param: tuple of parameters describing the model architecture, it should be of the form 
@@ -47,6 +47,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, show_res
     :param show_results:  Boolean, whether or not the evaluation results are printed. 
     :param modeltype: String, specifying, which type of model is going to be tested. The possible values are "simple" - refering to the surrogate for the SECIR-model 
         without age_resolution, "groups" - for the age resolved SECIR model. 
+    :param n_kfold: number of partizions used to cross-validate
     :returns: a dictionary of training statistics of the form 
         {"model", "activation","optimizer","mean_train_loss_kfold","mean_val_loss_kfold","training_time", "train_losses", "val_losses"}
 
@@ -59,7 +60,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, show_res
                                                       mode='min')
 
     # Preparing K-Fold Cross-Validation
-    kf = KFold(n_splits=5)
+    kf = KFold(n_splits=n_kfold)
     train_losses = []
     val_losses = []
 

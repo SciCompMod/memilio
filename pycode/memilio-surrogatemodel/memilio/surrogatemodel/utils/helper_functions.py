@@ -21,6 +21,8 @@
 import numpy as np
 import tensorflow as tf
 import os
+from memilio.epidata.modifyDataframeSeries import (fit_age_group_intervals)
+import pandas as pd
 
 
 def interpolate_age_groups(data_entry):
@@ -31,15 +33,13 @@ def interpolate_age_groups(data_entry):
     :returns: List containing the population in each age group used in the simulation.
 
     """
-    age_groups = {
-        "A00-A04": data_entry['<3 years'] + data_entry['3-5 years'] * 2 / 3,
-        "A05-A14": data_entry['3-5 years'] * 1 / 3 + data_entry['6-14 years'],
-        "A15-A34": data_entry['15-17 years'] + data_entry['18-24 years'] + data_entry['25-29 years'] + data_entry['30-39 years'] * 1 / 2,
-        "A35-A59": data_entry['30-39 years'] * 1 / 2 + data_entry['40-49 years'] + data_entry['50-64 years'] * 2 / 3,
-        "A60-A79": data_entry['50-64 years'] * 1 / 3 + data_entry['65-74 years'] + data_entry['>74 years'] * 1 / 5,
-        "A80+": data_entry['>74 years'] * 4 / 5
-    }
-    return [age_groups[key] for key in age_groups]
+    df_age_in = pd.DataFrame({
+        '<3': 1, '3-5': 1, '6-14': 1, '15-17': 1, '18-24': 1, '25-29': 1,
+        '30-39': 1, '40-49': 1, '50-64': 1, '64-74': 1, '>74': 1
+    })
+    age_out = ["<5", "5-14", "15-34", "35-59", "60-79", ">79"]
+
+    return (fit_age_group_intervals(df_age_in, age_out, data_entry))
 
 
 def remove_confirmed_compartments(result_array, delete_indices):
@@ -53,7 +53,7 @@ def remove_confirmed_compartments(result_array, delete_indices):
     return np.delete(result_array, delete_indices, axis=1)
 
 
-def transform_data(data, transformer, num_runs, num_groups=6, num_compartments=8):
+def normalize_simulation_data(data, transformer, num_runs, num_groups=6, num_compartments=8):
     """ Transforms the data by a logarithmic normalization.
     Reshaping is necessary, because the transformer needs an array with dimension <= 2.
 
@@ -65,11 +65,9 @@ def transform_data(data, transformer, num_runs, num_groups=6, num_compartments=8
     :returns: Transformed data.
 
     """
-
-    data = np.asarray(data).transpose(2, 0, 1).reshape(
-        num_groups*num_compartments, -1)
+    data = np.asarray(data).reshape(num_runs, -1)
     scaled_data = transformer.transform(data)
-    return tf.convert_to_tensor(scaled_data.transpose().reshape(num_runs, -1, num_groups*num_compartments))
+    return tf.convert_to_tensor(scaled_data.reshape(num_runs, -1, num_groups*num_compartments))
 
 
 def save_model(model, path, modelname):
