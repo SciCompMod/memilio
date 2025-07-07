@@ -62,26 +62,26 @@ struct InfrastructureRatios {
     // Employment and workplaces
     // Source: Destatis labor force statistics 2023
     static constexpr double EMPLOYMENT_RATE      = 0.638; // 63.8% of population aged 15-64
-    static constexpr double PEOPLE_PER_WORKPLACE = 25.0; // Average employees per workplace
+    static constexpr double PEOPLE_PER_WORKPLACE = 15.0; // Average employees per workplace
 
     // Education
     // Source: Destatis education statistics 2023
-    static constexpr double STUDENTS_PER_ELEMENTARY_SCHOOL = 180.0; // Primary schools
-    static constexpr double STUDENTS_PER_SECONDARY_SCHOOL  = 450.0; // Secondary schools
+    static constexpr double STUDENTS_PER_ELEMENTARY_SCHOOL = 30.0; // Primary schools
+    static constexpr double STUDENTS_PER_SECONDARY_SCHOOL  = 30.0; // Secondary schools
     static constexpr double ELEMENTARY_TO_SECONDARY_RATIO  = 3.5; // 3.5 elementary per secondary
 
     // Retail and services
     // Source: HDE retail statistics 2023
-    static constexpr double PEOPLE_PER_GROCERY_STORE = 2000.0; // Basic necessities
-    static constexpr double PEOPLE_PER_PHARMACY      = 3500.0; // Pharmacies
-    static constexpr double PEOPLE_PER_GENERAL_STORE = 1500.0; // General retail
+    static constexpr double PEOPLE_PER_GROCERY_STORE = 100.0; // Basic necessities
+    static constexpr double PEOPLE_PER_PHARMACY      = 150.0; // Pharmacies
+    static constexpr double PEOPLE_PER_GENERAL_STORE = 150.0; // General retail
 
     // Social and event locations
     // Source: DEHOGA hospitality statistics 2023
-    static constexpr double PEOPLE_PER_RESTAURANT  = 400.0; // Restaurants/cafes
-    static constexpr double PEOPLE_PER_BAR         = 800.0; // Bars/pubs
-    static constexpr double PEOPLE_PER_LARGE_EVENT = 50000.0; // Concert halls, stadiums
-    static constexpr double PEOPLE_PER_SMALL_EVENT = 2000.0; // Community centers, clubs
+    static constexpr double PEOPLE_PER_RESTAURANT  = 30.0; // Restaurants/cafes
+    static constexpr double PEOPLE_PER_BAR         = 20.0; // Bars/pubs
+    static constexpr double PEOPLE_PER_LARGE_EVENT = 10.0; // Concert halls, stadiums
+    static constexpr double PEOPLE_PER_SMALL_EVENT = 20.0; // Community centers, clubs
 };
 
 /**

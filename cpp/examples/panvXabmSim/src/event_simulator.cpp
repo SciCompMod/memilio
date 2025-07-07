@@ -58,19 +58,33 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
     // Now we need to simulate the event world and search for a suitable K parameter with which the simulation has the same number of infected persons as in the Panvadere data
 
     // Rudimentary grid search for K parameter
-    double k_min = 100; // Minimum K value
-    double k_max = 200.0; // Maximum K value
+    double k_min = 1.0; // Minimum K value
+    double k_max = 20.0; // Maximum K value
 
     double k_step                  = 1.0; // Step size for K value
     double best_k                  = k_min;
     size_t best_infected_count     = 0;
-    const int num_runs             = 10; // Number of runs for averaging
+    const int num_runs             = 200; // Number of runs for averaging
     double best_avg_infected_count = -1.0;
 
     for (double k = k_min; k <= k_max; k += k_step) {
         size_t total_infected_for_k = 0;
         for (int i = 0; i < num_runs; ++i) {
             BOOST_OUTCOME_TRY(auto calculation_world, create_event_world(config, city, event_map));
+            set_parameters(calculation_world.parameters);
+
+            double ratio = 1.0;
+            if (config.type == EventType::Restaurant_Table_Equals_Half_Household ||
+                config.type == EventType::Restaurant_Table_Equals_Household) {
+                // Set restaurant-specific parameters
+                ratio = 3.0 / config.event_duration_hours; // 3 hours divided by event duration
+            }
+            else if (config.type == EventType::WorkMeeting_Many_Meetings ||
+                     config.type == EventType::WorkMeeting_Few_Meetings) {
+                ratio = 8.0 / config.event_duration_hours; // 3 hours divided by event duration
+            }
+            set_local_parameters_event(calculation_world, ratio);
+
             calculation_world.use_migration_rules(false); // Disable migration rules for this simulation
             auto t0 = mio::abm::TimePoint(0); // Start time per simulation
             auto tmax =

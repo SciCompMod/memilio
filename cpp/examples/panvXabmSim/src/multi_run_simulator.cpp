@@ -34,9 +34,10 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 
         // Step 3: Calculate K parameter
         std::cout << "Calculating infection parameter K..." << std::endl;
-        //TODO: Implement this function to calculate K parameter based on event type
-        BOOST_OUTCOME_TRY(results.infection_parameter_k,
-                          EventSimulator::calculate_infection_parameter_k(config.event_config, base_world, event_map));
+        if (results.infection_parameter_k < 0.0) {
+            BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
+                                                                 config.event_config, base_world, event_map));
+        }
 
         // Step 3: Get initial infections
         std::vector<uint32_t> initial_infections;
