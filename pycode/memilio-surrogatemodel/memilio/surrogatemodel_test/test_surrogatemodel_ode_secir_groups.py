@@ -21,11 +21,13 @@ from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
                                                      network_architectures, dampings)
-import memilio.surrogatemodel.surrogate_utils as utils
+import memilio.surrogatemodel.utils.helper_functions as utils
+from memilio.surrogatemodel.utils import grid_search
 from unittest.mock import patch
+import pandas as pd
 import os
 import unittest
-
+import pickle
 
 import numpy as np
 import tensorflow as tf
@@ -732,6 +734,70 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         weights2 = mlp2.get_weights()
         for w1, w2 in zip(weights1, weights2):
             np.testing.assert_allclose(w1, w2)
+
+    @patch('memilio.surrogatemodel.utils.grid_search.train_and_evaluate_model')
+    def test_perform_grid_search(self, mock_train_and_evaluate_model):
+        """ Testing grid search for simple model along a sequence of possible parameter values"""
+        mock_train_and_evaluate_model.return_value = {
+            "model": "._.",
+            "activation": "relu",
+            "optimizer": "Eva",
+            "mean_train_loss_kfold": 42,
+            "mean_val_loss_kfold": 12,
+            "training_time": 1,
+            "train_losses": [3],
+            "val_losses": [6]
+        }
+        filename_df = "dataframe_optimizer"
+        os.mkdir(self.path)
+
+        # General grid search parameters for the training process:
+        early_stop = [100]
+        max_epochs = [1]
+        losses = [tf.keras.losses.MeanAbsolutePercentageError()]
+        optimizers = ['Adam', 'Adam']
+        metrics = [[tf.keras.metrics.MeanAbsoluteError(),
+                    tf.keras.metrics.MeanAbsolutePercentageError()]]
+
+        # Define grid search parameters for the architecture
+        label_width = 3
+        num_outputs = 2
+        num_age_groups = 1
+        hidden_layers = [1, 2]
+        neurons_in_hidden_layer = [32]
+        activation_function = ['relu']
+        models = ["Dense"]
+
+        # Collecting parameters
+        training_parameters = [(early, epochs, loss, optimizer, metric)
+                               for early in early_stop for epochs in max_epochs for loss in losses
+                               for optimizer in optimizers for metric in metrics]
+
+        model_parameters = [(label_width, num_age_groups, num_outputs, layer, neuron_number, activation, modelname)
+                            for layer in hidden_layers for neuron_number in neurons_in_hidden_layer
+                            for activation in activation_function for modelname in models]
+
+        # generate dataset with multiple output
+        inputs = tf.ones([5, 1, 2])
+        labels = tf.ones([5, 3, 2])
+
+        grid_search.perform_grid_search(
+            model_parameters, inputs, labels, training_parameters,
+            filename_df, self.path, "groups"
+        )
+
+        # testing saving the results
+        self.assertEqual(len(os.listdir(self.path)), 1)
+
+        self.assertEqual(os.listdir(os.path.join(self.path,  'secir_groups_grid_search')),
+                         [filename_df+".pickle"])
+
+        # testing size of the output
+        path_name = os.path.join(self.path,  'secir_groups_grid_search')
+        with open(os.path.join(path_name, filename_df + ".pickle"), "rb") as f:
+            d = pickle.load(f)
+        df = pd.DataFrame(d)
+        self.assertEqual(len(df['model']), 4)
 
 
 if __name__ == '__main__':

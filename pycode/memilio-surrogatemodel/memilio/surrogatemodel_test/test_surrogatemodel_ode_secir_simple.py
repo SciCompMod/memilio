@@ -17,10 +17,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_simple import (data_generation,
-                                                     network_architectures, grid_search)
+                                                     network_architectures)
+from memilio.surrogatemodel.utils import grid_search
 from memilio.surrogatemodel.ode_secir_simple import model as md
 import os
 import pickle
@@ -441,9 +443,9 @@ class TestSurrogatemodelOdeSecirSimple(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(res["val_losses"][0][0]), max_epochs)
         self.assertEqual(res["optimizer"], "Adam")
 
-    @patch('memilio.surrogatemodel.ode_secir_simple.grid_search.train_and_evaluate_model')
+    @patch('memilio.surrogatemodel.utils.grid_search.train_and_evaluate_model')
     def test_perform_grid_search(self, mock_train_and_evaluate_model):
-        """ Testing gridsearch along a sequence of possible parameter values"""
+        """ Testing grid search for simple model along a sequence of possible parameter values"""
         mock_train_and_evaluate_model.return_value = {
             "model": "._.",
             "activation": "relu",

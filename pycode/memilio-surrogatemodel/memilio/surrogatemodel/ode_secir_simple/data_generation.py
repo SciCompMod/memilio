@@ -33,7 +33,7 @@ from memilio.simulation import (AgeGroup, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
-from memilio.surrogatemodel.surrogate_utils import (
+from memilio.surrogatemodel.utils.helper_functions import (
     interpolate_age_groups, remove_confirmed_compartments, transform_data)
 import memilio.simulation.osecir as osecir
 

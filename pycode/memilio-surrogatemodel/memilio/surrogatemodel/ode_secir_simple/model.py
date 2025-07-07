@@ -27,7 +27,7 @@ import tensorflow as tf
 
 from memilio.simulation.osecir import InfectionState
 import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures
-from memilio.surrogatemodel.surrogate_utils import (calc_split_index)
+from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
 
 
 def initialize_model(parameters):

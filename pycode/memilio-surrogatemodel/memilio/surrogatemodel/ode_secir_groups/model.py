@@ -19,7 +19,7 @@
 #############################################################################
 from memilio.surrogatemodel.ode_secir_groups import network_architectures
 from memilio.simulation.osecir import InfectionState
-from memilio.surrogatemodel.surrogate_utils import (
+from memilio.surrogatemodel.utils.helper_functions import (
     calc_split_index, flat_input)
 import os
 import pickle

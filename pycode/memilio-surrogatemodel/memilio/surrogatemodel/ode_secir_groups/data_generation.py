@@ -34,7 +34,7 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 import memilio.surrogatemodel.ode_secir_groups.dampings as dampings
-from memilio.surrogatemodel.surrogate_utils import (
+from memilio.surrogatemodel.utils.helper_functions import (
     interpolate_age_groups, remove_confirmed_compartments, transform_data)
 import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
