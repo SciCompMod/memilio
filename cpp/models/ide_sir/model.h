@@ -135,7 +135,8 @@ class ModelMessinaExtended
     using ParameterSet = Parameters;
 
 public:
-    ModelMessinaExtended(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order);
+    ModelMessinaExtended(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
+                         size_t finite_difference_order = 1);
 
     ScalarType get_totalpop() const;
 
@@ -159,6 +160,58 @@ public:
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax);
+
+    // ---- Public parameters. ----
+    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
+    // people in defined #InfectionState%s for every AgeGroup.
+    TimeSeries<ScalarType> flows;
+
+private:
+    // ---- Private parameters. ----
+    ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    size_t m_gregory_order;
+    size_t m_finite_difference_order;
+    std::vector<ScalarType> m_transitiondistribution_vector;
+    std::vector<ScalarType> m_transmissionproboncontact_vector;
+    std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
+};
+
+/*********************************************************************************************************************/
+
+// This class is a further extension of ModelMessinaExtended where use detailed initial conditions, i.e. we assume that
+// we have knowledge of the compartment values on a time interval before the simulation start and not just at the simulation start.
+class ModelMessinaExtendedDetailedInit
+{
+    using ParameterSet = Parameters;
+
+public:
+    ModelMessinaExtendedDetailedInit(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
+                                     size_t finite_difference_order = 1);
+
+    ScalarType get_totalpop() const;
+
+    size_t get_gregory_order() const
+    {
+        return m_gregory_order;
+    }
+
+    ScalarType sum_part1_weight(size_t n, size_t j);
+    ScalarType sum_part2_weight(size_t n, size_t j);
+
+    // Returns the number of iterations needed in fixed point iteration.
+    size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-10,
+                     size_t max_iterations = 100);
+
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, size_t iter_counter);
+
+    void compute_S_deriv(ScalarType dt, size_t time_point_index);
+    void compute_S_deriv(ScalarType dt);
+
+    void compute_I_and_R(ScalarType dt);
+
+    void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
+    void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
 
     // ---- Public parameters. ----
     ParameterSet parameters{}; ///< ParameterSet of Model Parameters.

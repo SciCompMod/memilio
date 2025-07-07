@@ -33,7 +33,11 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-ScalarType t0   = 0.;
+// Start time of initial values
+ScalarType t_init = -3.;
+// Simulation start
+ScalarType t0 = 0.;
+// Simulation end
 ScalarType tmax = 1.;
 
 ScalarType S0 = 90.;
@@ -56,7 +60,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
     for (ScalarType ide_exponent : ide_exponents) {
-        ScalarType dt = pow(10, -ide_exponent);
+        ScalarType dt = pow(10., -ide_exponent);
         std::cout << "Simulate with dt = " << dt << std::endl;
 
         // Define init_populations; depending on whether we have a groundtruth available or if we are computing it here,
@@ -65,24 +69,24 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
         // std::cout << "Num time points groundtruth: " << result_groundtruth.get_num_time_points() << std::endl;
 
+        // Check if groundtruth is available and initialize accordingly.
         if (result_groundtruth.get_num_time_points() == 0) {
-            // Initialize first (gregory_order-1) time points with constant values.
+            // Initialize first (-t_init/dt)+(gregory_order-1) time points with constant values.
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = S0;
             vec_init[(size_t)mio::isir::InfectionState::Infected]    = I0;
             vec_init[(size_t)mio::isir::InfectionState::Recovered]   = R0;
             // Add time points S_0, S_1, S_{n0-1} to init_populations as these values are assumed to be known in the groundtruth.
-            init_populations.add_time_point(0, vec_init);
-            while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
+            init_populations.add_time_point(t_init, vec_init);
+            while (init_populations.get_last_time() < t0 * dt - 1e-10) {
                 init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
             }
         }
         else {
             // Initialize first (gregory_order-1) time points based on groundtruth.
             ScalarType dt_groundtruth = result_groundtruth.get_time(1) - result_groundtruth.get_time(0);
-            // std::cout << "dt groundtruth: " << dt_groundtruth << std::endl;
+
             size_t groundtruth_index = size_t(dt / dt_groundtruth);
-            // std::cout << "groundtruth_index: " << groundtruth_index << std::endl;
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
 
@@ -94,10 +98,10 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             for (size_t compartment : compartments) {
                 vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
             }
-            init_populations.add_time_point(0, vec_init);
+            init_populations.add_time_point(t_init, vec_init);
 
             // Add values for t_1,...,t_{n0-1}.
-            while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
+            while (init_populations.get_last_time() < t0 * dt - 1e-10) {
                 // std::cout << "Init time: " << init_populations.get_last_time() << std::endl;
                 for (size_t compartment : compartments) {
                     vec_init[compartment] = result_groundtruth.get_value(
@@ -107,13 +111,15 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             }
         }
 
-        // Initialize model.
-        mio::isir::ModelMessinaExtended model(std::move(init_populations), total_population, gregory_order);
+        std::cout << "init last time: " << init_populations.get_last_time() << std::endl;
 
-        mio::NormalDistributionDensity normaldensity(0.4, 0.6);
-        mio::StateAgeFunctionWrapper dist(normaldensity);
-        // mio::ExponentialSurvivalFunction exp(2.);
-        // mio::StateAgeFunctionWrapper dist(exp);
+        // Initialize model.
+        mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order);
+
+        // mio::NormalDistributionDensity normaldensity(0.4, 0.6);
+        // mio::StateAgeFunctionWrapper dist(normaldensity);
+        mio::ExponentialSurvivalFunction exp(2.);
+        mio::StateAgeFunctionWrapper dist(exp);
         std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
@@ -130,7 +136,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // Carry out simulation.
-        mio::isir::SimulationMessinaExtended sim(model, dt);
+        mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
         sim.advance_messina(tmax);
 
         // If no groundtruth is gibven as input, we set the here computed results as groundtruth.
@@ -138,7 +144,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             result_groundtruth = sim.get_result();
         }
 
-        sim.get_result().print_table();
+        // sim.get_result().print_table();
 
         mio::unused(save_dir);
 
@@ -162,27 +168,27 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
 int main()
 {
-    std::string result_dir = "../../simulation_results/messina_model_extended_groundtruth_dt=1e-5/";
+    std::string result_dir = "../../simulation_results/messina_model_extended_detailed_init/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
 
     // Compute groundtruth.
 
-    size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {5};
+    size_t gregory_order_groundtruth                  = 1;
+    std::vector<ScalarType> ide_exponents_groundtruth = {3};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
         simulate_ide(ide_exponents_groundtruth, gregory_order_groundtruth, result_dir);
 
-    // Simulate with larger timesteps and use result_groundtruth for initialization.
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
-    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+    // // Simulate with larger timesteps and use result_groundtruth for initialization.
+    // std::vector<size_t> gregory_orders    = {1, 2, 3};
+    // std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
 
-    for (size_t gregory_order : gregory_orders) {
-        std::cout << "Using Gregory order = " << gregory_order << std::endl;
-        mio::IOResult<mio::TimeSeries<ScalarType>> result =
-            simulate_ide(ide_exponents, gregory_order, result_dir, result_groundtruth.value());
-    }
+    // for (size_t gregory_order : gregory_orders) {
+    //     std::cout << "Using Gregory order = " << gregory_order << std::endl;
+    //     mio::IOResult<mio::TimeSeries<ScalarType>> result =
+    //         simulate_ide(ide_exponents, gregory_order, result_dir, result_groundtruth.value());
+    // }
 }

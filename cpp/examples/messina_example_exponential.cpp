@@ -35,7 +35,7 @@ namespace params
 size_t num_agegroups = 1;
 
 ScalarType t0   = 0.;
-ScalarType tmax = 5.;
+ScalarType tmax = 1.;
 
 ScalarType TimeInfected = 2.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
@@ -109,14 +109,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    // Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
-    // vec_init[(size_t)mio::isir::InfectionState::Susceptible] = S0;
-    // // Scheme currently only works if Infected=0 in the beginning.
-    // vec_init[(size_t)mio::isir::InfectionState::Infected]  = I0;
-    // vec_init[(size_t)mio::isir::InfectionState::Recovered] = R0;
-
-    // ScalarType total_population = vec_init.sum();
-
     for (ScalarType ide_exponent : ide_exponents) {
 
         ScalarType dt = pow(10, -ide_exponent);
@@ -149,18 +141,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                            groundtruth_index))[(size_t)mio::isir::InfectionState::Susceptible];
                 init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
             }
-
-            // total_population = result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Susceptible] +
-            //                    result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Infected] +
-            //                    result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Recovered];
         }
-
-        // // TODO: it would be sufficient to have finite_difference_order of time steps before gregory_order
-        // mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
-        // init_populations.add_time_point(-(ScalarType)finite_difference_order * dt, vec_init);
-        // while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
-        //     init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
-        // }
 
         // Initialize model.
         mio::isir::ModelMessina model(std::move(init_populations), total_population, gregory_order);
@@ -175,7 +156,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         model.parameters.get<mio::isir::TransmissionProbabilityOnContact>() = transmissiononcontact_wrapper;
 
         mio::ConstantFunction riskofinfection(RiskOfInfectionFromSymptomatic);
-        mio::StateAgeFunctionWrapper riskofinfection_wrapper(transmissiononcontact);
+        mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
         model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
         model.parameters.get<mio::isir::beta>() = beta;
@@ -205,7 +186,7 @@ int main()
 {
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-    std::string save_dir = "../../simulation_results/exponential_paper_example/";
+    std::string save_dir = "../../simulation_results/exponential_paper_example_dt_ode=1e-6/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);

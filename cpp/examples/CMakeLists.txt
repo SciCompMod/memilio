@@ -124,9 +124,9 @@ add_executable(ide_sir_example ide_sir.cpp)
 target_link_libraries(ide_sir_example PRIVATE memilio ide_sir)
 target_compile_options(ide_sir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ide_sir_convergence_example ide_sir_convergence.cpp)
-target_link_libraries(ide_sir_convergence_example PRIVATE memilio ide_sir)
-target_compile_options(ide_sir_convergence_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+add_executable(messina_example_exponential messina_example_exponential.cpp)
+target_link_libraries(messina_example_exponential PRIVATE memilio ide_sir)
+target_compile_options(messina_example_exponential PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(messina_example messina_example.cpp)
 target_link_libraries(messina_example PRIVATE memilio ide_sir)
@@ -135,6 +135,10 @@ target_compile_options(messina_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNIN
 add_executable(messina_example_extended messina_example_extended.cpp)
 target_link_libraries(messina_example_extended PRIVATE memilio ide_sir)
 target_compile_options(messina_example_extended PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(messina_example_extended_detailed_init messina_example_extended_detailed_init.cpp)
+target_link_libraries(messina_example_extended_detailed_init PRIVATE memilio ide_sir)
+target_compile_options(messina_example_extended_detailed_init PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)

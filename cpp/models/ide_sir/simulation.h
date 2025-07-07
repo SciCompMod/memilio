@@ -181,10 +181,7 @@ private:
 
 /*********************************************************************************************************************/
 
-/**
- * run the simulation in discrete steps and report results.
- */
-class Simulation
+class SimulationMessinaExtendedDetailedInit
 {
 
 public:
@@ -193,20 +190,17 @@ public:
      * @param[in] model An instance of the IDE model.
      * @param[in] dt Step size of numerical solver.
      */
-    Simulation(Model const& model, ScalarType dt)
-        : m_model(std::make_unique<Model>(model))
+    SimulationMessinaExtendedDetailedInit(ModelMessinaExtendedDetailedInit const& model, ScalarType dt)
+        : m_model(std::make_unique<ModelMessinaExtendedDetailedInit>(model))
         , m_dt(dt)
     {
+        assert(m_dt > 0);
     }
 
     /** 
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance(ScalarType tmax);
-
-    void advance2(ScalarType tmax);
-
     void advance_messina(ScalarType tmax);
 
     /**
@@ -230,24 +224,9 @@ public:
     }
 
     /**
-     * @brief Get the transitions between the different #InfectionState%s.
-     *
-     * @return TimeSeries with stored transitions calculated in the simulation.
-     */
-    TimeSeries<ScalarType> const& get_flows()
-    {
-        return m_model->flows;
-    }
-
-    TimeSeries<ScalarType> get_susceptibles_difference()
-    {
-        return m_model->susceptibles_difference;
-    }
-
-    /**
      * @brief returns the simulation model used in simulation.
      */
-    const Model& get_model() const
+    const ModelMessinaExtendedDetailedInit& get_model() const
     {
         return *m_model;
     }
@@ -255,7 +234,7 @@ public:
     /**
      * @brief returns the simulation model used in simulation.
      */
-    Model& get_model()
+    ModelMessinaExtendedDetailedInit& get_model()
     {
         return *m_model;
     }
@@ -270,19 +249,116 @@ public:
     }
 
 private:
-    std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
+    std::unique_ptr<ModelMessinaExtendedDetailedInit> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+    size_t m_max_number_iterations =
+        0; ///< Get maximal number of iterations that was necessary throughout the simulation.
 };
 
-/**
- * @brief Run a Simulation of an IDE-SECIR model.
- *
- * @param[in] tmax End time.
- * @param[in] dt Initial step size of integration.
- * @param[in] model An instance of an IDE-SECIR model.
- * @return A TimeSeries to represent the final simulation result.
- */
-TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
+/*********************************************************************************************************************/
+
+// /**
+//  * run the simulation in discrete steps and report results.
+//  */
+// class Simulation
+// {
+
+// public:
+//     /**
+//      * @brief setup the Simulation for an IDE model.
+//      * @param[in] model An instance of the IDE model.
+//      * @param[in] dt Step size of numerical solver.
+//      */
+//     Simulation(Model const& model, ScalarType dt)
+//         : m_model(std::make_unique<Model>(model))
+//         , m_dt(dt)
+//     {
+//     }
+
+//     /** 
+//      * Run the simulation from the current time to tmax.
+//      * @param tmax Time to stop.
+//      */
+//     void advance(ScalarType tmax);
+
+//     void advance2(ScalarType tmax);
+
+//     void advance_messina(ScalarType tmax);
+
+//     /**
+//      * @brief Get the result of the simulation.
+//      * Return the number of persons in all #InfectionState%s.
+//      * @return The result of the simulation.
+//      */
+//     TimeSeries<ScalarType> get_result()
+//     {
+//         return m_model->populations;
+//     }
+
+//     /**
+//      * @brief Get the result of the simulation.
+//      * Return the number of persons in all #InfectionState%s.
+//      * @return The result of the simulation.
+//      */
+//     const TimeSeries<ScalarType>& get_result() const
+//     {
+//         return m_model->populations;
+//     }
+
+//     /**
+//      * @brief Get the transitions between the different #InfectionState%s.
+//      *
+//      * @return TimeSeries with stored transitions calculated in the simulation.
+//      */
+//     TimeSeries<ScalarType> const& get_flows()
+//     {
+//         return m_model->flows;
+//     }
+
+//     TimeSeries<ScalarType> get_susceptibles_difference()
+//     {
+//         return m_model->susceptibles_difference;
+//     }
+
+//     /**
+//      * @brief returns the simulation model used in simulation.
+//      */
+//     const Model& get_model() const
+//     {
+//         return *m_model;
+//     }
+
+//     /**
+//      * @brief returns the simulation model used in simulation.
+//      */
+//     Model& get_model()
+//     {
+//         return *m_model;
+//     }
+
+//     /**
+//      * @brief get the time step of the simulation.
+//      * 
+//      */
+//     ScalarType get_dt()
+//     {
+//         return m_dt;
+//     }
+
+// private:
+//     std::unique_ptr<Model> m_model; ///< Unique pointer to the Model simulated.
+//     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+// };
+
+// /**
+//  * @brief Run a Simulation of an IDE-SECIR model.
+//  *
+//  * @param[in] tmax End time.
+//  * @param[in] dt Initial step size of integration.
+//  * @param[in] model An instance of an IDE-SECIR model.
+//  * @return A TimeSeries to represent the final simulation result.
+//  */
+// TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
 
 } // namespace isir
 } // namespace mio
