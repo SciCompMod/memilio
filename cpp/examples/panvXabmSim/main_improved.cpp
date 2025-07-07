@@ -85,10 +85,10 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     MultiRunConfig config;
 
     // Set defaults
-    config.city_config                        = CityConfig{};
-    config.city_config.total_population       = Config::DEFAULT_POPULATION;
-    config.event_config.type                  = EventType::Restaurant_Table_Equals_Household;
-    config.event_config.type                  = EventType::Restaurant_Table_Equals_Half_Household; // Default event type
+    config.city_config                  = CityConfig{};
+    config.city_config.total_population = Config::DEFAULT_POPULATION;
+    config.event_config.type            = EventType::Restaurant_Table_Equals_Household;
+    // config.event_config.type                  = EventType::Restaurant_Table_Equals_Half_Household; // Default event type
     config.event_config.infection_parameter_k = Config::DEFAULT_INFECTION_K;
     config.event_config.event_duration_hours  = Config::DEFAULT_EVENT_HOURS;
     config.simulation_type                    = SimType::Panvadere; // Default to Panvadere simulation

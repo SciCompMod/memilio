@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <parameter_setter.h>
 
 mio::IOResult<std::string> EventSimulator::get_panvadere_file_for_event_type(EventType type)
 {
@@ -32,29 +33,79 @@ std::string EventSimulationConfig::get_panvadere_file() const
     return result.value();
 }
 
-mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const EventSimulationConfig& config)
+mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const EventSimulationConfig& config,
+                                                                      mio::abm::World& city,
+                                                                      std::map<uint32_t, uint32_t>& event_map)
 {
-    // Validate configuration first
 
-    // Calculate K parameter based on event type and duration
-    double base_k_value = 1.0;
+    // Check how many infectious persons there are in the panvadere file
+    BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(config.type));
 
-    switch (config.type) {
-    case EventType::Restaurant_Table_Equals_Household:
-        base_k_value = 20.0; // Higher transmission in close dining
-        break;
-    case EventType::Restaurant_Table_Equals_Half_Household:
-        base_k_value = 20.0; // Slightly lower than full household tables
-        break;
-    case EventType::WorkMeeting_Many_Meetings:
-        base_k_value = 0.8; // Lower transmission in meeting room
-        break;
-    case EventType::WorkMeeting_Few_Meetings:
-        base_k_value = 0.9; // Slightly higher with fewer, longer meetings
-        break;
+    // Read Panvadere infection data
+    BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+
+    if (panvadere_data.empty()) {
+        return mio::failure(mio::StatusCode::InvalidFileFormat, "No valid infection data found in Panvadere file");
+    }
+    // Count infected persons in the Panvadere data
+    size_t infected_count = 0;
+    for (const auto& entry : panvadere_data) {
+        if (std::get<2>(entry)) { // Check if infected status is true
+            infected_count++;
+        }
     }
 
-    return mio::success(base_k_value);
+    // Now we need to simulate the event world and search for a suitable K parameter with which the simulation has the same number of infected persons as in the Panvadere data
+
+    // Rudimentary grid search for K parameter
+    double k_min = 100; // Minimum K value
+    double k_max = 200.0; // Maximum K value
+
+    double k_step                  = 1.0; // Step size for K value
+    double best_k                  = k_min;
+    size_t best_infected_count     = 0;
+    const int num_runs             = 10; // Number of runs for averaging
+    double best_avg_infected_count = -1.0;
+
+    for (double k = k_min; k <= k_max; k += k_step) {
+        size_t total_infected_for_k = 0;
+        for (int i = 0; i < num_runs; ++i) {
+            BOOST_OUTCOME_TRY(auto calculation_world, create_event_world(config, city, event_map));
+            calculation_world.use_migration_rules(false); // Disable migration rules for this simulation
+            auto t0 = mio::abm::TimePoint(0); // Start time per simulation
+            auto tmax =
+                mio::abm::TimePoint(0) + mio::abm::hours(config.event_duration_hours); // End time per simulation
+
+            // Set infection parameter K
+            calculation_world.parameters.get<mio::abm::InfectionRateFromViralShed>() = k;
+
+            auto sim = mio::abm::Simulation(t0, std::move(calculation_world));
+            sim.advance(tmax);
+
+            // Count infected persons in the simulation
+            size_t current_infected_count = 0;
+            for (const auto& person : sim.get_world().get_persons()) {
+                if (person.is_infected(tmax)) {
+                    current_infected_count++;
+                }
+            }
+            total_infected_for_k += current_infected_count;
+        }
+
+        double avg_infected_count = static_cast<double>(total_infected_for_k) / num_runs;
+
+        // Check if this K value gives a better match to the Panvadere data
+        if (best_avg_infected_count < 0 ||
+            std::abs(avg_infected_count - static_cast<double>(infected_count)) <
+                std::abs(best_avg_infected_count - static_cast<double>(infected_count))) {
+            best_k                  = k;
+            best_avg_infected_count = avg_infected_count;
+            best_infected_count     = static_cast<size_t>(std::round(avg_infected_count));
+            mio::unused(best_infected_count); // Avoid unused variable warning
+        }
+    }
+
+    return mio::success(best_k);
 }
 
 mio::IOResult<std::vector<std::tuple<uint32_t, std::string, bool>>>
@@ -152,6 +203,15 @@ EventSimulator::read_panv_file_restaurant(const std::string& filename)
     return mio::success(infected_status);
 }
 
+mio::IOResult<std::vector<uint32_t>>
+EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& config, const mio::abm::World& city)
+{
+    // empty vector to hold infected person IDs
+    std::vector<uint32_t> infected_people;
+    mio::unused(config, city);
+    return mio::success(infected_people);
+}
+
 mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(EventType event_type,
                                                                                std::map<uint32_t, uint32_t>& event_map)
 {
@@ -229,18 +289,6 @@ mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(E
     }
 
     return mio::success(household_infections);
-}
-
-mio::IOResult<std::vector<uint32_t>>
-EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& config, const mio::abm::World& city)
-{
-    // Create event-specific world
-    BOOST_OUTCOME_TRY(auto event_world, create_event_world(config));
-
-    // Simulate event transmission
-    auto infected_people = simulate_event_transmission(config, city);
-
-    return mio::success(infected_people);
 }
 
 std::string EventSimulator::event_type_to_string(EventType type)
@@ -488,7 +536,7 @@ EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city
             auto household_it =
                 std::find_if(city.get_locations().begin(), city.get_locations().end(),
                              [&household_size, &household_ids_reserved](const auto& location) {
-                                 return location.get_persons().size() == household_size &&
+                                 return location.get_persons().size() > household_size &&
                                         std::find(household_ids_reserved.begin(), household_ids_reserved.end(),
                                                   location.get_index()) == household_ids_reserved.end();
                              });
@@ -552,49 +600,57 @@ EventSimulator::map_work_meeting_to_households(const std::map<uint32_t, bool>& p
     return mio::success(household_infections);
 }
 
-mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSimulationConfig& config)
+mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSimulationConfig& config,
+                                                                  mio::abm::World& city,
+                                                                  std::map<uint32_t, uint32_t>& event_map)
 {
-    // TODO: Create a specialized world for event simulation
-    // This would be a smaller world focused on the specific event type
-    mio::unused(config); // Prevent unused warning
+    // We take the persons out of the city world and create a new world for the event simulation.
+    // There we just need one locaiton for the event, which is the event location.
+    // All the persons are directly assigned to this location and dont move.
+    // Then we need one contagious person, which is the first person in the event_map.
+
     auto world = mio::abm::World(num_age_groups);
+    set_parameters(world.parameters);
 
-    // Add event location
-    // auto event_location = world.add_location(mio::abm::LocationType::SocialEvent);
+    mio::abm::LocationId loc_id; // Location ID for the event location
+    if (config.type == EventType::Restaurant_Table_Equals_Household ||
+        config.type == EventType::Restaurant_Table_Equals_Half_Household) {
+        loc_id = world.add_location(mio::abm::LocationType::SocialEvent); // Add one event location
+    }
+    else if (config.type == EventType::WorkMeeting_Many_Meetings ||
+             config.type == EventType::WorkMeeting_Few_Meetings) {
+        loc_id = world.add_location(mio::abm::LocationType::Work); // Add one work meeting location
+    }
+    // We at least need one house, hospital and icu
+    auto home     = world.add_location(mio::abm::LocationType::Home); // Add one home location
+    auto hospital = world.add_location(mio::abm::LocationType::Hospital); // Add one hospital
+    auto icu      = world.add_location(mio::abm::LocationType::ICU); // Add one ICU location
 
-    // Add people to event
-    // for (int i = 0; i < config.num_persons; ++i) {
-    //     auto person_id = size_t(i);
-    //     auto age_group = mio::AgeGroup(i % num_age_groups);
-    //     auto person =
-    //         mio::abm::Person(world.get_individualized_location(mio::abm::LocationType::Home, person_id), age_group);
-    //     world.add_person(person_id, std::move(person));
-    // }
+    // Add persons to the event world
+    for (const auto& [person_id_before, person_id_sim] : event_map) {
+        // Get the person from the city world
+        auto& person = city.get_person(person_id_sim);
+
+        // Create a new person in the event world
+        auto& added_person = world.add_person(loc_id, person.get_age());
+
+        // assign the person to the event location
+        added_person.set_assigned_location(home);
+        added_person.set_assigned_location(hospital);
+        added_person.set_assigned_location(icu);
+        added_person.set_assigned_location(loc_id); // Assign to the event location
+    }
+
+    // Set the first person as infected
+    if (!event_map.empty()) {
+        auto& first_person = world.get_persons()[0]; // Get the first person in the event world
+        auto prng          = mio::abm::Person::RandomNumberGenerator(world.get_rng(), first_person);
+        first_person.add_new_infection(mio::abm::Infection(prng, mio::abm::VirusVariant::Alpha, first_person.get_age(),
+                                                           world.parameters, mio::abm::TimePoint(0),
+                                                           mio::abm::InfectionState::InfectedNoSymptoms));
+    }
 
     return mio::success(std::move(world));
-}
-
-std::vector<uint32_t> EventSimulator::simulate_event_transmission(const EventSimulationConfig& config,
-                                                                  const mio::abm::World& event_world)
-{
-    std::vector<uint32_t> infected_people;
-
-    mio::unused(event_world, config); // Prevent unused warning
-
-    // TODO: Run event simulation to determine who gets infected
-    // 1. Place one initially infected person
-    // 2. Run simulation for event duration
-    // 3. Return list of infected people
-
-    // For now, simple random infection
-    // for (const auto& [person_id, person] : event_world.get_persons()) {
-    //     // Simple placeholder: 10% infection rate
-    //     if (person_id.get() % 10 == 0) {
-    //         infected_people[person_id.get()] = true;
-    //     }
-    // }
-
-    return infected_people;
 }
 
 mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_persons(const mio::abm::World& city,

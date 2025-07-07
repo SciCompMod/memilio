@@ -60,7 +60,9 @@ public:
      * @param config Event simulation configuration
      * @return IOResult containing the calculated K parameter
      */
-    static mio::IOResult<double> calculate_infection_parameter_k(const EventSimulationConfig& config);
+    static mio::IOResult<double> calculate_infection_parameter_k(const EventSimulationConfig& config,
+                                                                 mio::abm::World& city,
+                                                                 std::map<uint32_t, uint32_t>& event_map);
 
     // === Initialization Methods ===
 
@@ -130,7 +132,6 @@ public:
     map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data);
 
 private:
-    static mio::IOResult<mio::abm::World> create_event_world(const EventSimulationConfig& config);
-    static std::vector<uint32_t> simulate_event_transmission(const EventSimulationConfig& config,
-                                                             const mio::abm::World& city);
+    static mio::IOResult<mio::abm::World> create_event_world(const EventSimulationConfig& config, mio::abm::World& city,
+                                                             std::map<uint32_t, uint32_t>& event_map);
 };
