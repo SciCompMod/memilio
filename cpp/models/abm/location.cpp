@@ -113,66 +113,8 @@ ScalarType Location::transmission_air_per_day(uint32_t cell_index, VirusVariant 
     return rate;
 }
 
-void Location::interact_micro(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                              const Parameters& global_params) const
-{
-    auto age_receiver                  = person.get_age();
-    ScalarType mask_protection         = person.get_mask_protective_factor(global_params);
-    ScalarType mobility_damping_factor = global_params.get<MobilityRestrictionParameter>();
-    assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
-    for (auto cell_index : person.get_cells()) {
-        std::pair<VirusVariant, ScalarType> local_indiv_expected_trans[static_cast<uint32_t>(VirusVariant::Count)];
-        for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
-
-            ScalarType transmission_micro_contacts = 0;
-            auto my_row_in_micro_matrix_it =
-                std::find(m_assigned_persons.begin(), m_assigned_persons.end(), person.get_person_id());
-            if (my_row_in_micro_matrix_it == m_assigned_persons.end()) {
-                throw std::runtime_error("Person not found in assigned persons.");
-            }
-            int my_row_in_micro_matrix        = std::distance(m_assigned_persons.begin(), my_row_in_micro_matrix_it);
-            Eigen::VectorXd viral_shed_others = Eigen::VectorXd::Zero(m_assigned_persons.size());
-            for (int i = 0; i < (int)m_assigned_persons.size(); i++) {
-                if (m_assigned_persons[i] == INVALID_PERSON_ID) {
-                    continue;
-                }
-                if (i != my_row_in_micro_matrix) {
-                    auto person_it = std::find(m_persons.begin(), m_persons.end(), m_assigned_persons[i]);
-                    if (person_it != m_persons.end()) {
-                        auto curr_person = *person_it;
-                        auto is_infected = curr_person->is_infected(t);
-                        if (is_infected) {
-                            auto viral_shed_to_add = curr_person->get_infection().get_viral_shed(t);
-                            viral_shed_others(i)   = viral_shed_to_add;
-                        }
-                    }
-                }
-            }
-
-            int current_day_hour          = (int)std::fmod(t.hours(), 24);
-            auto current_micro_matrix     = m_hourly_contact_matrices[current_day_hour];
-            Eigen::VectorXd contact_rates = current_micro_matrix * viral_shed_others;
-            transmission_micro_contacts   = contact_rates(my_row_in_micro_matrix);
-
-            VirusVariant virus                      = static_cast<VirusVariant>(v);
-            ScalarType local_indiv_expected_trans_v = (mobility_damping_factor * transmission_micro_contacts +
-                                                       transmission_air_per_day(cell_index, virus, global_params)) *
-                                                      (1 - mask_protection) *
-                                                      (1 - person.get_protection_factor(t, virus, global_params));
-
-            local_indiv_expected_trans[v] = std::make_pair(virus, local_indiv_expected_trans_v);
-        }
-        VirusVariant virus = random_transition(rng, VirusVariant::Count, dt, local_indiv_expected_trans);
-        if (virus != VirusVariant::Count) {
-            person.add_new_infection(Infection(rng, virus, age_receiver, global_params, t + dt / 2,
-                                               mio::abm::InfectionState::Susceptible, person.get_latest_protection(t),
-                                               false));
-        }
-    }
-}
-
 void Location::interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                        const Parameters& global_params) const
+                        const Parameters& global_params)
 {
 
     // if (m_hourly_contact_matrices[0].size() != 0) {
@@ -211,6 +153,7 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
             person.add_new_infection(Infection(rng, virus, age_receiver, global_params, t + dt / 2,
                                                mio::abm::InfectionState::Susceptible, person.get_latest_protection(t),
                                                false)); // Starting time in first approximation
+            m_track_infected_persons.push_back(person.get_person_id());
         }
     }
 }

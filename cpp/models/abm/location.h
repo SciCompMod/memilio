@@ -213,7 +213,7 @@ public:
      * @param[in] params Parameters of the Model.
      */
     void interact(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
-                  const Parameters& params) const;
+                  const Parameters& params);
 
     /** 
      * @brief Add a Person to the population at this Location.
@@ -424,6 +424,15 @@ public:
     {
         return m_geographical_location;
     }
+    void clear_infected_persons()
+    {
+        m_track_infected_persons.clear();
+    }
+
+    std::vector<uint32_t> get_infected_persons() const
+    {
+        return m_track_infected_persons;
+    }
 
     /**
      * @brief Set the geographical location of the Location.
@@ -477,6 +486,7 @@ private:
     HourlyContactMatrix m_hourly_contact_matrices; ///< Contact matrices for the Location.
     mutable std::vector<uint32_t> m_assigned_persons;
     bool m_dynamic_assignment = false;
+    std::vector<uint32_t> m_track_infected_persons; ///< List of infected Person%s at the Location this timestep.
 };
 
 } // namespace abm

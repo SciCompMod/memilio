@@ -70,11 +70,6 @@ struct InfrastructureRatios {
     static constexpr double STUDENTS_PER_SECONDARY_SCHOOL  = 450.0; // Secondary schools
     static constexpr double ELEMENTARY_TO_SECONDARY_RATIO  = 3.5; // 3.5 elementary per secondary
 
-    // Healthcare
-    // Source: Destatis healthcare statistics 2023
-    static constexpr double PEOPLE_PER_HOSPITAL_BED = 125.0; // 8 beds per 1000 people
-    static constexpr double PEOPLE_PER_ICU_BED      = 1250.0; // 0.8 ICU beds per 1000 people
-
     // Retail and services
     // Source: HDE retail statistics 2023
     static constexpr double PEOPLE_PER_GROCERY_STORE = 2000.0; // Basic necessities
