@@ -131,6 +131,12 @@ int main()
     sim_explicit.advance(tmax);
     const auto& explicit_results_full = sim_explicit.get_result();
 
+    // print results to CSV file
+    const std::string save_dir                        = "/localdata1/code/memilio/saves";
+    const std::vector<std::string> compartment_labels = {"S", "E", "I", "R"};
+    explicit_results_full.export_csv(save_dir + "/explicit_commuter_compare_sol.csv", compartment_labels, ',', 12);
+    flow_commuter_results.export_csv(save_dir + "/flow_commuter_compare_sol.csv", compartment_labels, ',', 12);
+
     // Extract commuter compartments from explicit results
     // For 1 age group, NonCommuter (4 states), CommuterBase (4 states) -> CommuterBase is tail(4)
     mio::TimeSeries<ScalarType> explicit_commuter_results(4);

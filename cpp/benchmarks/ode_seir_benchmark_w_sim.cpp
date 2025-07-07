@@ -49,7 +49,7 @@ void setup_model_benchmark(ModelType& model, size_t num_agegroups = 6)
     }
     model.parameters.template set<mio::oseir::TimeExposed<ScalarType>>(5.2);
     model.parameters.template set<mio::oseir::TimeInfected<ScalarType>>(6);
-    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
     mio::ContactMatrixGroup& contact_matrix = model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(10.);
     model.apply_constraints();

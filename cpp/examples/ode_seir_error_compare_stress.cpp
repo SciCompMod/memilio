@@ -36,11 +36,11 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0;
-    ScalarType tmax = 10.;
+    ScalarType tmax = 0.5;
 
     mio::oseir::Model<ScalarType> model(1);
 
-    const auto sus = 9700, exp = 100, inf = 100, rec = 100;
+    const auto sus = 5000, exp = 1500, inf = 1500, rec = 2000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = sus;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = exp;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]    = inf;
@@ -86,30 +86,12 @@ int main()
     const auto sol_euler = calculate_mobile_population(t0, tmax, common_step_size, integrate_mobile_population_euler,
                                                        sim, seir_res, mobile_population);
 
-    // Solutions for high order
-    mobile_population << S_c, E_c, I_c, R_c;
-    const auto sol_highorder = calculate_mobile_population(
-        t0, tmax, common_step_size, integrate_mobile_population_high_order, sim, seir_res, mobile_population);
-
-    // Solutions for Flow-based method
-    mobile_population << S_c, E_c, I_c, R_c;
-    const auto sol_flow = calculate_mobile_population(t0, tmax, common_step_size, flow_based_mobility_returns, sim,
-                                                      seir_res, mobile_population);
-
-    // Solutions for Probabilistic method
-    mobile_population << S_c, E_c, I_c, R_c;
-    const auto sol_prob = calculate_mobile_population(t0, tmax, common_step_size, probabilistic_mobility_returns, sim,
-                                                      seir_res, mobile_population);
-
     // Write to csv files
     const std::string save_dir                        = "/localdata1/code/memilio/saves";
     const std::vector<std::string> compartment_labels = {"S", "E", "I", "R"};
-    sol_ref.export_csv(save_dir + "/mobile_ref_solution_cp.csv", compartment_labels);
-    sol_euler.export_csv(save_dir + "/mobile_euler_solution_cp.csv", compartment_labels);
-    sol_highorder.export_csv(save_dir + "/mobile_highorder_solution_cp.csv", compartment_labels);
-    sol_flow.export_csv(save_dir + "/mobile_flow_solution_cp.csv", compartment_labels);
-    sol_prob.export_csv(save_dir + "/mobile_prob_solution_cp.csv", compartment_labels);
-    seir_res.export_csv(save_dir + "/seir_solution_cp.csv", compartment_labels);
+    sol_ref.export_csv(save_dir + "/mobile_ref_solution_stress.csv", compartment_labels);
+    sol_euler.export_csv(save_dir + "/mobile_euler_solution_stress.csv", compartment_labels);
+    seir_res.export_csv(save_dir + "/seir_solution_stress.csv", compartment_labels);
 
     return 0;
 }
