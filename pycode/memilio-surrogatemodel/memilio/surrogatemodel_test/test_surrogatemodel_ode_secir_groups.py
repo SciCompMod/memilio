@@ -25,7 +25,7 @@ import memilio.surrogatemodel.surrogate_utils as utils
 from unittest.mock import patch
 import os
 import unittest
-import tempfile
+
 
 import numpy as np
 import tensorflow as tf
@@ -719,10 +719,14 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
             filename="data_secir_groups_10days_2_random.pickle",
             modeltype='classic',  plot_stats=False)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            utils.save_model(mlp1.model, tmpdir, "mlp_multi_multi")
-            path_file = os.path.join(tmpdir, "mlp_multi_multi.keras")
-            mlp2 = utils.load_model(path_file)
+        utils.save_model(mlp1.model, self.path, "mlp_multi_multi")
+        path_file = os.path.join(self.path, "mlp_multi_multi.keras")
+        if os.path.isfile(path_file):
+            print("--------------------------------------------------")
+            print(r"\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/")
+            print(r"/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ ")
+            print("--------------------------------------------------")
+        mlp2 = utils.load_model(path_file)
 
         weights1 = mlp1.model.get_weights()
         weights2 = mlp2.get_weights()
