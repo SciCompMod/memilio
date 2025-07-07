@@ -20,9 +20,9 @@
 from pyfakefs import fake_filesystem_unittest
 
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
-                                                     network_architectures, dampings)
+                                                     network_architectures)
 import memilio.surrogatemodel.utils.helper_functions as utils
-from memilio.surrogatemodel.utils import grid_search
+from memilio.surrogatemodel.utils import dampings, grid_search
 from unittest.mock import patch
 import pandas as pd
 import os

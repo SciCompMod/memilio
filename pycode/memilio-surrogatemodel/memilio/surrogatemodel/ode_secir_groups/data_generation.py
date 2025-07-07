@@ -33,7 +33,7 @@ from memilio.simulation import (AgeGroup, Damping, LogLevel, set_log_level)
 from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
-import memilio.surrogatemodel.ode_secir_groups.dampings as dampings
+import memilio.surrogatemodel.utils.dampings as dampings
 from memilio.surrogatemodel.utils.helper_functions import (
     interpolate_age_groups, remove_confirmed_compartments, transform_data)
 import memilio.simulation as mio
@@ -142,8 +142,8 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
     damped_matrices = []
 
     for i in np.arange(len(damping_days)):
-        damping = damping = np.ones((num_groups, num_groups)
-                                    ) * damping_factors[i]
+        damping = np.ones((num_groups, num_groups)
+                          ) * damping_factors[i]
         day = damping_days[i]
         model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
             coeffs=(damping), t=day, level=0, type=0))
