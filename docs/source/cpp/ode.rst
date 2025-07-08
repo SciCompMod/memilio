@@ -110,6 +110,8 @@ You can run a simulation using either fixed or adaptive solution schemes with an
 default, the simulation uses an adaptive solution scheme of the boost library and an absolute tolerance of 1e-10 and a 
 relative tolerance of 1e-5. For more details on the possible integration schemes, see <numerical integrator stuff>.
 
+Additionally, a feedback simulation is available, which allows for dynamic adjustments of the simulation based on its own output. This is particularly useful for modeling behavioral changes in response to the epidemiological situation. The local feedback simulation is based on the work of Dönges et al. (doi.org/10.3389/fphy.2022.842180). It uses the history of ICU occupancy to calculate a "perceived risk", which then translates into a reduction of contact rates. The ``FeedbackSimulation`` class wraps an existing simulation and applies this feedback mechanism at regular intervals. This concept can be extended to a metapopulation model using a ``FeedbackGraphSimulation``, which is described in more detail in the "Graph-based metapopulation model" section.
+
 
 Output
 ------
@@ -142,5 +144,3 @@ List of models
     models/osecir
     models/osecirvvs
     models/osecirts
-
-    
