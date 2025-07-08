@@ -25,24 +25,15 @@ if(MEMILIO_ENABLE_IPOPT)
     )
     target_link_libraries(secirvvs_graph PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
 
-    # add_executable(secirvvs_ESID 
-    #     secirvvs_ESID/main.cpp 
-    #     secirvvs_ESID/optimization_model.cpp
-    #     secirvvs_ESID/secirvvs_optimization.cpp
-    #     secirvvs_ESID/secirvvs_ipopt.cpp
-    # )
-    # target_link_libraries(secirvvs_ESID PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
-
-
-    add_executable(secirvvs_ESID_2 
-        secirvvs_ESID_2/main.cpp 
-        secirvvs_ESID_2/optimization_model/optimization_model.cpp
-        secirvvs_ESID_2/optimization_settings/secirvvs_optimization.cpp
-        secirvvs_ESID_2/ipopt_solver/secirvvs_ipopt.cpp
-        secirvvs_ESID_2/control_parameters/control_parameters.cpp
-        secirvvs_ESID_2/constraints/constraints.cpp
+    add_executable(secirvvs_ESID 
+        secirvvs_ESID/main.cpp 
+        secirvvs_ESID/optimization_model/optimization_model.cpp
+        secirvvs_ESID/optimization_settings/secirvvs_optimization.cpp
+        secirvvs_ESID/ipopt_solver/secirvvs_ipopt.cpp
+        secirvvs_ESID/control_parameters/control_parameters.cpp
+        secirvvs_ESID/constraints/constraints.cpp
     )
-    target_link_libraries(secirvvs_ESID_2 PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
+    target_link_libraries(secirvvs_ESID PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
 
 
 
