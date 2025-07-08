@@ -265,7 +265,7 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
             'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
         read_data = False
 
-    directory = os.path.join(out_folder, 'Germany', 'pydata')
+    directory = os.path.join(out_folder, 'Germany')
     gd.check_dir(directory)
 
     df_pop_raw, ref_year = read_population_data(ref_year)
@@ -373,7 +373,7 @@ def write_population_data(df_pop: pd.DataFrame,
     :returns: None
 
     """
-    directory = os.path.join(out_folder, 'Germany', 'pydata')
+    directory = os.path.join(out_folder, 'Germany')
     df_pop_export = export_population_dataframe(
         df_pop, directory, file_format, merge_eisenach, ref_year)
     return df_pop_export
