@@ -60,6 +60,29 @@ public:
     {
     }
 
+    // Copy constructor (deep‐copies the Model)
+    Simulation(Simulation const& o)
+        : m_integratorCore(o.m_integratorCore) // share the same integrator core
+        , m_model(std::make_unique<Model>(*o.m_model)) // deep‐copy the model itself
+        , m_integrator(m_integratorCore) // re‐hook integrator onto the copied core
+        , m_result(o.m_result) // copy the result history
+        , m_dt(o.m_dt) // copy the step size
+    {
+    }
+
+    // Copy assignment
+    Simulation& operator=(Simulation const& o)
+    {
+        if (this != &o) {
+            m_integratorCore = o.m_integratorCore; // share integrator core
+            m_model          = std::make_unique<Model>(*o.m_model); // deep‐copy the model
+            m_integrator     = OdeIntegrator<FP>(m_integratorCore); // reset integrator with the shared core
+            m_result         = o.m_result; // copy the time series
+            m_dt             = o.m_dt; // copy the step size
+        }
+        return *this;
+    }
+
     /**
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.

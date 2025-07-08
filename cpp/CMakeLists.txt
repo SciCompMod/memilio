@@ -195,6 +195,7 @@ endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
     add_subdirectory(examples)
+    add_subdirectory(examples/optimization_examples)
 endif()
 
 if(MEMILIO_BUILD_TESTS)
