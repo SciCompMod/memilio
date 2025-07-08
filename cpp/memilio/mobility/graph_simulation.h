@@ -268,6 +268,16 @@ auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
+// FeedbackGraphSimulation is only allowed to be used with local FeedbackSimulation.
+// Therefore, we use type traits to check if the type is a specialization of FeedbackSimulation
+template <class T>
+struct is_feedback_simulation : std::false_type {
+};
+
+template <typename FP, typename Sim, typename ContactPatterns>
+struct is_feedback_simulation<FeedbackSimulation<FP, Sim, ContactPatterns>> : std::true_type {
+};
+
 template <typename FP, class Graph>
 class FeedbackGraphSimulation
 {
@@ -279,6 +289,9 @@ public:
         , m_initialized(false)
         , m_global_icu_occupancy(6)
     {
+        using SimT = decltype(m_graph.nodes()[0].property.get_simulation());
+        static_assert(is_feedback_simulation<std::decay_t<SimT>>::value,
+                      "Graph node simulation must be a FeedbackSimulation.");
     }
 
     void advance(FP t_max)
