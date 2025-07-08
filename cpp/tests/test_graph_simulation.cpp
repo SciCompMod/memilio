@@ -358,7 +358,7 @@ TEST(TestGraphSimulation, feedbackSimulation)
     Graph g;
 
     const auto num_nodes = 2;
-    for (size_t i = 0; i < num_nodes; ++i) {
+    for (int i = 0; i < num_nodes; ++i) {
 
         auto feedback_sim = FeedbackSim(Simulation(model, t0), icu_indices);
 
