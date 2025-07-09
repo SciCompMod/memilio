@@ -49,6 +49,15 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
         """ """
         self.setUpPyfakefs()
 
+    def test_interpolate_age_groups(self):
+        entry = {'ID_County': 1000, 'Population': 11000, '<3 years': 1000, '3-5 years': 1000, '6-14 years': 1000, '15-17 years': 1000,
+                 '18-24 years': 1000, '25-29 years': 1000, '30-39 years': 1000, '40-49 years': 1000, '50-64 years': 1000, '65-74 years': 1000, '>74 years': 1000}
+        res = [1666.6666666666665, 1333.3333333333335, 3500.0,
+               2166.6666666666665, 1533.3333333333335, 800.0]
+        interpol_entry = utils.interpolate_age_groups(
+            entry, ['0-4', '5-14', '15-34', '35-59', '60-79', '>79'])
+        self.assertEqual(res, interpol_entry)
+
     def test_calc_dist_days(self):
         with self.assertRaises(ValueError) as error:
             dampings.calc_dist_days(10, 2, 10, 2)

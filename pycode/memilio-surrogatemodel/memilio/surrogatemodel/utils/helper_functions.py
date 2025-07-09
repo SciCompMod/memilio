@@ -30,16 +30,10 @@ def interpolate_age_groups(data_entry, age_groups):
     We assume that the people in the age groups are uniformly distributed.
 
     :param data_entry: Data entry containing the population data.
-    :param age_groups: List declaring the new age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
+    :param age_groups: List declaring the new age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '>79']
     :returns: List containing the population in each age group used in the simulation.
 
     """
-
-    df_age_in = pd.DataFrame.from_dict({
-        '<3': [1], '3-5': [1], '6-14': [1], '15-17': [1], '18-24': [1], '25-29': [1],
-        '30-39': [1], '40-49': [1], '50-64': [1], '64-74': [1], '>74': [1]
-    })
-
     # Prepare to convert in Dataframe
     for i in data_entry:
         data_entry[i] = [data_entry[i]]
@@ -50,8 +44,9 @@ def interpolate_age_groups(data_entry, age_groups):
 
     # Interpolate the different age_groups
     data_interpolated = fit_age_group_intervals(
-        df_age_in, age_groups, df_reduced)
+        df_reduced, age_groups)
     res = list(data_interpolated)
+
     return res
 
 
