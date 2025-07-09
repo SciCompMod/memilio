@@ -97,7 +97,25 @@ html_theme_options = {
     "style_nav_header_background": "#f8f9fb",
 }
 
-
+# Mock heavy dependencies to speed up build
+autodoc_mock_imports = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "matplotlib",
+    "tensorflow",
+    "scikit-learn",
+    "h5py",
+    "tables",
+    "geopandas",
+    "pyarrow",
+    "PyQt6",
+    "wget",
+    "twill",
+    "folium",
+    "mapclassify",
+    "imageio",
+]
 
 # -- Options for EPUB output
 epub_show_urls = 'footnote'
