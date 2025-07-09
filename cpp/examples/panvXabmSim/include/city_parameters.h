@@ -10,49 +10,36 @@
  * to create realistic city simulations.
  * 
  * Sources:
- * - German Federal Statistical Office (Destatis) 2023: Population by age groups
- * - German Federal Statistical Office: Household statistics 2023
- * - German Federal Statistical Office: Labor force statistics 2023
- * - German Federal Statistical Office: Education statistics 2023
- * - German Trade Association (HDE): Retail structure statistics 2023
- * - German Hotel and Restaurant Association (DEHOGA): Hospitality statistics 2023
- * - German Federal Statistical Office: Healthcare infrastructure 2023
+ * - German Federal Statistical Office (Destatis) 2024: Population: Germany, reference date, age Code: 12411-0005
+ * - German Federal Statistical Office: Household statistics 2024 Code: 12421-0100
  */
 
 namespace CityParameters
 {
 
 /**
- * @brief German age distribution based on 2023 census data
+ * @brief German age distribution based on 2024 data
  * Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
- * Source: Destatis 2023 population statistics
  */
 const std::vector<double> GERMAN_AGE_DISTRIBUTION = {
-    0.047, // 0-4 years: 4.7%
-    0.096, // 5-14 years: 9.6%
-    0.245, // 15-34 years: 24.5%
-    0.338, // 35-59 years: 33.8%
-    0.214, // 60-79 years: 21.4%
-    0.060 // 80+ years: 6.0%
+    0.044, // 0-4 years: 4.4%
+    0.094, // 5-14 years: 9.4%
+    0.222, // 15-34 years: 22.2%
+    0.334, // 35-59 years: 33.4%
+    0.233, // 60-79 years: 23.3%
+    0.073 // 80+ years: 7.3%
 };
 
 /**
  * @brief German household size distribution
- * Source: Destatis Mikrozensus 2023
  */
 const std::vector<double> HOUSEHOLD_SIZE_DISTRIBUTION = {
-    0.432, // 1-person households: 43.2%
-    0.336, // 2-person households: 33.6%
-    0.117, // 3-person households: 11.7%
-    0.095, // 4-person households: 9.5%
-    0.020 // 5+ person households: 2.0%
+    0.415, // 1-person households: 41.5%
+    0.342, // 2-person households: 34.2%
+    0.118, // 3-person households: 11.8%
+    0.091, // 4-person households: 9.1%
+    0.034 // 5+ person households: 3.4%
 };
-
-/**
- * @brief Average household size in Germany
- * Source: Destatis 2023
- */
-const double AVERAGE_HOUSEHOLD_SIZE = 1.95;
 
 /**
  * @brief Infrastructure ratios per 1000 people
@@ -61,53 +48,29 @@ const double AVERAGE_HOUSEHOLD_SIZE = 1.95;
 struct InfrastructureRatios {
     // Employment and workplaces
     // Source: Destatis labor force statistics 2023
-    static constexpr double EMPLOYMENT_RATE      = 0.638; // 63.8% of population aged 15-64
-    static constexpr double PEOPLE_PER_WORKPLACE = 15.0; // Average employees per workplace
+    static constexpr double EMPLOYMENT_RATE =
+        0.775; // 2024 Erwerbstätigenquoten Altersgruppe 15 bis unter 65 Jahren https://www.destatis.de/DE/Themen/Arbeit/Arbeitsmarkt/Erwerbstaetigkeit/Tabellen/erwerbstaetigenquoten-gebietsstand-geschlecht-altergruppe-mikrozensus.html
+    static constexpr double PEOPLE_PER_WORKPLACE = 10.0; // Average employees per workplace
 
     // Education
-    // Source: Destatis education statistics 2023
-    static constexpr double STUDENTS_PER_ELEMENTARY_SCHOOL = 30.0; // Primary schools
-    static constexpr double STUDENTS_PER_SECONDARY_SCHOOL  = 30.0; // Secondary schools
-    static constexpr double ELEMENTARY_TO_SECONDARY_RATIO  = 3.5; // 3.5 elementary per secondary
+    // Source: Schüler: Deutschland, Schuljahr, Geschlecht, Schulart, Jahrgangsstufen Code: 21111-0002
+    static constexpr double SCHOOL_RATE =
+        0.105; // OF all persons. This is only for 5-14 years, but we use it for all school-age groups
+    static constexpr double MAX_STUDENTS_PER_ELEMENTARY_SCHOOL =
+        200; // Primary schools Destatis(anzahl schüler) durch anzahl grundschulen(statista)
+    static constexpr double MAX_STUDENTS_PER_SECONDARY_SCHOOL =
+        300; // Secondary schools Destatis(anzahl schüler) durch anzahl gymnasien(statista)
+    static constexpr double RATIO_ELEMENTARY_TO_SECONDARY_SCHOOL =
+        1.65; // There are 1.65 persons in secondary school for each elementary school student
 
     // Retail and services
     // Source: HDE retail statistics 2023
-    static constexpr double PEOPLE_PER_GROCERY_STORE = 100.0; // Basic necessities
-    static constexpr double PEOPLE_PER_PHARMACY      = 150.0; // Pharmacies
-    static constexpr double PEOPLE_PER_GENERAL_STORE = 150.0; // General retail
+    static constexpr double amount_of_retail_stores_per_1000_people =
+        3.7; // https://de.statista.com/themen/136/einzelhandel-in-deutschland/
 
     // Social and event locations
-    // Source: DEHOGA hospitality statistics 2023
-    static constexpr double PEOPLE_PER_RESTAURANT  = 30.0; // Restaurants/cafes
-    static constexpr double PEOPLE_PER_BAR         = 20.0; // Bars/pubs
-    static constexpr double PEOPLE_PER_LARGE_EVENT = 10.0; // Concert halls, stadiums
-    static constexpr double PEOPLE_PER_SMALL_EVENT = 20.0; // Community centers, clubs
-};
-
-/**
- * @brief School attendance rates by age group
- * Source: Destatis education statistics 2023
- */
-const std::map<int, double> SCHOOL_ATTENDANCE_RATES = {
-    {0, 0.0}, // 0-4 years: 0% (some kindergarten, but not modeled)
-    {1, 1.0}, // 5-14 years: 100% school attendance
-    {2, 0.0}, // 15-34 years: 0% in education/training
-    {3, 0.0}, // 35-59 years: 0% in continuing education
-    {4, 0.0}, // 60-79 years: 0%
-    {5, 0.0} // 80+ years: 0%
-};
-
-/**
- * @brief Employment rates by age group
- * Source: Destatis labor force statistics 2023
- */
-const std::map<int, double> EMPLOYMENT_RATES = {
-    {0, 0.0}, // 0-4 years: 0%
-    {1, 0.0}, // 5-14 years: 0%
-    {2, 1.0}, // 15-34 years: 78%
-    {3, 1.0}, // 35-59 years: 85%
-    {4, 0.0}, // 60-79 years: 32% (part-time, retirement transition)
-    {5, 0.0} // 80+ years: 0%
+    static constexpr double PEOPLE_PER_EVENT                = 40.0;
+    static constexpr double chance_per_hour_to_attend_event = 0.03;
 };
 
 /**
@@ -116,59 +79,120 @@ const std::map<int, double> EMPLOYMENT_RATES = {
  * @return Infrastructure configuration for the city
  */
 struct CityInfrastructure {
-    int num_households;
+    std::vector<int> num_households_hh_size;
     int num_workplaces;
     int num_elementary_schools;
     int num_secondary_schools;
     int num_hospitals;
     int num_icus;
-    int num_grocery_stores;
-    int num_pharmacies;
-    int num_general_stores;
-    int num_restaurants;
-    int num_bars;
-    int num_large_events;
-    int num_small_events;
+    int num_stores;
+    int num_events;
+    int num_persons_elementary_schools;
+    int num_persons_secondary_schools;
+    int num_worker;
+
+    std::vector<int> calc_household_sizes(int population) const
+    {
+        const int n_bins = HOUSEHOLD_SIZE_DISTRIBUTION.size();
+
+        // 1. Estimate household count based on average household size
+        double avg_household_size = 0.0;
+        for (int i = 0; i < n_bins; ++i)
+            avg_household_size += (i + 1) * HOUSEHOLD_SIZE_DISTRIBUTION[i];
+
+        int estimated_total_households = static_cast<int>(std::round(population / avg_household_size));
+
+        // 2. Calculate raw household numbers per bin
+        std::vector<double> raw_households(n_bins);
+        for (int i = 0; i < n_bins; ++i)
+            raw_households[i] = estimated_total_households * HOUSEHOLD_SIZE_DISTRIBUTION[i];
+
+        // 3. Round and fix totals
+        std::vector<int> households_by_size(n_bins);
+        for (int i = 0; i < n_bins; ++i)
+            households_by_size[i] = static_cast<int>(std::round(raw_households[i]));
+
+        // 4. Ensure population total is correct
+        int total_people = 0;
+        for (int i = 0; i < n_bins; ++i)
+            total_people += households_by_size[i] * (i + 1);
+
+        int diff = population - total_people;
+        // Fix small rounding errors by adding/subtracting people in 5-person households
+        while (diff != 0) {
+            int idx = (diff > 0) ? 4 : 0; // 5-person or 1-person
+            households_by_size[idx] += (diff > 0) ? 1 : -1;
+            diff += (diff > 0) ? -(idx + 1) : (idx + 1);
+        }
+
+        return households_by_size;
+    }
+
+    int calc_num_workplaces(int population) const
+    {
+        // Calculate number of workplaces based on employment rate and average employees per workplace
+        int n_w  = static_cast<int>(std::round(population * InfrastructureRatios::EMPLOYMENT_RATE));
+        int n_wp = static_cast<int>(std::round(n_w / InfrastructureRatios::PEOPLE_PER_WORKPLACE));
+        return n_wp;
+    }
+
+    std::tuple<int, int, int, int> calc_num_elem_and_sec_schools(int population) const
+    {
+        // Calculate number of elementary schools based on school rate and max students per school
+        int total_students          = static_cast<int>(population * InfrastructureRatios::SCHOOL_RATE);
+        int num_elementary_students = static_cast<int>(
+            std::round(total_students / (1.0 + InfrastructureRatios::RATIO_ELEMENTARY_TO_SECONDARY_SCHOOL)));
+        int num_secondary_students = total_students - num_elementary_students;
+        return std::make_tuple(
+            static_cast<int>(static_cast<int>(
+                std::ceil(num_elementary_students / InfrastructureRatios::MAX_STUDENTS_PER_ELEMENTARY_SCHOOL))),
+            static_cast<int>(static_cast<int>(
+                std::ceil(num_secondary_students / InfrastructureRatios::MAX_STUDENTS_PER_SECONDARY_SCHOOL))),
+            num_elementary_students, num_secondary_students);
+    }
+
+    int calc_stores(int population) const
+    {
+        // Calculate number of retail stores based on average stores per 1000 people
+        int n_stores = static_cast<int>(
+            std::ceil(population * InfrastructureRatios::amount_of_retail_stores_per_1000_people / 1000.0));
+        return n_stores;
+    }
+
+    int calc_num_events(int population) const
+    {
+        // Calculate number of events based on people per event and chance to attend
+        int n_events = static_cast<int>(std::ceil(population / InfrastructureRatios::PEOPLE_PER_EVENT));
+        return n_events;
+    }
 
     static CityInfrastructure calculate(int population)
     {
         CityInfrastructure infra;
 
-        // Households based on average household size
-        infra.num_households = static_cast<int>(population / AVERAGE_HOUSEHOLD_SIZE);
+        // Calculate household sizes
+        infra.num_households_hh_size = infra.calc_household_sizes(population);
 
-        // Workplaces
-        int working_population = static_cast<int>(population * InfrastructureRatios::EMPLOYMENT_RATE);
-        infra.num_workplaces =
-            std::max(1, static_cast<int>(working_population / InfrastructureRatios::PEOPLE_PER_WORKPLACE));
+        // Calculate workplaces
+        infra.num_workplaces = infra.calc_num_workplaces(population);
 
-        // Schools
-        int school_age_population =
-            static_cast<int>(population * (GERMAN_AGE_DISTRIBUTION[1] + GERMAN_AGE_DISTRIBUTION[2] * 0.45));
-        infra.num_elementary_schools = std::max(
-            1, static_cast<int>(school_age_population * 0.7 / InfrastructureRatios::STUDENTS_PER_ELEMENTARY_SCHOOL));
-        infra.num_secondary_schools = std::max(
-            1, static_cast<int>(infra.num_elementary_schools / InfrastructureRatios::ELEMENTARY_TO_SECONDARY_RATIO));
+        // Calculate schools
+        auto [num_elem_schools, num_sec_schools, num_elem_students, num_sec_students] =
+            infra.calc_num_elem_and_sec_schools(population);
+        infra.num_persons_elementary_schools = num_elem_students;
+        infra.num_persons_secondary_schools  = num_sec_students;
+        infra.num_elementary_schools         = num_elem_schools;
+        infra.num_secondary_schools          = num_sec_schools;
 
-        // Healthcare
-        // infra.num_hospitals = std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_HOSPITAL_BED));
-        // infra.num_icus      = std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_ICU_BED));
-        infra.num_hospitals = 1;
-        infra.num_icus      = 1; // Simplified for this model, could be adjusted based on real ratios
-        // Retail
-        infra.num_grocery_stores =
-            std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_GROCERY_STORE));
-        infra.num_pharmacies = std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_PHARMACY));
-        infra.num_general_stores =
-            std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_GENERAL_STORE));
+        // Calculate hospitals and ICUs
+        infra.num_hospitals = 1; // 1 hospital per 100,000 people
+        infra.num_icus      = 1; //
 
-        // Social venues
-        infra.num_restaurants = std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_RESTAURANT));
-        infra.num_bars        = std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_BAR));
-        infra.num_large_events =
-            std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_LARGE_EVENT));
-        infra.num_small_events =
-            std::max(1, static_cast<int>(population / InfrastructureRatios::PEOPLE_PER_SMALL_EVENT));
+        // Calculate stores
+        infra.num_stores = infra.calc_stores(population);
+
+        // Calculate events
+        infra.num_events = infra.calc_num_events(population);
 
         return infra;
     }

@@ -20,7 +20,7 @@ constexpr int MAX_EVENT_HOURS = 24;
 
 // Default values
 constexpr int DEFAULT_RUNS               = 25;
-constexpr int DEFAULT_DAYS               = 10;
+constexpr int DEFAULT_DAYS               = 14;
 constexpr int DEFAULT_POPULATION         = 1000;
 constexpr double DEFAULT_INFECTION_K     = 2.0;
 constexpr int DEFAULT_EVENT_HOURS        = 2;

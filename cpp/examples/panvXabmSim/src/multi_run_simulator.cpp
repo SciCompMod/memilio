@@ -14,26 +14,26 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 
     MultiRunResults results;
     for (int run = 0; run < config.num_runs; ++run) {
-        if (run % 10 == 0) {
-            std::cout << "Run " << run << "/" << config.num_runs << std::endl;
+        if (run % 10 == 0 || run == config.num_runs - 1) {
+            std::cout << "Run " << run + 1 << "/" << config.num_runs << std::endl;
         }
 
         results.event_type      = config.event_config.type;
         results.simulation_type = config.simulation_type;
 
         // Step 1: Build city (done once)
-        std::cout << "Building city..." << std::endl;
+        // std::cout << "Building city..." << std::endl;
         BOOST_OUTCOME_TRY(auto base_world, CityBuilder::build_world(config.city_config));
-        CityBuilder::print_city_summary(config.city_config);
+        // CityBuilder::print_city_summary(config.city_config);
 
         // Step 2: Get map from specific event to ids of persons in simulation
-        std::cout << "Mapping events to person IDs..." << std::endl;
+        // std::cout << "Mapping events to person IDs..." << std::endl;
         //TODO: Implement this function to map events to persons
         BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config.type));
         // results.event_person_map = event_map;
 
         // Step 3: Calculate K parameter
-        std::cout << "Calculating infection parameter K..." << std::endl;
+        // std::cout << "Calculating infection parameter K..." << std::endl;
         if (results.infection_parameter_k < 0.0) {
             BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
                                                                  config.event_config, base_world, event_map));
@@ -42,20 +42,20 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // Step 3: Get initial infections
         std::vector<uint32_t> initial_infections;
         if (config.simulation_type == SimType::Panvadere) {
-            std::cout << "Loading infections from Panvadere..." << std::endl;
+            // std::cout << "Loading infections from Panvadere..." << std::endl;
             BOOST_OUTCOME_TRY(auto infections,
                               EventSimulator::initialize_from_panvadere(config.event_config.type, event_map));
             initial_infections = infections;
         }
         else if (config.simulation_type == SimType::Memilio) {
-            std::cout << "Simulating event infections..." << std::endl;
-            BOOST_OUTCOME_TRY(auto infections,
-                              EventSimulator::initialize_from_event_simulation(config.event_config, base_world));
+            // std::cout << "Simulating event infections..." << std::endl;
+            BOOST_OUTCOME_TRY(auto infections, EventSimulator::initialize_from_event_simulation(
+                                                   base_world.get_rng(), config.event_config.type, event_map));
             initial_infections = infections;
         }
 
         // Step 4: Run multiple simulations
-        std::cout << "Running " << config.num_runs << " simulations..." << std::endl;
+        // std::cout << "Running " << config.num_runs << " simulations..." << std::endl;
         results.all_runs.reserve(config.num_runs);
 
         auto single_result = run_single_simulation_with_infections(

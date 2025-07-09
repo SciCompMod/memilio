@@ -80,8 +80,9 @@ public:
      * @param city The city world for context
      * @return IOResult containing infected person mapping
      */
-    static mio::IOResult<std::vector<uint32_t>> initialize_from_event_simulation(const EventSimulationConfig& config,
-                                                                                 const mio::abm::World& city);
+    static mio::IOResult<std::vector<uint32_t>>
+    initialize_from_event_simulation(const mio::RandomNumberGenerator rng, EventType event_type,
+                                     std::map<uint32_t, uint32_t>& event_map);
 
     // === Utility Functions ===
 
@@ -121,6 +122,12 @@ public:
      * @brief Map restaurant tables to households for infection tracking
      */
     static mio::IOResult<std::map<uint32_t, uint32_t>> map_restaurant_tables_to_households(mio::abm::World& city);
+
+    /**
+     * @brief Map restaurant tables to households for infection tracking
+     */
+    static mio::IOResult<std::map<uint32_t, uint32_t>>
+    map_two_person_per_household_restaurant_tables_to_households(mio::abm::World& city);
 
     /**
      * @brief Map restaurant tables to households for infection tracking

@@ -77,7 +77,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
             if (config.type == EventType::Restaurant_Table_Equals_Half_Household ||
                 config.type == EventType::Restaurant_Table_Equals_Household) {
                 // Set restaurant-specific parameters
-                ratio = 3.0 / config.event_duration_hours; // 3 hours divided by event duration
+                ratio = 3.0 / config.event_duration_hours * 4; // 3 hours divided by event duration
             }
             else if (config.type == EventType::WorkMeeting_Many_Meetings ||
                      config.type == EventType::WorkMeeting_Few_Meetings) {
@@ -212,18 +212,58 @@ EventSimulator::read_panv_file_restaurant(const std::string& filename)
         return mio::failure(mio::StatusCode::InvalidFileFormat, "No valid data found in file");
     }
 
-    std::cout << "Successfully read " << infected_status.size() << " persons from " << filename << std::endl;
+    // std::cout << "Successfully read " << infected_status.size() << " persons from " << filename << std::endl;
 
     return mio::success(infected_status);
 }
 
 mio::IOResult<std::vector<uint32_t>>
-EventSimulator::initialize_from_event_simulation(const EventSimulationConfig& config, const mio::abm::World& city)
+EventSimulator::initialize_from_event_simulation(mio::RandomNumberGenerator rng, EventType event_type,
+                                                 std::map<uint32_t, uint32_t>& event_map)
 {
-    // empty vector to hold infected person IDs
-    std::vector<uint32_t> infected_people;
-    mio::unused(config, city);
-    return mio::success(infected_people);
+    // Map to households based on event type
+    std::vector<uint32_t> household_infections;
+
+    switch (event_type) {
+    case EventType::Restaurant_Table_Equals_Half_Household:
+    case EventType::Restaurant_Table_Equals_Household: {
+        BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
+
+        // Read Panvadere infection data
+        BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+
+        size_t amount_of_infected = 0;
+        for (const auto& entry : panvadere_data) {
+            bool is_infected = std::get<2>(entry);
+            if (is_infected) {
+                amount_of_infected++;
+            }
+        }
+
+        auto event_map_copy = event_map;
+        //shuffle the event_map_copy to randomize the household mapping
+        std::vector<std::pair<uint32_t, uint32_t>> event_map_vector(event_map_copy.begin(), event_map_copy.end());
+        std::shuffle(event_map_vector.begin(), event_map_vector.end(), rng);
+
+        // take amount_of_infected households from the shuffled event_map_vector
+        for (size_t i = 0; i < amount_of_infected && i < event_map_vector.size(); ++i) {
+            household_infections.push_back(event_map_vector[i].second);
+        }
+
+        break;
+    }
+    case EventType::WorkMeeting_Many_Meetings:
+        break;
+    case EventType::WorkMeeting_Few_Meetings:
+        break;
+    default:
+        // Map events to households
+        return mio::failure(mio::StatusCode::InvalidValue,
+                            "Event type not supported for Panvadere data mapping: " + event_type_to_string(event_type));
+        break;
+    }
+
+    return mio::success(household_infections);
 }
 
 mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(EventType event_type,
@@ -262,7 +302,7 @@ mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(E
                 }
             }
         }
-        return mio::success(household_infections);
+        break;
     }
 
     case EventType::Restaurant_Table_Equals_Half_Household: {
@@ -291,10 +331,12 @@ mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(E
                 }
             }
         }
-        return mio::success(household_infections);
+        break;
     }
     case EventType::WorkMeeting_Many_Meetings:
+        break;
     case EventType::WorkMeeting_Few_Meetings:
+        break;
     default:
         // Map events to households
         return mio::failure(mio::StatusCode::InvalidValue,
@@ -465,7 +507,7 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
 }
 
 mio::IOResult<std::map<uint32_t, uint32_t>>
-EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city)
+EventSimulator::map_two_person_per_household_restaurant_tables_to_households(mio::abm::World& city)
 {
     // This funciton maps a simulation id to a household id in the world simulation.
 
@@ -583,12 +625,64 @@ EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city
         }
     }
 
-    // Summarize the household map
-    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
-    for (const auto& [person_id_pre, person_id_sim] : household_map) {
-        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
-                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
-                  << std::endl;
+    // // Summarize the household map
+    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
+    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+    //               << std::endl;
+    // }
+
+    return mio::success(household_map);
+}
+
+mio::IOResult<std::map<uint32_t, uint32_t>>
+EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city)
+{
+    // This funciton maps a simulation id to a household id in the world simulation.
+
+    // First we read in the infection data from the Panvadere simulation
+    BOOST_OUTCOME_TRY(auto panvadere_file,
+                      get_panvadere_file_for_event_type(EventType::Restaurant_Table_Equals_Household));
+    BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+
+    // For this we want to map each seat to a random household. For this we look at a table and assign the first household with that
+    // amount of people to the table. If the table has more than 5 people we devide it into two households: one household for the first 5 people and one for the rest.
+
+    // First we just need each person ID
+    std::vector<uint32_t> person_ids;
+    for (const auto& entry : panvadere_data) {
+        uint32_t person_id = std::get<0>(entry);
+        // Add person ID to the vector
+        person_ids.push_back(person_id);
+    }
+
+    // Get all households in the city world
+    std::vector<std::tuple<mio::abm::LocationId, uint32_t>> households;
+    for (const auto& location : city.get_locations()) {
+        if (location.get_type() == mio::abm::LocationType::Home) {
+            households.push_back(std::make_tuple(mio::abm::LocationId({location.get_index(), location.get_type()}),
+                                                 location.get_persons().size())); // Store household index
+        }
+    }
+
+    //Delete all households which have less than 2 persons, as we want to assign at least two persons to a household
+    households.erase(std::remove_if(households.begin(), households.end(),
+                                    [](const std::tuple<mio::abm::LocationId, uint32_t>& household) {
+                                        return std::get<1>(household) < 4; // Remove households with less than 2 persons
+                                    }),
+                     households.end());
+
+    //Shuffle the households to get a random order
+    std::shuffle(households.begin(), households.end(), city.get_rng());
+
+    // Now we assign each person to a random household
+    std::map<uint32_t, uint32_t> household_map;
+    int counter_hh = 0; // Counter for households, to assign each person to a household
+    for (const auto& person_id : person_ids) {
+        auto household_persons   = city.get_individualized_location(std::get<0>(households[counter_hh])).get_persons();
+        household_map[person_id] = household_persons[0].get()->get_person_id(); // Map person ID to household ID
+        counter_hh++; // Increment household counter
     }
 
     return mio::success(household_map);
@@ -677,6 +771,9 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_person
         return mio::success(household_map);
     }
     case EventType::Restaurant_Table_Equals_Half_Household: {
+        // BOOST_OUTCOME_TRY(auto household_map,
+        //                   EventSimulator::map_two_person_per_household_restaurant_tables_to_households(
+        //                       const_cast<mio::abm::World&>(city)));
         BOOST_OUTCOME_TRY(auto household_map, EventSimulator::map_random_restaurant_tables_to_households(
                                                   const_cast<mio::abm::World&>(city)));
         return mio::success(household_map);
