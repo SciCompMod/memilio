@@ -36,12 +36,12 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        interpolate_simulation_result, simulate)
 import memilio.surrogatemodel.utils.dampings as dampings
 from memilio.surrogatemodel.utils.helper_functions import (
-    interpolate_age_groups, remove_confirmed_compartments, transform_data)
+    interpolate_age_groups, remove_confirmed_compartments, normalize_simulation_data)
 import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
 
 
-def run_secir_groups_simulation(days, damping_days, damping_factors, populations):
+def run_secir_groups_simulation(days, damping_days, damping_factors, populations, age_groups):
     """ Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
@@ -49,7 +49,9 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
     :param damping_days: The days when damping is applied.
     :param damping_factors: damping factors associated to the damping days.
     :param populations: List containing the population in each age group.
-    :returns: List containing the populations in each compartment used to initialize the run.
+    :param age_groups: List declaring the used age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
+    :returns: Tuple of lists (list_of_simulation_results, list_of_damped_matrices), the first containing the simulation results, the second list containing the 
+        damped contact matrices. 
 
     """
     # Collect indices of confirmed compartments
@@ -65,9 +67,8 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
     start_year = 2019
     dt = 0.1
 
-    # Define age Groups
-    groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
-    num_groups = len(groups)
+    # Get number of age groups
+    num_groups = len(age_groups)
 
     # Initialize Parameters
     model = Model(num_groups)
@@ -204,8 +205,10 @@ def generate_data(
     # Since the first day of the input is day 0, we still need to subtract 1.
     days = input_width + label_width - 1
 
+    # Define used age_groups
+    age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '>79']
     # Load population data
-    population = get_population(path_population)
+    population = get_population(path_population, age_groups)
 
     # show progess in terminal for longer runs
     # Due to the random structure, there's currently no need to shuffle the data
@@ -218,7 +221,7 @@ def generate_data(
             min_damping_day=2)
 
         data_run, damped_matrices = run_secir_groups_simulation(
-            days, damping_days, damping_factors, population[random.randint(0, len(population) - 1)])
+            days, damping_days, damping_factors, population[random.randint(0, len(population) - 1)], age_groups)
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         data['contact_matrices'].append(damped_matrices)
@@ -232,8 +235,10 @@ def generate_data(
         transformer = FunctionTransformer(np.log1p, validate=True)
 
         # transform inputs and labels
-        data['inputs'] = transform_data(data['inputs'], transformer, num_runs)
-        data['labels'] = transform_data(data['labels'], transformer, num_runs)
+        data['inputs'] = normalize_simulation_data(
+            data['inputs'], transformer, num_runs)
+        data['labels'] = normalize_simulation_data(
+            data['labels'], transformer, num_runs)
     else:
         data['inputs'] = tf.convert_to_tensor(data['inputs'])
         data['labels'] = tf.convert_to_tensor(data['labels'])
@@ -296,10 +301,11 @@ def getMinimumMatrix():
     return minimum
 
 
-def get_population(path):
+def get_population(path, age_groups):
     """ read population data in list from dataset
 
-    :param path: Path to the dataset containing the population data
+    :param path: Path to the dataset containing the population 
+    :param age_groups: List declaring the new age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     :returns: List of interpolated age grouped population data
 
     """
@@ -308,7 +314,7 @@ def get_population(path):
         data = json.load(f)
     population = []
     for data_entry in data:
-        population.append(interpolate_age_groups(data_entry))
+        population.append(interpolate_age_groups(data_entry, age_groups))
     return population
 
 
@@ -322,7 +328,7 @@ if __name__ == "__main__":
         r"data//Germany//pydata//county_current_population.json")
 
     input_width = 5
-    label_width = 30
-    num_runs = 10000
+    label_width = 90
+    num_runs = 100
     data = generate_data(num_runs, path_output, path_population, input_width,
-                         label_width, damping_method="classic")
+                         label_width, damping_method="active")

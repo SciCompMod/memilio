@@ -25,21 +25,34 @@ from memilio.epidata.modifyDataframeSeries import (fit_age_group_intervals)
 import pandas as pd
 
 
-def interpolate_age_groups(data_entry):
+def interpolate_age_groups(data_entry, age_groups):
     """ Interpolates the age groups from the population data into the age groups used in the simulation.
     We assume that the people in the age groups are uniformly distributed.
 
     :param data_entry: Data entry containing the population data.
+    :param age_groups: List declaring the new age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     :returns: List containing the population in each age group used in the simulation.
 
     """
-    df_age_in = pd.DataFrame({
-        '<3': 1, '3-5': 1, '6-14': 1, '15-17': 1, '18-24': 1, '25-29': 1,
-        '30-39': 1, '40-49': 1, '50-64': 1, '64-74': 1, '>74': 1
-    })
-    age_out = ["<5", "5-14", "15-34", "35-59", "60-79", ">79"]
 
-    return (fit_age_group_intervals(df_age_in, age_out, data_entry))
+    df_age_in = pd.DataFrame.from_dict({
+        '<3': [1], '3-5': [1], '6-14': [1], '15-17': [1], '18-24': [1], '25-29': [1],
+        '30-39': [1], '40-49': [1], '50-64': [1], '64-74': [1], '>74': [1]
+    })
+
+    # Prepare to convert in Dataframe
+    for i in data_entry:
+        data_entry[i] = [data_entry[i]]
+
+    df_entry = pd.DataFrame.from_dict(data_entry)
+    # Excluding ID_County and total number of population
+    df_reduced = df_entry.loc[:, "<3 years":">74 years":1]
+
+    # Interpolate the different age_groups
+    data_interpolated = fit_age_group_intervals(
+        df_age_in, age_groups, df_reduced)
+    res = list(data_interpolated)
+    return res
 
 
 def remove_confirmed_compartments(result_array, delete_indices):
