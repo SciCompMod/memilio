@@ -34,7 +34,7 @@ from memilio.simulation.osecir import (Index_InfectionState,
                                        InfectionState, Model,
                                        interpolate_simulation_result, simulate)
 from memilio.surrogatemodel.utils.helper_functions import (
-    interpolate_age_groups, remove_confirmed_compartments, transform_data)
+    interpolate_age_groups, remove_confirmed_compartments, normalize_simulation_data)
 import memilio.simulation.osecir as osecir
 
 
@@ -173,9 +173,9 @@ def generate_data(
     if normalize:
         # logarithmic normalization
         transformer = FunctionTransformer(np.log1p, validate=True)
-        data['inputs'] = transform_data(
+        data['inputs'] = normalize_simulation_data(
             data['inputs'], transformer, num_runs, 1)
-        data['labels'] = transform_data(
+        data['labels'] = normalize_simulation_data(
             data['labels'], transformer, num_runs, 1)
     else:
         data['inputs'] = tf.convert_to_tensor(data['inputs'])

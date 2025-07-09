@@ -62,13 +62,14 @@ class TestSurrogatemodelOdeSecirGroups(fake_filesystem_unittest.TestCase):
         damping_factors = [0.3, 0.4]
         population = [5256.0, 10551, 32368.5,
                       43637.833333333336, 22874.066666666666, 8473.6]
+        age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '>79']
 
         simulation_1 = data_generation.run_secir_groups_simulation(
-            days_1, damping_days, damping_factors,  population)
+            days_1, damping_days, damping_factors,  population, age_groups)
         simulation_2 = data_generation.run_secir_groups_simulation(
-            days_2, damping_days, damping_factors, population)
+            days_2, damping_days, damping_factors, population, age_groups)
         simulation_3 = data_generation.run_secir_groups_simulation(
-            days_3, damping_days, damping_factors, population)
+            days_3, damping_days, damping_factors, population, age_groups)
 
         # result length
         self.assertEqual(len(simulation_1[0]), days_1+1)
