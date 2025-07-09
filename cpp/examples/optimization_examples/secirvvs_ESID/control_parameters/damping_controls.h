@@ -48,7 +48,7 @@ mio::DampingSampling<FP> make_school_closure_damping(mio::SimulationTime<FP> tim
     const mio::DampingLevel level(static_cast<size_t>(InterventionLevel::Main));
     const mio::DampingType type(static_cast<size_t>(Intervention::SchoolClosure));
     const std::vector<size_t> locations    = {static_cast<size_t>(ContactLocation::School)};
-    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, FP(1.0));
+    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, 1.0);
 
     return mio::DampingSampling<FP>(damping_value, level, type, time, locations, group_weights);
 }
@@ -60,7 +60,7 @@ mio::DampingSampling<FP> make_home_office_damping(mio::SimulationTime<FP> time, 
     const mio::DampingLevel level(static_cast<size_t>(InterventionLevel::Main));
     const mio::DampingType type(static_cast<size_t>(Intervention::HomeOffice));
     const std::vector<size_t> locations    = {static_cast<size_t>(ContactLocation::Work)};
-    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, FP(1.0));
+    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, 1.0);
 
     return mio::DampingSampling<FP>(damping_value, level, type, time, locations, group_weights);
 }
@@ -73,7 +73,7 @@ mio::DampingSampling<FP> make_physical_distancing_school_damping(mio::Simulation
     const mio::DampingLevel level(static_cast<size_t>(InterventionLevel::PhysicalDistanceAndMasks));
     const mio::DampingType type(static_cast<size_t>(Intervention::PhysicalDistanceAndMasks));
     const std::vector<size_t> locations    = {static_cast<size_t>(ContactLocation::School)};
-    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, FP(1.0));
+    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, 1.0);
 
     return mio::DampingSampling<FP>(damping_value, level, type, time, locations, group_weights);
 }
@@ -86,7 +86,7 @@ mio::DampingSampling<FP> make_physical_distancing_work_damping(mio::SimulationTi
     const mio::DampingLevel level(static_cast<size_t>(InterventionLevel::PhysicalDistanceAndMasks));
     const mio::DampingType type(static_cast<size_t>(Intervention::PhysicalDistanceAndMasks));
     const std::vector<size_t> locations    = {static_cast<size_t>(ContactLocation::Work)};
-    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, FP(1.0));
+    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, 1.0);
 
     return mio::DampingSampling<FP>(damping_value, level, type, time, locations, group_weights);
 }
@@ -99,42 +99,37 @@ mio::DampingSampling<FP> make_physical_distancing_other_damping(mio::SimulationT
     const mio::DampingLevel level(static_cast<size_t>(InterventionLevel::PhysicalDistanceAndMasks));
     const mio::DampingType type(static_cast<size_t>(Intervention::PhysicalDistanceAndMasks));
     const std::vector<size_t> locations    = {static_cast<size_t>(ContactLocation::Other)};
-    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, FP(1.0));
+    const Eigen::VectorX<FP> group_weights = Eigen::VectorX<FP>::Constant(num_age_groups, 1.0);
 
     return mio::DampingSampling<FP>(damping_value, level, type, time, locations, group_weights);
 }
 
 template <typename FP>
 void set_control_dampings(const SecirvvsOptimization& settings, mio::osecirvvs::Model<FP>& model,
-                          const std::vector<FP>& parameters)
+                          const std::vector<FP>& control_parameters)
 {
-    assert(parameters.size() == settings.num_control_parameters() * settings.num_control_intervals());
-
-    size_t num_control_parameters = settings.num_control_parameters();
-    size_t num_control_intervals  = settings.num_control_intervals();
-    size_t pc_resolution          = settings.pc_resolution();
-
-    size_t num_age_groups = static_cast<size_t>(model.parameters.get_num_groups());
+    assert(control_parameters.size() == settings.num_control_parameters() * settings.num_control_intervals());
 
     mio::UncertainContactMatrix<FP>& contacts = model.parameters.template get<mio::osecirvvs::ContactPatterns<FP>>();
     std::vector<mio::DampingSampling<FP>>& contact_dampings = contacts.get_dampings();
 
     std::vector<FP> time_steps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.num_intervals());
 
-    for (size_t control_interval = 0; control_interval < num_control_intervals; control_interval++) {
+    for (size_t control_interval = 0; control_interval < settings.num_control_intervals(); control_interval++) {
 
-        size_t time_step_index = control_interval * pc_resolution;
-        mio::SimulationTime<FP> time(time_steps[time_step_index]);
+        mio::SimulationTime<FP> time(time_steps[control_interval * settings.pc_resolution()]);
 
         auto param_at = [&](const std::string& name) {
             size_t control_index = static_cast<size_t>(string_to_control(name));
-            return parameters[control_index + control_interval * num_control_parameters];
+            return control_parameters[control_index + control_interval * settings.num_control_parameters()];
         };
 
         auto effectiveness = [&](const std::string& name) {
             size_t control_index = static_cast<size_t>(string_to_control(name));
             return settings.control_parameters()[control_index].effectiveness();
         };
+
+        size_t num_age_groups = static_cast<size_t>(model.parameters.get_num_groups());
 
         auto damping_school_closure = make_school_closure_damping<FP>(
             time, effectiveness("SchoolClosure") * param_at("SchoolClosure"), num_age_groups);

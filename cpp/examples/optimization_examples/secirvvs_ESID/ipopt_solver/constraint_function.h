@@ -28,7 +28,7 @@ void constraint_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimiza
 
     std::vector<FP> parameters(n);
     for (size_t i = 0; i < n; i++) {
-        parameters[i] = ptr_parameters[i];
+        parameters[i] = settings.activation_function()(ptr_parameters[i]);
     }
 
     std::vector<FP> path_constraint_values(settings.num_path_constraints(), 0.0);
@@ -40,7 +40,7 @@ void constraint_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimiza
 
     std::vector<FP> time_steps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.num_intervals());
 
-    update_path_constraint<FP>(settings, model, path_constraint_values, 0);
+    update_path_constraint<FP>(settings, model, path_constraint_values);
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
         mio::TimeSeries<FP> result = mio::simulate<FP, mio::osecirvvs::Model<FP>>(
             time_steps[interval], time_steps[interval + 1], settings.dt(), model, integrator);
@@ -52,7 +52,7 @@ void constraint_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimiza
                 model.populations[{age_group, mio::osecirvvs::InfectionState(state_index)}] = final_state[idx];
             }
         }
-        update_path_constraint<FP>(settings, model, path_constraint_values, interval);
+        update_path_constraint<FP>(settings, model, path_constraint_values);
     }
     update_terminal_constraint<FP>(settings, model, terminal_constraint_values);
 

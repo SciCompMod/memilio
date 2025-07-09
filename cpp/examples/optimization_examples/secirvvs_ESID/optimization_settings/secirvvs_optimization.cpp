@@ -8,7 +8,7 @@ SecirvvsOptimization::SecirvvsOptimization(const OptimizationModel& optimization
                                            size_t integrator_resolution, ADType ad_eval_f, ADType ad_eval_jac,
                                            std::vector<ControlParameter> control_parameters,
                                            std::vector<Constraint> path_constraints,
-                                           std::vector<Constraint> terminal_constraints)
+                                           std::vector<Constraint> terminal_constraints, ControlActivation activation)
     : m_optimization_model(optimization_model)
     , m_t0(m_optimization_model.t0())
     , m_tmax(m_optimization_model.tmax())
@@ -22,6 +22,7 @@ SecirvvsOptimization::SecirvvsOptimization(const OptimizationModel& optimization
     , m_control_parameters(control_parameters)
     , m_path_constraints(path_constraints)
     , m_terminal_constraints(terminal_constraints)
+    , m_activation_function(ControlActivationFunction(activation))
 {
     m_num_intervals            = m_num_control_intervals * m_pc_resolution;
     m_dt                       = (m_tmax - m_t0) / (m_num_intervals * m_integrator_resolution);
@@ -112,6 +113,11 @@ const std::vector<Constraint>& SecirvvsOptimization::terminal_constraints() cons
     return m_terminal_constraints;
 }
 
+ControlActivationFunction SecirvvsOptimization::activation_function() const
+{
+    return m_activation_function;
+}
+
 size_t SecirvvsOptimization::num_intervals() const
 {
     return m_num_intervals;
@@ -165,7 +171,7 @@ void SecirvvsOptimization::check_constraint_feasability()
 
     std::vector<double> time_steps = make_time_grid<double>(t0(), tmax(), num_intervals());
 
-    update_path_constraint<double>(*this, model, path_constraint_values, 0);
+    update_path_constraint<double>(*this, model, path_constraint_values);
     for (size_t interval = 0; interval < num_intervals(); interval++) {
 
         mio::TimeSeries<double> result = mio::simulate<double, mio::osecirvvs::Model<double>>(
@@ -178,7 +184,7 @@ void SecirvvsOptimization::check_constraint_feasability()
                 model.populations[{age_group, mio::osecirvvs::InfectionState(state_index)}] = final_state[idx];
             }
         }
-        update_path_constraint<double>(*this, model, path_constraint_values, 0);
+        update_path_constraint<double>(*this, model, path_constraint_values);
     }
     update_terminal_constraint<double>(*this, model, terminal_constraint_values);
 
@@ -194,8 +200,9 @@ void SecirvvsOptimization::check_constraint_feasability()
 
         if (max_val < path_constraint_value) {
             std::cout << "Path Constraint [" << i << "] \"" << constraint.name() << "\": Increasing from " << max_val
-                      << " to " << path_constraint_value << ".\n";
+                      << " to " << path_constraint_value * (1 + epsilon) << ".\n";
 
+            assert(0.0 <= path_constraint_value);
             constraint.set_range({min_val, path_constraint_value * (1 + epsilon)});
         }
     }
@@ -210,8 +217,9 @@ void SecirvvsOptimization::check_constraint_feasability()
 
         if (max_val < terminal_constraint_value) {
             std::cout << "Terminal Constraint [" << i << "] \"" << constraint.name() << "\": Increasing from "
-                      << max_val << " to " << terminal_constraint_value << ".\n";
+                      << max_val << " to " << terminal_constraint_value * (1 + epsilon) << ".\n";
 
+            assert(0.0 <= terminal_constraint_value);
             constraint.set_range({min_val, terminal_constraint_value * (1 + epsilon)});
         }
     }

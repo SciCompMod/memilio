@@ -9,6 +9,7 @@
 #include "optimization_model/optimization_model.h"
 #include "optimization_settings/secirvvs_optimization.h"
 #include "control_parameters/control_parameters.h"
+#include "control_parameters/control_activation.h"
 #include "constraints/constraints.h"
 
 #include "helpers/integrator_selector.h"
@@ -18,9 +19,19 @@
 #include "IpTNLP.hpp"
 #include "IpIpoptApplication.hpp"
 
+#include "constraints/infection_state_utils.h"
+
 // Example: ./../build/bin/secirvvs_ESID /home/jli/Memilio-Branches/memilio/data/Germany
+
+// We use strings to gather infection state constraints:
+// "Infected+Immunity Critical"
 int main(int argc, char* argv[])
 {
+    std::cout << "Example: \"Infected+Immunity+NoSymptoms Critical\":" << std::endl;
+    for (auto state : query_infection_states("Infected+Immunity+NoSymptoms Critical")) {
+        std::cout << infection_state_to_string(state) << std::endl;
+    }
+
     // ------------------------------ //
     // --- Parse 'data_directory' --- //
     // ------------------------------ //
@@ -57,8 +68,13 @@ int main(int argc, char* argv[])
     IntegratorType integrator_type = IntegratorType::ControlledFehlberg78;
     size_t integrator_resolution   = 10;
 
+    // ADType::Reverse can run out of tape size: Segmentation fault
     ADType ad_eval_f   = ADType::Forward;
     ADType ad_eval_jac = ADType::Forward;
+
+    // Mapping f:[0,1]->[0,1], f(0)=0, f(1/2)=1/2, f(1)=1.
+    // ControlActivation::Sigmoid can only be used if controls are in [0,1].
+    ControlActivation activation = ControlActivation::Linear;
 
     // clang-format off
     // Control parameters: 0: No intervention, 1: Full intervention
@@ -87,7 +103,7 @@ int main(int argc, char* argv[])
 
     SecirvvsOptimization settings(model, num_control_intervals, pc_resolution, random_start, integrator_type,
                                   integrator_resolution, ad_eval_f, ad_eval_jac, control_parameters, path_constraints,
-                                  terminal_constraints);
+                                  terminal_constraints, activation);
 
     // ----------------------------- //
     // --- Create NLP and solver --- //

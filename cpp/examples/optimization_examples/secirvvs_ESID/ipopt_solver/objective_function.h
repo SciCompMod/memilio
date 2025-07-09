@@ -29,7 +29,7 @@ FP objective_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimizatio
 
     std::vector<FP> parameters(n);
     for (size_t i = 0; i < n; i++) {
-        parameters[i] = ptr_parameters[i];
+        parameters[i] = settings.activation_function()(ptr_parameters[i]);
     }
 
     set_control_dampings<FP>(settings, model, parameters);
@@ -41,15 +41,16 @@ FP objective_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimizatio
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
         size_t control_interval = interval / settings.pc_resolution();
-        auto param_at           = [&](const std::string& name) {
+
+        auto param_at = [&](const std::string& name) {
             size_t control_index = static_cast<size_t>(string_to_control(name));
             return parameters[control_index + control_interval * settings.num_control_parameters()];
         };
-        FP school_closure             = param_at("SchoolClosure");
-        FP home_office                = param_at("HomeOffice");
-        FP physical_distancing_school = param_at("PhysicalDistancingSchool");
-        FP physical_distancing_work   = param_at("PhysicalDistancingWork");
-        FP physical_distancing_other  = param_at("PhysicalDistancingOther");
+
+        auto cost = [&](const std::string& name) {
+            size_t control_index = static_cast<size_t>(string_to_control(name));
+            return settings.control_parameters()[control_index].cost();
+        };
 
         mio::TimeSeries<FP> result = mio::simulate<FP, mio::osecirvvs::Model<FP>>(
             time_steps[interval], time_steps[interval + 1], settings.dt(), model, integrator);
@@ -61,9 +62,15 @@ FP objective_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimizatio
                 model.populations[{age_group, mio::osecirvvs::InfectionState(state_index)}] = final_state[idx];
             }
         }
-        objective += (school_closure + home_office + physical_distancing_school + physical_distancing_work +
-                      physical_distancing_other) /
-                     settings.num_intervals();
+
+        FP interval_cost = 0.0;
+        interval_cost += cost("SchoolClosure") * param_at("SchoolClosure");
+        interval_cost += cost("HomeOffice") * param_at("HomeOffice");
+        interval_cost += cost("PhysicalDistancingSchool") * param_at("PhysicalDistancingSchool");
+        interval_cost += cost("PhysicalDistancingWork") * param_at("PhysicalDistancingWork");
+        interval_cost += cost("PhysicalDistancingOther") * param_at("PhysicalDistancingOther");
+
+        objective += interval_cost / settings.num_intervals();
     }
 
     return objective;

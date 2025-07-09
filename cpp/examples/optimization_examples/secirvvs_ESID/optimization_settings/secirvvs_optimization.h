@@ -10,6 +10,7 @@
 
 #include "../optimization_model/optimization_model.h"
 #include "../control_parameters/control_parameters.h"
+#include "../control_parameters/control_activation.h"
 #include "../constraints/constraints.h"
 #include "../constraints/infection_state_utils.h"
 #include "../optimization_settings/secirvvs_optimization.h"
@@ -25,7 +26,7 @@ public:
                          size_t pc_resolution, bool random_start, IntegratorType integrator_type,
                          size_t integrator_resolution, ADType ad_eval_f, ADType ad_eval_jac,
                          std::vector<ControlParameter> control_parameters, std::vector<Constraint> path_constraints,
-                         std::vector<Constraint> terminal_constraints);
+                         std::vector<Constraint> terminal_constraints, ControlActivation activation);
 
     const OptimizationModel& optimization_model() const;
     double t0() const;
@@ -45,6 +46,8 @@ public:
     const std::vector<Constraint>& path_constraints() const;
     std::vector<Constraint>& terminal_constraints();
     const std::vector<Constraint>& terminal_constraints() const;
+
+    ControlActivationFunction activation_function() const;
 
     size_t num_intervals() const;
     double dt() const;
@@ -69,6 +72,7 @@ private:
     std::vector<ControlParameter> m_control_parameters;
     std::vector<Constraint> m_path_constraints;
     std::vector<Constraint> m_terminal_constraints;
+    ControlActivationFunction m_activation_function;
     /* Helper members */
     size_t m_num_intervals;
     double m_dt;
