@@ -92,7 +92,7 @@ maximum_signature_line_length = 40
 html_theme = 'sphinx_rtd_theme'
 html_logo = "../memilio-small.png"
 html_theme_options = {
-    "collapse_navigation": False,
+    "collapse_navigation": True,
     "logo_only": True,
     "style_nav_header_background": "#f8f9fb",
 }
