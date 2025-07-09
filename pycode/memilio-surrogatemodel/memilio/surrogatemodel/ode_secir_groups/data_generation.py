@@ -85,26 +85,26 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
         # Initial number of people in each compartment with random numbers
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Exposed)] = random.uniform(
-            0.00025, 0.0005) * populations[i]
+            0.00025, 0.005) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptoms)] = random.uniform(
-            0.0001, 0.00035) * populations[i]
+            0.0001, 0.0035) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedNoSymptomsConfirmed)] = 0
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptoms)] = random.uniform(
-            0.00007, 0.0001) * populations[i]
+            0.00007, 0.001) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSymptomsConfirmed)] = 0
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedSevere)] = random.uniform(
-            0.00003, 0.00006) * populations[i]
+            0.00003, 0.0006) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.InfectedCritical)] = random.uniform(
-            0.00001, 0.00002) * populations[i]
+            0.00001, 0.0002) * populations[i]
         model.populations[AgeGroup(i), Index_InfectionState(
             InfectionState.Recovered)] = random.uniform(
-            0.002, 0.008) * populations[i]
+            0.002, 0.08) * populations[i]
         model.populations[AgeGroup(i),
                           Index_InfectionState(InfectionState.Dead)] = 0
         model.populations.set_difference_from_group_total_AgeGroup(

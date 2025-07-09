@@ -19,7 +19,7 @@
 #############################################################################
 
 from pyfakefs import fake_filesystem_unittest
-import memilio.epidata
+import memilio.epidata.modifyDataframeSeries
 from memilio.surrogatemodel.ode_secir_simple import (data_generation,
                                                      network_architectures)
 from memilio.surrogatemodel.ode_secir_simple import model as md
