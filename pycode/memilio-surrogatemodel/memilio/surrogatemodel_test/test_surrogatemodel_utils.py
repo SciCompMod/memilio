@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from pyfakefs import fake_filesystem_unittest
-
+import memilio.epidata
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
                                                      network_architectures)
 import memilio.surrogatemodel.utils.helper_functions as utils
@@ -257,10 +257,8 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
         utils.save_model(mlp1.model, self.path, "mlp_multi_multi")
         path_file = os.path.join(self.path, "mlp_multi_multi.keras")
         if os.path.isfile(path_file):
-            print("--------------------------------------------------")
-            print(r"\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/")
-            print(r"/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ ")
-            print("--------------------------------------------------")
+            print("File !")
+
         mlp2 = utils.load_model(path_file)
 
         weights1 = mlp1.model.get_weights()

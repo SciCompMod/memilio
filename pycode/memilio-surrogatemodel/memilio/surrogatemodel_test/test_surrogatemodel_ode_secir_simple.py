@@ -19,14 +19,11 @@
 #############################################################################
 
 from pyfakefs import fake_filesystem_unittest
-
+import memilio.epidata
 from memilio.surrogatemodel.ode_secir_simple import (data_generation,
                                                      network_architectures)
-from memilio.surrogatemodel.utils import grid_search
 from memilio.surrogatemodel.ode_secir_simple import model as md
 import os
-import pickle
-import pandas as pd
 import unittest
 from unittest.mock import patch
 
