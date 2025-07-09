@@ -545,7 +545,7 @@ void Seair_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, co
     
     auto results = sim.get_result();
     auto result_interpolated = mio::interpolate_simulation_result(results, grid);
-    result_interpolated.print_table({"S", "E", "A", "I", "R", "D"}, 21, 10, outFileResults);
+    result_interpolated.print_table(outFileResults, {"S", "E", "A", "I", "R", "D"}, 21, 10);
 
     //close files
     outFileSocialDistancing.close();

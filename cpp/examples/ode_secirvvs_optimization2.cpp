@@ -639,7 +639,6 @@ void Secirvvs_NLP::eval_objective_constraints(const std::vector<FP>& x, std::vec
         // we just can add the values
         FP obj_value = (xx[controlIndex] + xx[controlIndex + numControlIntervals_] + xx[controlIndex + 2 * numControlIntervals_] + xx[controlIndex + 3 * numControlIntervals_] + xx[controlIndex + 4 * numControlIntervals_]);
         objective += pcresolution_ * weight_function(grid[gridindex]) * obj_value;
-        // sim.get_dt() = dt;
         
         for (int i = 0; i < pcresolution_; ++i, ++gridindex) {
             
@@ -776,7 +775,7 @@ bool Secirvvs_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_
 //     m_tape->interpret_adjoint();
 
 //     for (int i = 0; i < n; ++i) {
-//         grad_f[i]             = ad::derivative(xx[i]);
+//         grad_f[i] = ad::derivative(xx[i]);
 //     }
 //     return true;
 // }
@@ -900,8 +899,10 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
     mio::osecirvvs::Simulation<FP> sim(model, t0, dt);
 
     //open files for parameter output
-    std::ofstream outFileControlVariable("ControlVariables.csv");
-    std::ofstream outFileResults("OptResult.csv");
+    std::string outFileControlVariableName = "ControlVariables.csv";
+    std::string outFileResultsName = "OptResult.csv";
+    // std::ofstream outFileControlVariable(outFileControlVariableName);
+    // std::ofstream outFileResults(outFileResultsName);
     
     mio::TimeSeries<FP> resultControlVariables = mio::TimeSeries<FP>(numControls_);
     Eigen::VectorX<FP> currentControlVariables(numControls_); 
@@ -922,18 +923,18 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
         resultControlVariables.add_time_point(grid[gridindex], currentControlVariables);
     } 
     
-    auto results = sim.get_result();
-    auto resultInterpolated = mio::interpolate_simulation_result(results, grid);
-    auto resultAggregated = aggregate_result(resultInterpolated, num_age_groups);
+    mio::TimeSeries<FP> results = sim.get_result();
+    mio::TimeSeries<FP> resultInterpolated = mio::interpolate_simulation_result(results, grid);
+    mio::TimeSeries<FP> resultAggregated = aggregate_result(resultInterpolated, num_age_groups);
     std::vector<std::string> names_comp = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
-    resultAggregated.print_table(names_comp, 21, 10, outFileResults);
+    out = resultAggregated.export_csv(outFileResultsName, names_comp, ',', 10);
 
     std::vector<std::string> names_controls = {"SchoolClosure", "HomeOffice", "PhysicalDistancingSchool", "PhysicalDistancingWork", "PhysicalDistancingOther"};
-    resultControlVariables.print_table(names_controls, 21, 10, outFileControlVariable);
+    out = resultControlVariables.export_csv(outFileControlVariableName, names_controls, ',', 10);
 
     //close files
-    outFileControlVariable.close();
-    outFileResults.close();
+    // outFileControlVariable.close();
+    // outFileResults.close();
 
     return;
 }
