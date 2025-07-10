@@ -226,6 +226,7 @@ EventSimulator::initialize_from_event_simulation(mio::RandomNumberGenerator rng,
 
     switch (event_type) {
     case EventType::Restaurant_Table_Equals_Half_Household:
+    case EventType::Restaurant_Table_Equals_Random:
     case EventType::Restaurant_Table_Equals_Household: {
         BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
 
@@ -276,35 +277,8 @@ mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(E
     // Get the appropriate file for this event type
 
     switch (event_type) {
-    case EventType::Restaurant_Table_Equals_Household: {
-        BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
-
-        // Read Panvadere infection data
-        BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
-
-        for (const auto& entry : panvadere_data) {
-            uint32_t person_id = std::get<0>(entry);
-            std::string table  = std::get<1>(entry);
-            bool is_infected   = std::get<2>(entry);
-
-            // Map person ID to household ID
-            if (is_infected) {
-                // Check if the table is already mapped to a household
-                auto it = event_map.find(person_id);
-                if (it != event_map.end()) {
-                    // If already mapped, add to household infections
-                    household_infections.push_back(it->second);
-                }
-                else {
-                    return mio::failure(mio::StatusCode::InvalidValue, "Person ID " + std::to_string(person_id) +
-                                                                           " not found in event map for table " +
-                                                                           table);
-                }
-            }
-        }
-        break;
-    }
-
+    case EventType::Restaurant_Table_Equals_Household:
+    case EventType::Restaurant_Table_Equals_Random:
     case EventType::Restaurant_Table_Equals_Half_Household: {
         BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
 
