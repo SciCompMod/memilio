@@ -230,7 +230,7 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
                                                                                available_ages.size() - 1);
                 int selected_age = available_ages[age];
 
-                household.push_back(static_cast<mio::AgeGroup>(age));
+                household.push_back(static_cast<mio::AgeGroup>(selected_age));
                 remaining_ages[selected_age]--;
 
                 // Check if this person is a child (age 0 or 1)
