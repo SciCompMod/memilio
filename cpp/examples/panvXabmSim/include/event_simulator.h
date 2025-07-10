@@ -11,6 +11,7 @@ enum class EventType
 {
     Restaurant_Table_Equals_Household,
     Restaurant_Table_Equals_Half_Household,
+    Restaurant_Table_Equals_Random,
     WorkMeeting_Many_Meetings,
     WorkMeeting_Few_Meetings
 };
@@ -28,6 +29,8 @@ const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
      std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
     {EventType::Restaurant_Table_Equals_Half_Household,
      std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
+    {EventType::Restaurant_Table_Equals_Random,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
     {EventType::WorkMeeting_Many_Meetings,
      std::string(Config::DEFAULT_BASE_DIR) + "/data/work_meeting_many/infections.txt"},
     {EventType::WorkMeeting_Few_Meetings,
@@ -35,8 +38,7 @@ const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
 
 struct EventSimulationConfig {
     EventType type;
-    double infection_parameter_k = 0.0;
-    int event_duration_hours     = 2;
+    int event_duration_hours = 2;
 
     // Get the appropriate panvadere file for this event type
     std::string get_panvadere_file() const;
