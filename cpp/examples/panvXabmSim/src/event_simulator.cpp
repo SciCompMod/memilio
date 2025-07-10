@@ -77,7 +77,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
             if (config.type == EventType::Restaurant_Table_Equals_Half_Household ||
                 config.type == EventType::Restaurant_Table_Equals_Household) {
                 // Set restaurant-specific parameters
-                ratio = 3.0 / config.event_duration_hours * 4; // 3 hours divided by event duration
+                ratio = 3.0 / config.event_duration_hours; // 3 hours divided by event duration
             }
             else if (config.type == EventType::WorkMeeting_Many_Meetings ||
                      config.type == EventType::WorkMeeting_Few_Meetings) {
@@ -771,9 +771,12 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_person
         return mio::success(household_map);
     }
     case EventType::Restaurant_Table_Equals_Half_Household: {
-        // BOOST_OUTCOME_TRY(auto household_map,
-        //                   EventSimulator::map_two_person_per_household_restaurant_tables_to_households(
-        //                       const_cast<mio::abm::World&>(city)));
+        BOOST_OUTCOME_TRY(auto household_map,
+                          EventSimulator::map_two_person_per_household_restaurant_tables_to_households(
+                              const_cast<mio::abm::World&>(city)));
+        return mio::success(household_map);
+    }
+    case EventType::Restaurant_Table_Equals_Random: {
         BOOST_OUTCOME_TRY(auto household_map, EventSimulator::map_random_restaurant_tables_to_households(
                                                   const_cast<mio::abm::World&>(city)));
         return mio::success(household_map);

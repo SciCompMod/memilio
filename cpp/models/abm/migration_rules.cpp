@@ -54,7 +54,8 @@ LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& 
 {
     auto current_loc = person.get_location().get_type();
 
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
+    if (person.get_assigned_location_index(LocationType::School) != INVALID_LOCATION_INDEX &&
+        current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         person.get_go_to_school_time(params) >= t.time_since_midnight() &&
         person.get_go_to_school_time(params) < t.time_since_midnight() + dt &&
         params.get<mio::abm::AgeGroupGotoSchool>()[person.get_age()] && person.goes_to_school(t, params) &&
@@ -73,7 +74,8 @@ LocationType go_to_work(Person::RandomNumberGenerator& /*rng*/, const Person& pe
 {
     auto current_loc = person.get_location().get_type();
 
-    if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
+    if (person.get_assigned_location_index(LocationType::Work) != INVALID_LOCATION_INDEX &&
+        current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         params.get<mio::abm::AgeGroupGotoWork>()[person.get_age()] && t.day_of_week() < 5 &&
         t.time_since_midnight() + dt > person.get_go_to_work_time(params) &&
         t.time_since_midnight() <= person.get_go_to_work_time(params) && person.goes_to_work(t, params) &&
@@ -92,14 +94,15 @@ LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person
 {
     auto current_loc = person.get_location().get_type();
     //leave
-    if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
+    if (person.get_assigned_location_index(LocationType::BasicsShop) != INVALID_LOCATION_INDEX && t.day_of_week() < 6 &&
+        t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});
     }
 
     //return home
-    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(1)) {
+    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(2)) {
         return LocationType::Home;
     }
 
@@ -121,7 +124,7 @@ LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& perso
 
     //return home
     if (current_loc == LocationType::SocialEvent && t.hour_of_day() >= 20 &&
-        person.get_time_at_location() >= hours(2)) {
+        person.get_time_at_location() >= hours(3)) {
         return LocationType::Home;
     }
 

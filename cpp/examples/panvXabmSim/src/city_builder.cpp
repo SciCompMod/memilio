@@ -308,6 +308,24 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
             person.set_assigned_location(hospitals[0]);
             person.set_assigned_location(icus[0]);
         }
+        // Increment the household index
+        household_index++;
+    }
+
+    // Quick check if we created the right amount household sizes:
+    std::vector<int> household_sizes(5, 0);
+    for (const auto& loc : world.get_locations()) {
+        if (loc.get_type() != mio::abm::LocationType::Home) {
+            continue; // Only count households
+        }
+        household_sizes[loc.get_persons().size() - 1]++;
+    }
+
+    for (size_t i = 0; i < household_sizes.size(); ++i) {
+        if (household_sizes[i] != hh_per_size[i]) {
+            std::cerr << "Error: Expected " << hh_per_size[i] << " households of size " << (i + 1) << ", but found "
+                      << household_sizes[i] << ".\n";
+        }
     }
 
     // Finally we assign schools, workplaces, shops, events to the persons based on their age groups and according to the rules:

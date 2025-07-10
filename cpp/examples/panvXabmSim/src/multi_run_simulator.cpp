@@ -21,16 +21,14 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         results.event_type      = config.event_config.type;
         results.simulation_type = config.simulation_type;
 
-        // Step 1: Build city (done once)
+        // Step 1: Build city
         // std::cout << "Building city..." << std::endl;
         BOOST_OUTCOME_TRY(auto base_world, CityBuilder::build_world(config.city_config));
         // CityBuilder::print_city_summary(config.city_config);
 
         // Step 2: Get map from specific event to ids of persons in simulation
         // std::cout << "Mapping events to person IDs..." << std::endl;
-        //TODO: Implement this function to map events to persons
         BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config.type));
-        // results.event_person_map = event_map;
 
         // Step 3: Calculate K parameter
         // std::cout << "Calculating infection parameter K..." << std::endl;
