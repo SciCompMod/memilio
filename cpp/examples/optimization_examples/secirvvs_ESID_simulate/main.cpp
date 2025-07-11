@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <optional>
 
 #include "memilio/utils/logging.h"
 
@@ -20,9 +19,19 @@
 #include "IpTNLP.hpp"
 #include "IpIpoptApplication.hpp"
 
+#include "constraints/infection_state_utils.h"
+
 // Example: ./../build/bin/secirvvs_ESID /home/jli/Memilio-Branches/memilio/data/Germany
+
+// We use strings to gather infection state constraints:
+// "Infected+Immunity Critical"
 int main(int argc, char* argv[])
 {
+    std::cout << "Example: \"Infected+Immunity+NoSymptoms Critical\":" << std::endl;
+    for (auto state : query_infection_states("Infected+Immunity+NoSymptoms Critical")) {
+        std::cout << infection_state_to_string(state) << std::endl;
+    }
+
     // ------------------------------ //
     // --- Parse 'data_directory' --- //
     // ------------------------------ //
@@ -47,10 +56,7 @@ int main(int argc, char* argv[])
     // ---------------------------- //
     double t0   = 0.0;
     double tmax = 56.0; // 8 weeks in days
-    OptimizationModel optimization_model(data_directory, t0, tmax);
-
-    auto graph_model  = optimization_model.create_graph_model<double>();
-    const auto& nodes = graph_model.nodes();
+    OptimizationModel model(data_directory, t0, tmax);
 
     // --------------------------------------- //
     // --- Configure optimization settings --- //
@@ -82,25 +88,22 @@ int main(int argc, char* argv[])
     };
 
     // Path Constraints: Active during entire simulation
-    // { name, {lower, upper}, node_id (optional) }
+    // { name, {lower, upper} }
     std::vector<Constraint> path_constraints = {
-        {"Severe", {0.0, 190'000}, std::nullopt},
-        {"Severe", {0.0, 80'000}, nodes[0].id},
-        {"Severe", {0.0, 145'000}, nodes[1].id},
-        {"Critical", {0.0, 250}, std::nullopt}
+        {"Severe", {0.0, 125'000}},
+        {"Critical", {0.0, 125}}
     };
 
     // Terminal constraints: Active at the last time step
-    // { name, {lower, upper}, node_id (optional) }
+    // { name, {lower, upper} }
     std::vector<Constraint> terminal_constraints = {
-        {"Dead", {0.0, 410'000}, std::nullopt},
-        {"Dead", {0.0, 200'000}, nodes[0].id}
+        {"Dead", {0.0, 224'000}}
     };
     // clang-format on
 
-    SecirvvsOptimization settings(optimization_model, num_control_intervals, pc_resolution, random_start,
-                                  integrator_type, integrator_resolution, ad_eval_f, ad_eval_jac, control_parameters,
-                                  path_constraints, terminal_constraints, activation);
+    SecirvvsOptimization settings(model, num_control_intervals, pc_resolution, random_start, integrator_type,
+                                  integrator_resolution, ad_eval_f, ad_eval_jac, control_parameters, path_constraints,
+                                  terminal_constraints, activation);
 
     // ----------------------------- //
     // --- Create NLP and solver --- //
@@ -112,7 +115,7 @@ int main(int argc, char* argv[])
     int print_frequency    = 1;
     bool print_timings     = true;
     int max_iter           = 500;
-    double tol             = 1e-3;
+    double tol             = 1e-4;
     bool use_exact_hessian = false;
     assert(!use_exact_hessian);
     std::string hessianApproximation = use_exact_hessian ? "exact" : "limited-memory";
@@ -148,4 +151,6 @@ int main(int argc, char* argv[])
     else {
         std::cout << "\n*** The problem failed to solve!\n";
     }
+
+    return 0;
 }
