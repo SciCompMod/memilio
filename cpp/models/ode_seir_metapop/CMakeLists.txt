@@ -3,7 +3,6 @@ add_library(ode_seir_metapop
     model.h
     model.cpp
     parameters.h
-    regions.h
 )
 target_link_libraries(ode_seir_metapop PUBLIC memilio)
 target_include_directories(ode_seir_metapop PUBLIC

@@ -3,7 +3,7 @@
 #include "models/ode_seir_metapop/infection_state.h"
 #include "models/ode_seir_metapop/model.h"
 #include "models/ode_seir_metapop/parameters.h"
-#include "models/ode_seir_metapop/regions.h"
+#include "memilio/geography/regions.h"
 
 int main()
 {
@@ -14,14 +14,13 @@ int main()
     mio::oseirmetapop::Model<ScalarType> model(3, 1);
 
     for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
-        model.populations[{mio::oseirmetapop::Region(i), mio::AgeGroup(0),
-                           mio::oseirmetapop::InfectionState::Susceptible}] = 10000;
+        model.populations[{mio::regions::Region(i), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Susceptible}] =
+            10000;
     }
 
-    model.populations[{mio::oseirmetapop::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Exposed}] +=
+    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Exposed}] += 100;
+    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), mio::oseirmetapop::InfectionState::Susceptible}] -=
         100;
-    model.populations[{mio::oseirmetapop::Region(0), mio::AgeGroup(0),
-                       mio::oseirmetapop::InfectionState::Susceptible}] -= 100;
 
     Eigen::MatrixXd mobility_data_commuter(3, 3);
     mobility_data_commuter << 0.4, 0.3, 0.3, 0.2, 0.7, 0.1, 0.4, 0.1, 0.5;

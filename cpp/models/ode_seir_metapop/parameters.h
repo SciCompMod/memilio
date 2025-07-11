@@ -25,7 +25,7 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/custom_index_array.h"
-#include "models/ode_seir_metapop/regions.h"
+#include "memilio/geography/regions.h"
 #include "Eigen/Sparse"
 
 #include <vector>
@@ -34,6 +34,8 @@ namespace mio
 {
 namespace oseirmetapop
 {
+
+using Region = mio::regions::Region;
 
 /****************************************************
 * Define Parameters of the SEIR model with mobility *

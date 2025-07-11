@@ -24,7 +24,7 @@
 #include "memilio/epidemiology/populations.h"
 #include "models/ode_seir_metapop/infection_state.h"
 #include "models/ode_seir_metapop/parameters.h"
-#include "models/ode_seir_metapop/regions.h"
+#include "memilio/geography/regions.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/compartments/simulation.h"
@@ -46,12 +46,12 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed
  * @brief The Model holds the Parameters and the initial Populations and defines the ordinary differential equations.
  */
 template <typename FP = ScalarType>
-class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, Region, AgeGroup, InfectionState>,
+class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, InfectionState>,
                                Parameters<FP>, Flows>
 {
 
-    using Base =
-        FlowModel<FP, InfectionState, mio::Populations<FP, Region, AgeGroup, InfectionState>, Parameters<FP>, Flows>;
+    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, InfectionState>,
+                           Parameters<FP>, Flows>;
 
 public:
     using typename Base::ParameterSet;
