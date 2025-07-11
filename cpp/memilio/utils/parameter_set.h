@@ -225,7 +225,7 @@ public:
      */
     template <class Dummy = void,
               class       = std::enable_if_t<
-                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+                        details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
     ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {
@@ -342,6 +342,13 @@ public:
     }
 
 private:
+    /**
+     * @brief Internal constructor taking a value for each parameter, and initializing it.
+     * @tparam Dummy Do not specify template parameters. They are used to select a viable constructor. The second and
+     * third parameter are needed for an empty ParameterSet<>, to disable this constructor and avoid equivalence to
+     * other constructors, respectively.
+     */
+    template <class Dummy = void, class = std::enable_if_t<(sizeof...(Tags) > 0), Dummy>, class = Dummy>
     ParameterSet(const typename Tags::Type&... t)
         : m_tup(t...)
     {
@@ -356,8 +363,7 @@ private:
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
     {
         //read current parameter, append result to results of previous parameters, recurse to next parameter
-        const size_t I        = sizeof...(Rs);
-        using TaggedParameter = std::tuple_element_t<I, decltype(ParameterSet::m_tup)>;
+        using TaggedParameter = std::tuple_element_t<sizeof...(Rs), decltype(ParameterSet::m_tup)>;
         auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
         return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
     }

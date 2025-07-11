@@ -64,6 +64,7 @@ set(TESTSOURCES
     test_metaprogramming.cpp
     test_history.cpp
     test_utils.cpp
+    test_timers.cpp
     test_ide_seir.cpp
     test_ide_secir.cpp
     test_ide_secir_ageres.cpp
@@ -86,6 +87,7 @@ set(TESTSOURCES
     test_graph_abm.cpp
     test_abstract_parameter_dist.cpp
     test_odemetapop.cpp
+    test_temporal_hybrid_model.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)

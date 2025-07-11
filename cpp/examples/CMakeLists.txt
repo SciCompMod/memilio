@@ -6,6 +6,10 @@ add_executable(euler_example euler_test.cpp)
 target_link_libraries(euler_example PRIVATE memilio)
 target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(performance_timer_example performance_timers.cpp)
+target_link_libraries(performance_timer_example PRIVATE memilio)
+target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
 target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_parameter_sampling_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -147,6 +151,10 @@ target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_E
 add_executable(smm_example smm.cpp)
 target_link_libraries(smm_example PRIVATE memilio smm)
 target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(temporal_hybrid_example temporal_hybrid_dabm_osecir.cpp)
+target_link_libraries(temporal_hybrid_example PRIVATE memilio hybrid ode_secir d_abm)
+target_compile_options(temporal_hybrid_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
