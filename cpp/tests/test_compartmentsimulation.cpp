@@ -55,7 +55,7 @@ TEST(TestCompartmentSimulation, integrator_uses_model_reference)
     ASSERT_NEAR(sim.get_result().get_last_value()[0], 3.0, 1e-5);
 }
 
-struct MockSimulateSim { // looks just enough like a simulation for the simulate functions to not notice
+struct MockSimulateSim { // looks just enough like a simulation for the simulate functions not to notice
 
     // this "model" converts to and from int implicitly, exposing its value after calling chech_constraints
     // this enables us to check whether check_constraints is called before the simulation is constructed
@@ -87,8 +87,8 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         dt    = dt_in;
     }
 
-    template <size_t Order>
-    void set_integrator(std::shared_ptr<mio::IntegratorCore<double, Order>> integrator_in)
+    template <template <class> class... Integrands>
+    void set_integrator(std::shared_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
     {
         integrator = (int)(size_t)integrator_in.get(); // no, do not use this elsewhere. do not even look at this
     }
@@ -116,6 +116,7 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         t0 = dt = tmax = model = integrator = 0;
     }
 
+    // static public members used to check whether a simulate function works as expected.
     inline static double t0, dt, tmax;
     inline static int model, integrator;
 };
@@ -150,14 +151,14 @@ TEST(TestCompartmentSimulation, simulate_functions)
 
     // helpers to deal with different orders of cores. do not reuse this or something similar in actual code
     const auto evil_pointer_cast_1 = [](int i) {
-        return std::shared_ptr<mio::IntegratorCore<double, 1>>({
-            (mio::IntegratorCore<double, 1>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
+        return std::shared_ptr<mio::OdeIntegratorCore<double>>({
+            (mio::OdeIntegratorCore<double>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
             [](auto&&) {} // this too
         });
     };
     const auto evil_pointer_cast_2 = [](int i) {
-        return std::shared_ptr<mio::IntegratorCore<double, 2>>({
-            (mio::IntegratorCore<double, 2>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
+        return std::shared_ptr<mio::SdeIntegratorCore<double>>({
+            (mio::SdeIntegratorCore<double>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
             [](auto&&) {} // this too
         });
     };
@@ -177,10 +178,11 @@ TEST(TestCompartmentSimulation, simulate_functions)
         compose(eval_ts, mio::simulate_stochastic<double, Sim::Model, Sim>, evil_pointer_cast_2)};
 
     // test all simulate functions
-    for (auto&& f : simulate_fcts) {
+    for (auto&& simulate : simulate_fcts) {
+        // reset static values in the mock, then call simulate to set them
         Sim::clear();
-        auto result = f(t0, tmax, dt, model, integrator);
-
+        auto result = simulate(t0, tmax, dt, model, integrator);
+        // check that all values are set correctly
         EXPECT_NEAR(result, 17.0, mio::Limits<double>::zero_tolerance());
         // use equal (instead of near) since there is no math happening in this test
         EXPECT_EQ(Sim::t0, t0);

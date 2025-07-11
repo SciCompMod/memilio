@@ -19,9 +19,13 @@
 */
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/mioomp.h"
+#include "utils.h"
 
+#include "gmock/gmock.h"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -132,4 +136,26 @@ TEST(TestUtils, OpenMP)
     // check that all thread ids are uniqueliy present via summation over 0,...,get_max_threads()
     // (this check is mathematically not sufficient, but should be good enough pragmatically)
     EXPECT_EQ(sum, (get_max_threads() * (get_max_threads() - 1)) / 2);
+}
+
+TEST(TestUtils, RedirectLogger)
+{
+    // test basic functionality of this testing utility
+    // in particular, verify that it can capture log calls, that view() does not erase the log, and that read() does
+    mio::RedirectLogger logger;
+    logger.capture();
+    // log should start out empty
+    EXPECT_TRUE(logger.view().empty());
+    EXPECT_TRUE(logger.read().empty());
+    // write a message, and copy the log output
+    const std::string msg = "Test Message";
+    mio::log_warning(msg);
+    const std::string log{logger.view()};
+
+    EXPECT_FALSE(logger.view().empty()); // check that view() did not clear the log
+    EXPECT_THAT(log, testing::EndsWith(msg + "\n")); // check the message. ignore the start with "info" and time
+    EXPECT_EQ(logger.read(), log); // check that view() did not modify the buffer
+    EXPECT_TRUE(logger.view().empty()); // check that read() cleared the buffer
+
+    logger.release();
 }

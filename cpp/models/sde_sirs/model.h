@@ -70,8 +70,10 @@ public:
     void get_noise(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
                    ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> noise) const
     {
-        get_flows(pop, y, t, noise);
-        noise = noise.array().sqrt();
+        Eigen::VectorX<ScalarType> flows(Flows::size());
+        get_flows(pop, y, t, flows);
+        flows = flows.array().sqrt() * Base::white_noise(Flows::size()).array();
+        get_derivatives(flows, noise);
     }
 };
 

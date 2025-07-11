@@ -35,7 +35,7 @@ namespace mio
  * @tparam M An implementation of CompartmentalModel.
  * @tparam Order The number of DerivFunction%s used by the integrator.
  */
-template <typename FP, class M, size_t Order>
+template <typename FP, class M, template <class> class... Integrands>
 class SimulationBase
 {
     static_assert(is_compartment_model<FP, M>::value, "Template parameter must be a compartment model.");
@@ -49,7 +49,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    SimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Order>> integrator, FP t0, FP dt)
+    SimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Integrands...>> integrator, FP t0, FP dt)
         : m_integratorCore(integrator)
         , m_model(std::make_unique<Model>(model))
         , m_integrator(m_integratorCore)
@@ -62,7 +62,7 @@ public:
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
      */
-    void set_integrator(std::shared_ptr<IntegratorCore<FP, Order>> integrator)
+    void set_integrator(std::shared_ptr<IntegratorCore<FP, Integrands...>> integrator)
     {
         m_integratorCore = std::move(integrator);
         m_integrator.set_integrator(m_integratorCore);
@@ -73,11 +73,11 @@ public:
      * @return A reference to the integrator core used in the simulation
      * @{
      */
-    IntegratorCore<FP, Order>& get_integrator()
+    IntegratorCore<FP, Integrands...>& get_integrator()
     {
         return *m_integratorCore;
     }
-    const IntegratorCore<FP, Order>& get_integrator() const
+    const IntegratorCore<FP, Integrands...>& get_integrator() const
     {
         return *m_integratorCore;
     }
@@ -140,16 +140,16 @@ protected:
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::VectorX<FP>> advance(const DerivFunction<FP> (&fs)[Order], FP tmax, TimeSeries<FP>& results)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands<FP>&... fs, FP tmax, TimeSeries<FP>& results)
     {
-        return m_integrator.advance(fs, tmax, m_dt, results);
+        return m_integrator.advance(fs..., tmax, m_dt, results);
     }
 
 private:
-    std::shared_ptr<IntegratorCore<FP, Order>>
+    std::shared_ptr<IntegratorCore<FP, Integrands...>>
         m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
-    XdeIntegrator<FP, Order>
+    SystemIntegrator<FP, Integrands...>
         m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
     TimeSeries<FP> m_result; ///< The simulation results.
     FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.

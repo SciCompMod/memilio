@@ -58,7 +58,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
             y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
-        rkf45.step({sine_deriv}, y[i], t_eval, dt, y[i + 1]); //
+        rkf45.step(sine_deriv, y[i], t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 

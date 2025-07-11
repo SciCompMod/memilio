@@ -35,14 +35,14 @@ namespace mio
  * @tparam M An implementation of FlowModel.
  * @tparam Order The number of DerivFunction%s used by the integrator.
  */
-template <typename FP, class M, size_t Order>
-class FlowSimulationBase : public SimulationBase<FP, M, Order>
+template <typename FP, class M, template <class> class... Intgrands>
+class FlowSimulationBase : public SimulationBase<FP, M, Intgrands...>
 {
     static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
 
 public:
     using Model = M;
-    using Base  = SimulationBase<FP, M, Order>;
+    using Base  = SimulationBase<FP, M, Intgrands...>;
 
     /**
      * @brief Create a FlowSimulationBase.
@@ -50,7 +50,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Order>> integrator, FP t0, FP dt)
+    FlowSimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Intgrands...>> integrator, FP t0, FP dt)
         : Base(model, integrator, t0, dt)
         , m_flow_result(t0, model.get_initial_flows())
     {

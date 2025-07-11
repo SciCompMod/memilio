@@ -35,38 +35,38 @@ namespace pymio
 
 void bind_Integrator_Core(pybind11::module_& m)
 {
-    pymio::bind_class<mio::IntegratorCore<double, 1>, pymio::EnablePickling::Never,
-                      std::shared_ptr<mio::IntegratorCore<double, 1>>>(m, "IntegratorCore")
+    pymio::bind_class<mio::OdeIntegratorCore<double>, pymio::EnablePickling::Never,
+                      std::shared_ptr<mio::OdeIntegratorCore<double>>>(m, "IntegratorCore")
         .def_property("dt_max",
-                      pybind11::overload_cast<>(&mio::IntegratorCore<double, 1>::get_dt_max, pybind11::const_),
-                      [](mio::IntegratorCore<double, 1>& self, double dt_max) {
+                      pybind11::overload_cast<>(&mio::OdeIntegratorCore<double>::get_dt_max, pybind11::const_),
+                      [](mio::OdeIntegratorCore<double>& self, double dt_max) {
                           self.get_dt_max() = dt_max;
                       })
         .def_property("dt_min",
-                      pybind11::overload_cast<>(&mio::IntegratorCore<double, 1>::get_dt_min, pybind11::const_),
-                      [](mio::IntegratorCore<double, 1>& self, double dt_min) {
+                      pybind11::overload_cast<>(&mio::OdeIntegratorCore<double>::get_dt_min, pybind11::const_),
+                      [](mio::OdeIntegratorCore<double>& self, double dt_min) {
                           self.get_dt_min() = dt_min;
                       });
 
-    pymio::bind_class<mio::EulerIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
+    pymio::bind_class<mio::EulerIntegratorCore<double>, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
                       std::shared_ptr<mio::EulerIntegratorCore<double>>>(m, "EulerIntegratorCore")
         .def(pybind11::init<>())
         .def(
             "step",
             [](const mio::EulerIntegratorCore<double>& self, pybind11::function f, Eigen::Ref<const Eigen::VectorXd> yt,
                double t, double dt, Eigen::Ref<Eigen::VectorXd> ytp1) {
-                bool result =
-                    self.step({[f](Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) {
-                                  f(y, t, dydt);
-                              }},
-                              yt, t, dt, ytp1);
+                bool result = self.step(
+                    [f](Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) {
+                        f(y, t, dydt);
+                    },
+                    yt, t, dt, ytp1);
                 return result;
             },
             pybind11::arg("f"), pybind11::arg("yt"), pybind11::arg("t"), pybind11::arg("dt"), pybind11::arg("ytp1"));
 
     using RungeKuttaCashKarp54Integrator =
         mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>;
-    pymio::bind_class<RungeKuttaCashKarp54Integrator, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
+    pymio::bind_class<RungeKuttaCashKarp54Integrator, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
                       std::shared_ptr<RungeKuttaCashKarp54Integrator>>(m, "RungeKuttaCashKarp54IntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<const double, const double, const double, const double>(), pybind11::arg("abs_tol"),
@@ -74,7 +74,7 @@ void bind_Integrator_Core(pybind11::module_& m)
         .def("set_abs_tolerance", &RungeKuttaCashKarp54Integrator::set_abs_tolerance, pybind11::arg("tol"))
         .def("set_rel_tolerance", &RungeKuttaCashKarp54Integrator::set_rel_tolerance, pybind11::arg("tol"));
 
-    pymio::bind_class<mio::RKIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double, 1>,
+    pymio::bind_class<mio::RKIntegratorCore<double>, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
                       std::shared_ptr<mio::RKIntegratorCore<double>>>(m, "RKIntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<double, double, double, double>(), pybind11::arg("abs_tol") = 1e-10,

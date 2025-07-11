@@ -22,6 +22,10 @@
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/flow_model.h"
+#include "memilio/utils/metaprogramming.h"
+#include "memilio/utils/random_number_generator.h"
+
+#include <cstddef>
 
 namespace mio
 {
@@ -37,8 +41,39 @@ public:
                                     FlowModel<FP, Comp, Pop, Params, Flows>>;
     using Base::Base;
 
+    /**
+     * random noise part of a SDE model. represents the result of the deterministic noise matrix multiplied by a white noise vector.
+     * In case of infectious disease models, the noise matrix may map noise contributions from each flow to their respective
+     * compartments. In that case, the white noise vector has size #flows.
+     * The resulting noise vector must have the same size as the state vector y, i.e. it must have Pop::Count entries. 
+     * This is due to the fact that the integration of SDE models must happen on populations, not flows, as the applied noise
+     * can occassionally push compartments into negative values. this is mitigated by the SdeIntegratorCore%s, but this
+     * mitigation can not (in general) be applied to flows.
+     * The noise must still be applied per flow, so both inflow and outflow use the same random value. otherwise, transitions
+     * between compartments would no longer preserve the total population count. 
+     */
     virtual void get_noise(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
                            FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*noise*/) const {};
+
+    auto white_noise(Eigen::Index size) const
+    {
+        return Eigen::VectorX<FP>::NullaryExpr(size, 1, [this]() {
+            return sample_standart_normal_distribution();
+        });
+    }
+
+    FP sample_standart_normal_distribution() const
+    {
+        return FP{DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
+    }
+
+    RandomNumberGenerator& get_rng() const
+    {
+        return m_rng;
+    }
+
+private:
+    mutable RandomNumberGenerator m_rng;
 };
 
 namespace details

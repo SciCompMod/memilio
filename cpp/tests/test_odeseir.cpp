@@ -432,7 +432,7 @@ TEST(TestSeir, Simulation)
 
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double, 1>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    std::shared_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     auto sim = simulate(t0, tmax, dt, model, integrator);
 
@@ -471,7 +471,7 @@ TEST(TestSeir, FlowSimulation)
 
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double, 1>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    std::shared_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
 
     auto sim = simulate_flows(t0, tmax, dt, model, integrator);
 

@@ -58,17 +58,19 @@ public:
         ScalarType coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
                                params.template get<TransmissionProbabilityOnContact>() / Base::populations.get_total();
 
-        flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
+        flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
             coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
-        flows[this->template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
+        flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
             (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 
     void get_noise(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
                    ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> noise) const
     {
-        get_flows(pop, y, t, noise);
-        noise = noise.array().sqrt();
+        Eigen::VectorX<ScalarType> flows(Flows::size());
+        get_flows(pop, y, t, flows);
+        flows = flows.array().sqrt() * Base::white_noise(Flows::size()).array();
+        get_derivatives(flows, noise);
     }
 };
 

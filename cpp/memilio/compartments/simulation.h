@@ -40,10 +40,10 @@ using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::
  * @tparam M An implementation of a CompartmentalModel.
  */
 template <typename FP, class M>
-class Simulation : public SimulationBase<FP, M, 1>
+class Simulation : public SimulationBase<FP, M, DerivFunction>
 {
 public:
-    using Base  = SimulationBase<FP, M, 1>;
+    using Base  = SimulationBase<FP, M, DerivFunction>;
     using Model = M;
 
     /**
@@ -66,10 +66,11 @@ public:
      */
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
-        return Base::advance({[this](auto&& y, auto&& t, auto&& dydt) {
-                                 Base::get_model().eval_right_hand_side(y, y, t, dydt);
-                             }},
-                             tmax, Base::get_result());
+        return Base::advance(
+            [this](auto&& y, auto&& t, auto&& dydt) {
+                Base::get_model().eval_right_hand_side(y, y, t, dydt);
+            },
+            tmax, Base::get_result());
     }
 };
 
@@ -110,7 +111,7 @@ using is_compartment_model_simulation =
  */
 template <typename FP, class Model, class Sim = Simulation<FP, Model>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
-                        std::shared_ptr<IntegratorCore<FP, 1>> integrator = nullptr)
+                        std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

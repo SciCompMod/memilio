@@ -23,6 +23,7 @@
 #include "memilio/compartments/stochastic_model.h"
 #include "memilio/compartments/simulation_base.h"
 #include "memilio/math/euler_maruyama.h"
+#include "memilio/math/integrator.h"
 #include "memilio/utils/time_series.h"
 
 namespace mio
@@ -34,12 +35,12 @@ namespace mio
  * @tparam M An implementation of a StochasticModel.
  */
 template <typename FP, class M>
-class StochasticSimulation : public SimulationBase<FP, M, 2>
+class StochasticSimulation : public SimulationBase<FP, M, DerivFunction, DerivFunction>
 {
     static_assert(is_stochastic_model<FP, M>::value, "Template parameter must be a stochastic model.");
 
 public:
-    using Base  = SimulationBase<FP, M, 2>;
+    using Base  = SimulationBase<FP, M, DerivFunction, DerivFunction>;
     using Model = M;
 
     /**
@@ -62,20 +63,21 @@ public:
      */
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
-        return Base::advance({[this](auto&& y, auto&& t, auto&& dydt) {
-                                  Base::get_model().eval_right_hand_side(y, y, t, dydt);
-                              },
-                              [this](auto&& y, auto&& t, auto&& dydt) {
-                                  dydt.setZero();
-                                  Base::get_model().get_noise(y, y, t, dydt);
-                              }},
-                             tmax, Base::get_result());
+        return Base::advance(
+            [this](auto&& y, auto&& t, auto&& dydt) {
+                Base::get_model().eval_right_hand_side(y, y, t, dydt);
+            },
+            [this](auto&& y, auto&& t, auto&& noise) {
+                noise.setZero();
+                Base::get_model().get_noise(y, y, t, noise);
+            },
+            tmax, Base::get_result());
     }
 };
 
 template <typename FP, class Model, class Sim = StochasticSimulation<FP, Model>>
 TimeSeries<FP> simulate_stochastic(FP t0, FP tmax, FP dt, Model const& model,
-                                   std::shared_ptr<IntegratorCore<FP, 2>> integrator = nullptr)
+                                   std::shared_ptr<SdeIntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

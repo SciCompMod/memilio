@@ -464,10 +464,11 @@ void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobi
 {
     auto y0 = mobile_population.eval();
     auto y1 = mobile_population;
-    EulerIntegratorCore<FP>().step({[&](auto&& y, auto&& t_, auto&& dydt) {
-                                       sim.get_model().get_derivatives(total, y, t_, dydt);
-                                   }},
-                                   y0, t, dt, y1);
+    EulerIntegratorCore<FP>().step(
+        [&](auto&& y, auto&& t_, auto&& dydt) {
+            sim.get_model().get_derivatives(total, y, t_, dydt);
+        },
+        y0, t, dt, y1);
 }
 
 /**

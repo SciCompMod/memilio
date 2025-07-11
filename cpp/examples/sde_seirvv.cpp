@@ -82,4 +82,6 @@ int main()
     auto sseirv2 = mio::simulate_stochastic(tmid, tmax, dt, model);
     sseirv.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
                         "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
+    sseirv2.print_table({"Susceptible", "ExposedV1", "InfectedV1", "RecoveredV1", "ExposedV2", "InfectedV2",
+                         "RecoveredV2", "ExposedV1V2", "InfectedV1V2", "RecoveredV1V2"});
 }

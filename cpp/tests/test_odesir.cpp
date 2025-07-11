@@ -71,7 +71,7 @@ TEST(TestOdeSir, compareWithPreviousRun)
         0.6, mio::SimulationTime(12.5));
 
     std::vector<std::vector<double>> refData                   = load_test_data_csv<double>("ode-sir-compare.csv");
-    std::shared_ptr<mio::IntegratorCore<double, 1>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    std::shared_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
     auto result                                                = mio::simulate(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
@@ -252,7 +252,7 @@ TEST(Testsir, Simulation)
     contact_matrix[0].get_baseline().setConstant(1);
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double, 1>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    std::shared_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
     auto sim                                                   = simulate(t0, tmax, dt, model, integrator);
 
     EXPECT_EQ(sim.get_num_time_points(), 2);

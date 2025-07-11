@@ -32,11 +32,11 @@ namespace mio
  * @tparam M An implementation of a FlowModel.
  */
 template <typename FP, class M>
-class FlowSimulation : public FlowSimulationBase<FP, M, 1>
+class FlowSimulation : public FlowSimulationBase<FP, M, DerivFunction>
 {
 public:
     using Model = M;
-    using Base  = FlowSimulationBase<FP, M, 1>;
+    using Base  = FlowSimulationBase<FP, M, DerivFunction>;
 
     /**
      * @brief Set up the simulation with an ODE solver.
@@ -107,7 +107,7 @@ private:
  */
 template <typename FP, class Model, class Sim = FlowSimulation<FP, Model>>
 std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& model,
-                                           std::shared_ptr<IntegratorCore<FP, 1>> integrator = nullptr)
+                                           std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

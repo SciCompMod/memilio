@@ -37,7 +37,7 @@ template <typename FP>
 using DerivFunction =
     std::function<void(Eigen::Ref<const Eigen::VectorX<FP>> y, FP t, Eigen::Ref<Eigen::VectorX<FP>> dydt)>;
 
-template <typename FP, size_t Order>
+template <typename FP, template <class> class... Integrands>
 class IntegratorCore
 {
 public:
@@ -80,7 +80,7 @@ public:
      * @return Always true for nonadaptive methods.
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
-    virtual bool step(const DerivFunction<FP> (&f)[Order], Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
+    virtual bool step(const Integrands<FP>&..., Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
                       Eigen::Ref<Eigen::VectorX<FP>> ytp1) const = 0;
 
     /**
@@ -119,19 +119,25 @@ private:
     FP m_dt_min, m_dt_max; /// Bounds to step size dt.
 };
 
+template <class FP>
+using OdeIntegratorCore = IntegratorCore<FP, DerivFunction>;
+
+template <class FP>
+using SdeIntegratorCore = IntegratorCore<FP, DerivFunction, DerivFunction>;
+
 /**
  * @brief Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
  * @tparam FP a floating point type accepted by Eigen
  */
-template <typename FP, size_t Order>
-class XdeIntegrator
+template <typename FP, template <class> class... Integrands>
+class SystemIntegrator
 {
 public:
     /**
      * @brief create an integrator for a specific IVP
      * @param[in] core implements the solution method
      */
-    XdeIntegrator(std::shared_ptr<IntegratorCore<FP, Order>> core)
+    SystemIntegrator(std::shared_ptr<IntegratorCore<FP, Integrands...>> core)
         : m_core(core)
         , m_is_adaptive(false)
     {
@@ -147,8 +153,7 @@ public:
      * @return A reference to the last value in the results time series.
      */
 
-    Eigen::Ref<Eigen::VectorX<FP>> advance(const DerivFunction<FP> (&f)[Order], const FP tmax, FP& dt,
-                                           TimeSeries<FP>& results)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands<FP>&... fs, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
         using std::fabs;
@@ -187,7 +192,7 @@ public:
             dt_copy = dt;
 
             results.add_time_point();
-            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
+            step_okay &= m_core->step(fs..., results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
             // if dt has been changed by step, register the current m_core as adaptive.
@@ -213,22 +218,22 @@ public:
         return results.get_last_value();
     }
 
-    void set_integrator(std::shared_ptr<IntegratorCore<FP, Order>> integrator)
+    void set_integrator(std::shared_ptr<IntegratorCore<FP, Integrands...>> integrator)
     {
         m_core        = integrator;
         m_is_adaptive = false;
     }
 
 private:
-    std::shared_ptr<IntegratorCore<FP, Order>> m_core;
+    std::shared_ptr<IntegratorCore<FP, Integrands...>> m_core;
     bool m_is_adaptive;
 };
 
 template <typename FP>
-using OdeIntegrator = XdeIntegrator<FP, 1>;
+using OdeIntegrator = SystemIntegrator<FP, DerivFunction>;
 
 template <typename FP>
-using SdeIntegrator = XdeIntegrator<FP, 2>;
+using SdeIntegrator = SystemIntegrator<FP, DerivFunction, DerivFunction>;
 
 } // namespace mio
 
