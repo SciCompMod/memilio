@@ -60,25 +60,40 @@ public:
     {
     }
 
-    // Copy constructor (deep‐copies the Model)
-    Simulation(Simulation const& o)
-        : m_integratorCore(o.m_integratorCore) // share the same integrator core
-        , m_model(std::make_unique<Model>(*o.m_model)) // deep‐copy the model itself
-        , m_integrator(m_integratorCore) // re‐hook integrator onto the copied core
-        , m_result(o.m_result) // copy the result history
-        , m_dt(o.m_dt) // copy the step size
+    /**
+     * @brief Constructs a copy of another Simulation object.
+     *
+     * Performs a deep copy of the model, while sharing the same integrator core.
+     * The time series results and step size are also copied.
+     *
+     * @param[in] other The Simulation object to copy from.
+     */
+    Simulation(Simulation const& other)
+        : m_integratorCore(other.m_integratorCore)
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(m_integratorCore)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
     {
     }
 
-    // Copy assignment
-    Simulation& operator=(Simulation const& o)
+    /**
+     * @brief Assigns another Simulation object to this one.
+     *
+     * Performs a deep copy of the model, while sharing the same integrator core.
+     * The time series results and step size are also copied.
+     *
+     * @param[in] other The Simulation object to assign from.
+     * @return Reference to this Simulation object.
+     */
+    Simulation& operator=(Simulation const& other)
     {
-        if (this != &o) {
-            m_integratorCore = o.m_integratorCore; // share integrator core
-            m_model          = std::make_unique<Model>(*o.m_model); // deep‐copy the model
-            m_integrator     = OdeIntegrator<FP>(m_integratorCore); // reset integrator with the shared core
-            m_result         = o.m_result; // copy the time series
-            m_dt             = o.m_dt; // copy the step size
+        if (this != &other) {
+            m_integratorCore = other.m_integratorCore;
+            m_model          = std::make_unique<Model>(*other.m_model);
+            m_integrator     = OdeIntegrator<FP>(m_integratorCore);
+            m_result         = other.m_result;
+            m_dt             = other.m_dt;
         }
         return *this;
     }
