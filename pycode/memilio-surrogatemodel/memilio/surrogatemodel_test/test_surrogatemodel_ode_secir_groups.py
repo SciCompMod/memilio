@@ -18,7 +18,6 @@
 # limitations under the License.
 #############################################################################
 from pyfakefs import fake_filesystem_unittest
-import memilio.epidata.modifyDataframeSeries
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
                                                      network_architectures)
 

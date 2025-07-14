@@ -268,6 +268,8 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
 
         utils.save_model(mlp1.model, self.path, "mlp_multi_multi")
         path_file = os.path.join(self.path, "mlp_multi_multi.keras")
+        if os.path.isfile(path_file):
+            print("Datei existiert")
 
         mlp2 = utils.load_model(path_file)
 
