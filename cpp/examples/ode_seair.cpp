@@ -67,7 +67,7 @@ int main()
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     // Accurate automatic differentiation (AD) and Finite Differences (FP) require higher-precision numerical integrators than typically used.
-    auto FP_integrator =
+    auto AD_integrator =
         std::make_shared<mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>(
             1e-12, 1e-8, std::numeric_limits<double>::min(), dt);
     auto double_integrator =
@@ -81,7 +81,7 @@ int main()
     ad::derivative(value)                                                                                   = 1.0;
     model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = value;
     model1.check_constraints();
-    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1, FP_integrator);
+    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1, AD_integrator);
 
     // We want to compare the derivatives computed ba algorithmic differention with difference quotient.
     // To this end we perturbe the corresponding initial value of the by an increment h and simulate again.
