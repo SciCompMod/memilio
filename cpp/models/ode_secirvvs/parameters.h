@@ -763,7 +763,7 @@ public:
             corrected = true;
         }
 
-        const ScalarType tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
@@ -953,7 +953,7 @@ public:
      */
     bool check_constraints() const
     {
-        const ScalarType tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
             log_error("Constraint check: Parameter Seasonality smaller {} or larger {}", 0, 0.5);
             return true;

@@ -642,8 +642,8 @@ public:
 
             if (last_value(count * i + S) - first_vacc < 0) {
                 FP corrected = 0.99 * last_value(count * i + S);
-                log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", ad::value(t),
-                            ad::value(first_vacc), ad::value(corrected));
+                log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", t, first_vacc,
+                            corrected);
                 first_vacc = corrected;
             }
 
@@ -652,8 +652,8 @@ public:
 
             if (last_value(count * i + SV) - full_vacc < 0) {
                 FP corrected = 0.99 * last_value(count * i + SV);
-                log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", ad::value(t),
-                            ad::value(full_vacc), ad::value(corrected));
+                log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", t, full_vacc,
+                            corrected);
                 full_vacc = corrected;
             }
 

@@ -144,7 +144,7 @@ public:
             // ICU capacity shortage is close
             FP criticalPerSevereAdjusted = smoother_cosine<FP>(
                 icu_occupancy, 0.90 * params.template get<ICUCapacity<FP>>(), params.template get<ICUCapacity<FP>>(),
-                params.template get<CriticalPerSevere<FP>>()[i], FP(0.0));
+                params.template get<CriticalPerSevere<FP>>()[i], 0.0);
 
             FP deathsPerSevereAdjusted = params.template get<CriticalPerSevere<FP>>()[i] - criticalPerSevereAdjusted;
 
@@ -290,11 +290,12 @@ public:
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns<FP>>();
 
         FP delay_npi_implementation; // delay which is needed to implement a NPI that is criterion-dependent
-        auto t        = BaseT::get_result().get_last_time();
-        const auto dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
+        FP t        = BaseT::get_result().get_last_time();
+        const FP dt = dyn_npis.get_thresholds().size() > 0 ? FP(dyn_npis.get_interval().get()) : FP(tmax);
 
         while (t < tmax) {
-            auto dt_eff = min<FP>({dt, tmax - t, m_t_last_npi_check + dt - t});
+            FP dt_eff = min<FP>(dt, tmax - t);
+            dt_eff    = min<FP>(dt_eff, m_t_last_npi_check + dt - t);
 
             BaseT::advance(t + dt_eff);
             if (t > 0) {
@@ -390,7 +391,7 @@ FP get_infections_relative(const Simulation<FP, Base>& sim, FP /* t*/, const Eig
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::InfectedSymptoms});
     }
-    auto inf_rel = sum_inf / sim.get_model().populations.get_total();
+    FP inf_rel = sum_inf / sim.get_model().populations.get_total();
 
     return inf_rel;
 }
