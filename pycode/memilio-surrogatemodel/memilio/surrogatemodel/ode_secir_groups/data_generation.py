@@ -41,7 +41,7 @@ import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
 
 
-def run_secir_groups_simulation(days, damping_days, damping_factors, populations, age_groups):
+def run_secir_groups_simulation(days, damping_days, damping_factors, populations):
     """ Uses an ODE SECIR model allowing for asymptomatic infection with 6 different age groups. The model is not stratified by region.
     Virus-specific parameters are fixed and initial number of persons in the particular infection states are chosen randomly from defined ranges.
 
@@ -49,7 +49,6 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
     :param damping_days: The days when damping is applied.
     :param damping_factors: damping factors associated to the damping days.
     :param populations: List containing the population in each age group.
-    :param age_groups: List declaring the used age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     :returns: Tuple of lists (list_of_simulation_results, list_of_damped_matrices), the first containing the simulation results, the second list containing the 
         damped contact matrices. 
 
@@ -67,6 +66,7 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, populations
     start_year = 2019
     dt = 0.1
 
+    age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     # Get number of age groups
     num_groups = len(age_groups)
 
@@ -205,10 +205,8 @@ def generate_data(
     # Since the first day of the input is day 0, we still need to subtract 1.
     days = input_width + label_width - 1
 
-    # Define used age_groups
-    age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '>79']
     # Load population data
-    population = get_population(path_population, age_groups)
+    population = get_population(path_population)
 
     # show progess in terminal for longer runs
     # Due to the random structure, there's currently no need to shuffle the data
@@ -221,7 +219,7 @@ def generate_data(
             min_damping_day=2)
 
         data_run, damped_matrices = run_secir_groups_simulation(
-            days, damping_days, damping_factors, population[random.randint(0, len(population) - 1)], age_groups)
+            days, damping_days, damping_factors, population[random.randint(0, len(population) - 1)])
         data['inputs'].append(data_run[:input_width])
         data['labels'].append(data_run[input_width:])
         data['contact_matrices'].append(damped_matrices)
@@ -301,11 +299,10 @@ def getMinimumMatrix():
     return minimum
 
 
-def get_population(path, age_groups):
+def get_population(path):
     """ read population data in list from dataset
 
     :param path: Path to the dataset containing the population 
-    :param age_groups: List declaring the new age groups, e.g. groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     :returns: List of interpolated age grouped population data
 
     """
@@ -314,7 +311,7 @@ def get_population(path, age_groups):
         data = json.load(f)
     population = []
     for data_entry in data:
-        population.append(interpolate_age_groups(data_entry, age_groups))
+        population.append(interpolate_age_groups(data_entry))
     return population
 
 
