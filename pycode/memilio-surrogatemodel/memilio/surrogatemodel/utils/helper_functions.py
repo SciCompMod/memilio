@@ -69,34 +69,6 @@ def normalize_simulation_data(data, transformer, num_runs, num_groups=6, num_com
     return tf.convert_to_tensor(scaled_data.reshape(num_runs, -1, num_groups*num_compartments))
 
 
-def save_model(model, path, modelname):
-    """
-    Saving a trained model. 
-
-    :param model: trained tensorflow keras model 
-    :param path: path where the model should be stored 
-    :param modelname: the name of the model 
-    """
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    path_to_file = os.path.join(path, modelname + ".keras")
-    model.save(path_to_file)
-    print("Model successfully saved")
-
-
-def load_model(path):
-    """
-    Loading a trained model. 
-
-    :param path: path to the .keras file containing the desired model
-    :returns: trained tf.keras model 
-    """
-    if not os.path.isfile(path):
-        raise FileNotFoundError(
-            "There is no .keras model stored at the given directory.")
-    return tf.keras.models.load_model(path)
-
-
 def calc_split_index(n, split_train=0.7,
                      split_valid=0.2, split_test=0.1):
     """
