@@ -147,45 +147,6 @@ mio::AgeGroup determine_age_group(uint32_t age)
     }
 }
 
-int stringToMinutes(const std::string& input)
-{
-    size_t colonPos = input.find(":");
-    if (colonPos == std::string::npos) {
-        // Handle invalid input (no colon found)
-        return -1; // You can choose a suitable error code here.
-    }
-
-    std::string xStr = input.substr(0, colonPos);
-    std::string yStr = input.substr(colonPos + 1);
-
-    int x = std::stoi(xStr);
-    int y = std::stoi(yStr);
-    return x * 60 + y;
-}
-
-int longLatToInt(const std::string& input)
-{
-    double y = std::stod(input) * 1e+5; //we want the 5 numbers after digit
-    return (int)y;
-}
-
-void split_line(std::string string, std::vector<int32_t>* row)
-{
-    std::vector<std::string> strings;
-    boost::split(strings, string, boost::is_any_of(","));
-    std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
-        if (s.find(":") != std::string::npos) {
-            return stringToMinutes(s);
-        }
-        else if (s.find(".") != std::string::npos) {
-            return longLatToInt(s);
-        }
-        else {
-            return std::stoi(s);
-        }
-    });
-}
-
 void write_infection_paths(std::string filename, mio::abm::Model& model, mio::abm::TimePoint tmax)
 {
     auto file = fopen(filename.c_str(), "w");
@@ -1611,12 +1572,14 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.def(
         "calculate_infections_per_quantity",
-        [](std::string sim_result_folder, std::string save_folder, int num_sims) {
-            std::string save_file_loctype_infections = save_folder + "num_agents_infections_loctype.txt";
-            std::string save_file_ww_area_infections = save_folder + "num_agents_infections_area.txt";
+        [](std::string sim_result_folder, std::string save_folder, int num_sims, std::string person_file) {
+            std::string save_file_loctype_infections    = save_folder + "num_agents_infections_loctype.txt";
+            std::string save_file_ww_area_infections    = save_folder + "num_agents_infections_area.txt";
+            std::string save_file_hh_size_ag_infections = save_folder + "num_agents_infections_hh_size_ag.txt";
             calculate_infections_per_quantity(sim_result_folder, save_file_loctype_infections, "locType", "v5",
                                               num_sims);
             calculate_infections_per_quantity(sim_result_folder, save_file_ww_area_infections, "area", "v4", num_sims);
+            calculate_infections_per_hh_size(sim_result_folder, person_file, save_file_hh_size_ag_infections, num_sims);
         },
         py::return_value_policy::reference_internal);
 #endif
