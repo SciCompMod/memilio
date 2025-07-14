@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 from pyfakefs import fake_filesystem_unittest
-import memilio.epidata.modifyDataframeSeries
+
 from memilio.surrogatemodel.ode_secir_groups import (data_generation, model,
                                                      network_architectures)
 import memilio.surrogatemodel.utils.helper_functions as utils
@@ -48,6 +48,18 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
     def setUp(self):
         """ """
         self.setUpPyfakefs()
+
+    @patch('memilio.epidata.modifyDataframeSeries.fit_age_group_intervals',
+           return_value=[1666.6666666666665, 1333.3333333333335, 3500.0,
+                         2166.6666666666665, 1533.3333333333335, 800.0])
+    def test_interpolate_age_groups(self):
+        res = [1666.6666666666665, 1333.3333333333335, 3500.0,
+               2166.6666666666665, 1533.3333333333335, 800.0]
+        entry = {'ID_County': 1000, 'Population': 11000, '<3 years': 1000, '3-5 years': 1000, '6-14 years': 1000, '15-17 years': 1000,
+                 '18-24 years': 1000, '25-29 years': 1000, '30-39 years': 1000, '40-49 years': 1000, '50-64 years': 1000, '65-74 years': 1000, '>74 years': 1000}
+        interpol_entry = utils.interpolate_age_groups(
+            entry, ['0-4', '5-14', '15-34', '35-59', '60-79', '>79'])
+        self.assertEqual(res, interpol_entry)
 
     def test_calc_dist_days(self):
         with self.assertRaises(ValueError) as error:
@@ -256,8 +268,10 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
 
         utils.save_model(mlp1.model, self.path, "mlp_multi_multi")
         path_file = os.path.join(self.path, "mlp_multi_multi.keras")
-        if os.path.isfile(path_file):
-            print("File !")
+        with os.scandir() as dir_entries:
+            for entry in dir_entries:
+                info = entry.stat()
+                print(info)
 
         mlp2 = utils.load_model(path_file)
 
