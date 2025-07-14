@@ -52,7 +52,7 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.modifyDataframeSeries.fit_age_group_intervals',
            return_value=[1666.6666666666665, 1333.3333333333335, 3500.0,
                          2166.6666666666665, 1533.3333333333335, 800.0])
-    def test_interpolate_age_groups(self):
+    def test_interpolate_age_groups(self, mockres):
         res = [1666.6666666666665, 1333.3333333333335, 3500.0,
                2166.6666666666665, 1533.3333333333335, 800.0]
         entry = {'ID_County': 1000, 'Population': 11000, '<3 years': 1000, '3-5 years': 1000, '6-14 years': 1000, '15-17 years': 1000,
@@ -268,10 +268,6 @@ class TestSurrogatemodelUtils(fake_filesystem_unittest.TestCase):
 
         utils.save_model(mlp1.model, self.path, "mlp_multi_multi")
         path_file = os.path.join(self.path, "mlp_multi_multi.keras")
-        with os.scandir() as dir_entries:
-            for entry in dir_entries:
-                info = entry.stat()
-                print(info)
 
         mlp2 = utils.load_model(path_file)
 
