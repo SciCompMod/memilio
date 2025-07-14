@@ -21,7 +21,7 @@
 import numpy as np
 import tensorflow as tf
 import os
-from memilio.epidata.modifyDataframeSeries import (fit_age_group_intervals)
+from memilio.epidata import modifyDataframeSeries as mds
 import pandas as pd
 
 
@@ -43,7 +43,7 @@ def interpolate_age_groups(data_entry, age_groups):
     df_reduced = df_entry.loc[:, "<3 years":">74 years":1]
 
     # Interpolate the different age_groups
-    data_interpolated = fit_age_group_intervals(
+    data_interpolated = mds.fit_age_group_intervals(
         df_reduced, age_groups)
     res = list(data_interpolated)
 
