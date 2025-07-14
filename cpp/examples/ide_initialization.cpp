@@ -79,8 +79,8 @@ int main(int argc, char** argv)
 
         using Vec = Eigen::VectorX<ScalarType>;
         mio::TimeSeries<ScalarType> init(num_agegroups * (size_t)mio::isecir::InfectionTransition::Count);
-        init.add_time_point<Eigen::VectorXd>(-7.,
-                                             Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));
+        init.add_time_point<Eigen::VectorX<ScalarType>>(
+            -7., Vec::Constant((size_t)mio::isecir::InfectionTransition::Count, 1. * dt));
         while (init.get_last_time() < -dt / 2.) {
             init.add_time_point(init.get_last_time() + dt,
                                 Vec::Constant((int)mio::isecir::InfectionTransition::Count, 1. * dt));

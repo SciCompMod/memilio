@@ -88,7 +88,7 @@ struct GammaCutOff {
     using Type = size_t;
     static Type get_default(AgeGroup)
     {
-        return 45;
+        return Type(45);
     }
     static std::string name()
     {
@@ -136,7 +136,7 @@ struct SoftPlusCurvatureParameter {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return FP(0.1);
+        return Type(0.1);
     }
     static std::string name()
     {
@@ -152,7 +152,7 @@ struct NominalICUCapacity {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return FP(9.0);
+        return Type(9.0);
     }
     static std::string name()
     {
@@ -280,7 +280,7 @@ public:
         const auto& b          = m_feedback_parameters.template get<GammaScaleParameter<FP>>();
         for (size_t i = num_time_points - n; i < num_time_points; ++i) {
             size_t day   = i - (num_time_points - n);
-            FP gamma     = pow(b, a) * pow(day, a - 1) * exp(-b * day) / std::tgamma(a);
+            FP gamma     = pow(b, a) * pow(day, a - 1) * exp(-b * day) / std::tgamma(ad::value(a));
             FP perc_risk = icu_occ.get_value(i).sum() / m_feedback_parameters.template get<NominalICUCapacity<FP>>();
             perc_risk    = min<FP>(perc_risk, 1.0);
             perceived_risk += perc_risk * gamma;

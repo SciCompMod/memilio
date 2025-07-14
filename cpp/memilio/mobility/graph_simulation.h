@@ -149,32 +149,27 @@ public:
 
     void advance(FP t_max)
     {
-        using std::min;
         //draw normalized waiting time
-        FP normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(m_rng, 1.0);
-        std::vector<FP> dt_cand(Base::m_graph.nodes().size());
-        FP cumulative_rate = 0; //cumulative transition rate
+        ScalarType normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(m_rng, 1.0);
+        std::vector<ScalarType> dt_cand(Base::m_graph.nodes().size());
+        ScalarType cumulative_rate = 0; //cumulative transition rate
         size_t parameters_per_edge =
             size_t(Base::m_graph.edges()[0].property.get_parameters().get_coefficients().get_shape().rows());
-        std::vector<FP> transition_rates(parameters_per_edge * Base::m_graph.edges().size());
+        std::vector<ScalarType> transition_rates(parameters_per_edge * Base::m_graph.edges().size());
         while (Base::m_t < t_max) {
-            Base::m_dt = min<FP>({Base::m_dt, t_max - Base::m_t});
+            Base::m_dt = std::min({Base::m_dt, t_max - Base::m_t});
             //calculate current transition rates and cumulative rate
             cumulative_rate = get_cumulative_transition_rate();
-            if (cumulative_rate * Base::m_dt > normalized_waiting_time) {
-                /* at least one transition event during current time step */
+            if (cumulative_rate * Base::m_dt >
+                normalized_waiting_time) { //at least one transition event during current time step
                 do {
                     //evaluate rates
                     get_rates(m_rates);
                     //draw transition event
-                    std::vector<ScalarType> rates_double(m_rates.size());
-                    std::transform(m_rates.begin(), m_rates.end(), rates_double.begin(), [](const FP& v) {
-                        return ad::value(v);
-                    });
-                    size_t event = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, rates_double);
+                    size_t event = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, m_rates);
                     //edge that performs transition event
                     auto& event_edge = Base::m_graph.edges()[event / parameters_per_edge];
-                    //index for compartment and age group moving
+                    //index for compartment and age group migrating
                     auto flat_index = event % parameters_per_edge;
 
                     //advance nodes until t + (waiting_time / cumulative_rate)

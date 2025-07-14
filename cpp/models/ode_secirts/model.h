@@ -269,7 +269,7 @@ public:
                 FP normalized_time = (params.template get<StartDay<FP>>() + t) -
                                      365.0 * floor((params.template get<StartDay<FP>>() + t) / 365.0);
                 FP season_val = (1 + params.template get<Seasonality<FP>>() *
-                                         sin(3.141592653589793 * (normalized_time / 182.5 + 0.5)));
+                                         sin(3.14159265358979323846264338327950288 * (normalized_time / 182.5 + 0.5)));
 
                 FP cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(t))(

@@ -57,22 +57,21 @@ int main(int argc, char** argv)
 
     const auto t0   = 0.;
     const auto tmax = 10.;
-    using FP        = double;
 
     double cont_freq = 10; // see Polymod study
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model<FP> model(1);
+    mio::osecir::Model<double> model(1);
     mio::AgeGroup nb_groups = model.parameters.get_num_groups();
     double fact             = 1.0 / (double)(size_t)nb_groups;
 
     auto& params = model.parameters;
 
-    params.set<mio::osecir::ICUCapacity<FP>>(std::numeric_limits<double>::max());
-    params.set<mio::osecir::StartDay<FP>>(0);
-    params.set<mio::osecir::Seasonality<FP>>(0);
+    params.set<mio::osecir::ICUCapacity<double>>(std::numeric_limits<double>::max());
+    params.set<mio::osecir::StartDay<double>>(0);
+    params.set<mio::osecir::Seasonality<double>>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
         params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
@@ -93,18 +92,18 @@ int main(int argc, char** argv)
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<mio::osecir::TransmissionProbabilityOnContact<FP>>()[i] = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms<FP>>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<FP>>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<FP>>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms<FP>>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere<FP>>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical<FP>>()[i]                = 0.3;
+        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i] = 0.05;
+        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]   = 0.67;
+        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]   = 0.09;
+        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]   = 0.25;
+        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]        = 0.2;
+        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                = 0.25;
+        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
     }
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<FP>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
         mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
@@ -121,7 +120,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    mio::Graph<mio::osecir::Model<FP>, mio::MobilityParameters<FP>> graph;
+    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> graph;
     for (int node = 0; node < commuter_mobility.rows(); node++) {
         graph.add_node(node, model);
     }
@@ -143,7 +142,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading Json Files..." << std::flush;
-    auto graph_read_result = mio::read_graph<FP, mio::osecir::Model<FP>>("graph_parameters");
+    auto graph_read_result = mio::read_graph<double, mio::osecir::Model<double>>("graph_parameters");
 
     if (!graph_read_result) {
         std::cout << "Error: " << graph_read_result.error().formatted_message();
@@ -152,7 +151,7 @@ int main(int argc, char** argv)
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = mio::ParameterStudy<FP, mio::osecir::Simulation<FP>>(graph_read, t0, tmax, 0.5, 2);
+    auto study = mio::ParameterStudy<double, mio::osecir::Simulation<double>>(graph_read, t0, tmax, 0.5, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

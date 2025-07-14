@@ -266,7 +266,7 @@ public:
  * @param constraints are the constraints of the NLP
  * @param objective is the objectie of the NLP
  */
-    template <typename FP = double>
+    template <typename FP>
     void eval_objective_constraints(const std::vector<FP>& x, std::vector<FP>& constraints, FP& objective);
 
 public:

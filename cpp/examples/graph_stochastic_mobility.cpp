@@ -76,8 +76,8 @@ int main(int /*argc*/, char** /*argv*/)
     //add contact pattern and contact damping
     mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                               = mio::ContactMatrix<double>(
-        Eigen::MatrixX<double>::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
-    contact_matrix.add_damping(Eigen::MatrixX<double>::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
+        Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
                                mio::SimulationTime<double>(5.));
 
     model.apply_constraints();
@@ -101,7 +101,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_node(1002, model2, t0);
 
     auto transition_rates = mio::MobilityCoefficients<double>(model.populations.numel());
-    ScalarType kappa      = 0.01;
+    double kappa          = 0.01;
 
     for (auto age = mio::AgeGroup(0); age < num_age_groups; age++) {
         for (auto compartment = mio::Index<mio::osecir::InfectionState>(0);

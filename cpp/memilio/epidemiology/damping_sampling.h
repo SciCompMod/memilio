@@ -229,7 +229,7 @@ public:
         auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
         auto v   = obj.expect_element("Value", Tag<UncertainValue<FP>>{});
         auto m   = obj.expect_list("MatrixIndices", Tag<size_t>{});
-        auto g   = obj.expect_element("GroupWeights", Tag<Eigen::VectorXd>{});
+        auto g   = obj.expect_element("GroupWeights", Tag<Eigen::VectorX<FP>>{});
         return apply(
             io,
             [](auto&& ti_, auto&& ty_, auto&& l_, auto&& v_, auto&& m_, auto&& g_) {

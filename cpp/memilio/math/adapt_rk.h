@@ -224,7 +224,7 @@ public:
         using std::min;
         using std::pow;
 
-        dt = min(dt, this->get_dt_max());
+        dt = min<FP>(dt, this->get_dt_max());
 
         FP t_eval; // shifted time for evaluating yt
         FP dt_new; // updated dt
@@ -286,10 +286,10 @@ public:
             // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
             dt_new *= 0.9;
             // check if updated dt stays within desired bounds and update dt for next step
-            dt = min(dt_new, this->get_dt_max());
+            dt = min<FP>(dt_new, this->get_dt_max());
         }
 
-        dt = max(dt, this->get_dt_min());
+        dt = max<FP>(dt, this->get_dt_min());
         // return 'converged' in favor of '!dt_is_invalid', as these values only differ if step sizing failed,
         // but the step with size dt_min was accepted.
         return converged;
@@ -299,7 +299,7 @@ protected:
     Tableau<FP> m_tab;
     TableauFinal<FP> m_tab_final;
     FP m_abs_tol, m_rel_tol;
-    mutable Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
+    mutable Eigen::MatrixX<FP> m_kt_values;
 
 private:
     mutable Eigen::VectorX<FP> m_eps;

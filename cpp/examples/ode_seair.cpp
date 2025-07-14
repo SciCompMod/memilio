@@ -66,15 +66,13 @@ int main()
 
     mio::log_info("Simulating SEAIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    // ----------------- //
-    // Define integrator //
-    // ----------------- //
+    // Accurate automatic differentiation (AD) and Finite Differences (FP) require higher-precision numerical integrators than typically used.
     auto FP_integrator =
         std::make_shared<mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>(
-            1e-12, 1e-8, std::numeric_limits<ScalarType>::min(), dt);
+            1e-12, 1e-8, std::numeric_limits<double>::min(), dt);
     auto double_integrator =
         std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>(
-            1e-12, 1e-8, std::numeric_limits<ScalarType>::min(), ad::value(dt));
+            1e-12, 1e-8, std::numeric_limits<double>::min(), ad::value(dt));
 
     // Compute derivative of the final states of the model with respect to the initial value of the suscetible population
     mio::oseair::Model<FP> model1;

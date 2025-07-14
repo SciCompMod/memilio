@@ -155,8 +155,9 @@ public:
                 .sum();
 
         // --- Susceptibles. ---
-        FP season_val = 1 + params.template get<Seasonality<FP>>() *
-                                sin(3.141592653589793 * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5));
+        FP season_val =
+            1 + params.template get<Seasonality<FP>>() * sin(3.14159265358979323846264338327950288 *
+                                                             ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5));
         dydt[0] =
             -y[0] / total_population * season_val * params.template get<TransmissionProbabilityOnContact<FP>>() *
             params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t))(0, 0) *

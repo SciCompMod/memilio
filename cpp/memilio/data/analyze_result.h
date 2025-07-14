@@ -180,12 +180,14 @@ FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
 template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol)
 {
+    using std::ceil;
+    using std::floor;
     const auto t0    = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
     // add another day if the first time point is equal to day_0 up to absolute tolerance tol
-    const auto day0 = (t0 - abs_tol < std::ceil(t0) - 1) ? std::floor(t0) : std::ceil(t0);
+    const auto day0 = (t0 - abs_tol < ceil(t0) - 1) ? floor(t0) : ceil(t0);
     // add another day if the last time point is equal to day_max up to absolute tolerance tol
-    const auto day_max = (t_max + abs_tol > std::floor(t_max) + 1) ? std::ceil(t_max) : std::floor(t_max);
+    const auto day_max = (t_max + abs_tol > floor(t_max) + 1) ? ceil(t_max) : floor(t_max);
 
     // create interpolation_times vector with all days between day0 and day_max
     std::vector<FP> tps(static_cast<int>(day_max) - static_cast<int>(day0) + 1);

@@ -32,19 +32,19 @@ namespace mio
 namespace benchmark
 {
 
-using FlowModel = ::mio::oseir::Model<ScalarType>;
+using FlowModel = ::mio::oseir::Model<double>;
 
 using namespace oseir;
 
 // For comparison benchmarks, the ODE-SEIR model has been adapted into
 // a compartmental model that does not rely on flows.
 class FlowlessModel
-    : public CompartmentalModel<ScalarType, oseir::InfectionState,
-                                Populations<ScalarType, AgeGroup, oseir::InfectionState>, oseir::Parameters<ScalarType>>
+    : public CompartmentalModel<double, oseir::InfectionState, Populations<double, AgeGroup, oseir::InfectionState>,
+                                oseir::Parameters<double>>
 {
-    using Base = CompartmentalModel<ScalarType, oseir::InfectionState,
-                                    mio::Populations<ScalarType, AgeGroup, oseir::InfectionState>,
-                                    oseir::Parameters<ScalarType>>;
+    using Base =
+        CompartmentalModel<double, oseir::InfectionState, mio::Populations<double, AgeGroup, oseir::InfectionState>,
+                           oseir::Parameters<double>>;
 
 public:
     FlowlessModel(int num_agegroups)
@@ -73,17 +73,17 @@ public:
 
                 const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
                 const double coeffStoE =
-                    params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(
-                        SimulationTime<ScalarType>(t))(i.get(), j.get()) *
-                    params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * Nj_inv;
+                    params.template get<ContactPatterns<double>>().get_cont_freq_mat().get_matrix_at(
+                        SimulationTime<double>(t))(i.get(), j.get()) *
+                    params.template get<TransmissionProbabilityOnContact<double>>()[i] * Nj_inv;
 
                 dydt[Si] -= y[Si] * pop[Ij] * coeffStoE;
                 dydt[Ei] += y[Si] * pop[Ij] * coeffStoE;
             }
 
-            dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
-            dydt[Ii] -= (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
-            dydt[Ri] = (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
+            dydt[Ii] += (1.0 / params.get<TimeExposed<double>>()[i]) * y[Ei];
+            dydt[Ii] -= (1.0 / params.get<TimeInfected<double>>()[i]) * y[Ii];
+            dydt[Ri] = (1.0 / params.get<TimeInfected<double>>()[i]) * y[Ii];
         }
     }
 };
@@ -103,12 +103,12 @@ void setup_model(Model& model)
             model.populations[{i, oseir::InfectionState::Infected}] -
             model.populations[{i, oseir::InfectionState::Recovered}];
     }
-    model.parameters.template set<mio::oseir::TimeExposed<ScalarType>>(5.2);
-    model.parameters.template set<mio::oseir::TimeInfected<ScalarType>>(6);
-    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
-    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
-        model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
-    contact_matrix[0].get_baseline().setConstant(10.);
+    model.parameters.template set<mio::oseir::TimeExposed<double>>(5.2);
+    model.parameters.template set<mio::oseir::TimeInfected<double>>(6);
+    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
+    mio::ContactMatrixGroup<double>& contact_matrix =
+        model.parameters.template get<mio::oseir::ContactPatterns<double>>();
+    contact_matrix[0].get_baseline().setConstant(10.0);
 }
 
 } // namespace benchmark
@@ -126,10 +126,10 @@ void flowless_sim(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::IntegratorCore<double>> I =
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
+    mio::TimeSeries<double> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -149,10 +149,10 @@ void flow_sim_comp_only(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::IntegratorCore<double>> I =
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
+    mio::TimeSeries<double> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -172,10 +172,10 @@ void flow_sim(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::IntegratorCore<double>> I =
+        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
+    mio::TimeSeries<double> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
         // This code gets timed

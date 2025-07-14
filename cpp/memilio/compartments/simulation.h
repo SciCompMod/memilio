@@ -60,7 +60,7 @@ public:
     {
     }
 
-    /**
+    /** 
      * @brief Constructs a copy of another Simulation object.
      *
      * Performs a deep copy of the model, while sharing the same integrator core.

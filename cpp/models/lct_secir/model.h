@@ -322,8 +322,8 @@ private:
         double N_2          = pop.segment(first_index_group2, LctStateGroup2::Count - 1).sum();
         const double divN_2 = (N_2 < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / N_2;
         ScalarType season_val =
-            1 + params.template get<Seasonality<FP>>() *
-                    sin(3.141592653589793 * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5));
+            1 + params.template get<Seasonality<FP>>() * sin(3.14159265358979323846264338327950288 *
+                                                             ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5));
         dydt[Si_1] += -y[Si_1] * divN_2 * season_val *
                       params.template get<TransmissionProbabilityOnContact<FP>>()[Group1] *
                       params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(

@@ -176,7 +176,7 @@ public:
         auto group_idx        = mio::get<T>(midx);
         FP current_population = get_group_total(group_idx);
         size_t idx            = this->get_flat_index(midx);
-        current_population -= this->array()[idx].value();
+        current_population -= this->array()[idx];
 
         assert(current_population <= total_group_population + 1e-10);
 
@@ -194,9 +194,10 @@ public:
      */
     void set_total(FP value)
     {
+        using std::fabs;
         FP current_population = get_total();
         if (fabs(current_population) < 1e-12) {
-            FP ysize = FP(this->array().size());
+            FP ysize = static_cast<FP>(this->array().size());
             for (size_t i = 0; i < this->get_num_compartments(); i++) {
                 this->array()[(Eigen::Index)i] = value / ysize;
             }
@@ -219,7 +220,7 @@ public:
     {
         FP current_population = get_total();
         size_t idx            = this->get_flat_index(midx);
-        current_population -= this->array()[idx].value();
+        current_population -= this->array()[idx];
 
         assert(current_population <= total_population);
 
@@ -242,10 +243,10 @@ public:
     {
         bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i].value() < 0.0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i,
-                            this->array()[i].value(), 0);
-                this->array()[i] = FP(0.0);
+            if (this->array()[i] < 0.0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
+                            0);
+                this->array()[i] = 0.0;
                 corrected        = true;
             }
         }
@@ -259,7 +260,7 @@ public:
     bool check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
-            FP value = this->array()[i].value();
+            FP value = this->array()[i];
             if (value < 0.0) {
                 log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
                 return true;

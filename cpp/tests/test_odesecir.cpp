@@ -955,12 +955,14 @@ TEST(TestOdeSecir, get_reproduction_number)
     //Test handling non-invertibility of V for certain values
     mio::TimeSeries<ScalarType>::Vector result_7((int)mio::osecir::InfectionState::Count * num_groups);
     double icu_occupancy = 0.95 * model.parameters.get<mio::osecir::ICUCapacity<double>>();
-    double severe1       = model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0] /
-                     (model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] * 5 *
-                      model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)1] *
-                      3.141592653589793 / (model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
-                      std::sin(3.141592653589793 / (0.1 * model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
-                               (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity<double>>())));
+    double severe1 =
+        model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0] /
+        (model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] * 5 *
+         model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)1] *
+         3.14159265358979323846264338327950288 / (model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
+         std::sin(3.14159265358979323846264338327950288 /
+                  (0.1 * model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
+                  (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity<double>>())));
 
     mio::TimeSeries<ScalarType> time_series2((int)mio::osecir::InfectionState::Count * num_groups);
     result_7 << 1000, 0, 0, 0, 0, 0, severe1, 0.95 * model.parameters.get<mio::osecir::ICUCapacity<double>>(), 0, 0,

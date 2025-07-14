@@ -232,9 +232,9 @@ public:
                     this->populations.get_flat_index({j, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
                 // effective contact rate by contact rate between groups i and j and damping j
-                FP season_val =
-                    (1 + params.template get<Seasonality<FP>>() *
-                             sin(3.141592653589793 * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
+                FP season_val = (1 + params.template get<Seasonality<FP>>() *
+                                         sin(3.14159265358979323846264338327950288 *
+                                             ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
                 FP cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(t))(
                                      static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));

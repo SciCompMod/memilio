@@ -167,10 +167,10 @@ public:
     {
         bool corrected = false;
         for (int i = 0; i < m_y.array().size(); i++) {
-            if (m_y.array()[i].value() < 0.0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i,
-                            m_y.array()[i].value(), 0);
-                m_y.array()[i] = 0.0;
+            if (m_y.array()[i] < 0.0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y.array()[i],
+                            0);
+                m_y.array()[i] = 0.;
                 corrected      = true;
             }
         }

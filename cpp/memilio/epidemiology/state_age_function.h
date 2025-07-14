@@ -170,8 +170,8 @@ struct StateAgeFunction {
     void set_distribution_parameter(FP new_distribution_parameter)
     {
         m_distribution_parameter = new_distribution_parameter;
-        m_support_max            = -1.0;
-        m_mean                   = -1.0;
+        m_support_max            = -1.;
+        m_mean                   = -1.;
     }
 
     /**
@@ -201,8 +201,8 @@ struct StateAgeFunction {
     void set_location(FP new_location)
     {
         m_location    = new_location;
-        m_support_max = -1.0;
-        m_mean        = -1.0;
+        m_support_max = -1.;
+        m_mean        = -1.;
     }
 
     /**
@@ -236,8 +236,8 @@ struct StateAgeFunction {
             new_scale = 1;
         }
         m_scale       = new_scale;
-        m_support_max = -1.0;
-        m_mean        = -1.0;
+        m_support_max = -1.;
+        m_mean        = -1.;
     }
 
     /**

@@ -98,7 +98,7 @@ public:
     Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime<FP> t)
         : Base(m, level, type, t)
     {
-        assert((get_coeffs().array() <= FP(1.0)).all() && "damping coefficient out of range");
+        assert((get_coeffs().array() <= 1.).all() && "damping coefficient out of range");
     }
 
     /**
@@ -301,7 +301,7 @@ public:
         add_(value_type(std::forward<T>(t)...));
     }
     template <class... T>
-    void add(ScalarType d, T... t)
+    void add(FP d, T... t)
     {
         add_(value_type(d, std::forward<T>(t)..., m_shape));
     }
