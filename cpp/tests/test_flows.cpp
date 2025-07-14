@@ -58,7 +58,7 @@ class TestModel : public mio::FlowModel<double, I, mio::Populations<double, I, C
 
 public:
     TestModel(Populations::Index dimensions)
-        : Base(Populations(dimensions, 0.), mio::oseir::Parameters(mio::AgeGroup(1)))
+        : Base(Populations(dimensions, 0.), mio::oseir::Parameters<double>(mio::AgeGroup(1)))
     {
     }
     void get_flows(Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
@@ -157,7 +157,7 @@ TEST(TestFlows, CompareSimulations)
     model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 

@@ -30,7 +30,7 @@ namespace mio
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  * @tparam FP A floating point type, e.g., ScalarType.
  */
-template <typename FP = ScalarType>
+template <typename FP>
 class EulerIntegratorCore : public IntegratorCore<FP>
 {
 public:

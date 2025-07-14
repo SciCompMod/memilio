@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker, Martin J. Kuehn
@@ -244,7 +244,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
 
             int start_id = ids[edge_indx].first;
             auto total   = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
-                                                                                                      num_elements)
+                                                                                                        num_elements)
                              .eval();
             while (edge_indx < num_edges && ids[edge_indx].first == start_id) {
                 const auto& result_edge = results[edge_indx];

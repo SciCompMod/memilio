@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Martin Siggel, Henrik Zunker
@@ -78,10 +78,10 @@ protected:
         model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
         model.parameters.set<mio::oseir::TimeInfected<double>>(2);
 
-        mio::ContactMatrixGroup& contact_matrix =
+        mio::ContactMatrixGroup<double>& contact_matrix =
             model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
         contact_matrix[0].get_baseline().setConstant(2.7);
-        contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+        contact_matrix[0].add_damping(0.6, mio::SimulationTime<double>(12.5));
     }
 };
 
@@ -127,7 +127,7 @@ TEST(TestOdeSeir, apply_constraints_parameters)
     model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
@@ -164,7 +164,7 @@ TEST(TestOdeSeir, get_reproduction_numbers)
 
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
@@ -257,7 +257,7 @@ TEST(TestOdeSeir, get_reproduction_number)
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
 
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
@@ -347,7 +347,7 @@ TEST(TestSeir, get_flows)
     model.parameters.set<mio::oseir::TimeExposed<double>>(2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(4);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(1);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1);
     model.check_constraints();
@@ -375,13 +375,13 @@ TEST(TestSeir, get_flows_two_agegroups)
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
-    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible},
-                                                                     total_first_population);
+    model.populations.set_difference_from_group_total<mio::AgeGroup>(
+        {mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}, total_first_population);
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Exposed}]   = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Infected}]  = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Recovered}] = 10;
-    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible},
-                                                                     total_second_population);
+    model.populations.set_difference_from_group_total<mio::AgeGroup>(
+        {mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible}, total_second_population);
 
     for (auto i = mio::AgeGroup(0); i <= mio::AgeGroup(1); i++) {
         model.parameters.get<mio::oseir::TimeExposed<double>>()[i]                      = 2;
@@ -389,8 +389,9 @@ TEST(TestSeir, get_flows_two_agegroups)
         model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<double>>()[i] = 1;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 1.0));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::oseir::ContactPatterns<double>>();
+    contact_matrix[0] =
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 1.0));
     model.check_constraints();
 
     auto dydt_default = Eigen::VectorXd(6);
@@ -426,7 +427,7 @@ TEST(TestSeir, Simulation)
     model.parameters.set<mio::oseir::TimeExposed<double>>(2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(4);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(1);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1);
 
@@ -451,7 +452,7 @@ TEST(TestSeir, FlowSimulation)
     double tmax = 1;
     double dt   = 1;
 
-    mio::oseir::Model model(1);
+    mio::oseir::Model<double> model(1);
 
     constexpr double total_population                                            = 400;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
@@ -465,7 +466,7 @@ TEST(TestSeir, FlowSimulation)
     model.parameters.set<mio::oseir::TimeExposed<double>>(2);
     model.parameters.set<mio::oseir::TimeInfected<double>>(4);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(1);
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(1);
 

@@ -45,7 +45,7 @@ void bind_damping_members(DampingClass& damping_class)
 
     damping_class
         .def(pybind11::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
-                 return Damping(c, mio::DampingLevel(level), mio::DampingType(type), mio::SimulationTime(t));
+                 return Damping(c, mio::DampingLevel(level), mio::DampingType(type), mio::SimulationTime<double>(t));
              }),
              pybind11::arg("coeffs"), pybind11::arg("t"), pybind11::arg("level") = 0, pybind11::arg("type") = 0)
         .def_property(
@@ -60,7 +60,7 @@ void bind_damping_members(DampingClass& damping_class)
                 return double(self.get_time());
             },
             [](Damping& self, double v) {
-                self.get_time() = mio::SimulationTime(v);
+                self.get_time() = mio::SimulationTime<double>(v);
             },
             pybind11::return_value_policy::reference_internal)
         .def_property(
@@ -105,7 +105,7 @@ void bind_dampings_members(DampingsClass& dampings_class)
                  self.add(d);
              })
         .def("get_matrix_at", [](const Dampings& self, double t) {
-            return self.get_matrix_at(t);
+            return self.get_matrix_at(mio::SimulationTime<double>(t));
         });
 }
 

@@ -37,9 +37,8 @@ namespace mio
  * @brief This is an adaptive IntegratorCore. It creates and manages an instance of a
  * boost::numeric::odeint::controlled_runge_kutta integrator, wrapped as mio::IntegratorCore.
  */
-template <typename FP,
-          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
-          class ControlledStepper>
+template <typename FP, template <class State, class Value, class Deriv, class Time, class Algebra, class Operations,
+                                 class Resizer> class ControlledStepper>
 class ControlledStepperWrapper : public mio::IntegratorCore<FP>
 {
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
@@ -59,9 +58,8 @@ public:
      * @param dt_min lower bound for time step dt
      * @param dt_max upper bound for time step dt
      */
-    ControlledStepperWrapper(double abs_tol = 1e-10, double rel_tol = 1e-5,
-                             double dt_min = std::numeric_limits<double>::min(),
-                             double dt_max = std::numeric_limits<double>::max())
+    ControlledStepperWrapper(FP abs_tol = 1e-10, FP rel_tol = 1e-5, FP dt_min = std::numeric_limits<ScalarType>::min(),
+                             FP dt_max = std::numeric_limits<ScalarType>::max())
         : IntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
@@ -120,7 +118,7 @@ public:
         // bound dt from below
         // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
 
-        dt = max(dt, this->get_dt_min());
+        dt = max<FP>(dt, this->get_dt_min());
         // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
         if (step_result == fail) {
             // adaptive stepping failed, but we still return the result of the last attempt
@@ -178,9 +176,8 @@ private:
  * @brief This is a non-adaptive IntegratorCore. It creates and manages an instance of an explicit stepper from
  * boost::numeric::odeint, wrapped as mio::IntegratorCore.
  */
-template <typename FP,
-          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
-          class ExplicitStepper>
+template <typename FP, template <class State, class Value, class Deriv, class Time, class Algebra, class Operations,
+                                 class Resizer> class ExplicitStepper>
 class ExplicitStepperWrapper : public mio::IntegratorCore<FP>
 {
 public:

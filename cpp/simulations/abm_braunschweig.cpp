@@ -58,9 +58,9 @@ const auto age_group_80_plus  = mio::AgeGroup(5);
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, ScalarType max)
+void assign_uniform_distribution(mio::UncertainValue<ScalarType>& p, ScalarType min, ScalarType max)
 {
-    p = mio::UncertainValue<>(0.5 * (max + min));
+    p = mio::UncertainValue<ScalarType>(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -867,6 +867,7 @@ mio::abm::Simulation<> create_sampled_simulation(const std::string& input_file, 
     assign_infection_state(model, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
 
     auto sim = mio::abm::Simulation(t0, std::move(model));
+
     return sim;
 }
 
@@ -915,7 +916,7 @@ void write_log_to_file_trip_data(const T& history)
 
             int start_index = mobility_data_index - 1;
             using Type      = std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
-                                    mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
+                                         mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>;
             while (!std::binary_search(std::begin(mobility_data[start_index]), std::end(mobility_data[start_index]),
                                        mobility_data[mobility_data_index][trip_index],
                                        [](const Type& v1, const Type& v2) {

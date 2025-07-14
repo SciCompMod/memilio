@@ -55,14 +55,14 @@ public:
     }
 
     /**
-     * @brief Get person buffer. 
+     * @brief Get person buffer.
      */
     std::vector<size_t>& get_person_buffer()
     {
         return m_person_buffer;
     }
 
-    /** 
+    /**
     * @brief Removes person from the model.
     * @param[in] pos Index of person in m_persons vector.
     */
@@ -73,7 +73,7 @@ public:
         Base::m_person_ids_equal_index = false;
     }
 
-    /** 
+    /**
      * @brief Evolve the Graph Model one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.

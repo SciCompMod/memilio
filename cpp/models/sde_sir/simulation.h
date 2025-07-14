@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
@@ -31,10 +31,11 @@ namespace ssir
 {
 
 /// @brief A specialized Simulation for mio::ssir::Model.
-class Simulation : public mio::Simulation<ScalarType, Model>
+template <typename FP>
+class Simulation : public mio::Simulation<FP, Model<FP>>
 {
 protected:
-    using mio::Simulation<ScalarType, Model>::set_integrator;
+    using mio::Simulation<FP, Model<FP>>::set_integrator;
 
 public:
     /**
@@ -43,27 +44,27 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
-        : mio::Simulation<ScalarType, Model>(model, t0, dt)
+    Simulation(Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
+        : mio::Simulation<FP, Model<FP>>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<FP>>();
         set_integrator(integrator);
     }
 
-    using mio::Simulation<ScalarType, Model>::Simulation;
+    using mio::Simulation<FP, Model<FP>>::Simulation;
     /**
      * @brief advance simulation to tmax
      * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
-    Eigen::Ref<Eigen::VectorX<ScalarType>> advance(ScalarType tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
-        return get_ode_integrator().advance(
+        return this->get_ode_integrator().advance(
             [this](auto&& y, auto&& t, auto&& dydt) {
-                get_model().step_size = get_dt();
-                get_model().get_derivatives(y, y, t, dydt);
+                this->get_model().step_size = this->get_dt();
+                this->get_model().get_derivatives(y, y, t, dydt);
             },
-            tmax, get_dt(), get_result());
+            tmax, this->get_dt(), this->get_result());
     }
 };
 
@@ -75,19 +76,21 @@ public:
  * @param[in] model An instance of mio::ssir::Model.
  * @return A TimeSeries to represent the final simulation result
  */
-inline TimeSeries<ScalarType> simulate(ScalarType t0, ScalarType tmax, ScalarType dt, Model const& model)
+template <typename FP>
+inline TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model<FP> const& model)
 {
     model.check_constraints();
-    Simulation sim(model, t0, dt);
+    Simulation<FP> sim(model, t0, dt);
     sim.advance(tmax);
     return sim.get_result();
 }
 
 /// @brief A specialized FlowSimulation for mio::ssir::Model.
-class FlowSimulation : public mio::FlowSimulation<ScalarType, Model>
+template <typename FP>
+class FlowSimulation : public mio::FlowSimulation<FP, Model<FP>>
 {
 protected:
-    using mio::FlowSimulation<ScalarType, Model>::set_integrator;
+    using mio::FlowSimulation<FP, Model<FP>>::set_integrator;
 
 public:
     /**
@@ -96,10 +99,10 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 0.1)
-        : mio::FlowSimulation<ScalarType, Model>(model, t0, dt)
+    FlowSimulation(Model<FP> const& model, FP t0 = 0., FP dt = 0.1)
+        : mio::FlowSimulation<FP, Model<FP>>(model, t0, dt)
     {
-        auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
+        auto integrator = std::make_shared<mio::EulerIntegratorCore<FP>>();
         set_integrator(integrator);
     }
 
@@ -108,24 +111,25 @@ public:
      * tmax must be greater than get_result().get_last_time_point().
      * @param[in] tmax Next stopping time of the simulation.
      */
-    Eigen::Ref<Eigen::VectorX<ScalarType>> advance(ScalarType tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
-        assert(get_flows().get_num_time_points() == get_result().get_num_time_points());
+        assert(this->get_flows().get_num_time_points() == this->get_result().get_num_time_points());
         auto result = this->get_ode_integrator().advance(
             // see the general mio::FlowSimulation for more details on this DerivFunction
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
-                const auto& pop_result = get_result();
-                auto& model            = get_model();
+                const auto& pop_result = this->get_result();
+                auto& model            = this->get_model();
                 // compute current population
-                model.get_derivatives(flows - get_flows().get_value(pop_result.get_num_time_points() - 1), m_pop);
-                m_pop += pop_result.get_last_value();
+                model.get_derivatives(flows - this->get_flows().get_value(pop_result.get_num_time_points() - 1),
+                                      this->m_pop);
+                this->m_pop += pop_result.get_last_value();
                 // compute the current change in flows with respect to the current population
                 dflows_dt.setZero();
-                model.step_size = get_dt(); // set the current step size
-                model.get_flows(m_pop, m_pop, t, dflows_dt);
+                model.step_size = this->get_dt(); // set the current step size
+                model.get_flows(this->m_pop, this->m_pop, t, dflows_dt);
             },
-            tmax, get_dt(), get_flows());
-        compute_population_results();
+            tmax, this->get_dt(), this->get_flows());
+        this->compute_population_results();
         return result;
     }
 };
@@ -139,11 +143,11 @@ public:
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  */
-inline std::vector<TimeSeries<ScalarType>> simulate_flows(ScalarType t0, ScalarType tmax, ScalarType dt,
-                                                          Model const& model)
+template <typename FP>
+inline std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model<FP> const& model)
 {
     model.check_constraints();
-    FlowSimulation sim(model, t0, dt);
+    FlowSimulation<FP> sim(model, t0, dt);
     sim.advance(tmax);
     return {sim.get_result(), sim.get_flows()};
 }

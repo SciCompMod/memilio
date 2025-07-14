@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
@@ -39,7 +39,7 @@ namespace oseir
 /**
  * @brief probability of getting infected from a contact
  */
-template <typename FP = double>
+template <typename FP>
 struct TransmissionProbabilityOnContact {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -55,7 +55,7 @@ struct TransmissionProbabilityOnContact {
 /**
  * @brief the latent time in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -71,7 +71,7 @@ struct TimeExposed {
 /**
  * @brief the infectious time in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeInfected {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -87,7 +87,7 @@ struct TimeInfected {
 /**
  * @brief the contact patterns within the society are modelled using a ContactMatrix
  */
-template <class FP = ScalarType>
+template <class FP>
 struct ContactPatterns {
     using Type = UncertainContactMatrix<FP>;
     static Type get_default(AgeGroup size)
@@ -100,14 +100,14 @@ struct ContactPatterns {
     }
 };
 
-template <typename FP = double>
+template <typename FP>
 using ParametersBase =
     ParameterSet<TransmissionProbabilityOnContact<FP>, TimeExposed<FP>, TimeInfected<FP>, ContactPatterns<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template <typename FP = double>
+template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -124,7 +124,7 @@ public:
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
-     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
      * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
      *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
@@ -133,7 +133,7 @@ public:
      *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
      *            may often be necessary to have set meaningful values.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     * @return Returns true if one ore more constraint were corrected, false otherwise.
      */
     bool apply_constraints()
     {
@@ -173,9 +173,9 @@ public:
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
      * if constraints are not satisfied.
-     * @return Returns true if one constraint is not satisfied, otherwise false.   
+     * @return Returns true if one constraint is not satisfied, otherwise false.
      */
     bool check_constraints() const
     {

@@ -30,19 +30,19 @@ namespace abm
 void set_home_office(TimePoint t_begin, double p, Parameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
-    params.get<WorkRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.get<WorkRatio>().add_damping(damping1, SimulationTime<ScalarType>(t_begin.days()));
 }
 
 void set_school_closure(TimePoint t_begin, double p, Parameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(1, p);
-    params.get<SchoolRatio>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.get<SchoolRatio>().add_damping(damping1, SimulationTime<ScalarType>(t_begin.days()));
 }
 
 void close_social_events(TimePoint t_begin, double p, Parameters& params)
 {
     auto damping1 = Eigen::VectorXd::Constant(params.get_num_groups(), p);
-    params.get<SocialEventRate>().add_damping(damping1, SimulationTime(t_begin.days()));
+    params.get<SocialEventRate>().add_damping(damping1, SimulationTime<ScalarType>(t_begin.days()));
 }
 
 } // namespace abm

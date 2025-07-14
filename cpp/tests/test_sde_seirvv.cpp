@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
@@ -24,19 +24,19 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-const mio::sseirvv::Model& sseirvv_testing_model()
+const mio::sseirvv::Model<double>& sseirvv_testing_model()
 {
-    static mio::sseirvv::Model model;
+    static mio::sseirvv::Model<double> model;
     model.step_size = 1.0 / 16;
     model.populations.array().setConstant(1);
     { // Set parameters s.t. coeffStoI is 1.
-        model.parameters.set<mio::sseirvv::TimeExposedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeExposedV2>(1./4);
-        model.parameters.set<mio::sseirvv::TimeInfectedV1>(1);
-        model.parameters.set<mio::sseirvv::TimeInfectedV2>(1./4);
-        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(1);
-        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(1);
-        model.parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 10;
+        model.parameters.set<mio::sseirvv::TimeExposedV1<double>>(1);
+        model.parameters.set<mio::sseirvv::TimeExposedV2<double>>(1. / 4);
+        model.parameters.set<mio::sseirvv::TimeInfectedV1<double>>(1);
+        model.parameters.set<mio::sseirvv::TimeInfectedV2<double>>(1. / 4);
+        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(1);
+        model.parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2<double>>(1);
+        model.parameters.get<mio::sseirvv::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
     }
     return model;
 }
@@ -82,25 +82,25 @@ TEST(TestSdeSeirvv, get_flows)
 
     // Non-constant y for a more meaningful test.
     Eigen::VectorXd y = Eigen::VectorXd(10);
-    y << 1,1,1,1,1,1,1,2,2,2;
-    Eigen::VectorXd flows   = Eigen::VectorXd::Constant(9, 1);
+    y << 1, 1, 1, 1, 1, 1, 1, 2, 2, 2;
+    Eigen::VectorXd flows = Eigen::VectorXd::Constant(9, 1);
 
     // Results contain two parts : deterministic + stochastic.
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     auto expected_result = Eigen::VectorXd(9);
-    expected_result << 1 + sqrt(1) * sqrt(16), 3 + 0, 1 + 0, 4 + sqrt(4) * sqrt(16), 1 + sqrt(1) * sqrt(16), 
-        4 + 0, 3 + 0, 8 + sqrt(8) * sqrt(16), 8 + 0;
+    expected_result << 1 + sqrt(1) * sqrt(16), 3 + 0, 1 + 0, 4 + sqrt(4) * sqrt(16), 1 + sqrt(1) * sqrt(16), 4 + 0,
+        3 + 0, 8 + sqrt(8) * sqrt(16), 8 + 0;
     EXPECT_EQ(flows, expected_result);
 
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     expected_result = Eigen::VectorXd(9);
-    expected_result << 1 + 0, 3 + sqrt(3) * sqrt(16), 1 + sqrt(1) * sqrt(16), 4 + 0, 1 + 0, 
-        4 + sqrt(4) * sqrt(16), 3 + sqrt(3) * sqrt(16), 8 + 0, 8 + sqrt(8) * sqrt(16);
+    expected_result << 1 + 0, 3 + sqrt(3) * sqrt(16), 1 + sqrt(1) * sqrt(16), 4 + 0, 1 + 0, 4 + sqrt(4) * sqrt(16),
+        3 + sqrt(3) * sqrt(16), 8 + 0, 8 + sqrt(8) * sqrt(16);
     EXPECT_EQ(flows, expected_result);
 
     sseirvv_testing_model().get_flows(y, y, 0, flows);
     expected_result = Eigen::VectorXd(9);
-    expected_result << 8,8,16,16,16,16,16,32,32;
+    expected_result << 8, 8, 16, 16, 16, 16, 16, 32, 32;
     EXPECT_EQ(flows, expected_result);
 }
 
@@ -117,7 +117,7 @@ TEST(TestSdeSeirvv, Simulation)
         // 9 calls for each advance, as each call get_derivatives exactly once.
         .WillRepeatedly(testing::Return(.0));
 
-    auto sim = mio::sseirvv::Simulation(sseirvv_testing_model(), 0, 1);
+    auto sim = mio::sseirvv::Simulation<double>(sseirvv_testing_model(), 0, 1);
     sim.advance(1);
 
     EXPECT_EQ(sim.get_model().step_size, 1.0); // Set by simulation.
@@ -125,7 +125,7 @@ TEST(TestSdeSeirvv, Simulation)
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // Stores initial value and single step.
 
     auto expected_result = Eigen::VectorXd(10);
-    expected_result << 0,0.5,1,1,0.5,1,2,1,1,2;
+    expected_result << 0, 0.5, 1, 1, 0.5, 1, 2, 1, 1, 2;
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 
     sim.advance(1.5);
@@ -145,7 +145,7 @@ TEST(TestSdeSeirvv, FlowSimulation)
         // 3 calls for each advance, as each call get_derivatives exactly once.
         .WillRepeatedly(testing::Return(.5));
 
-    auto sim = mio::sseirvv::FlowSimulation(sseirvv_testing_model(), 0, 1);
+    auto sim = mio::sseirvv::FlowSimulation<double>(sseirvv_testing_model(), 0, 1);
     sim.advance(1);
 
     EXPECT_EQ(sim.get_model().step_size, 1.0); // Set by simulation.
@@ -153,11 +153,11 @@ TEST(TestSdeSeirvv, FlowSimulation)
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // Stores initial value and single step.
 
     auto expected_result = Eigen::VectorXd(10);
-    expected_result << 0,0.5,1,1,0.5,1,2,1,1,2;
+    expected_result << 0, 0.5, 1, 1, 0.5, 1, 2, 1, 1, 2;
     EXPECT_EQ(sim.get_result().get_last_value(), expected_result);
 
     auto expected_flows = Eigen::VectorXd(9);
-    expected_flows << 0.5,0.5,1,1,1,1,1,1,1;
+    expected_flows << 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1;
     EXPECT_EQ(sim.get_flows().get_last_value(), expected_flows);
 
     sim.advance(1.5);
@@ -166,14 +166,14 @@ TEST(TestSdeSeirvv, FlowSimulation)
 
 TEST(TestSdeSeirvv, check_constraints_parameters)
 {
-    mio::sseirvv::Model::ParameterSet parameters;
-    parameters.set<mio::sseirvv::TimeInfectedV1>(6);
-    parameters.set<mio::sseirvv::TimeInfectedV2>(6);
-    parameters.set<mio::sseirvv::TimeExposedV1>(6);
-    parameters.set<mio::sseirvv::TimeExposedV2>(6);
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.04);
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(0.04);
-    parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 10;
+    mio::sseirvv::Model<double>::ParameterSet parameters;
+    parameters.set<mio::sseirvv::TimeInfectedV1<double>>(6);
+    parameters.set<mio::sseirvv::TimeInfectedV2<double>>(6);
+    parameters.set<mio::sseirvv::TimeExposedV1<double>>(6);
+    parameters.set<mio::sseirvv::TimeExposedV2<double>>(6);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(0.04);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2<double>>(0.04);
+    parameters.get<mio::sseirvv::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
 
     // model.check_constraints() combines the functions from population and parameters.
     // We only want to test the functions for the parameters defined in parameters.h.
@@ -181,27 +181,27 @@ TEST(TestSdeSeirvv, check_constraints_parameters)
 
     mio::set_log_level(mio::LogLevel::off);
 
-    parameters.set<mio::sseirvv::TimeInfectedV1>(0);
+    parameters.set<mio::sseirvv::TimeInfectedV1<double>>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
-    parameters.set<mio::sseirvv::TimeInfectedV1>(6);
-    parameters.set<mio::sseirvv::TimeInfectedV2>(0);
+    parameters.set<mio::sseirvv::TimeInfectedV1<double>>(6);
+    parameters.set<mio::sseirvv::TimeInfectedV2<double>>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
-    parameters.set<mio::sseirvv::TimeInfectedV2>(6);
-    parameters.set<mio::sseirvv::TimeExposedV1>(0); 
+    parameters.set<mio::sseirvv::TimeInfectedV2<double>>(6);
+    parameters.set<mio::sseirvv::TimeExposedV1<double>>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
-    parameters.set<mio::sseirvv::TimeExposedV1>(6);
-    parameters.set<mio::sseirvv::TimeExposedV2>(0);
+    parameters.set<mio::sseirvv::TimeExposedV1<double>>(6);
+    parameters.set<mio::sseirvv::TimeExposedV2<double>>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
-    parameters.set<mio::sseirvv::TimeExposedV2>(6);
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(10.);
+    parameters.set<mio::sseirvv::TimeExposedV2<double>>(6);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(10.);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.04);
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(10.);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(0.04);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2<double>>(10.);
     EXPECT_EQ(parameters.check_constraints(), 1);
     mio::set_log_level(mio::LogLevel::warn);
 }
@@ -209,45 +209,45 @@ TEST(TestSdeSeirvv, check_constraints_parameters)
 TEST(TestSdeSeirvv, apply_constraints_parameters)
 {
     const ScalarType tol_times = 1e-1;
-    mio::sseirvv::Model::ParameterSet parameters;
-    parameters.set<mio::sseirvv::TimeInfectedV1>(6);
-    parameters.set<mio::sseirvv::TimeInfectedV2>(6);
-    parameters.set<mio::sseirvv::TimeExposedV1>(6);
-    parameters.set<mio::sseirvv::TimeExposedV2>(6);
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(0.04);
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(0.04);
-    parameters.get<mio::sseirvv::ContactPatterns>().get_baseline()(0, 0) = 10;
+    mio::sseirvv::Model<double>::ParameterSet parameters;
+    parameters.set<mio::sseirvv::TimeInfectedV1<double>>(6);
+    parameters.set<mio::sseirvv::TimeInfectedV2<double>>(6);
+    parameters.set<mio::sseirvv::TimeExposedV1<double>>(6);
+    parameters.set<mio::sseirvv::TimeExposedV2<double>>(6);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(0.04);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2<double>>(0.04);
+    parameters.get<mio::sseirvv::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
 
     EXPECT_EQ(parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
 
-    parameters.set<mio::sseirvv::TimeInfectedV1>(-2.5);
+    parameters.set<mio::sseirvv::TimeInfectedV1<double>>(-2.5);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_EQ(parameters.get<mio::sseirvv::TimeInfectedV1>(), tol_times);
+    EXPECT_EQ(parameters.get<mio::sseirvv::TimeInfectedV1<double>>(), tol_times);
 
-    parameters.set<mio::sseirvv::TimeInfectedV2>(-2.5);
+    parameters.set<mio::sseirvv::TimeInfectedV2<double>>(-2.5);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_EQ(parameters.get<mio::sseirvv::TimeInfectedV2>(), tol_times);
+    EXPECT_EQ(parameters.get<mio::sseirvv::TimeInfectedV2<double>>(), tol_times);
 
-    parameters.set<mio::sseirvv::TimeExposedV1>(-2.5);
+    parameters.set<mio::sseirvv::TimeExposedV1<double>>(-2.5);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_EQ(parameters.get<mio::sseirvv::TimeExposedV1>(), tol_times);
+    EXPECT_EQ(parameters.get<mio::sseirvv::TimeExposedV1<double>>(), tol_times);
 
-    parameters.set<mio::sseirvv::TimeExposedV2>(-2.5);
+    parameters.set<mio::sseirvv::TimeExposedV2<double>>(-2.5);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_EQ(parameters.get<mio::sseirvv::TimeExposedV2>(), tol_times);
+    EXPECT_EQ(parameters.get<mio::sseirvv::TimeExposedV2<double>>(), tol_times);
 
-    parameters.set<mio::sseirvv::TimeExposedV2>(-2.5);
+    parameters.set<mio::sseirvv::TimeExposedV2<double>>(-2.5);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_EQ(parameters.get<mio::sseirvv::TimeExposedV2>(), tol_times);
+    EXPECT_EQ(parameters.get<mio::sseirvv::TimeExposedV2<double>>(), tol_times);
 
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1>(10.);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(10.);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_NEAR(parameters.get<mio::sseirvv::TransmissionProbabilityOnContactV1>(), 0.0, 1e-14);
+    EXPECT_NEAR(parameters.get<mio::sseirvv::TransmissionProbabilityOnContactV1<double>>(), 0.0, 1e-14);
 
-    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2>(10.);
+    parameters.set<mio::sseirvv::TransmissionProbabilityOnContactV2<double>>(10.);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_NEAR(parameters.get<mio::sseirvv::TransmissionProbabilityOnContactV2>(), 0.0, 1e-14);
+    EXPECT_NEAR(parameters.get<mio::sseirvv::TransmissionProbabilityOnContactV2<double>>(), 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
 }

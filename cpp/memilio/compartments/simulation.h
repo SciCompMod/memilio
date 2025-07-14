@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -29,7 +29,7 @@
 namespace mio
 {
 
-template <typename FP = ScalarType>
+template <typename FP>
 using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_cash_karp54>;
 
 /**
@@ -58,6 +58,44 @@ public:
         , m_result(t0, m_model->get_initial_values())
         , m_dt(dt)
     {
+    }
+
+    /** 
+     * @brief Constructs a copy of another Simulation object.
+     *
+     * Performs a deep copy of the model, while sharing the same integrator core.
+     * The time series results and step size are also copied.
+     *
+     * @param[in] other The Simulation object to copy from.
+     */
+    Simulation(Simulation const& other)
+        : m_integratorCore(other.m_integratorCore)
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(m_integratorCore)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
+    {
+    }
+
+    /**
+     * @brief Assigns another Simulation object to this one.
+     *
+     * Performs a deep copy of the model, while sharing the same integrator core.
+     * The time series results and step size are also copied.
+     *
+     * @param[in] other The Simulation object to assign from.
+     * @return Reference to this Simulation object.
+     */
+    Simulation& operator=(Simulation const& other)
+    {
+        if (this != &other) {
+            m_integratorCore = other.m_integratorCore;
+            m_model          = std::make_unique<Model>(*other.m_model);
+            m_integrator     = OdeIntegrator<FP>(m_integratorCore);
+            m_result         = other.m_result;
+            m_dt             = other.m_dt;
+        }
+        return *this;
     }
 
     /**
@@ -184,8 +222,8 @@ template <typename FP, class Sim>
 using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
 
 /**
- * Template meta function to check if a type is a compartment model simulation. 
- * Defines a static constant of name `value`. 
+ * Template meta function to check if a type is a compartment model simulation.
+ * Defines a static constant of name `value`.
  * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP floating point type, e.g., double

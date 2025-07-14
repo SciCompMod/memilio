@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -51,13 +51,14 @@ int main()
     model.parameters.set<mio::oseir::TimeInfected<ScalarType>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
     model.check_constraints();
 
-    auto seir = simulate(t0, tmax, dt, model);
+    auto seir = mio::simulate<ScalarType>(t0, tmax, dt, model);
 
     seir.print_table({"S", "E", "I", "R"});
     std::cout << "\nnumber total: " << seir.get_last_value().sum() << "\n";

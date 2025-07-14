@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
@@ -32,7 +32,7 @@
 
 int main()
 {
-    using Vec = mio::TimeSeries<ScalarType>::Vector;
+    using Vec = Eigen::VectorX<ScalarType>;
 
     size_t num_agegroups = 1;
 
@@ -80,9 +80,9 @@ int main()
     // model.populations.get_last_value()[(Eigen::Index)mio::isecir::InfectionState::Recovered] = 0;
 
     // Set working parameters.
-    mio::SmootherCosine smoothcos(2.0);
-    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib(num_transitions, delaydistribution);
+    mio::SmootherCosine<ScalarType> smoothcos(2.0);
+    mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib(num_transitions, delaydistribution);
     // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
@@ -96,12 +96,13 @@ int main()
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
     model.parameters.get<mio::isecir::TransitionProbabilities>()[mio::AgeGroup(0)]        = vec_prob;
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 10.));
+    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 
-    mio::ExponentialSurvivalFunction exponential(0.5);
-    mio::StateAgeFunctionWrapper prob(exponential);
+    mio::ExponentialSurvivalFunction<ScalarType> exponential(0.5);
+    mio::StateAgeFunctionWrapper<ScalarType> prob(exponential);
 
     model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[mio::AgeGroup(0)] = prob;
     model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[mio::AgeGroup(0)]   = prob;

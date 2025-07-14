@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -38,7 +38,7 @@ int main()
     double nb_total_t0 = 10000, nb_inf_t0 = 50, nb_rec_t0 = 10;
 
     const size_t num_groups = 3;
-    mio::osir::Model model(num_groups);
+    mio::osir::Model<double> model(num_groups);
 
     double fact = 1.0 / num_groups;
 
@@ -54,13 +54,14 @@ int main()
         model.parameters.get<mio::osir::TransmissionProbabilityOnContact<double>>()[i] = 0.3;
     }
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osir::ContactPatterns<double>>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7), mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7),
+                               mio::SimulationTime<double>(30.));
 
     model.apply_constraints();
 
-    auto sir = simulate(t0, tmax, dt, model);
+    auto sir = mio::simulate<double>(t0, tmax, dt, model);
 
     std::vector<std::string> vars = {"S", "I", "R"};
     printf("Number of time points :%d\n", static_cast<int>(sir.get_num_time_points()));
