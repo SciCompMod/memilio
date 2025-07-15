@@ -11,7 +11,6 @@
 
 mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const MultiRunConfig& config)
 {
-
     MultiRunResults results;
     for (int run = 0; run < config.num_runs; ++run) {
         if (run % 10 == 0 || run == config.num_runs - 1) {
@@ -35,6 +34,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         if (results.infection_parameter_k < 0.0) {
             BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
                                                                  config.event_config, base_world, event_map));
+            // results.infection_parameter_k = 200; // Placeholder value for K parameter
         }
 
         // Step 3: Get initial infections
@@ -114,7 +114,7 @@ void assign_infection_state(mio::abm::World& world, const std::vector<uint32_t>&
         auto rng = mio::abm::Person::RandomNumberGenerator(world.get_rng(), world.get_person(person_id));
         world.get_person(person_id).add_new_infection(
             mio::abm::Infection(rng, mio::abm::VirusVariant::Alpha, world.get_person(person_id).get_age(),
-                                world.parameters, t, mio::abm::InfectionState::Exposed));
+                                world.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms));
     }
 }
 

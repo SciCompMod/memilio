@@ -102,7 +102,7 @@ LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person
     }
 
     //return home
-    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(2)) {
+    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(1)) {
         return LocationType::Home;
     }
 

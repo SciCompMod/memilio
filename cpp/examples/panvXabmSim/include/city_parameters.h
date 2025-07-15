@@ -69,7 +69,7 @@ struct InfrastructureRatios {
         3.7; // https://de.statista.com/themen/136/einzelhandel-in-deutschland/
 
     // Social and event locations
-    static constexpr double PEOPLE_PER_EVENT                = 40.0;
+    static constexpr double PEOPLE_PER_EVENT                = 15.0;
     static constexpr double chance_per_hour_to_attend_event = 0.03;
 };
 
