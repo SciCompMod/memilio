@@ -11,8 +11,8 @@ PYTHON3_DIR="$MAIN_PATH/m_v/bin/python3"
 EVENT_TYPE="restaurant_table_equals_household"
 SIM_TYPE="memilio"
 VIZ_OPTIONS="--s90percentile"
-NUM_DAYS=30
-NUM_PERSONS=5000
+NUM_DAYS=10
+NUM_PERSONS=3000
 
 # BOOL for visualization
 VISUALIZE=true

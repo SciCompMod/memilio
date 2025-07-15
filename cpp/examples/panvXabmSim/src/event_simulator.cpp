@@ -59,7 +59,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
 
     // Rudimentary grid search for K parameter
     double k_min = 1.0; // Minimum K value
-    double k_max = 20.0; // Maximum K value
+    double k_max = 1000.0; // Maximum K value
 
     double k_step                  = 1.0; // Step size for K value
     double best_k                  = k_min;
@@ -77,11 +77,11 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
             if (config.type == EventType::Restaurant_Table_Equals_Half_Household ||
                 config.type == EventType::Restaurant_Table_Equals_Household) {
                 // Set restaurant-specific parameters
-                ratio = 3.0 / config.event_duration_hours; // 3 hours divided by event duration
+                ratio = 4.0 / config.event_duration_hours; // 3 hours divided by event duration
             }
             else if (config.type == EventType::WorkMeeting_Many_Meetings ||
                      config.type == EventType::WorkMeeting_Few_Meetings) {
-                ratio = 8.0 / config.event_duration_hours; // 3 hours divided by event duration
+                ratio = 6.0 / config.event_duration_hours; // 3 hours divided by event duration
             }
             set_local_parameters_event(calculation_world, ratio);
 
@@ -225,8 +225,29 @@ EventSimulator::initialize_from_event_simulation(mio::RandomNumberGenerator rng,
     std::vector<uint32_t> household_infections;
 
     switch (event_type) {
-    case EventType::Restaurant_Table_Equals_Half_Household:
-    case EventType::Restaurant_Table_Equals_Random:
+    case EventType::Restaurant_Table_Equals_Half_Household: {
+        std::vector<uint32_t> return_vector;
+        mio::unused(rng); // Avoid unused variable warning
+        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
+        return_vector = {0, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25};
+        for (size_t i = 0; i < return_vector.size(); ++i) {
+            household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
+        }
+
+        break;
+    }
+    case EventType::Restaurant_Table_Equals_Random: {
+        std::vector<uint32_t> return_vector;
+        mio::unused(rng); // Avoid unused variable warning
+        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
+        return_vector = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+        for (size_t i = 0; i < return_vector.size(); ++i) {
+            household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
+        }
+
+        break;
+    }
+
     case EventType::Restaurant_Table_Equals_Household: {
         // BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
 
