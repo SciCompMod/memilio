@@ -41,6 +41,7 @@ Contents
    references
    faq
    development
+   team
 
 .. toctree::
    :maxdepth: 2
