@@ -397,7 +397,7 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
 
         else if (person.get_age() == age_group_35_to_59 || person.get_age() == age_group_15_to_34) {
             // Assign to a workplace if in age group 35-59
-            if (count_workers < infra.num_workplaces) {
+            if (count_workers < infra.num_worker) {
                 person.set_assigned_location(workplaces[count_workers % infra.num_workplaces]);
                 count_workers++;
                 continue;
@@ -410,35 +410,35 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
     }
 
     // Check if we did everything correctly
-    // for (auto& person : world.get_persons()) {
-    //     if (person.get_assigned_locations()[0] == std::numeric_limits<uint32_t>::max()) {
-    //         //Home
-    //         std::cerr << "Error: Person " << person.get_person_id() << " has no assigned home location.\n";
-    //     }
-    //     if (person.get_assigned_locations()[1] != std::numeric_limits<uint32_t>::max() &&
-    //         person.get_assigned_locations()[2] != std::numeric_limits<uint32_t>::max()) {
-    //         std::cerr << "Error: Person " << person.get_person_id() << " has an wokr and school place assigned.\n";
-    //     }
+    for (auto& person : world.get_persons()) {
+        if (person.get_assigned_locations()[0] == std::numeric_limits<uint32_t>::max()) {
+            //Home
+            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned home location.\n";
+        }
+        if (person.get_assigned_locations()[1] != std::numeric_limits<uint32_t>::max() &&
+            person.get_assigned_locations()[2] != std::numeric_limits<uint32_t>::max()) {
+            std::cerr << "Error: Person " << person.get_person_id() << " has an wokr and school place assigned.\n";
+        }
 
-    //     if (person.get_assigned_locations()[3] == std::numeric_limits<uint32_t>::max()) {
-    //         //Event
-    //         std::cerr << "Error: Person " << person.get_person_id() << " has no assigned event location.\n";
-    //     }
-    //     if (person.get_assigned_locations()[4] == std::numeric_limits<uint32_t>::max() &&
-    //         person.get_age() != age_group_0_to_4) {
-    //         //Shop
-    //         std::cerr << "Error: Person " << person.get_person_id() << " has no assigned shop location.\n";
-    //     }
+        if (person.get_assigned_locations()[3] == std::numeric_limits<uint32_t>::max()) {
+            //Event
+            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned event location.\n";
+        }
+        if (person.get_assigned_locations()[4] == std::numeric_limits<uint32_t>::max() &&
+            person.get_age() != age_group_0_to_4) {
+            //Shop
+            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned shop location.\n";
+        }
 
-    //     if (person.get_assigned_locations()[5] == std::numeric_limits<uint32_t>::max()) {
-    //         //Hospital
-    //         std::cerr << "Error: Person " << person.get_person_id() << " has no assigned hospital location.\n";
-    //     }
-    //     if (person.get_assigned_locations()[6] == std::numeric_limits<uint32_t>::max()) {
-    //         //ICU
-    //         std::cerr << "Error: Person " << person.get_person_id() << " has no assigned ICU location.\n";
-    //     }
-    // }
+        if (person.get_assigned_locations()[5] == std::numeric_limits<uint32_t>::max()) {
+            //Hospital
+            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned hospital location.\n";
+        }
+        if (person.get_assigned_locations()[6] == std::numeric_limits<uint32_t>::max()) {
+            //ICU
+            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned ICU location.\n";
+        }
+    }
 
     return mio::success();
 }

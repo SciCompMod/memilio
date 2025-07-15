@@ -128,12 +128,19 @@ struct CityInfrastructure {
         return households_by_size;
     }
 
-    int calc_num_workplaces(int population) const
+    std::pair<int, int> calc_num_workplaces_and_worker(int population) const
     {
         // Calculate number of workplaces based on employment rate and average employees per workplace
-        int n_w  = static_cast<int>(std::round(population * InfrastructureRatios::EMPLOYMENT_RATE));
+        std::vector<int> age_vector(GERMAN_AGE_DISTRIBUTION.size());
+        for (size_t i = 0; i < CityParameters::GERMAN_AGE_DISTRIBUTION.size(); ++i) {
+            int age_group_population = static_cast<int>(population * CityParameters::GERMAN_AGE_DISTRIBUTION[i]);
+            age_vector.at(i)         = age_group_population;
+        }
+
+        int n_potential_worker = age_vector[2] + age_vector[3] + ((4 / 20) * age_vector[4]);
+        auto n_w = static_cast<int>(std::round(n_potential_worker * InfrastructureRatios::EMPLOYMENT_RATE));
         int n_wp = static_cast<int>(std::round(n_w / InfrastructureRatios::PEOPLE_PER_WORKPLACE));
-        return n_wp;
+        return std::make_pair(n_wp, n_w);
     }
 
     std::tuple<int, int, int, int> calc_num_elem_and_sec_schools(int population) const
@@ -174,7 +181,9 @@ struct CityInfrastructure {
         infra.num_households_hh_size = infra.calc_household_sizes(population);
 
         // Calculate workplaces
-        infra.num_workplaces = infra.calc_num_workplaces(population);
+        auto [num_workplaces, num_worker] = infra.calc_num_workplaces_and_worker(population);
+        infra.num_workplaces              = num_workplaces;
+        infra.num_worker                  = num_worker;
 
         // Calculate schools
         auto [num_elem_schools, num_sec_schools, num_elem_students, num_sec_students] =
