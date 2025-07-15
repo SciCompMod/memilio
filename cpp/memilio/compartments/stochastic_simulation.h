@@ -35,12 +35,12 @@ namespace mio
  * @tparam M An implementation of a StochasticModel.
  */
 template <typename FP, class M>
-class StochasticSimulation : public SimulationBase<FP, M, DerivFunction, DerivFunction>
+class StochasticSimulation : public details::SimulationBase<FP, M, SdeIntegrator<FP>>
 {
     static_assert(is_stochastic_model<FP, M>::value, "Template parameter must be a stochastic model.");
 
 public:
-    using Base  = SimulationBase<FP, M, DerivFunction, DerivFunction>;
+    using Base  = details::SimulationBase<FP, M, SdeIntegrator<FP>>;
     using Model = M;
 
     /**

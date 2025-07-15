@@ -87,7 +87,7 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         dt    = dt_in;
     }
 
-    template <template <class> class... Integrands>
+    template <class... Integrands>
     void set_integrator(std::shared_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
     {
         integrator = (int)(size_t)integrator_in.get(); // no, do not use this elsewhere. do not even look at this

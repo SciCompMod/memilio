@@ -40,10 +40,10 @@ using DefaultIntegratorCore = mio::ControlledStepperWrapper<FP, boost::numeric::
  * @tparam M An implementation of a CompartmentalModel.
  */
 template <typename FP, class M>
-class Simulation : public SimulationBase<FP, M, DerivFunction>
+class Simulation : public details::SimulationBase<FP, M, OdeIntegrator<FP>>
 {
 public:
-    using Base  = SimulationBase<FP, M, DerivFunction>;
+    using Base  = details::SimulationBase<FP, M, OdeIntegrator<FP>>;
     using Model = M;
 
     /**

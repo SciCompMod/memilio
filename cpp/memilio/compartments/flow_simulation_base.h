@@ -26,23 +26,26 @@
 
 namespace mio
 {
+namespace details
+{
 
 /**
  * @brief Base class to define a FlowSimulation.
- * Provides a protected advance method that accepts Order DerivFunction%s, which must be implemented by the Derived
+ * Provides a protected advance method that accepts the specified integrands, that must be exposed by the Derived
  * class. Also defines all relevant members and accessors for a FlowSimulation.
  * @tparam FP A floating point type, e.g. double.
  * @tparam M An implementation of FlowModel.
- * @tparam Order The number of DerivFunction%s used by the integrator.
+ * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
  */
-template <typename FP, class M, template <class> class... Intgrands>
-class FlowSimulationBase : public SimulationBase<FP, M, Intgrands...>
+template <typename FP, class M, class... Integrands>
+class FlowSimulationBase : public SimulationBase<FP, M, Integrands...>
 {
     static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
 
 public:
+    using Base  = SimulationBase<FP, M, Integrands...>;
     using Model = M;
-    using Base  = SimulationBase<FP, M, Intgrands...>;
+    using Core  = IntegratorCore<FP, Integrands...>;
 
     /**
      * @brief Create a FlowSimulationBase.
@@ -50,7 +53,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Intgrands...>> integrator, FP t0, FP dt)
+    FlowSimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
         : Base(model, integrator, t0, dt)
         , m_flow_result(t0, model.get_initial_flows())
     {
@@ -103,6 +106,14 @@ private:
     mio::TimeSeries<FP> m_flow_result; ///< Flow result of the simulation.
 };
 
+/// @brief Specialization of FlowSimulationBase that takes a SystemIntegrator instead of it's Integrands.
+template <typename FP, class M, class... Integrands>
+class FlowSimulationBase<FP, M, SystemIntegrator<FP, Integrands...>> : public FlowSimulationBase<FP, M, Integrands...>
+{
+    using FlowSimulationBase<FP, M, Integrands...>::FlowSimulationBase;
+};
+
+} // namespace details
 } // namespace mio
 
 #endif // MIO_COMPARTMENTS_FLOW_SIMULATION_BASE_H

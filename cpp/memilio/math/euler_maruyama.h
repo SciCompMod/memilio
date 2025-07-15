@@ -20,9 +20,9 @@
 #ifndef MIO_MATH_EULER_MARUYAMA_H
 #define MIO_MATH_EULER_MARUYAMA_H
 
-#include "memilio/config.h"
-#include "memilio/math/floating_point.h"
 #include "memilio/math/integrator.h"
+#include "memilio/math/eigen.h"
+#include "memilio/math/utils.h"
 #include "memilio/utils/logging.h"
 
 namespace mio
@@ -43,33 +43,31 @@ public:
 
     /**
      * @brief Fixed step width integrator for stochastic models.
-     * Expects flow-based integrands. Requires results to be 
-     * @param[in] yt value of y at t, y(t)
-     * @param[in,out] t current time step h=dt
-     * @param[in,out] dt current time step h=dt
-     * @param[out] ytp1 approximated value y(t+1)
+     * Expects population-based integrands, i.e. not flows. 
+     * @param[in] f Deterministic part of the stochastic differential equation.
+     * @param[in] noise_f Stochastic part of the stochastic differential equation.
+     * @param[in] yt Value of y at t, y(t).
+     * @param[in,out] t Current time. Overwritten with t+dt.
+     * @param[in] dt Current time step size h=dt.
+     * @param[out] ytp1 The approximated value of y(t+dt).
      */
     bool step(const DerivFunction<FP>& f, const DerivFunction<FP>& noise_f, Eigen::Ref<const Eigen::VectorX<FP>> yt,
               FP& t, FP& dt, Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         using std::sqrt;
 
-        // auto pre = yt.sum();
-
-        // we are misusing the next step y as temporary space to store the derivative
         f(yt, t, ytp1);
-        // auto post  = (yt + dt * ytp1).sum();
 
         Eigen::VectorX<FP> noise = Eigen::VectorX<FP>::Zero(yt.size());
         noise_f(yt, t, noise);
 
         ytp1 = yt + dt * ytp1 + sqrt(dt) * noise;
 
-        // if (!floating_point_equal(pre, post, Limits<double>::zero_tolerance())) {
-        //     std::cout << "pre: " << pre << " != post: " << post << "\n";
-        // }
+        if (!map_to_nonnegative(ytp1)) [[unlikely]] {
+            mio::log_error("Failed to rescale values in Euler Maruyama step, total population is negative. "
+                           "Redistributing absolute values evenly.");
+        }
 
-        map_to_nonnegative(ytp1);
         t += dt;
         return true;
     }

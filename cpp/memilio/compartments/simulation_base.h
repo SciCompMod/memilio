@@ -26,22 +26,25 @@
 
 namespace mio
 {
+namespace details
+{
 
 /**
  * @brief Base class to define a Simulation.
- * Provides a protected advance method that accepts Order DerivFunction%s, which must be implemented by the Derived
+ * Provides a protected advance method that accepts the specified integrands, that must be exposed by the Derived
  * class. Also defines all relevant members and accessors for a Simulation.
  * @tparam FP A floating point type, e.g. double.
  * @tparam M An implementation of CompartmentalModel.
- * @tparam Order The number of DerivFunction%s used by the integrator.
+ * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
  */
-template <typename FP, class M, template <class> class... Integrands>
+template <typename FP, class M, class... Integrands>
 class SimulationBase
 {
     static_assert(is_compartment_model<FP, M>::value, "Template parameter must be a compartment model.");
 
 public:
     using Model = M;
+    using Core  = IntegratorCore<FP, Integrands...>;
 
     /**
      * @brief Create a SimulationBase.
@@ -49,7 +52,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    SimulationBase(Model const& model, std::shared_ptr<IntegratorCore<FP, Integrands...>> integrator, FP t0, FP dt)
+    SimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
         : m_integratorCore(integrator)
         , m_model(std::make_unique<Model>(model))
         , m_integrator(m_integratorCore)
@@ -62,7 +65,7 @@ public:
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
      */
-    void set_integrator(std::shared_ptr<IntegratorCore<FP, Integrands...>> integrator)
+    void set_integrator(std::shared_ptr<Core> integrator)
     {
         m_integratorCore = std::move(integrator);
         m_integrator.set_integrator(m_integratorCore);
@@ -73,11 +76,11 @@ public:
      * @return A reference to the integrator core used in the simulation
      * @{
      */
-    IntegratorCore<FP, Integrands...>& get_integrator()
+    Core& get_integrator()
     {
         return *m_integratorCore;
     }
-    const IntegratorCore<FP, Integrands...>& get_integrator() const
+    const Core& get_integrator() const
     {
         return *m_integratorCore;
     }
@@ -136,18 +139,19 @@ public:
 
 protected:
     /**
-     * @brief advance simulation to tmax
-     * tmax must be greater than get_result().get_last_time_point()
-     * @param tmax next stopping point of simulation
+     * @brief Run the simulation up to a given time.
+     * @param[in] fs Integrands passed to the integrator, e.g. a wrapper for `get_derivatives`.
+     * @param[in] tmax Next stopping point of the simulation.
+     * @param[in,out] results The TimeSeries to use as initial value and for storing integration results. 
+     * @return The simulation result at tmax.
      */
-    Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands<FP>&... fs, FP tmax, TimeSeries<FP>& results)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands&... fs, FP tmax, TimeSeries<FP>& results)
     {
         return m_integrator.advance(fs..., tmax, m_dt, results);
     }
 
 private:
-    std::shared_ptr<IntegratorCore<FP, Integrands...>>
-        m_integratorCore; ///< Defines the integration scheme via its step function.
+    std::shared_ptr<Core> m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
     SystemIntegrator<FP, Integrands...>
         m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
@@ -155,6 +159,14 @@ private:
     FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
 };
 
+/// @brief Specialization of SimulationBase that takes a SystemIntegrator instead of it's Integrands.
+template <typename FP, class M, class... Integrands>
+class SimulationBase<FP, M, SystemIntegrator<FP, Integrands...>> : public SimulationBase<FP, M, Integrands...>
+{
+    using SimulationBase<FP, M, Integrands...>::SimulationBase;
+};
+
+} // namespace details
 } // namespace mio
 
 #endif // MIO_COMPARTMENTS_SIMULATION_BASE_H

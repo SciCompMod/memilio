@@ -25,12 +25,10 @@
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/random_number_generator.h"
 
-#include <cstddef>
-
 namespace mio
 {
 
-/// @brief A CompartmentalModel with additional get_noise member.
+/// @brief A CompartmentalModel with an additional get_noise member.
 template <typename FP, class Comp, class Pop, class Params, class Flows = void>
 class StochasticModel
     : public std::conditional_t<std::is_same_v<Flows, void>, CompartmentalModel<FP, Comp, Pop, Params>,
@@ -42,19 +40,30 @@ public:
     using Base::Base;
 
     /**
-     * random noise part of a SDE model. represents the result of the deterministic noise matrix multiplied by a white noise vector.
-     * In case of infectious disease models, the noise matrix may map noise contributions from each flow to their respective
-     * compartments. In that case, the white noise vector has size #flows.
-     * The resulting noise vector must have the same size as the state vector y, i.e. it must have Pop::Count entries. 
-     * This is due to the fact that the integration of SDE models must happen on populations, not flows, as the applied noise
-     * can occassionally push compartments into negative values. this is mitigated by the SdeIntegratorCore%s, but this
-     * mitigation can not (in general) be applied to flows.
-     * The noise must still be applied per flow, so both inflow and outflow use the same random value. otherwise, transitions
-     * between compartments would no longer preserve the total population count. 
+     * @brief Calculate random changes to the population at a certain time point. 
+     *
+     * This function calculates the random noise part of an SDE model. In general, it represents the result of the
+     * deterministic noise matrix multiplied by a white noise vector.
+     *
+     * For infectious disease models, the noise matrix usually maps noise contributions from each flow to their
+     * respective compartments. In that case, the white noise vector has size #flows. The resulting noise vector must
+     * have the same size as the state vector y. 
+     * This is due to the fact that the integration of SDE models must happen on populations, not flows, as the applied
+     * noise can occassionally push compartments into negative values. This can be mitigated by removing negative values
+     * and rescaling the population (see `map_to_nonnegative`), but this mitigation can not (in general) be applied
+     * to flows.
+     * The noise must still be applied per flow, so both inflow and outflow use the same random value. Otherwise,
+     * transitions between compartments would no longer preserve the total population count. 
      */
     virtual void get_noise(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
                            FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*noise*/) const {};
 
+    /**
+     * @brief Sample a vector of independent standart normal distributed values from the model's RNG.
+     * @param size The size of the vector.
+     * Useful for vector arithmetic. For single random values, use `sample_standart_normal_distribution`.
+     * @return A random vector (expression calling sample_standart_normal_distribution for each entry).
+     */
     auto white_noise(Eigen::Index size) const
     {
         return Eigen::VectorX<FP>::NullaryExpr(size, 1, [this]() {
@@ -62,18 +71,25 @@ public:
         });
     }
 
+    /**
+     * @brief Sample a standart normal distributed value from the model's RNG.
+     * For a vector of random values, use `white_noise`.
+     * Note that the value is always drawn as a double, and then converted to FP.
+     * @return A random value.
+     */
     FP sample_standart_normal_distribution() const
     {
         return FP{DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
     }
 
+    /// @brief Access the model's RNG.
     RandomNumberGenerator& get_rng() const
     {
         return m_rng;
     }
 
 private:
-    mutable RandomNumberGenerator m_rng;
+    mutable RandomNumberGenerator m_rng; ///< RNG for generating white noise in the get_noise implementation.
 };
 
 namespace details

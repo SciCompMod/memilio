@@ -25,7 +25,6 @@
 #include "memilio/utils/metaprogramming.h"
 #include <utility>
 #include <iostream>
-#include <iterator>
 
 namespace mio
 {
@@ -472,32 +471,6 @@ template <class M>
 std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> cend(const M& m)
 {
     return {m, m.size()};
-}
-
-template <typename FP>
-void map_to_nonnegative(Eigen::Ref<Eigen::VectorX<FP>> x)
-{
-    FP positive{0.0}, negative{0.0};
-    for (auto& v : x) {
-        if (v >= FP{0.0}) {
-            positive += v;
-        }
-        else {
-            negative -= v;
-            v = FP{0.0};
-        }
-    }
-
-    if (negative > Limits<FP>::zero_tolerance()) {
-        if (positive > negative) [[likely]] {
-            x = x * (1 - negative / positive);
-        }
-        else {
-            log_error("Failed to rescale values in Euler Maruyama step, total population is negative. "
-                      "Redistributing absolute values evenly.");
-            x.array() = negative / x.size();
-        }
-    }
 }
 
 } // namespace mio

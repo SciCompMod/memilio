@@ -22,6 +22,7 @@
 
 #include "memilio/compartments/flow_simulation_base.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/math/integrator.h"
 
 namespace mio
 {
@@ -32,11 +33,11 @@ namespace mio
  * @tparam M An implementation of a FlowModel.
  */
 template <typename FP, class M>
-class FlowSimulation : public FlowSimulationBase<FP, M, DerivFunction>
+class FlowSimulation : public details::FlowSimulationBase<FP, M, OdeIntegrator<FP>>
 {
 public:
+    using Base  = details::FlowSimulationBase<FP, M, OdeIntegrator<FP>>;
     using Model = M;
-    using Base  = FlowSimulationBase<FP, M, DerivFunction>;
 
     /**
      * @brief Set up the simulation with an ODE solver.
@@ -63,7 +64,7 @@ public:
         // as many entries in m_flow_result as in Base::m_result
         assert(Base::get_flows().get_num_time_points() == Base::get_result().get_num_time_points());
         const auto result = Base::advance(
-            {[this](auto&& flows, auto&& t, auto&& dflows_dt) {
+            [this](auto&& flows, auto&& t, auto&& dflows_dt) {
                 const auto& pop_result = this->get_result();
                 const auto& model      = this->get_model();
                 // compute current population
@@ -82,7 +83,7 @@ public:
                 // compute the current change in flows with respect to the current population
                 dflows_dt.setZero();
                 model.get_flows(m_pop, m_pop, t, dflows_dt); // this result is used by the integrator
-            }},
+            },
             tmax, Base::get_flows());
         Base::compute_population_results();
         return result;
