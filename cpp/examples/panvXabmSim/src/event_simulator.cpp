@@ -228,27 +228,35 @@ EventSimulator::initialize_from_event_simulation(mio::RandomNumberGenerator rng,
     case EventType::Restaurant_Table_Equals_Half_Household:
     case EventType::Restaurant_Table_Equals_Random:
     case EventType::Restaurant_Table_Equals_Household: {
-        BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
+        // BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
 
-        // Read Panvadere infection data
-        BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
+        // // Read Panvadere infection data
+        // BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
 
-        size_t amount_of_infected = 0;
-        for (const auto& entry : panvadere_data) {
-            bool is_infected = std::get<2>(entry);
-            if (is_infected) {
-                amount_of_infected++;
-            }
-        }
+        // size_t amount_of_infected = 0;
+        // for (const auto& entry : panvadere_data) {
+        //     bool is_infected = std::get<2>(entry);
+        //     if (is_infected) {
+        //         amount_of_infected++;
+        //     }
+        // }
 
-        auto event_map_copy = event_map;
-        //shuffle the event_map_copy to randomize the household mapping
-        std::vector<std::pair<uint32_t, uint32_t>> event_map_vector(event_map_copy.begin(), event_map_copy.end());
-        std::shuffle(event_map_vector.begin(), event_map_vector.end(), rng);
+        // auto event_map_copy = event_map;
+        // //shuffle the event_map_copy to randomize the household mapping
+        // std::vector<std::pair<uint32_t, uint32_t>> event_map_vector(event_map_copy.begin(), event_map_copy.end());
+        // std::shuffle(event_map_vector.begin(), event_map_vector.end(), rng);
 
-        // take amount_of_infected households from the shuffled event_map_vector
-        for (size_t i = 0; i < amount_of_infected && i < event_map_vector.size(); ++i) {
-            household_infections.push_back(event_map_vector[i].second);
+        // // take amount_of_infected households from the shuffled event_map_vector
+        // for (size_t i = 0; i < amount_of_infected && i < event_map_vector.size(); ++i) {
+        //     household_infections.push_back(event_map_vector[i].second);
+        // }
+
+        std::vector<uint32_t> return_vector;
+        mio::unused(rng); // Avoid unused variable warning
+        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
+        return_vector = {0, 4, 9, 13, 18, 20, 25, 1, 5, 10, 14, 21, 26, 27};
+        for (size_t i = 0; i < return_vector.size(); ++i) {
+            household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
         }
 
         break;

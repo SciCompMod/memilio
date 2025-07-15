@@ -146,7 +146,6 @@ def load_h5_results(base_path, percentile):
 
 def plot_infections_loc_types_average(
         path_to_loc_types,
-        start_date='2021-03-01',
         colormap='Set1',
         smooth_sigma=1,
         rolling_window=1,
@@ -154,7 +153,6 @@ def plot_infections_loc_types_average(
     """ Plots rolling sum of new infections per 24 hours location type for the median run.
 
     @param[in] base_path Path to results directory.
-    @param[in] start_date Start date as string.
     @param[in] colormap Matplotlib colormap.
     @param[in] smooth_sigma Sigma for Gaussian smoothing.
     @param[in] rolling_window Window size for rolling sum.
@@ -183,58 +181,21 @@ def plot_infections_loc_types_average(
         plt.plot(time[0::rolling_window], y, color=color, linewidth=2.5)
 
     plt.legend(list(location_type_labels.values()))
-    _format_x_axis(time, start_date, xtick_step)
-    plt.xlabel('Date')
+    _format_x_axis_days(time, xtick_step)
+    plt.xlabel('Days')
     plt.ylabel('Number of individuals')
-    plt.show()
 
-
-def plot_infection_states_results(
-        path_to_infection_states,
-        start_date='2021-03-01',
-        colormap='Set1',
-        xtick_step=150,
-        show90=False
-):
-    """ Loads and plots infection state results. 
-
-    @param[in] path_to_infection_states Path to results directory containing infection state data.
-    @param[in] start_date Start date as string (YYYY-MM-DD format).
-    @param[in] colormap Matplotlib colormap name.
-    @param[in] xtick_step Step size for x-axis ticks.
-    @param[in] show90 If True, plot 90% percentile (5% and 95%) in addition to 50% percentile.
-    """
-
-    # Load data
-    p50 = load_h5_results(path_to_infection_states, "p50")
-    p25 = load_h5_results(path_to_infection_states, "p25")
-    p75 = load_h5_results(path_to_infection_states, "p75")
-    time = p50['Time']
-    total_50 = p50['Total']
-    total_25 = p25['Total']
-    total_75 = p75['Total']
-    p05 = p95 = None
-    total_05 = total_95 = None
-    if show90:
-        total_95 = load_h5_results(path_to_infection_states, "p95")
-        total_05 = load_h5_results(path_to_infection_states, "p05")
-        p95 = total_95['Total']
-        p05 = total_05['Total']
-
-    plot_infection_states_by_age_group(
-        time, p50, p25, p75, colormap,
-        p05_bs=total_05 if show90 else None,
-        p95_bs=total_95 if show90 else None,
-        show90=show90
-    )
-    plot_infection_states(time, total_50, total_25,
-                          total_75, start_date, colormap, xtick_step,
-                          y05=p05, y95=p95, show_90=show90)
+    # Save the plot to parent folder
+    output_dir = os.path.dirname(path_to_loc_types)
+    output_file = os.path.join(output_dir, "infection_location_types.png")
+    plt.savefig(output_file)
+    print(f"Plot saved to {output_file}")
+    plt.close()
 
 
 def plot_infection_states(
         x, y50, y25, y75,
-        start_date='2021-03-01',
+        path_to_infection_states,
         colormap='Set1',
         xtick_step=150,
         y05=None, y95=None, show_90=False):
@@ -244,6 +205,7 @@ def plot_infection_states(
     @param[in] y50 50th percentile data array.
     @param[in] y25 25th percentile data array.
     @param[in] y75 75th percentile data array.
+    @param[in] path_to_infection_states Path to infection states directory.
     @param[in] start_date Start date as string (YYYY-MM-DD format).
     @param[in] colormap Matplotlib colormap name.
     @param[in] xtick_step Step size for x-axis ticks.
@@ -284,14 +246,20 @@ def plot_infection_states(
                              # More transparent
                              alpha=0.25, color=color_plot[i])
 
-    _format_x_axis(x, start_date, xtick_step)
-    plt.xlabel('Date')
+    _format_x_axis_days(x, xtick_step)
+    plt.xlabel('Days')
     plt.ylabel('Number of individuals')
-    plt.show()
+
+    # Save the plot to parent folder
+    output_dir = os.path.dirname(path_to_infection_states)
+    output_file = os.path.join(output_dir, "infection_states.png")
+    plt.savefig(output_file)
+    print(f"Plot saved to {output_file}")
+    plt.close()
 
 
 def plot_infection_states_by_age_group(
-    x, p50_bs, p25_bs, p75_bs, colormap='Set1',
+    x, p50_bs, p25_bs, p75_bs, path_to_infection_states, colormap='Set1',
     p05_bs=None, p95_bs=None, show90=False
 ):
     """ Plots infection states for each age group, with optional 90% percentile. 
@@ -300,6 +268,7 @@ def plot_infection_states_by_age_group(
     @param[in] p50_bs Dictionary containing 50th percentile data for all age groups.
     @param[in] p25_bs Dictionary containing 25th percentile data for all age groups.
     @param[in] p75_bs Dictionary containing 75th percentile data for all age groups.
+    @param[in] path_to_infection_states Path to infection states directory.
     @param[in] colormap Matplotlib colormap name.
     @param[in] p05_bs Dictionary containing 5th percentile data for all age groups (optional).
     @param[in] p95_bs Dictionary containing 95th percentile data for all age groups (optional).
@@ -345,7 +314,54 @@ def plot_infection_states_by_age_group(
         'Infection states per age group with 50%' + string_short + ' percentile',
         fontsize=16)
 
-    plt.show()
+    # Save the plot to parent folder
+    output_dir = os.path.dirname(path_to_infection_states)
+    output_file = os.path.join(output_dir, "infection_states_by_age_group.png")
+    plt.savefig(output_file)
+    print(f"Plot saved to {output_file}")
+    plt.close()
+
+
+def plot_infection_states_results(
+        path_to_infection_states,
+        colormap='Set1',
+        xtick_step=150,
+        show90=False
+):
+    """ Loads and plots infection state results. 
+
+    @param[in] path_to_infection_states Path to results directory containing infection state data.
+    @param[in] start_date Start date as string (YYYY-MM-DD format).
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] show90 If True, plot 90% percentile (5% and 95%) in addition to 50% percentile.
+    """
+
+    # Load data
+    p50 = load_h5_results(path_to_infection_states, "p50")
+    p25 = load_h5_results(path_to_infection_states, "p25")
+    p75 = load_h5_results(path_to_infection_states, "p75")
+    time = p50['Time']
+    total_50 = p50['Total']
+    total_25 = p25['Total']
+    total_75 = p75['Total']
+    p05 = p95 = None
+    total_05 = total_95 = None
+    if show90:
+        total_95 = load_h5_results(path_to_infection_states, "p95")
+        total_05 = load_h5_results(path_to_infection_states, "p05")
+        p95 = total_95['Total']
+        p05 = total_05['Total']
+
+    plot_infection_states_by_age_group(
+        time, p50, p25, p75, path_to_infection_states, colormap,
+        p05_bs=total_05 if show90 else None,
+        p95_bs=total_95 if show90 else None,
+        show90=show90
+    )
+    plot_infection_states(time, total_50, total_25,
+                          total_75, path_to_infection_states, colormap, xtick_step,
+                          y05=p05, y95=p95, show_90=show90)
 
 
 def _plot_state(ax, x, y50, y25, y75, color, title, y05=None, y95=None, show90=False):
@@ -362,14 +378,10 @@ def _plot_state(ax, x, y50, y25, y75, color, title, y05=None, y95=None, show90=F
     ax.set_title(title)
 
 
-def _format_x_axis(x, start_date, xtick_step):
-    """ Helper to format x-axis as dates. """
-    start = datetime.strptime(start_date, '%Y-%m-%d')
-    xx = [start + pd.Timedelta(days=int(i)) for i in x]
-    xx_str = [dt.strftime('%Y-%m-%d') for dt in xx]
+def _format_x_axis_days(x, xtick_step):
+    """ Helper to format x-axis as days. """
     plt.gca().set_xticks(x[::xtick_step])
-    plt.gca().set_xticklabels(xx_str[::xtick_step])
-    plt.gcf().autofmt_xdate()
+    plt.gca().set_xticklabels([int(day) for day in x[::xtick_step]])
 
 
 def main():
@@ -386,30 +398,37 @@ def main():
                         default='Set1', help="Matplotlib colormap")
     parser.add_argument("--xtick-step", type=int,
                         default=150, help="Step for x-axis ticks (usually hours)")
-    parser.add_argument("--90percentile", action="store_true",
+    parser.add_argument("--s90percentile", action="store_true",
                         help="If set, plot 90% percentile as well")
     args = parser.parse_args()
 
-    path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result"
+    print("Arguments received:")
+    print(f"Path to infection states: {args.path_to_infection_states}")
+    print(f"Path to location types: {args.path_to_loc_types}")
+    if args.path_to_infection_states:
+        plot_infection_states_results(
+            path_to_infection_states=args.path_to_infection_states,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step,
+            show90=args.s90percentile
+        )
 
-    # plot_infection_states_results(
-    #     path_to_infection_states=path + "/infection_state_per_age_group",
-    #     start_date=args.start_date,
-    #     colormap=args.colormap,
-    #     xtick_step=args.xtick_step,
-    #     show90=True
-    # )
-    plot_infections_loc_types_average(
-        path_to_loc_types=path + "/infection_per_location_type_per_age_group",
-        start_date=args.start_date,
-        colormap=args.colormap,
-        xtick_step=args.xtick_step)
+    if args.path_to_loc_types:
+        plot_infections_loc_types_average(
+            path_to_loc_types=args.path_to_loc_types,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step)
 
     if not args.path_to_infection_states and not args.path_to_loc_types:
         print("Please provide a path to infection states or location types results.")
 
-    plt.show()
-
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 1:
+        print("No arguments provided. Running in interactive mode.")
+        main()
+    else:
+        print("Running in CLI mode with provided arguments.")
+        main()
+        sys.exit(0)
+    sys.exit(1)

@@ -156,13 +156,6 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
         }
         else if (arg == "--output_dir" && i + 1 < argc) {
             config.output_base_dir = argv[++i];
-            // Ensure the output directory exists
-            if (!fs::exists(config.output_base_dir)) {
-                if (!fs::create_directories(config.output_base_dir)) {
-                    std::cerr << "Error: Could not create output directory '" << config.output_base_dir << "'\n";
-                    exit(1);
-                }
-            }
         }
         else if (arg == "--help") {
             print_help(argv[0]);
@@ -220,8 +213,6 @@ void print_config_summary(const MultiRunConfig& config)
 void print_summary(const MultiRunResults& results)
 {
     std::cout << "\n=== Simulation Summary ===" << std::endl;
-    std::cout << "Event Type: " << EventSimulator::event_type_to_string(results.event_type) << std::endl;
-    std::cout << "Simulation Type: " << EventSimulator::simulation_type_to_string(results.simulation_type) << std::endl;
     std::cout << "Infection Parameter K: " << results.infection_parameter_k << std::endl;
     std::cout << "=========================" << std::endl;
 }
@@ -245,8 +236,10 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     BOOST_OUTCOME_TRY(auto results, MultiRunSimulator::run_multi_simulation(config));
 
     // Save results
-    std::string result_dir = config.output_base_dir + "/results_" + currentDateTime();
-    BOOST_OUTCOME_TRY(MultiRunSimulator::save_multi_run_results(results, result_dir));
+    if (config.output_base_dir == Config::DEFAULT_OUTPUT_DIR) {
+        config.output_base_dir = config.output_base_dir + "/results_" + currentDateTime();
+    }
+    BOOST_OUTCOME_TRY(MultiRunSimulator::save_multi_run_results(results, config.output_base_dir));
 
     // Print final results
     auto end_time       = std::chrono::high_resolution_clock::now();
@@ -256,7 +249,7 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
 
     std::cout << "\n✓ Multi-run simulation completed successfully!" << std::endl;
     std::cout << "Total execution time: " << total_duration.count() << " seconds" << std::endl;
-    std::cout << "Results saved to: " << result_dir << std::endl;
+    std::cout << "Results saved to: " << config.output_base_dir << std::endl;
     std::cout << "Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
 
     return mio::success();

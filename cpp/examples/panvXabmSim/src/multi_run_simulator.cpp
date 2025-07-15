@@ -104,15 +104,6 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_age_group, ensemble_params, {0},
                                    base_dir + "/infection_state_per_age_group", false, true));
 
-    //See if last_result folder exists in parent directory
-    fs::path parent_dir      = fs::path(base_dir).parent_path();
-    fs::path last_result_dir = parent_dir / "last_result";
-
-    if (fs::exists(last_result_dir)) {
-        // If it exists, copy the current result folder to last_result
-        BOOST_OUTCOME_TRY(copy_result_folder(base_dir, last_result_dir));
-    }
-
     return mio::success();
 }
 
