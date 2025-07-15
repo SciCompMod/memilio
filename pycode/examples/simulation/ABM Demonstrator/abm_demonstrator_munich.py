@@ -519,7 +519,7 @@ def save_persons(trip_file):
 
         school_zone = -2
         school_id = -2
-        ### Assign school to ages 5 to 14###
+        ### Assign school to ages 5 to 15###
         if (row['age'] > 4 and row['age'] < 16):
             # Get all schools the person visits sorted by number of trips to that school
             schools = locs[(locs['puid'] == row['puid']) & (
@@ -577,6 +577,8 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
     with open(mapping_path) as f:
         d = dict(x.rstrip().split(None, 1) for x in f)
     areas = geopandas.read_file(wastewater_path)
+    areas.to_crs(epsg=32632)
+    areas["area"] = areas.geometry.area / 1_000_000
     new_dict = {}
     new_dict2 = {}
     for traffic_cell_id in d.keys():
@@ -590,10 +592,12 @@ def map_traffic_cell_to_wastewater_area(mapping_path, wastewater_path, new_file,
             # new_key = 'x' + traffic_cell_id
             # new_dict[new_key] = d[traffic_cell_id].split(' ')
         else:
-            Id_tan = np.unique(
-                areas[areas['id_n'] == int(traffic_cell_id)]['ID_TAN'])
+            Id_tan = areas[areas['id_n'] == int(traffic_cell_id)][[
+                'ID_TAN', 'area']]
+            weights = Id_tan['area'] / Id_tan['area'].sum()
             for loc in d[traffic_cell_id].split(' '):
-                new_key = str(random.choice(Id_tan))
+                ww_area = np.random.choice(Id_tan['ID_TAN'], p=weights)
+                new_key = str(ww_area)
                 if (new_key in new_dict):
                     new_dict[new_key].append(loc)
                 else:
@@ -683,7 +687,7 @@ def run_abm_simulation(sim_num):
     # starting time point
     t0 = abm.TimePoint(0)
     # end time point of simulation
-    tmax = t0 + abm.days(90)
+    tmax = t0 + abm.days(92)
     # create simulation with starting timepoint and number of age groups
     sim = abm.Simulation(t0, num_age_groups)
     # set seeds for simulation
