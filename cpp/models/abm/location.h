@@ -241,7 +241,7 @@ public:
      * @param[in] num_agegroups The number of age groups in the model.
      * @param[in] params Parameters of the Model.
      */
-    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups, const Parameters& params);
+    void cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups);
 
     /**
      * @brief Get the Location specific Infection parameters.

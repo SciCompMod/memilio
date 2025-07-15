@@ -180,7 +180,7 @@ void Location::adjust_contact_rates(size_t num_agegroups)
     }
 }
 
-void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups, const Parameters& params)
+void Location::cache_exposure_rates(TimePoint t, TimeSpan dt, size_t num_agegroups)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
