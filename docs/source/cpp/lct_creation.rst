@@ -4,16 +4,16 @@ LCT model creation
 The mathematical model
 ----------------------
 
-Before implementing a model in MEmilio, we need to do a some math, in particular, define an initial value problem
+Before implementing a model in MEmilio, we need to do some math, in particular, define an initial value problem
 given by a system of ordinary differential equations. In the here considered example, we consider a SIRD model where we 
-divide the Infectious compartment into :math`n` subcompartments. The model is defined by
+divide the Infectious compartment into :math:`n` subcompartments. The model is defined by
 
 .. math::  
 
     \begin{aligned}
-        S'(t) & = -\rho\phi\ \frac{S(t)*I(t)}{N_{\perp D}} \\
-        I_1'(t) & = \rho\phi\ \frac{S(t)*I(t)}{N_{\perp D}} - \frac{n}{T_I}I_1(t) \\
-        I_j'(t) & = \frac{n}{T_I}I_{j-1}(t) - \frac{n}{T_I}I_j(t) \quad \text{for } j\in\{2,\dots,n}\\
+        S'(t) & = -\rho\phi\ \frac{S(t)I(t)}{N_{\perp D}} \\
+        I_1'(t) & = \rho\phi\ \frac{S(t)I(t)}{N_{\perp D}} - \frac{n}{T_I}I_1(t) \\
+        I_j'(t) & = \frac{n}{T_I}I_{j-1}(t) - \frac{n}{T_I}I_j(t) \quad \text{for } j\in\{2,\dots,n\}\\
         R'(t) & = \frac{\mu_R}{T_I}I(t) \\
         D'(t) & = \frac{\mu_D}{T_I}I(t) \\
     \end{aligned}
@@ -21,7 +21,7 @@ divide the Infectious compartment into :math`n` subcompartments. The model is de
 with :math:`I(t) = \sum_{j=1}^n I_j(t)` and some initial values for :math:`t=0`. Here :math:`N_{\perp D} := S(t) + I(t) + R(t)`.
 
 This type of model belongs to the class of compartmental models because the model population is represented by discrete infection
-states **S** usceptible, **I** nfectious, **R** ecovered, **D** eceased, also called compartments.
+states **S**usceptible, **I**nfectious, **R**ecovered, **D**eceased, also called compartments.
 
 Infection states
 ~~~~~~~~~~~~~~~~
@@ -46,7 +46,7 @@ Parameters
 
 Next, we define the parameters in "parameters.h", which consist of a struct for each constant used in the mathematical
 model. This struct must define the data type, name and default value of the constant. For example, for the time a
-person stays infectious :math:`T_I` we define a struct
+person stays infectious :math:`T_I` we define a struct:
 
 .. code-block:: cpp
 
@@ -67,23 +67,23 @@ person stays infectious :math:`T_I` we define a struct
 
 and for the contact rate :math:`\phi` a struct
 
-We also define a parameter ``ContactPatterns`` determining the contacts of the different groups by 
+We also define a parameter ``ContactPatterns`` determining the contacts of the different groups by:
 
 .. code-block:: cpp
 
     struct ContactPatterns {
-    using Type = UncertainContactMatrix<ScalarType>;
+        using Type = UncertainContactMatrix<ScalarType>;
 
-    static Type get_default()
-    {
-        mio::ContactMatrixGroup contact_matrix(1, 1);
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
-        return Type(contact_matrix);
-    }
-    static std::string name()
-    {
-        return "ContactPatterns";
-    }
+        static Type get_default()
+        {
+            mio::ContactMatrixGroup contact_matrix(1, 1);
+            contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
+            return Type(contact_matrix);
+        }
+        static std::string name()
+        {
+            return "ContactPatterns";
+        }
     }; 
 
 Avoid using the mathematical symbols of the constant as names for the struct. Their connection can be noted in the
@@ -144,12 +144,13 @@ Now we can define the model as a **CompartmentalModel** in the file model.h:
             const auto N = y[InfectionState::Susceptible] + y[InfectionState::Infectious] +
                            y[InfectionState::Recovered];
 
-            dydt[InfectionState::Susceptible] = params.template get<TransmissionRisk<FP>>() *
-                                                params.template get<ContactRate<FP>>() *
-                                                y[InfectionState::Susceptible] * y[InfectionState::Infectious] / N;
+            dydt[InfectionState::Susceptible] = -params.template get<TransmissionRisk<FP>>() *
+                                                 params.template get<ContactRate<FP>>() *
+                                                 y[InfectionState::Susceptible] * y[InfectionState::Infectious] / N;
             
             . . .
         }
+    };
 
 Note that this class has a template parameter **LctStates** that defines the number of subcompartments per infection state. 
 For LCT models, the class **CompartmentalModel** requires the following template arguments:

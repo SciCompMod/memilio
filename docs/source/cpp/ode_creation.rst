@@ -146,7 +146,7 @@ Now we can define the model:
             const auto N = y[InfectionState::Susceptible] + y[InfectionState::Infectious] +
                            y[InfectionState::Recovered];
 
-            dydt[InfectionState::Susceptible] = params.template get<TransmissionRisk<FP>>() *
+            dydt[InfectionState::Susceptible] = -params.template get<TransmissionRisk<FP>>() *
                                                 params.template get<ContactRate<FP>>() *
                                                 y[InfectionState::Susceptible] * y[InfectionState::Infectious] / N;
             

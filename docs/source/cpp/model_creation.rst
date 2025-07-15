@@ -10,5 +10,5 @@ Here we collect information on how to create models.
    Ordinary differential equations <ode_creation>
    Linear Chain Trick <lct_creation>
    Stochastic-differential equations <sde_creation>
-   Integro-differenatial equations <ide_creation>
+   Integro-differential equations <ide_creation>
     
