@@ -23,7 +23,7 @@ add_library(memilio
     geography/regions.cpp
     epidemiology/simulation_day.h
     geography/holiday_data.ipp
-    compartments/compartmentalmodel.h
+    compartments/compartmental_model.h
     compartments/flow_model.h
     compartments/flow_simulation_base.h
     compartments/flow_simulation.h
@@ -44,6 +44,8 @@ add_library(memilio
     io/history.h
     io/mobility_io.h
     io/mobility_io.cpp
+    io/parameters_io.h
+    io/parameters_io.cpp
     io/result_io.h
     io/result_io.cpp
     io/epi_data.h
@@ -112,6 +114,7 @@ add_library(memilio
     utils/mioomp.cpp
     utils/string_literal.h
     utils/type_list.h
+    utils/base_dir.h
 )
 
 target_include_directories(memilio PUBLIC

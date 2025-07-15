@@ -20,7 +20,7 @@
 #ifndef MIO_COMPARTMENTS_STOCHASTIC_MODEL_H
 #define MIO_COMPARTMENTS_STOCHASTIC_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/flow_model.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/random_number_generator.h"

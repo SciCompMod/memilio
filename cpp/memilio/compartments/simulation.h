@@ -20,7 +20,7 @@
 #ifndef MIO_COMPARTMENTS_SIMULATION_H
 #define MIO_COMPARTMENTS_SIMULATION_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/simulation_base.h"
 #include "memilio/math/integrator.h"
 #include "memilio/utils/metaprogramming.h"
