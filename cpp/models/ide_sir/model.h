@@ -103,8 +103,8 @@ public:
         return m_gregory_order;
     }
 
-    ScalarType sum_part1_term(size_t n, size_t j, ScalarType input);
-    ScalarType sum_part2_term(size_t n, size_t j, ScalarType input);
+    ScalarType sum_part1_weight(size_t n, size_t j);
+    ScalarType sum_part2_weight(size_t n, size_t j);
 
     ScalarType fixed_point_function(ScalarType s, ScalarType dt);
 
@@ -203,12 +203,12 @@ public:
     size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-10,
                      size_t max_iterations = 100);
 
-    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, size_t iter_counter);
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index);
 
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);
 
-    void compute_I_and_R(ScalarType dt);
+    void compute_I_and_R(ScalarType dt, size_t t0_index);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);

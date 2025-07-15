@@ -148,6 +148,26 @@ public:
     }
 
     /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    TimeSeries<ScalarType> get_flows()
+    {
+        return m_model->flows;
+    }
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    const TimeSeries<ScalarType>& get_flows() const
+    {
+        return m_model->flows;
+    }
+
+    /**
      * @brief returns the simulation model used in simulation.
      */
     const ModelMessinaExtended& get_model() const
@@ -224,6 +244,26 @@ public:
     }
 
     /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    TimeSeries<ScalarType> get_flows()
+    {
+        return m_model->flows;
+    }
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    const TimeSeries<ScalarType>& get_flows() const
+    {
+        return m_model->flows;
+    }
+
+    /**
      * @brief returns the simulation model used in simulation.
      */
     const ModelMessinaExtendedDetailedInit& get_model() const
@@ -275,7 +315,7 @@ private:
 //     {
 //     }
 
-//     /** 
+//     /**
 //      * Run the simulation from the current time to tmax.
 //      * @param tmax Time to stop.
 //      */
@@ -338,7 +378,7 @@ private:
 
 //     /**
 //      * @brief get the time step of the simulation.
-//      * 
+//      *
 //      */
 //     ScalarType get_dt()
 //     {

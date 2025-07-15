@@ -63,26 +63,16 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
         // we are setting init_populations differently.
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
 
-        // std::cout << "Num time points groundtruth: " << result_groundtruth.get_num_time_points() << std::endl;
-
         if (result_groundtruth.get_num_time_points() == 0) {
             // Initialize first (gregory_order-1) time points with constant values.
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = S0;
             vec_init[(size_t)mio::isir::InfectionState::Infected]    = I0;
             vec_init[(size_t)mio::isir::InfectionState::Recovered]   = R0;
-            // Add time points S_0, S_1, S_{n0-1} to init_populations as these values are assumed to be known in the groundtruth.
+            // Add time point t0.
             init_populations.add_time_point(0, vec_init);
-            while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
-                init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
-            }
         }
         else {
-            // Initialize first (gregory_order-1) time points based on groundtruth.
-            ScalarType dt_groundtruth = result_groundtruth.get_time(1) - result_groundtruth.get_time(0);
-            // std::cout << "dt groundtruth: " << dt_groundtruth << std::endl;
-            size_t groundtruth_index = size_t(dt / dt_groundtruth);
-            // std::cout << "groundtruth_index: " << groundtruth_index << std::endl;
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
 
@@ -95,16 +85,6 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
                 vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
             }
             init_populations.add_time_point(0, vec_init);
-
-            // Add values for t_1,...,t_{n0-1}.
-            while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
-                // std::cout << "Init time: " << init_populations.get_last_time() << std::endl;
-                for (size_t compartment : compartments) {
-                    vec_init[compartment] = result_groundtruth.get_value(
-                        size_t(init_populations.get_num_time_points() * groundtruth_index))[compartment];
-                }
-                init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
-            }
         }
 
         // Initialize model.
@@ -170,19 +150,19 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {5};
+    std::vector<ScalarType> ide_exponents_groundtruth = {1};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
         simulate_ide(ide_exponents_groundtruth, gregory_order_groundtruth, result_dir);
 
-    // Simulate with larger timesteps and use result_groundtruth for initialization.
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
-    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+    // // Simulate with larger timesteps and use result_groundtruth for initialization.
+    // std::vector<size_t> gregory_orders    = {1, 2, 3};
+    // std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
 
-    for (size_t gregory_order : gregory_orders) {
-        std::cout << "Using Gregory order = " << gregory_order << std::endl;
-        mio::IOResult<mio::TimeSeries<ScalarType>> result =
-            simulate_ide(ide_exponents, gregory_order, result_dir, result_groundtruth.value());
-    }
+    // for (size_t gregory_order : gregory_orders) {
+    //     std::cout << "Using Gregory order = " << gregory_order << std::endl;
+    //     mio::IOResult<mio::TimeSeries<ScalarType>> result =
+    //         simulate_ide(ide_exponents, gregory_order, result_dir, result_groundtruth.value());
+    // }
 }

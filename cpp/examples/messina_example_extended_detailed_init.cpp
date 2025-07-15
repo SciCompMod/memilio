@@ -76,7 +76,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] = S0;
             vec_init[(size_t)mio::isir::InfectionState::Infected]    = I0;
             vec_init[(size_t)mio::isir::InfectionState::Recovered]   = R0;
-            // Add time points S_0, S_1, S_{n0-1} to init_populations as these values are assumed to be known in the groundtruth.
+            // Add time points from t_init to t0 to init_populations.
             init_populations.add_time_point(t_init, vec_init);
             while (init_populations.get_last_time() < t0 * dt - 1e-10) {
                 init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
@@ -100,9 +100,8 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             }
             init_populations.add_time_point(t_init, vec_init);
 
-            // Add values for t_1,...,t_{n0-1}.
-            while (init_populations.get_last_time() < t0 * dt - 1e-10) {
-                // std::cout << "Init time: " << init_populations.get_last_time() << std::endl;
+            // Add values for t_init,...,t0..
+            while (init_populations.get_last_time() < t0 - 1e-10) {
                 for (size_t compartment : compartments) {
                     vec_init[compartment] = result_groundtruth.get_value(
                         size_t(init_populations.get_num_time_points() * groundtruth_index))[compartment];
@@ -111,15 +110,13 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             }
         }
 
-        std::cout << "init last time: " << init_populations.get_last_time() << std::endl;
-
         // Initialize model.
         mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order);
 
-        // mio::NormalDistributionDensity normaldensity(0.4, 0.6);
-        // mio::StateAgeFunctionWrapper dist(normaldensity);
-        mio::ExponentialSurvivalFunction exp(2.);
-        mio::StateAgeFunctionWrapper dist(exp);
+        mio::NormalDistributionDensity normaldensity(0.4, 0.6);
+        mio::StateAgeFunctionWrapper dist(normaldensity);
+        // mio::ExponentialSurvivalFunction exp(2.);
+        // mio::StateAgeFunctionWrapper dist(exp);
         std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
 
@@ -176,7 +173,7 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 1;
-    std::vector<ScalarType> ide_exponents_groundtruth = {3};
+    std::vector<ScalarType> ide_exponents_groundtruth = {2};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
