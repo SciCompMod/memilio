@@ -12,7 +12,7 @@ including :doc:`equation-based<cpp/aggregated_models>`, :doc:`agent-based <cpp/i
 and :doc:`hybrid graph-ODE-based models <cpp/graph_metapop>`. It furthermore provides ready-to-use tools for data integration and visualizations. 
 Among the equation-based models, we provide models based on :doc:`ordinary differential equations <cpp/ode>`,
 :doc:`the linear chain trick (LCT), <cpp/lct>` and a recent :doc:`generalized LCT <cpp/glct>`, :doc:`integro-differential equations <cpp/ide>` 
-and :doc:`stochastic differential equations <cpp/sde>`. With simple definitions, models can be spatially or demograpically resolved.
+and :doc:`stochastic differential equations <cpp/sde>`. With simple definitions, models can be spatially or demographically resolved.
 
 The MEmilio framework is written in two languages: C++ and Python. 
 
@@ -172,7 +172,7 @@ Running simulations
 ~~~~~~~~~~~~~~~~~~~~~
 You can run simulations either via the C++ interface where they are originally implemented or via the python bindings. 
 For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <cpp/model_usage>` section.
-In short, the executables for different model instatiations are build as described above and can be run via 
+In short, the executables for different model instantiations are build as described above and can be run via 
 
 .. code-block:: console
 

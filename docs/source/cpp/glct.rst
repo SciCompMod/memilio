@@ -1,10 +1,10 @@
 Generalized Linear Chain Trick model
 ====================================
 
-MEmilio implements a SECIR-type model utilizing the  Generalized Linear Chain Trick (GLCT). This is a generalization of 
-the LCT model and allows for phase-type distributed stay times in the compartments. Phase-type distributions are dense 
+MEmilio implements a SECIR-type model utilizing the Generalized Linear Chain Trick (GLCT). This is a generalization of 
+the LCT model. In contrast to simpler ODE models that assume (possibly unrealistic) exponentially distributed stay times, the GLCT allows for more realistic, phase-type distributed stay times in the compartments through the use of subcompartments. Phase-type distributions are dense 
 in the field of all positive-valued distributions. Therefore, for any positive-valued distribution, a phase-type 
-distribution of arbitrary precision can be identified. Note that the resulting system can still be described by ODEs. 
+distribution of arbitrary precision can be identified. Note that the resulting system can still be described by an ordinary differential equation system. 
 
 In the following, we present the general structure of the GLCT model. The particular model documentation with examples 
 is linked at the bottom of this page.
@@ -12,7 +12,7 @@ is linked at the bottom of this page.
 Infection states
 ----------------
 
-The model contains a list of **InfectionState**\s that define particular features of the subpopulations in the particular state.
+The model contains a list of **InfectionState**s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -43,10 +43,10 @@ a set of contact matrices of arbitrary length and which can represent the differ
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
 group :math:`i` to group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
-to one value if no stratifcation is used. The values can be adjusted during the simulation, e.g., through implementing 
+to one value if no stratification is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
-Parameters can get accessed via ``model.parameters.get<Param<double>>()`` and set via either 
-``model.parameters.get<Param<double>>() = value`` or ``model.parameters.set<Param<double>>(value)``. 
+Parameters can be accessed via ``model.parameters.get<Param<double>>()`` and set via either 
+``model.parameters.set<Param<double>>(value)`` or ``model.parameters.get<Param<double>>() = value``. 
 
 
 Initial conditions
@@ -113,17 +113,6 @@ To visualize the results of a simulation, you can use the Python package :doc:`m
 and its documentation.
 
 In the following, we give detailed explanations of the GLCT-SECIR model.
-
-Introduction
--------------
-
-This model is based on the Generalized Linear Chain Trick (GLCT). 
-
-The GLCT provides the option to use phase-type distributed stay times in the compartments through the use of subcompartments. The Generalized Linear Chain Trick is an extension of the Linear Chain Trick (as the name already suggests). Phase-type distributions are dense in the field of all positive-valued distributions. Therefore, for any positive-valued distribution, a phase-type distribution of arbitrary precision can be identified.
-The normal ODE models have (possibly unrealistic) exponentially distributed stay times.
-The GLCT model can still be described by an ordinary differential equation system.
-
-
 
 List of models
 -----------------------------
