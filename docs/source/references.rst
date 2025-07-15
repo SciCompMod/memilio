@@ -6,7 +6,6 @@ The following gives an overview on (peer-reviewed) publications extending or usi
 Recently Submitted Publications
 --------------------------------------
 
-- Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. arXiv. `arXiv:2502.14428 <https://arxiv.org/abs/2502.14428>`_
 - Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2024). *Towards Graph Neural Network Surrogates Leveraging Mechanistic Expert Knowledge for Pandemic Response*. arXiv. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
 - Wendler AC, Plötzke L, Tritzschak H, Kühn MJ. (2024). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. Submitted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
 - Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Submitted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
@@ -16,6 +15,8 @@ Peer-Reviewed Publications
 --------------------------
 
 **2025**
+
+- Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. *Chaos, Solitons & Fractals* 199:116782. `DOI:10.1016/j.chaos.2025.116782 <https://doi.org/10.1016/j.chaos.2025.116782>`_
 
 - Schmid N, Bicker J , Hofmann AF, Wallrafen-Sam K, Kerkmann D, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
  
