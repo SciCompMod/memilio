@@ -11,6 +11,11 @@ PYTHON3_DIR="$MAIN_PATH/m_v/bin/python3"
 EVENT_TYPE="restaurant_table_equals_household"
 SIM_TYPE="memilio"
 VIZ_OPTIONS="--s90percentile"
+NUM_DAYS=30
+NUM_PERSONS=5000
+
+# BOOL for visualization
+VISUALIZE=true
 
 # Functions
 create_results_dir() {
@@ -22,7 +27,8 @@ create_results_dir() {
 run_simulation() {
     local results_dir=$1
     echo "Running simulation..."
-    $MAIN_EXECUTABLE --event "$EVENT_TYPE" --sim "$SIM_TYPE" --output_dir "$results_dir"
+    $MAIN_EXECUTABLE --event "$EVENT_TYPE" --sim "$SIM_TYPE" --output_dir "$results_dir"    \
+        --days "$NUM_DAYS" --n_persons "$NUM_PERSONS"
     return $?
 }
 
@@ -60,10 +66,15 @@ main() {
     fi
     echo "Simulation completed. Results saved in $results_dir."
     
-    if ! run_visualization "$results_dir"; then
-        echo "Error: Visualization failed."
-        exit 1
+    if [ "$VISUALIZE" = true ]; then
+        echo "Visualization is enabled."
+        if ! run_visualization "$results_dir"; then
+            echo "Error: Visualization failed."
+            exit 1
+        fi
+        echo "Visualization completed successfully."
     fi
+   
 
     if [ -d "$results_dir/infection_state_per_age_group" ]; then
         copy_results_to_last_result "$results_dir"
@@ -71,7 +82,8 @@ main() {
         echo "No infection state results found to copy."
     fi
 
-    echo "Visualization completed successfully."
+    echo "All operations completed successfully."
+  
 }
 
 # Run main function
