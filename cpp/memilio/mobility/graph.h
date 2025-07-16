@@ -211,7 +211,9 @@ public:
     }
 
     /**
-     * @brief range of edges going out from a specific node
+     * @brief Range of edges going pout from a specific node
+     * 
+     * @param node_idx ID of node
      */
     auto out_edges(size_t node_idx)
     {
@@ -220,6 +222,8 @@ public:
 
     /**
      * @brief range of edges going out from a specific node
+     * 
+     * @param node_idx ID of node
      */
     auto out_edges(size_t node_idx) const
     {
