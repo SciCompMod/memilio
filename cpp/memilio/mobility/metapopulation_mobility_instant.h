@@ -434,10 +434,9 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
         // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
         std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
                        condensed_values.data(), [&last_value](const auto& indices) {
-                           return std::accumulate(indices.begin(), indices.end(), 0.0,
-                                                  [&last_value](FP sum, auto i) {
-                                                      return sum + last_value[i];
-                                                  });
+                           return std::accumulate(indices.begin(), indices.end(), 0.0, [&last_value](FP sum, auto i) {
+                               return sum + last_value[i];
+                           });
                        });
 
         // the last value is the sum of commuters
@@ -641,7 +640,7 @@ void MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<Sim>& node_fro
 }
 
 /**
- * edge functor for mobility-based simulation.
+ * node functor for mobility-based simulation.
  * @see SimulationNode::advance
  */
 template <class Sim>
@@ -662,7 +661,8 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 }
 
 /**
- * create a mobility-based simulation.
+ * @brief create a mobility-based simulation.
+ * 
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
  * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
  * Returns are adjusted based on the development in the target node. 
@@ -697,7 +697,7 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& g
 /** @} */
 
 /**
- * Create a graph simulation without mobility.
+ * @brief Create a graph simulation without mobility.
  * 
  * Note that we set the time step of the graph simulation to infinity since we do not require any exchange between the 
  * nodes. Hence, in each node, the simulation runs until tmax when advancing the simulation without interruption.
@@ -706,16 +706,16 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& g
  * @param graph Set up for graph-based simulation.
  * @{
  */
- template <typename FP, class Sim>
- auto make_no_mobility_sim(FP t0, Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
- {
-     using GraphSim =
-         GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
-                         void (*)(FP, FP, mio::MobilityEdge<FP>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
-                         void (*)(FP, FP, mio::SimulationNode<Sim>&)>;
-     return GraphSim(t0, std::numeric_limits<FP>::infinity(), graph, &advance_model<Sim>,
-                     [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
- }
+template <typename FP, class Sim>
+auto make_no_mobility_sim(FP t0, Graph<SimulationNode<Sim>, MobilityEdge<FP>>& graph)
+{
+    using GraphSim =
+        GraphSimulation<Graph<SimulationNode<Sim>, MobilityEdge<FP>>, FP, FP,
+                        void (*)(FP, FP, mio::MobilityEdge<FP>&, mio::SimulationNode<Sim>&, mio::SimulationNode<Sim>&),
+                        void (*)(FP, FP, mio::SimulationNode<Sim>&)>;
+    return GraphSim(t0, std::numeric_limits<FP>::infinity(), graph, &advance_model<Sim>,
+                    [](FP, FP, MobilityEdge<FP>&, SimulationNode<Sim>&, SimulationNode<Sim>&) {});
+}
 
 template <typename FP, class Sim>
 auto make_no_mobility_sim(FP t0, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& graph)
