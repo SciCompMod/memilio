@@ -53,7 +53,7 @@ void bind_mobility_parameter_edge(py::module_& m, std::string const& name)
                                })
         .def_property_readonly(
             "property",
-            [](const mio::Edge<mio::MobilityEdge<double>>& self) -> auto& {
+            [](const mio::Edge<mio::MobilityParameters<double>>& self) -> auto& {
                 return self.property;
             },
             py::return_value_policy::reference_internal);
