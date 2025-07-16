@@ -34,7 +34,7 @@ Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting Started
+   :caption: About
 
    getting_started
    citation
