@@ -680,9 +680,9 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
         sum_first_integral +=
             gregory_weight_first_integral *
             (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) / m_N) *
-            m_transmissionproboncontact_vector[current_time_index - t0_index - j] *
-            m_riskofinffromsymptomatic_vector[current_time_index - t0_index - j] *
-            m_transitiondistribution_vector[current_time_index - t0_index - j] *
+            m_transmissionproboncontact_vector[current_time_index - j] *
+            m_riskofinffromsymptomatic_vector[current_time_index - j] *
+            m_transitiondistribution_vector[current_time_index - j] *
             populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
     }
 
@@ -721,9 +721,9 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
 
         sum_first_integral +=
             (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) / m_N) *
-            gregory_weight * m_transmissionproboncontact_vector[current_time_index - t0_index - j] *
-            m_riskofinffromsymptomatic_vector[current_time_index - t0_index - j] *
-            m_transitiondistribution_vector[current_time_index - t0_index - j] * relevant_susceptibles;
+            gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
+            m_riskofinffromsymptomatic_vector[current_time_index - j] *
+            m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
     }
 
     for (size_t j = std::min(current_time_index - t0_index, m_gregory_order); j <= current_time_index; j++) {
