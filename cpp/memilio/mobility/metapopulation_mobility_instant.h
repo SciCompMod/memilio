@@ -189,7 +189,7 @@ public:
     //@}
 
     /**
-     * Get/Setthe mobility coefficients.
+     * Get/Set the mobility coefficients.
      * The coefficients represent the (time-dependent) percentage of people moving 
      * from one node to another by age and infection compartment. 
      * @{
