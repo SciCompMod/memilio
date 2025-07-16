@@ -5,11 +5,11 @@ MAIN_PATH="/Users/saschakorf/Nosynch/Arbeit/memilio/cpp"
 MAIN_EXECUTABLE="$MAIN_PATH/build/bin/panvXabm"
 SIM_VIZ_SCRIPT="$MAIN_PATH/examples/panvXabmSim/viz/sim_viz.py"
 RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
-PYTHON3_DIR="$MAIN_PATH/m_v/bin/python3"
+PYTHON3_DIR="$MAIN_PATH/examples/panvXabmSim/virt_env/bin/python3"
 
 # Simulation parameters
 EVENT_TYPE="restaurant_table_equals_household"
-SIM_TYPE="memilio"
+SIM_TYPE="panvadere"
 VIZ_OPTIONS="--s90percentile"
 NUM_DAYS=10
 NUM_PERSONS=3000
