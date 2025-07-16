@@ -153,7 +153,8 @@ TEST(TestUtils, RedirectLogger)
     const std::string log{logger.view()};
 
     EXPECT_FALSE(logger.view().empty()); // check that view() did not clear the log
-    EXPECT_THAT(log, testing::EndsWith(msg + "\n")); // check the message. ignore the start with "info" and time
+    EXPECT_THAT(log, testing::HasSubstr("[redirect] [warning] " +
+                                        msg)); // check the message. ignore the time stamp at the start
     EXPECT_EQ(logger.read(), log); // check that view() did not modify the buffer
     EXPECT_TRUE(logger.view().empty()); // check that read() cleared the buffer
 
