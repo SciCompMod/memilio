@@ -140,6 +140,7 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
         columns=dd.EngEng["idCounty"])
 
     gd.write_dataframe(df_pop_export, directory, filename, file_format)
+    gd.write_dataframe(df_pop_export.drop(columns=new_cols[2:]), directory, filename + '_aggregated', file_format)
 
     return df_pop_export
 

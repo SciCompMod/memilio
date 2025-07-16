@@ -368,7 +368,7 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
                 for (auto compartment : mobile_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
-                    mobility_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
+                    mobility_coeffs[size_t(ContactLocation::Home)].get_baseline()[coeff_index] =
                         commuter_coeff_ij * commuting_weights[size_t(age)];
                 }
             }

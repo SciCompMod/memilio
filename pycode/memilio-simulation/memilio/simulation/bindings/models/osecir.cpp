@@ -252,14 +252,14 @@ PYBIND11_MODULE(_simulation_osecir, m)
            const std::string& data_dir, const std::string& population_data_path, bool is_node_for_county,
            mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>>& params_graph,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, double tnt_capacity_factor,
-           int num_days = 0, bool export_time_series = false) {
+           int num_days = 0, bool export_time_series = false, bool rki_age_groups = true) {
             auto result = mio::set_nodes<
                 mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
                 mio::osecir::Model<double>, mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
                 decltype(mio::osecir::read_input_data_county<mio::osecir::Model<double>>), decltype(mio::get_node_ids)>(
                 params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
                 mio::osecir::read_input_data_county<mio::osecir::Model<double>>, mio::get_node_ids, scaling_factor_inf,
-                scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
+                scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series, rki_age_groups);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
@@ -278,12 +278,11 @@ PYBIND11_MODULE(_simulation_osecir, m)
             auto mobile_comp = {mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed,
                                 mio::osecir::InfectionState::InfectedNoSymptoms,
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
-            auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
+            // auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result = mio::set_edges<ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
                                          mio::MobilityCoefficientGroup, mio::osecir::InfectionState,
-                                         decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
-                                                                             mobile_comp, contact_locations_size,
-                                                                             mio::read_mobility_plain, weights);
+                                         decltype(mio::read_mobility_plain)>(
+                mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain, {});
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);

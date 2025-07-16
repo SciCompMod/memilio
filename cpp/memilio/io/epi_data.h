@@ -77,6 +77,9 @@ public:
     double num_recovered;
     double num_deaths;
     Date date;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
+    boost::optional<regions::DistrictId> district_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
@@ -86,12 +89,15 @@ public:
         auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
+        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d) {
-                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d};
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& sid, auto&& cid, auto&& did) {
+                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d, sid, cid, did};
             },
-            num_confirmed, num_recovered, num_deaths, date);
+            num_confirmed, num_recovered, num_deaths, date, state_id, county_id, district_id);
     }
 };
 
@@ -442,7 +448,7 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
  * @return list of population data.
  */
 inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename,
-                                                                       bool rki_age_group = true)
+                                                                       bool rki_age_group = false)
 {
     BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_population_data(jsvalue, rki_age_group);
