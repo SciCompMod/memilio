@@ -101,7 +101,7 @@ The default serialization is intentionally less flexible than the serialize and 
 
 - Every class member itself must be serializable, deserializable and assignable.
 
-This feature is primarily meant to make data classes easy to (de)serialize, avoiding some repitition that is necessary
+This feature is primarily meant to make data classes easy to (de)serialize, avoiding some repetition that is necessary
 when writing both a serialize and deserialize function. It can, however, be used for any class that should be
 serialized in its entirety, and that does not need to make any decisions or computations while doing so. For example,
 default serialization cannot be used if your class has optional members or values, or if one of its members is stored

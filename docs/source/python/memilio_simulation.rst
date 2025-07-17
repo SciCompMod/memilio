@@ -13,8 +13,8 @@ Required Python packages:
 
 * scikit-build
 
-For a succesful build, the development libraries for Python need to be installed, i.e. python3.x-dev. 
-Additionally, as this packages builds upon the MEmilio C++ library, 
+For a successful build, the development libraries for Python need to be installed, i.e. python3.x-dev. 
+Additionally, as this package builds upon the MEmilio C++ library, 
 all dependencies of the main library need to be met. Read more about
 the C++ dependencies at :doc:`cpp  <../getting_started>`. 
 
