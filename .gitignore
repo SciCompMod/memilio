@@ -283,4 +283,6 @@ docs/xml
 docs/source/api
 docs/source/generated
 
+settings.json
+
 # End of https://www.gitignore.io/api/c++,node,python

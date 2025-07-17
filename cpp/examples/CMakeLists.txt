@@ -128,6 +128,10 @@ add_executable(lct_secir_example lct_secir.cpp)
 target_link_libraries(lct_secir_example PRIVATE memilio lct_secir)
 target_compile_options(lct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(lct_secir_2_disease_example lct_secir_2_disease.cpp)
+target_link_libraries(lct_secir_2_disease_example PRIVATE memilio lct_secir_2_disease)
+target_compile_options(lct_secir_2_disease_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(glct_secir_example glct_secir.cpp)
 target_link_libraries(glct_secir_example PRIVATE memilio glct_secir)
 target_compile_options(glct_secir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
