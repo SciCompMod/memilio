@@ -42,18 +42,20 @@ void TripList::add_trips(std::vector<Trip> trip)
     //Also include the person id in the comparison so different persons can make trips at the same time.
     //The same person can only make one trip at the same time.
 
-    // Sort the incoming trips first
     std::sort(trip.begin(), trip.end(), [](auto& trip1, auto& trip2) {
-        return std::tie(trip1.trip_time, trip1.person_id) < std::tie(trip2.trip_time, trip2.person_id);
+        return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
     });
+    // Avoid storage duplication by using in-place merge
+    const size_t original_size = m_trips.size();
 
-    std::vector<Trip> merged_trips;
-    merged_trips.reserve(m_trips.size() + trip.size());
-    std::merge(m_trips.begin(), m_trips.end(), trip.begin(), trip.end(), std::back_inserter(merged_trips),
-               [](auto& trip1, auto& trip2) {
-                   return std::tie(trip1.trip_time, trip1.person_id) < std::tie(trip2.trip_time, trip2.person_id);
-               });
-    m_trips = std::move(merged_trips);
+    // Append the sorted new trips to the end
+    m_trips.insert(m_trips.end(), std::make_move_iterator(trip.begin()), std::make_move_iterator(trip.end()));
+
+    // Use in-place merge to merge the two sorted ranges
+    std::inplace_merge(m_trips.begin(), m_trips.begin() + original_size, m_trips.end(),
+                       [](const auto& trip1, const auto& trip2) {
+                           return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+                       });
 }
 
 } // namespace abm
