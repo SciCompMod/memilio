@@ -90,7 +90,7 @@ TEST_F(TestTestingScheme, runScheme)
     EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(10)), true);
 
     // Deactivate the scheme after the end date.
-    EXPECT_EQ(testing_scheme1.is_active(mio::abm::TimePoint(60 * 60 * 24 * 3 + 200)), false);
+    EXPECT_EQ(testing_scheme1.is_active(end_date + mio::abm::seconds(200)), false);
 
     // Setup a second scheme with different infection states.
     std::vector<mio::abm::InfectionState> test_infection_states2 = {mio::abm::InfectionState::Recovered};
@@ -327,7 +327,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
     // Create PCR test parameters with high accuracy but long wait time
     const auto test_params_pcr = mio::abm::TestParameters{0.95, 0.99, mio::abm::hours(24), mio::abm::TestType::PCR};
 
-    // Create rapid test parameters with lower accuracy but quick results (we need to set this to 24 hours to avoid the person getting healthy randomly)
+    // Create rapid test parameters with lower accuracy (we need to set this to 24 hours to avoid the person getting healthy randomly)
     const auto test_params_rapid = mio::abm::TestParameters{0.8, 0.9, mio::abm::hours(24), mio::abm::TestType::Antigen};
 
     auto testing_criteria = mio::abm::TestingCriteria();
@@ -361,8 +361,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
         .WillOnce(testing::Return(0.5)); // Person complies to isolation
 
     // Test PCR test with infected person
-    bool pcr_infected_result =
-        testing_scheme_pcr.run_and_test(rng_infected, person_infected, start_date + mio::abm::hours(1));
+    bool pcr_infected_result = testing_scheme_pcr.run_and_test(rng_infected, person_infected, start_date);
     EXPECT_EQ(pcr_infected_result, true); // PCR should detect infection
 
     // Reset mock for PCR test with healthy person
@@ -372,8 +371,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
         .WillOnce(testing::Return(0.98)); // PCR test correctly identifies no infection (< specificity 0.99)
 
     // Test PCR test with healthy person
-    bool pcr_healthy_result =
-        testing_scheme_pcr.run_and_test(rng_healthy, person_healthy, start_date + mio::abm::hours(1));
+    bool pcr_healthy_result = testing_scheme_pcr.run_and_test(rng_healthy, person_healthy, start_date);
     EXPECT_EQ(pcr_healthy_result, false); // PCR should correctly identify no infection
 
     // Reset mock for rapid test with infected person
@@ -385,8 +383,7 @@ TEST_F(TestTestingScheme, differentTestTypes)
         .WillOnce(testing::Return(0.1)); // Infected person complies for isolation
 
     // Test rapid test with infected person
-    bool rapid_infected_result =
-        testing_scheme_rapid.run_and_test(rng_infected, person_infected, start_date + mio::abm::hours(1));
+    bool rapid_infected_result = testing_scheme_rapid.run_and_test(rng_infected, person_infected, start_date);
     EXPECT_EQ(rapid_infected_result, true); // Rapid test should detect infection
 }
 
@@ -598,5 +595,5 @@ TEST_F(TestTestingScheme, testCompliance)
 
     // Test at shop with specific ID - should run the scheme
     bool result1 = test_strategy.run_and_check(rng, person, shop1, start_date);
-    EXPECT_EQ(result1, false); // Person should not be allowed to enter after positive test
+    EXPECT_EQ(result1, false); // Person should not be allowed to enter after not complying to the test
 }

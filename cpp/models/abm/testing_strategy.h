@@ -168,8 +168,8 @@ class TestingStrategy
 {
 public:
     /**
-     * @brief List of testing schemes for a given LocationType and LocationId.
-     * A LocalStrategy with id of value LocationId::invalid_id() is used for all Locations with LocationType type.
+     * @brief Vector of testing schemes used as an entry for either LocationId or LocationType in TestingStrategy.
+     * @details The index of the vector is either corresponding to the LocationId or LocationType in the according TestingStrategy vector.
      */
     struct LocalStrategy {
         std::vector<TestingScheme> schemes;
