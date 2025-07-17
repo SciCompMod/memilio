@@ -24,7 +24,7 @@
 #include "lct_secir_2_disease/parameters.h"
 #include "lct_secir_2_disease/infection_state.h"
 #include "memilio/compartments/compartmentalmodel.h"
-#include "memilio/epidemiology/lct_populations.h"
+#include "memilio/epidemiology/lct2d_populations.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
@@ -33,6 +33,7 @@
 /*
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/math/eigen.h"
+#include <cstddef>
 */
 namespace mio
 {
@@ -58,7 +59,7 @@ public:
     using Base = CompartmentalModel<ScalarType, InfectionState, LctPopulations<ScalarType, LctStates...>, Parameters>;
     using typename Base::ParameterSet;
     using typename Base::Populations;
-    static size_t constexpr num_groups = sizeof...(LctStates);
+    static size_t constexpr num_groups = 1; //sizeof...(LctStates);    only one (age) group for the beginning
     static_assert(num_groups >= 1, "The number of LctStates provided should be at least one.");
 
     /// @brief Default constructor.
@@ -169,9 +170,10 @@ private:
                 this->populations.template get_first_index_of_group<Group>(), LctStateGroup::Count));
 
         // Function call for next group if applicable.
+        /* only one (age) group, do not need this
         if constexpr (Group + 1 < num_groups) {
             compress_vector<Group + 1>(subcompartments, compartments);
-        }
+        } */
     }
 
     /**
@@ -193,100 +195,387 @@ private:
         static_assert((Group < num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup = type_at_index_t<Group, LctStates...>;
 
-        size_t first_index_group = this->populations.template get_first_index_of_group<Group>();
-        auto params              = this->parameters;
-        ScalarType flow          = 0;
+        size_t first_index_group =
+            this->populations.template get_first_index_of_group<Group>(); // susceptible compartment?
+        auto params     = this->parameters;
+        ScalarType flow = 0;
 
         // Indices of first subcompartment of the InfectionState for the group in the vectors.
-        size_t Ei_first_index = first_index_group + LctStateGroup::template get_first_index<InfectionState::Exposed>();
-        size_t INSi_first_index =
-            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedNoSymptoms>();
-        size_t ISyi_first_index =
-            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms>();
-        size_t ISevi_first_index =
-            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSevere>();
-        size_t ICri_first_index =
-            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical>();
-        size_t Ri = first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered>();
-        size_t Di = first_index_group + LctStateGroup::template get_first_index<InfectionState::Dead>();
+        size_t Ei_1a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::Exposed_1a>();
+        size_t Ei_2a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::Exposed_2a>();
+        size_t Ei_1b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::Exposed_1b>();
+        size_t Ei_2b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::Exposed_2b>();
+        size_t INSi_1a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedNoSymptoms_1a>();
+        size_t INSi_2a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedNoSymptoms_2a>();
+        size_t INSi_1b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedNoSymptoms_1b>();
+        size_t INSi_2b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedNoSymptoms_2b>();
+        size_t ISyi_1a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms_1a>();
+        size_t ISyi_2a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms_2a>();
+        size_t ISyi_1b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms_1b>();
+        size_t ISyi_2b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSymptoms_2b>();
+        size_t ISevi_1a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSevere_1a>();
+        size_t ISevi_2a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSevere_2a>();
+        size_t ISevi_1b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSevere_1b>();
+        size_t ISevi_2b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedSevere_2b>();
+        size_t ICri_1a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical_1a>();
+        size_t ICri_2a_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical_2a>();
+        size_t ICri_1b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical_1b>();
+        size_t ICri_2b_first_index =
+            first_index_group + LctStateGroup::template get_first_index<InfectionState::InfectedCritical_2b>();
+        size_t Ri_a  = first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered_a>();
+        size_t Ri_b  = first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered_b>();
+        size_t Ri_ab = first_index_group + LctStateGroup::template get_first_index<InfectionState::Recovered_ab>();
+        size_t Di_a  = first_index_group + LctStateGroup::template get_first_index<InfectionState::Dead_a>();
+        size_t Di_b  = first_index_group + LctStateGroup::template get_first_index<InfectionState::Dead_b>();
 
         // Calculate derivative of the Susceptible compartment.
-        interact<Group, 0>(pop, y, t, dydt);
+        // outflow generated by disease a and disease b both
+        double part_a = 0;
+        double part_b = 0;
+        interact<Group, 0>(pop, y, t, dydt, &part_a, &part_b, first_index_group, 2); // S is affected by both diseases
+        // split flow
+        double div_part_both = (part_a + part_b < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (part_a + part_b);
 
-        // Calculate derivative of the Exposed compartment.
-        dydt[Ei_first_index] = -dydt[first_index_group];
-        for (size_t subcomp = 0; subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::Exposed>();
-             subcomp++) {
+        // Start with derivatives of first infections, so 1a and 1b compartments
+
+        // Calculate derivative of the Exposed_1x compartments, split flow from susceptible.
+        // Exposed 1 a:
+        dydt[Ei_1a_first_index] = -dydt[first_index_group] * part_a * div_part_both;
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_1a>(); subcomp++) {
             // Variable flow stores the value of the flow from one subcompartment to the next one.
-            // Ei_first_index + subcomp is always the index of a (sub-)compartment of Exposed and Ei_first_index
+            // Ei_1a_first_index + subcomp is always the index of a (sub-)compartment of Exposed and Ei_1a_first_index
             // + subcomp + 1 can also be the index of the first (sub-)compartment of InfectedNoSymptoms.
-            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::Exposed>() *
-                   (1 / params.template get<TimeExposed>()[Group]) * y[Ei_first_index + subcomp];
-            // Subtract flow from dydt[Ei_first_index + subcomp] and add to next subcompartment.
-            dydt[Ei_first_index + subcomp] -= flow;
-            dydt[Ei_first_index + subcomp + 1] = flow;
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_1a>() *
+                   (1 / params.template get<TimeExposed_a>()[Group]) * y[Ei_1a_first_index + subcomp];
+            // Subtract flow from dydt[Ei_1a_first_index + subcomp] and add to next subcompartment.
+            dydt[Ei_1a_first_index + subcomp] -= flow;
+            dydt[Ei_1a_first_index + subcomp + 1] = flow;
+        }
+        // Exposed 1 b:
+        dydt[Ei_1b_first_index] = -dydt[first_index_group] * part_b * div_part_both;
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_1b>(); subcomp++) {
+            // Variable flow stores the value of the flow from one subcompartment to the next one.
+            // Ei_1a_first_index + subcomp is always the index of a (sub-)compartment of Exposed and Ei_1b_first_index
+            // + subcomp + 1 can also be the index of the first (sub-)compartment of InfectedNoSymptoms.
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_1b>() *
+                   (1 / params.template get<TimeExposed_b>()[Group]) * y[Ei_1b_first_index + subcomp];
+            // Subtract flow from dydt[Ei_1b_first_index + subcomp] and add to next subcompartment.
+            dydt[Ei_1b_first_index + subcomp] -= flow;
+            dydt[Ei_1b_first_index + subcomp + 1] = flow;
         }
 
-        // Calculate derivative of the InfectedNoSymptoms compartment.
+        // Calculate derivative of the InfectedNoSymptoms_1a compartment.
         for (size_t subcomp = 0;
-             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>();
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1a>();
              subcomp++) {
-            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>() *
-                   (1 / params.template get<TimeInfectedNoSymptoms>()[Group]) * y[INSi_first_index + subcomp];
-            dydt[INSi_first_index + subcomp] -= flow;
-            dydt[INSi_first_index + subcomp + 1] = flow;
+            flow =
+                (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1a>() *
+                (1 / params.template get<TimeInfectedNoSymptoms_a>()[Group]) * y[INSi_1a_first_index + subcomp];
+            dydt[INSi_1a_first_index + subcomp] -= flow;
+            dydt[INSi_1a_first_index + subcomp + 1] = flow;
         }
-
-        // Calculate derivative of the InfectedSymptoms compartment.
-        // Flow from last (sub-) compartment of C must be split between
-        // the first subcompartment of InfectedSymptoms and Recovered.
-        dydt[Ri] = dydt[ISyi_first_index] * params.template get<RecoveredPerInfectedNoSymptoms>()[Group];
-        dydt[ISyi_first_index] =
-            dydt[ISyi_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms>()[Group]);
+        // Calculate derivative of the InfectedNoSymptoms_1b compartment.
         for (size_t subcomp = 0;
-             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms>(); subcomp++) {
-            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms>() *
-                   (1 / params.template get<TimeInfectedSymptoms>()[Group]) * y[ISyi_first_index + subcomp];
-            dydt[ISyi_first_index + subcomp] -= flow;
-            dydt[ISyi_first_index + subcomp + 1] = flow;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1b>();
+             subcomp++) {
+            flow =
+                (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1b>() *
+                (1 / params.template get<TimeInfectedNoSymptoms_b>()[Group]) * y[INSi_1b_first_index + subcomp];
+            dydt[INSi_1b_first_index + subcomp] -= flow;
+            dydt[INSi_1b_first_index + subcomp + 1] = flow;
         }
 
+        // Calculate derivative of the InfectedSymptoms_1a compartment.
+        // Flow from last (sub-) compartment of C_1a must be split between
+        // the first subcompartment of InfectedSymptoms_1a and Recovered_a.
+        dydt[Ri_a] = dydt[ISyi_1a_first_index] * params.template get<RecoveredPerInfectedNoSymptoms_a>()[Group];
+        dydt[ISyi_1a_first_index] =
+            dydt[ISyi_1a_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms_a>()[Group]);
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_1a>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_1a>() *
+                   (1 / params.template get<TimeInfectedSymptoms_a>()[Group]) * y[ISyi_1a_first_index + subcomp];
+            dydt[ISyi_1a_first_index + subcomp] -= flow;
+            dydt[ISyi_1a_first_index + subcomp + 1] = flow;
+        }
+        // Calculate derivative of the InfectedSymptoms_1b compartment.
+        // Flow from last (sub-) compartment of C_1b must be split between
+        // the first subcompartment of InfectedSymptoms_1b and Recovered_b.
+        dydt[Ri_b] = dydt[ISyi_1b_first_index] * params.template get<RecoveredPerInfectedNoSymptoms_b>()[Group];
+        dydt[ISyi_1b_first_index] =
+            dydt[ISyi_1b_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms_b>()[Group]);
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_1b>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_1b>() *
+                   (1 / params.template get<TimeInfectedSymptoms_b>()[Group]) * y[ISyi_1b_first_index + subcomp];
+            dydt[ISyi_1b_first_index + subcomp] -= flow;
+            dydt[ISyi_1b_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedSevere_1a compartment.
+        // again split the flow from the last subcompartment of I_1a
+        dydt[Ri_a] += dydt[ISevi_1a_first_index] * (1 - params.template get<SeverePerInfectedSymptoms_a>()[Group]);
+        dydt[ISevi_1a_first_index] =
+            dydt[ISevi_1a_first_index] * params.template get<SeverePerInfectedSymptoms_a>()[Group];
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_1a>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_1a>() *
+                   (1 / params.template get<TimeInfectedSevere_a>()[Group]) * y[ISevi_1a_first_index + subcomp];
+            dydt[ISevi_1a_first_index + subcomp] -= flow;
+            dydt[ISevi_1a_first_index + subcomp + 1] = flow;
+        }
         // Calculate derivative of the InfectedSevere compartment.
-        dydt[Ri] += dydt[ISevi_first_index] * (1 - params.template get<SeverePerInfectedSymptoms>()[Group]);
-        dydt[ISevi_first_index] = dydt[ISevi_first_index] * params.template get<SeverePerInfectedSymptoms>()[Group];
+        // again split the flow from the last subcompartment of I_1b
+        dydt[Ri_b] += dydt[ISevi_1b_first_index] * (1 - params.template get<SeverePerInfectedSymptoms_b>()[Group]);
+        dydt[ISevi_1b_first_index] =
+            dydt[ISevi_1b_first_index] * params.template get<SeverePerInfectedSymptoms_b>()[Group];
         for (size_t subcomp = 0;
-             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>(); subcomp++) {
-            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere>() *
-                   (1 / params.template get<TimeInfectedSevere>()[Group]) * y[ISevi_first_index + subcomp];
-            dydt[ISevi_first_index + subcomp] -= flow;
-            dydt[ISevi_first_index + subcomp + 1] = flow;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_1b>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_1b>() *
+                   (1 / params.template get<TimeInfectedSevere_b>()[Group]) * y[ISevi_1b_first_index + subcomp];
+            dydt[ISevi_1b_first_index + subcomp] -= flow;
+            dydt[ISevi_1b_first_index + subcomp + 1] = flow;
         }
 
         // Calculate derivative of the InfectedCritical compartment.
-        dydt[Ri] += dydt[ICri_first_index] * (1 - params.template get<CriticalPerSevere>()[Group]);
-        dydt[ICri_first_index] = dydt[ICri_first_index] * params.template get<CriticalPerSevere>()[Group];
+        // again split flow from last subcompartment of H_1a between R_a and U_1a
+        dydt[Ri_a] += dydt[ICri_1a_first_index] * (1 - params.template get<CriticalPerSevere_a>()[Group]);
+        dydt[ICri_1a_first_index] = dydt[ICri_1a_first_index] * params.template get<CriticalPerSevere_a>()[Group];
         for (size_t subcomp = 0;
-             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>() - 1;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1a>() - 1;
              subcomp++) {
-            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-                   (1 / params.template get<TimeInfectedCritical>()[Group]) * y[ICri_first_index + subcomp];
-            dydt[ICri_first_index + subcomp] -= flow;
-            dydt[ICri_first_index + subcomp + 1] = flow;
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1a>() *
+                   (1 / params.template get<TimeInfectedCritical_a>()[Group]) * y[ICri_1a_first_index + subcomp];
+            dydt[ICri_1a_first_index + subcomp] -= flow;
+            dydt[ICri_1a_first_index + subcomp + 1] = flow;
         }
+        // Calculate derivative of the InfectedCritical compartment.
+        // again split flow from last subcompartment of H_1b between R_b and U_1b
+        dydt[Ri_b] += dydt[ICri_1b_first_index] * (1 - params.template get<CriticalPerSevere_b>()[Group]);
+        dydt[ICri_1b_first_index] = dydt[ICri_1b_first_index] * params.template get<CriticalPerSevere_b>()[Group];
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1b>() - 1;
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1b>() *
+                   (1 / params.template get<TimeInfectedCritical_b>()[Group]) * y[ICri_1b_first_index + subcomp];
+            dydt[ICri_1b_first_index + subcomp] -= flow;
+            dydt[ICri_1b_first_index + subcomp + 1] = flow;
+        }
+
         // Last flow from InfectedCritical has to be divided between Recovered and Dead.
         // Must be calculated separately in order not to overwrite the already calculated values ​​for Recovered.
-        flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical>() *
-               (1 / params.template get<TimeInfectedCritical>()[Group]) * y[Ri - 1];
-        dydt[Ri - 1] -= flow;
-        dydt[Ri] = dydt[Ri] + (1 - params.template get<DeathsPerCritical>()[Group]) * flow;
-        dydt[Di] = params.template get<DeathsPerCritical>()[Group] * flow;
+        // for 1a
+        flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1a>() *
+               (1 / params.template get<TimeInfectedCritical_a>()[Group]) *
+               y[ICri_1a_first_index +
+                 LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1a>() - 1];
+        dydt[ICri_1a_first_index +
+             LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1a>() - 1] -= flow;
+        dydt[Ri_a] = dydt[Ri_a] + (1 - params.template get<DeathsPerCritical_a>()[Group]) * flow;
+        dydt[Di_a] = params.template get<DeathsPerCritical_a>()[Group] * flow;
+        // for 1b
+        flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1b>() *
+               (1 / params.template get<TimeInfectedCritical_b>()[Group]) *
+               y[ICri_1b_first_index +
+                 LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1b>() - 1];
+        dydt[ICri_1b_first_index +
+             LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_1b>() - 1] -= flow;
+        dydt[Ri_b] = dydt[Ri_b] + (1 - params.template get<DeathsPerCritical_b>()[Group]) * flow;
+        dydt[Di_b] = params.template get<DeathsPerCritical_b>()[Group] * flow;
+
+        // second infection 2x
+
+        // outflow from Recovered_x, people getting infected for the second time
+        double temp_Ra = dydt[Ri_a];
+        interact<Group, 0>(pop, y, t, dydt, &part_a, &part_b, Ri_a, 1); // outflow from R_a is only affected by b
+        double temp_Rb = dydt[Ri_b];
+        interact<Group, 0>(pop, y, t, dydt, &part_a, &part_b, Ri_b, 0); // outflow from R_a is only affected by a
+
+        // Calculate derivative of the Exposed_2x compartments
+        // Exposed 2 a
+        dydt[Ei_2a_first_index] = -(dydt[Ri_b] - temp_Rb);
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_2a>(); subcomp++) {
+            // Variable flow stores the value of the flow from one subcompartment to the next one.
+            // Ei_1a_first_index + subcomp is always the index of a (sub-)compartment of Exposed and Ei_1a_first_index
+            // + subcomp + 1 can also be the index of the first (sub-)compartment of InfectedNoSymptoms.
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_2a>() *
+                   (1 / params.template get<TimeExposed_a>()[Group]) * y[Ei_2a_first_index + subcomp];
+            // Subtract flow from dydt[Ei_1a_first_index + subcomp] and add to next subcompartment.
+            dydt[Ei_2a_first_index + subcomp] -= flow;
+            dydt[Ei_2a_first_index + subcomp + 1] = flow;
+        }
+        // Exposed 2 b
+        dydt[Ei_2b_first_index] = -(dydt[Ri_a] - temp_Ra);
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_2b>(); subcomp++) {
+            // Variable flow stores the value of the flow from one subcompartment to the next one.
+            // Ei_1a_first_index + subcomp is always the index of a (sub-)compartment of Exposed and Ei_1a_first_index
+            // + subcomp + 1 can also be the index of the first (sub-)compartment of InfectedNoSymptoms.
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::Exposed_2b>() *
+                   (1 / params.template get<TimeExposed_b>()[Group]) * y[Ei_2b_first_index + subcomp];
+            // Subtract flow from dydt[Ei_1a_first_index + subcomp] and add to next subcompartment.
+            dydt[Ei_2b_first_index + subcomp] -= flow;
+            dydt[Ei_2b_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedNoSymptoms_2a compartment.
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2a>();
+             subcomp++) {
+            flow =
+                (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2a>() *
+                (1 / params.template get<TimeInfectedNoSymptoms_a>()[Group]) * y[INSi_2a_first_index + subcomp];
+            dydt[INSi_2a_first_index + subcomp] -= flow;
+            dydt[INSi_2a_first_index + subcomp + 1] = flow;
+        }
+        // Calculate derivative of the InfectedNoSymptoms_2b compartment.
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2b>();
+             subcomp++) {
+            flow =
+                (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2b>() *
+                (1 / params.template get<TimeInfectedNoSymptoms_b>()[Group]) * y[INSi_2b_first_index + subcomp];
+            dydt[INSi_2b_first_index + subcomp] -= flow;
+            dydt[INSi_2b_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedSymptoms_2a compartment.
+        // Flow from last (sub-) compartment of C_2a must be split between
+        // the first subcompartment of InfectedSymptoms_2a and Recovered_ab.
+        dydt[Ri_ab] = dydt[ISyi_2a_first_index] * params.template get<RecoveredPerInfectedNoSymptoms_a>()[Group];
+        dydt[ISyi_2a_first_index] =
+            dydt[ISyi_2a_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms_a>()[Group]);
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_2a>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_2a>() *
+                   (1 / params.template get<TimeInfectedSymptoms_a>()[Group]) * y[ISyi_2a_first_index + subcomp];
+            dydt[ISyi_2a_first_index + subcomp] -= flow;
+            dydt[ISyi_2a_first_index + subcomp + 1] = flow;
+        }
+        // Calculate derivative of the InfectedSymptoms_2b compartment.
+        // Flow from last (sub-) compartment of C_2b must be split between
+        // the first subcompartment of InfectedSymptoms_2b and Recovered_ab.
+        dydt[Ri_ab] = dydt[ISyi_2b_first_index] * params.template get<RecoveredPerInfectedNoSymptoms_b>()[Group];
+        dydt[ISyi_2b_first_index] =
+            dydt[ISyi_2b_first_index] * (1 - params.template get<RecoveredPerInfectedNoSymptoms_b>()[Group]);
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_2b>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSymptoms_2b>() *
+                   (1 / params.template get<TimeInfectedSymptoms_b>()[Group]) * y[ISyi_2b_first_index + subcomp];
+            dydt[ISyi_2b_first_index + subcomp] -= flow;
+            dydt[ISyi_2b_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedSevere_2a compartment.
+        // again split the flow from the last subcompartment of I_2a
+        dydt[Ri_ab] += dydt[ISevi_2a_first_index] * (1 - params.template get<SeverePerInfectedSymptoms_a>()[Group]);
+        dydt[ISevi_2a_first_index] =
+            dydt[ISevi_2a_first_index] * params.template get<SeverePerInfectedSymptoms_a>()[Group];
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_2a>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_2a>() *
+                   (1 / params.template get<TimeInfectedSevere_a>()[Group]) * y[ISevi_2a_first_index + subcomp];
+            dydt[ISevi_2a_first_index + subcomp] -= flow;
+            dydt[ISevi_2a_first_index + subcomp + 1] = flow;
+        }
+        // Calculate derivative of the InfectedSevere compartment.
+        // again split the flow from the last subcompartment of I_2b
+        dydt[Ri_ab] += dydt[ISevi_2b_first_index] * (1 - params.template get<SeverePerInfectedSymptoms_b>()[Group]);
+        dydt[ISevi_2b_first_index] =
+            dydt[ISevi_2b_first_index] * params.template get<SeverePerInfectedSymptoms_b>()[Group];
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_2b>();
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedSevere_2b>() *
+                   (1 / params.template get<TimeInfectedSevere_b>()[Group]) * y[ISevi_2b_first_index + subcomp];
+            dydt[ISevi_2b_first_index + subcomp] -= flow;
+            dydt[ISevi_2b_first_index + subcomp + 1] = flow;
+        }
+
+        // Calculate derivative of the InfectedCritical compartment.
+        // again split flow from last subcompartment of H_2a between R_ab and U_2a
+        dydt[Ri_ab] += dydt[ICri_2a_first_index] * (1 - params.template get<CriticalPerSevere_a>()[Group]);
+        dydt[ICri_2a_first_index] = dydt[ICri_2a_first_index] * params.template get<CriticalPerSevere_a>()[Group];
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2a>() - 1;
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2a>() *
+                   (1 / params.template get<TimeInfectedCritical_a>()[Group]) * y[ICri_2a_first_index + subcomp];
+            dydt[ICri_2a_first_index + subcomp] -= flow;
+            dydt[ICri_2a_first_index + subcomp + 1] = flow;
+        }
+        // Calculate derivative of the InfectedCritical compartment.
+        // again split flow from last subcompartment of H_1b between R_b and U_1b
+        dydt[Ri_ab] += dydt[ICri_2b_first_index] * (1 - params.template get<CriticalPerSevere_b>()[Group]);
+        dydt[ICri_2b_first_index] = dydt[ICri_2b_first_index] * params.template get<CriticalPerSevere_b>()[Group];
+        for (size_t subcomp = 0;
+             subcomp < LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2b>() - 1;
+             subcomp++) {
+            flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2b>() *
+                   (1 / params.template get<TimeInfectedCritical_b>()[Group]) * y[ICri_2b_first_index + subcomp];
+            dydt[ICri_2b_first_index + subcomp] -= flow;
+            dydt[ICri_2b_first_index + subcomp + 1] = flow;
+        }
+
+        // Last flow from InfectedCritical has to be divided between Recovered and Dead.
+        // Must be calculated separately in order not to overwrite the already calculated values ​​for Recovered.
+        // for 2a
+        flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2a>() *
+               (1 / params.template get<TimeInfectedCritical_a>()[Group]) *
+               y[ICri_2a_first_index +
+                 LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2a>() - 1];
+        dydt[ICri_2a_first_index +
+             LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2a>() - 1] -= flow;
+        dydt[Ri_ab] = dydt[Ri_ab] + (1 - params.template get<DeathsPerCritical_a>()[Group]) * flow;
+        dydt[Di_a]  = params.template get<DeathsPerCritical_a>()[Group] * flow;
+        // for 1b
+        flow = (ScalarType)LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2b>() *
+               (1 / params.template get<TimeInfectedCritical_b>()[Group]) *
+               y[ICri_2b_first_index +
+                 LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2b>() - 1];
+        dydt[ICri_2b_first_index +
+             LctStateGroup::template get_num_subcompartments<InfectionState::InfectedCritical_2b>() - 1] -= flow;
+        dydt[Ri_ab] = dydt[Ri_ab] + (1 - params.template get<DeathsPerCritical_b>()[Group]) * flow;
+        dydt[Di_b]  = params.template get<DeathsPerCritical_b>()[Group] * flow;
 
         // Function call for next group if applicable.
+        /* only one (age) group, do not need this
         if constexpr (Group + 1 < num_groups) {
             get_derivatives_impl<Group + 1>(pop, y, t, dydt);
-        }
+        }*/
     }
 
+    // for calculating flows that are caused by people becoming infected (transmission of infection, therefore needs infectious people)
+    // not just natural progression of the illness that would happen without external forces
     /**
      * @brief Calculates the derivative of the Susceptible compartment for Group1.
      *
@@ -300,44 +589,108 @@ private:
      */
     template <size_t Group1, size_t Group2 = 0>
     void interact(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
-                  ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> dydt) const
+                  ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> dydt, double* part_a, double* part_b,
+                  size_t compartment_index, int which_disease) const
     {
         static_assert((Group1 < num_groups) && (Group1 >= 0) && (Group2 < num_groups) && (Group2 >= 0),
                       "The template parameters Group1 & Group2 should be valid.");
-        using LctStateGroup2            = type_at_index_t<Group2, LctStates...>;
-        size_t Si_1                     = this->populations.template get_first_index_of_group<Group1>();
-        ScalarType infectedNoSymptoms_2 = 0;
-        ScalarType infectedSymptoms_2   = 0;
-        auto params                     = this->parameters;
+        using LctStateGroup2 = type_at_index_t<Group2, LctStates...>;
+        //size_t Si_1                       = this->populations.template get_first_index_of_group<Group1>();
+        ScalarType infectedNoSymptoms_2_a = 0;
+        ScalarType infectedSymptoms_2_a   = 0;
+        ScalarType infectedNoSymptoms_2_b = 0;
+        ScalarType infectedSymptoms_2_b   = 0;
+        auto params                       = this->parameters;
 
         size_t first_index_group2 = this->populations.template get_first_index_of_group<Group2>();
 
-        // Calculate sum of all subcompartments for InfectedNoSymptoms of Group2.
-        infectedNoSymptoms_2 =
+        // Calculate sum of all subcompartments for InfectedNoSymptoms for disease a of Group2.
+        infectedNoSymptoms_2_a =
             pop.segment(first_index_group2 +
-                            LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms>(),
-                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms>())
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_1a>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1a>())
+                .sum() +
+            pop.segment(first_index_group2 +
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_2a>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2a>())
                 .sum();
-        // Calculate sum of all subcompartments for InfectedSymptoms of Group2.
-        infectedSymptoms_2 =
+        // Calculate sum of all subcompartments for InfectedSymptoms for disease a of Group2.
+        infectedSymptoms_2_a =
             pop.segment(first_index_group2 +
-                            LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms>(),
-                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms>())
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_1a>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_1a>())
+                .sum() +
+            pop.segment(first_index_group2 +
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_2a>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_2a>())
+                .sum();
+        // Calculate sum of all subcompartments for InfectedNoSymptoms for disease b of Group2.
+        infectedNoSymptoms_2_b =
+            pop.segment(first_index_group2 +
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_1b>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_1b>())
+                .sum() +
+            pop.segment(first_index_group2 +
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedNoSymptoms_2b>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedNoSymptoms_2b>())
+                .sum();
+        // Calculate sum of all subcompartments for InfectedSymptoms for disease b of Group2.
+        infectedSymptoms_2_a =
+            pop.segment(first_index_group2 +
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_1b>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_1b>())
+                .sum() +
+            pop.segment(first_index_group2 +
+                            LctStateGroup2::template get_first_index<InfectionState::InfectedSymptoms_2b>(),
+                        LctStateGroup2::template get_num_subcompartments<InfectionState::InfectedSymptoms_2b>())
                 .sum();
         // Size of the Subpopulation Group2 without dead people.
         double N_2            = pop.segment(first_index_group2, LctStateGroup2::Count - 1).sum();
         const double divN_2   = (N_2 < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / N_2;
         ScalarType season_val = 1 + params.template get<Seasonality>() *
                                         sin(3.141592653589793 * ((params.template get<StartDay>() + t) / 182.5 + 0.5));
-        dydt[Si_1] += -y[Si_1] * divN_2 * season_val * params.template get<TransmissionProbabilityOnContact>()[Group1] *
-                      params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
-                          static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2)) *
-                      (params.template get<RelativeTransmissionNoSymptoms>()[Group2] * infectedNoSymptoms_2 +
-                       params.template get<RiskOfInfectionFromSymptomatic>()[Group2] * infectedSymptoms_2);
-        // Function call for next interacting group if applicable.
+
+        if (which_disease == 0) { // disease a
+            dydt[compartment_index] +=
+                -y[compartment_index] * divN_2 * season_val *
+                params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
+                    static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2)) *
+                params.template get<TransmissionProbabilityOnContact_a>()[Group1] *
+                (params.template get<RelativeTransmissionNoSymptoms_a>()[Group2] * infectedNoSymptoms_2_a +
+                 params.template get<RiskOfInfectionFromSymptomatic_a>()[Group2] * infectedSymptoms_2_a);
+        }
+        else if (which_disease == 1) { // disease b
+            dydt[compartment_index] +=
+                -y[compartment_index] * divN_2 * season_val *
+                params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
+                    static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2)) *
+                (params.template get<RelativeTransmissionNoSymptoms_b>()[Group2] * infectedNoSymptoms_2_b +
+                 params.template get<RiskOfInfectionFromSymptomatic_b>()[Group2] * infectedSymptoms_2_b);
+        }
+        else if (which_disease == 2) { // both diseases
+            dydt[compartment_index] +=
+                -y[compartment_index] * divN_2 * season_val *
+                params.template get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(t)(
+                    static_cast<Eigen::Index>(Group1), static_cast<Eigen::Index>(Group2)) *
+                (params.template get<TransmissionProbabilityOnContact_a>()[Group1] *
+                     (params.template get<RelativeTransmissionNoSymptoms_a>()[Group2] * infectedNoSymptoms_2_a +
+                      params.template get<RiskOfInfectionFromSymptomatic_a>()[Group2] * infectedSymptoms_2_a) +
+                 params.template get<TransmissionProbabilityOnContact_b>()[Group1] *
+                     (params.template get<RelativeTransmissionNoSymptoms_b>()[Group2] * infectedNoSymptoms_2_b +
+                      params.template get<RiskOfInfectionFromSymptomatic_b>()[Group2] * infectedSymptoms_2_b));
+        }
+        /* only one group, you do not need this
         if constexpr (Group2 + 1 < num_groups) {
             interact<Group1, Group2 + 1>(pop, y, t, dydt);
-        }
+        }*/
+
+        *part_a = params.template get<TransmissionProbabilityOnContact_a>()[Group1] *
+                  (params.template get<RelativeTransmissionNoSymptoms_a>()[Group2] * infectedNoSymptoms_2_a +
+                   params.template get<RiskOfInfectionFromSymptomatic_a>()[Group2] * infectedSymptoms_2_a);
+
+        *part_b = params.template get<TransmissionProbabilityOnContact_b>()[Group1] *
+                  (params.template get<RelativeTransmissionNoSymptoms_b>()[Group2] * infectedNoSymptoms_2_b +
+                   params.template get<RiskOfInfectionFromSymptomatic_b>()[Group2] * infectedSymptoms_2_b);
     }
 
     /**
@@ -358,12 +711,15 @@ private:
                         Group);
             return true;
         }
-        if (LctStateGroup::template get_num_subcompartments<InfectionState::Recovered>() != 1) {
+        if (LctStateGroup::template get_num_subcompartments<InfectionState::Recovered_a>() != 1 ||
+            LctStateGroup::template get_num_subcompartments<InfectionState::Recovered_b>() != 1 ||
+            LctStateGroup::template get_num_subcompartments<InfectionState::Recovered_ab>() != 1) {
             log_warning("Constraint check: The number of subcompartments for Recovered of group {} should be one!",
                         Group);
             return true;
         }
-        if (LctStateGroup::template get_num_subcompartments<InfectionState::Dead>() != 1) {
+        if (LctStateGroup::template get_num_subcompartments<InfectionState::Dead_a>() != 1 ||
+            LctStateGroup::template get_num_subcompartments<InfectionState::Dead_b>() != 1) {
             log_warning("Constraint check: The number of subcompartments for Dead of group {} should be one!", Group);
             return true;
         }

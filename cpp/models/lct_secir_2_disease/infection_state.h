@@ -40,33 +40,33 @@ enum class InfectionState
     InfectedSymptoms_1a   = 3,
     InfectedSevere_1a     = 4,
     InfectedCritical_1a   = 5,
-    // R and D for disease a
-    Recovered_a = 6,
-    Dead_a      = 7,
-    // second infection with disease b
-    Exposed_2b            = 8,
-    InfectedNoSymptoms_2b = 9,
-    InfectedSymptoms_2b   = 10,
-    InfectedSevere_2b     = 11,
-    InfectedCritical_2b   = 12,
-    // R and D for disease b
-    Recovered_b = 13,
-    Dead_b      = 14,
-    // first infection with disease b
-    Exposed_1b            = 15,
-    InfectedNoSymptoms_1b = 16,
-    InfectedSymptoms_1b   = 17,
-    InfectedSevere_1b     = 18,
-    InfectedCritical_1b   = 19,
     // second infection with disease a
-    Exposed_2a            = 20,
-    InfectedNoSymptoms_2a = 21,
-    InfectedSymptoms_2a   = 22,
-    InfectedSevere_2a     = 23,
-    InfectedCritical_2a   = 24,
+    Exposed_2a            = 6,
+    InfectedNoSymptoms_2a = 7,
+    InfectedSymptoms_2a   = 8,
+    InfectedSevere_2a     = 9,
+    InfectedCritical_2a   = 10,
+    // R and D for disease a
+    Recovered_a = 11,
+    Dead_a      = 12,
+    // first infection with disease b
+    Exposed_1b            = 13,
+    InfectedNoSymptoms_1b = 14,
+    InfectedSymptoms_1b   = 15,
+    InfectedSevere_1b     = 16,
+    InfectedCritical_1b   = 17,
+    // second infection with disease b
+    Exposed_2b            = 18,
+    InfectedNoSymptoms_2b = 19,
+    InfectedSymptoms_2b   = 20,
+    InfectedSevere_2b     = 21,
+    InfectedCritical_2b   = 22,
+    // R and D for disease b
+    Recovered_b = 23,
+    Dead_b      = 24,
     // Recovered from both diseases
     Recovered_ab = 25,
-    Count        = 8
+    Count        = 26
 };
 
 /**
@@ -86,17 +86,17 @@ enum class InfectionTransition
     InfectedSevere_1aToRecovered_a             = 7,
     InfectedCritical_1aToDead_a                = 8,
     InfectedCritical_1aToRecovered_a           = 9,
-    // second infection with b
-    Recovered_aToExposed_2b                    = 10,
-    Exposed_2bToInfectedNoSymptoms_2b          = 11,
-    InfectedNoSymptoms_2bToInfectedSymptoms_2b = 12,
-    InfectedNoSymptoms_2bToRecovered_ab        = 13,
-    InfectedSymptoms_2bToInfectedSevere_2b     = 14,
-    InfectedSymptoms_2bToRecovered_ab          = 15,
-    InfectedSevere_2bToInfectedCritical_2b     = 16,
-    InfectedSevere_2bToRecovered_ab            = 17,
-    InfectedCritical_2bToDead_b                = 18,
-    InfectedCritical_2bToRecovered_ab          = 19,
+    // second infection with a
+    Recovered_bToExposed_2a                    = 10,
+    Exposed_2aToInfectedNoSymptoms_2a          = 11,
+    InfectedNoSymptoms_2aToInfectedSymptoms_2a = 12,
+    InfectedNoSymptoms_2aToRecovered_ab        = 13,
+    InfectedSymptoms_2aToInfectedSevere_2a     = 14,
+    InfectedSymptoms_2aToRecovered_ab          = 15,
+    InfectedSevere_2aToInfectedCritical_2a     = 16,
+    InfectedSevere_2aToRecovered_ab            = 17,
+    InfectedCritical_2aToDead_a                = 18,
+    InfectedCritical_2aToRecovered_ab          = 19,
     // first infection with b
     SusceptibleToExposed_1b                    = 20,
     Exposed_1bToInfectedNoSymptoms_1b          = 21,
@@ -108,17 +108,17 @@ enum class InfectionTransition
     InfectedSevere_1bToRecovered_b             = 27,
     InfectedCritical_1bToDead_b                = 28,
     InfectedCritical_1bToRecovered_b           = 29,
-    // second infection with a
-    Recovered_bToExposed_2a                    = 30,
-    Exposed_2aToInfectedNoSymptoms_2a          = 31,
-    InfectedNoSymptoms_2aToInfectedSymptoms_2a = 32,
-    InfectedNoSymptoms_2aToRecovered_ab        = 33,
-    InfectedSymptoms_2aToInfectedSevere_2a     = 34,
-    InfectedSymptoms_2aToRecovered_ab          = 35,
-    InfectedSevere_2aToInfectedCritical_2a     = 36,
-    InfectedSevere_2aToRecovered_ab            = 37,
-    InfectedCritical_2aToDead_a                = 38,
-    InfectedCritical_2aToRecovered_ab          = 39,
+    // second infection with b
+    Recovered_aToExposed_2b                    = 30,
+    Exposed_2bToInfectedNoSymptoms_2b          = 31,
+    InfectedNoSymptoms_2bToInfectedSymptoms_2b = 32,
+    InfectedNoSymptoms_2bToRecovered_ab        = 33,
+    InfectedSymptoms_2bToInfectedSevere_2b     = 34,
+    InfectedSymptoms_2bToRecovered_ab          = 35,
+    InfectedSevere_2bToInfectedCritical_2b     = 36,
+    InfectedSevere_2bToRecovered_ab            = 37,
+    InfectedCritical_2bToDead_b                = 38,
+    InfectedCritical_2bToRecovered_ab          = 39,
     Count                                      = 40
 };
 

@@ -1,4 +1,4 @@
-# LCT SECIR model
+# LCT SECIR TWO DISEASES model
 
 This model is based on the Linear Chain Trick. 
 
