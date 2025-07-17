@@ -237,6 +237,32 @@ to your corresponding ``settings.json``.
 
 Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html . 
 
+Figure colors and settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to ensure that figures in the documentation and in the code have a consistent look, we use the following settings:
+
+**Default color scheme**
+
+- For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`_ library. 
+- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#set1>`_ colormap.
+
+**Colorblind-friendly alternatives**
+
+For better accessibility and when creating figures with many categories, consider using colorblind-friendly alternatives:
+
+- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#tab10>`_ colormap for up to 10 distinct categories
+- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html#viridis>`_, `plasma`, or `cividis` colormaps
+- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html#rdbu>`_ or `RdYlBu` colormaps
+- Avoid using red-green color combinations without additional visual cues (patterns, shapes, etc.)
+
+**General figure guidelines**
+
+- Use consistent font sizes across all figures (typically 10-12pt for labels, 8-10pt for tick labels)
+- Ensure sufficient contrast between colors and background
+- Add appropriate legends and axis labels with units
+- For line plots with multiple series, vary both color and line style (solid, dashed, dotted) for better distinction
+- When possible, test figures with a colorblind simulator to ensure accessibility
 
 Git workflow
 ----------------------
