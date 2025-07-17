@@ -40,67 +40,35 @@ namespace abm
  * @brief A trip describes a change of Location from one Location to another Location.
  */
 struct Trip {
-    //TODO: Origin is currently not used for the trips. Should we delete it then?
     PersonId person_id; /**< Person that makes the trip and corresponds to the index into the structure m_persons from
     Model, where all Person%s are saved.*/
-    TimePoint time; ///< Daytime at which a Person changes the Location.
+    TimePoint trip_time; ///< Daytime at which a Person changes the Location.
     LocationId destination; ///< Location where the Person changes to.
     int destination_model_id; ///< Model id of destination Location.
-    LocationId origin; ///< Location where the Person starts the Trip.
-    int origin_model_id; ///< Model id of origin Location.
+    TransportMode trip_mode; ///< Mode of transportation. See TransportMode for all possible modes of transportation.
     std::vector<uint32_t> cells; /**< If destination consists of different Cell%s, this gives the index of the
     Cell%s the Person changes to.*/
-    TransportMode
-        trip_mode; ///< Mode of transportation. 1:Bike, 2:Car (Driver), 3:Car (Co-Driver)), 4:Public Transport, 5:Walking, 6:Other/Unknown
-    LocationType destination_type; ///< Type of destination Location.
 
     /**
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
-     * @param[in] time_new Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
+     * @param[in] time Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
      * @param[in] destination Location where the Person changes to.
      * @param[in] destination_model_id Model the Person changes to.
      * @param[in] origin Location where the person starts the Trip.
      * @param[in] origin_model_id Model the Person starts the Trip.
      * @param[in] input_cells The index of the Cell%s the Person changes to.
      */
-    Trip(PersonId id, TimePoint time_new, LocationId dest, int dest_model_id, LocationId orig, int orig_model_id,
-         TransportMode mode_of_transport, LocationType type_of_activity, const std::vector<uint32_t>& input_cells = {})
+    Trip(PersonId id, const TimePoint time, const LocationId dest, const int dest_model_id = 0,
+         const TransportMode mode_of_transport    = mio::abm::TransportMode::Unknown,
+         const std::vector<uint32_t>& input_cells = {})
         : person_id(id)
-        , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
+        , trip_time(mio::abm::TimePoint(time.time_since_midnight().seconds()))
         , destination(dest)
         , destination_model_id(dest_model_id)
-        , origin(orig)
-        , origin_model_id(orig_model_id)
-        , cells(input_cells)
         , trip_mode(mode_of_transport)
-        , destination_type(type_of_activity)
-    {
-    }
-
-    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, TransportMode mode_of_transport,
-         LocationType type_of_activity, const std::vector<uint32_t>& input_cells = {})
-        : person_id(id)
-        , time(mio::abm::TimePoint(time_new.time_since_midnight().seconds()))
-        , destination(dest)
-        , destination_model_id(0)
-        , origin(orig)
-        , origin_model_id(0)
         , cells(input_cells)
-        , trip_mode(mode_of_transport)
-        , destination_type(type_of_activity)
-    {
-    }
 
-    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationId orig, LocationType type_of_activity,
-         const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, dest, orig, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
-    {
-    }
-
-    Trip(PersonId id, TimePoint time_new, LocationId dest, LocationType type_of_activity,
-         const std::vector<uint32_t>& input_cells = {})
-        : Trip(id, time_new, dest, dest, mio::abm::TransportMode::Unknown, type_of_activity, input_cells)
     {
     }
 
@@ -109,17 +77,18 @@ struct Trip {
      */
     bool operator==(const Trip& other) const
     {
-        return (person_id == other.person_id) && (time == other.time) && (destination == other.destination) &&
-               (origin == other.origin);
+        return (person_id == other.person_id) && (trip_time == other.trip_time) && (destination == other.destination) &&
+               (destination_model_id == other.destination_model_id) && (trip_mode == other.trip_mode);
     }
 
     auto default_serialize()
     {
         return Members("Trip")
             .add("person_id", person_id)
-            .add("time", time)
+            .add("trip_time", trip_time)
             .add("destination", destination)
-            .add("origin", origin);
+            .add("model_id", destination_model_id)
+            .add("trip_mode", trip_mode);
     }
 };
 
@@ -132,31 +101,26 @@ public:
     /**
      * @brief Construct empty TripList.
      */
-    TripList();
+    TripList() = default;
 
     /**
      * @brief Get the next Trip.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    const Trip& get_next_trip(bool weekend) const;
+    const Trip& get_next_trip() const;
 
     /**
-     * @brief Get the time at which the next Trip will happen.
+     * @brief Get the trip_time at which the next Trip will happen.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    TimePoint get_next_trip_time(bool weekend) const;
+    TimePoint get_next_trip_time() const;
 
     /**
-     * @brief Add a Trip to the trip list.
-     * @param[in] trip The Trip to be added.
+     * @brief Adds Trips to the trip list.
+     * @param[in] trips The Trips to be added.
      * @param[in] weekend If the Trip is made on a weekend day.     
      */
-    void add_trip(Trip trip, bool weekend = false);
-
-    /**
-     * @brief Use the same TripList for weekend and weekday.
-     */
-    void use_weekday_trips_on_weekend();
+    void add_trips(std::vector<Trip> trip);
 
     /**
      * @brief Increment the current index to select the next Trip.
@@ -178,9 +142,9 @@ public:
      * @brief Get the length of the TripList.
      * @param weekend Whether the Trip%s during the week or on the weekend are used.
      */
-    size_t num_trips(bool weekend = false) const
+    size_t num_trips() const
     {
-        return weekend ? m_trips_weekend.size() : m_trips_weekday.size();
+        return m_trips.size();
     }
 
     /**
@@ -194,16 +158,12 @@ public:
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("TestingScheme")
-            .add("trips_weekday", m_trips_weekday)
-            .add("trips_weekend", m_trips_weekend)
-            .add("index", m_current_index);
+        return Members("TestingScheme").add("trips", m_trips).add("index", m_current_index);
     }
 
 private:
-    std::vector<Trip> m_trips_weekday; ///< The list of Trip%s a Person makes on a weekday.
-    std::vector<Trip> m_trips_weekend; ///< The list of Trip%s a Person makes on a weekend day.
-    uint32_t m_current_index; ///< The index of the Trip a Person makes next.
+    std::vector<Trip> m_trips; ///< The list of Trip%s a Person makes on a weekday.
+    uint32_t m_current_index = 0; ///< The index of the Trip a Person makes next.
 };
 
 } // namespace abm
@@ -213,7 +173,7 @@ template <>
 struct DefaultFactory<abm::Trip> {
     static abm::Trip create()
     {
-        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}, abm::LocationType{}};
+        return abm::Trip{abm::PersonId{}, abm::TimePoint{}, abm::LocationId{}};
     }
 };
 
