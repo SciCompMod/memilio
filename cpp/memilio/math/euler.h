@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EULER_H
-#define EULER_H
+#ifndef MIO_MATH_EULER_H
+#define MIO_MATH_EULER_H
 
 #include "memilio/math/integrator.h"
 
@@ -59,4 +59,4 @@ public:
 
 } // namespace mio
 
-#endif // EULER_H
+#endif // MIO_MATH_EULER_H

@@ -19,12 +19,11 @@
 */
 #pragma once
 
-#include "memilio/config.h"
 #include "memilio/math/eigen.h"
-#include "memilio/utils/logging.h"
 #include "memilio/utils/metaprogramming.h"
 #include <utility>
 #include <iostream>
+#include <iterator>
 
 namespace mio
 {
