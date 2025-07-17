@@ -63,31 +63,6 @@ public:
     bool operator==(const TestingCriteria& other) const;
 
     /**
-     * @brief Add an AgeGroup to the set of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] age_group AgeGroup to be added.
-     */
-    void add_age_group(const AgeGroup age_group);
-
-    /**
-     * @brief Remove an AgeGroup from the set of AgeGroup%s that are either allowed or required to be tested.
-     * @param[in] age_group AgeGroup to be removed.
-     */
-    void remove_age_group(const AgeGroup age_group);
-
-    /**
-     * @brief Add an #InfectionState to the set of #InfectionState%s that are either allowed or required to be tested.
-     * @param[in] infection_state #InfectionState to be added.
-     */
-    void add_infection_state(const InfectionState infection_state);
-
-    /**
-     * @brief Remove an #InfectionState from the set of #InfectionState%s that are either allowed or required to be
-     * tested.
-     * @param[in] infection_state #InfectionState to be removed.
-     */
-    void remove_infection_state(const InfectionState infection_state);
-
-    /**
      * @brief Check if a Person and a Location meet all the required properties to get tested.
      * @param[in] p Person to be checked.
      * @param[in] t TimePoint when to evaluate the TestingCriteria.
@@ -133,22 +108,16 @@ public:
      * @brief Gets the activity status of the scheme.
      * @return Whether the TestingScheme is currently active.
      */
-    bool is_active() const;
-
-    /**
-     * @brief Checks if the scheme is active at a given time and updates activity status.
-     * @param[in] t TimePoint to be updated at.
-     */
-    void update_activity_status(TimePoint t);
+    bool is_active(TimePoint t) const;
 
     /**
      * @brief Runs the TestingScheme and potentially tests a Person.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] t TimePoint when to run the scheme.
-     * @return If the person is allowed to enter the Location by the scheme.
+     * @return Whether the Person is assumed to have a positive test result (could be not complying to the test).
      */
-    bool run_scheme(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
+    bool run_and_test(PersonalRandomNumberGenerator& rng, Person& person, TimePoint t) const;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
@@ -159,13 +128,30 @@ public:
             .add("start_date", m_start_date)
             .add("end_date", m_end_date)
             .add("test_params", m_test_parameters)
-            .add("probability", m_probability)
-            .add("is_active", m_is_active);
+            .add("probability", m_probability);
     }
 
 private:
     friend DefaultFactory<TestingScheme>;
     TestingScheme() = default;
+
+    /**
+     * @brief Gets the start date of the scheme.
+     * @return The start date of the scheme.
+     */
+    mio::abm::TimePoint get_start_date() const
+    {
+        return m_start_date;
+    }
+
+    /**
+     * @brief Gets the end date of the scheme.
+     * @return The end date of the scheme.
+     */
+    mio::abm::TimePoint get_end_date() const
+    {
+        return m_end_date;
+    }
 
     TestingCriteria m_testing_criteria; ///< TestingCriteria of the scheme.
     TimeSpan m_validity_period; ///< The valid TimeSpan of the test.
@@ -173,7 +159,6 @@ private:
     TimePoint m_end_date; ///< Ending date of the scheme.
     TestParameters m_test_parameters; ///< Parameters of the test.
     ScalarType m_probability; ///< Probability of performing the test.
-    bool m_is_active = false; ///< Whether the scheme is currently active.
 };
 
 /**
@@ -183,92 +168,78 @@ class TestingStrategy
 {
 public:
     /**
-     * @brief List of testing schemes for a given LocationType and LocationId.
-     * A LocalStrategy with id of value LocationId::invalid_id() is used for all Locations with LocationType type.
+     * @brief Vector of testing schemes used as an entry for either LocationId or LocationType in TestingStrategy.
+     * @details The index of the vector is either corresponding to the LocationId or LocationType in the according TestingStrategy vector.
      */
     struct LocalStrategy {
-        LocationType type;
-        LocationId id;
         std::vector<TestingScheme> schemes;
 
         /// This method is used by the default serialization feature.
         auto default_serialize()
         {
-            return Members("LocalStrategy").add("type", type).add("id", id).add("schemes", schemes);
+            return Members("LocalStrategy").add("schemes", schemes);
         }
     };
 
     /**
      * @brief Create a TestingStrategy.
-     * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
+     * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing. 
+     * The first vector is for LocationId and the second for LocationType.
+     * The index of the vector is the LocationId or LocationType and the value is the vektor of TestingScheme(s).
      */
     TestingStrategy() = default;
-    explicit TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_map);
+    explicit TestingStrategy(const std::vector<LocalStrategy>& location_to_schemes_id,
+                             const std::vector<LocalStrategy>& location_to_schemes_type);
 
     /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
-     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location for a specific id.
      * @param[in] loc_id LocationId key for TestingScheme to be added.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const LocationId& loc_id, const TestingScheme& scheme);
-
+    void add_scheme(const LocationId& loc_id, const TestingScheme& scheme);
     /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain LocationType.
-     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
-     * @param[in] loc_type LocationId key for TestingScheme to be added.
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_type LocationType key for TestingScheme to add.
      * @param[in] scheme TestingScheme to be added.
      */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
+    void add_scheme(const LocationType& loc_type, const TestingScheme& scheme);
+
+    /**
+     * @brief Add a TestingScheme to the set of schemes that are checked for testing at a certain Location.
+     * @param[in] loc_type Vector of LocationType key for TestingScheme to add.
+     * @param[in] scheme TestingScheme to be added.
+     */
+    void add_scheme(const std::vector<LocationType>& loc_type, const TestingScheme& scheme)
     {
-        add_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
+        for (auto& type : loc_type) {
+            add_scheme(type, scheme);
+        }
     }
 
     /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
-     * @param[in] loc_id LocationId key for TestingScheme to be remove.
-     * @param[in] scheme TestingScheme to be removed.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const LocationId& loc_id, const TestingScheme& scheme);
-
-    /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at a certain Location.
-     * A TestingScheme with loc_id of value LocationId::invalid_id() is used for all Locations of the given type.
-     * @param[in] loc_type LocationType key for TestingScheme to be remove.
-     * @param[in] scheme TestingScheme to be removed.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme)
-    {
-        remove_testing_scheme(loc_type, LocationId::invalid_id(), scheme);
-    }
-
-    /**
-     * @brief Checks if the given TimePoint is within the interval of start and end date of each TestingScheme and then
-     * changes the activity status for each TestingScheme accordingly.
-     * @param t TimePoint to check the activity status of each TestingScheme.
-     */
-    void update_activity_status(const TimePoint t);
-
-    /**
-     * @brief Runs the TestingStrategy and potentially tests a Person.
+     * @brief Runs the TestingStrategy and potentially tests a Person when entering.
+     * @details The TestingStrategy runs the TestingSchemes in the order they are added but first IDs and then types. 
+     * It also decides if one can enter, if there are no positive tests, home is always allowed.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.
      * @param[in] location Location to check.
      * @param[in] t TimePoint when to run the strategy.
-     * @return If the Person is allowed to enter the Location.
      */
-    bool run_strategy(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
+    bool run_and_check(PersonalRandomNumberGenerator& rng, Person& person, const Location& location, TimePoint t);
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("TestingStrategy").add("schemes", m_location_to_schemes_map);
+        return Members("TestingStrategy")
+            .add("schemes_id", m_testing_schemes_at_location_id)
+            .add("schemes_type", m_testing_schemes_at_location_type);
     }
 
 private:
-    std::vector<LocalStrategy> m_location_to_schemes_map; ///< Set of schemes that are checked for testing.
+    std::vector<LocalStrategy>
+        m_testing_schemes_at_location_id; ///< Set of schemes that are checked for testing in specific locations.
+    std::vector<LocalStrategy>
+        m_testing_schemes_at_location_type; ///< Set of schemes that are checked for testing in overall locations types
 };
 
 } // namespace abm
