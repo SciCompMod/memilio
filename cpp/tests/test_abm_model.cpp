@@ -691,6 +691,8 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Community] = 0.5;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::FFP2]      = 0.6;
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical]  = 0.7;
+    params.get<mio::abm::QuarantineEffectiveness>()                       = 0.5;
+    params.get<mio::abm::QuarantineDuration>()                            = mio::abm::days(14);
     params.get<mio::abm::LockdownDate>()                                  = mio::abm::TimePoint(0);
     ASSERT_EQ(params.check_constraints(), false);
 
@@ -788,6 +790,12 @@ TEST_F(TestModel, checkParameterConstraints)
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 1.2;
     EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::MaskProtection>()[mio::abm::MaskType::Surgical] = 0.7;
+
+    params.get<mio::abm::QuarantineEffectiveness>() = -0.1;
+    EXPECT_TRUE(params.check_constraints());
+    params.get<mio::abm::QuarantineEffectiveness>() = 1.5;
+    EXPECT_TRUE(params.check_constraints());
+    params.get<mio::abm::QuarantineEffectiveness>() = 0.8;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     EXPECT_TRUE(params.check_constraints());
