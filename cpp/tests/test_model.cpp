@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/parameterset.h"
 #include "memilio/compartments/simulation.h"

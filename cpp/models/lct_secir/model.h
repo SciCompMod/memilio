@@ -23,7 +23,7 @@
 
 #include "lct_secir/parameters.h"
 #include "lct_secir/infection_state.h"
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/lct_populations.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/config.h"
