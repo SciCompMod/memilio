@@ -21,7 +21,7 @@
 #define SIMULATION_H
 
 #include "memilio/config.h"
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
@@ -119,10 +119,6 @@ public:
         return m_result;
     }
 
-    /**
-     * @brief get_result returns the final simulation result
-     * @return a TimeSeries to represent the final simulation result
-     */
     const TimeSeries<FP>& get_result() const
     {
         return m_result;
