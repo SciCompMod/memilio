@@ -52,7 +52,7 @@ struct Trip {
     /**
      * @brief Construct a new Trip.
      * @param[in] id ID of the Person that makes the Trip.
-     * @param[in] trip_time Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
+     * @param[in] time Time at which a Person changes the Location this currently cant be set for s specific day just a timepoint in a day.
      * @param[in] destination Location where the Person changes to.
      * @param[in] destination_model_id Model the Person changes to.
      * @param[in] origin Location where the person starts the Trip.

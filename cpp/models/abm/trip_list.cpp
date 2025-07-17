@@ -43,7 +43,7 @@ void TripList::add_trips(std::vector<Trip> trip)
     //The same person can only make one trip at the same time.
 
     std::sort(trip.begin(), trip.end(), [](auto& trip1, auto& trip2) {
-        return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
+        return std::tie(trip1.trip_time, trip1.person_id) < std::tie(trip2.trip_time, trip2.person_id);
     });
     // Avoid storage duplication by using in-place merge
     const size_t original_size = m_trips.size();
@@ -52,10 +52,10 @@ void TripList::add_trips(std::vector<Trip> trip)
     m_trips.insert(m_trips.end(), std::make_move_iterator(trip.begin()), std::make_move_iterator(trip.end()));
 
     // Use in-place merge to merge the two sorted ranges
-    std::inplace_merge(m_trips.begin(), m_trips.begin() + original_size, m_trips.end(),
-                       [](const auto& trip1, const auto& trip2) {
-                           return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
-                       });
+    std::inplace_merge(
+        m_trips.begin(), m_trips.begin() + original_size, m_trips.end(), [](const auto& trip1, const auto& trip2) {
+            return std::tie(trip1.trip_time, trip1.person_id) < std::tie(trip2.trip_time, trip2.person_id);
+        });
 }
 
 } // namespace abm
