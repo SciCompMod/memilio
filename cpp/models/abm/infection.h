@@ -35,6 +35,16 @@ namespace abm
 {
 
 /**
+ * @brief Represents a transition between infection states with duration and probability.
+ */
+struct StateTransition {
+    InfectionState from_state;
+    InfectionState to_state;
+    TimeSpan duration;
+    ScalarType probability = 1.0; // 1.0 means deterministic transition
+};
+
+/**
  * @brief Models the ViralLoad for an Infection, modelled on a log_10 scale.
  * Based on https://www.science.org/doi/full/10.1126/science.abi5273
  * Examplary ViralLoad courses can be seen for example in Fig. 4 B.
@@ -190,6 +200,102 @@ private:
      */
     TimePoint draw_infection_course_backward(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                              TimePoint init_date, InfectionState init_state);
+
+    /**
+     * @brief Initialize the viral load parameters for the infection.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] virus Virus type of the Infection.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     * @param[in] init_date Date of initializing the Infection.
+     * @param[in] latest_protection Latest protection against Infection.
+     */
+    void initialize_viral_load(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
+                               const Parameters& params, TimePoint init_date, ProtectionEvent latest_protection);
+
+    /**
+     * @brief Initialize the infectivity parameters for the infection.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] virus Virus type of the Infection.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     */
+    void initialize_infectivity(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
+                                const Parameters& params);
+
+    /**
+     * @brief Initialize the virus shed factor for the infection.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] virus Virus type of the Infection.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     */
+    void initialize_virus_shed_factor(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
+                                      const Parameters& params);
+
+    /**
+     * @brief Get the forward transition from a given infection state.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     * @param[in] current_state Current infection state.
+     * @param[in] current_time Current time point.
+     * @param[in] latest_protection Latest protection against Infection.
+     * @return StateTransition representing the next transition.
+     */
+    StateTransition get_forward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                           InfectionState current_state, TimePoint current_time,
+                                           ProtectionEvent latest_protection) const;
+
+    /**
+     * @brief Get the backward transition from a given infection state.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     * @param[in] current_state Current infection state.
+     * @return StateTransition representing the previous transition.
+     */
+    StateTransition get_backward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
+                                            InfectionState current_state) const;
+
+    /**
+     * @brief Get the backward transition from recovered state.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     * @return StateTransition representing the transition that led to recovery.
+     */
+    StateTransition get_recovered_backward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age,
+                                                      const Parameters& params) const;
+
+    /**
+     * @brief Get the backward transition from dead state.
+     * @param[inout] rng PersonalRandomNumberGenerator of the Person.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     * @return StateTransition representing the transition that led to death.
+     */
+    StateTransition get_dead_backward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age,
+                                                 const Parameters& params) const;
+
+    /**
+     * @brief Calculate the overall death probability for the infection.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] params Parameters of the Model.
+     * @return The probability of death for this infection.
+     */
+    ScalarType calculate_death_probability(AgeGroup age, const Parameters& params) const;
+
+    /**
+     * @brief Get the severity protection factor based on latest protection.
+     * @param[in] params Parameters of the Model.
+     * @param[in] latest_protection Latest protection against Infection.
+     * @param[in] age AgeGroup of the Person.
+     * @param[in] current_time Current time point.
+     * @return The protection factor against severe outcomes.
+     */
+    ScalarType get_severity_protection_factor(const Parameters& params, ProtectionEvent latest_protection, AgeGroup age,
+                                              TimePoint current_time) const;
 
     std::vector<std::pair<TimePoint, InfectionState>> m_infection_course; ///< Start date of each #InfectionState.
     VirusVariant m_virus_variant; ///< Variant of the Infection.
