@@ -21,7 +21,7 @@
 #ifndef MIO_FLOW_MODEL_H_
 #define MIO_FLOW_MODEL_H_
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/flow.h"
 #include "memilio/utils/type_list.h"

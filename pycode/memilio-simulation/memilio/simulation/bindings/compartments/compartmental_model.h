@@ -20,7 +20,7 @@
 #ifndef PYMIO_COMPARTMENTALMODEL_H
 #define PYMIO_COMPARTMENTALMODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "pybind_util.h"
 
 #include "pybind11/pybind11.h"

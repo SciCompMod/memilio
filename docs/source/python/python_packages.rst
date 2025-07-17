@@ -60,7 +60,7 @@ Most of them serve their own use case,
 
         +++
 
-        .. button-ref:: surrogate_models
+        .. button-ref:: memilio_surrogate
             :expand:
             :color: secondary
             :click-parent:
@@ -102,21 +102,23 @@ Most of them serve their own use case,
             To the generation package
 
 
+.. _Python_Installation:
+
 Installation
 ------------
 
-Each package provides a `setup.py` script that installs the packaga and its dependencies with which
-the installation can be run with the command (from the directory containing `setup.py`)
+Each package provides a `setup.py` script that installs the package and its dependencies. 
+The installation can be run with the following command (from the directory containing the `setup.py`)
 
 .. code-block:: console 
     
     pip install .
 
 
-For developement of code use
+For developement of code use this command instead
 
 .. code-block:: console 
     
     pip install -e .[dev]
 
-The dependencies are denoted in documentation of each package.
+The dependencies are denoted in the documentation of each package.
