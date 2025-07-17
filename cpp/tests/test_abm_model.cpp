@@ -795,6 +795,7 @@ TEST_F(TestModel, checkParameterConstraints)
     EXPECT_TRUE(params.check_constraints());
     params.get<mio::abm::QuarantineEffectiveness>() = 1.5;
     EXPECT_TRUE(params.check_constraints());
+    params.get<mio::abm::QuarantineEffectiveness>() = 0.8;
 
     params.get<mio::abm::LockdownDate>() = mio::abm::TimePoint(-2);
     EXPECT_TRUE(params.check_constraints());

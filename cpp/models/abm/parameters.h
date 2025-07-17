@@ -531,7 +531,7 @@ struct QuarantineDuration {
 };
 
 /**
- * @brief Effectiveness of quarantine. 0.0 meaning no effect (precentual reduction of viral shed emmition), 1.0 meaning full effect.
+ * @brief Effectiveness of quarantine. 0.0 meaning no effect (percentage reduction of viral shed emission), 1.0 meaning full effect.
  */
 struct QuarantineEffectiveness {
     using Type = ScalarType;
