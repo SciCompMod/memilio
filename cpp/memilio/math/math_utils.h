@@ -17,9 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_MATH_UTILS_H
-#define MIO_MATH_UTILS_H
+#ifndef MIO_MATH_MATH_UTILS_H
+#define MIO_MATH_MATH_UTILS_H
 
+#include "memilio/config.h"
 #include "memilio/io/io.h"
 #include "memilio/math/eigen.h"
 
@@ -65,4 +66,4 @@ IOResult<void> map_to_nonnegative(Eigen::Ref<Eigen::VectorX<FP>> x, const FP tol
 
 } // namespace mio
 
-#endif // MIO_MATH_UTILS_H
+#endif // MIO_MATH_MATH_UTILS_H

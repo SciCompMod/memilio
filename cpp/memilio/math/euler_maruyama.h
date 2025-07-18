@@ -22,7 +22,7 @@
 
 #include "memilio/math/integrator.h"
 #include "memilio/math/eigen.h"
-#include "memilio/math/utils.h"
+#include "memilio/math/math_utils.h"
 #include "memilio/utils/logging.h"
 
 namespace mio
