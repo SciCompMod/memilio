@@ -80,6 +80,10 @@ add_executable(ode_secir_feedback ode_secir_feedback.cpp)
 target_link_libraries(ode_secir_feedback PRIVATE memilio ode_secir)
 target_compile_options(ode_secir_feedback PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_secir_feedback_graph ode_secir_feedback_graph.cpp)
+target_link_libraries(ode_secir_feedback_graph PRIVATE memilio ode_secir)
+target_compile_options(ode_secir_feedback_graph PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_secirvvs_example ode_secirvvs.cpp)
 target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs)
 target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

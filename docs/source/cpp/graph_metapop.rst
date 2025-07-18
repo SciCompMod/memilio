@@ -43,6 +43,17 @@ For further details, please refer to:
 In the stochastic mobility approach, transitions of individuals between regions, i.e. graph nodes, are modeled as stochastic jumps. The frequency of individuals transitioning from region i to region j is determined by a rate :math:`\lambda_{ij}` which can be interpreted as the (expected) fraction of the population in region i that commutes to region j within one day. In contrast to the instant and detailed mobility approach, the time points and the number of transitions between two regions are stochastic.
 
 
+Behavior-based ODE models
+-------------------------
+
+The graph-based simulation can be combined with the feedback mechanism described in the :doc:`ODE models documentation <ode>`.
+This allows for modeling behavioral changes in response to the epidemiological situation not only on a local level but also considering regional and global information. The ``FeedbackGraphSimulation`` extends the local feedback by incorporating a weighted blend of local, regional, and global ICU occupancy to calculate the perceived risk. This blended risk then influences the contact patterns in each node, allowing for a more nuanced and realistic simulation of public health responses across a metapopulation.
+
+The extension and inclusion of regional and global information is based on the following paper:
+
+- Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. Chaos, Solitons & Fractals. `https://doi.org/10.1016/j.chaos.2025.116782`
+
+
 How to: Set up a graph and run a graph simulation
 -------------------------------------------------
 

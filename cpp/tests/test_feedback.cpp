@@ -108,6 +108,48 @@ TEST_F(TestFeedbackSimulation, CalcPerceivedRisk)
     EXPECT_NEAR(risk, 0.27357588823428847, 1e-10);
 }
 
+TEST_F(TestFeedbackSimulation, CalcPerceivedRiskWithBlending)
+{
+    auto& fb_params                                            = feedback_sim->get_parameters();
+    fb_params.template get<mio::GammaShapeParameter<double>>() = 1;
+    fb_params.template get<mio::GammaScaleParameter<double>>() = 1;
+    fb_params.template get<mio::NominalICUCapacity<double>>()  = 10;
+
+    // add a single local ICU occupancy time point with value 2.
+    Eigen::VectorXd icu_value_local(1);
+    icu_value_local << 2;
+    auto& icu_occ_local = fb_params.template get<mio::ICUOccupancyHistory<double>>();
+    icu_occ_local.add_time_point(0.0, icu_value_local);
+
+    // create regional and global ICU occupancy data
+    mio::TimeSeries<double> icu_occ_regional(1), icu_occ_global(1);
+    Eigen::VectorXd icu_value_regional(1), icu_value_global(1);
+    icu_value_regional << 4;
+    icu_value_global << 6;
+    icu_occ_regional.add_time_point(0.0, icu_value_regional);
+    icu_occ_global.add_time_point(0.0, icu_value_global);
+
+    feedback_sim->set_regional_icu_occupancy(icu_occ_regional);
+    feedback_sim->set_global_icu_occupancy(icu_occ_global);
+
+    // Scenario 1: Test with local, regional, and global blending
+    fb_params.template get<mio::BlendingFactorLocal<double>>()    = 0.2;
+    fb_params.template get<mio::BlendingFactorRegional<double>>() = 0.3;
+    // global blending factor is 1 - 0.2 - 0.3 = 0.5
+
+    double risk = feedback_sim->calc_risk_perceived();
+    // Expected risk: 0.2 * (2/10) + 0.3 * (4/10) + 0.5 * (6/10) = 0.46
+    EXPECT_NEAR(risk, 0.46, 1e-10);
+
+    // Scenario 2: Test with only regional blending
+    fb_params.template get<mio::BlendingFactorLocal<double>>()    = 0.0;
+    fb_params.template get<mio::BlendingFactorRegional<double>>() = 1.0;
+
+    risk = feedback_sim->calc_risk_perceived();
+    // Expected risk: 1.0 * (4/10) = 0.4
+    EXPECT_NEAR(risk, 0.4, 1e-10);
+}
+
 TEST_F(TestFeedbackSimulation, ApplyFeedback)
 {
     // bounds for contact reduction measures
