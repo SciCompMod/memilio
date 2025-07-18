@@ -29,7 +29,7 @@ namespace mio
 {
 
 /**
- * @brief Simple explicit integration y(t+1) = y(t) + h*f(t,y) + sqrt(h) * noise_f(t,h) for SDE systems.
+ * @brief Simple explicit integration y(t+1) = y(t) + h*f(t,y) + sqrt(h) * noise_f(t,y) for SDE systems.
  * @tparam FP A floating point type, e.g., ScalarType.
  */
 template <typename FP>
