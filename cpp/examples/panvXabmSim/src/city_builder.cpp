@@ -195,8 +195,6 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
     // 6.
     // Everybody gets assigned to a random social event and everybody whos not in age group 0 to a random Basic shop.
 
-    mio::unused(household_locations, workplaces, shops, events, hospitals, icus);
-
     auto world_rng  = world.get_rng();
     auto age_vector = create_age_vector(total_population);
 

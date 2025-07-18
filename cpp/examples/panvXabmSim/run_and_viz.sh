@@ -13,6 +13,9 @@ SIM_TYPE="panvadere"
 VIZ_OPTIONS="--s90percentile"
 NUM_DAYS=10
 NUM_PERSONS=3000
+OMP_NUM_THREADS=4
+# Set environment variables
+export OMP_NUM_THREADS=$OMP_NUM_THREADS
 
 # BOOL for visualization
 VISUALIZE=true

@@ -218,6 +218,13 @@ void print_summary(const MultiRunResults& results)
 mio::IOResult<void> main_flow(int argc, char* argv[])
 {
     mio::set_log_level(mio::LogLevel::critical);
+
+    // Initialize random number generator with fixed seeds for reproducibility
+    std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
+    auto rng                              = mio::RandomNumberGenerator();
+    rng.seed(seeds);
+    rng.synchronize();
+
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // Parse configuration
