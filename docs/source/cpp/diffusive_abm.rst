@@ -122,7 +122,7 @@ There are no non-pharmaceutical interventions (NPIs) explicitly implemented in t
 .. code-block:: cpp
 
     //Reduce the transmission risk by 10%
-    model.get_adoption_rates().at({mio::mpm::Region(0), Status::S, Status::E}).factor *= 0.9;
+    model.get_adoption_rates().at({mio::regions::Region(0), Status::S, Status::E}).factor *= 0.9;
 
 Simulation
 -----------

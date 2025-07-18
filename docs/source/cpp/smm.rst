@@ -53,9 +53,9 @@ Using the infection states from above and two regions, there are five first-orde
       adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}});
    }
 
-   //Set second-order adoption rate different for the two regions
+  //Set second-order adoption rate different for the two regions
    adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(0), 0.1, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
-   adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(0), 0.2, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+   adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(1), 0.2, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
 
    //Initialize model parameter
    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
@@ -95,7 +95,7 @@ These populations have the class type **Populations** and can be set via:
 
 .. code-block:: cpp
 
-   double pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop;
+   double pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop, numR = 0, numD = 0;
 
    //Population is distributed equally to the regions
    for (size_t r = 0; r < num_regions; ++r) {
@@ -118,11 +118,11 @@ As the spatial transition rates are dependent on infection state, region changes
       for (size_t i = 0; i < num_regions; ++i) {
          for (size_t j = 0; j < num_regions; ++j)
                if (i != j) {
-                  transition_rates.push_back(
-                     {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
-                  transition_rates.push_back(
-                     {InfectionState(s), mio::regions::Region(j), mio::regions::Region(i), 0.01});
-               }
+            transition_rates.push_back(
+               {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
+            transition_rates.push_back(
+               {InfectionState(s), mio::regions::Region(j), mio::regions::Region(i), 0.01});
+         }
       }
    }
 
