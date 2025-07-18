@@ -102,7 +102,7 @@ public:
      */
     auto pop_next_event()
     {
-        return _exchanges.pop()
+        return _exchanges.pop();
     }
     /**
      * @brief Return the ExchangeData for the next exchange event and delete it from the list.
@@ -215,7 +215,7 @@ template <class Sim>
 GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
 make_mobility_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph)
 {
-    return make_graph_sim_stochastic(
+    return make_graph_sim(
         t0, dt, graph, &advance_model<Sim>,
         static_cast<void (*)(MobilityEdgeDirected&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
             &apply_mobility<Sim, MobilityEdgeDirected>));
@@ -225,7 +225,7 @@ template <class Sim>
 GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
 make_mobility_sim(double t0, double dt, Graph<SimulationNode<Sim>, MobilityEdgeDirected>&& graph)
 {
-    return make_graph_sim_stochastic(
+    return make_graph_sim(
         t0, dt, std::move(graph), &advance_model<Sim>,
         static_cast<void (*)(MobilityEdgeDirected&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
             &apply_mobility<Sim, MobilityEdgeDirected>));
