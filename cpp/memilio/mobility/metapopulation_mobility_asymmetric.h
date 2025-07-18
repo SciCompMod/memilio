@@ -53,6 +53,11 @@ public:
     {
         insert_input_data(input_data);
     };
+    MobilityParametersTimed(int time, int number, int to)
+        : _exchanges{}
+    {
+        _exchanges.push(ExchangeData(time, number, to));
+    };
 
     /**
     * @brief Return the number of exchanged items in the next exchange event.
