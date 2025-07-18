@@ -19,12 +19,12 @@ given by a system of ordinary differential equations. For example we consider a 
 and some initial values for :math:`t=0`. Here :math:`N_{\perp D} := S(t) + I(t) + R(t)`.
 
 This type of model is called compartmental model, because the model population is represented by discrete infection
-states **S** usceptible, **I** nfectious, **R** ecovered, **D** eceased, also called compartments.
+states **S**\usceptible, **I**\nfectious, **R**\ecovered, **D**\eceased, also called compartments.
 
 How to define an ODE model
 --------------------------
 
-To define an ODE model in MEmilio, there are two options. You can define a CompartmentalModel or FlowModel, which
+To define an ODE model in MEmilio, there are two options. You can define a CompartmentalModel or a FlowModel, which
 use different methods to define the right hand side of the mathematical model above. Both classes need definitions for
 the infection states, population and parameters it uses. The FlowModel additionally requires a list of flows.
 
@@ -35,9 +35,9 @@ other noteworthy features of the model in shortened form. All files in the follo
 Infection states
 ~~~~~~~~~~~~~~~~
 
-First we define an :code:`enum class` called InfectionState in the file "infection_state.h", which contains an entry
+First we define an :code:`enum class` called ``InfectionState`` in the file "infection_state.h", which contains an entry
 for each infection state of the mathematical model, followed by an entry called :code:`Count`. This enumerates the 
-compartments starting from 0, with Count being equal to the number of compartments. For example:
+compartments starting from 0, with Count being equal to the number of compartments. In our example we have:
 
 .. code-block:: cpp
 
@@ -55,7 +55,7 @@ Parameters
 
 Next, we define the parameters in "parameters.h", which consist of a struct for each constant used in the mathematical
 model. This struct must define the data type, name and default value of the constant. For example, for the time a
-person stays infectious :math:`T_I` we define a struct
+person stays infectious, :math:`T_I`, we define a struct
 
 .. code-block:: cpp
 
@@ -113,7 +113,7 @@ Population
 ~~~~~~~~~~
 
 The population will be stored in a vector, with a component for each infection state. We define it using the class
-`mio::Population`.
+``mio::Population``.
 
 .. code-block:: cpp
 
