@@ -34,7 +34,7 @@ Agent-based model benchmarks
 
 There is a suite of benchmarks for the ABM that can be used to check performance. The suite contains setups of different sizes. If you added a new feature (i.e., you didn't just fix a bug in an existing feature), make sure the feature is actually used by the benchmark. Add it to the benchmark if necessary, then run the benchmark to see if the cost for the new feature is acceptable and as expected.
 
-Most new features will add some overhead, but this needs to be limited and in proportion to the added value of the feature so runtime doesn't grow out of control. Optional features that can be disabled should only incur minimal overhead. If you did not add any new feature, just run the benchmark before and after your changes to make sure there are no performance regressions. This process will hopefully be automated soon by running benchmarks in the CI.
+Most new features will add some overhead, but this needs to be limited and in proportion to the added value of the feature so runtime doesn't grow out of control. Optional features that can be disabled should only incur minimal overhead. If you did not add any new feature, just run the benchmark before and after your changes to make sure there are no performance regressions. This process will hopefully be automated soon by running benchmarks in the CI (see the `corresponding issue <https://github.com/SciCompMod/memilio/issues/1045>`_ for progress).
 
 Build the benchmarks by defining the CMake variable ``MEMILIO_BUILD_BENCHMARKS=ON`` in the build. Make sure to use a **Release** build to test performance.
 
