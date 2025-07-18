@@ -1,10 +1,11 @@
 #pragma once
 
-#include "config.h"
+#include "memilio/config.h"
 #include "memilio/math/integrator.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
 #include "boost/numeric/odeint.hpp"
+
 
 enum class IntegratorType
 {

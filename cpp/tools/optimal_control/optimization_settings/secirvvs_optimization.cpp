@@ -1,7 +1,7 @@
-#include "secirvvs_optimization.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 
-#include "../control_parameters/damping_controls.h"
-#include "../constraints/update_constraints.h"
+#include "tools/optimal_control/control_parameters/damping_controls.h"
+#include "tools/optimal_control/constraints/update_constraints.h"
 
 SecirvvsOptimization::SecirvvsOptimization(const OptimizationModel& optimization_model, size_t num_control_intervals,
                                            size_t pc_resolution, bool random_start, IntegratorType integrator_type,

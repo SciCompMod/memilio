@@ -1,4 +1,4 @@
-#include "secirvvs_ipopt.h"
+#pragma once
 
 #include <iostream>
 #include <cassert>
@@ -13,23 +13,99 @@
 #include <stdexcept>
 #include <chrono>
 #include <random>
+#include <memory>
 
+#include "IpTNLP.hpp"
 #include "IpIpoptData.hpp"
+#include "ad/ad.hpp"
 
+#include "tools/optimal_control/ipopt_solver/objective_function.h"
+#include "tools/optimal_control/ipopt_solver/constraint_function.h"
+#include "tools/optimal_control/ipopt_solver/save_solution.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
+
+#include "models/ode_secirvvs/model.h"
 #include "memilio/utils/mioomp.h"
 
-#include "objective_function.h"
-#include "constraint_function.h"
-#include "save_solution.h"
+template <class CompartmentalModel>
+class MIO_NLP : public Ipopt::TNLP
+{
+public:
+    MIO_NLP(const SecirvvsOptimization& settings);
 
-Secirvvs_NLP::Secirvvs_NLP(const SecirvvsOptimization& settings)
+    MIO_NLP(const MIO_NLP&)            = delete;
+    MIO_NLP(MIO_NLP&&)                 = delete;
+    MIO_NLP& operator=(const MIO_NLP&) = delete;
+    MIO_NLP& operator=(MIO_NLP&&)      = delete;
+
+    ~MIO_NLP() override;
+
+    bool get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g, Ipopt::Index& nnz_h_lag,
+                      Ipopt::TNLP::IndexStyleEnum& index_style) override;
+
+    bool get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Number* x_u, Ipopt::Index m, Ipopt::Number* g_l,
+                         Ipopt::Number* g_u) override;
+
+    bool get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x, bool init_z, Ipopt::Number* z_L,
+                            Ipopt::Number* z_U, Ipopt::Index m, bool init_lambda, Ipopt::Number* lambda) override;
+
+    bool eval_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number& obj_value) override;
+    bool eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f) override;
+
+    bool eval_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Number* g) override;
+    bool eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
+                    Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values) override;
+
+    bool eval_h(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number obj_factor, Ipopt::Index m,
+                const Ipopt::Number* lambda, bool new_lambda, Ipopt::Index nele_hess, Ipopt::Index* iRow,
+                Ipopt::Index* jCol, Ipopt::Number* values) override;
+
+    bool eval_grad_f_forward(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f);
+    bool eval_grad_f_reverse(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f);
+
+    bool eval_jac_g_forward(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
+                            Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values);
+    bool eval_jac_g_reverse(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
+                            Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values);
+
+    void finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number* x, const Ipopt::Number* z_L,
+                           const Ipopt::Number* z_U, Ipopt::Index m, const Ipopt::Number* g,
+                           const Ipopt::Number* lambda, Ipopt::Number obj_value, const Ipopt::IpoptData* ip_data,
+                           Ipopt::IpoptCalculatedQuantities* ip_cq) override;
+
+private:
+    const SecirvvsOptimization& m_settings;
+
+    // plain-double model for objective & constraints in native double precision
+    std::unique_ptr<CompartmentalModel<double>> m_model_double;
+    // forward-mode (tangent-linear) AD model for Jacobian via GT1S
+    std::unique_ptr<CompartmentalModel<ad::gt1s<double>::type>> m_model_tangent_linear;
+    // reverse-mode (adjoint) AD model for gradient via GA1S
+    std::unique_ptr<CompartmentalModel<ad::ga1s<double>::type>> m_model_adjoint;
+
+    Ipopt::Index m_n;
+    Ipopt::Index m_m;
+    Ipopt::Index m_nnz_jac_g;
+    Ipopt::Index m_nnz_h_lag;
+
+    std::vector<Ipopt::Number> m_x_l;
+    std::vector<Ipopt::Number> m_x_u;
+    std::vector<Ipopt::Number> m_g_l;
+    std::vector<Ipopt::Number> m_g_u;
+
+    using tape_t   = ad::ga1s<double>::tape_t;
+    tape_t* m_tape = nullptr;
+};
+
+template <class Model>
+MIO_NLP<Model>::MIO_NLP(const SecirvvsOptimization& settings)
     : m_settings(settings)
     // plain-double model for objective & constraints in native double precision
-    , m_model_double(settings.optimization_model().create_model<double>())
+    , m_model_double(std::make_unique<CompartmentalModel<double>>(settings.optimization_model().create_model<double>()))
     // forward-mode (tangent-linear) AD model for Jacobian via GT1S
-    , m_model_tangent_linear(settings.optimization_model().create_model<ad::gt1s<double>::type>())
+    , m_model_tangent_linear(std::make_unique<CompartmentalModel<ad::gt1s<double>>>(settings.optimization_model().create_model<ad::gt1s<double>::type>()))
     // reverse-mode (adjoint) AD model for gradient via GA1S
-    , m_model_adjoint(settings.optimization_model().create_model<ad::ga1s<double>::type>())
+    , m_model_adjoint(std::make_unique<CompartmentalModel<ad::ga1s<double>>>(settings.optimization_model().create_model<ad::ga1s<double>::type>()))
 {
     size_t num_control_intervals    = m_settings.num_control_intervals();
     size_t pc_resolution            = m_settings.pc_resolution();
@@ -82,7 +158,8 @@ Secirvvs_NLP::Secirvvs_NLP(const SecirvvsOptimization& settings)
     }
 }
 
-Secirvvs_NLP::~Secirvvs_NLP()
+template <class Model>
+MIO_NLP<Model>::~MIO_NLP()
 {
     if (m_tape) {
         tape_t::remove(m_tape);
@@ -90,7 +167,8 @@ Secirvvs_NLP::~Secirvvs_NLP()
     }
 }
 
-bool Secirvvs_NLP::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g, Ipopt::Index& nnz_h_lag,
+template <class Model>
+bool MIO_NLP<Model>::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g, Ipopt::Index& nnz_h_lag,
                                 Ipopt::TNLP::IndexStyleEnum& index_style)
 {
     n           = m_n;
@@ -101,7 +179,8 @@ bool Secirvvs_NLP::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& 
     return true;
 }
 
-bool Secirvvs_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Number* x_u, Ipopt::Index m,
+template <class Model>
+bool MIO_NLP<Model>::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Number* x_u, Ipopt::Index m,
                                    Ipopt::Number* g_l, Ipopt::Number* g_u)
 {
     assert(n == m_n && m == m_m);
@@ -118,7 +197,8 @@ bool Secirvvs_NLP::get_bounds_info(Ipopt::Index n, Ipopt::Number* x_l, Ipopt::Nu
     return true;
 }
 
-bool Secirvvs_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x, bool init_z,
+template <class Model>
+bool MIO_NLP<Model>::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x, bool init_z,
                                       Ipopt::Number* /*z_L*/, Ipopt::Number* /*z_U*/, Ipopt::Index m, bool init_lambda,
                                       Ipopt::Number* /*lambda*/
 )
@@ -152,25 +232,28 @@ bool Secirvvs_NLP::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number
     return true;
 }
 
-bool Secirvvs_NLP::eval_f(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number& obj_value)
+template <class Model>
+bool MIO_NLP<Model>::eval_f(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number& obj_value)
 {
     assert(n == m_n);
 
-    obj_value = objective_function(m_model_double, m_settings, x, n);
+    obj_value = objective_function(*m_model_double, m_settings, x, n);
 
     return true;
 }
 
-bool Secirvvs_NLP::eval_g(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m, Ipopt::Number* g)
+template <class Model>
+bool MIO_NLP<Model>::eval_g(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m, Ipopt::Number* g)
 {
     assert(n == m_n && m == m_m);
 
-    constraint_function(m_model_double, m_settings, x, n, g, m);
+    constraint_function(*m_model_double, m_settings, x, n, g, m);
 
     return true;
 }
 
-bool Secirvvs_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f)
+template <class Model>
+bool MIO_NLP<Model>::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Number* grad_f)
 {
     assert(n == m_n);
 
@@ -184,7 +267,8 @@ bool Secirvvs_NLP::eval_grad_f(Ipopt::Index n, const Ipopt::Number* x, bool new_
     }
 }
 
-bool Secirvvs_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
+template <class Model>
+bool MIO_NLP<Model>::eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x, Ipopt::Index m, Ipopt::Index nele_jac,
                               Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values)
 {
     assert(n == m_n && m == m_m && nele_jac == m_nnz_jac_g);
@@ -199,14 +283,16 @@ bool Secirvvs_NLP::eval_jac_g(Ipopt::Index n, const Ipopt::Number* x, bool new_x
     }
 }
 
-bool Secirvvs_NLP::eval_h(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number obj_factor,
+template <class Model>
+bool MIO_NLP<Model>::eval_h(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number obj_factor,
                           Ipopt::Index m, const Ipopt::Number* lambda, bool /*new_lambda*/, Ipopt::Index nele_hess,
                           Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values)
 {
     return false;
 }
 
-bool Secirvvs_NLP::eval_grad_f_forward(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number* grad_f)
+template <class Model>
+bool MIO_NLP<Model>::eval_grad_f_forward(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number* grad_f)
 {
     assert(n == m_n);
 
@@ -223,7 +309,7 @@ bool Secirvvs_NLP::eval_grad_f_forward(Ipopt::Index n, const Ipopt::Number* x, b
         PRAGMA_OMP(for)
         for (Ipopt::Index column = 0; column < n; ++column) {
             ad::derivative(x_ad[column]) = 1.0;
-            ad_t obj_ad                  = objective_function(m_model_tangent_linear, m_settings, x_ad.data(), n);
+            ad_t obj_ad                  = objective_function(*m_model_tangent_linear, m_settings, x_ad.data(), n);
             grad_f[column]               = ad::derivative(obj_ad);
             ad::derivative(x_ad[column]) = 0.0;
         }
@@ -232,7 +318,8 @@ bool Secirvvs_NLP::eval_grad_f_forward(Ipopt::Index n, const Ipopt::Number* x, b
     return true;
 }
 
-bool Secirvvs_NLP::eval_grad_f_reverse(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number* grad_f)
+template <class Model>
+bool MIO_NLP<Model>::eval_grad_f_reverse(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number* grad_f)
 {
     assert(n == m_n);
     using ad_t = ad::ga1s<double>::type;
@@ -247,7 +334,7 @@ bool Secirvvs_NLP::eval_grad_f_reverse(Ipopt::Index n, const Ipopt::Number* x, b
         m_tape->register_variable(x_ad[i]);
     }
 
-    ad_t obj_ad = objective_function(m_model_adjoint, m_settings, x_ad.data(), n);
+    ad_t obj_ad = objective_function(*m_model_adjoint, m_settings, x_ad.data(), n);
     m_tape->register_output_variable(obj_ad);
     ad::derivative(obj_ad) = 1.0;
 
@@ -260,7 +347,8 @@ bool Secirvvs_NLP::eval_grad_f_reverse(Ipopt::Index n, const Ipopt::Number* x, b
     return true;
 }
 
-bool Secirvvs_NLP::eval_jac_g_forward(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m,
+template <class Model>
+bool MIO_NLP<Model>::eval_jac_g_forward(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m,
                                       Ipopt::Index nele_jac, Ipopt::Index* iRow, Ipopt::Index* jCol,
                                       Ipopt::Number* values)
 {
@@ -293,7 +381,7 @@ bool Secirvvs_NLP::eval_jac_g_forward(Ipopt::Index n, const Ipopt::Number* x, bo
         PRAGMA_OMP(for)
         for (Ipopt::Index column = 0; column < n; ++column) {
             ad::derivative(x_ad[column]) = 1.0;
-            constraint_function(m_model_tangent_linear, m_settings, x_ad.data(), n, g_ad.data(), m);
+            constraint_function(*m_model_tangent_linear, m_settings, x_ad.data(), n, g_ad.data(), m);
 
             for (Ipopt::Index row = 0; row < m; ++row) {
                 values[column * m + row] = ad::derivative(g_ad[row]);
@@ -319,7 +407,8 @@ bool Secirvvs_NLP::eval_jac_g_forward(Ipopt::Index n, const Ipopt::Number* x, bo
     return true;
 }
 
-bool Secirvvs_NLP::eval_jac_g_reverse(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m,
+template <class Model>
+bool MIO_NLP<Model>::eval_jac_g_reverse(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m,
                                       Ipopt::Index nele_jac, Ipopt::Index* iRow, Ipopt::Index* jCol,
                                       Ipopt::Number* values)
 {
@@ -349,7 +438,7 @@ bool Secirvvs_NLP::eval_jac_g_reverse(Ipopt::Index n, const Ipopt::Number* x, bo
     }
 
     std::vector<ad_t> g_ad(m);
-    constraint_function(m_model_adjoint, m_settings, x_ad.data(), n, g_ad.data(), m);
+    constraint_function(*m_model_adjoint, m_settings, x_ad.data(), n, g_ad.data(), m);
 
     for (Ipopt::Index row = 0; row < m; ++row) {
         m_tape->register_output_variable(g_ad[row]);
@@ -380,7 +469,8 @@ bool Secirvvs_NLP::eval_jac_g_reverse(Ipopt::Index n, const Ipopt::Number* x, bo
     return true;
 }
 
-void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number* x,
+template <class Model>
+void MIO_NLP<Model>::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number* x,
                                      const Ipopt::Number* z_L, const Ipopt::Number* z_U, Ipopt::Index m,
                                      const Ipopt::Number* g, const Ipopt::Number* lambda, Ipopt::Number obj_value,
                                      const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq)
@@ -391,7 +481,7 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
         std::cout << "Number of iterations: " << ip_data->iter_count() << "\n";
     }
 
-    save_solution(m_model_double, m_settings, n, x, z_L, z_U, m, g, lambda, obj_value);
+    save_solution(*m_model_double, m_settings, n, x, z_L, z_U, m, g, lambda, obj_value);
 
     return;
 }

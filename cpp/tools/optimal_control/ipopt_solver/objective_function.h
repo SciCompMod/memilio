@@ -2,19 +2,19 @@
 
 #include <vector>
 
-#include "../optimization_settings/secirvvs_optimization.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 #include "models/ode_secirvvs/model.h"
 
-#include "../control_parameters/damping_controls.h"
-#include "../constraints/update_constraints.h"
+#include "tools/optimal_control/control_parameters/damping_controls.h"
+#include "tools/optimal_control/constraints/update_constraints.h"
 
-#include "../helpers/integrator_selector.h"
-#include "../helpers/make_time_grid.h"
+#include "tools/optimal_control/helpers/integrator_selector.h"
+#include "tools/optimal_control/helpers/make_time_grid.h"
 
-#include "../constraints/infection_state_utils.h"
+#include "tools/optimal_control/constraints/infection_state_utils.h"
 
 template <typename FP>
-FP objective_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimization& settings, const FP* ptr_parameters,
+FP objective_function(const mio::osecirvvs::Model<FP>& model, const SecirvvsOptimization& settings, const FP* ptr_parameters,
                       size_t n)
 {
     // ------------------------------------------------------------------ //
@@ -32,11 +32,14 @@ FP objective_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimizatio
         parameters[i] = settings.activation_function()(ptr_parameters[i]);
     }
 
-    set_control_dampings<FP>(settings, model, parameters);
-
     auto integrator = make_integrator<FP>(settings.integrator_type(), settings.dt());
 
     std::vector<FP> time_steps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.num_intervals());
+
+    mio::osecirvvs::Simulation<FP> sim(model, settings.t0(), settings.dt());
+    sim.set_integrator(integrator);
+    
+    set_control_dampings<FP>(settings, sim.get_model(), parameters);
 
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
@@ -52,16 +55,9 @@ FP objective_function(mio::osecirvvs::Model<FP> model, const SecirvvsOptimizatio
             return settings.control_parameters()[control_index].cost();
         };
 
-        mio::TimeSeries<FP> result = mio::simulate<FP, mio::osecirvvs::Model<FP>>(
-            time_steps[interval], time_steps[interval + 1], settings.dt(), model, integrator);
-        const auto& final_state = result.get_last_value();
-
-        for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
-            for (size_t state_index = 0; state_index < num_infection_states(); state_index++) {
-                size_t idx = age_group.get() * num_infection_states() + state_index;
-                model.populations[{age_group, mio::osecirvvs::InfectionState(state_index)}] = final_state[idx];
-            }
-        }
+        sim.get_dt() = settings.dt();
+        sim.advance(time_steps[gridindex + 1]);
+        const auto& final_state = sim.get_result().get_last_value();
 
         FP interval_cost = 0.0;
         interval_cost += cost("SchoolClosure") * param_at("SchoolClosure");

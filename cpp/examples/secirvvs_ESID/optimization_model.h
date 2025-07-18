@@ -15,6 +15,8 @@
 #include "memilio/utils/date.h"
 #include "memilio/io/mobility_io.h"
 #include "models/ode_secirvvs/model.h"
+#include "memilio/mobility/graph.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
 
 namespace fs = boost::filesystem;
 
@@ -213,8 +215,6 @@ mio::IOResult<void> OptimizationModel::set_initial_values(mio::osecirvvs::Model<
     BOOST_OUTCOME_TRY(set_contact_matrices<FP>(params));
     model.parameters = params;
 
-    std::cout << model.parameters.template get<mio::osecirvvs::StartDay>() << "\n";
-
     // BOOST_OUTCOME_TRY(set_synthetic_population_data(model));
     BOOST_OUTCOME_TRY(set_population_data<FP>(model));
     model.apply_constraints();
@@ -227,6 +227,16 @@ mio::osecirvvs::Model<FP> OptimizationModel::create_model()
 {
     mio::osecirvvs::Model<FP> model(m_num_age_groups);
     auto out = set_initial_values<FP>(model);
+
+    mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<FP>>, mio::MobilityEdge<FP>> graph;
+    graph.add_node(1, model, m_t0);
+
+    std::cout << "Node: " << bool(std::is_copy_constructible<mio::SimulationNode<mio::Simulation<FP, mio::osecirvvs::Model<FP>>>>::value) << "\n";
+    std::cout << "Edge: " << bool(std::is_copy_constructible<mio::MobilityEdge<FP>>::value) << "\n";
+
+    auto graph2 = graph;
+    
+    mio::unused(graph2);
     return model;
 }
 

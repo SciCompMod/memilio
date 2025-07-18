@@ -5,16 +5,15 @@
 #include <cstddef>
 #include <cassert>
 
-#include "constraints.h"
-#include "infection_state_utils.h"
-
-#include "../optimization_settings/secirvvs_optimization.h"
+#include "tools/optimal_control/constraints/constraints.h"
+#include "tools/optimal_control/constraints/infection_state_utils.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 
 #include <vector>
 
 template <typename FP>
 void update_path_constraint(const SecirvvsOptimization& settings, const mio::osecirvvs::Model<FP>& model,
-                            std::vector<FP>& path_constraints)
+                            const auto& final_state, std::vector<FP>& path_constraints)
 {
     // ------------------------------------------------------------------- //
     // Consider the model to be at an intermediate simulation step.        //
@@ -29,18 +28,22 @@ void update_path_constraint(const SecirvvsOptimization& settings, const mio::ose
         auto states           = query_infection_states(constraint.name());
 
         FP value = 0.0;
-        for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+        for (mio::AgeGroup agegroup = 0; agegroup < model.parameters.get_num_groups(); agegroup++)
+        {
+            auto age_group_offset = (int)agegroup * (int)num_infection_states();
+
             for (const auto& state : states) {
-                value += model.populations[{age_group, state}];
+                value += final[(int)state + age_group_offset];
             }
         }
+
         path_constraints[constraint_index] = max<FP>(path_constraints[constraint_index], value);
     }
 }
 
 template <typename FP>
 void update_terminal_constraint(const SecirvvsOptimization& settings, const mio::osecirvvs::Model<FP>& model,
-                                std::vector<FP>& terminal_constraints)
+                                const auto& final_state, std::vector<FP>& terminal_constraints)
 {
     // ----------------------------------------------------------------------- //
     // Consider the model to be at the final simulation step.                  //
@@ -53,9 +56,12 @@ void update_terminal_constraint(const SecirvvsOptimization& settings, const mio:
         auto states           = query_infection_states(constraint.name());
 
         FP value = 0.0;
-        for (mio::AgeGroup age_group = 0; age_group < model.parameters.get_num_groups(); age_group++) {
+        for (mio::AgeGroup agegroup = 0; agegroup < model.parameters.get_num_groups(); agegroup++)
+        {
+            auto age_group_offset = (int)agegroup * (int)num_infection_states();
+
             for (const auto& state : states) {
-                value += model.populations[{age_group, state}];
+                value += final[(int)state + age_group_offset];
             }
         }
         terminal_constraints[constraint_index] = value;

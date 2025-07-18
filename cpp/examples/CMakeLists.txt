@@ -6,13 +6,13 @@ configure_file(data_dir.h.in data_dir.h)
 # target_link_libraries(euler_example PRIVATE memilio)
 # target_compile_options(euler_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(performance_timer_example performance_timers.cpp)
-target_link_libraries(performance_timer_example PRIVATE memilio)
-target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+# add_executable(performance_timer_example performance_timers.cpp)
+# target_link_libraries(performance_timer_example PRIVATE memilio)
+# target_compile_options(performance_timer_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
-target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
-target_compile_options(ode_secir_parameter_sampling_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+# add_executable(ode_secir_parameter_sampling_example ode_secir_parameter_sampling.cpp)
+# target_link_libraries(ode_secir_parameter_sampling_example PRIVATE memilio ode_secir)
+# target_compile_options(ode_secir_parameter_sampling_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # add_executable(adapt_rk_example adapt_rk_test.cpp)
 # target_link_libraries(adapt_rk_example PRIVATE memilio)
@@ -55,9 +55,17 @@ if(MEMILIO_ENABLE_IPOPT)
     target_link_libraries(ode_seair_optimization_2 PRIVATE memilio ode_seair AD::AD Ipopt::Ipopt)
     target_compile_options(ode_seair_optimization_2 PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-    add_executable(ode_secirvvs_optimization ode_secirvvs_optimization.cpp)
-    target_link_libraries(ode_secirvvs_optimization PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
-    target_compile_options(ode_secirvvs_optimization PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(ode_secirvvs_optimization2 ode_secirvvs_optimization2.cpp)
+    target_link_libraries(ode_secirvvs_optimization2 PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
+    target_compile_options(ode_secirvvs_optimization2 PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(secirvvs_ESID 
+        secirvvs_ESID/main.cpp 
+        secirvvs_ESID/optimization_model/optimization_model.cpp
+    )
+    target_link_libraries(secirvvs_ESID PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
+    target_compile_options(secirvvs_ESID PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 endif()
 
 # add_executable(ad_square_example ad_square_example.cpp)
@@ -91,6 +99,10 @@ endif()
 add_executable(ode_secirvvs_example ode_secirvvs.cpp)
 target_link_libraries(ode_secirvvs_example PRIVATE memilio ode_secirvvs)
 target_compile_options(ode_secirvvs_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+add_executable(ode_secirvvs_ad_example ode_secirvvs_ad.cpp)
+target_link_libraries(ode_secirvvs_ad_example PRIVATE memilio ode_secirvvs)
+target_compile_options(ode_secirvvs_ad_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # add_executable(ode_secirts_example ode_secirts.cpp)
 # target_link_libraries(ode_secirts_example PRIVATE memilio ode_secirts)

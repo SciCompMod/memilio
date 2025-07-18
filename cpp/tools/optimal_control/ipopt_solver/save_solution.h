@@ -4,19 +4,19 @@
 #include <vector>
 #include <iostream>
 
-#include "../optimization_settings/secirvvs_optimization.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 #include "models/ode_secirvvs/model.h"
 
-#include "../control_parameters/damping_controls.h"
-#include "../constraints/update_constraints.h"
+#include "tools/optimal_control/control_parameters/damping_controls.h"
+#include "tools/optimal_control/constraints/update_constraints.h"
 
-#include "../helpers/integrator_selector.h"
-#include "../helpers/make_time_grid.h"
+#include "tools/optimal_control/helpers/integrator_selector.h"
+#include "tools/optimal_control/helpers/make_time_grid.h"
 
-#include "../constraints/infection_state_utils.h"
+#include "tools/optimal_control/constraints/infection_state_utils.h"
 
-template <typename FP>
-void save_solution(mio::osecirvvs::Model<FP> model, const SecirvvsOptimization& settings, size_t n,
+template <typename FP, template <typename /* no pack */> typename CompartmentalModel>
+void save_solution(CompartmentalModel<FP>& model, const SecirvvsOptimization& settings, size_t n,
                    const FP* ptr_parameters, const FP* z_L, const FP* z_U, size_t m, const FP* ptr_constraints,
                    const FP* lambda, FP obj_value)
 {

@@ -1,4 +1,4 @@
-#include "control_parameters.h"
+#include "tools/optimal_control/control_parameters/control_parameters.h"
 
 ControlParameter::ControlParameter(std::string name, std::pair<double, double> allowed_range,
                                    double effectiveness_value, double cost_value)

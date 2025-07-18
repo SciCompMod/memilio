@@ -51,7 +51,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
+    Simulation(const Model& model, FP t0 = 0., FP dt = 0.1)
         : m_integratorCore(std::make_shared<DefaultIntegratorCore<FP>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(m_integratorCore)
@@ -59,6 +59,32 @@ public:
         , m_dt(dt)
     {
     }
+
+    Simulation(const Simulation& other)
+        : m_integratorCore(std::make_shared<DefaultIntegratorCore<FP>>())
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(m_integratorCore)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
+    {
+    }
+
+    Simulation& operator=(const Simulation& other) 
+    {
+        if(this != &other)
+        {
+            m_integratorCore = std::make_shared<DefaultIntegratorCore<FP>>();
+            m_model = std::make_unique<Model>(*other.m_model);
+            m_integrator = m_integratorCore;
+            m_result = other.m_result;
+            m_dt = other.m_dt;
+        }
+        return *this; 
+    }
+
+    ~Simulation() = default;
+    Simulation(Simulation && other) = default;
+    Simulation& operator=(Simulation && other) = default;
 
     /**
      * @brief Set the integrator core used in the simulation.
@@ -84,7 +110,7 @@ public:
      * @brief get_integrator
      * @return reference to the core integrator used in the simulation
      */
-    IntegratorCore<FP> const& get_integrator() const
+    const IntegratorCore<FP>& get_integrator() const
     {
         return *m_integratorCore;
     }

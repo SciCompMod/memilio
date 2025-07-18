@@ -69,6 +69,30 @@ public:
     {
     }
 
+    ControlledStepperWrapper(const ControlledStepperWrapper& other)
+        : IntegratorCore<FP>(other.m_dt_min, other.m_dt_max)
+        , m_abs_tol(other.m_abs_tol)
+        , m_rel_tol(other.m_rel_tol)
+        , m_stepper(create_stepper())
+    {
+    }
+
+    ControlledStepperWrapper& operator=(const ControlledStepperWrapper& other) 
+    {
+        if(this != &other)
+        {
+            IntegratorCore<FP>(other.m_dt_min, other.m_dt_max);
+            m_abs_tol = other.m_abs_tol;
+            m_rel_tol = other.m_result;
+            m_stepper = create_stepper();
+        }
+        return *this; 
+    }
+
+    ControlledStepperWrapper(ControlledStepperWrapper && other) = delete;
+    ControlledStepperWrapper& operator=(ControlledStepperWrapper && other) = delete;
+    ~ControlledStepperWrapper() = default;
+
     /**
      * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
      *

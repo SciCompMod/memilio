@@ -1,4 +1,4 @@
-#include "constraints.h"
+#include "tools/optimal_control/constraints/constraints.h"
 
 Constraint::Constraint(std::string name, std::pair<double, double> allowed_range)
     : m_name(std::move(name))

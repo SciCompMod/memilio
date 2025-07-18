@@ -7,12 +7,11 @@
 #include <cstddef>
 #include <functional>
 
-#include "control_parameters.h"
-
 #include "models/ode_secirvvs/model.h"
 
-#include "../optimization_settings/secirvvs_optimization.h"
-#include "../helpers/make_time_grid.h"
+#include "tools/optimal_control/control_parameters/control_parameters.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
+#include "tools/optimal_control/helpers/make_time_grid.h"
 
 enum class Intervention
 {

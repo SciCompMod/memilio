@@ -42,7 +42,9 @@ namespace mio
 template <typename X, typename V>
 auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
 {
+    std::cout << "debug\n";
     const auto weight = (x_eval - x_1) / (x_2 - x_1);
+    std::cout << "debug\n";
     return y1 + weight * (y2 - y1);
 }
 
@@ -59,6 +61,7 @@ auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& 
 template <class FP>
 typename TimeSeries<FP>::Vector linear_interpolation(FP time, const TimeSeries<FP>& data)
 {
+    std::cout << "debug 2\n";
     assert(data.get_num_time_points() > 0 && "Interpolation requires at least one time point.");
     const auto tp_range = data.get_times();
     // find next time point in data (strictly) after time

@@ -8,16 +8,16 @@
 
 #include "memilio/utils/logging.h"
 
-#include "../optimization_model/optimization_model.h"
-#include "../control_parameters/control_parameters.h"
-#include "../control_parameters/control_activation.h"
-#include "../constraints/constraints.h"
-#include "../constraints/infection_state_utils.h"
-#include "../optimization_settings/secirvvs_optimization.h"
+#include "tools/optimal_control/optimization_model/optimization_model.h"
+#include "tools/optimal_control/control_parameters/control_parameters.h"
+#include "tools/optimal_control/control_parameters/control_activation.h"
+#include "tools/optimal_control/constraints/constraints.h"
+#include "tools/optimal_control/constraints/infection_state_utils.h"
+#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 
-#include "../helpers/integrator_selector.h"
-#include "../helpers/make_time_grid.h"
-#include "../helpers/ad_type.h"
+#include "tools/optimal_control/helpers/integrator_selector.h"
+#include "tools/optimal_control/helpers/make_time_grid.h"
+#include "tools/optimal_control/helpers/ad_type.h"
 
 class SecirvvsOptimization
 {
