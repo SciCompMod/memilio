@@ -6,7 +6,7 @@ This document describes utilities for reading and writing data from and to files
 
 - The serialization framework, that can be used to define the structure of data without using a specific file format.
   There are implementations of the framework for different formats. The framework is described in detail below, also
-  see the `serialization example <../../examples/serialize.cpp>`__.
+  see the `serialization example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/serialize.cpp>`__.
   
 - The command line interface, that can be used to set (and get) values of a ``ParameterSet``.
 
@@ -272,8 +272,8 @@ Working with the History object
 The History object provides a way to save data throughout the simulation process. It offers an interface where users can
 define the data to be saved from a given object using Loggers and the method of saving it using Writers. Afterward, the
 user can access this data from the History object and manipulate it. For a basic Logger use case, refer to
-`this example <../../examples/history.cpp>`__. For an example demonstrating using a Logger in the ABM, refer to
-`this example <../../examples/abm_history_example.cpp>`__.
+`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__. For an example demonstrating using a Logger in the ABM, refer to
+`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_history_object.cpp>`__.
 
 Loggers
 ~~~~~~~
@@ -293,7 +293,7 @@ functions is the same as the one given to the ``History`` member-function ``Hist
 Users can derive their Loggers from ``LogOnce`` or ``LogAlways`` to use a predefined ``should_log`` function.
 ``LogOnce`` logs only at the first call of ``Logger::log()``, while ``LogAlways`` logs every time ``log`` is called.
 All implemented Loggers must be default constructible/destructible. For user-defined examples in the ABM, refer to
-`this file <../../models/abm/common_abm_loggers.h>`__.
+`this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`__.
 
 .. code-block:: cpp
 
@@ -324,9 +324,9 @@ user-implemented ``Writer`` must have a ``Data`` Type and implement the
 - ``add_record``: This manipulates the passed Data member of the ``History`` class to store the value ``t`` returned by
   the Loggers. It is used whenever ``History::log`` is called and ``Logger::should_log`` is true.
 
-A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <history.h>`__.
+A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/history.h>`__.
 This stores the data from the loggers in a tuple of vectors every time the Logger is called. Another ``Writer`` named
-``TimeSeriesWriter`` can be found in `this file <../../models/abm/common_abm_loggers.h>`__, which saves data in a
+``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`__, which saves data in a
 Timeseries. The according Logger has to have a suitable return type.
 
 .. code-block:: cpp
@@ -354,9 +354,9 @@ For this, the lifetime of the ``History`` has to be as long as one wants to have
 should not be constructed in the function it is called in when data is needed later.
 
 To access data from a specific Logger, one can use ``std::get<x>`` where x is the position of the Logger in the template
-argument list of the ``History`` object. Refer to `this example <../../examples/history.cpp>`__ for a simple
-implementation of a history object and `this full ABM example <../../simulation/abm.cpp>`__ for a more advanced use case
+argument list of the ``History`` object. Refer to `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__ for a simple
+implementation of a history object and `this full ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm.cpp>`__ for a more advanced use case
 of the History object with several History objects in use.
 
 As mentioned, if multiple Writers have to be used simultaneously, a separate History object is needed for each Writer.
-For a use case of this, refer to `the ABM Simulation advance function <../../models/abm/simulation.cpp>`__.
+For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`__.
