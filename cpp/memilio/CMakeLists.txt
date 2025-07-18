@@ -25,8 +25,12 @@ add_library(memilio
     geography/holiday_data.ipp
     compartments/compartmental_model.h
     compartments/flow_model.h
-    compartments/simulation.h
+    compartments/flow_simulation_base.h
     compartments/flow_simulation.h
+    compartments/simulation_base.h
+    compartments/simulation.h
+    compartments/stochastic_simulation.h
+    compartments/stochastic_model.h
     compartments/parameter_studies.h
     io/default_serialize.h
     io/default_serialize.cpp
@@ -64,6 +68,7 @@ add_library(memilio
     math/interpolation.cpp
     math/time_series_functor.h
     math/time_series_functor.cpp
+    math/math_utils.h
     mobility/metapopulation_mobility_instant.h
     mobility/metapopulation_mobility_instant.cpp
     mobility/metapopulation_mobility_stochastic.h
