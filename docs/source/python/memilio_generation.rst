@@ -8,7 +8,7 @@ For a particular example, see the SEIR model with its files `oseir.cpp` and `ose
 This generating software was developed as a part of the Bachelor thesis `Automatische Codegenerierung für nutzerfreundliche mathematisch-epidemiologische Modelle <https://elib.dlr.de/190367/>`_. 
 The following figure from Chapter 5 outlines the workflow of the generator. Blue boxes represent parts of the code generator and orange ones the input and output. Rectangular boxes contain classes with logic, the rest represent data.
 
-.. image:: https://github.com/SciCompMod/memilio/main/blob/pycode/memilio-generation/generator_workflow.png
+.. image:: ../../../pycode/memilio-generation/generator_workflow.png
    :alt: tikzGeneratorWorkflow
 
 Dependencies
