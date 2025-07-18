@@ -59,25 +59,25 @@ public:
                            FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*noise*/) const {};
 
     /**
-     * @brief Sample a vector of independent standart normal distributed values from the model's RNG.
+     * @brief Sample a vector of independent standard normal distributed values from the model's RNG.
      * @param size The size of the vector.
-     * Useful for vector arithmetic. For single random values, use `sample_standart_normal_distribution`.
-     * @return A random vector (expression calling sample_standart_normal_distribution for each entry).
+     * Useful for vector arithmetic. For single random values, use `sample_standard_normal_distribution`.
+     * @return A random vector (expression calling sample_standard_normal_distribution for each entry).
      */
     auto white_noise(Eigen::Index size) const
     {
         return Eigen::VectorX<FP>::NullaryExpr(size, 1, [this]() {
-            return sample_standart_normal_distribution();
+            return sample_standard_normal_distribution();
         });
     }
 
     /**
-     * @brief Sample a standart normal distributed value from the model's RNG.
+     * @brief Sample a standard normal distributed value from the model's RNG.
      * For a vector of random values, use `white_noise`.
      * Note that the value is always drawn as a double, and then converted to FP.
      * @return A random value.
      */
-    FP sample_standart_normal_distribution() const
+    FP sample_standard_normal_distribution() const
     {
         return FP{DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
     }
@@ -104,10 +104,10 @@ using get_noise_expr_t =
 /**
  * Template meta function to check if a type is a valid stochastic model. 
  * Defines a static constant of name `value`. 
- * The constant `value` will be equal to true if M is a valid flow model type.
+ * The constant `value` will be equal to true if M is a valid stochastic model type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP A floating point type, e.g. double.
- * @tparam Model A type that may or may not be a flow model.
+ * @tparam Model A type that may or may not be a stochastic model.
  */
 template <typename FP, class Model>
 using is_stochastic_model =
