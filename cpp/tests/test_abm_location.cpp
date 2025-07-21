@@ -103,6 +103,7 @@ TEST_F(TestLocation, interact)
 
     // Setup location with some chance of exposure
     mio::abm::Location location(mio::abm::LocationType::Work, 0, num_age_groups);
+    location.get_infection_parameters().get<mio::abm::UseLocationCapacityForTransmissions>() = true;
     auto infected1 = make_test_person(this->get_rng(), location, age_group_15_to_34,
                                       mio::abm::InfectionState::InfectedNoSymptoms, t, params);
     auto infected2 = make_test_person(this->get_rng(), location, age_group_80_plus,

@@ -21,9 +21,9 @@
 #ifndef MIO_SDE_SIR_MODEL_H
 #define MIO_SDE_SIR_MODEL_H
 
+#include "memilio/compartments/stochastic_model.h"
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/utils/random_number_generator.h"
 #include "sde_sir/infection_state.h"
 #include "sde_sir/parameters.h"
 
@@ -39,46 +39,39 @@ namespace ssir
 using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infected>,
                        Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
-class Model : public FlowModel<ScalarType, InfectionState, Populations<ScalarType, InfectionState>, Parameters, Flows>
+class Model : public mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
+                                          Parameters, Flows>
 {
-    using Base = FlowModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>, Parameters, Flows>;
-
 public:
+    using Base = mio::StochasticModel<ScalarType, InfectionState, mio::Populations<ScalarType, InfectionState>,
+                                      Parameters, Flows>;
+
     Model()
-        : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
+        : Base(typename Base::Populations({InfectionState::Count}, 0.), typename Base::ParameterSet())
     {
     }
 
     void get_flows(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
                    ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> flows) const
     {
-        auto& params         = this->parameters;
-        ScalarType coeffStoI = params.get<ContactPatterns>().get_matrix_at(t)(0, 0) *
-                               params.get<TransmissionProbabilityOnContact>() / populations.get_total();
+        auto& params         = Base::parameters;
+        ScalarType coeffStoI = params.template get<ContactPatterns>().get_matrix_at(t)(0, 0) *
+                               params.template get<TransmissionProbabilityOnContact>() / Base::populations.get_total();
 
-        ScalarType si = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        ScalarType ir = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-
-        // Assuming that no person can change its InfectionState twice in a single time step,
-        // take the minimum of the calculated flow and the source compartment, to ensure that
-        // no compartment attains negative values.
-
-        flows[get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] = std::clamp(
-            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
-                sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) /
-                    sqrt(step_size) * si,
-            0.0, y[(size_t)InfectionState::Susceptible] / step_size);
-
-        flows[get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] = std::clamp(
-            (1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected] +
-                sqrt((1.0 / params.get<TimeInfected>()) * y[(size_t)InfectionState::Infected]) / sqrt(step_size) * ir,
-            0.0, y[(size_t)InfectionState::Infected] / step_size);
+        flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
+            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
+        flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
+            (1.0 / params.template get<TimeInfected>()) * y[(size_t)InfectionState::Infected];
     }
 
-    ScalarType step_size; ///< A step size of the model with which the stochastic process is realized.
-    mutable RandomNumberGenerator rng;
-
-private:
+    void get_noise(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop, Eigen::Ref<const Eigen::VectorX<ScalarType>> y,
+                   ScalarType t, Eigen::Ref<Eigen::VectorX<ScalarType>> noise) const
+    {
+        Eigen::VectorX<ScalarType> flows(Flows::size());
+        get_flows(pop, y, t, flows);
+        flows = flows.array().sqrt() * Base::white_noise(Flows::size()).array();
+        get_derivatives(flows, noise);
+    }
 };
 
 } // namespace ssir

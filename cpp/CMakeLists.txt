@@ -10,6 +10,7 @@ option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
+option(MEMILIO_BUILD_SBML_MODELS "Build the SBML importer and imported models." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -73,6 +74,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
+
+file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/.." MEMILIO_BASE_DIR)
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -162,6 +165,8 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     endif()
 endif()
 
+
+
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
@@ -185,6 +190,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/sde_seirvv)
     add_subdirectory(models/graph_abm)
     add_subdirectory(models/smm)
+    add_subdirectory(models/hybrid)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
@@ -201,6 +207,10 @@ endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
+endif()
+
+if(MEMILIO_BUILD_SBML_MODELS)
+    add_subdirectory(sbml_model_generation)
 endif()
 
 install(TARGETS memilio

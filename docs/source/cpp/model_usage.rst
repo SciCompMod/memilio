@@ -8,5 +8,6 @@ Model Usage
 
    aggregated_models
    individual_models
-   mobility_metapop
+   metapop
    io
+   hybrid_models
