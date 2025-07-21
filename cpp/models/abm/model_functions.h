@@ -38,7 +38,7 @@ namespace abm
  * @param[in] virus VirusVariant of interest.
  * @param[in] age_receiver AgeGroup of the receiving Person.
  * @param[in] params The local infection parameters.
- * @return Average amount of Infection%s with the virus from the AgeGroup of the transmitter per day.
+ * @return Total amount of virus exposure by contacts of the receiver.
  */
 ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                       const VirusVariant virus, const AgeGroup age_receiver,
@@ -50,7 +50,7 @@ ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const C
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
  * @param[in] global_params The parameter set of the Model.
- * @return Average amount of Infection%s with the virus per day.
+ * @return Total amount of virus exposure by air.
  */
 ScalarType total_exposure_by_air(const AirExposureRates& rates, const CellIndex cell_index, const VirusVariant virus,
                                  const Parameters& global_params);
