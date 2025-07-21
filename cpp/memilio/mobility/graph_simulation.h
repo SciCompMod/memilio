@@ -91,7 +91,7 @@ template <typename FP, class Graph, class Timepoint, class Timespan,
 class GraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
 {
     using Base = GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>;
-    using Base::Base;
+    using Base::GraphSimulationBase;
 
 public:
     void advance(Timepoint t_max = 1.0)
