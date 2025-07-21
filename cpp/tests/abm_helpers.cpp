@@ -61,9 +61,9 @@ void interact_testing(mio::abm::PersonalRandomNumberGenerator& personal_rng, mio
     std::for_each(local_contact_exposure.begin(), local_contact_exposure.end(), [](auto& r) {
         r = 0.0;
     });
-    // caclculate current exposures
+    // calculate current exposures
     for (const mio::abm::Person& p : local_population) {
-        add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, t, dt);
+        add_exposure_contribution(local_air_exposure, local_contact_exposure, p, location, global_parameters, t, dt);
     }
     // run interaction
     mio::abm::interact(personal_rng, person, location, local_air_exposure, local_contact_exposure, t, dt,
