@@ -614,8 +614,8 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
                     auto group        = Eigen::Index(j / num_comparts);
                     auto compart      = j % num_comparts;
                     log(remaining_after_return(j) < -1e-3 ? LogLevel::warn : LogLevel::info,
-                        "Underflow during mobility returns at time {}, compartment {}, age group {}: {}", ad::value(t),
-                        compart, group, ad::value(remaining_after_return(j)));
+                        "Underflow during mobility returns at time {}, compartment {}, age group {}: {}", t, compart,
+                        group, remaining_after_return(j));
                     Eigen::Index max_index;
                     slice(remaining_after_return, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
                     log_info("Transferring to compartment {}", max_index);

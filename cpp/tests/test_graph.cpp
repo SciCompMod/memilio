@@ -200,7 +200,7 @@ TEST(TestGraph, set_nodes_secirvvs)
                        mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>(
             params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", false, params_graph, read_function_nodes,
-            node_id_function, std::vector<double>(size_t(1), 1.0), double(1.0), double(0.01));
+            node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
 
     EXPECT_EQ(params_graph.nodes().size(), 2);
     EXPECT_EQ(params_graph.nodes()[0].id, 1001);

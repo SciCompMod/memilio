@@ -100,17 +100,17 @@ public:
             if (next_event < adoption_rates().size()) {
                 // perform adoption event
                 const auto& rate = adoption_rates()[next_event];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1.0;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
                 m_model->populations[{rate.region, rate.from}] -= 1.0;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1.0;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
                 m_model->populations[{rate.region, rate.to}] += 1.0;
             }
             else {
                 // perform transition event
                 const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1.0;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
                 m_model->populations[{rate.from, rate.status}] -= 1.0;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1.0;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
                 m_model->populations[{rate.to, rate.status}] += 1.0;
             }
             // update internal times

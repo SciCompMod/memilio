@@ -232,10 +232,12 @@ public:
         bool converged     = false; // carry for convergence criterion
         bool dt_is_invalid = false;
 
-        // Resize m_kt_values and error estimates
-        m_kt_values.resize(yt.size(), m_tab_final.entries_low.size());
-        m_error_estimate.resize(yt.size());
-        m_eps.resize(yt.size());
+        if (m_yt_eval.size() != yt.size()) {
+            m_yt_eval.resize(yt.size());
+            m_kt_values.resize(yt.size(), m_tab_final.entries_low.size());
+        }
+
+        m_yt_eval = yt;
 
         while (!converged && !dt_is_invalid) {
             if (dt < this->get_dt_min()) {
@@ -243,25 +245,24 @@ public:
                 dt            = this->get_dt_min();
             }
             // compute first column of kt, i.e. kt_0 for each y in yt_eval
-            f(yt, t, m_kt_values.col(0));
+            f(m_yt_eval, t, m_kt_values.col(0));
 
             for (Eigen::Index i = 1; i < m_kt_values.cols(); i++) {
                 // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
-
-                // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array
+                t_eval = t;
+                t_eval += m_tab.entries[i - 1][0] *
+                          dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array
                 // use ytp1 as temporary storage for evaluating m_kt_values[i]
-                t_eval = t + m_tab.entries[i - 1][0] * dt;
-
-                ytp1 = yt;
+                ytp1 = m_yt_eval;
                 for (Eigen::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
                     ytp1 += (dt * m_tab.entries[i - 1][k]) * m_kt_values.col(k - 1);
                 }
                 // get the derivatives, i.e., compute kt_i for all y in ytp1: kt_i = f(t_eval, ytp1_low)
                 f(ytp1, t_eval, m_kt_values.col(i));
             }
-
             // calculate low order estimate
-            ytp1 = yt + (dt * (m_kt_values * m_tab_final.entries_low));
+            ytp1 = m_yt_eval;
+            ytp1 += (dt * (m_kt_values * m_tab_final.entries_low));
             // truncation error estimate: yt_low - yt_high = O(h^(p+1)) where p = order of convergence
             m_error_estimate = dt * (m_kt_values * (m_tab_final.entries_high - m_tab_final.entries_low)).array().abs();
             // calculate mixed tolerance
@@ -279,16 +280,13 @@ public:
             // compute new value for dt
             // converged implies eps/error_estimate >= 1, so dt will be increased for the next step
             // hence !converged implies 0 < eps/error_estimate < 1, strictly decreasing dt
-            dt_new = dt * pow((m_eps.array() / m_error_estimate.array()).minCoeff(),
-                              (1. / (m_tab_final.entries_low.size() - 1)));
-
+            dt_new = dt * pow((m_eps / m_error_estimate).minCoeff(), (1. / (m_tab_final.entries_low.size() - 1)));
             // safety factor for more conservative step increases,
             // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
             dt_new *= 0.9;
             // check if updated dt stays within desired bounds and update dt for next step
             dt = min<FP>(dt_new, this->get_dt_max());
         }
-
         dt = max<FP>(dt, this->get_dt_min());
         // return 'converged' in favor of '!dt_is_invalid', as these values only differ if step sizing failed,
         // but the step with size dt_min was accepted.
@@ -299,11 +297,12 @@ protected:
     Tableau<FP> m_tab;
     TableauFinal<FP> m_tab_final;
     FP m_abs_tol, m_rel_tol;
-    mutable Eigen::MatrixX<FP> m_kt_values;
+    mutable Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
+    mutable Eigen::VectorX<FP> m_yt_eval;
 
 private:
-    mutable Eigen::VectorX<FP> m_eps;
-    mutable Eigen::VectorX<FP> m_error_estimate;
+    mutable Eigen::Array<FP, Eigen::Dynamic, Eigen::Dynamic> m_eps,
+        m_error_estimate; // tolerance and estimate used for time step adaption
 };
 
 } // namespace mio

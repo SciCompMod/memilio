@@ -266,6 +266,7 @@ public:
                     this->populations.get_flat_index({j, InfectionState::InfectedSymptomsImprovedImmunityConfirmed});
 
                 // effective contact rate by contact rate between groups i and j and damping j
+                // std::fmod('time', 365.0) is non differentiable. Use std::floor instead to normalize 'time'.
                 FP normalized_time = (params.template get<StartDay<FP>>() + t) -
                                      365.0 * floor((params.template get<StartDay<FP>>() + t) / 365.0);
                 FP season_val = (1 + params.template get<Seasonality<FP>>() *

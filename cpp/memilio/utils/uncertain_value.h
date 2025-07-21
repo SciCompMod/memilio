@@ -44,8 +44,6 @@ template <typename FP>
 class UncertainValue
 {
 public:
-    // Constructors
-
     /**
      * @brief Default-constructs with value = 0.0 and no distribution.
      */
@@ -77,7 +75,6 @@ public:
     {
     }
 
-    // Copy and Move
     UncertainValue(UncertainValue<FP>&& other) noexcept  = default;
     UncertainValue& operator=(UncertainValue&&) noexcept = default;
 
@@ -107,8 +104,6 @@ public:
         return *this;
     }
 
-    // Assignment from arithmetic/scalar
-
     /**
      * @brief Assign a new scalar value (distribution unchanged).
      */
@@ -122,14 +117,13 @@ public:
      * @brief Assign from any arithmetic type (distribution unchanged).
      */
     template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-    UncertainValue& operator=(T v)
+    UncertainValue<FP>& operator=(T v)
     {
         m_value = static_cast<FP>(v);
         return *this;
     }
 
     // Arithmetic compound operators (value-only)
-
     UncertainValue<FP>& operator+=(const FP& v)
     {
         m_value += v;
@@ -150,8 +144,6 @@ public:
         m_value /= v;
         return *this;
     }
-
-    // Conversion to FP
 
     /**
      * @brief Explicit access to the underlying scalar.
@@ -176,8 +168,6 @@ public:
     {
         return m_value;
     }
-
-    // Distribution management
 
     /**
      * @brief Set the uncertainty distribution.
@@ -209,8 +199,6 @@ public:
         return m_dist.get();
     }
 
-    // Sampling
-
     /**
      * @brief Sets the value by sampling from the distribution
      *        and returns the new value.
@@ -226,8 +214,6 @@ public:
         }
         return m_value;
     }
-
-    // Serialization
 
     /**
      * @brief Serialize this object.

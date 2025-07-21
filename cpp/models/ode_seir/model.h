@@ -145,10 +145,10 @@ public:
 
         V = V.inverse();
 
-        //Compute F*V
         Eigen::MatrixX<FP> NextGenMatrix(total_infected_compartments, total_infected_compartments);
         NextGenMatrix.noalias() = F * V;
 
+        // Computing eigenvalues with Eigen3 is non differentiable.
         Eigen::MatrixXd NextGenMatrix_dbl = NextGenMatrix.unaryExpr([](const FP& x) {
             return ad::value(x);
         });

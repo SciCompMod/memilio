@@ -87,7 +87,7 @@ public:
         FP icu_occupancy           = 0.0;
         FP test_and_trace_required = 0.0;
         for (AgeGroup i = 0; i < n_agegroups; ++i) {
-            test_and_trace_required += (1.0 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
+            test_and_trace_required += (1 - params.template get<RecoveredPerInfectedNoSymptoms<FP>>()[i]) /
                                        params.template get<TimeInfectedNoSymptoms<FP>>()[i] *
                                        this->populations.get_from(pop, {i, InfectionState::InfectedNoSymptoms});
             icu_occupancy += this->populations.get_from(pop, {i, InfectionState::InfectedCritical});
@@ -589,10 +589,10 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 
     V = V.inverse();
 
-    //Compute F*V
     Eigen::MatrixX<FP> NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
     NextGenMatrix.noalias() = F * V;
 
+    // Computing eigenvalues with Eigen3 is non differentiable.
     Eigen::MatrixXd NextGenMatrix_dbl = NextGenMatrix.unaryExpr([](const FP& x) {
         return ad::value(x);
     });

@@ -688,7 +688,9 @@ public:
         const FP dt = dyn_npis.get_thresholds().size() > 0 ? dyn_npis.get_interval().get() : tmax;
         while (t < tmax) {
 
-            FP dt_eff = min<FP>({dt, tmax - t, m_t_last_npi_check + dt - t});
+            FP dt_eff = min<FP>(dt, tmax - t);
+            dt_eff    = min<FP>(dt_eff, m_t_last_npi_check + dt - t);
+
             if (dt_eff >= 1.0) {
                 dt_eff = 1.0;
             }
