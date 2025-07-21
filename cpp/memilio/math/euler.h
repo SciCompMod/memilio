@@ -17,10 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EULER_H
-#define EULER_H
+#ifndef MIO_MATH_EULER_H
+#define MIO_MATH_EULER_H
 
-#include "memilio/config.h"
 #include "memilio/math/integrator.h"
 
 namespace mio
@@ -31,11 +30,11 @@ namespace mio
  * @tparam FP A floating point type, e.g., ScalarType.
  */
 template <typename FP>
-class EulerIntegratorCore : public IntegratorCore<FP>
+class EulerIntegratorCore : public OdeIntegratorCore<FP>
 {
 public:
     EulerIntegratorCore()
-        : IntegratorCore<FP>(FP{}, FP{})
+        : OdeIntegratorCore<FP>(FP{}, FP{})
     {
     }
 
@@ -60,4 +59,4 @@ public:
 
 } // namespace mio
 
-#endif // EULER_H
+#endif // MIO_MATH_EULER_H

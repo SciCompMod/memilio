@@ -863,7 +863,7 @@ mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename
             }
         }
 
-        example << "std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator = "
+        example << "std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> integrator = "
                    "std::make_shared<mio::EulerIntegratorCore<ScalarType>>();"
                 << std::endl;
         example << "auto sim = mio::Simulation<ScalarType, mio::" << lowercase_name

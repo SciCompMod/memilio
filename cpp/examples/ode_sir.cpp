@@ -56,7 +56,7 @@ int main()
     contact_matrix[0].add_damping(0.6, mio::SimulationTime<ScalarType>(12.5));
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
+    std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
         std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
     auto sir = mio::simulate<ScalarType>(t0, tmax, dt, model, integrator);
 

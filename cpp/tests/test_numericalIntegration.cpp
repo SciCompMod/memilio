@@ -17,12 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm_helpers.h"
 #include "actions.h"
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/euler_maruyama.h"
 #include "memilio/math/integrator.h"
 #include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/logging.h"
+#include "utils.h"
 
 #include "boost/numeric/odeint/stepper/modified_midpoint.hpp"
 #include <gtest/gtest.h>
@@ -248,7 +251,7 @@ auto DoStep()
                           testing::Return(true));
 }
 
-class MockIntegratorCore : public mio::IntegratorCore<double>
+class MockIntegratorCore : public mio::OdeIntegratorCore<double>
 {
 public:
     MockIntegratorCore()
@@ -257,7 +260,7 @@ public:
     }
 
     MockIntegratorCore(double dt_min, double dt_max)
-        : IntegratorCore<double>(dt_min, dt_max)
+        : mio::OdeIntegratorCore<double>(dt_min, dt_max)
     {
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
@@ -277,7 +280,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     auto integrator = mio::OdeIntegrator<double>(mock_core);
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt = 1e-2;
-    integrator.advance(f, 1, dt, result);
+    integrator.advance({f}, 1, dt, result);
     EXPECT_EQ(result.get_num_time_points(), 101);
 }
 
@@ -287,7 +290,7 @@ TEST(TestOdeIntegrator, integratorStopsAtTMax)
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 0.137;
     auto integrator = mio::OdeIntegrator<double>(std::make_shared<testing::NiceMock<MockIntegratorCore>>());
-    integrator.advance(f, 2.34, dt, result);
+    integrator.advance({f}, 2.34, dt, result);
     EXPECT_DOUBLE_EQ(result.get_last_time(), 2.34);
 }
 
@@ -331,8 +334,8 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 1.0;
     auto integrator = mio::OdeIntegrator<double>(mock_core);
-    integrator.advance(f, 10.0, dt, result);
-    integrator.advance(f, 23.0, dt, result);
+    integrator.advance({f}, 10.0, dt, result);
+    integrator.advance({f}, 23.0, dt, result);
 }
 
 auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
@@ -364,8 +367,8 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
         EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
     }
 
-    integrator.advance(f, 4 * dt0, dt, result);
-    integrator.advance(f, 5 * dt0, dt, result);
+    integrator.advance({f}, 4 * dt0, dt, result);
+    integrator.advance({f}, 5 * dt0, dt, result);
 }
 
 TEST(TestOdeIntegrator, integratorForcesLastStepSize)
@@ -390,10 +393,62 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
 
     // run a mock integration to examine whether only the last step is forced
     mio::TimeSeries<double> mock_result(0, Eigen::VectorXd::Constant(1, 0));
-    integrator.advance(f, t_max, dt, mock_result);
+    integrator.advance({f}, t_max, dt, mock_result);
 
     EXPECT_EQ(mock_result.get_num_time_points(), num_calls + 1);
     for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
         EXPECT_DOUBLE_EQ(mock_result.get_time(i), std::min(i * dt_min, t_max));
     }
+}
+
+TEST(TestStochasticIntegrator, EulerMaruyamaIntegratorCore)
+{
+    using X = Eigen::Vector2d;
+
+    mio::EulerMaruyamaIntegratorCore<double> integrator;
+    const double ref_val   = std::sin(1);
+    const double ref_noise = std::sqrt(ref_val);
+    double white_noise     = 1;
+    double t, dt = 1;
+    mio::RedirectLogger logger;
+
+    const auto f = [](Eigen::Ref<const X> _, double s, Eigen::Ref<X> y) {
+        mio::unused(_);
+        y[0] = std::sin(s);
+        y[1] = 0;
+    };
+    const auto noise = [&f, &white_noise](Eigen::Ref<const X> x, double s, Eigen::Ref<X> y) {
+        f(x, s, y);
+        y = white_noise * y.array().sqrt();
+    };
+
+    logger.capture();
+
+    X x = {0, 1}, y; // feasable setup, with x[1] as rescale target
+    t = 1, white_noise = 1;
+    integrator.step(f, noise, x, t, dt, y); // no negative value, no rescaling
+    EXPECT_NEAR(y[0], ref_val + ref_noise, mio::Limits<double>::zero_tolerance());
+    EXPECT_NEAR(y[1], 1, mio::Limits<double>::zero_tolerance());
+
+    t = 1, white_noise = -1;
+    integrator.step(f, noise, x, t, dt, y); // rescale succeeds
+    EXPECT_NEAR(y[0], 0, mio::Limits<double>::zero_tolerance());
+    EXPECT_NEAR(y[1], 1 + (ref_val - ref_noise), mio::Limits<double>::zero_tolerance());
+
+    EXPECT_TRUE(logger.read().empty()); // no log messages yet
+
+    x[1] = 0; // take away rescale target
+    t = 1, white_noise = -1;
+    integrator.step(f, noise, x, t, dt, y); // no positive values, rescale fails
+    EXPECT_GT(y[0], 0);
+    EXPECT_NEAR(y[0], y[1], mio::Limits<double>::zero_tolerance());
+    EXPECT_THAT(logger.read(), testing::HasSubstr("[error] Failed to rescale values"));
+
+    t = 0, white_noise = -1;
+    integrator.step(f, noise, x, t, dt, y); // everything is 0, rescale does nothing
+    EXPECT_EQ(y[0], 0);
+    EXPECT_EQ(y[1], 0);
+    EXPECT_TRUE(logger.read().empty()); // no log messages again
+
+    logger.release();
 }

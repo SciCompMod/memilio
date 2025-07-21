@@ -143,14 +143,14 @@ public:
  * This class integrates a system of ODEs via the step method
  */
 template <typename FP>
-class RKIntegratorCore : public IntegratorCore<FP>
+class RKIntegratorCore : public OdeIntegratorCore<FP>
 {
 public:
     /**
      * @brief Setting up the integrator
      */
     RKIntegratorCore()
-        : IntegratorCore<FP>(std::numeric_limits<ScalarType>::min(), std::numeric_limits<ScalarType>::max())
+        : OdeIntegratorCore<FP>(std::numeric_limits<ScalarType>::min(), std::numeric_limits<ScalarType>::max())
         , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
     {
@@ -164,7 +164,7 @@ public:
      * @param dt_max upper bound for time step dt
      */
     RKIntegratorCore(const FP abs_tol, const FP rel_tol, const FP dt_min, const FP dt_max)
-        : IntegratorCore<FP>(dt_min, dt_max)
+        : OdeIntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
     {

@@ -39,7 +39,7 @@ namespace mio
  */
 template <typename FP, template <class State, class Value, class Deriv, class Time, class Algebra, class Operations,
                                  class Resizer> class ControlledStepper>
-class ControlledStepperWrapper : public mio::IntegratorCore<FP>
+class ControlledStepperWrapper : public mio::OdeIntegratorCore<FP>
 {
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
         ControlledStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, boost::numeric::odeint::vector_space_algebra,
@@ -60,7 +60,7 @@ public:
      */
     ControlledStepperWrapper(FP abs_tol = 1e-10, FP rel_tol = 1e-5, FP dt_min = std::numeric_limits<ScalarType>::min(),
                              FP dt_max = std::numeric_limits<ScalarType>::max())
-        : IntegratorCore<FP>(dt_min, dt_max)
+        : OdeIntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
         , m_stepper(create_stepper())
@@ -75,7 +75,7 @@ public:
      * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
      * @param[out] ytp1 The approximated value of y(t').
      */
-    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+    bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         using boost::numeric::odeint::fail;
@@ -178,7 +178,7 @@ private:
  */
 template <typename FP, template <class State, class Value, class Deriv, class Time, class Algebra, class Operations,
                                  class Resizer> class ExplicitStepper>
-class ExplicitStepperWrapper : public mio::IntegratorCore<FP>
+class ExplicitStepperWrapper : public mio::OdeIntegratorCore<FP>
 {
 public:
     using Stepper =
@@ -190,7 +190,7 @@ public:
      * @brief Set up the integrator.
      */
     ExplicitStepperWrapper()
-        : mio::IntegratorCore<FP>(FP{}, FP{})
+        : mio::OdeIntegratorCore<FP>(FP{}, FP{})
     {
     }
 

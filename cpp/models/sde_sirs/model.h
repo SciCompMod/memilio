@@ -22,8 +22,8 @@
 #define MIO_SDE_SIR_MODEL_H
 
 #include "memilio/compartments/flow_model.h"
+#include "memilio/compartments/stochastic_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "memilio/utils/random_number_generator.h"
 #include "sde_sirs/infection_state.h"
 #include "sde_sirs/parameters.h"
 
@@ -41,11 +41,12 @@ using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Infecte
                        Flow<InfectionState::Recovered, InfectionState::Susceptible>>;
 
 template <typename FP>
-class Model : public FlowModel<FP, InfectionState, Populations<FP, InfectionState>, Parameters<FP>, Flows>
+class Model
+    : public mio::StochasticModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>
 {
-    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>;
-
 public:
+    using Base = mio::StochasticModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>, Flows>;
+
     Model()
         : Base(typename Base::Populations({InfectionState::Count}, 0.0), typename Base::ParameterSet())
     {
@@ -54,48 +55,26 @@ public:
     void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const
     {
-        using std::sqrt;
-
-        auto& params = this->parameters;
+        auto& params = Base::parameters;
         FP coeffStoI = params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
-                       params.template get<TransmissionProbabilityOnContact<FP>>() / this->populations.get_total();
-
-        FP si = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        FP ir = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-        FP rs = mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(rng, 0.0, 1.0);
-
-        const FP inv_sqrt_dt = 1 / sqrt(step_size);
-
-        // Assuming that no person can change its InfectionState twice in a single time step,
-        // take the minimum of the calculated flow and the source compartment, to ensure that
-        // no compartment attains negative values.
+                       params.template get<TransmissionProbabilityOnContact<FP>>() / Base::populations.get_total();
 
         flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
-            std::clamp<FP>(
-                coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected] +
-                    sqrt(coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected]) *
-                        inv_sqrt_dt * si,
-                0.0, y[(size_t)InfectionState::Susceptible] / step_size);
-
+            coeffStoI * y[(size_t)InfectionState::Susceptible] * pop[(size_t)InfectionState::Infected];
         flows[this->template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>()] =
-            std::clamp<FP>(
-                (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected] +
-                    sqrt((1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected]) *
-                        inv_sqrt_dt * ir,
-                0.0, y[(size_t)InfectionState::Infected] / step_size);
-
+            (1.0 / params.template get<TimeInfected<FP>>()) * y[(size_t)InfectionState::Infected];
         flows[this->template get_flat_flow_index<InfectionState::Recovered, InfectionState::Susceptible>()] =
-            std::clamp<FP>(
-                (1.0 / params.template get<TimeImmune<FP>>()) * y[(size_t)InfectionState::Recovered] +
-                    sqrt((1.0 / params.template get<TimeImmune<FP>>()) * y[(size_t)InfectionState::Recovered]) *
-                        inv_sqrt_dt * rs,
-                0.0, y[(size_t)InfectionState::Recovered] / step_size);
+            (1.0 / params.template get<TimeImmune<FP>>()) * y[(size_t)InfectionState::Recovered];
     }
 
-    FP step_size; ///< A step size of the model with which the stochastic process is realized.
-    mutable RandomNumberGenerator rng;
-
-private:
+    void get_noise(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
+                   Eigen::Ref<Eigen::VectorX<FP>> noise) const
+    {
+        Eigen::VectorX<FP> flows(Flows::size());
+        get_flows(pop, y, t, flows);
+        flows = flows.array().sqrt() * Base::white_noise(Flows::size()).array();
+        this->get_derivatives(flows, noise);
+    }
 };
 
 } // namespace ssirs

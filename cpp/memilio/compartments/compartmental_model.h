@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_COMPARTMENTALMODEL_H
-#define MIO_COMPARTMENTALMODEL_H
+#ifndef MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H
+#define MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
@@ -215,4 +215,4 @@ using is_compartment_model =
 
 } // namespace mio
 
-#endif // MIO_COMPARTMENTALMODEL_H
+#endif // MIO_COMPARTMENTS_COMPARTMENTAL_MODEL_H

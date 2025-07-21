@@ -101,9 +101,9 @@ TEST_F(ModelTestOdeSeair, get_derivatives)
 
 TEST_F(ModelTestOdeSeair, Simulation)
 {
-    dt                                                      = 1;
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto sim                                                = simulate(t0, tmax, dt, model, integrator);
+    dt                                                         = 1;
+    std::shared_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
+    auto sim                                                   = simulate(t0, tmax, dt, model, integrator);
 
     EXPECT_EQ(sim.get_num_time_points(), 2);
 
