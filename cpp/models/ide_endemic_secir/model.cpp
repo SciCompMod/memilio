@@ -334,16 +334,14 @@ void Model::update_compartments(ScalarType dt)
 
 void Model::compute_populationsize()
 {
-    m_totalpopulation.get_last_value()[0] =
-        std::accumulate(populations.get_last_value().begin(), populations.get_last_value().end(), 0) -
-        populations.get_last_value()[(int)InfectionState::Dead];
-    m_totalpopulationupdate.get_last_value()[0] =
-        std::accumulate(populations_update.get_last_value().begin(), populations_update.get_last_value().end(), 0) -
-        populations_update.get_last_value()[(int)InfectionState::Dead];
-    // m_totalpopulationincludingD.get_last_value()[0] =
-    //     std::accumulate(populations.get_last_value().begin(), populations.get_last_value().end(), 0);
-    // m_totalpopulationupdateincludingD.get_last_value()[0] =
-    //     std::accumulate(populations_update.get_last_value().begin(), populations_update.get_last_value().end(), 0);
+    ScalarType sum1 = 0;
+    ScalarType sum2 = 0;
+    for (int state = 0; state < Eigen::Index(InfectionState::Count) - 1; state++) {
+        sum1 += populations.get_last_value()[state];
+        sum2 += populations_update.get_last_value()[state];
+    }
+    m_totalpopulation.get_last_value()[0]       = sum1;
+    m_totalpopulationupdate.get_last_value()[0] = sum2;
 }
 
 void Model::compute_normalizedcompartments()

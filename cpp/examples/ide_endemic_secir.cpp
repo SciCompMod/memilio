@@ -17,8 +17,8 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 100;
-    ScalarType dt   = 0.1;
+    ScalarType tmax = 1000;
+    ScalarType dt   = 1.0;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -47,18 +47,23 @@ int main()
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    mio::SmootherCosine smoothcos(2.0);
+    mio::SmootherCosine smoothcos(8.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
     model.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
 
-    std::vector<ScalarType> vec_prob(num_transitions, 0.5);
-    // The following probabilities must be 1, as there is no other way to go.
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::SusceptibleToExposed)]        = 1;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]      = 0.1;
-    model.parameters.get<mio::endisecir::TransitionProbabilities>()                          = vec_prob;
+    std::vector<ScalarType> vec_prob((int)mio::endisecir::InfectionTransition::Count, 1.);
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 0.5;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToRecovered)]        = 1 - 0.5;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]     = 0.1;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSymptomsToRecovered)]          = 1 - 0.1;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToInfectedCritical)]     = 0.3;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToRecovered)]            = 1 - 0.3;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]               = 0.2;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToRecovered)]          = 1 - 0.2;
+
+    model.parameters.set<mio::endisecir::TransitionProbabilities>(vec_prob);
 
     mio::ContactMatrixGroup contact_matrix                  = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
@@ -75,8 +80,8 @@ int main()
     model.parameters.get<mio::endisecir::RelativeTransmissionNoSymptoms>() = exponential_prob;
     model.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    model.parameters.set<mio::endisecir::NaturalBirthRate>(3e-4);
-    model.parameters.set<mio::endisecir::NaturalDeathRate>(4e-4);
+    model.parameters.set<mio::endisecir::NaturalBirthRate>(4e-3);
+    model.parameters.set<mio::endisecir::NaturalDeathRate>(3e-3);
 
     //model.set_tol_for_support_max(1e-6);
 
@@ -86,7 +91,7 @@ int main()
 
     auto interpolated_results = mio::interpolate_simulation_result(sim.get_compartments(), dt / 2.);
 
-    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    // interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
 
     // Uncomment to print the compartments computed with the update scheme.
     // auto interpolated_results_update = mio::interpolate_simulation_result(sim.get_compartments_update(), dt / 2.);
@@ -109,7 +114,7 @@ int main()
     // sim.get_totalpopulations().print_table({"N"}, 16, 9);
 
     // Uncomment to print the force of infection.
-    //sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
+    sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
     // sim.get_forceofinfections_update().print_table({"FoIUpdate"}, 16, 8);
 
     // std::vector<ScalarType> equi = sim.get_equilibriumcompartments();
