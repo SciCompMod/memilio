@@ -40,7 +40,7 @@ TEST_F(TestInfection, init)
     auto age_group_test     = age_group_15_to_34;
     mio::abm::Location loc(mio::abm::LocationType::Hospital, 0);
 
-    params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}] =
+    params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}] =
         mio::ParameterDistributionUniform(0.1, 0.2);
 
     //set up a personal RNG for infections
@@ -58,12 +58,12 @@ TEST_F(TestInfection, init)
         // 1st infection
         .WillOnce(testing::Return(0.4)) // Transition to Infected
         .WillOnce(testing::Return(0.6)) // Transition to Recovered
-        .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
-                                      .params()[0])) // Virus Shed Factor
+        .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
+                                      .params()[0])) // Viral Shed Factor
         // 2nd infection
         .WillOnce(testing::Return(1.0)) // Transition to Recovered
-        .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
-                                      .params()[0])) // Virus Shed Factor
+        .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
+                                      .params()[0])) // Viral Shed Factor
         .WillRepeatedly(testing::Return(1.0));
 
     //Distribution for stay times
@@ -90,8 +90,8 @@ TEST_F(TestInfection, init)
               mio::abm::InfectionState::Exposed);
     EXPECT_EQ(infection.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
               mio::abm::InfectionState::InfectedNoSymptoms);
-    // Test infectivity at a specific time point
-    EXPECT_NEAR(infection.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.02689414213699951, 1e-14);
+    // Test viral shed at a specific time point
+    EXPECT_NEAR(infection.get_viral_shed(mio::abm::TimePoint(0) + mio::abm::days(3)), 0.02689414213699951, 1e-14);
 
     // Test infection with previous exposure and recovery state transition.
     params.get<mio::abm::SeverityProtectionFactor>()[{mio::abm::ProtectionType::GenericVaccine, age_group_test,
@@ -110,8 +110,8 @@ TEST_F(TestInfection, init)
         mio::abm::InfectionState::InfectedSymptoms);
     EXPECT_EQ(infection_w_previous_exp.get_infection_state(mio::abm::TimePoint(0) + mio::abm::days(1)),
               mio::abm::InfectionState::Recovered);
-    // Test infectivity at a specific time point
-    EXPECT_NEAR(infection_w_previous_exp.get_infectivity(mio::abm::TimePoint(0) + mio::abm::days(3)),
+    // Test viral shed at a specific time point
+    EXPECT_NEAR(infection_w_previous_exp.get_viral_shed(mio::abm::TimePoint(0) + mio::abm::days(3)),
                 9.1105119440064545e-05, 1e-14);
 }
 
@@ -202,16 +202,16 @@ TEST_F(TestInfection, drawInfectionCourseBackward)
         .Times(testing::AtLeast(7))
         // 1st infection
         .WillOnce(testing::Return(0.6)) // Transition to InfectedNoSymptoms
-        .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
-                                      .params()[0])) // Virus Shed Factor
+        .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
+                                      .params()[0])) // Viral Shed Factor
         // 2nd infection
         .WillOnce(testing::Return(0.4)) // Transition to InfectedSymptoms
-        .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
-                                      .params()[0])) // Virus Shed Factor
+        .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
+                                      .params()[0])) // Viral Shed Factor
         // 3rd infection
         .WillOnce(testing::Return(0.2)) // Transition to InfectedSevere
-        .WillOnce(testing::Return(params.get<mio::abm::VirusShedFactor>()[{virus_variant_test, age_group_test}]
-                                      .params()[0])) // Virus Shed Factor
+        .WillOnce(testing::Return(params.get<mio::abm::ViralShedFactor>()[{virus_variant_test, age_group_test}]
+                                      .params()[0])) // Viral Shed Factor
         // 4th infection
         .WillOnce(testing::Return(0.05)) // Transition to InfectedCritical
         .WillRepeatedly(testing::Return(1.0));

@@ -32,7 +32,7 @@ namespace abm
 {
 
 /**
- * @brief Compute the number of daily transmissions for contact transmission of a virus in a cell.
+ * @brief Compute the total virus exposure for contact transmission in a cell (unit: per day).
  * @param[in] rates The local exposure rates.
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
@@ -40,20 +40,20 @@ namespace abm
  * @param[in] params The local infection parameters.
  * @return Average amount of Infection%s with the virus from the AgeGroup of the transmitter per day.
  */
-ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
-                                           const VirusVariant virus, const AgeGroup age_receiver,
-                                           const LocalInfectionParameters& params);
+ScalarType total_exposure_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
+                                      const VirusVariant virus, const AgeGroup age_receiver,
+                                      const LocalInfectionParameters& params);
 
 /**
- * @brief Compute the number of daily transmissions for aerosol transmission of a virus in a cell.
+ * @brief Compute the total virus exposure for aerosol transmission in a cell (unit: per day).
  * @param[in] rates The local exposure rates.
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
  * @param[in] global_params The parameter set of the Model.
  * @return Average amount of Infection%s with the virus per day.
  */
-ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellIndex cell_index,
-                                      const VirusVariant virus, const Parameters& global_params);
+ScalarType total_exposure_by_air(const AirExposureRates& rates, const CellIndex cell_index, const VirusVariant virus,
+                                 const Parameters& global_params);
 
 /**
  * @brief Add the contribution of a person to the local exposure rates.

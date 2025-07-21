@@ -42,24 +42,19 @@ void Infection::initialize_viral_load(PersonalRandomNumberGenerator& rng, VirusV
     m_viral_load.peak    = vl_params.viral_load_peak.get(rng) * high_viral_load_factor;
     m_viral_load.incline = vl_params.viral_load_incline.get(rng);
     m_viral_load.decline = vl_params.viral_load_decline.get(rng);
-    m_viral_load.end_date =
-        m_viral_load.start_date +
-        days(int(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline));
+    m_viral_load.end_date = m_viral_load.start_date +
+                            days(m_viral_load.peak / m_viral_load.incline - m_viral_load.peak / m_viral_load.decline);
 }
 
-void Infection::initialize_infectivity(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
-                                       const Parameters& params)
+void Infection::initialize_viral_shed(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
+                                      const Parameters& params)
 {
-    auto inf_params  = params.get<InfectivityDistributions>()[{virus, age}];
-    m_log_norm_alpha = inf_params.infectivity_alpha.get(rng);
-    m_log_norm_beta  = inf_params.infectivity_beta.get(rng);
-}
+    auto viral_shed_params = params.get<ViralShedDistribution>()[{virus, age}];
+    m_log_norm_alpha       = viral_shed_params.viral_shed_alpha;
+    m_log_norm_beta        = viral_shed_params.viral_shed_beta;
 
-void Infection::initialize_virus_shed_factor(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
-                                             const Parameters& params)
-{
-    auto shedfactor_param          = params.get<VirusShedFactor>()[{virus, age}];
-    m_individual_virus_shed_factor = shedfactor_param.get(rng);
+    auto shedfactor_param          = params.get<ViralShedFactor>()[{virus, age}];
+    m_individual_viral_shed_factor = shedfactor_param.get(rng);
 }
 
 Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
@@ -71,8 +66,7 @@ Infection::Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, Age
     m_viral_load.start_date = draw_infection_course(rng, age, params, init_date, init_state, latest_protection);
 
     initialize_viral_load(rng, virus, age, params, init_date, latest_protection);
-    initialize_infectivity(rng, virus, age, params);
-    initialize_virus_shed_factor(rng, virus, age, params);
+    initialize_viral_shed(rng, virus, age, params);
 }
 
 ScalarType Infection::get_viral_load(TimePoint t) const
@@ -92,12 +86,12 @@ ScalarType Infection::get_viral_load(TimePoint t) const
     }
 }
 
-ScalarType Infection::get_infectivity(TimePoint t) const
+ScalarType Infection::get_viral_shed(TimePoint t) const
 {
     if (m_viral_load.start_date >= t || get_infection_state(t) == InfectionState::Exposed) {
         return 0;
     }
-    return m_individual_virus_shed_factor / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
+    return m_individual_viral_shed_factor / (1 + exp(-(m_log_norm_alpha + m_log_norm_beta * get_viral_load(t))));
 }
 
 VirusVariant Infection::get_virus_variant() const
@@ -137,9 +131,9 @@ TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, A
                                            TimePoint init_date, InfectionState init_state,
                                            ProtectionEvent latest_protection)
 {
-    assert(age.get() < params.get_num_groups());
-    TimePoint start_date = draw_infection_course_backward(rng, age, params, init_date, init_state);
-    draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
+    TimePoint start_of_init_state =
+        draw_infection_course_forward(rng, age, params, init_date, init_state, latest_protection);
+    TimePoint start_date = draw_infection_course_backward(rng, age, params, start_of_init_state, init_state);
     return start_date;
 }
 
@@ -148,9 +142,14 @@ StateTransition Infection::get_forward_transition(PersonalRandomNumberGenerator&
                                                   TimePoint current_time, ProtectionEvent latest_protection) const
 {
     auto& uniform_dist = UniformDistribution<double>::get_instance();
-    StateTransition transition{current_state, current_state, TimeSpan{}, 0.0};
+    StateTransition transition{current_state, current_state, TimeSpan{}};
 
     switch (current_state) {
+    case InfectionState::Susceptible:
+        transition.to_state = InfectionState::Exposed;
+        transition.duration = mio::abm::hours(0);
+        break;
+
     case InfectionState::Exposed:
         transition.to_state = InfectionState::InfectedNoSymptoms;
         transition.duration = days(params.get<TimeExposedToNoSymptoms>()[{m_virus_variant, age}].get(rng));
@@ -231,7 +230,7 @@ StateTransition Infection::get_forward_transition(PersonalRandomNumberGenerator&
 StateTransition Infection::get_backward_transition(PersonalRandomNumberGenerator& rng, AgeGroup age,
                                                    const Parameters& params, InfectionState current_state) const
 {
-    StateTransition transition{current_state, current_state, TimeSpan{}, 0.0};
+    StateTransition transition{current_state, current_state, TimeSpan{}};
 
     switch (current_state) {
     case InfectionState::InfectedNoSymptoms:
@@ -277,12 +276,13 @@ StateTransition Infection::get_recovered_backward_transition(PersonalRandomNumbe
 
     // Compute death probability to factor it out
     ScalarType p_death = calculate_death_probability(age, params);
+    assert(p_death == 1 && "Trying to create a recovered agent although the chance to die is 100%.");
 
     ScalarType symptoms_prob = params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}];
     ScalarType severe_prob   = params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}];
     ScalarType critical_prob = params.get<CriticalPerInfectedSevere>()[{m_virus_variant, age}];
 
-    StateTransition transition{InfectionState::Recovered, InfectionState::InfectedNoSymptoms, TimeSpan{}, 0.0};
+    StateTransition transition{InfectionState::Recovered, InfectionState::InfectedNoSymptoms, TimeSpan{}};
 
     if (p > symptoms_prob / (1 - p_death)) {
         transition.to_state = InfectionState::InfectedNoSymptoms;
@@ -310,7 +310,7 @@ StateTransition Infection::get_dead_backward_transition(PersonalRandomNumberGene
     auto& uniform_dist = UniformDistribution<double>::get_instance();
     ScalarType p       = uniform_dist(rng);
 
-    StateTransition transition{InfectionState::Dead, InfectionState::InfectedSevere, TimeSpan{}, 0.0};
+    StateTransition transition{InfectionState::Dead, InfectionState::InfectedSevere, TimeSpan{}};
 
     if (p < params.get<DeathsPerInfectedSevere>()[{m_virus_variant, age}]) {
         transition.to_state = InfectionState::InfectedSevere;
@@ -342,11 +342,14 @@ ScalarType Infection::get_severity_protection_factor(const Parameters& params, P
         current_time.days() - latest_protection.time.days());
 }
 
-void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age,
-                                              const Parameters& params, TimePoint init_date, InfectionState start_state,
-                                              ProtectionEvent latest_protection)
+TimePoint Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng, AgeGroup age,
+                                                   const Parameters& params, TimePoint init_date,
+                                                   InfectionState start_state, ProtectionEvent latest_protection)
 {
-    assert(age.get() < params.get_num_groups());
+    TimePoint start_of_init_state = init_date; // since there is no state transition from Recovered or Dead
+    bool init                     = true; // the random start time of the first state cannot be drawn
+    auto& uniform_dist =
+        UniformDistribution<double>::get_instance(); // thus, just use the init_date as the start for this
 
     TimePoint current_time       = init_date;
     InfectionState current_state = start_state;
@@ -355,19 +358,24 @@ void Infection::draw_infection_course_forward(PersonalRandomNumberGenerator& rng
     while (current_state != InfectionState::Recovered && current_state != InfectionState::Dead) {
         StateTransition transition =
             get_forward_transition(rng, age, params, current_state, current_time, latest_protection);
+        if (init && current_state != InfectionState::Susceptible) { // random init within first time period
+            ScalarType p = uniform_dist(rng);
+            start_of_init_state -= transition.duration * (1 - p);
+            transition.duration *= p;
+            init = false;
+        }
         current_time += transition.duration;
         current_state = transition.to_state;
         m_infection_course.push_back({current_time, current_state});
     }
+    return start_of_init_state;
 }
 
 TimePoint Infection::draw_infection_course_backward(PersonalRandomNumberGenerator& rng, AgeGroup age,
-                                                    const Parameters& params, TimePoint init_date,
+                                                    const Parameters& params, TimePoint start_of_init_state,
                                                     InfectionState init_state)
 {
-    assert(age.get() < params.get_num_groups());
-
-    TimePoint current_time       = init_date;
+    TimePoint current_time       = start_of_init_state;
     InfectionState current_state = init_state;
 
     while (current_state != InfectionState::Exposed) {

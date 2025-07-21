@@ -314,42 +314,39 @@ struct ViralLoadDistributions {
 };
 
 /**
- * @brief Parameters for the Infectivity. Default values taken as constant values that match the graph 2C from
+ * @brief Parameters for the viral shed. Default values taken as constant values that match the graph 2C from
  * https://github.com/VirologyCharite/SARS-CoV-2-VL-paper/tree/main
 */
-struct InfectivityDistributionsParameters {
-    AbstractParameterDistribution infectivity_alpha;
-    AbstractParameterDistribution infectivity_beta;
+struct ViralShedParameters {
+    ScalarType viral_shed_alpha;
+    ScalarType viral_shed_beta;
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("InfectivityDistributionsParameters")
-            .add("infectivity_alpha", infectivity_alpha)
-            .add("infectivity_beta", infectivity_beta);
+        return Members("ViralShedParameters")
+            .add("viral_shed_alpha", viral_shed_alpha)
+            .add("viral_shed_beta", viral_shed_beta);
     }
 };
 
-struct InfectivityDistributions {
-    using Type = CustomIndexArray<InfectivityDistributionsParameters, VirusVariant, AgeGroup>;
+struct ViralShedDistribution {
+    using Type = CustomIndexArray<ViralShedParameters, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        Type default_val(
-            {VirusVariant::Count, size},
-            InfectivityDistributionsParameters{AbstractParameterDistribution(ParameterDistributionConstant(-7.)),
-                                               AbstractParameterDistribution(ParameterDistributionConstant(1.))});
+        Type default_val({VirusVariant::Count, size}, ViralShedParameters{-7., 1.});
         return default_val;
     }
     static std::string name()
     {
-        return "InfectivityDistributions";
+        return "ViralShedDistribution";
     }
 };
 
 /**
- * @brief Individual virus shed factor to account for variability in infectious viral load spread.
+ * @brief Individual viral shed factor to account for variability in infectious viral load spread.
 */
-struct VirusShedFactor {
+struct ViralShedFactor {
     using Type = CustomIndexArray<AbstractParameterDistribution, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -359,7 +356,22 @@ struct VirusShedFactor {
     }
     static std::string name()
     {
-        return "VirusShedFactor";
+        return "ViralShedFactor";
+    }
+};
+
+/**
+ * @brief Determines the infection rate by viral shed. Used as a linear factor.
+*/
+struct InfectionRateFromViralShed {
+    using Type = CustomIndexArray<ScalarType, VirusVariant>;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return Type({VirusVariant::Count}, 1.0);
+    }
+    static std::string name()
+    {
+        return "InfectionRateFromViralShed";
     }
 };
 
@@ -686,11 +698,11 @@ using ParametersBase =
                  TimeInfectedSevereToRecovered, TimeInfectedSevereToDead, TimeInfectedCriticalToDead,
                  TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
                  CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions,
-                 InfectivityDistributions, VirusShedFactor, DetectInfection, MaskProtection, AerosolTransmissionRates,
-                 LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
-                 GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
-                 AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor,
-                 HighViralLoadProtectionFactor, TestData>;
+                 ViralShedDistribution, ViralShedFactor, InfectionRateFromViralShed, DetectInfection, MaskProtection,
+                 AerosolTransmissionRates, LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate,
+                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
+                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -916,6 +928,15 @@ public:
                     return true;
                 }
 
+                if (this->get<ViralShedFactor>()[{v, i}].params()[0] < 0.0) {
+                    log_error("Constraint check: Mean of parameter ViralShedFactor of virus "
+                              "variant {} "
+                              "and age group {:.0f} smaller "
+                              "than {:d}",
+                              (uint32_t)v, (size_t)i, 0);
+                    return true;
+                }
+
                 if (this->get<DetectInfection>()[{v, i}] < 0.0 || this->get<DetectInfection>()[{v, i}] > 1.0) {
                     log_error("Constraint check: Parameter DetectInfection of virus variant {} and age group {:.0f} "
                               "smaller than {:d} or "
@@ -954,6 +975,15 @@ public:
                 log_error("Constraint check: Parameter GotoWorkTimeMaximum of age group {:.0f} smaller {:d} or larger "
                           "than one day time span",
                           (size_t)i, this->get<GotoSchoolTimeMinimum>()[i].seconds());
+                return true;
+            }
+        }
+
+        for (auto&& v : enum_members<VirusVariant>()) {
+            if (this->get<InfectionRateFromViralShed>()[v] < 0.0) {
+                log_error("Constraint check: Parameter InfectionRateFromViralShed of virus "
+                          "variant {} is smaller than {:d}",
+                          (uint32_t)v, 0);
                 return true;
             }
         }

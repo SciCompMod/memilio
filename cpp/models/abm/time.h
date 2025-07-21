@@ -129,6 +129,10 @@ public:
     {
         return TimeSpan{m_seconds * f};
     }
+    TimeSpan operator*(ScalarType f) const
+    {
+        return TimeSpan{int(m_seconds * f)};
+    }
     TimeSpan& operator*=(int f)
     {
         m_seconds *= f;

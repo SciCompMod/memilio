@@ -368,11 +368,11 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_CALL(mock_uniform_dist2.get_mock(), invoke)
         .Times(testing::Exactly(6))
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p1
-        .WillOnce(testing::Return(0.8)) // draw random virus shed p1
+        .WillOnce(testing::Return(0.8)) // draw random viral shed p1
         .WillOnce(testing::Return(1.0)) // draw transition to Recovered p3
-        .WillOnce(testing::Return(0.8)) // draw random virus shed p3
+        .WillOnce(testing::Return(0.8)) // draw random viral shed p3
         .WillOnce(testing::Return(0.0)) // draw transition from InfectedCritical p4
-        .WillOnce(testing::Return(0.8)) // draw random virus shed p4
+        .WillOnce(testing::Return(0.8)) // draw random viral shed p4
         .RetiresOnSaturation();
 
     auto rng_p1 = mio::abm::PersonalRandomNumberGenerator(p1);
