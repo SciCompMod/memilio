@@ -264,8 +264,9 @@ TEST_F(TestInfection, getPersonalProtectiveFactor)
     auto location = mio::abm::Location(mio::abm::LocationType::School, 0, num_age_groups);
     auto person   = mio::abm::Person(this->get_rng(), location.get_type(), location.get_id(), location.get_model_id(),
                                      age_group_15_to_34);
-    person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, mio::abm::TimePoint(0));
-    auto latest_protection = person.get_latest_protection();
+    auto t0       = mio::abm::Timepoint(0);
+    person.add_new_vaccination(mio::abm::ProtectionType::GenericVaccine, t0);
+    auto latest_protection = person.get_latest_protection(t0);
 
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     // Test default parameter functions
