@@ -94,6 +94,7 @@ public:
     Model(const Model& other, int id = 0)
         : parameters(other.parameters)
         , m_local_population_cache()
+        , m_local_population_per_age_cache()
         , m_air_exposure_rates_cache()
         , m_contact_exposure_rates_cache()
         , m_is_local_population_cache_valid(false)
@@ -390,7 +391,7 @@ public:
     /**
      * @brief Get the total number of Person%s at the Location.
      * @param[in] location A LocationId from the Model.
-     * @return Number of Person%s in the location.
+     * @return Number of Person%s at the location.
      */
     size_t get_number_persons(LocationId location) const
     {
@@ -398,6 +399,21 @@ public:
             build_compute_local_population_cache();
         }
         return m_local_population_cache[location.get()];
+    }
+
+    /**
+     * @brief Get the number of Person%s of a specific AgeGroup in a specific Cell at the Location.
+     * @param[in] location A LocationId from the Model.
+     * @param[in] cell_idx Index of the Cell.
+     * @param[in] AgeGroup An AgeGroup from the Model.
+     * @return Number of Person%s of the AgeGroup in the Cell at the Location.
+     */
+    size_t get_number_persons_age(LocationId location, CellIndex cell_idx, AgeGroup age) const
+    {
+        if (!m_is_local_population_cache_valid) {
+            build_compute_local_population_cache();
+        }
+        return m_local_population_per_age_cache[location.get()][cell_idx, age];
     }
 
     // Change the Location of a Person. this requires that Location is part of this Model.
@@ -536,6 +552,7 @@ protected:
                                 const std::vector<uint32_t>& cells = {0})
     {
         LocationId origin               = get_location(person).get_id();
+        auto old_cells                  = person.get_cells();
         const bool has_changed_location = mio::abm::change_location(person, get_location(destination), mode, cells);
         // if the person has changed location, invalidate exposure caches but keep population caches valid
         if (has_changed_location) {
@@ -543,6 +560,12 @@ protected:
             if (m_is_local_population_cache_valid) {
                 --m_local_population_cache[origin.get()];
                 ++m_local_population_cache[destination.get()];
+                for (CellIndex cell : old_cells) {
+                    --m_local_population_per_age_cache[origin.get()][{cell, person.get_age()}];
+                }
+                for (CellIndex cell : cells) {
+                    ++m_local_population_per_age_cache[destination.get()][{cell, person.get_age()}];
+                }
             }
         }
     }
@@ -624,6 +647,8 @@ protected:
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.
+    mutable Eigen::Matrix<CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>>
+        m_local_population_per_age_cache; ///<Current number of Persons per AgeGroup in a given location.
     Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
     Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>

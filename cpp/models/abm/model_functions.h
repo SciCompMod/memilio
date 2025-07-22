@@ -70,6 +70,18 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
                                const TimePoint t, const TimeSpan dt);
 
 /**
+ * @brief Normalize contact exposure rate by number of people in age groups
+ * @param[in, out] local_air_exposure Exposure rates by aerosols for the local population.
+ * @param[in, out] local_contact_exposure Exposure by rates contacts for the local population.
+ * @param[in] cells Vector of Cell%s of the location.
+ * @param[in] local_population_per_age Local population per AgeGroup.
+ */
+void normalize_exposure_contribution(
+    AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
+    const std::vector<CellIndex>& cells,
+    const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age);
+
+/**
  * @brief Let a Person interact with the population at its current Location, possibly getting infected.
  * @param[in, out] rng PersonalRandomNumberGenerator for this Person.
  * @param[in, out] person The person to interact with the local population.

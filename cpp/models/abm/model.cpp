@@ -71,6 +71,9 @@ PersonId Model::add_person(Person&& person)
     auto& new_person = m_persons.back();
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
+        for (CellIndex cell : new_person.get_cells()) {
+            ++m_local_population_per_age_cache[new_person.get_location().get()][{cell, person.get_age()}];
+        }
     }
     return new_person.get_id();
 }
@@ -219,15 +222,26 @@ void Model::build_compute_local_population_cache() const
         const size_t num_locations = m_locations.size();
         const size_t num_persons   = m_persons.size();
         m_local_population_cache.resize(num_locations);
+        m_local_population_per_age_cache.resize(num_locations);
+
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
             m_local_population_cache[i] = 0;
+            for (CellIndex cell_idx : m_locations[i].get_cells()) {
+                for (AgeGroup group = AgeGroup(0); group < m_num_groups; ++group) {
+                    m_local_population_per_age_cache[i][{cell, group}] = 0;
+                }
+            }
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
             if (m_activeness_statuses[i]) {
                 assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 ++m_local_population_cache[m_persons[i].get_location().get()];
+                for (CellIndex cell : m_person[i].get_cells()) {
+                    ++m_local_population_per_age_cache[m_persons[i].get_location().get()]
+                                                      [{cell, m_persons[i].get_age()}];
+                }
             }
         } // implicit taskloop barrier
     } // implicit single barrier
@@ -281,8 +295,8 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
         // here is an implicit (and needed) barrier from parallel for
 
         // 2) add all contributions from each person
-        PRAGMA_OMP(taskloop)
-        for (size_t i = 0; i < num_persons; ++i) {
+        Eigen::Matrix PRAGMA_OMP(taskloop) for (size_t i = 0; i < num_persons; ++i)
+        {
             const Person& person = m_persons[i];
             const auto location  = person.get_location().get();
             if (m_activeness_statuses[i]) {
@@ -292,6 +306,15 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                                                     get_location(person.get_location()), parameters, t, dt);
             }
         } // implicit taskloop barrier
+
+        // 3) normalize contributions for each location
+        PRAGMA_OMP(taskloop)
+        for (size_t i = 0; i < num_locations; ++i) {
+            mio::abm::normalize_exposure_rates(m_air_exposure_rates_cache[location],
+                                               m_contact_exposure_rates_cache[location], location.get_cells(),
+                                               m_local_population_per_age_cache[location]);
+        } // implicit taskloop barrier
+
     } // implicit single barrier
 }
 

@@ -129,6 +129,23 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
     }
 }
 
+void normalize_exposure_contribution(
+    AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
+    const std::vector<CellIndex>& cells,
+    const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age)
+{
+    for (CellIndex cell : cells) {
+        for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_agegroups); age_group++) {
+            if (local_population_per_age[{cell, age_group}] > 0) {
+                local_air_exposure[{cell, age_group}] =
+                    local_air_exposure[{cell, age_group}] / local_population_per_age[{cell, age_group}];
+                local_contact_exposure[{cell, age_group}] =
+                    local_contact_exposure[{cell, age_group}] / local_population_per_age[{cell, age_group}];
+            }
+        }
+    }
+}
+
 bool change_location(Person& person, const Location& destination, const TransportMode mode,
                      const std::vector<uint32_t>& cells)
 {
