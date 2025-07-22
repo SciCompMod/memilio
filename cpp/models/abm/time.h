@@ -129,10 +129,13 @@ public:
     {
         return TimeSpan{m_seconds * f};
     }
-    TimeSpan operator*(double f) const
+
+    // Multiplication with double and rounding down afterwards
+    TimeSpan multiply(double f) const
     {
         return TimeSpan{int(m_seconds * f)};
     }
+
     TimeSpan& operator*=(int f)
     {
         m_seconds *= f;

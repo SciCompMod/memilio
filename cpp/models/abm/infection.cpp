@@ -277,6 +277,7 @@ StateTransition Infection::get_recovered_backward_transition(PersonalRandomNumbe
     // Compute death probability to factor it out
     ScalarType p_death = calculate_death_probability(age, params);
     assert(p_death == 1 && "Trying to create a recovered agent although the chance to die is 100%.");
+    ScalarType inv_death = 1 / (1 - p_death);
 
     ScalarType symptoms_prob = params.get<SymptomsPerInfectedNoSymptoms>()[{m_virus_variant, age}];
     ScalarType severe_prob   = params.get<SeverePerInfectedSymptoms>()[{m_virus_variant, age}];
@@ -284,18 +285,18 @@ StateTransition Infection::get_recovered_backward_transition(PersonalRandomNumbe
 
     StateTransition transition{InfectionState::Recovered, InfectionState::InfectedNoSymptoms, TimeSpan{}};
 
-    if (p > symptoms_prob / (1 - p_death)) {
+    if (p > symptoms_prob * inv_death) {
         transition.to_state = InfectionState::InfectedNoSymptoms;
         transition.duration = days(params.get<TimeInfectedNoSymptomsToRecovered>()[{m_virus_variant, age}].get(rng));
     }
-    else if (p > symptoms_prob * severe_prob / (1 - p_death)) {
-        transition.to_state = InfectionState::InfectedSymptoms;
-        transition.duration = days(params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}].get(rng));
-    }
-    else if (p > symptoms_prob * severe_prob * critical_prob / (1 - p_death)) {
-        transition.to_state = InfectionState::InfectedSevere;
-        transition.duration = days(params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}].get(rng));
-    }
+        else if (p > symptoms_prob * severe_prob * inv_death) {
+            transition.to_state = InfectionState::InfectedSymptoms;
+            transition.duration = days(params.get<TimeInfectedSymptomsToRecovered>()[{m_virus_variant, age}].get(rng));
+        }
+        else if (p > symptoms_prob * severe_prob * critical_prob * inv_death) {
+            transition.to_state = InfectionState::InfectedSevere;
+            transition.duration = days(params.get<TimeInfectedSevereToRecovered>()[{m_virus_variant, age}].get(rng));
+        }
     else {
         transition.to_state = InfectionState::InfectedCritical;
         transition.duration = days(params.get<TimeInfectedCriticalToRecovered>()[{m_virus_variant, age}].get(rng));
@@ -360,8 +361,8 @@ TimePoint Infection::draw_infection_course_forward(PersonalRandomNumberGenerator
             get_forward_transition(rng, age, params, current_state, current_time, latest_protection);
         if (init && current_state != InfectionState::Susceptible) { // random init within first time period
             ScalarType p = uniform_dist(rng);
-            start_of_init_state -= transition.duration * (1 - p);
-            transition.duration *= p;
+            start_of_init_state -= transition.duration.multiply(1 - p);
+            transition.duration = transition.duration.multiply(p);
             init = false;
         }
         current_time += transition.duration;
