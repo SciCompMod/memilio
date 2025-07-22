@@ -1,9 +1,9 @@
-ODE models
-==========
+ODE-based models
+================
 
 MEmilio implements various models based on ordinary differential equations (ODEs). ODE-based models are a subclass of 
-compartmental models in which individuals are grouped into compartments. MEmilio's ODE-based models range from most simple 
-SIR structure to complex models with multi-layer and waning immunity. These models can be stratified by age groups or 
+compartmental models in which individuals are grouped into subpopulations called compartments. MEmilio's ODE-based models range from most simple 
+SIR structures to complex models with multiple layers and waning immunity. These models can be stratified by age groups or 
 other sociodemographic factors.
 
 In the following, we present the general structure for all simple ODE-based models. For generalizations via the Linear 
@@ -27,7 +27,7 @@ Infection state transitions
 
 Our ODE-based models are either implemented as **FlowModel** or as **CompartmentalModel**. In a **FlowModel**, flows 
 ``Flow<State1, State2>`` between **InfectionState**\s **State1** and **State2** are defined. Instead of a standard 
-solution to an ODE-based model, this implementation additionally realizes the solution of the transitions or flows 
+solution of an ODE-based model, this implementation additionally realizes the solution of the transitions or flows 
 between states and directly enables users to access new transmissions or hospitalizations at any time point. 
 The simpler class **CompartmentalModel** only considers the states of the system and not the flows.
 
@@ -35,7 +35,7 @@ The simpler class **CompartmentalModel** only considers the states of the system
 Sociodemographic stratification
 -------------------------------
 
-For most models, the population can also be stratified by one sociodemographic dimension. This dimension is denoted 
+For most ODE-based models, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
 **AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, 
 see :doc:`Model Creation <ode_creation>`.
 
@@ -49,10 +49,10 @@ compartment or the contact rates between different age groups. Most model parame
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a
 value for each sociodemographic group. To model different contact rates between different sociodemographic groups, we
 use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. The **UncertainContactMatrix** contains
-a set of contact matrices of arbitrary length and which can represent the different contact locations in the model like 
+a set of contact matrices of arbitrary length which can represent different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
-In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
-group :math:`i` to group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
+In the **ContactPatterns** parameter, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic 
+group :math:`i` and group :math:`j`. The dimension of the matrix is automatically defined by the model initiation and it is reduced 
 to one value if no stratifcation is used. The values can be adjusted during the simulation, e.g., through implementing 
 nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
 Parameters can get accessed via ``model.parameters.get<Param<double>>()`` and set via either 
@@ -102,13 +102,12 @@ reduction factor :math:`r`, the reduced contact rate is :math:`(1-r) * c_{i,j}`.
 Simulation
 ----------
 
-Once the model is setup, run a simple simulation from time ``t0`` to ``tmax`` with an initial step size ``dt`` using the 
-``mio::simulation()`` function. This will run a simulation of type **Simulation** that does not save the flows between 
-compartments but only the sizes of each compartment over time. To use the flow information, make sure to use a 
-**FlowModel** and run a simulation of type **FlowSimulation** with the ``mio::simulate_flows()`` function.
-You can run a simulation using either fixed or adaptive solution schemes with an absolute or relative tolerance. By 
-default, the simulation uses an adaptive solution scheme of the boost library and an absolute tolerance of 1e-10 and a 
-relative tolerance of 1e-5. For more details on the possible integration schemes, see <numerical integrator stuff>.
+Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with an initial step size ``dt`` using the 
+``mio::simulation()`` function. This will run a simulation of type **Simulation** that saves the sizes of each compartment over time. 
+To also save the flow information, make sure to use a **FlowModel** and run a simulation of type **FlowSimulation** with the ``mio::simulate_flows()`` function.
+You can run a simulation using either fixed or adaptive integration schemes with an absolute or relative tolerance. By 
+default, the simulation uses an adaptive integration scheme of the boost library with an absolute tolerance of 1e-10 and a 
+relative tolerance of 1e-5.
 
 
 Output

@@ -1,12 +1,11 @@
 ODE-based SECIR-type model
 ===========================
 
-The ODE-SECIR module models and simulates an epidemic using an approach based on ordinary differential equations.
+The ODE-SECIR module models and simulates an epidemic using an ODE-based SECIR-type model approach.
 The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical
-states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
-In the following, we present the model in detail.
+symptoms are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
 
-The infection states and the transitions (also see next to sections) are visualized in the following image.
+The infection states and the transitions (also see next two sections) are visualized in the following graph.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/70579874/46b09e8a-d083-4ef9-8328-21975890b60f
    :alt: secir_model
@@ -69,7 +68,7 @@ see :doc:`Model Creation <../ode_creation>`.
 Parameters
 ----------
 
-The model implements the following parameters.
+The model implements the following parameters:
 
 .. list-table::
    :header-rows: 1
@@ -165,7 +164,7 @@ For age-resolved models, you need to set the initial conditions for each age gro
 Nonpharmaceutical Interventions
 -------------------------------
 
-In the SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions.
+In the SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings to the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions.
 
 Basic dampings can be added to the contact matrix as follows:
 
@@ -188,7 +187,7 @@ For age-resolved models, you can apply different dampings to different groups:
     contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant((size_t)nb_groups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
-The SECIR model also supports dynamic NPIs based on epidemic thresholds. These are implemented in the model specific Simulation class and are automatically triggered based on predefined criteria, such as the percentage of infected individuals in the population.
+The SECIR model also supports dynamic NPIs based on epidemic thresholds. These are implemented in the model specific **Simulation** class and are automatically triggered based on predefined criteria, such as the percentage of infected individuals in the population.
 
 For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
@@ -238,7 +237,7 @@ You can create intervention types that target specific locations with different 
         Holidays,
     };
 
-For example, to implement a complex lockdown scenario with multiple interventions starting on a specific date:
+A complex lockdown scenario with multiple interventions starting on a specific date can be implemented via:
 
 .. code-block:: cpp
 
@@ -252,7 +251,7 @@ For example, to implement a complex lockdown scenario with multiple intervention
     contact_dampings.push_back(social_events(start_lockdown, 0.6, 0.8));
     contact_dampings.push_back(physical_distancing(start_lockdown, 0.4, 0.6));
 
-For dynamic NPIs that activate automatically based on thresholds:
+For dynamic NPIs that are automatically activated based on thresholds:
 
 .. code-block:: cpp
 
@@ -272,7 +271,7 @@ The SECIR model offers two simulation functions:
 1. **simulate**: Standard simulation that tracks the compartment sizes over time
 2. **simulate_flows**: Extended simulation that additionally tracks the flows between compartments
 
-Basic simulation:
+Standard simulation:
 
 .. code-block:: cpp
 
@@ -322,7 +321,7 @@ The output of the simulation is a `TimeSeries` object containing the sizes of ea
     Eigen::VectorXd last_value = secir.get_last_value();
     double last_time = secir.get_last_time();
 
-For flow simulations, the result consists of two `TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two `mio::TimeSeries` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 
@@ -352,7 +351,7 @@ Additionally, you can export the results to a CSV file:
     // Export results to CSV with default settings
     secir.export_csv("simulation_results.csv");
 
-The SECIR model also provides utility functions to extract specific measures, such as the reproduction number:
+The ODE-SECIR model also provides utility functions to extract specific measures, such as the reproduction number:
 
 .. code-block:: cpp
 
@@ -368,9 +367,6 @@ Visualization
 
 To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
 and its documentation.
-
-You can export your simulation results to CSV format as described above.
-
 
     
 Examples
