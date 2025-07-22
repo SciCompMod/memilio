@@ -50,7 +50,7 @@ void split_line(std::string string, std::vector<int32_t>* row)
 }
 
 void calculate_infections_per_quantity(std::string output_path, std::string save_file, std::string area_or_type,
-                                       std::string v4_or_v5, int num_sims)
+                                       std::string v4_or_v5, int num_sims, int start_sim)
 {
     auto start    = std::chrono::high_resolution_clock::now();
     auto txt_file = fopen(save_file.c_str(), "w");
@@ -60,7 +60,7 @@ void calculate_infections_per_quantity(std::string output_path, std::string save
     fprintf(txt_file, "Sim,t,%s,NumInfected,NewInfections,NumAgents", area_or_type.c_str());
     fprintf(txt_file, "\n");
 
-    for (int sim = 0; sim < num_sims; ++sim) {
+    for (int sim = start_sim; sim < num_sims + start_sim; ++sim) {
         auto start_sim = std::chrono::high_resolution_clock::now();
         //Location dataset
         std::string file = output_path + std::to_string(sim) + "_output_" + v4_or_v5 + ".h5";
@@ -179,7 +179,7 @@ int determine_age_group_index(uint32_t age)
 }
 
 void calculate_infections_per_hh_size(std::string output_path, std::string person_file, std::string save_file,
-                                      int num_sims)
+                                      int num_sims, int start_sim)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -256,7 +256,7 @@ void calculate_infections_per_hh_size(std::string output_path, std::string perso
     }
     fprintf(txt_file, "\n");
 
-    for (int sim = 0; sim < num_sims; ++sim) {
+    for (int sim = start_sim; sim < num_sims + start_sim; ++sim) {
         auto start_sim = std::chrono::high_resolution_clock::now();
         //Location dataset
         std::string file = output_path + std::to_string(sim) + "_output_v4.h5";
@@ -340,4 +340,200 @@ void calculate_infections_per_hh_size(std::string output_path, std::string perso
     auto stop     = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
     std::cout << "Total time to calculate infections hh size and age group: " << duration.count() << "[s]" << std::endl;
+}
+
+void calculate_agents_per_quantity(std::string output_path, std::string save_file, int num_sims, int start_sim,
+                                   std::string area_or_type, std::string v4_or_v5)
+{
+    auto file = fopen(save_file.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", save_file);
+    }
+    fprintf(file, "Sim,t,%s,NumAgents", area_or_type.c_str());
+    fprintf(file, "\n");
+    for (int sim = start_sim; sim < num_sims + start_sim; ++sim) {
+        auto start              = std::chrono::high_resolution_clock::now();
+        std::string output_file = output_path + std::to_string(sim) + "_output_" + v4_or_v5 + ".h5";
+        //Load H5 file
+        mio::H5File sim_output{H5Fopen(output_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)};
+        std::string group_name = "data";
+        //Open group
+        mio::H5Group h5group{H5Gopen(sim_output.id, group_name.c_str(), H5P_DEFAULT)};
+        //Open dataset
+        mio::H5DataSet dset_loc_ids{H5Dopen(h5group.id, "loc_ids", H5P_DEFAULT)};
+        //Open dataspace
+        mio::H5DataSpace dataspace{H5Dget_space(dset_loc_ids.id)};
+        //Get dimensions
+        int ndims     = H5Sget_simple_extent_ndims(dataspace.id);
+        hsize_t* dims = (hsize_t*)malloc(ndims * sizeof(hsize_t));
+        H5Sget_simple_extent_dims(dataspace.id, dims, NULL);
+
+        hsize_t rows  = dims[0];
+        hsize_t cols  = dims[1];
+        int* data     = (int*)malloc(rows * cols * sizeof(int));
+        herr_t status = H5Dread(dset_loc_ids.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+        std::vector<int> data1(data, data + dims[0] * dims[1]);
+        int max_area = *std::max_element(data1.begin(), data1.end());
+        //Save data in matrix
+        std::vector<std::vector<int>> matrix(dims[1], std::vector<int>(max_area + 1));
+        for (size_t i = 0; i < dims[0]; ++i) {
+            for (size_t j = 0; j < dims[1]; ++j) {
+                int loc_type = data[i * dims[1] + j];
+                matrix[j][loc_type] += 1;
+            }
+        }
+
+        for (size_t i = 0; i < matrix.size(); ++i) {
+            for (size_t j = 0; j < matrix[0].size(); ++j) {
+                fprintf(file, "%d,", sim);
+                fprintf(file, "%d,", static_cast<int>(i));
+                fprintf(file, "%d,", static_cast<int>(j));
+                fprintf(file, "%d,", matrix[i][j]);
+                fprintf(file, "\n");
+            }
+        }
+        auto stop     = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+        std::cout << "Sim " << std::to_string(sim) << ": Time to calculate agents per quantity: " << duration.count()
+                  << "[s]" << std::endl;
+    }
+    fclose(file);
+}
+
+std::string get_age_group_string(uint32_t age)
+{
+    if (age <= 4) {
+        return "0-4";
+    }
+    else if (age <= 15) {
+        return "5-15";
+    }
+    else if (age <= 34) {
+        return "16-34";
+    }
+    else if (age <= 59) {
+        return "35-59";
+    }
+    else if (age <= 79) {
+        return "60-79";
+    }
+    else if (age > 79) {
+        return "80+";
+    }
+    else {
+        return "NaN";
+    }
+}
+
+void calculate_agents_per_quantity_age_groups(std::string output_path, std::string save_file, std::string area_or_type,
+                                              std::string person_file, int num_sims, int start_sim,
+                                              std::string v4_or_v5)
+{
+    std::vector<int> ages;
+    // Read in persons
+    const boost::filesystem::path p = person_file;
+    if (!boost::filesystem::exists(p)) {
+        mio::log_error("Cannot read in data. File does not exist.");
+    }
+    // File pointer
+    std::fstream fin;
+
+    // Open an existing file
+    fin.open(person_file, std::ios::in);
+    std::vector<int32_t> row;
+    std::vector<std::string> row_string;
+    std::string line;
+
+    // Read the Titles from the Data file
+    std::getline(fin, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+    std::vector<std::string> titles;
+    boost::split(titles, line, boost::is_any_of(","));
+    uint32_t count_of_titles              = 0;
+    std::map<std::string, uint32_t> index = {};
+    for (auto const& title : titles) {
+        index.insert({title, count_of_titles});
+        row_string.push_back(title);
+        count_of_titles++;
+    }
+
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // read columns in this row
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        uint32_t age = row[index["age"]];
+        ages.push_back(age);
+    }
+
+    auto file = fopen(save_file.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", save_file);
+    }
+    fprintf(file, "Sim,t,%s,AgeGroup,NumAgents", area_or_type.c_str());
+    fprintf(file, "\n");
+    for (int sim = start_sim; sim < num_sims + start_sim; ++sim) {
+        auto start              = std::chrono::high_resolution_clock::now();
+        std::string output_file = output_path + std::to_string(sim) + "_output_" + v4_or_v5 + ".h5";
+        //Load H5 file
+        mio::H5File sim_output{H5Fopen(output_file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)};
+        std::string group_name = "data";
+        //Open group
+        mio::H5Group h5group{H5Gopen(sim_output.id, group_name.c_str(), H5P_DEFAULT)};
+        //Open dataset
+        mio::H5DataSet dset_loc_ids{H5Dopen(h5group.id, "loc_ids", H5P_DEFAULT)};
+        //Open dataspace
+        mio::H5DataSpace dataspace{H5Dget_space(dset_loc_ids.id)};
+        //Get dimensions
+        int ndims     = H5Sget_simple_extent_ndims(dataspace.id);
+        hsize_t* dims = (hsize_t*)malloc(ndims * sizeof(hsize_t));
+        H5Sget_simple_extent_dims(dataspace.id, dims, NULL);
+
+        hsize_t rows  = dims[0];
+        hsize_t cols  = dims[1];
+        int* data     = (int*)malloc(rows * cols * sizeof(int));
+        herr_t status = H5Dread(dset_loc_ids.id, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+        std::vector<int> data1(data, data + dims[0] * dims[1]);
+        int max_area = *std::max_element(data1.begin(), data1.end());
+
+        //Age groups
+        std::map<std::string, int> age_groups{{"0-4", 0},   {"5-15", 1},  {"16-34", 2},
+                                              {"35-59", 3}, {"60-79", 4}, {"80+", 5}};
+        //Age groups
+        std::map<int, std::string> index_to_age_groups{{0, "0-4"},   {1, "5-15"},  {2, "16-34"},
+                                                       {3, "35-59"}, {4, "60-79"}, {5, "80+"}};
+        //Save data in matrix
+        std::vector<std::vector<std::vector<int>>> matrix(
+            dims[1], std::vector<std::vector<int>>(max_area + 1, std::vector<int>(6)));
+        for (size_t agent = 0; agent < dims[0]; ++agent) {
+            for (size_t j = 0; j < dims[1]; ++j) {
+                int loc_type   = data[agent * dims[1] + j];
+                std::string ag = get_age_group_string(ages[agent]);
+                if (ag == "NaN") {
+                    mio::log(mio::LogLevel::err, "Age group does not exists.}");
+                }
+                matrix[j][loc_type][age_groups[ag]] += 1;
+            }
+        }
+
+        for (size_t agent = 0; agent < matrix.size(); ++agent) {
+            for (size_t quantity = 0; quantity < matrix[0].size(); ++quantity) {
+                for (size_t age_group = 0; age_group < matrix[0][0].size(); ++age_group) {
+                    fprintf(file, "%d,", sim);
+                    fprintf(file, "%d,", static_cast<int>(agent));
+                    fprintf(file, "%d,", static_cast<int>(quantity));
+                    fprintf(file, "%s,", index_to_age_groups[age_group].c_str());
+                    fprintf(file, "%d,", matrix[agent][quantity][age_group]);
+                    fprintf(file, "\n");
+                }
+            }
+        }
+        auto stop     = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+        std::cout << "Sim " << std::to_string(sim)
+                  << ": Time to calculate agents per quantity age groups: " << duration.count() << "[s]" << std::endl;
+    }
+    fclose(file);
 }

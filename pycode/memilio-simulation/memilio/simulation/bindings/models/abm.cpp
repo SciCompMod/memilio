@@ -1572,14 +1572,30 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     m.def(
         "calculate_infections_per_quantity",
-        [](std::string sim_result_folder, std::string save_folder, int num_sims, std::string person_file) {
+        [](std::string sim_result_folder, std::string save_folder, int num_sims, int start_sim,
+           std::string person_file) {
             std::string save_file_loctype_infections    = save_folder + "num_agents_infections_loctype.txt";
             std::string save_file_ww_area_infections    = save_folder + "num_agents_infections_area.txt";
             std::string save_file_hh_size_ag_infections = save_folder + "num_agents_infections_hh_size_ag.txt";
             calculate_infections_per_quantity(sim_result_folder, save_file_loctype_infections, "locType", "v5",
-                                              num_sims);
-            calculate_infections_per_quantity(sim_result_folder, save_file_ww_area_infections, "area", "v4", num_sims);
-            calculate_infections_per_hh_size(sim_result_folder, person_file, save_file_hh_size_ag_infections, num_sims);
+                                              num_sims, start_sim);
+            calculate_infections_per_quantity(sim_result_folder, save_file_ww_area_infections, "area", "v4", num_sims,
+                                              start_sim);
+            calculate_infections_per_hh_size(sim_result_folder, person_file, save_file_hh_size_ag_infections, num_sims,
+                                             start_sim);
+        },
+        py::return_value_policy::reference_internal);
+
+    m.def(
+        "calculate_agents_per_quantity_age_groups",
+        [](std::string sim_result_folder, std::string save_folder, int num_sims, int start_sim,
+           std::string person_file) {
+            std::string save_file_loctype = save_folder + "num_agents_loctype_ag.txt";
+            std::string save_file_ww_area = save_folder + "num_agents_area_ag.txt";
+            calculate_agents_per_quantity_age_groups(sim_result_folder, save_file_loctype, "locType", person_file,
+                                                     num_sims, start_sim, "v5");
+            calculate_agents_per_quantity_age_groups(sim_result_folder, save_file_ww_area, "area", person_file,
+                                                     num_sims, start_sim, "v4");
         },
         py::return_value_policy::reference_internal);
 #endif

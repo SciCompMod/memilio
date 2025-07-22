@@ -8,5 +8,8 @@ if __name__ == "__main__":
     # Path to person.csv file
     person_file = ""
     num_sims = 1
+    start_sim = 0  # Index the first simulation starts with
     abm.calculate_infections_per_quantity(
-        sim_result_file, save_folder, num_sims, person_file)
+        sim_result_file, save_folder, num_sims, start_sim, person_file)
+    abm.calculate_agents_per_quantity_age_groups(
+        sim_result_file, save_folder, num_sims, start_sim, person_file)
