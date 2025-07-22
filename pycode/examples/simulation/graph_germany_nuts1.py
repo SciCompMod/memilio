@@ -20,13 +20,13 @@
 import numpy as np
 import datetime
 import os
-# import memilio.simulation as mio
-# import memilio.simulation.osecir as osecir
+import memilio.simulation as mio
+import memilio.simulation.osecir as osecir
 import matplotlib.pyplot as plt
 
 from enum import Enum
-# from memilio.simulation.osecir import (Model, Simulation,
-                                    #    interpolate_simulation_result)
+from memilio.simulation.osecir import (Model, Simulation,
+                                       interpolate_simulation_result)
 
 import pickle
 
@@ -117,11 +117,11 @@ class Simulation:
 
         data_dir_Germany = os.path.join(self.data_dir, "Germany")
         mobility_data_file = os.path.join(
-            data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
+            data_dir_Germany, "mobility", "commuter_mobility_2022_states.txt")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
         path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population_aggregated.json")
+                                            "county_current_population_states.json")
 
         print("Setting nodes...")
         mio.osecir.set_nodes(
@@ -184,7 +184,7 @@ class Simulation:
          
         return results
 
-def run_germany_nuts3_simulation(damping_value):
+def run_germany_nuts1_simulation(damping_value):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -203,49 +203,48 @@ def prior():
     return {"damping_value": damping_value}
 
 if __name__ == "__main__":
-    import os 
-    os.environ["KERAS_BACKEND"] = "jax"
 
-    import bayesflow as bf
+    run_germany_nuts1_simulation(0.5)
+    # import os 
+    # os.environ["KERAS_BACKEND"] = "jax"
 
-    simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    # trainings_data = simulator.sample(5)
+    # import bayesflow as bf
+
+    # simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
+    # # trainings_data = simulator.sample(5)
 
     # with open('trainings_data.pickle', 'wb') as f:
     #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('trainings_data.pickle', 'rb') as f:
-        trainings_data = pickle.load(f)
+    # with open('trainings_data.pickle', 'rb') as f:
+    #     trainings_data = pickle.load(f)
 
-    trainings_data['region0'] = trainings_data['region0'][8]
-
-    trainings_data = {k:v for k, v in trainings_data.items() if k in ('damping_value', 'region0', 'region1')}
-    print("Loaded training data:", trainings_data)
+    # # trainings_data = {k:v for k, v in trainings_data.items() if k in ('damping_value', 'region0', 'region1')}
+    # print("Loaded training data:", trainings_data)
 
 
     # trainings_data = simulator.sample(2)
     # validation_data = simulator.sample(2)
 
-    adapter = (
-        bf.Adapter()
-        .to_array()
-        .convert_dtype("float64", "float32")
-        .constrain("damping_value", lower=0.0, upper=1.0)
-        .concatenate(["region"+str(region) for region in range(len(trainings_data)-1)], into="summary_variables")
-        .rename("damping_value", "inference_variables")
-        .log("summary_variables", p1=True)
-        .standardize("summary_variables")
-    )
+    # adapter = (
+    #     bf.Adapter()
+    #     .to_array()
+    #     .convert_dtype("float64", "float32")
+    #     .constrain("damping_value", lower=0.0, upper=1.0)
+    #     .concatenate(["region"+str(region) for region in range(len(trainings_data)-1)], into="summary_variables")
+    #     .rename("damping_value", "inference_variables")
+    #     #.standardize("summary_variables")
+    # )
 
-    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=4)
-    inference_network = bf.networks.CouplingFlow()
+    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=4)
+    # inference_network = bf.networks.CouplingFlow()
 
-    workflow = bf.BasicWorkflow(
-        simulator=simulator, 
-        adapter=adapter,
-        summary_network=summary_network,
-        inference_network=inference_network
-    )
+    # workflow = bf.BasicWorkflow(
+    #     simulator=simulator, 
+    #     adapter=adapter,
+    #     summary_network=summary_network,
+    #     inference_network=inference_network
+    # )
 
-    history = workflow.fit_offline(data=trainings_data, epochs=2, batch_size=2, validation_data=trainings_data)
-    f = bf.diagnostics.plots.loss(history)
+    # history = workflow.fit_offline(data=trainings_data, epochs=2, batch_size=2, validation_data=trainings_data)
+    # f = bf.diagnostics.plots.loss(history)
