@@ -413,7 +413,7 @@ public:
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
         }
-        return m_local_population_per_age_cache[location.get()][cell_idx, age];
+        return m_local_population_per_age_cache[location.get()][{cell_idx, age}];
     }
 
     // Change the Location of a Person. this requires that Location is part of this Model.
@@ -647,7 +647,7 @@ protected:
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.
-    mutable Eigen::Matrix<CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>>
+    mutable Eigen::Matrix<CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>, Eigen::Dynamic, 1>
         m_local_population_per_age_cache; ///<Current number of Persons per AgeGroup in a given location.
     Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
