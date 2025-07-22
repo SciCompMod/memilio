@@ -141,6 +141,7 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
 
     gd.write_dataframe(df_pop_export, directory, filename, file_format)
     gd.write_dataframe(df_pop_export.drop(columns=new_cols[2:]), directory, filename + '_aggregated', file_format)
+    gd.write_dataframe(aggregate_to_state_level(df_pop_export.drop(columns=new_cols[2:])), directory, filename + '_states', file_format)
 
     return df_pop_export
 
@@ -443,6 +444,14 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         ref_year=ref_year
     )
     return df_pop_export
+
+def aggregate_to_state_level(df_pop: pd.DataFrame):
+
+    countyIDtostateID = geoger.get_countyid_to_stateid_map()
+
+    df_pop['ID_State'] = df_pop[dd.EngEng['idCounty']].map(countyIDtostateID)
+    df_pop = df_pop.drop(columns='ID_County').groupby('ID_State').sum()
+    return df_pop
 
 
 def main():
