@@ -145,6 +145,16 @@ void Location::interact(Person::RandomNumberGenerator& rng, Person& person, Time
                 (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_params));
             ScalarType infection_rate = global_params.get<InfectionRateFromViralShed>()[{virus}] * exposed_viral_shed;
             local_indiv_expected_trans[v] = std::make_pair(virus, infection_rate);
+            // if (m_id.type == LocationType::Home && infection_rate > 3.0) {
+            //     // In home, we do not have any infections, so we can skip the rest of the logic
+            //     std::cout << "Expected Infection Rate: " << infection_rate
+            //               << " in home location. This should not happen." << std::endl;
+            // }
+            // if (m_id.type == LocationType::Work && infection_rate > 4.0) {
+            //     // In work, we do not have any infections, so we can skip the rest of the logic
+            //     std::cout << "Expected Infection Rate: " << infection_rate
+            //               << " in work location. This should not happen." << std::endl;
+            // }
         }
         VirusVariant virus =
             random_transition(rng, VirusVariant::Count, dt,

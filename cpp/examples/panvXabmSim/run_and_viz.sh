@@ -5,11 +5,14 @@ MAIN_PATH="/Users/saschakorf/Nosynch/Arbeit/memilio/cpp"
 MAIN_EXECUTABLE="$MAIN_PATH/build/bin/panvXabm"
 SIM_VIZ_SCRIPT="$MAIN_PATH/examples/panvXabmSim/viz/sim_viz.py"
 RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
-PYTHON3_DIR="$MAIN_PATH/examples/panvXabmSim/virt_env/bin/python3"
+PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 
 # Simulation parameters
-EVENT_TYPE="restaurant_table_equals_household"
-SIM_TYPE="panvadere"
+# EVENT_TYPE="restaurant_table_equals_random_household"
+#EVENT_TYPE="restaurant_table_equals_half_household"  # Options: restaurant_table_equals_half_household, restaurant_table_equals_full_household
+EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equals_half
+# SIM_TYPE="memilio"  # Options: panvadere, memilio
+SIM_TYPE="panvadere"  # Options: panvadere, memilio
 VIZ_OPTIONS="--s90percentile"
 NUM_DAYS=10
 NUM_PERSONS=3000
@@ -31,7 +34,7 @@ run_simulation() {
     local results_dir=$1
     echo "Running simulation..."
     $MAIN_EXECUTABLE --event "$EVENT_TYPE" --sim "$SIM_TYPE" --output_dir "$results_dir"    \
-        --days "$NUM_DAYS" --n_persons "$NUM_PERSONS"
+        --days "$NUM_DAYS" --n_persons "$NUM_PERSONS"  
     return $?
 }
 

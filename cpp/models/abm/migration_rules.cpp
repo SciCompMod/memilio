@@ -63,7 +63,7 @@ LocationType go_to_school(Person::RandomNumberGenerator& /*rng*/, const Person& 
         return LocationType::School;
     }
     //return home
-    if (current_loc == LocationType::School && t.hour_of_day() >= 15) {
+    if (current_loc == LocationType::School && t.hour_of_day() >= 14) {
         return LocationType::Home;
     }
     return current_loc;
@@ -94,15 +94,15 @@ LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person
 {
     auto current_loc = person.get_location().get_type();
     //leave
-    if (person.get_assigned_location_index(LocationType::BasicsShop) != INVALID_LOCATION_INDEX && t.day_of_week() < 6 &&
-        t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
+    if (person.get_assigned_location_index(LocationType::BasicsShop) != INVALID_LOCATION_INDEX &&
+        (t.day_of_week() < 5) && t.hour_of_day() > 18 && t.hour_of_day() < 21 && current_loc == LocationType::Home &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});
     }
 
     //return home
-    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(1)) {
+    if (current_loc == LocationType::BasicsShop && person.get_time_at_location() >= hours(2)) {
         return LocationType::Home;
     }
 
@@ -115,7 +115,7 @@ LocationType go_to_event(Person::RandomNumberGenerator& rng, const Person& perso
     auto current_loc = person.get_location().get_type();
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
+        ((t.day_of_week() >= 5 && t.hour_of_day() >= 10) || (t.day_of_week() < 5 && t.hour_of_day() >= 21)) &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::SocialEvent,

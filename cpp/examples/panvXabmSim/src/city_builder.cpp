@@ -11,9 +11,10 @@
 #include <iostream>
 #include <iomanip>
 
-mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config)
+mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng)
 {
-    auto world = mio::abm::World(num_age_groups);
+    auto world      = mio::abm::World(num_age_groups);
+    world.get_rng() = rng; // Set the random number generator for the world
 
     // Get infrastructure configuration based on German demographic data
     auto infra = config.infrastructure();

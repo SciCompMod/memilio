@@ -23,7 +23,7 @@ struct CityConfig {
 class CityBuilder
 {
 public:
-    static mio::IOResult<mio::abm::World> build_world(const CityConfig& config);
+    static mio::IOResult<mio::abm::World> build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng);
     static void print_city_summary(const CityConfig& config);
 
 private:

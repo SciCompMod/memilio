@@ -148,7 +148,7 @@ def plot_infections_loc_types_average(
         path_to_loc_types,
         colormap='Set1',
         smooth_sigma=1,
-        rolling_window=24,
+        rolling_window=1,
         xtick_step=150):
     """ Plots rolling sum of new infections per 24 hours location type for the median run.
 

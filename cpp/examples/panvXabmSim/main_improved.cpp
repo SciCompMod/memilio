@@ -88,9 +88,9 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     // Set defaults
     config.city_config                       = CityConfig{};
     config.city_config.total_population      = Config::DEFAULT_POPULATION;
-    config.event_config.type                 = EventType::Restaurant_Table_Equals_Household;
+    config.event_config.type                 = EventType::WorkMeeting_Many_Meetings;
     config.event_config.event_duration_hours = Config::DEFAULT_EVENT_HOURS;
-    config.simulation_type                   = SimType::Memilio; // Default to Panvadere simulatio
+    config.simulation_type                   = SimType::Panvadere; // Default to Panvadere simulatio
     config.num_runs                          = Config::DEFAULT_RUNS;
     config.simulation_days                   = Config::DEFAULT_DAYS;
     config.output_base_dir                   = Config::DEFAULT_OUTPUT_DIR;
@@ -220,7 +220,7 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     mio::set_log_level(mio::LogLevel::critical);
 
     // Initialize random number generator with fixed seeds for reproducibility
-    std::initializer_list<uint32_t> seeds = {14159265u, 35897932u};
+    std::initializer_list<uint32_t> seeds = {14159265u, 35897932u, 27182818u, 18284590u, 45235360u, 28747135u};
     auto rng                              = mio::RandomNumberGenerator();
     rng.seed(seeds);
     rng.synchronize();
@@ -238,7 +238,7 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     print_config_summary(config);
 
     // Run multi-simulation
-    BOOST_OUTCOME_TRY(auto results, MultiRunSimulator::run_multi_simulation(config));
+    BOOST_OUTCOME_TRY(auto results, MultiRunSimulator::run_multi_simulation(config, rng));
 
     // Save results
     if (config.output_base_dir == Config::DEFAULT_OUTPUT_DIR) {

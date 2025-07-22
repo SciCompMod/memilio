@@ -511,7 +511,7 @@ struct BasicShoppingRate {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
-        return Type({size}, 0.3);
+        return Type({size}, 1.0);
     }
     static std::string name()
     {
@@ -586,7 +586,7 @@ struct GotoWorkTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
     }
     static std::string name()
     {
@@ -601,7 +601,7 @@ struct GotoSchoolTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
     }
     static std::string name()
     {

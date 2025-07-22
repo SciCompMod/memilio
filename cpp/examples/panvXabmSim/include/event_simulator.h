@@ -32,9 +32,9 @@ const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
     {EventType::Restaurant_Table_Equals_Random,
      std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
     {EventType::WorkMeeting_Many_Meetings,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_meeting_many/infections.txt"},
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_many_meetings/infections.txt"},
     {EventType::WorkMeeting_Few_Meetings,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_meeting_few/infections.txt"}};
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_few_meetings/infections.txt"}};
 
 struct EventSimulationConfig {
     EventType type;
@@ -83,9 +83,8 @@ public:
      * @return IOResult containing infected person mapping
      */
     static mio::IOResult<std::vector<uint32_t>>
-    initialize_from_event_simulation(const mio::RandomNumberGenerator rng, EventType event_type,
-                                     std::map<uint32_t, uint32_t>& event_map);
-
+    initialize_from_event_simulation(EventType event_type, std::map<uint32_t, uint32_t>& event_map);
+    ///!!!!! Don't add RNG!!!!!//
     // === Utility Functions ===
 
     /**
@@ -118,7 +117,8 @@ public:
     /**
      * @brief Read infection data from a Panvadere file
      */
-    static mio::IOResult<std::map<uint32_t, bool>> read_panv_file_work(const std::string& filename);
+    static mio::IOResult<std::vector<std::tuple<uint32_t, uint32_t, bool>>>
+    read_panv_file_work(const std::string& filename);
 
     /**
      * @brief Map restaurant tables to households for infection tracking
@@ -137,8 +137,7 @@ public:
     static mio::IOResult<std::map<uint32_t, uint32_t>>
     map_random_restaurant_tables_to_households(mio::abm::World& city);
 
-    static mio::IOResult<std::map<uint32_t, uint32_t>>
-    map_work_meeting_to_households(const std::map<uint32_t, bool>& panvadere_data);
+    static mio::IOResult<std::map<uint32_t, uint32_t>> map_work_meeting_to_households(mio::abm::World& city);
 
 private:
     static mio::IOResult<mio::abm::World> create_event_world(const EventSimulationConfig& config, mio::abm::World& city,
