@@ -148,7 +148,7 @@ def plot_infections_loc_types_average(
         path_to_loc_types,
         colormap='Set1',
         smooth_sigma=1,
-        rolling_window=1,
+        rolling_window=24*3,
         xtick_step=150):
     """ Plots rolling sum of new infections per 24 hours location type for the median run.
 
@@ -301,8 +301,8 @@ def plot_infection_states_comparison(
     for i in states_plot:
         plt.plot(x1, y50_1[:, i], color=color_plot[i],
                  linewidth=2.5, linestyle='-', label=f'{state_labels[i]} - {label1}')
-    
-    # Plot second simulation  
+
+    # Plot second simulation
     for i in states_plot:
         plt.plot(x2, y50_2[:, i], color=color_plot[i],
                  linewidth=2.5, linestyle='--', label=f'{state_labels[i]} - {label2}')
@@ -326,7 +326,8 @@ def plot_infection_states_comparison(
                              alpha=0.1, color=color_plot[i])
 
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    _format_x_axis_days(x1, xtick_step)  # Assuming x1 and x2 have similar ranges
+    # Assuming x1 and x2 have similar ranges
+    _format_x_axis_days(x1, xtick_step)
     plt.xlabel('Days')
     plt.ylabel('Number of individuals')
     plt.tight_layout()
@@ -366,7 +367,7 @@ def plot_infection_states_results_comparison(
     total_50_1 = p50_1['Total']
     total_25_1 = p25_1['Total']
     total_75_1 = p75_1['Total']
-    
+
     # Load data for second simulation
     p50_2 = load_h5_results(path_to_infection_states_2, "p50")
     p25_2 = load_h5_results(path_to_infection_states_2, "p25")
@@ -383,7 +384,7 @@ def plot_infection_states_results_comparison(
         total_05_1 = load_h5_results(path_to_infection_states_1, "p05")
         p95_1 = total_95_1['Total']
         p05_1 = total_05_1['Total']
-        
+
         total_95_2 = load_h5_results(path_to_infection_states_2, "p95")
         total_05_2 = load_h5_results(path_to_infection_states_2, "p05")
         p95_2 = total_95_2['Total']
@@ -552,7 +553,7 @@ def main():
     print(f"Path to infection states: {args.path_to_infection_states}")
     print(f"Path to infection states 2: {args.path_to_infection_states_2}")
     print(f"Path to location types: {args.path_to_loc_types}")
-    
+
     # Check if comparison mode is requested
     if args.path_to_infection_states and args.path_to_infection_states_2:
         print("Running infection states comparison...")

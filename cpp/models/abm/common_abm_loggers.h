@@ -291,24 +291,29 @@ struct DataWriterToMemoryDelta {
     */
     static void add_record(const typename Logger::Type& t, Data& data)
     {
-
-        if (std::get<index_of_type_v<Logger, Loggers...>>(data).size() > 0) {
-            typename Logger::Type diff_vector{};
-            auto& current_state_vec = std::get<index_of_type_v<Logger, Loggers...>>(data).front();
-            for (auto i = 0; i < (int)current_state_vec.size(); i++) {
-                if (std::get<1>(t[i]) != std::get<1>(current_state_vec[i])) {
-                    std::get<1>(current_state_vec[i]) = std::get<1>(t[i]);
-                    diff_vector.push_back(t[i]);
-                }
-            }
-            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(diff_vector);
-        }
-        else {
-            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(
-                t); // We use the first entry as a reference for the current position.
-            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
-        }
+        std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
     }
+
+    // static void add_record(const typename Logger::Type& t, Data& data)
+    // {
+
+    //     if (std::get<index_of_type_v<Logger, Loggers...>>(data).size() > 0) {
+    //         typename Logger::Type diff_vector{};
+    //         auto& current_state_vec = std::get<index_of_type_v<Logger, Loggers...>>(data).front();
+    //         for (auto i = 0; i < (int)current_state_vec.size(); i++) {
+    //             if (std::get<1>(t[i]) != std::get<1>(current_state_vec[i])) {
+    //                 std::get<1>(current_state_vec[i]) = std::get<1>(t[i]);
+    //                 diff_vector.push_back(t[i]);
+    //             }
+    //         }
+    //         std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(diff_vector);
+    //     }
+    //     else {
+    //         std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(
+    //             t); // We use the first entry as a reference for the current position.
+    //         std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
+    //     }
+    // }
 };
 
 } // namespace abm

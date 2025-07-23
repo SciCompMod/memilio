@@ -8,6 +8,29 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <tuple>
+
+std::string location_type_to_string(mio::abm::LocationType type)
+{
+    switch (type) {
+    case mio::abm::LocationType::Home:
+        return "Home";
+    case mio::abm::LocationType::Work:
+        return "Work";
+    case mio::abm::LocationType::School:
+        return "School";
+    case mio::abm::LocationType::SocialEvent:
+        return "SocialEvent";
+    case mio::abm::LocationType::BasicsShop:
+        return "BasicsShop";
+    case mio::abm::LocationType::Hospital:
+        return "Hospital";
+    case mio::abm::LocationType::ICU:
+        return "ICU";
+    default:
+        return "Unknown";
+    }
+}
 
 mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const MultiRunConfig& config,
                                                                        mio::RandomNumberGenerator rng)
@@ -24,7 +47,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // Step 1: Build city
         // std::cout << "Building city..." << std::endl;
         auto run_rng_counter =
-            mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run), mio::Counter<uint32_t>(0));
+            mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(0), mio::Counter<uint32_t>(0));
         rng.set_counter(run_rng_counter);
         BOOST_OUTCOME_TRY(auto base_world, CityBuilder::build_world(config.city_config, rng));
         for (auto& person : base_world.get_persons()) {
@@ -32,6 +55,9 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
             person.get_rng_counter() =
                 mio::Counter<uint32_t>(run * 1000000 + run); // Ensure unique counter for each run
         }
+        run_rng_counter =
+            mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run), mio::Counter<uint32_t>(0));
+        rng.set_counter(run_rng_counter);
         // We could reset it to zero if we dont want random assignment of infections.
 
         // CityBuilder::print_city_summary(config.city_config);
@@ -98,6 +124,21 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         summary.close();
     }
 
+    //Save LocationType and ID just take the first run and write out toa txt file
+    std::string location_type_and_id_file = base_dir + "/location_type_and_id.txt";
+    std::ofstream location_file(location_type_and_id_file);
+    if (location_file.is_open()) {
+        location_file << "Person ID, Location Type\n";
+        for (const auto& timestep : results.all_runs[0].infection_per_location_type_and_id) {
+            for (const auto& person_info : timestep) {
+                location_file << std::get<0>(person_info) << ", " << location_type_to_string(std::get<1>(person_info))
+                              << "\n";
+            }
+            location_file << "\n"; // Separate time steps with a newline
+        }
+        location_file.close();
+    }
+
     //Save percentile results
     auto ensembl_inf_per_loc_type  = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
     auto ensembl_inf_per_age_group = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
@@ -155,13 +196,16 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
         Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
 
-    sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup);
+    mio::History<mio::abm::DataWriterToMemoryDelta, LogLocationTypeAndId> historyLocationTypeAndId;
+
+    sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyLocationTypeAndId);
 
     results.infection_per_loc_type =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
-    results.ensemble_params = std::vector<mio::abm::World>{sim.get_world()};
+    results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
+    results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // Placeholder implementation
     return mio::success(results);

@@ -353,6 +353,11 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
         sec_overhang  = infra.num_persons_secondary_schools;
     }
 
+    int amount_of_60plus_that_work = infra.num_worker - sec_overhang - age_vector[2] - age_vector[3];
+    if (amount_of_60plus_that_work < 0) {
+        amount_of_60plus_that_work = 0; // No one over 60 works
+    }
+
     for (auto& person : world.get_persons()) {
 
         if (person.get_age() != age_group_0_to_4) {
@@ -377,7 +382,7 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
                 continue;
             }
         }
-        else if (person.get_age() == age_group_15_to_34) {
+        else if ((prim_overhang > 0 || sec_overhang > 0) && person.get_age() == age_group_15_to_34) {
             if (prim_overhang > 0) {
                 // Assign to a primary school if there are overhangs
                 person.set_assigned_location(prim_schools[count_elementary_schools % infra.num_elementary_schools]);
@@ -403,13 +408,29 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
             }
         }
         else if (person.get_age() == age_group_60_to_79 || person.get_age() == age_group_80_plus) {
-            // No specific assignment for older age groups, they will not work or go to school
-            continue;
+            // Assign to a workplace if in age group 60-79 or 80+
+            if (amount_of_60plus_that_work > 0) {
+                person.set_assigned_location(workplaces[count_workers % infra.num_workplaces]);
+                count_workers++;
+                amount_of_60plus_that_work--;
+                continue;
+            }
         }
     }
 
+    int workerss         = 0;
+    int school_attendees = 0;
     // Check if we did everything correctly
     for (auto& person : world.get_persons()) {
+        // We count amount of workers and school attendees
+
+        if (person.get_assigned_locations()[1] != std::numeric_limits<uint32_t>::max()) {
+            school_attendees++;
+        }
+        if (person.get_assigned_locations()[2] != std::numeric_limits<uint32_t>::max()) {
+            workerss++;
+        }
+
         if (person.get_assigned_locations()[0] == std::numeric_limits<uint32_t>::max()) {
             //Home
             std::cerr << "Error: Person " << person.get_person_id() << " has no assigned home location.\n";
@@ -437,6 +458,15 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
             //ICU
             std::cerr << "Error: Person " << person.get_person_id() << " has no assigned ICU location.\n";
         }
+    }
+
+    // Check if we assigned the right amount of workers and school attendees
+    if (workerss != infra.num_worker) {
+        std::cerr << "Error: Expected " << infra.num_worker << " workers, but found " << workerss << ".\n";
+    }
+    if (school_attendees != infra.num_persons_elementary_schools + infra.num_persons_secondary_schools) {
+        std::cerr << "Error: Expected " << (infra.num_persons_elementary_schools + infra.num_persons_secondary_schools)
+                  << " school attendees, but found " << school_attendees << ".\n";
     }
 
     return mio::success();

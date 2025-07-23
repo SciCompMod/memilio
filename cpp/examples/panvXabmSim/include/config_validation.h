@@ -9,7 +9,7 @@ constexpr int MAX_RUNS = 1000;
 constexpr int MIN_DAYS = 1;
 constexpr int MAX_DAYS = 365;
 
-constexpr int MIN_POPULATION = 100;
+constexpr int MIN_POPULATION = 10;
 constexpr int MAX_POPULATION = 1000000;
 
 constexpr double MIN_INFECTION_K = 0.1;
@@ -20,7 +20,7 @@ constexpr int MAX_EVENT_HOURS = 24;
 
 // Default values
 constexpr int DEFAULT_RUNS               = 25;
-constexpr int DEFAULT_DAYS               = 14;
+constexpr int DEFAULT_DAYS               = 7;
 constexpr int DEFAULT_POPULATION         = 1000;
 constexpr double DEFAULT_INFECTION_K     = 2.0;
 constexpr int DEFAULT_EVENT_HOURS        = 2;

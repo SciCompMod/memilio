@@ -586,7 +586,7 @@ struct GotoWorkTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(6));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(8));
     }
     static std::string name()
     {
@@ -601,7 +601,7 @@ struct GotoSchoolTimeMinimum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(8));
     }
     static std::string name()
     {
@@ -616,7 +616,7 @@ struct GotoSchoolTimeMaximum {
     using Type = CustomIndexArray<TimeSpan, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
-        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(9));
+        return CustomIndexArray<TimeSpan, AgeGroup>(size, hours(8));
     }
     static std::string name()
     {
@@ -633,6 +633,7 @@ struct AgeGroupGotoSchool {
     {
         auto a         = Type(num_agegroups, false);
         a[AgeGroup(1)] = true;
+        a[AgeGroup(2)] = true;
         return a;
     }
     static std::string name()

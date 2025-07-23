@@ -10,11 +10,11 @@ PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 # Simulation parameters
 # EVENT_TYPE="restaurant_table_equals_random_household"
 # EVENT_TYPE="restaurant_table_equals_half_household"  # Options: restaurant_table_equals_half_household, restaurant_table_equals_full_household
-# EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equals_half
+EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equals_half
 # EVENT_TYPE="work_meeting_many"
 # EVENT_TYPE="work_meeting_few"  # Options: work_meeting_many, work_meeting_few, work_meeting_low
-EVENT_TYPE="work_meeting_low"  # Options: work_meeting_many, work
-SIM_TYPE="memilio"  # Options: panvadere, memilio
+# EVENT_TYPE="work_meeting_low"  # Options: work_meeting_many, work
+SIM_TYPE="panvadere"  # Options: panvadere, memilio
 # SIM_TYPE="panvadere"  # Options: panvadere, memilio
 VIZ_OPTIONS="--s90percentile"
 NUM_DAYS=10

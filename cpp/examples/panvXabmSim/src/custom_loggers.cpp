@@ -40,13 +40,11 @@ LogInfectionPerLocationTypePerAgeGroup::log(const mio::abm::Simulation& sim)
 
 LogLocationTypeAndId::Type LogLocationTypeAndId::log(const mio::abm::Simulation& sim)
 {
-    Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::LocationType::Count));
-    auto curr_time      = sim.get_time();
 
-    // If there is no interresting person ids to logged, log all persons.
-    // Otherwise log accordingly
-    for (auto&& loc : sim.get_world().get_locations()) {
-        sum[(int)(loc.get_type())] += 1;
+    Type location_information{};
+    location_information.reserve(sim.get_world().get_locations().size());
+    for (auto&& person : sim.get_world().get_persons()) {
+        location_information.push_back(std::make_tuple(person.get_person_id(), person.get_location().get_type()));
     }
-    return std::make_pair(curr_time, sum);
+    return location_information;
 }
