@@ -258,6 +258,144 @@ def plot_infection_states(
     plt.close()
 
 
+def plot_infection_states_comparison(
+        x1, y50_1, y25_1, y75_1, label1,
+        x2, y50_2, y25_2, y75_2, label2,
+        output_path,
+        colormap='Set1',
+        xtick_step=150,
+        y05_1=None, y95_1=None, y05_2=None, y95_2=None, show_90=False):
+    """ Plots infection states comparison between two simulation runs.
+
+    @param[in] x1 Time array for first simulation.
+    @param[in] y50_1 50th percentile data array for first simulation.
+    @param[in] y25_1 25th percentile data array for first simulation.
+    @param[in] y75_1 75th percentile data array for first simulation.
+    @param[in] label1 Label for first simulation.
+    @param[in] x2 Time array for second simulation.
+    @param[in] y50_2 50th percentile data array for second simulation.
+    @param[in] y25_2 25th percentile data array for second simulation.
+    @param[in] y75_2 75th percentile data array for second simulation.
+    @param[in] label2 Label for second simulation.
+    @param[in] output_path Path where to save the comparison plot.
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] y05_1 5th percentile data array for first simulation (optional).
+    @param[in] y95_1 95th percentile data array for first simulation (optional).
+    @param[in] y05_2 5th percentile data array for second simulation (optional).
+    @param[in] y95_2 95th percentile data array for second simulation (optional).
+    @param[in] show_90 If True, plot 90% percentile bands in addition to 50% percentile.
+    """
+
+    plt.figure('Infection_states_comparison', figsize=(12, 8))
+
+    title = f'Infection states comparison: {label1} vs {label2}'
+    if show_90:
+        title += ' (with 90% percentiles)'
+    plt.title(title)
+
+    color_plot = matplotlib.colormaps.get_cmap(colormap).colors
+    states_plot = list(state_labels.keys())
+
+    # Plot first simulation
+    for i in states_plot:
+        plt.plot(x1, y50_1[:, i], color=color_plot[i],
+                 linewidth=2.5, linestyle='-', label=f'{state_labels[i]} - {label1}')
+    
+    # Plot second simulation  
+    for i in states_plot:
+        plt.plot(x2, y50_2[:, i], color=color_plot[i],
+                 linewidth=2.5, linestyle='--', label=f'{state_labels[i]} - {label2}')
+
+    # Add percentile bands for first simulation
+    for i in states_plot:
+        plt.fill_between(x1, y25_1[:, i], y75_1[:, i],
+                         alpha=0.15, color=color_plot[i])
+        # Optional: 90% percentile for first simulation
+        if show_90 and y05_1 is not None and y95_1 is not None:
+            plt.fill_between(x1, y05_1[:, i], y95_1[:, i],
+                             alpha=0.1, color=color_plot[i])
+
+    # Add percentile bands for second simulation
+    for i in states_plot:
+        plt.fill_between(x2, y25_2[:, i], y75_2[:, i],
+                         alpha=0.15, color=color_plot[i], linestyle='--')
+        # Optional: 90% percentile for second simulation
+        if show_90 and y05_2 is not None and y95_2 is not None:
+            plt.fill_between(x2, y05_2[:, i], y95_2[:, i],
+                             alpha=0.1, color=color_plot[i])
+
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    _format_x_axis_days(x1, xtick_step)  # Assuming x1 and x2 have similar ranges
+    plt.xlabel('Days')
+    plt.ylabel('Number of individuals')
+    plt.tight_layout()
+
+    # Save the plot
+    output_file = os.path.join(output_path, "infection_states_comparison.png")
+    plt.savefig(output_file, bbox_inches='tight')
+    print(f"Comparison plot saved to {output_file}")
+    plt.close()
+
+
+def plot_infection_states_results_comparison(
+        path_to_infection_states_1, label1,
+        path_to_infection_states_2, label2,
+        output_path,
+        colormap='Set1',
+        xtick_step=150,
+        show90=False
+):
+    """ Loads and plots infection state results comparison between two simulation runs.
+
+    @param[in] path_to_infection_states_1 Path to first results directory.
+    @param[in] label1 Label for first simulation.
+    @param[in] path_to_infection_states_2 Path to second results directory.
+    @param[in] label2 Label for second simulation.
+    @param[in] output_path Path where to save the comparison plots.
+    @param[in] colormap Matplotlib colormap name.
+    @param[in] xtick_step Step size for x-axis ticks.
+    @param[in] show90 If True, plot 90% percentile (5% and 95%) in addition to 50% percentile.
+    """
+
+    # Load data for first simulation
+    p50_1 = load_h5_results(path_to_infection_states_1, "p50")
+    p25_1 = load_h5_results(path_to_infection_states_1, "p25")
+    p75_1 = load_h5_results(path_to_infection_states_1, "p75")
+    time1 = p50_1['Time']
+    total_50_1 = p50_1['Total']
+    total_25_1 = p25_1['Total']
+    total_75_1 = p75_1['Total']
+    
+    # Load data for second simulation
+    p50_2 = load_h5_results(path_to_infection_states_2, "p50")
+    p25_2 = load_h5_results(path_to_infection_states_2, "p25")
+    p75_2 = load_h5_results(path_to_infection_states_2, "p75")
+    time2 = p50_2['Time']
+    total_50_2 = p50_2['Total']
+    total_25_2 = p25_2['Total']
+    total_75_2 = p75_2['Total']
+
+    # Optional 90% percentiles
+    p05_1 = p95_1 = p05_2 = p95_2 = None
+    if show90:
+        total_95_1 = load_h5_results(path_to_infection_states_1, "p95")
+        total_05_1 = load_h5_results(path_to_infection_states_1, "p05")
+        p95_1 = total_95_1['Total']
+        p05_1 = total_05_1['Total']
+        
+        total_95_2 = load_h5_results(path_to_infection_states_2, "p95")
+        total_05_2 = load_h5_results(path_to_infection_states_2, "p05")
+        p95_2 = total_95_2['Total']
+        p05_2 = total_05_2['Total']
+
+    plot_infection_states_comparison(
+        time1, total_50_1, total_25_1, total_75_1, label1,
+        time2, total_50_2, total_25_2, total_75_2, label2,
+        output_path, colormap, xtick_step,
+        y05_1=p05_1, y95_1=p95_1, y05_2=p05_2, y95_2=p95_2, show_90=show90)
+
+
 def plot_infection_states_by_age_group(
     x, p50_bs, p25_bs, p75_bs, path_to_infection_states, colormap='Set1',
     p05_bs=None, p95_bs=None, show90=False
@@ -392,6 +530,14 @@ def main():
                         help="Path to infection states results")
     parser.add_argument("--path-to-loc-types",
                         help="Path to location types results")
+    parser.add_argument("--path-to-infection-states-2",
+                        help="Path to second infection states results for comparison")
+    parser.add_argument("--label1", type=str, default="Simulation 1",
+                        help="Label for first simulation")
+    parser.add_argument("--label2", type=str, default="Simulation 2",
+                        help="Label for second simulation")
+    parser.add_argument("--output-path", type=str, default=".",
+                        help="Output path for comparison plots")
     parser.add_argument("--start-date", type=str, default='2021-03-01',
                         help="Simulation start date (YYYY-MM-DD)")
     parser.add_argument("--colormap", type=str,
@@ -404,8 +550,23 @@ def main():
 
     print("Arguments received:")
     print(f"Path to infection states: {args.path_to_infection_states}")
+    print(f"Path to infection states 2: {args.path_to_infection_states_2}")
     print(f"Path to location types: {args.path_to_loc_types}")
-    if args.path_to_infection_states:
+    
+    # Check if comparison mode is requested
+    if args.path_to_infection_states and args.path_to_infection_states_2:
+        print("Running infection states comparison...")
+        plot_infection_states_results_comparison(
+            path_to_infection_states_1=args.path_to_infection_states,
+            label1=args.label1,
+            path_to_infection_states_2=args.path_to_infection_states_2,
+            label2=args.label2,
+            output_path=args.output_path,
+            colormap=args.colormap,
+            xtick_step=args.xtick_step,
+            show90=args.s90percentile
+        )
+    elif args.path_to_infection_states:
         plot_infection_states_results(
             path_to_infection_states=args.path_to_infection_states,
             colormap=args.colormap,

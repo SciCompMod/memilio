@@ -95,7 +95,7 @@ LocationType go_to_shop(Person::RandomNumberGenerator& rng, const Person& person
     auto current_loc = person.get_location().get_type();
     //leave
     if (person.get_assigned_location_index(LocationType::BasicsShop) != INVALID_LOCATION_INDEX &&
-        (t.day_of_week() < 5) && t.hour_of_day() > 18 && t.hour_of_day() < 21 && current_loc == LocationType::Home &&
+        (t.day_of_week() < 6) && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});
@@ -179,6 +179,20 @@ LocationType get_buried(Person::RandomNumberGenerator& /*rng*/, const Person& pe
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state(t) == InfectionState::Dead) {
         return LocationType::Cemetery;
+    }
+    return current_loc;
+}
+
+LocationType should_quarantine(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                               const Parameters& params)
+{
+    mio::unused(rng); // rng is not used in this rule, but kept for consistency with other rules
+    auto current_loc = person.get_location().get_type();
+    if (!person.is_in_quarantine(t, params) &&
+        person.get_infection_state(t - mio::abm::days(2)) == InfectionState::InfectedSymptoms &&
+        person.get_infection_state(t - mio::abm::days(2) - dt) != InfectionState::InfectedSymptoms) {
+        person.set_quarantine_start(t);
+        return LocationType::Home;
     }
     return current_loc;
 }

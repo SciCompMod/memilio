@@ -101,6 +101,12 @@ LocationType return_home_when_recovered(Person::RandomNumberGenerator& rng, cons
  */
 LocationType get_buried(Person::RandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,
                         const Parameters& params);
+
+/**
+ * @brief Person%s in the icu go to cemetery when they are dead.
+ */
+LocationType should_quarantine(Person::RandomNumberGenerator& rng, Person& person, TimePoint t, TimeSpan dt,
+                               const Parameters& params);
 /**@}*/
 
 } // namespace abm

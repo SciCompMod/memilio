@@ -195,6 +195,15 @@ public:
     }
 
     /**
+     * @brief Set the quarantine start time for the Person.
+     * @param[in] t The TimePoint to set as the quarantine start time.
+     */
+    void set_quarantine_start(const TimePoint t)
+    {
+        m_quarantine_start = t;
+    }
+
+    /**
      * @brief Returns if the Person is infected at the TimePoint.
      * @param[in] t TimePoint of querry. Usually the current time of the Simulation.
      * @return True if the Person is infected at the TimePoint.
@@ -539,7 +548,7 @@ private:
     mio::abm::TransportMode m_last_transport_mode; ///< TransportMode the Person used to get to its current Location.
     Counter<uint32_t> m_rng_counter{0}; ///< counter for RandomNumberGenerator.
     bool m_should_be_logged = true; ///< Flag to determine if the Person should be logged.
-    bool m_tested_positive = false;
+    bool m_tested_positive  = false;
 };
 
 } // namespace abm

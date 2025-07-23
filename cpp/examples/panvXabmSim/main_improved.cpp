@@ -19,7 +19,8 @@ const std::unordered_map<std::string, EventType> EVENT_TYPE_MAP = {
     {"restaurant_table_equals_half_household", EventType::Restaurant_Table_Equals_Half_Household},
     {"restaurant_table_equals_random_household", EventType::Restaurant_Table_Equals_Random},
     {"work_meeting_many", EventType::WorkMeeting_Many_Meetings},
-    {"work_meeting_few", EventType::WorkMeeting_Few_Meetings}};
+    {"work_meeting_few", EventType::WorkMeeting_Few_Meetings},
+    {"work_meeting_low", EventType::WorkMeeting_Low_Meetings}};
 
 // Simulation type mapping
 const std::unordered_map<std::string, SimType> SIM_TYPE_MAP = {
@@ -86,14 +87,13 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     MultiRunConfig config;
 
     // Set defaults
-    config.city_config                       = CityConfig{};
-    config.city_config.total_population      = Config::DEFAULT_POPULATION;
-    config.event_config.type                 = EventType::WorkMeeting_Many_Meetings;
-    config.event_config.event_duration_hours = Config::DEFAULT_EVENT_HOURS;
-    config.simulation_type                   = SimType::Panvadere; // Default to Panvadere simulatio
-    config.num_runs                          = Config::DEFAULT_RUNS;
-    config.simulation_days                   = Config::DEFAULT_DAYS;
-    config.output_base_dir                   = Config::DEFAULT_OUTPUT_DIR;
+    config.city_config                  = CityConfig{};
+    config.city_config.total_population = Config::DEFAULT_POPULATION;
+    config.event_config.type            = EventType::WorkMeeting_Low_Meetings;
+    config.simulation_type              = SimType::Memilio; // Default to Panvadere simulatio
+    config.num_runs                     = Config::DEFAULT_RUNS;
+    config.simulation_days              = Config::DEFAULT_DAYS;
+    config.output_base_dir              = Config::DEFAULT_OUTPUT_DIR;
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {

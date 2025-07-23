@@ -13,7 +13,8 @@ enum class EventType
     Restaurant_Table_Equals_Half_Household,
     Restaurant_Table_Equals_Random,
     WorkMeeting_Many_Meetings,
-    WorkMeeting_Few_Meetings
+    WorkMeeting_Few_Meetings,
+    WorkMeeting_Low_Meetings
 };
 
 enum class SimType
@@ -34,11 +35,12 @@ const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
     {EventType::WorkMeeting_Many_Meetings,
      std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_many_meetings/infections.txt"},
     {EventType::WorkMeeting_Few_Meetings,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_few_meetings/infections.txt"}};
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_few_meetings/infections.txt"},
+    {EventType::WorkMeeting_Low_Meetings,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_super_low/infections.txt"}};
 
 struct EventSimulationConfig {
     EventType type;
-    int event_duration_hours = 2;
 
     // Get the appropriate panvadere file for this event type
     std::string get_panvadere_file() const;
@@ -137,7 +139,8 @@ public:
     static mio::IOResult<std::map<uint32_t, uint32_t>>
     map_random_restaurant_tables_to_households(mio::abm::World& city);
 
-    static mio::IOResult<std::map<uint32_t, uint32_t>> map_work_meeting_to_households(mio::abm::World& city);
+    static mio::IOResult<std::map<uint32_t, uint32_t>> map_work_meeting_to_households(mio::abm::World& city,
+                                                                                      EventType event_type);
 
 private:
     static mio::IOResult<mio::abm::World> create_event_world(const EventSimulationConfig& config, mio::abm::World& city,

@@ -104,6 +104,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 (has_locations({LocationType::Home}) && try_migration_rule(&return_home_when_recovered)) ||
                 (has_locations({LocationType::Hospital}) && try_migration_rule(&go_to_hospital)) ||
                 (has_locations({LocationType::ICU}) && try_migration_rule(&go_to_icu)) ||
+                (has_locations({LocationType::Home}) && try_migration_rule(&should_quarantine)) ||
                 (has_locations({LocationType::School, LocationType::Home}) && try_migration_rule(&go_to_school)) ||
                 (has_locations({LocationType::Work, LocationType::Home}) && try_migration_rule(&go_to_work)) ||
                 (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_migration_rule(&go_to_shop)) ||
