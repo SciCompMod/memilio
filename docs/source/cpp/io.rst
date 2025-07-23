@@ -4,15 +4,17 @@ Input / Output
 This document describes utilities for reading and writing data from and to files in different formats, in cases where
 ``TimeSeries::print_table()`` is not enough. The main sections are:
 
-- The serialization framework, that can be used to define the structure of data without using a specific file format.
+- The :ref:`serialization framework<serialization>`, that can be used to define the structure of data without using a specific file format.
   There are implementations of the framework for different formats. The framework is described in detail below, also
   see the `serialization example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/serialize.cpp>`__.
   
-- The command line interface, that can be used to set (and get) values of a ``ParameterSet``.
+- The :ref:`command line interface<command line>`, that can be used to set (and get) values of a ``ParameterSet``.
 
-- The History class for logging almost arbitrary information. It can be thought of as a generalization of a results
+- The :ref:`History class<history>` for logging almost arbitrary information. It can be thought of as a generalization of a results
   ``TimeSeries``, and is mainly used for the ABM.
- 
+
+
+.. _serialization:
 
 The Serialization framework
 ---------------------------
@@ -54,13 +56,13 @@ There is also support for a binary format. If you want to use a format directly 
 Main functions and types
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **functions serialize and deserialize**:
-  Main entry points to the framework to write and read values, respectively. The functions expect an IOContext
+- **Functions serialize and deserialize**:
+  Main entry points to the framework to write and read values, respectively. The functions expect an `IOContext`
   (see Concepts below) that stores the serialized data. (De-)serialization can be customized by providing a
   (de-)serialize_internal overload or a (de-)serialize member function for the type. See the section "Implementing
   serialization for a new type" or the documentation for ``serialize`` and ``deserialize``.
 - **IOStatus and IOResult**:
-  Used for error handling, see section "Error Handling" below.
+  Used for error handling, see section :ref:`Error Handling<error handling>` below.
 
 Default serialization
 ~~~~~~~~~~~~~~~~~~~~~
@@ -108,9 +110,11 @@ default serialization cannot be used if your class has optional members or value
 as a pointer.
 
 As to the feature set, default-serialization only supports the ``add_element`` and ``expect_element`` operations defined
-in the Concepts section below, where each operation's arguments are provided through the ``add`` function. Note that the
+in the :ref:`Concepts<concepts>` section, where each operation's arguments are provided through the ``add`` function. Note that the
 value provided to ``add`` is also used to assign a value during deserialization, hence the class members must be used
 directly in the function (i.e. as a non-const lvalue reference).
+
+.. _concepts:
 
 Concepts
 ~~~~~~~~
@@ -168,6 +172,8 @@ Concepts
      Returns ``boost::optional<T>`` if an optional value of type T can be found under the key "Name". The optional may
      contain a value or it may be empty. Otherwise returns an error. Note that for some formats a wrong key is
      indistinguishable from an empty optional, so make sure to provide the correct key.
+
+.. _error handling:
 
 Error handling
 ~~~~~~~~~~~~~~
@@ -229,6 +235,8 @@ Other IO modules
 - HDF5 support classes for C++
 - Reading of mobility matrix files
 
+.. _command line:
+
 The command line interface
 --------------------------
 
@@ -265,6 +273,8 @@ To set the value of a parameter from the command line, first type the correspond
 followed by the value that should be assigned (reference ``--print_option``). Values are given as a JSON value
 corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
 JSON string ``"some string"`` must be entered as ``\\"some string\\"`` or ``'"some string"'``.
+
+.. _history:
 
 Working with the History object
 -------------------------------
