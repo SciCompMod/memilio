@@ -15,7 +15,7 @@ During the simulation, graph nodes are advanced independently from each other ac
 
 The instant mobility approach was introduced by Kühn et al. (2021) and mainly represents daily instant commuting activities between different regions. Using realistic commuting data, such as the absolute number of commuters between regions, we can model realistic exchanges of individuals in the metapopulation context.
 
-In this approach, the commuters are exchanged twice daily in an instantaneous manner, allowing the integration of age-specific mobility restrictions. The implementation also allows the restriction of mobility activities for certain infection states, such as symptomatic infected individuals. An important feature implemented in Kühn et al. (2022) is the testing of commuters, which enables the detection and potential isolation of asymptomatic or symptomatic infected individuals before they can infect people in other regions.
+In this approach, the commuters are exchanged twice daily in an instantaneous manner, allowing the integration of age-specific mobility restrictions. The implementation also allows for the restriction of mobility activities for certain infection states, such as symptomatic infected individuals. An important feature implemented in Kühn et al. (2022) is the testing of commuters, which enables the detection and potential isolation of asymptomatic or symptomatic infected individuals before they can infect people in other regions.
 
 The instant mobility approach assumes instant exchange between regions without considering travel times. The length of stay is fixed to half a day.
 Since all regions exchange commuters simultaneously, this scheme offers great properties for parallelization and has fewer constraints on the integration time step compared to more detailed mobility approaches.
@@ -29,9 +29,9 @@ For further details, please refer to:
 
 The detailed mobility scheme was introduced in Zunker et al. (2024) and further develops the instant approach. The detailed mobility model addresses some of the constraints of the instant approach by adding realistic travel and stay times.
 
-The core idea of this detailed approach is that each region has a second, local model, which can be parameterized independently from the existing model, to represent mobility within the region. This allows for more detailed modeling of population movement.
+The core idea of this detailed approach is that each region has a second local model, which can be parameterized independently from the existing model, to represent mobility within the region. This allows for more detailed modeling of population movement.
 
-To have a realistic representation of the exchange process, we calculate the centroids of each region, which is represented by a polygon. When modeling travel between two non-adjacent regions (nodes k and l), the model creates a path connecting their centroids, which may pass through other regions. The predefined travel time between regions is then distributed across all regions along this path.
+To have a realistic representation of the exchange process, we calculate the centroids of each region, which is represented by a polygon. When modeling travel between two non-adjacent regions (nodes :math:`k` and :math:`l`), the model creates a path connecting their centroids, which may pass through other regions. The predefined travel time between regions is then distributed across all regions along this path.
 Commuters move along these paths and pass through various mobility models during their trip. This allows for potential interactions with other commuters during transit. The detailed mobility approach enables modeling of scenarios that cannot be addressed with the instant approach, such as the impact of different mask type usage in public transport. However, this increased realism comes at the cost of greater computational effort and requires more detailed input data.
 
 For further details, please refer to:
@@ -40,25 +40,24 @@ For further details, please refer to:
 
 **Stochastic mobility approach**
 
-In the stochastic mobility approach, transitions of individuals between regions, i.e. graph nodes, are modeled as stochastic jumps. The frequency of individuals transitioning from region i to region j is determined by a rate :math:`\lambda_{ij}` which can be interpreted as the (expected) fraction of the population in region i that commutes to region j within one day. In contrast to the instant and detailed mobility approach, the time points and the number of transitions between two regions are stochastic.
+In the stochastic mobility approach, transitions of individuals between regions, i.e. graph nodes, are modeled as stochastic jumps. The frequency of individuals transitioning from region :math:`i` to region :math:`j` is determined by a rate :math:`\lambda_{ij}` which can be interpreted as the (expected) fraction of the population in region :math:`i` that commutes to region :math:`j` within one day. In contrast to the instant and detailed mobility approach, the time points and the number of transitions between two regions are stochastic.
 
 
 How to: Set up a graph and run a graph simulation
 -------------------------------------------------
 
-The graph simulation couples multiple simulation instances representing different geographic regions via a graph-based approach. In this example, a compartment model based on ODEs (ODE-SECIR) is used for each region. The simulation proceeds by advancing each region independently and then exchanging portions of the population between regions along the graph edges.
+The graph simulation couples multiple simulation instances representing different geographic regions via a graph-based approach. In this example, a compartmental model based on ODEs (ODE-SECIR) is used for each region. The simulation proceeds by advancing each region independently and then exchanging portions of the population between regions along the graph edges.
 
 The following steps detail how to configure and execute a graph simulation:
 
-1. **Initialize the local compartment model:**
+1. **Initialize the local compartmental model:**
 
-   First, set up the compartment model by initializing the populations and parameters. In this example, we use a single age group and start with 10,000 susceptible individuals. Additionally, the necessary epidemiological parameters (e.g. time periods, transmission probabilities) are set.
+   First, set up the compartmental model by initializing the parameters that are equal in every region. In this example, we use a single age group and set the necessary epidemiological parameters (e.g. time periods, transmission probabilities).
 
    .. code-block:: cpp
 
            const size_t num_groups = 1;
            mio::osecir::Model model(num_groups);
-           model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
            model.parameters.set<mio::osecir::StartDay>(0);
            model.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.2);
        
@@ -83,7 +82,7 @@ The following steps detail how to configure and execute a graph simulation:
 
 2. **Create simulation groups and adjust contact patterns:**
 
-   To represent different geographic regions, clone the base model into separate model groups. In this example, two model groups are created. The first group is modified by applying a contact damping to simulate contact restrictions.
+   To represent different geographic regions, clone the base model into separate model groups. In this example, two model groups are created. The first group is modified by applying a contact damping to simulate contact restrictions. Additionally, set the populations in all models.
 
    .. code-block:: cpp
 
@@ -99,6 +98,8 @@ The following steps detail how to configure and execute a graph simulation:
            // Initialize infection in group 1
            model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 9990;
            model_group1.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]     = 100;
+
+           model_group2.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] = 10000;
 
 3. **Define compartments to save from edges:**
 
@@ -136,7 +137,7 @@ The following steps detail how to configure and execute a graph simulation:
            g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)mio::osecir::InfectionState::Count, 0.1), indices_save_edges);
 
 
-For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as edge type for the graph. The rates or mibility coefficients can be set as follows:
+   For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as edge type for the graph. The rates or mobility coefficients can be set as follows:
 
     .. code-block:: cpp
 
@@ -161,7 +162,7 @@ For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as e
    .. code-block:: cpp
             
            const auto tmax = 30.;
-           const auto dt   = 0.5; // time step or Mobility (daily mobility occurs every second step)
+           const auto dt   = 0.5; // time step for Mobility (daily mobility occurs every second step)
            auto sim = mio::make_mobility_sim(t0, dt, std::move(g));
            sim.advance(tmax);
 
@@ -174,6 +175,4 @@ For the stochastic mobility, ``mio::MobilityEdgeStochastic`` has to be used as e
            auto& edge_1_0 = sim.get_graph().edges()[1];
            auto& results  = edge_1_0.property.get_mobility_results();
            results.print_table({"Commuter INS", "Commuter ISy", "Commuter Total"});
-       
-           return 0;
-       }
+
