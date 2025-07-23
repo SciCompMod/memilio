@@ -28,7 +28,7 @@ Another way of mobility we use in the simulation of Braunschweig (simulations/ab
 
 ## Get Started
 
-This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, can find a full example in the [ABM minimal example](../../examples/abm_minimal.cpp) and a more detailed Doxygen documentation [here](https://scicompmod.github.io/memilio/documentation/index.html ). For a guide on installation and running the simulations and examples, see this [README](../../README.md).
+This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, can find a full example in the [ABM minimal example](../../examples/abm_minimal.cpp) and a more detailed Doxygen documentation [here](https://scicompmod.github.io/memilio/documentation/index.html ). For a guide on installation and running the examples, see this [README](../../README.md).
 
 Every person in the ABM belongs to an AgeGroup, which we can define as follows:  
 
