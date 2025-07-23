@@ -4,8 +4,8 @@ ODE model creation
 The mathematical model
 ----------------------
 
-Before implementing a model in MEmilio, we need to do a some math, in particular, define an initial value problem
-given by a system of ordinary differential equations. For example we consider a SIRD model given by
+Before implementing a model in MEmilio, we need to do some math, in particular, define an initial value problem
+given by a system of ordinary differential equations. For example, we consider a SIRD model given by
 
 .. math::  
 
@@ -16,7 +16,7 @@ given by a system of ordinary differential equations. For example we consider a 
         D'(t) & = \frac{\mu_D}{T_I}I(t) \\
     \end{aligned}
 
-and some initial values for :math:`t=0`. Here :math:`N_{\perp D} := S(t) + I(t) + R(t)`.
+and some initial values for :math:`t=0`. Here, :math:`N_{\perp D} := S(t) + I(t) + R(t)`.
 
 This type of model is called compartmental model, because the model population is represented by discrete infection
 states **S**\usceptible, **I**\nfectious, **R**\ecovered, **D**\eceased, also called compartments.
@@ -29,15 +29,15 @@ use different methods to define the right hand side of the mathematical model ab
 the infection states, population and parameters it uses. The FlowModel additionally requires a list of flows.
 
 We start by creating a new directory for our model under "cpp/models", in this case we can call it "ode_sird". The name
-must be unique and start with "ode\_", so the type of model is obvious. The rest usually contains the compartments or
+must be unique and start with "ode\_", so the type of model is obvious. The rest of the name usually contains the compartments or
 other noteworthy features of the model in shortened form. All files in the following are put into this directory.
 
 Infection states
 ~~~~~~~~~~~~~~~~
 
-First we define an :code:`enum class` called ``InfectionState`` in the file "infection_state.h", which contains an entry
+First, we define an :code:`enum class` called ``InfectionState`` in the file "infection_state.h", which contains an entry
 for each infection state of the mathematical model, followed by an entry called :code:`Count`. This enumerates the 
-compartments starting from 0, with Count being equal to the number of compartments. In our example we have:
+compartments starting from 0, with :code:`Count` being equal to the number of compartments. In our example we have:
 
 .. code-block:: cpp
 
@@ -154,6 +154,8 @@ Now we can define the model:
         }
     };
 
+Here, the :code:`get_derivatives` function implements the right hand side of the differential equations. 
+
 Define a flow model
 ^^^^^^^^^^^^^^^^^^^
 
@@ -161,7 +163,7 @@ A flow model is a special case of a compartmental model, where each compartment 
 
 .. math::
 
-    Z_i(t) = \sum_{i \ne j} f_{Z_j \rightarrow Z_i}(t) - \sum_{i \ne j} f_{Z_i \rightarrow Z_j}(t),
+    Z'_i(t) = \sum_{j \ne i} f_{Z_j \rightarrow Z_i}(t) - \sum_{j \ne i} f_{Z_i \rightarrow Z_j}(t),
 
 where the flows :math:`f_{Z_i \rightarrow Z_j} \gt 0` are the amount of population changing from compartment
 :math:`Z_i` to :math:`Z_j` at time :math:`t`. So the first sum accumulates all inflows, the second subtracts all
