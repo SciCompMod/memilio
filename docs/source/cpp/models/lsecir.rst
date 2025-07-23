@@ -2,12 +2,10 @@ LCT-based SECIR-type model
 ==========================
 
 The LCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Linear Chain 
-Trick to provide the option of Erlang distributed stay times in the compartments through the use of subcompartments. 
-The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical 
-states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
-In the following, we present the model in detail.
+This provides the option of Erlang distributed stay times in the compartments through the use of subcompartments. 
+The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
 
-Below is a visualization of the infection states and transitions. without a stratification according to groups.
+Below is a visualization of the infection states and transitions without a stratification according to socisdemographic groups.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/70579874/6a5d5a95-20f9-4176-8894-c091bd48bfb7
    :alt: tikzLCTSECIR
@@ -15,12 +13,9 @@ Below is a visualization of the infection states and transitions. without a stra
 
 For a detailed description and application of the model, see:
 
-- Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: 
-Implications of underlying assumptions for numerical solutions*. Under review. `https://doi.org/10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_ 
-- Plötzke L. (2023). *Der Linear Chain Trick in der epidemiologischen Modellierung als Kompromiss zwischen gewöhnlichen 
-und Integro-Differentialgleichungen*. Master's thesis, University of Cologne. `https://elib.dlr.de/200381/ <https://elib.dlr.de/200381/>`_
-- Hurtado PJ, Kirosingh AS. (2019). *Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell 
-time distributions into mean field ODE models*. Journal of Mathematical Biology. `https://doi.org/10.1007/s00285-019-01412-w <https://doi.org/10.1007/s00285-019-01412-w>`_
+- Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Under review. `https://doi.org/10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_ 
+- Plötzke L. (2023). *Der Linear Chain Trick in der epidemiologischen Modellierung als Kompromiss zwischen gewöhnlichen und Integro-Differentialgleichungen*. Master's thesis, University of Cologne. `https://elib.dlr.de/200381/ <https://elib.dlr.de/200381/>`_
+- Hurtado PJ, Kirosingh AS. (2019). *Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell time distributions into mean field ODE models*. Journal of Mathematical Biology. `https://doi.org/10.1007/s00285-019-01412-w <https://doi.org/10.1007/s00285-019-01412-w>`_
 
 
 Infection States
@@ -45,14 +40,13 @@ It is possible to include subcompartments for the five compartments `Exposed`, `
 Sociodemographic Stratification
 -------------------------------
 
-In the LDE-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**Group**. It can be used for age groups as well as for other interpretations. 
+In the LCT-SECIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted **Group**. It can be used for age groups as well as for other interpretations. 
 
 
 Parameters
 ----------
 
-The model implements the following parameters.
+The model implements the following parameters:
 
 .. list-table::
    :header-rows: 1
@@ -128,7 +122,7 @@ The notation of the compartments with indices here stands for subcompartments an
 Initial conditions
 ------------------
 
-To initialize the model, we start by defining the number of subcompartments and constructing the model. We can choose the number of subcompartments.
+To initialize the model, we start by defining the number of subcompartments and constructing the model with it.
 
 .. code-block:: cpp
     
@@ -140,7 +134,7 @@ To initialize the model, we start by defining the number of subcompartments and 
     using Model    = mio::lsecir::Model<LctState>;
     Model model;
 
-For the simulation, we need initial values for all (sub)compartments. If we do not set the initial values manually, these are internally set to :math:`0`.
+For the simulation, we need initial values for all (sub)compartments. If we do not set the initial values manually, these are set to :math:`0` by default.
 
 We start with constructing a vector ``initial_populations`` that we will pass on to the model. It contains vectors for each compartment, that contains a vector with initial values for the respective subcompartments. 
     
@@ -149,7 +143,7 @@ We start with constructing a vector ``initial_populations`` that we will pass on
         std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
                                                                     {50},  {10, 10, 5, 3, 2}, {20},         {10}};
 
-We assert that vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
+We assert that the vector has the correct size by checking that the number of `InfectionState`\s and the numbers of subcompartments are correct.
 
 .. code-block:: cpp
 
@@ -175,7 +169,7 @@ We assert that vector has the correct size by checking that the number of `Infec
             return 1;
         }
 
-Now, we transfer the vector ``initial_populations`` to the model. 
+The initial populations in the model are set via:
 
 .. code-block:: cpp
 
@@ -191,21 +185,15 @@ Now, we transfer the vector ``initial_populations`` to the model.
     
 In addition to setting the initial populations manually, MEmilio provides two other ways of setting the initial populations:  
 
-- The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/parameters_io.h>`_ provides 
-functionality to compute an initial value vector for the LCT-SECIR model based on reported data.
-- The file `initializer_flows <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/initializer_flows.h>`_ 
-provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of 
-a TimeSeries of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. 
-This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or 
-if the reported data is in the form of flows.
+- The file `parameters_io <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/parameters_io.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on reported data.
+- The file `initializer_flows <https://github.com/SciCompMod/memilio/blob/main/cpp/models/lct_secir/initializer_flows.h>`_ provides functionality to compute an initial value vector for the LCT-SECIR model based on initial data in the form of a ``mio::TimeSeries`` of InfectionTransitions. For the concept of the InfectionTransitions or flows, see also the IDE-SECIR model. This method can be particularly useful if a comparison is to be made with an IDE model with matching initialization or if the reported data is in the form of flows.
 
 
 .. _Nonpharmaceutical Interventions:
 Nonpharmaceutical Interventions
 -------------------------------
 
-In the SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix. 
-These dampings reduce the contact rates between different groups to simulate interventions.
+In the LCT-SECIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions.
 
 Basic dampings can be added to the contact matrix as follows:
 
@@ -231,8 +219,7 @@ For age-resolved models, you can apply different dampings to different groups:
                              mio::SimulationTime(30.));
 
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific 
-dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 
@@ -284,7 +271,7 @@ You can create intervention types that target specific locations with different 
 Simulation
 ----------
 
-We can simulate using the defined model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt` as follows:
+We can simulate the model from :math:`t_0` to :math:`t_{\max}` with initial step size :math:`dt` as follows:
 
 .. code-block:: cpp
 
@@ -309,14 +296,13 @@ You can also specify a custom integrator:
 Output
 ------
 
-The simulation result is divided by subcompartments. We can call the function ``calculate_compartments()`` to get a 
-result according to the `InfectionState`\s .
+The simulation result is stratefied by subcompartments. The function ``calculate_compartments()`` aggregates the subcompartments by `InfectionState`\s.
 
 .. code-block:: cpp
 
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
 
-You can access the data in the `TimeSeries` object as follows:
+You can access the data in the `mio::TimeSeries` object as follows:
 
 .. code-block:: cpp
 
@@ -354,10 +340,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
-and its documentation.
-
-You can export your simulation results to CSV format as described above.
+To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>` and its documentation.
 
     
 Examples

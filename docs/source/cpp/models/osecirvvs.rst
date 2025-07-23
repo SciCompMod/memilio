@@ -89,7 +89,7 @@ Sociodemographic Stratification
 -------------------------------
 
 Like the basic ODE-SECIR model, the ODE-SECIRVVS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, and mortality risks across age groups. The dimension is denoted 
-**AgeGroup** but can also be used for other interpretations
+**AgeGroup** but can also be used for other interpretations.
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
 Parameters

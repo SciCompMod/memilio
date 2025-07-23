@@ -35,9 +35,7 @@ The simpler class **CompartmentalModel** only considers the states of the system
 Sociodemographic stratification
 -------------------------------
 
-For most ODE-based models, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, 
-see :doc:`Model Creation <ode_creation>`.
+For most ODE-based models, the population can be stratified by one sociodemographic dimension. This dimension is denoted **AgeGroup** but can also be used for other interpretations. For stratifications with two or more dimensions, see :doc:`Model Creation <ode_creation>`.
 
 
 Parameters
@@ -113,7 +111,7 @@ relative tolerance of 1e-5.
 Output
 ------
 
-The output of the **Simulation** is a ``TimeSeries`` containing the sizes of each compartment at each time point. A 
+The output of the **Simulation** is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. A 
 simple table can be printed using the ``print_table()`` function of the ``TimeSeries`` class. The output of the 
 **FlowSimulation** additionally contains the flows between compartments at each time point. The compartment sizes can 
 be printed with ``result[0].print_table()`` and the flows with ``result[1].print_table()``. 
