@@ -287,7 +287,7 @@ public:
         , m_t(t0)
         , m_dt(dt)
         , m_initialized(false)
-        , m_global_icu_occupancy(6)
+        , m_global_icu_occupancy(0)
     {
         using SimT = decltype(m_graph.nodes()[0].property.get_simulation());
         static_assert(is_feedback_simulation<std::decay_t<SimT>>::value,
