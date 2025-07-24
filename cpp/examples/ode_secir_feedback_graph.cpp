@@ -35,7 +35,7 @@ void initialize_model(mio::osecir::Model<double>& model, double cont_freq)
     model.parameters.set<mio::osecir::StartDay>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
-    // time-related parameters
+    // Mean stay times per compartment
     model.parameters.get<mio::osecir::TimeExposed<double>>()            = 3.2;
     model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>() = 2.0;
     model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()   = 5.8;
