@@ -67,13 +67,20 @@ void bind_time_series(py::module_& m, std::string const& name)
             "print_table",
             [](const mio::TimeSeries<double>& self, const std::vector<std::string>& column_labels, size_t width,
                size_t precision, char separator, const std::string& header_prefix) {
+                self.print_table(column_labels, width, precision, separator, header_prefix);
+            },
+            py::arg("column_labels") = std::vector<std::string>{}, py::arg("width") = 16, py::arg("precision") = 5,
+            py::arg("separator") = ' ', py::arg("header_prefix") = "\n")
+        .def(
+            "print_table",
+            [](const mio::TimeSeries<double>& self, bool return_string, const std::vector<std::string>& column_labels,
+               size_t width, size_t precision, char separator, const std::string& header_prefix) {
                 std::ostringstream oss;
                 self.print_table(oss, column_labels, width, precision, separator, header_prefix);
                 return oss.str();
             },
-            py::arg("column_labels") = std::vector<std::string>{}, py::arg("width") = 16, py::arg("precision") = 5,
-            py::arg("separator") = ' ', py::arg("header_prefix") = "\n")
-
+            py::arg("return_string"), py::arg("column_labels") = std::vector<std::string>{}, py::arg("width") = 16,
+            py::arg("precision") = 5, py::arg("separator") = ' ', py::arg("header_prefix") = "\n")
         .def(
             "export_csv",
             [](const mio::TimeSeries<double>& self, const std::string& filename,
