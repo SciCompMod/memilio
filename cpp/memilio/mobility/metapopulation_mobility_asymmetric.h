@@ -73,7 +73,7 @@ public:
      * 
      * @return auto 
      */
-    auto next_event_time()
+    auto next_event_time() const
     {
         return _exchanges.top().time;
     };
@@ -167,6 +167,11 @@ public:
         return m_parameters;
     }
 
+    auto next_event_time() const
+    {
+        return m_parameters.next_event_time();
+    }
+
     /**
          * compute mobility from node_from to node_to for a given event
          * @param[in] event index specifying which compartment and age group change nodes
@@ -174,22 +179,30 @@ public:
          * @param node_to node that people changed to
          */
     template <class Sim>
-    void apply_mobility(const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph);
+    void apply_mobility(SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
     MobilityParametersTimed m_parameters;
 };
 
 template <class Sim>
-void MobilityEdgeDirected::apply_mobility(const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph)
+void MobilityEdgeDirected::apply_mobility(SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
-    auto node_to_id = m_parameters.next_event_node_to();
-    auto number     = m_parameters.next_event_number();
-    auto time       = m_parameters.next_event_time();
-    m_parameters.pop_next_event();
-    auto node_to = graph.nodes()[node_to_id];
+    auto next_event = m_parameters.process_next_event();
+    auto num_moving = next_event.number;
+    node_from.get_result().get_last_value()[0] -= num_moving;
+    node_to.get_result().get_last_value()[0] += num_moving;
 }
 
+template <class Sim>
+void apply_timed_mobility(double t, double dt, MobilityEdgeDirected& edge, SimulationNode<Sim>& node_from,
+                          SimulationNode<Sim>& node_to)
+{
+    if (edge.next_event_time() >= t + dt) {
+        return;
+    }
+    edge.apply_mobility(node_from, node_to);
+}
 // /**get_last_value
 //      * edge functor for mobility-based simulation.
 //      * @see MobilityEdgeDirected::apply_mobility
@@ -211,21 +224,24 @@ void MobilityEdgeDirected::apply_mobility(const Graph<SimulationNode<Sim>, Mobil
      * @param graph set up for mobility-based simulation
      * @{
      */
-template <class Sim>
+template <typename FP, class Sim>
 AsymmetricGraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
-make_mobility_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph)
+make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &advance_model<Sim>,
-
-                          &apply_mobility<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>);
+    return make_asymmetric_graph_sim(
+        t0, dt, graph, &advance_model<Sim>,
+        static_cast<void (*)(FP, FP, SimulationNode<Sim>&, SimulationNode<Sim>&)>(apply_mobility<FP, Sim>));
 }
+// static_cast<void (*)(MobilityEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(&apply_mobility<Sim, MobilityEdgeStochastic>)
 
-template <class Sim>
+template <typename FP, class Sim>
 AsymmetricGraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
-make_mobility_sim(double t0, double dt, Graph<SimulationNode<Sim>, MobilityEdgeDirected>&& graph)
+make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdgeDirected>&& graph)
 {
-    return make_graph_sim(t0, dt, std::move(graph), &advance_model<Sim>,
-                          &apply_mobility<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>);
+    return make_asymmetric_graph_sim(
+        t0, dt, std::move(graph), &advance_model<Sim>,
+        static_cast<void (*)(FP, FP, MobilityEdgeDirected&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
+            apply_timed_mobility<Sim>));
 }
 
 /** @} */
