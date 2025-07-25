@@ -904,11 +904,11 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_work_meeting_to_
 
     std::vector<uint32_t> work_teams = {0, 1, 2, 3, 4}; // Work teams for the event simulation
     std::vector<std::vector<uint32_t>> work_persons(work_teams.size());
-    work_persons[0] = {0, 1, 2, 3}; // Work team 1
-    work_persons[1] = {4, 5, 6, 7}; // Work team 2
-    work_persons[2] = {8, 9, 10, 11, 12, 13}; // Work team 3
-    work_persons[3] = {14, 15, 16, 17, 18, 19}; // Work team 4
-    work_persons[4] = {20, 21, 22, 23, 24, 25}; // Work team 5
+    work_persons[0] = {0, 1, 8, 9, 10}; // Work team 1 Room 1 and 5
+    work_persons[1] = {2, 3, 11, 12, 13}; // Work team 2 Room 2 and 6
+    work_persons[2] = {4, 5, 13, 14, 15, 16}; // Work team 3 Room 3 and 7
+    work_persons[3] = {6, 7, 17, 18, 19}; // Work team 4 Room 4 and 8
+    work_persons[4] = {20, 21, 22, 23, 24, 25}; // Work team 5 Room 9 and 10
     std::vector<uint32_t> workplace_id_per_work_team(work_teams.size()); // Workplace IDs for each work team
 
     int current_work_team = 0; // Current work team index
