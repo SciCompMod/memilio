@@ -17,16 +17,22 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
-#include "ode_secir/model.h"
-#include "ode_secir/infection_state.h"
-#include "ode_secir/parameters.h"
-#include "memilio/compartments/simulation.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/metapopulation_mobility_stochastic.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "smm/simulation.h"
+#include "smm/parameters.h"
 
 #include <iostream>
+
+enum class InfectionState
+{
+    S,
+    E,
+    I,
+    R,
+    Count
+};
 
 int main(int /*argc*/, char** /*argv*/)
 {
@@ -35,67 +41,34 @@ int main(int /*argc*/, char** /*argv*/)
     const auto dt   = 0.1; //initial time step
 
     //total compartment sizes
-    double num_total = 10000, num_exp = 200, num_ins = 50, num_is = 50, num_isev = 10, num_icri = 5, num_rec = 0,
-           num_dead = 0;
+    double num_total = 10000, num_exp = 200, num_ins = 50, num_rec = 0;
 
-    //model with 3 age group
-    mio::osecir::Model<double> model(3);
+    using Model = mio::smm::Model<1, InfectionState>;
+    Model model;
 
-    auto& params = model.parameters;
+    auto home = mio::regions::Region(1);
 
-    auto num_age_groups = params.get_num_groups();
-    double fact         = 1.0 / (double)(size_t)num_age_groups;
+    model.populations[{home, InfectionState::E}] = num_exp;
+    model.populations[{home, InfectionState::I}] = num_ins;
+    model.populations[{home, InfectionState::R}] = num_rec;
+    model.populations[{home, InfectionState::S}] = num_total - num_exp - num_ins - num_rec;
 
-    //set initialization and model parameters
-    for (auto i = mio::AgeGroup(0); i < num_age_groups; i++) {
-        params.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
-        params.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.;
-        params.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 6.;
-        params.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 12.;
-        params.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 8.;
+    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+    adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.2, {}});
+    adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 0.333, {}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.5}}});
+    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>() = adoption_rates;
 
-        //initial populations is equally distributed among age groups
-        model.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * num_exp;
-        model.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * num_ins;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSymptoms}]   = fact * num_is;
-        model.populations[{i, mio::osecir::InfectionState::InfectedSevere}]     = fact * num_isev;
-        model.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * num_icri;
-        model.populations[{i, mio::osecir::InfectionState::Recovered}]          = fact * num_rec;
-        model.populations[{i, mio::osecir::InfectionState::Dead}]               = fact * num_dead;
-        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
-                                                                         fact * num_total);
-
-        params.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i] = 0.05;
-        params.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]   = 0.67;
-        params.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]   = 0.09;
-        params.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]   = 0.25;
-        params.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]        = 0.2;
-        params.get<mio::osecir::CriticalPerSevere<double>>()[i]                = 0.25;
-        params.get<mio::osecir::DeathsPerCritical<double>>()[i]                = 0.3;
-    }
-
-    //add contact pattern and contact damping
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
-                               mio::SimulationTime(5.));
-
-    model.apply_constraints();
-
+    // std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+    // for (size_t s = 0; s < static_cast<size_t>(InfectionState::Count); ++s) {
+    //     transition_rates.push_back({InfectionState(s), home, home, 0});
+    // }
+    // model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
     //modify model for second node
     auto model2 = model;
 
-    for (auto i = mio::AgeGroup(0); i < num_age_groups; i++) {
-
-        model2.populations[{i, mio::osecir::InfectionState::Exposed}]            = fact * 100;
-        model2.populations[{i, mio::osecir::InfectionState::InfectedNoSymptoms}] = fact * 100;
-        model2.populations[{i, mio::osecir::InfectionState::InfectedCritical}]   = fact * 10;
-        model2.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::osecir::InfectionState::Susceptible},
-                                                                          fact * num_total);
-    }
-
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeDirected>
+    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::smm::Model<1, InfectionState>>>,
+               mio::MobilityEdgeDirected>
         graph;
     graph.add_node(1001, model, t0);
     graph.add_node(1002, model2, t0);
