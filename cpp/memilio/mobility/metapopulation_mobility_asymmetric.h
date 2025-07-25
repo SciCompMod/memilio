@@ -190,16 +190,16 @@ void MobilityEdgeDirected::apply_mobility(const Graph<SimulationNode<Sim>, Mobil
     auto node_to = graph.nodes()[node_to_id];
 }
 
-/**get_last_value
-     * edge functor for mobility-based simulation.
-     * @see MobilityEdgeDirected::apply_mobility
-     */
-template <class Sim, class StochasticEdge>
-void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<Sim>& node_from,
-                    SimulationNode<Sim>& node_to)
-{
-    mobilityEdge.apply_mobility(event, node_from, node_to);
-}
+// /**get_last_value
+//      * edge functor for mobility-based simulation.
+//      * @see MobilityEdgeDirected::apply_mobility
+//      */
+// template <class Sim, class StochasticEdge>
+// void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<Sim>& node_from,
+//                     SimulationNode<Sim>& node_to)
+// {
+//     mobilityEdge.apply_mobility(event, node_from, node_to);
+// }
 
 /**
      * create a mobility-based simulation.
@@ -212,23 +212,20 @@ void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<S
      * @{
      */
 template <class Sim>
-GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
+AsymmetricGraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
 make_mobility_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph)
 {
-    return make_graph_sim(
-        t0, dt, graph, &advance_model<Sim>,
-        static_cast<void (*)(MobilityEdgeDirected&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
-            &apply_mobility<Sim, MobilityEdgeDirected>));
+    return make_graph_sim(t0, dt, graph, &advance_model<Sim>,
+
+                          &apply_mobility<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>);
 }
 
 template <class Sim>
-GraphSimulationStochastic<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
+AsymmetricGraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
 make_mobility_sim(double t0, double dt, Graph<SimulationNode<Sim>, MobilityEdgeDirected>&& graph)
 {
-    return make_graph_sim(
-        t0, dt, std::move(graph), &advance_model<Sim>,
-        static_cast<void (*)(MobilityEdgeDirected&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
-            &apply_mobility<Sim, MobilityEdgeDirected>));
+    return make_graph_sim(t0, dt, std::move(graph), &advance_model<Sim>,
+                          &apply_mobility<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>);
 }
 
 /** @} */
