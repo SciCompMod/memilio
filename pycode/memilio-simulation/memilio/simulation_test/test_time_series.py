@@ -90,7 +90,7 @@ class Test_TimeSeries(unittest.TestCase):
         self.assertIsNone(result)
 
         # Test that print_table() with custom parameters still prints to console
-        result = ts.print_table(["Column1"], 10, 2)
+        result = ts.print_table(False, ["Column1"], 10, 2)
         self.assertIsNone(result)
 
     def test_export_csv(self):
