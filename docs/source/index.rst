@@ -22,7 +22,7 @@ If you use MEmilio, please :doc:`cite our work<citation>`.
 
 .. attention::
 
-   This work is under active development as is this documentation.
+   This framework is under active development, as is this documentation.
 
 Contents
 =========
