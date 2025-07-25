@@ -87,6 +87,17 @@ The model has the following parameters:
      - ``TransitionRate``
      - Spatial transition rate for infection state i from region k to region l.
 
+The adoption rate :math:`\gamma^{(k)}_{i,j}` at time :math:`t` is given by
+
+:math:`\gamma^{(k)}_{i,j}(t) = c_{i,j}\frac{i^{(k)}{N}\cdot\sum_{\tau \in \Psi}\tau.factor \cdot \tau.state(t)`
+
+ and the spatial transiton rate at time :math:`t` by
+
+ :math:`\lambda^{(k,l)}_{i} = \lambda^{(k,l)}_{i}.factor\cdot i^{(k)}(t)`
+
+ with :math:`i^{(k)}` the population in region :math:`k` having infection state :math:`i`.
+
+
 Initial conditions
 ------------------
 
