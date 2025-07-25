@@ -124,9 +124,9 @@ class GraphSimulationStochastic
                                  std::function<void(double, double, typename Graph::NodeProperty&)>>
 {
     using Base          = GraphSimulationBase<Graph, double, double,
-                                     std::function<void(typename Graph::EdgeProperty&, size_t,
+                                              std::function<void(typename Graph::EdgeProperty&, size_t,
                                                         typename Graph::NodeProperty&, typename Graph::NodeProperty&)>,
-                                     std::function<void(double, double, typename Graph::NodeProperty&)>>;
+                                              std::function<void(double, double, typename Graph::NodeProperty&)>>;
     using node_function = typename Base::node_function;
     using edge_function = typename Base::edge_function;
 
@@ -252,6 +252,38 @@ private:
     RandomNumberGenerator m_rng;
 };
 
+template <class Graph, class Timepoint = double, class Timespan = double,
+          class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
+                                  typename Graph::NodeProperty&),
+          class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
+class AsymmetricGraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
+{
+    using Base = GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>;
+    using Base::GraphSimulationBase;
+
+public:
+    void advance(Timepoint t_max = 1.0)
+    {
+        auto dt = Base::m_dt;
+        while (Base::m_t < t_max) {
+            if (Base::m_t + dt > t_max) {
+                dt = t_max - Base::m_t;
+            }
+
+            for (auto& n : Base::m_graph.nodes()) {
+                Base::m_node_func(Base::m_t, dt, n.property);
+            }
+
+            Base::m_t += dt;
+
+            for (auto& e : Base::m_graph.edges()) {
+                Base::m_edge_func(Base::m_t, dt, e.property, Base::m_graph.nodes()[e.start_node_idx].property,
+                                  Base::m_graph.nodes()[e.end_node_idx].property);
+            }
+        }
+    }
+};
+
 template <typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
 auto make_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
@@ -263,6 +295,13 @@ template <typename FP, class Graph, class NodeF, class EdgeF>
 auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
     return GraphSimulationStochastic<std::decay_t<Graph>>(
+        t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
+}
+
+template <typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
+auto make_asymmetric_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+{
+    return AsymmetricGraphSimulation<std::decay_t<Graph>, Timepoint, Timespan, EdgeF, NodeF>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
