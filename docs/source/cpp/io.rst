@@ -137,10 +137,10 @@ Concepts
    - ``io.flags()``:
        Returns the flags that determine the behavior of serialization; see IOFlags.
    - ``io.error()``:
-       Returns an IOStatus object to check if there were any errors during serialization. Usually it is not necessary to
+       Returns an ``IOStatus`` object to check if there were any errors during serialization. Usually it is not necessary to
        check this manually but can be used to report the error faster and avoid expensive operations that would be
        wasted anyway.
-   - ``io.set_error(s)`` with some IOStatus object:
+   - ``io.set_error(s)`` with some ``IOStatus`` object:
        Stores an error that was generated outside of the IOContext, e.g., if a value that was deserialized is outside an
        allowed range.
 
@@ -148,12 +148,12 @@ Concepts
 
    Gives structured access to serialized data. During serialization, data can be added with ``add_...`` operations.
    During deserialization, data can be retrieved with ``expect_...`` operations. Data must be retrieved in the same
-   orderas it was added since, e.g., binary format does not allow lookup by key. The following operations are supported
+   order as it was added since, e.g., binary format does not allow lookup by key. The following operations are supported
    for an IOObject ``obj``:
 
    - ``obj.add_element("Name", t)``:
      Stores an object ``t`` in the IOObject under the key "Name". If ``t`` is of basic type (i.e., int, string),
-     IOObjectis expected to handle it directly. Otherwise, the object uses ``mio::serialize`` to get the data for ``t``.
+     IOObject is expected to handle it directly. Otherwise, the object uses ``mio::serialize`` to get the data for ``t``.
    - ``obj.add_list("Name", b, e)``:
      Stores the elements in the range represented by iterators ``b`` and ``e`` under the key "Name". The individual
      elements are not named. The elements are either handled directly by the IOObject or using ``mio::serialize`` just
@@ -178,10 +178,10 @@ Concepts
 Error handling
 ~~~~~~~~~~~~~~
 
-Errors are handled by returning error codes. The type IOStatus contains an error code and an optional string with
-additional information. The type IOResult contains either a value or an IOStatus that describes an error. Operations
+Errors are handled by returning error codes. The type ``IOStatus`` contains an error code and an optional string with
+additional information. The type ``IOResult`` contains either a value or an ``IOStatus`` that describes an error. Operations
 that can fail return an ``IOResult<T>`` where T is the type of the value that is produced by the operation if it is
-successful. Except where necessary because of dependencies, the framework does not throw nor catch any exceptions.
+successful. Except where necessary because of dependencies, the MEmilio framework does neither throw nor catch any exceptions.
 IOContext and IOObject implementations are expected to store errors. During serialization, ``add_...`` operations fail
 without returning errors, but the error is stored in the IOObject and subsequent calls are usually no-ops. During
 deserialization, the values produced must usually be used or inspected, so ``expect_...`` operations return an IOResult.
@@ -195,8 +195,8 @@ Adding a new data type to be serialized
 Serialization of a new type T can be customized by providing *either* member functions ``serialize`` and ``deserialize``
 *or* free functions ``serialize_internal`` and ``deserialize_internal``.
 
-The ``void serialize(IOContext& io)`` member function takes an IO context and uses ``create_object`` and ``add_...``
-operations to add data. The static ``IOResult<T> deserialize(IOContext& io)`` member function takes an IO context and
+The ``void serialize(IOContext& io)`` member function takes an IOContext and uses ``create_object`` and ``add_...``
+operations to add data. The static ``IOResult<T> deserialize(IOContext& io)`` member function takes an IOContext and
 uses ``expect_...`` operations to retrieve the data. The ``apply`` utility function can be used to inspect the result of
 the ``expect_...`` operations and construct the object of type T.
 E.g.:
@@ -219,7 +219,7 @@ E.g.:
     };
 
 The free functions ``serialize_internal`` and ``deserialize_internal`` must be found with argument-dependent lookup
-(ADL). They can be used if no member function should or can be added to the type. See the code in ``memilio/io/io.h``
+(ADL). They can be used if no member function should or can be added to the type. See the code in `memilio/io/io.h <https://memilio.readthedocs.io/en/latest/api/program_listing_file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_memilio_io_io.h.html>`_
 for examples where this was done for, e.g., Eigen3 matrices and STL containers.
 
 Adding a new format
@@ -243,7 +243,7 @@ The command line interface
 We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
 or read from a parameter set. It can take parameters from command line arguments (i.e. the content of ``argv`` in the
 main function), and assign them to or get them from a ``mio::ParameterSet``. A small example can be seen in
-``cpp/examples/cli.cpp``.
+`cpp/examples/cli.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/cli.cpp>`_.
 
 The command line interface (CLI) provides some non-parameter options listed below.
 
@@ -280,15 +280,15 @@ Working with the History object
 -------------------------------
 
 The History object provides a way to save data throughout the simulation process. It offers an interface where users can
-define the data to be saved from a given object using Loggers and the method of saving it using Writers. Afterward, the
-user can access this data from the History object and manipulate it. For a basic Logger use case, refer to
-`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__. For an example demonstrating using a Logger in the ABM, refer to
+define the data to be saved from a given object using Loggers and the method of saving it using ``Writer``\s. Afterward, the
+user can access this data from the History object and manipulate it. For a basic ``Logger`` use case, refer to
+`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__. For an example demonstrating using a ``Logger`` in the ABM, refer to
 `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_history_object.cpp>`__.
 
 Loggers
 ~~~~~~~
 
-The ``Logger`` struct is a tool for logging data from a given object. Each user-implemented Logger must have a ``Type``
+The ``Logger`` struct is a tool for logging data from a given object. Each user-implemented ``Logger`` must have a ``Type``
 and implement two functions: ``Type log(const T&)`` and ``bool should_log(const T&)``. The input ``T`` for these
 functions is the same as the one given to the ``History`` member-function ``History::log``, e.g. ``Model&`` in the ABM.
 
@@ -335,9 +335,9 @@ user-implemented ``Writer`` must have a ``Data`` Type and implement the
   the Loggers. It is used whenever ``History::log`` is called and ``Logger::should_log`` is true.
 
 A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/history.h>`__.
-This stores the data from the loggers in a tuple of vectors every time the Logger is called. Another ``Writer`` named
+This stores the data from the loggers in a tuple of vectors every time the ``Logger`` is called. Another ``Writer`` named
 ``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`__, which saves data in a
-Timeseries. The according Logger has to have a suitable return type.
+Timeseries. The according ``Logger`` has to have a suitable return type.
 
 .. code-block:: cpp
 
@@ -354,19 +354,19 @@ Timeseries. The according Logger has to have a suitable return type.
 History
 ~~~~~~~
 
-The ``History`` class manages the Writers and Loggers and provides an interface to log data. It is templated on one
-``Writer`` and several suitable and unique ``Loggers``. To use the Writer to log something, the ``History`` provides the
-function ``void log(const T& t)`` to call the ``add_record`` function of the ``Writer`` if the Logger function
+The ``History`` class manages the ``Writer``\s and Loggers and provides an interface to log data. It is templated on one
+``Writer`` and several suitable and unique ``Logger``\s. To use the Writer to log something, the ``History`` provides the
+function ``void log(const T& t)`` to call the ``add_record`` function of the ``Writer`` if the ``Logger`` function
 ``should_log`` returns true.
 
 To access the data from the ``History`` class after logging, we provide the function ``get_log`` to access all records.
 For this, the lifetime of the ``History`` has to be as long as one wants to have access to the data, e.g., a history
 should not be constructed in the function it is called in when data is needed later.
 
-To access data from a specific Logger, one can use ``std::get<x>`` where x is the position of the Logger in the template
+To access data from a specific ``Logger``, one can use ``std::get<x>`` where x is the position of the ``Logger`` in the template
 argument list of the ``History`` object. Refer to `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__ for a simple
 implementation of a history object and `this full ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm.cpp>`__ for a more advanced use case
 of the History object with several History objects in use.
 
-As mentioned, if multiple Writers have to be used simultaneously, a separate History object is needed for each Writer.
+As mentioned, if multiple ``Writer``\s have to be used simultaneously, a separate History object is needed for each Writer.
 For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`__.
