@@ -31,7 +31,7 @@ import memilio.simulation as mio
 from memilio.simulation import abm
 from memilio.simulation import AgeGroup
 from memilio.simulation.abm import VirusVariant
-from memilio.simulation.abm import History
+from memilio.simulation.abm import HistoryFitting
 from memilio.simulation.abm import Infection
 
 import pandas as pd
@@ -760,19 +760,8 @@ def run_abm_simulation(sim_num):
         f'Time for assigning infection state: {end_assign - start_assign} seconds')
     total_init_time += (end_assign - start_assign)
 
-    # initialize tan wastewater ids for all locations
-    start_ww_init = time.time()
-    abm.set_wastewater_ids(os.path.join(
-        output_path, str(sim_num) + '_mapping_tan_locs.txt'), sim.model)
-    end_ww_init = time.time()
-    print(
-        f'Time for initializing TAN areas for all locations: {end_ww_init - start_ww_init} seconds')
-    total_init_time += (end_ww_init - start_ww_init)
-    # write size per location
-    abm.write_size_per_location(os.path.join(
-        output_path, str(sim_num) + '_size_per_loc.txt'), sim.model)
-    # output object
-    history = History()
+    # output object only containing the aggregated infection states
+    history = HistoryFitting()
     start_advance = time.time()
     # advance simulation until tmax
     sim.advance(tmax, history)
@@ -780,13 +769,6 @@ def run_abm_simulation(sim_num):
     print(
         f'Time for advancing simulation: {end_advance - start_advance} seconds')
     total_simulation_time += (end_advance - start_advance)
-    # write infection paths per agent to file
-    start_o1 = time.time()
-    abm.save_infection_paths(os.path.join(
-        output_path, str(sim_num) + '_infection_paths.txt'), sim.model, tmax)
-    end_o1 = time.time()
-    print(f'Time writing infection paths txt: {end_o1 - start_o1} seconds')
-    total_output_time += (end_o1 - start_o1)
     # write compartment size per time step to file
     start_o2 = time.time()
     abm.save_comp_output(os.path.join(
@@ -794,58 +776,6 @@ def run_abm_simulation(sim_num):
     end_o2 = time.time()
     print(f'Time writing comps csv: {end_o2 - start_o2} seconds')
     total_output_time += (end_o2 - start_o2)
-    # # write results to h5 file v1. The file has two data sets for every AgentId which are:
-    # # - LocationId at every time step
-    # # - Time since transmission at every time step
-    # start_h5_v1 = time.time()
-    # abm.write_h5(os.path.join(
-    #     output_path, str(sim_num) + '_output_v1.h5'), history)
-    # end_h5_v1 = time.time()
-    # print(f'Time to write v1 output h5: {end_h5_v1 - start_h5_v1} seconds')
-    # total_output_time += (end_h5_v1 - start_h5_v1)
-
-    # # write results to h5 file v2. The file has three data sets for every AgentId which are:
-    # # - Time since transmission at change points. Even indices are the change time point
-    # #   and the following odd index is the changed time since transmission
-    # # - Time points of location changes
-    # # - (New) LocationId corresponding to the time points from the second dataset
-    # start_h5_v2 = time.time()
-    # abm.write_h5_v2(os.path.join(
-    #     output_path, str(sim_num) + '_output_v2.h5'), history)
-    # end_h5_v2 = time.time()
-    # print(f'Time to write v2 output h5: {end_h5_v2 - start_h5_v2} seconds')
-    # total_output_time += (end_h5_v2 - start_h5_v2)
-
-    # # write results to h5 file v3. The file has one group with two datasets:
-    # # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
-    # # - LocationId at every time step for every agent (matrix of size #agents x #timepoints)
-    # start_h5_v3 = time.time()
-    # abm.write_h5_v3(os.path.join(
-    #     output_path, str(sim_num) + '_output_v3.h5'), history)
-    # end_h5_v3 = time.time()
-    # print(f'Time to write v3 output h5: {end_h5_v3 - start_h5_v3} seconds')
-    # total_output_time += (end_h5_v3 - start_h5_v3)
-
-    # write results to h5 file v4. The file has one group with two datasets:
-    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
-    # - TanAreaId (int > 0) at every time step for every agent (matrix of size #agents x #timepoints).
-    #   If the agent is at a location not in Munich the id is 0.
-    start_h5_v4 = time.time()
-    abm.write_h5_v4(os.path.join(
-        output_path, str(sim_num) + '_output_v4.h5'), history)
-    end_h5_v4 = time.time()
-    print(f'Time to write v4 output h5: {end_h5_v4 - start_h5_v4} seconds')
-    total_output_time += (end_h5_v4 - start_h5_v4)
-
-    # write results to h5 file v4. The file has one group with two datasets:
-    # - Transmission time point and recovery time point for every agent (matrix of size #agents x 2)
-    # - LocationType at every time step for every agent (matrix of size #agents x #timepoints).
-    start_h5_v5 = time.time()
-    abm.write_h5_v5(os.path.join(
-        output_path, str(sim_num) + '_output_v5.h5'), history)
-    end_h5_v5 = time.time()
-    print(f'Time to write v5 output h5: {end_h5_v5 - start_h5_v5} seconds')
-    total_output_time += (end_h5_v5 - start_h5_v5)
     print('done')
     return (sim_num, total_init_time, total_simulation_time, total_output_time)
 

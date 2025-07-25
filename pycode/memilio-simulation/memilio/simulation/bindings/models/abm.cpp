@@ -39,6 +39,7 @@
 #include "boost/algorithm/string/classification.hpp"
 #include "memilio/io/hdf5_cpp.h"
 #include "munich_postprocessing/output_processing.h"
+#include "abm/common_abm_loggers.h"
 
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"
@@ -208,8 +209,7 @@ void write_infection_paths(std::string filename, mio::abm::Model& model, mio::ab
 }
 
 void write_compartments(std::string filename, mio::abm::Model& model,
-                        mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
-                                     LogPersonsPerLocationAndInfectionTime, LogAgentIds>& history)
+                        mio::History<mio::DataWriterToMemory, LogTimePoint>& history)
 {
     auto file = fopen(filename.c_str(), "w");
     if (file == NULL) {
@@ -1357,9 +1357,7 @@ PYBIND11_MODULE(_simulation_abm, m)
 
     pymio::bind_class<mio::abm::Simulation, pymio::EnablePickling::Never>(m, "Simulation")
         .def(py::init<mio::abm::TimePoint, size_t>())
-        .def("advance",
-             &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
-                                                         LogPersonsPerLocationAndInfectionTime, LogAgentIds>>)
+        .def("advance", &mio::abm::Simulation::advance<mio::History<mio::DataWriterToMemory, LogTimePoint>>)
         .def("advance",
              static_cast<void (mio::abm::Simulation::*)(mio::abm::TimePoint)>(&mio::abm::Simulation::advance),
              py::arg("tmax"))
@@ -1371,6 +1369,13 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<>())
         .def_property_readonly("log", [](mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds,
                                                       LogPersonsPerLocationAndInfectionTime, LogAgentIds>& self) {
+            return self.get_log();
+        });
+
+    pymio::bind_class<mio::History<mio::DataWriterToMemory, LogTimePoint>, pymio::EnablePickling::Never>(
+        m, "HistoryFitting")
+        .def(py::init<>())
+        .def_property_readonly("log", [](mio::History<mio::DataWriterToMemory, LogTimePoint>& self) {
             return self.get_log();
         });
 
