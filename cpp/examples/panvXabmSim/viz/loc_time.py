@@ -308,8 +308,8 @@ def main():
 
     if person_totals is not None:
         # Create pie charts
-        # create_pie_charts(person_totals, location_types,
-        #                   num_days, workers, school_attendees)
+        create_pie_charts(person_totals, location_types,
+                          num_days, workers, school_attendees)
 
         # Print detailed summary
         print_detailed_summary(person_totals, location_types,
