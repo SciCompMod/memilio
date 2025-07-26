@@ -466,49 +466,6 @@ TEST_F(TestTestingScheme, multipleSchemesCombination)
 }
 
 /**
- * @brief Test for TestingStrategy handling of home location.
- */
-TEST_F(TestTestingScheme, testingStrategyHomeAccess)
-{
-    auto validity_period   = mio::abm::days(1);
-    const auto start_date  = mio::abm::TimePoint(0);
-    const auto end_date    = mio::abm::TimePoint(500);
-    const auto probability = 0.8;
-    const auto test_params = mio::abm::TestParameters{0.9, 0.99, mio::abm::hours(2), mio::abm::TestType::PCR};
-
-    // Create a testing scheme for all infection states
-    std::vector<mio::abm::InfectionState> all_states = {
-        mio::abm::InfectionState::InfectedSymptoms, mio::abm::InfectionState::InfectedNoSymptoms,
-        mio::abm::InfectionState::Exposed, mio::abm::InfectionState::Recovered, mio::abm::InfectionState::Susceptible};
-
-    auto testing_criteria = mio::abm::TestingCriteria({}, all_states);
-    auto testing_scheme =
-        mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params, probability);
-
-    // Create TestingStrategy and add scheme to Home location type
-    mio::abm::TestingStrategy test_strategy;
-    test_strategy.add_scheme(mio::abm::LocationType::Home, testing_scheme);
-
-    // Create home location and infected person
-    mio::abm::Location loc_home(mio::abm::LocationType::Home, 0, num_age_groups);
-    auto person = make_test_person(this->get_rng(), loc_home, age_group_15_to_34,
-                                   mio::abm::InfectionState::InfectedSymptoms, start_date);
-    auto rng    = mio::abm::PersonalRandomNumberGenerator(person);
-
-    // Mock uniform distribution to control random behavior in testing
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::Exactly(3))
-        .WillOnce(testing::Return(0.7)) // Person gets tested
-        .WillOnce(testing::Return(0.05)) // Test is positive
-        .WillOnce(testing::Return(0.5)); // Person complies to isolation
-
-    // Even though a person tests positive, they should always be allowed to enter home
-    bool result = test_strategy.run_and_check(rng, person, loc_home, start_date);
-    EXPECT_EQ(result, true); // Person should be allowed to enter home regardless of test result
-}
-
-/**
  * @brief Test for TestingStrategy with location-specific schemes.
  */
 TEST_F(TestTestingScheme, locationSpecificSchemes)

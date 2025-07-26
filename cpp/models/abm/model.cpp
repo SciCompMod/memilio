@@ -123,8 +123,11 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
                         return false;
                     }
-                    // The person cannot move if he has a positive test result
-                    if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t)) {
+                    // The person cannot move if he has a positive test result, except he want to go to a hospital, ICU or home.
+                    if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
+                        target_location.get_type() != LocationType::Hospital &&
+                        target_location.get_type() != LocationType::ICU &&
+                        target_location.get_type() != LocationType::Home) {
                         return false;
                     }
 
@@ -191,7 +194,9 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // skip the trip if the performed TestingStrategy is positive
-        if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t)) {
+        if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
+            target_location.get_type() != LocationType::Hospital && target_location.get_type() != LocationType::ICU &&
+            target_location.get_type() != LocationType::Home) {
             continue;
         }
         // all requirements are met, move to target location

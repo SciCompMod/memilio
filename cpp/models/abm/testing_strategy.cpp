@@ -168,12 +168,8 @@ bool TestingStrategy::run_and_check(PersonalRandomNumberGenerator& rng, Person& 
     }
 
     // If the location is a home, entry is always allowed regardless of testing, no early return here because we still need to test
-    if (location.get_type() == LocationType::Home) {
-        return true;
-    }
-    else {
-        return entry_allowed;
-    }
+
+    return entry_allowed;
 }
 
 } // namespace abm
