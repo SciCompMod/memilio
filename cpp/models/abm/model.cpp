@@ -295,7 +295,7 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                 assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 mio::abm::add_exposure_contribution(m_air_exposure_rates_cache[location],
                                                     m_contact_exposure_rates_cache[location], person,
-                                                    get_location(person.get_location()), t, dt);
+                                                    get_location(person.get_location()), parameters, t, dt);
             }
         } // implicit taskloop barrier
     } // implicit single barrier
