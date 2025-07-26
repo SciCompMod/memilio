@@ -98,7 +98,8 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
 }
 
 void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
-                               const Person& person, const Location& location, const TimePoint t, const TimeSpan dt)
+                               const Person& person, const Location& location, const Parameters& params,
+                               const TimePoint t, const TimeSpan dt)
 {
     if (person.get_location() != location.get_id()) {
         mio::log_debug("In add_exposure_contribution: Person {} is not at Location {}", person.get_id().get(),
@@ -110,16 +111,20 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
         auto virus      = infection.get_virus_variant();
         auto age        = person.get_age();
         // average infectivity over the time step to second order accuracy using midpoint rule
+        const auto infectivity = infection.get_infectivity(t + dt / 2);
+        const auto quarantine_factor =
+            person.is_in_quarantine(t, params) ? (1.0 - params.get<QuarantineEffectiveness>()) : 1.0;
+
         for (CellIndex cell : person.get_cells()) {
+            auto air_contribution     = infectivity * quarantine_factor;
+            auto contact_contribution = infectivity * quarantine_factor;
+
             if (location.get_infection_parameters().get<UseLocationCapacityForTransmissions>()) {
-                local_air_exposure[{cell, virus}] +=
-                    infection.get_infectivity(t + dt / 2) *
-                    location.get_cells()[cell.get()].compute_space_per_person_relative();
+                air_contribution *= location.get_cells()[cell.get()].compute_space_per_person_relative();
             }
-            else {
-                local_air_exposure[{cell, virus}] += infection.get_infectivity(t + dt / 2);
-            }
-            local_contact_exposure[{cell, virus, age}] += infection.get_infectivity(t + dt / 2);
+
+            local_air_exposure[{cell, virus}] += air_contribution;
+            local_contact_exposure[{cell, virus, age}] += contact_contribution;
         }
     }
 }

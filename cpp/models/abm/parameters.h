@@ -531,6 +531,21 @@ struct QuarantineDuration {
 };
 
 /**
+ * @brief Effectiveness of quarantine. 0.0 meaning no effect (percentage reduction of viral shed emission), 1.0 meaning full effect.
+ */
+struct QuarantineEffectiveness {
+    using Type = ScalarType;
+    static auto get_default(AgeGroup /*size*/)
+    {
+        return 0.0;
+    }
+    static std::string name()
+    {
+        return "QuarantineEffectivness";
+    }
+};
+
+/**
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
@@ -687,10 +702,10 @@ using ParametersBase =
                  TimeInfectedCriticalToRecovered, SymptomsPerInfectedNoSymptoms, SeverePerInfectedSymptoms,
                  CriticalPerInfectedSevere, DeathsPerInfectedSevere, DeathsPerInfectedCritical, ViralLoadDistributions,
                  InfectivityDistributions, VirusShedFactor, DetectInfection, MaskProtection, AerosolTransmissionRates,
-                 LockdownDate, QuarantineDuration, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio,
-                 GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum,
-                 AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor, SeverityProtectionFactor,
-                 HighViralLoadProtectionFactor, TestData>;
+                 LockdownDate, QuarantineDuration, QuarantineEffectiveness, SocialEventRate, BasicShoppingRate,
+                 WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum,
+                 GotoSchoolTimeMaximum, AgeGroupGotoSchool, AgeGroupGotoWork, InfectionProtectionFactor,
+                 SeverityProtectionFactor, HighViralLoadProtectionFactor, TestData>;
 
 /**
  * @brief Maximum number of Person%s an infectious Person can infect at the respective Location.
@@ -981,6 +996,11 @@ public:
 
         if (this->get<LockdownDate>().seconds() < 0.0) {
             log_error("Constraint check: Parameter LockdownDate smaller {:d}", 0);
+            return true;
+        }
+
+        if (this->get<QuarantineEffectiveness>() < 0.0 || this->get<QuarantineEffectiveness>() > 1.0) {
+            log_error("Constraint check: Parameter QuarantineEffectiveness not between {:d,:d}", 0.0, 1.0);
             return true;
         }
 

@@ -140,15 +140,15 @@ public:
  *
  * This class integrates a system of ODEs via the step method
  */
-template <typename FP = double>
-class RKIntegratorCore : public IntegratorCore<FP>
+template <typename FP>
+class RKIntegratorCore : public OdeIntegratorCore<FP>
 {
 public:
     /**
      * @brief Setting up the integrator
      */
     RKIntegratorCore()
-        : IntegratorCore<FP>(std::numeric_limits<double>::min(), std::numeric_limits<double>::max())
+        : OdeIntegratorCore<FP>(std::numeric_limits<double>::min(), std::numeric_limits<double>::max())
         , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
     {
@@ -162,7 +162,7 @@ public:
      * @param dt_max upper bound for time step dt
      */
     RKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
-        : IntegratorCore<FP>(dt_min, dt_max)
+        : OdeIntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
     {
@@ -207,7 +207,7 @@ public:
      * @param[in,out] dt current time step size h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
+    bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override
     {
         assert(0 <= this->get_dt_min());
