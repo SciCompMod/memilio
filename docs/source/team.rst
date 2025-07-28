@@ -69,6 +69,33 @@ Henrik Zunker is a PhD student at the Institute for Software Technology at the G
 
 .. _developer_3:
 
+
+Sascha Korf
+^^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: Sascha Korf
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Agent Based Modelling (ABMs)
+
+Sascha Korf is a PhD student at the Institute for Software Technology at the German Aerospace Center (DLR) since 2022. 
+His background is in numerical mathematics, where he studied at the University of Cologne. He is interested in the development of agent-based models for infectious disease dynamics, especially in the context of high-performance computing.
+
+**Selected Publications:**
+
+* Kerkmann D, **Korf S**, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
+Diallo D, Schoenfeld J, Schmieding R, **Korf S**, Kühn MJ, Hecking T. (2025). *Integrating Human Mobility Models with Epidemic Modeling: A Framework for Generating Synthetic Temporal Contact Networks*. *Entropy (Basel)* 27(5):507. `DOI:10.3390/e27050507 <https://doi.org/10.3390/e27050507>`_
+
+**Links:**
+
+* `Google Scholar Profile <https://scholar.google.com/citations?user=gEng86kAAAAJ&hl=en>`_
+* `ORCID Profile: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`_
+
+.. _developer_3:
+
 Julia Bicker
 ^^^^^^^^^^^^
 
