@@ -157,12 +157,22 @@ With this number we create an empty model:
 
    auto model = mio::abm::Model(num_age_groups);
 
-We can set several general parameters, which you can find `here <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/parameters.h>`_. Here is an example where we set the
-duration of the time in the InfectedSymptoms state to the InfectedSevere state to 4 days:
+The model parameters can be set for the whole model or for specific locations. For example, we can set the
+maximum number of contacts at a location: 
+Here is an example where we set the duration of the time in the InfectedSymptoms state to the InfectedSevere state to 4 days:
 
 .. code-block:: cpp
 
    model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>() = 4.;
+
+We can also set the contact rates for specific age groups at a location:
+.. code-block:: cpp
+
+   model.get_location(work)
+       .get_infection_parameters()
+       .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
+
+For a full list of parameters, see the `here <https://memilio.readthedocs.io/en/latest/api/file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_models_abm_parameters.h.html>`_
 
 Locations and persons
 ~~~~~~~~~~~~~~~~~~~~~
@@ -277,7 +287,7 @@ Here, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-:ref:`history<history>`, for example, to track all the Infection states of each simulation step.
+`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a Timeseries.
 
 .. code-block:: cpp
 
