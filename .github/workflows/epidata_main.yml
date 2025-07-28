@@ -33,7 +33,7 @@ jobs:
           console.log(`Checking discussions for ${owner}/${repo}`);
           
           try {
-            const { data } = await octokit.graphql(`
+            const response = await octokit.graphql(`
               query { 
                 repository(owner: "${owner}", name: "${repo}") {
                   discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
@@ -43,19 +43,20 @@ jobs:
               }
             `);
             
-            console.log('GraphQL response:', JSON.stringify(data, null, 2));
+            console.log('Full GraphQL response:', JSON.stringify(response, null, 2));
             
-            if (!data || !data.repository) {
+            if (!response || !response.repository) {
               console.log('Repository not found or discussions not enabled');
+              console.log('Response keys:', Object.keys(response || {}));
               return;
             }
             
-            if (!data.repository.discussions) {
+            if (!response.repository.discussions) {
               console.log('Discussions not available for this repository');
               return;
             }
             
-            const newDiscussions = data.repository.discussions.nodes.filter(
+            const newDiscussions = response.repository.discussions.nodes.filter(
               d => new Date(d.createdAt) > since
             );
             
