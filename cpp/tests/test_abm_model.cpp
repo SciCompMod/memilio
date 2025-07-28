@@ -350,18 +350,14 @@ TEST_F(TestModel, evolveMobilityTrips)
 
     // Set trips for persons between assigned locations.
     mio::abm::TripList& data = model.get_trip_list();
-    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id, home_id,
-                         mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
-                         mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id, home_id,
-                         mio::abm::LocationType::SocialEvent);
-    data.add_trip(trip1);
-    data.add_trip(trip2);
-    data.add_trip(trip3);
+    mio::abm::Trip trip1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), work_id);
+    mio::abm::Trip trip2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
+    mio::abm::Trip trip3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(9), event_id);
 
-    // Set trips to use weekday trips on weekends.
-    data.use_weekday_trips_on_weekend();
+    auto trips_part1 = std::vector<mio::abm::Trip>{trip2, trip3};
+    auto trips_part2 = std::vector<mio::abm::Trip>{trip1};
+    data.add_trips(trips_part1);
+    data.add_trips(trips_part2); //to see if merge works
 
     // Mock the random distribution to control random behavior.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist2;
@@ -405,54 +401,6 @@ TEST_F(TestModel, evolveMobilityTrips)
     EXPECT_EQ(model.get_number_persons(work_id), 1);
     EXPECT_EQ(model.get_number_persons(home_id), 1);
     EXPECT_EQ(model.get_number_persons(hospital_id), 1);
-
-    // Move all persons back to their home location to prepare for weekend trips.
-    model.change_location(p1.get_id(), home_id);
-    model.change_location(p3.get_id(), home_id);
-    model.change_location(p2.get_id(), home_id);
-    model.change_location(p5.get_id(), home_id);
-
-    // Update the time to the weekend and reset the trip index.
-    t = mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(8);
-    model.get_trip_list().reset_index();
-
-    // Evolve the model again to verify the weekend behavior.
-    model.evolve(t, dt);
-
-    EXPECT_EQ(p1.get_location(), work_id);
-    EXPECT_EQ(p2.get_location(), event_id);
-    EXPECT_EQ(p3.get_location(), home_id);
-    EXPECT_EQ(p4.get_location(), home_id);
-    EXPECT_EQ(p5.get_location(), event_id);
-    EXPECT_EQ(model.get_number_persons(event_id), 2);
-    EXPECT_EQ(model.get_number_persons(work_id), 1);
-    EXPECT_EQ(model.get_number_persons(home_id), 2);
-
-    // Add additional weekend trips for further verification.
-    bool weekend = true;
-    mio::abm::Trip tripweekend1(p1.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), event_id,
-                                work_id, mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip tripweekend2(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), home_id,
-                                event_id, mio::abm::LocationType::Home);
-    mio::abm::Trip tripweekend3(p5.get_id(), mio::abm::TimePoint(0) + mio::abm::days(6) + mio::abm::hours(10), work_id,
-                                event_id, mio::abm::LocationType::Work);
-    data.add_trip(tripweekend1, weekend);
-    data.add_trip(tripweekend2, weekend);
-    data.add_trip(tripweekend3, weekend);
-
-    // Advance time and evolve the model to check location transitions during the weekend.
-    t += mio::abm::hours(1);
-
-    model.evolve(t, dt);
-
-    EXPECT_EQ(p1.get_location(), event_id);
-    EXPECT_EQ(p2.get_location(), home_id);
-    EXPECT_EQ(p3.get_location(), home_id);
-    EXPECT_EQ(p4.get_location(), home_id);
-    EXPECT_EQ(p5.get_location(), work_id);
-    EXPECT_EQ(model.get_number_persons(event_id), 1);
-    EXPECT_EQ(model.get_number_persons(work_id), 1);
-    EXPECT_EQ(model.get_number_persons(home_id), 3);
 }
 
 #ifndef MEMILIO_ENABLE_OPENMP // TODO: Test can fail with parallel execution of mobility, as the capacity is not taken into account correctly at the moment (c. f. issue #640)
@@ -558,15 +506,10 @@ TEST_F(TestModel, checkMobilityOfDeadPerson)
 
     // Add trip to see if a dead person can change location outside of cemetery by scheduled trips
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), work_id, home_id,
-                         mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
-                         mio::abm::LocationType::Home);
-    mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), home_id, icu_id,
-                         mio::abm::LocationType::Home);
-    trip_list.add_trip(trip1);
-    trip_list.add_trip(trip2);
-    trip_list.add_trip(trip3);
+    mio::abm::Trip trip1(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(2), home_id);
+    mio::abm::Trip trip2(p_dead.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
+    mio::abm::Trip trip3(p_severe.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(3), icu_id);
+    trip_list.add_trips({trip1, trip2, trip3});
 
     // Check the dead person got burried and the severely infected person starts in Hospital
     model.evolve(t, dt);
@@ -1004,16 +947,12 @@ TEST_F(TestModel, mobilityTripWithAppliedNPIs)
 
     // Using trip list
     mio::abm::TripList& trip_list = model.get_trip_list();
-    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id, home_id, mio::abm::LocationType::School);
-    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id, home_id, mio::abm::LocationType::Work);
-    trip_list.add_trip(trip1);
-    trip_list.add_trip(trip2);
-    trip_list.add_trip(trip3);
-    trip_list.add_trip(trip4);
-    trip_list.add_trip(trip5);
+    mio::abm::Trip trip1(p_compliant_go_to_work.get_id(), t, work_id);
+    mio::abm::Trip trip2(p_compliant_go_to_school.get_id(), t, school_id);
+    mio::abm::Trip trip3(p_no_mask.get_id(), t, work_id);
+    mio::abm::Trip trip4(p_no_test.get_id(), t, work_id);
+    mio::abm::Trip trip5(p_no_isolation.get_id(), t, work_id);
+    trip_list.add_trips({trip1, trip2, trip3, trip4, trip5});
     model.use_mobility_rules(false);
     model.evolve(t, dt);
 
