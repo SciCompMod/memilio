@@ -1,153 +1,87 @@
-name: Epidata-CI
+# .github/workflows/discussion-monitor.yml
+name: Simple Discussion Monitor
 
-on: 
+on:
   schedule:
-    - cron: "40 1 * * *"
-  push:
-    branches:
-      - 'main'
-    tags:
-      - version-*
-    paths:
-      - '**/memilio-epidata/**'
-      - '.github/**'
+    - cron: '0 9 * * *'
   workflow_dispatch:
+  pull_request:  # This will run on PRs for testing
 
 jobs:
-  pre-commit:
+  check-discussions:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      discussions: read
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 3.11
-    - uses: pre-commit/action@v3.0.1
+    - name: Check for new discussions
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+      run: |
+        npm install @octokit/rest
+        cat > check.js << 'EOF'
+        const { Octokit } = require('@octokit/rest');
 
-  build-py-epidata:
-    runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_28_x86_64
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/build-py
-        with:
-          package: epidata
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-  build-py-plot:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_28_x86_64
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/build-py
-        with:
-          package: plot
-
-  test-py-epidata:
-    needs: build-py-epidata
-    strategy:
-      matrix: 
-        version: ["3.8", "3.11"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/test-py
-        with: 
-          version: ${{ matrix.version }}
-          package: epidata
-          coverage: ON
-
-  test-py-plot:
-    if: github.event.pull_request.draft == false
-    needs: [build-py-plot, build-py-epidata]
-    strategy:
-      matrix: 
-        version: ["3.8", "3.11"]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/test-py
-        with: 
-          version: ${{ matrix.version }}
-          package: plot
-          coverage: ON 
-
-  merge-artifacts:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        packages: [epidata, plot]
-    needs: [test-py-plot, test-py-epidata]
-    steps:
-      - name: merge epidata reports
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: test-py-coverage-reports-${{ matrix.packages }}
-          pattern: test-py-coverage-reports-${{ matrix.packages }}-*
-
-  test-pylint-epidata:
-    needs: build-py-epidata
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/test-pylint
-        with:
-          package: epidata
-
-  test-pylint-plot:
-    needs: build-py-plot
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/test-pylint
-        with:
-          package: plot
-
-  download-data:
-    needs: build-py-epidata
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install python3-pip gnupg
-          python -m pip install --upgrade pip
-      - name: Download Python Wheels
-        uses: actions/download-artifact@v4
-        with:
-          name: python-wheels-epidata
-          path: pycode/wheelhouse
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-      - name: Install Python Wheels
-        run: |
-          for pkg in `ls pycode/wheelhouse/*cp311*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
-          for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
-      - name: Download Data
-        run: |
-          mkdir -p data_dl
-          getcasedata -o data_dl --no-progress-indicators
-          getpopuldata -o data_dl --no-progress-indicators
-          getjhdata -o data_dl --no-progress-indicators
-          getdividata -o data_dl --no-progress-indicators
-          getcommutermobility -o data_dl --no-progress-indicators
-          getvaccinationdata -o data_dl --no-progress-indicators
-          gethospitalizationdata -o data_dl --no-progress-indicators
-      - name: Upload Data
-        uses: actions/upload-artifact@v4
-        with:
-          name: data
-          path: |
-            data_dl/*.json
-            data_dl/Germany/*.json
-            data_dl/Spain/*.json
-            data_dl/France/*.json
-            data_dl/Italy*.json
-            data_dl/SouthKorea/*.json
-            data_dl/US/*.json
-            data_dl/China/*.json
-          retention-days: 1
+        async function check() {
+          const since = new Date();
+          since.setHours(since.getHours() - 25);
           
+          const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+          console.log(`Checking discussions for ${owner}/${repo}`);
+          
+          try {
+            const { data } = await octokit.graphql(`
+              query { 
+                repository(owner: "${owner}", name: "${repo}") {
+                  discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
+                    nodes { createdAt }
+                  }
+                }
+              }
+            `);
+            
+            console.log('GraphQL response:', JSON.stringify(data, null, 2));
+            
+            if (!data || !data.repository) {
+              console.log('Repository not found or discussions not enabled');
+              return;
+            }
+            
+            if (!data.repository.discussions) {
+              console.log('Discussions not available for this repository');
+              return;
+            }
+            
+            const newDiscussions = data.repository.discussions.nodes.filter(
+              d => new Date(d.createdAt) > since
+            );
+            
+            console.log(`Found ${newDiscussions.length} new discussions`);
+            
+            if (newDiscussions.length > 0) {
+              const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'New disc on Github' })
+              });
+              console.log('Mattermost notification sent');
+            }
+          } catch (error) {
+            console.error('Error details:', error);
+            // Still try to send a test message to verify Mattermost works
+            if (process.env.MATTERMOST_WEBHOOK_URL) {
+              await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'GitHub Discussion bot test - there was an error checking discussions' })
+              });
+            }
+          }
+        }
+
+        check().catch(console.error);
+        EOF
+        node check.js
