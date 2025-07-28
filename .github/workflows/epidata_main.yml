@@ -4,7 +4,6 @@ name: Simple Discussion Monitor
 on:
   schedule:
     - cron: '0 9 * * *'
-  pull_request:  # This will run on PRs for testing
 
 jobs:
   check-discussions:
@@ -69,14 +68,7 @@ jobs:
               });
               console.log('Mattermost notification sent');
             }
-              else {
-               const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: 'No New discussion on GitHub this is a test.' })
-              });
-              console.log('No new discussions found');
-            }
+             
           } catch (error) {
             console.error('Error details:', error);
             // Still try to send a test message to verify Mattermost works
