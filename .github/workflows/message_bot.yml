@@ -4,8 +4,6 @@ name: Simple Discussion Monitor
 on:
   schedule:
     - cron: '0 9 * * *'
-  workflow_dispatch:
-  pull_request:  # This will run on PRs for testing
 
 jobs:
   check-discussions:
