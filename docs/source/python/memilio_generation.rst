@@ -33,8 +33,9 @@ The package provides an example script on how to use it in `memilio/tools`. The 
 
 Before running the example you have to do these steps of setup:
 
-* Change `config.json.txt <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/tools/config.json.txt/>`_.
-* Check if the parameters set in ``__post_init__()`` of the `ScannerConfig class <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/scanner_config.py>`_ match with the cpp-class names.
+* Set the source file path in `example_oseir.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/tools/example_oseir.py>`_ under ``conf.source_file`` to the path of the C++ model you want to generate bindings for.
+* Set the target folder path in `example_oseir.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/tools/example_oseir.py>`_ under ``conf.target_folder`` to the path where you want the generated bindings to be. 
+
 
 Example:
 After processing as described in the previous paragraph, run the example with the command (adjust the path according to your current folder):
@@ -44,7 +45,32 @@ After processing as described in the previous paragraph, run the example with th
     python memilio/tools/example_oseir.py 
 
 
-When working on a new model, you can copy the example script and add an additional segment to the config.json.txt. The setup works similar to the example. Additionaly, you can print the AST of your model into a file for development or debugging.
+
+Visualization
+-------------
+
+The package contains a `Visualization class <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/graph_visualization.py>`_  to display the generated AST.
+This allows you to visualize the abstract syntax tree (AST) of the C++ model.
+
+This allows for:
+
+* Printing the AST in the terminal.
+* Saving the AST as a PDF file.
+* Formatting the AST in a text file.
+
+Example:
+``aviz.output_ast_formatted(ast, ast.get_node_by_index(1))`` displays the second node of the AST and its children in a file called ast_formatted.txt. 
+With the root node ``.get_node_by_index(0)`` you can display the whole AST.
+
+``aviz.output_ast_terminal(ast, ast.get_node_by_index(1))`` displays the second node of the AST and its children in terminal.
+
+The first argument of the statements specifies the given AST. The second argument specifies the node and its children that you want to display.
+
+``aviz.output_ast_png(ast.get_node_by_index(2), 2)`` displays the third node of the AST and its children with a depth of 2 as a png file. 
+The second argument of the statement specifies the depth up to which the function displays child nodes. 
+This means that any nodes beyond the specified depth (e.g., all nodes at level 3 and beyond if the depth is set to 2) will not be shown.
+
+Notice that the visualization as a png-file should not print the whole AST, as it is not possible to display the whole AST in a single image.
 
 Testing
 -------
