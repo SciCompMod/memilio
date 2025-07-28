@@ -343,7 +343,7 @@ TEST(TestGraphSimulation, feedbackSimulation)
     using Model         = mio::oseir::Model<double>;
     using Simulation    = mio::Simulation<double, Model>;
     using FeedbackSim   = mio::FeedbackSimulation<double, Simulation, mio::oseir::ContactPatterns<double>>;
-    using Node          = mio::SimulationNode<FeedbackSim>;
+    using Node          = mio::SimulationNode<double, FeedbackSim>;
     using Edge          = mio::MobilityEdge<double>;
     using Graph         = mio::Graph<Node, Edge>;
     using GraphFeedback = mio::FeedbackGraphSimulation<double, Graph>;
