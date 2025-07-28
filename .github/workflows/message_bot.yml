@@ -83,11 +83,11 @@ jobs:
                 message = {
                   text: `## ${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
 
-                  **[${discussion.title}](${discussion.url})**
+**[${discussion.title}](${discussion.url})**
 
-                  👤 **Author:** ${discussion.author.login}
-                  📂 **Category:** ${discussion.category.name}
-                  🔢 **Discussion #${discussion.number}**`,
+👤 **Author:** ${discussion.author.login}
+📂 **Category:** ${discussion.category.name}
+🔢 **Discussion #${discussion.number}**`,
                   username: "GitHub Discussion Bot",
                   icon_emoji: ":github:"
                 };
@@ -100,10 +100,10 @@ jobs:
                 message = {
                   text: `## 🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
 
-                ${discussionList}
+${discussionList}
 
-                ---
-                *Check out the latest discussions above!*`,
+---
+*Check out the latest discussions above!*`,
                   username: "GitHub Discussion Bot",
                   icon_emoji: ":github:"
                 };
