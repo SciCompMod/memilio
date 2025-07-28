@@ -1,4 +1,4 @@
-Development guidelines
+Developer workflow
 ========================
 
 We are always happy about contributions to the project! Here you can find more information on our coding guidelines, our git workflow, benchmarking our models and writing documentation. 
@@ -343,13 +343,6 @@ To honor original authors as well as reviewers and their suggestions, reviewers 
 
 
 The full list of labels that should be used to identify issues can be found at: https://github.com/DLR-SC/memilio/labels
-
-
-Agent-based model development 
-------------------------------------------------
-
-If you add new features to the agent-based model, please make sure to run the benchmarks and check if the performance is 
-acceptable. See the section on :ref:`performance-monitoring-cpp` for more information.
 
 
 Documentation
