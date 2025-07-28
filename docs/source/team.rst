@@ -115,7 +115,18 @@ Carlotta Gerstein completed her Bachelor's degree in Mathematics at the Universi
 
 * `ORCID Profile: 0009-0004-4410-0502 <https://orcid.org/0009-0004-4410-0502>`_
 
-----
+Maximilian Betz
+^^^^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: Maximilian Betz
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Epidemiological modeling, Machine Learning, Automatic generation of Python bindings
+
+Maximilian Betz completed his Bachelor's degree in Computer Science at the DHBW Mannheim as an integrated degree program with the Department of High-Performance Computing at the German Aerospace Center (DLR). Afterwards, he continued with a Master's in Computer Science at the University of Cologne, where he focused on Machine Learning and High Performance Computing. During the Master's, he kept working at the DLR as a student assistant with a focus on automatic generation of Python bindings, metapopulation models to simulate the spatial spread of infectious diseases and Machine Learning based parameter inference.
 
 .. _contributors:
 
