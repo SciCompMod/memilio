@@ -9,11 +9,13 @@ For expanding the bindings with new models look into the section
 Generally, the package is following the structure of the main C++
 library to make it easy to understand and comparable, while introducing
 changes to create a more pythonic interface. We will follow the example of an
-ODE SEIR model starting with a comparison of the model initialization between
-Python and C++.
+ODE SEIR model.
 
-Define the model
-------------
+Define infectious disease model
+--------------------------------
+
+Following is a comparison of the model initialization between
+Python and C++ to better understand the differences between both interfaces.
 
 .. grid:: 1 1 2 2
 

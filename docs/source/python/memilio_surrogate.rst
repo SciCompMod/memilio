@@ -1,5 +1,5 @@
-MEmilio Surrogate Model Package
-===============================
+MEmilio Surrogate Model
+========================
 
 MEmilio Surrogate Model contains machine learning based surrogate models that make predictions based on the MEmilio simulation models. 
 Currently there are only surrogate models for ODE-type models. The simulations of these models are used for data generation. 
