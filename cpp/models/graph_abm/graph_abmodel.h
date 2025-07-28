@@ -113,7 +113,7 @@ private:
                             return false;
                         }
                         // the Person cannot move if the performed TestingStrategy is positive
-                        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                        if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t)) {
                             return false;
                         }
                         // update worn mask to target location's requirements
@@ -172,7 +172,7 @@ private:
                     continue;
                 }
                 // skip the trip if the performed TestingStrategy is positive
-                if (!Base::m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                if (!Base::m_testing_strategy.run_and_check(personal_rng, person, target_location, t)) {
                     continue;
                 }
                 // all requirements are met, move to target location

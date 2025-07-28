@@ -123,10 +123,14 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                         get_number_persons(target_location.get_id()) >= target_location.get_capacity().persons) {
                         return false;
                     }
-                    // the Person cannot move if the performed TestingStrategy is positive
-                    if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+                    // The person cannot move if he has a positive test result, except he want to go to a hospital, ICU or home.
+                    if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
+                        target_location.get_type() != LocationType::Hospital &&
+                        target_location.get_type() != LocationType::ICU &&
+                        target_location.get_type() != LocationType::Home) {
                         return false;
                     }
+
                     // update worn mask to target location's requirements
                     if (target_location.is_mask_required()) {
                         // if the current MaskProtection level is lower than required, the Person changes mask
@@ -189,7 +193,9 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
             continue;
         }
         // skip the trip if the performed TestingStrategy is positive
-        if (!m_testing_strategy.run_strategy(personal_rng, person, target_location, t)) {
+        if (!m_testing_strategy.run_and_check(personal_rng, person, target_location, t) &&
+            target_location.get_type() != LocationType::Hospital && target_location.get_type() != LocationType::ICU &&
+            target_location.get_type() != LocationType::Home) {
             continue;
         }
         // all requirements are met, move to target location
@@ -296,8 +302,6 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
 
 void Model::begin_step(TimePoint t, TimeSpan dt)
 {
-    m_testing_strategy.update_activity_status(t);
-
     if (!m_is_local_population_cache_valid) {
         build_compute_local_population_cache();
         m_is_local_population_cache_valid = true;
