@@ -10,11 +10,11 @@ The follwing list expalins the non-standard data types that are used throughout 
    * - Data type name
      - Description
    * - :code:`FP`
-     - A floating point type. Usually :code:`double` is used, but for instane in the optimization using optimal control :code:`FP` is equal to :code:`Ipopt::Number`, see :doc:` <models/oseair>`  and `examples/ode_seair_optimization.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_seair_optimization.cpp>`_.
+     - A floating point type. Usually :code:`double` is used, but for instane in the optimization using optimal control :code:`FP` is equal to :code:`Ipopt::Number`, see :doc:`models/oseair`  and `examples/ode_seair_optimization.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_seair_optimization.cpp>`_.
    * - :code:`UncertainValue`
      - This data type describes a value sampled from a given distribution. The value is intialized with a given :code:`FP` and can be (re)sampled with the :code:`draw_sample()` function.
    * - :code:`AgeGroup`
-     - A typesafe ``size_t``, i.e. an integer that cannot be confused with other integer types so operations like assignment, addition etc. only work with other :code:`AgeGroup`s.
+     - A typesafe ``size_t``, i.e. an integer that cannot be confused with other integer types so operations like assignment, addition etc. only work with other :code:`AgeGroup`\s.
    * - :code:`Region`
      - A typesafe ``size_t``.
    * - :code:`CustomIndexArray`
@@ -42,10 +42,10 @@ The follwing list expalins the non-standard data types that are used throughout 
    * - :code:`MobilityEdge`
      - Represents mobility between two nodes in a graph. Handles the movement of populations between nodes, tracks mobile populations, and applies mobility returns according to epidemiological models.
    * - :code:`DampingMatrixExpression`
-     - Represents a coefficient-wise matrix expression B - D * (B - M), where B is a baseline matrix, M is a minimum matrix, and D is a time-dependent complex damping factor. Used as the base for time-dependent contact matrices.
+     - Represents a coefficient-wise matrix expression :math:`B - D * (B - M)`, where :math:`B` is a baseline matrix, :math:`M` is a minimum matrix, and :math:`D` is a time-dependent complex damping factor. Used as the base for time-dependent contact matrices.
    * - :code:`DampingMatrixExpressionGroup`
-     - Represents a collection of DampingMatrixExpressions that are summed up. Used for representing multiple sources of contacts or mobility.
+     - Represents a collection of ``DampingMatrixExpression``\s that are summed up. Used for representing multiple sources of contacts or mobility.
    * - :code:`ContactMatrix`
-     - Time-dependent contact frequencies between groups, derived from DampingMatrixExpression. Models how the contact rates between different age groups change over time due to interventions.
+     - Time-dependent contact frequencies between groups, derived from ``DampingMatrixExpression``. Models how the contact rates between different age groups change over time due to interventions.
    * - :code:`ContactMatrixGroup`
-     - A collection of contact matrices that represent different contexts (e.g., home, school, work) whose sum is the total number of contacts, derived from DampingMatrixExpressionGroup.
+     - A collection of contact matrices that represent different contexts (e.g., home, school, work) whose sum is the total number of contacts, derived from ``DampingMatrixExpressionGroup``.
