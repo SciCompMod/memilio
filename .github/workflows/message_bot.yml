@@ -79,7 +79,7 @@ jobs:
               if (newDiscussions.length === 1) {
                 const discussion = newDiscussions[0];
                 message = {
-                  text: `## ${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
+                  text: `${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
 
         **[${discussion.title}](${discussion.url})**
 
@@ -95,7 +95,7 @@ jobs:
                 ).join('\n');
                 
                 message = {
-                  text: `## 🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
+                  text: `🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
 
         ${discussionList}
 
