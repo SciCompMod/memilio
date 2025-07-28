@@ -1,22 +1,23 @@
 Common data types
 -----------------
 
-Here we want to explain the intention behind the non-standard data types that are used throughout MEmilio.
+The follwing list expalins the non-standard data types that are used throughout MEmilio.
 
-FP
-~~
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 60
 
-The template :code:`FP` and the derived types like :code:`UncertainValue<FP>` in these examples are commonly used throughout MEmilio.
-:code:`FP` is a floating point type, usually :code:`double`. An :code:`UncertainValue<FP>` holds a value of type
-:code:`FP` as well as (optionally) a distribution to sample new values from, e.g. for a parameter study.
-
-.. dropdown:: :fa:`gears` Expert's settings
-
-    The type ``mio::AgeGroup`` is a typesafe ``size_t``, meaning an integer that cannot be confused with other integer
-    types. So assignment, addition, etc. only works with another ``mio::AgeGroup``, not ``size_t`` or another integer
-    type. This is useful for function interfaces or indexing, as it makes it (nearly) impossible to mix up, e.g., age
-    groups with infection states. Check out ``mio::Index`` if you want to learn more.
-
-    The type ``mio::Populations`` is an extension of a ``mio::CustomIndexArray``, which is a template type that manages
-    a flat array. Its main purpose is to allow multidimensional indexing into this array, using typesafe indices like
-    a ``mio::Index`` or a ``enum class``.
+   * - Data type name
+     - Description
+   * - :code:`FP`
+     - A floating point type. Usually :code:`double` is used, but for instane in the optimization using optimal control :code:`FP` is equal to :code:`Ipopt::Number`, see models/oseair and `examples/ode_seair_optimization.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_seair_optimization.cpp>`_.
+   * - :code:`UncertainValue`
+     - This data type describes a value sampled from a given distribution. The value is intialized with a given :code:`FP` and can be (re)sampled with the :code:`draw_sample()` function.
+   * - :code:`AgeGroup`
+     - A typesafe ``size_t``, i.e. an integer that cannot be confused with other integer types so operations like assignment, addition etc. only work with other :code:`AgeGroup`s.
+   * - :code:`Region`
+     - A typesafe ``size_t``.
+   * - :code:`CustomIndexArray`
+     - An array whose values can be accesses by a multi-index. This datatype is for example used in the parameter :code:`mio::abm::TimeExposedToNoSymptoms` making it dependent on :code:`mio::abm::VirusVariant` and :code:`mio::AgeGroup`. Its values can then be set for a specific :code:`virus_variant` and :code:`age_group` using :code`model.parameters.template get<mio::abm::TimeInfectedSevereToCritical>()[{virus_variant, age_group}]`.
+   * - :code:`Populations`
+     - Is a :code:`mio::CustomIndexArray` with :code:`mio::UncertainValue<FP>` as values.
