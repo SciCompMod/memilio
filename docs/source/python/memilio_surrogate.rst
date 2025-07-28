@@ -31,8 +31,8 @@ The package currently provides the following modules:
 
 - `models`: models for different tasks
    Currently we have the following models: 
-   - `ode_secir_simple`: A simple model allowing for asymptomatic as well as symptomatic infection not stratified by age groups.
-   - `ode_secir_groups`: A model allowing for asymptomatic as well as symptomatic infection stratified by age groups and including one damping.
+   - `ode_secir_simple`: A simple model allowing for asymptomatic as well as symptomatic infection states not stratified by age groups.
+   - `ode_secir_groups`: A model allowing for asymptomatic as well as symptomatic infection states stratified by age groups and including one damping.
 
      Each model folder contains the following files: 
      - `data_generation`: Data generation from expert model simulation outputs.
@@ -42,7 +42,7 @@ The package currently provides the following modules:
      - `hyperparameter_tuning`: Scripts for tuning model hyperparameters.
 
 
-- `tests`: this file contains all tests 
+- `tests`: This file contains all tests.
 
 ODE-SECIR Simple Model
 -----------------
@@ -80,11 +80,11 @@ The `data_generation.py` module provides functionality to generate training data
 
 The data generation process can be summarized as follows:
 
-1. Randomly initializes the model parameters and initial compartment populations
-2. Runs the ODE-SECIR simulation using the C++ backend via Python bindings
-3. Applies logarithmic normalization to improve training stability
-4. Splits each time series into input and label segments
-5. Saves the dataset as a pickle file for later use
+1. Randomly initializes the model parameters and initial compartment populations.
+2. Runs the ODE-SECIR simulation using the C++ backend via Python bindings.
+3. Applies logarithmic normalization to improve training stability.
+4. Splits each time series into input and label segments.
+5. Saves the dataset as a pickle file for later use.
 
 Network Architectures
 ~~~~~~~~~~~~~~~~~~~~
