@@ -19,7 +19,8 @@ and, in particular, for
 - Hybrid agent-metapopulation-based models: Bicker J, Schmieding R, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `https://doi.org/10.1016/j.idm.2024.12.015`
 - Graph Neural Networks: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`
 - ODE-based models with Linear Chain Trick: Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Submitted for publication. `https://doi.org/10.48550/arXiv.2412.09140`
-- Behavior-based ODE models: Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. *Chaos, Solitons & Fractals* 199:116782. `https://doi.org/10.1016/j.chaos.2025.116782`
+- Behavior-based ODE models: Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. Chaos, Solitons & Fractals. `https://doi.org/10.1016/j.chaos.2025.116782`
+
 
 **Getting started**
 
