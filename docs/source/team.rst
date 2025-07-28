@@ -58,14 +58,14 @@ Henrik Zunker is a PhD student at the Institute for Software Technology at the G
 
 **Selected Publications:**
 
-* **Zunker H**, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
 * **Zunker H**, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models. Chaos, Solitons & Fractals. https://doi.org/10.1016/j.chaos.2025.116782
-* Schmidt A, **Zunker H**, Heinlein A, Kühn MJ. (2024). Towards Graph Neural Network Surrogates Leveraging Mechanistic Expert Knowledge for Pandemic Response. arXiv. https://arxiv.org/abs/2411.06500
+* Schmidt A, **Zunker H**, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
+* **Zunker H**, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
 
 **Links:**
 
 * `Google Scholar Profile <https://scholar.google.com/citations?user=gEng86kAAAAJ&hl=en>`_
-* `ORCID: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`_
+* `ORCID Profile: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`_
 
 ----
 
@@ -101,3 +101,25 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
 * by German Federal Ministry of Education and Research under grant agreement 031L0297B (Project INSIDe),
 * by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant agreement 528702961,
 * by German Federal Ministry of Education and Research under grant agreement 031L0319A and 031L0319A (Project AIMS).
+
+.. |helmholtz| image:: _static/funder/helmholtz.jpg
+   :width: 200px
+   :alt: Helmholtz Association
+
+.. |bmbf| image:: _static/funder/bmbf.jpg
+   :width: 200px
+   :alt: Bundesministerium für Bildung und Forschung
+
+.. |bmdv| image:: _static/funder/bmdv.png
+   :width: 200px
+   :alt: Bundesministerium für Digitales und Verkehr
+
+.. |hdslee| image:: _static/funder/hdslee.png
+   :width: 200px
+   :alt: Helmholtz School for Data Science in Life, Earth and Energy
+
+.. |mfund| image:: _static/funder/mfund.png
+   :width: 200px
+   :alt: mFUND
+
+|helmholtz| |bmbf| |bmdv| |hdslee| |mfund|
