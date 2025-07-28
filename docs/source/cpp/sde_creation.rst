@@ -1,4 +1,4 @@
-SDE Model Creation
+SDE model creation
 ==================
 
 The mathematical model

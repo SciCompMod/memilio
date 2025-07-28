@@ -1,5 +1,5 @@
-MEmilio Generation Package
-==========================
+MEmilio Generation
+===================
 
 This package provides an automatic code generator for python bindings of the MEmilio C++ library. 
 It enables the automatic generation of a part of the :doc:`Python Bindings <memilio_simulation>` that is common across multiple models. 

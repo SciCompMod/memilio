@@ -1,5 +1,5 @@
-MEmilio Plot Package
-=======================
+MEmilio Plot
+=============
 
 MEmilio Plot provides modules and scripts to plot epidemiological or simulation data as returned
 by other packages of the MEmilio software.

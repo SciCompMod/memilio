@@ -1,5 +1,5 @@
-MEmilio Simulation Package
-==========================
+MEmilio Simulation
+===================
 
 MEmilio Simulation contains Python bindings for the MEmilio C++ library. 
 It enables setting up and running simulations of infectious disease dynamics from a Python interface.

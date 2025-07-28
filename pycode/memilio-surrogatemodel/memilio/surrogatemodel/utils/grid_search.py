@@ -26,13 +26,15 @@ import pandas as pd
 import time
 from sklearn.model_selection import KFold
 import numpy as np
-import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures
-import memilio.surrogatemodel.ode_secir_simple.model as md
+import memilio.surrogatemodel.ode_secir_simple.network_architectures as architectures_simple
+import memilio.surrogatemodel.ode_secir_groups.network_architectures as architectures_groups
+import memilio.surrogatemodel.ode_secir_simple.model as md_simple
+import memilio.surrogatemodel.ode_secir_groups.model as md_groups
 
 # Function to train and evaluate the model using cross-validation
 
 
-def train_and_evaluate_model(param, inputs, labels, training_parameter, show_results=False):
+def train_and_evaluate_model(param, inputs, labels, training_parameter, show_results=False, modeltype="simple", n_kfold=5):
     """ Training and evaluating a model with given architecture using 5-fold cross validation, returning a dictionary with the main training statistics. 
 
     :param param: tuple of parameters describing the model architecture, it should be of the form 
@@ -43,19 +45,22 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, show_res
         (early_stop, max_epochs, loss, optimizer, metrics), where loss is a loss-function implemented in keras, optimizer is the name of the used optimizer, 
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
     :param show_results:  Boolean, whether or not the evaluation results are printed. 
+    :param modeltype: String, specifying, which type of model is going to be tested. The possible values are "simple" - refering to the surrogate for the SECIR-model 
+        without age_resolution, "groups" - for the age resolved SECIR model. 
+    :param n_kfold: number of partizions used to cross-validate
     :returns: a dictionary of training statistics of the form 
         {"model", "activation","optimizer","mean_train_loss_kfold","mean_val_loss_kfold","training_time", "train_losses", "val_losses"}
 
     """
     # Unpacking parameters
-    _, _, _, _, activation, modelname = param
+    activation, modelname = param[-2:]
     early_stop, max_epochs, loss, optimizer, metrics = training_parameter
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=early_stop,
                                                       mode='min')
 
     # Preparing K-Fold Cross-Validation
-    kf = KFold(n_splits=5)
+    kf = KFold(n_splits=n_kfold)
     train_losses = []
     val_losses = []
 
@@ -74,7 +79,12 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, show_res
         valid_labels = tf.gather(labels, indices=val_idx)
 
         # Initializing model
-        model = md.initialize_model(param)
+        if modeltype == "simple":
+            model = md_simple.initialize_model(param)
+        elif modeltype == "groups":
+            model = md_groups.initialize_model(param)
+        else:
+            raise ValueError(modeltype+" is not known.")
         # Compile the model
         model.compile(loss=loss,
                       optimizer=optimizer,
@@ -115,7 +125,7 @@ def train_and_evaluate_model(param, inputs, labels, training_parameter, show_res
     }
 
 
-def perform_grid_search(model_parameters, inputs, labels, training_parameters, filename_df, path=None):
+def perform_grid_search(model_parameters, inputs, labels, training_parameters, filename_df, path=None,  modeltype="simple"):
     """ Performing grid search for a given set of model parameters
 
     The results are stored in directory 'secir_simple_grid_search', each row has the form 
@@ -132,6 +142,8 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
     :param filename_df: String, giving name of the file, where the data is stored, actual filename is given by filename_df + ".pickle"
     :param path: String representing the path, where dataframe should be stored
+    :param modeltype: String, specifying, which type of model is going to be tested. The possible values are "simple" - refering to the surrogate for the SECIR-model 
+        without age_resolution, "groups" - for the age resolved SECIR model. 
     """
     # Create a DataFrame to store the results
     df_results = pd.DataFrame(columns=['model', 'optimizer', 'number_of_hidden_layers', 'number_of_neurons', 'activation',
@@ -141,7 +153,7 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
     # Iterate the different model architectures and save the training results
     for param in model_parameters:
         for training_parameter in training_parameters:
-            _, _, layer, neuron_number, activation, modelname = param
+            layer, neuron_number, activation, modelname = param[-4:]
             results = train_and_evaluate_model(
                 param, inputs, labels, training_parameter)
             df_results.loc[len(df_results.index)] = [
@@ -156,7 +168,7 @@ def perform_grid_search(model_parameters, inputs, labels, training_parameters, f
             ]
 
     # Save the results in file
-    folder_name = 'secir_simple_grid_search'
+    folder_name = 'secir_' + modeltype + '_grid_search'
 
     if path is None:
         path = os.path.dirname(os.path.realpath(__file__))
