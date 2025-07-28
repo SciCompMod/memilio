@@ -2,7 +2,6 @@ name: Simple Discussion Monitor
 
 on:
   pull_request:
-    types: [opened, edited, reopened]
     
   schedule:
     - cron: '0 9 * * *'
