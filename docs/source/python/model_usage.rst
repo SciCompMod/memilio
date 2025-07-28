@@ -1,8 +1,8 @@
-Tutorial: Usage of python bindings
+Tutorial: Usage of Python bindings
 ==================================
 
 This tutorial should give an overview of how to use the
-currently available functions and models of the python bindings.
+currently available functions and models of the Python bindings.
 For expanding the bindings with new models look into the section 
 :doc:`Model Creation <model_creation>`.
 
@@ -97,7 +97,7 @@ Now we could simulate the infectious diesease dynamic by calling simulate:
 
    result = oseir.simulate(0, t_max, dt, model)
 
-Similar to the MEmilio C++ library, the python interface provides the option of adjusting the solver.
+Similar to the MEmilio C++ library, the Python interface provides the option of adjusting the solver.
 Currently available:
 
 * Euler

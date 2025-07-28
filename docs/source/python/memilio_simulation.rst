@@ -22,7 +22,7 @@ Usage
 -----
 
 For understanding the package you can follow the introductions on model usage and creation.
-Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>` for the 
+Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_ for the 
 different features are provided. Lastly, this documentation provides tutorials on applications for the MEmilio Python interface,
 coupling it with other libraries, showing the advantages of in language simulation models.
 
