@@ -50,9 +50,8 @@ person stays infectious, :math:`T_I`, we define a struct:
 
 .. code-block:: cpp
 
-    template <typename FP>
     struct TimeInfectious {
-        using Type = UncertainValue<FP>;
+        using Type = UncertainValue<ScalarType>;
 
         static Type get_default()
         {
@@ -94,8 +93,8 @@ Finally, define a type :code:`Parameters` by listing all parameter structs as te
 .. code-block:: cpp
 
     template <typename FP>
-    using Parameters = mio::ParameterSet<TimeInfectious<FP>, RecoveryRate<FP>, LethalityRate<FP>, ContactRate<FP>,
-                                         TransmissionRisk<FP>>;
+    using Parameters = mio::ParameterSet<TimeInfectious, RecoveryRate, LethalityRate, ContactRate,
+                                         TransmissionRisk>;
 
 For more complex models, :code:`Parameters` allows passing arguments from its constructor to the :code:`get_default`
 functions. Make sure that all of these functions take the exact types as function arguments that you want to pass to
@@ -142,11 +141,25 @@ Now we can define the model as a **CompartmentalModel** in the file "model.h":
             const auto N = y[InfectionState::Susceptible] + y[InfectionState::Infectious] +
                            y[InfectionState::Recovered];
 
+            ScalarType flow = 0;
+
+            // Derivative for Susceptible compartment.
             dydt[InfectionState::Susceptible] = -params.template get<TransmissionRisk<FP>>() *
                                                  params.template get<ContactRate<FP>>() *
                                                  y[InfectionState::Susceptible] * y[InfectionState::Infectious] / N;
-            
+
+            // Derivative for subcompartments of Infectious compartment.
+            for (size_t i = 0; i < LctState::template get_num_subcompartments<InfectionState::Infectious>(); i++) {
+                flow = (ScalarType)LctState::template get_num_subcompartments<InfectionState::Infectious>() *
+                    (1 / params.template get<TimeInfectious>()) *
+                    y[LctState::template get_first_index<InfectionState::Infectious>() + i];
+                dydt[LctState::template get_first_index<InfectionState::Infectious>() + i] =
+                    dydt[LctState::template get_first_index<InfectionState::Infectious>() + i] - flow;
+                dydt[LctState::template get_first_index<InfectionState::Infectious>() + i + 1] = flow;
+            }
+
             . . .
+
         }
     };
 
@@ -169,3 +182,9 @@ into subcompartments to a TimeSeries that conatins the simulation results accord
 For an example, see the implementation within the LCT-SECIR model.
 - A function ``check_constraints()`` that checks that the model satisfies sensible constraints regarding parameters and initial conditions. 
 For an example, see the implementation within the LCT-SECIR model. 
+
+.. dropdown:: :fa:`gears` Expert's settings
+
+    To make the model more realistic, it is possible to stratify the population by sociodemographic dimensions auch as age groups. 
+    For this, we can add a template parameter ``Group`` to the model and adapt the code accordingly. For an example, 
+    see the implementation of the LCT-SECIR model.

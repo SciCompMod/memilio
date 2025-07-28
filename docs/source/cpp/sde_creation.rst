@@ -1,2 +1,2 @@
-SDE Model Creation
+SDE model creation
 ==================
