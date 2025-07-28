@@ -1,7 +1,9 @@
-# .github/workflows/discussion-monitor.yml
 name: Simple Discussion Monitor
 
 on:
+  pull_request:
+    types: [opened, edited, reopened]
+    
   schedule:
     - cron: '0 9 * * *'
   workflow_dispatch:
@@ -46,6 +48,9 @@ jobs:
               body: JSON.stringify({ text: 'New disc on Github' })
             });
             console.log('Mattermost notification sent');
+          }
+          else {
+            console.log('No new discussions found');
           }
         }
 
