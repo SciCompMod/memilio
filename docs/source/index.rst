@@ -20,7 +20,7 @@ MEmilio implements various models for infectious disease dynamics, ranging from 
 If you use MEmilio, please :doc:`cite our work<citation>`.
 
 
-.. attention::
+.. note::
 
    This framework is under active development, as is this documentation.
 
@@ -42,11 +42,11 @@ Contents
    :caption: C++ Interface
 
    cpp/overview
-   cpp/interfaces
    cpp/installation
    cpp/model_usage
    cpp/model_creation
    cpp/development
+   cpp/interfaces
 
 .. toctree::
    :maxdepth: 2
