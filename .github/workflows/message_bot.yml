@@ -4,6 +4,7 @@ name: Simple Discussion Monitor
 on:
   schedule:
     - cron: '0 9 * * *'
+  pull_request:
 
 jobs:
   check-discussions:
