@@ -1,5 +1,5 @@
 # .github/workflows/discussion-monitor.yml
-name: Simple Discussion Monitor
+name: Dicussion Monitor
 
 on:
   schedule:
