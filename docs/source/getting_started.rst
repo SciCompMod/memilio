@@ -183,6 +183,16 @@ Out of the box this works for all examples in the ``cpp/examples`` folder of our
 that do not depend on user-provided external libraries. 
 Additional explanations for our models are linked at the corresponding sites of this documentation.
 
+Simulations used in publications
+********************************
+For simulations used in publications, we maintain a separate repository: 
+`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`_. 
+This repository contains simulations organized in separate folders, each with the specific version of MEmilio 
+used for the published results. This ensures that simulation results can be easily reproduced.
+
+The repository also includes additional scripts for plotting, data gathering, and pre-/post-processing 
+that were used in publications.
+
 
 Loading data
 ~~~~~~~~~~~~~~~~~~~~~

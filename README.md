@@ -27,6 +27,12 @@ and, in particular, for
 The documentation for MEmilio can be found at 
 https://memilio.readthedocs.io/en/latest/index.html
 
+**Publication simulations**
+
+Simulations used for publications, along with their specific plotting and processing scripts, 
+are available in a separate repository:
+https://github.com/SciCompMod/memilio-simulations
+
 **Development**
 
 The coding guidelines and git workflow description can be found in the documentation at 

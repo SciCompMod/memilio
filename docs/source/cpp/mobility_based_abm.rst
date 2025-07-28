@@ -5,7 +5,7 @@ This module models and simulates the epidemic using an agent-based model (*ABM*)
 the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the
 model and interacting with (infecting) each other. For a detailed overview of the ABM, see:
 
-- Kerkmann D, Korf S, et al. Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread. https://doi.org/10.48550/arXiv.2410.08050
+- Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
 
 Introduction
 -----------
