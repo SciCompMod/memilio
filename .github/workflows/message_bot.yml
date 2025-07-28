@@ -8,6 +8,9 @@ on:
 jobs:
   check-discussions:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      discussions: read
     steps:
     - name: Check for new discussions
       env:
@@ -25,28 +28,56 @@ jobs:
           since.setHours(since.getHours() - 25);
           
           const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+          console.log(`Checking discussions for ${owner}/${repo}`);
           
-          const { data } = await octokit.graphql(`
-            query { 
-              repository(owner: "${owner}", name: "${repo}") {
-                discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
-                  nodes { createdAt }
+          try {
+            const response = await octokit.graphql(`
+              query { 
+                repository(owner: "${owner}", name: "${repo}") {
+                  discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
+                    nodes { createdAt }
+                  }
                 }
               }
+            `);
+            
+            console.log('Full GraphQL response:', JSON.stringify(response, null, 2));
+            
+            if (!response || !response.repository) {
+              console.log('Repository not found or discussions not enabled');
+              console.log('Response keys:', Object.keys(response || {}));
+              return;
             }
-          `);
-          
-          const newDiscussions = data.repository.discussions.nodes.filter(
-            d => new Date(d.createdAt) > since
-          );
-          
-          if (newDiscussions.length > 0) {
-            const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text: 'New disc on Github' })
-            });
-            console.log('Mattermost notification sent');
+            
+            if (!response.repository.discussions) {
+              console.log('Discussions not available for this repository');
+              return;
+            }
+            
+            const newDiscussions = response.repository.discussions.nodes.filter(
+              d => new Date(d.createdAt) > since
+            );
+            
+            console.log(`Found ${newDiscussions.length} new discussions`);
+            
+            if (newDiscussions.length > 0) {
+              const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'New disc on Github' })
+              });
+              console.log('Mattermost notification sent');
+            }
+          } catch (error) {
+            console.error('Error details:', error);
+            // Still try to send a test message to verify Mattermost works
+            if (process.env.MATTERMOST_WEBHOOK_URL) {
+              await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'GitHub Discussion bot test - there was an error checking discussions' })
+              });
+            }
           }
         }
 
