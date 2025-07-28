@@ -1,5 +1,5 @@
-MEmilio Epidata Package
-=======================
+MEmilio Epidata
+================
 
 MEmilio Epidata provides modules and scripts to download epidemiological data from various different sources.
 The package as well as links to the sources can be found in the `pycode/memilio-epidata <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-epidata>`_.

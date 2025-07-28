@@ -12,7 +12,7 @@ changes to create a more pythonic interface. We will follow the example of an
 ODE SEIR model starting with a comparison of the model initialization between
 Python and C++.
 
-Define Model
+Define the model
 ------------
 
 .. grid:: 1 1 2 2
@@ -38,16 +38,15 @@ Define Model
          #include "ode_seir/model.h"
 
          int num_groups = 1;
-         mio::oseir::Model<ScalarType> model(num_groups);
+         mio::oseir::Model<double> model(num_groups);
 
+Initialize parameters
+---------------------
 
 Next, the parameters should be defined of the scenario you want to model. The model has the 
 possibility to incorporate age stratification, which leads to many of the parameters having 
 values for each age group. The AgeGroup is used for indexing. For the example model
 with a single age group defined by num_groups the parameter definitions follow as
-
-Initialize Parameters
----------------------
 
 .. code-block:: python
 
@@ -65,7 +64,7 @@ Initialize Parameters
 AgeGroup(0) defines the first age group. For a model with more than one age group,
 we could index the other groups with AgeGroup(1), AgeGroup(2), ....
 
-Initial Conditions
+Initial conditions
 -------------------
 
 We also need to define the inital states of the population. They are not only divided through an age group,
@@ -87,6 +86,12 @@ of the age group.
 
 Nonpharmaceutical interventions
 -------------------------------
+
+
+.. code-block:: python
+
+   integrator = mio.RKIntegratorCore(dt_max=1)
+   result = oseir.simulate(0, days, dt, model, integrator)
 
 Simulation
 ----------
@@ -111,7 +116,7 @@ The integrator can be changed as the last parameter of the simulate function.
    integrator = mio.RKIntegratorCore(dt_max=1)
    result = oseir.simulate(0, days, dt, model, integrator)
 
-Output and Visualization
+Output and visualization
 -------------------------
 
 The result returned from the simulation is a TimeSeries object containing the number of people per age group in each infection state at each time step.
@@ -125,14 +130,11 @@ pythonic interface.
 Now you can use the usual data handling options and make us of the easy visualization tools that are part of Python.
 Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <memilio_plot>`.
 
-Additional Ressources
+Additional ressources
 ---------------------
 
 Further examples are provided at `examples/simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation/>`_. 
 They include the usage of a FlowModel, introducing a graph model for regional differences or parameter studies for simulating under uncertainty.
 
-Limitations
------------
 
-Lastly Limitations with introduction of model creation
 
