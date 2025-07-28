@@ -1,11 +1,11 @@
+# .github/workflows/discussion-monitor.yml
 name: Simple Discussion Monitor
 
 on:
-  pull_request:
-    
   schedule:
     - cron: '0 9 * * *'
   workflow_dispatch:
+  pull_request:  # This will run on PRs for testing
 
 jobs:
   check-discussions:
@@ -26,9 +26,11 @@ jobs:
           const since = new Date();
           since.setHours(since.getHours() - 25);
           
+          const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+          
           const { data } = await octokit.graphql(`
             query { 
-              repository(owner: "${process.env.GITHUB_REPOSITORY_OWNER}", name: "${process.env.GITHUB_REPOSITORY}".split('/')[1]) {
+              repository(owner: "${owner}", name: "${repo}") {
                 discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
                   nodes { createdAt }
                 }
@@ -47,9 +49,6 @@ jobs:
               body: JSON.stringify({ text: 'New disc on Github' })
             });
             console.log('Mattermost notification sent');
-          }
-          else {
-            console.log('No new discussions found');
           }
         }
 
