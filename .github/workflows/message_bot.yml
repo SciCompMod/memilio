@@ -1,10 +1,11 @@
-name: Dicussion Monitor
+# .github/workflows/discussion-monitor.yml
+name: Simple Discussion Monitor
 
 on:
   schedule:
     - cron: '0 9 * * *'
   workflow_dispatch:
-  pull_request:  # This will run on PRs for testing
+  pull_request:
 
 jobs:
   check-discussions:
@@ -61,7 +62,7 @@ jobs:
               console.log('Response keys:', Object.keys(response || {}));
               return;
             }
-            
+
             if (!response.repository.discussions) {
               console.log('Discussions not available for this repository');
               return;
@@ -77,21 +78,19 @@ jobs:
               let message;
               
               if (newDiscussions.length === 1) {
-                // Single discussion - detailed format
                 const discussion = newDiscussions[0];
                 message = {
                   text: `## ${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
 
-**[${discussion.title}](${discussion.url})**
+        **[${discussion.title}](${discussion.url})**
 
-👤 **Author:** ${discussion.author.login}
-📂 **Category:** ${discussion.category.name}
-🔢 **Discussion #${discussion.number}**`,
+        👤 **Author:** ${discussion.author.login}
+        📂 **Category:** ${discussion.category.name}
+        🔢 **Discussion #${discussion.number}**`,
                   username: "GitHub Discussion Bot",
                   icon_emoji: ":github:"
                 };
               } else {
-                // Multiple discussions - summary format
                 const discussionList = newDiscussions.map(d => 
                   `- ${d.category.emoji || '💬'} **[${d.title}](${d.url})** by ${d.author.login}`
                 ).join('\n');
@@ -99,10 +98,10 @@ jobs:
                 message = {
                   text: `## 🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
 
-${discussionList}
+        ${discussionList}
 
----
-*Check out the latest discussions above!*`,
+        ---
+        *Check out the latest discussions above!*`,
                   username: "GitHub Discussion Bot",
                   icon_emoji: ":github:"
                 };
@@ -117,7 +116,6 @@ ${discussionList}
             }
           } catch (error) {
             console.error('Error details:', error);
-            // Still try to send a test message to verify Mattermost works
             if (process.env.MATTERMOST_WEBHOOK_URL) {
               await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
                 method: 'POST',
