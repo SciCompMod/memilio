@@ -1,4 +1,3 @@
-# .github/workflows/discussion-monitor.yml
 name: Dicussion Monitor
 
 on:
