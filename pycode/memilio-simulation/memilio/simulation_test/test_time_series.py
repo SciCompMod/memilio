@@ -65,7 +65,7 @@ class Test_TimeSeries(unittest.TestCase):
         ts = mio.TimeSeries(1)
         ts.add_time_point(2, np.r_[1])
         ts.add_time_point(3.5, np.r_[2])
-        output = ts.print_table(["a", "b"], 2, 2)
+        output = ts.print_table(True, ["a", "b"], 2, 2)
         self.assertEqual(
             output, '\nTime a \n2.00 1.00\n3.50 2.00\n')
 
@@ -74,9 +74,24 @@ class Test_TimeSeries(unittest.TestCase):
         ts = mio.TimeSeries(1)
         ts.add_time_point(2, np.r_[1])
         ts.add_time_point(3.5, np.r_[2])
-        output = ts.print_table(["a"], 4, 1, ',', "# ")
+        output = ts.print_table(True, ["a"], 4, 1, ',', "# ")
         self.assertEqual(
             output, '# Time,a   \n 2.0, 1.0\n 3.5, 2.0\n')
+
+    def test_print_table_console_output(self):
+        """Test the new print_table function that prints directly to console"""
+        ts = mio.TimeSeries(1)
+        ts.add_time_point(2, np.r_[1])
+        ts.add_time_point(3.5, np.r_[2])
+
+        # Test that print_table() without return_string parameter returns None
+        # (meaning it prints directly to console)
+        result = ts.print_table()
+        self.assertIsNone(result)
+
+        # Test that print_table() with custom parameters still prints to console
+        result = ts.print_table(False, ["Column1"], 10, 2)
+        self.assertIsNone(result)
 
     def test_export_csv(self):
         """Test export_csv functionality"""
