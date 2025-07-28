@@ -11,7 +11,7 @@ Core Developers
 .. _developer_1:
 
 Martin Kühn
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^
 
 .. image:: https://www.martinkuehn.eu/research/kuehn150x150.jpg
    :alt: Martin Kühn
@@ -44,7 +44,7 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
 .. _developer_2:
 
 Henrik Zunker
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 .. image:: _static/team/max_mustermann.jpg
    :alt: Henrik Zunker
@@ -70,7 +70,7 @@ Henrik Zunker is a PhD student at the Institute for Software Technology at the G
 .. _developer_3:
 
 Julia Bicker
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
 
 .. image:: _static/team/max_mustermann.jpg
    :alt: Julia Bicker
@@ -91,6 +91,29 @@ Julia Bicker is a PhD student at the Institute for Software Technology at the Ge
 
 * `Google Scholar Profile <https://scholar.google.com/citations?user=W0NCJ7MAAAAJ&hl=de&oi=ao>`_
 * `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/my-orcid?orcid=0000-0001-9382-4209>`_
+
+.. _developer_4:
+
+Carlotta Gerstein
+^^^^^^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: Carlotta Gerstein
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Agent-based modeling, Metapopulation models, Epidemiological modeling
+
+Carlotta Gerstein completed her Bachelor's degree in Mathematics at the University of Bonn. To explore more applied areas, she continued with a Master's in Mathematics at the University of Cologne, where she focused on High Performance Computing. During her studies, she worked as a student assistant at the German Aerospace Center (DLR) in the Department of High-Performance Computing, where she focused on agent-based and metapopulation models to simulate the spatial spread of infectious diseases. In April 2025, she joined the research group of Prof. Jan Hasenauer as a PhD student at the University of Bonn. 
+
+**Selected Publications:**
+
+* Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, **Gerstein C**, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
+
+**Links:**
+
+* `ORCID Profile: 0009-0004-4410-0502 <https://orcid.org/0009-0004-4410-0502>`_
 
 ----
 
