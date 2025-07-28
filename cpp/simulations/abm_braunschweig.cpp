@@ -341,6 +341,7 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
     std::getline(fin, line); // Skip header row
 
     // Add the persons and trips
+    std::vector<mio::abm::Trip> trips;
     while (std::getline(fin, line)) {
         row.clear();
 
@@ -357,8 +358,6 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         uint32_t target_location_id = std::abs(row[index["loc_id_end"]]);
         uint32_t start_location_id  = std::abs(row[index["loc_id_start"]]);
         uint32_t trip_start         = row[index["start_time"]];
-        uint32_t transport_mode     = row[index["travel_mode"]];
-        uint32_t acticity_end       = row[index["activity_end"]];
 
         // Add the trip to the trip list person and location must exist at this point
         auto target_location = locations.find(target_location_id)->second;
@@ -388,12 +387,10 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
             // For trips where the start location is not known use Home instead
             start_location = model.get_person(pid_itr->second).get_assigned_location(mio::abm::LocationType::Home);
         }
-        model.get_trip_list().add_trip(
-            mio::abm::Trip(static_cast<uint64_t>(pid_itr->first),
-                           mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location, start_location,
-                           mio::abm::TransportMode(transport_mode), mio::abm::LocationType(acticity_end)));
+        trips.push_back(
+            mio::abm::Trip(pid_itr->second, mio::abm::TimePoint(0) + mio::abm::minutes(trip_start), target_location));
     }
-    model.get_trip_list().use_weekday_trips_on_weekend();
+    model.get_trip_list().add_trips(trips);
 }
 
 void set_parameters(mio::abm::Parameters params)

@@ -109,7 +109,7 @@ using is_compartment_model_simulation =
  * @tparam Model The particular Model derived from CompartmentModel to simulate.
  * @tparam Sim A Simulation that can simulate the model.
  */
-template <typename FP, class Model, class Sim = Simulation<FP, Model>>
+template <typename FP, class Model, class Sim = mio::Simulation<FP, Model>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
                         std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
 {

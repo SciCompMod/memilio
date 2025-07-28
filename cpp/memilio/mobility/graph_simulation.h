@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Henrik Zunker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -22,6 +22,8 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
+#include "memilio/compartments/feedback_simulation.h"
+#include "memilio/geography/regions.h"
 
 namespace mio
 {
@@ -265,6 +267,207 @@ auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF
     return GraphSimulationStochastic<FP, std::decay_t<Graph>>(
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
+
+// FeedbackGraphSimulation is only allowed to be used with local FeedbackSimulation.
+// Therefore, we use type traits to check if the type is a specialization of FeedbackSimulation
+template <class T>
+struct is_feedback_simulation : std::false_type {
+};
+
+template <typename FP, typename Sim, typename ContactPatterns>
+struct is_feedback_simulation<FeedbackSimulation<FP, Sim, ContactPatterns>> : std::true_type {
+};
+
+template <typename FP, class Graph>
+class FeedbackGraphSimulation
+{
+public:
+    FeedbackGraphSimulation(Graph&& g, FP t0, FP dt)
+        : m_graph(std::move(g))
+        , m_t(t0)
+        , m_dt(dt)
+        , m_initialized(false)
+        , m_global_icu_occupancy(0)
+    {
+        using SimT = decltype(m_graph.nodes()[0].property.get_simulation());
+        static_assert(is_feedback_simulation<std::decay_t<SimT>>::value,
+                      "Graph node simulation must be a FeedbackSimulation.");
+    }
+
+    void advance(FP t_max)
+    {
+        // Initialize global and regional ICU occupancy if not done yet
+        if (!m_initialized) {
+            calculate_global_icu_occupancy();
+            calculate_regional_icu_occupancy();
+            m_initialized = true;
+        }
+
+        while (m_t < t_max) {
+            FP dt_eff = std::min(m_dt, t_max - m_t);
+
+            // assign the regional and global ICU occupancy to each node
+            distribute_icu_data();
+
+            // apply feedback and advance simulation for each node
+            for (auto& node : m_graph.nodes()) {
+                node.property.get_simulation().advance(m_t + dt_eff, m_dt);
+            }
+
+            // apply mobility between nodes
+            for (auto& edge : m_graph.edges()) {
+                auto& node_from = m_graph.nodes()[edge.start_node_idx];
+                auto& node_to   = m_graph.nodes()[edge.end_node_idx];
+                edge.property.apply_mobility(m_t, m_dt, node_from.property, node_to.property);
+            }
+
+            // update ICU occupancy for each node
+            update_global_icu_occupancy();
+            update_regional_icu_occupancy();
+
+            m_t += dt_eff;
+        }
+    }
+
+    Graph& get_graph()
+    {
+        return m_graph;
+    }
+
+private:
+    /**
+     * @brief Calculates the global ICU occupancy based on the ICU history of all nodes.
+     * The result is stored in m_global_icu_occupancy.
+     */
+    void calculate_global_icu_occupancy()
+    {
+        auto& first_node_sim   = m_graph.nodes()[0].property.get_simulation();
+        auto& first_node_icu   = first_node_sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
+        m_global_icu_occupancy = mio::TimeSeries<FP>(first_node_icu.get_num_elements());
+        m_global_icu_occupancy.add_time_point(0.0, Eigen::VectorXd::Zero(first_node_icu.get_num_elements()));
+
+        FP total_population = 0;
+        for (Eigen::Index i = 0; i < first_node_icu.get_num_time_points(); ++i) {
+            Eigen::VectorXd sum = Eigen::VectorXd::Zero(first_node_icu.get_num_elements());
+            for (auto& node : m_graph.nodes()) {
+                auto& sim         = node.property.get_simulation();
+                auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
+                sum += icu_history.get_value(i) * node.property.get_simulation().get_model().populations.get_total();
+                total_population += node.property.get_simulation().get_model().populations.get_total();
+            }
+            m_global_icu_occupancy.add_time_point(first_node_icu.get_time(i), sum / total_population);
+        }
+    }
+
+    /**
+     * @brief Calculates the regional ICU occupancy for each region.
+     * The calculation is based on the ICU history of the nodes in each region.
+     * The results are stored in m_regional_icu_occupancy.
+     */
+    void calculate_regional_icu_occupancy()
+    {
+        std::unordered_map<int, FP> regional_population;
+        for (auto& node : m_graph.nodes()) {
+            auto region_id = mio::regions::get_state_id(node.id).get();
+            regional_population[region_id] += node.property.get_simulation().get_model().populations.get_total();
+        }
+
+        auto& first_node_sim         = m_graph.nodes()[0].property.get_simulation();
+        auto& first_node_icu         = first_node_sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
+        Eigen::Index num_time_points = first_node_icu.get_num_time_points();
+        Eigen::Index num_elements    = first_node_icu.get_num_elements();
+
+        // For each region: vector of summed ICU values for all time points
+        std::unordered_map<int, std::vector<Eigen::VectorXd>> regional_sums;
+        for (auto const& [region_id, _] : regional_population) {
+            regional_sums[region_id] =
+                std::vector<Eigen::VectorXd>(num_time_points, Eigen::VectorXd::Zero(num_elements));
+        }
+
+        // Sum up
+        for (auto& node : m_graph.nodes()) {
+            auto region_id    = mio::regions::get_state_id(node.id).get();
+            auto& sim         = node.property.get_simulation();
+            auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
+            FP pop            = node.property.get_simulation().get_model().populations.get_total();
+            for (Eigen::Index i = 0; i < num_time_points; ++i) {
+                regional_sums[region_id][i] += icu_history.get_value(i) * pop;
+            }
+        }
+
+        // Initialize TimeSeries and insert values
+        m_regional_icu_occupancy.clear();
+        for (auto const& [region_id, sum_vec] : regional_sums) {
+            mio::TimeSeries<FP> ts(num_elements);
+            for (Eigen::Index i = 0; i < num_time_points; ++i) {
+                ts.add_time_point(first_node_icu.get_time(i), sum_vec[i] / regional_population[region_id]);
+            }
+            m_regional_icu_occupancy.emplace(region_id, std::move(ts));
+        }
+    }
+
+    /**
+     * @brief Updates the global ICU occupancy with the latest values from all nodes.
+     * A new time point is added to m_global_icu_occupancy.
+     */
+    void update_global_icu_occupancy()
+    {
+        FP total_population = 0;
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_global_icu_occupancy.get_num_elements());
+        for (auto& node : m_graph.nodes()) {
+            auto& sim         = node.property.get_simulation();
+            auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
+            sum += icu_history.get_last_value() * node.property.get_simulation().get_model().populations.get_total();
+            total_population += node.property.get_simulation().get_model().populations.get_total();
+        }
+        m_global_icu_occupancy.add_time_point(m_t, sum / total_population);
+    }
+
+    /**
+     * @brief Updates the regional ICU occupancy for each region with the latest values.
+     * A new time point is added to each TimeSeries in m_regional_icu_occupancy.
+     */
+    void update_regional_icu_occupancy()
+    {
+
+        std::unordered_map<int, FP> regional_population;
+        for (auto& [region_id, regional_data] : m_regional_icu_occupancy) {
+            Eigen::VectorXd sum = Eigen::VectorXd::Zero(regional_data.get_num_elements());
+            for (auto& node : m_graph.nodes()) {
+                if (mio::regions::get_state_id(node.id).get() == region_id) {
+                    auto& sim         = node.property.get_simulation();
+                    auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
+                    sum += icu_history.get_last_value() *
+                           node.property.get_simulation().get_model().populations.get_total();
+                    regional_population[region_id] +=
+                        node.property.get_simulation().get_model().populations.get_total();
+                }
+            }
+            regional_data.add_time_point(m_t, sum / regional_population[region_id]);
+        }
+    }
+
+    /**
+     * @brief Distributes the calculated global and regional ICU occupancy data to each node.
+     * This makes the data available for feedback mechanisms within the node-local simulations.
+     */
+    void distribute_icu_data()
+    {
+        for (auto& node : m_graph.nodes()) {
+            auto region_id = mio::regions::get_state_id(node.id).get();
+            auto& sim      = node.property.get_simulation();
+            sim.set_regional_icu_occupancy(m_regional_icu_occupancy.at(region_id));
+            sim.set_global_icu_occupancy(m_global_icu_occupancy);
+        }
+    }
+
+    Graph m_graph;
+    FP m_t;
+    FP m_dt;
+    bool m_initialized;
+    mio::TimeSeries<FP> m_global_icu_occupancy;
+    std::unordered_map<int, mio::TimeSeries<FP>> m_regional_icu_occupancy;
+};
 
 } // namespace mio
 #endif //MIO_MOBILITY_GRAPH_SIMULATION_H

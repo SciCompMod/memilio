@@ -23,6 +23,7 @@
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/mobility/metapopulation_mobility_stochastic.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/compartments/feedback_simulation.h"
 #include "ode_seir/model.h"
 #include "gtest/gtest.h"
 #include "load_test_data.h"
@@ -335,6 +336,73 @@ TEST(TestGraphSimulation, consistencyFlowMobility)
         EXPECT_NEAR(compare[t_indx][2], temp_sol[1], 1e-10);
         EXPECT_NEAR(compare[t_indx][3], temp_sol[2], 1e-10);
     }
+}
+
+TEST(TestGraphSimulation, feedbackSimulation)
+{
+    using Model         = mio::oseir::Model<double>;
+    using Simulation    = mio::Simulation<double, Model>;
+    using FeedbackSim   = mio::FeedbackSimulation<double, Simulation, mio::oseir::ContactPatterns<double>>;
+    using Node          = mio::SimulationNode<FeedbackSim>;
+    using Edge          = mio::MobilityEdge<double>;
+    using Graph         = mio::Graph<Node, Edge>;
+    using GraphFeedback = mio::FeedbackGraphSimulation<double, Graph>;
+
+    double t0   = 0;
+    double tmax = 5.0;
+    double dt   = 1.0;
+
+    Model model(1);
+    model.populations.set_total(1000);
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 900;
+    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = 100;
+
+    std::vector<size_t> icu_indices = {(size_t)mio::oseir::InfectionState::Infected};
+
+    Graph g;
+
+    const auto num_nodes = 2;
+    for (int i = 0; i < num_nodes; ++i) {
+
+        auto feedback_sim = FeedbackSim(Simulation(model, t0), icu_indices);
+
+        // set feedback parameters
+        feedback_sim.get_parameters().get<mio::NominalICUCapacity<double>>() = 10;
+        auto& icu_occupancy     = feedback_sim.get_parameters().get<mio::ICUOccupancyHistory<double>>();
+        Eigen::VectorXd icu_day = Eigen::VectorXd::Constant(1, 1);
+        const auto cutoff       = static_cast<int>(feedback_sim.get_parameters().get<mio::GammaCutOff>());
+        for (int t = -cutoff; t <= 0; ++t) {
+            icu_occupancy.add_time_point(t, icu_day);
+        }
+
+        // bounds for contact reduction measures
+        feedback_sim.get_parameters().get<mio::ContactReductionMin<double>>() = {0.1};
+        feedback_sim.get_parameters().get<mio::ContactReductionMax<double>>() = {0.8};
+
+        // Set blending factors. The global blending factor is implicitly defined as 1 - local - regional.
+        feedback_sim.get_parameters().get<mio::BlendingFactorLocal<double>>()    = 0.5;
+        feedback_sim.get_parameters().get<mio::BlendingFactorRegional<double>>() = 0.3;
+
+        g.add_node(i, std::move(feedback_sim));
+    }
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.01));
+
+    double total_pop_before = 0;
+    for (auto& node : g.nodes()) {
+        total_pop_before += node.property.get_simulation().get_model().populations.get_total();
+    }
+
+    GraphFeedback sim(std::move(g), t0, dt);
+
+    sim.advance(tmax);
+
+    double total_pop_after = 0;
+    for (auto& node : sim.get_graph().nodes()) {
+        total_pop_after += node.property.get_simulation().get_model().populations.get_total();
+    }
+
+    EXPECT_NEAR(total_pop_before, total_pop_after, 1e-10);
+    EXPECT_NEAR(sim.get_graph().nodes()[0].property.get_simulation().get_result().get_last_time(), tmax, 1e-10);
 }
 
 namespace

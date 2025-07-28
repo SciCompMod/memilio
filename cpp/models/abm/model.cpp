@@ -171,13 +171,12 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
     }
 
     // check if a person makes a trip
-    bool weekend     = t.is_weekend();
-    size_t num_trips = m_trip_list.num_trips(weekend);
+    size_t num_trips = m_trip_list.num_trips();
 
     for (; m_trip_list.get_current_index() < num_trips &&
-           m_trip_list.get_next_trip_time(weekend).seconds() < (t + dt).time_since_midnight().seconds();
+           m_trip_list.get_next_trip_time().seconds() < (t + dt).time_since_midnight().seconds();
          m_trip_list.increase_index()) {
-        auto& trip        = m_trip_list.get_next_trip(weekend);
+        auto& trip        = m_trip_list.get_next_trip();
         auto& person      = get_person(trip.person_id);
         auto personal_rng = PersonalRandomNumberGenerator(person);
         // skip the trip if the person is in quarantine or is dead
