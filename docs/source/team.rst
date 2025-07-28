@@ -142,6 +142,25 @@ Carlotta Gerstein completed her Bachelor's degree in Mathematics at the Universi
 
 * `ORCID Profile: 0009-0004-4410-0502 <https://orcid.org/0009-0004-4410-0502>`_
 
+Kilian Volmer
+^^^^^^^^^^^^^^^^^
+
+.. image:: https://www.mathematics-and-life-sciences.uni-bonn.de/people/kilian-volmer/@@images/image/preview
+   :alt: Kilian Volmer
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Epidemiological modelling, Metapopulation models
+
+
+Kilian holds a B.SC. and a M.SC. in Mathematics from the University of Bonn. During his Masters he worked as a research 
+assistant in the group of Prof. Kevin Thurley and wrote his thesis on modelling immune cell interactions. In December 
+2024 he joined the group of Prof. Jan Hasenauer at the Life and Medical Sciences Institute and the Bonn Center 
+for Mathematical Life Sciences as a PhD student to work on infectious disease modelling.
+
+
+
 Maximilian Betz
 ^^^^^^^^^^^^^^^
 
