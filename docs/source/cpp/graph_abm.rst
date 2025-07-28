@@ -126,7 +126,9 @@ Assigning infection states and locations to persons in all models can be done vi
     adult2.set_assigned_location(mio::abm::LocationType::Work, work, model2.get_id());
     adult3.set_assigned_location(mio::abm::LocationType::Work, work, model2.get_id());
 
-For initializing the graph nodes and edges a ``mio::Graph`` is created which gets ``mio::ABMSimulationNode`` and ``mio::ABMMobilityEdge`` as templates. Additionally, every node needs a ``mio::History`` object to log its results during the simulation. See :doc:`io` for information on how to use ``mio::History``. Below, ``mio::abm::LogInfectionState`` is used as logger.
+For initializing the graph nodes and edges, a ``mio::Graph`` is created which gets ``mio::ABMSimulationNode`` and ``mio::ABMMobilityEdge`` as templates. 
+Additionally, every node needs a ``mio::History`` object to log its results during the simulation. See :ref:`history` for information on how to use ``mio::History``. 
+Below, ``mio::abm::LogInfectionState`` is used as logger.
 
 .. code-block:: cpp
 
@@ -139,7 +141,8 @@ For initializing the graph nodes and edges a ``mio::Graph`` is created which get
     graph.add_edge(model1.get_id(), model2.get_id());
     graph.add_edge(model2.get_id(), model1.get_id());
 
-To simulate the model from `start_date` to `end_date` with given graph step size `exchange_time_span`, a GraphSimulation has to be created. The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until `end_date` is done as follows:
+To simulate the model from `start_date` to `end_date` with given graph step size `exchange_time_span`, a GraphSimulation has to be created. 
+The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until `end_date` is done as follows:
 
 .. code-block:: cpp
 
