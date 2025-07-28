@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2024 MEmilio
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker
 *
@@ -125,13 +125,13 @@ TEST(TestGraphAbm, test_apply_mobility)
     p4.set_assigned_location(event_2.get_type(), event_2.get_id(), event_2.get_model_id());
 
     mio::abm::TripList& trips = model1.get_trip_list();
-    mio::abm::Trip trip1(p3.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_1, model1.get_id(), home_id,
-                         model1.get_id(), mio::abm::TransportMode::Unknown, mio::abm::LocationType::SocialEvent);
-    mio::abm::Trip trip2(p4.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_2, model2.get_id(), home_id,
-                         model1.get_id(), mio::abm::TransportMode::Unknown, mio::abm::LocationType::SocialEvent);
+    mio::abm::Trip trip1(p3.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_1, model1.get_id(),
+                         mio::abm::TransportMode::Unknown, {});
+    mio::abm::Trip trip2(p4.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), event_id_2, model2.get_id(),
+                         mio::abm::TransportMode::Unknown, {});
 
-    trips.add_trip(trip1);
-    trips.add_trip(trip2);
+    auto tripsvec = std::vector<mio::abm::Trip>{trip1, trip2};
+    trips.add_trips(tripsvec);
 
     auto t  = mio::abm::TimePoint(0);
     auto dt = mio::abm::hours(12);
@@ -218,10 +218,10 @@ TEST(TestGraphABM, mask_compliance)
 
     //add trips for p2
     mio::abm::TripList& trips = model.get_trip_list();
-    mio::abm::Trip trip1(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id, model.get_id(), home_id,
-                         model.get_id(), mio::abm::TransportMode::Unknown, mio::abm::LocationType::School);
+    mio::abm::Trip trip1(p2.get_id(), mio::abm::TimePoint(0) + mio::abm::hours(8), school_id, model.get_id(),
+                         mio::abm::TransportMode::Unknown, {});
 
-    trips.add_trip(trip1);
+    trips.add_trips({trip1});
 
     auto t0 = mio::abm::TimePoint(0);
     auto dt = mio::abm::hours(12);

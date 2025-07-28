@@ -1,5 +1,5 @@
 /* 
-* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -45,7 +45,7 @@ inline size_t well_index(const Position& p)
  * @tparam InfectionState An infection state enum.
  */
 template <class InfectionState>
-class QuadWellModel
+class QuadWell
 {
 
 public:
@@ -67,8 +67,8 @@ public:
      * @param[in] sigma Noise term for the diffusion process.
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
-    QuadWellModel(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
-                  double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
+    QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
+             double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
         , m_sigma(sigma)

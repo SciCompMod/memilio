@@ -18,9 +18,8 @@
 * limitations under the License.
 */
 
-#include "memilio/utils/logging.h"
+#include "memilio/compartments/stochastic_simulation.h"
 #include "sde_sir/model.h"
-#include "sde_sir/simulation.h"
 
 int main()
 {
@@ -49,7 +48,7 @@ int main()
 
     model.check_constraints();
 
-    auto sir = mio::ssir::simulate(t0, tmax, dt, model);
+    auto sir = mio::simulate_stochastic(t0, tmax, dt, model);
 
     sir.print_table();
 }

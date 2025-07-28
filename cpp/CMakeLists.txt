@@ -75,6 +75,8 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
+file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/.." MEMILIO_BASE_DIR)
+
 # code coverage analysis
 # Note: this only works under linux and with make
 # Ninja creates different directory names which do not work together with this scrupt
@@ -188,6 +190,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/sde_seirvv)
     add_subdirectory(models/graph_abm)
     add_subdirectory(models/smm)
+    add_subdirectory(models/hybrid)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)

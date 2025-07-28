@@ -25,7 +25,7 @@ import pandas as pd
 import time
 from sklearn.model_selection import KFold
 import numpy as np
-import memilio.surrogatemodel.ode_secir_simple.grid_search as grid_search
+import memilio.surrogatemodel.utils.grid_search as grid_search
 import memilio.surrogatemodel.ode_secir_simple.model as md
 
 # Setting random seed

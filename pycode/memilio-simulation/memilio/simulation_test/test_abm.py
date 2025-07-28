@@ -57,13 +57,6 @@ class TestAbm(unittest.TestCase):
 
         home.infection_parameters.MaximumContacts = 10
         self.assertEqual(home.infection_parameters.MaximumContacts, 10)
-        testing_inf_states = []
-        testing_crit = abm.TestingCriteria(
-            testing_ages, testing_inf_states)
-        testing_scheme = abm.TestingScheme(testing_crit, abm.days(
-            1), t0, t0 + abm.days(1), model.parameters.TestData[abm.TestType.Antigen], 1.0)
-        # initially false, will only active once simulation starts
-        self.assertEqual(testing_scheme.active, False)
 
     def test_persons(self):
         """ """
@@ -106,10 +99,9 @@ class TestAbm(unittest.TestCase):
 
         # trips
         trip_list = abm.TripList()
-        trip_list.add_trip(abm.Trip(0, abm.TimePoint(
-            0) + abm.hours(8), social_event_id, home_id, abm.LocationType.SocialEvent))
-        trip_list.add_trip(abm.Trip(1, abm.TimePoint(0) +
-                           abm.hours(8), work_id, home_id, abm.LocationType.Work))
+        trip_list.add_trips(
+            [abm.Trip(abm.PersonId(0), abm.TimePoint(0) + abm.hours(8), social_event_id), abm.Trip(abm.PersonId(1), abm.TimePoint(0) + abm.hours(8), work_id)])
+
         model.trip_list = trip_list
         model.use_mobility_rules = False
         self.assertEqual(model.trip_list.num_trips(), 2)
