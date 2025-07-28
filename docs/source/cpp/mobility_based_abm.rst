@@ -288,7 +288,7 @@ Finally, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-:doc:`history<io>`, for example, to track all the Infection states of each simulation step.
+:ref:`history<history>`, for example, to track all the Infection states of each simulation step.
 
 .. code-block:: cpp
 
