@@ -5,12 +5,12 @@ This module models and simulates the epidemic using an agent-based model (*ABM*)
 the spread of COVID-19 in a population with discrete persons (the agents) moving throughout locations in the
 model and interacting with (infecting) each other. For a detailed overview of the ABM, see:
 
-- Kerkmann D, Korf S, et al. Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread. https://doi.org/10.48550/arXiv.2410.08050
+- Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
 
 Introduction
 -----------
 
-The model is implemented in multiple classes and headers located in the ``/cpp/models/abm/`` directory. The core classes and their locations are:
+The model is implemented in multiple classes and header files located in the ``/cpp/models/abm/`` directory. The core classes and their locations are:
 
 - ``Person`` (person.h): Represents individual agents in the simulation
 - ``Infection`` (infection.h): Manages infection dynamics and disease progression 
@@ -122,7 +122,7 @@ Simulation
 ----------
 
 The simulation runs in discrete time steps. Each step has two phases, an **interaction phase** and a **mobility phase**.
-After these two phases the disease can progress and the simulation time is increased by one step.
+After these two phases, the disease can progress and the simulation time is increased by one step.
 
 Interaction phase
 ~~~~~~~~~~~~~~~~~~~
@@ -135,7 +135,7 @@ level of the susceptible person.
 Mobility phase
 ~~~~~~~~~~~~~~~~~~
 
-During the mobility phase, each person may change their location. Mobility follow
+During the mobility phase, each person may change their location. Mobility follows
 `rules <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.cpp>`_, considering the current location, time of day, and properties of the person (e.g. age).
 Some location changes are deterministic and regular (e.g. going to work), while others are random (e.g. going shopping or to a
 social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
@@ -150,9 +150,8 @@ How to
 -----------
 
 This section gives an introduction to how to use the ABM and set up your own simulation. For a quick overview, you can find a full
-example in the `ABM minimal example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_minimal.cpp>`_ and a more detailed Doxygen documentation
-`here <https://scicompmod.github.io/memilio/documentation/index.html>`_. For a guide on installation and running the simulations and
-examples, see this `README <https://github.com/SciCompMod/memilio/blob/main/cpp/README.md>`_.
+example in the `ABM minimal example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_minimal.cpp>`_. For a guide on installation and running the simulations and
+examples, see :doc:`installation`.
 
 Every person in the ABM belongs to an AgeGroup, which we can define as follows:
 
@@ -257,7 +256,7 @@ During the simulation, people can get tested, and we have to specify the scheme 
 Initializing infections
 ~~~~~~~~~~~~~~~~~~~~~~
 
-For some infections to happen during the simulation, we have to initialize people with infections:
+For infections to happen during the simulation, we have to initialize people with infections:
 
 .. code-block:: cpp
 
@@ -289,7 +288,7 @@ Finally, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step.
+:ref:`history<history>`, for example, to track all the Infection states of each simulation step.
 
 .. code-block:: cpp
 

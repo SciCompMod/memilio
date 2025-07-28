@@ -38,20 +38,20 @@ Timer usage
 
 In this section we present how to use the AutoTimer class. This is the preferred way of using the timing framework, as
 the class takes care of running the timer, managing its lifetime for later evaluation, and ensuring thread safety with
-OpenMP.
+OpenMP. The AutoTimer class uses some other classes that are listed and explained in :ref:`Classes and their responsibilities`.
 
 An AutoTimer starts when it is created, and stops when it is destroyed - which usually happens at the next closing
 bracket :code:`}` or the next :code:`return`. This design, automating the starting and stopping of a timer, is
 intentionally limiting, because it helps to avoid several issues or mistakes that can arise when manually running
 timers. 
 
-You can also try out the `code example <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__.
+An example on how to use the timers can be found at `code example <https://github.com/SciCompMod/memilio/tree/main/cpp/examples>`__.
 
 
 Timing in executables
 ^^^^^^^^^^^^^^^^^^^^^
 
-Let's say you have set up a Simulation, and want to measure how long it takes, without the setup. Then you can write 
+To measure how long advancing a simulation without the setup takes, you can write 
 
 .. code-block:: cpp
 
@@ -68,8 +68,7 @@ Let's say you have set up a Simulation, and want to measure how long it takes, w
         ... // evaluate results
     }
 
-and will see a table printed at the end of your program, that lists the time it took to :code:`advance` next to the
-timer named "my simulation". That's it!
+and will see a table printed at the end of your program next to the timer named "my simulation", that lists the time it took to :code:`advance`.
 
 You can add more timers like this, but make sure you use unique names, otherwise the same timer will be reused, and the
 measured times will be added together. The name of the timer object itself (here :code:`my_timer`) is not important, as
@@ -158,6 +157,7 @@ example, NamedTimer (the class used by AutoTimer) cannot be instantiated dynamic
 be known at compile time. This also means that adding a lot of timers will impact the time it takes to compile the code,
 though a couple hundred timers should only take around an additional second.
 
+.. _Classes and their responsibilities:
 Classes and their responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -166,14 +166,14 @@ specific component, view its API documentation.
 
 - **BasicTimer**:
   The foundation of the timing framework. BasicTimer is a very simple class, that defines the methods start, stop,
-  reset, and get_elapsed_time. These are used by all other classes in this framework. Uses a wall clock, so if compute
+  reset, and get_elapsed_time. These are used by all other classes in this framework. It uses a wall clock, so if compute
   resources are shared with other tasks, the timing results may be higher than expected. In debug builds, it will log
   errors whenever a member function was used incorrectly, e.g. when start was called twice.
 
 - **TimerRegistration**:
   This simple struct is used to keep track of timers and some additional information, but does not manage their storage.
   It consists of two strings for name and scope, a reference to a BasicTimer, and a thread id. The thread id specifies
-  which thread the timer is used in, which could differ from the thread is is created by.
+  which thread the timer is used in, which could differ from the thread it is created by.
 
 - **Printer**:
   A pure virtual class defining a print method to evaluate and output timing results via a list of TimerRegistrations.
