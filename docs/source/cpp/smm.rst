@@ -36,7 +36,7 @@ Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (
 Infection state transitions
 ---------------------------
 
-The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
+The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
 
 Using the infection states from above and two regions, there are five first-order adoption rates per region and one second-order adoption rate per region. In the example below, the second-order adoption rate (transition from S to E) differs between the regions:
 
@@ -86,6 +86,17 @@ The model has the following parameters:
    * - :math:`\lambda^{(k,l)}_{i}`
      - ``TransitionRate``
      - Spatial transition rate for infection state i from region k to region l.
+
+The adoption rate :math:`\gamma^{(k)}_{i,j}` at time :math:`t` is given by
+
+:math:`\gamma^{(k)}_{i,j}(t) = c_{i,j}\frac{i^{(k)}{N}\cdot\sum_{\tau \in \Psi}\tau.factor \cdot \tau.state(t)`
+
+ and the spatial transiton rate at time :math:`t` by
+
+ :math:`\lambda^{(k,l)}_{i} = \lambda^{(k,l)}_{i}.factor\cdot i^{(k)}(t)`
+
+ with :math:`i^{(k)}` the population in region :math:`k` having infection state :math:`i`.
+
 
 Initial conditions
 ------------------
