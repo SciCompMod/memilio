@@ -5,7 +5,7 @@ The follwing list expalins the non-standard data types that are used throughout 
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 20 60
+   :widths: 20 60
 
    * - Data type name
      - Description
