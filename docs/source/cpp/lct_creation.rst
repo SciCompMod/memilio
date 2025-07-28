@@ -44,7 +44,7 @@ compartments starting from 0, with Count being equal to the number of compartmen
 Parameters
 ~~~~~~~~~~
 
-Next, we define the parameters in "parameters.h", which consist of a struct for each constant used in the mathematical
+Next, we define the parameters in "parameters.h", which consist of a struct for each parameter used in the mathematical
 model. This struct must define the data type, name and default value of the constant. For example, for the time a
 person stays infectious, :math:`T_I`, we define a struct:
 
@@ -87,9 +87,6 @@ We also define a parameter ``ContactPatterns`` determining the contacts of the d
 
 Avoid using the mathematical symbol of a constant as name for the struct. Their connection can be noted down in the
 documentation of these structs.
-Additionally, we can determine parameters influencing the infection dynamics. In the case of the LCT-SECIR model we use 
-the parameters ``TransmissionProbabilityOnContact``, ``RelativeTransmissionNoSymptoms``, ``RiskOfInfectionFromSymptomatic``, ``StartDay`` and ``Seasonality``. 
-For each parameter, we need to define a default value and a name as for the above parameters. 
 
 Finally, define a type :code:`Parameters` by listing all parameter structs as template arguments of a
 :code:`mio::ParameterSet`:
@@ -113,9 +110,9 @@ it using the class ``LctPopulations``.
 .. code-block:: cpp
 
     template <typename FP = ScalarType, class... LctStates>
-    using Population = mio::LctPopulations<FP, LctStates...>;
+    using Populations = mio::LctPopulations<FP, LctStates...>;
 
-where ``LctStates`` contains the number of subcompartments per infection state. 
+where ``LctStates`` contains the number of subcompartments per infection state.
 
 Importantly, this class allows further stratifying the population vector, with the most common
 example being adding age groups.
@@ -123,7 +120,7 @@ example being adding age groups.
 Define the model
 ^^^^^^^^^^^^^^^^
 
-Now we can define the model as a **CompartmentalModel** in the file model.h:  
+Now we can define the model as a **CompartmentalModel** in the file "model.h":  
 
 .. code-block:: cpp
 
@@ -158,12 +155,17 @@ For LCT models, the class ``CompartmentalModel`` requires the following template
     
 - type of floating point type, here ``ScalarType``,
 - a class ``InfectionState`` containing the compartments, see above,
-- the class ``LctPopulations`` which is a class template for compartment populations of LCT models depending on the floating point type and the considered ``LctStates``,
+- the class ``LctPopulations`` which is a class template for compartment populations of LCT models depending on the 
+floating point type and the considered ``LctStates`` and determines the type of the public member ``populations`` which contains 
+the number of individuals per subcompartment and is used to pass initial conditions to the model,
 - the class ``Parameters`` containing all required parameters, see above. 
 
 The function ``get_derivatives()`` evaluates the right-hand-side of the ODE :math:`dydt = f(y, t)` that we want to solve, see above.
 
 It is also useful to implement the following methods within the model:
 
-- A function ``calculate_compartments()`` that accumulates the TimeSeries containing simulation results that are divided into subcompartments to a TimeSeries that conatins the simulation results according to the infection states without subcompartments. 
+- A function ``calculate_compartments()`` that accumulates the TimeSeries containing simulation results that are divided 
+into subcompartments to a TimeSeries that conatins the simulation results according to the infection states without subcompartments. 
+For an example, see the implementation within the LCT-SECIR model.
 - A function ``check_constraints()`` that checks that the model satisfies sensible constraints regarding parameters and initial conditions. 
+For an example, see the implementation within the LCT-SECIR model. 
