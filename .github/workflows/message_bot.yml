@@ -1,0 +1,54 @@
+# .github/workflows/discussion-monitor.yml
+name: Simple Discussion Monitor
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-discussions:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check for new discussions
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+      run: |
+        npm install @octokit/rest
+        cat > check.js << 'EOF'
+        const { Octokit } = require('@octokit/rest');
+
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+        async function check() {
+          const since = new Date();
+          since.setHours(since.getHours() - 25);
+          
+          const { data } = await octokit.graphql(`
+            query { 
+              repository(owner: "${process.env.GITHUB_REPOSITORY_OWNER}", name: "${process.env.GITHUB_REPOSITORY}".split('/')[1]) {
+                discussions(first: 10, orderBy: {field: CREATED_AT, direction: DESC}) {
+                  nodes { createdAt }
+                }
+              }
+            }
+          `);
+          
+          const newDiscussions = data.repository.discussions.nodes.filter(
+            d => new Date(d.createdAt) > since
+          );
+          
+          if (newDiscussions.length > 0) {
+            const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: 'New disc on Github' })
+            });
+            console.log('Mattermost notification sent');
+          }
+        }
+
+        check().catch(console.error);
+        EOF
+        node check.js
