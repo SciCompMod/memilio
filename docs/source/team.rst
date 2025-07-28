@@ -95,6 +95,7 @@ Acknowledgments
 ---------------
 
 MEmilio has been supported by various project grants. Since 2020, MEmilio has been funded 
+
 * by the Initiative and Networking Fund of the Helmholtz Association of German Research Institutions under grant agreement number KA1-Co-08 (Project LOKI-Pandemics),
 * by the German Federal Ministry for Digital and Transport under grant agreement FKZ19F2211A and FKZ19F2211B (Project PANDEMOS),
 * by the Helmholtz School for Data Science in Life, Earth and Energy (HDS-LEE),
@@ -115,11 +116,11 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
    :alt: Bundesministerium für Digitales und Verkehr
 
 .. |hdslee| image:: _static/funder/hdslee.png
-   :width: 200px
+   :width: 250px
    :alt: Helmholtz School for Data Science in Life, Earth and Energy
 
 .. |mfund| image:: _static/funder/mfund.png
-   :width: 200px
+   :width: 150px
    :alt: mFUND
 
-|helmholtz| |bmbf| |bmdv| |hdslee| |mfund|
+|helmholtz| |bmdv| |mfund| |bmbf| |hdslee|
