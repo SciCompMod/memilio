@@ -1,7 +1,7 @@
 MEmilio Epidata Package
 =======================
 
-MEmilio Epidata provides modules and scripts to download epidemiological data from various official and inofficial sources.
+MEmilio Epidata provides modules and scripts to download epidemiological data from various different sources.
 The package as well as links to the sources can be found in the `pycode/memilio-epidata <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-epidata>`_.
 
 Installation
@@ -160,7 +160,7 @@ When you add a new script
 - Add an executable to the setup.py in "pycode/memilio-epidata".
 - Add it to the cli_dict in getDataIntoPandasDataFrame.py.
     - Add a meaningful key for the new script.
-    - as the value add a list in the form [comment to print when script is started, list of used parser arguments (optional)].
+    - for the dict value add a list in the form [comment to print when script is started, list of used parser arguments (optional)].
     - If more than the default parser should be added, add these parser to the  list of used parser.
 - Add tests.
 - Add an entry "executablename -h" to the .github/test-py/action.yml.
