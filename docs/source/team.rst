@@ -67,6 +67,31 @@ Henrik Zunker is a PhD student at the Institute for Software Technology at the G
 * `Google Scholar Profile <https://scholar.google.com/citations?user=gEng86kAAAAJ&hl=en>`_
 * `ORCID Profile: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`_
 
+.. _developer_3:
+
+Julia Bicker
+^^^^^^^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: Julia Bicker
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Mathematical Modeling, Hybrid Modeling, High-Performance Computing, Agent-based Modeling, Ordinary Differential Equations (ODEs)
+
+Julia Bicker is a PhD student at the Institute for Software Technology at the German Aerospace Center (DLR) since 2022. She focuses on the development of hybrid models that combine individual-based and population-based models, namely stochastic agent-based and ODE-based metapopulation models.
+
+**Selected Publications:**
+
+* **Bicker J**, Schmieding R, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `DOI:10.1016/j.idm.2024.12.015 <https://doi.org/10.1016/j.idm.2024.12.015>`_
+* Schmid N, **Bicker J** , Hofmann AF, Wallrafen-Sam K, Kerkmann D, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
+
+**Links:**
+
+* `Google Scholar Profile <https://scholar.google.com/citations?user=W0NCJ7MAAAAJ&hl=de&oi=ao>`_
+* `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/my-orcid?orcid=0000-0001-9382-4209>`_
+
 ----
 
 .. _contributors:
