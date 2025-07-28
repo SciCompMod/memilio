@@ -1,0 +1,592 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import networkx as nx
+from matplotlib.patches import FancyArrowPatch, Circle
+import matplotlib.patches as patches
+
+# Sample infection events (when people got infected)
+sample_infection_events = [
+    {'person_id': 1, 'time': 0.0, 'location': 'W1',
+        'location_type': 'Work'},  # Patient zero
+    {'person_id': 4, 'time': 8.5, 'location': 'W1',
+        'location_type': 'Work'},  # Infected by person 1
+    {'person_id': 7, 'time': 9.2, 'location': 'W1',
+        'location_type': 'Work'},  # Could be 1 or 4
+    {'person_id': 2, 'time': 14.3, 'location': 'H1',
+        'location_type': 'Home'},  # Infected by person 1 at home
+    {'person_id': 3, 'time': 15.1, 'location': 'H1',
+        'location_type': 'Home'},  # Could be person 1 or 2
+    {'person_id': 5, 'time': 18.7, 'location': 'H2',
+        'location_type': 'Home'},  # Infected by person 4 at home
+    {'person_id': 8, 'time': 24.2, 'location': 'E1',
+        'location_type': 'Social_Event'},  # Multiple potential infectors
+    {'person_id': 9, 'time': 24.8, 'location': 'E1',
+        'location_type': 'Social_Event'},  # Same event as person 8
+    {'person_id': 6, 'time': 25.5, 'location': 'H2',
+        'location_type': 'Home'},  # Could be person 4 or 5
+    {'person_id': 10, 'time': 32.1, 'location': 'S1',
+        'location_type': 'School'},  # Clear transmission
+    {'person_id': 11, 'time': 33.4, 'location': 'S1',
+        'location_type': 'School'},  # Infected by person 10
+    {'person_id': 12, 'time': 36.7, 'location': 'SH1',
+        'location_type': 'Shopping'},  # Multiple shoppers
+    {'person_id': 13, 'time': 37.2, 'location': 'SH1',
+        'location_type': 'Shopping'},  # Same shopping trip
+    {'person_id': 14, 'time': 48.3, 'location': 'W2',
+        'location_type': 'Work'},  # New workplace outbreak
+    {'person_id': 15, 'time': 49.1, 'location': 'W2',
+        'location_type': 'Work'},  # Infected by person 14
+    {'person_id': 16, 'time': 50.2, 'location': 'W2',
+        'location_type': 'Work'},  # Could be 14 or 15
+]
+
+# Enhanced contact data showing who was where when
+sample_contact_data_timeline = [
+    # Early workplace contacts (where patient zero spreads)
+    {'person_1': 1, 'person_2': 4, 'time': 8.0,
+        'location_type': 'Work', 'location_id': 'W1'},
+    {'person_1': 1, 'person_2': 7, 'time': 8.5,
+        'location_type': 'Work', 'location_id': 'W1'},
+    {'person_1': 4, 'person_2': 7, 'time': 9.0, 'location_type': 'Work',
+        'location_id': 'W1'},  # Ambiguous transmission
+    {'person_1': 1, 'person_2': 4, 'time': 9.5,
+        'location_type': 'Work', 'location_id': 'W1'},
+
+    # Household transmission H1
+    {'person_1': 1, 'person_2': 2, 'time': 14.0,
+        'location_type': 'Home', 'location_id': 'H1'},
+    {'person_1': 1, 'person_2': 3, 'time': 14.5,
+        'location_type': 'Home', 'location_id': 'H1'},
+    {'person_1': 2, 'person_2': 3, 'time': 15.0,
+        'location_type': 'Home', 'location_id': 'H1'},  # Ambiguous
+
+    # Household transmission H2
+    {'person_1': 4, 'person_2': 5, 'time': 18.0,
+        'location_type': 'Home', 'location_id': 'H2'},
+    {'person_1': 4, 'person_2': 6, 'time': 24.0,
+        'location_type': 'Home', 'location_id': 'H2'},
+    {'person_1': 5, 'person_2': 6, 'time': 25.0,
+        'location_type': 'Home', 'location_id': 'H2'},  # Ambiguous
+
+    # Social event (multiple people, uncertain transmission)
+    {'person_1': 1, 'person_2': 8, 'time': 23.5,
+        'location_type': 'Social_Event', 'location_id': 'E1'},
+    {'person_1': 4, 'person_2': 8, 'time': 23.8,
+        'location_type': 'Social_Event', 'location_id': 'E1'},
+    {'person_1': 7, 'person_2': 8, 'time': 24.0,
+        'location_type': 'Social_Event', 'location_id': 'E1'},
+    {'person_1': 8, 'person_2': 9, 'time': 24.5,
+        'location_type': 'Social_Event', 'location_id': 'E1'},
+    {'person_1': 1, 'person_2': 9, 'time': 24.2,
+        'location_type': 'Social_Event', 'location_id': 'E1'},
+
+    # School transmission (clearer chain)
+    {'person_1': 3, 'person_2': 10, 'time': 31.5,
+        'location_type': 'School', 'location_id': 'S1'},
+    {'person_1': 10, 'person_2': 11, 'time': 33.0,
+        'location_type': 'School', 'location_id': 'S1'},
+
+    # Shopping center (multiple potential infectors)
+    {'person_1': 2, 'person_2': 12, 'time': 36.0,
+        'location_type': 'Shopping', 'location_id': 'SH1'},
+    {'person_1': 5, 'person_2': 12, 'time': 36.3,
+        'location_type': 'Shopping', 'location_id': 'SH1'},
+    {'person_1': 8, 'person_2': 12, 'time': 36.5,
+        'location_type': 'Shopping', 'location_id': 'SH1'},
+    {'person_1': 12, 'person_2': 13, 'time': 37.0,
+        'location_type': 'Shopping', 'location_id': 'SH1'},
+    {'person_1': 2, 'person_2': 13, 'time': 37.1,
+        'location_type': 'Shopping', 'location_id': 'SH1'},
+
+    # New workplace outbreak
+    {'person_1': 14, 'person_2': 15, 'time': 48.5,
+        'location_type': 'Work', 'location_id': 'W2'},
+    {'person_1': 14, 'person_2': 16, 'time': 49.5,
+        'location_type': 'Work', 'location_id': 'W2'},
+    {'person_1': 15, 'person_2': 16, 'time': 50.0,
+        'location_type': 'Work', 'location_id': 'W2'},  # Ambiguous
+]
+
+
+def has_contact_at_location(person1, person2, location, time, contact_data, time_tolerance=2):
+    """Check if two people had contact at specific location around specific time"""
+    relevant_contacts = contact_data[
+        (((contact_data['person_1'] == person1) & (contact_data['person_2'] == person2)) |
+         ((contact_data['person_1'] == person2) & (contact_data['person_2'] == person1))) &
+        (contact_data['location_id'] == location) &
+        (abs(contact_data['time'] - time) <= time_tolerance)
+    ]
+    return len(relevant_contacts) > 0
+
+
+def get_contact_strength_between(person1, person2, location, contact_data):
+    """Get contact strength between two specific people at location"""
+    contacts = contact_data[
+        (((contact_data['person_1'] == person1) & (contact_data['person_2'] == person2)) |
+         ((contact_data['person_1'] == person2) & (contact_data['person_2'] == person1))) &
+        (contact_data['location_id'] == location)
+    ]
+    return len(contacts)
+
+
+def find_potential_infectors(infected_person, infection_time, location,
+                             infection_events, contact_data, time_window=24):
+    """Find who could have infected this person and calculate probabilities"""
+
+    # Find people who were infectious at the same location within time window
+    potential_infectors = []
+
+    for event in infection_events:
+        if (event['person_id'] != infected_person and
+            event['time'] < infection_time and
+                event['time'] > infection_time - time_window):
+
+            # Check if they were at same location
+            if has_contact_at_location(event['person_id'], infected_person,
+                                       location, infection_time, contact_data):
+
+                # Calculate probability based on time proximity and contact strength
+                time_diff = infection_time - event['time']
+                contact_strength = get_contact_strength_between(
+                    event['person_id'], infected_person, location, contact_data)
+
+                # Simple probability model
+                time_factor = max(0, 1 - time_diff / time_window)
+                # Normalize contact strength
+                contact_factor = min(contact_strength / 3, 1.0)
+                probability = time_factor * contact_factor
+
+                if probability > 0:
+                    potential_infectors.append(
+                        (event['person_id'], probability))
+
+    # Normalize probabilities
+    total_prob = sum(prob for _, prob in potential_infectors)
+    if total_prob > 0:
+        potential_infectors = [(pid, prob/total_prob)
+                               for pid, prob in potential_infectors]
+
+    return potential_infectors
+
+
+def create_probabilistic_infection_tree(infection_events, contact_data, figsize=(16, 12)):
+    """
+    Create infection tree with probability branches for uncertain transmissions
+    """
+    plt.figure(figsize=figsize)
+
+    # Sort infections by time
+    infection_events = sorted(infection_events, key=lambda x: x['time'])
+
+    # Create tree layout
+    levels = {}  # time -> list of persons
+    for event in infection_events:
+        time_level = int(event['time'] / 12)  # Group by 12-hour periods
+        if time_level not in levels:
+            levels[time_level] = []
+        levels[time_level].append(event)
+
+    # Draw nodes for each time level
+    y_spacing = 3.0
+    x_spacing = 2.0
+
+    person_positions = {}
+
+    for level, events in levels.items():
+        y_pos = level * y_spacing
+        n_events = len(events)
+        start_x = -(n_events - 1) * x_spacing / 2
+
+        for i, event in enumerate(events):
+            x_pos = start_x + i * x_spacing
+            person_id = event['person_id']
+            person_positions[person_id] = (x_pos, y_pos)
+
+            # Draw person node
+            if event['time'] == 0:  # Patient zero
+                circle = plt.Circle((x_pos, y_pos), 0.4,
+                                    color='darkred', alpha=0.8, zorder=3)
+            else:
+                circle = plt.Circle((x_pos, y_pos), 0.3,
+                                    color='red', alpha=0.7, zorder=3)
+            plt.gca().add_patch(circle)
+
+            # Add person label
+            plt.text(x_pos, y_pos, str(person_id),
+                     ha='center', va='center', fontsize=10,
+                     fontweight='bold', color='white')
+
+            # Add time label
+            plt.text(x_pos, y_pos - 0.7, f't={event["time"]:.1f}h',
+                     ha='center', va='center', fontsize=8, alpha=0.7)
+
+    # Draw probabilistic connections
+    for event in infection_events[1:]:  # Skip patient zero
+        infected_person = event['person_id']
+        infection_time = event['time']
+        location = event['location']
+
+        # Find potential infectors at same location around same time
+        potential_infectors = find_potential_infectors(
+            infected_person, infection_time, location, infection_events, contact_data)
+
+        if potential_infectors:
+            # Draw probabilistic arrows
+            for infector, probability in potential_infectors:
+                if infector in person_positions and infected_person in person_positions:
+                    x1, y1 = person_positions[infector]
+                    x2, y2 = person_positions[infected_person]
+
+                    # Arrow thickness based on probability
+                    arrow_width = max(1, probability * 8)
+                    alpha = 0.4 + 0.6 * probability
+
+                    arrow = FancyArrowPatch((x1, y1), (x2, y2),
+                                            connectionstyle="arc3,rad=0.1",
+                                            arrowstyle='->',
+                                            mutation_scale=15,
+                                            linewidth=arrow_width,
+                                            alpha=alpha,
+                                            color='darkred')
+                    plt.gca().add_patch(arrow)
+
+                    # Add probability label
+                    mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
+                    plt.text(mid_x + 0.3, mid_y, f'{probability:.2f}',
+                             fontsize=8, alpha=0.8, fontweight='bold',
+                             bbox=dict(boxstyle='round,pad=0.2',
+                                       facecolor='yellow', alpha=0.7))
+
+    plt.title('Probabilistic Infection Tree\n(Arrow thickness = transmission probability)',
+              fontsize=14, fontweight='bold')
+    plt.xlabel('Spatial Distribution')
+    plt.ylabel('Time Progression (12h periods)')
+    plt.axis('equal')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+
+def create_uncertainty_cloud_network(infection_events, contact_data, figsize=(16, 12)):
+    """
+    Create network where uncertain transmissions are shown as probability clouds
+    """
+    plt.figure(figsize=figsize)
+
+    # Create basic network
+    G = nx.Graph()
+
+    # Add all infected persons
+    for event in infection_events:
+        G.add_node(event['person_id'],
+                   infection_time=event['time'],
+                   location=event['location'])
+
+    # Create layout
+    pos = nx.spring_layout(G, k=3, iterations=50)
+
+    # Draw uncertainty clouds for ambiguous transmissions
+    for event in infection_events[1:]:  # Skip patient zero
+        infected_person = event['person_id']
+        potential_infectors = find_potential_infectors(
+            infected_person, event['time'], event['location'],
+            infection_events, contact_data)
+
+        if len(potential_infectors) > 1:  # Ambiguous case
+            # Draw cloud around potential infectors
+            infector_positions = [pos[pid] for pid, _ in potential_infectors
+                                  if pid in pos]
+
+            if infector_positions:
+                # Calculate cloud center and radius
+                cloud_x = np.mean([p[0] for p in infector_positions])
+                cloud_y = np.mean([p[1] for p in infector_positions])
+                cloud_radius = max(0.5, np.max([
+                    np.sqrt((p[0] - cloud_x)**2 + (p[1] - cloud_y)**2)
+                    for p in infector_positions
+                ]) + 0.3)
+
+                # Draw uncertainty cloud
+                cloud = Circle((cloud_x, cloud_y), cloud_radius,
+                               facecolor='orange', alpha=0.2,
+                               edgecolor='orange', linestyle='--',
+                               linewidth=2, zorder=1)
+                plt.gca().add_patch(cloud)
+
+                # Connect cloud to infected person
+                infected_pos = pos[infected_person]
+                arrow = FancyArrowPatch((cloud_x, cloud_y), infected_pos,
+                                        connectionstyle="arc3,rad=0.2",
+                                        arrowstyle='->', mutation_scale=20,
+                                        linewidth=3, alpha=0.6,
+                                        color='orange', zorder=2)
+                plt.gca().add_patch(arrow)
+
+                # Add uncertainty label
+                plt.text(cloud_x, cloud_y, '?',
+                         ha='center', va='center', fontsize=20,
+                         fontweight='bold', color='orange', alpha=0.8)
+
+    # Draw certain transmissions (single potential infector)
+    certain_edges = []
+    for event in infection_events[1:]:
+        infected_person = event['person_id']
+        potential_infectors = find_potential_infectors(
+            infected_person, event['time'], event['location'],
+            infection_events, contact_data)
+
+        if len(potential_infectors) == 1:  # Certain transmission
+            infector = potential_infectors[0][0]
+            certain_edges.append((infector, infected_person))
+
+    # Draw nodes
+    node_colors = []
+    for node in G.nodes():
+        infection_time = G.nodes[node]['infection_time']
+        if infection_time == 0:  # Patient zero
+            node_colors.append('darkred')
+        else:
+            # Color by infection time
+            max_time = max(e['time'] for e in infection_events)
+            intensity = 1 - (infection_time / max_time)
+            node_colors.append(plt.cm.Reds(0.3 + 0.7 * intensity))
+
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors,
+                           node_size=500, alpha=0.9,
+                           edgecolors='black', linewidths=2)
+
+    # Draw certain edges
+    nx.draw_networkx_edges(G, pos, edgelist=certain_edges,
+                           edge_color='darkgreen', width=3, alpha=0.8)
+
+    # Draw labels
+    labels = {node: str(node) for node in G.nodes()}
+    nx.draw_networkx_labels(G, pos, labels, font_size=12, font_weight='bold')
+
+    # Add legend
+    legend_elements = [
+        plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='darkred',
+                   markersize=12, label='Patient Zero'),
+        plt.Line2D([0], [0], color='darkgreen', lw=3,
+                   label='Certain Transmission'),
+        plt.Line2D([0], [0], color='orange', lw=3, linestyle='--',
+                   label='Uncertain Transmission'),
+        patches.Circle((0, 0), 0.1, facecolor='orange',
+                       alpha=0.2, label='Uncertainty Cloud')
+    ]
+
+    plt.legend(handles=legend_elements, loc='upper right')
+    plt.title('Infection Network with Transmission Uncertainty',
+              fontsize=14, fontweight='bold')
+    plt.axis('off')
+    plt.tight_layout()
+    plt.show()
+
+
+def create_timeline_with_probability_bars(infection_events, contact_data, figsize=(20, 10)):
+    """
+    Create timeline showing infection events with probability bars for potential infectors
+    """
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize, height_ratios=[3, 1])
+
+    # Sort by time
+    infection_events = sorted(infection_events, key=lambda x: x['time'])
+
+    # Main timeline (top)
+    times = [event['time'] for event in infection_events]
+    persons = [event['person_id'] for event in infection_events]
+
+    # Plot infection points
+    colors = ['darkred' if event['time'] ==
+              0 else 'red' for event in infection_events]
+    sizes = [150 if event['time'] == 0 else 100 for event in infection_events]
+
+    ax1.scatter(times, persons, s=sizes, c=colors,
+                alpha=0.8, zorder=3, edgecolors='black')
+
+    # Add person labels
+    for event in infection_events:
+        ax1.annotate(f"{event['person_id']}\n({event['location']})",
+                     (event['time'], event['person_id']),
+                     xytext=(8, 0), textcoords='offset points',
+                     fontsize=8, fontweight='bold',
+                     bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
+
+    # Draw probability bars for uncertain transmissions
+    for i, event in enumerate(infection_events[1:], 1):
+        infected_person = event['person_id']
+        potential_infectors = find_potential_infectors(
+            infected_person, event['time'], event['location'],
+            infection_events, contact_data)
+
+        if len(potential_infectors) > 1:
+            # Draw probability bars
+            bar_width = 3.0  # hours
+            bar_bottom = infected_person - 0.4
+
+            for j, (infector, probability) in enumerate(potential_infectors):
+                bar_height = probability * 0.8
+                bar_left = event['time'] - bar_width * \
+                    (len(potential_infectors) - j + 0.5)
+
+                ax1.barh(bar_bottom, bar_width, height=bar_height,
+                         left=bar_left, alpha=0.7,
+                         color=plt.cm.Set3(j % 12))
+
+                # Add probability text
+                ax1.text(bar_left + bar_width/2, bar_bottom + bar_height/2,
+                         f'P{infector}\n{probability:.2f}',
+                         ha='center', va='center', fontsize=7, fontweight='bold')
+
+    ax1.set_xlabel('Time (hours)')
+    ax1.set_ylabel('Person ID')
+    ax1.set_title(
+        'Infection Timeline with Transmission Probabilities\n(Bars show potential infectors and their probabilities)')
+    ax1.grid(True, alpha=0.3)
+    ax1.set_ylim(0, max(persons) + 1)
+
+    # Uncertainty summary (bottom)
+    uncertainty_scores = []
+    times_uncertain = []
+
+    for event in infection_events[1:]:
+        potential_infectors = find_potential_infectors(
+            event['person_id'], event['time'], event['location'],
+            infection_events, contact_data)
+
+        # Calculate uncertainty score (entropy)
+        if potential_infectors:
+            probs = [prob for _, prob in potential_infectors]
+            if len(probs) > 1:
+                entropy = -sum(p * np.log2(p) if p > 0 else 0 for p in probs)
+            else:
+                entropy = 0
+            uncertainty_scores.append(entropy)
+            times_uncertain.append(event['time'])
+
+    if uncertainty_scores:
+        ax2.plot(times_uncertain, uncertainty_scores, 'o-',
+                 color='orange', linewidth=2, markersize=6)
+        ax2.fill_between(times_uncertain, uncertainty_scores,
+                         alpha=0.3, color='orange')
+
+    ax2.set_xlabel('Time (hours)')
+    ax2.set_ylabel('Uncertainty\n(Entropy)')
+    ax2.set_title('Transmission Uncertainty Over Time')
+    ax2.grid(True, alpha=0.3)
+    ax2.set_ylim(0, max(uncertainty_scores) * 1.1 if uncertainty_scores else 1)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def run_sample_visualizations():
+    """Run all three visualization types with the sample data"""
+
+    # Convert sample data to DataFrame
+    contact_df = pd.DataFrame(sample_contact_data_timeline)
+
+    print("=== SAMPLE INFECTION SCENARIO ===")
+    print("Timeline:")
+    for event in sorted(sample_infection_events, key=lambda x: x['time']):
+        print(
+            f"  t={event['time']:5.1f}h: Person {event['person_id']} infected at {event['location']} ({event['location_type']})")
+
+    print("\nUncertainty Cases:")
+    for event in sample_infection_events[1:]:
+        potential_infectors = find_potential_infectors(
+            event['person_id'], event['time'], event['location'],
+            sample_infection_events, contact_df)
+
+        if len(potential_infectors) > 1:
+            infector_info = ", ".join(
+                [f"P{pid}({prob:.2f})" for pid, prob in potential_infectors])
+            print(
+                f"  Person {event['person_id']}: Could be infected by {infector_info}")
+
+    print("\nCreating visualizations...")
+
+    print("1. Probabilistic infection tree...")
+    create_probabilistic_infection_tree(sample_infection_events, contact_df)
+
+    print("2. Uncertainty cloud network...")
+    create_uncertainty_cloud_network(sample_infection_events, contact_df)
+
+    print("3. Timeline with probability bars...")
+    create_timeline_with_probability_bars(sample_infection_events, contact_df)
+
+
+def analyze_transmission_patterns(infection_events, contact_data):
+    """Analyze patterns in the transmission data"""
+    
+
+    contact_df = pd.DataFrame(contact_data) if isinstance(
+        contact_data, list) else contact_data
+
+    print("=== TRANSMISSION PATTERN ANALYSIS ===")
+
+    # Count certain vs uncertain transmissions
+    certain_count = 0
+    uncertain_count = 0
+
+    for event in infection_events[1:]:  # Skip patient zero
+        potential_infectors = find_potential_infectors(
+            event['person_id'], event['time'], event['location'],
+            infection_events, contact_df)
+
+        if len(potential_infectors) == 1:
+            certain_count += 1
+        elif len(potential_infectors) > 1:
+            uncertain_count += 1
+
+    total_transmissions = certain_count + uncertain_count
+
+    print(f"Total transmissions: {total_transmissions}")
+    print(
+        f"Certain transmissions: {certain_count} ({certain_count/total_transmissions*100:.1f}%)")
+    print(
+        f"Uncertain transmissions: {uncertain_count} ({uncertain_count/total_transmissions*100:.1f}%)")
+
+    # Analyze by location type
+    location_uncertainty = {}
+    for event in infection_events[1:]:
+        loc_type = event['location_type']
+        potential_infectors = find_potential_infectors(
+            event['person_id'], event['time'], event['location'],
+            infection_events, contact_df)
+
+        if loc_type not in location_uncertainty:
+            location_uncertainty[loc_type] = {'certain': 0, 'uncertain': 0}
+
+        if len(potential_infectors) == 1:
+            location_uncertainty[loc_type]['certain'] += 1
+        elif len(potential_infectors) > 1:
+            location_uncertainty[loc_type]['uncertain'] += 1
+
+    print(f"\nUncertainty by location type:")
+    for loc_type, counts in location_uncertainty.items():
+        total = counts['certain'] + counts['uncertain']
+        if total > 0:
+            uncertain_pct = counts['uncertain'] / total * 100
+            print(
+                f"  {loc_type}: {uncertain_pct:.1f}% uncertain ({counts['uncertain']}/{total})")
+
+
+# Main execution
+if __name__ == "__main__":
+    print("Running infection timeline visualizations with sample data...")
+
+    # Analyze the sample data first
+    analyze_transmission_patterns(
+        sample_infection_events, sample_contact_data_timeline)
+
+    print("\n" + "="*60 + "\n")
+
+    # Run the visualizations
+    run_sample_visualizations()
+
+    print("\nVisualization complete! Each chart shows:")
+    print("1. Probabilistic Tree: Infection spread over time with probability-weighted arrows")
+    print("2. Uncertainty Clouds: Network view with uncertainty zones highlighted")
+    print("3. Timeline: Chronological view with probability bars for each infection")
