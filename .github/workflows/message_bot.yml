@@ -81,27 +81,29 @@ jobs:
                 // Single discussion - detailed format
                 const discussion = newDiscussions[0];
                 message = {
-                  text: `### ${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
+                  text: `## ${discussion.category.emoji || '💬'} New Discussion on ${owner}/${repo}
+
                   **[${discussion.title}](${discussion.url})**
-                  👤 **Author:** ${discussion.author.login}  
-                  📂 **Category:** ${discussion.category.name}  
-                  🔢 **#${discussion.number}**`,
+
+                  👤 **Author:** ${discussion.author.login}
+                  📂 **Category:** ${discussion.category.name}
+                  🔢 **Discussion #${discussion.number}**`,
                   username: "GitHub Discussion Bot",
                   icon_emoji: ":github:"
                 };
               } else {
                 // Multiple discussions - summary format
                 const discussionList = newDiscussions.map(d => 
-                  `• ${d.category.emoji || '💬'} [${d.title}](${d.url}) by ${d.author.login}`
+                  `- ${d.category.emoji || '💬'} **[${d.title}](${d.url})** by ${d.author.login}`
                 ).join('\n');
                 
                 message = {
-                  text: `### 🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
+                  text: `## 🎉 ${newDiscussions.length} New Discussions on ${owner}/${repo}
 
-                  ${discussionList}
+                ${discussionList}
 
-                    ---
-                    *Check out the latest discussions above!*`,
+                ---
+                *Check out the latest discussions above!*`,
                   username: "GitHub Discussion Bot",
                   icon_emoji: ":github:"
                 };
