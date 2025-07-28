@@ -4,7 +4,6 @@ name: Simple Discussion Monitor
 on:
   schedule:
     - cron: '0 9 * * *'
-  workflow_dispatch:
   pull_request:  # This will run on PRs for testing
 
 jobs:
@@ -66,9 +65,17 @@ jobs:
               const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: 'New disc on Github' })
+                body: JSON.stringify({ text: 'New discussion on GitHub' })
               });
               console.log('Mattermost notification sent');
+            }
+              else {
+               const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: 'No New discussion on GitHub this is a test.' })
+              });
+              console.log('No new discussions found');
             }
           } catch (error) {
             console.error('Error details:', error);
