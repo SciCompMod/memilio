@@ -46,7 +46,7 @@ int main(int /*argc*/, char** /*argv*/)
     using Model = mio::smm::Model<1, InfectionState>;
     Model model;
 
-    auto home = mio::regions::Region(1);
+    auto home = mio::regions::Region(0);
 
     model.populations[{home, InfectionState::E}] = num_exp;
     model.populations[{home, InfectionState::I}] = num_ins;
