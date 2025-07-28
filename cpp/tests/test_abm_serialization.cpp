@@ -255,18 +255,19 @@ TEST(TestAbmSerialization, Model)
 
     Json::Value reference_json;
 
-    reference_json["cemetery_id"]                 = Json::UInt(i++);
-    reference_json["location_types"]              = Json::UInt(i++);
-    reference_json["locations"]                   = Json::Value(Json::arrayValue);
-    reference_json["parameters"]                  = abm_parameters;
-    reference_json["persons"]                     = Json::Value(Json::arrayValue);
-    reference_json["rng"]["counter"]              = Json::UInt(i++);
-    reference_json["rng"]["key"]                  = Json::UInt(i++);
-    reference_json["rng"]["seeds"]                = json_uint_array({i++, i++, i++, i++, i++, i++});
-    reference_json["testing_strategy"]["schemes"] = Json::Value(Json::arrayValue);
-    reference_json["trip_list"]["index"]          = Json::UInt(i++);
-    reference_json["trip_list"]["trips"]          = Json::Value(Json::arrayValue);
-    reference_json["use_mobility_rules"]          = Json::Value(false);
+    reference_json["cemetery_id"]                      = Json::UInt(i++);
+    reference_json["location_types"]                   = Json::UInt(i++);
+    reference_json["locations"]                        = Json::Value(Json::arrayValue);
+    reference_json["parameters"]                       = abm_parameters;
+    reference_json["persons"]                          = Json::Value(Json::arrayValue);
+    reference_json["rng"]["counter"]                   = Json::UInt(i++);
+    reference_json["rng"]["key"]                       = Json::UInt(i++);
+    reference_json["rng"]["seeds"]                     = json_uint_array({i++, i++, i++, i++, i++, i++});
+    reference_json["testing_strategy"]["schemes_id"]   = Json::Value(Json::arrayValue);
+    reference_json["testing_strategy"]["schemes_type"] = Json::Value(Json::arrayValue);
+    reference_json["trip_list"]["index"]               = Json::UInt(i++);
+    reference_json["trip_list"]["trips"]               = Json::Value(Json::arrayValue);
+    reference_json["use_mobility_rules"]               = Json::Value(false);
 
     test_json_serialization<mio::abm::Model>(reference_json);
 }
