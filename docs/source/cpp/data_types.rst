@@ -21,3 +21,23 @@ The follwing list expalins the non-standard data types that are used throughout 
      - An array whose values can be accesses by a multi-index. This datatype is for example used in the parameter :code:`mio::abm::TimeExposedToNoSymptoms` making it dependent on :code:`mio::abm::VirusVariant` and :code:`mio::AgeGroup`. Its values can then be set for a specific :code:`virus_variant` and :code:`age_group` using :code`model.parameters.template get<mio::abm::TimeInfectedSevereToCritical>()[{virus_variant, age_group}]`.
    * - :code:`Populations`
      - Is a :code:`mio::CustomIndexArray` with :code:`mio::UncertainValue<FP>` as values.
+   * - :code:`TimeSeries`
+     - Stores vectors of values at time points. Each time point has a vector of values of the same size with operations like adding time points, retrieving values, exporting to CSV, etc. It's also used for storing and analyzing simulation results over time.
+   * - :code:`Graph`
+     - A generic graph structure that represents a network of nodes connected by edges. Each node and edge can have associated properties. The Graph is used to model geographical regions connected by mobility patterns (e.g., commuting), where each node is represented by its own epidemiological model.
+   * - :code:`Node`
+     - Represents a node in a Graph with a unique ID and associated properties. 
+   * - :code:`Edge`
+     - Represents a directed connection between two nodes in a Graph with associated properties.
+   * - :code:`EdgeBase`, :code:`InEdgeBase`, :code:`OutEdgeBase`
+     - Base classes for Edge that define start and end node indices for connections in the Graph.
+   * - :code:`SimulationNode`
+     - Represents a simulation in one node of a mobility graph. Contains a simulation model of any type and keeps track of the last state and time point.
+   * - :code:`MobilityCoefficients`
+     - Time-dependent mobility coefficients used to model how populations move between nodes in a graph.
+   * - :code:`MobilityCoefficientGroup`
+     - A collection of time-dependent mobility coefficients that differentiate between various sources of mobility.
+   * - :code:`MobilityParameters`
+     - Parameters that influence mobility between nodes, including coefficients and dynamic non-pharmaceutical interventions (NPIs).
+   * - :code:`MobilityEdge`
+     - Represents mobility between two nodes in a graph. Handles the movement of populations between nodes, tracks mobile populations, and applies mobility returns according to epidemiological models.
