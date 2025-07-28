@@ -65,7 +65,7 @@ jobs:
               const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: 'New disc on Github' })
+                body: JSON.stringify({ text: 'New discussion on Github, ' + newDiscussions[0].title + ' created at ' + newDiscussions[0].createdAt })
               });
               console.log('Mattermost notification sent');
             }
