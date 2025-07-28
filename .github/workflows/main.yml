@@ -11,10 +11,6 @@ on:
       - version-*
     paths-ignore:
       - "**/memilio-epidata/**"
-  pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
-    paths-ignore:
-      - "**/memilio-epidata/**"
   workflow_dispatch:
 
 concurrency:
