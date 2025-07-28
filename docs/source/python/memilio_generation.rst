@@ -8,11 +8,12 @@ For a particular example, see the SEIR model with its files `oseir.cpp` and `ose
 This generating software was developed as a part of the Bachelor thesis `Automatische Codegenerierung für nutzerfreundliche mathematisch-epidemiologische Modelle <https://elib.dlr.de/190367/>`_. 
 The following figure from Chapter 5 outlines the workflow of the generator. Blue boxes represent parts of the code generator and orange ones the input and output. Rectangular boxes contain classes with logic, the rest represent data.
 
-.. image:: ../../../pycode/memilio-generation/generator_workflow.png
-   :alt: tikzGeneratorWorkflow
+.. image:: https://github.com/SciCompMod/memilio/raw/main/pycode/memilio-generation/generator_workflow.png
+    :alt: Workflow of the generator
+
 
 Dependencies
-------------
+----------
 
 The package uses the `Clang C++ library <https://clang.llvm.org/>`_ and the `LibClang Python library <https://libclang.readthedocs.io/en/latest/index.html>`_ to analyze the C++ code of a model. Both need to be installed and share the same version.
 
@@ -23,6 +24,8 @@ Required python packages:
 * dataclasses_json
 * graphviz
 * importlib-resources
+
+
 
 Usage
 -----
@@ -38,13 +41,25 @@ Before running the example you have to do these steps of setup:
 
 
 Example:
+
 After processing as described in the previous paragraph, run the example with the command (adjust the path according to your current folder):
 
 .. code-block:: console 
 
     python memilio/tools/example_oseir.py 
 
+To use the visualization run the command:  
 
+.. code-block:: console 
+
+    python memilio/tools/example_oseir.py -p
+
+
+Common mistakes:
+
+* Please ensure that your python bindings are compatible with your libclang.so version.
+
+Set your libclang version under ``install_requires`` according to your python bindings version in the `setup.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/graph_visualization.py>`_.
 
 Visualization
 -------------
@@ -59,7 +74,9 @@ This allows for:
 * Formatting the AST in a text file.
 
 Example:
+
 ``aviz.output_ast_formatted(ast, ast.get_node_by_index(1))`` displays the second node of the AST and its children in a file called ast_formatted.txt. 
+
 With the root node ``.get_node_by_index(0)`` you can display the whole AST.
 
 ``aviz.output_ast_terminal(ast, ast.get_node_by_index(1))`` displays the second node of the AST and its children in terminal.
