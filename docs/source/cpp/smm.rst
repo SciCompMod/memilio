@@ -5,7 +5,7 @@ The stochastic metapopulation model uses a Markov process to simulate disease dy
 
 :math:`\partial_t p(X,Z;t) = G p(X,Z;t) + L p(X,Z;t)`.
 
-The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z` the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X` the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct methode (stochastic simulation algorithm) is used for simulation.
+The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X`, the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct method (stochastic simulation algorithm) is used for simulation.
 
 
 Infection states
@@ -91,11 +91,11 @@ The adoption rate :math:`\gamma^{(k)}_{i,j}` at time :math:`t` is given by
 
 :math:`\gamma^{(k)}_{i,j}(t) = c_{i,j}\frac{i^{(k)}{N}\cdot\sum_{\tau \in \Psi}\tau.factor \cdot \tau.state(t)`
 
- and the spatial transiton rate at time :math:`t` by
+and the spatial transition rate at time :math:`t` by
 
  :math:`\lambda^{(k,l)}_{i} = \lambda^{(k,l)}_{i}.factor\cdot i^{(k)}(t)`
 
- with :math:`i^{(k)}` the population in region :math:`k` having infection state :math:`i`.
+with :math:`i^{(k)}` the population in region :math:`k` having infection state :math:`i`.
 
 
 Initial conditions
@@ -140,15 +140,15 @@ As the spatial transition rates are dependent on infection state, region changes
    //Initialize model parameter
    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
 
-Non-pharmaceutical Interventions
+Nonpharmaceutical interventions
 --------------------------------
 
-There are no non-pharmaceutical interventions (NPIs) explicitly implemented in the model. However, NPIs influencing the adoption or spatial transition rates can be realized by resetting the corresponding model parameters.
+There are no nonpharmaceutical interventions (NPIs) explicitly implemented in the model. However, NPIs influencing the adoption or spatial transition rates can be realized by resetting the corresponding model parameters.
 
 Simulation
 ----------
 
-At the beginning of the simulation, the waiting times for all events (infection state adoptions and spatial transitions) are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting time for the event that just happend is drawn. The simulation saves the system state in discrete time steps.
+At the beginning of the simulation, the waiting times for all events (infection state adoptions and spatial transitions) are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
 
 To simulate the model from `t0` to `tmax` with given step size `dt`, a **Simulation** has to be created and advanced until `tmax`. The step size is only used to regularly save the system state during the simulation.
 
