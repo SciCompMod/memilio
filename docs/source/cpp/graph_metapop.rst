@@ -12,7 +12,7 @@ in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first
 mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. 
 The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 
 Simulation

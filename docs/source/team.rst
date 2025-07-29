@@ -205,8 +205,8 @@ We thank all contributors, who have contributed to MEmilio. For a complete list 
 
 .. _collaboration:
 
-Participating research groups
--------------
+Contributing research groups and institutes
+-------------------------------------------
 
 MEmilio has been developed by and in collaboration with various research institutions:
 

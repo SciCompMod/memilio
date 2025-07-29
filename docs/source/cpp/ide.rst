@@ -9,7 +9,7 @@ In the following, we present the general structure of the IDE-SECIR model.
 The IDE-SEIR model follows a different structure, an introduction and a detailed example are provided in a separate 
 section below. 
 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 
 Infection states

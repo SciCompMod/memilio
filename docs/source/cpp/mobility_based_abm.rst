@@ -9,7 +9,7 @@ Consequently, the ABM is computationally more expensive than the ODE models, but
 At the same time, the ABM has to be parametrized carefully to ensure that the simulation results are realistic and meaningful.
 
 In the following, we present more details of the agent-based model, including code examples. 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 Structure
 ~~~~~~~~~
