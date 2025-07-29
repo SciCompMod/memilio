@@ -5,7 +5,7 @@ MEmilio implements a SECIR-type model utilizing the Linear Chain Trick (LCT). Th
 
 In the following, we present the general structure of the LCT model. The particular model documentation with examples is linked at the bottom of this page.
 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 
 Infection states

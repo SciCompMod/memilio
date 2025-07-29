@@ -6,7 +6,7 @@ distribution of arbitrary precision can be identified. Note that the resulting s
 
 In the following, we present the general structure of the GLCT model. The particular model documentation with examples is linked at the bottom of this page.
 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 Infection states
 ----------------

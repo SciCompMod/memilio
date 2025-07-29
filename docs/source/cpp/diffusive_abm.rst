@@ -11,7 +11,7 @@ with :math:`X` the vector of all agents' positions and :math:`Z` the vector of a
 The Model class needs an Implementation class as template argument which provides the domain agents move and interact in. A quadwell potential and a singlewell potential given in the classes **QuadWell** and **SingleWell** respectively are implemented, but any other suitable potential can be used as implementation. 
 
 In the following, we present more details of the diffusive agent-based model, including code examples. 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 Infection states
 ----------------

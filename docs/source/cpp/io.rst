@@ -5,7 +5,7 @@ Aggregated output
 -----------------
 
 All aggregated models save their results in a :code:`mio::TimeSeries` that contains all subpopulations for every time 
-point, see :doc:` <data_types>` for a description of the :code:`mio::TimeSeries` data type. The time series can be printed 
+point, see :doc:`data_types` for a description of the :code:`mio::TimeSeries` data type. The time series can be printed 
 to the terminal with the :code:`TimeSeries::print_table()` function and exported to a CSV file using :code:`TimeSeries::export_csv`. 
 As e.g. for the ODE-based models adaptive step size methods are used, the time series will not be necessarily available 
 on equidistant time points or days. To obtain a  :code:`mio::TimeSeries` interpolated on days or user-defined time points, 
