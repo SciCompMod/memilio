@@ -245,15 +245,15 @@ In order to ensure that figures in the documentation and in the code have a cons
 **Default color scheme**
 
 - For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`_ library. 
-- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#set1>`_ colormap.
+- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#Qualitative>`_ colormap.
 
 **Colorblind-friendly alternatives**
 
 For better accessibility and when creating figures with many categories, consider using colorblind-friendly alternatives:
 
-- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#tab10>`_ colormap for up to 10 distinct categories
-- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html#viridis>`_, `plasma`, or `cividis` colormaps
-- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html#rdbu>`_ or `RdYlBu` colormaps
+- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ colormap for up to 10 distinct categories
+- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_, `plasma`, or `cividis` colormaps
+- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ or `RdYlBu` colormaps
 - Avoid using red-green color combinations without additional visual cues (patterns, shapes, etc.)
 
 **General figure guidelines**
