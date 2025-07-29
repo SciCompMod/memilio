@@ -351,7 +351,7 @@ Documentation
 The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
 slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
 This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
-a pull request is merged into the main branch. Thus, we recommend building the documentation locally to test changes.
+a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
 
 
 Please make sure to have a working python environment with a python version that is compatible with 
@@ -367,14 +367,12 @@ First generate the doxygen output by running
 
 
 In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
-build times while testing we recommend to only use e.g. ``../cpp/models/abm``. PLEASE don't commit this change!
+build times while testing we recommend to only use e.g. ``../cpp/models/abm``. **Don't commit this change!**
 
 Then sphinx can be used to build the documentation:
 
 .. code-block:: bash
 
-    make html # sphinx-build source html
+    make html # alternatively: sphinx-build source html
 
 The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).
-
-For the documentation, please keep in mind that it is written in reStructuredText (RST) and uses a slightly different syntax than Markdown. A documentation can be found at `<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
