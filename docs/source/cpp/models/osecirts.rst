@@ -395,7 +395,7 @@ and its documentation.
 Examples
 --------
 
-To get started with the ODE-SECIRTS model, check out the code example in the memilio repository:
+To get started with the ODE-SECIRTS model, check out the code example in the MEmilio repository:
 `examples/ode_secirts.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secirts.cpp>`_.
 
 Overview of the ``osecirts`` namespace:

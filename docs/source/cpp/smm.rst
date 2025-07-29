@@ -56,6 +56,7 @@ Using the infection states from above and two regions, there are five first-orde
    }
 
   //Set second-order adoption rate different for the two regions
+  // adoption rate has the form {i, j, k, c_{i,j}, {{tau1.state, tau1.factor}, {tau2.state, tau2.factor}}}, see the equation below
    adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(0), 0.1, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
    adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(1), 0.2, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
 
@@ -82,20 +83,20 @@ The model has the following parameters:
    * - :math:`\gamma^{(k)}_{i,j}`
      - ``AdoptionRate``
      - Adoption rate in region k from infection state i to state j. Apart from the region k, the source (i) and target (j) infection state, the adoption rates get influences :math:`\tau \in \Psi` and a constant :math:`c_{i,j}`.
-   * - :math:`\tau`
+   * - :math:`\tau=(\tau_{factor}, \tau_{state})`
      - ``Influence``
      - Influence for second-order adoption rate consisting of the influencing infection state and a factor with which the population having the corresponding infection state is multiplied.
-   * - :math:`\lambda^{(k,l)}_{i}`
+   * - :math:`\tilde{\lambda}^{(k,l)}_{i}`
      - ``TransitionRate``
-     - Spatial transition rate for infection state i from region k to region l.
+     - Spatial transition rate for infection state i from region k to region l. Apart from the source region k, the target region l and the infection state i, the transition rates also get a constant :math:`\lambda^{(k,l)}_{i}`.
 
 The adoption rate :math:`\gamma^{(k)}_{i,j}` at time :math:`t` is given by
 
-:math:`\gamma^{(k)}_{i,j}(t) = c_{i,j}\frac{i^{(k)}}{N}\cdot\sum_{\tau \in \Psi}\tau.factor \cdot \tau.state(t)`
+:math:`\gamma^{(k)}_{i,j}(t) = c_{i,j}\frac{i^{(k)}}{N}\cdot\sum_{\tau \in \Psi}\tau_{factor} \cdot \tau_{state}(t)`
 
 and the spatial transition rate at time :math:`t` by
 
- :math:`\lambda^{(k,l)}_{i} = \lambda^{(k,l)}_{i}.factor\cdot i^{(k)}(t)`
+ :math:`\tilde{\lambda}^{(k,l)}_{i} = \lambda^{(k,l)}_{i}\cdot i^{(k)}(t)`
 
 with :math:`i^{(k)}` the population in region :math:`k` having infection state :math:`i`.
 
@@ -131,6 +132,7 @@ As the spatial transition rates are dependent on infection state, region changes
       for (size_t i = 0; i < num_regions; ++i) {
          for (size_t j = 0; j < num_regions; ++j)
                if (i != j) {
+            // transition rate has the form {i, k, l, \lambda^{(k,l)}_{i}}
             transition_rates.push_back(
                {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
             transition_rates.push_back(

@@ -3,7 +3,7 @@ Extensions
 
 MEmilio provides several extensions to interact with external data structures or software. 
 
-- :doc:`SBML <sbml>` can be used to semi-automatically create models in MEmilio given a model description in the `Systems Biology Markup Language <https://sbml.org/>`_ format.
+- :doc:The `Systems Biology Markup Language <https://sbml.org/>`_ (`SBML <sbml>`) can be used to semi-automatically create (or load) models in MEmilio from a given model description in SBML format.
 
 **Further advice:**
 

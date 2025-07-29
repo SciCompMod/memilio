@@ -17,12 +17,13 @@ We recommend to configure it locally such that it runs automatically on every co
     pre-commit install
 
 
-For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`_ and this short video series: https://calmcode.io/pre-commit/the-problem.html
+For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`_ and this short video series: https://calmcode.io/pre-commit/the-problem.html.
 
-Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068 . Be therefore sure to not commit python code from a worktree.
+Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068. Be therefore sure to not commit python code from a worktree.
+
 
 C++ coding guidelines
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 
 
@@ -36,14 +37,14 @@ Namespaces:
 
 Naming rules:
 
-  - Classes begin with large Letters , e.g. ``class MyClass``
-  - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function`` 
+  - Classes begin with large Letters , e.g. ``class MyClass``.
+  - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function``.
   - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading ``m_``, e.g. ``m_my_member``.
 
 Return Values:
 
-  - If only one object is output, use return, for multiple objects, pass by reference (we still have to check ``std::expected``)
-  - The semantics of return value arguments have to make clear, how the ownership is handled
+  - If only one object is output, use return, for multiple objects, pass by reference (we still have to check ``std::expected``).
+  - The semantics of return value arguments have to make clear, how the ownership is handled.
 
     - If the function creates an object (allocates), pass it as ``std::unique_ptr<T>&``
     - If the function simply changes an object, pass is as ``T&``
@@ -56,13 +57,13 @@ Exceptions:
 
 Logging:
 
-  - Do not use printfs
-  - Use the logging functions from ``logging.h``
-  - For debug logs, use ``mio::log_debug(msg)``
+  - Do not use printfs.
+  - Use the logging functions from ``logging.h``.
+  - For debug logs, use ``mio::log_debug(msg)``.
 
 Includes:
 
-  - Please use include guards with capitalized name of the header file (``test.h -> #ifndefine TEST_H``)
+  - Please use include guards with capitalized name of the header file (``test.h -> #ifndefine TEST_H``).
   - Sort includes according to
 
      1. own header
@@ -194,7 +195,7 @@ These settings are set in the file ``.clang-format`` in the root directory of th
 
 **Using clang-format with either Qt, Visual Studio Code, or VSCodium**
 
-The Beautifier plugin shipped with QtCreator supports clang-format (help could also be provided by https://www.vikingsoftware.com/using-clang-format-with-qtcreator/ ), so you will be able to automatically format your code. For Visual Studio Code, install the Clang-format extension and add the lines:
+The Beautifier plugin shipped with QtCreator supports clang-format (help could also be provided by https://www.vikingsoftware.com/using-clang-format-with-qtcreator/), so you will be able to automatically format your code. For Visual Studio Code, install the Clang-format extension and add the lines:
 
 .. code:: 
 
@@ -219,7 +220,7 @@ might appear. In that case, update ``clang-format`` or install a newer version (
 Python coding guidelines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Please follow the `PEP 8 -- Style Guide for Python. <https://www.python.org/dev/peps/pep-0008/>`_
+Please follow the `PEP 8 -- Style Guide for Python. <https://www.python.org/dev/peps/pep-0008/>`_.
 
 
 **Note on maximum line length**
@@ -235,7 +236,7 @@ to your corresponding ``settings.json``.
 
 **Docstrings**
 
-Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html . 
+Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html. 
 
 Figure colors and settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,15 +246,15 @@ In order to ensure that figures in the documentation and in the code have a cons
 **Default color scheme**
 
 - For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`_ library. 
-- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#set1>`_ colormap.
+- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#Qualitative>`_ colormap.
 
 **Colorblind-friendly alternatives**
 
 For better accessibility and when creating figures with many categories, consider using colorblind-friendly alternatives:
 
-- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#tab10>`_ colormap for up to 10 distinct categories
-- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html#viridis>`_, `plasma`, or `cividis` colormaps
-- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html#rdbu>`_ or `RdYlBu` colormaps
+- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ colormap for up to 10 distinct categories
+- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_, `plasma`, or `cividis` colormaps
+- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ or `RdYlBu` colormaps
 - Avoid using red-green color combinations without additional visual cues (patterns, shapes, etc.)
 
 **General figure guidelines**
@@ -295,7 +296,7 @@ The software development process is inspired by `Scrum <https://en.wikipedia.org
 - A sprint is a temporally limited cycle of a fixed time, in our case **three** weeks.
 - The scope of work will be defined in a sprint meeting where work is related to issues.
 - MEmilio-related issues are categorized in three different classes: agent-based modeling, equation-based modeling and MEmilio: data, tools and more. If a clear categorization is not possible, issues may be assigned to more than one class.
-- Sprints are organized via the new GitHub Project boards: https://github.com/DLR-SC/memilio/projects
+- Sprints are organized via the new GitHub Project boards: https://github.com/DLR-SC/memilio/projects.
 
 **Procedure**
 
@@ -351,7 +352,7 @@ Documentation
 The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
 slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
 This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
-a pull request is merged into the main branch. Thus, we recommend building the documentation locally to test changes.
+a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
 
 
 Please make sure to have a working python environment with a python version that is compatible with 
@@ -367,15 +368,12 @@ First generate the doxygen output by running
 
 
 In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
-build times while testing we recommend to only use e.g. ``../cpp/models/abm``. PLEASE don't commit this change!
+build times while testing we recommend to only use e.g. ``../cpp/models/abm``. **Don't commit this change!**
 
 Then sphinx can be used to build the documentation:
 
 .. code-block:: bash
 
-    cd docs
-    make html # sphinx-build source html
+    make html # alternatively: sphinx-build source html
 
 The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).
-
-For the documentation, please keep in mind that it is written in reStructuredText (RST) and uses a slightly different syntax than Markdown. A documentation can be found at `<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
