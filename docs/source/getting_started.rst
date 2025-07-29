@@ -213,8 +213,8 @@ Visualizations
 
 For visualizations, we provide our :doc:`python package MEmilio-plot <python/memilio_plot>`. Apart from that, we have 
 collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`_. 
-For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`.
+For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`_.
 
 Further questions
 ~~~~~~~~~~~~~~~~~~~~~
-If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `e-mail <mailto:Martin.Kuehn@DLR.de>` or open an issue or discusion on `github <https://github.com/SciCompMod/memilio/>`
+If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discusion on `github <https://github.com/SciCompMod/memilio/>`_.
