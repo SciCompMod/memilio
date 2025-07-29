@@ -15,7 +15,7 @@ Define infectious disease model
 --------------------------------
 
 Following is a comparison of the model initialization between
-Python and C++ to better understand the differences between both interfaces.
+Python and C++ to better understand the differences of both interfaces.
 
 .. grid:: 1 1 2 2
 
@@ -63,14 +63,14 @@ with a single age group defined by num_groups the parameter definitions follow a
    # Compartment transition propabilities
    model.parameters.TransmissionProbabilityOnContact[A0] = 1.
 
-AgeGroup(0) defines the first age group. For a model with more than one age group,
-we could index the other groups with AgeGroup(1), AgeGroup(2), ....
+``AgeGroup(0)`` defines the first age group. For a model with more than one age group,
+we could index the other groups with ``AgeGroup(1)``, ``AgeGroup(2)``, ....
 
 Initial conditions
 -------------------
 
 We also need to define the inital states of the population. They are not only divided through an age group,
-but also an infection state, such that an additional index of the enum InfectionState has to be provided.
+but also an infection state, such that an additional index of the enum ``InfectionState`` has to be provided.
 
 .. code-block:: python
 
@@ -82,30 +82,42 @@ but also an infection state, such that an additional index of the enum Infection
    model.populations.set_difference_from_total(
       (A0, oseir.InfectionState.Susceptible), total_population)
 
-The function model.populations.set_difference_from_total hepls by setting the last compartment with
+The function ``model.populations.set_difference_from_total()`` helps by setting the last compartment with
 a total population size of the scenario and will take the difference to the combined other compartments
 of the age group.
 
 Nonpharmaceutical interventions
 -------------------------------
 
+One important topic of interest in infectious disease are nonpharmaceutical interventions, which aim to reduce the spread of the disease.
+The model supports to define base contact patters for the mean daily contacts between different age groups. When using multiple contact patterns they get 
+accumulated to get overall daily contacts. 
 
 .. code-block:: python
 
-   integrator = mio.RKIntegratorCore(dt_max=1)
-   result = oseir.simulate(0, days, dt, model, integrator)
+   model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones(
+        (num_groups, num_groups))
+   model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
+        (num_groups, num_groups))
+
+Then, dampings can be added to (partially) reduce the contacts defined by a ``ContactMatrix`` beginning at a time step ``t``. 
+
+.. code-block:: python
+
+   model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+        Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
 Simulation
 ----------
 
-Now we could simulate the infectious diesease dynamic by calling simulate:
+Now, the infectious diesease dynamic can be simulated by calling ``simulate()``:
 
 .. code-block:: python
 
-   result = oseir.simulate(0, t_max, dt, model)
+   result = oseir.simulate(t0=0, tmax=60, dt=1, model)
 
 Similar to the MEmilio C++ library, the Python interface provides the option of adjusting the solver.
-Currently available:
+Currently available are:
 
 * Euler
 * RungeKuttaCashKarp54 (default)
@@ -116,7 +128,7 @@ The integrator can be changed as the last parameter of the simulate function.
 .. code-block:: python
 
    integrator = mio.RKIntegratorCore(dt_max=1)
-   result = oseir.simulate(0, days, dt, model, integrator)
+   result = oseir.simulate(0, tmax=60, dt=1, model, integrator)
 
 Output and visualization
 -------------------------

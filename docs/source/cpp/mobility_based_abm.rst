@@ -14,15 +14,15 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Structure
 ~~~~~~~~~
 
-The model is implemented in multiple classes. Source and header fiels are located in the `/cpp/models/abm/ <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/>` directory. While many files contain supporting implementation or additional features, it is important to understand the main workflow and core classes.
+The model is implemented in multiple classes. Source and header files are located in the `/cpp/models/abm/ <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/>` directory. While many files contain supporting implementation or additional features, it is important to understand the main workflow and core classes.
 The core classes and their locations are:
 
 - ``Simulation`` (`simulation.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`): Runs the simulation and stores results. The model is evolved in discrete time steps of the same size which can be chosen by the user.
 - ``Model`` (`model.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/model.h>`): Collection of all persons, locations and used parameters. Is initialized with the number of age groups that are considered. It also holds information about the testing strategy of the simulation and holds the rules for the mobility phase.
 - ``Model Functions`` (`model_functions.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/model_functions.h>`): A collection of model functions that mostly cover interaction of agents at locations. These functions are called in the model evolve function.
 - ``Parameters`` (`parameters.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/parameters.h>`): Collection of all parameters used in the model.
-- ``Location`` (`location.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location.h>`): Represents places in the model where people meet and interact, e.g. home, school, work, social event sites. Along their type, locations contain an ID and a geographical location (longitude and latitude). A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and can be set per location. Manditory masks can be activated to simulate a mask obligation intervention.
-- ``Person`` (`person.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/person.h>`): Represents an agent of the model. A person has an ID, is associated with an age group and has and a list with their assigned locations (i.e. the locations they can visit during the simulation). Every person has lists with past and current infections as well as vaccinations. Further, more information on the personal behavior and test results is available.
+- ``Location`` (`location.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location.h>`): Represents places in the model where people meet and interact, e.g. home, school, work, social event sites. Along their type, locations contain an ID and a geographical location (longitude and latitude). A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and can be set per location. Mandatory masks can be activated to simulate a mask obligation intervention.
+- ``Person`` (`person.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/person.h>`): Represents an agent of the model. A person has an ID, is associated with an age group and has a list with their assigned locations (i.e. the locations they can visit during the simulation). Every person has lists with past and current infections as well as vaccinations. Further, more information on the personal behavior and test results is available.
 - ``Infection`` (`infection.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection.h>`): Collection of all information about a person’s infection, i.e. infectiousness, infection course and symptoms, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model and is explained in detail below.
 
 
@@ -43,10 +43,10 @@ The ABM implements a detailed disease progression model that captures the full c
    * **Dead**: Deceased due to infection
 
 Stochastic Transitions:
-   Agents traverse the infection states from Susceptible to Recovered or Dead. Recovery is possible from every Infected State (NoSymptoms, Symptoms, Severe, Critical) and Dead is possible from InfetedSevere and InfectedCritical.
+   Agents traverse the infection states from Susceptible to Recovered or Dead. Recovery is possible from every Infected State (NoSymptoms, Symptoms, Severe, Critical) and Dead is possible from InfectedSevere and InfectedCritical.
    Right now, agents that have recovered from an infection cannot be infected again. This is supposed to change in the future, allowing for reinfections.
    Progression between states is stochastic, with age-dependent probabilities. The duration in each state is drawn from distributions.
-   Note that vaccination is not implemented through infection states, but seperately and has an impact on the disease transmission and progression (compare with 4. **Dependencies** below).
+   Note that vaccination is not implemented through infection states, but separately and has an impact on the disease transmission and progression (compare with 4. **Dependencies** below).
 
 2. **Viral Load Dynamics**: The model implements realistic viral load curves based on scientific data. The logarithmic viral load is modeled as a function of time since infection, with three phases:
 
@@ -71,7 +71,7 @@ Stochastic Transitions:
      * Duration of infectious period
      * Probability of being infected (again)
 
-4. **Disease spread**: During interactions, agents can infected each other. The viral shed is used in combination with further personal information and contact details to feed into a stochastic process that determines if the virus is transmitted and a new agent becomes infected. The chosen time step of the model has no impact on the expected amount of transmissions per time.
+4. **Disease spread**: During interactions, agents can infect each other. The viral shed is used in combination with further personal information and contact details to feed into a stochastic process that determines if the virus is transmitted and a new agent becomes infected. The chosen time step of the model has no impact on the expected amount of transmissions per time.
 
 For details on the mathematical modeling of viral shed and disease spread, we refer to 
 - Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
@@ -134,7 +134,7 @@ Mobility phase
 
 During the mobility phase, each person may change their location.
 
-The availabe location types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>` are:
+The available location types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>` are:
 
    * **Home**: Home location of a person
    * **School**: School location for children
@@ -145,9 +145,9 @@ The availabe location types defined in `location_type.h <https://github.com/SciC
    * **ICU**: Intensive Care Unit for critical patients
    * **Cemetery**: Exists once per model and is used as a final resting place for deceased persons
 
-A few more types are availabe, but these are currently not used in the model.
+A few more types are available, but these are currently not used in the model.
 
-The odel supports two ways of mobility:
+The model supports two ways of mobility:
 `Mobility rules <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.cpp>`_, considering the current location, time of day, and properties of the person (e.g. age).
 The mobility rules use the assigned locations of the persons. Some location changes are deterministic and regular (e.g. going to work), while others are random (e.g. going shopping or to a
 social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
@@ -160,7 +160,7 @@ You can restrict some mobility rules by allowing only a proportion of people to 
    * Going to the cemetery when deceased
    * Returning home when recovered
 
-   More severe cases of infection take precedence over less severe cases, meaning for example that a critically person goes to the ICU, and does not stay in quarantine at home.
+   More severe cases of infection take precedence over less severe cases, meaning for example that a critically infected person goes to the ICU, and does not stay in quarantine at home.
 
 2. **Optional mobility**: This mobility is not based on the infection state of the person. For example, a person can go to a social event or a shop.
 While the first category is mandatory, the second category is optional and can be restricted by the user. This allows for modeling different scenarios, such as lockdowns or social distancing measures, or the exclusive usage of trips.
@@ -168,7 +168,7 @@ The optional mobility rules consist of:
    * Going to work at work hours
    * Going to school at school hours
    * Going to a social event in the evening or on weekends
-   * Going to a shop randomly druing the day (except Sunday)
+   * Going to a shop randomly during the day (except Sunday)
 
 Another way of mobility is using trips. A trip consists of the ID of the person that performs this trip, a time point when this trip is performed, and the destination.
 At the beginning of the simulation, a list with all trips is initialized and followed during the simulation. The agents do the same trips every day. As before, agents that are
