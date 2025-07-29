@@ -4,7 +4,7 @@ ODE model creation
 The mathematical model
 ----------------------
 
-Before implementing a model in MEmilio, we need to do a some math, in particular, define an initial value problem
+Before implementing a model in MEmilio, we need to do some math, in particular, define an initial value problem
 given by a system of ordinary differential equations. For example, we consider a SIRD model given by
 
 .. math::  

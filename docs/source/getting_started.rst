@@ -18,7 +18,7 @@ The MEmilio framework is written in two languages: C++ and Python.
 
 - The C++ backend contains efficient and optimized model implementations that further use parallelization to speed up execution and reduce waiting times.
 - Python is used for data acquisition, plotting, and machine-learning models.
-- We, furthermore, provide Python interfaces to selected models (implemented in C++) to allow the use and study of advanced models by users less experience in programming or computer science.
+- We, furthermore, provide Python interfaces to selected models (implemented in C++) to allow the use and study of advanced models by users with less experience in programming or computer science.
 
 For more details on using models implemented in C++ directly, see the sections on :doc:`model usage <cpp/model_usage>`.
 For more details on implementing new infection dynamics models that could then be combined with, e.g., our mobility patterns, see :doc:`model creation <cpp/model_creation>`.
