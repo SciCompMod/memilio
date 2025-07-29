@@ -81,6 +81,31 @@ The ABM implements a detailed disease progression model that captures the full c
    * Protection status (prior immunity)
    * Random factors (individual variation)
 
+Data collection
+~~~~~~~~~~~~~~~~~~
+
+The ABM simulation can collect data through the ``History`` object, which allows for flexible data logging. This is particularly 
+useful for analyzing results after the simulation has completed. There are multiple types of data that can be collected:
+
+1. **Time Series Data**: Track how infection states change over time
+   
+2. **Location-specific Data**: Monitor occupancy or infection rates at specific locations
+
+3. **Person-specific Data**: Follow individual movement patterns or infection trajectories
+
+The examples demonstrate two approaches:
+
+.. code-block:: cpp
+
+   // Basic time series tracking of infection states
+   mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
+       Eigen::Index(mio::abm::InfectionState::Count)};
+   
+   // More complex logging with multiple data types
+   mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
+   
+   // Run simulation with history object
+   sim.advance(tmax, history);
 
 Interventions
 ~~~~~~~~~~~~~~~~~~
@@ -145,22 +170,12 @@ With this number we create an empty model:
 
    auto model = mio::abm::Model(num_age_groups);
 
-The model parameters can be set for the whole model or for specific locations. For example, we can set the
-maximum number of contacts at a location: 
-Here is an example where we set the duration of the incubation period to 4 days:
+We can set several general parameters, which you can find `here <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/parameters.h>`_. Here is an example where we set the
+duration of the incubation period to 4 days:
 
 .. code-block:: cpp
 
    model.parameters.get<mio::abm::IncubationPeriod>() = 4.;
-
-We can also set the contact rates for specific age groups at a location:
-.. code-block:: cpp
-
-   model.get_location(work)
-       .get_infection_parameters()
-       .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
-
-For a full list of parameters, see the `here <https://memilio.readthedocs.io/en/latest/api/file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_models_abm_parameters.h.html>`_
 
 Locations and persons
 ~~~~~~~~~~~~~~~~~~~~~
@@ -274,7 +289,7 @@ Finally, we run the simulation:
    sim.advance(tmax);
 
 Alternatively, if we want to track things in the simulation, we need to set up a
-`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step into a Timeseries.
+`history <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/README.md#the-history-object>`_, for example, to track all the Infection states of each simulation step.
 
 .. code-block:: cpp
 
