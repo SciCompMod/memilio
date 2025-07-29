@@ -303,4 +303,9 @@ To index into the ``flows`` vector we use the function ``get_flat_flow_index``, 
 compartments as template arguments, in that order. Indexes from further stratification (like ``mio::AgeGroup``) can be
 passed as an optional function argument.
 
+Note that ``FlowModel`` defines a ``get_derivatives`` function for you, that allows the ``Model`` class to be used as a
+regular ``CompartmentalModel``. It uses ``Flows`` and ``get_flows`` internally to assemble the derivatives. There is
+also an overload ``get_derivatives(flows, dydt)`` that directly computes the derivatives ``dydt`` from a given vector
+``flows`` without calling ``get_flows``.
+
 To use this model, head :doc:`here<cpp/ode>`.
