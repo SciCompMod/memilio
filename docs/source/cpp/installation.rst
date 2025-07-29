@@ -159,7 +159,7 @@ Additional options can be specified by appending one or more ``-D<OPTION>=<VALUE
     * - ``MEMILIO_ENABLE_LIKWID_MARKER``
       - Compile MEmilio with likwid markers. ON or OFF, default OFF.
 
-Other important options may need:
+Other important options you may need:
 
 .. list-table::
     :header-rows: 1
@@ -175,7 +175,7 @@ Other important options may need:
     * - ``sbml_DIR``
       - If you have the SBML library installed, but it is not found by CMake, you may have to set this option to the directory in your installation that contains the ``sbml-config.cmake`` file.
 
-.. note::
+.. tip::
 
     **Example**: You can disable unit tests and enable building benchmarks using 
    
@@ -209,16 +209,16 @@ Integration into other projects
 
 Using CMake, integration is simple. 
 
-If you installed the project, there is a `memilio-config.cmake` file included with your installation. This config file will tell CMake which libraries and directories have to be included. Look up the config using the command `find_package(memilio)` in your own `CMakeLists.txt`. On Linux, the file should be found automatically if you installed in the normal GNU directories. Otherwise, or if you are working on Windows, you have to specify the `memilio_DIR` variable when running CMake to point it to the `memilio-config.cmake` file. Add the main framework as a dependency with the command `target_link_libraries(<your target> PRIVATE memilio::memilio)`. Other targets that are exported are `memilio::secir`, `memilio::seir`, and `memilio::abm`. This will set all required include directories and libraries, even transitive ones.
+If you installed the project, there is a `memilio-config.cmake` file included with your installation. This config file will tell CMake which libraries and directories have to be included. Look up the config using the command `find_package(memilio)` in your own `CMakeLists.txt`. On Linux, the file should be found automatically if you installed it in the normal GNU directories. Otherwise, or if you are working on Windows, you have to specify the `memilio_DIR` variable when running CMake to point it to the `memilio-config.cmake` file. Add the main framework as a dependency with the command `target_link_libraries(<your target> PRIVATE memilio::memilio)`. Other targets that are exported are `memilio::secir`, `memilio::seir`, and `memilio::abm`. This will set all required include directories and libraries, even transitive ones.
 
 Alternatively, `MEmilio` can be integrated as a subdirectory of your project with `add_subdirectory(memilio/cpp)`, then you can use the same `target_link_libraries` command as above.
 
 Installation
 ~~~~~~~~~~~~
 
-.. note::
+.. warning::
     
-    **Warning**: Installing currently is not tested and probably does not work as expected or at all. If you want to
+    Installing currently is not tested and probably does not work as expected or at all. If you want to
     integrate the project into yours, use the `add_subdirectory` way.
 
 After having built MEmilio C++ as described above, you can install it to the location given in the
@@ -228,7 +228,7 @@ After having built MEmilio C++ as described above, you can install it to the loc
 
     cmake --install cpp/build
 
-This will install the libraries, headers, and executables that were built, i.e. where `MEMILIO_BUILD_<PART>=ON`.
+This will install the libraries, headers, and executables that were built, i.e. where ``MEMILIO_BUILD_<PART>=ON``.
 
 Known issues
 ^^^^^^^^^^^^
