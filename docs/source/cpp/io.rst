@@ -1,6 +1,8 @@
 Input/Output functionalities
 ============================
 
+MEmilio provides a set of input/output (IO) functionalities to read and write data from and to files in different formats. IO functionality has been harmonized as much as possible across different models but due to the inherent differences between models, IO functionality is to some extent model-specific; for details see the descriptions below and the respective model (group) documentations.
+
 Aggregated output
 -----------------
 
