@@ -14,7 +14,7 @@ layers or abstract models to many different applications. With this, novel appli
 benefitting from prior set-ups and scenarios, eventually realizing swift reaction to novel threats by emerging pathogens.
  
 The question can hopefully be explained best from the end-user perspective. A particular example as implemented or used by
-an end-user and , e.g., returning concrete numbers of new infections on different simulation days is a *particular* model
+an end-user and, e.g., returning concrete numbers of new infections on different simulation days is a *particular* model
 *realization* of a *templated* model such as ODE-SEIR in the C++ model folder. This templated model does not yet define 
 the stratification into a precise number of age groups. Furthermore, while it provides default values for parameters, the
 model realization should be parametrized for the particular use case as the templated model is considered to be generic

@@ -27,7 +27,7 @@ This document describes utilities for reading and writing data from and to files
 
 There also exist other IO modules that are implemented for specific models.
 
-- We have HDF5 support classes for C++, e.g. for reading of mobility matrix files in the graph-based metapopulation model, see :doc:`<graph_metapop>`.
+- We have HDF5 support classes for C++, e.g. for reading of mobility matrix files in the graph-based metapopulation model, see :doc:`graph_metapop`.
 
 .. _command line:
 
@@ -209,7 +209,7 @@ Main functions and types
 
 - **Functions serialize and deserialize**:
   Main entry points to the framework to write and read values, respectively. The functions expect an `IOContext`
-  (see :ref:`Concepts`<concepts> below) that stores the serialized data. (De-)serialization can be customized by providing a
+  (see :ref:`Concepts<concepts>` below) that stores the serialized data. (De-)serialization can be customized by providing a
   (de-)serialize_internal overload or a (de-)serialize member function for the type. See the section 
   :ref:`Adding a new data type to be serialized<adding new serialization>` or the documentation for ``serialize`` and ``deserialize``.
 - **IOStatus and IOResult**:
