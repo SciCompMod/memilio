@@ -25,11 +25,13 @@ dl.class > dt:first-of-type {
 .rst-content dl .sig {
   width: -webkit-fill-available;
 }
+
 .rst-content .viewcode-link {
   display: inline-flex;
   float: inline-end;
   margin-right: 1.5em;
 }
+
 .rst-content .headerlink {
   position: absolute;
   right: 0.5em;
@@ -38,4 +40,49 @@ dl.class > dt:first-of-type {
 .wy-table-responsive table td,
 .wy-table-responsive table th {
   white-space: normal;
+}
+
+/* Team page styles */
+.developer-photo {
+  border-radius: 8px;
+  margin-right: 20px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Clear floats after each developer section */
+.section h3 {
+  clear: both;
+}
+
+/* Add some spacing between developer sections */
+.section>.section {
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e4e5;
+}
+
+/* Style the links section */
+.section ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.section ul li {
+  margin-bottom: 5px;
+}
+
+.section ul li a {
+  color: #2980b9;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.section ul li a:hover {
+  text-decoration: underline;
+}
+
+.section p {
+  text-align: justify;
+  line-height: 1.6;
 }
