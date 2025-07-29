@@ -70,7 +70,7 @@ Contact rates can be adjusted during the simulation to model nonpharmaceutical i
 Simulation
 ----------
 
-Once the model is setup, one can run a simple simulation from time ``t0`` to ``tmax`` with initial step size ``dt`` using the ``mio::simulation()`` function. This will run a simulation of type **Simulation** that saves the sizes of each subcompartment over time. 
+Once the model is setup, one can run a simple simulation from time ``t0`` to ``tmax`` with initial step size ``dt`` using the ``mio::simulate()`` function. This will run a simulation of type **Simulation** that saves the sizes of each subcompartment over time. 
 You can run a simulation using either fixed or adaptive integration schemes with an absolute or relative tolerance. By default, the simulation uses an adaptive solution scheme of the boost library with an absolute tolerance of 1e-10 and a relative tolerance of 1e-5. For more details on the possible integration schemes, see <numerical integrator stuff>.
 
 

@@ -104,7 +104,7 @@ Simulation
 ----------
 
 Once the model is set up, one can run a simple simulation from time ``t0`` to ``tmax`` with an initial step size ``dt`` using the 
-``mio::simulation()`` function. This will run a simulation of type **Simulation** that saves the sizes of each compartment over time. 
+``mio::simulate()`` function. This will run a simulation of type **Simulation** that saves the sizes of each compartment over time. 
 To also save the flow information, make sure to use a **FlowModel** and run a simulation of type **FlowSimulation** with the ``mio::simulate_flows()`` function.
 You can run a simulation using either fixed or adaptive integration schemes with an absolute or relative tolerance. By 
 default, the simulation uses an adaptive integration scheme of the boost library with an absolute tolerance of 1e-10 and a 
