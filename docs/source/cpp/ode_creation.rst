@@ -5,7 +5,7 @@ The mathematical model
 ----------------------
 
 Before implementing a model in MEmilio, we need to do a some math, in particular, define an initial value problem
-given by a system of ordinary differential equations. For example we consider a SIRD model given by
+given by a system of ordinary differential equations. For example, we consider a SIRD model given by
 
 .. math::  
 
@@ -21,11 +21,11 @@ and some initial values for :math:`t=0`. Here :math:`N_{\perp D} := S(t) + I(t) 
 This type of model is called compartmental model, because the model population is represented by discrete infection
 states **S**\usceptible, **I**\nfectious, **R**\ecovered, **D**\eceased, also called compartments.
 
-How to define an ODE model
---------------------------
+How to implement an ODE model
+-----------------------------
 
 To define an ODE model in MEmilio, there are two options. You can define a CompartmentalModel or a FlowModel, which
-use different methods to define the right hand side of the mathematical model above. Both classes need definitions for
+use different methods to define the right-hand side of the mathematical model above. Both classes need definitions for
 the infection states, population and parameters it uses. The FlowModel additionally requires a list of flows.
 
 We start by creating a new directory for our model under "cpp/models", in this case we can call it "ode_sird". The name
@@ -135,13 +135,13 @@ example being adding :code:`mio::AgeGroups` to the template.
 
 .. dropdown:: :fa:`gears` Expert's settings
 
-    The type ``mio::AgeGroup`` is a typesafe ``size_t``, meaning an integer that cannot be confused with other integer
+    The type ``mio::AgeGroup`` is a type-safe ``size_t``, meaning an integer that cannot be confused with other integer
     types. So assignment, addition, etc. only works with another ``mio::AgeGroup``, not ``size_t`` or another integer
     type. This is useful for function interfaces or indexing, as it makes it (nearly) impossible to mix up, e.g., age
     groups with infection states. Check out ``mio::Index`` if you want to learn more.
 
     The type ``mio::Populations`` is an extension of a ``mio::CustomIndexArray``, which is a template type that manages
-    a flat array. Its main purpose is to allow multidimensional indexing into this array, using typesafe indices like
+    a flat array. Its main purpose is to allow multidimensional indexing into this array, using type-safe indices like
     a ``mio::Index`` or a ``enum class``.
 
     The definition of our ``Population`` then changes to
@@ -162,8 +162,8 @@ example being adding :code:`mio::AgeGroups` to the template.
     where we use ``populations.get_flat_index`` to get the correct index in the flat state and derivative vectors.
     You may also want to change the Parameters to use age groups, check out the available ODE models as reference. 
 
-Define a compartmental model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Define a compartmental model class
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now we can define the model:
 
@@ -201,9 +201,9 @@ Now we can define the model:
 Here, create a new class ``Model`` that inherits from ``mio::CompartmentalModel``, which predefines some functions (like
 ``check_constraints``) and members (like ``populations`` and ``parameters``) for us. In the class body, we first add
 a few ``using`` statements, that create shorthands for our base class and its types. Next, we define a constructor, that
-creates populations and parameters with their default values, so they can be set later. Finally, we define the the right
-hand side of the model equations through ``get_derivatives``. Importantly, note that the value in ``populations`` is
-only used as initial value for the IVP, the current state of the model at time ``t`` is given by ``y`` instead. The
+creates populations and parameters with their default values, so they can be set later. Finally, we define the
+right-hand side of the model equations through ``get_derivatives``. Importantly, note that the value in ``populations``
+is only used as initial value for the IVP, the current state of the model at time ``t`` is given by ``y`` instead. The
 derivative of ``y`` at ``t`` is to be stored in ``dydt``.
 
 Note that the argument ``pop`` is used once instead of ``y``. As a general rule, use ``y`` when the index matches with
@@ -213,11 +213,11 @@ Essentially, ``pop`` is the population that is interacted with, while ``y`` is t
 models use this to model the exchange between multiple models, e.g. by setting ``pop = y ± commuters``. Outside of graph
 models both ``y`` and ``pop`` will have the same value.
 
-Check out the page on the usage of :doc:`ODE-based models<cpp/ode>`.
+Continue :doc:`here<cpp/ode>` to learn how to use this model, or read on if you want to use a flow based ODE model.
 
 
-Define a flow model
-^^^^^^^^^^^^^^^^^^^
+Implement the ODE model using flows
+-----------------------------------
 
 A flow model is a special case of a compartmental model, where the derivative of each compartment over time
 :math:`Z_i'(t)` can be written as
@@ -263,8 +263,8 @@ Infection states, Parameters and Population
 
 Since a Flow model is just a special case of a compartmental model, all of these are defined exactly as described above.
 
-Define the model
-~~~~~~~~~~~~~~~~
+Define a flow model class
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 With the flows and classes also used by the CompartmentalModel, we can define a FlowModel as such: 
 
@@ -294,7 +294,7 @@ With the flows and classes also used by the CompartmentalModel, we can define a 
         }
     };
 
-This is mostly analoguous to the definition of a compartmental model, with a few important differences. First, we now
+This is mostly analogous to the definition of a compartmental model, with a few important differences. First, we now
 inherit from ``FlowModel``, which gets the ``Flows`` as an additional template argument. The ``Base`` alias changes
 accordingly. Secondly, the function we implement is called ``get_flows`` and computes the derivative of y in terms of
 its flows.
@@ -302,3 +302,5 @@ its flows.
 To index into the ``flows`` vector we use the function ``get_flat_flow_index``, which takes the source and target
 compartments as template arguments, in that order. Indexes from further stratification (like ``mio::AgeGroup``) can be
 passed as an optional function argument.
+
+To use this model, head :doc:`here<cpp/ode>`.
