@@ -161,8 +161,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
                       const mio::abm::TestParameters&, double>(),
              py::arg("testing_criteria"), py::arg("testing_validity_period"), py::arg("start_date"),
-             py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
-        .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
+             py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"));
 
     pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
         .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("type"), py::arg("time"))
@@ -170,7 +169,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
-        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
+        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&,
+                      const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
 
     pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)

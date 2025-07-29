@@ -111,20 +111,9 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         return mio::abm::TestingCriteria(random_ages, random_states);
     };
 
-    model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::School,
-        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-    model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::Work,
-        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-    model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::Home,
-        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
-    model.get_testing_strategy().add_testing_scheme(
-        mio::abm::LocationType::SocialEvent,
+    model.get_testing_strategy().add_scheme(
+        {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+         mio::abm::LocationType::Home},
         mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
                                 mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
