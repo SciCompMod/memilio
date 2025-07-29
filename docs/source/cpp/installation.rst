@@ -6,8 +6,8 @@ installing MEmilio C++, make sure a C++20 compiler, CMake and a build tool (like
 device. The following guide will make use of the command line, but you can use graphical build tools from an IDE as
 well.
 
-Quickstart
-^^^^^^^^^^
+Quick start
+-----------
 
 These are minimal build instructions. More detailed steps and explanations are given below.
 
@@ -27,7 +27,7 @@ After the build process is done, you can run files from "cpp/build/bin", for exa
 This will run several tests and should write out ``[  PASSED  ]`` in the end.
 
 Requirements
-^^^^^^^^^^^^
+------------
 MEmilio C++ is regularly tested with the following compilers (list will be extended over time):
 
 - GCC, versions 11 and 13
@@ -90,7 +90,10 @@ instead. Version compatibility needs to be ensured by the user, the version we c
 See the `thirdparty directory <https://github.com/SciCompMod/memilio/blob/main/cpp/thirdparty/README.md>`_ for more details.
 
 Step-by-step instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
+
+Download
+~~~~~~~~
 
 Start by downloading the newest version (or a specific release) of MEmilio from our
 `github repository <https://github.com/SciCompMod/memilio>`_ to a directory of your choice, or clone it directly using
@@ -114,7 +117,10 @@ This will create a new directory called "memilio". Change into this directory.
 .. code:: bash
 
     cd memilio
-    
+
+Configuration
+~~~~~~~~~~~~~
+
 Before we can *build* anything, we need to *configure* the project first. If you want to use its default options,
 simply run
 
@@ -183,6 +189,9 @@ Other important options you may need:
     
         cmake -S cpp -B cpp/build -DMEMILIO_BUILD_TESTS=OFF -DMEMILIO_BUILD_BENCHMARKS=ON
 
+Building
+~~~~~~~~
+
 Finally, you can *build* the project by running
 
 .. code:: bash
@@ -209,9 +218,9 @@ Integration into other projects
 
 Using CMake, integration is simple. 
 
-If you installed the project, there is a `memilio-config.cmake` file included with your installation. This config file will tell CMake which libraries and directories have to be included. Look up the config using the command `find_package(memilio)` in your own `CMakeLists.txt`. On Linux, the file should be found automatically if you installed it in the normal GNU directories. Otherwise, or if you are working on Windows, you have to specify the `memilio_DIR` variable when running CMake to point it to the `memilio-config.cmake` file. Add the main framework as a dependency with the command `target_link_libraries(<your target> PRIVATE memilio::memilio)`. Other targets that are exported are `memilio::secir`, `memilio::seir`, and `memilio::abm`. This will set all required include directories and libraries, even transitive ones.
+If you installed the project, there is a `memilio-config.cmake` file included with your installation. This config file will tell CMake which libraries and directories have to be included. Look up the config using the command ``find_package(memilio)`` in your own `CMakeLists.txt`. On Linux, the file should be found automatically if you installed it in the normal GNU directories. Otherwise, or if you are working on Windows, you have to specify the ``memilio_DIR`` variable when running CMake to point it to the `memilio-config.cmake` file. Add the main framework as a dependency with the command ``target_link_libraries(<your target> PRIVATE memilio::memilio)``. Other targets that are exported are ``memilio::secir``, ``memilio::seir``, and ``memilio::abm``. This will set all required include directories and libraries, even transitive ones.
 
-Alternatively, `MEmilio` can be integrated as a subdirectory of your project with `add_subdirectory(memilio/cpp)`, then you can use the same `target_link_libraries` command as above.
+Alternatively, MEmilio can be integrated as a subdirectory of your project with ``add_subdirectory(memilio/cpp)``, then you can use the same ``target_link_libraries`` command as above.
 
 Installation
 ~~~~~~~~~~~~
@@ -231,7 +240,7 @@ After having built MEmilio C++ as described above, you can install it to the loc
 This will install the libraries, headers, and executables that were built, i.e. where ``MEMILIO_BUILD_<PART>=ON``.
 
 Known issues
-^^^^^^^^^^^^
+------------
 
 - Installing currently is not tested and probably does not work as expected or at all. If you want to integrate the project into yours, use the `add_subdirectory` way.
 - On Windows, automatic detection of HDF5 installations does not work reliably. If you get HDF5 related errors during the build, you may have to supply the HDF5_DIR variable during CMake configuration, see above.
