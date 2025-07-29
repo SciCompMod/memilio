@@ -13,7 +13,7 @@ We assume that our stochastic models are a system of initial value problems of t
 where :math:`Z_t \in \mathcal{R}^n` and initial values :math:`Z_0 = z_0 \in \mathcal{R}^n`. The function
 :math:`a : \mathcal{R}^n \times \mathcal{R} \rightarrow \mathcal{R}^n` is called drift coefficient,
 :math:`b : \mathcal{R}^n \times \mathcal{R} \rightarrow \mathcal{R}^{n \times m}` is called diffusion coefficient or
-noise term for some :math:`m`, e.g. the number of flows. Both functions are deterministic, the stochasticity comes from
+noise term for some :math:`m`, e.g., the number of flows. Both functions are deterministic, the stochasticity comes from
 the (formal) derivative of the Brownian motion :math:`\mathrm{d}W_t` in :math:`\mathcal{R}^m`.
 
 
@@ -29,7 +29,7 @@ system
 How to define an SDE model
 --------------------------
 
-In short, to define an SDE model in MEmilio, you have to implement a ``StochasticModel``, e.g. by inheriting from it.
+In short, to define an SDE model in MEmilio, you have to implement a ``StochasticModel``, e.g., by inheriting from it.
 To that end, we first need to define types that list all ``InfectionState``\s, ``Parameter``\s and initial conditions
 via a ``Population``. Refer to the :doc:`ODE model creation <ode_creation>` page for more details on these types.
 
@@ -107,7 +107,7 @@ compartments. For more details on how to implement the ``get_derivatives`` or ``
 .. dropdown:: :fa:`gears` Expert's knowledge
 
     The SDE models must work on compartments (rather than flows) due to the stochasticity being able to cause negative
-    compartment values during integration, which usually make no sense in infectious disease models, so we use a
+    compartment values during integration, which usually makes no sense in infectious disease models, so we use a
     mitigation against these negative values (see the function ``mio::map_to_nonnegative``). However, such a mitigation
     can only be applied to compartments, and, in general, propagation of changes on compartments back to flows is not
     possible.
@@ -126,7 +126,7 @@ You may want to use a ``FlowModel`` if your noise depends on the current flow va
 :math:`b` may map each flow's noise contribution to its source and/or target compartment. In that case, the size of the
 white noise vector :math:`m` is equal to the number of flows.
 
-An example for a get_noise function from one of the bundled SDE models looks like this:
+An example for a ``get_noise`` function from one of the bundled SDE models looks like this:
 
 .. code:: cpp
 
@@ -139,6 +139,6 @@ An example for a get_noise function from one of the bundled SDE models looks lik
         get_derivatives(flows, noise);
     }
 
-Here we first compute the flows, then take the square root of each flow and multiply it by a standard normal distributed
+Here, we first compute the flows, then take the square root of each flow and multiply it by a standard normal distributed
 value. The mapping from flows to compartments (that is mathematically done by a matrix multiplication) is taken care of
 by the overload of ``get_derivatives``.
