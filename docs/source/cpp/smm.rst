@@ -7,6 +7,8 @@ The stochastic metapopulation model uses a Markov process to simulate disease dy
 
 The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X`, the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct method (stochastic simulation algorithm) is used for simulation.
 
+In the following, we present more details of the stochastic metapopulation model, including code examples. 
+An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
 
 Infection states
 ----------------

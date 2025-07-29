@@ -6,7 +6,16 @@ Introduction
 
 This model realizes multiple instances of the mobility-based agent-based model (ABM) ``abm::Model`` (see :doc:`mobility_based_abm` for the documentation) 
 as nodes in a directed graph. One local model represents a geographical region. The regions are connected by the graph edges. Mobility within one node 
-and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. Therefore this graph-based agent-based (graph-ABM) model can be reduced to a single mobility-based agent-based model if simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal. Preimplemented mobility rules can be found in `<https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.h>`_. The motivation behind the graph-ABM is to have multiple ABMs run independently from each other in parallel for different regions and only synchronize, i.e. exchange agents via edges, in fixed time intervals. The synchronization time steps should be bigger than the internal ABM time steps to reduce communication between nodes as much as possible.
+and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. 
+Therefore this graph-based agent-based (graph-ABM) model can be reduced to a single mobility-based agent-based model if 
+simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal. 
+Preimplemented mobility rules can be found in `<https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.h>`_. 
+The motivation behind the graph-ABM is to have multiple ABMs run independently from each other in parallel for different regions and only synchronize, 
+i.e. exchange agents via edges, in fixed time intervals. The synchronization time steps should be bigger than the internal 
+ABM time steps to reduce communication between nodes as much as possible.
+
+An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+
 
 Simulation
 -----------

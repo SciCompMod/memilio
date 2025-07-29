@@ -7,6 +7,8 @@ model and interacting with (infecting) each other. For a detailed overview of th
 
 - Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
 
+An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+
 
 Structure
 ~~~~~~~~~

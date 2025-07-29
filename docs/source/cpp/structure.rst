@@ -15,3 +15,5 @@ Depending on your model, it may make sense to create additional files for functi
 - ``simulation.h``/ ``simulation.cpp``: If your model does not derive from ``CompartmentalModel`` or ``FlowModel``, you need to provide a ``Simulation`` class that determines how your model equations are solved. 
 
 For further information on how to create a new aggregated model, see the respective sections :doc:`above this structure <../model_creation>`. The creation of an individual-based model is much more complex and we suggest to build upon ``cpp/models/abm``. 
+
+An overview of nonstandard but often used data types that already exist within MEmilio can be found under :doc:`<data_types>`.

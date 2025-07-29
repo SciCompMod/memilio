@@ -4,7 +4,16 @@ Graph-based metapopulation model
 Introduction
 -------------
 
-This model realizes a metapopulation model using a directed graph with instances of an ODE-based model as graph nodes. Any ODE-based model implemented in MEmilio can be used in the graph nodes, see :doc:`ode`, representing one geographical region. Currently, only ODE-based models are supported as nodes, but support for other models will be added soon. Mobility between graph nodes is modelled via graph edges. There are two different types of mobility edges implemented in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first one implements a deterministic instant mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
+This model realizes a metapopulation model using a directed graph with instances of an ODE-based model as graph nodes. 
+Any ODE-based model implemented in MEmilio can be used in the graph nodes, see :doc:`ode`, representing one geographical region. 
+Currently, only ODE-based models are supported as nodes, but support for other models will be added soon. 
+Mobility between graph nodes is modelled via graph edges. There are two different types of mobility edges implemented 
+in MEmilio: ``mio::MobilityEdge`` and ``mio::MobilityEdgeStochastic``. The first one implements a deterministic instant 
+mobility approach where subpopulations are exchanged between graph nodes instantaneously in fixed time intervals. 
+The latter implements mobility as stochastic jumps between graph nodes using a temporal Gillespie algorithm for simulation.
+
+An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+
 
 Simulation
 -----------

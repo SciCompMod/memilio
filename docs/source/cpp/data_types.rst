@@ -41,11 +41,12 @@ The following list explains the nonstandard data types that are used throughout 
      - Parameters that influence mobility between nodes, including coefficients and dynamic nonpharmaceutical interventions (NPIs).
    * - :code:`MobilityEdge`
      - Represents mobility between two nodes in a graph. Handles the movement of populations between nodes, tracks mobile populations, and applies mobility returns according to epidemiological models.
-   * - :code:`DampingMatrixExpression`
-     - Represents a coefficient-wise matrix expression :math:`B - D * (B - M)`, where :math:`B` is a baseline matrix, :math:`M` is a minimum matrix, and :math:`D` is a time-dependent complex damping factor. Used as the base for time-dependent contact matrices.
-   * - :code:`DampingMatrixExpressionGroup`
-     - Represents a collection of ``DampingMatrixExpression``\s that are summed up. Used for representing multiple sources of contacts or mobility.
    * - :code:`ContactMatrix`
      - Time-dependent contact frequencies between groups, derived from ``DampingMatrixExpression``. Models how the contact rates between different age groups change over time due to interventions.
    * - :code:`ContactMatrixGroup`
      - A collection of contact matrices that represent different contexts (e.g., home, school, work) whose sum is the total number of contacts, derived from ``DampingMatrixExpressionGroup``.
+   * - :code:`DampingMatrixExpression`
+     - Represents a coefficient-wise matrix expression :math:`B - D * (B - M)`, where :math:`B` is a baseline matrix, :math:`M` is a minimum matrix, and :math:`D` is a time-dependent complex damping factor. Used as the base for time-dependent contact matrices.
+   * - :code:`DampingMatrixExpressionGroup`
+     - Represents a collection of ``DampingMatrixExpression``\s that are summed up. Used for representing multiple sources of contacts or mobility.
+

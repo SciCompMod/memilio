@@ -1,5 +1,5 @@
 IO functionalities
-===================
+==================
 
 Aggregated output
 -----------------
@@ -21,13 +21,11 @@ This document describes utilities for reading and writing data from and to files
 - The :ref:`command line interface<command line>`, that can be used to set (and get) values of a ``ParameterSet``.
 
 - The :ref:`History class<history>` for logging almost arbitrary information. It can be thought of as a generalization of a results
-  ``TimeSeries``, and is mainly used for the ABM
+  ``TimeSeries``, and is mainly used for the ABM.
 
-Other IO modules
-----------------
+There also exist other IO modules that are implemented for specific models.
 
-- HDF5 support classes for C++
-- Reading of mobility matrix files
+- We have HDF5 support classes for C++, e.g. for reading of mobility matrix files in the graph-based metapopulation model, see :doc:`<graph_metapop>`.
 
 .. _command line:
 
@@ -210,10 +208,8 @@ Main functions and types
 - **Functions serialize and deserialize**:
   Main entry points to the framework to write and read values, respectively. The functions expect an `IOContext`
   (see :ref:`Concepts`<concepts> below) that stores the serialized data. (De-)serialization can be customized by providing a
-  (de-)serialize_internal overload or a (de-)serialize member function for the type. See the section :ref:`Adding a new data type to be serialized<adding new serialization>`
-  
-  "Implementing
-  serialization for a new type" or the documentation for ``serialize`` and ``deserialize``.
+  (de-)serialize_internal overload or a (de-)serialize member function for the type. See the section 
+  :ref:`Adding a new data type to be serialized<adding new serialization>` or the documentation for ``serialize`` and ``deserialize``.
 - **IOStatus and IOResult**:
   Used for error handling, see section :ref:`Error Handling<error handling>` below.
 

@@ -10,6 +10,9 @@ In the following, we present the general structure for all simple ODE-based mode
 Chain Trick and Erlang distributed stay times, see :doc:`here <lct>`. For spatially resolved Graph-ODE models, 
 see :doc:`here <graph_metapop>`. The particular model documentations with examples are linked at the bottom of this page.
 
+An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+
+
 Infection states
 ----------------
 
