@@ -223,7 +223,7 @@ Contributing research groups and institutes
 MEmilio has been developed by and in collaboration with various research institutions:
 
 * **German Aerospace Center (DLR)** - Institute for Software Technology 
-* **University of Bonn** - Life and Medical Sciences Institute and Bonn Center for Mathematical Life Sciences
+* **University of Bonn** - Life and Medical Sciences Institute and `Bonn Center for Mathematical Life Sciences <https://www.bcml.uni-bonn.de/>`_
 * **Helmholtz Centre for Infection Research (HZI)** - Department of Systems Immunology
 * **Forschungszentrum Jülich (FZJ)** - Institute of Climate and Energy Systems (ICE-1) and Institute of Bio- und Geosciences: Biotechnology (IBG-1)
 
