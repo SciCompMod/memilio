@@ -14,7 +14,7 @@ The motivation behind the graph-ABM is to have multiple ABMs run independently f
 i.e. exchange agents via edges, in fixed time intervals. The synchronization time steps should be bigger than the internal 
 ABM time steps to reduce communication between nodes as much as possible.
 
-An overview of nonstandard but often used data types can be found under :doc:`<data_types>`.
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 
 Simulation
