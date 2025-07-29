@@ -2,7 +2,7 @@ Model Creation
 ==============
 
 While MEmilio already preimplements many different models, it is possible to create new models. This section describes how to create a new model in MEmilio. All of MEmilio's models have been designed to share a maximum of structure and functionality, however, the creation of a new aggregated model differs fundamentally from the creation of a new inidividual-based model. New metapopulation models are generally created by implementing an aggregated model in a graph structure.
-In addition, MEmilio also provides an :doc:`extenstion<sbml>` to create models from `Systems Biology Markup Language (SBML) <https://sbml.org/>`_ files. 
+In addition, MEmilio also provides an :doc:`extension<sbml>` to create models from `Systems Biology Markup Language (SBML) <https://sbml.org/>`_ files. 
 
 .. toctree::
    :maxdepth: 1
