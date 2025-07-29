@@ -22,7 +22,7 @@ for many different use cases or pathogens with the same transmission pathway. In
 a combination of two or more model realizations. For instance, we can use a graph structure to model the mobility and
 use different model realizations of ODE-SEIR models in different nodes of the graph. We then have one realization of
 the graph for modeling the mobility and two model realizations of ODE-SEIR type for two different regions. For an 
-example, see `here <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_graph.cpp>`_ .
+example, see `here <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secir_graph.cpp>`_.
 
 If it will not be clear from the context, feel free to reach out directly.
 
