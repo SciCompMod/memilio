@@ -54,7 +54,7 @@ Henrik Zunker
 
 **Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Ordinary Differential Equations (ODEs)
 
-Henrik Zunker is a PhD student at the Institute for Software Technology at the German Aerospace Center (DLR) since 2022. He is working on the development of MEmilio, focusing on equation-based models. In addition, he is involved in the development of machine learning models acting as surrogate models using various techniques (such as graph neural networks).
+Henrik Zunker is a PhD student at the Institute of Software Technology at the German Aerospace Center (DLR) since 2022. He is working on the development of MEmilio, focusing on equation-based models. In addition, he is involved in the development of machine learning models acting as surrogate models using various techniques (such as graph neural networks).
 
 **Selected Publications:**
 
@@ -81,7 +81,7 @@ Sascha Korf
 
 **Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Agent Based Modelling (ABMs)
 
-Sascha Korf is a PhD student at the Institute for Software Technology at the German Aerospace Center (DLR) since 2022. 
+Sascha Korf is a PhD student at the Institute of Software Technology at the German Aerospace Center (DLR) since 2022. 
 His background is in numerical mathematics, where he studied at the University of Cologne. He is interested in the development of agent-based models for infectious disease dynamics, especially in the context of high-performance computing.
 
 **Selected Publications:**
@@ -91,8 +91,7 @@ Diallo D, Schoenfeld J, Schmieding R, **Korf S**, Kühn MJ, Hecking T. (2025). *
 
 **Links:**
 
-* `Google Scholar Profile <https://scholar.google.com/citations?user=gEng86kAAAAJ&hl=en>`_
-* `ORCID Profile: 0000-0002-9825-365X <https://orcid.org/0000-0002-9825-365X>`_
+* `ORCID Profile: 0000-0002-1431-3046<https://orcid.org/0000-0002-1431-3046>_
 
 .. _developer_3:
 
@@ -107,7 +106,7 @@ Julia Bicker
 
 **Research Focus:** Mathematical Modeling, Hybrid Modeling, High-Performance Computing, Agent-based Modeling, Ordinary Differential Equations (ODEs)
 
-Julia Bicker is a PhD student at the Institute for Software Technology at the German Aerospace Center (DLR) since 2022. She focuses on the development of hybrid models that combine individual-based and population-based models, namely stochastic agent-based and ODE-based metapopulation models.
+Julia Bicker is a PhD student at the Institute of Software Technology at the German Aerospace Center (DLR) since 2022. She focuses on the development of hybrid models that combine individual-based and population-based models, namely stochastic agent-based and ODE-based metapopulation models.
 
 **Selected Publications:**
 
@@ -118,6 +117,29 @@ Julia Bicker is a PhD student at the Institute for Software Technology at the Ge
 
 * `Google Scholar Profile <https://scholar.google.com/citations?user=W0NCJ7MAAAAJ&hl=de&oi=ao>`_
 * `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/my-orcid?orcid=0000-0001-9382-4209>`_
+
+Anna Wendler
+^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: Anna Wendler
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Mathematical Modeling, Integro-Differential Equations (IDEs), High-Performance Computing, Scientific Computing
+
+Anna Wendler is a PhD student at the Institute of Software Technology at the German Aerospace Center (DLR) since 2022. She focuses on the development of models based on integro-differential equations that provide a generalization of models based on ordinary differential equations. 
+
+**Selected Publications:**
+
+* **Wendler A**, Plötzke L, Tritzschak H, Kühn MJ. (2025). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. Accepted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
+* Plötzke L, **Wendler A**, Schmieding R, Kühn MJ. (2025). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
+
+**Links:**
+
+* `Google Scholar Profile <https://scholar.google.com/citations?view_op=list_works&hl=de&user=NOvN9ucAAAAJ>`_
+* `ORCID Profile: 0000-0001-9382-4209 <https://orcid.org/0000-0002-1816-8907>`_
 
 .. _developer_4:
 
