@@ -21,7 +21,6 @@ Required python packages:
 - pyxlsb
 - wget
 - folium
-- matplotlib
 - mapclassify
 - geopandas
 - h5py

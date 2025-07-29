@@ -28,7 +28,7 @@ The :doc:`memilio-epidata <python/memilio_epidata>` package provides tools to do
 as infection or mobility data. More about this and our other Python packages can be found in the :doc:`Python Interface Section <python/python_packages>` 
 of this documentation.
 
-A few things are not represented in this documentation, but part of the `github repository <https://github.com/SciCompMod/memilio>`_. 
+A few things are not represented in this documentation, but are part of the `github repository <https://github.com/SciCompMod/memilio>`_. 
 In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`_ folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
@@ -172,7 +172,7 @@ Running simulations
 ~~~~~~~~~~~~~~~~~~~~~
 You can run simulations either via the C++ interface where they are originally implemented or via the python bindings. 
 For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <cpp/model_usage>` section.
-In short, the executables for different model instantiations are build as described above and can be run via 
+In short, the executables for different model instantiations are built as described above and can be run via 
 
 .. code-block:: console
 
