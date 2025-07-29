@@ -245,7 +245,7 @@ In order to ensure that figures in the documentation and in the code have a cons
 **Default color scheme**
 
 - For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`_ library. 
-- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#set1>`_ colormap.
+- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#Qualitative>`_ colormap.
 
 **Colorblind-friendly alternatives**
 
