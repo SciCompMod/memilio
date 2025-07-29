@@ -1,4 +1,4 @@
-Getting Started
+Getting started
 ===============
 
 Overview
@@ -51,7 +51,7 @@ In addition, we provide several Python packages to download epidemiological data
 Below, we will give you a step-by-step guide for both methods. If you are new to MEmilio and more familiar with Python, Julia, or R than with C++, we recommend starting with the Python packages, 
 as they provide an easy access to simulate infection dynamics models from and collect experiences with MEmilio.
 
-Required Tools
+Required tools
 *****************
 
 Before you can install MEmilio, you need to install some common development tools. 
@@ -71,7 +71,7 @@ Before you can install MEmilio, you need to install some common development tool
     *   **macOS:** One option is installing the **Xcode Command Line Tools** by running ``xcode-select --install`` in your terminal.
     *   **Linux:** On Linux, essential build tools and CMake might be preinstalled. Otherwise, on Debian/Ubuntu, you could execute the installation by running ``sudo apt-get install cmake gcc g++`` in your terminal.
 
-Step 1: Download the MEmilio Source Code
+Step 1: Download the MEmilio source code
 *****************************************
 
 Once the required tools are installed, open a terminal and download the MEmilio code with this command:
@@ -97,7 +97,7 @@ Now, navigate into that folder:
 
 From here, choose one of the following options.
 
-Option A: Installing the Python Packages (Recommended for nonexperienced users or for data download and visualizations)
+Option A: Installing the Python packages (Recommended for nonexperienced users or for data download and visualizations)
 ****************************************************
 
 You can run simulations, download data, or create plots, by only installing our Python packages.
@@ -137,7 +137,7 @@ You can run simulations, download data, or create plots, by only installing our 
 
 To install other packages, see the items below *Python Interface* in the menu on the left hand side.
 
-Option B: Building the C++ Core (Advanced)
+Option B: Building the C++ core (Advanced)
 ****************************************
 
 For experienced developers and C++ programmers, we offer the C++ backend to fully benefit from all functionality and parallel performance.

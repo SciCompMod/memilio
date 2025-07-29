@@ -77,7 +77,7 @@ The History object provides a way to save data throughout the simulation process
 define the data to be saved from a given object using Loggers and the method of saving it using ``Writer``\s. Afterward, the
 user can access this data from the History object and manipulate it. For a basic ``Logger`` use case, refer to
 `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__. For an example demonstrating using a ``Logger`` in the ABM
-`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_history_object.cpp
+`this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/abm_history_object.cpp>`_.
 
 Loggers
 ~~~~~~~
@@ -96,8 +96,8 @@ functions is the same as the one given to the ``History`` member-function ``Hist
 
 Users can derive their Loggers from ``LogOnce`` or ``LogAlways`` to use a predefined ``should_log`` function.
 ``LogOnce`` logs only at the first call of ``Logger::log()``, while ``LogAlways`` logs every time ``log`` is called.
-All implemented Loggers must be default constructible/destructible. For user-defined examples in the ABM
-`this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h
+All implemented Loggers must be default constructible/destructible. For user-defined examples in the ABM see
+`this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_.
 
 .. code-block:: cpp
 
@@ -130,7 +130,7 @@ user-implemented ``Writer`` must have a ``Data`` Type and implement the
 
 A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/history.h>`__.
 This stores the data from the loggers in a tuple of vectors every time the ``Logger`` is called. Another ``Writer`` named
-``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`__, which saves 
+``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_, which saves 
 Timeseries. The according ``Logger`` has to have a suitable return type.
 
 .. code-block:: cpp
@@ -163,7 +163,7 @@ implementation of a history object and `this full ABM example <https://github.co
 of the History object with several History objects in use.
 
 As mentioned, if multiple ``Writer``\s have to be used simultaneously, a separate History object is needed for each Writer.
-For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h
+For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`_.
 
 .. _serialization:
 

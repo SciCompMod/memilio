@@ -21,7 +21,7 @@ For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/l
 
 Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068 . Be therefore sure to not commit python code from a worktree.
 
-C++ Coding guidelines
+C++ coding guidelines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -83,7 +83,7 @@ Code Documentation:
     - Please also provide a description for member variables; use ``///< DESCRIPTION`  or `/**< DESCRIPTION */`` for two lines. Keep it short.
 
 
-Mandatory C++ Style Guidelines
+Mandatory C++ style guidelines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The style guidelines are adopted from `TiGL <https://github.com/DLR-SC/tigl>`_.
@@ -284,7 +284,7 @@ General
 - If we release a new version of the software, we create a tag for the version on the main branch.
 - Please keep all issue-related communication within the issue or pull request.
 
-Software Development in Sprints
+Software development in sprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The software development process is inspired by `Scrum <https://en.wikipedia.org/wiki/Scrum_(software_development)>`_ and the development of the core developers is organized in sprints. The rules below only partially apply to external (non-core) contributors.

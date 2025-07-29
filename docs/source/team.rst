@@ -5,7 +5,7 @@ This page introduces the main developers and researchers behind MEmilio.
 
 .. _core_developers:
 
-Core Developers
+Core developers
 ---------------
 
 .. _developer_1:

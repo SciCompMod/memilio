@@ -3,7 +3,7 @@ References
 
 The following gives an overview on (peer-reviewed) publications extending or using MEmilio. If you would like to add a publication, `contact us <mailto:Martin.Kuehn@DLR.de>`.
 
-Recently Submitted Publications
+Recently submitted publications
 --------------------------------------
 
 - Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. arXiv. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
@@ -11,7 +11,7 @@ Recently Submitted Publications
 - Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
 
 
-Peer-Reviewed Publications
+Peer-reviewed publications
 --------------------------
 
 **2025**

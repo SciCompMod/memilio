@@ -44,9 +44,13 @@ The parameters of the model are defined as structs and are combined in a class `
 We use different types of parameters to represent epidemiological parameters such as the mean stay times in a 
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a value for each sociodemographic group. 
-To model different contact rates between different sociodemographic groups, we use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. The **UncertainContactMatrix** contains a set of contact matrices of arbitrary length and which can represent the different contact locations in the model like 
+To model different contact rates between different sociodemographic groups, we use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. 
+The **UncertainContactMatrix** contains anmarbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
-In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. The dimension of the matrix is automatically defined by the model initialization and is reduced to one value if no stratification is used. The values can be adjusted during the simulation, e.g., through implementing nonpharmaceutical interventions, see the section on :ref:`Nonpharmaceutical Interventions`.
+In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. 
+The dimension of the matrix is automatically defined by the model initialization and is reduced to one value if no stratification is used. 
+The values can be adjusted during the simulation, e.g., through implementing nonpharmaceutical interventions, 
+see the section on :ref:`Nonpharmaceutical Interventions LCT`.
 Parameters can be accessed via ``model.parameters.get<Param<double>>()`` and set via either 
 ``model.parameters.get<Param<double>>() = value`` or ``model.parameters.set<Param<double>>(value)``. 
 
@@ -57,7 +61,7 @@ Initial conditions
 The initial conditions of the model are represented by a class **LctPopulations** that gives the number of individuals in each sociodemographic group and each subcompartment for each **InfectionState**. For more details, see :doc:`Model Creation <lct_creation>`. Before the simulation, the initial conditions for each **InfectionState** and sociodemographic group must be set.
 
 
-.. _Nonpharmaceutical Interventions:
+.. _Nonpharmaceutical Interventions LCT:
 Nonpharmaceutical interventions
 -------------------------------
 

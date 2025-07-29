@@ -14,16 +14,16 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Structure
 ~~~~~~~~~
 
-The model is implemented in multiple classes. Source and header files are located in the `/cpp/models/abm/ <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/>` directory. While many files contain supporting implementation or additional features, it is important to understand the main workflow and core classes.
+The model is implemented in multiple classes. Source and header files are located in the `/cpp/models/abm/ <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/>`_ directory. While many files contain supporting implementation or additional features, it is important to understand the main workflow and core classes.
 The core classes and their locations are:
 
-- ``Simulation`` (`simulation.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`): Runs the simulation and stores results. The model is evolved in discrete time steps of the same size which can be chosen by the user.
-- ``Model`` (`model.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/model.h>`): Collection of all persons, locations and used parameters. Is initialized with the number of age groups that are considered. It also holds information about the testing strategy of the simulation and holds the rules for the mobility phase.
-- ``Model Functions`` (`model_functions.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/model_functions.h>`): A collection of model functions that mostly cover interaction of agents at locations. These functions are called in the model evolve function.
-- ``Parameters`` (`parameters.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/parameters.h>`): Collection of all parameters used in the model.
-- ``Location`` (`location.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location.h>`): Represents places in the model where people meet and interact, e.g. home, school, work, social event sites. Along their type, locations contain an ID and a geographical location (longitude and latitude). A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and can be set per location. Mandatory masks can be activated to simulate a mask obligation intervention.
-- ``Person`` (`person.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/person.h>`): Represents an agent of the model. A person has an ID, is associated with an age group and has a list with their assigned locations (i.e. the locations they can visit during the simulation). Every person has lists with past and current infections as well as vaccinations. Further, more information on the personal behavior and test results is available.
-- ``Infection`` (`infection.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection.h>`): Collection of all information about a person’s infection, i.e. infectiousness, infection course and symptoms, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model and is explained in detail below.
+- ``Simulation`` (`simulation.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`_): Runs the simulation and stores results. The model is evolved in discrete time steps of the same size which can be chosen by the user.
+- ``Model`` (`model.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/model.h>`_): Collection of all persons, locations and used parameters. Is initialized with the number of age groups that are considered. It also holds information about the testing strategy of the simulation and holds the rules for the mobility phase.
+- ``Model Functions`` (`model_functions.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/model_functions.h>`_): A collection of model functions that mostly cover interaction of agents at locations. These functions are called in the model evolve function.
+- ``Parameters`` (`parameters.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/parameters.h>`_): Collection of all parameters used in the model.
+- ``Location`` (`location.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location.h>`_): Represents places in the model where people meet and interact, e.g. home, school, work, social event sites. Along their type, locations contain an ID and a geographical location (longitude and latitude). A location can be split into cells to model parts of a location, like classrooms in a school. Some infection parameters are location-specific and can be set per location. Mandatory masks can be activated to simulate a mask obligation intervention.
+- ``Person`` (`person.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/person.h>`_): Represents an agent of the model. A person has an ID, is associated with an age group and has a list with their assigned locations (i.e. the locations they can visit during the simulation). Every person has lists with past and current infections as well as vaccinations. Further, more information on the personal behavior and test results is available.
+- ``Infection`` (`infection.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection.h>`_): Collection of all information about a person’s infection, i.e. infectiousness, infection course and symptoms, virus variant. The infection course is drawn stochastically from the infection states that are similar to the compartments of the SECIR model and is explained in detail below.
 
 
 Disease progression
@@ -31,7 +31,7 @@ Disease progression
 
 The ABM implements a detailed disease progression model that captures the full course of an infection from exposure to resolution. The disease progression is modeled through the ``Infection`` class, which contains:
 
-1. **Infection States**: Similar to the :doc:`equation based models <ode>`, an infected person progresses through states defined in `infection_state.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection_state.h>``:
+1. **Infection States**: Similar to the :doc:`equation based models <ode>`, an infected person progresses through states defined in `infection_state.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection_state.h>`_:
 
    * **Susceptible**: Initial state before infection
    * **Exposed**: Infected but not yet infectious
@@ -79,7 +79,7 @@ For details on the mathematical modeling of viral shed and disease spread, we re
 Data extraction
 ~~~~~~~~~~~~~~~
 The ABM simulation can collect and extract data through the ``History`` object, which allows for flexible data logging and writing.
-A collection of often used loggers and writers is available in `common_abm_loggers.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`, but users can define their own loggers and writers to satisfy their individual needs.
+A collection of often used loggers and writers is available in `common_abm_loggers.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_, but users can define their own loggers and writers to satisfy their individual needs.
 This is particularly useful for analyzing results after the simulation has completed. There are multiple types of data that can be collected:
 
 1. **Time Series Data**: Track how infection states change over time
@@ -134,7 +134,7 @@ Mobility phase
 
 During the mobility phase, each person may change their location.
 
-The available location types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>` are:
+The available location types defined in `location_type.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/location_type.h>`_ are:
 
    * **Home**: Home location of a person
    * **School**: School location for children
@@ -213,7 +213,7 @@ We can also set the contact rates for specific age groups at a location:
        .get_infection_parameters()
        .get<mio::abm::ContactRates>()[{age_group_15_to_34, age_group_15_to_34}] = 10.0;
 
-For a full list of parameters, see the `here <https://memilio.readthedocs.io/en/latest/api/file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_models_abm_parameters.h.html>`_
+For a full list of parameters, see `here <https://memilio.readthedocs.io/en/latest/api/file__home_docs_checkouts_readthedocs.org_user_builds_memilio_checkouts_latest_cpp_models_abm_parameters.h.html>`_.
 
 Locations and persons
 ~~~~~~~~~~~~~~~~~~~~~
