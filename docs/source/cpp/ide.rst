@@ -68,7 +68,7 @@ e.g. ``SmootherCosine``. Any class that is derived from ``StateAgeFunction`` can
 ``StateAgeFunctionWrapper`` object that is then passed to the model.
 
 Parameters can get accessed via ``model.parameters.get<Param<ScalarType>>()`` and set via either 
-``model.parameters.get<Param<ScalarType>>() = value``.
+``model.parameters.get<Param<ScalarType>>() = value`` or ``model.parameters.set<Param<ScalarType>>(value)``.
 
 
 Initial conditions
@@ -147,7 +147,7 @@ IDE-SEIR model
 The IDE-SEIR roughly follows the same structure but differs in a few points:
 
 - We do not consider infection state transitions but only infection states. 
-- The initial conditions are defined by the compartment sizes at the simulation start :math:`t_0`
+- The initial conditions are defined by the compartment sizes at the simulation start :math:`t_0`.
 
 Note that the IDE-SEIR model is solved with a different numerical scheme than the IDE-SECIR model. For further information, 
 see :doc:`IDE-SEIR <./models/iseir>`.

@@ -184,7 +184,7 @@ specific component, view its API documentation.
   registered timers after the end of main. Timers can be registered by passing a TimerRegistration to its add_timer
   method. Uses a singleton pattern to provide global access to the same object, that is, the only way to obtain a
   TimerRegistrar object is by using its get_instance method, which returns a reference to a static object. Importantly,
-  this class does not manage or own timer objects, and there is intentionally no methods that retrive or delete
+  this class does not manage or own timer objects, and there is intentionally no methods that retrieve or delete
   TimerRegistrations.
 
 - **NamedTimer**:

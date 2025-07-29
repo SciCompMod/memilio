@@ -2,7 +2,7 @@ Overview
 ===============
 
 MEmilio contains a plethora of python modules containing tools to expand on the main C++.
-Most of them serve their own use case,
+Most of them serve their own use case:
 
 .. grid:: 1 1 2 2
     :gutter: 2 3 4 4
@@ -118,7 +118,7 @@ The installation can be run with the following command (from the directory conta
     pip install .
 
 
-For developement of code use this command instead
+For development of code use this command instead
 
 .. code-block:: console 
     

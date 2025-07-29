@@ -80,7 +80,7 @@ Code Documentation:
     - The plural of classes, objects etc. should be denoted with a `%` sign between class name and plural s, e.g., `Household%s`. This is in order to visualize it correctly and provide a link on the doxygen page.
     - Use `[in]`, `[out]`, or `[in, out]` after `@param` in order to clarify if parameters are used as input, output or in- and output parameters.
     - To reference to enums put a # sign before the name.
-    - Plase also provide a description for member variables; use ``///< DESCRIPTION`  or `/**< DESCRIPTION */`` for two lines. Keep it short.
+    - Please also provide a description for member variables; use ``///< DESCRIPTION`  or `/**< DESCRIPTION */`` for two lines. Keep it short.
 
 
 Mandatory C++ Style Guidelines
@@ -354,7 +354,7 @@ This online documentation is generated using `ReadTheDocs <https://readthedocs.o
 a pull request is merged into the main branch. Thus, we recommend building the documentation locally to test changes.
 
 
-Please make sure to have a working python envirenment with a python version that is compatible with 
+Please make sure to have a working python environment with a python version that is compatible with 
 our :doc:`memilio-python packages <python/python_packages>` as well as 
 all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`_ installed.
 

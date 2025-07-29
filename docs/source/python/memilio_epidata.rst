@@ -51,7 +51,7 @@ After installation the following functions are available:
 * ``get_commuter_data``: Computes DataFrame of commuter mobility patterns based on the Federal Agency of Work data.
 * ``get_divi_data``: Downloads ICU data from German DIVI Intensivregister (DIVI).
 * ``get_hospitalization_data``: Downloads data about COVID-19 hospitalizations data from Robert Koch-Institut (RKI-H).
-* ``get_jh_data``: Downloads COVID-19 case data from John Hopkins University (JH).
+* ``get_jh_data``: Downloads COVID-19 case data from Johns Hopkins University (JH).
 * ``get_npi_data``: Loads a certain resolution of recorded NPI data from the Corona Datenplattform and extracts the counties asked for and activates the NPIs if they are incidence dependent.
 * ``get_population_data``: Downloads population data for German federal states and counties from various public sources (P).
 * ``get_simulation_data``: Downloads all data required for a simulation with the graph-metapopulation model which are SARS-CoV-2 case data(RKI-C), population data (P), ICU data (DIVI) and COVID-19 vaccination data from Robert Koch-Institut (RKI-V).
