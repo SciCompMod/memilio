@@ -1,7 +1,7 @@
 Build instructions
 ==================
 
-The MEmilio core library (MEmilio C++) is written C++ and uses `CMake <https://cmake.org/>`_ as build system. Before
+The MEmilio core library (MEmilio C++) is written in C++ and uses `CMake <https://cmake.org/>`_ as build system. Before
 installing MEmilio C++, make sure a C++20 compiler, CMake and a build tool (like GNU Make or Ninja) is installed on your
 device. The following guide will make use of the command line, but you can use graphical build tools from an IDE as
 well.
@@ -92,7 +92,7 @@ See the `thirdparty directory <https://github.com/SciCompMod/memilio/blob/main/c
 Step-by-step instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Start by download the newest version (or a specific release) of MEmilio from our
+Start by downloading the newest version (or a specific release) of MEmilio from our
 `github repository <https://github.com/SciCompMod/memilio>`_ to a directory of your choice, or clone it directly using
 git by first opening a terminal in that directory and then running
 
