@@ -60,11 +60,5 @@ The MEmilio library uses a modular organization of models, where generic impleme
 Build System
 -------------
 
-The project uses CMake as a build system with various configuration options such as:
-
-- ``MEMILIO_BUILD_TESTS``: Enables building unit tests
-- ``MEMILIO_BUILD_EXAMPLES``: Enables building example applications
-- ``MEMILIO_BUILD_MODELS``: Enables building model libraries
-- ``MEMILIO_ENABLE_OPENMP``: Enables multithreading with OpenMP
-
-For more details on the build system, refer to TBD
+The project uses CMake as a build system with various configuration options. 
+For an explanation, refer to :doc:`installation`.
