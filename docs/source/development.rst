@@ -373,7 +373,6 @@ Then sphinx can be used to build the documentation:
 
 .. code-block:: bash
 
-    cd docs
     make html # sphinx-build source html
 
 The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).
