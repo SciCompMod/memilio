@@ -19,7 +19,7 @@ Martin Kühn
    :align: left
    :class: developer-photo
 
-**Research Focus:** High-Performance Computing, Mathematical Modeling, Numerical Analysis, Scientific Computing
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Numerical Analysis, Scientific Computing, Metapopulation Models, Integro-Differential Equation-based Models, Agent-Based Models, Hybrid Models, Machine Learning Surrogates
 
 Martin Kühn studied at University of Cologne, Germany, and Université de Montréal, Canada, and obtained a PhD in Applied Mathematics from University of Cologne in 2018. He is affiliated with the Institute of Software Technology of the German Aerospace Center where he leads the group of Predictive Simulation Software and the University of Bonn where he does research on mathematical-epidemiological modeling. His research focuses on the design, analysis, and implementation of numerical methods in the context of high performance computing. Over the last five years, Martin Kühn has studied various models for the spread of infectious diseases, including SARS-CoV-2. He initiated the development of the MEmilio framework to support fast and reliable response to pandemic threats using mathematical models from ordinary and integro-differential equations, metapopulations, agent-based and hybrid metapopulation-agent-based models as well as machine learning surrogate models through, e.g., graph neural networks.
 
