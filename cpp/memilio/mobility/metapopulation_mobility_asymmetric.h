@@ -21,14 +21,15 @@
 #define METAPOPULATION_MOBILITY_STOCHASTIC_H
 
 #include "memilio/compartments/simulation.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/epidemiology/age_group.h"
+
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
 #include "boost/filesystem.hpp"
 
+#include <boost/numeric/ublas/vector_expression.hpp>
 #include <cassert>
 #include <functional>
 #include <queue>
@@ -53,11 +54,16 @@ public:
     {
         insert_input_data(input_data);
     };
-    MobilityParametersTimed(int time, int number, int to)
+    MobilityParametersTimed(double time, int number, int to)
         : _exchanges{}
     {
         _exchanges.push(ExchangeData(time, number, to));
     };
+
+    void add_exchange(double time, int number, int to)
+    {
+        _exchanges.push(ExchangeData{time, number, to});
+    }
 
     /**
     * @brief Return the number of exchanged items in the next exchange event.
@@ -75,6 +81,9 @@ public:
      */
     auto next_event_time() const
     {
+        if (_exchanges.empty()) {
+            return std::numeric_limits<double>::max();
+        }
         return _exchanges.top().time;
     };
     /**
@@ -159,6 +168,11 @@ public:
     {
     }
 
+    void add_exchange(double time, int number, int to)
+    {
+        m_parameters.add_exchange(time, number, to);
+    }
+
     /**
          * get the mobility parameters.
          */
@@ -190,8 +204,15 @@ void MobilityEdgeDirected::apply_mobility(SimulationNode<Sim>& node_from, Simula
 {
     auto next_event = m_parameters.process_next_event();
     auto num_moving = next_event.number;
-    node_from.get_result().get_last_value()[0] -= num_moving;
-    node_to.get_result().get_last_value()[0] += num_moving;
+    // auto num_available = boost::numeric::ublas::sum(node_from.get_result().get_last_value());
+    auto rng          = mio::RandomNumberGenerator();
+    auto distribution = DiscreteDistributionInPlace<int>();
+
+    for (int i = 0; i < num_moving; ++i) {
+        auto group = distribution(rng, {node_from.get_result().get_last_value()});
+        node_from.get_result().get_last_value()[group] -= 1;
+        node_to.get_result().get_last_value()[group] += 1;
+    }
 }
 
 template <class Sim>
