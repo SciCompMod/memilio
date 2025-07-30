@@ -69,14 +69,21 @@ int main(int /*argc*/, char** /*argv*/)
 
     mio::Graph<mio::SimulationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
     graph.add_node(0, model, t0);
+    graph.add_node(1, model2, t0);
 
-    auto param = mio::MobilityParametersTimed(2, 10, 1);
-
+    auto param = mio::MobilityParametersTimed(2.0, 10, 1);
     graph.add_edge(0, 1, param);
+    graph.edges()[0].property.add_exchange(5.0, 5, 1);
+    graph.edges()[0].property.add_exchange(6.0, 500, 1);
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
+
+    std::cout << "First table" << std::endl;
+    sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});
+    std::cout << "Second Table" << std::endl;
+    sim.get_graph().nodes()[1].property.get_result().print_table({"S", "E", "I", "R"});
 
     return 0;
 }
