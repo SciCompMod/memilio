@@ -84,7 +84,7 @@ Loggers
 
 The ``Logger`` struct is a tool for logging data from a given object. Each user-implemented ``Logger`` must have a ``Type``
 and implement two functions: ``Type log(const T&)`` and ``bool should_log(const T&)``. The input ``T`` for these
-functions is the same as the one given to the ``History`` member-function ``History::log``, e.g. ``Model&`` in 
+functions is the same as the one given to the ``History`` member-function ``History::log``, e.g. ``Model&`` in the ABM.
 
 - ``Type``: Return Type of ``log``.
 
@@ -130,7 +130,7 @@ user-implemented ``Writer`` must have a ``Data`` Type and implement the
 
 A predefined universal ``Writer`` called ``DataWriterToMemory`` is already implemented in `history.h <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/io/history.h>`__.
 This stores the data from the loggers in a tuple of vectors every time the ``Logger`` is called. Another ``Writer`` named
-``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_, which saves 
+``TimeSeriesWriter`` can be found in `this file <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/common_abm_loggers.h>`_, which saves data in a
 Timeseries. The according ``Logger`` has to have a suitable return type.
 
 .. code-block:: cpp
@@ -159,7 +159,7 @@ should not be constructed in the function it is called in when data is needed la
 
 To access data from a specific ``Logger``, one can use ``std::get<x>`` where x is the position of the ``Logger`` in the template
 argument list of the ``History`` object. Refer to `this example <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/history.cpp>`__ for a simple
-implementation of a history object and `this full ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm.cpp>`__ for a more 
+implementation of a history object and `this full ABM example <https://github.com/SciCompMod/memilio/blob/main/cpp/simulations/abm.cpp>`__ for a more advanced use case
 of the History object with several History objects in use.
 
 As mentioned, if multiple ``Writer``\s have to be used simultaneously, a separate History object is needed for each Writer.
