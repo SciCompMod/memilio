@@ -13,13 +13,13 @@ Core developers
 Martin Kühn
 ^^^^^^^^^^^
 
-.. image:: https://www.martinkuehn.eu/research/kuehn150x150.jpg
+.. image:: https://martinkuehn.eu/research/images/martin.png
    :alt: Martin Kühn
    :width: 150px
    :align: left
    :class: developer-photo
 
-**Research Focus:** High-Performance Computing, Mathematical Modeling, Numerical Analysis, Scientific Computing, Metapopulation Models, Integro-Differential Equation-based Models, Agent-Based Models, Hybrid Models, Machine Learning Surrogates
+**Research Focus:** High-Performance Computing, Energy-aware Computing, Numerical Analysis, Scientific Computing, Mathematical Modeling, Metapopulation Models, Integro-Differential Equation-based Models, Agent-Based Models, Hybrid Models, Machine Learning Surrogates
 
 Martin Kühn studied at University of Cologne, Germany, and Université de Montréal, Canada, and obtained a PhD in Applied Mathematics from University of Cologne in 2018. He is affiliated with the Institute of Software Technology of the German Aerospace Center where he leads the group of Predictive Simulation Software and the University of Bonn where he does research on mathematical-epidemiological modeling. His research focuses on the design, analysis, and implementation of numerical methods in the context of high performance computing. Over the last five years, Martin Kühn has studied various models for the spread of infectious diseases, including SARS-CoV-2. He initiated the development of the MEmilio framework to support fast and reliable response to pandemic threats using mathematical models from ordinary and integro-differential equations, metapopulations, agent-based and hybrid metapopulation-agent-based models as well as machine learning surrogate models through, e.g., graph neural networks.
 
@@ -77,13 +77,13 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
 Sascha Korf
 ^^^^^^^^^^^^^
 
-.. image:: _static/team/max_mustermann.jpg
+.. image:: https://martinkuehn.eu/research/images/sascha.png
    :alt: Sascha Korf
    :width: 150px
    :align: left
    :class: developer-photo
 
-**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Agent Based Modelling (ABMs)
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Agent Based Modeling (ABMs)
 
 Sascha Korf is a PhD student at the Institute of Software Technology at the German Aerospace Center (DLR) since 2022. 
 His background is in numerical mathematics, where he studied at the University of Cologne. He is interested in the development of agent-based models for infectious disease dynamics, especially in the context of high-performance computing.
@@ -104,7 +104,7 @@ His background is in numerical mathematics, where he studied at the University o
 Julia Bicker
 ^^^^^^^^^^^^
 
-.. image:: _static/team/max_mustermann.jpg
+.. image:: https://martinkuehn.eu/research/images/julia.png
    :alt: Julia Bicker
    :width: 150px
    :align: left
@@ -185,13 +185,13 @@ Kilian Volmer
    :align: left
    :class: developer-photo
 
-**Research Focus:** Epidemiological modelling, Metapopulation models
+**Research Focus:** Epidemiological Modeling, Metapopulation models
 
 
 Kilian holds a B.SC. and a M.SC. in Mathematics from the University of Bonn. During his Masters he worked as a research 
-assistant in the group of Prof. Kevin Thurley and wrote his thesis on modelling immune cell interactions. In December 
+assistant in the group of Prof. Kevin Thurley and wrote his thesis on modeling immune cell interactions. In December 
 2024 he joined the group of Prof. Jan Hasenauer at the Life and Medical Sciences Institute and the Bonn Center 
-for Mathematical Life Sciences as a PhD student to work on infectious disease modelling.
+for Mathematical Life Sciences as a PhD student to work on infectious disease modeling.
 
 
 
