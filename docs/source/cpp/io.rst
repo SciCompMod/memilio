@@ -201,8 +201,8 @@ file in Json format, then deserialize (read) the Json again.
      Foo foo = io_result.value();
    }
 
-There is also support for a binary format. If you want to use a format directly instead of writing to a file, use the
-``serialize_json``/``deserialize_json`` and ``serialize_binary``/``deserialize_binary`` functions.
+There is also support for a binary format. If you want to use a data format directly instead of writing it to a file,
+use the ``serialize_json``/``deserialize_json`` and ``serialize_binary``/``deserialize_binary`` functions.
 
 Main functions and types
 ~~~~~~~~~~~~~~~~~~~~~~~~
