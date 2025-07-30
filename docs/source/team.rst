@@ -208,6 +208,36 @@ Maximilian Betz
 
 Maximilian Betz completed his Bachelor's degree in Computer Science at the DHBW Mannheim as an integrated degree program with the Department of High-Performance Computing at the German Aerospace Center (DLR). Afterwards, he continued with a Master's in Computer Science at the University of Cologne, where he focused on Machine Learning and High Performance Computing. During the Master's, he kept working at the DLR as a student assistant with a focus on automatic generation of Python bindings, metapopulation models to simulate the spatial spread of infectious diseases and Machine Learning based parameter inference.
 
+René Schmieding
+^^^^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: A very sophisticated tea drinker.
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** High-Performance Computing, Numerical Mathematics, Parallelization & Scalability, Software Design (C++)
+
+René Schmieding completed both his Bachelor's and Master's degree at the University of Bonn in collaboration with the
+German Aerospace Center (DLR), on applications in numerics and high-performance computing. He kept
+working at the DLR on the development of MEmilio, focusing on parallelization and optimization of both the agent- and
+equation-based models.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * Zunker H, **Schmieding R**, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
+   * Bicker J, **Schmieding R**, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `DOI:10.1016/j.idm.2024.12.015 <https://doi.org/10.1016/j.idm.2024.12.015>`_
+   * Diallo D, Schoenfeld J, **Schmieding R**, Korf S, Kühn MJ, Hecking T. (2025). *Integrating Human Mobility Models with Epidemic Modeling: A Framework for Generating Synthetic Temporal Contact Networks*. *Entropy (Basel)* 27(5):507. `DOI:10.3390/e27050507 <https://doi.org/10.3390/e27050507>`_
+   * Plötzke L, Wendler A, **Schmieding R**, Kühn MJ. (2025). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0002-2769-0270 <https://orcid.org/0000-0002-2769-0270>`_
+
+
 .. _contributors:
 
 Contributors
