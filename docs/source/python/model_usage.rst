@@ -1,4 +1,4 @@
-Tutorial: Usage of Python bindings
+How to: Usage of Python bindings
 ==================================
 
 This tutorial should give an overview of how to use the

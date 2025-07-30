@@ -6,7 +6,7 @@ particularly suited for simple simulations of infectious diseases in a populatio
 library. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
 In the following, we present the model in detail.
 
-The infection staes and the transitions are visualized in the following image.
+The infection states and the transitions are visualized in the following image.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/69154294/01c9a2ae-2f5c-4bad-b7f0-34de651f2c73
    :alt: SIR_model
@@ -27,7 +27,7 @@ The model contains the following list of **InfectionState**\s:
 Infection State transitions
 ---------------------------
 
-The ODE-SIR model is implemented as **CompartmentalModel**. In each time step, the model computes the aggregated
+The ODE-SIR model is implemented as a **CompartmentalModel**. In each time step, the model computes the aggregated
 compartment values.
 
 
@@ -35,7 +35,7 @@ Sociodemographic Stratification
 -------------------------------
 
 In the ODE-SIR model, the population can be stratified by one sociodemographic dimension. This dimension is denoted 
-**AgeGroup** but can also used for other interpretations. For stratifications with two or more dimensions, see 
+**AgeGroup** but can also be used for other interpretations. For stratification with two or more dimensions, see 
 :doc:`Model Creation <../ode_creation>`.
 
 The number of age groups is specified in the model constructor and the model can be initialized with:
@@ -90,7 +90,7 @@ each compartment:
    // Set the susceptible population as difference to ensure correct total population
    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}, nb_total_t0);
 
-For age-resolved simulations, you need to set the initial conditions ofr each age group. Additionally, you can use 
+For age-resolved simulations, you need to set the initial conditions for each age group. Additionally, you can use 
 ``set_difference_from_group_total`` to set the susceptible compartment as the difference between the total group size 
 and all other compartments.
 
@@ -152,8 +152,8 @@ You can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a `TimeSeries` object containing the sizes of each compartment at each time point. For a
-basic simulation, you can access the results as follows:
+The output of the simulation is a ``TimeSeries`` object containing the sizes of each compartment at each time point. For
+a basic simulation, you can access the results as follows:
 
 .. code-block:: cpp
 

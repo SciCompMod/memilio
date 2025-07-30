@@ -163,7 +163,7 @@ implementation of a history object and `this full ABM example <https://github.co
 of the History object with several History objects in use.
 
 As mentioned, if multiple ``Writer``\s have to be used simultaneously, a separate History object is needed for each Writer.
-For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`_.
+For a use case of this, refer to `the ABM Simulation advance function <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/simulation.h>`__
 
 .. _serialization:
 
@@ -380,3 +380,44 @@ Adding a new format
 Implement concepts IOContext and IOObject that provide the operations listed above. Your implementation should handle
 all built-in types as well as ``std::string``. It may handle other types (e.g., STL containers) as well if it can do so
 more efficiently than the provided general free functions.
+
+.. _epidemiological_data:
+
+Epidemiological Data Integration
+--------------------------------
+
+For equation-based models, MEmilio provides direct integration with real-world epidemiological data through the :doc:`memilio-epidata <../python/memilio_epidata>` package. This allows models to be initialized and calibrated with actual 
+population, case, hospitalization, and ICU data from various sources.
+
+MEmilio provides specialized functions in the parameter I/O modules to read and process this epidemiological data 
+for model initialization, such as population data, confirmed cases, vaccination data, and ICU data.
+
+Additionally, the integration supports different administrative levels such as districts, counties, and states. 
+Therefore, MEmilio provides high-level functions that combine multiple data sources:
+
+.. code-block:: cpp
+
+    // Read all input data for Germany
+    template <class Model>
+    IOResult<void> read_input_data_germany(std::vector<Model>& model, 
+                                           Date date,
+                                           const std::vector<double>& scaling_factor_inf,
+                                           double scaling_factor_icu,
+                                           const std::string& pydata_dir);
+    
+    // Read input data for specific counties
+    template <class Model>
+    IOResult<void> read_input_data_county(std::vector<Model>& model, 
+                                          Date date,
+                                          const std::vector<int>& county,
+                                          const std::vector<double>& scaling_factor_inf,
+                                          double scaling_factor_icu,
+                                          const std::string& pydata_dir);
+
+These functions automatically handle:
+
+- Reading population data from census files
+- Loading case data from RKI sources
+- Integrating ICU data from DIVI register
+- Applying scaling factors for data adjustment
+- Setting initial conditions in epidemiological models

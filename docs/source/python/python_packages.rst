@@ -1,5 +1,5 @@
 Overview
-===============
+=========
 
 MEmilio contains a plethora of python modules containing tools to expand on the main C++.
 Most of them serve their own use case:

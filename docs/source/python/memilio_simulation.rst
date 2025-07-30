@@ -1,8 +1,7 @@
 MEmilio Simulation
 ===================
 
-MEmilio Simulation contains Python bindings for the MEmilio C++ library. 
-It enables setting up and running simulations of infectious disease dynamics from a Python interface.
+MEmilio Simulation is a Python interface to the MEmilio C++ library. Using python bindings, it allows to specify and run original C++ routines directly from Python. It can be used with basic Python skills and without prior knowledge of C++.
 
 The package is contained inside the folder `pycode/memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_.
 
@@ -57,10 +56,10 @@ Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/mai
 different features are provided. Lastly, this documentation provides tutorials on applications for the MEmilio Python interface,
 coupling it with other libraries, showing the advantages of in language simulation models.
 
-**Tutorials**:
-:doc:`Model Usage <model_usage>` |
-:doc:`Model Creation <model_creation>` |
-:doc:`Common Patterns <python_bindings_patterns>`
+**How to**:
+:doc:`Usage of Python bindings <model_usage>` |
+:doc:`Expanding Python bindings <model_creation>` |
+:doc:`Common patterns <python_bindings_patterns>`
 
 .. toctree::
     :maxdepth: 1
