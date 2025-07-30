@@ -152,8 +152,10 @@ The model supports two ways of mobility:
 The mobility rules use the assigned locations of the persons. Some location changes are deterministic and regular (e.g. going to work), while others are random (e.g. going shopping or to a
 social event in the evening/on the weekend). When agents are infected, they are quarantined and cannot change their location.
 You can restrict some mobility rules by allowing only a proportion of people to enter specific locations. We divide the mobility rules into two categories:
+
 1. **Infection-based mobility**: This mobility is based on the infection state of the person. For example, a person in quarantine cannot change their location, and severely or critically infected persons go to the hospital or ICU.
    This mobility is used to model the behavior of people during an epidemic. It consists of the following rules:
+
    * Going home when quarantined
    * Going to the hospital when severely infected
    * Going to the ICU when critically infected
@@ -165,6 +167,7 @@ You can restrict some mobility rules by allowing only a proportion of people to 
 2. **Optional mobility**: This mobility is not based on the infection state of the person. For example, a person can go to a social event or a shop.
 While the first category is mandatory, the second category is optional and can be restricted by the user. This allows for modeling different scenarios, such as lockdowns or social distancing measures, or the exclusive usage of trips.
 The optional mobility rules consist of:
+
    * Going to work at work hours
    * Going to school at school hours
    * Going to a social event in the evening or on weekends
@@ -207,6 +210,7 @@ Here is an example where we set the duration of the time in the InfectedSymptoms
    model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>() = 4.;
 
 We can also set the contact rates for specific age groups at a location:
+
 .. code-block:: cpp
 
    model.get_location(work)
