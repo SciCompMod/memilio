@@ -38,7 +38,7 @@ int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 0.1; //initial time step
+    const auto dt   = 1.; //initial time step
 
     //total compartment sizes
     double num_total = 10000, num_exp = 200, num_ins = 50, num_rec = 0;
@@ -67,11 +67,8 @@ int main(int /*argc*/, char** /*argv*/)
     //modify model for second node
     auto model2 = model;
 
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::smm::Model<1, InfectionState>>>,
-               mio::MobilityEdgeDirected>
-        graph;
-    graph.add_node(1001, model, t0);
-    graph.add_node(1002, model2, t0);
+    mio::Graph<mio::SimulationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
+    graph.add_node(0, model, t0);
 
     auto param = mio::MobilityParametersTimed(2, 10, 1);
 
