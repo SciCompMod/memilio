@@ -6,7 +6,8 @@ We are always happy about contributions to the project! Here you can find more i
 Coding guidelines
 ---------------------
 
-All software is built in modules, unit tests have to be added for each module/functionality.
+All software is built in modules, unit tests have to be added for each module/functionality. We use  `GoogleTest <https://google.github.io/googletest/>`_ for that
+and refer to their documentation for further information.
 
 The CI pipeline also automates some code style enforcement via a ``pre-commit``.
 We recommend to configure it locally such that it runs automatically on every commit:
