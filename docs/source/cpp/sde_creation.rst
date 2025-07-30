@@ -24,7 +24,7 @@ system
 
     \mathrm{d}Z_t = a(Z_t, t) \mathrm{d}t
 
-(i.e. with :math:`b \equiv 0`) is an ODE model as described on the :doc:`ODE model creation <cpp/ode_creation>` page.
+(i.e. with :math:`b \equiv 0`) is an ODE model as described on the :doc:`ODE model creation <ode_creation>` page.
 
 How to define an SDE model
 --------------------------
@@ -102,7 +102,7 @@ or alternatively as a ``FlowModel`` by additionally providing the list of ``Flow
 
 In both cases the computed ``noise`` vector must have the same size as the vectors ``pop`` and ``y``, i.e. the number of
 compartments. For more details on how to implement the ``get_derivatives`` or ``get_flows`` methods check out the
-:doc:`ODE model creation <cpp/ode_creation>` page.
+:doc:`ODE model creation <ode_creation>` page.
 
 .. dropdown:: :fa:`gears` Expert's knowledge
 

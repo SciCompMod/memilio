@@ -3,9 +3,9 @@ SDE-based models
 
 These models are a type of aggregated or compartmental model, which is described by a system of initial value problems
 (IVP) given by stochastic differential equations (SDE). In MEmilio, they are implemented as an ODE-based model with an
-additional function to compute the random noise, as can be seen :doc:`here <cpp/sde_creation>`. Hence, for the most part,
+additional function to compute the random noise, as can be seen :doc:`here <sde_creation>`. Hence, for the most part,
 SDE models are used exactly like ODE-based models. They mostly differ in how they are simulated, see the <Simulation>
-section below. For everything else, check out the page on :doc:`ODE-based model usage <cpp/ode>`.
+section below. For everything else, check out the page on :doc:`ODE-based model usage <ode>`.
 
 Simulation
 ----------
