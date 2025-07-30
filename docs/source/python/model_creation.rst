@@ -41,4 +41,4 @@ then the following steps should give an overview of what needs to be done:
 * Write new tests and examples
 * (Add the package to the documentation and stubs generation)
 
-MEmilio also provides the package :doc:`memilio-generation <memilio_generation>` for automatic generation of model specific python bindings.
+MEmilio also provides the package :doc:`memilio-generation <memilio_generation>` for automatic generation of model specific Python bindings.
