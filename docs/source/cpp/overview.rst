@@ -38,7 +38,7 @@ Model Structure
 
 The MEmilio library uses a modular organization of models, where generic implementations are inherited by specific implementations:
 
-.. image:: https://github.com/user-attachments/assets/280fa4f8-9caf-4e70-8e87-79754b4cc2dc
+.. image:: http://martinkuehn.eu/research/images/overview.png
    :alt: Model Hierarchy
    :width: 100%
 
