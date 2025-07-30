@@ -101,7 +101,7 @@ target_link_libraries(graph_stochastic_mobility_example PRIVATE memilio ode_seci
 target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(asymmetric_graph_example asymmetric_graph.cpp)
-target_link_libraries(asymmetric_graph_example PRIVATE memilio ode_secir)
+target_link_libraries(asymmetric_graph_example PRIVATE memilio smm)
 target_compile_options(asymmetric_graph_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(abm_minimal_example abm_minimal.cpp)
