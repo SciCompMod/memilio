@@ -31,7 +31,7 @@ How to define an SDE model
 
 In short, to define an SDE model in MEmilio, you have to implement a ``StochasticModel``, e.g., by inheriting from it.
 To that end, we first need to define types that list all ``InfectionState``\s, ``Parameter``\s and initial conditions
-via a ``Population``. Refer to the :doc:`ODE model creation <ode_creation>` page for more details on these types.
+via a ``Population``. We refer to the :doc:`ODE model creation <ode_creation>` page for more details on these types.
 
 A valid SDE model needs to implement one function each for the deterministic part
 :math:`a(Z_t, t) \mathrm{d}t` and stochastic part :math:`b(Z_t, t)\mathrm{d}W_t`. For the deterministic part, we require
