@@ -23,8 +23,8 @@ The MEmilio framework is written in two languages: C++ and Python.
 For more details on using models implemented in C++ directly, see the sections on :doc:`model usage <cpp/model_usage>`.
 For more details on implementing new infection dynamics models that could then be combined with, e.g., our mobility patterns, see :doc:`model creation <cpp/model_creation>`.
 
-If you prefer using Python to call or run our models, you can use our :doc:`memilio-simulation <python/memilio_simulation>` package to run simulations.
-The :doc:`memilio-epidata <python/memilio_epidata>` package provides tools to download and structure important data such 
+If you prefer using Python to call or run our models, you can use our :doc:`memilio-simulation <python/m-simulation>` package to run simulations.
+The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download and structure important data such 
 as infection or mobility data. More about this and our other Python packages can be found in the :doc:`Python Interface Section <python/python_packages>` 
 of this documentation.
 
@@ -196,7 +196,7 @@ that were used in publications.
 
 Loading data
 ~~~~~~~~~~~~~~~~~~~~~
-The :doc:`memilio-epidata <python/memilio_epidata>` package provides tools to download epidemiological relevant datasets. Some 
+The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download epidemiological relevant datasets. Some 
 datasets like contact matrices for Germany are also included in the ``data`` folder of the `github repository <https://github.com/SciCompMod/memilio/tree/main/data>`_ and 
 school holidays (for Germany) are directly included in the `C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`_.  
 
@@ -211,7 +211,7 @@ the :doc:`C++ model creation <cpp/model_creation>` section of this documentation
 Visualizations
 ~~~~~~~~~~~~~~~~~~~~~
 
-For visualizations, we provide our :doc:`python package MEmilio-plot <python/memilio_plot>`. Apart from that, we have 
+For visualizations, we provide our :doc:`python package MEmilio-plot <python/m-plot>`. Apart from that, we have 
 collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`_. 
 For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`_.
 

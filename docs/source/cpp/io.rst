@@ -386,7 +386,7 @@ more efficiently than the provided general free functions.
 Epidemiological Data Integration
 --------------------------------
 
-For equation-based models, MEmilio provides direct integration with real-world epidemiological data through the :doc:`memilio-epidata <../python/memilio_epidata>` package. This allows models to be initialized and calibrated with actual 
+For equation-based models, MEmilio provides direct integration with real-world epidemiological data through the :doc:`memilio-epidata <../python/m-epidata>` package. This allows models to be initialized and calibrated with actual 
 population, case, hospitalization, and ICU data from various sources.
 
 MEmilio provides specialized functions in the parameter I/O modules to read and process this epidemiological data 

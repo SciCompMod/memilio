@@ -239,7 +239,7 @@ The ODE-SEIR model also provides utility functions to extract specific measures,
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../python/memilio_plot>` 
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../python/m-plot>` 
 and its documentation.
 
 

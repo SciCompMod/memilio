@@ -11,7 +11,7 @@ as the bindings, as well as the functional source code we want to call from Pyth
 
 We will go over the common workflow of writing bindings for MEmilio, explaining the structure of the
 bindings and providing a small step-by-step guide on adding a new model. 
-For a depper look at common patterns you may encounter with the C++ MEmilio library and that are present in the bindings look into :doc:`Common patterns in Python bindings <python_bindings_patterns>`.
+For a depper look at common patterns you may encounter with the C++ MEmilio library and that are present in the bindings look into :doc:`Common patterns in Python bindings <m-simulation_common_patterns>`.
 
 Expanding the simulation packages
 ---------------------------------
@@ -41,4 +41,4 @@ then the following steps should give an overview of what needs to be done:
 * Write new tests and examples
 * (Add the package to the documentation and stubs generation)
 
-MEmilio also provides the package :doc:`memilio-generation <memilio_generation>` for automatic generation of model specific Python bindings.
+MEmilio also provides the package :doc:`memilio-generation <m-generation>` for automatic generation of model specific Python bindings.

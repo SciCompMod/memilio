@@ -22,7 +22,7 @@ Required python packages:
 - scikit-learn
 - progress
 
-Since we are running simulations to generate the data, the MEmilio :doc:`memilio-simulation <memilio_simulation>` package also needs to be installed.
+Since we are running simulations to generate the data, the MEmilio :doc:`memilio-simulation <m-simulation>` package also needs to be installed.
 
 Usage
 -----

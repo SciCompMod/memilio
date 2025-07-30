@@ -20,7 +20,7 @@ Most of them serve their own use case:
 
         +++
 
-        .. button-ref:: memilio_simulation
+        .. button-ref:: m-simulation
             :expand:
             :color: secondary
             :click-parent:
@@ -39,7 +39,7 @@ Most of them serve their own use case:
 
         +++
 
-        .. button-ref:: memilio_epidata
+        .. button-ref:: m-epidata
             :expand:
             :color: secondary
             :click-parent:
@@ -61,7 +61,7 @@ Most of them serve their own use case:
 
         +++
 
-        .. button-ref:: memilio_surrogate
+        .. button-ref:: m-surrogate
             :expand:
             :color: secondary
             :click-parent:
@@ -79,7 +79,7 @@ Most of them serve their own use case:
 
         +++
 
-        .. button-ref:: memilio_plot
+        .. button-ref:: m-plot
             :expand:
             :color: secondary
             :click-parent:
@@ -97,7 +97,7 @@ Most of them serve their own use case:
 
         +++
 
-        .. button-ref:: memilio_generation
+        .. button-ref:: m-generation
             :expand:
             :color: secondary
             :click-parent:

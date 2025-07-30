@@ -165,7 +165,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>`
 and its documentation.
 
 You can export your simulation results to CSV format as described above.

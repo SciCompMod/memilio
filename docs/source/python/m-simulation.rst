@@ -57,17 +57,17 @@ different features are provided. Lastly, this documentation provides tutorials o
 coupling it with other libraries, showing the advantages of in language simulation models.
 
 **How to**:
-:doc:`Usage of Python bindings <model_usage>` |
-:doc:`Expanding Python bindings <model_creation>` |
-:doc:`Common patterns <python_bindings_patterns>`
+:doc:`Usage of Python bindings <m-simulation_model_usage>` |
+:doc:`Expanding Python bindings <m-simulation_expanding_bindings>` |
+:doc:`Common patterns <m-simulation_common_patterns>`
 
 .. toctree::
     :maxdepth: 1
     :hidden:
     
-    Model Usage <model_usage>
-    Model Creation <model_creation>
-    Common Patterns <python_bindings_patterns>
+    Model Usage <m-simulation_model_usage>
+    Model Creation <m-simulation_expanding_bindings>
+    Common Patterns <m-simulation_common_patterns>
 
 Stubs
 -----

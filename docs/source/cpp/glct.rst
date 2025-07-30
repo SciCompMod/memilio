@@ -94,7 +94,7 @@ As adaptive step size methods are used by default, the output will not be availa
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../python/memilio_plot>` and its documentation.
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../python/m-plot>` and its documentation.
 
 
 List of models

@@ -4,7 +4,7 @@ How to: Usage of Python bindings
 This tutorial should give an overview of how to use the
 currently available functions and models of the Python bindings.
 For expanding the bindings with new models look into the section 
-:doc:`Model Creation <model_creation>`.
+:doc:`Model Creation <m-simulation_expanding_bindings>`.
 
 Generally, the package is following the structure of the main C++
 library to make it easy to understand and comparable, while introducing
@@ -142,7 +142,7 @@ pythonic interface.
    result_array = result.as_ndarray()
 
 Now you can use the usual data handling options and make us of the easy visualization tools that are part of Python.
-Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <memilio_plot>`.
+Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <m-plot>`.
 
 Additional ressources
 ---------------------
