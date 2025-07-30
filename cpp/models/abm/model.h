@@ -413,7 +413,8 @@ public:
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
         }
-        return m_local_population_per_age_cache[location.get()][{cell_idx, age}];
+        auto& m_local_population_per_age = m_local_population_per_age_cache[location.get()];
+        return m_local_population_per_age[{cell_idx, age}];
     }
 
     // Change the Location of a Person. this requires that Location is part of this Model.
@@ -561,10 +562,12 @@ protected:
                 --m_local_population_cache[origin.get()];
                 ++m_local_population_cache[destination.get()];
                 for (CellIndex cell : old_cells) {
-                    --m_local_population_per_age_cache[origin.get()][{cell, person.get_age()}];
+                    auto& local_population_per_age = m_local_population_per_age_cache[origin.get()];
+                    --local_population_per_age[{cell, person.get_age()}];
                 }
                 for (CellIndex cell : cells) {
-                    ++m_local_population_per_age_cache[destination.get()][{cell, person.get_age()}];
+                    auto& local_population_per_age = m_local_population_per_age_cache[destination.get()];
+                    ++local_population_per_age[{cell, person.get_age()}];
                 }
             }
         }

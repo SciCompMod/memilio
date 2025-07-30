@@ -130,17 +130,17 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
 }
 
 void normalize_exposure_contribution(
-    AirExposureRates& local_air_exposure, ContactExposureRates& local_contact_exposure,
-    const std::vector<CellIndex>& cells,
-    const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age)
+    ContactExposureRates& local_contact_exposure,
+    const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age,
+    size_t num_agegroups)
 {
-    for (CellIndex cell : cells) {
-        for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_agegroups); age_group++) {
-            if (local_population_per_age[{cell, age_group}] > 0) {
-                local_air_exposure[{cell, age_group}] =
-                    local_air_exposure[{cell, age_group}] / local_population_per_age[{cell, age_group}];
-                local_contact_exposure[{cell, age_group}] =
-                    local_contact_exposure[{cell, age_group}] / local_population_per_age[{cell, age_group}];
+    for (CellIndex cell = 0; cell < local_contact_exposure.size<CellIndex>(); ++cell) {
+        for (auto&& virus : enum_members<VirusVariant>()) {
+            for (auto age_group = AgeGroup(0); age_group < AgeGroup(num_agegroups); age_group++) {
+                if (local_population_per_age[{cell, age_group}] > 0) {
+                    local_contact_exposure[{cell, virus, age_group}] =
+                        local_contact_exposure[{cell, virus, age_group}] / local_population_per_age[{cell, age_group}];
+                }
             }
         }
     }
