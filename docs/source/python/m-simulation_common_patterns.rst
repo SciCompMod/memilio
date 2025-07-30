@@ -43,7 +43,7 @@ Configuration Macros
 --------------------
 
 Similar to the MEmilio C++ library, MEmilio Simulation uses compile-time configuration options through CMake to enable or disable specific features. 
-The correct preprocessor conditionals need to be added around the bindings, if those features are needed. For more information read :doc:`Configuration Macros <cpp/cpp_makros_preprocessing>`.
+The correct preprocessor conditionals need to be added around the bindings, if those features are needed. For more information read :doc:`Configuration Macros <../cpp/cpp_makros_preprocessing>`.
 
 Template classes/functions
 --------------------------

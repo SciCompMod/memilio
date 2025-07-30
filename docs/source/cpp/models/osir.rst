@@ -190,7 +190,7 @@ Additionally, you can export the results to a CSV file:
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../python/m-plot>` 
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>` 
 and its documentation.
 
 

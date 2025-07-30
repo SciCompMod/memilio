@@ -45,7 +45,7 @@ Package structure
 
 The package ``memilio.simulation`` and its submodules aim to mirror the namespaces of the C++ library. 
 The main module contains general code for modelling infectious disease, while each submodule contains a specific model.
-The overall package structure reflects the directory layout of the Python files, starting from the memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>_ folder.
+The overall package structure reflects the directory layout of the Python files, starting from the `memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_ folder.
 These Python files may include native Python extensions, while the binded C++ code is imported as binary modules into these.
 
 Usage
