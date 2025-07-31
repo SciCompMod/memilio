@@ -1,17 +1,18 @@
 Overview
 =========
 
-MEmilio contains a plethora of python modules containing tools to expand on the main C++.
-Most of them serve their own use case:
+MEmilio contains several python modules offering an easy-to-use interface to the efficiently implemented C++
+models and to complement these by data preparation, code generation, machine learning, or plotting functionality.
+Please see the individual package documentation for more details on the functionality and usage.
 
 .. grid:: 1 1 2 2
     :gutter: 2 3 4 4
 
     .. grid-item-card::
-        :img-top: https://github.com/user-attachments/assets/b95b8803-0fdc-4d80-88cc-fcb2643c3e8f
+        :img-top: http://martinkuehn.eu/research/images/pybind.png
         :text-align: center
 
-        MEmilio Python Bindings
+        MEmilio Python Interface
         ^^^
 
         This package provides a python interface for parts of the C++ main library,
@@ -28,14 +29,14 @@ Most of them serve their own use case:
             To the python bindings
 
     .. grid-item-card::
-        :img-top: https://github.com/user-attachments/assets/ca098013-ec8a-4fe9-964c-f1881b7382de
+        :img-top: http://martinkuehn.eu/research/images/epidata.png
         :text-align: center
 
-        Epidata Tool
+        MEmilio EpiData Package
         ^^^
 
         This package provides tools to download and structure important 
-        data such as infection or mobility data.
+        data such as infection or derived mobility data.
 
         +++
 
@@ -51,13 +52,13 @@ Most of them serve their own use case:
     :gutter: 2 3 4 4
 
     .. grid-item-card::
-        :img-top: https://github.com/user-attachments/assets/064a55a0-7054-4421-a026-353f8f4cc478
+        :img-top: http://martinkuehn.eu/research/images/surrogate.png
         :text-align: center
 
-        Surrogate Models
+        Machine Learning Surrogate Models
         ^^^
 
-        This package contains machine learning based surrogate models that make predictions based on the MEmilio simulation models. 
+        This package contains machine learning-based surrogate models that were trained based on the MEmilio simulation outputs. 
 
         +++
 
@@ -69,7 +70,7 @@ Most of them serve their own use case:
             To the intro of surrogate models
 
     .. grid-item-card::
-        :img-top: https://github.com/user-attachments/assets/81659df6-826c-4a34-83c0-a20c32d1d266
+        :img-top: http://martinkuehn.eu/research/images/plot.png
         :text-align: center
 
         Visualization
@@ -87,13 +88,13 @@ Most of them serve their own use case:
             To the visualization
    
     .. grid-item-card::
-        :img-top: https://github.com/user-attachments/assets/0c23a9a1-5b78-477f-981e-6bb7993fc80d
+        :img-top: http://martinkuehn.eu/research/images/pygen.png
         :text-align: center
 
-        Generating Bindings
+        Interface Generation
         ^^^
 
-        Easy to use tool for helping with the creation of new bindings of C++ models.
+        Easy to use tool for helping with the creation of python bindings or interfaces to (new) C++ models.
 
         +++
 
