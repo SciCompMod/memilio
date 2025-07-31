@@ -256,6 +256,7 @@ void Model::build_exposure_caches()
 {
     PRAGMA_OMP(single)
     {
+        mio::log_debug("Building exposure caches for ABM.");
         const size_t num_locations = m_locations.size();
         m_air_exposure_rates_cache.resize(num_locations);
         m_contact_exposure_rates_cache.resize(num_locations);

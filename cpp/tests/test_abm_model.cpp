@@ -17,11 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "utils.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/model.h"
+#include "abm/model_functions.h"
 #include "abm/virus_variant.h"
 #include "abm_helpers.h"
 #include "memilio/epidemiology/age_group.h"
@@ -108,6 +110,10 @@ TEST_F(TestModel, addPerson)
  */
 TEST_F(TestModel, getNumberPersoms)
 {
+    // replace spdlog::default_logger
+    mio::RedirectLogger logger;
+    logger.capture();
+
     auto model    = mio::abm::Model(num_age_groups);
     auto location = model.add_location(mio::abm::LocationType::School);
 
@@ -115,8 +121,14 @@ TEST_F(TestModel, getNumberPersoms)
     model.add_person(location, age_group_15_to_34);
     model.add_person(location, age_group_35_to_59);
 
+    EXPECT_TRUE(logger.read().empty());
+
     // Verify the total number of persons in the model.
-    EXPECT_EQ(model.get_number_persons(location), 2);
+    EXPECT_EQ(model.get_number_persons(location), 2); // This get also does the first build of the cache.
+#ifndef NDEBUG
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("Building exposure caches for ABM."));
+#endif
+
     // Verify the number of persons in the model for each age group.
     EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_15_to_34), 1);
     EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_35_to_59), 1);
@@ -125,6 +137,9 @@ TEST_F(TestModel, getNumberPersoms)
     EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_5_to_14), 0);
     EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_60_to_79), 0);
     EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_80_plus), 0);
+
+    EXPECT_TRUE(logger.read().empty());
+    logger.release();
 }
 
 /**
@@ -196,27 +211,19 @@ TEST_F(TestModel, findLocation)
  */
 TEST_F(TestModel, exposureContributionNormalization)
 {
-    auto model            = mio::abm::Model(num_age_groups);
-    auto location         = model.add_location(mio::abm::LocationType::School);
-    mio::abm::TimePoint t = mio::abm::TimePoint(0);
-    mio::abm::TimeSpan dt = mio::abm::hours(1);
+    mio::abm::ContactExposureRates contact_exposure_rates;
+    contact_exposure_rates.resize({mio::abm::CellIndex{1}, mio::abm::VirusVariant{1}, mio::AgeGroup{1}});
+    contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}] = 10.0;
 
-    // Add two infected persons to the model with the same age group.
-    add_test_person(model, location, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
-    add_test_person(model, location, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+    mio::CustomIndexArray<std::atomic_int_fast32_t, mio::abm::CellIndex, mio::AgeGroup> local_population_per_age;
+    local_population_per_age.resize({mio::abm::CellIndex{1}, mio::AgeGroup{1}});
+    local_population_per_age[{mio::abm::CellIndex{0}, mio::AgeGroup{0}}] =
+        2; // Set population for cell 0 and age group 0 to 2
 
-    auto& person1 = model.get_persons()[0];
-    auto& person2 = model.get_persons()[1];
+    mio::abm::normalize_exposure_contribution(contact_exposure_rates, local_population_per_age, 1);
 
-    // Verify that the exposure contribution is calculated correctly.
-    model.begin_step(t, dt);
-
-    auto& contact_exposure_rates = model.get_contact_exposure_rates(location);
-    const ScalarType age_group_rate =
-        contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, age_group_15_to_34}];
-    EXPECT_EQ(age_group_rate, (person1.get_infection().get_infectivity(t + dt / 2) +
-                               person2.get_infection().get_infectivity(t + dt / 2)) /
-                                  2);
+    auto& rate = contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}];
+    EXPECT_EQ(rate, 5.0);
 }
 
 /**
