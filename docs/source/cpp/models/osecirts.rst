@@ -319,7 +319,7 @@ For more complex scenarios, such as real-world lockdown modeling, detailed NPIs 
 Simulation
 ----------
 
-The SECIRTS model offers the same simulation functions as the other ODE-SECIR models:
+The ODE-SECIRTS model offers the same simulation functions as the other ODE-SECIR models:
 
 1. **simulate**: Standard simulation that tracks the compartment sizes over time
 2. **simulate_flows**: Extended simulation that additionally tracks the flows between compartments
@@ -389,7 +389,7 @@ Additionally, you can export the results to a CSV file for further analysis or v
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>`
 and its documentation.
 
 Examples

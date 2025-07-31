@@ -4,7 +4,7 @@ How to: Usage of Python bindings
 This tutorial should give an overview of how to use the
 currently available functions and models of the Python bindings.
 For expanding the bindings with new models look into the section 
-:doc:`Model Creation <model_creation>`.
+:doc:`Model Creation <m-simulation_expanding_bindings>`.
 
 Generally, the package is following the structure of the main C++
 library to make it easy to understand and comparable, while introducing
@@ -89,7 +89,7 @@ of the age group.
 Nonpharmaceutical interventions
 -------------------------------
 
-One important topic of interest in infectious disease are nonpharmaceutical interventions, which aim to reduce the spread of the disease.
+One important topic of interest in infectious disease dynamics are nonpharmaceutical interventions, which aim to reduce the spread of the disease.
 The model supports to define base contact patters for the mean daily contacts between different age groups. When using multiple contact patterns they get 
 accumulated to get overall daily contacts. 
 
@@ -100,7 +100,7 @@ accumulated to get overall daily contacts.
    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
         (num_groups, num_groups))
 
-Then, dampings can be added to (partially) reduce the contacts defined by a ``ContactMatrix`` beginning at a time step ``t``. 
+Then, dampings can be added to (partially) reduce the contacts defined by a ``ContactMatrix`` beginning at a time step ``t=30``. 
 
 .. code-block:: python
 
@@ -110,7 +110,7 @@ Then, dampings can be added to (partially) reduce the contacts defined by a ``Co
 Simulation
 ----------
 
-Now, the infectious diesease dynamic can be simulated by calling ``simulate()``:
+Now, the infectious diesease dynamics can be simulated by calling ``simulate()``:
 
 .. code-block:: python
 
@@ -141,8 +141,8 @@ pythonic interface.
    
    result_array = result.as_ndarray()
 
-Now you can use the usual data handling options and make us of the easy visualization tools that are part of Python.
-Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <memilio_plot>`.
+Now you can use the usual data handling options and make use of the easy visualization tools that are part of Python.
+Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <m-plot>`.
 
 Additional ressources
 ---------------------

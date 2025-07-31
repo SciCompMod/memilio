@@ -22,7 +22,7 @@ Required python packages:
 - scikit-learn
 - progress
 
-Since we are running simulations to generate the data, the MEmilio :doc:`memilio-simulation <memilio_simulation>` package also needs to be installed.
+Since we are running simulations to generate the data, the MEmilio :doc:`memilio-simulation <m-simulation>` package also needs to be installed.
 
 Usage
 -----
@@ -167,14 +167,3 @@ SECIR Groups Model
 -----------------
 
 To be added...
-
-Testing
--------
-
-The package provides a test suite in `memilio/surrogatemodel_test <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-surrogatemodel/memilio/surrogatemodel_test>`_.
-To run the tests, simply use the following command.
-
-.. code-block:: console 
-    
-    python -m unittest
-

@@ -54,11 +54,11 @@ Contents
    :caption: Python Interface
 
    python/python_packages
-   python/memilio_simulation
-   python/memilio_epidata
-   python/memilio_surrogate
-   python/memilio_generation
-   python/memilio_plot
+   python/m-simulation
+   python/m-epidata
+   python/m-surrogate
+   python/m-generation
+   python/m-plot
 
 .. toctree::
    :maxdepth: 1

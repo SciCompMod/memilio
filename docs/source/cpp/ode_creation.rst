@@ -213,7 +213,7 @@ Essentially, ``pop`` is the population that is interacted with, while ``y`` is t
 models use this to model the exchange between multiple models, e.g. by setting ``pop = y ± commuters``. Outside of graph
 models both ``y`` and ``pop`` will have the same value.
 
-Continue :doc:`here<cpp/ode>` to learn how to use this model, or read on if you want to use a flow based ODE model.
+Continue :doc:`here<ode>` to learn how to use this model, or read on if you want to use a flow based ODE model.
 
 
 Implement the ODE model using flows
@@ -308,4 +308,4 @@ regular ``CompartmentalModel``. It uses ``Flows`` and ``get_flows`` internally t
 also an overload ``get_derivatives(flows, dydt)`` that directly computes the derivatives ``dydt`` from a given vector
 ``flows`` without calling ``get_flows``.
 
-To use this model, head :doc:`here<cpp/ode>`.
+To use this model, head :doc:`here<ode>`.

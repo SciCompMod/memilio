@@ -128,17 +128,8 @@ the results to days or any other series of times points with ``mio::interpolate_
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../python/memilio_plot>`
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../python/m-plot>`
 and its documentation.    
-
-List of models
---------------
-
-.. toctree::
-    :titlesonly:
-    
-    models/isecir
-
 
 
 IDE-SEIR model
@@ -158,6 +149,7 @@ List of models
 .. toctree::
     :titlesonly:
     
+    models/isecir
     models/iseir
 
 

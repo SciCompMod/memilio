@@ -24,14 +24,14 @@ system
 
     \mathrm{d}Z_t = a(Z_t, t) \mathrm{d}t
 
-(i.e. with :math:`b \equiv 0`) is an ODE model as described on the :doc:`ODE model creation <cpp/ode_creation>` page.
+(i.e. with :math:`b \equiv 0`) is an ODE model as described on the :doc:`ODE model creation <ode_creation>` page.
 
 How to define an SDE model
 --------------------------
 
 In short, to define an SDE model in MEmilio, you have to implement a ``StochasticModel``, e.g., by inheriting from it.
 To that end, we first need to define types that list all ``InfectionState``\s, ``Parameter``\s and initial conditions
-via a ``Population``. Refer to the :doc:`ODE model creation <ode_creation>` page for more details on these types.
+via a ``Population``. We refer to the :doc:`ODE model creation <ode_creation>` page for more details on these types.
 
 A valid SDE model needs to implement one function each for the deterministic part
 :math:`a(Z_t, t) \mathrm{d}t` and stochastic part :math:`b(Z_t, t)\mathrm{d}W_t`. For the deterministic part, we require
@@ -102,7 +102,7 @@ or alternatively as a ``FlowModel`` by additionally providing the list of ``Flow
 
 In both cases the computed ``noise`` vector must have the same size as the vectors ``pop`` and ``y``, i.e. the number of
 compartments. For more details on how to implement the ``get_derivatives`` or ``get_flows`` methods check out the
-:doc:`ODE model creation <cpp/ode_creation>` page.
+:doc:`ODE model creation <ode_creation>` page.
 
 .. dropdown:: :fa:`gears` Expert's knowledge
 
