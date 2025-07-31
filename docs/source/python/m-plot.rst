@@ -6,6 +6,7 @@ by other packages of the MEmilio software.
 
 The package is contained inside the folder `pycode/memilio-plot <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-plot>`_.
 
+.. note:: This package is under active development.
 
 Dependencies
 ------------
