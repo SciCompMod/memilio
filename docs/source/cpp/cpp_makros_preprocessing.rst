@@ -1,4 +1,4 @@
-Configuration Macros
+Configuration macros
 -------------------
 
 MEmilio provides several compile-time configuration options through CMake that control which features and dependencies are available during compilation. These configurations are defined as preprocessor macros and can be used to conditionally compile code sections based on available libraries and enabled features.
