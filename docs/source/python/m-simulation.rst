@@ -51,7 +51,7 @@ These Python files may include native Python extensions, while the binded C++ co
 Usage
 -----
 
-For understanding the package you can follow the introductions on model usage and creation of the :doc:`C++ library <../cpp/overview.rst>`.
+For understanding the package you can follow the introductions on model usage and creation of the :doc:`C++ library <../cpp/overview>`.
 Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation>`_ for the 
 different features are provided. Lastly, this documentation provides tutorials on applications for the MEmilio Python interface,
 coupling it with other libraries, showing the advantages of in language simulation models.

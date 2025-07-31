@@ -9,7 +9,7 @@ section below. For everything else, check out the page on :doc:`ODE-based model 
 
 The class used for implementing SDE models is called **StochasticModel**. It is derived from a **CompartmentalModel**
 (or optionally a **FlowModel**) for the representation of the deterministic part of the model equations. Check out
-:doc:`SDE model creation <cpp/sde_creation>` for more details.
+:doc:`SDE model creation <sde_creation>` for more details.
 
 .. _Simulation SDE:
 Simulation
