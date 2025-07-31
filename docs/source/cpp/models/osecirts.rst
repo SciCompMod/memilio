@@ -319,7 +319,7 @@ For more complex scenarios, such as real-world lockdown modeling, detailed NPIs 
 Simulation
 ----------
 
-The SECIRTS model offers the same simulation functions as the other ODE-SECIR models:
+The ODE-SECIRTS model offers the same simulation functions as the other ODE-SECIR models:
 
 1. **simulate**: Standard simulation that tracks the compartment sizes over time
 2. **simulate_flows**: Extended simulation that additionally tracks the flows between compartments

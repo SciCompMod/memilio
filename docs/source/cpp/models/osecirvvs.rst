@@ -281,7 +281,7 @@ After setting the initial populations, you also need to set the vaccination para
 Nonpharmaceutical Interventions
 -------------------------------
 
-The ODE-SECIRVVS model supports nonpharmaceutical interventions (NPIs) through dampings to the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions like e.g. lockdowns.
+The ODE-SECIRVVS model supports nonpharmaceutical interventions (NPIs) through dampings to the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions like lockdowns.
 
 Basic dampings can be added to the contact matrix as follows:
 
