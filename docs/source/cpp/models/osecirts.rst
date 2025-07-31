@@ -1,10 +1,10 @@
-SECIRTS-type model including multi-layer waning immunity
-=========================================================
+ODE-based SECIRTS-type model including multi-layer waning immunity
+==================================================================
 
-This model extends the SECIRVVS model by adding waning immunity and introducing temporary immunity states that change the meaning of recovery.
-We structured the model into three layers of immunity: naive immunity, partial immunity, improved immunity.
+This model extends the ODE-SECIRVVS model by adding waning immunity and introducing temporary immunity states that change the meaning of recovery.
+Like the ODE-SECIRVVS model, the ODE-SECIRTS model has three layers of immunity: naive immunity, partial immunity, improved immunity.
 
-In the model, waning immunity is defined by the parameters ``TimeWaningPartialImmunity``, ``TimeWaningImprovedImmunity``, ``TimeTemporaryImmunityPI``, and ``TimeTemporaryImmunityII``. The parameters ``TimeWaningPartialImmunity`` and ``TimeWaningImprovedImmunity`` represent the (mean) duration after which an individual transitions from one immunity layer to the next less protected one due to waning immunity, assuming no vaccination or recovery from infection has occurred during this period. Also, the parameters ``TimeTemporaryImmunityPI`` and ``TimeTemporaryImmunityII`` denote the (mean) duration of temporary immunity following exposure to the virus, either through vaccination or recovery. During this state of temporary immunity, individuals are protected from reinfection and are incapable of transmitting the virus to others. Should individuals previously reside in the naive or partial immunity layer, their stay in the temporary immunity state results in a transition to the next more protected immunity layer.
+Additionally, waning immunity is defined by the parameters ``TimeWaningPartialImmunity``, ``TimeWaningImprovedImmunity``, ``TimeTemporaryImmunityPI``, and ``TimeTemporaryImmunityII``. The parameters ``TimeWaningPartialImmunity`` and ``TimeWaningImprovedImmunity`` represent the (mean) duration after which an individual transitions from one immunity layer to the next weaker one due to waning immunity, assuming no vaccination or recovery from infection has occurred during this period. Similarly, the parameters ``TimeTemporaryImmunityPI`` and ``TimeTemporaryImmunityII`` denote the (mean) duration of temporary immunity following exposure to the virus, either through vaccination or recovery. During this state of temporary immunity, individuals are protected from reinfection and are incapable of transmitting the virus to others. Should individuals previously reside in the naive or partial immunity layer, their stay in the temporary immunity state results in a transition to the next stronger immunity layer.
 
 For more details about the model, we refer to `1 <https://www.medrxiv.org/content/10.1101/2024.03.01.24303602v3>`_.
 
@@ -16,7 +16,7 @@ Below is an overview of the model architecture and its compartments.
 Infection States
 ----------------
 
-The model extends the SECIRVVS model by adding temporary immunity states and flow paths for waning immunity. It contains the following list of **InfectionState**\s:
+The model extends the ODE-SECIRVVS model by adding temporary immunity states and flow paths for waning immunity. It contains the following list of **InfectionState**\s:
 
 .. code-block:: RST
 
@@ -62,9 +62,9 @@ The model extends the SECIRVVS model by adding temporary immunity states and flo
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRTS model is implemented as a **FlowModel**, which computes the flows between compartments explicitly. A key difference from the SECIRVVS model is that vaccinations in the SECIRTS model are implemented as flows within the ODE system rather than discrete events.
+The ODE-SECIRTS model is implemented as a **FlowModel**, which computes the flows between compartments explicitly. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
 
-The complete list of flows defined in the model is extensive and includes:
+The model has the following state trnsitions:
 
 .. code-block:: RST
 
@@ -110,14 +110,14 @@ The complete list of flows defined in the model is extensive and includes:
 Sociodemographic Stratification
 -------------------------------
 
-Like the previous SECIR models, the SECIRTS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, mortality risks, and immunity waning rates across age groups.
-
+Like the other ODE-SECIR models, the ODE-SECIRTS model can be stratified by one sociodemographic dimension, typically age groups. This stratification is important for modeling different vaccination rates, symptom severities, mortality risks, and immunity waning rates across age groups. The dimension is denoted 
+**AgeGroup** but can also be used for other interpretations.
 For stratifications with two or more dimensions, see :doc:`Model Creation <../ode_creation>`.
 
 Parameters
 ----------
 
-The model includes all parameters from the SECIRVVS model plus additional parameters specific to waning immunity and temporary immunity states:
+The model includes all parameters from the ODE-SECIRVVS model as well as additional parameters specific to waning and temporary immunity states:
 
 .. list-table::
    :header-rows: 1
@@ -226,7 +226,7 @@ The model includes all parameters from the SECIRVVS model plus additional parame
 Initial conditions
 ------------------
 
-The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, you should set the initial values for each compartment across all immunity levels. The following code is from the ode_secirts.cpp example:
+The initial conditions of the model are represented by the class **Populations** which defines the number of individuals in each sociodemographic group and **InfectionState**. Before running a simulation, the initial values for each compartment across all immunity levels have to be set. This can be done via:
 
 .. code-block:: cpp
 
@@ -263,7 +263,7 @@ The initial conditions of the model are represented by the class **Populations**
         model.populations[{i, mio::osecirts::InfectionState::DeadImprovedImmunity}]                        = 0;
     }
 
-After setting the initial populations, you also need to configure the daily vaccination parameters, which are directly integrated into the ODE system in this model:
+After setting the initial populations, the daily vaccination parameters, which are directly integrated into the ODE system in this model, also need to be configured:
 
 .. code-block:: cpp
 
@@ -287,7 +287,7 @@ After setting the initial populations, you also need to configure the daily vacc
 Nonpharmaceutical Interventions
 -------------------------------
 
-Like other SECIR models, the SECIRTS model supports nonpharmaceutical interventions (NPIs) through dampings in the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions like lockdowns.
+Like the other ODE-SECIR models, the ODE-SECIRTS model supports nonpharmaceutical interventions (NPIs) through dampings in the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions like lockdowns.
 
 Basic dampings can be added to the contact matrix as follows:
 
@@ -313,18 +313,18 @@ The model also supports dynamic NPIs based on epidemic thresholds:
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings, we refer to the documentation of the ODE SECIR model. 
+For more complex scenarios, such as real-world lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the ODE-SECIR model. 
 
 
 Simulation
 ----------
 
-The SECIRTS model offers the same simulation functions as the other SECIR models:
+The ODE-SECIRTS model offers the same simulation functions as the other ODE-SECIR models:
 
 1. **simulate**: Standard simulation that tracks the compartment sizes over time
 2. **simulate_flows**: Extended simulation that additionally tracks the flows between compartments
 
-Basic simulation:
+Standard simulation:
 
 .. code-block:: cpp
 
@@ -337,9 +337,9 @@ Basic simulation:
 
 During simulation, the model handles several special processes:
 
-1. **Vaccinations**: Unlike the SECIRVVS model, vaccinations are integrated directly into the ODE system through flows from susceptible compartments to temporary immunity compartments.
+1. **Vaccinations**: Unlike the ODE-SECIRVVS model, vaccinations are integrated directly into the ODE system through flows from susceptible compartments to temporary immunity compartments.
 
-2. **Variant Evolution**: The `apply_variant` function updates the transmission probability based on the existance of a new variant over time, similar to other SECIR models.
+2. **Variant Evolution**: The `apply_variant` function updates the transmission probability based on the existance of a new variant over time, similar to other ODE-SECIR models.
 
 For both simulation types, you can also specify a custom integrator:
 
@@ -356,7 +356,7 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the simulation is a `TimeSeries` object containing the sizes of each compartment at each time point. For a basic simulation, you can access the results as follows:
+The output of the simulation is a `mio::TimeSeries` object containing the sizes of each compartment at each time point. For a standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -389,13 +389,13 @@ Additionally, you can export the results to a CSV file for further analysis or v
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../../python/memilio_plot>`
-and its documentation. You can export your simulation results to CSV format as described above.
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>`
+and its documentation.
 
 Examples
 --------
 
-To get started with the SECIRTS model, check out the code example in the memilio repository:
+To get started with the ODE-SECIRTS model, check out the code example in the MEmilio repository:
 `examples/ode_secirts.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_secirts.cpp>`_.
 
 Overview of the ``osecirts`` namespace:

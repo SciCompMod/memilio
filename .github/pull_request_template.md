@@ -22,7 +22,8 @@ Please check our [git workflow](https://memilio.readthedocs.io/en/latest/develop
 - [ ] New code adheres to [coding guidelines](https://memilio.readthedocs.io/en/latest/development.html#coding-guidelines)
 - [ ] No large data files have been added (files should in sum not exceed 100 KB, avoid PDFs, Word docs, etc.)
 - [ ] Tests are added for new functionality and a local test run was successful (with and without OpenMP)
-- [ ] Appropriate **documentation** for new functionality has been added (Doxygen in the code and explanations in the online documentation)
+- [ ] Appropriate **documentation within the code** (Doxygen) for new functionality has been added in the code
+- [ ] Appropriate **external documentation** (ReadTheDocs) for new functionality has been added to the online documentation
 - [ ] Proper attention to licenses, especially no new third-party software with conflicting license has been added
 - [ ] (For ABM development) Checked [benchmark results](https://memilio.readthedocs.io/en/latest/development.html#agent-based-model-development) and ran and posted a local test above from before and after development to ensure performance is monitored.
 
