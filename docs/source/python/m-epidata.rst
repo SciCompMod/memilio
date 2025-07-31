@@ -4,27 +4,6 @@ MEmilio Epidata
 MEmilio Epidata provides modules and scripts to download epidemiological data from various different sources.
 The package as well as links to the sources can be found in the `pycode/memilio-epidata <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-epidata>`_.
 
-Installation
-------------
-
-Use the provided ``setup.py`` script to install the package and its dependencies.
-
-To install the package, use from the directory containing `pycode/memilio-epidata`
-
-.. code-block:: console
-
-    pip install .
-
-This copies the package and the required dependencies to your site-packages.
-
-For development of code use the command 
-
-.. code-block:: console
-
-    pip install -e .[dev]
-
-This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
-
 Dependencies
 ------------
 
@@ -65,57 +44,6 @@ For a detailed description of the run options and the resulting data files writt
 see the `epidata subfolder <memilio/epidata/README.rst>`_.
 
 The downloaded data is written either to HDF5 or json files.
-
-Testing and Coverage
---------------------
-
-The package provides a test suite in `memilio/epidata_test <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-epidata/memilio/epidata_test>`_.
-
-The following packages are used by the tests:
-
-* pyfakefs (creates fake directory to test that expected folders are created and data is written)
-* coverage
-
-See Installation on how to install all these dependencies automatically.
-
-To run the tests use
-
-.. code-block:: console
-
-    python -m unittest
-
-To get the coverage report run
-
-.. code-block:: console
-
-    python -m coverage run -m unittest
-    python -m coverage report
-    python -m coverage xml -o coverage_python.xml
-    python -m coverage html -d coverage_python
-
-Coverage report for actual master:
-
-:Coverage Report: https://scicompmod.github.io/memilio/coverage/python/
-
-Inspection via pylint
----------------------
-The following packages have to be installed to run pylint:
-
-* pylint
-* pylint-json2html
-
-See Installation on how to install all these dependencies automatically.
-
-Run pylint with the commands
-
-.. code-block:: console
-
-    python setup.py pylint
-    pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
-
-Pylint report for actual master:
-
-:Pylint Report: https://dlr-sc.github.io/memilio/pylint/
 
 Additional Tools
 ----------------

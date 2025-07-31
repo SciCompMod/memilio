@@ -87,14 +87,3 @@ install it as memilio-stubs, e.g. from the package folder
 .. code-block:: console
 
     python ./tools/generate_stubs.py
-
-
-Testing
--------
-
-The package provides a test suite in `memilio/simulation_test <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation_test>`_.
-To run the tests, simply use the following command.
-
-.. code-block:: console 
-    
-    python -m unittest
