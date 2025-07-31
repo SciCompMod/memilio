@@ -24,45 +24,47 @@ If you use MEmilio, please :doc:`cite our work<citation>`.
 
    This framework is under active development, as is this documentation.
 
-Contents
-=========
 
-.. toctree::
-   :maxdepth: 1
-   :caption: About
 
-   getting_started
-   citation
-   references
-   faq
-   development
-   team
+.. dropdown:: :fa:`list` **Table of Contents**
+   :animate: fade-in-slide-down
 
-.. toctree::
-   :maxdepth: 2
-   :caption: C++ Interface
+   .. toctree::
+      :maxdepth: 1
+      :caption: About
 
-   cpp/overview
-   cpp/installation
-   cpp/model_usage
-   cpp/model_creation
-   cpp/development
-   cpp/interfaces
+      getting_started
+      citation
+      references
+      faq
+      development
+      team
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Python Interface
+   .. toctree::
+      :maxdepth: 2
+      :caption: C++ Interface
 
-   python/python_packages
-   python/m-simulation
-   python/m-epidata
-   python/m-surrogate
-   python/m-generation
-   python/m-plot
+      cpp/overview
+      cpp/installation
+      cpp/model_usage
+      cpp/model_creation
+      cpp/development
+      cpp/interfaces
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Code API 
+   .. toctree::
+      :maxdepth: 2
+      :caption: Python Interface
 
-   pythonapi/pythonapi
-   api/library_root
+      python/python_packages
+      python/m-simulation
+      python/m-epidata
+      python/m-surrogate
+      python/m-generation
+      python/m-plot
+
+   .. toctree::
+      :maxdepth: 1
+      :caption: Code API 
+
+      pythonapi/pythonapi
+      api/library_root
