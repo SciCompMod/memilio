@@ -271,24 +271,6 @@ public:
     size_t get_subpopulation_combined_per_location_type(TimePoint t, InfectionState s, LocationType type) const;
 
     /**
-     * @brief Get the contact exposure rates for a location.
-     * @param[in] location The LocationId of the Location.
-     */
-    const ContactExposureRates& get_contact_exposure_rates(LocationId location) const
-    {
-        return m_contact_exposure_rates_cache[location.get()];
-    }
-
-    /**
-     * @brief Get the air exposure rates for a location.
-     * @param[in] location The LocationId of the Location.
-     */
-    const AirExposureRates& get_air_exposure_rates(LocationId location) const
-    {
-        return m_air_exposure_rates_cache[location.get()];
-    }
-
-    /**
      * @brief Get the mobility data.
      * @return Reference to the list of Trip%s that the Person%s make.
      */
