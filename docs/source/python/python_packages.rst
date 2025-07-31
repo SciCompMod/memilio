@@ -117,6 +117,7 @@ The installation can be run with the following command (from the directory conta
     
     pip install .
 
+This copies the package and the required dependencies to your site-packages.
 
 For development of code use this command instead
 
@@ -124,4 +125,54 @@ For development of code use this command instead
     
     pip install -e .[dev]
 
+This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
 The dependencies are denoted in the documentation of each package.
+
+Testing
+-------
+
+Each package provides a test suite under ``pycode/memilio-{package_name}/memilio/{package_name}_test``. 
+To run the tests, simply use the following command inside the package folder after installation:
+
+.. code-block:: console 
+
+    python -m unittest
+
+Coverage Report
+----------------
+
+Dependencies for coverage report:
+
+* coverage
+
+To get the coverage report do in the package folder
+
+.. code-block:: console
+
+    python -m coverage run -m unittest
+    python -m coverage report
+    python -m coverage xml -o coverage_python.xml
+    python -m coverage html -d coverage_python
+
+Coverage report for actual master:
+
+`Coverage Report <https://scicompmod.github.io/memilio/coverage/python/>`_
+
+Inspection via pylint
+---------------------
+
+The following packages have to be installed to run pylint:
+
+* pylint
+* pylint-json2html
+
+Run pylint with the commands in the package folder
+
+.. code-block:: console
+
+    python setup.py pylint
+    pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+
+Pylint report for actual master:
+
+`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`_
