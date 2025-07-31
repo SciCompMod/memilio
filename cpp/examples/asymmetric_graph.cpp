@@ -20,6 +20,7 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/logging.h"
 #include "smm/simulation.h"
 #include "smm/parameters.h"
 
@@ -37,7 +38,7 @@ enum class InfectionState
 int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
-    const auto tmax = 10.;
+    const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
 
     //total compartment sizes
@@ -70,20 +71,40 @@ int main(int /*argc*/, char** /*argv*/)
     mio::Graph<mio::SimulationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
     graph.add_node(0, model, t0);
     graph.add_node(1, model2, t0);
+    size_t num_nodes = 200000;
+    for (size_t i = 2; i < num_nodes; i++) {
+        auto local_model = model;
+        graph.add_node(i, local_model, t0);
+    }
 
     auto param = mio::MobilityParametersTimed(2.0, 10, 1);
     graph.add_edge(0, 1, param);
     graph.edges()[0].property.add_exchange(5.0, 5, 1);
     graph.edges()[0].property.add_exchange(6.0, 500, 1);
 
+    auto rng          = mio::RandomNumberGenerator();
+    auto distribution = mio::DiscreteDistributionInPlace<size_t>();
+    std::vector<double> uniform_vector(num_nodes, 1.0);
+    mio::log_info("Nodes generated");
+    for (size_t i = 0; i < 1 * num_nodes; ++i) {
+        auto to          = distribution(rng, {uniform_vector});
+        auto from        = distribution(rng, {uniform_vector});
+        auto local_param = mio::MobilityParametersTimed(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, to);
+        graph.add_edge(from, to, local_param);
+        graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
+        graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
+    }
+
+    mio::log_info("Graph generated");
+
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
     sim.advance(tmax);
 
-    std::cout << "First table" << std::endl;
-    sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});
-    std::cout << "Second Table" << std::endl;
-    sim.get_graph().nodes()[1].property.get_result().print_table({"S", "E", "I", "R"});
+    // std::cout << "First table" << std::endl;
+    // sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});
+    // std::cout << "Second Table" << std::endl;
+    // sim.get_graph().nodes()[1].property.get_result().print_table({"S", "E", "I", "R"});
 
     return 0;
 }
