@@ -22,7 +22,7 @@ The following macros are automatically defined by CMake during the build process
      - Defined when profiling support is enabled. Activates performance monitoring and timing instrumentation throughout the codebase.
 
 Usage in Code
-~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 These macros are used with preprocessor conditionals to enable or disable specific functionality. You should use these macros to ensure that your code can compile and run correctly depending on the available libraries and features. 
 When using these macros, you should always consider fallbacks or alternative implementations when a feature is not available. This ensures that your code remains robust and can handle cases where optional dependencies are not present.
