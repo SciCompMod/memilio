@@ -12,10 +12,10 @@
 Welcome
 ===============
 
-MEmilio implements various models for infectious disease dynamics, ranging from simple compartmental models to complex Integro-Differential and agent-based models. Its modular design enables the combination of different models with distinct mobility patterns. Through efficient implementation and parallelization, MEmilio delivers cutting-edge and compute-intensive epidemiological models at a large scale, providing precise and high-resolution spatiotemporal infectious disease dynamics. MEmilio is continuously extended and is available open-source for community use.
+MEmilio implements various models for infectious disease dynamics, ranging from simple compartmental models to complex Integro-Differential and agent-based models. Its modular design enables the combination of different models with distinct mobility patterns. Through efficient implementation and parallelization in C++ and an easy-to-use python interface, MEmilio delivers cutting-edge and compute-intensive epidemiological models to broad range of applications and users, providing precise and high-resolution spatiotemporal infectious disease dynamics. MEmilio is continuously extended and is available open-source for community use.
 
-.. image:: https://github.com/user-attachments/assets/65af6012-106e-43c6-9e0e-c96a73aa7b1e
-   :alt: Memilio_overview
+.. image:: http://martinkuehn.eu/research/images/MEmilio_small.png
+   :alt: Memilio Overview
 
 If you use MEmilio, please :doc:`cite our work<citation>`.
 
