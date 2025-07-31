@@ -80,7 +80,7 @@ class Simulation:
         minimum = np.ones((self.num_groups, self.num_groups)) * 0
         contact_matrices[0] = mio.ContactMatrix(baseline, minimum)
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
-
+        
     def set_npis(self, params, end_date, damping_value):
         """
 
@@ -96,7 +96,7 @@ class Simulation:
             start_date = (start_damping - self.start_date).days
             params.ContactPatterns.cont_freq_mat[0].add_damping(mio.Damping(np.r_[damping_value], t=start_date))
 
-    def get_graph(self, end_date, damping_value):
+    def get_graph(self, end_date):
         """
 
         :param end_date: 
@@ -106,7 +106,6 @@ class Simulation:
         model = Model(self.num_groups)
         self.set_covid_parameters(model)
         self.set_contact_matrices(model)
-        self.set_npis(model.parameters, end_date, damping_value)
         print("Model initialized.")
 
         graph = osecir.ModelGraph()
@@ -141,7 +140,7 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, damping_value, save_graph=True):
+    def run(self, num_days_sim, damping_values, save_graph=True):
         """
 
         :param num_days_sim: 
@@ -154,7 +153,7 @@ class Simulation:
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
         num_runs = 10
 
-        graph = self.get_graph(end_date, damping_value)
+        graph = self.get_graph(end_date)
 
         if save_graph:
             path_graph = os.path.join(self.results_dir, "graph")
@@ -164,13 +163,14 @@ class Simulation:
 
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
-            mobility_graph.add_node(graph.get_node(node_idx).id, graph.get_node(node_idx).property)
+            node = graph.get_node(node_idx)
+            self.set_npis(node.property.parameters, end_date, damping_values[node_idx])
+            mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
                 graph.get_edge(edge_idx).start_node_idx,
                 graph.get_edge(edge_idx).end_node_idx,
                 graph.get_edge(edge_idx).property)
-
         mobility_sim = osecir.MobilitySimulation(mobility_graph, t0=0, dt=0.5)
         mobility_sim.advance(num_days_sim)
 
@@ -178,13 +178,10 @@ class Simulation:
         for node_idx in range(graph.num_nodes):
             results.append(osecir.interpolate_simulation_result(
             mobility_sim.graph.get_node(node_idx).property.result))
-
-        osecir.interpolate_simulation_result(
-            mobility_sim.graph.get_node(0).property.result).export_csv('test.csv')
          
         return results
 
-def run_germany_nuts3_simulation(damping_value):
+def run_germany_nuts3_simulation(damping_values):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -194,44 +191,60 @@ def run_germany_nuts3_simulation(damping_value):
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
     
-    results = sim.run(num_days_sim, damping_value)
+    results = sim.run(num_days_sim, damping_values)
 
-    return {"region" + str(region): results[region] for region in range(len(results))}
+    return {f'region{region}': results[region] for region in range(len(results))}
 
 def prior():
-    damping_value = np.random.uniform(0.0, 1.0)
-    return {"damping_value": damping_value}
+    damping_values = np.random.uniform(0.0, 1.0, 400)
+    return {'damping_values': damping_values}
+
+# def load_divi_data():
+#     file_path = os.path.dirname(os.path.abspath(__file__))
+#     divi_path = os.path.join(file_path, "../../../data/Germany/pydata")
+
+#     data = pd.read_json(os.path.join(divi_path, "county_divi_ma7.json"))
+#     data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
+#     divi_dict = {f"region{i}": data[f'region{i}'] for i in range(399)}
+#     print(divi_dict)
+
 
 if __name__ == "__main__":
+
+    # import pandas as pd
+    # load_divi_data()
     import os 
-    os.environ["KERAS_BACKEND"] = "tensorflow"
+    os.environ["KERAS_BACKEND"] = "jax"
 
     import bayesflow as bf
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    trainings_data = simulator.sample(5)
+    trainings_data = simulator.sample(1000)
 
-    with open('trainings_data.pickle', 'wb') as f:
+    for region in range(400):
+        trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
+
+    with open('trainings_data10.pickle', 'wb') as f:
         pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    # with open('trainings_data.pickle', 'rb') as f:
-    #     test = pickle.load(f)
+    # with open('trainings_data1.pickle', 'rb') as f:
+    #     trainings_data = pickle.load(f)
+    # for i in range(9):
+    #     with open(f'trainings_data{i+2}.pickle', 'rb') as f:
+    #         data = pickle.load(f)
+    #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    # test = {k:v for k, v in test.items() if k in ('damping_value', 'region0')}
-    # print("Loaded training data:", test)
-
-
-    # trainings_data = simulator.sample(2)
-    # validation_data = simulator.sample(2)
+    # with open('validation_data.pickle', 'rb') as f:
+    #     validation_data = pickle.load(f)
 
     # adapter = (
     #     bf.Adapter()
     #     .to_array()
     #     .convert_dtype("float64", "float32")
-    #     .constrain("damping_value", lower=0.0, upper=1.0)
-    #     .rename("damping_value", "inference_variables")
-    #     .rename("region0", "summary_variables")
-    #     #.standardize("summary_variables")
+    #     .constrain("damping_values", lower=0.0, upper=1.0)
+    #     .rename("damping_values", "inference_variables")
+    #     .concatenate([f'region{i}' for i in range(400)], into="summary_variables", axis=-1)
+    #     .log("summary_variables", p1=True)
     # )
 
     # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=4)
@@ -244,6 +257,12 @@ if __name__ == "__main__":
     #     inference_network=inference_network
     # )
 
-    # history = workflow.fit_offline(data=trainings_data, epochs=2, batch_size=2, validation_data=validation_data)
-    # f = bf.diagnostics.plots.loss(history)
-    # run_germany_nuts3_simulation(damping_value=0.5)
+    # history = workflow.fit_offline(data=trainings_data, epochs=1, batch_size=32, validation_data=validation_data)
+
+    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model.keras"))
+
+    # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True})
+    # plots['losses'].savefig('losses.png')
+    # plots['recovery'].savefig('recovery.png')
+    # plots['calibration_ecdf'].savefig('calibration_ecdf.png')
+    # plots['z_score_contraction'].savefig('z_score_contraction.png')
