@@ -220,6 +220,7 @@ void Model::build_compute_local_population_cache() const
 {
     PRAGMA_OMP(single)
     {
+        log_debug("Building local population cache for ABM.");
         const size_t num_locations = m_locations.size();
         const size_t num_persons   = m_persons.size();
         m_local_population_cache.resize(num_locations);

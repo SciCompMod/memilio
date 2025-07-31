@@ -108,7 +108,7 @@ TEST_F(TestModel, addPerson)
 /**
  * @brief Test the get_number_persons and get_number_persons_age methods in the Model class.
  */
-TEST_F(TestModel, getNumberPersoms)
+TEST_F(TestModel, getNumberPersons)
 {
     // replace spdlog::default_logger
     mio::RedirectLogger logger;
@@ -126,7 +126,7 @@ TEST_F(TestModel, getNumberPersoms)
     // Verify the total number of persons in the model.
     EXPECT_EQ(model.get_number_persons(location), 2); // This get also does the first build of the cache.
 #ifndef NDEBUG
-    EXPECT_THAT(logger.read(), ::testing::HasSubstr("Building exposure caches for ABM."));
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("Building local population cache for ABM."));
 #endif
 
     // Verify the number of persons in the model for each age group.
