@@ -28,7 +28,7 @@ The main directory structure in the ``pycode/memilio-simulation`` directory incl
 
         - **bindings/**: Binding code for creating the MEmilio Simulation package
 
-            - **compartments/**: Classes for compartment models and simulations
+            - **compartments/**: Classes for compartmental models and simulations
             - **epidemiology/**: Base classes for epidemiological modeling
             - **io/**: Input/output utilities for various formats
             - **math/**: Mathematical utilities such as integrators (Euler, RK)
@@ -44,14 +44,14 @@ Package structure
 -----------------
 
 The package ``memilio.simulation`` and its submodules aim to mirror the namespaces of the C++ library. 
-The main module contains general code for modelling infectious disease, while each submodule contains a specific model.
+The main module contains general code for modeling infectious diseases, while each submodule contains a specific model.
 The overall package structure reflects the directory layout of the Python files, starting from the `memilio-simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation>`_ folder.
 These Python files may include native Python extensions, while the binded C++ code is imported as binary modules into these.
 
 Usage
 -----
 
-For understanding the package you can follow the introductions on model usage and creation.
+For understanding the package you can follow the introductions on model usage and creation of the :doc:`C++ library <../cpp/overview.rst>`.
 Additionally, multiple `examples <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation>`_ for the 
 different features are provided. Lastly, this documentation provides tutorials on applications for the MEmilio Python interface,
 coupling it with other libraries, showing the advantages of in language simulation models.
@@ -87,3 +87,4 @@ install it as memilio-stubs, e.g. from the package folder
 .. code-block:: console
 
     python ./tools/generate_stubs.py
+    

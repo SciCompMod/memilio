@@ -30,7 +30,7 @@ Therefore, for the following example class
         ...
     };
 
-the bindings with enabled serialization based on SFINEA-clauses could look like
+the bindings with enabled serialization based on SFINAE-clauses could look like
 
 .. code-block:: c++
 
@@ -50,7 +50,7 @@ Template classes/functions
 
 C++ introduces template programming. Python cannot work with templates, because templates are a compile-time C++ feature, 
 but Python is dynamically typed and runtime-based. Therefore, when exposing templated C++ code to Python only specific template instantiations
-can be connected, i.e. each template specification that should be exposed to Python needs to be binded explitily with its own name.
+can be connected, i.e. each template specification that should be exposed to Python needs to be binded explicitly with its own name.
 
 To reduce the redundancy while programming MEmilio often uses templated binding methods handling a single template object. Those can be defined in the ``pymio`` namespace and
 used in the module definition code. We will follow with a short example by defining a simple templated class.
@@ -78,7 +78,7 @@ To implement the interface with pybind11, we can define a function taking the sa
 
     } // namespace pymio
 
-Now, with a single call to ``bind_MyTemplatedClass`` a specific instantiations is exposed. Let´s consider we have three different instantiations we know of, then the module definition could look like:
+Now, with a single call to ``bind_MyTemplatedClass`` a specific instantiation is exposed. Let´s consider we have three different instantiations we know of, then the module definition could look like:
 
 .. code-block:: c++
 
@@ -90,8 +90,8 @@ Now, with a single call to ``bind_MyTemplatedClass`` a specific instantiations i
 
     }
 
-This can be extended to include more definitions for the templated class or adding the pickling flag as a template aswell, so they can differ for each instantiation.
-Additionally, the binding function could return the ``pybind11::class_`` object, if some instantiations need custom interfaces which are not generalizable.
+This can be extended to include more definitions for the templated class or adding the pickling flag as a template as well, so they can differ for each instantiation.
+Additionally, the binding function could return the ``pybind11::class_`` object, if some instantiation need custom interfaces which are not generalizable.
 For an example of a MEmilio class using this approach look at the ``CompartmentalModel`` class bindings defined in `compartmental_model.h <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-simulation/memilio/simulation/bindings/compartments/compartmental_model.h>`_.
 
 IOResult as return
