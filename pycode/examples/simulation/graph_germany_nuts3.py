@@ -20,13 +20,13 @@
 import numpy as np
 import datetime
 import os
-# import memilio.simulation as mio
-# import memilio.simulation.osecir as osecir
+import memilio.simulation as mio
+import memilio.simulation.osecir as osecir
 import matplotlib.pyplot as plt
 
 from enum import Enum
-# from memilio.simulation.osecir import (Model, Simulation,
-                                    #    interpolate_simulation_result)
+from memilio.simulation.osecir import (Model, Simulation,
+                                       interpolate_simulation_result)
 
 import pickle
 
@@ -151,7 +151,6 @@ class Simulation:
         """
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
-        num_runs = 10
 
         graph = self.get_graph(end_date)
 
@@ -219,33 +218,35 @@ if __name__ == "__main__":
     import bayesflow as bf
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    trainings_data = simulator.sample(1000)
+    # trainings_data = simulator.sample(1000)
 
-    for region in range(400):
-        trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
+    # for region in range(400):
+    #     trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
 
-    with open('trainings_data10.pickle', 'wb') as f:
-        pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
+    # with open('trainings_data7.pickle', 'wb') as f:
+    #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    # with open('trainings_data1.pickle', 'rb') as f:
-    #     trainings_data = pickle.load(f)
-    # for i in range(9):
-    #     with open(f'trainings_data{i+2}.pickle', 'rb') as f:
-    #         data = pickle.load(f)
-    #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
+    with open('trainings_data1.pickle', 'rb') as f:
+        trainings_data = pickle.load(f)
+    for i in range(9):
+        with open(f'trainings_data{i+2}.pickle', 'rb') as f:
+            data = pickle.load(f)
+        trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    # with open('validation_data.pickle', 'rb') as f:
-    #     validation_data = pickle.load(f)
+    with open('validation_data.pickle', 'rb') as f:
+        validation_data = pickle.load(f)
 
-    # adapter = (
-    #     bf.Adapter()
-    #     .to_array()
-    #     .convert_dtype("float64", "float32")
-    #     .constrain("damping_values", lower=0.0, upper=1.0)
-    #     .rename("damping_values", "inference_variables")
-    #     .concatenate([f'region{i}' for i in range(400)], into="summary_variables", axis=-1)
-    #     .log("summary_variables", p1=True)
-    # )
+    adapter = (
+        bf.Adapter()
+        .to_array()
+        .convert_dtype("float64", "float32")
+        .constrain("damping_values", lower=0.0, upper=1.0)
+        .rename("damping_values", "inference_variables")
+        .concatenate([f'region{i}' for i in range(400)], into="summary_variables", axis=-1)
+        .log("summary_variables", p1=True)
+    )
+
+    print("inference_variables shape:", adapter(trainings_data)["inference_variables"].shape)
 
     summary_network = bf.networks.TimeSeriesNetwork(summary_dim=4)
     inference_network = bf.networks.CouplingFlow()
@@ -257,12 +258,12 @@ if __name__ == "__main__":
         inference_network=inference_network
     )
 
-    # history = workflow.fit_offline(data=trainings_data, epochs=1, batch_size=32, validation_data=validation_data)
+    history = workflow.fit_offline(data=trainings_data, epochs=1, batch_size=32, validation_data=validation_data)
 
-    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model.keras"))
+    workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model.keras"))
 
-    # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True})
-    # plots['losses'].savefig('losses.png')
-    # plots['recovery'].savefig('recovery.png')
-    # plots['calibration_ecdf'].savefig('calibration_ecdf.png')
-    # plots['z_score_contraction'].savefig('z_score_contraction.png')
+    plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True})
+    plots['losses'].savefig('losses_couplingflow.png')
+    plots['recovery'].savefig('recovery_couplingflow.png')
+    plots['calibration_ecdf'].savefig('calibration_ecdf_couplingflow.png')
+    plots['z_score_contraction'].savefig('z_score_contraction_couplingflow.png')
