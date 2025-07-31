@@ -27,7 +27,7 @@ Set the CMake variable ``MEMILIO_USE_LIKWID=ON`` to enable LIKWID support and ru
 For more details see the LIKWID documentation, available `here <https://github.com/RRZE-HPC/likwid/wiki/likwid-perfctr>`_.
 
 
-Performance Timers
+Performance timers
 ------------------
 
 Here we present MEmilio's own timing framework. 
@@ -124,7 +124,7 @@ If the containing function is used, a summary with timing results will be printe
 :code:`foo::Bar::baz` and :code:`foo::bar`, respectively.
 
 
-General Recommendations
+General recommendations
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 - **Do not time every detail.**
@@ -144,7 +144,7 @@ General Recommendations
   to read.
 
 
-The Timing Framework
+The timing framework
 ~~~~~~~~~~~~~~~~~~~~
 
 The main goals of this timing framework are to provide time measuring capabilities with minimal runtime overhead and
