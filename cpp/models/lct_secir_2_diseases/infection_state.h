@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef LCT_SECIR_2_DISEASE_INFECTIONSTATE_H
-#define LCT_SECIR_2_DISEASE_INFECTIONSTATE_H
+#ifndef LCT_SECIR_2_DISEASES_INFECTIONSTATE_H
+#define LCT_SECIR_2_DISEASES_INFECTIONSTATE_H
 
 namespace mio
 {
@@ -40,30 +40,32 @@ enum class InfectionState
     InfectedSymptoms_1a   = 3,
     InfectedSevere_1a     = 4,
     InfectedCritical_1a   = 5,
+    Recovered_a           = 6,
+    Dead_a                = 7,
     // second infection with disease a
-    Exposed_2a            = 6,
-    InfectedNoSymptoms_2a = 7,
-    InfectedSymptoms_2a   = 8,
-    InfectedSevere_2a     = 9,
-    InfectedCritical_2a   = 10,
+    Exposed_2a            = 8,
+    InfectedNoSymptoms_2a = 9,
+    InfectedSymptoms_2a   = 10,
+    InfectedSevere_2a     = 11,
+    InfectedCritical_2a   = 12,
     // R and D for disease a
-    Recovered_a = 11,
-    Dead_a      = 12,
+
     // first infection with disease b
     Exposed_1b            = 13,
     InfectedNoSymptoms_1b = 14,
     InfectedSymptoms_1b   = 15,
     InfectedSevere_1b     = 16,
     InfectedCritical_1b   = 17,
+    Recovered_b           = 18,
+    Dead_b                = 19,
     // second infection with disease b
-    Exposed_2b            = 18,
-    InfectedNoSymptoms_2b = 19,
-    InfectedSymptoms_2b   = 20,
-    InfectedSevere_2b     = 21,
-    InfectedCritical_2b   = 22,
+    Exposed_2b            = 20,
+    InfectedNoSymptoms_2b = 21,
+    InfectedSymptoms_2b   = 22,
+    InfectedSevere_2b     = 23,
+    InfectedCritical_2b   = 24,
     // R and D for disease b
-    Recovered_b = 23,
-    Dead_b      = 24,
+
     // Recovered from both diseases
     Recovered_ab = 25,
     Count        = 26
@@ -125,4 +127,4 @@ enum class InfectionTransition
 } // namespace lsecir2d
 } // namespace mio
 
-#endif // LCT_SECIR_2_DISEASE_INFECTIONSTATE_H
+#endif // LCT_SECIR_2_DISEASES_INFECTIONSTATE_H

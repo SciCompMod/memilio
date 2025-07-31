@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef LCT_SECIR_2_DISEASE_PARAMS_H
-#define LCT_SECIR_2_DISEASE_PARAMS_H
+#ifndef LCT_SECIR_2_DISEASES_PARAMS_H
+#define LCT_SECIR_2_DISEASES_PARAMS_H
 
 #include "memilio/config.h"
 #include "memilio/utils/parameter_set.h"
@@ -37,7 +37,7 @@ namespace lsecir2d
 {
 
 /**********************************************
-* Define Parameters of the LCT-SECIHURD model *
+* Define Parameters of the LCT-SECIHURD-2-DISEASES model *
 **********************************************/
 
 /**
@@ -216,7 +216,7 @@ struct TransmissionProbabilityOnContact_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
     static Type get_default(size_t size = 1)
     {
-        return Type::Constant(size, 1, 0.2);
+        return Type::Constant(size, 1, 1.);
     }
     static std::string name()
     {
@@ -302,7 +302,7 @@ struct RiskOfInfectionFromSymptomatic_b {
 };
 
 /**
- * @brief The percentage of asymptomatic cases for disease a in the SECIR model.
+ * @brief The percentage of asymptomatic cases for disease a.
  */
 struct RecoveredPerInfectedNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -317,7 +317,7 @@ struct RecoveredPerInfectedNoSymptoms_a {
 };
 
 /**
- * @brief The percentage of hospitalized patients per infected patients for disease a in the SECIR model.
+ * @brief The percentage of hospitalized patients per infected patients for disease a.
  */
 struct SeverePerInfectedSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -332,7 +332,7 @@ struct SeverePerInfectedSymptoms_a {
 };
 
 /**
- * @brief The percentage of ICU patients per hospitalized patients for disease a in the SECIR model.
+ * @brief The percentage of ICU patients per hospitalized patients for disease a.
  */
 struct CriticalPerSevere_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -347,7 +347,7 @@ struct CriticalPerSevere_a {
 };
 
 /**
- * @brief The percentage of dead patients per ICU patients for disease a in the SECIR model.
+ * @brief The percentage of dead patients per ICU patients for disease a.
  */
 struct DeathsPerCritical_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -362,7 +362,7 @@ struct DeathsPerCritical_a {
 };
 
 /**
- * @brief The percentage of asymptomatic cases for disease b in the SECIR model.
+ * @brief The percentage of asymptomatic cases for disease b.
  */
 struct RecoveredPerInfectedNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -377,7 +377,7 @@ struct RecoveredPerInfectedNoSymptoms_b {
 };
 
 /**
- * @brief The percentage of hospitalized patients per infected patients for disease b in the SECIR model.
+ * @brief The percentage of hospitalized patients per infected patients for disease b.
  */
 struct SeverePerInfectedSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -392,7 +392,7 @@ struct SeverePerInfectedSymptoms_b {
 };
 
 /**
- * @brief The percentage of ICU patients per hospitalized patients for disease b in the SECIR model.
+ * @brief The percentage of ICU patients per hospitalized patients for disease b.
  */
 struct CriticalPerSevere_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -407,7 +407,7 @@ struct CriticalPerSevere_b {
 };
 
 /**
- * @brief The percentage of dead patients per ICU patients for disease b in the SECIR model.
+ * @brief The percentage of dead patients per ICU patients for disease b.
  */
 struct DeathsPerCritical_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -422,7 +422,7 @@ struct DeathsPerCritical_b {
 };
 
 /**
- * @brief The start day in the LCT SECIR model.
+ * @brief The start day in the LCT-SECIR-2-DISEASES  model.
  * The start day defines in which season the simulation is started.
  * If the start day is 180 and simulation takes place from t0=0 to
  * tmax=100 the days 180 to 280 of the year are simulated.
@@ -440,7 +440,7 @@ struct StartDay {
 };
 
 /**
- * @brief The seasonality in the LCT-SECIR model.
+ * @brief The seasonality in the LCT-SECIR-2-DISEASES model.
  * The seasonality is given as (1+k*sin()) where the sine
  * curve is below one in summer and above one in winter.
  */
@@ -467,7 +467,7 @@ using ParametersBase =
                  CriticalPerSevere_b, DeathsPerCritical_b, StartDay, Seasonality>;
 
 /**
- * @brief Parameters of an LCT-SECIR model.
+ * @brief Parameters of an LCT-SECIR-2-DISEASES model.
  */
 class Parameters : public ParametersBase
 {
@@ -666,4 +666,4 @@ public:
 } // namespace lsecir2d
 } // namespace mio
 
-#endif // LCT_SECIR_2_DISEASE_PARAMS_H
+#endif // LCT_SECIR_2_DISEASES_PARAMS_H

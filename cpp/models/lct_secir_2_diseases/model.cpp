@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "lct_secir_2_disease/model.h"
+#include "lct_secir_2_diseases/model.h"
 
 namespace mio
 {

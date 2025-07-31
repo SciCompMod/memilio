@@ -37,8 +37,8 @@ int main()
     // Simple example to demonstrate how to run a simulation using an LCT-SECIR model.
     // One single AgeGroup/Category member is used here.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
-    constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 3, NumInfectedSymptoms = 1, NumInfectedSevere = 1,
-                     NumInfectedCritical = 5;
+    constexpr size_t NumExposed = 1, NumInfectedNoSymptoms = 1, NumInfectedSymptoms = 1, NumInfectedSevere = 1,
+                     NumInfectedCritical = 1;
     using InfState                       = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
                                             NumInfectedSevere, NumInfectedCritical, 1, 1>;
@@ -49,16 +49,16 @@ int main()
     // defined initial vector is used to initialize the LCT model.
     bool use_initializer_flows = false;
 
-    ScalarType tmax = 10;
+    ScalarType tmax = 5;
 
     // Set Parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 3.;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 3.;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 3.;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 3.;
 
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
@@ -117,8 +117,7 @@ int main()
         // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
         // how the entries of the initial value vector relate to the defined template parameters of the model or the number
         // of subcompartments. It is also possible to define the initial values directly.
-        std::vector<std::vector<ScalarType>> initial_populations = {{750}, {30, 20},          {20, 10, 10}, {50},
-                                                                    {50},  {10, 10, 5, 3, 2}, {20},         {10}};
+        std::vector<std::vector<ScalarType>> initial_populations = {{9000}, {1000}, {0}, {0}, {0}, {0}, {0}, {0}};
 
         // Assert that initial_populations has the right shape.
         if (initial_populations.size() != (size_t)InfState::Count) {
@@ -154,10 +153,10 @@ int main()
     }
 
     // Perform a simulation.
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.1, model);
     // The simulation result is divided by subcompartments.
     // We call the function calculate_compartments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
     auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
-    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 12, 4);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 12, 3);
 }
