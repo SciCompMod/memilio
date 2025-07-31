@@ -142,31 +142,21 @@ Option B: Building the C++ core (Advanced)
 
 For experienced developers and C++ programmers, we offer the C++ backend to fully benefit from all functionality and parallel performance.
 
-1.  Navigate to the C++ source code directory:
+Please see the full :doc:`C++ Build instructions <cpp/installation>` for more details and a list of compile options.
+
+1.  Run CMake. This tool *configures* the project for compilation on your specific system.
 
     .. code-block:: console
 
-       cd cpp
+        cmake -S cpp -B cpp/build
 
-2.  Create a separate directory for the build files.
-
-    .. code-block:: console
-
-       mkdir build && cd build
-
-3.  Run CMake. This tool prepares the project for compilation on your specific system.
+2.  Compile the code and create the executables. You can find them under *cpp/build/bin*.
 
     .. code-block:: console
 
-       cmake ..
+        cmake --build cpp/build
 
-4.  Compile the code and create the executables.
-
-    .. code-block:: console
-
-       cmake --build .
-
-For more detailed instructions, help with errors, and a list of compile options, please see the full :doc:`C++ Installation Guide <cpp/installation>`.
+If you experience errors, feel free to contact martin.kuehn@dlr.de or open a `discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`_!
 
 Running simulations
 ~~~~~~~~~~~~~~~~~~~~~
