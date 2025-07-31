@@ -240,7 +240,7 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
 * by the Helmholtz School for Data Science in Life, Earth and Energy (HDS-LEE),
 * by German Federal Ministry of Education and Research under grant agreement 031L0297B (Project INSIDe),
 * by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant agreement 528702961,
-* by German Federal Ministry of Education and Research under grant agreement 031L0319A and 031L0319A (Project AIMS).
+* by German Federal Ministry of Education and Research under grant agreement 031L0319A and 031L0319B (Project AIMS).
 
 .. |helmholtz| image:: _static/funder/helmholtz.jpg
    :width: 200px
