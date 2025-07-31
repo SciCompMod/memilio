@@ -5,7 +5,7 @@ This page introduces the main developers and researchers behind MEmilio.
 
 .. _core_developers:
 
-Core developers
+Core Developers
 ---------------
 
 .. _developer_1:
@@ -13,13 +13,13 @@ Core developers
 Martin Kühn
 ^^^^^^^^^^^
 
-.. image:: https://martinkuehn.eu/research/images/martin.png
+.. image:: https://www.martinkuehn.eu/research/kuehn150x150.jpg
    :alt: Martin Kühn
    :width: 150px
    :align: left
    :class: developer-photo
 
-**Research Focus:** High-Performance Computing, Energy-aware Computing, Numerical Analysis, Scientific Computing, Mathematical Modeling, Metapopulation Models, Integro-Differential Equation-based Models, Agent-Based Models, Hybrid Models, Machine Learning Surrogates
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Numerical Analysis, Scientific Computing, Metapopulation Models, Integro-Differential Equation-based Models, Agent-Based Models, Hybrid Models, Machine Learning Surrogates
 
 Martin Kühn studied at University of Cologne, Germany, and Université de Montréal, Canada, and obtained a PhD in Applied Mathematics from University of Cologne in 2018. He is affiliated with the Institute of Software Technology of the German Aerospace Center where he leads the group of Predictive Simulation Software and the University of Bonn where he does research on mathematical-epidemiological modeling. His research focuses on the design, analysis, and implementation of numerical methods in the context of high performance computing. Over the last five years, Martin Kühn has studied various models for the spread of infectious diseases, including SARS-CoV-2. He initiated the development of the MEmilio framework to support fast and reliable response to pandemic threats using mathematical models from ordinary and integro-differential equations, metapopulations, agent-based and hybrid metapopulation-agent-based models as well as machine learning surrogate models through, e.g., graph neural networks.
 
@@ -77,13 +77,13 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
 Sascha Korf
 ^^^^^^^^^^^^^
 
-.. image:: https://martinkuehn.eu/research/images/sascha.png
+.. image:: _static/team/max_mustermann.jpg
    :alt: Sascha Korf
    :width: 150px
    :align: left
    :class: developer-photo
 
-**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Agent Based Modeling (ABMs)
+**Research Focus:** High-Performance Computing, Mathematical Modeling, Scientific Computing, Agent Based Modelling (ABMs)
 
 Sascha Korf is a PhD student at the Institute of Software Technology at the German Aerospace Center (DLR) since 2022. 
 His background is in numerical mathematics, where he studied at the University of Cologne. He is interested in the development of agent-based models for infectious disease dynamics, especially in the context of high-performance computing.
@@ -104,7 +104,7 @@ His background is in numerical mathematics, where he studied at the University o
 Julia Bicker
 ^^^^^^^^^^^^
 
-.. image:: https://martinkuehn.eu/research/images/julia.png
+.. image:: _static/team/max_mustermann.jpg
    :alt: Julia Bicker
    :width: 150px
    :align: left
@@ -185,13 +185,13 @@ Kilian Volmer
    :align: left
    :class: developer-photo
 
-**Research Focus:** Epidemiological Modeling, Metapopulation models
+**Research Focus:** Epidemiological modelling, Metapopulation models
 
 
 Kilian holds a B.SC. and a M.SC. in Mathematics from the University of Bonn. During his Masters he worked as a research 
-assistant in the group of Prof. Kevin Thurley and wrote his thesis on modeling immune cell interactions. In December 
+assistant in the group of Prof. Kevin Thurley and wrote his thesis on modelling immune cell interactions. In December 
 2024 he joined the group of Prof. Jan Hasenauer at the Life and Medical Sciences Institute and the Bonn Center 
-for Mathematical Life Sciences as a PhD student to work on infectious disease modeling.
+for Mathematical Life Sciences as a PhD student to work on infectious disease modelling.
 
 
 
@@ -237,6 +237,32 @@ equation-based models.
 
    * `ORCID Profile: 0000-0002-2769-0270 <https://orcid.org/0000-0002-2769-0270>`_
 
+
+David Kerkmann
+^^^^^^^^^^^^^
+
+.. image:: _static/team/max_mustermann.jpg
+   :alt: David Kerkmann
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Mathematical Modeling, Agent Based Modelling (ABMs), Systems Immunology, Scientific Computing
+
+David Kerkmann is a PostDoc at the Department of Systems Immunology at the Helmholtz Centre for Infection Research (HZI) in Braunschweig, Germany since 2022. He holds a PhD degree in Mathematics from the Heinrich Heine University Düsseldorf.
+He is interested in the development of agent-based models for infectious disease dynamics, especially in the context of systems immunology and human behavior.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * **Kerkmann D**, Korf S, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
+   * Zunker H, Schmieding R, **Kerkmann D**, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
+   * Schmid N, Bicker J , Hofmann AF, Wallrafen-Sam K, **Kerkmann D**, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0009-0007-9109-096X <https://orcid.org/0009-0007-9109-096X>`_
 
 .. _contributors:
 

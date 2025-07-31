@@ -27,6 +27,11 @@ Required Python packages:
 
 For a successful build, the development libraries for Python need to be installed, i.e. python3.x-dev. 
 
+.. warning::
+    Generation currently requires specifically version ``18.1.1`` of `libclang.so`, since the function ``create_ast`` in `ast.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/ast.py>`_ generates the abstract syntax tree using `clang-18`. Different versions may lead to unsupported abstractions.
+
+    If you want to try a different version, set your `libclang` version under ``install_requires`` in the `setup.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/setup.py>`_ and change the clang command in ``create_ast`` in `ast.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/ast.py>`_.
+
 Usage
 -----
 
@@ -53,12 +58,6 @@ To use the visualization run the command:
     python memilio/tools/example_oseir.py -p
 
 
-**Common mistakes**
-
-* Please ensure that your Python bindings are compatible with your libclang.so version.
-
-Set your libclang version under ``install_requires`` according to your Python bindings version in the `setup.py <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/graph_visualization.py>`_.
-
 Visualization
 -------------
 
@@ -71,7 +70,7 @@ This allows you to visualize the abstract syntax tree (AST) of the C++ model in 
 
 **Example**
 
-``aviz.output_ast_formatted(ast, ast.get_node_by_index(1))`` displays the second node of the AST and its children in a file called ast_formatted.txt. 
+In your generation script, use ``aviz.output_ast_formatted(ast, ast.get_node_by_index(1))`` to display the second node of the AST and its children in a file called ast_formatted.txt. 
 With the root node ``.get_node_by_index(0)`` you can display the whole AST.
 
 ``aviz.output_ast_terminal(ast, ast.get_node_by_index(1))`` displays the second node of the AST and its children in terminal.
@@ -90,7 +89,7 @@ When implementing new model features you can follow these steps:
 
 * Add necessary configurations to `config.json.txt <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/tools/config.json.txt/>`_ and add corresponding attributes to the ``ScannerConfig``.
 * For the features you want to implement, find the nodes in the abstract syntax tree (AST) (use method Scanner.output_ast_file(); see the example in tools/).
-* Add the extraction of those features. Therefore, you need to change the "check_..."-methods corresponding to the ``CursorKind`` of your nodes in the ``Scanner``. If there is no corresponding "check\_..."-method you need to write a new one and add it to the switch-method (``scanner.switch_node_kind()``).
+* Add the extraction of those features. Therefore, you need to change the "check\_..."-methods corresponding to the ``CursorKind`` of your nodes in the ``Scanner``. If there is no corresponding "check\_..."-method you need to write a new one and add it to the switch-method (``scanner.switch_node_kind()``).
 * Extend the ``IntermediateRepresentation`` for the new model features.
 * Adjust the `cpp-template <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/template/template_cpp.txt>`_ and the `string-template-methods <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-generation/memilio/generation/template/template_string.py>`_. If needed, use new identifiers and write new string-template-methods for them.
 * Adjust the substitution dictionaries in the ``Generator``.

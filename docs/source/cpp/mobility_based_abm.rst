@@ -31,7 +31,7 @@ Disease progression
 
 The ABM implements a detailed disease progression model that captures the full course of an infection from exposure to resolution. The disease progression is modeled through the ``Infection`` class, which contains:
 
-1. **Infection States**: Similar to the :doc:`equation based models <ode>`, an infected person progresses through states defined in `infection_state.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection_state.h>`_:
+1. **Infection States**: Similar to the aggregated models (see, e.g., :doc:`equation based models<ode>`), an infected person progresses through states defined in `infection_state.h <https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/infection_state.h>`_:
 
    * **Susceptible**: Initial state before infection
    * **Exposed**: Infected but not yet infectious
@@ -88,19 +88,7 @@ This is particularly useful for analyzing results after the simulation has compl
 
 3. **Person-specific Data**: Follow individual movement patterns or infection trajectories
 
-The examples demonstrate two approaches:
-
-.. code-block:: cpp
-
-   // Basic time series tracking of infection states
-   mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-       Eigen::Index(mio::abm::InfectionState::Count)};
-   
-   // More complex logging with multiple data types
-   mio::History<mio::DataWriterToMemory, LogTimePoint, LogLocationIds> history;
-   
-   // Run simulation with history object
-   sim.advance(tmax, history);
+However, the user can also define their own loggers and writers to collect custom data. For further information and examples, see :doc:`io`.
 
 Interventions
 ~~~~~~~~~~~~~
