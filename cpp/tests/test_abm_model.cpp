@@ -104,6 +104,30 @@ TEST_F(TestModel, addPerson)
 }
 
 /**
+ * @brief Test the get_number_persons and get_number_persons_age methods in the Model class.
+ */
+TEST_F(TestModel, getNumberPersoms)
+{
+    auto model    = mio::abm::Model(num_age_groups);
+    auto location = model.add_location(mio::abm::LocationType::School);
+
+    // Add persons to the model.
+    model.add_person(location, age_group_15_to_34);
+    model.add_person(location, age_group_35_to_59);
+
+    // Verify the total number of persons in the model.
+    EXPECT_EQ(model.get_number_persons(location), 2);
+    // Verify the number of persons in the model for each age group.
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_15_to_34), 1);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_35_to_59), 1);
+    // Verify the number of persons in the model for an age group that has no persons.
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_0_to_4), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_5_to_14), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_60_to_79), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_80_plus), 0);
+}
+
+/**
  * @brief Test combined subpopulation count by location type in the Model class.
  */
 TEST_F(TestModel, getSubpopulationCombined)
@@ -165,6 +189,34 @@ TEST_F(TestModel, findLocation)
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, person_id), school_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
+}
+
+/**
+ * @brief Test the exposure contribution normalization in the Model class.
+ */
+TEST_F(TestModel, exposureContributionNormalization)
+{
+    auto model            = mio::abm::Model(num_age_groups);
+    auto location         = model.add_location(mio::abm::LocationType::School);
+    mio::abm::TimePoint t = mio::abm::TimePoint(0);
+    mio::abm::TimeSpan dt = mio::abm::hours(1);
+
+    // Add two infected persons to the model with the same age group.
+    add_test_person(model, location, age_group_15_to_34, mio::abm::InfectionState::InfectedNoSymptoms);
+    add_test_person(model, location, age_group_15_to_34, mio::abm::InfectionState::InfectedSymptoms);
+
+    auto& person1 = model.get_persons()[0];
+    auto& person2 = model.get_persons()[1];
+
+    // Verify that the exposure contribution is calculated correctly.
+    model.begin_step(t, dt);
+
+    auto& contact_exposure_rates = model.get_contact_exposure_rates(location);
+    const ScalarType age_group_rate =
+        contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, age_group_15_to_34}];
+    EXPECT_EQ(age_group_rate, (person1.get_infection().get_infectivity(t + dt / 2) +
+                               person2.get_infection().get_infectivity(t + dt / 2)) /
+                                  2);
 }
 
 /**
