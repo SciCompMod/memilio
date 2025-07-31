@@ -28,7 +28,6 @@
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/result_io.h"
-#include <string>
 #include <vector>
 
 namespace params
@@ -56,8 +55,7 @@ ScalarType cont_freq = 1.5 * 0.1;
 ScalarType beta      = cont_freq / total_population;
 } // namespace params
 
-mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(int ode_exponent, int abs_tol_exponent, int rel_tol_exponent,
-                                                        std::string save_dir = "")
+mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, std::string save_dir = "")
 {
     using namespace params;
 
@@ -82,11 +80,9 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(int ode_exponent, int ab
 
     model.check_constraints();
 
-    ScalarType abs_tol = pow(10, -abs_tol_exponent);
-    ScalarType rel_tol = pow(10, -rel_tol_exponent);
     std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
         std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            abs_tol, rel_tol, dt_ode, dt_ode);
+            1e-10, 1e-5, dt_ode, dt_ode);
     // integrator->set_dt_min(dt_ode);
     // integrator->set_dt_max(dt_ode);
     auto sir = simulate(t0, tmax, dt_ode, model, integrator);
@@ -96,7 +92,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(int ode_exponent, int ab
         mio::TimeSeries<ScalarType> compartments = sir;
         auto save_result_status_ode =
             mio::save_result({compartments}, {0}, num_agegroups,
-                             save_dir + "result_ode_dt=1e-" + fmt::format("{}", ode_exponent) + ".h5");
+                             save_dir + "result_ode_dt=1e-" + fmt::format("{:.0f}", ode_exponent) + ".h5");
 
         if (!save_result_status_ode) {
             return mio::failure(mio::StatusCode::InvalidValue,
@@ -190,44 +186,23 @@ int main()
 {
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
+    std::string save_dir = "../../simulation_results/exponential_paper_example_dt_ode=1e-6/";
+    // Make folder if not existent yet.
+    boost::filesystem::path dir(save_dir);
+    boost::filesystem::create_directories(dir);
 
     // Compute groundtruth with ODE model.
-    // int ode_exponent     = 2;
-    // int abs_tol_exponent = 1; // 10
-    // int rel_tol_exponent = 1; // 5
+    ScalarType ode_exponent = 6;
 
-    // std::vector<int> ode_exponents     = {6, 7, 8, 9, 10};
-    // std::vector<int> abs_tol_exponents = {9, 10, 11};
-    // std::vector<int> rel_tol_exponents = {5, 6, 7};
+    auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 
-    std::vector<int> ode_exponents     = {5};
-    std::vector<int> abs_tol_exponents = {10};
-    std::vector<int> rel_tol_exponents = {5};
+    // Do IDE simulations.
 
-    for (int ode_exponent : ode_exponents) {
-        for (int abs_tol_exponent : abs_tol_exponents) {
-            for (int rel_tol_exponent : rel_tol_exponents) {
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+    std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-                std::string save_dir = fmt::format(
-                    "../../simulation_results/exponential_paper_example_dt_ode=1e-{}_abstol=1e-{}_reltol={}/",
-                    std::to_string(ode_exponent), std::to_string(abs_tol_exponent), std::to_string(rel_tol_exponent));
-                std::cout << "Save dir: " << save_dir << std::endl;
-                // Make folder if not existent yet.
-                boost::filesystem::path dir(save_dir);
-                boost::filesystem::create_directories(dir);
-
-                auto result_ode = simulate_ode(ode_exponent, abs_tol_exponent, rel_tol_exponent, save_dir).value();
-
-                // Do IDE simulations.
-
-                std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
-                std::vector<size_t> gregory_orders    = {1, 2, 3};
-
-                for (size_t gregory_order : gregory_orders) {
-                    std::cout << "Gregory order: " << gregory_order << std::endl;
-                    mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, save_dir, result_ode);
-                }
-            }
-        }
+    for (size_t gregory_order : gregory_orders) {
+        std::cout << "Gregory order: " << gregory_order << std::endl;
+        mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, save_dir, result_ode);
     }
 }
