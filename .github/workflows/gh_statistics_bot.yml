@@ -37,25 +37,26 @@ jobs:
           script: |
             const asciichart = require('asciichart');
 
-            // Get date ranges for last 12 months
-            function getLast12MonthsRanges() {
-              const ranges = [];
+            // Get commit statistics for current month only
+            async function getCurrentMonthStats() {
               const now = new Date();
+              const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+              const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
               
-              for (let i = 11; i >= 0; i--) {
-                const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-                
-                ranges.push({
-                  start: monthStart.toISOString(),
-                  end: monthEnd.toISOString(),
-                  monthName: monthStart.toLocaleString('default', { month: 'short', year: 'numeric' }),
-                  month: monthStart.getMonth(),
-                  year: monthStart.getFullYear()
-                });
-              }
-              
-              return ranges;
+              const since = monthStart.toISOString();
+              const until = monthEnd.toISOString();
+              const monthName = monthStart.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+              const [commitStats, prStats] = await Promise.all([
+                getMonthCommitStats(since, until),
+                getMonthPRStats(since, until)
+              ]);
+
+              return {
+                monthName,
+                stats: commitStats,
+                prStats
+              };
             }
 
             // Get commit statistics for a specific month
@@ -243,14 +244,38 @@ jobs:
 
             // Main execution
             try {
-              console.log('Gathering 12 months of repository data...');
+              console.log('Gathering current month repository data...');
               
-              const monthRanges = getLast12MonthsRanges();
-              const monthlyData = [];
+              // Get current branch for testing
+              let currentBranch;
+              if (context.eventName === 'pull_request') {
+                currentBranch = context.payload.pull_request.head.ref;
+                console.log(`Using PR branch: ${currentBranch}`);
+              } else {
+                currentBranch = context.ref.replace('refs/heads/', '') || 'main';
+                console.log(`Using branch: ${currentBranch}`);
+              }
 
-              // Gather data for each month (with rate limiting)
+              // Gather data for last 12 months (for charts only)
+              const monthRanges = [];
+              const now = new Date();
+              
+              for (let i = 11; i >= 0; i--) {
+                const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+                
+                monthRanges.push({
+                  start: monthStart.toISOString(),
+                  end: monthEnd.toISOString(),
+                  monthName: monthStart.toLocaleString('default', { month: 'short', year: 'numeric' })
+                });
+              }
+
+              const monthlyData = [];
+              
+              // Gather data for charts (simplified)
               for (const range of monthRanges) {
-                console.log(`Processing ${range.monthName}...`);
+                console.log(`Processing ${range.monthName} for charts...`);
                 
                 const [stats, prStats] = await Promise.all([
                   getMonthCommitStats(range.start, range.end),
@@ -263,68 +288,31 @@ jobs:
                   prStats
                 });
 
-                // Small delay to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 1000));
-              }
-
-              // Get current branch for testing
-              let currentBranch;
-              if (context.eventName === 'pull_request') {
-                currentBranch = context.payload.pull_request.head.ref;
-                console.log(`Using PR branch: ${currentBranch}`);
-              } else {
-                currentBranch = context.ref.replace('refs/heads/', '') || 'main';
-                console.log(`Using branch: ${currentBranch}`);
+                await new Promise(resolve => setTimeout(resolve, 500));
               }
 
               // Create and commit SVG charts
               console.log('Generating and committing SVG charts...');
               const chartUrls = await commitChartsToRepo(monthlyData, currentBranch);
 
-              // Create ASCII charts for Mattermost
-              const commits = monthlyData.map(d => d.stats.totalCommits);
-              const linesAdded = monthlyData.map(d => d.stats.linesAdded);
-              
-              const commitsChart = asciichart.plot(commits, { 
-                height: 8,
-                colors: [asciichart.blue]
-              });
+              // Get current month stats for Mattermost post
+              const currentMonthData = await getCurrentMonthStats();
 
-              const linesChart = asciichart.plot(linesAdded, { 
-                height: 8,
-                colors: [asciichart.green]
-              });
-
-              // Get current month stats for summary
-              const currentMonth = monthlyData[monthlyData.length - 1];
-              const stats = currentMonth.stats;
-              const prStats = currentMonth.prStats;
-
-              // Post to Mattermost with ASCII charts and SVG links
+              // Post clean summary to Mattermost
               const mattermostPayload = {
-                text: `## 📊 Monthly Repository Report - ${currentMonth.month}`,
-                attachments: [
-                  {
-                    color: '#36a64f',
-                    fields: [
-                      { title: '📝 Total Commits', value: stats.totalCommits.toString(), short: true },
-                      { title: '📁 Files Changed', value: stats.filesChanged.toString(), short: true },
-                      { title: '🔀 PRs Merged', value: prStats.merged.toString(), short: true },
-                      { title: '🆕 PRs Opened', value: prStats.opened.toString(), short: true },
-                      { title: '👥 Active Contributors', value: stats.uniqueContributors.toString(), short: true },
-                      { title: '📈 Net Lines Changed', value: `${stats.netLines >= 0 ? '+' : ''}${stats.netLines.toLocaleString()}`, short: true }
-                    ],
-                    text: `**Code Changes:** +${stats.linesAdded.toLocaleString()} / -${stats.linesRemoved.toLocaleString()} lines\n` +
-                          `**Repository:** [${context.repo.owner}/${context.repo.repo}](https://github.com/${context.repo.owner}/${context.repo.repo})\n\n` +
-                          `### 📈 12-Month Activity Trends\n\`\`\`\nCommits:\n${commitsChart}\n\nLines Added:\n${linesChart}\n\`\`\`\n\n` +
-                          `### 📊 Professional Charts Generated\n` +
-                          `📈 [Commits Chart](${chartUrls.commitsUrl})\n` +
-                          `📊 [Lines Chart](${chartUrls.linesUrl})\n` +
-                          `🔀 [PRs Chart](${chartUrls.prsUrl})\n\n` +
-                          `*Add these to your documentation:*\n` +
-                          `\`![Repository Activity](./docs/assets/commits-chart.svg)\``
-                  }
-                ]
+                text: `## 📊 ${currentMonthData.monthName} Repository Activity`,
+                attachments: [{
+                  color: '#22c55e',
+                  fields: [
+                    { title: '📝 Commits', value: currentMonthData.stats.totalCommits.toString(), short: true },
+                    { title: '📁 Files Changed', value: currentMonthData.stats.filesChanged.toString(), short: true },
+                    { title: '🔀 PRs Merged', value: currentMonthData.prStats.merged.toString(), short: true },
+                    { title: '🆕 PRs Opened', value: currentMonthData.prStats.opened.toString(), short: true },
+                    { title: '👥 Contributors', value: currentMonthData.stats.uniqueContributors.toString(), short: true },
+                    { title: '📈 Lines Added', value: `+${currentMonthData.stats.linesAdded.toLocaleString()}`, short: true }
+                  ],
+                  footer: `Repository: ${context.repo.owner}/${context.repo.repo} • Charts updated in docs/assets/`
+                }]
               };
 
               const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
