@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: write
       issues: write
-      pull-requests: write  # Added this permission
+      pull-requests: write
       actions: read
       
     steps:
@@ -30,7 +30,6 @@ jobs:
             async function getSimpleMonthStats(since, until) {
               console.log(`Getting stats for ${since} to ${until}`);
               
-              // Get commits from main branch only (1 API call per month)
               const commits = await github.paginate(github.rest.repos.listCommits, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -41,10 +40,7 @@ jobs:
               
               console.log(`Found ${commits.length} commits on main branch`);
               
-              // Get unique contributors including co-authors
               const contributors = new Set();
-              
-              // First pass: add main commit authors
               commits.forEach(commit => {
                 if (commit.author && commit.author.login) {
                   contributors.add(commit.author.login);
@@ -54,7 +50,6 @@ jobs:
                 }
               });
               
-              // Get detailed stats from commits and extract co-authors
               let totalLinesAdded = 0;
               let filesChanged = 0;
               
@@ -69,27 +64,20 @@ jobs:
                   totalLinesAdded += commitDetail.data.stats?.additions || 0;
                   filesChanged += commitDetail.data.files?.length || 0;
                   
-                  // Extract co-authors from commit message
                   if (commitDetail.data.commit && commitDetail.data.commit.message) {
                     const message = commitDetail.data.commit.message;
-                    
-                    // Look for Co-authored-by: patterns
                     const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
                     let match;
                     
                     while ((match = coAuthorRegex.exec(message)) !== null) {
                       const coAuthorName = match[1].trim();
-                      const coAuthorEmail = match[2].trim();
-                      
-                      // Add co-author name to contributors
                       if (coAuthorName && coAuthorName.length > 0) {
                         contributors.add(coAuthorName);
-                        console.log(`Found co-author: ${coAuthorName} <${coAuthorEmail}>`);
+                        console.log(`Found co-author: ${coAuthorName}`);
                       }
                     }
                   }
                   
-                  // Also check if GitHub detected additional authors
                   if (commitDetail.data.author && commitDetail.data.author.login) {
                     contributors.add(commitDetail.data.author.login);
                   }
@@ -99,7 +87,6 @@ jobs:
                 }
               }
               
-              // For remaining commits (beyond first 30), do a lighter check for co-authors
               for (const commit of commits.slice(30, 60)) {
                 try {
                   const commitDetail = await github.rest.repos.getCommit({
@@ -108,7 +95,6 @@ jobs:
                     ref: commit.sha,
                   });
                   
-                  // Only extract co-authors, skip file/line stats to save API quota
                   if (commitDetail.data.commit && commitDetail.data.commit.message) {
                     const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
                     let match;
@@ -117,16 +103,15 @@ jobs:
                       const coAuthorName = match[1].trim();
                       if (coAuthorName && coAuthorName.length > 0) {
                         contributors.add(coAuthorName);
-                        console.log(`Found co-author in commit ${commit.sha.substring(0, 7)}: ${coAuthorName}`);
                       }
                     }
                   }
                 } catch (error) {
-                  console.log(`Error checking co-authors for commit ${commit.sha}: ${error.message}`);
+                  console.log(`Error checking co-authors: ${error.message}`);
                 }
               }
               
-              console.log(`Total unique contributors (including co-authors): ${contributors.size}`);
+              console.log(`Total contributors: ${contributors.size}`);
               console.log(`Contributors: ${Array.from(contributors).join(', ')}`);
               
               return {
@@ -138,7 +123,6 @@ jobs:
               };
             }
 
-            // Get PR stats (1 API call per month)
             async function getPRStats(since, until) {
               const prs = await github.paginate(github.rest.pulls.list, {
                 owner: context.repo.owner,
@@ -158,7 +142,6 @@ jobs:
               return { merged: mergedPRs.length };
             }
 
-            // Get languages (1 API call total)
             async function getLanguageStats() {
               try {
                 const languages = await github.rest.repos.listLanguages({
@@ -179,7 +162,6 @@ jobs:
               }
             }
 
-            // Create SVG chart
             function createSVGChart(data, title, color, monthLabels) {
               const width = 600;
               const height = 200;
@@ -239,7 +221,6 @@ jobs:
               </svg>`;
             }
 
-            // Create PR and commit charts
             async function createChartsAndPR(monthlyData) {
               const totalCommits = monthlyData.map(d => d.stats.totalCommits);
               const mergedPRs = monthlyData.map(d => d.prStats.merged);
@@ -247,7 +228,6 @@ jobs:
               const activeContributors = monthlyData.map(d => d.stats.activeContributors);
               const monthLabels = monthlyData.map(d => d.month);
               
-              // Create the 4 required charts
               const charts = [
                 { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
                 { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
@@ -255,13 +235,11 @@ jobs:
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
               ];
               
-              // Get repo info first
               const repoInfo = await github.rest.repos.get({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
               
-              // Create branch for PR
               const now = new Date();
               const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
               
@@ -286,7 +264,6 @@ jobs:
                 }
               }
               
-              // Commit charts
               for (const chart of charts) {
                 try {
                   let existingFileSha = null;
@@ -318,102 +295,6 @@ jobs:
                 }
               }
               
-              // Create PR
-              const latestMonth = monthlyData[monthlyData.length - 1];
-              try {
-                const pr = await github.rest.pulls.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title: `📊 Update Repository Statistics - ${latestMonth.month}`,
-                  head: branchName,
-                  base: repoInfo.data.default_branch,
-                  body: `## Repository Activity Charts Updated
-
-                  **${latestMonth.month} Summary:**
-                  - 📝 Total Commits: ${latestMonth.stats.totalCommits}
-                  - 🔀 Merged PRs: ${latestMonth.prStats.merged}  
-                  - 📈 Lines Added: ${latestMonth.stats.linesAdded.toLocaleString()}
-                  - 👥 Active Contributors: ${latestMonth.stats.activeContributors}
-
-                  Updated charts in \`docs/stats/\` showing 12 months of repository activity.`
-                });
-                
-                return pr.data.html_url;
-              } catch (error) {
-                if (error.message.includes('A pull request already exists')) {
-                  return 'PR already exists';
-                }
-                throw error;
-              }
-            }'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
-                { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels) },
-                { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
-              ];
-              
-              // Get repo info first
-              const repoInfo = await github.rest.repos.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-              });
-              
-              // Create branch for PR
-              const now = new Date();
-              const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-              
-              try {
-                const mainRef = await github.rest.git.getRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: `heads/${repoInfo.data.default_branch}`,
-                });
-                
-                await github.rest.git.createRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: `refs/heads/${branchName}`,
-                  sha: mainRef.data.object.sha,
-                });
-                
-                console.log(`Created branch: ${branchName}`);
-              } catch (error) {
-                if (!error.message.includes('Reference already exists')) {
-                  throw error;
-                }
-              }
-              
-              // Commit charts
-              for (const chart of charts) {
-                try {
-                  let existingFileSha = null;
-                  try {
-                    const existing = await github.rest.repos.getContent({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      path: chart.path,
-                      ref: branchName
-                    });
-                    existingFileSha = existing.data.sha;
-                  } catch (e) {}
-                  
-                  const params = {
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    path: chart.path,
-                    message: `Update ${chart.path}`,
-                    content: Buffer.from(chart.content).toString('base64'),
-                    branch: branchName
-                  };
-                  
-                  if (existingFileSha) params.sha = existingFileSha;
-                  
-                  await github.rest.repos.createOrUpdateFileContents(params);
-                  console.log(`Updated: ${chart.path}`);
-                } catch (error) {
-                  console.log(`Error updating ${chart.path}: ${error.message}`);
-                }
-              }
-              
-              // Create PR
               const latestMonth = monthlyData[monthlyData.length - 1];
               try {
                 const pr = await github.rest.pulls.create({
@@ -442,14 +323,12 @@ jobs:
               }
             }
 
-            // Main execution
             try {
               console.log('Starting simple monthly report generation...');
               
               const monthlyData = [];
               const now = new Date();
               
-              // Get last 12 months of data (simple approach) - fixed date logic
               for (let i = 12; i >= 1; i--) {
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
@@ -470,13 +349,9 @@ jobs:
                 monthlyData.push({ month: monthName, stats, prStats });
               }
               
-              // Create charts and PR
               const prUrl = await createChartsAndPR(monthlyData);
-              
-              // Get languages
               const languages = await getLanguageStats();
               
-              // Post to Mattermost
               const latest = monthlyData[monthlyData.length - 1];
               const mattermostPayload = {
                 text: `📊 **${latest.month} Repository Activity**`,
