@@ -58,57 +58,123 @@ jobs:
                 return [];
               }
             }
+
+            // Get commit statistics - properly separated like GitHub Pulse
             async function getMonthCommitStats(since, until) {
-              const commits = await github.paginate(github.rest.repos.listCommits, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                since,
-                until,
-                per_page: 100,
-              });
-
-              const contributors = new Set();
-              const filesChanged = new Set();
-              let totalAdditions = 0;
-              let totalDeletions = 0;
-
-              for (const commit of commits.slice(0, 50)) {
-                if (commit.author) {
-                  contributors.add(commit.author.login);
-                }
-
-                try {
-                  const commitDetail = await github.rest.repos.getCommit({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: commit.sha,
-                  });
-
-                  if (commitDetail.data.files) {
-                    commitDetail.data.files.forEach(file => {
-                      filesChanged.add(file.filename);
-                    });
+              console.log(`=== GETTING COMMITS BETWEEN ${since} AND ${until} ===`);
+              
+              try {
+                // Get the default branch name first
+                const repo = await github.rest.repos.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+                const defaultBranch = repo.data.default_branch;
+                console.log(`*** DEFAULT BRANCH: ${defaultBranch} ***`);
+                
+                // Get ALL commits from ALL branches (no sha filter)
+                console.log('*** FETCHING ALL BRANCH COMMITS ***');
+                const allBranchCommits = await github.paginate(github.rest.repos.listCommits, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  since,
+                  until,
+                  per_page: 100,
+                });
+                
+                console.log(`*** FOUND ${allBranchCommits.length} COMMITS ACROSS ALL BRANCHES ***`);
+                
+                // Get commits from MAIN branch only
+                console.log('*** FETCHING MAIN BRANCH COMMITS ***');
+                const mainBranchCommits = await github.paginate(github.rest.repos.listCommits, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  sha: defaultBranch,
+                  since,
+                  until,
+                  per_page: 100,
+                });
+                
+                console.log(`*** FOUND ${mainBranchCommits.length} COMMITS ON ${defaultBranch} ***`);
+                
+                // Process ALL branch commits for total authors and line changes
+                const allAuthors = new Set();
+                let totalAdditions = 0;
+                let totalDeletions = 0;
+                
+                console.log('*** PROCESSING ALL BRANCH COMMITS FOR AUTHORS ***');
+                for (const commit of allBranchCommits) {
+                  if (commit.author && commit.author.login) {
+                    allAuthors.add(commit.author.login);
                   }
-
-                  totalAdditions += commitDetail.data.stats?.additions || 0;
-                  totalDeletions += commitDetail.data.stats?.deletions || 0;
-                } catch (error) {
-                  console.log(`Error getting commit details: ${error.message}`);
+                  
+                  // Get detailed stats for first 50 commits to avoid rate limits
+                  if (allBranchCommits.indexOf(commit) < 50) {
+                    try {
+                      const commitDetail = await github.rest.repos.getCommit({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        ref: commit.sha,
+                      });
+                      
+                      totalAdditions += commitDetail.data.stats?.additions || 0;
+                      totalDeletions += commitDetail.data.stats?.deletions || 0;
+                    } catch (error) {
+                      console.log(`Error getting commit detail: ${error.message}`);
+                    }
+                  }
                 }
+                
+                console.log(`*** FOUND ${allAuthors.size} UNIQUE AUTHORS ***`);
+                console.log(`*** AUTHORS: ${Array.from(allAuthors).join(', ')} ***`);
+                
+                // Process MAIN branch commits for main-specific file changes
+                let mainFileChanges = 0;
+                
+                for (const commit of mainBranchCommits.slice(0, 30)) {
+                  try {
+                    const commitDetail = await github.rest.repos.getCommit({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      ref: commit.sha,
+                    });
+                    
+                    mainFileChanges += commitDetail.data.files?.length || 0;
+                  } catch (error) {
+                    console.log(`Error getting main commit detail: ${error.message}`);
+                  }
+                }
+                
+                const result = {
+                  totalCommitsAllBranches: allBranchCommits.length,
+                  totalCommitsMain: mainBranchCommits.length,
+                  totalAuthors: allAuthors.size,
+                  authorsList: Array.from(allAuthors),
+                  filesChangedMain: mainFileChanges,
+                  linesAdded: totalAdditions,
+                  linesRemoved: totalDeletions,
+                  netLines: totalAdditions - totalDeletions,
+                };
+                
+                console.log('*** FINAL RESULT ***', JSON.stringify(result, null, 2));
+                return result;
+                
+              } catch (error) {
+                console.log('*** ERROR GETTING COMMIT STATS ***', error.message);
+                return {
+                  totalCommitsAllBranches: 0,
+                  totalCommitsMain: 0,
+                  totalAuthors: 0,
+                  authorsList: [],
+                  filesChangedMain: 0,
+                  linesAdded: 0,
+                  linesRemoved: 0,
+                  netLines: 0,
+                };
               }
-
-              return {
-                totalCommits: commits.length,
-                uniqueContributors: contributors.size,
-                contributorsList: Array.from(contributors),
-                filesChanged: filesChanged.size,
-                linesAdded: totalAdditions,
-                linesRemoved: totalDeletions,
-                netLines: totalAdditions - totalDeletions,
-              };
             }
 
-            // Get PR statistics for a specific month
+            // Get pull request statistics
             async function getMonthPRStats(since, until) {
               const allPRs = await github.paginate(github.rest.pulls.list, {
                 owner: context.repo.owner,
@@ -216,7 +282,6 @@ jobs:
                     });
                     existingFileSha = existingFile.data.sha;
                   } catch (error) {
-                    // File doesn't exist, that's okay
                     console.log(`File ${file.path} doesn't exist yet, creating new file`);
                   }
                   
@@ -229,7 +294,6 @@ jobs:
                     branch: targetBranch
                   };
                   
-                  // Add SHA if file exists
                   if (existingFileSha) {
                     params.sha = existingFileSha;
                   }
@@ -244,7 +308,7 @@ jobs:
 
             // Main execution
             try {
-              console.log('Gathering repository data for last 12 months...');
+              console.log('*** STARTING MONTHLY REPORT GENERATION ***');
               
               // Get current branch
               let targetBranch;
@@ -256,7 +320,7 @@ jobs:
                 console.log(`Using branch: ${targetBranch}`);
               }
 
-              // Gather data for last 12 months - use previous month as latest
+              // Gather data for last 12 months
               const monthlyDataArray = [];
               const now = new Date();
               
@@ -264,7 +328,6 @@ jobs:
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
                 
-                // Debug the date calculation
                 console.log(`Month ${i}: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()}`);
                 
                 const monthRange = {
@@ -293,16 +356,14 @@ jobs:
               console.log('Generating and committing SVG charts...');
               await commitChartsToRepo(monthlyDataArray, targetBranch);
 
-              // Get language stats for current month
+              // Get language stats
               const languageStats = await getLanguageStats();
 
-              // Use latest month for Mattermost (should be July 2025)
+              // Use latest month for Mattermost
               const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
-              console.log(`Latest month data for Mattermost:`, JSON.stringify(latestMonthData, null, 2));
-              console.log(`Stats object:`, JSON.stringify(latestMonthData.stats, null, 2));
-              console.log(`PR Stats object:`, JSON.stringify(latestMonthData.prStats, null, 2));
+              console.log(`*** LATEST MONTH FOR MATTERMOST ***`, JSON.stringify(latestMonthData, null, 2));
 
-              // Post to Mattermost using correct property names
+              // Post to Mattermost
               const mattermostPayload = {
                 text: `📊 **${latestMonthData.month} Repository Activity**`,
                 attachments: [{
