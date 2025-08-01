@@ -11,7 +11,7 @@ jobs:
   generate-monthly-report:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Changed to write for committing charts
+      contents: write
       issues: write
       pull-requests: read
       
@@ -37,8 +37,6 @@ jobs:
           script: |
             const asciichart = require('asciichart');
 
-
-
             // Get commit statistics for a specific month
             async function getMonthCommitStats(since, until) {
               const commits = await github.paginate(github.rest.repos.listCommits, {
@@ -54,7 +52,7 @@ jobs:
               let totalAdditions = 0;
               let totalDeletions = 0;
 
-              for (const commit of commits.slice(0, 50)) { // Limit to avoid rate limits
+              for (const commit of commits.slice(0, 50)) {
                 if (commit.author) {
                   contributors.add(commit.author.login);
                 }
@@ -129,14 +127,12 @@ jobs:
               const minValue = Math.min(...data);
               const range = maxValue - minValue || 1;
               
-              // Create SVG path for the line
               const points = data.map((value, index) => {
                 const x = padding + (index / (data.length - 1)) * chartWidth;
                 const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
                 return `${x},${y}`;
               }).join(' L');
               
-              // Create area fill path
               const areaPoints = `M${padding},${padding + chartHeight} L${points} L${padding + chartWidth},${padding + chartHeight} Z`;
               
               return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
@@ -147,56 +143,44 @@ jobs:
                   </linearGradient>
                 </defs>
                 
-                <!-- Background -->
                 <rect width="${width}" height="${height}" fill="#ffffff"/>
                 
-                <!-- Grid lines -->
                 ${[0, 0.25, 0.5, 0.75, 1].map(ratio => 
                   `<line x1="${padding}" y1="${padding + chartHeight * ratio}" x2="${padding + chartWidth}" y2="${padding + chartHeight * ratio}" stroke="#e5e7eb" stroke-width="1"/>`
                 ).join('')}
                 
-                <!-- Area fill -->
                 <path d="${areaPoints}" fill="url(#gradient)"/>
-                
-                <!-- Line -->
                 <path d="M${points}" stroke="${color}" stroke-width="2" fill="none"/>
                 
-                <!-- Data points -->
                 ${data.map((value, index) => {
                   const x = padding + (index / (data.length - 1)) * chartWidth;
                   const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
                   return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
                 }).join('')}
                 
-                <!-- Title -->
                 <text x="${width/2}" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">${title}</text>
-                
-                <!-- Y-axis labels -->
                 <text x="15" y="${padding + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${maxValue}</text>
                 <text x="15" y="${padding + chartHeight + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${minValue}</text>
               </svg>`;
             }
 
             // Commit charts to repository
-            async function commitChartsToRepo(monthlyData, currentBranch) {
+            async function commitChartsToRepo(monthlyData, targetBranch) {
               const commits = monthlyData.map(d => d.stats.totalCommits);
               const linesAdded = monthlyData.map(d => d.stats.linesAdded);
               const prsOpened = monthlyData.map(d => d.prStats.opened);
-              const prsMerged = monthlyData.map(d => d.prStats.merged);
               
-              // Create SVG charts
               const commitsSvg = createSVGChart(commits, 'Monthly Commits', '#3b82f6');
               const linesSvg = createSVGChart(linesAdded, 'Lines Added per Month', '#22c55e');
               const prsSvg = createSVGChart(prsOpened, 'Pull Requests Opened', '#8b5cf6');
               
-              const files = [
+              const chartFiles = [
                 { path: 'docs/assets/commits-chart.svg', content: commitsSvg },
                 { path: 'docs/assets/lines-chart.svg', content: linesSvg },
                 { path: 'docs/assets/prs-chart.svg', content: prsSvg }
               ];
               
-              // Create or update each chart file
-              for (const file of files) {
+              for (const file of chartFiles) {
                 try {
                   const base64Content = Buffer.from(file.content).toString('base64');
                   
@@ -206,7 +190,7 @@ jobs:
                     path: file.path,
                     message: `Update repository activity chart: ${file.path}`,
                     content: base64Content,
-                    branch: currentBranch
+                    branch: targetBranch
                   });
                   
                   console.log(`Updated chart: ${file.path}`);
@@ -216,54 +200,49 @@ jobs:
               }
               
               return {
-                commitsUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${currentBranch}/docs/assets/commits-chart.svg`,
-                linesUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${currentBranch}/docs/assets/lines-chart.svg`,
-                prsUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${currentBranch}/docs/assets/prs-chart.svg`
+                commitsUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${targetBranch}/docs/assets/commits-chart.svg`,
+                linesUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${targetBranch}/docs/assets/lines-chart.svg`,
+                prsUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${targetBranch}/docs/assets/prs-chart.svg`
               };
             }
 
             // Main execution
             try {
-              console.log('Gathering current month repository data...');
+              console.log('Gathering repository data for last 12 months...');
               
-              // Get current branch for testing
-              let currentBranch;
+              // Get current branch
+              let targetBranch;
               if (context.eventName === 'pull_request') {
-                currentBranch = context.payload.pull_request.head.ref;
-                console.log(`Using PR branch: ${currentBranch}`);
+                targetBranch = context.payload.pull_request.head.ref;
+                console.log(`Using PR branch: ${targetBranch}`);
               } else {
-                currentBranch = context.ref.replace('refs/heads/', '') || 'main';
-                console.log(`Using branch: ${currentBranch}`);
+                targetBranch = context.ref.replace('refs/heads/', '') || 'main';
+                console.log(`Using branch: ${targetBranch}`);
               }
 
-              // Gather data for last 12 months (for charts only)
-              const monthRanges = [];
+              // Gather data for last 12 months
+              const monthlyDataArray = [];
               const now = new Date();
               
               for (let i = 11; i >= 0; i--) {
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
                 
-                monthRanges.push({
+                const monthRange = {
                   start: monthStart.toISOString(),
                   end: monthEnd.toISOString(),
                   monthName: monthStart.toLocaleString('default', { month: 'short', year: 'numeric' })
-                });
-              }
+                };
 
-              const monthlyData = [];
-              
-              // Gather data for charts (simplified)
-              for (const range of monthRanges) {
-                console.log(`Processing ${range.monthName} for charts...`);
+                console.log(`Processing ${monthRange.monthName}...`);
                 
                 const [stats, prStats] = await Promise.all([
-                  getMonthCommitStats(range.start, range.end),
-                  getMonthPRStats(range.start, range.end)
+                  getMonthCommitStats(monthRange.start, monthRange.end),
+                  getMonthPRStats(monthRange.start, monthRange.end)
                 ]);
 
-                monthlyData.push({
-                  month: range.monthName,
+                monthlyDataArray.push({
+                  month: monthRange.monthName,
                   stats,
                   prStats
                 });
@@ -273,26 +252,23 @@ jobs:
 
               // Create and commit SVG charts
               console.log('Generating and committing SVG charts...');
-              const chartUrls = await commitChartsToRepo(monthlyData, currentBranch);
+              await commitChartsToRepo(monthlyDataArray, targetBranch);
 
-              // Get current month stats for Mattermost post
-              const currentMonthData = await getCurrentMonthStats();
+              // Use latest month for Mattermost
+              const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
 
-              // Get current month stats for Mattermost post
-              const currentMonthData = await getCurrentMonthStats();
-
-              // Post clean summary to Mattermost
+              // Post to Mattermost
               const mattermostPayload = {
-                text: `📊 **${currentMonthData.monthName} Repository Activity**`,
+                text: `📊 **${latestMonthData.month} Repository Activity**`,
                 attachments: [{
                   color: '#22c55e',
                   fields: [
-                    { title: '📝 Commits', value: currentMonthData.stats.totalCommits.toString(), short: true },
-                    { title: '📁 Files Changed', value: currentMonthData.stats.filesChanged.toString(), short: true },
-                    { title: '🔀 PRs Merged', value: currentMonthData.prStats.merged.toString(), short: true },
-                    { title: '🆕 PRs Opened', value: currentMonthData.prStats.opened.toString(), short: true },
-                    { title: '👥 Contributors', value: currentMonthData.stats.uniqueContributors.toString(), short: true },
-                    { title: '📈 Lines Added', value: currentMonthData.stats.linesAdded.toLocaleString(), short: true }
+                    { title: '📝 Commits', value: latestMonthData.stats.totalCommits.toString(), short: true },
+                    { title: '📁 Files Changed', value: latestMonthData.stats.filesChanged.toString(), short: true },
+                    { title: '🔀 PRs Merged', value: latestMonthData.prStats.merged.toString(), short: true },
+                    { title: '🆕 PRs Opened', value: latestMonthData.prStats.opened.toString(), short: true },
+                    { title: '👥 Contributors', value: latestMonthData.stats.uniqueContributors.toString(), short: true },
+                    { title: '📈 Lines Added', value: latestMonthData.stats.linesAdded.toLocaleString(), short: true }
                   ],
                   text: `Repository: ${context.repo.owner}/${context.repo.repo}`,
                   footer: 'Charts updated in docs/assets/ for documentation'
