@@ -45,7 +45,7 @@ jobs:
                 if (commit.author && commit.author.login) {
                   contributors.add(commit.author.login);
                 }
-                if (commit.committer && commit.committer.login && commit.committer.login !== commit.author?.login) {
+                if (commit.committer && commit.committer.login && commit.committer.login !== commit.author?.login && commit.committer.login !== 'github-actions[bot]' && commit.committer.login !== 'dependabot[bot]' && commit.committer.login !== 'web-flow[bot]') {
                   contributors.add(commit.committer.login);
                 }
               });
