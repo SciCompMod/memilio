@@ -209,9 +209,9 @@ jobs:
               const prsSvg = createSVGChart(prsOpened, 'Pull Requests Opened', '#8b5cf6');
               
               const files = [
-                { path: 'docs/commits-chart.svg', content: commitsSvg },
-                { path: 'docs/lines-chart.svg', content: linesSvg },
-                { path: 'docs/prs-chart.svg', content: prsSvg }
+                { path: 'docs/assets/commits-chart.svg', content: commitsSvg },
+                { path: 'docs/assets/lines-chart.svg', content: linesSvg },
+                { path: 'docs/assets/prs-chart.svg', content: prsSvg }
               ];
               
               // Create or update each chart file
@@ -268,8 +268,14 @@ jobs:
               }
 
               // Get current branch for testing
-              const currentBranch = context.ref.replace('refs/heads/', '') || 'main';
-              console.log(`Using branch: ${currentBranch}`);
+              let currentBranch;
+              if (context.eventName === 'pull_request') {
+                currentBranch = context.payload.pull_request.head.ref;
+                console.log(`Using PR branch: ${currentBranch}`);
+              } else {
+                currentBranch = context.ref.replace('refs/heads/', '') || 'main';
+                console.log(`Using branch: ${currentBranch}`);
+              }
 
               // Create and commit SVG charts
               console.log('Generating and committing SVG charts...');
