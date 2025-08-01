@@ -264,10 +264,16 @@ He is interested in the development of agent-based models for infectious disease
 
    * `ORCID Profile: 0009-0007-9109-096X <https://orcid.org/0009-0007-9109-096X>`_
 
+
+.. _former_core_developers:
+
+Former Core Developers
+----------------------   
+
 .. _contributors:
 
-Contributors
-------------
+Further Active or Former Contributors
+--------------------------------------
 
 We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`_.
 
