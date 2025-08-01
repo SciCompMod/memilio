@@ -209,9 +209,9 @@ jobs:
               const prsSvg = createSVGChart(prsOpened, 'Pull Requests Opened', '#8b5cf6');
               
               const files = [
-                { path: 'docs/assets/commits-chart.svg', content: commitsSvg },
-                { path: 'docs/assets/lines-chart.svg', content: linesSvg },
-                { path: 'docs/assets/prs-chart.svg', content: prsSvg }
+                { path: 'docs/commits-chart.svg', content: commitsSvg },
+                { path: 'docs/lines-chart.svg', content: linesSvg },
+                { path: 'docs/prs-chart.svg', content: prsSvg }
               ];
               
               // Create or update each chart file
