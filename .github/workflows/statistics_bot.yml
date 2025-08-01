@@ -1,7 +1,8 @@
 name: Monthly Repository Statistics
 
 on:
-  pull_request
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   generate-monthly-report:
