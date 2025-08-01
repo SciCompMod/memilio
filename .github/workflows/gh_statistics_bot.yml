@@ -221,7 +221,7 @@ jobs:
               </svg>`;
             }
 
-            async function createChartsAndPR(monthlyData) {
+            async function createChartsOnBranch(monthlyData) {
               const totalCommits = monthlyData.map(d => d.stats.totalCommits);
               const mergedPRs = monthlyData.map(d => d.prStats.merged);
               const linesAdded = monthlyData.map(d => d.stats.linesAdded);
@@ -235,11 +235,13 @@ jobs:
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
               ];
               
+              // Get repo info
               const repoInfo = await github.rest.repos.get({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
               });
               
+              // Create new branch
               const now = new Date();
               const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
               
@@ -259,11 +261,14 @@ jobs:
                 
                 console.log(`Created branch: ${branchName}`);
               } catch (error) {
-                if (!error.message.includes('Reference already exists')) {
+                if (error.message.includes('Reference already exists')) {
+                  console.log(`Branch ${branchName} already exists, using existing branch`);
+                } else {
                   throw error;
                 }
               }
               
+              // Commit charts to the new branch only
               for (const chart of charts) {
                 try {
                   let existingFileSha = null;
@@ -275,7 +280,9 @@ jobs:
                       ref: branchName
                     });
                     existingFileSha = existing.data.sha;
-                  } catch (e) {}
+                  } catch (e) {
+                    console.log(`File ${chart.path} doesn't exist on branch, creating new file`);
+                  }
                   
                   const params = {
                     owner: context.repo.owner,
@@ -289,38 +296,18 @@ jobs:
                   if (existingFileSha) params.sha = existingFileSha;
                   
                   await github.rest.repos.createOrUpdateFileContents(params);
-                  console.log(`Updated: ${chart.path}`);
+                  console.log(`Updated on branch: ${chart.path}`);
                 } catch (error) {
-                  console.log(`Error updating ${chart.path}: ${error.message}`);
+                  console.log(`Error updating ${chart.path} on branch: ${error.message}`);
                 }
               }
               
               const latestMonth = monthlyData[monthlyData.length - 1];
-              try {
-                const pr = await github.rest.pulls.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title: `📊 Update Repository Statistics - ${latestMonth.month}`,
-                  head: branchName,
-                  base: repoInfo.data.default_branch,
-                  body: `## Repository Activity Charts Updated
-
-                  **${latestMonth.month} Summary:**
-                  - 📝 Total Commits: ${latestMonth.stats.totalCommits}
-                  - 🔀 Merged PRs: ${latestMonth.prStats.merged}  
-                  - 📈 Lines Added: ${latestMonth.stats.linesAdded.toLocaleString()}
-                  - 👥 Active Contributors: ${latestMonth.stats.activeContributors}
-
-                  Updated charts in \`docs/stats/\` showing 12 months of repository activity.`
-                });
-                
-                return pr.data.html_url;
-              } catch (error) {
-                if (error.message.includes('A pull request already exists')) {
-                  return 'PR already exists';
-                }
-                throw error;
-              }
+              return {
+                branchName: branchName,
+                message: `Charts updated on branch ${branchName} for ${latestMonth.month}`,
+                branchUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`
+              };
             }
 
             try {
@@ -349,7 +336,7 @@ jobs:
                 monthlyData.push({ month: monthName, stats, prStats });
               }
               
-              const prUrl = await createChartsAndPR(monthlyData);
+              const branchResult = await createChartsOnBranch(monthlyData);
               const languages = await getLanguageStats();
               
               const latest = monthlyData[monthlyData.length - 1];
@@ -365,7 +352,7 @@ jobs:
                   ],
                   text: `**Top Contributors:** ${latest.stats.contributorsList.slice(0, 3).join(', ') || 'None'}\n` +
                         `**Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
-                        `**Charts:** ${typeof prUrl === 'string' && prUrl.startsWith('http') ? `[View PR](${prUrl})` : 'Updated in docs/stats/'}\n` +
+                        `**Charts:** [View on branch ${branchResult.branchName}](${branchResult.branchUrl})\n` +
                         `Repository: ${context.repo.owner}/${context.repo.repo}`,
                   footer: 'Simple repository statistics'
                 }]
