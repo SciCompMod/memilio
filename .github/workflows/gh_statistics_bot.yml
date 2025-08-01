@@ -99,7 +99,7 @@ jobs:
                 const allCommitsSet = new Set();
                 const allAuthors = new Set();
                 
-                for (const branch of branches.slice(0, 20)) { // Limit to first 20 branches to avoid rate limits
+                for (const branch of branches.slice(0, 200)) { // Limit to first 20 branches to avoid rate limits
                   try {
                     console.log(`Checking branch: ${branch.name}`);
                     const branchCommits = await github.paginate(github.rest.repos.listCommits, {
@@ -134,7 +134,7 @@ jobs:
                 let totalDeletions = 0;
                 let mainFileChanges = 0;
                 
-                for (const commit of mainBranchCommits.slice(0, 30)) {
+                for (const commit of mainBranchCommits.slice(0, 100)) {
                   try {
                     const commitDetail = await github.rest.repos.getCommit({
                       owner: context.repo.owner,
