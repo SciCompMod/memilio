@@ -17,7 +17,7 @@
     
     <text x="40" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Aug 2024</text><text x="181.8181818181818" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Nov 2024</text><text x="323.6363636363636" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Feb 2025</text><text x="465.4545454545455" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">May 2025</text>
     
-    <text x="300" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">Total Lines Added</text>
+    <text x="300" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">Lines Added</text>
     <text x="15" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">26179</text>
     <text x="15" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">210</text>
   </svg>
