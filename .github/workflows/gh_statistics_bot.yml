@@ -87,29 +87,6 @@ jobs:
                 }
               }
               
-              for (const commit of commits.slice(30, 60)) {
-                try {
-                  const commitDetail = await github.rest.repos.getCommit({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: commit.sha,
-                  });
-                  
-                  if (commitDetail.data.commit && commitDetail.data.commit.message) {
-                    const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
-                    let match;
-                    
-                    while ((match = coAuthorRegex.exec(commitDetail.data.commit.message)) !== null) {
-                      const coAuthorName = match[1].trim();
-                      if (coAuthorName && coAuthorName.length > 0) {
-                        contributors.add(coAuthorName);
-                      }
-                    }
-                  }
-                } catch (error) {
-                  console.log(`Error checking co-authors: ${error.message}`);
-                }
-              }
               
               console.log(`Total contributors: ${contributors.size}`);
               console.log(`Contributors: ${Array.from(contributors).join(', ')}`);
