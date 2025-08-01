@@ -5,7 +5,8 @@ on:
     types: [opened, synchronize]
   schedule:
     - cron: '0 9 1 * *'
-    
+  workflow_dispatch:
+
 jobs:
   generate-monthly-report:
     runs-on: ubuntu-latest
@@ -255,7 +256,7 @@ jobs:
                 console.log(`Using branch: ${targetBranch}`);
               }
 
-              // Gather data for last 12 months
+              // Gather data for last 12 months - use previous month as latest
               const monthlyDataArray = [];
               const now = new Date();
               
@@ -263,13 +264,16 @@ jobs:
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
                 
+                // Debug the date calculation
+                console.log(`Month ${i}: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()}`);
+                
                 const monthRange = {
                   start: monthStart.toISOString(),
                   end: monthEnd.toISOString(),
                   monthName: monthStart.toLocaleString('default', { month: 'short', year: 'numeric' })
                 };
 
-                console.log(`Processing ${monthRange.monthName}...`);
+                console.log(`Processing ${monthRange.monthName} (${monthRange.start} to ${monthRange.end})...`);
                 
                 const [stats, prStats] = await Promise.all([
                   getMonthCommitStats(monthRange.start, monthRange.end),
@@ -292,8 +296,9 @@ jobs:
               // Get language stats for current month
               const languageStats = await getLanguageStats();
 
-              // Use latest month for Mattermost
+              // Use latest month for Mattermost (should be July 2025)
               const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
+              console.log(`Latest month data:`, JSON.stringify(latestMonthData, null, 2));
 
               // Post to Mattermost with safe property access
               const mattermostPayload = {
