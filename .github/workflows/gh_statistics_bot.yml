@@ -72,17 +72,14 @@ jobs:
                 const defaultBranch = repo.data.default_branch;
                 console.log(`*** DEFAULT BRANCH: ${defaultBranch} ***`);
                 
-                // Get ALL commits from ALL branches (no sha filter)
-                console.log('*** FETCHING ALL BRANCH COMMITS ***');
-                const allBranchCommits = await github.paginate(github.rest.repos.listCommits, {
+                // Get all branches first
+                const branches = await github.paginate(github.rest.repos.listBranches, {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  since,
-                  until,
                   per_page: 100,
                 });
                 
-                console.log(`*** FOUND ${allBranchCommits.length} COMMITS ACROSS ALL BRANCHES ***`);
+                console.log(`*** FOUND ${branches.length} BRANCHES ***`);
                 
                 // Get commits from MAIN branch only
                 console.log('*** FETCHING MAIN BRANCH COMMITS ***');
@@ -97,38 +94,44 @@ jobs:
                 
                 console.log(`*** FOUND ${mainBranchCommits.length} COMMITS ON ${defaultBranch} ***`);
                 
-                // Process ALL branch commits for total authors and line changes
+                // Get commits from ALL branches
+                console.log('*** FETCHING COMMITS FROM ALL BRANCHES ***');
+                const allCommitsSet = new Set();
                 const allAuthors = new Set();
-                let totalAdditions = 0;
-                let totalDeletions = 0;
                 
-                console.log('*** PROCESSING ALL BRANCH COMMITS FOR AUTHORS ***');
-                for (const commit of allBranchCommits) {
-                  if (commit.author && commit.author.login) {
-                    allAuthors.add(commit.author.login);
-                  }
-                  
-                  // Get detailed stats for first 50 commits to avoid rate limits
-                  if (allBranchCommits.indexOf(commit) < 50) {
-                    try {
-                      const commitDetail = await github.rest.repos.getCommit({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        ref: commit.sha,
-                      });
-                      
-                      totalAdditions += commitDetail.data.stats?.additions || 0;
-                      totalDeletions += commitDetail.data.stats?.deletions || 0;
-                    } catch (error) {
-                      console.log(`Error getting commit detail: ${error.message}`);
-                    }
+                for (const branch of branches.slice(0, 20)) { // Limit to first 20 branches to avoid rate limits
+                  try {
+                    console.log(`Checking branch: ${branch.name}`);
+                    const branchCommits = await github.paginate(github.rest.repos.listCommits, {
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      sha: branch.name,
+                      since,
+                      until,
+                      per_page: 100,
+                    });
+                    
+                    console.log(`Found ${branchCommits.length} commits on ${branch.name}`);
+                    
+                    branchCommits.forEach(commit => {
+                      allCommitsSet.add(commit.sha);
+                      if (commit.author && commit.author.login) {
+                        allAuthors.add(commit.author.login);
+                      }
+                    });
+                    
+                  } catch (error) {
+                    console.log(`Error getting commits for branch ${branch.name}:`, error.message);
                   }
                 }
                 
-                console.log(`*** FOUND ${allAuthors.size} UNIQUE AUTHORS ***`);
+                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ALL BRANCHES: ${allCommitsSet.size} ***`);
+                console.log(`*** TOTAL UNIQUE AUTHORS: ${allAuthors.size} ***`);
                 console.log(`*** AUTHORS: ${Array.from(allAuthors).join(', ')} ***`);
                 
-                // Process MAIN branch commits for main-specific file changes
+                // Get detailed stats from main branch commits for line changes and file counts
+                let totalAdditions = 0;
+                let totalDeletions = 0;
                 let mainFileChanges = 0;
                 
                 for (const commit of mainBranchCommits.slice(0, 30)) {
@@ -140,13 +143,15 @@ jobs:
                     });
                     
                     mainFileChanges += commitDetail.data.files?.length || 0;
+                    totalAdditions += commitDetail.data.stats?.additions || 0;
+                    totalDeletions += commitDetail.data.stats?.deletions || 0;
                   } catch (error) {
                     console.log(`Error getting main commit detail: ${error.message}`);
                   }
                 }
                 
                 const result = {
-                  totalCommitsAllBranches: allBranchCommits.length,
+                  totalCommitsAllBranches: allCommitsSet.size,
                   totalCommitsMain: mainBranchCommits.length,
                   totalAuthors: allAuthors.size,
                   authorsList: Array.from(allAuthors),
