@@ -32,126 +32,11 @@
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <cassert>
 #include <functional>
-#include <queue>
 #include <streambuf>
 #include <vector>
 
 namespace mio
 {
-
-class MobilityParametersTimed
-{
-
-public:
-    /**
-     * @brief Construct a new Mobility Parameters Timed object
-     * 
-     */
-    MobilityParametersTimed()
-        : _exchanges{} {};
-    MobilityParametersTimed(std::filebuf& input_data)
-        : _exchanges{}
-    {
-        insert_input_data(input_data);
-    };
-    MobilityParametersTimed(double time, int number, int to)
-        : _exchanges{}
-    {
-        _exchanges.push(ExchangeData(time, number, to));
-    };
-
-    void add_exchange(double time, int number, int to)
-    {
-        _exchanges.push(ExchangeData{time, number, to});
-    }
-
-    /**
-    * @brief Return the number of exchanged items in the next exchange event.
-    * 
-    * @return auto 
-    */
-    auto next_event_number()
-    {
-        return _exchanges.top().number;
-    };
-    /**
-     * @brief Return the timepoint of the next exchangeclass EdgePropertyT event.
-     * 
-     * @return auto 
-     */
-    auto next_event_time() const
-    {
-        if (_exchanges.empty()) {
-            return std::numeric_limits<double>::max();
-        }
-        return _exchanges.top().time;
-    };
-    /**
-     * @brief Return the destination node id of the next exchange
-     * 
-     * @return auto 
-     */
-    auto next_event_node_to()
-    {
-        return _exchanges.top().node_to;
-    }
-    /**
-     * @brief Return a const reference to the next event
-     * 
-     * @return auto 
-     */
-    auto next_event()
-    {
-        return _exchanges.top();
-    }
-    /**
-     * @brief Delete the next event from the heap
-     * 
-     * @return auto 
-     */
-    auto pop_next_event()
-    {
-        return _exchanges.pop();
-    }
-    /**
-     * @brief Return the ExchangeData for the next exchange event and delete it from the list.
-     * 
-     * @return auto 
-     */
-    auto process_next_event()
-    {
-        auto next_event = _exchanges.top();
-        _exchanges.pop();
-        return next_event;
-    };
-
-private:
-    void insert_input_data(std::filebuf& input_data) {
-        //...
-    };
-
-    /**
-     * @brief Stores Timepoint and number of exchanged items for an exchange process.
-     * 
-     * @param time Timepoint of the exchange process
-     * @param number Number of exchanged items
-     */
-    struct ExchangeData {
-        double time;
-        int number;
-        int node_to;
-    };
-
-    struct CompareExchangeData {
-        bool operator()(const ExchangeData& left, const ExchangeData& right)
-        {
-            return left.time > right.time;
-        };
-    };
-
-private:
-    std::priority_queue<ExchangeData, std::vector<ExchangeData>, CompareExchangeData> _exchanges;
-};
 
 /**
  * represents the mobility between two nodes.
@@ -163,28 +48,17 @@ public:
      * create edge with timed movement parameters.
      * @param params mobility rate for each group and compartment
      */
-    MobilityEdgeDirected(const MobilityParametersTimed& params)
-        : m_parameters(params)
-    {
-    }
+    // MobilityEdgeDirected(const MobilityParametersTimed& params)
+    //     : m_parameters(params)
+    // {
+    // }
 
-    void add_exchange(double time, int number, int to)
-    {
-        m_parameters.add_exchange(time, number, to);
-    }
+    // auto next_event_time() const
+    // {
+    //     return m_parameters.next_event_time();
+    // }
 
-    /**
-         * get the mobility parameters.
-         */
-    const MobilityParametersTimed& get_parameters() const
-    {
-        return m_parameters;
-    }
-
-    auto next_event_time() const
-    {
-        return m_parameters.next_event_time();
-    }
+    MobilityEdgeDirected() = default;
 
     /**
          * compute mobility from node_from to node_to for a given event
@@ -193,17 +67,18 @@ public:
          * @param node_to node that people changed to
          */
     template <class Sim>
-    void apply_mobility(SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
+    void apply_mobility(double num_moving, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
-private:
-    MobilityParametersTimed m_parameters;
+    // private:
+    // MobilityParametersTimed m_parameters;
 };
 
 template <class Sim>
-void MobilityEdgeDirected::apply_mobility(SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
+void MobilityEdgeDirected::apply_mobility(double num_moving, SimulationNode<Sim>& node_from,
+                                          SimulationNode<Sim>& node_to)
 {
-    auto next_event = m_parameters.process_next_event();
-    auto num_moving = next_event.number;
+    // auto next_event = m_parameters.process_next_event();
+    // auto num_moving = next_event.number;
     // auto num_available = boost::numeric::ublas::sum(node_from.get_result().get_last_value());
     auto rng          = mio::RandomNumberGenerator();
     auto distribution = DiscreteDistributionInPlace<int>();
@@ -216,13 +91,13 @@ void MobilityEdgeDirected::apply_mobility(SimulationNode<Sim>& node_from, Simula
 }
 
 template <class Sim>
-void apply_timed_mobility(double t, double dt, MobilityEdgeDirected& edge, SimulationNode<Sim>& node_from,
+void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edge, SimulationNode<Sim>& node_from,
                           SimulationNode<Sim>& node_to)
 {
-    if (edge.next_event_time() >= t + dt) {
-        return;
-    }
-    edge.apply_mobility(node_from, node_to);
+    // if (edge.next_event_time() >= t + dt) {
+    //     return;
+    // }
+    edge.apply_mobility(num_moving, node_from, node_to);
 }
 // /**get_last_value
 //      * edge functor for mobility-based simulation.

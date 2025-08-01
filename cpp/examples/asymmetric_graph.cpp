@@ -78,26 +78,35 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     auto param = mio::MobilityParametersTimed(2.0, 10, 1);
-    graph.add_edge(0, 1, param);
-    graph.edges()[0].property.add_exchange(5.0, 5, 1);
-    graph.edges()[0].property.add_exchange(6.0, 500, 1);
+    graph.add_edge(0, 1);
+    // graph.edges()[0].property.add_exchange(5.0, 5, 1);
+    // graph.edges()[0].property.add_exchange(6.0, 500, 1);
 
     auto rng          = mio::RandomNumberGenerator();
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
     std::vector<double> uniform_vector(num_nodes, 1.0);
     mio::log_info("Nodes generated");
     for (size_t i = 0; i < 1 * num_nodes; ++i) {
-        auto to          = distribution(rng, {uniform_vector});
-        auto from        = distribution(rng, {uniform_vector});
-        auto local_param = mio::MobilityParametersTimed(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, to);
-        graph.add_edge(from, to, local_param);
-        graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
-        graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
+        auto to   = distribution(rng, {uniform_vector});
+        auto from = distribution(rng, {uniform_vector});
+        graph.add_edge(from, to);
+
+        // graph.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i)
+        // graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
+        // graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
     }
 
     mio::log_info("Graph generated");
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
+
+    for (size_t i = 0; i < 1 * num_nodes; i++) {
+        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    }
+
+    mio::log_info("Number of exchanges: {}", sim.get_parameters().size());
+
+    mio::log_info("Exchanges added");
 
     sim.advance(tmax);
 

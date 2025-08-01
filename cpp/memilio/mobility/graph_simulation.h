@@ -22,9 +22,129 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/random_number_generator.h"
+#include <queue>
 
 namespace mio
 {
+
+class MobilityParametersTimed
+{
+
+public:
+    /**
+     * @brief Construct a new Mobility Parameters Timed object
+     * 
+     */
+    MobilityParametersTimed()
+        : _exchanges{} {};
+    MobilityParametersTimed(std::filebuf& input_data)
+        : _exchanges{}
+    {
+        insert_input_data(input_data);
+    };
+    MobilityParametersTimed(double time, double number, int edge)
+        : _exchanges{}
+    {
+        _exchanges.push(ExchangeData(time, number, edge));
+    };
+
+    void add_exchange(double time, double number, int edge)
+    {
+        _exchanges.push(ExchangeData{time, number, edge});
+    }
+
+    /**
+    * @brief Return the number of exchanged items in the next exchange event.
+    * 
+    * @return auto 
+    */
+    auto next_event_number()
+    {
+        return _exchanges.top().number;
+    };
+    /**
+     * @brief Return the timepoint of the next exchangeclass EdgePropertyT event.
+     * 
+     * @return auto 
+     */
+    auto next_event_time() const
+    {
+        if (_exchanges.empty()) {
+            return std::numeric_limits<double>::max();
+        }
+        return _exchanges.top().time;
+    };
+    /**
+     * @brief Return the destination node id of the next exchange
+     * 
+     * @return auto 
+     */
+    auto next_event_edge_id()
+    {
+        return _exchanges.top().edge_id;
+    }
+    /**
+     * @brief Return a const reference to the next event
+     * 
+     * @return auto 
+     */
+    auto next_event()
+    {
+        return _exchanges.top();
+    }
+    /**
+     * @brief Delete the next event from the heap
+     * 
+     * @return auto 
+     */
+    auto pop_next_event()
+    {
+        return _exchanges.pop();
+    }
+    /**
+     * @brief Return the ExchangeData for the next exchange event and delete it from the list.
+     * 
+     * @return auto 
+     */
+    auto process_next_event()
+    {
+        auto next_event = _exchanges.top();
+        _exchanges.pop();
+        return next_event;
+    };
+
+    auto size() const
+    {
+        return _exchanges.size();
+    }
+
+private:
+    void insert_input_data(std::filebuf& input_data) {
+        //...
+    };
+
+    /**
+     * @brief Stores Timepoint and number of exchanged items for an exchange process.
+     * 
+     * @param time Timepoint of the exchange process
+     * @param number Number of exchanged items
+     */
+    struct ExchangeData {
+        double time;
+        double number;
+        int edge_id;
+    };
+
+    struct CompareExchangeData {
+        bool operator()(const ExchangeData& left, const ExchangeData& right)
+        {
+            return left.time > right.time;
+        };
+    };
+
+private:
+    std::priority_queue<ExchangeData, std::vector<ExchangeData>, CompareExchangeData> _exchanges;
+};
 
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
@@ -264,7 +384,7 @@ class AsymmetricGraphSimulation : public GraphSimulationBase<Graph, Timepoint, T
 public:
     void advance(Timepoint t_max = 1.0)
     {
-        auto dt = Base::m_dt;
+        auto dt = m_parameters.next_event_time() - Base::m_t;
         while (Base::m_t < t_max) {
             if (Base::m_t + dt > t_max) {
                 dt = t_max - Base::m_t;
@@ -276,12 +396,31 @@ public:
 
             Base::m_t += dt;
 
-            for (auto& e : Base::m_graph.edges()) {
-                Base::m_edge_func(Base::m_t, dt, e.property, Base::m_graph.nodes()[e.start_node_idx].property,
+            while (m_parameters.next_event_time() == Base::m_t) {
+                auto next_event = m_parameters.process_next_event();
+                auto& e         = Base::m_graph.edges()[next_event.edge_id];
+                Base::m_edge_func(Base::m_t, next_event.number, e.property,
+                                  Base::m_graph.nodes()[e.start_node_idx].property,
                                   Base::m_graph.nodes()[e.end_node_idx].property);
             }
         }
     }
+
+    void add_exchange(double time, double number, int edge)
+    {
+        m_parameters.add_exchange(time, number, edge);
+    }
+
+    /**
+         * get the mobility parameters.
+         */
+    const MobilityParametersTimed& get_parameters() const
+    {
+        return m_parameters;
+    }
+
+private:
+    mio::MobilityParametersTimed m_parameters;
 };
 
 template <typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
