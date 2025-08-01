@@ -1,0 +1,30 @@
+<svg width="600" height="200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.3" />
+        <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.1" />
+      </linearGradient>
+    </defs>
+    
+    <!-- Background -->
+    <rect width="600" height="200" fill="#ffffff"/>
+    
+    <!-- Grid lines -->
+    <line x1="40" y1="40" x2="560" y2="40" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="70" x2="560" y2="70" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="100" x2="560" y2="100" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="130" x2="560" y2="130" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="160" x2="560" y2="160" stroke="#e5e7eb" stroke-width="1"/>
+    
+    <!-- Area fill -->
+    <path d="M40,160 L40,91.42857142857143 L87.27272727272728,151.42857142857142 L134.54545454545456,142.85714285714286 L181.8181818181818,91.42857142857143 L229.0909090909091,57.14285714285715 L276.3636363636364,142.85714285714286 L323.6363636363636,82.85714285714285 L370.9090909090909,40 L418.1818181818182,82.85714285714285 L465.4545454545455,117.14285714285714 L512.7272727272727,74.28571428571428 L560,160 L560,160 Z" fill="url(#gradient)"/>
+    
+    <!-- Line -->
+    <path d="M40,91.42857142857143 L87.27272727272728,151.42857142857142 L134.54545454545456,142.85714285714286 L181.8181818181818,91.42857142857143 L229.0909090909091,57.14285714285715 L276.3636363636364,142.85714285714286 L323.6363636363636,82.85714285714285 L370.9090909090909,40 L418.1818181818182,82.85714285714285 L465.4545454545455,117.14285714285714 L512.7272727272727,74.28571428571428 L560,160" stroke="#8b5cf6" stroke-width="2" fill="none"/>
+    
+    <!-- Data points -->
+    <circle cx="40" cy="91.42857142857143" r="3" fill="#8b5cf6"/><circle cx="87.27272727272728" cy="151.42857142857142" r="3" fill="#8b5cf6"/><circle cx="134.54545454545456" cy="142.85714285714286" r="3" fill="#8b5cf6"/><circle cx="181.8181818181818" cy="91.42857142857143" r="3" fill="#8b5cf6"/><circle cx="229.0909090909091" cy="57.14285714285715" r="3" fill="#8b5cf6"/><circle cx="276.3636363636364" cy="142.85714285714286" r="3" fill="#8b5cf6"/><circle cx="323.6363636363636" cy="82.85714285714285" r="3" fill="#8b5cf6"/><circle cx="370.9090909090909" cy="40" r="3" fill="#8b5cf6"/><circle cx="418.1818181818182" cy="82.85714285714285" r="3" fill="#8b5cf6"/><circle cx="465.4545454545455" cy="117.14285714285714" r="3" fill="#8b5cf6"/><circle cx="512.7272727272727" cy="74.28571428571428" r="3" fill="#8b5cf6"/><circle cx="560" cy="160" r="3" fill="#8b5cf6"/>
+    
+    <!-- Title -->
+    <text x="300" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">Pull Requests Opened</text>
+    
+    <!-- Y-axis labels -->
+    <text x="15" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">15</text>
+    <text x="15" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">1</text>
+  </svg>
