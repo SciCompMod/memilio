@@ -60,7 +60,7 @@ public:
     {
     }
 
-    virtual ~IntegratorCore(){};
+    virtual ~IntegratorCore() {};
 
     /**
      * @brief Make a single integration step.
@@ -167,6 +167,7 @@ public:
     Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands&... fs, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
+        using std::ceil;
         using std::fabs;
         using std::max;
         using std::min;
@@ -195,7 +196,7 @@ public:
                 dt_restore = dt;
                 dt         = tmax - t;
                 // if necessary, also reduce minimal step size such that we do not step past tmax
-                m_core->get_dt_min() = min(tmax - t, m_core->get_dt_min());
+                m_core->get_dt_min() = min<FP>(tmax - t, m_core->get_dt_min());
                 // if dt_min was reduced, the following step will be the last due to dt == dt_min (see step method)
                 // dt_min must be restored after this loop
             }
@@ -212,7 +213,7 @@ public:
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
-        dt = max(dt, dt_restore);
+        dt = max<FP>(dt, dt_restore);
 
         if (m_is_adaptive) {
             if (!step_okay) {

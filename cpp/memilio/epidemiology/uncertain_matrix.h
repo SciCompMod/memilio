@@ -39,20 +39,21 @@ namespace mio
  * that are sampled to modify the contacts at some points in time.
  * @see UncertainValue
  */
-template <typename FP = double>
+template <typename FP>
 class UncertainContactMatrix
 {
 public:
     UncertainContactMatrix(size_t num_matrices = 1, Eigen::Index num_groups = 1)
-        : UncertainContactMatrix(ContactMatrixGroup(num_matrices, num_groups))
+        : UncertainContactMatrix<FP>(ContactMatrixGroup<FP>(num_matrices, num_groups))
     {
     }
 
-    UncertainContactMatrix(const ContactMatrixGroup& cont_freq)
+    UncertainContactMatrix(const ContactMatrixGroup<FP>& cont_freq)
         : m_cont_freq(cont_freq)
         , m_dampings()
-        , m_school_holiday_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {},
-                                   Eigen::VectorXd::Zero(cont_freq.get_num_groups()))
+        , m_school_holiday_damping(mio::UncertainValue<FP>(0.0), mio::DampingLevel(0), mio::DampingType(0),
+                                   mio::SimulationTime<FP>(0.0), {},
+                                   Eigen::VectorX<FP>::Zero(cont_freq.get_num_groups()))
         , m_school_holidays()
     {
     }
@@ -61,7 +62,7 @@ public:
      * @brief Conversion to const ContactMatrix reference by returning the 
      *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactMatrixGroup const &() const
+    operator ContactMatrixGroup<FP> const&() const
     {
         return m_cont_freq;
     }
@@ -70,7 +71,7 @@ public:
      * @brief Conversion to ContactMatrix reference by returning the 
      *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactMatrixGroup&()
+    operator ContactMatrixGroup<FP>&()
     {
         return m_cont_freq;
     }
@@ -79,7 +80,7 @@ public:
      * @brief Set an UncertainContactMatrix from a ContactMatrix, 
      *        all distributions remain unchanged.
      */
-    UncertainContactMatrix& operator=(const ContactMatrixGroup& cont_freq)
+    UncertainContactMatrix<FP>& operator=(const ContactMatrixGroup<FP>& cont_freq)
     {
         m_cont_freq = cont_freq;
         return *this;
@@ -89,7 +90,7 @@ public:
      * @brief Returns the ContactMatrix reference 
      *        of the UncertainContactMatrix object
      */
-    ContactMatrixGroup& get_cont_freq_mat()
+    ContactMatrixGroup<FP>& get_cont_freq_mat()
     {
         return m_cont_freq;
     }
@@ -98,7 +99,7 @@ public:
      * @brief Returns the const ContactMatrix reference 
      *        of the UncertainContactMatrix object
      */
-    ContactMatrixGroup const& get_cont_freq_mat() const
+    ContactMatrixGroup<FP> const& get_cont_freq_mat() const
     {
         return m_cont_freq;
     }
@@ -138,11 +139,11 @@ public:
      * one period is a pair of start and end dates.
      * @{
      */
-    std::vector<std::pair<SimulationTime, SimulationTime>>& get_school_holidays()
+    std::vector<std::pair<SimulationTime<FP>, SimulationTime<FP>>>& get_school_holidays()
     {
         return m_school_holidays;
     }
-    const std::vector<std::pair<SimulationTime, SimulationTime>>& get_school_holidays() const
+    const std::vector<std::pair<SimulationTime<FP>, SimulationTime<FP>>>& get_school_holidays() const
     {
         return m_school_holidays;
     }
@@ -153,7 +154,7 @@ public:
      * @param accum accumulating current and newly sampled dampings if true;
      *              default: false; removing all previously set dampings
      */
-    ContactMatrixGroup draw_sample(bool accum = false)
+    ContactMatrixGroup<FP> draw_sample(bool accum = false)
     {
         draw_sample_dampings();
         return make_matrix(accum);
@@ -175,7 +176,7 @@ public:
      * @param accum accumulating current and newly dampings if true;
      *              default: false; removing all previously set dampings
      */
-    ContactMatrixGroup make_matrix(bool accum = false)
+    ContactMatrixGroup<FP> make_matrix(bool accum = false)
     {
         if (!accum) {
             m_cont_freq.clear_dampings();
@@ -222,18 +223,18 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<UncertainContactMatrix> deserialize(IOContext& io)
+    static IOResult<UncertainContactMatrix<FP>> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("UncertainContactMatrix");
         if (!(io.flags() & IOF_OmitDistributions)) {
-            auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup>{});
+            auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup<FP>>{});
             auto e = obj.expect_element("SchoolHolidayDamping", Tag<DampingSampling<FP>>{});
-            auto f = obj.expect_list("SchoolHolidays", Tag<std::pair<SimulationTime, SimulationTime>>{});
+            auto f = obj.expect_list("SchoolHolidays", Tag<std::pair<SimulationTime<FP>, SimulationTime<FP>>>{});
             auto d = obj.expect_list("Dampings", Tag<DampingSampling<FP>>{});
             return apply(
                 io,
                 [](auto&& c_, auto&& d_, auto&& e_, auto&& f_) {
-                    auto m                         = UncertainContactMatrix{c_};
+                    auto m                         = UncertainContactMatrix<FP>{c_};
                     m.get_dampings()               = d_;
                     m.get_school_holiday_damping() = e_;
                     m.get_school_holidays()        = f_;
@@ -242,21 +243,21 @@ public:
                 c, d, e, f);
         }
         else {
-            auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup>{});
+            auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup<FP>>{});
             return apply(
                 io,
                 [](auto&& c_) {
-                    return UncertainContactMatrix{c_};
+                    return UncertainContactMatrix<FP>{c_};
                 },
                 c);
         }
     }
 
 private:
-    ContactMatrixGroup m_cont_freq;
+    ContactMatrixGroup<FP> m_cont_freq;
     std::vector<DampingSampling<FP>> m_dampings;
     DampingSampling<FP> m_school_holiday_damping;
-    std::vector<std::pair<SimulationTime, SimulationTime>> m_school_holidays;
+    std::vector<std::pair<SimulationTime<FP>, SimulationTime<FP>>> m_school_holidays;
 };
 
 } // namespace mio

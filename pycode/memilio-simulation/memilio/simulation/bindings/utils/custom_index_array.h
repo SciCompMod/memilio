@@ -38,10 +38,12 @@ namespace pymio
 {
 
 template <typename T, typename = void>
-struct has_indices_attribute : std::false_type {};
+struct has_indices_attribute : std::false_type {
+};
 
 template <typename T>
-struct has_indices_attribute<T, std::void_t<decltype(std::declval<T>().size().indices)>> : std::true_type {};
+struct has_indices_attribute<T, std::void_t<decltype(std::declval<T>().size().indices)>> : std::true_type {
+};
 
 // Recursively bind the members of custom index array
 // that require a single Tag as a template argument.
@@ -64,7 +66,7 @@ void bind_single_tag_template_members(pybind11::module_& m, pybind11::class_<C>&
 
     c.def(("size_" + tname).c_str(), &C::template size<T>);
     // Only add if the Index is multidimensional, e.g. only when Index::indices exists, because it is used in resize
-    if constexpr (has_indices_attribute<C>::value){
+    if constexpr (has_indices_attribute<C>::value) {
         c.def(("resize_" + tname).c_str(), &C::template resize<T>);
     }
 

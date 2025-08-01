@@ -61,6 +61,44 @@ public:
     {
     }
 
+    /** 
+     * @brief Constructs a copy of another SimulationBase object.
+     *
+     * Performs a deep copy of the model, while sharing the same integrator core.
+     * The time series results and step size are also copied.
+     *
+     * @param[in] other The SimulationBase object to copy from.
+     */
+    SimulationBase(SimulationBase const& other)
+        : m_integratorCore(other.m_integratorCore)
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(m_integratorCore)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
+    {
+    }
+
+    /**
+     * @brief Assigns another SimulationBase object to this one.
+     *
+     * Performs a deep copy of the model, while sharing the same integrator core.
+     * The time series results and step size are also copied.
+     *
+     * @param[in] other The SimulationBase object to assign from.
+     * @return Reference to this SimulationBase object.
+     */
+    SimulationBase& operator=(SimulationBase const& other)
+    {
+        if (this != &other) {
+            m_integratorCore = other.m_integratorCore;
+            m_model          = std::make_unique<Model>(*other.m_model);
+            m_integrator.set_integrator(m_integratorCore);
+            m_result = other.m_result;
+            m_dt     = other.m_dt;
+        }
+        return *this;
+    }
+
     /**
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.

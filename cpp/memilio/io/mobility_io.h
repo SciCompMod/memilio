@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker, Martin J. Kuehn
@@ -44,7 +44,7 @@ IOResult<int> count_lines(const std::string& filename);
 /**
  * @brief Reads formatted mobility or contact data which is given in columns
  *          from_str	to_str	from_rs	    to_rs	count_abs
- *        and separated by tabs. Writes it into a NxN Eigen Matrix, 
+ *        and separated by tabs. Writes it into a NxN Eigen Matrix,
  *        where N is the number of regions
  * @param filename name of file to be read
  */
@@ -52,7 +52,7 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
 
 /**
  * @brief Reads txt mobility data or contact which is given by values only
- *        and separated by spaces. Writes it into a NxN Eigen 
+ *        and separated by spaces. Writes it into a NxN Eigen
  *        Matrix, where N is the number of regions
  * @param filename name of file to be read
  */
@@ -192,7 +192,7 @@ IOResult<Graph<Model, MobilityParameters<FP>>> read_graph(const std::string& dir
  * @param[in] results Simulation results per edge of the graph.
  * @param[in] ids Identifiers for the start and end node of the edges.
  * @param[in] filename Name of the file where the results will be saved.
- * @return Any io errors that occur during writing of the files. 
+ * @return Any io errors that occur during writing of the files.
  */
 IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
                           const std::string& filename);

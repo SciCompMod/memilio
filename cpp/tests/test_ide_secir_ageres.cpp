@@ -83,9 +83,9 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     // Set working parameters.
 
     // First AgeGroup for TransitionDistributions.
-    mio::SmootherCosine smoothcos1(2.0);
-    mio::StateAgeFunctionWrapper delaydistribution1(smoothcos1);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib1(num_transitions, delaydistribution1);
+    mio::SmootherCosine<ScalarType> smoothcos1(2.0);
+    mio::StateAgeFunctionWrapper<ScalarType> delaydistribution1(smoothcos1);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib1(num_transitions, delaydistribution1);
     // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
     vec_delaydistrib1[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
     vec_delaydistrib1[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
@@ -94,9 +94,9 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(0)] = vec_delaydistrib1;
 
     // Second AgeGroup for TransitionDistributions.
-    mio::SmootherCosine smoothcos2(3.0);
-    mio::StateAgeFunctionWrapper delaydistribution2(smoothcos2);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib2(num_transitions, delaydistribution2);
+    mio::SmootherCosine<ScalarType> smoothcos2(3.0);
+    mio::StateAgeFunctionWrapper<ScalarType> delaydistribution2(smoothcos2);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib2(num_transitions, delaydistribution2);
     // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
     vec_delaydistrib2[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
     vec_delaydistrib2[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
@@ -105,9 +105,9 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     model.parameters.get<mio::isecir::TransitionDistributions>()[mio::AgeGroup(1)] = vec_delaydistrib2;
 
     // Third AgeGroup for TransitionDistributions.
-    mio::SmootherCosine smoothcos3(2.5);
-    mio::StateAgeFunctionWrapper delaydistribution3(smoothcos3);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib3(num_transitions, delaydistribution3);
+    mio::SmootherCosine<ScalarType> smoothcos3(2.5);
+    mio::StateAgeFunctionWrapper<ScalarType> delaydistribution3(smoothcos3);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib3(num_transitions, delaydistribution3);
     // TransitionDistribution is not used for SusceptibleToExposed. Therefore, the parameter can be set to any value.
     vec_delaydistrib1[(int)mio::isecir::InfectionTransition::SusceptibleToExposed].set_distribution_parameter(-1.);
     vec_delaydistrib1[(int)mio::isecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
@@ -125,12 +125,13 @@ TEST(TestIdeAgeres, compareWithPreviousRun)
     }
 
     // Contact matrix.
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 10.));
     model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
     mio::ExponentialSurvivalFunction exponential(0.5);
-    mio::StateAgeFunctionWrapper prob(exponential);
+    mio::StateAgeFunctionWrapper<ScalarType> prob(exponential);
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
         model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
         model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;

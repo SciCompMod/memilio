@@ -55,13 +55,13 @@ namespace isecir
  */
 struct TransitionDistributions {
 
-    using Type = CustomIndexArray<std::vector<StateAgeFunctionWrapper>, AgeGroup>;
+    using Type = CustomIndexArray<std::vector<StateAgeFunctionWrapper<ScalarType>>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         SmootherCosine smoothcos(2.0);
-        StateAgeFunctionWrapper delaydistribution(smoothcos);
-        std::vector<StateAgeFunctionWrapper> state_age_function_vector((int)InfectionTransition::Count,
-                                                                       delaydistribution);
+        StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
+        std::vector<StateAgeFunctionWrapper<ScalarType>> state_age_function_vector((int)InfectionTransition::Count,
+                                                                                   delaydistribution);
         return Type(size, state_age_function_vector);
     }
 
@@ -97,13 +97,14 @@ struct TransitionProbabilities {
  * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
 struct ContactPatterns {
-    using Type = UncertainContactMatrix<double>;
+    using Type = UncertainContactMatrix<ScalarType>;
 
     static Type get_default(AgeGroup size)
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, static_cast<Eigen::Index>((size_t)size));
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(static_cast<Eigen::Index>((size_t)size),
-                                                                         static_cast<Eigen::Index>((size_t)size), 10.));
+        ContactMatrixGroup<ScalarType> contact_matrix =
+            ContactMatrixGroup<ScalarType>(1, static_cast<Eigen::Index>((size_t)size));
+        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(
+            static_cast<Eigen::Index>((size_t)size), static_cast<Eigen::Index>((size_t)size), 10.));
         return Type(contact_matrix);
     }
     static std::string name()
@@ -116,7 +117,7 @@ struct ContactPatterns {
 * @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    using Type = CustomIndexArray<StateAgeFunctionWrapper<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
@@ -133,7 +134,7 @@ struct TransmissionProbabilityOnContact {
 */
 struct RelativeTransmissionNoSymptoms {
 
-    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    using Type = CustomIndexArray<StateAgeFunctionWrapper<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
@@ -149,7 +150,7 @@ struct RelativeTransmissionNoSymptoms {
 * @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    using Type = CustomIndexArray<StateAgeFunctionWrapper<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);

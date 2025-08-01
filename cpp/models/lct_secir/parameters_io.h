@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -50,13 +50,13 @@ namespace details
 
 /**
 * @brief Processes one entry of an RKI data set for the definition of an initial value vector for an LCT population.
-*   
-* Takes one entry of an RKI data vector and changes the value in populations accordingly. 
+*
+* Takes one entry of an RKI data vector and changes the value in populations accordingly.
 * This function provides sub-functionality of the set_initial_values_from_confirmed_cases() function.
 *
 * @param[out] populations The populations for which the inital data should be computed and set.
 * @param[in] entry The entry of the RKI data set.
-* @param[in] offset The offset between the date of the entry and the date for which the 
+* @param[in] offset The offset between the date of the entry and the date for which the
 *   initial value vector is calculated.
 * @param[in] staytimes A vector of the average time spent in each compartment defined in InfectionState
 *    (for the group under consideration) for which the initial value vector is calculated.
@@ -67,7 +67,7 @@ namespace details
 * @param[in] criticalPerSevere Probability (for the group under consideration)
 *    for which the initial value vector is calculated.
 * @param[in] scale_confirmed_cases Factor by which to scale the confirmed cases of RKI data to consider unreported cases.
-* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations.
 *   This defines the number of age groups and the numbers of subcompartments.
 * @tparam EntryType The type of the data entry of the RKI data.
 * @tparam Group The age group of the entry the should be processed.
@@ -342,31 +342,31 @@ void process_entry(Populations& populations, const EntryType& entry, int offset,
 /**
 * @brief Computes an initialization vector for an LCT population with case data from RKI recursively for each age group
 *    (or for one age group in the case without age resolution).
-*   
+*
 * Please use the set_initial_values_from_reported_data() function, which calls this function automatically!
-* This function calculates a segment referring to the defined age group of the initial value vector with 
+* This function calculates a segment referring to the defined age group of the initial value vector with
 *   subcompartments using the rki_data and the parameters.
 * The values for the whole initial value vector stored in populations are calculated recursively.
 *
 * @param[in] rki_data Vector with the RKI data.
 * @param[out] populations The populations for which the inital data should be computed and set.
-* @param[in] parameters The parameters that should be used to calculate the initial values. 
+* @param[in] parameters The parameters that should be used to calculate the initial values.
 *   Probabilities and mean stay times are used.
 * @param[in] date Date for which the initial values should be computed. date is the start date of the simulation.
-* @param[in] total_population Total size of the population of Germany or of every age group. 
-* @param[in] scale_confirmed_cases Factor(s for each age group) by which to scale the confirmed cases of the rki data 
+* @param[in] total_population Total size of the population of Germany or of every age group.
+* @param[in] scale_confirmed_cases Factor(s for each age group) by which to scale the confirmed cases of the rki data
 *   to consider unreported cases.
-* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations.
 *   This defines the number of age groups and the numbers of subcompartments.
-* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and
 *   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
-* @tparam Group The age group for which the initial values should be calculated. The function is called recursively 
+* @tparam Group The age group for which the initial values should be calculated. The function is called recursively
 *   such that the initial values are calculated for every age group if Group is zero at the beginning.
 * @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType, size_t Group = 0>
 IOResult<void> set_initial_values_from_confirmed_cases(Populations& populations, const std::vector<EntryType>& rki_data,
-                                                       const Parameters& parameters, const Date date,
+                                                       const Parameters<ScalarType>& parameters, const Date date,
                                                        const std::vector<ScalarType>& total_population,
                                                        const std::vector<ScalarType>& scale_confirmed_cases)
 {
@@ -376,15 +376,19 @@ IOResult<void> set_initial_values_from_confirmed_cases(Populations& populations,
 
     // Define variables for parameters.
     std::vector<ScalarType> staytimes((size_t)InfectionState::Count, -1.);
-    staytimes[(size_t)InfectionState::Exposed]            = parameters.template get<TimeExposed>()[Group];
-    staytimes[(size_t)InfectionState::InfectedNoSymptoms] = parameters.template get<TimeInfectedNoSymptoms>()[Group];
-    staytimes[(size_t)InfectionState::InfectedSymptoms]   = parameters.template get<TimeInfectedSymptoms>()[Group];
-    staytimes[(size_t)InfectionState::InfectedSevere]     = parameters.template get<TimeInfectedSevere>()[Group];
-    staytimes[(size_t)InfectionState::InfectedCritical]   = parameters.template get<TimeInfectedCritical>()[Group];
+    staytimes[(size_t)InfectionState::Exposed] = parameters.template get<TimeExposed<ScalarType>>()[Group];
+    staytimes[(size_t)InfectionState::InfectedNoSymptoms] =
+        parameters.template get<TimeInfectedNoSymptoms<ScalarType>>()[Group];
+    staytimes[(size_t)InfectionState::InfectedSymptoms] =
+        parameters.template get<TimeInfectedSymptoms<ScalarType>>()[Group];
+    staytimes[(size_t)InfectionState::InfectedSevere] =
+        parameters.template get<TimeInfectedSevere<ScalarType>>()[Group];
+    staytimes[(size_t)InfectionState::InfectedCritical] =
+        parameters.template get<TimeInfectedCritical<ScalarType>>()[Group];
     ScalarType inv_prob_SymptomsPerNoSymptoms =
-        1 / (1 - parameters.template get<RecoveredPerInfectedNoSymptoms>()[Group]);
-    ScalarType prob_SeverePerInfectedSymptoms = parameters.template get<SeverePerInfectedSymptoms>()[Group];
-    ScalarType prob_CriticalPerSevere         = parameters.template get<CriticalPerSevere>()[Group];
+        1 / (1 - parameters.template get<RecoveredPerInfectedNoSymptoms<ScalarType>>()[Group]);
+    ScalarType prob_SeverePerInfectedSymptoms = parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[Group];
+    ScalarType prob_CriticalPerSevere         = parameters.template get<CriticalPerSevere<ScalarType>>()[Group];
 
     ScalarType min_offset_needed = std::floor(-staytimes[(size_t)InfectionState::InfectedSymptoms] -
                                               staytimes[(size_t)InfectionState::InfectedSevere] -
@@ -463,19 +467,19 @@ IOResult<void> set_initial_values_from_confirmed_cases(Populations& populations,
 }
 
 /**
-* @brief Computes the total number of patients in Intensive Care Units (in all groups and subcompartments) 
+* @brief Computes the total number of patients in Intensive Care Units (in all groups and subcompartments)
 *       in the provided Population.
-*   
-* This function calculates the total number of individuals within the compartment InfectedCritical 
-* for the Populations-data provided, irrespective of their subcompartment or group. 
-* This total number can be used to scale the entries so that the total number in InfectedCritical is equal to 
-* the number of ICU patients reported in the DIVI data. 
+*
+* This function calculates the total number of individuals within the compartment InfectedCritical
+* for the Populations-data provided, irrespective of their subcompartment or group.
+* This total number can be used to scale the entries so that the total number in InfectedCritical is equal to
+* the number of ICU patients reported in the DIVI data.
 * Please use the set_initial_values_from_reported_data() function, which calls this function automatically!
 *
 * @param[in] populations The populations for which the total number in InfectedCritical should be computed.
-* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations.
 *   This defines the number of age groups and the numbers of subcompartments.
-* @tparam Group The age group for which the total number should be calculated. The function is called recursively 
+* @tparam Group The age group for which the total number should be calculated. The function is called recursively
 *   such that the total number in InfectedCritical within all groups is calculated if Group is zero at the beginning.
 * @returns The total number of patients in Intensive Care Units (in all groups and subcompartments).
 */
@@ -520,28 +524,28 @@ IOResult<ScalarType> get_icu_from_divi_data(const std::vector<DiviEntry>& divi_d
 }
 
 /**
-* @brief Rescales the entries for InfectedCritical in populations such that the total number 
+* @brief Rescales the entries for InfectedCritical in populations such that the total number
 *   equals the reported number.
-*   
-* This function rescales the entries for InfectedCritical in the given population for every group and subcompartment 
+*
+* This function rescales the entries for InfectedCritical in the given population for every group and subcompartment
 * such that the total number in all InfectedCritical compartments equals the reported number infectedCritical_reported.
 *
 * If the total number of individuals in InfectedCritical in populations is zero and the reported number is not,
-* the reported number is distributed uniformly across the groups. 
-* Within the groups, the number is distributed uniformly to the subcompartments. 
-* Note that especially the uniform distribution across groups is not necessarily realistic, 
+* the reported number is distributed uniformly across the groups.
+* Within the groups, the number is distributed uniformly to the subcompartments.
+* Note that especially the uniform distribution across groups is not necessarily realistic,
 * because the need for intensive care can differ by group.
 *
 * @param[in,out] populations The populations for which the entries of the InfectedCritical compartments are rescaled.
-* @param[in] infectedCritical_reported The reported number for patients in ICU. The total number of individuals in the 
+* @param[in] infectedCritical_reported The reported number for patients in ICU. The total number of individuals in the
 *   InfectedCritical compartment in populations will be equal to this value afterward.
 *   You can calculate this value with the get_icu_from_divi_data() function.
-* @param[in] infectedCritical_populations The current total number of individuals in the InfectedCritical compartment 
+* @param[in] infectedCritical_populations The current total number of individuals in the InfectedCritical compartment
 *   in populations. You can calculate this value with the get_total_InfectedCritical_from_populations() function.
-* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations.
 *   This defines the number of age groups and the numbers of subcompartments.
-* @tparam Group The age group for which the entries of InfectedCritical should be scaled. 
-*   The function is called recursively for the groups. The total number in the InfectedCritical compartments is only 
+* @tparam Group The age group for which the entries of InfectedCritical should be scaled.
+*   The function is called recursively for the groups. The total number in the InfectedCritical compartments is only
 *   equal to infectedCritical_reported after the function call if Group is set to zero in the beginning.
 * @returns Any io errors that happen during the scaling.
 */
@@ -624,49 +628,49 @@ IOResult<void> rescale_to_divi_data(Populations& populations, const ScalarType i
 
 /**
 * @brief Computes an initialization vector for an LCT population with case data from RKI (and possibly DIVI data).
-*   
+*
 * Use just one group in the definition of the populations to not divide between age groups.
 * Otherwise, the number of groups has to match the number of RKI age groups.
 * The function calculates an initial value vector referring to an LCT population and updates the initial value vector
 * in the populations class.
 * For the computation expected stay times in the subcompartments defined in the parameters variable are used.
-* To calculate the initial values, we assume for simplicity that individuals stay in the subcompartment 
+* To calculate the initial values, we assume for simplicity that individuals stay in the subcompartment
 * for exactly the expected time.
 * The RKI data are linearly interpolated within one day to match the expected stay time in a subcompartment.
-* The RKI data should contain data for each needed day with or without division of age groups, 
+* The RKI data should contain data for each needed day with or without division of age groups,
 *   the completeness of the dates is not verified.
 * Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, which creates files
 * named e.g. cases_all_germany.json for no groups or cases_all_age.json with division in age groups or similar names.
-* One should set impute_dates=True so that missing dates are imputed. 
+* One should set impute_dates=True so that missing dates are imputed.
 * To read the data into a vector, use the functionality from epi_data.h.
-* The data and the number of entries in the total_population and scale_confirmed_cases vectors have to match the 
+* The data and the number of entries in the total_population and scale_confirmed_cases vectors have to match the
 *   number of groups used in Populations.
 *
-* Additionally, one can scale the result from the calculation with the RKI data to match the reported number of 
-* patients in ICUs. The patient numbers are provided by DIVI and can be downloaded e.g. using 
+* Additionally, one can scale the result from the calculation with the RKI data to match the reported number of
+* patients in ICUs. The patient numbers are provided by DIVI and can be downloaded e.g. using
 * pycode/memilio-epidata/memilio/epidata/getDIVIData.py (One should also set impute_dates=True so that missing dates
 * are imputed.). Again, to read the data into a vector, use the functionality from epi_data.h.
 *
 * @param[in] rki_data Vector with the RKI data.
 * @param[out] populations The populations for which the inital data should be computed and set.
-* @param[in] parameters The parameters that should be used to calculate the initial values. 
+* @param[in] parameters The parameters that should be used to calculate the initial values.
 *   Probabilities and mean stay times are used.
 * @param[in] date Date for which the initial values should be computed. date is the start date of the simulation.
-* @param[in] total_population Total size of the population of Germany or of every age group. 
-* @param[in] scale_confirmed_cases Factor(s for each age group) by which to scale the confirmed cases of the rki data 
+* @param[in] total_population Total size of the population of Germany or of every age group.
+* @param[in] scale_confirmed_cases Factor(s for each age group) by which to scale the confirmed cases of the rki data
 *   to consider unreported cases.
-* @param[in] divi_data Vector with DIVI data used to scale the number of individuals in the InfectedCritical 
-*   compartments in populations so that the total number match the reported number. 
+* @param[in] divi_data Vector with DIVI data used to scale the number of individuals in the InfectedCritical
+*   compartments in populations so that the total number match the reported number.
 *   For the default value (an empty vector), the calculated populations using the RKI data is not scaled.
-* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations. 
+* @tparam Populations is expected to be an LctPopulations defined in epidemiology/lct_populations.
 *   This defines the number of age groups and the numbers of subcompartments.
-* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and
 *   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
 * @returns Any io errors that happen during data processing.
 */
 template <class Populations, class EntryType>
 IOResult<void> set_initial_values_from_reported_data(const std::vector<EntryType>& rki_data, Populations& populations,
-                                                     const Parameters& parameters, const Date date,
+                                                     const Parameters<ScalarType>& parameters, const Date date,
                                                      const std::vector<ScalarType>& total_population,
                                                      const std::vector<ScalarType>& scale_confirmed_cases,
                                                      const std::vector<DiviEntry>& divi_data = std::vector<DiviEntry>())

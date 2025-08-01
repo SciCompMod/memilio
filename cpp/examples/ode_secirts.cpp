@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -22,6 +22,7 @@
 #include "ode_secirts/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/data/analyze_result.h"
 
 int main()
 {
@@ -121,19 +122,19 @@ int main()
         }
     }
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
-    const double cont_freq                  = 10;
-    const double fact                       = 1.0 / (double)(size_t)nb_groups;
+    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
+    const double cont_freq                          = 10;
+    const double fact                               = 1.0 / (double)(size_t)nb_groups;
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
+                               mio::SimulationTime<double>(30.));
 
     model.parameters.get<mio::osecirts::Seasonality<double>>() = 0.2;
 
     model.apply_constraints();
 
-    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<double> result = mio::osecirts::simulate<double>(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 

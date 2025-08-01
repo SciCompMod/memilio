@@ -178,8 +178,9 @@ using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
 template <class A, class B>
 auto max(const Eigen::MatrixBase<A>& a, B&& b)
 {
+    using std::max;
     return a.binaryExpr(std::forward<B>(b), [](auto a_i, auto b_i) {
-        return std::max(a_i, b_i);
+        return max(a_i, b_i);
     });
 }
 

@@ -93,7 +93,7 @@ public:
      * @param[in] sigma Noise term for the diffusion process.
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
-    SingleWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<Status>>& rates,
+    SingleWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<ScalarType, Status>>& rates,
                ScalarType contact_radius = 0.4, ScalarType sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
@@ -193,7 +193,7 @@ public:
         return val;
     }
 
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>& get_adoption_rates()
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>& get_adoption_rates()
     {
         return m_adoption_rates;
     }
@@ -246,7 +246,7 @@ private:
                p[1] <= upper_domain_border;
     }
 
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<Status>>
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>
         m_adoption_rates; ///< Map of AdoptionRates according to their region index and their from -> to infection states.
     ScalarType m_contact_radius; ///< Agents' interaction radius. Within this radius agents are considered as contacts.
     ScalarType m_sigma; ///< Noise term of the diffusion process.

@@ -58,9 +58,9 @@ const auto age_group_80_plus  = mio::AgeGroup(5);
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(mio::UncertainValue<>& p, ScalarType min, ScalarType max)
+void assign_uniform_distribution(mio::UncertainValue<ScalarType>& p, ScalarType min, ScalarType max)
 {
-    p = mio::UncertainValue<>(0.5 * (max + min));
+    p = mio::UncertainValue<ScalarType>(0.5 * (max + min));
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -864,6 +864,7 @@ mio::abm::Simulation<> create_sampled_simulation(const std::string& input_file, 
     assign_infection_state(model, t0, exposed_prob, infected_no_symptoms_prob, infected_symptoms_prob, recovered_prob);
 
     auto sim = mio::abm::Simulation(t0, std::move(model));
+
     return sim;
 }
 

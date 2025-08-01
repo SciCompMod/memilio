@@ -36,7 +36,7 @@ void bind_damping_sampling(py::module_& m, std::string const& name)
         .def(py::init([](const mio::UncertainValue<double>& value, int level, int type, double time,
                          const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
                  return mio::DampingSampling(value, mio::DampingLevel(level), mio::DampingType(type),
-                                             mio::SimulationTime(time), matrices, groups);
+                                             mio::SimulationTime<double>(time), matrices, groups);
              }),
              py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
              py::arg("group_weights"))
@@ -64,7 +64,7 @@ void bind_damping_sampling(py::module_& m, std::string const& name)
                 return double(self.get_time());
             },
             [](mio::DampingSampling<double>& self, double t) {
-                self.set_time(mio::SimulationTime(t));
+                self.set_time(mio::SimulationTime<double>(t));
             })
         .def_property("matrix_indices", &mio::DampingSampling<double>::get_matrix_indices,
                       &mio::DampingSampling<double>::set_matrix_indices)

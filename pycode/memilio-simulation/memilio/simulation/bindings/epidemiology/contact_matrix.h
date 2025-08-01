@@ -72,7 +72,7 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
                  return std::vector<Damping>(self.get_dampings().begin(), self.get_dampings().end());
              })
         .def("get_matrix_at", [](const DampingExpression& self, double t) {
-            return self.get_matrix_at(t);
+            return self.get_matrix_at(mio::SimulationTime<double>(t));
         });
     bind_shape_property(damping_expression_class);
 }
@@ -119,7 +119,7 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
                  self[i] = m;
              })
         .def("get_matrix_at", [](const DampingExpressionGroup& self, double t) {
-            return self.get_matrix_at(t);
+            return self.get_matrix_at(mio::SimulationTime<double>(t));
         });
 }
 

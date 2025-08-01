@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn, Rene Schmieding, Henrik Zunker
@@ -49,13 +49,13 @@ int main()
     model.parameters.set<mio::oseir::TimeInfected<double>>(6);
     model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
 
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<double>& contact_matrix =
         model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
 
-    auto seir = simulate_flows(t0, tmax, dt, model);
+    auto seir = mio::simulate_flows<double>(t0, tmax, dt, model);
 
     printf("Compartments: \n");
     seir[0].print_table({"S", "E", "I", "R"});
