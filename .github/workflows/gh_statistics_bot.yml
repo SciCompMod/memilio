@@ -254,16 +254,17 @@ jobs:
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
               ];
               
+              // Get repo info first
+              const repoInfo = await github.rest.repos.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              
               // Create branch for PR
               const now = new Date();
               const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
               
               try {
-                const repoInfo = await github.rest.repos.get({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                });
-                
                 const mainRef = await github.rest.git.getRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
