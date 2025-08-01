@@ -37,27 +37,7 @@ jobs:
           script: |
             const asciichart = require('asciichart');
 
-            // Get commit statistics for current month only
-            async function getCurrentMonthStats() {
-              const now = new Date();
-              const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-              const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-              
-              const since = monthStart.toISOString();
-              const until = monthEnd.toISOString();
-              const monthName = monthStart.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-              const [commitStats, prStats] = await Promise.all([
-                getMonthCommitStats(since, until),
-                getMonthPRStats(since, until)
-              ]);
-
-              return {
-                monthName,
-                stats: commitStats,
-                prStats
-              };
-            }
 
             // Get commit statistics for a specific month
             async function getMonthCommitStats(since, until) {
