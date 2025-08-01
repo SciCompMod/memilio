@@ -1,0 +1,289 @@
+name: Monthly Repository Statistics
+
+on:
+  schedule:
+    # Runs at 9 AM UTC on the 1st day of every month
+    - cron: '0 9 1 * *'
+
+  pull_request:
+
+
+jobs:
+  generate-monthly-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Generate Monthly Statistics Report
+        uses: actions/github-script@v7
+        env:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+            // Get date range for previous month
+            function getLastMonthRange() {
+              const now = new Date();
+              const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+              const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+              
+              return {
+                start: lastMonth.toISOString(),
+                end: endOfLastMonth.toISOString(),
+                monthName: lastMonth.toLocaleString('default', { month: 'long', year: 'numeric' })
+              };
+            }
+
+            // Get commit statistics
+            async function getCommitStats(since, until) {
+              const commits = await github.paginate(github.rest.repos.listCommits, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                since,
+                until,
+                per_page: 100,
+              });
+
+              const contributors = new Set();
+              const filesChanged = new Set();
+              let totalAdditions = 0;
+              let totalDeletions = 0;
+
+              for (const commit of commits) {
+                if (commit.author) {
+                  contributors.add(commit.author.login);
+                }
+
+                try {
+                  const commitDetail = await github.rest.repos.getCommit({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: commit.sha,
+                  });
+
+                  if (commitDetail.data.files) {
+                    commitDetail.data.files.forEach(file => {
+                      filesChanged.add(file.filename);
+                    });
+                  }
+
+                  totalAdditions += commitDetail.data.stats?.additions || 0;
+                  totalDeletions += commitDetail.data.stats?.deletions || 0;
+                } catch (error) {
+                  console.log(`Error getting commit details for ${commit.sha}:`, error.message);
+                }
+              }
+
+              return {
+                totalCommits: commits.length,
+                uniqueContributors: contributors.size,
+                contributorsList: Array.from(contributors),
+                filesChanged: filesChanged.size,
+                linesAdded: totalAdditions,
+                linesRemoved: totalDeletions,
+                netLines: totalAdditions - totalDeletions,
+              };
+            }
+
+            // Get pull request statistics
+            async function getPRStats(since, until) {
+              const allPRs = await github.paginate(github.rest.pulls.list, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              const mergedPRs = allPRs.filter(pr => 
+                pr.merged_at && 
+                new Date(pr.merged_at) >= new Date(since) && 
+                new Date(pr.merged_at) <= new Date(until)
+              );
+
+              const openedPRs = allPRs.filter(pr => 
+                new Date(pr.created_at) >= new Date(since) && 
+                new Date(pr.created_at) <= new Date(until)
+              );
+
+              let totalReviewTime = 0;
+              let reviewTimeCount = 0;
+
+              for (const pr of mergedPRs) {
+                if (pr.created_at && pr.merged_at) {
+                  const reviewTime = new Date(pr.merged_at) - new Date(pr.created_at);
+                  totalReviewTime += reviewTime;
+                  reviewTimeCount++;
+                }
+              }
+
+              const avgReviewTimeHours = reviewTimeCount > 0 
+                ? Math.round(totalReviewTime / reviewTimeCount / (1000 * 60 * 60)) 
+                : 0;
+
+              return {
+                merged: mergedPRs.length,
+                opened: openedPRs.length,
+                avgReviewTimeHours,
+                mergedPRTitles: mergedPRs.slice(0, 10).map(pr => `#${pr.number}: ${pr.title}`),
+              };
+            }
+
+            // Get issue statistics
+            async function getIssueStats(since, until) {
+              const allIssues = await github.paginate(github.rest.issues.listForRepo, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              const issues = allIssues.filter(issue => !issue.pull_request);
+
+              const openedIssues = issues.filter(issue => 
+                new Date(issue.created_at) >= new Date(since) && 
+                new Date(issue.created_at) <= new Date(until)
+              );
+
+              const closedIssues = issues.filter(issue => 
+                issue.closed_at &&
+                new Date(issue.closed_at) >= new Date(since) && 
+                new Date(issue.closed_at) <= new Date(until)
+              );
+
+              return {
+                opened: openedIssues.length,
+                closed: closedIssues.length,
+              };
+            }
+
+            // Get language statistics
+            async function getLanguageStats() {
+              try {
+                const languages = await github.rest.repos.listLanguages({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+
+                const total = Object.values(languages.data).reduce((sum, bytes) => sum + bytes, 0);
+                return Object.entries(languages.data)
+                  .map(([lang, bytes]) => ({
+                    language: lang,
+                    percentage: ((bytes / total) * 100).toFixed(1)
+                  }))
+                  .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
+                  .slice(0, 5);
+              } catch (error) {
+                console.log('Error getting language stats:', error.message);
+                return [];
+              }
+            }
+
+            // Generate markdown report
+            function generateReport(stats, dateRange) {
+              const { monthName } = dateRange;
+              
+              return `# 📊 Monthly Repository Report - ${monthName}
+
+            ## 🎯 Key Metrics
+
+            | Metric | Count |
+            |--------|--------|
+            | 📝 Total Commits | ${stats.commits.totalCommits} |
+            | 📁 Files Changed | ${stats.commits.filesChanged} |
+            | 🔀 PRs Merged | ${stats.prs.merged} |
+            | 🆕 PRs Opened | ${stats.prs.opened} |
+            | 🐛 Issues Opened | ${stats.issues.opened} |
+            | ✅ Issues Closed | ${stats.issues.closed} |
+            | 👥 Active Contributors | ${stats.commits.uniqueContributors} |
+
+            ## 📈 Code Changes
+
+            - **Lines Added:** +${stats.commits.linesAdded.toLocaleString()}
+            - **Lines Removed:** -${stats.commits.linesRemoved.toLocaleString()}
+            - **Net Change:** ${stats.commits.netLines >= 0 ? '+' : ''}${stats.commits.netLines.toLocaleString()} lines
+
+            ${stats.prs.avgReviewTimeHours > 0 ? `## ⏱️ Review Metrics\n\n- **Average PR Review Time:** ${stats.prs.avgReviewTimeHours} hours` : ''}
+
+            ## 👨‍💻 Top Contributors
+
+            ${stats.commits.contributorsList.slice(0, 5).map((contributor, i) => `${i + 1}. @${contributor}`).join('\n')}
+
+            ${stats.languages.length > 0 ? `## 💻 Language Breakdown\n\n${stats.languages.map(lang => `- **${lang.language}:** ${lang.percentage}%`).join('\n')}` : ''}
+
+            ${stats.prs.mergedPRTitles.length > 0 ? `## 🎉 Recent Merged PRs\n\n${stats.prs.mergedPRTitles.slice(0, 5).map(title => `- ${title}`).join('\n')}` : ''}
+
+            ---
+            *Generated automatically by Monthly Stats Bot on ${new Date().toLocaleDateString()}*`;
+            }
+
+            // Main execution
+            try {
+              const dateRange = getLastMonthRange();
+              console.log(`Generating report for ${dateRange.monthName}...`);
+
+              // Gather all statistics
+              const [commitStats, prStats, issueStats, languages] = await Promise.all([
+                getCommitStats(dateRange.start, dateRange.end),
+                getPRStats(dateRange.start, dateRange.end),
+                getIssueStats(dateRange.start, dateRange.end),
+                getLanguageStats(),
+              ]);
+
+              const stats = {
+                commits: commitStats,
+                prs: prStats,
+                issues: issueStats,
+                languages,
+              };
+
+              // Generate the report
+              const reportBody = generateReport(stats, dateRange);
+
+              // Post to Mattermost
+              const mattermostPayload = {
+                text: `## 📊 Monthly Repository Report - ${dateRange.monthName}`,
+                attachments: [{
+                  color: '#36a64f',
+                  fields: [
+                    { title: '📝 Total Commits', value: stats.commits.totalCommits.toString(), short: true },
+                    { title: '📁 Files Changed', value: stats.commits.filesChanged.toString(), short: true },
+                    { title: '🔀 PRs Merged', value: stats.prs.merged.toString(), short: true },
+                    { title: '🆕 PRs Opened', value: stats.prs.opened.toString(), short: true },
+                    { title: '🐛 Issues Opened', value: stats.issues.opened.toString(), short: true },
+                    { title: '✅ Issues Closed', value: stats.issues.closed.toString(), short: true },
+                    { title: '👥 Active Contributors', value: stats.commits.uniqueContributors.toString(), short: true },
+                    { title: '📈 Net Lines Changed', value: `${stats.commits.netLines >= 0 ? '+' : ''}${stats.commits.netLines.toLocaleString()}`, short: true }
+                  ],
+                  text: `**Code Changes:** +${stats.commits.linesAdded.toLocaleString()} / -${stats.commits.linesRemoved.toLocaleString()} lines\n` +
+                        `**Top Contributors:** ${stats.commits.contributorsList.slice(0, 3).join(', ')}\n` +
+                        `${stats.languages.length > 0 ? `**Languages:** ${stats.languages.slice(0, 3).map(l => `${l.language} (${l.percentage}%)`).join(', ')}\n` : ''}` +
+                        `${stats.prs.avgReviewTimeHours > 0 ? `**Avg PR Review Time:** ${stats.prs.avgReviewTimeHours} hours\n` : ''}` +
+                        `\n[View Repository](https://github.com/${context.repo.owner}/${context.repo.repo})`
+                }]
+              };
+
+              const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(mattermostPayload)
+              });
+
+              if (!response.ok) {
+                throw new Error(`Mattermost webhook failed: ${response.status} ${response.statusText}`);
+              }
+
+              console.log(`Monthly report posted to Mattermost successfully`);
+
+            } catch (error) {
+              console.error('Error generating monthly report:', error);
+              core.setFailed(`Monthly report generation failed: ${error.message}`);
+            }
