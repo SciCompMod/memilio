@@ -1,14 +1,17 @@
-name: Monthly Repository Statistics
+name: Monthly Repository Statistics with Charts
 
 on:
   pull_request:
     types: [opened, synchronize]
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
 
 jobs:
   generate-monthly-report:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # Changed to write for committing charts
       issues: write
       pull-requests: read
       
@@ -16,27 +19,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Generate Monthly Statistics Report
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install asciichart
+        
+      - name: Generate Monthly Statistics Report with Charts
         uses: actions/github-script@v7
         env:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
         with:
           script: |
-            // Get date range for previous month
-            function getLastMonthRange() {
+            const asciichart = require('asciichart');
+
+            // Get date ranges for last 12 months
+            function getLast12MonthsRanges() {
+              const ranges = [];
               const now = new Date();
-              const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-              const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
               
-              return {
-                start: lastMonth.toISOString(),
-                end: endOfLastMonth.toISOString(),
-                monthName: lastMonth.toLocaleString('default', { month: 'long', year: 'numeric' })
-              };
+              for (let i = 11; i >= 0; i--) {
+                const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+                
+                ranges.push({
+                  start: monthStart.toISOString(),
+                  end: monthEnd.toISOString(),
+                  monthName: monthStart.toLocaleString('default', { month: 'short', year: 'numeric' }),
+                  month: monthStart.getMonth(),
+                  year: monthStart.getFullYear()
+                });
+              }
+              
+              return ranges;
             }
 
-            // Get commit statistics
-            async function getCommitStats(since, until) {
+            // Get commit statistics for a specific month
+            async function getMonthCommitStats(since, until) {
               const commits = await github.paginate(github.rest.repos.listCommits, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -50,7 +73,7 @@ jobs:
               let totalAdditions = 0;
               let totalDeletions = 0;
 
-              for (const commit of commits) {
+              for (const commit of commits.slice(0, 50)) { // Limit to avoid rate limits
                 if (commit.author) {
                   contributors.add(commit.author.login);
                 }
@@ -71,14 +94,13 @@ jobs:
                   totalAdditions += commitDetail.data.stats?.additions || 0;
                   totalDeletions += commitDetail.data.stats?.deletions || 0;
                 } catch (error) {
-                  console.log(`Error getting commit details for ${commit.sha}:`, error.message);
+                  console.log(`Error getting commit details: ${error.message}`);
                 }
               }
 
               return {
                 totalCommits: commits.length,
                 uniqueContributors: contributors.size,
-                contributorsList: Array.from(contributors),
                 filesChanged: filesChanged.size,
                 linesAdded: totalAdditions,
                 linesRemoved: totalDeletions,
@@ -86,8 +108,8 @@ jobs:
               };
             }
 
-            // Get pull request statistics
-            async function getPRStats(since, until) {
+            // Get PR statistics for a specific month
+            async function getMonthPRStats(since, until) {
               const allPRs = await github.paginate(github.rest.pulls.list, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -108,122 +130,195 @@ jobs:
                 new Date(pr.created_at) <= new Date(until)
               );
 
-              let totalReviewTime = 0;
-              let reviewTimeCount = 0;
-
-              for (const pr of mergedPRs) {
-                if (pr.created_at && pr.merged_at) {
-                  const reviewTime = new Date(pr.merged_at) - new Date(pr.created_at);
-                  totalReviewTime += reviewTime;
-                  reviewTimeCount++;
-                }
-              }
-
-              const avgReviewTimeHours = reviewTimeCount > 0 
-                ? Math.round(totalReviewTime / reviewTimeCount / (1000 * 60 * 60)) 
-                : 0;
-
               return {
                 merged: mergedPRs.length,
                 opened: openedPRs.length,
-                avgReviewTimeHours,
-                mergedPRTitles: mergedPRs.slice(0, 10).map(pr => `#${pr.number}: ${pr.title}`),
               };
             }
 
-            // Get issue statistics
-            async function getIssueStats(since, until) {
-              const allIssues = await github.paginate(github.rest.issues.listForRepo, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'all',
-                sort: 'updated',
-                direction: 'desc',
-                per_page: 100,
-              });
-
-              const issues = allIssues.filter(issue => !issue.pull_request);
-
-              const openedIssues = issues.filter(issue => 
-                new Date(issue.created_at) >= new Date(since) && 
-                new Date(issue.created_at) <= new Date(until)
-              );
-
-              const closedIssues = issues.filter(issue => 
-                issue.closed_at &&
-                new Date(issue.closed_at) >= new Date(since) && 
-                new Date(issue.closed_at) <= new Date(until)
-              );
-
-              return {
-                opened: openedIssues.length,
-                closed: closedIssues.length,
-              };
+            // Create professional SVG charts
+            function createSVGChart(data, title, color = '#22c55e') {
+              const width = 600;
+              const height = 200;
+              const padding = 40;
+              const chartWidth = width - 2 * padding;
+              const chartHeight = height - 2 * padding;
+              
+              const maxValue = Math.max(...data);
+              const minValue = Math.min(...data);
+              const range = maxValue - minValue || 1;
+              
+              // Create SVG path for the line
+              const points = data.map((value, index) => {
+                const x = padding + (index / (data.length - 1)) * chartWidth;
+                const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+                return `${x},${y}`;
+              }).join(' L');
+              
+              // Create area fill path
+              const areaPoints = `M${padding},${padding + chartHeight} L${points} L${padding + chartWidth},${padding + chartHeight} Z`;
+              
+              return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:${color};stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:${color};stop-opacity:0.1" />
+                  </linearGradient>
+                </defs>
+                
+                <!-- Background -->
+                <rect width="${width}" height="${height}" fill="#ffffff"/>
+                
+                <!-- Grid lines -->
+                ${[0, 0.25, 0.5, 0.75, 1].map(ratio => 
+                  `<line x1="${padding}" y1="${padding + chartHeight * ratio}" x2="${padding + chartWidth}" y2="${padding + chartHeight * ratio}" stroke="#e5e7eb" stroke-width="1"/>`
+                ).join('')}
+                
+                <!-- Area fill -->
+                <path d="${areaPoints}" fill="url(#gradient)"/>
+                
+                <!-- Line -->
+                <path d="M${points}" stroke="${color}" stroke-width="2" fill="none"/>
+                
+                <!-- Data points -->
+                ${data.map((value, index) => {
+                  const x = padding + (index / (data.length - 1)) * chartWidth;
+                  const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+                  return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+                }).join('')}
+                
+                <!-- Title -->
+                <text x="${width/2}" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">${title}</text>
+                
+                <!-- Y-axis labels -->
+                <text x="15" y="${padding + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${maxValue}</text>
+                <text x="15" y="${padding + chartHeight + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${minValue}</text>
+              </svg>`;
             }
 
-            // Get language statistics
-            async function getLanguageStats() {
-              try {
-                const languages = await github.rest.repos.listLanguages({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                });
-
-                const total = Object.values(languages.data).reduce((sum, bytes) => sum + bytes, 0);
-                return Object.entries(languages.data)
-                  .map(([lang, bytes]) => ({
-                    language: lang,
-                    percentage: ((bytes / total) * 100).toFixed(1)
-                  }))
-                  .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
-                  .slice(0, 5);
-              } catch (error) {
-                console.log('Error getting language stats:', error.message);
-                return [];
+            // Commit charts to repository
+            async function commitChartsToRepo(monthlyData, currentBranch) {
+              const commits = monthlyData.map(d => d.stats.totalCommits);
+              const linesAdded = monthlyData.map(d => d.stats.linesAdded);
+              const prsOpened = monthlyData.map(d => d.prStats.opened);
+              const prsMerged = monthlyData.map(d => d.prStats.merged);
+              
+              // Create SVG charts
+              const commitsSvg = createSVGChart(commits, 'Monthly Commits', '#3b82f6');
+              const linesSvg = createSVGChart(linesAdded, 'Lines Added per Month', '#22c55e');
+              const prsSvg = createSVGChart(prsOpened, 'Pull Requests Opened', '#8b5cf6');
+              
+              const files = [
+                { path: 'docs/assets/commits-chart.svg', content: commitsSvg },
+                { path: 'docs/assets/lines-chart.svg', content: linesSvg },
+                { path: 'docs/assets/prs-chart.svg', content: prsSvg }
+              ];
+              
+              // Create or update each chart file
+              for (const file of files) {
+                try {
+                  const base64Content = Buffer.from(file.content).toString('base64');
+                  
+                  await github.rest.repos.createOrUpdateFileContents({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: file.path,
+                    message: `Update repository activity chart: ${file.path}`,
+                    content: base64Content,
+                    branch: currentBranch
+                  });
+                  
+                  console.log(`Updated chart: ${file.path}`);
+                } catch (error) {
+                  console.log(`Error updating ${file.path}:`, error.message);
+                }
               }
+              
+              return {
+                commitsUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${currentBranch}/docs/assets/commits-chart.svg`,
+                linesUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${currentBranch}/docs/assets/lines-chart.svg`,
+                prsUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${currentBranch}/docs/assets/prs-chart.svg`
+              };
             }
 
             // Main execution
             try {
-              const dateRange = getLastMonthRange();
-              console.log(`Generating report for ${dateRange.monthName}...`);
+              console.log('Gathering 12 months of repository data...');
+              
+              const monthRanges = getLast12MonthsRanges();
+              const monthlyData = [];
 
-              // Gather all statistics
-              const [commitStats, prStats, issueStats, languages] = await Promise.all([
-                getCommitStats(dateRange.start, dateRange.end),
-                getPRStats(dateRange.start, dateRange.end),
-                getIssueStats(dateRange.start, dateRange.end),
-                getLanguageStats(),
-              ]);
+              // Gather data for each month (with rate limiting)
+              for (const range of monthRanges) {
+                console.log(`Processing ${range.monthName}...`);
+                
+                const [stats, prStats] = await Promise.all([
+                  getMonthCommitStats(range.start, range.end),
+                  getMonthPRStats(range.start, range.end)
+                ]);
 
-              const stats = {
-                commits: commitStats,
-                prs: prStats,
-                issues: issueStats,
-                languages,
-              };
+                monthlyData.push({
+                  month: range.monthName,
+                  stats,
+                  prStats
+                });
 
-              // Post to Mattermost
+                // Small delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+
+              // Get current branch for testing
+              const currentBranch = context.ref.replace('refs/heads/', '') || 'main';
+              console.log(`Using branch: ${currentBranch}`);
+
+              // Create and commit SVG charts
+              console.log('Generating and committing SVG charts...');
+              const chartUrls = await commitChartsToRepo(monthlyData, currentBranch);
+
+              // Create ASCII charts for Mattermost
+              const commits = monthlyData.map(d => d.stats.totalCommits);
+              const linesAdded = monthlyData.map(d => d.stats.linesAdded);
+              
+              const commitsChart = asciichart.plot(commits, { 
+                height: 8,
+                colors: [asciichart.blue]
+              });
+
+              const linesChart = asciichart.plot(linesAdded, { 
+                height: 8,
+                colors: [asciichart.green]
+              });
+
+              // Get current month stats for summary
+              const currentMonth = monthlyData[monthlyData.length - 1];
+              const stats = currentMonth.stats;
+              const prStats = currentMonth.prStats;
+
+              // Post to Mattermost with ASCII charts and SVG links
               const mattermostPayload = {
-                text: `## 📊 Monthly Repository Report - ${dateRange.monthName}`,
-                attachments: [{
-                  color: '#36a64f',
-                  fields: [
-                    { title: '📝 Total Commits', value: stats.commits.totalCommits.toString(), short: true },
-                    { title: '📁 Files Changed', value: stats.commits.filesChanged.toString(), short: true },
-                    { title: '🔀 PRs Merged', value: stats.prs.merged.toString(), short: true },
-                    { title: '🆕 PRs Opened', value: stats.prs.opened.toString(), short: true },
-                    { title: '🐛 Issues Opened', value: stats.issues.opened.toString(), short: true },
-                    { title: '✅ Issues Closed', value: stats.issues.closed.toString(), short: true },
-                    { title: '👥 Active Contributors', value: stats.commits.uniqueContributors.toString(), short: true },
-                    { title: '📈 Net Lines Changed', value: `${stats.commits.netLines >= 0 ? '+' : ''}${stats.commits.netLines.toLocaleString()}`, short: true }
-                  ],
-                  text: `**Code Changes:** +${stats.commits.linesAdded.toLocaleString()} / -${stats.commits.linesRemoved.toLocaleString()} lines\n` +
-                        `**Top Contributors:** ${stats.commits.contributorsList.slice(0, 3).join(', ')}\n` +
-                        `${stats.languages.length > 0 ? `**Languages:** ${stats.languages.slice(0, 3).map(l => `${l.language} (${l.percentage}%)`).join(', ')}\n` : ''}` +
-                        `${stats.prs.avgReviewTimeHours > 0 ? `**Avg PR Review Time:** ${stats.prs.avgReviewTimeHours} hours\n` : ''}` +
-                        `\n[View Repository](https://github.com/${context.repo.owner}/${context.repo.repo})`
-                }]
+                text: `## 📊 Monthly Repository Report - ${currentMonth.month}`,
+                attachments: [
+                  {
+                    color: '#36a64f',
+                    fields: [
+                      { title: '📝 Total Commits', value: stats.totalCommits.toString(), short: true },
+                      { title: '📁 Files Changed', value: stats.filesChanged.toString(), short: true },
+                      { title: '🔀 PRs Merged', value: prStats.merged.toString(), short: true },
+                      { title: '🆕 PRs Opened', value: prStats.opened.toString(), short: true },
+                      { title: '👥 Active Contributors', value: stats.uniqueContributors.toString(), short: true },
+                      { title: '📈 Net Lines Changed', value: `${stats.netLines >= 0 ? '+' : ''}${stats.netLines.toLocaleString()}`, short: true }
+                    ],
+                    text: `**Code Changes:** +${stats.linesAdded.toLocaleString()} / -${stats.linesRemoved.toLocaleString()} lines\n` +
+                          `**Repository:** [${context.repo.owner}/${context.repo.repo}](https://github.com/${context.repo.owner}/${context.repo.repo})\n\n` +
+                          `### 📈 12-Month Activity Trends\n\`\`\`\nCommits:\n${commitsChart}\n\nLines Added:\n${linesChart}\n\`\`\`\n\n` +
+                          `### 📊 Professional Charts Generated\n` +
+                          `📈 [Commits Chart](${chartUrls.commitsUrl})\n` +
+                          `📊 [Lines Chart](${chartUrls.linesUrl})\n` +
+                          `🔀 [PRs Chart](${chartUrls.prsUrl})\n\n` +
+                          `*Add these to your documentation:*\n` +
+                          `\`![Repository Activity](./docs/assets/commits-chart.svg)\``
+                  }
+                ]
               };
 
               const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
@@ -238,7 +333,7 @@ jobs:
                 throw new Error(`Mattermost webhook failed: ${response.status} ${response.statusText}`);
               }
 
-              console.log(`Monthly report posted to Mattermost successfully`);
+              console.log('Monthly report with charts posted to Mattermost successfully');
 
             } catch (error) {
               console.error('Error generating monthly report:', error);
