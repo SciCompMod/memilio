@@ -20,13 +20,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Generate Simple Monthly Statistics
+      - name: Generate Enhanced Monthly Statistics
         uses: actions/github-script@v7
         env:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
         with:
           script: |
-            // Simple stats with minimal API calls - main branch only
+            // Enhanced stats with additional metrics - main branch focused
             async function getSimpleMonthStats(since, until) {
               console.log(`Getting stats for ${since} to ${until}`);
               
@@ -41,6 +41,10 @@ jobs:
               console.log(`Found ${commits.length} commits on main branch`);
               
               const contributors = new Set();
+              let totalLinesAdded = 0;
+              let totalLinesDeleted = 0;
+              let filesChanged = 0;
+              
               commits.forEach(commit => {
                 if (commit.author && commit.author.login) {
                   contributors.add(commit.author.login);
@@ -49,9 +53,6 @@ jobs:
                   contributors.add(commit.committer.login);
                 }
               });
-              
-              let totalLinesAdded = 0;
-              let filesChanged = 0;
               
               for (const commit of commits.slice(0, 30)) {
                 try {
@@ -62,6 +63,7 @@ jobs:
                   });
                   
                   totalLinesAdded += commitDetail.data.stats?.additions || 0;
+                  totalLinesDeleted += commitDetail.data.stats?.deletions || 0;
                   filesChanged += commitDetail.data.files?.length || 0;
                   
                   if (commitDetail.data.commit && commitDetail.data.commit.message) {
@@ -87,7 +89,6 @@ jobs:
                 }
               }
               
-              
               console.log(`Total contributors: ${contributors.size}`);
               console.log(`Contributors: ${Array.from(contributors).join(', ')}`);
               
@@ -95,6 +96,8 @@ jobs:
                 totalCommits: commits.length,
                 activeContributors: contributors.size,
                 linesAdded: totalLinesAdded,
+                linesDeleted: totalLinesDeleted,
+                netLinesChanged: totalLinesAdded - totalLinesDeleted,
                 filesChanged: filesChanged,
                 contributorsList: Array.from(contributors)
               };
@@ -116,7 +119,120 @@ jobs:
                 new Date(pr.merged_at) <= new Date(until)
               );
 
-              return { merged: mergedPRs.length };
+              const openedPRs = prs.filter(pr => 
+                new Date(pr.created_at) >= new Date(since) && 
+                new Date(pr.created_at) <= new Date(until)
+              );
+
+              const closedPRs = prs.filter(pr => 
+                pr.closed_at && !pr.merged_at &&
+                new Date(pr.closed_at) >= new Date(since) && 
+                new Date(pr.closed_at) <= new Date(until)
+              );
+
+              // Calculate average time to merge for merged PRs
+              let totalMergeTime = 0;
+              let mergeTimeCount = 0;
+              
+              mergedPRs.forEach(pr => {
+                if (pr.created_at && pr.merged_at) {
+                  const created = new Date(pr.created_at);
+                  const merged = new Date(pr.merged_at);
+                  totalMergeTime += (merged - created) / (1000 * 60 * 60 * 24); // days
+                  mergeTimeCount++;
+                }
+              });
+
+              const avgMergeTime = mergeTimeCount > 0 ? (totalMergeTime / mergeTimeCount).toFixed(1) : 0;
+
+              return { 
+                merged: mergedPRs.length,
+                opened: openedPRs.length,
+                closed: closedPRs.length,
+                avgMergeTimeDays: parseFloat(avgMergeTime)
+              };
+            }
+
+            async function getIssueStats(since, until) {
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              // Filter out pull requests (GitHub API includes PRs in issues)
+              const actualIssues = issues.filter(issue => !issue.pull_request);
+
+              const openedIssues = actualIssues.filter(issue => 
+                new Date(issue.created_at) >= new Date(since) && 
+                new Date(issue.created_at) <= new Date(until)
+              );
+
+              const closedIssues = actualIssues.filter(issue => 
+                issue.closed_at &&
+                new Date(issue.closed_at) >= new Date(since) && 
+                new Date(issue.closed_at) <= new Date(until)
+              );
+
+              // Calculate average time to close for closed issues
+              let totalCloseTime = 0;
+              let closeTimeCount = 0;
+              
+              closedIssues.forEach(issue => {
+                if (issue.created_at && issue.closed_at) {
+                  const created = new Date(issue.created_at);
+                  const closed = new Date(issue.closed_at);
+                  totalCloseTime += (closed - created) / (1000 * 60 * 60 * 24); // days
+                  closeTimeCount++;
+                }
+              });
+
+              const avgCloseTime = closeTimeCount > 0 ? (totalCloseTime / closeTimeCount).toFixed(1) : 0;
+
+              // Count issues by labels
+              const labelCounts = {};
+              openedIssues.forEach(issue => {
+                issue.labels.forEach(label => {
+                  labelCounts[label.name] = (labelCounts[label.name] || 0) + 1;
+                });
+              });
+
+              return {
+                opened: openedIssues.length,
+                closed: closedIssues.length,
+                avgCloseTimeDays: parseFloat(avgCloseTime),
+                topLabels: Object.entries(labelCounts)
+                  .sort(([,a], [,b]) => b - a)
+                  .slice(0, 3)
+                  .map(([label, count]) => ({ label, count }))
+              };
+            }
+
+            async function getReleaseStats(since, until) {
+              try {
+                const releases = await github.paginate(github.rest.repos.listReleases, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  per_page: 100,
+                });
+
+                const monthlyReleases = releases.filter(release => 
+                  new Date(release.created_at) >= new Date(since) && 
+                  new Date(release.created_at) <= new Date(until)
+                );
+
+                return {
+                  total: monthlyReleases.length,
+                  preReleases: monthlyReleases.filter(r => r.prerelease).length,
+                  latestRelease: monthlyReleases.length > 0 ? monthlyReleases[0].tag_name : null
+                };
+              } catch (error) {
+                console.log(`Error getting releases: ${error.message}`);
+                return { total: 0, preReleases: 0, latestRelease: null };
+              }
             }
 
             async function getLanguageStats() {
@@ -136,6 +252,25 @@ jobs:
                   .slice(0, 3);
               } catch (error) {
                 return [];
+              }
+            }
+
+            async function getStarAndForkStats() {
+              try {
+                const repo = await github.rest.repos.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+
+                return {
+                  stars: repo.data.stargazers_count,
+                  forks: repo.data.forks_count,
+                  watchers: repo.data.subscribers_count,
+                  openIssues: repo.data.open_issues_count
+                };
+              } catch (error) {
+                console.log(`Error getting repo stats: ${error.message}`);
+                return { stars: 0, forks: 0, watchers: 0, openIssues: 0 };
               }
             }
 
@@ -203,13 +338,17 @@ jobs:
               const mergedPRs = monthlyData.map(d => d.prStats.merged);
               const linesAdded = monthlyData.map(d => d.stats.linesAdded);
               const activeContributors = monthlyData.map(d => d.stats.activeContributors);
+              const issuesClosed = monthlyData.map(d => d.issueStats.closed);
+              const netLinesChanged = monthlyData.map(d => d.stats.netLinesChanged);
               const monthLabels = monthlyData.map(d => d.month);
               
               const charts = [
                 { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
                 { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
-                { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels) },
-                { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
+                { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Lines Added', '#22c55e', monthLabels) },
+                { path: 'docs/stats/net-lines-changed-chart.svg', content: createSVGChart(netLinesChanged, 'Net Lines Changed', '#f59e0b', monthLabels) },
+                { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) },
+                { path: 'docs/stats/issues-closed-chart.svg', content: createSVGChart(issuesClosed, 'Issues Closed', '#ef4444', monthLabels) }
               ];
               
               // Get repo info
@@ -288,7 +427,7 @@ jobs:
             }
 
             try {
-              console.log('Starting simple monthly report generation...');
+              console.log('Starting enhanced monthly report generation...');
               
               const monthlyData = [];
               const now = new Date();
@@ -305,33 +444,62 @@ jobs:
                 
                 console.log(`Processing ${monthName} (${since} to ${until})...`);
                 
-                const [stats, prStats] = await Promise.all([
+                const [stats, prStats, issueStats, releaseStats] = await Promise.all([
                   getSimpleMonthStats(since, until),
-                  getPRStats(since, until)
+                  getPRStats(since, until),
+                  getIssueStats(since, until),
+                  getReleaseStats(since, until)
                 ]);
                 
-                monthlyData.push({ month: monthName, stats, prStats });
+                monthlyData.push({ month: monthName, stats, prStats, issueStats, releaseStats });
               }
               
               const branchResult = await createChartsOnBranch(monthlyData);
               const languages = await getLanguageStats();
+              const repoStats = await getStarAndForkStats();
               
               const latest = monthlyData[monthlyData.length - 1];
+              
+              // Create summary statistics
+              const topCommitType = Object.entries(latest.stats.commitTypes)
+                .sort(([,a], [,b]) => b - a)[0];
+              
               const mattermostPayload = {
-                text: `📊 **${latest.month} Repository Activity**`,
+                text: `📊 **${latest.month} Repository Activity Report**`,
                 attachments: [{
                   color: '#22c55e',
                   fields: [
+                    // Core Development Activity
                     { title: '📝 Total Commits', value: latest.stats.totalCommits.toString(), short: true },
-                    { title: '🔀 Merged PRs', value: latest.prStats.merged.toString(), short: true },
+                    { title: '👥 Active Contributors', value: latest.stats.activeContributors.toString(), short: true },
                     { title: '📈 Lines Added', value: latest.stats.linesAdded.toLocaleString(), short: true },
-                    { title: '👥 Contributors', value: latest.stats.activeContributors.toString(), short: true }
+                    { title: '📉 Lines Deleted', value: latest.stats.linesDeleted.toLocaleString(), short: true },
+                    { title: '⚖️ Net Lines Changed', value: latest.stats.netLinesChanged.toLocaleString(), short: true },
+                    { title: '📁 Files Changed', value: latest.stats.filesChanged.toString(), short: true },
+                    
+                    // Pull Request Activity
+                    { title: '🔀 PRs Merged', value: latest.prStats.merged.toString(), short: true },
+                    { title: '🆕 PRs Opened', value: latest.prStats.opened.toString(), short: true },
+                    { title: '❌ PRs Closed', value: latest.prStats.closed.toString(), short: true },
+                    { title: '⏱️ Avg Merge Time', value: `${latest.prStats.avgMergeTimeDays} days`, short: true },
+                    
+                    // Issue Management
+                    { title: '🐛 Issues Opened', value: latest.issueStats.opened.toString(), short: true },
+                    { title: '✅ Issues Closed', value: latest.issueStats.closed.toString(), short: true },
+                    { title: '🕐 Avg Close Time', value: `${latest.issueStats.avgCloseTimeDays} days`, short: true },
+                    { title: '🏷️ Top Issue Label', value: latest.issueStats.topLabels[0]?.label || 'None', short: true },
+                    
+                    // Release Activity
+                    { title: '🚀 Releases', value: latest.releaseStats.total.toString(), short: true },
+                    { title: '📦 Latest Release', value: latest.releaseStats.latestRelease || 'None', short: true },
                   ],
-                  text: `**Top Contributors:** ${latest.stats.contributorsList.slice(0, 3).join(', ') || 'None'}\n` +
-                        `**Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
-                        `**Charts:** [View on branch ${branchResult.branchName}](${branchResult.branchUrl})\n` +
-                        `Repository: ${context.repo.owner}/${context.repo.repo}`,
-                  footer: 'Simple repository statistics'
+                  text: `**🏆 Top Contributors:** ${latest.stats.contributorsList.slice(0, 5).join(', ') || 'None'}\n` +
+                        `**💻 Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n` +
+                        `**📊 Most Common Commit Type:** ${topCommitType ? `${topCommitType[0]} (${topCommitType[1]} commits)` : 'N/A'}\n` +
+                        `**⭐ Repository Stats:** ${repoStats.stars} stars • ${repoStats.forks} forks • ${repoStats.openIssues} open issues\n\n` +
+                        `**📈 Charts:** [View detailed charts on branch ${branchResult.branchName}](${branchResult.branchUrl})\n` +
+                        `**📂 Repository:** ${context.repo.owner}/${context.repo.repo}`,
+                  footer: 'Enhanced repository statistics • Generated by GitHub Actions'
                 }]
               };
 
@@ -345,7 +513,13 @@ jobs:
                 throw new Error(`Mattermost webhook failed: ${response.status}`);
               }
 
-              console.log('Simple monthly report completed successfully');
+              console.log('Enhanced monthly report completed successfully');
+              console.log(`Generated stats for ${latest.month}:`);
+              console.log(`- Commits: ${latest.stats.totalCommits}`);
+              console.log(`- Contributors: ${latest.stats.activeContributors}`);
+              console.log(`- Issues closed: ${latest.issueStats.closed}`);
+              console.log(`- PRs merged: ${latest.prStats.merged}`);
+              console.log(`- Releases: ${latest.releaseStats.total}`);
 
             } catch (error) {
               console.error('Error:', error);
