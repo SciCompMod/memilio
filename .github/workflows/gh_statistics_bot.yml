@@ -59,89 +59,107 @@ jobs:
               }
             }
 
-            // Get commit statistics using GitHub's recommended approach - optimized
+            // Cache for branch activity to avoid repeated API calls
+            let branchActivityCache = null;
+
+            // Get active branches for the entire year (cache this)
+            async function getActiveBranchesForYear() {
+              if (branchActivityCache) {
+                console.log('*** USING CACHED BRANCH ACTIVITY ***');
+                return branchActivityCache;
+              }
+
+              console.log('*** BUILDING BRANCH ACTIVITY CACHE FOR FULL YEAR ***');
+              
+              // Get all branches
+              const branches = await github.paginate(github.rest.repos.listBranches, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              });
+              
+              console.log(`*** FOUND ${branches.length} BRANCHES ***`);
+              
+              // Get the date range for the entire year we're analyzing
+              const now = new Date();
+              const yearStart = new Date(now.getFullYear(), now.getMonth() - 12, 1);
+              const yearEnd = new Date();
+              
+              console.log(`*** CHECKING ACTIVITY FROM ${yearStart.toISOString()} TO ${yearEnd.toISOString()} ***`);
+              
+              const activeBranches = [];
+              let branchesChecked = 0;
+              
+              for (const branch of branches) {
+                try {
+                  branchesChecked++;
+                  if (branchesChecked % 20 === 0) {
+                    console.log(`*** Checked ${branchesChecked}/${branches.length} branches for yearly activity ***`);
+                  }
+                  
+                  // Check if branch has ANY commits in the entire year
+                  const branchCommits = await github.rest.repos.listCommits({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    sha: branch.name,
+                    since: yearStart.toISOString(),
+                    until: yearEnd.toISOString(),
+                    per_page: 1,
+                  });
+                  
+                  if (branchCommits.data.length > 0) {
+                    activeBranches.push(branch);
+                    console.log(`*** Branch ${branch.name} has commits in the year ***`);
+                  }
+                  
+                } catch (error) {
+                  console.log(`*** Error checking ${branch.name}: ${error.message} ***`);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+              
+              console.log(`*** FOUND ${activeBranches.length} ACTIVE BRANCHES FOR THE YEAR ***`);
+              branchActivityCache = activeBranches;
+              return activeBranches;
+            }
+
+            // Get commit statistics using cached active branches
             async function getMonthCommitStats(since, until) {
-              console.log(`=== GETTING COMMITS FROM ACTIVE BRANCHES ${since} TO ${until} ===`);
+              console.log(`=== GETTING COMMITS FROM CACHED ACTIVE BRANCHES ${since} TO ${until} ===`);
               
               try {
-                // Step 1: Get all branches in the repository
-                console.log('*** STEP 1: LISTING ALL BRANCHES ***');
-                const branches = await github.paginate(github.rest.repos.listBranches, {
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  per_page: 100,
-                });
+                // Get the list of active branches for the year (cached after first call)
+                const activeBranches = await getActiveBranchesForYear();
                 
-                console.log(`*** FOUND ${branches.length} BRANCHES ***`);
-                
-                // Get default branch for main commit counting
+                // Get default branch info
                 const repo = await github.rest.repos.get({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                 });
                 const defaultBranch = repo.data.default_branch;
-                console.log(`*** DEFAULT BRANCH: ${defaultBranch} ***`);
                 
-                // Step 2: Check each branch for commits in the date range (with early exit)
-                console.log('*** STEP 2: FINDING BRANCHES WITH COMMITS IN DATE RANGE ***');
-                const activeBranches = [];
-                let branchesChecked = 0;
+                console.log(`*** PROCESSING ${activeBranches.length} ACTIVE BRANCHES FOR THIS MONTH ***`);
                 
-                for (const branch of branches) {
+                const allCommitShas = new Set();
+                const allAuthors = new Set();
+                let mainBranchCommits = [];
+                
+                // Now only check the active branches for this specific month
+                for (const branch of activeBranches) {
                   try {
-                    branchesChecked++;
-                    if (branchesChecked % 20 === 0) {
-                      console.log(`*** Checked ${branchesChecked}/${branches.length} branches ***`);
-                    }
-                    
-                    // Get just the first page to check if branch has commits in date range
-                    const branchCommits = await github.rest.repos.listCommits({
+                    const branchCommits = await github.paginate(github.rest.repos.listCommits, {
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       sha: branch.name,
                       since,
                       until,
-                      per_page: 1, // Just check if any commits exist
-                    });
-                    
-                    if (branchCommits.data.length > 0) {
-                      activeBranches.push({
-                        branch: branch,
-                        hasCommits: true
-                      });
-                      console.log(`*** Branch ${branch.name} has commits in date range ***`);
-                    }
-                    
-                  } catch (error) {
-                    console.log(`*** Error checking ${branch.name}: ${error.message} ***`);
-                  }
-                  
-                  // Small delay to avoid rate limiting
-                  await new Promise(resolve => setTimeout(resolve, 50));
-                }
-                
-                console.log(`*** FOUND ${activeBranches.length} ACTIVE BRANCHES WITH COMMITS ***`);
-                
-                // Step 3: Get full commit data only from active branches
-                console.log('*** STEP 3: FETCHING ALL COMMITS FROM ACTIVE BRANCHES ***');
-                const allCommitShas = new Set();
-                const allAuthors = new Set();
-                let mainBranchCommits = [];
-                
-                for (const activeBranch of activeBranches) {
-                  try {
-                    console.log(`*** Fetching all commits from active branch: ${activeBranch.branch.name} ***`);
-                    
-                    const branchCommits = await github.paginate(github.rest.repos.listCommits, {
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      sha: activeBranch.branch.name,
-                      since,
-                      until,
                       per_page: 100,
                     });
                     
-                    console.log(`*** Found ${branchCommits.length} commits on ${activeBranch.branch.name} ***`);
+                    if (branchCommits.length > 0) {
+                      console.log(`*** Found ${branchCommits.length} commits on ${branch.name} for this month ***`);
+                    }
                     
                     // Add to our sets (automatically handles duplicates)
                     branchCommits.forEach(commit => {
@@ -152,31 +170,28 @@ jobs:
                     });
                     
                     // Keep main branch commits separate
-                    if (activeBranch.branch.name === defaultBranch) {
+                    if (branch.name === defaultBranch) {
                       mainBranchCommits = branchCommits;
                     }
                     
                   } catch (error) {
-                    console.log(`*** Error fetching commits from ${activeBranch.branch.name}: ${error.message} ***`);
+                    console.log(`*** Error fetching commits from ${branch.name}: ${error.message} ***`);
                   }
                   
-                  // Small delay to avoid rate limiting
                   await new Promise(resolve => setTimeout(resolve, 100));
                 }
                 
-                console.log(`*** PROCESSED ${activeBranches.length} ACTIVE BRANCHES ***`);
-                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ALL ACTIVE BRANCHES: ${allCommitShas.size} ***`);
+                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ACTIVE BRANCHES: ${allCommitShas.size} ***`);
                 console.log(`*** COMMITS ON MAIN BRANCH: ${mainBranchCommits.length} ***`);
                 console.log(`*** TOTAL UNIQUE AUTHORS: ${allAuthors.size} ***`);
                 console.log(`*** AUTHORS: ${Array.from(allAuthors).join(', ')} ***`);
                 
-                // Step 4: Get detailed stats from main branch commits
-                console.log('*** STEP 4: GETTING DETAILED STATS FROM MAIN BRANCH ***');
+                // Get detailed stats from main branch commits
                 let totalAdditions = 0;
                 let totalDeletions = 0;
                 let mainFileChanges = 0;
                 
-                for (const commit of mainBranchCommits.slice(0, 50)) { // Limit to avoid rate limits
+                for (const commit of mainBranchCommits.slice(0, 50)) {
                   try {
                     const commitDetail = await github.rest.repos.getCommit({
                       owner: context.repo.owner,
@@ -203,11 +218,11 @@ jobs:
                   netLines: totalAdditions - totalDeletions,
                 };
                 
-                console.log('*** FINAL OPTIMIZED RESULT ***', JSON.stringify(result, null, 2));
+                console.log('*** CACHED OPTIMIZED RESULT ***', JSON.stringify(result, null, 2));
                 return result;
                 
               } catch (error) {
-                console.log('*** ERROR WITH OPTIMIZED APPROACH ***', error.message);
+                console.log('*** ERROR WITH CACHED APPROACH ***', error.message);
                 return {
                   totalCommitsAllBranches: 0,
                   totalCommitsMain: 0,
@@ -311,7 +326,7 @@ jobs:
               </svg>`;
             }
 
-            // Commit charts to repository
+            // Commit charts to repository and create PR
             async function commitChartsToRepo(monthlyData, targetBranch) {
               const totalCommits = monthlyData.map(d => d.stats?.totalCommitsAllBranches || d.stats?.totalCommits || 0);
               const mergedPRs = monthlyData.map(d => d.prStats?.merged || 0);
@@ -326,13 +341,51 @@ jobs:
               const linesAddedSvg = createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels);
               const activeContributorsSvg = createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels);
               
+              // Create a new branch for the PR
+              const now = new Date();
+              const prBranchName = `update-stats-charts-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+              
+              console.log(`*** CREATING NEW BRANCH: ${prBranchName} ***`);
+              
+              try {
+                // Get the default branch reference
+                const defaultBranch = await github.rest.repos.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+                
+                const mainBranchRef = await github.rest.git.getRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `heads/${defaultBranch.data.default_branch}`,
+                });
+                
+                // Create new branch
+                await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/heads/${prBranchName}`,
+                  sha: mainBranchRef.data.object.sha,
+                });
+                
+                console.log(`*** CREATED BRANCH: ${prBranchName} ***`);
+                
+              } catch (error) {
+                if (error.message.includes('Reference already exists')) {
+                  console.log(`*** BRANCH ${prBranchName} ALREADY EXISTS, USING EXISTING BRANCH ***`);
+                } else {
+                  throw error;
+                }
+              }
+              
               const chartFiles = [
-                { path: 'docs/assets/total-commits-chart.svg', content: totalCommitsSvg },
-                { path: 'docs/assets/merged-prs-chart.svg', content: mergedPRsSvg },
-                { path: 'docs/assets/lines-added-chart.svg', content: linesAddedSvg },
-                { path: 'docs/assets/active-contributors-chart.svg', content: activeContributorsSvg }
+                { path: 'docs/stats/total-commits-chart.svg', content: totalCommitsSvg },
+                { path: 'docs/stats/merged-prs-chart.svg', content: mergedPRsSvg },
+                { path: 'docs/stats/lines-added-chart.svg', content: linesAddedSvg },
+                { path: 'docs/stats/active-contributors-chart.svg', content: activeContributorsSvg }
               ];
               
+              // Commit files to the new branch
               for (const file of chartFiles) {
                 try {
                   const base64Content = Buffer.from(file.content).toString('base64');
@@ -344,7 +397,7 @@ jobs:
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       path: file.path,
-                      ref: targetBranch
+                      ref: prBranchName
                     });
                     existingFileSha = existingFile.data.sha;
                   } catch (error) {
@@ -357,7 +410,7 @@ jobs:
                     path: file.path,
                     message: `Update repository activity chart: ${file.path}`,
                     content: base64Content,
-                    branch: targetBranch
+                    branch: prBranchName
                   };
                   
                   if (existingFileSha) {
@@ -368,6 +421,53 @@ jobs:
                   console.log(`Updated chart: ${file.path}`);
                 } catch (error) {
                   console.log(`Error updating ${file.path}:`, error.message);
+                }
+              }
+              
+              // Create the PR
+              const latestMonth = monthlyData[monthlyData.length - 1];
+              const prTitle = `📊 Update Repository Statistics Charts - ${latestMonth.month}`;
+              const prBody = `## 📊 Monthly Repository Statistics Update
+
+              This PR automatically updates our repository activity charts with the latest data for **${latestMonth.month}**.
+
+              ### 📈 Updated Charts
+              - 🔵 **Total Commits (All Branches):** ${latestMonth.stats?.totalCommitsAllBranches || latestMonth.stats?.totalCommits || 0} commits
+              - 🟢 **Merged Pull Requests:** ${latestMonth.prStats?.merged || 0} PRs
+              - 🟣 **Total Lines Added:** ${(latestMonth.stats?.linesAdded || 0).toLocaleString()} lines
+              - 🟠 **Active Contributors:** ${latestMonth.stats?.totalAuthors || latestMonth.stats?.uniqueContributors || 0} developers
+
+              ### 📁 Files Updated
+              - \`docs/stats/total-commits-chart.svg\`
+              - \`docs/stats/merged-prs-chart.svg\`
+              - \`docs/stats/lines-added-chart.svg\`
+              - \`docs/stats/active-contributors-chart.svg\`
+
+              ### 🤖 About
+              This PR was automatically generated by our monthly statistics bot. The charts show 12 months of repository activity trends and can be embedded in documentation to showcase project health and development velocity.
+
+              ---
+              *Generated automatically on ${new Date().toLocaleDateString()}*`;
+
+              try {
+                const pullRequest = await github.rest.pulls.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: prTitle,
+                  head: prBranchName,
+                  base: defaultBranch.data.default_branch,
+                  body: prBody,
+                });
+                
+                console.log(`*** CREATED PR: ${pullRequest.data.html_url} ***`);
+                return pullRequest.data.html_url;
+                
+              } catch (error) {
+                if (error.message.includes('A pull request already exists')) {
+                  console.log(`*** PR ALREADY EXISTS FOR BRANCH ${prBranchName} ***`);
+                  return `PR already exists for ${prBranchName}`;
+                } else {
+                  throw error;
                 }
               }
             }
@@ -418,9 +518,9 @@ jobs:
                 await new Promise(resolve => setTimeout(resolve, 500));
               }
 
-              // Create and commit SVG charts
+              // Create and commit SVG charts, then create PR
               console.log('Generating and committing SVG charts...');
-              await commitChartsToRepo(monthlyDataArray, targetBranch);
+              const prUrl = await commitChartsToRepo(monthlyDataArray, targetBranch);
 
               // Get language stats
               const languageStats = await getLanguageStats();
@@ -429,7 +529,7 @@ jobs:
               const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
               console.log(`*** LATEST MONTH FOR MATTERMOST ***`, JSON.stringify(latestMonthData, null, 2));
 
-              // Post to Mattermost
+              // Post to Mattermost with PR link
               const mattermostPayload = {
                 text: `📊 **${latestMonthData.month} Repository Activity**`,
                 attachments: [{
@@ -446,8 +546,9 @@ jobs:
                         `**Top Contributors:** ${(latestMonthData.stats?.authorsList || []).slice(0, 3).join(', ') || 'None'}\n` +
                         `**Languages:** ${(languageStats || []).map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
                         `*Excluding merges, ${latestMonthData.stats?.totalAuthors || 0} authors pushed ${latestMonthData.stats?.totalCommitsMain || 0} commits to main and ${latestMonthData.stats?.totalCommitsAllBranches || 0} commits to all branches*\n\n` +
+                        `**📊 Charts Updated:** ${typeof prUrl === 'string' && prUrl.startsWith('http') ? `[View PR](${prUrl})` : 'Charts updated in docs/stats/'}\n` +
                         `Repository: ${context.repo.owner}/${context.repo.repo}`,
-                  footer: 'Charts updated in docs/assets/ for documentation'
+                  footer: 'Monthly statistics generated automatically'
                 }]
               };
 
