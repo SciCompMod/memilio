@@ -1,7 +1,7 @@
 name: Monthly Repository Statistics
 
 on:
-  pull_request: 
+  pull_request
 
 jobs:
   generate-monthly-report:
