@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize]
   schedule:
     - cron: '0 9 1 * *'
+  workflow_dispatch:
 
 jobs:
   generate-monthly-report:
@@ -258,7 +259,7 @@ jobs:
               const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
               
               try {
-                const repo = await github.rest.repos.get({
+                const repoInfo = await github.rest.repos.get({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                 });
@@ -266,7 +267,7 @@ jobs:
                 const mainRef = await github.rest.git.getRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  ref: `heads/${repo.data.default_branch}`,
+                  ref: `heads/${repoInfo.data.default_branch}`,
                 });
                 
                 await github.rest.git.createRef({
@@ -323,7 +324,7 @@ jobs:
                   repo: context.repo.repo,
                   title: `📊 Update Repository Statistics - ${latestMonth.month}`,
                   head: branchName,
-                  base: repo.data.default_branch,
+                  base: repoInfo.data.default_branch,
                   body: `## Repository Activity Charts Updated
 
                   **${latestMonth.month} Summary:**
@@ -351,16 +352,18 @@ jobs:
               const monthlyData = [];
               const now = new Date();
               
-              // Get last 12 months of data (simple approach)
+              // Get last 12 months of data (simple approach) - fixed date logic
               for (let i = 12; i >= 1; i--) {
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+                
+                console.log(`Month ${i}: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()}`);
                 
                 const since = monthStart.toISOString();
                 const until = monthEnd.toISOString();
                 const monthName = monthStart.toLocaleString('default', { month: 'short', year: 'numeric' });
                 
-                console.log(`Processing ${monthName}...`);
+                console.log(`Processing ${monthName} (${since} to ${until})...`);
                 
                 const [stats, prStats] = await Promise.all([
                   getSimpleMonthStats(since, until),
