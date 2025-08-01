@@ -26,9 +26,9 @@ jobs:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
         with:
           script: |
-            // Simple stats with minimal API calls - main branch only
+            // Simple stats for historical data (main branch only)
             async function getSimpleMonthStats(since, until) {
-              console.log(`Getting stats for ${since} to ${until}`);
+              console.log(`Getting simple stats for ${since} to ${until}`);
               
               const commits = await github.paginate(github.rest.repos.listCommits, {
                 owner: context.repo.owner,
@@ -37,8 +37,6 @@ jobs:
                 until,
                 per_page: 100,
               });
-              
-              console.log(`Found ${commits.length} commits on main branch`);
               
               const contributors = new Set();
               commits.forEach(commit => {
@@ -51,6 +49,7 @@ jobs:
               });
               
               let totalLinesAdded = 0;
+              let totalLinesRemoved = 0;
               let filesChanged = 0;
               
               for (const commit of commits.slice(0, 30)) {
@@ -62,43 +61,12 @@ jobs:
                   });
                   
                   totalLinesAdded += commitDetail.data.stats?.additions || 0;
+                  totalLinesRemoved += commitDetail.data.stats?.deletions || 0;
                   filesChanged += commitDetail.data.files?.length || 0;
                   
                   if (commitDetail.data.commit && commitDetail.data.commit.message) {
-                    const message = commitDetail.data.commit.message;
                     const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
                     let match;
-                    
-                    while ((match = coAuthorRegex.exec(message)) !== null) {
-                      const coAuthorName = match[1].trim();
-                      if (coAuthorName && coAuthorName.length > 0) {
-                        contributors.add(coAuthorName);
-                        console.log(`Found co-author: ${coAuthorName}`);
-                      }
-                    }
-                  }
-                  
-                  if (commitDetail.data.author && commitDetail.data.author.login) {
-                    contributors.add(commitDetail.data.author.login);
-                  }
-                  
-                } catch (error) {
-                  console.log(`Error getting commit detail: ${error.message}`);
-                }
-              }
-              
-              for (const commit of commits.slice(30, 60)) {
-                try {
-                  const commitDetail = await github.rest.repos.getCommit({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: commit.sha,
-                  });
-                  
-                  if (commitDetail.data.commit && commitDetail.data.commit.message) {
-                    const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
-                    let match;
-                    
                     while ((match = coAuthorRegex.exec(commitDetail.data.commit.message)) !== null) {
                       const coAuthorName = match[1].trim();
                       if (coAuthorName && coAuthorName.length > 0) {
@@ -106,20 +74,138 @@ jobs:
                       }
                     }
                   }
+                  
                 } catch (error) {
-                  console.log(`Error checking co-authors: ${error.message}`);
+                  console.log(`Error getting commit detail: ${error.message}`);
                 }
               }
-              
-              console.log(`Total contributors: ${contributors.size}`);
-              console.log(`Contributors: ${Array.from(contributors).join(', ')}`);
               
               return {
                 totalCommits: commits.length,
                 activeContributors: contributors.size,
                 linesAdded: totalLinesAdded,
+                linesRemoved: totalLinesRemoved,
+                linesChanged: totalLinesAdded + totalLinesRemoved,
                 filesChanged: filesChanged,
                 contributorsList: Array.from(contributors)
+              };
+            }
+
+            // Comprehensive stats for current month (all branches)
+            async function getComprehensiveMonthStats(since, until) {
+              console.log(`Getting comprehensive stats for ${since} to ${until}`);
+              
+              // Get all branches
+              const branches = await github.paginate(github.rest.repos.listBranches, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              });
+              
+              console.log(`Found ${branches.length} branches`);
+              
+              // Find active branches (have commits in date range)
+              const activeBranches = [];
+              for (const branch of branches.slice(0, 50)) { // Limit to avoid rate limits
+                try {
+                  const branchCommits = await github.rest.repos.listCommits({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    sha: branch.name,
+                    since,
+                    until,
+                    per_page: 1,
+                  });
+                  
+                  if (branchCommits.data.length > 0) {
+                    activeBranches.push(branch);
+                    console.log(`Branch ${branch.name} has commits in date range`);
+                  }
+                } catch (error) {
+                  console.log(`Error checking branch ${branch.name}: ${error.message}`);
+                }
+              }
+              
+              console.log(`Found ${activeBranches.length} active branches`);
+              
+              // Get all commits from active branches
+              const allCommitShas = new Set();
+              const allAuthors = new Set();
+              let totalLinesAdded = 0;
+              let totalLinesRemoved = 0;
+              let totalFilesChanged = 0;
+              
+              for (const branch of activeBranches) {
+                try {
+                  const branchCommits = await github.paginate(github.rest.repos.listCommits, {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    sha: branch.name,
+                    since,
+                    until,
+                    per_page: 100,
+                  });
+                  
+                  console.log(`Found ${branchCommits.length} commits on ${branch.name}`);
+                  
+                  for (const commit of branchCommits) {
+                    if (!allCommitShas.has(commit.sha)) {
+                      allCommitShas.add(commit.sha);
+                      
+                      if (commit.author && commit.author.login) {
+                        allAuthors.add(commit.author.login);
+                      }
+                      if (commit.committer && commit.committer.login) {
+                        allAuthors.add(commit.committer.login);
+                      }
+                      
+                      // Get detailed stats for first 20 unique commits
+                      if (allCommitShas.size <= 20) {
+                        try {
+                          const commitDetail = await github.rest.repos.getCommit({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            ref: commit.sha,
+                          });
+                          
+                          totalLinesAdded += commitDetail.data.stats?.additions || 0;
+                          totalLinesRemoved += commitDetail.data.stats?.deletions || 0;
+                          totalFilesChanged += commitDetail.data.files?.length || 0;
+                          
+                          // Extract co-authors
+                          if (commitDetail.data.commit && commitDetail.data.commit.message) {
+                            const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
+                            let match;
+                            while ((match = coAuthorRegex.exec(commitDetail.data.commit.message)) !== null) {
+                              const coAuthorName = match[1].trim();
+                              if (coAuthorName && coAuthorName.length > 0) {
+                                allAuthors.add(coAuthorName);
+                              }
+                            }
+                          }
+                        } catch (error) {
+                          console.log(`Error getting detailed stats: ${error.message}`);
+                        }
+                      }
+                    }
+                  }
+                } catch (error) {
+                  console.log(`Error getting commits from ${branch.name}: ${error.message}`);
+                }
+              }
+              
+              console.log(`Total unique commits: ${allCommitShas.size}`);
+              console.log(`Total unique authors: ${allAuthors.size}`);
+              console.log(`Authors: ${Array.from(allAuthors).join(', ')}`);
+              
+              return {
+                totalCommits: allCommitShas.size,
+                activeContributors: allAuthors.size,
+                linesAdded: totalLinesAdded,
+                linesRemoved: totalLinesRemoved,
+                linesChanged: totalLinesAdded + totalLinesRemoved,
+                filesChanged: totalFilesChanged,
+                contributorsList: Array.from(allAuthors)
               };
             }
 
@@ -224,14 +310,14 @@ jobs:
             async function createChartsOnBranch(monthlyData) {
               const totalCommits = monthlyData.map(d => d.stats.totalCommits);
               const mergedPRs = monthlyData.map(d => d.prStats.merged);
-              const linesAdded = monthlyData.map(d => d.stats.linesAdded);
+              const linesChanged = monthlyData.map(d => d.stats.linesChanged);
               const activeContributors = monthlyData.map(d => d.stats.activeContributors);
               const monthLabels = monthlyData.map(d => d.month);
               
               const charts = [
                 { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
                 { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
-                { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels) },
+                { path: 'docs/stats/lines-changed-chart.svg', content: createSVGChart(linesChanged, 'Total Lines Changed', '#22c55e', monthLabels) },
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
               ];
               
@@ -316,7 +402,8 @@ jobs:
               const monthlyData = [];
               const now = new Date();
               
-              for (let i = 12; i >= 1; i--) {
+              // Get historical data (main branch only for speed)
+              for (let i = 12; i >= 2; i--) {
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
                 
@@ -326,7 +413,7 @@ jobs:
                 const until = monthEnd.toISOString();
                 const monthName = monthStart.toLocaleString('default', { month: 'short', year: 'numeric' });
                 
-                console.log(`Processing ${monthName} (${since} to ${until})...`);
+                console.log(`Processing ${monthName} (simple stats)...`);
                 
                 const [stats, prStats] = await Promise.all([
                   getSimpleMonthStats(since, until),
@@ -335,6 +422,20 @@ jobs:
                 
                 monthlyData.push({ month: monthName, stats, prStats });
               }
+              
+              // Get current month with comprehensive stats (all branches)
+              const currentMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+              const currentMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+              const currentMonthName = currentMonthStart.toLocaleString('default', { month: 'short', year: 'numeric' });
+              
+              console.log(`Processing current month ${currentMonthName} with comprehensive stats...`);
+              
+              const [currentStats, currentPRStats] = await Promise.all([
+                getComprehensiveMonthStats(currentMonthStart.toISOString(), currentMonthEnd.toISOString()),
+                getPRStats(currentMonthStart.toISOString(), currentMonthEnd.toISOString())
+              ]);
+              
+              monthlyData.push({ month: currentMonthName, stats: currentStats, prStats: currentPRStats });
               
               const branchResult = await createChartsOnBranch(monthlyData);
               const languages = await getLanguageStats();
@@ -347,10 +448,11 @@ jobs:
                   fields: [
                     { title: '📝 Total Commits', value: latest.stats.totalCommits.toString(), short: true },
                     { title: '🔀 Merged PRs', value: latest.prStats.merged.toString(), short: true },
-                    { title: '📈 Lines Added', value: latest.stats.linesAdded.toLocaleString(), short: true },
+                    { title: '📊 Lines Changed', value: latest.stats.linesChanged.toLocaleString(), short: true },
                     { title: '👥 Contributors', value: latest.stats.activeContributors.toString(), short: true }
                   ],
-                  text: `**Top Contributors:** ${latest.stats.contributorsList.slice(0, 3).join(', ') || 'None'}\n` +
+                  text: `**Code Changes:** +${latest.stats.linesAdded.toLocaleString()} / -${latest.stats.linesRemoved.toLocaleString()} lines\n` +
+                        `**Top Contributors:** ${latest.stats.contributorsList.slice(0, 3).join(', ') || 'None'}\n` +
                         `**Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
                         `**Charts:** [View on branch ${branchResult.branchName}](${branchResult.branchUrl})\n` +
                         `Repository: ${context.repo.owner}/${context.repo.repo}`,
