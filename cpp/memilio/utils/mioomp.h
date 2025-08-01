@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -36,7 +36,7 @@
 #else
 
 /**
-* Macro for OpenMP directives. 
+* Macro for OpenMP directives.
 * Evaluates to nothing because OpenMP is disabled.
 * Unknown pragmas are ignored by the compiler, but the compiler emits warnings, so
 * we remove the #pragma completely.

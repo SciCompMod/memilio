@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -40,7 +40,7 @@ namespace glsecir
 /// @brief Vector with the probability to start in any of the subcompartments of the Exposed compartment.
 struct StartingProbabilitiesExposed {
     using Type = Eigen::VectorX<ScalarType>;
-    /** 
+    /**
      * @brief Default parameters can be used to get an Erlang distributed stay time in the Exposed compartment.
      * @param[in] numExposed Number of subcompartments of the Exposed compartment.
      */
@@ -97,7 +97,7 @@ struct StartingProbabilitiesInfectedNoSymptoms {
 };
 
 /**
- * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedNoSymptoms 
+ * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedNoSymptoms
  *      compartment before developing symptoms.
  */
 struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
@@ -122,7 +122,7 @@ struct TransitionMatrixInfectedNoSymptomsToInfectedSymptoms {
 };
 
 /**
- * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedNoSymptoms 
+ * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedNoSymptoms
  *      compartment before recovery.
  */
 struct TransitionMatrixInfectedNoSymptomsToRecovered {
@@ -166,7 +166,7 @@ struct StartingProbabilitiesInfectedSymptoms {
 };
 
 /**
- * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedNoSymptoms 
+ * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedNoSymptoms
  *      compartment before going to hospital.
  */
 struct TransitionMatrixInfectedSymptomsToInfectedSevere {
@@ -191,7 +191,7 @@ struct TransitionMatrixInfectedSymptomsToInfectedSevere {
 };
 
 /**
- * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedSymptoms 
+ * @brief Transition matrix of the phase-type distribution describing the stay time in the InfectedSymptoms
  *      compartment before recovery.
  */
 struct TransitionMatrixInfectedSymptomsToRecovered {

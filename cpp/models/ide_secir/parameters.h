@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke
@@ -47,7 +47,7 @@ namespace isecir
 /**
  * @brief Transition distribution for each transition in #InfectionTransition.
  *
- * For each transition, the corresponding transition distribution can be chosen independently. 
+ * For each transition, the corresponding transition distribution can be chosen independently.
  * The choice of distributions determines how many initial time points are required to initialize the model, see
  * get_global_support_max() in models/ide_secir/model.h.
  *
@@ -75,7 +75,7 @@ struct TransitionDistributions {
  * @brief Defines the probability for each possible transition to take this flow/transition.
  */
 struct TransitionProbabilities {
-    /*For consistency, also define TransitionProbabilities for each transition in #InfectionTransition. 
+    /*For consistency, also define TransitionProbabilities for each transition in #InfectionTransition.
     Transition Probabilities should be set to 1 if there is no possible other flow from starting compartment.*/
     using Type = CustomIndexArray<std::vector<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -329,7 +329,7 @@ public:
                 return true;
             }
 
-            /* The first entry of TransitionDistributions is not checked because the distribution S->E is never used 
+            /* The first entry of TransitionDistributions is not checked because the distribution S->E is never used
             (and it makes no sense to use the distribution). The support does not need to be valid.*/
             for (size_t i = 1; i < (int)InfectionTransition::Count; i++) {
                 if (floating_point_less(this->get<TransitionDistributions>()[group][i].get_support_max(10), 0.0,

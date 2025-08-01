@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: Julia Bicker, René Schmieding
@@ -40,7 +40,7 @@ template <class CurrentModel, class TargetModel>
 void convert_model(const CurrentModel&, TargetModel&) = delete;
 
 /**
- * @brief A temporal-hybrid simulation. 
+ * @brief A temporal-hybrid simulation.
  * The temporal-hybrid simulation switches between two models during the course of time according to a given condition. This requires a specilization of the convert_model function for the two models used.
  * @tparam Model1 (Simulation) Type of the first model used.
  * @tparam Model2 (Simulation) Type of the second model used.

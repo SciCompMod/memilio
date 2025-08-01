@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -35,7 +35,7 @@ namespace iseir
 
 /**
  * @brief The time of latency used in the IDE SEIR model.
- * 
+ *
  * Latency time is the average time from infection to the onset of infectivity used in the model.
  * Latency time is measured in days.
  */
@@ -49,7 +49,7 @@ struct LatencyTime {
 
 /**
  * @brief The infectious time used in the IDE SEIR model.
- * 
+ *
  * Infectious time is the average time from onset of infectivity to recovery used in the model.
  * Infectious time is measured in days.
  */
@@ -63,8 +63,8 @@ struct InfectiousTime {
 
 /**
  * @brief The risk of transmission in the event of a contact used in the IDE SEIR model.
- * 
- * The transmission risk is the average risk to get infected in the event of a contact, 
+ *
+ * The transmission risk is the average risk to get infected in the event of a contact,
  * given that the contact takes place between a susceptible and an infected person.
  */
 struct TransmissionRisk {
@@ -77,7 +77,7 @@ struct TransmissionRisk {
 
 /**
  * @brief The contact frequency is modeled using an UncertainContactMatrix.
- * 
+ *
  * The contact frequency is the average number of contact of an individual per day.
  * We use the type UncertainContactMatrix, because of the Randomness in this variable.
  * Via this parameter, dampings can be included to simulate non-pharmaceutical interventions.

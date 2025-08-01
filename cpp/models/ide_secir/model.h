@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
@@ -50,17 +50,17 @@ public:
     /**
     * @brief Constructor to create an IDE-SECIR model.
     *
-    * @param[in, out] transitions_init TimeSeries with the initial values of the number of individuals, 
+    * @param[in, out] transitions_init TimeSeries with the initial values of the number of individuals,
     *   which transit within one timestep dt from one compartment to another.
     *   Possible transitions are specified in #InfectionTransition%s.
-    *   Considered time points should have the distance dt. The last time point determines the start time t0 of the 
-    *   simulation. 
+    *   Considered time points should have the distance dt. The last time point determines the start time t0 of the
+    *   simulation.
     *   The time history must reach a certain point in the past so that the simulation can be performed.
     *   A warning is displayed if the condition is violated.
     * @param[in] N_init A vector, containing the populations of the considered region, for every AgeGroup.
     * @param[in] deaths_init A vector, containing the total number of deaths at time t0, for every AgeGroup.
     * @param[in] num_agegroups The number of AgeGroups.
-    * @param[in] total_confirmed_cases_init A vector, containing the total confirmed cases at time t0 can be set if it 
+    * @param[in] total_confirmed_cases_init A vector, containing the total confirmed cases at time t0 can be set if it
     *   should be used for initialization, for every AgeGroup.
     */
     Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
@@ -77,7 +77,7 @@ public:
     /**
     * @brief Returns a flat index for the TimeSeries transitions which contains values for the #InfectionTransition%s.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store values for the different 
+    * In the TimeSeries we store a vector for each time point. In this vector we store values for the different
     * #InfectionTransition%s for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionTransition.
     *
@@ -93,7 +93,7 @@ public:
     /**
     * @brief Returns a flat index for the TimeSeries populations which contains values for the #InfectionState%s.
     *
-    * In the TimeSeries we store a vector for each time point. In this vector we store values for the 
+    * In the TimeSeries we store a vector for each time point. In this vector we store values for the
     * different #InfectionState%s for every AgeGroup.
     * This function is used to get the right index in this vector for a specific AgeGroup and #InfectionState.
     *
@@ -109,11 +109,11 @@ public:
      * @brief Getter for the global support_max, i.e. the maximum of support_max over all TransitionDistributions.
      *
      * This determines how many initial values we need for the transitions.
-     * It may be possible to run the simulation with fewer time points than the value of the global support_max, 
+     * It may be possible to run the simulation with fewer time points than the value of the global support_max,
      * but this number ensures that it is possible.
      *
      * @param[in] dt Time step size.
-     * 
+     *
      * @return Global support_max.
      */
     ScalarType get_global_support_max(ScalarType dt) const;
@@ -141,7 +141,7 @@ public:
     /**
      * @brief Getter for number of age groups.
      *
-     * @return Returns number of age groups. 
+     * @return Returns number of age groups.
      */
     size_t get_num_agegroups() const
     {
@@ -173,23 +173,23 @@ public:
 private:
     // ---- Functionality to calculate the sizes of the compartments for time t0. ----
     /**
-     * @brief Compute the compartment specified in idx_InfectionState at the current time -- only using historic flow 
+     * @brief Compute the compartment specified in idx_InfectionState at the current time -- only using historic flow
      * values and disrespecting potential, previous compartment value.
-     * 
+     *
      * The computation is meaningful for all compartments except Susceptible, Recovered and #Death
-     * and mostly needed for initialization. 
+     * and mostly needed for initialization.
      * For Susceptible, Recovered and Dead, use corresponding alternative functions.
      *
      * @param[in] dt Time discretization step size.
      * @param[in] idx_InfectionState Specifies the considered #InfectionState
      * @param[in] group The AgeGroup for which we want to compute.
-     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions. 
-     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
+     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions.
+     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution,
      *              related to a flow from the considered #InfectionState to any other #InfectionState.
      *              This index is also used for related probability.
-     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
+     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution,
      *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases
-     *               to Recovered). 
+     *               to Recovered).
      *              Related probability is calculated via 1-probability[idx_TransitionDistribution1].
      *              Sometimes the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1.
      */
@@ -201,32 +201,32 @@ private:
     /**
      * @brief Computes the values of the infection compartments subset at initialization.
      *
-     * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and 
+     * The values for the compartments Exposed, InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and
      * InfectedCritical for time t_0 are calculated using the initial data in form of flows.
      * Calculated values are stored in populations.
-     * 
+     *
      * @param[in] dt Time discretization step size.
      */
     void initial_compute_compartments_infection(ScalarType dt);
 
     /**
      * @brief Computes the values of compartments at initialization.
-     * 
+     *
      * The initialization method is selected automatically based on the different values that need to be set beforehand.
      * Infection compartments are always computed through historic flows.
      * Initialization methods for Susceptible and Recovered are tested in the following order:
-     * 1.) If a positive number for the total number of confirmed cases is set, Recovered is set according to that 
+     * 1.) If a positive number for the total number of confirmed cases is set, Recovered is set according to that
      * value and Susceptible%s are derived.
      * 2.) If Susceptible%s are set, Recovered will be derived.
      * 3.) If Recovered are set directly, Susceptible%s are derived.
-     * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021) 
+     * 4.) If none of the above is set with positive value, the force of infection is used as in Messina et al (2021)
      * to set the Susceptible%s.
      *
-     * The function calculate_compartments_initialization() is used in every method for the compartments Exposed, 
+     * The function calculate_compartments_initialization() is used in every method for the compartments Exposed,
      * InfectedNoSymptoms, InfectedSymptoms, InfectedSevere and InfectedCritical.
      * In addition, the force of infection is calculated for start time t_0.
      *
-     * @param[in] dt Time discretization step size.      
+     * @param[in] dt Time discretization step size.
      */
     void initial_compute_compartments(ScalarType dt);
 
@@ -236,19 +236,19 @@ private:
     *
     * Number is computed using previous number of Susceptible%s and the force of infection (also from previous timestep).
     * Number is stored at the matching index in populations.
-    * @param[in] dt Time discretization step size.    
+    * @param[in] dt Time discretization step size.
     */
     void compute_susceptibles(ScalarType dt);
 
     /**
      * @brief Computes size of a flow.
-     * 
-     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the time 
+     *
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the time
      * index current_time_index.
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
-     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
+     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      * @param[in] current_time_index The time index the flow should be computed for.
@@ -259,13 +259,13 @@ private:
 
     /**
      * @brief Computes size of a flow for the current last time value in transitions.
-     * 
-     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current 
-     * last time value in transitions. 
+     *
+     * Computes size of one flow from #InfectionTransition, specified in idx_InfectionTransitions, for the current
+     * last time value in transitions.
      *
      * @param[in] idx_InfectionTransitions Specifies the considered flow from #InfectionTransition.
      * @param[in] idx_IncomingFlow Index of the flow in #InfectionTransition, which goes to the considered starting
-     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via 
+     *      compartment of the flow specified in idx_InfectionTransitions. Size of considered flow is calculated via
      *      the value of this incoming flow.
      * @param[in] dt Time step to compute flow for.
      * @param[in] group The Age Group for which we want to compute the flow.
@@ -285,8 +285,8 @@ private:
     /**
      * @brief Updates the values of one compartment using flows.
      *
-     * New value is stored in populations. The value is calculated using the compartment size in the previous 
-     * time step and the related flows of the current time step. 
+     * New value is stored in populations. The value is calculated using the compartment size in the previous
+     * time step and the related flows of the current time step.
      * Therefore the flows of the current time step should be calculated before using this function.
      */
     void update_compartment_from_flow(InfectionState infectionState,
@@ -296,28 +296,28 @@ private:
     /**
      * @brief Updates the values of all compartments except Susceptible at initialization.
      *
-     * New values are stored in populations. The values are calculated using the compartment size in the previous 
-     * time step and the related flows of the current time step. 
+     * New values are stored in populations. The values are calculated using the compartment size in the previous
+     * time step and the related flows of the current time step.
      * Therefore the flows of the current time step should be calculated before using this function.
-     * 
+     *
      */
     void update_compartments();
 
     /**
      * @brief Computes force of infection for the current last time in transitions.
-     * 
+     *
      * Computed value is stored in m_forceofinfection.
-     * 
-     * @param[in] dt Time discretization step size.          
-     * @param[in] initialization If true we are in the case of the initialization of the model. 
-     *      For this we need forceofinfection at time point t0-dt and not at the current last time 
+     *
+     * @param[in] dt Time discretization step size.
+     * @param[in] initialization If true we are in the case of the initialization of the model.
+     *      For this we need forceofinfection at time point t0-dt and not at the current last time
      *      (given by transitions) as in the other time steps.
      */
     void compute_forceofinfection(ScalarType dt, bool initialization = false);
 
     // ---- Functionality to set vectors with necessary information regarding TransitionDistributions. ----
     /**
-     * @brief Setter for the vector m_transitiondistributions_support_max that contains the support_max for all 
+     * @brief Setter for the vector m_transitiondistributions_support_max that contains the support_max for all
      * TransitionDistributions.
      *
      * This determines how many summands are required when calculating flows, the force of infection or compartments.
@@ -327,11 +327,11 @@ private:
     void set_transitiondistributions_support_max(ScalarType dt);
 
     /**
-     * @brief Setter for the vector m_transitiondistributions_derivative that contains the approximated derivative for 
+     * @brief Setter for the vector m_transitiondistributions_derivative that contains the approximated derivative for
      * all TransitionDistributions for all necessary time points.
      *
      * The derivative is approximated using a backwards difference scheme.
-     * The number of necessary time points for each TransitionDistribution is determined using 
+     * The number of necessary time points for each TransitionDistribution is determined using
      * m_transitiondistributions_support_max.
      *
      * @param[in] dt Time step size.
@@ -341,11 +341,11 @@ private:
     /**
      * @brief Setter for the vector m_transitiondistributions_in_forceofinfection.
      *
-     * When computing the force of infection, we evaluate the survival functions of the TransitionDistributions 
-     * InfectedNoSymptomsToInfectedSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToInfectedSevere and 
-     * InfectedSymptomsToRecovered, weighted by the corresponding TransitionProbabilities, at the same time points. 
-     * Here, we compute these contributions to the force of infection term and store them in the vector 
-     * m_transitiondistributions_in_forceofinfection so that we can access this vector for all following computations. 
+     * When computing the force of infection, we evaluate the survival functions of the TransitionDistributions
+     * InfectedNoSymptomsToInfectedSymptoms, InfectedNoSymptomsToRecovered, InfectedSymptomsToInfectedSevere and
+     * InfectedSymptomsToRecovered, weighted by the corresponding TransitionProbabilities, at the same time points.
+     * Here, we compute these contributions to the force of infection term and store them in the vector
+     * m_transitiondistributions_in_forceofinfection so that we can access this vector for all following computations.
      *
      * @param[in] dt Time step size.
      */

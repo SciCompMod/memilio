@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -32,7 +32,7 @@ namespace mio
 {
 /**
  * @brief Daily local ICU occupancy per age group.
- * 
+ *
  * This parameter stores all historic (local) ICU occupancy values normalized per 100,000 inhabitants.
  * The values are extracted from the simulation results based on the provided ICU compartment indices
  * and are updated at each feedback step.
@@ -162,7 +162,7 @@ struct NominalICUCapacity {
 };
 
 /**
- * @brief Blending factor for local ICU occupancy. 
+ * @brief Blending factor for local ICU occupancy.
  * If we only have a local simulation, this factor is set to 1.0 per default.
  */
 template <typename FP>
@@ -239,7 +239,7 @@ public:
      *
      * The simulation is advanced in steps of dt_feedback. At each step, feedback
      * is applied, then the simulation is advanced, and afterwards the current ICU occupancy is stored.
-     * 
+     *
      * Note that the simulation may make additional substeps depending on its own
      * timestep dt. When using fixed-step integrators, dt_feedback should be an integer multiple of
      * the simulation timestep dt.
@@ -375,9 +375,9 @@ public:
     }
 
     /**
-     * @brief Sets the regional ICU occupancy time series. 
+     * @brief Sets the regional ICU occupancy time series.
      * This is used in the graph simulation to initialize and update the regional ICU occupancy.
-     * 
+     *
      * @param icu_regional The regional ICU occupancy time series.
      */
     void set_regional_icu_occupancy(const mio::TimeSeries<FP>& icu_regional)

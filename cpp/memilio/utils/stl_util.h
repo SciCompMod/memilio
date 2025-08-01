@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -56,7 +56,7 @@ inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t 
 /**
  * @brief inserts element in a sorted vector, replacing items that are equal
  * precondition:  elements in the vector are partially sorted and unique according the predicate
- * postcondition: same as precondition, additionally contains exactly one element that is equal to item, 
+ * postcondition: same as precondition, additionally contains exactly one element that is equal to item,
  *                order of other items is preserved
  * @param vec vector where item will be inserted
  * @param item item to insert
@@ -88,7 +88,7 @@ typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T c
 
 /**
  * @brief immutable random access range, e.g. a piece of a vector, represented by a pair of iterators
- * immutable means no elements can be added or removed. the elements themselves 
+ * immutable means no elements can be added or removed. the elements themselves
  * can be modified if the iterators that make up the range allow it.
  */
 template <class IterPair>
@@ -241,16 +241,16 @@ void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail
 } // namespace details
 
 /** join one ore more strings with path separators.
- * Accepts mixed C strings or std::strings. 
- * 
- * example: 
- * 
+ * Accepts mixed C strings or std::strings.
+ *
+ * example:
+ *
  *     std::string hello("Hello");
  *     auto p = path_join(hello, "World"); //returns "Hello/World"
- * 
+ *
  * @param base first string
  * @param app zero or more other strings
- * @returns all inputs joined 
+ * @returns all inputs joined
  */
 template <class String, class... Strings>
 std::string path_join(String&& base, Strings&&... app)
@@ -263,7 +263,7 @@ std::string path_join(String&& base, Strings&&... app)
 
 /**
  * converts a unique_ptr<T> to unique_ptr<U>.
- * behavior is similar to normal dynamic_cast except if the conversion 
+ * behavior is similar to normal dynamic_cast except if the conversion
  * is successful, the original unique_ptr<T> is now in a moved-from state and ownership
  * of the object has been transferred to the returned unique_ptr<U>.
  * @param base_ptr ptr to object to convert
@@ -299,7 +299,7 @@ bool contains(Iter b, Iter e, Pred p)
  * ```
  * enum class E { A, B, Count };
  * assert(enum_members<E>() == std::array<2, E>(E::A, E::B));
- * ``` 
+ * ```
  * @tparam T An enum class that is a valid index.
  * @return Array of all members of the enum class not including T::Count.
  */

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -237,7 +237,7 @@ public:
      * this constructor exists if all parameters have get_default(args...) with the same number of arguments or a default constructor.
      * Arguments get forwarded to get_default of parameters.
      @tparam T1 First argument of get_default(...) function called on the parameters, e.g., T1=AgeGroup&.
-     @tparam TN Further arguments passed to get_default(...) functions. 
+     @tparam TN Further arguments passed to get_default(...) functions.
      */
     template <
         class T1, class... TN,
@@ -327,7 +327,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

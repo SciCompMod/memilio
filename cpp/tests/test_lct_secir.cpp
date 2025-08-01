@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -351,8 +351,8 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     }
 }
 
-/* Test if the function get_derivatives() is working for more than one group. 
- * The parameters and LctStates are chosen, such that the sum of the groups should produce the 
+/* Test if the function get_derivatives() is working for more than one group.
+ * The parameters and LctStates are chosen, such that the sum of the groups should produce the
  * same output as the function with one group. This is tested. */
 TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
 {
@@ -509,7 +509,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
 }
 
 /* Test compares a simulation with the result of a previous run stored in a .csv file.
- * Here, three groups with the same parametrization as the one used for the previous result is used. 
+ * Here, three groups with the same parametrization as the one used for the previous result is used.
  * It is tested, if the sum of the results of the groups is equal to the result with one group.
  */
 TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)

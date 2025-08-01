@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth
@@ -27,7 +27,7 @@ namespace mio
 namespace abm
 {
 
-/** 
+/**
  * @brief #InfectionState in ABM.
  * Can be used as 0-based index.
  */

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele, Rene Schmieding
@@ -142,7 +142,7 @@ protected:
      * @brief Run the simulation up to a given time.
      * @param[in] fs Integrands passed to the integrator, e.g. a wrapper for `get_derivatives`.
      * @param[in] tmax Next stopping point of the simulation.
-     * @param[in,out] results The TimeSeries to use as initial value and for storing integration results. 
+     * @param[in,out] results The TimeSeries to use as initial value and for storing integration results.
      * @return The simulation result at tmax.
      */
     Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands&... fs, FP tmax, TimeSeries<FP>& results)

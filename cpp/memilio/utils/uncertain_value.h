@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Martin Siggel, Daniel Abele
@@ -31,13 +31,13 @@ namespace mio
 {
 
 /**
- * @brief The UncertainValue class consists of a 
+ * @brief The UncertainValue class consists of a
  *        scalar value and a Distribution object
- * 
+ *
  * The UncertainValue class represents a model parameter that
  * can take a scalar value but that is subjected to a uncertainty.
  * The uncertainty is represented by a distribution object of kind
- * ParameterDistribution and the current scalar value can be 
+ * ParameterDistribution and the current scalar value can be
  * replaced by drawing a new sample from the the distribution
  * @tparam FP underlying floating point type, e.g., double
  */
@@ -59,7 +59,7 @@ public:
     UncertainValue(UncertainValue&& other) = default;
 
     /**
-    * @brief Create an UncertainValue by cloning scalar value 
+    * @brief Create an UncertainValue by cloning scalar value
     *        and distribution of another UncertainValue
     */
     UncertainValue(const UncertainValue& other)
@@ -158,7 +158,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

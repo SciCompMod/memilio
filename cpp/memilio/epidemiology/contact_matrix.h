@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -49,7 +49,7 @@ public:
 
     /**
      * construct with baseline and minimum contacts and zero dampings.
-     * @param baseline matrix expression 
+     * @param baseline matrix expression
      * @param minimum matrix expression, must be same size as baseline
      * @tparam M, K matrix expressions compatible with Matrix type
      */
@@ -64,7 +64,7 @@ public:
 
     /**
      * construct with only baseline, minimum and dampings is zero.
-     * @param baseline matrix expression 
+     * @param baseline matrix expression
      * @tparam M matrix expressions compatible with Matrix type
      */
     template <class M>
@@ -204,7 +204,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -336,7 +336,7 @@ public:
         return m_matrices[0].get_shape();
     }
 
-    /** 
+    /**
      * equality operators.
      */
     bool operator==(const DampingMatrixExpressionGroup& other) const
@@ -430,7 +430,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -493,7 +493,7 @@ private:
  * The effective contacts are B - D * (B - M), where B is the baseline, D are
  * combined dampings and M is the minimum.
  * The minimum is not necessarily smaller than the baseline in every entry,
- * but it reflects the state at maximum lockdown. In places where the 
+ * but it reflects the state at maximum lockdown. In places where the
  * minimum is greater than the baseline, a positive damping increases
  * instead of reduces contacts.
  * All these members are matrix valued, e.g. B_ij are the normal contacts
@@ -527,7 +527,7 @@ public:
 /**
  * represents a collection of contact frequency matrices that whose sum is the total
  * number of contacts.
- * can separate matrices of contacts in different contexts, e.g. work, leisure, etc. 
+ * can separate matrices of contacts in different contexts, e.g. work, leisure, etc.
  */
 class ContactMatrixGroup : public DampingMatrixExpressionGroup<ContactMatrix>
 {

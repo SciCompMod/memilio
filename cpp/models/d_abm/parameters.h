@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker

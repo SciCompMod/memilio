@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -37,11 +37,11 @@ namespace lsecir
 {
 
 /**
- * @brief Class that can be used to compute an initialization vector out of flows for an LCT Model 
+ * @brief Class that can be used to compute an initialization vector out of flows for an LCT Model
  *  with division in groups.
- * 
- *  The initialization method is based on the fact that the LCT model is a special case of an IDE model with special 
- *  choices of stay time distributions (so-called Erlang distributions). Accordingly, the method for calculating 
+ *
+ *  The initialization method is based on the fact that the LCT model is a special case of an IDE model with special
+ *  choices of stay time distributions (so-called Erlang distributions). Accordingly, the method for calculating
  *  initial values for the compartments from given flows/transitions is taken from the IDE-SECIR model.
  *  We cannot use the functionality of the IDE model directly, as we have to calculate a division into sub-compartments
  *  and not only the sizes of the compartments.
@@ -58,10 +58,10 @@ public:
     /**
      * @brief Constructs a new Initializer object.
      *
-     * @param[in] flows Initializing TimeSeries with flows fitting to these defined in InfectionTransition. 
+     * @param[in] flows Initializing TimeSeries with flows fitting to these defined in InfectionTransition.
      *      For each group of m_model, InfectionTransition::Count entries are required.
-     *      Timesteps should be equidistant and the values should be non-negative. 
-     *      The time history has to be long enough so that it is possible to calculate the initial vector. 
+     *      Timesteps should be equidistant and the values should be non-negative.
+     *      The time history has to be long enough so that it is possible to calculate the initial vector.
      *      The length of the required time history depends on the Erlang densities used to compute the initial vector.
      * @param[in, out] model The LCT-SECIR model for which the initialization should be performed.
      */
@@ -75,15 +75,15 @@ public:
     /**
      * @brief Core function of Initializer.
      *
-     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number 
+     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number
      * of persons for each subcompartment for each group.
      * The initial value vector is updated in the model.
      *
      * @param[in] total_population The total size of the considered population.
      * @param[in] deaths Number of deceased people from the disease at time 0.
      * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
-     * @return Returns true if one (or more) constraint(s) of the model, the initial flows 
-     *      or the computed initial value vector are not satisfied, otherwise false. 
+     * @return Returns true if one (or more) constraint(s) of the model, the initial flows
+     *      or the computed initial value vector are not satisfied, otherwise false.
      */
     bool compute_initialization_vector(Eigen::VectorX<ScalarType> const& total_population,
                                        Eigen::VectorX<ScalarType> const& deaths,
@@ -120,7 +120,7 @@ private:
     /**
      * @brief Implementation of the calculation of the initial value vector slice that corresponds to a specified group.
      *
-     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number 
+     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number
      * of persons for each subcompartment. The groups are calculated recursively.
      *
      * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
@@ -129,7 +129,7 @@ private:
      * @param[in] deaths Number of deceased people from the disease at time 0.
      * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
      * @return Returns true if one (or more) constraint(s) of the computed initial value vector are not satisfied,
-     *       otherwise false. 
+     *       otherwise false.
      */
     template <size_t Group = 0>
     bool compute_initialization_vector_impl(Eigen::VectorX<ScalarType>& init,
@@ -210,7 +210,7 @@ private:
 
     /**
      * @brief Checks constraints of the Initializer including checks for the model.
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
     bool check_constraints() const
     {
@@ -241,19 +241,19 @@ private:
     }
 
     /**
-     * @brief Computes a slice of the initial value vector for each subcompartment of one InfectionState 
+     * @brief Computes a slice of the initial value vector for each subcompartment of one InfectionState
      *  for a specified group.
      *
      * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
      * @tparam State The InfectionState for which the corresponding slice of the initial value vector is calculated
      * @param[out] init The initial value vector under consideration.
-     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow 
+     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow
      *      to the InfectionState.
-     * @param[in] transition_rate Specifies the transition rate of the InfectionState. 
+     * @param[in] transition_rate Specifies the transition rate of the InfectionState.
      *      'This is equal to 1 / (expected time in the InfectionState).
-     
+
      * @return Returns true if one (or more) constraint(s) of the computed slice of the initial value vector
-     *      are not satisfied, otherwise false. 
+     *      are not satisfied, otherwise false.
      */
     template <InfectionState State, size_t Group>
     bool compute_compartment(Eigen::VectorX<ScalarType>& init, Eigen::Index idx_incoming_flow,

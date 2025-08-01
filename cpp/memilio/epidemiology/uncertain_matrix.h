@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -31,9 +31,9 @@ namespace mio
 
 /**
  * @brief The UncertainContactMatrix class consists of a
- *        ContactMatrix with fixed baseline and uncertain Dampings. 
- * 
- * The UncertainContactMatrix class represents a matrix-style model parameter 
+ *        ContactMatrix with fixed baseline and uncertain Dampings.
+ *
+ * The UncertainContactMatrix class represents a matrix-style model parameter
  * that can take a ContactMatrix value but that is subjected to a uncertainty,
  * based on contact pattern changes realized by zero or more dampings with uncertain coefficients
  * that are sampled to modify the contacts at some points in time.
@@ -58,7 +58,7 @@ public:
     }
 
     /**
-     * @brief Conversion to const ContactMatrix reference by returning the 
+     * @brief Conversion to const ContactMatrix reference by returning the
      *        ContactMatrix contained in UncertainContactMatrix
      */
     operator ContactMatrixGroup const &() const
@@ -67,7 +67,7 @@ public:
     }
 
     /**
-     * @brief Conversion to ContactMatrix reference by returning the 
+     * @brief Conversion to ContactMatrix reference by returning the
      *        ContactMatrix contained in UncertainContactMatrix
      */
     operator ContactMatrixGroup&()
@@ -76,7 +76,7 @@ public:
     }
 
     /**
-     * @brief Set an UncertainContactMatrix from a ContactMatrix, 
+     * @brief Set an UncertainContactMatrix from a ContactMatrix,
      *        all distributions remain unchanged.
      */
     UncertainContactMatrix& operator=(const ContactMatrixGroup& cont_freq)
@@ -86,7 +86,7 @@ public:
     }
 
     /**
-     * @brief Returns the ContactMatrix reference 
+     * @brief Returns the ContactMatrix reference
      *        of the UncertainContactMatrix object
      */
     ContactMatrixGroup& get_cont_freq_mat()
@@ -95,7 +95,7 @@ public:
     }
 
     /**
-     * @brief Returns the const ContactMatrix reference 
+     * @brief Returns the const ContactMatrix reference
      *        of the UncertainContactMatrix object
      */
     ContactMatrixGroup const& get_cont_freq_mat() const
@@ -202,7 +202,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

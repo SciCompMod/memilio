@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Elisabeth Kluth, Khoa Nguyen
@@ -118,7 +118,7 @@ public:
     /**
      * @brief Adds Trips to the trip list.
      * @param[in] trips The Trips to be added.
-     * @param[in] weekend If the Trip is made on a weekend day.     
+     * @param[in] weekend If the Trip is made on a weekend day.
      */
     void add_trips(std::vector<Trip> trip);
 

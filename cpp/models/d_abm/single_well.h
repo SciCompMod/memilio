@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: Julia Bicker, René Schmieding
@@ -69,7 +69,7 @@ private:
 };
 
 /**
- * @brief Implementation of diffusive ABM, see dabm::Model. 
+ * @brief Implementation of diffusive ABM, see dabm::Model.
  * This implementation defines a diffusion process for the potential F(x,y) = (x^4 + y^4)/2.
  * @tparam InfectionState An infection state enum.
  */
@@ -234,7 +234,7 @@ private:
         return (agent.position - contact.position).norm() < m_contact_radius && (&agent != &contact);
     }
 
-    /** 
+    /**
      * @brief Restrict domain to [-2, 2]^2 where "escaping" is impossible.
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.

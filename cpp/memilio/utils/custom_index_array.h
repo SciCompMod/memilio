@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
@@ -141,10 +141,10 @@ size_t flatten_index(MultiIndex const& indices, MultiIndex const& dimensions)
  * An element can be accessed using a MultiIndex:
  *
  * auto x = populations[{Index<AgeGroup>(0), Index<Gender>(Gender::Female)}];
- * 
+ *
  * If the category is an enum class, the Index class can be omitted for convenience in almost all cases since
  * Index<E> is implicitly constructible from enum type E, e.g.:
- * 
+ *
  * CustomIndexArray<size_t, AgeGroup, Gender> populations({Index<AgeGroup>(2), Gender::Count});
  * auto x = populations[{Index<AgeGroup>(0), Gender::Female}];
  *
@@ -864,7 +864,7 @@ public:
     /**@}*/
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -114,13 +114,13 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
-     * The result processing function is called when a run is finished. It receives the result of the run 
-     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function 
+     * The result processing function is called when a run is finished. It receives the result of the run
+     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function
      * are gathered and returned as a list.
      * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
-     * The MPI processes each contribute a share of the runs. The sample function and result processing function 
-     * are called in the same process that performs the run. The results returned by the result processing function are 
-     * gathered at the root process and returned as a list by the root in the same order as if the programm 
+     * The MPI processes each contribute a share of the runs. The sample function and result processing function
+     * are called in the same process that performs the run. The results returned by the result processing function are
+     * gathered at the root process and returned as a list by the root in the same order as if the programm
      * were running sequentially. Processes other than the root return an empty list.
      * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
      * @param result_processing_function Processing function for simulation results, e.g., output function.

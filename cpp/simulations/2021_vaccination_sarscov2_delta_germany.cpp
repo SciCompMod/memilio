@@ -602,14 +602,14 @@ enum class RunMode
 
 /**
  * Run the parameter study.
- * Load a previously stored graph or create a new one from data. 
+ * Load a previously stored graph or create a new one from data.
  * The graph is the input for the parameter study.
  * A newly created graph is saved and can be reused.
  * @param mode Mode for running the parameter study.
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
- * @param save_single_runs [Default: true] Defines if single run results are written to the disk. 
+ * @param save_single_runs [Default: true] Defines if single run results are written to the disk.
  * @returns any io error that occurs during reading or writing of files.
  */
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,

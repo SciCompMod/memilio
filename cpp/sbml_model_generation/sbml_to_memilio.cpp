@@ -20,8 +20,8 @@
  * @param[in] filepath A path including the filename.
  * @return std::string The path without the filename.
  *
- * Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input 
- * file without file ending. 
+ * Uses `boost::filesystem::path` to get the path to the input file, then uses `stem()` to get the name of the input
+ * file without file ending.
  */
 std::string get_filename(const std::string& filepath)
 {
@@ -36,9 +36,9 @@ std::string get_filename(const std::string& filepath)
  * @return IOResult<std::string> The path to the folder or an error code.
  *
  * This function tries to find the folder called `folder_name`. It checks whether it is in the current directory or any
- * of the two parent directories. It makes sure that it does not accidently use the folder with the same name in the 
+ * of the two parent directories. It makes sure that it does not accidently use the folder with the same name in the
  * build directory. This function is thus tailored to find the folder for the sbml generated model files.
- * If the folder is not found, it returns an error code. 
+ * If the folder is not found, it returns an error code.
  */
 mio::IOResult<std::string> get_path(std::string folder_name)
 {
@@ -70,7 +70,7 @@ mio::IOResult<std::string> get_path(std::string folder_name)
  * @param[in] foldername The name of the folder to be created.
  * @param[in] path The path where the folder should be created -this needs to exist.
  *
- * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
+ * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates
  * a folder with the resulting name at the location given by `path` using `boost::filesystem`.
  */
 void create_folder(const std::string& foldername, const std::string& path)
@@ -135,11 +135,11 @@ void append_brackets(std::string& leading_bracket, std::string& trailing_bracket
  * @param[in] model_namespace The namespace of the model.
  * @return std::string The formatted formula.
  *
- * This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing 
- * braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a 
- * parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the 
+ * This function goes through the parts of the formula as identified by spaces. It first strips leading/trailing
+ * braces and leading minus sings. Then it checks if the part is a parameter, species or compartment. If it is a
+ * parameter, it is replaced by the corresponding parameter in the model. If it is a species, it is replaced by the
  * corresponding species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is
- * pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then 
+ * pi, it is replaced by M_PI. If it is time, it is replaced by 0.0. The leading and trailing braces are then
  * re-added to the part and the parts are joined together.
  */
 std::string format_main_formula(Model& model, const std::string& math_string, const std::string& model_namespace)
@@ -181,7 +181,7 @@ std::string format_main_formula(Model& model, const std::string& math_string, co
  * @param[in] model_namespace The namespace of the model.
  * @return std::string The formatted initial assignement.
  *
- * First it checks whether an initial amount is given for the species. Then it checks the other possibilites for 
+ * First it checks whether an initial amount is given for the species. Then it checks the other possibilites for
  * initial assignements:
  * - If an initial concentration is given, it is used
  * - If an initial assignment is given, it is used. This could be
@@ -225,7 +225,7 @@ std::string get_initial_assignment(Species& species, Model& model, const std::st
  * @return mio::IOResult<std::string> The resulting string or an error code.
  *
  * Checks whether the formula is a parameter, species or compartment. In the first two cases it returns the code to
- * get the corresponding values, in the last case it prints an error message. 
+ * get the corresponding values, in the last case it prints an error message.
  */
 mio::IOResult<std::string> format_event_variable(const std::string& formula, Model& model,
                                                  const std::string& model_namespace)
@@ -256,10 +256,10 @@ mio::IOResult<std::string> format_event_variable(const std::string& formula, Mod
  * @return mio::IOResult<std::string> The resulting string.
  *
  * Goes through the parts of the formula delimited by spaces. It first strips leading/trailing braces and leading
- * minus signs. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is 
- * replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding 
- * species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is 
- * replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the 
+ * minus signs. Then it checks if the part is a parameter, species or compartment. If it is a parameter, it is
+ * replaced by the corresponding parameter in the model. If it is a species, it is replaced by the corresponding
+ * species in the model. If it is a compartment, it is replaced by the size of the compartment. If it is pi, it is
+ * replaced by M_PI. If it is time, it is replaced by t. The leading and trailing braces are then re-added to the
  * part and the parts are joined together.
  */
 mio::IOResult<std::string> format_event_formulas(std::string& formula, Model& model, const std::string& model_namespace)
@@ -305,13 +305,13 @@ mio::IOResult<std::string> format_event_formulas(std::string& formula, Model& mo
  * @return mio::IOResult<std::string> The resulting string.
  *
  * Goes through the parts of the formula as identified by spaces.
- * - It first strips leading/trailing braces and leading minus signs. 
- * - Then it checks if the part is a parameter, species or compartment. 
- *   - If it is a parameter, it is replaced by the corresponding parameter in the model. 
+ * - It first strips leading/trailing braces and leading minus signs.
+ * - Then it checks if the part is a parameter, species or compartment.
+ *   - If it is a parameter, it is replaced by the corresponding parameter in the model.
  *   - If it is a species, it prints an error as they are not supported.
- *   - If it is a compartment, it is replaced by the size of the compartment. 
- * - If it is pi, it is replaced by M_PI. 
- * - If it is time, it prints an error. 
+ *   - If it is a compartment, it is replaced by the size of the compartment.
+ * - If it is pi, it is replaced by M_PI.
+ * - If it is time, it prints an error.
  * The leading and trailing braces are then re-added to the part and the parts are joined together.
  */
 mio::IOResult<std::string> format_event_trigger(const std::string& formula, Model& model,
@@ -355,11 +355,11 @@ mio::IOResult<std::string> format_event_trigger(const std::string& formula, Mode
  * @param[in] model_namespace The namespace of the model.
  * @return mio::IOResult<std::string> The resulting string.
  *
- * This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two 
- * values. If that is not the case, it prints an error. Then it expects one of the two nodes to be a time node. The 
- * other node has the comparison value and is returned. It is always assumed, but never checked, that we have a 
+ * This function assumes a very specific layout of the formula. It needs to be a comparison between exaclty two
+ * values. If that is not the case, it prints an error. Then it expects one of the two nodes to be a time node. The
+ * other node has the comparison value and is returned. It is always assumed, but never checked, that we have a
  * positive comparison, i.e. the time is indeed the maximum time.
- * This function is used to find the maximum time until which an event runs. It is used for the generation of the     
+ * This function is used to find the maximum time until which an event runs. It is used for the generation of the
  * example.cpp file.
  */
 mio::IOResult<std::string> find_tmax(const ASTNode& trigger, Model& model, const std::string& model_namespace)
@@ -419,8 +419,8 @@ mio::IOResult<void> verify_model_suitability(const Model& model)
  * @param[in] path The path where the file should be created.
  * @return mio::IOResult<void> Succes or error code.
  *
- * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
- * a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the 
+ * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates
+ * a file with the resulting name using `boost::filesystem` at the location given by `path`. Then it writes the
  * species in the model as infection states to the file.
  */
 mio::IOResult<void> create_infection_state(Model& model, const std::string& filename, const std::string& path)
@@ -464,9 +464,9 @@ mio::IOResult<void> create_infection_state(Model& model, const std::string& file
  * @param[in] path The path where the file should be created.
  * @return mio::IOResult<void> Succes or error code.
  *
- * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates 
- * a file with the resulting name using `boost::filesystem` at the location given by `path`. 
- * Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as 
+ * Extracts the filename using :cpp:func:`get_filename(const std::string& filename)`, converts it to lower case and creates
+ * a file with the resulting name using `boost::filesystem` at the location given by `path`.
+ * Then it creates one struct for every parameter in the model. It uses the value as returned by libsbml as
  * default value. (This may be overwritten in the example.cpp file.)
  */
 mio::IOResult<void> create_parameters(Model& model, const std::string& filename, const std::string& path)
@@ -562,13 +562,13 @@ mio::IOResult<void> create_model_cpp(const std::string& filename, const std::str
  * @param[in] path The path where the file should be created.
  * @return mio::IOResult<void> Success or error code.
  *
- * Creates the model.h file based on the filename and `path`. First some generic input is written to the file. Then the 
+ * Creates the model.h file based on the filename and `path`. First some generic input is written to the file. Then the
  * `get_derivatives`-function is generated. It
  * - creates an index variable for every species
  * - creates a lambda function for every function definition in the model to have it at hand
  * - goes through every reaction in the model and generates the corresponding code. This is done in local scopes to make sure local parameters don't cause errors.
  * - checks every rule whether it is a RateRule and generates code for it if it is.
- * 
+ *
  * In the end it appends a generic serialization function.
  */
 mio::IOResult<void> create_model_h(Model& model, const std::string& filename, const std::string& path)
@@ -775,8 +775,8 @@ mio::IOResult<void> create_model_h(Model& model, const std::string& filename, co
  * @param[in] path The path where the file should be created.
  * @return mio::IOResult<void> Success or error code.
  *
- * Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this 
- * program are needed. The file location is generated using filename and path and the file is stored in the generated 
+ * Creates the generic CMakeLists.txt file for the model folder, assuming that only the files generated by this
+ * program are needed. The file location is generated using filename and path and the file is stored in the generated
  * folder.
  */
 mio::IOResult<void> create_cmake(const std::string& filename, const std::string& path)
@@ -812,9 +812,9 @@ mio::IOResult<void> create_cmake(const std::string& filename, const std::string&
  * @param[in] path The path where the file should be created.
  * @return mio::IOResult<void> Success or error code.
  *
- * The filename is based on the given filename and path. 
- * The file first contains generic input, then the model, it's parameters and specis are initialized. 
- * The model is simulated in steps to add events that are triggered by a specific time. In the end the model is 
+ * The filename is based on the given filename and path.
+ * The file first contains generic input, then the model, it's parameters and specis are initialized.
+ * The model is simulated in steps to add events that are triggered by a specific time. In the end the model is
  * simulated for another 50 days. The results are printed to the console and saved in a file as a table.
  */
 mio::IOResult<void> create_example_cpp(Model& model, const std::string& filename, const std::string& path)
@@ -964,7 +964,7 @@ mio::IOResult<void> modify_cmakelists(const std::string& filename, const std::st
     return mio::success();
 }
 
-/** 
+/**
  * @brief Calls clang-format to format the generated files.
  *
  * @param[in] filename The name of the file to be processed.
@@ -989,13 +989,13 @@ void format_files(const std::string& filename, const std::string& path)
     }
 }
 
-/** 
+/**
  * @brief Runs the program.
  * @param[in] argc The number of command line arguments.
  * @param[in] argv The command line arguments, here the name of the file that should be processed.
  *
- * This function expects exaclty one parameter which should be the path to the file that should be processed. If more 
- * or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file 
+ * This function expects exaclty one parameter which should be the path to the file that should be processed. If more
+ * or less parameters are given, it raises an error. If the correct number of parameters is given, it treats the file
  * as a SBML file and generates the MEmilio code for it.
  */
 int main(int argc, char* argv[])

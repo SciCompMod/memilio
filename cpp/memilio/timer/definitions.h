@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -44,7 +44,7 @@ using DurationType = std::chrono::steady_clock::duration;
 
 /**
  * @brief Convert a duration to a (floating point) number of seconds.
- * @param[in] duration Any DurationType value, mainly `BasicTimer::get_elapsed_time()`.  
+ * @param[in] duration Any DurationType value, mainly `BasicTimer::get_elapsed_time()`.
  * @return The duration in seconds.
  */
 double time_in_seconds(DurationType duration);

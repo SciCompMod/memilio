@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -159,7 +159,7 @@ public:
     /**
      * @brief set_difference_from_group_total sets the total population for a given group from a difference
      *
-     * This function sets the population size 
+     * This function sets the population size
      *
      * @param total_population the new value for the total population
      * @param indices The indices of the compartment
@@ -185,7 +185,7 @@ public:
      *
      * This function rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
-     * compartments. 
+     * compartments.
      *
      * @param value the new value for the total population
      */
@@ -224,11 +224,11 @@ public:
     }
 
     /**
-     * @brief Checks whether all compartments have non-negative values. 
+     * @brief Checks whether all compartments have non-negative values.
      * This function can be used to prevent slighly negative function values in compartment sizes that came out
      * due to roundoff errors if, e.g., population sizes were computed in a complex way.
      *
-     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.

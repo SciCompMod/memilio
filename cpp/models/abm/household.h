@@ -39,7 +39,7 @@ namespace abm
  * A HouseholdGroup holds a vector with a tuple of a Household and the amount of times the Household is in the group.
  * E.g. if 10 households hold a member of "child and parent" and that Household would be parentAndChildHousehold the
  * vector would contain <parentAndChildHousehold, 10>. parentAndChildHousehold would consist of a vector with the
- * HouseholdMembers parent and child and parent has, for example the age distribution {0,0,10,1,0,0} with respect to the 
+ * HouseholdMembers parent and child and parent has, for example the age distribution {0,0,10,1,0,0} with respect to the
  * AgeGroup class. The child would have, for example, {1,1,0,0,0}, meaning that the AgeGroups 0-4 and 5-14 are the only
  * possible ages and are both equally likely.
  */
@@ -53,7 +53,7 @@ class HouseholdMember
 public:
     /**
      * @brief Constructs a new HouseholdMember.
-     * @param[in] agegroups the age groups in the model. 
+     * @param[in] agegroups the age groups in the model.
      */
     HouseholdMember(size_t num_agegroups)
         : m_age_weights({AgeGroup(num_agegroups)}, 0)
@@ -144,7 +144,7 @@ public:
 private:
     int m_number_of_members; ///< Total number of Person%s in the Household.
     int m_space_per_member; ///< Space per Person in cubic meters (constant maximal capacity over time).
-    std::vector<std::tuple<HouseholdMember, int>> m_household_member_list; /**< HouseholdMember%s of the Household and 
+    std::vector<std::tuple<HouseholdMember, int>> m_household_member_list; /**< HouseholdMember%s of the Household and
     the respective number of Person%s.*/
 };
 
@@ -190,7 +190,7 @@ public:
 
 private:
     int m_number_of_households; ///< Number of Household%s in this group.
-    std::vector<std::tuple<Household, int>> m_household_list; /**< A list of types of Household%s and the amount of 
+    std::vector<std::tuple<Household, int>> m_household_list; /**< A list of types of Household%s and the amount of
     times it is in the group.*/
 };
 

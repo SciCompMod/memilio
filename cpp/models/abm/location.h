@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
@@ -68,7 +68,7 @@ using ContactExposureRates = CustomIndexArray<boost::atomic<ScalarType>, CellInd
 using AirExposureRates     = CustomIndexArray<boost::atomic<ScalarType>, CellIndex, VirusVariant>;
 
 /**
- * @brief CellCapacity describes the size of a Cell. 
+ * @brief CellCapacity describes the size of a Cell.
  * It consists of a volume and a capacity in Person%s which is an upper bound for the number
  * of people that can be in the Cell at the same time.
  */
@@ -89,7 +89,7 @@ struct CellCapacity {
 };
 
 /**
- * @brief The Location can be split up into several Cell%s. 
+ * @brief The Location can be split up into several Cell%s.
  * This allows a finer division of the people at the Location.
  */
 struct Cell {
@@ -115,7 +115,7 @@ class Location
 {
 public:
     /**
-     * @brief Construct a Location with provided parameters. 
+     * @brief Construct a Location with provided parameters.
      * @param[in] loc_type The #LocationType.
      * @param[in] loc_id The index of the Location in the Model.
      * @param[in] num_agegroups [Default: 1] The number of age groups in the model.

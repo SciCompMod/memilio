@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -119,9 +119,9 @@ void draw_sample_demographics(Model<FP>& model)
 }
 
 /**
- * Draws a sample from the specified distributions for all parameters 
+ * Draws a sample from the specified distributions for all parameters
  * related to the infection.
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups.
  */
@@ -191,7 +191,7 @@ void draw_sample_infection(Model<FP>& model)
 /**
  * Draws a sample from model parameter distributions and stores sample values
  * as parameters values (cf. UncertainValue and Parameters classes).
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param[inout] model Model including contact patterns for all age groups.
  */
@@ -207,7 +207,7 @@ void draw_sample(Model<FP>& model)
 /**
  * Draws samples for each model node in a graph.
  * Some parameters are shared between nodes and are only sampled once.
- * 
+ *
  * @tparam FP Floating point type, e.g., double.
  * @param graph Graph to be sampled.
  * @return Graph with nodes and edges from the input graph sampled.

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -53,7 +53,7 @@ struct TimeExposed {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
+ * @brief Average time spent in the TimeInfectedNoSymptoms before developing
  *  symptoms or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedNoSymptoms {
@@ -69,7 +69,7 @@ struct TimeInfectedNoSymptoms {
 };
 
 /**
- * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
+ * @brief Average time spent in the TimeInfectedSymptoms before going to hospital
  *  or recover for each group in the SECIR model in day unit.
  */
 struct TimeInfectedSymptoms {
@@ -85,7 +85,7 @@ struct TimeInfectedSymptoms {
 };
 
 /**
- * @brief Average time being in the Hospital before treated by ICU or recover for each group in the 
+ * @brief Average time being in the Hospital before treated by ICU or recover for each group in the
  *  SECIR model in day unit.
  */
 struct TimeInfectedSevere {
@@ -302,7 +302,7 @@ public:
 
     /**
      * @brief Checks whether all parameters satisfy their corresponding constraints and throws errors, if they do not.
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
     bool check_constraints() const
     {

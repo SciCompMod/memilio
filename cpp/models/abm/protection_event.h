@@ -30,7 +30,7 @@ namespace mio
 namespace abm
 {
 
-/** 
+/**
  * @brief #ProtectionType in ABM.
  * can be used as 0-based index
  */

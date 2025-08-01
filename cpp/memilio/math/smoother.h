@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -27,7 +27,7 @@ namespace mio
 {
 
 /**
- * @brief Returns the smoothed evaluation of a discrete jump of function values  
+ * @brief Returns the smoothed evaluation of a discrete jump of function values
  * yleft and yright on xleft and xright, respectively, by using a cosine function.
  * If the input value is outside the given interval, yleft or yright are returned, respectively.
  *        { yleft,                                                                      for x <= xleft

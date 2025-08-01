@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -33,11 +33,11 @@
 namespace mio
 {
 /**
- * @brief Gets the region ID (county, state, or district) of an EpiDataEntry. If none are available, 
+ * @brief Gets the region ID (county, state, or district) of an EpiDataEntry. If none are available,
  * it defaults to 0 which is representing the whole country.
- * 
+ *
  * If none are available, it defaults to 0 which is representing the whole country.
- * 
+ *
  * @tparam EpiDataEntry The type of the data entry.
  * @param data_entry The (RKI) data entry to extract the region ID from.
  * @return The region ID as integer, or 0 if no specific region information is available.
@@ -51,7 +51,7 @@ int get_region_id(const EpiDataEntry& data_entry)
 }
 
 /**
- * @brief Extracts the number of individuals in critical condition (ICU) for each region 
+ * @brief Extracts the number of individuals in critical condition (ICU) for each region
  * on a specified date from the provided DIVI data.
  *
  * @tparam FP Floating point type (default: double).
@@ -116,7 +116,7 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
 
 /**
  * @brief Reads population data from a vector of population data entries.
- * 
+ *
  * @param[in] population_data Vector of population data entries.
  * @param[in] vregion Vector of keys representing the regions of interest.
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
@@ -127,7 +127,7 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 
 /**
  * @brief Reads population data from census data.
- * 
+ *
  * @param[in] path Path to the population data file.
  * @param[in] vregion Vector of keys representing the regions of interest.
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population

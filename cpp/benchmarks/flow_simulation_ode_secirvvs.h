@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Daniel Abele, Martin J. Kuehn
@@ -398,7 +398,7 @@ public:
     }
 
     /**
-    * serialize this. 
+    * serialize this.
     * @see mio::serialize
     */
     template <class IOContext>

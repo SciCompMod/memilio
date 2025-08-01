@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn, Lena Ploetzke
@@ -261,7 +261,7 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
 #ifdef MEMILIO_HAS_HDF5
 
 /**
-* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day. 
+* @brief Uses the initialisation method, which uses the reported data to set the initial conditions for the model for a given day.
 * The initialisation is applied for a predefined number of days and finally saved in a timeseries for each region. In the end,
 * we save the files "Results_rki.h5" and "Results_rki_sum.h5" in the results_dir.
 * Results_rki.h5 contains a time series for each region and Results_rki_sum.h5 contains the sum of all regions.

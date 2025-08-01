@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann, Rene Schmieding
@@ -97,7 +97,7 @@ bool change_location(Person& person, const Location& destination, const Transpor
 
 /**
  * @brief Adjust ContactRates of location by MaximumContacts.
- * Every ContactRate is adjusted by the proportion MaximumContacts of the location has on the total 
+ * Every ContactRate is adjusted by the proportion MaximumContacts of the location has on the total
  * number of contacts according to the ContactRates.
  * @param[in, out] location The location whose ContactRates are adjusted.
  * @param[in] num_agegroup The number of AgeGroups in the model.

@@ -91,11 +91,11 @@ PYBIND11_MODULE(_simulation_oseir, m)
     pymio::bind_Flow_Simulation<mio::FlowSimulation<double, mio::oseir::Model<double>>>(m, "FlowSimulation");
 
     m.def(
-        "simulate", &mio::simulate<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR from t0 to tmax.", 
+        "simulate", &mio::simulate<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR from t0 to tmax.",
         py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.def(
-        "simulate_flows", &mio::simulate_flows<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR with flows from t0 to tmax.", 
+        "simulate_flows", &mio::simulate_flows<double, mio::oseir::Model<double>>, "Simulates an ODE SEIR with flows from t0 to tmax.",
         py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.attr("__version__") = "dev";

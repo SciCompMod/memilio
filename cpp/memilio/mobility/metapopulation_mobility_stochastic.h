@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -63,7 +63,7 @@ public:
     {
     }
 
-    /** 
+    /**
      * equality comparison operators
      */
     //@{
@@ -80,7 +80,7 @@ public:
     /**
      * Get/Set the mobility coefficients.
      * The coefficients represent the rates for moving
-     * from one node to another by age and infection compartment. 
+     * from one node to another by age and infection compartment.
      * @{
      */
     /**
@@ -103,7 +103,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -135,7 +135,7 @@ private:
     MobilityCoefficients m_coefficients; //one per group and compartment
 };
 
-/** 
+/**
  * represents the mobility between two nodes.
  */
 class MobilityEdgeStochastic
@@ -215,8 +215,8 @@ void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<S
 /**
  * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
- * Returns are adjusted based on the development in the target node. 
+ * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node.
+ * Returns are adjusted based on the development in the target node.
  * @param t0 start time of the simulation
  * @param dt time step between mobility
  * @param graph set up for mobility-based simulation

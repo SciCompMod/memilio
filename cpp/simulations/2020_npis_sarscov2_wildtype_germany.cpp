@@ -521,7 +521,7 @@ enum class RunMode
 
 /**
  * Run the parameter study.
- * Load a previously stored graph or create a new one from data. 
+ * Load a previously stored graph or create a new one from data.
  * The graph is the input for the parameter study.
  * A newly created graph is saved and can be reused.
  * @param mode Mode for running the parameter study.

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -49,7 +49,7 @@ class TimeSeriesTimeIterator;
  * the value at each time point is a vector.
  * size of the vector is determined at runtime but is equal for all time points.
  * grows efficiently (like std::vector) in time dimension.
- * Time and values of a single point are stored together in memory: 
+ * Time and values of a single point are stored together in memory:
  * {t0, v0[0], v0[1], ...}, {t1, v1[0], v1[1], ...}, {t2, v20, ...
  * @tparam FP any floating point like type accepted by Eigen
  */
@@ -106,7 +106,7 @@ public:
     /**
      * @brief Initialize a TimeSeries with a table.
      * @param table Consists of a list of time points, each of the form (time, value_0, value_1, ..., value_n) for
-     *     some fixed n >= 0. 
+     *     some fixed n >= 0.
      */
     TimeSeries(std::vector<std::vector<FP>> table)
         : m_data() // resized in body
@@ -248,7 +248,7 @@ public:
         return value;
     }
 
-    /** 
+    /**
      * remove time point.
      * @param i index to remove
      */
@@ -379,10 +379,10 @@ public:
     /** @} */
 
     /*********************
-     * 
+     *
      * Iterator interface to iterate over values.
      * vector at time point 0 -> vector at time point 1 -> ...
-     * 
+     *
      *********************/
     iterator begin()
     {
@@ -445,10 +445,10 @@ public:
     }
 
     /*********************
-     * 
+     *
      * Iterator interface to iterate over times.
      * time at point 0 -> time at point 1 -> ...
-     * 
+     *
      *********************/
     Range<std::pair<time_iterator, time_iterator>> get_times()
     {
@@ -553,7 +553,7 @@ public:
      *
      * The first column of the CSV file contains the time points. The remaining columns
      * contain the values at each time point. Column headers can be specified with column_labels.
-     * This function utilizes the print_table method with a width of 1, the 
+     * This function utilizes the print_table method with a width of 1, the
      * specified separator, and an empty string as header prefix.
      *
      * @param[in] filepath Path to the CSV file.
@@ -668,7 +668,7 @@ struct TimeSeriesIterTraits {
     using TimeReference = std::conditional_t<IsConst, const FP&, FP&>;
 };
 
-/** base class for TimeSeries iterators that iterate by time point (i.e. column) 
+/** base class for TimeSeries iterators that iterate by time point (i.e. column)
  * @tparam Derived Iterator derived type, provides get_reference member function
  * @tparam FP floating point type of the TimeSeries
  * @tparam IsConstIter true for const_iterator

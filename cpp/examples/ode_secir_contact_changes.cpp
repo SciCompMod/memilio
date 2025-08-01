@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -22,11 +22,11 @@
 #include "memilio/utils/logging.h"
 #include "memilio/math/euler.h"
 
-/* 
+/*
  * This example demonstrates how to realize contact behavior changes with any of our ordinary differential
  * equation-based models. This example can thus easily be adapted for other models like osecirvvs, oseir, osir etc.
  * We print out the flows (i.e., new transmissions, infections, hospitalizations etc. per time point.) As we use an
- * fixed-time step Explicit Euler, we can compare them. 
+ * fixed-time step Explicit Euler, we can compare them.
 */
 int main()
 {

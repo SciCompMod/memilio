@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Anna Wendler, Lena Ploetzke, Martin J. Kuehn
@@ -365,8 +365,8 @@ void Model::initial_compute_compartments(ScalarType dt)
                 int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
 
                 int StEi = get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
-                /* Attention: With an inappropriate combination of parameters and initial conditions, it can happen that S 
-                becomes greater than N when this formula is used. In this case, at least one compartment is initialized 
+                /* Attention: With an inappropriate combination of parameters and initial conditions, it can happen that S
+                becomes greater than N when this formula is used. In this case, at least one compartment is initialized
                 with a number less than zero, so that a log_error is thrown.
                 However, this initialization method is consistent with the numerical solver of the model equations,
                 so it may sometimes make sense to use this method. */
@@ -428,13 +428,13 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
                          Eigen::Index current_time_index, AgeGroup group)
 {
     ScalarType sum = 0;
-    /* In order to satisfy TransitionDistribution(dt*i) = 0 for all i >= k, k is determined by the maximum support of 
+    /* In order to satisfy TransitionDistribution(dt*i) = 0 for all i >= k, k is determined by the maximum support of
     the distribution.
     Since we are using a backwards difference scheme to compute the derivative, we have that the
     derivative of TransitionDistribution(dt*i) = 0 for all i >= k+1.
 
-    Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are 
-    already zero. 
+    Hence calc_time_index goes until std::ceil(support_max/dt) since for std::ceil(support_max/dt)+1 all terms are
+    already zero.
     This needs to be adjusted if we are changing the finite difference scheme */
     Eigen::Index calc_time_index =
         (Eigen::Index)std::ceil(m_transitiondistributions_support_max[group][idx_InfectionTransitions] / dt);

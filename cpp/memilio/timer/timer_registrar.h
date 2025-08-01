@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -60,7 +60,7 @@ public:
      * Note that the TimerRegistrar does not manage any storage, it only keeps a list of the timers and their names.
      * Therefore, if you manually call add_timer, you have to make sure that the registered timer lives long enough
      * for e.g. the last print_timer call. You may want to disable_final_timer_summary, and look at NamedTimer as an
-     * example that does guarantee correct object lifetime.  
+     * example that does guarantee correct object lifetime.
      *
      * @param registration A new registration with a name, a reference to a timer, and the thread id it is created on.
      */
@@ -79,7 +79,7 @@ public:
 
     /**
      * @brief Print all timers using a Printer.
-     * 
+     *
      * By default, uses TablePrinter to write to stdout. The printer can be changed using the set_printer member.
      *
      * @param out Any output stream, defaults to std::cout.

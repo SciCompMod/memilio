@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, David Kerkmann, Sascha Korf, Martin J. Kuehn, Khoa Nguyen
@@ -170,21 +170,21 @@ public:
             params, persons, locations, location_types, trip_list, use_mobility_rules, cemetery_id, rng);
     }
 
-    /** 
+    /**
      * @brief Prepare the Model for the next Simulation step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
     void begin_step(TimePoint t, TimeSpan dt);
 
-    /** 
+    /**
      * @brief Evolve the Model one time step.
      * @param[in] t Current time.
      * @param[in] dt Length of the time step.
      */
     void evolve(TimePoint t, TimeSpan dt);
 
-    /** 
+    /**
      * @brief Add a Location to the Model.
      * @param[in] type Type of Location to add.
      * @param[in] num_cells [Default: 1] Number of Cell%s that the Location is divided into.
@@ -192,7 +192,7 @@ public:
      */
     LocationId add_location(LocationType type, uint32_t num_cells = 1);
 
-    /** 
+    /**
      * @brief Add a Person to the Model.
      * @param[in] id The LocationID of the initial Location of the Person.
      * @param[in] age AgeGroup of the person.
@@ -202,7 +202,7 @@ public:
 
     /**
      * @brief Adds a copy of a given Person to the Model.
-     * @param[in] person The Person to copy from. 
+     * @param[in] person The Person to copy from.
      * @return Id of the newly created Person.
      */
     PersonId add_person(Person&& person);
@@ -245,7 +245,7 @@ public:
     /**
      * @brief Assign a Location to a Person.
      * A Person can have at most one assigned Location of a certain LocationType.
-     * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
+     * Assigning another Location of an already assigned LocationType will replace the prior assignment.
      * @param[in] person The Id of the person this location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
@@ -317,14 +317,14 @@ public:
 
     const TestingStrategy& get_testing_strategy() const;
 
-    /** 
+    /**
      * @brief The simulation parameters of the Model.
      */
     Parameters parameters;
 
     /**
     * Get the RandomNumberGenerator used by this Model for random events.
-    * Persons use their own generators with the same key as the global one. 
+    * Persons use their own generators with the same key as the global one.
     * @return The random number generator.
     */
     RandomNumberGenerator& get_rng()
@@ -425,7 +425,7 @@ public:
     /**
      * @brief Assign a Location to a Person.
      * A Person can have at most one assigned Location of a certain LocationType.
-     * Assigning another Location of an already assigned LocationType will replace the prior assignment.  
+     * Assigning another Location of an already assigned LocationType will replace the prior assignment.
      * @param[in] person reference to the Person the location will be assigned to.
      * @param[in] location The LocationId of the Location.
      */
@@ -461,8 +461,8 @@ public:
 
     /**
      * @brief Get index of person in m_persons.
-     * @param[in] person_id A person's unique PersonId. 
-     * First 32 bit are the Person's individual id and second 32 bit the Persons's home model id. 
+     * @param[in] person_id A person's unique PersonId.
+     * First 32 bit are the Person's individual id and second 32 bit the Persons's home model id.
      * @return Index of Person in m_persons vector.
      * @{
      */
@@ -581,7 +581,7 @@ protected:
     }
 
     /**
-     * @brief Implementation of Model::get_person. 
+     * @brief Implementation of Model::get_person.
      * This function needs to use a template to deduce whether the model and returned person should be const.
      * @param[in] m A reference to `*this`, so we can access m_persons.
      * @param[in] person_id A Person's PersonId.

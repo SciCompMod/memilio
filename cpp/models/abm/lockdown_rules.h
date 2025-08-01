@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen
@@ -57,7 +57,7 @@ void set_home_office(TimePoint t_begin, double p, Parameters& params);
  */
 void set_school_closure(TimePoint t_begin, double p, Parameters& params);
 
-/** 
+/**
  * @brief During lockdown Person%s join social events less often.
  * Whether a Person joins a social event is a random event (exponentially distributed).
  * The Damping changes the parameter of the exponential distribution, where a Damping of 0 corresponds to no Damping

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -60,10 +60,10 @@ struct is_expression_valid<Expr, void_t<Expr<T...>>, T...> : std::true_type {
  *  {
  *    void mem_fun(){}
  *  };
- * 
+ *
  *  template<class T>
  *  using mem_fun_t = decltype(std::declval<T>().mem_fun());
- * 
+ *
  *  static_assert(is_expression_valid<mem_fun_t, Foo>);
  * @endcode
  */
@@ -85,7 +85,7 @@ constexpr bool negation_v = negation<Trait>::value;
 
 /**
  * conjunction (logical and) of zero or more type traits with boolean values.
- * Does boolean shortcircuiting (like regular `if`) as expected. 
+ * Does boolean shortcircuiting (like regular `if`) as expected.
  * see https://en.cppreference.com/w/cpp/types/conjunction.
  * @{
  */
@@ -150,14 +150,14 @@ struct Empty {
  * Otherwise, defines a type that is copyable.
  * In both cases, the type will be trivially moveable and constructible.
  * To be used as a base type to make a class conditionally copyable.
- * Can be used to e.g. ensure that std::is_copy_constructible and std::is_copy_assignable is true only if 
+ * Can be used to e.g. ensure that std::is_copy_constructible and std::is_copy_assignable is true only if
  * the type can actually be copied (Note: this is not true for some STL containers, e.g., std::vector).
  */
 template <bool Cond>
 using not_copyable_if = std::conditional<Cond, details::NoCopy, details::Empty>;
 
 /**
- * equivalent to not_copyable_if<Cond>::type. 
+ * equivalent to not_copyable_if<Cond>::type.
  * @see not_copyable_if
  */
 template <bool Cond>

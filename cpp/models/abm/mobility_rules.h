@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth, Khoa Nguyen
@@ -37,9 +37,9 @@ namespace abm
  * @param[in] t Current time.
  * @param[in] dt Length of the time step.
  * @param[in] params Mobility parameters.
- * @return Location that the Person moves to if the rule is applied, the current Location of the person 
+ * @return Location that the Person moves to if the rule is applied, the current Location of the person
  * if the rule is not applied because of age, time, etc.
- * 
+ *
  * @{
  */
 /**
@@ -54,7 +54,7 @@ LocationType random_mobility(PersonalRandomNumberGenerator& rng, const Person& p
 LocationType go_to_school(PersonalRandomNumberGenerator& rng, const Person& p, TimePoint t, TimeSpan dt,
                           const Parameters& params);
 
-/** 
+/**
  * @brief Adults may go shopping in their free time.
  */
 LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person, TimePoint t, TimeSpan dt,

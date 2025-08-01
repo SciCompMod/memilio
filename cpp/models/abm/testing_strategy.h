@@ -90,7 +90,7 @@ public:
     /**
      * @brief Create a TestingScheme.
      * @param[in] testing_criteria Vector of TestingCriteria that are checked for testing.
-     * @param validity_period The valid TimeSpan of the test. 
+     * @param validity_period The valid TimeSpan of the test.
      * @param start_date Starting date of the scheme.
      * @param end_date Ending date of the scheme.
      * @param test_parameters The parameters of test to be performed.
@@ -183,7 +183,7 @@ public:
 
     /**
      * @brief Create a TestingStrategy.
-     * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing. 
+     * @param[in] testing_schemes Vector of TestingSchemes that are checked for testing.
      * The first vector is for LocationId and the second for LocationType.
      * The index of the vector is the LocationId or LocationType and the value is the vektor of TestingScheme(s).
      */
@@ -218,7 +218,7 @@ public:
 
     /**
      * @brief Runs the TestingStrategy and potentially tests a Person when entering.
-     * @details The TestingStrategy runs the TestingSchemes in the order they are added but first IDs and then types. 
+     * @details The TestingStrategy runs the TestingSchemes in the order they are added but first IDs and then types.
      * It also decides if one can enter, if there are no positive tests, home is always allowed.
      * @param[inout] rng PersonalRandomNumberGenerator of the Person being tested.
      * @param[in] person Person to check.

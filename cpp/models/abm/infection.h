@@ -71,7 +71,7 @@ public:
      * @param[in] init_date Date of initializing the Infection.
      * @param[in] init_state [Default: InfectionState::Exposed] #InfectionState at time of initializing the Infection.
      * @param[in] latest_protection [Default: {ProtectionType::NoProtection, TimePoint(0)}] The pair value of last ProtectionType (previous Infection/Vaccination) and TimePoint of that protection.
-     * @param[in] detected [Default: false] If the Infection is detected.     
+     * @param[in] detected [Default: false] If the Infection is detected.
      */
     Infection(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age, const Parameters& params,
               TimePoint start_date, InfectionState start_state = InfectionState::Exposed,

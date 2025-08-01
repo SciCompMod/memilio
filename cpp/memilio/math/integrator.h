@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -65,7 +65,7 @@ public:
     /**
      * @brief Make a single integration step.
      *
-     * The behaviour of this method changes when the integration scheme has adaptive step sizing. 
+     * The behaviour of this method changes when the integration scheme has adaptive step sizing.
      * These changes are noted in the parentheses (...) below.
      * Adaptive integrators use the bounds dt_min and dt_max for dt, accessible through the IntegratorCore member
      * functions get_dt_min() and get_dt_max(), respectively. Fixed step integrators ignore these values.
@@ -254,7 +254,7 @@ using OdeIntegrator = SystemIntegrator<FP, DerivFunction<FP>>;
 /**
  * @brief Solver for a system of initial value problems (IVPs) consisting of stochastic differential equations (SDEs).
  * The IVPs are of the form dY'(t) = f(Y(t), t)dt + g(Y(t), t)dW(t), y(0) = y0.
- * Each summand corresponds to one DerivFunction. 
+ * Each summand corresponds to one DerivFunction.
  */
 template <typename FP>
 using SdeIntegrator = SystemIntegrator<FP, DerivFunction<FP>, DerivFunction<FP>>;

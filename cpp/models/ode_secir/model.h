@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
@@ -210,7 +210,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -350,7 +350,7 @@ private:
  * @param[in] dt time step.
  * @param[in] model SECIR model to simulate.
  * @param[in] integrator optional integrator, uses rk45 if nullptr.
- * 
+ *
  * @return Returns the result of the simulation.
  */
 template <typename FP = ScalarType>
@@ -362,14 +362,14 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
 
 /**
  * @brief Specialization of simulate for SECIR models using the FlowSimulation.
- * 
+ *
  * @tparam FP floating point type, e.g., double.
  * @param[in] t0 start time.
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIR model to simulate.
  * @param[in] integrator optional integrator, uses rk45 if nullptr.
- * 
+ *
  * @return Returns the result of the Flowsimulation.
  */
 template <typename FP = ScalarType>

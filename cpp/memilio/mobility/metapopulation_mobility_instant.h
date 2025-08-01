@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -147,10 +147,10 @@ public:
      * @brief Constructor for initializing mobility parameters with coefficients from type `MobilityCoefficientGroup`
      * and specific save indices.
      *
-     * @param[in] coeffs A group of mobility coefficients represented by a `MobilityCoefficientGroup` object, defining 
+     * @param[in] coeffs A group of mobility coefficients represented by a `MobilityCoefficientGroup` object, defining
      * how individuals move between nodes.
-     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
-     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments.
+     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results`
      * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
      */
     MobilityParameters(const MobilityCoefficientGroup& coeffs, const std::vector<std::vector<size_t>>& save_indices)
@@ -164,8 +164,8 @@ public:
      * and specific save indices.
      *
      * @param[in] coeffs An `Eigen::VectorXd` containing mobility coefficients.
-     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
-     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results` 
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments.
+     * Each inner vector represents a set of compartments whose data will be saved in the member `m_mobility_results`
      * of the `MobilityEdge` class during the simulation using the `add_mobility_result_time_point` function.
      */
     MobilityParameters(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
@@ -174,7 +174,7 @@ public:
     {
     }
 
-    /** 
+    /**
      * equality comparison operators
      */
     //@{
@@ -190,8 +190,8 @@ public:
 
     /**
      * Get/Setthe mobility coefficients.
-     * The coefficients represent the (time-dependent) percentage of people moving 
-     * from one node to another by age and infection compartment. 
+     * The coefficients represent the (time-dependent) percentage of people moving
+     * from one node to another by age and infection compartment.
      * @{
      */
     /**
@@ -216,11 +216,11 @@ public:
     /**
      * @brief Get the indices of compartments to be saved during mobility.
      *
-     * This function returns a reference to the vector of `m_saved_compartment_indices`, which specifies the groups of 
-     * compartments that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation 
+     * This function returns a reference to the vector of `m_saved_compartment_indices`, which specifies the groups of
+     * compartments that are saved in the member `m_mobility_results` of the `MobilityEdge` class during the simulation
      * using the `add_mobility_result_time_point` function.
      *
-     * @return A reference to the 2D vector containing indices of compartments to be saved. The outer vector represents different sets of compartments. 
+     * @return A reference to the 2D vector containing indices of compartments to be saved. The outer vector represents different sets of compartments.
      * Each inner vector represents a group of compartments defined by indices.
      */
     const auto& get_save_indices() const
@@ -254,7 +254,7 @@ public:
     /** @} */
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -291,7 +291,7 @@ private:
     std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
 };
 
-/** 
+/**
  * represents the mobility between two nodes.
  */
 template <typename FP = double>
@@ -314,8 +314,8 @@ public:
 
     /**
      * @brief Create edge with coefficients.
-     * 
-     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment 
+     *
+     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment
      * that change nodes in each time step.
      */
     MobilityEdge(const Eigen::VectorXd& coeffs)
@@ -331,9 +331,9 @@ public:
     /**
      * @brief Create edge with coefficients as MobilityParameters object and a 2D vector of indices which determine which compartments are saved.
      *
-     * @param[in] params A `MobilityParameters` object representing the percentage of people in each group and compartment 
+     * @param[in] params A `MobilityParameters` object representing the percentage of people in each group and compartment
      * that change nodes in each time step.
-     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments. 
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments.
      * Each inner vector represents a group of indices to be saved.
      */
     MobilityEdge(const MobilityParameters<FP>& params, const std::vector<std::vector<size_t>>& save_indices)
@@ -349,9 +349,9 @@ public:
     /**
      * @brief Create edge with coefficients and a 2D vector of indices which determine which compartments are saved.
      *
-     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment that migrate 
+     * @param[in] coeffs An `Eigen::VectorXd` representing the percentage of people in each group and compartment that migrate
      * in each time step.
-     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments, while each 
+     * @param[in] save_indices A 2D vector of indices. The outer vector represents different sets of compartments, while each
      * inner vector represents a group of indices for compartments to be saved.
      */
     MobilityEdge(const Eigen::VectorXd& coeffs, const std::vector<std::vector<size_t>>& save_indices)
@@ -414,7 +414,7 @@ private:
     /**
      * @brief Computes a condensed version of `m_mobile_population` and stores it in `m_mobility_results`.
      *
-     * The `m_mobility_results` then only contains commuters with infection states `InfectedNoSymptoms` and 
+     * The `m_mobility_results` then only contains commuters with infection states `InfectedNoSymptoms` and
      * `InfectedSymptoms`. Additionally, the total number of commuters is stored in the last entry of `m_mobility_results`.
      *
      * @param[in] t The current time.
@@ -481,7 +481,7 @@ using get_infections_relative_expr_t = decltype(get_infections_relative(
 /**
  * get the percantage of infected people of the total population in the node
  * If dynamic NPIs are enabled, there needs to be an overload of get_infections_relative(model, y)
- * for the Model type that can be found with argument-dependent lookup. Ideally define get_infections_relative 
+ * for the Model type that can be found with argument-dependent lookup. Ideally define get_infections_relative
  * in the same namespace as the Model type.
  * @param node a node of a mobility graph.
  * @param y the current value of the simulation.
@@ -510,9 +510,9 @@ using get_mobility_factors_expr_t = decltype(get_mobility_factors(
 
 /**
  * Get an additional mobility factor.
- * The absolute mobility for each compartment is computed by c_i * y_i * f_i, wher c_i is the coefficient set in 
+ * The absolute mobility for each compartment is computed by c_i * y_i * f_i, wher c_i is the coefficient set in
  * MobilityParameters, y_i is the current compartment population, f_i is the factor returned by this function.
- * This factor is optional, default 1.0. If you need to adjust mobility in that way, overload get_mobility_factors(model, t, y) 
+ * This factor is optional, default 1.0. If you need to adjust mobility in that way, overload get_mobility_factors(model, t, y)
  * for your Model type so that can be found with argument-dependent lookup.
  * @param node a node of a mobility graph.
  * @param y the current value of the simulation.
@@ -541,7 +541,7 @@ using test_commuters_expr_t = decltype(test_commuters(
  * Test persons when moving from their source node.
  * May transfer persons between compartments, e.g., if an infection was detected.
  * This feature is optional, default implementation does nothing.
- * In order to support this feature for your model, implement a test_commuters overload 
+ * In order to support this feature for your model, implement a test_commuters overload
  * that can be found with argument-dependent lookup.
  * @param node a node of a mobility graph.
  * @param mobile_population mutable reference to vector of persons per compartment that change nodes.
@@ -663,8 +663,8 @@ void apply_mobility(FP t, FP dt, MobilityEdge<FP>& mobilityEdge, SimulationNode<
 /**
  * create a mobility-based simulation.
  * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
- * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node. 
- * Returns are adjusted based on the development in the target node. 
+ * changes from one node to the other. In the next timestep, the mobile population returns to their "home" node.
+ * Returns are adjusted based on the development in the target node.
  * @param t0 start time of the simulation
  * @param dt time step between mobility
  * @param graph set up for mobility-based simulation
@@ -697,8 +697,8 @@ make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdge<FP>>&& g
 
 /**
  * Create a graph simulation without mobility.
- * 
- * Note that we set the time step of the graph simulation to infinity since we do not require any exchange between the 
+ *
+ * Note that we set the time step of the graph simulation to infinity since we do not require any exchange between the
  * nodes. Hence, in each node, the simulation runs until tmax when advancing the simulation without interruption.
  *
  * @param t0 Start time of the simulation.

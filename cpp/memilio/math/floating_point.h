@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -49,7 +49,7 @@ T abs_max(T v1, T v2)
  * @param v2 second floating point value
  * @param abs_tol maximum allowed absolute difference, default 0.
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
- * @return true if v1 is within the specified relative OR absolute tolerance of v2  
+ * @return true if v1 is within the specified relative OR absolute tolerance of v2
  */
 template <class T>
 bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_limits<T>::min())
@@ -61,14 +61,14 @@ bool floating_point_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_li
 
 /**
  * compare two floating point values with tolerances.
- * v1 < v2 if 
- *  a) v1 not == v2 within tolerances and 
+ * v1 < v2 if
+ *  a) v1 not == v2 within tolerances and
  *  b) v1 not > v2.
  * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
  * Use relative tolerance (or both) otherwise.
  * @param v1 first floating point value
  * @param v2 second floating point value
- * @param abs_tol maximum allowed absolute difference for equality, default 0. 
+ * @param abs_tol maximum allowed absolute difference for equality, default 0.
  * @param rel_tol maximum allowed relative difference for equality, default numeric_limits::min.
  * @return true if v1 is less than v2 and not within relative or absolute tolerance of v2.
  */
@@ -81,14 +81,14 @@ bool floating_point_less(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_lim
 
 /**
  * compare two floating point values with tolerances.
- * v1 > v2 if 
- *  a) v1 not == v2 within tolerances AND 
+ * v1 > v2 if
+ *  a) v1 not == v2 within tolerances AND
  *  b) v1 not < v2.
  * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
  * Use relative tolerance (or both) otherwise.
  * @param v1 first floating point value
  * @param v2 second floating point value
- * @param abs_tol maximum allowed absolute difference, default 0. 
+ * @param abs_tol maximum allowed absolute difference, default 0.
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is greater than v2 and not within absolute or relative tolerance of v2.
  */
@@ -100,14 +100,14 @@ bool floating_point_greater(T v1, T v2, T abs_tol = 0, T rel_tol = std::numeric_
 
 /**
  * compare two floating point values with tolerances.
- * v1 <= v2 if 
- *  a) v1 < v2 OR 
+ * v1 <= v2 if
+ *  a) v1 < v2 OR
  *  b) v1 == v2 within tolerances.
  * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
  * Use relative tolerance (or both) otherwise.
  * @param v1 first floating point value
  * @param v2 second floating point value
- * @param abs_tol maximum allowed absolute difference, default 0. 
+ * @param abs_tol maximum allowed absolute difference, default 0.
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is less than v2 or within relative or absolute tolerances of v2.
  */
@@ -119,14 +119,14 @@ bool floating_point_less_equal(T v1, T v2, T abs_tol = 0, T rel_tol = std::numer
 
 /**
  * compare two floating point values with tolerances.
- * v1 >= v2 if 
- *  a) v1 > v2 OR 
+ * v1 >= v2 if
+ *  a) v1 > v2 OR
  *  b) v1 == v2 within tolerances.
  * Use absolute tolerance for comparisons with zero or if you know the magnitude of the values.
  * Use relative tolerance (or both) otherwise.
  * @param v1 first floating point value
  * @param v2 second floating point value
- * @param abs_tol maximum allowed absolute difference, default 0. 
+ * @param abs_tol maximum allowed absolute difference, default 0.
  * @param rel_tol maximum allowed relative difference, default numeric_limits::min.
  * @return true if v1 is greater than v2 or within absolute or relative tolerance of v2.
  */

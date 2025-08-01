@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele, Julia Bicker
@@ -116,7 +116,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -441,7 +441,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionNorm
 }
 
 /*
- * Child class of Parameter Distribution class which represents an uniform distribution 
+ * Child class of Parameter Distribution class which represents an uniform distribution
  */
 class ParameterDistributionUniform : public VisitableParameterDistribution<ParameterDistributionUniform>
 {
@@ -568,7 +568,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUnif
 }
 
 /*
- * Child class of Parameter Distribution class which represents an lognormal distribution 
+ * Child class of Parameter Distribution class which represents an lognormal distribution
  */
 class ParameterDistributionLogNormal : public VisitableParameterDistribution<ParameterDistributionLogNormal>
 {
@@ -695,7 +695,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionLogN
 }
 
 /*
- * Child class of Parameter Distribution class which represents an exponential distribution 
+ * Child class of Parameter Distribution class which represents an exponential distribution
  */
 class ParameterDistributionExponential : public VisitableParameterDistribution<ParameterDistributionExponential>
 {
@@ -814,7 +814,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionExpo
 }
 
 /*
- * Child class of Parameter Distribution class which represents a constant distribution/value 
+ * Child class of Parameter Distribution class which represents a constant distribution/value
  */
 class ParameterDistributionConstant : public VisitableParameterDistribution<ParameterDistributionConstant>
 {

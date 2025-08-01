@@ -99,7 +99,7 @@ double result_fct_m2(const MockModel2& model2, double /*t*/)
 
 /**
  * @brief Test advance function of TemporalHybridSimulation class.
- * The advance function of this class should advance one of two models depending on a given condition. 
+ * The advance function of this class should advance one of two models depending on a given condition.
  * If the condition is fulfilled, the currently used model used be converted to the target model using the corresponding convert_model function.
  */
 TEST(TestTemporalHybrid, test_advance)

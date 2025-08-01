@@ -42,35 +42,35 @@ namespace isecir
 
 /**
 * @brief Computes a TimeSeries of flows to provide initial data for an IDE-SECIR model with data from RKI.
-*   
+*
 * The flows InfectedNoSymptomsToInfectedSymptoms are calculated using the confirmed cases in the RKI data.
 * If necessary, the RKI data are linearly interpolated within one day.
 * The RKI data should contain data for each needed day without division of age groups, the completeness of the dates is not verified.
-* Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py, 
+* Data can be downloaded e.g. with the file pycode/memilio-epidata/memilio/epidata/getCaseData.py,
 * which creates a file named cases_all_germany.json or a similar name. One should set impute_dates=True so that missing dates are imputed.
 *
 * The flows InfectedSymptomsToInfectedSevere, InfectedSymptomsToRecovered, InfectedSevereToInfectedCritical,
 * InfectedSevereToRecovered, InfectedCriticalToDead and InfectedCriticalToRecovered can then be calculated using
 * the InfectedNoSymptomsToInfectedSymptoms flow with the standard formula from the IDE model.
-* The ExposedToInfectedNoSymptoms and InfectedNoSymptomsToInfectedSymptoms flows are calculated 
-* using the means of the respective TransitionDistribution. 
+* The ExposedToInfectedNoSymptoms and InfectedNoSymptomsToInfectedSymptoms flows are calculated
+* using the means of the respective TransitionDistribution.
 * The flow InfectedNoSymptomsToInfectedSymptoms is calculated with the standard formula from the IDE model
 * using the results for ExposedToInfectedNoSymptoms.
 *
-* The number of deaths used in the model is computed by shifting the reported RKI data according to the mean values of the transitions 
+* The number of deaths used in the model is computed by shifting the reported RKI data according to the mean values of the transitions
 * InfectedSymptomsToInfectedSevere, InfectedSevereToInfectedCritical and InfectedCriticalToDead.
-* We also set the number of total confirmed cases in the model. 
+* We also set the number of total confirmed cases in the model.
 * Therefore the initialization method using the total confirmed cases is used in the model. See also the documentation of the model class.
-* 
+*
 * The start date of the model simulation is set to t0=0.
 *
 * @param[in, out] model The model for which the initial flows should be computed.
 * @param[in] dt Time step size.
 * @param[in] rki_data Vector containing RKI data.
 * @param[in] date The start date of the simulation and the last time point of the TimeSeries used for initialization.
-* @param[in] scale_confirmed_cases Vector with factor(s for each age group) by which to scale the confirmed cases of 
+* @param[in] scale_confirmed_cases Vector with factor(s for each age group) by which to scale the confirmed cases of
 *   rki_data to consider unreported cases.
-* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and 
+* @tparam EntryType is expected to be ConfirmedCasesNoAgeEntry for data that is not age resolved and
 *   ConfirmedCasesDataEntry for age resolved data. See also epi_data.h.
 * @returns Any io errors that happen during reading of the files.
 */

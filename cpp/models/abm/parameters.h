@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann, Julia Bicker
@@ -399,7 +399,7 @@ struct MaskProtection {
 };
 
 /**
- * @brief Aerosol transmission rates. 
+ * @brief Aerosol transmission rates.
 */
 struct AerosolTransmissionRates {
     using Type = CustomIndexArray<ScalarType, VirusVariant>;
@@ -785,7 +785,7 @@ public:
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
      * if constraints are not satisfied.
      * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */

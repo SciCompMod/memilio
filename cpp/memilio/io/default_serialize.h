@@ -32,10 +32,10 @@ namespace mio
 
 /**
  * @brief A pair of name and reference.
- * 
+ *
  * Used for default (de)serialization.
  * This object holds a char pointer to a name and reference to value. Mind their lifetime!
- * @tparam ValueType The (non-cv, non-reference) type of the value. 
+ * @tparam ValueType The (non-cv, non-reference) type of the value.
  */
 template <class ValueType>
 struct NamedRef {
@@ -47,8 +47,8 @@ struct NamedRef {
     /**
      * @brief Create a named reference.
      *
-     * @param n A string literal. 
-     * @param v A non-const lvalue reference to the value. 
+     * @param n A string literal.
+     * @param v A non-const lvalue reference to the value.
      */
     explicit NamedRef(const char* n, Reference v)
         : name(n)
@@ -115,7 +115,7 @@ IOResult<DefaultSerializable> default_deserialize_impl(IOContext& io, DefaultSer
 
 /**
  * @brief List of a class's members.
- * 
+ *
  * Used for default (de)serialization.
  * Holds a char pointer to the class name as well as a tuple of NamedRefs with all added class members.
  * Initially, the template parameter pack should be left empty. It will be filled by calling Members::add.
@@ -145,7 +145,7 @@ struct Members {
      * @param[in] member_name The name used for serialization. Should be the same as or similar to the class member.
      * For example, a good option a private class member `m_time` is simply `"time"`.
      * @param[in] member A class member. Always pass this variable directly, do not use getters or accessors.
-     * @return A Members object with all previous class members and the newly added one.  
+     * @return A Members object with all previous class members and the newly added one.
      */
     template <class T>
     [[nodiscard]] Members<ValueTypes..., T> add(const char* member_name, T& member)

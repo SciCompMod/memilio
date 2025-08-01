@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn
@@ -38,10 +38,10 @@ namespace mio
 /**
  * @brief Save the results of a graph simulation run.
  * @param result Simulation results per node of the graph.
- * @param ids Identifiers for each node of the graph. 
+ * @param ids Identifiers for each node of the graph.
  * @param num_groups Number of groups in the results.
  * @param filename Name of file
- * @return Any io errors that occur during writing of the files. 
+ * @return Any io errors that occur during writing of the files.
  */
 IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids, int num_groups,
                            const std::string& filename);
@@ -103,7 +103,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
  * Creates a new subdirectory for each run according to run_idx.
  * @param result Simulation results per node of the graph.
  * @param params Parameters used for the simulation run.
- * @param ids Identifiers for each node of the graph. 
+ * @param ids Identifiers for each node of the graph.
  * @param result_dir Top level directory for all results of the parameter study.
  * @param run_idx Index of the run; used in directory name.
  * @return Any io errors that occur during writing of the files.
@@ -123,7 +123,7 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
 
 /**
  * @brief Save the results of a parameter study.
- * Stores different percentiles (p5, p25, p50, p75, p90) and sums of the results and parameters. 
+ * Stores different percentiles (p5, p25, p50, p75, p90) and sums of the results and parameters.
  * @param ensemble_results Result of each simulation run.
  * @param ensemble_params Parameters used for each simulation run.
  * @param county_ids Ids of the county nodes.

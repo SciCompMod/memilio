@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -47,7 +47,7 @@ namespace mio
  *
  * Specializations are provided for `float` and `double` types. In order to use
  * other floating point types, a new specialization for that type must be added.
- * 
+ *
  * Member functions of the unspecialized class are disabled. Using them results
  * in compile time errors.
  * @{

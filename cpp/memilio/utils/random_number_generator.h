@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -50,10 +50,10 @@ namespace mio
 /**
 * Base class for counter based random number generator.
 *
-* All (pseudo) random number generators (RNG) consist of some state, 
+* All (pseudo) random number generators (RNG) consist of some state,
 * a function `state = advance(state)`, and a function `sample = generate(state)`.
-* They produce a sequence of random samples by advancing the state and from the new state 
-* generate the actual sample. 
+* They produce a sequence of random samples by advancing the state and from the new state
+* generate the actual sample.
 *
 * example in pseudo code:
 * state = initial_state(seed)
@@ -66,9 +66,9 @@ namespace mio
 * be complicated in order to perform the necessary mixing of bits. The state
 * needs to be relatively large to contain sufficient numbers of random bits. The generate function
 * on the other hand is very simple, often just returning the state (whole or in parts) without further
-* computation. 
+* computation.
 *
-* In counter based generators (cRNG), the state and advance function are very simple and 
+* In counter based generators (cRNG), the state and advance function are very simple and
 * all the mixing of bits is in the generate function. The state is split into a key and a counter.
 * The generate function is an encryption or hash function. Like a hash function, it produces a
 * pseudo-random value from the input. The key is used by the generate function the same way as an encryption key.
@@ -80,15 +80,15 @@ namespace mio
 * a total sequence of N samples you only need to create n counters, where counter i starts at i * (N / n).
 * Normal RNGs need special algorithms to efficiently generate subsequences, if it is possible at all.
 * The counter is of minimal size, it only needs to be big enough to fit the number of samples generated.
-* Often the subsequence index i is already available in some other form, e.g., the thread index or the agent index in an 
-* agent based model, so only a small amount of extra storage is needed for the subsequence counter. 
+* Often the subsequence index i is already available in some other form, e.g., the thread index or the agent index in an
+* agent based model, so only a small amount of extra storage is needed for the subsequence counter.
 * The key is shared between all subsequences. Modern CPU architectures also are very efficient at executing the hash and
-* encryption functions that are used as the generate function, increasing performance of the generator. 
-* 
+* encryption functions that are used as the generate function, increasing performance of the generator.
+*
 * The length of the total sequence and the subsequences and the number of subsequences can be adjusted as needed
 * by assigning different numbers of bits to the key, the subsequence index and the subsequence counter.
-* The counter only needs to store the number of samples generated. A counter of c bits supports a 
-* sequence of 2^c samples or 2^n subsequences of 2^(c - n) samples, in which case you can split the 
+* The counter only needs to store the number of samples generated. A counter of c bits supports a
+* sequence of 2^c samples or 2^n subsequences of 2^(c - n) samples, in which case you can split the
 * counter into a subsequence index of n bits and a subsequence counter of (c - n) bits where each
 * of the subsequence counters starts at 0.
 * Generating a samples of k bits requires a key of at least k bits for sufficient randomness.
@@ -96,14 +96,14 @@ namespace mio
 * * A 64 bit counter (uint64_t) and a 64 bit key produce 2^64 samples each with 64 bits. You need to store
 * one counter and one key.
 * * A subsequence index of 32 bits (uint32_t), subsequence counter with 32 bits and a 64 bit key
-* produce 2^32 subsequences of 2^32 samples each with 64 bits per sample. You need to store 2^32 subsequence indices, 
+* produce 2^32 subsequences of 2^32 samples each with 64 bits per sample. You need to store 2^32 subsequence indices,
 * 2^32 subsequence counters and one key, but the counters are completely independent and thread safe. The subsequence index
-* and corresponding subsequence counter can also be stored together in one 64bit counter, e.g., the subsequence index is the 
+* and corresponding subsequence counter can also be stored together in one 64bit counter, e.g., the subsequence index is the
 * high bits and subsequence counter is the low bits, see `rng_totalsequence_index()`.
 *
 * Also see https://github.com/DEShawResearch/random123 for more information on cRNGs and the specific cRNG
 * we use.
-* 
+*
 * Classes deriving from this base class need to supply the key and counter by implementing
 * the functions
 * * result_type get_key() const
@@ -219,11 +219,11 @@ Key<uint64_t> seed_rng_key(SeedSeq& seed_seq)
 
 /**
 * Get the counter in the total sequence for a counter in a given subsequence.
-* A total sequence counter of C bits supports 2^N subsequences of 2^(C - N) samples. Then the counter 
+* A total sequence counter of C bits supports 2^N subsequences of 2^(C - N) samples. Then the counter
 * can be split into a subsequence index of N bits and a subsequence counter of S = (C - N) bits.
-* The length of the subsequences is determined by the type of the subsequence counter and the 
+* The length of the subsequences is determined by the type of the subsequence counter and the
 * requested total sequence counter.
-* The subsequence index does not need to be exactly N bits, it can be larger. E.g., a 
+* The subsequence index does not need to be exactly N bits, it can be larger. E.g., a
 * subsequence counter of 16 bits and a subsequence index of 64 bits can be used for
 * a combined counter of 64 bits since there is not 48 bit type.
 * @tparam UIntC The counter type of the total sequence with C bits.
@@ -264,7 +264,7 @@ Counter<UIntC> rng_totalsequence_counter(UIntN subsequence_idx, CounterS counter
 
 /**
 * Get the subsequence counter from the total sequence counter.
-* A total sequence counter of C bits supports 2^N subsequences of 2^(C - N) samples. Then the counter 
+* A total sequence counter of C bits supports 2^N subsequences of 2^(C - N) samples. Then the counter
 * can be split into a subsequence index of N bits and a subsequence counter of S = (C - N) bits.
 * The length of the subsequences is determined by the type of the subsequence counter.
 * @tparam UIntS An unsigned integer type of S bits for the subsequence counter.
@@ -466,8 +466,8 @@ public:
     /**
      * get a random sample from the distribution.
      * accepts the same arguments as the constructors of the template parameter type.
-     * example: 
-     * std::uniform_int_distribution is constructed from two integers, so 
+     * example:
+     * std::uniform_int_distribution is constructed from two integers, so
      * DistributionAdapter<std::uniform_int_distribution>::operator() accepts two integers as well.
      */
     template <class RNG, class... T>

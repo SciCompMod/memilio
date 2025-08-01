@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -42,10 +42,10 @@ namespace lsecir
  * @tparam LctStates The LCT model can work with any number of LctStates, where each LctState corresponds to a group,
  * e.g. one AgeGroup. The purpose of the LctStates is to define the number of subcompartments for each InfectionState.
  * If you do not want to divide the population into groups, just use one LctState.
- * If you want to divide the population according to more than one category, e.g. sex and age, 
- * you have to specify one LctState for each pair of groups, e.g. for (female, A00-A04), (female, A05-A14) etc. 
+ * If you want to divide the population according to more than one category, e.g. sex and age,
+ * you have to specify one LctState for each pair of groups, e.g. for (female, A00-A04), (female, A05-A14) etc.
  * This is because the number of subcompartments can be different for each group.
- * Therefore, the number of LctStates also determines the number of groups. 
+ * Therefore, the number of LctStates also determines the number of groups.
  */
 template <class... LctStates>
 class Model
@@ -77,7 +77,7 @@ public:
     /**
      * @brief Evaluates the right-hand-side f of the ODE dydt = f(y, t).
      *
-     * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
+     * The LCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t).
      * y is a vector containing the number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
      * @param[in] pop The current state of the population in the geographic unit we are considering.
@@ -99,12 +99,12 @@ public:
      * @brief Cumulates a simulation result with subcompartments to produce a result that divides the population only
      *   into the infection states defined in InfectionState.
      *
-     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided 
+     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided
      * in subcompartments.
-     * The function calculates a TimeSeries without subcompartments from another TimeSeries with subcompartments. 
+     * The function calculates a TimeSeries without subcompartments from another TimeSeries with subcompartments.
      * This is done by summing up the numbers in the subcompartments.
      * @param[in] subcompartments_ts Result of a simulation with the model.
-     * @return Result of the simulation divided in infection states without subcompartments. 
+     * @return Result of the simulation divided in infection states without subcompartments.
      *  Returns TimeSeries with values -1 if calculation is not possible.
      */
     TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& subcompartments_ts) const
@@ -140,11 +140,11 @@ public:
 
 private:
     /**
-     * @brief Converts a vector with subcompartments in a vector without subcompartments 
+     * @brief Converts a vector with subcompartments in a vector without subcompartments
      * by summing up subcompartment values.
      * This is done recursively for each group which corresponds to a slice of the vector.
      *
-     * @tparam group The group specifying the slice of the vector being considered. 
+     * @tparam group The group specifying the slice of the vector being considered.
      * @param[in] subcompartments The vector that should be converted.
      * @param[out] compartments Reference to the vector where the output is stored.
      */
@@ -177,7 +177,7 @@ private:
      *
      * See also the function get_derivative.
      * For each group, one slice of the output vector is calculated.
-     * @tparam group The group specifying the slice of the vector being considered.  
+     * @tparam group The group specifying the slice of the vector being considered.
      * @param[in] pop The current state of the population in the geographic unit we are considering.
      * @param[in] y The current state of the model (or a subpopulation) as a flat array.
      * @param[in] t The current time.
@@ -289,8 +289,8 @@ private:
      * @brief Calculates the derivative of the Susceptible compartment for Group1.
      *
      * This is done recursively by calculating the interaction terms with each group.
-     * @tparam Group1 The group for which the derivative of the Susceptible compartment should be calculated. 
-     * @tparam Group2 The group that Group1 interacts with. 
+     * @tparam Group1 The group for which the derivative of the Susceptible compartment should be calculated.
+     * @tparam Group2 The group that Group1 interacts with.
      * @param[in] pop The current state of the population in the geographic unit we are considering.
      * @param[in] y The current state of the model (or a subpopulation) as a flat array.
      * @param[in] t The current time.
@@ -339,7 +339,7 @@ private:
     }
 
     /**
-     * @brief Checks whether LctState of a group satisfies all constraints. 
+     * @brief Checks whether LctState of a group satisfies all constraints.
      *  Recursively, it checks that all groups satisfy the constraints.
      *
      * @tparam group The group for which the constraints should be checked.

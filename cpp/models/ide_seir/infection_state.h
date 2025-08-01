@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -26,7 +26,7 @@ namespace mio
 namespace iseir
 {
 /**
- * @brief The InfectionState enum describes the possible categories for the infectious state of persons 
+ * @brief The InfectionState enum describes the possible categories for the infectious state of persons
  *    in ide_seir model.
  */
 enum class InfectionState

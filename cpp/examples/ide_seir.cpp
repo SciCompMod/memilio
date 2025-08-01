@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -25,9 +25,9 @@
 int main()
 {
     /**
-    * Note: the initial values as well as all other parameters are randomly chosen for this example and are not 
+    * Note: the initial values as well as all other parameters are randomly chosen for this example and are not
     * intended to characterize the real world.
-    * This example has the purpose to show how the IDE SEIR model can be applied. 
+    * This example has the purpose to show how the IDE SEIR model can be applied.
     */
 
     using Vec = mio::TimeSeries<double>::Vector;
@@ -38,8 +38,8 @@ int main()
     mio::TimeSeries<double> init(1);
 
     /**
-    * Construction of the initial TimeSeries with point of times and the corresponding number of susceptibles.  
-    * The smallest time should be small enough. See the documentation of the IdeSeirModel constructor for 
+    * Construction of the initial TimeSeries with point of times and the corresponding number of susceptibles.
+    * The smallest time should be small enough. See the documentation of the IdeSeirModel constructor for
     * detailed information. Initial data are chosen randomly.
     */
     init.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));

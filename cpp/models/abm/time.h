@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -103,7 +103,7 @@ public:
     /**@}*/
 
     /**
-     * @name Numeric operators for addition, subtraction, and scalar integer multiplication and division. 
+     * @name Numeric operators for addition, subtraction, and scalar integer multiplication and division.
      * @{
      */
     TimeSpan operator+(const TimeSpan& s) const
@@ -157,7 +157,7 @@ private:
 
 /**
  * @brief Represents a point in time.
- * Seconds from an unspecified monday at 00:00 (epoch). 
+ * Seconds from an unspecified monday at 00:00 (epoch).
  */
 class TimePoint
 {

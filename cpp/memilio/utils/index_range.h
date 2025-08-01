@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding
@@ -57,7 +57,7 @@ public:
 
         /**
          * @brief Default constructed MultiIndexIterator.
-         * This will not construct a valid iterator. 
+         * This will not construct a valid iterator.
          */
         MultiIndexIterator()
             : m_index(MultiIndex::Zero())

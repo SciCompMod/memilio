@@ -1,4 +1,4 @@
-/* 
+/*
 * * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -36,8 +36,8 @@ namespace osecirts
 // clang-format off
 using Flows = TypeList<
     //naive
-    Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>, 
-    Flow<InfectionState::SusceptibleNaive,                            InfectionState::TemporaryImmunePartialImmunity>, 
+    Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>,
+    Flow<InfectionState::SusceptibleNaive,                            InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::ExposedNaive,                                InfectionState::InfectedNoSymptomsNaive>,
     Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::InfectedSymptomsNaive>,
     Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::TemporaryImmunePartialImmunity>,
@@ -48,7 +48,7 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::InfectedSevereNaive>,
     Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::InfectedCriticalNaive>,
-    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::TemporaryImmunePartialImmunity>, 
+    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::TemporaryImmunePartialImmunity>,
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::TemporaryImmunePartialImmunity>,
@@ -87,7 +87,7 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedSevereImprovedImmunity,              InfectionState::DeadImprovedImmunity>,
     Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::DeadImprovedImmunity>,
     Flow<InfectionState::InfectedCriticalImprovedImmunity,            InfectionState::TemporaryImmuneImprovedImmunity>,
-    
+
     // waning
     Flow<InfectionState::TemporaryImmunePartialImmunity,              InfectionState::SusceptiblePartialImmunity>,
     Flow<InfectionState::TemporaryImmuneImprovedImmunity,             InfectionState::SusceptibleImprovedImmunity>,
@@ -583,7 +583,7 @@ public:
     /**
     * @brief Calculates smoothed vaccinations for a given time point.
     *
-    * This function calculates the number of vaccinations for each age group at a given time t, 
+    * This function calculates the number of vaccinations for each age group at a given time t,
     * based on daily vaccinations data. The smoothing is done using a cosine function.
     *
     * @param t The time in the simulation.
@@ -634,7 +634,7 @@ public:
     }
 
     /**
-    * serialize this. 
+    * serialize this.
     * @see mio::serialize
     */
     template <class IOContext>
@@ -701,13 +701,13 @@ public:
 
     /**
     * @brief Applies the effect of a new variant of a disease to the transmission probability of the model.
-    * 
+    *
     * This function adjusts the transmission probability of the disease for each age group based on the share of the new variant.
     * The share of the new variant is calculated based on the time `t` and the start day of the new variant.
     * The transmission probability is then updated for each age group in the model.
-    * 
+    *
     * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
-    * 
+    *
     * @param [in] t The current time.
     * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
     */
@@ -815,13 +815,13 @@ private:
 
 /**
  * @brief Specialization of simulate for SECIRS-type models using Simulation.
- * 
+ *
  * @param[in] t0 start time.
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIRS-type model to simulate.
  * @param[in] integrator optional integrator, uses rk45 if nullptr.
- * 
+ *
  * @return Returns the result of the simulation.
  */
 template <typename FP = ScalarType>
@@ -833,13 +833,13 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
 
 /**
  * @brief Specialization of simulate for SECIRS-type models using the FlowSimulation.
- * 
+ *
  * @param[in] t0 start time.
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIRS-type model to simulate.
  * @param[in] integrator optional integrator, uses rk45 if nullptr.
- * 
+ *
  * @return Returns the result of the Flowsimulation.
   */
 template <typename FP = ScalarType>
@@ -921,7 +921,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 
 /**
  * @brief Adjusts the state of commuters in a model, accounting for detection and mobility effects.
- * 
+ *
  * @tparam FP Floating-point type, e.g., double.
  * @tparam Base Simulation type that uses the SECIRTS-type model. see Simulation.
  * @param[in,out] sim Simulation object containing the model and result data.

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -55,7 +55,7 @@ public:
 
     /**
      * @brief Get a thread local instance of this timer. It is automatically registered to the TimerRegistrar.
-     * 
+     *
      * This is the only way to obtain a NamedTimer, as its constructors are disabled. Since there is exactly one timer
      * for each Name and Scope combination, this timer is inherently threadsafe. The Name and Scope together effectively
      * work as a key for a global map, though the map access is made during compilation.

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -46,14 +46,14 @@ public:
         * @brief Create an IDE SEIR model.
         *
         * @param[in, out] init TimeSeries with the initial values of the number of susceptibles at associated initial times.
-        *   The time steps in this vector should be equidistant and equal to the time step used for the simulation. 
-        *   A certain history of time steps and values for susceptibles is needed. 
+        *   The time steps in this vector should be equidistant and equal to the time step used for the simulation.
+        *   A certain history of time steps and values for susceptibles is needed.
         *   A warning is displayed if the condition is violated.
-        *   Co be more precise, the first time point needs to be smaller than -(k-1)*TimeStep with 
+        *   Co be more precise, the first time point needs to be smaller than -(k-1)*TimeStep with
         *       k=ceil((InfectiousTime + LatencyTime)/TimeStep).
         *   The last time point in this vector should be a time 0.
         * @param[in] dt_init The size of the time step used for numerical simulation.
-        * @param[in] N_init The population of the considered region. 
+        * @param[in] N_init The population of the considered region.
         */
     Model(TimeSeries<double>&& init, double dt_init, int N_init, const Pa& Parameterset_init = Pa())
         : parameters{Parameterset_init}
@@ -67,12 +67,12 @@ public:
     /**
         * @brief Simulate the evolution of infection numbers with the given IDE SEIR model.
         *
-        * The simulation is performed by solving the underlying model equation numerically. 
+        * The simulation is performed by solving the underlying model equation numerically.
         * Here, an integro-differential equation is to be solved. The model parameters and the initial data are used.
         *
-        * @param[in] t_max Last simulation day. 
+        * @param[in] t_max Last simulation day.
         *   If the last point of time of the initial TimeSeries was 0, the simulation will be executed for t_max days.
-        * @return The result of the simulation, stored in a TimeSeries with simulation time and 
+        * @return The result of the simulation, stored in a TimeSeries with simulation time and
         *       associated number of susceptibles.
         */
     TimeSeries<double> const& simulate(int t_max)
@@ -110,9 +110,9 @@ public:
     /**
         * @brief Calculate the distribution of the population in E, I and, R based on the calculated values for S.
         *
-        * The values are calculated using the average latency and infection time, not using model equations. 
+        * The values are calculated using the average latency and infection time, not using model equations.
         * The simulated values of S are used for this purpose, so the simulate() function should be called beforehand.
-        * 
+        *
         * @return The result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an
         *   associated Vector with values for S, E, I, and R.
         */
@@ -156,8 +156,8 @@ private:
 
     /**
         * @brief Numerical differentiation of one compartment using a central difference quotient.
-        * 
-        * @param[in] ts_ide TimeSeries with the time steps already calculated. 
+        *
+        * @param[in] ts_ide TimeSeries with the time steps already calculated.
         *       Used as function values in numerical differentiation.
         * @param[in] idx Time index at which the numerical differentiation should be performed.
         * @param[in] compartment Compartment for which the numerical differentiation is to be performed.
@@ -172,7 +172,7 @@ private:
     /**
         * @brief Numerical integration of the inner integral of the integro-differential equation for the group S using
         *    a trapezoidal sum.
-        * 
+        *
         * @param[in] idx Index of the point of time used in the inner integral.
         * @return Result of the numerical integration.
         */

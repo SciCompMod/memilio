@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -40,20 +40,20 @@ public:
     using Base::Base;
 
     /**
-     * @brief Calculate random changes to the population at a certain time point. 
+     * @brief Calculate random changes to the population at a certain time point.
      *
      * This function calculates the random noise part of an SDE model. In general, it represents the result of the
      * deterministic noise matrix multiplied by a white noise vector.
      *
      * For infectious disease models, the noise matrix usually maps noise contributions from each flow to their
      * respective compartments. In that case, the white noise vector has size #flows. The resulting noise vector must
-     * have the same size as the state vector y. 
+     * have the same size as the state vector y.
      * This is due to the fact that the integration of SDE models must happen on populations, not flows, as the applied
      * noise can occassionally push compartments into negative values. This can be mitigated by removing negative values
      * and rescaling the population (see `map_to_nonnegative`), but this mitigation can not (in general) be applied
      * to flows.
      * The noise must still be applied per flow, so both inflow and outflow use the same random value. Otherwise,
-     * transitions between compartments would no longer preserve the total population count. 
+     * transitions between compartments would no longer preserve the total population count.
      */
     virtual void get_noise(Eigen::Ref<const Eigen::VectorX<FP>> /*pop*/, Eigen::Ref<const Eigen::VectorX<FP>> /*y*/,
                            FP /*t*/, Eigen::Ref<Eigen::VectorX<FP>> /*noise*/) const {};
@@ -102,8 +102,8 @@ using get_noise_expr_t =
 }
 
 /**
- * Template meta function to check if a type is a valid stochastic model. 
- * Defines a static constant of name `value`. 
+ * Template meta function to check if a type is a valid stochastic model.
+ * Defines a static constant of name `value`.
  * The constant `value` will be equal to true if M is a valid stochastic model type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP A floating point type, e.g. double.

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -37,7 +37,7 @@ namespace osecirvvs
 // clang-format off
 using Flows = TypeList<
     //naive
-    Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>, 
+    Flow<InfectionState::SusceptibleNaive,                            InfectionState::ExposedNaive>,
     Flow<InfectionState::ExposedNaive,                                InfectionState::InfectedNoSymptomsNaive>,
     Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::InfectedSymptomsNaive>,
     Flow<InfectionState::InfectedNoSymptomsNaive,                     InfectionState::SusceptibleImprovedImmunity>,
@@ -48,7 +48,7 @@ using Flows = TypeList<
     Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::InfectedSevereNaive>,
     Flow<InfectionState::InfectedSymptomsNaiveConfirmed,              InfectionState::SusceptibleImprovedImmunity>,
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::InfectedCriticalNaive>,
-    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::SusceptibleImprovedImmunity>, 
+    Flow<InfectionState::InfectedSevereNaive,                         InfectionState::SusceptibleImprovedImmunity>,
     Flow<InfectionState::InfectedSevereNaive,                         InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::DeadNaive>,
     Flow<InfectionState::InfectedCriticalNaive,                       InfectionState::SusceptibleImprovedImmunity>,
@@ -512,7 +512,7 @@ public:
     }
 
     /**
-    * serialize this. 
+    * serialize this.
     * @see mio::serialize
     */
     template <class IOContext>
@@ -579,13 +579,13 @@ public:
 
     /**
     * @brief Applies the effect of a new variant of a disease to the transmission probability of the model.
-    * 
+    *
     * This function adjusts the transmission probability of the disease for each age group based on the share of the new variant.
     * The share of the new variant is calculated based on the time `t` and the start day of the new variant.
     * The transmission probability is then updated for each age group in the model.
-    * 
+    *
     * Based on Equation (35) and (36) in doi.org/10.1371/journal.pcbi.1010054
-    * 
+    *
     * @param [in] t The current time.
     * @param [in] base_infectiousness The base infectiousness of the old variant for each age group.
     */
@@ -747,14 +747,14 @@ private:
 
 /**
  * @brief Specialization of simulate for SECIRVVS models using Simulation.
- * 
+ *
  * @tparam FP floating point type, e.g., double.
  * @param[in] t0 start time.
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIRVVS model to simulate.
  * @param[in] integrator optional integrator, uses rk45 if nullptr.
- * 
+ *
  * @return Returns the result of the simulation.
  */
 template <typename FP = ScalarType>
@@ -766,14 +766,14 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
 
 /**
  * @brief Specialization of simulate for SECIRVVS models using the FlowSimulation.
- * 
+ *
  * @tparam FP floating point type, e.g., double.
  * @param[in] t0 start time.
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIRVVS model to simulate.
  * @param[in] integrator optional integrator, uses rk45 if nullptr.
- * 
+ *
  * @return Returns the result of the Flowsimulation.
   */
 template <typename FP = ScalarType>

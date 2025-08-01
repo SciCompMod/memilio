@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -40,7 +40,7 @@ class DampingSampling
 {
 public:
     /**
-     * Creates a DampingSampling.  
+     * Creates a DampingSampling.
      * @param value random value that all matrix coefficients depend on.
      * @param level level of the damping.
      * @param type type of the damping.
@@ -186,7 +186,7 @@ public:
     }
 
     /**
-     * equality comparison operators. 
+     * equality comparison operators.
      * @{
      */
     bool operator==(const DampingSampling& other) const
@@ -201,7 +201,7 @@ public:
     /**@}*/
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -273,9 +273,9 @@ void apply_dampings(DampingExpression& damping_expression, const DampingSampling
  * d_ij = 1 - sqrt((1 - g_i) * (1 - g_j))
  * where d_ij is a coefficient of the matrix
  * and g_i,g_j are coefficients of the group vector.
- * For diagonal elements (i.e. contacts of group with itself): d_ii = g_i; 
- * the damping of the corresponding group is applied directly. 
- * For off diagonal elements (i.e. contacts of group with other group): d_ij between g_i and g_j; 
+ * For diagonal elements (i.e. contacts of group with itself): d_ii = g_i;
+ * the damping of the corresponding group is applied directly.
+ * For off diagonal elements (i.e. contacts of group with other group): d_ij between g_i and g_j;
  * the dampings of both groups are combined and applied equally.
  * @param groups damping value weighted by group.
  * @return square matrix expression of damping coefficients.

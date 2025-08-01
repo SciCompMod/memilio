@@ -1,7 +1,7 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Henrik Zunker 
+* Authors: Henrik Zunker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *

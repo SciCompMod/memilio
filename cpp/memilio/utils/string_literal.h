@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -45,7 +45,7 @@ struct StringLiteral {
     /**
      * @brief Construct a StringLiteral. Use as `StringLiteral{"example string literal"}`.
      * The type of string is a const reference to a fixed-size char array.
-     * @param[in] string_literal Any string literal. 
+     * @param[in] string_literal Any string literal.
      */
     constexpr StringLiteral(const value_type (&string_literal)[size() + 1])
     {

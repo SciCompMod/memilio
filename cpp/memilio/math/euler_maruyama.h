@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -43,7 +43,7 @@ public:
 
     /**
      * @brief Fixed step width integrator for stochastic models.
-     * Expects population-based integrands, i.e. not flows. 
+     * Expects population-based integrands, i.e. not flows.
      * @param[in] f Deterministic part of the stochastic differential equation.
      * @param[in] noise_f Stochastic part of the stochastic differential equation.
      * @param[in] yt Value of y at t, y(t).

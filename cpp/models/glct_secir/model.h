@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -40,7 +40,7 @@ namespace glsecir
  * @brief Class that defines an GLCT-SECIR model.
  *
  * @tparam NumExposed The number of subcompartments used for the Exposed compartment.
- * @tparam NumInfectedNoSymptoms The number of subcompartments used for the InfectedNoSymptoms compartment. 
+ * @tparam NumInfectedNoSymptoms The number of subcompartments used for the InfectedNoSymptoms compartment.
  * @tparam NumInfectedSymptoms The number of subcompartments used for the InfectedSymptoms compartment.
  * @tparam NumInfectedSevere The number of subcompartments used for the InfectedSevere compartment.
  * @tparam NumInfectedCritical The number of subcompartments used for the InfectedCritical compartment.
@@ -73,7 +73,7 @@ public:
     }
 
     /**
-     * @brief Checks that the model satisfies all constraints (e.g. parameter or population constraints), and 
+     * @brief Checks that the model satisfies all constraints (e.g. parameter or population constraints), and
      *  logs an error if constraints are not satisfied.
      *
      * @return Returns true if one or more constraints are not satisfied, false otherwise.
@@ -125,7 +125,7 @@ public:
     /**
      * @brief Evaluates the right-hand-side f of the GLCT dydt = f(y, t).
      *
-     * The GLCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t). 
+     * The GLCT-SECIR model is defined through ordinary differential equations of the form dydt = f(y, t).
      * y is a vector containing number of individuals for each (sub-) compartment.
      * This function evaluates the right-hand-side f of the ODE and can be used in an ODE solver.
      *
@@ -332,12 +332,12 @@ public:
      * @brief Cumulates a simulation result with subcompartments to produce a result that divides the population only
      *   into the infection states defined in InfectionState.
      *
-     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided 
+     * If the model is used for simulation, we will get a result in form of a TimeSeries with infection states divided
      * in subcompartments.
-     * The function calculates a TimeSeries without subcompartments from another TimeSeries with subcompartments. 
+     * The function calculates a TimeSeries without subcompartments from another TimeSeries with subcompartments.
      * This is done by summing up the corresponding subcompartments.
      * @param[in] subcompartments_ts Result of a simulation with the model.
-     * @return Result of the simulation divided in infection states without subcompartments. 
+     * @return Result of the simulation divided in infection states without subcompartments.
      *  Returns TimeSeries with values -1 if calculation is not possible.
      */
     TimeSeries<ScalarType> calculate_compartments(const TimeSeries<ScalarType>& subcompartments_ts) const

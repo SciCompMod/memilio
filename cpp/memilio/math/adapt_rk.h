@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -157,7 +157,7 @@ public:
     /**
      * @brief Set up the integrator
      * @param abs_tol absolute tolerance
-     * @param rel_tol relative tolerance 
+     * @param rel_tol relative tolerance
      * @param dt_min lower bound for time step dt
      * @param dt_max upper bound for time step dt
      */

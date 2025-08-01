@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Sascha Korf
@@ -38,7 +38,7 @@ namespace abm
 /**
  * @brief Struct to save specific mobility data of an agent.
  * The data consists of:
- * 
+ *
  */
 struct mobility_data {
     uint32_t agent_id;
@@ -82,7 +82,7 @@ struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<
         std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
     /**
-     * @brief Log the LocationInformation of the simulation. 
+     * @brief Log the LocationInformation of the simulation.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
      * -# The index of the location.
@@ -112,8 +112,8 @@ struct LogLocationInformation : mio::LogOnce {
  */
 struct LogPersonInformation : mio::LogOnce {
     using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::AgeGroup>>;
-    /** 
-     * @brief Log the LocationInformation of the simulation. 
+    /**
+     * @brief Log the LocationInformation of the simulation.
      * @param[in] sim The simulation of the abm.
      * @return A vector of tuples with the LocationInformation, where each tuple contains the following information:
      * -# The person id.
@@ -139,7 +139,7 @@ struct LogPersonInformation : mio::LogOnce {
 struct LogDataForMobility : mio::LogAlways {
     using Type = std::vector<std::tuple<mio::abm::PersonId, mio::abm::LocationId, mio::abm::TimePoint,
                                         mio::abm::TransportMode, mio::abm::ActivityType, mio::abm::InfectionState>>;
-    /** 
+    /**
      * @brief Log the mobility data of the agents in the simulation.
      * @param[in] sim The simulation of the ABM.
      * @return A vector of tuples with the mobility Data, where each tuple contains the following information:
@@ -167,7 +167,7 @@ struct LogDataForMobility : mio::LogAlways {
 */
 struct LogInfectionState : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
-    /** 
+    /**
      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
      * @param[in] sim The simulation of the abm.
      * @return A pair of the TimePoint and the TimeSeries of the number of Person%s in an #InfectionState.
@@ -217,7 +217,7 @@ struct DataWriterToMemoryDelta {
     using Data = std::tuple<std::vector<typename Loggers::Type>...>;
     template <class Logger>
     /**
-     * @brief This function adds an entry to the data vector. 
+     * @brief This function adds an entry to the data vector.
      * @param[in] t The data from the logger.
      * @param[in,out] data The data tuple.
      * @details The data is only added if it differs from the last entry. For this we use the first entry as a reference for the current position.

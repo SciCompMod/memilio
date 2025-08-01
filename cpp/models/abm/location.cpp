@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Elisabeth Kluth, Carlotta Gerstein, Martin J. Kuehn, Khoa Nguyen, David Kerkmann
@@ -39,7 +39,7 @@ Location::Location(LocationType loc_type, LocationId loc_id, size_t num_agegroup
 }
 
 /*
-For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of 
+For every cell in a location we have a transmission factor that is nomalized to m_capacity.volume / m_capacity.persons of
 the location "Home", which is 66. We multiply this rate with the individual size of each cell to obtain a "space per person" factor.
 */
 ScalarType Cell::compute_space_per_person_relative() const

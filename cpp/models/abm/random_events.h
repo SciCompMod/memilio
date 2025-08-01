@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -30,10 +30,10 @@ namespace abm
 
 /**
  * @brief Select a random transition from a list of possible transitions from the current state to others.
- * Each transition is represented by the new state and the probability of the transition, e.g. 
+ * Each transition is represented by the new state and the probability of the transition, e.g.
  * a pair {1, 0.5} is the transition to state 1 with rate 0.5.
  * Transition rates are not probabilities but the parameters of an exponential distribution.
- * One of the transitions happens if x < dt, where x is a sample from the exponential distribution Exp(S), 
+ * One of the transitions happens if x < dt, where x is a sample from the exponential distribution Exp(S),
  * S begin the sum of all rates. Which transition happens is determined by sampling from a discrete distribution
  * with the rates as weights. It's also possible that no transition happens in this time step.
  * In this case the current state is returned.

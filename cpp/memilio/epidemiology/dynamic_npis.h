@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -121,7 +121,7 @@ public:
     /**
      * Get/Set the base value of the thresholds.
      * The base value determines the unit of the threshold values.
-     * E.g. If the base value is X, the thresholds should be interpreted as cases per X people. 
+     * E.g. If the base value is X, the thresholds should be interpreted as cases per X people.
      * @{
      */
     /**
@@ -153,7 +153,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -202,8 +202,8 @@ private:
 
 /**
  * Get a list of indices of specified dampings.
- * Returns the indices of dampings that match the given type and level and that become active in the specified 
- * time span (excluding the particular interval boundaries, begin and end). 
+ * Returns the indices of dampings that match the given type and level and that become active in the specified
+ * time span (excluding the particular interval boundaries, begin and end).
  * Utility for implementation of dynamic NPIs.
  * @param damping_expr some matrix expression that contains dampings, e.g. a ContactMatrix.
  * @param lvl damping level to match
@@ -256,13 +256,13 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  * implement dynamic NPIs for a time span.
  * Adds or removes dampings to ensure that the active dampings during the specified
  * time span is at least as big as the specified dynamic dampings.
- * If another damping of the same type and level is active at the beginning of the time span or 
+ * If another damping of the same type and level is active at the beginning of the time span or
  * becomes active during the time span, the coefficient wise maximum of the new damping and the existing damping
  * is used.
  * At the end of the time span, another set of dampings may be added that restores the dampings on each level and type as they
  * would have been without the dynamic npis that have just been implemented.
  * Examples:
- * a) no damping exists yet, dynamic npi of value `d`: 
+ * a) no damping exists yet, dynamic npi of value `d`:
  *     one damping is added at the beginning of the time span that has the value `d`,
  *     another damping is added at the end of the time span that has a value zero.
  * b) damping of value `a` is active before the beginning of the time span, dynamic npi of value `d` is added:
@@ -270,7 +270,7 @@ Eigen::Ref<const typename DampingExpr::Matrix> get_active_damping(const DampingE
  *     another damping is added at the end of the time span that has the value a
  * b) damping of value `a` becomes active at a time `t_a` between the beginning of the time span and the end, dynamic npi of value `d` is added:
  *     one damping is added at the beginning of the time span that has the value `d`,
- *     the value of the damping at time `t_a` is set to `max(d, a)`, 
+ *     the value of the damping at time `t_a` is set to `max(d, a)`,
  *     another damping is added at the end of the time span that has the value a
  * @param damping_expr_group a group of matrix expressions that contains dampings, e.g. a ContactMatrixGroup.
  * @param dynamic_npis the NPIs to be implemented

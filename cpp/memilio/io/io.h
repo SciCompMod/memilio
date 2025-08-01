@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow
@@ -66,13 +66,13 @@ enum IOFlags
     IOF_None = 0,
 
     /**
-     * Don't serialize distributions for types that contain both a specific value and a distribution 
+     * Don't serialize distributions for types that contain both a specific value and a distribution
      * from which new values can be sampled, e.g. UncertainValue.
      */
     IOF_OmitDistributions = 1 << 0,
 
     /**
-     * Don't serialize the current value for types that contain both a specific value and a distribution 
+     * Don't serialize the current value for types that contain both a specific value and a distribution
      * from which new values can be sampled, e.g., UncertainValue.
      */
     IOF_OmitValues = 1 << 1,
@@ -185,9 +185,9 @@ inline std::error_code make_error_code(StatusCode e)
 /**
  * IOStatus represents the result of an operation.
  * Consists of an error code and additional information in a string message.
- * The error code may be a value from mio::StatusCode or from a dependency. 
- * The category of the error code can be inspected to see where the 
- * error code originated; see https://en.cppreference.com/w/cpp/error/error_code. 
+ * The error code may be a value from mio::StatusCode or from a dependency.
+ * The category of the error code can be inspected to see where the
+ * error code originated; see https://en.cppreference.com/w/cpp/error/error_code.
  */
 class IOStatus
 {
@@ -304,23 +304,23 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * e.g.
  * `IOResult<int> parse_int(const std::string& s);`
  * `IOResult<void> mkdir(const std::string& path);`
- * 
+ *
  * Create IOResult objects with:
  * - `success(t)`, `failure(e)`: Create objects that store a T or IOStatus and are implicitly convertible to IOResult.
  *                               This is the easiest way to return from a function that returns an IOResult.
  * - constructors: IOResult can normally be constructed directly from T or IOStatus.
  *                 If T is convertible to an error code (e.g. T = int), these constructors are disabled.
  *                 There are constructors IOResult(Tag<T>{}, t) and IOResult(Tag<IOStatus>{}, e) that always work.
- * 
+ *
  * Inspect the result with:
  * - `operator bool()`: true if result represents success.
  * - `value()`: returns a reference to the value.
  * - `error()`: returns a reference to the error.
- * `value()`/`error()` assert (terminate in debug mode) if 
+ * `value()`/`error()` assert (terminate in debug mode) if
  * the result is not succesful/not an error.
- * 
+ *
  * When nesting functions that return IOResult, it is also possible to unpack the value
- * and forward errors using the macro BOOST_OUTCOME_TRY. 
+ * and forward errors using the macro BOOST_OUTCOME_TRY.
  * The statement `BOOST_OUTCOME_TRY(x, try_get_x());` is equivalent to the statements
  * ```
  * auto result = try_get_x();
@@ -328,8 +328,8 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  *   return result.as_failure();
  * }
  * auto&& x = result.value();
- * ``` 
- * This way, code the branches that are added for error handling are not visible in 
+ * ```
+ * This way, code the branches that are added for error handling are not visible in
  * your code, the logic looks completely linear, e.g.:
  * ```
  * extern void use_int(int i);
@@ -341,7 +341,7 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * }
  * ```
  * The variable name can be omitted for operations that return IOResult<void>.
- * 
+ *
  * @see https://www.boost.org/doc/libs/1_75_0/libs/outcome/doc/html/index.html
  * @tparam the type produced by an opertion that can fail.
  */
@@ -458,8 +458,8 @@ ApplyResultT<F, T...> eval(F f, const IOResult<T>&... rs)
  * Evaluate a function with zero or more unpacked IOResults as arguments.
  * Returns an IOResult that contains the result of `f(rs.value()...)` if all IOResults `rs`
  * contain a value. If any IOResult contains an error, that error is returned instead.
- * The function f may return an object of any type U. It can also return IOResult<U> 
- * (e.g. to validate the values contained in the arguments). In either case, apply returns 
+ * The function f may return an object of any type U. It can also return IOResult<U>
+ * (e.g. to validate the values contained in the arguments). In either case, apply returns
  * IOResult<U> and never any nested IOResult<IOResult<U>>. If apply returns an error, it is also
  * stored in the given IO context so that the context is informed of e.g. validation errors
  * that cannot be checked simply from the types and the format of the file.
@@ -620,7 +620,7 @@ void serialize_internal(IOContext& io, const Eigen::EigenBase<M>& mat)
  * deserialize an Eigen matrix.
  * It is possible to serialize an unevaluated expression, e.g. Eigen::MatrixXd::Constant(r, c, v).
  * But it is (at least currently) not possible to deserialize it. Only matrices that own their memory
- * can be deserialized. 
+ * can be deserialized.
  * @tparam IOContext a type that models the IOContext concept.
  * @tparam M the type of Eigen matrix expression to be deserialized.
  * @param io an IO context.
@@ -712,7 +712,7 @@ void serialize_internal(IOContext& io, E e)
 
 /**
  * deserialize an enum value from its underlying type.
- * It is impossible to validate the range of the enum type, 
+ * It is impossible to validate the range of the enum type,
  * validate after if necessary.
  * @tparam IOContext a type that models the IOContext concept.
  * @tparam E an enum type to be deserialized.
@@ -837,10 +837,10 @@ IOResult<Container> deserialize_internal(IOContext& io, Tag<Container> /*tag*/)
  * Save data that describes an object in a format determined by the given context.
  * There must be provided for the type T either a free function `serialize_internal(io, t)`
  * that can be found using argument dependent lookup (ADL) or a member function `t.serialize(io)`.
- * The `serialize_internal` function or `serialize` member function provide the data that describes 
- * the object to the io context. The context stores the data in some unspecified format so that the 
+ * The `serialize_internal` function or `serialize` member function provide the data that describes
+ * the object to the io context. The context stores the data in some unspecified format so that the
  * objects can be reconstructed from it. The context also keeps track of any IO errors.
- * `serialize_internal` overloads are already provided for many common types, e.g. STL containers 
+ * `serialize_internal` overloads are already provided for many common types, e.g. STL containers
  * or Eigen Matrices.
  * `serialize` and `deserialize` are the main entry point into this IO framework,
  * but there may be more convenient functions provided for specific IO contexts.
@@ -863,8 +863,8 @@ void serialize(IOContext& io, const T& t)
  * that can be found using argument dependent lookup (ADL) or a static member function `T::deserialize(io)`.
  * The `deserialize_internal` function or `deserialize` member function retrieve the data needed to
  * restore the object from the IO context. The context provides the data if it can and keeps track of errors.
- * `deserialize_internal` overloads are already provided for many common types, e.g. STL containers 
- * or Eigen Matrices. 
+ * `deserialize_internal` overloads are already provided for many common types, e.g. STL containers
+ * or Eigen Matrices.
  * `serialize` and `deserialize` are the main entry points into this IO framework,
  * but there may be more convenient functions provided for specific IO contexts.
  * These functions are not expected to use ADL, so should be called namespace qualified.

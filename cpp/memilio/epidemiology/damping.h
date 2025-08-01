@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Daniel Abele
@@ -205,7 +205,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -242,8 +242,8 @@ public:
 /**
  * collection of dampings at different time points.
  * combination of dampings is computed in the way described at get_matrix_at.
- * @see get_matrix_at 
- * @tparam D an instance of Damping template or compatible type. 
+ * @see get_matrix_at
+ * @tparam D an instance of Damping template or compatible type.
  */
 template <class D>
 class Dampings
@@ -322,7 +322,7 @@ public:
     }
 
     /**
-    * Disable the internal cache to speed up multiple modifications in a row. 
+    * Disable the internal cache to speed up multiple modifications in a row.
     * This class has an internal cache where all dampings are combined into a single time series of matrices for faster lookup.
     * By default, the cache is automatically updated when dampings are added or removed, but this can be expensive.
     * This function can be used to disable the cache so that add() or remove() can be called multiple times
@@ -342,12 +342,12 @@ public:
      * Dampings on the same level apply additively.
      * e.g.
      * Two dampings a and b on different levels combine to (1 - (1 - a)(1 - b)) or (a + b - ab).
-     * Two dampings a and b on the same level combine to (a + b). 
-     * 
+     * Two dampings a and b on the same level combine to (a + b).
+     *
      * Transitions between different contact frequencies are smoothed out over one day to avoid discontinuities.
      * Uses lazy evaluation, coefficients are calculated on indexed access.
      * @param t time in the simulation
-     * @return matrix expression 
+     * @return matrix expression
      */
     auto get_matrix_at(SimulationTime t) const
     {
@@ -442,7 +442,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

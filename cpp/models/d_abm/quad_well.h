@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
@@ -40,7 +40,7 @@ inline size_t well_index(const Position& p)
 }
 
 /**
- * @brief Implementation of diffusive ABM, see dabm::Model. 
+ * @brief Implementation of diffusive ABM, see dabm::Model.
  * This implementation defines a diffusion process for the potential F(x,y) = (x^2 -1)^2+(y^2-1)^2.
  * @tparam InfectionState An infection state enum.
  */
@@ -246,7 +246,7 @@ private:
                well_index(agent.position) == well_index(contact.position);
     }
 
-    /** 
+    /**
      * @brief Restrict domain to [-2, 2]^2 where "escaping" is impossible.
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.

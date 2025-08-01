@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
@@ -60,7 +60,7 @@ public:
     {
     }
 
-    /** 
+    /**
      * @brief Run the Simulation from the current time to tmax.
      * @param[in] tmax Time to stop.
      * @param[in] history History object to log data of the Simulation.

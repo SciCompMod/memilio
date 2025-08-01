@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -19,7 +19,7 @@
 */
 /**
  * A collection of classes to simplify handling of matrix shapes in meta programming.
- * 
+ *
  * Matrix shape types follow this model:
  * - subtype Matrix that is an alias of an Eigen matrix type
  * - at least one constructor that sets the shape from dimensions
@@ -97,7 +97,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -201,7 +201,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -237,7 +237,7 @@ private:
 
 /**
  * shape of a column vector.
- * cols() == 1. 
+ * cols() == 1.
  */
 class ColumnVectorShape
 {
@@ -302,7 +302,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>

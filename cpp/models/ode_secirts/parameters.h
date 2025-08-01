@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -281,7 +281,7 @@ struct TimeInfectedCritical {
     }
 };
 
-/** 
+/**
  * @brief Time in days to describe waning immunity to get susceptible from partial to naive immunity layer.
  * @tparam FP The floating-point type (default: double).
  */
@@ -298,7 +298,7 @@ struct TimeWaningPartialImmunity {
     }
 };
 
-/** 
+/**
  * @brief Time in days to describe waning immunity to get susceptible from improved to partial immunity layer.
  * @tparam FP The floating-point type (default: double).
  */
@@ -316,7 +316,7 @@ struct TimeWaningImprovedImmunity {
 };
 
 /**
- * @brief The time people stays immune after infection or vaccination located in naive immunity layer 
+ * @brief The time people stays immune after infection or vaccination located in naive immunity layer
  * in day unit.
  * @tparam FP The floating-point type (default: double).
  */
@@ -369,7 +369,7 @@ struct TransmissionProbabilityOnContact {
 
 /**
 * @brief The relative infectability from individuals located in the InfectedNoSymptoms infection state.
-* @tparam FP The floating-point type (default: double). 
+* @tparam FP The floating-point type (default: double).
 */
 template <typename FP = double>
 struct RelativeTransmissionNoSymptoms {
@@ -828,7 +828,7 @@ public:
 
     /**
      * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
-     * Time spans cannot be negative and probabilities can only take values between [0,1]. 
+     * Time spans cannot be negative and probabilities can only take values between [0,1].
      *
      * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
      *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
@@ -837,7 +837,7 @@ public:
      *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
      *            may often be necessary to have set meaningful values.
      *
-     * @return Returns true if one ore more constraint were corrected, false otherwise.  
+     * @return Returns true if one ore more constraint were corrected, false otherwise.
      */
     bool apply_constraints()
     {
@@ -1107,9 +1107,9 @@ public:
     }
 
     /**
-     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error 
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
      * if constraints are not satisfied.
-     * @return Returns true if one constraint is not satisfied, otherwise false.    
+     * @return Returns true if one constraint is not satisfied, otherwise false.
      */
     bool check_constraints() const
     {

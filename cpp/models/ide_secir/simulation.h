@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J Kuehn, Anna Wendler, Lena Ploetzke
@@ -41,7 +41,7 @@ public:
     /**
      * @brief setup the Simulation for an IDE model.
      * @param[in] model An instance of the IDE model.
-     * @param[in] dt Step size of numerical solver. Throughout the simulation, the step size will be constant. 
+     * @param[in] dt Step size of numerical solver. Throughout the simulation, the step size will be constant.
      */
     Simulation(Model const& model, ScalarType dt = 0.1)
         : m_model(std::make_unique<Model>(model))
@@ -53,7 +53,7 @@ public:
         m_model->set_transitiondistributions_in_forceofinfection(m_dt);
     }
 
-    /** 
+    /**
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
@@ -81,7 +81,7 @@ public:
 
     /**
      * @brief Get the transitions between the different #InfectionState%s.
-     * 
+     *
      * @return TimeSeries with stored transitions calculated in the simulation.
      */
     TimeSeries<ScalarType> const& get_transitions()
@@ -107,7 +107,7 @@ public:
 
     /**
      * @brief get the time step of the simulation.
-     * 
+     *
      */
     ScalarType get_dt()
     {

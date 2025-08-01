@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -36,7 +36,7 @@ namespace mio
 {
 namespace osecir
 {
-/** Sets alls SecirParams parameters normally distributed, 
+/** Sets alls SecirParams parameters normally distributed,
  *  using the current value and a given standard deviation
  * @param[inout] params SecirParams including contact patterns for alle age groups
  * @param[in] t0 start time

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -33,7 +33,7 @@ namespace mio
  * In case of a negative sum, this function distributes the absolute sum evenly over all entries and returns an error.
  * @param[in,out] x The vector to map.
  * @param[in] tolerance Absolute tolerance to check if a value is 0.
- * @return Returns an error if the sum was negative. 
+ * @return Returns an error if the sum was negative.
  */
 template <typename FP>
 IOResult<void> map_to_nonnegative(Eigen::Ref<Eigen::VectorX<FP>> x, const FP tolerance = Limits<FP>::zero_tolerance())

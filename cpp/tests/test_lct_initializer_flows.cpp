@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -98,7 +98,7 @@ TEST(TestInitializer, compareWithPrevious)
 }
 
 /* Test compares a calculation of an initial vector using data for flows with a previous result.
-* Here, the population is divided into three identical groups with equal LctStates and parameters. 
+* Here, the population is divided into three identical groups with equal LctStates and parameters.
 * The sum of the initial values should be the same as the result with one single group.
 */
 TEST(TestInitializer, compareWithPreviousThreeGroups)

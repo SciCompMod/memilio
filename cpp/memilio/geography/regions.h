@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -78,7 +78,7 @@ DECL_TYPESAFE(int, CountyId);
 DECL_TYPESAFE(int, DistrictId);
 
 /**
-         * get the id of the state that the specified county is in. 
+         * get the id of the state that the specified county is in.
          * @param[in, out] county a county id.
          */
 StateId get_state_id(int county);

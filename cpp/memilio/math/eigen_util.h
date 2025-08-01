@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -84,7 +84,7 @@ Eigen::Index minor_size(M&& m)
 }
 
 /**
- * helper to get the matrix type from an eigen expression 
+ * helper to get the matrix type from an eigen expression
  * with correct const volatile qualitfications.
  */
 template <class M>
@@ -184,12 +184,12 @@ auto max(const Eigen::MatrixBase<A>& a, B&& b)
 }
 
 /**
- * Maps a random access range (i.e. anything with size() and operator[], e.g. std::vector) onto a 
+ * Maps a random access range (i.e. anything with size() and operator[], e.g. std::vector) onto a
  * Eigen array expression. Returns a column array expression ´a´ where a[i] = f(v[i]).
  * The returned expression stores a reference to the range, lifetime of the range must exceed
  * lifetime of the return.
  * @param v a random access range.
- * @param f a function that returns a numeric scalar for each element of v. 
+ * @param f a function that returns a numeric scalar for each element of v.
  * @return an array expression ´a´ the same size as v where a[i] = f(v[i]).
  */
 template <class Rng, class F>
@@ -338,7 +338,7 @@ public:
 
     /**
      * dereference this to get the element pointed to.
-     * may return a temporary value instead of a reference to the element if the matrix is not evaluated 
+     * may return a temporary value instead of a reference to the element if the matrix is not evaluated
      * in memory, e.g. in the case of Eigen::MatrixXd::Constant(r, c, v).
      */
     decltype(auto) operator*() const
@@ -348,7 +348,7 @@ public:
 
     /**
      * get a pointer to the element this iterator points to.
-     * may return a proxy instead of a reference to the element if the matrix is not evaluated 
+     * may return a proxy instead of a reference to the element if the matrix is not evaluated
      * in memory, e.g. in the case of Eigen::MatrixXd::Constant(r, c, v).
      * The proxy stores a copy of the element and forwards the address of this copy.
      * @{
@@ -415,7 +415,7 @@ private:
 
 /**
  * create a non-const iterator to first element of the matrix m.
- * only enabled if the matrix is evaluated in memory, i.e. elements can be modified. 
+ * only enabled if the matrix is evaluated in memory, i.e. elements can be modified.
  */
 template <class M>
 std::enable_if_t<conjunction_v<std::is_base_of<Eigen::EigenBase<M>, M>, details::IsElementReference<M>>,
