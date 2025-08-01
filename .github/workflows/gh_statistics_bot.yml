@@ -302,26 +302,23 @@ jobs:
               console.log(`Stats object:`, JSON.stringify(latestMonthData.stats, null, 2));
               console.log(`PR Stats object:`, JSON.stringify(latestMonthData.prStats, null, 2));
 
-              // Post to Mattermost - debug version to see what we actually have
-              console.log('Available properties in stats:', Object.keys(latestMonthData.stats || {}));
-              console.log('Available properties in prStats:', Object.keys(latestMonthData.prStats || {}));
-              
+              // Post to Mattermost using correct property names
               const mattermostPayload = {
                 text: `📊 **${latestMonthData.month} Repository Activity**`,
                 attachments: [{
                   color: '#22c55e',
                   fields: [
-                    { title: '📝 Commits to Main', value: (latestMonthData.stats?.totalCommitsMain || latestMonthData.stats?.totalCommits || 0).toString(), short: true },
-                    { title: '🌿 All Branch Commits', value: (latestMonthData.stats?.totalCommitsAllBranches || latestMonthData.stats?.totalCommits || 0).toString(), short: true },
-                    { title: '📁 Files Changed', value: (latestMonthData.stats?.filesChangedMain || latestMonthData.stats?.filesChanged || 0).toString(), short: true },
+                    { title: '📝 Commits to Main', value: (latestMonthData.stats?.totalCommitsMain || 0).toString(), short: true },
+                    { title: '🌿 All Branch Commits', value: (latestMonthData.stats?.totalCommitsAllBranches || 0).toString(), short: true },
+                    { title: '📁 Files Changed', value: (latestMonthData.stats?.filesChangedMain || 0).toString(), short: true },
                     { title: '🔀 PRs Merged', value: (latestMonthData.prStats?.merged || 0).toString(), short: true },
                     { title: '🆕 PRs Opened', value: (latestMonthData.prStats?.opened || 0).toString(), short: true },
-                    { title: '👥 Authors', value: (latestMonthData.stats?.totalAuthors || latestMonthData.stats?.uniqueContributors || 0).toString(), short: true }
+                    { title: '👥 Authors', value: (latestMonthData.stats?.totalAuthors || 0).toString(), short: true }
                   ],
                   text: `**Code Changes:** +${(latestMonthData.stats?.linesAdded || 0).toLocaleString()} / -${(latestMonthData.stats?.linesRemoved || 0).toLocaleString()} lines\n` +
-                        `**Top Contributors:** ${(latestMonthData.stats?.authorsList || latestMonthData.stats?.contributorsList || []).slice(0, 3).join(', ') || 'None'}\n` +
+                        `**Top Contributors:** ${(latestMonthData.stats?.authorsList || []).slice(0, 3).join(', ') || 'None'}\n` +
                         `**Languages:** ${(languageStats || []).map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
-                        `*Excluding merges, ${latestMonthData.stats?.totalAuthors || latestMonthData.stats?.uniqueContributors || 0} authors pushed ${latestMonthData.stats?.totalCommitsMain || latestMonthData.stats?.totalCommits || 0} commits to main and ${latestMonthData.stats?.totalCommitsAllBranches || latestMonthData.stats?.totalCommits || 0} commits to all branches*\n\n` +
+                        `*Excluding merges, ${latestMonthData.stats?.totalAuthors || 0} authors pushed ${latestMonthData.stats?.totalCommitsMain || 0} commits to main and ${latestMonthData.stats?.totalCommitsAllBranches || 0} commits to all branches*\n\n` +
                         `Repository: ${context.repo.owner}/${context.repo.repo}`,
                   footer: 'Charts updated in docs/assets/ for documentation'
                 }]
