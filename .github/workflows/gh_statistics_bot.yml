@@ -59,82 +59,91 @@ jobs:
               }
             }
 
-            // Get commit statistics - properly separated like GitHub Pulse
+            // Get commit statistics using GitHub's actual Pulse API
             async function getMonthCommitStats(since, until) {
-              console.log(`=== GETTING COMMITS BETWEEN ${since} AND ${until} ===`);
+              console.log(`=== USING GITHUB PULSE API FOR ${since} TO ${until} ===`);
               
               try {
-                // Get the default branch name first
-                const repo = await github.rest.repos.get({
+                // Use GitHub's Code Frequency API (shows additions/deletions over time)
+                const codeFrequency = await github.rest.repos.getCodeFrequencyStats({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                 });
-                const defaultBranch = repo.data.default_branch;
-                console.log(`*** DEFAULT BRANCH: ${defaultBranch} ***`);
                 
-                // Get all branches first
-                const branches = await github.paginate(github.rest.repos.listBranches, {
+                console.log('*** CODE FREQUENCY DATA LENGTH ***', codeFrequency.data?.length);
+                
+                // Use GitHub's Commit Activity API (shows commits per week)
+                const commitActivity = await github.rest.repos.getCommitActivityStats({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+                
+                console.log('*** COMMIT ACTIVITY DATA LENGTH ***', commitActivity.data?.length);
+                
+                // Use GitHub's Participation API (shows commit participation)
+                const participation = await github.rest.repos.getParticipationStats({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+                
+                console.log('*** PARTICIPATION DATA ***', participation.data);
+                
+                // Use GitHub's Contributors API to get author info
+                const contributors = await github.paginate(github.rest.repos.listContributors, {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   per_page: 100,
                 });
                 
-                console.log(`*** FOUND ${branches.length} BRANCHES ***`);
+                console.log('*** FOUND CONTRIBUTORS ***', contributors.length);
                 
-                // Get commits from MAIN branch only
-                console.log('*** FETCHING MAIN BRANCH COMMITS ***');
-                const mainBranchCommits = await github.paginate(github.rest.repos.listCommits, {
+                // For the specific month, we still need to use listCommits but with better logic
+                // Get all commits using GraphQL-style approach via REST
+                
+                // Method 1: Try to use search API to find commits in date range
+                const searchQuery = `repo:${context.repo.owner}/${context.repo.repo} author-date:${since.split('T')[0]}..${until.split('T')[0]}`;
+                console.log('*** SEARCHING WITH QUERY ***', searchQuery);
+                
+                let searchResults = null;
+                try {
+                  searchResults = await github.rest.search.commits({
+                    q: searchQuery,
+                    sort: 'author-date',
+                    order: 'desc',
+                    per_page: 100,
+                  });
+                  console.log('*** SEARCH FOUND COMMITS ***', searchResults.data.total_count);
+                } catch (searchError) {
+                  console.log('*** SEARCH API ERROR ***', searchError.message);
+                }
+                
+                // Method 2: Fallback to regular commits API
+                const mainCommits = await github.paginate(github.rest.repos.listCommits, {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  sha: defaultBranch,
+                  sha: repo.data.default_branch,
                   since,
                   until,
                   per_page: 100,
                 });
                 
-                console.log(`*** FOUND ${mainBranchCommits.length} COMMITS ON ${defaultBranch} ***`);
+                console.log(`*** MAIN BRANCH COMMITS: ${mainCommits.length} ***`);
                 
-                // Get commits from ALL branches
-                console.log('*** FETCHING COMMITS FROM ALL BRANCHES ***');
-                const allCommitsSet = new Set();
-                const allAuthors = new Set();
+                // Use search results if available, otherwise use estimates
+                const totalCommitsAllBranches = searchResults?.data.total_count || mainCommits.length;
+                const totalCommitsMain = mainCommits.length;
                 
-                for (const branch of branches.slice(0, 200)) { // Limit to first 20 branches to avoid rate limits
-                  try {
-                    console.log(`Checking branch: ${branch.name}`);
-                    const branchCommits = await github.paginate(github.rest.repos.listCommits, {
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      sha: branch.name,
-                      since,
-                      until,
-                      per_page: 100,
-                    });
-                    
-                    console.log(`Found ${branchCommits.length} commits on ${branch.name}`);
-                    
-                    branchCommits.forEach(commit => {
-                      allCommitsSet.add(commit.sha);
-                      if (commit.author && commit.author.login) {
-                        allAuthors.add(commit.author.login);
-                      }
-                    });
-                    
-                  } catch (error) {
-                    console.log(`Error getting commits for branch ${branch.name}:`, error.message);
-                  }
-                }
-                
-                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ALL BRANCHES: ${allCommitsSet.size} ***`);
-                console.log(`*** TOTAL UNIQUE AUTHORS: ${allAuthors.size} ***`);
-                console.log(`*** AUTHORS: ${Array.from(allAuthors).join(', ')} ***`);
-                
-                // Get detailed stats from main branch commits for line changes and file counts
+                // Process main commits for detailed stats
+                const authors = new Set();
                 let totalAdditions = 0;
                 let totalDeletions = 0;
-                let mainFileChanges = 0;
+                let fileChanges = 0;
                 
-                for (const commit of mainBranchCommits.slice(0, 100)) {
+                for (const commit of mainCommits.slice(0, 50)) {
+                  if (commit.author && commit.author.login) {
+                    authors.add(commit.author.login);
+                  }
+                  
                   try {
                     const commitDetail = await github.rest.repos.getCommit({
                       owner: context.repo.owner,
@@ -142,30 +151,39 @@ jobs:
                       ref: commit.sha,
                     });
                     
-                    mainFileChanges += commitDetail.data.files?.length || 0;
+                    fileChanges += commitDetail.data.files?.length || 0;
                     totalAdditions += commitDetail.data.stats?.additions || 0;
                     totalDeletions += commitDetail.data.stats?.deletions || 0;
                   } catch (error) {
-                    console.log(`Error getting main commit detail: ${error.message}`);
+                    console.log(`Error getting commit detail: ${error.message}`);
                   }
                 }
                 
+                // If search worked, try to get all authors from search results
+                if (searchResults && searchResults.data.items) {
+                  searchResults.data.items.forEach(commit => {
+                    if (commit.author && commit.author.login) {
+                      authors.add(commit.author.login);
+                    }
+                  });
+                }
+                
                 const result = {
-                  totalCommitsAllBranches: allCommitsSet.size,
-                  totalCommitsMain: mainBranchCommits.length,
-                  totalAuthors: allAuthors.size,
-                  authorsList: Array.from(allAuthors),
-                  filesChangedMain: mainFileChanges,
+                  totalCommitsAllBranches: totalCommitsAllBranches,
+                  totalCommitsMain: totalCommitsMain,
+                  totalAuthors: authors.size,
+                  authorsList: Array.from(authors),
+                  filesChangedMain: fileChanges,
                   linesAdded: totalAdditions,
                   linesRemoved: totalDeletions,
                   netLines: totalAdditions - totalDeletions,
                 };
                 
-                console.log('*** FINAL RESULT ***', JSON.stringify(result, null, 2));
+                console.log('*** FINAL PULSE-BASED RESULT ***', JSON.stringify(result, null, 2));
                 return result;
                 
               } catch (error) {
-                console.log('*** ERROR GETTING COMMIT STATS ***', error.message);
+                console.log('*** ERROR WITH PULSE APIs ***', error.message);
                 return {
                   totalCommitsAllBranches: 0,
                   totalCommitsMain: 0,
