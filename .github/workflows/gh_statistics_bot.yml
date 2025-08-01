@@ -59,9 +59,9 @@ jobs:
               }
             }
 
-            // Get commit statistics using GitHub's recommended approach
+            // Get commit statistics using GitHub's recommended approach - optimized
             async function getMonthCommitStats(since, until) {
-              console.log(`=== GETTING ALL COMMITS FROM ALL BRANCHES ${since} TO ${until} ===`);
+              console.log(`=== GETTING COMMITS FROM ACTIVE BRANCHES ${since} TO ${until} ===`);
               
               try {
                 // Step 1: Get all branches in the repository
@@ -82,32 +82,66 @@ jobs:
                 const defaultBranch = repo.data.default_branch;
                 console.log(`*** DEFAULT BRANCH: ${defaultBranch} ***`);
                 
-                // Step 2: Fetch commits for ALL branches
-                console.log('*** STEP 2: FETCHING COMMITS FROM ALL BRANCHES ***');
-                const allCommitShas = new Set();
-                const allAuthors = new Set();
-                let mainBranchCommits = [];
-                let branchesProcessed = 0;
+                // Step 2: Check each branch for commits in the date range (with early exit)
+                console.log('*** STEP 2: FINDING BRANCHES WITH COMMITS IN DATE RANGE ***');
+                const activeBranches = [];
+                let branchesChecked = 0;
                 
                 for (const branch of branches) {
                   try {
-                    branchesProcessed++;
-                    if (branchesProcessed % 10 === 0) {
-                      console.log(`*** Processing branch ${branchesProcessed}/${branches.length}: ${branch.name} ***`);
+                    branchesChecked++;
+                    if (branchesChecked % 20 === 0) {
+                      console.log(`*** Checked ${branchesChecked}/${branches.length} branches ***`);
                     }
                     
-                    const branchCommits = await github.paginate(github.rest.repos.listCommits, {
+                    // Get just the first page to check if branch has commits in date range
+                    const branchCommits = await github.rest.repos.listCommits({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       sha: branch.name,
                       since,
                       until,
+                      per_page: 1, // Just check if any commits exist
+                    });
+                    
+                    if (branchCommits.data.length > 0) {
+                      activeBranches.push({
+                        branch: branch,
+                        hasCommits: true
+                      });
+                      console.log(`*** Branch ${branch.name} has commits in date range ***`);
+                    }
+                    
+                  } catch (error) {
+                    console.log(`*** Error checking ${branch.name}: ${error.message} ***`);
+                  }
+                  
+                  // Small delay to avoid rate limiting
+                  await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                console.log(`*** FOUND ${activeBranches.length} ACTIVE BRANCHES WITH COMMITS ***`);
+                
+                // Step 3: Get full commit data only from active branches
+                console.log('*** STEP 3: FETCHING ALL COMMITS FROM ACTIVE BRANCHES ***');
+                const allCommitShas = new Set();
+                const allAuthors = new Set();
+                let mainBranchCommits = [];
+                
+                for (const activeBranch of activeBranches) {
+                  try {
+                    console.log(`*** Fetching all commits from active branch: ${activeBranch.branch.name} ***`);
+                    
+                    const branchCommits = await github.paginate(github.rest.repos.listCommits, {
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      sha: activeBranch.branch.name,
+                      since,
+                      until,
                       per_page: 100,
                     });
                     
-                    if (branchCommits.length > 0) {
-                      console.log(`*** Found ${branchCommits.length} commits on ${branch.name} ***`);
-                    }
+                    console.log(`*** Found ${branchCommits.length} commits on ${activeBranch.branch.name} ***`);
                     
                     // Add to our sets (automatically handles duplicates)
                     branchCommits.forEach(commit => {
@@ -118,26 +152,26 @@ jobs:
                     });
                     
                     // Keep main branch commits separate
-                    if (branch.name === defaultBranch) {
+                    if (activeBranch.branch.name === defaultBranch) {
                       mainBranchCommits = branchCommits;
                     }
                     
                   } catch (error) {
-                    console.log(`*** Error fetching commits from ${branch.name}: ${error.message} ***`);
+                    console.log(`*** Error fetching commits from ${activeBranch.branch.name}: ${error.message} ***`);
                   }
                   
-                  // Small delay to be respectful of rate limits
-                  await new Promise(resolve => setTimeout(resolve, 50));
+                  // Small delay to avoid rate limiting
+                  await new Promise(resolve => setTimeout(resolve, 100));
                 }
                 
-                console.log(`*** PROCESSED ${branchesProcessed} BRANCHES ***`);
-                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ALL BRANCHES: ${allCommitShas.size} ***`);
+                console.log(`*** PROCESSED ${activeBranches.length} ACTIVE BRANCHES ***`);
+                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ALL ACTIVE BRANCHES: ${allCommitShas.size} ***`);
                 console.log(`*** COMMITS ON MAIN BRANCH: ${mainBranchCommits.length} ***`);
                 console.log(`*** TOTAL UNIQUE AUTHORS: ${allAuthors.size} ***`);
                 console.log(`*** AUTHORS: ${Array.from(allAuthors).join(', ')} ***`);
                 
-                // Step 3: Get detailed stats from main branch commits
-                console.log('*** STEP 3: GETTING DETAILED STATS FROM MAIN BRANCH ***');
+                // Step 4: Get detailed stats from main branch commits
+                console.log('*** STEP 4: GETTING DETAILED STATS FROM MAIN BRANCH ***');
                 let totalAdditions = 0;
                 let totalDeletions = 0;
                 let mainFileChanges = 0;
@@ -169,11 +203,11 @@ jobs:
                   netLines: totalAdditions - totalDeletions,
                 };
                 
-                console.log('*** FINAL RESULT (ALL BRANCHES PROCESSED) ***', JSON.stringify(result, null, 2));
+                console.log('*** FINAL OPTIMIZED RESULT ***', JSON.stringify(result, null, 2));
                 return result;
                 
               } catch (error) {
-                console.log('*** ERROR PROCESSING ALL BRANCHES ***', error.message);
+                console.log('*** ERROR WITH OPTIMIZED APPROACH ***', error.message);
                 return {
                   totalCommitsAllBranches: 0,
                   totalCommitsMain: 0,
@@ -215,13 +249,13 @@ jobs:
               };
             }
 
-            // Create professional SVG charts
-            function createSVGChart(data, title, color = '#22c55e') {
+            // Create professional SVG charts with month labels
+            function createSVGChart(data, title, color = '#22c55e', monthLabels = []) {
               const width = 600;
               const height = 200;
               const padding = 40;
               const chartWidth = width - 2 * padding;
-              const chartHeight = height - 2 * padding;
+              const chartHeight = height - 2 * padding - 20; // Extra space for labels
               
               const maxValue = Math.max(...data);
               const minValue = Math.min(...data);
@@ -234,6 +268,16 @@ jobs:
               }).join(' L');
               
               const areaPoints = `M${padding},${padding + chartHeight} L${points} L${padding + chartWidth},${padding + chartHeight} Z`;
+              
+              // Create month labels (every 3rd month)
+              const monthLabelElements = monthLabels.map((month, index) => {
+                if (index % 3 === 0) { // Show every 3rd month
+                  const x = padding + (index / (data.length - 1)) * chartWidth;
+                  const y = padding + chartHeight + 15;
+                  return `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">${month}</text>`;
+                }
+                return '';
+              }).join('');
               
               return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -258,6 +302,9 @@ jobs:
                   return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
                 }).join('')}
                 
+                <!-- Month labels -->
+                ${monthLabelElements}
+                
                 <text x="${width/2}" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">${title}</text>
                 <text x="15" y="${padding + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${maxValue}</text>
                 <text x="15" y="${padding + chartHeight + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${minValue}</text>
@@ -266,18 +313,24 @@ jobs:
 
             // Commit charts to repository
             async function commitChartsToRepo(monthlyData, targetBranch) {
-              const commits = monthlyData.map(d => d.stats?.totalCommitsAllBranches || d.stats?.totalCommits || 0);
+              const totalCommits = monthlyData.map(d => d.stats?.totalCommitsAllBranches || d.stats?.totalCommits || 0);
+              const mergedPRs = monthlyData.map(d => d.prStats?.merged || 0);
               const linesAdded = monthlyData.map(d => d.stats?.linesAdded || 0);
-              const prsOpened = monthlyData.map(d => d.prStats?.opened || 0);
+              const activeContributors = monthlyData.map(d => d.stats?.totalAuthors || d.stats?.uniqueContributors || 0);
               
-              const commitsSvg = createSVGChart(commits, 'Monthly Commits', '#3b82f6');
-              const linesSvg = createSVGChart(linesAdded, 'Lines Added per Month', '#22c55e');
-              const prsSvg = createSVGChart(prsOpened, 'Pull Requests Opened', '#8b5cf6');
+              // Extract month labels from the data
+              const monthLabels = monthlyData.map(d => d.month);
+              
+              const totalCommitsSvg = createSVGChart(totalCommits, 'Total Commits (All Branches)', '#3b82f6', monthLabels);
+              const mergedPRsSvg = createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels);
+              const linesAddedSvg = createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels);
+              const activeContributorsSvg = createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels);
               
               const chartFiles = [
-                { path: 'docs/assets/commits-chart.svg', content: commitsSvg },
-                { path: 'docs/assets/lines-chart.svg', content: linesSvg },
-                { path: 'docs/assets/prs-chart.svg', content: prsSvg }
+                { path: 'docs/assets/total-commits-chart.svg', content: totalCommitsSvg },
+                { path: 'docs/assets/merged-prs-chart.svg', content: mergedPRsSvg },
+                { path: 'docs/assets/lines-added-chart.svg', content: linesAddedSvg },
+                { path: 'docs/assets/active-contributors-chart.svg', content: activeContributorsSvg }
               ];
               
               for (const file of chartFiles) {
@@ -337,7 +390,7 @@ jobs:
               const monthlyDataArray = [];
               const now = new Date();
               
-              for (let i = 2; i >= 1; i--) {
+              for (let i = 12; i >= 1; i--) {
                 const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
                 const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
                 
