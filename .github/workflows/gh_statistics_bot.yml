@@ -187,7 +187,7 @@ jobs:
 
             // Commit charts to repository
             async function commitChartsToRepo(monthlyData, targetBranch) {
-              const commits = monthlyData.map(d => d.stats?.totalCommitsAllBranches || 0);
+              const commits = monthlyData.map(d => d.stats?.totalCommitsAllBranches || d.stats?.totalCommits || 0);
               const linesAdded = monthlyData.map(d => d.stats?.linesAdded || 0);
               const prsOpened = monthlyData.map(d => d.prStats?.opened || 0);
               
