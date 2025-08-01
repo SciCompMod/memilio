@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/compartments/stochastic_simulation.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/utils/logging.h"
 #include "sde_sirs/model.h"
-#include "sde_sirs/simulation.h"
 
 int main()
 {
@@ -50,7 +50,7 @@ int main()
 
     model.check_constraints();
 
-    auto ssirs = mio::ssirs::simulate(t0, tmax, dt, model);
+    auto ssirs = mio::simulate_stochastic(t0, tmax, dt, model);
 
     // interpolate results
     auto interpolated_results = mio::interpolate_simulation_result(ssirs);

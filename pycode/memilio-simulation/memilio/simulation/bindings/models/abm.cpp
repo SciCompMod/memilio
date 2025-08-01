@@ -161,8 +161,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::init<const mio::abm::TestingCriteria&, mio::abm::TimeSpan, mio::abm::TimePoint, mio::abm::TimePoint,
                       const mio::abm::TestParameters&, double>(),
              py::arg("testing_criteria"), py::arg("testing_validity_period"), py::arg("start_date"),
-             py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"))
-        .def_property_readonly("active", &mio::abm::TestingScheme::is_active);
+             py::arg("end_date"), py::arg("test_parameters"), py::arg("probability"));
 
     pymio::bind_class<mio::abm::ProtectionEvent, pymio::EnablePickling::Never>(m, "ProtectionEvent")
         .def(py::init<mio::abm::ProtectionType, mio::abm::TimePoint>(), py::arg("type"), py::arg("time"))
@@ -170,7 +169,8 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_readwrite("time", &mio::abm::ProtectionEvent::time);
 
     pymio::bind_class<mio::abm::TestingStrategy, pymio::EnablePickling::Never>(m, "TestingStrategy")
-        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
+        .def(py::init<const std::vector<mio::abm::TestingStrategy::LocalStrategy>&,
+                      const std::vector<mio::abm::TestingStrategy::LocalStrategy>&>());
 
     pymio::bind_class<mio::abm::Location, pymio::EnablePickling::Never>(m, "Location")
         .def_property_readonly("type", &mio::abm::Location::get_type)
@@ -186,22 +186,17 @@ PYBIND11_MODULE(_simulation_abm, m)
     pymio::bind_Range<decltype(std::declval<const mio::abm::Model>().get_persons())>(m, "_ModelPersonsRange");
 
     pymio::bind_class<mio::abm::Trip, pymio::EnablePickling::Never>(m, "Trip")
-        .def(py::init<uint64_t, mio::abm::TimePoint, mio::abm::LocationId, mio::abm::LocationId, mio::abm::LocationType,
-                      std::vector<uint32_t>>(),
-             py::arg("person_id"), py::arg("time"), py::arg("destination"), py::arg("origin"),
-             py::arg("type_of_activity"), py::arg("cells") = std::vector<uint32_t>())
+        .def(py::init<mio::abm::PersonId, mio::abm::TimePoint, mio::abm::LocationId>(), py::arg("person_id"),
+             py::arg("time"), py::arg("destination"))
         .def_readwrite("person_id", &mio::abm::Trip::person_id)
-        .def_readwrite("time", &mio::abm::Trip::time)
-        .def_readwrite("destination", &mio::abm::Trip::destination)
-        .def_readwrite("origin", &mio::abm::Trip::origin)
-        .def_readwrite("destination_type", &mio::abm::Trip::destination_type)
-        .def_readwrite("cells", &mio::abm::Trip::cells);
+        .def_readwrite("trip_time", &mio::abm::Trip::trip_time)
+        .def_readwrite("destination", &mio::abm::Trip::destination);
 
     pymio::bind_class<mio::abm::TripList, pymio::EnablePickling::Never>(m, "TripList")
         .def(py::init<>())
-        .def("add_trip", &mio::abm::TripList::add_trip, py::arg("trip"), py::arg("weekend") = false)
-        .def("next_trip", &mio::abm::TripList::get_next_trip, py::arg("weekend") = false)
-        .def("num_trips", &mio::abm::TripList::num_trips, py::arg("weekend") = false);
+        .def("add_trips", &mio::abm::TripList::add_trips, py::arg("trips") = std::vector<mio::abm::Trip>())
+        .def("next_trip", &mio::abm::TripList::get_next_trip)
+        .def("num_trips", &mio::abm::TripList::num_trips);
 
     pymio::bind_class<mio::abm::Model, pymio::EnablePickling::Never>(m, "Model")
         .def(py::init<int32_t>())

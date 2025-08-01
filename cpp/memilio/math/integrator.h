@@ -31,13 +31,19 @@ namespace mio
 {
 
 /**
- * Function template to be integrated.
+ * @brief Function template to be integrated.
+ * @tparam FP A floating point type, e.g. double.
  */
-template <typename FP = double>
+template <typename FP>
 using DerivFunction =
     std::function<void(Eigen::Ref<const Eigen::VectorX<FP>> y, FP t, Eigen::Ref<Eigen::VectorX<FP>> dydt)>;
 
-template <typename FP = double>
+/**
+ * @brief Interface class defining the integration step used in a SystemIntegrator.
+ * @tparam FP A floating point type, e.g. double.
+ * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
+ */
+template <typename FP, class... Integrands>
 class IntegratorCore
 {
 public:
@@ -67,7 +73,8 @@ public:
      * Tolerances are defined in each implementation, usually using a criterion with absolute and relative tolerances.
      * Even if the step sizing failed, the integrator will make a step of at least size dt_min.
      *
-     * @param[in] f Right hand side of the ODE. May be called multiple times with different arguments.
+     * @param[in] fs One or more function(s) defining the right hand side of the IVP.
+     *     May be called multiple times with different arguments.
      * @param[in] yt The known value of y at time t.
      * @param[in,out] t The current time. It will be increased by dt.
      *     (If adaptive, the increment is instead within [dt_min, dt].)
@@ -80,7 +87,7 @@ public:
      * @return Always true for nonadaptive methods.
      *     (If adaptive, returns whether the adaptive step sizing was successful.)
      */
-    virtual bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
+    virtual bool step(const Integrands&... fs, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
                       Eigen::Ref<Eigen::VectorX<FP>> ytp1) const = 0;
 
     /**
@@ -119,19 +126,30 @@ private:
     FP m_dt_min, m_dt_max; /// Bounds to step size dt.
 };
 
+/// @brief Interface for defining solvers for ODE problems. Also @see IntegratorCore and @see CompartmentalModel.
+template <class FP>
+using OdeIntegratorCore = IntegratorCore<FP, DerivFunction<FP>>;
+
+/// @brief Interface for defining solvers for SDE problems. Also @see IntegratorCore and @see StochasticModel.
+template <class FP>
+using SdeIntegratorCore = IntegratorCore<FP, DerivFunction<FP>, DerivFunction<FP>>;
+
 /**
- * @brief Integrate initial value problems (IVP) of ordinary differential equations (ODE) of the form y' = f(y, t), y(t0) = y0.
- * @tparam FP a floating point type accepted by Eigen
+ * @brief Integrate a system of equations over time.
+ * @tparam FP A floating point type, e.g. double.
+ * @tparam Integrands One or more function types used for defining the right hand side of a system of equations.
+ * How multiple Integrands are combined depends on the IntegratorCore implementation.
  */
-template <typename FP = double>
-class OdeIntegrator
+template <typename FP, class... Integrands>
+class SystemIntegrator
 {
 public:
+    using Core = IntegratorCore<FP, Integrands...>;
     /**
-     * @brief create an integrator for a specific IVP
-     * @param[in] core implements the solution method
+     * @brief Create an integrator for a specific IVP.
+     * @param[in] core Implements the solver.
      */
-    OdeIntegrator(std::shared_ptr<IntegratorCore<FP>> core)
+    SystemIntegrator(std::shared_ptr<Core> core)
         : m_core(core)
         , m_is_adaptive(false)
     {
@@ -139,15 +157,14 @@ public:
 
     /**
      * @brief Advance the integrator.
-     * @param[in] f The rhs of the ODE.
+     * @param[in] fs Integrands passed to the integrator, e.g. a wrapper for `get_derivatives`.
      * @param[in] tmax Time end point. Must be greater than results.get_last_time().
      * @param[in, out] dt Initial integration step size. May be changed by the IntegratorCore.
      * @param[in, out] results List of results. Must contain at least one time point. The last entry is used as
      * initial time and value. A new entry is added for each integration step.
      * @return A reference to the last value in the results time series.
      */
-
-    Eigen::Ref<Eigen::VectorX<FP>> advance(const DerivFunction<FP>& f, const FP tmax, FP& dt, TimeSeries<FP>& results)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands&... fs, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
         using std::fabs;
@@ -186,7 +203,7 @@ public:
             dt_copy = dt;
 
             results.add_time_point();
-            step_okay &= m_core->step(f, results[i], t, dt, results[i + 1]);
+            step_okay &= m_core->step(fs..., results[i], t, dt, results[i + 1]);
             results.get_last_time() = t;
 
             // if dt has been changed by step, register the current m_core as adaptive.
@@ -212,16 +229,35 @@ public:
         return results.get_last_value();
     }
 
-    void set_integrator(std::shared_ptr<IntegratorCore<FP>> integrator)
+    /**
+     * @brief Change the IntegratorCore used for integration.
+     * @param core The new integrator.
+     */
+    void set_integrator(std::shared_ptr<Core> core)
     {
-        m_core        = integrator;
+        m_core        = core;
         m_is_adaptive = false;
     }
 
 private:
-    std::shared_ptr<IntegratorCore<FP>> m_core;
+    std::shared_ptr<Core> m_core;
     bool m_is_adaptive;
 };
+
+/**
+ * @brief Solver for a system of initial value problems (IVPs) consisting of ordinary differential equations (ODEs).
+ * The IVPs are of the form y'(t) = f(y(t), t), y(0) = y0.
+ */
+template <typename FP>
+using OdeIntegrator = SystemIntegrator<FP, DerivFunction<FP>>;
+
+/**
+ * @brief Solver for a system of initial value problems (IVPs) consisting of stochastic differential equations (SDEs).
+ * The IVPs are of the form dY'(t) = f(Y(t), t)dt + g(Y(t), t)dW(t), y(0) = y0.
+ * Each summand corresponds to one DerivFunction. 
+ */
+template <typename FP>
+using SdeIntegrator = SystemIntegrator<FP, DerivFunction<FP>, DerivFunction<FP>>;
 
 } // namespace mio
 

@@ -486,8 +486,8 @@ public:
     /**
      * @brief Print out the TimeSeries as a table.
      *
-    * All row entries in the table are separated by the given separator, followed by additional spaces filling the width
-    * of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
+     * All row entries in the table are separated by the given separator, followed by additional spaces filling the width
+     * of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width

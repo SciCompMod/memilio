@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "ode_secir/model.h"
-#include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/math/euler.h"
 
