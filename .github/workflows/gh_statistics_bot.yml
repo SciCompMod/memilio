@@ -59,7 +59,47 @@ jobs:
               }
             }
 
-            // Cache for branch activity to avoid repeated API calls
+            // Extract all authors including co-authors from commit
+            function extractAllAuthors(commit, commitDetail = null) {
+              const authors = new Set();
+              
+              // Add main commit author
+              if (commit.author && commit.author.login) {
+                authors.add(commit.author.login);
+              }
+              
+              // Extract co-authors from commit message
+              if (commitDetail && commitDetail.commit && commitDetail.commit.message) {
+                const message = commitDetail.commit.message;
+                const coAuthorRegex = /Co-authored-by:\s*([^<]+)\s*<([^>]+)>/gi;
+                let match;
+                
+                while ((match = coAuthorRegex.exec(message)) !== null) {
+                  const coAuthorName = match[1].trim();
+                  const coAuthorEmail = match[2].trim();
+                  
+                  // Try to match email to GitHub username (this is best effort)
+                  // GitHub usually shows co-authors in the commit.author field, but let's also parse manually
+                  authors.add(coAuthorName);
+                  console.log(`Found co-author: ${coAuthorName} <${coAuthorEmail}>`);
+                }
+              }
+              
+              // Also check GitHub's co-author API data if available
+              if (commitDetail && commitDetail.author && commitDetail.author.login) {
+                authors.add(commitDetail.author.login);
+              }
+              
+              // Check for multiple authors in the commit data
+              if (commitDetail && commitDetail.commit && commitDetail.commit.author) {
+                // Sometimes GitHub includes co-authors in different fields
+                if (commitDetail.commit.author.name && commitDetail.commit.author.email) {
+                  // This is best effort - we can't always map email to username without additional API calls
+                }
+              }
+              
+              return Array.from(authors);
+            }
             let branchActivityCache = null;
 
             // Get active branches for the entire year (cache this)
@@ -161,13 +201,37 @@ jobs:
                       console.log(`*** Found ${branchCommits.length} commits on ${branch.name} for this month ***`);
                     }
                     
-                    // Add to our sets (automatically handles duplicates)
-                    branchCommits.forEach(commit => {
+                    // Process each commit to extract all authors including co-authors
+                    for (const commit of branchCommits) {
                       allCommitShas.add(commit.sha);
+                      
+                      // Add basic author first
                       if (commit.author && commit.author.login) {
                         allAuthors.add(commit.author.login);
                       }
-                    });
+                      
+                      // For a subset of commits, get detailed info to extract co-authors
+                      if (branchCommits.indexOf(commit) < 10) { // Limit to avoid rate limits
+                        try {
+                          const commitDetail = await github.rest.repos.getCommit({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            ref: commit.sha,
+                          });
+                          
+                          // Extract all authors including co-authors
+                          const allCommitAuthors = extractAllAuthors(commit, commitDetail.data);
+                          allCommitAuthors.forEach(author => {
+                            if (author && author.trim()) {
+                              allAuthors.add(author.trim());
+                            }
+                          });
+                          
+                        } catch (error) {
+                          console.log(`Error getting detailed commit info: ${error.message}`);
+                        }
+                      }
+                    }
                     
                     // Keep main branch commits separate
                     if (branch.name === defaultBranch) {
@@ -349,15 +413,17 @@ jobs:
               
               try {
                 // Get the default branch reference
-                const defaultBranch = await github.rest.repos.get({
+                const repoInfo = await github.rest.repos.get({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                 });
                 
+                const defaultBranchName = repoInfo.data.default_branch;
+                
                 const mainBranchRef = await github.rest.git.getRef({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  ref: `heads/${defaultBranch.data.default_branch}`,
+                  ref: `heads/${defaultBranchName}`,
                 });
                 
                 // Create new branch
@@ -455,7 +521,7 @@ jobs:
                   repo: context.repo.repo,
                   title: prTitle,
                   head: prBranchName,
-                  base: defaultBranch.data.default_branch,
+                  base: defaultBranchName,
                   body: prBody,
                 });
                 
