@@ -27,7 +27,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm init -y
-          npm install asciichart
         
       - name: Generate Monthly Statistics Report with Charts
         uses: actions/github-script@v7
@@ -35,8 +34,6 @@ jobs:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
         with:
           script: |
-            const asciichart = require('asciichart');
-
             // Get language statistics
             async function getLanguageStats() {
               try {
