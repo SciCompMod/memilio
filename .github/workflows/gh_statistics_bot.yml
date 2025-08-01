@@ -298,9 +298,12 @@ jobs:
               // Get current month stats for Mattermost post
               const currentMonthData = await getCurrentMonthStats();
 
+              // Get current month stats for Mattermost post
+              const currentMonthData = await getCurrentMonthStats();
+
               // Post clean summary to Mattermost
               const mattermostPayload = {
-                text: `## 📊 ${currentMonthData.monthName} Repository Activity`,
+                text: `📊 **${currentMonthData.monthName} Repository Activity**`,
                 attachments: [{
                   color: '#22c55e',
                   fields: [
@@ -309,9 +312,10 @@ jobs:
                     { title: '🔀 PRs Merged', value: currentMonthData.prStats.merged.toString(), short: true },
                     { title: '🆕 PRs Opened', value: currentMonthData.prStats.opened.toString(), short: true },
                     { title: '👥 Contributors', value: currentMonthData.stats.uniqueContributors.toString(), short: true },
-                    { title: '📈 Lines Added', value: `+${currentMonthData.stats.linesAdded.toLocaleString()}`, short: true }
+                    { title: '📈 Lines Added', value: currentMonthData.stats.linesAdded.toLocaleString(), short: true }
                   ],
-                  footer: `Repository: ${context.repo.owner}/${context.repo.repo} • Charts updated in docs/assets/`
+                  text: `Repository: ${context.repo.owner}/${context.repo.repo}`,
+                  footer: 'Charts updated in docs/assets/ for documentation'
                 }]
               };
 
