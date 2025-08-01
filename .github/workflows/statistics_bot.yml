@@ -4,7 +4,8 @@ on:
   schedule:
     # Runs at 9 AM UTC on the 1st day of every month
     - cron: '0 9 1 * *'
-  workflow_dispatch: # Allows manual triggering
+  pull_request: # Allows manual triggering
+
 
 jobs:
   generate-monthly-report:
