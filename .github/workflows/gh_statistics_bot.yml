@@ -300,7 +300,7 @@ jobs:
               const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
               console.log(`Latest month data:`, JSON.stringify(latestMonthData, null, 2));
 
-              // Post to Mattermost with safe property access
+              // Post to Mattermost with correct property names
               const mattermostPayload = {
                 text: `📊 **${latestMonthData.month} Repository Activity**`,
                 attachments: [{
