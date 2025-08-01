@@ -13,7 +13,8 @@ jobs:
     permissions:
       contents: write
       issues: write
-      pull-requests: read
+      pull-requests: write  # Added this permission
+      actions: read
       
     steps:
       - name: Checkout repository
@@ -250,6 +251,101 @@ jobs:
               const charts = [
                 { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
                 { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
+                { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels) },
+                { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
+              ];
+              
+              // Get repo info first
+              const repoInfo = await github.rest.repos.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+              
+              // Create branch for PR
+              const now = new Date();
+              const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+              
+              try {
+                const mainRef = await github.rest.git.getRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `heads/${repoInfo.data.default_branch}`,
+                });
+                
+                await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/heads/${branchName}`,
+                  sha: mainRef.data.object.sha,
+                });
+                
+                console.log(`Created branch: ${branchName}`);
+              } catch (error) {
+                if (!error.message.includes('Reference already exists')) {
+                  throw error;
+                }
+              }
+              
+              // Commit charts
+              for (const chart of charts) {
+                try {
+                  let existingFileSha = null;
+                  try {
+                    const existing = await github.rest.repos.getContent({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      path: chart.path,
+                      ref: branchName
+                    });
+                    existingFileSha = existing.data.sha;
+                  } catch (e) {}
+                  
+                  const params = {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: chart.path,
+                    message: `Update ${chart.path}`,
+                    content: Buffer.from(chart.content).toString('base64'),
+                    branch: branchName
+                  };
+                  
+                  if (existingFileSha) params.sha = existingFileSha;
+                  
+                  await github.rest.repos.createOrUpdateFileContents(params);
+                  console.log(`Updated: ${chart.path}`);
+                } catch (error) {
+                  console.log(`Error updating ${chart.path}: ${error.message}`);
+                }
+              }
+              
+              // Create PR
+              const latestMonth = monthlyData[monthlyData.length - 1];
+              try {
+                const pr = await github.rest.pulls.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `📊 Update Repository Statistics - ${latestMonth.month}`,
+                  head: branchName,
+                  base: repoInfo.data.default_branch,
+                  body: `## Repository Activity Charts Updated
+
+                  **${latestMonth.month} Summary:**
+                  - 📝 Total Commits: ${latestMonth.stats.totalCommits}
+                  - 🔀 Merged PRs: ${latestMonth.prStats.merged}  
+                  - 📈 Lines Added: ${latestMonth.stats.linesAdded.toLocaleString()}
+                  - 👥 Active Contributors: ${latestMonth.stats.activeContributors}
+
+                  Updated charts in \`docs/stats/\` showing 12 months of repository activity.`
+                });
+                
+                return pr.data.html_url;
+              } catch (error) {
+                if (error.message.includes('A pull request already exists')) {
+                  return 'PR already exists';
+                }
+                throw error;
+              }
+            }'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
                 { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Total Lines Added', '#22c55e', monthLabels) },
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) }
               ];
