@@ -134,8 +134,8 @@ jobs:
                 let totalAdditions = 0;
                 let totalDeletions = 0;
                 let mainFileChanges = 0;
-                
-                for (const commit of mainBranchCommits.slice(0, 50)) { // Limit to avoid rate limits
+
+                for (const commit of mainBranchCommits) { // Limit to avoid rate limits
                   try {
                     const commitDetail = await github.rest.repos.getCommit({
                       owner: context.repo.owner,
