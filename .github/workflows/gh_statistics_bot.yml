@@ -74,50 +74,6 @@ jobs:
                 
                 console.log(`*** FOUND ${branches.length} BRANCHES ***`);
                 
-                // Step 1.5: Sort branches by most recent commit date
-                console.log('*** STEP 1.5: SORTING BRANCHES BY RECENT ACTIVITY ***');
-                const branchesWithDates = [];
-                
-                for (const branch of branches.slice(0, 50)) { // Get recent activity for first 50 to avoid rate limits
-                  try {
-                    const branchInfo = await github.rest.repos.getBranch({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
-                      branch: branch.name,
-                    });
-                    
-                    branchesWithDates.push({
-                      name: branch.name,
-                      lastCommitDate: branchInfo.data.commit.commit.author.date,
-                      branch: branch
-                    });
-                  } catch (error) {
-                    console.log(`Error getting branch info for ${branch.name}: ${error.message}`);
-                    // Add branch without date info as fallback
-                    branchesWithDates.push({
-                      name: branch.name,
-                      lastCommitDate: '1970-01-01T00:00:00Z', // Very old date as fallback
-                      branch: branch
-                    });
-                  }
-                }
-                
-                // Add remaining branches without date checking (to avoid rate limits)
-                for (const branch of branches.slice(50)) {
-                  branchesWithDates.push({
-                    name: branch.name,
-                    lastCommitDate: '1970-01-01T00:00:00Z',
-                    branch: branch
-                  });
-                }
-                
-                // Sort by most recent first
-                branchesWithDates.sort((a, b) => new Date(b.lastCommitDate) - new Date(a.lastCommitDate));
-                
-                // Take the most recent 30 branches (or all if fewer)
-                const sortedBranches = branchesWithDates.slice(0, 30).map(b => b.branch);
-                console.log(`*** USING TOP ${sortedBranches.length} MOST RECENT BRANCHES: ${sortedBranches.slice(0, 10).map(b => b.name).join(', ')}${sortedBranches.length > 10 ? '...' : ''} ***`);
-                
                 // Get default branch for main commit counting
                 const repo = await github.rest.repos.get({
                   owner: context.repo.owner,
@@ -126,15 +82,19 @@ jobs:
                 const defaultBranch = repo.data.default_branch;
                 console.log(`*** DEFAULT BRANCH: ${defaultBranch} ***`);
                 
-                // Step 2: Fetch commits for each selected branch
-                console.log('*** STEP 2: FETCHING COMMITS FROM SELECTED BRANCHES ***');
+                // Step 2: Fetch commits for ALL branches
+                console.log('*** STEP 2: FETCHING COMMITS FROM ALL BRANCHES ***');
                 const allCommitShas = new Set();
                 const allAuthors = new Set();
                 let mainBranchCommits = [];
+                let branchesProcessed = 0;
                 
-                for (const branch of sortedBranches) {
+                for (const branch of branches) {
                   try {
-                    console.log(`*** Fetching commits from branch: ${branch.name} ***`);
+                    branchesProcessed++;
+                    if (branchesProcessed % 10 === 0) {
+                      console.log(`*** Processing branch ${branchesProcessed}/${branches.length}: ${branch.name} ***`);
+                    }
                     
                     const branchCommits = await github.paginate(github.rest.repos.listCommits, {
                       owner: context.repo.owner,
@@ -145,7 +105,9 @@ jobs:
                       per_page: 100,
                     });
                     
-                    console.log(`*** Found ${branchCommits.length} commits on ${branch.name} ***`);
+                    if (branchCommits.length > 0) {
+                      console.log(`*** Found ${branchCommits.length} commits on ${branch.name} ***`);
+                    }
                     
                     // Add to our sets (automatically handles duplicates)
                     branchCommits.forEach(commit => {
@@ -164,11 +126,12 @@ jobs:
                     console.log(`*** Error fetching commits from ${branch.name}: ${error.message} ***`);
                   }
                   
-                  // Add delay to avoid rate limiting
-                  await new Promise(resolve => setTimeout(resolve, 200));
+                  // Small delay to be respectful of rate limits
+                  await new Promise(resolve => setTimeout(resolve, 50));
                 }
                 
-                console.log(`*** TOTAL UNIQUE COMMITS ACROSS SELECTED BRANCHES: ${allCommitShas.size} ***`);
+                console.log(`*** PROCESSED ${branchesProcessed} BRANCHES ***`);
+                console.log(`*** TOTAL UNIQUE COMMITS ACROSS ALL BRANCHES: ${allCommitShas.size} ***`);
                 console.log(`*** COMMITS ON MAIN BRANCH: ${mainBranchCommits.length} ***`);
                 console.log(`*** TOTAL UNIQUE AUTHORS: ${allAuthors.size} ***`);
                 console.log(`*** AUTHORS: ${Array.from(allAuthors).join(', ')} ***`);
@@ -206,11 +169,11 @@ jobs:
                   netLines: totalAdditions - totalDeletions,
                 };
                 
-                console.log('*** FINAL RESULT (SORTED BY RECENCY) ***', JSON.stringify(result, null, 2));
+                console.log('*** FINAL RESULT (ALL BRANCHES PROCESSED) ***', JSON.stringify(result, null, 2));
                 return result;
                 
               } catch (error) {
-                console.log('*** ERROR WITH SORTED BRANCH APPROACH ***', error.message);
+                console.log('*** ERROR PROCESSING ALL BRANCHES ***', error.message);
                 return {
                   totalCommitsAllBranches: 0,
                   totalCommitsMain: 0,
