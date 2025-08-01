@@ -335,4 +335,341 @@ jobs:
             } catch (error) {
               console.error('Error generating monthly report:', error);
               core.setFailed(`Monthly report generation failed: ${error.message}`);
+            }aname: Monthly Repository Statistics with Charts
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+jobs:
+  generate-monthly-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install asciichart
+        
+      - name: Generate Monthly Statistics Report with Charts
+        uses: actions/github-script@v7
+        env:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+        with:
+          script: |
+            const asciichart = require('asciichart');
+
+            // Get language statistics
+            async function getLanguageStats() {
+              try {
+                const languages = await github.rest.repos.listLanguages({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+
+                const total = Object.values(languages.data).reduce((sum, bytes) => sum + bytes, 0);
+                return Object.entries(languages.data)
+                  .map(([lang, bytes]) => ({
+                    language: lang,
+                    percentage: ((bytes / total) * 100).toFixed(1)
+                  }))
+                  .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
+                  .slice(0, 3);
+              } catch (error) {
+                console.log('Error getting language stats:', error.message);
+                return [];
+              }
+            }
+            async function getMonthCommitStats(since, until) {
+              const commits = await github.paginate(github.rest.repos.listCommits, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                since,
+                until,
+                per_page: 100,
+              });
+
+              const contributors = new Set();
+              const filesChanged = new Set();
+              let totalAdditions = 0;
+              let totalDeletions = 0;
+
+              for (const commit of commits.slice(0, 50)) {
+                if (commit.author) {
+                  contributors.add(commit.author.login);
+                }
+
+                try {
+                  const commitDetail = await github.rest.repos.getCommit({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: commit.sha,
+                  });
+
+                  if (commitDetail.data.files) {
+                    commitDetail.data.files.forEach(file => {
+                      filesChanged.add(file.filename);
+                    });
+                  }
+
+                  totalAdditions += commitDetail.data.stats?.additions || 0;
+                  totalDeletions += commitDetail.data.stats?.deletions || 0;
+                } catch (error) {
+                  console.log(`Error getting commit details: ${error.message}`);
+                }
+              }
+
+              return {
+                totalCommits: commits.length,
+                uniqueContributors: contributors.size,
+                contributorsList: Array.from(contributors),
+                filesChanged: filesChanged.size,
+                linesAdded: totalAdditions,
+                linesRemoved: totalDeletions,
+                netLines: totalAdditions - totalDeletions,
+              };
+            }
+
+            // Get PR statistics for a specific month
+            async function getMonthPRStats(since, until) {
+              const allPRs = await github.paginate(github.rest.pulls.list, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100,
+              });
+
+              const mergedPRs = allPRs.filter(pr => 
+                pr.merged_at && 
+                new Date(pr.merged_at) >= new Date(since) && 
+                new Date(pr.merged_at) <= new Date(until)
+              );
+
+              const openedPRs = allPRs.filter(pr => 
+                new Date(pr.created_at) >= new Date(since) && 
+                new Date(pr.created_at) <= new Date(until)
+              );
+
+              return {
+                merged: mergedPRs.length,
+                opened: openedPRs.length,
+              };
+            }
+
+            // Create professional SVG charts
+            function createSVGChart(data, title, color = '#22c55e') {
+              const width = 600;
+              const height = 200;
+              const padding = 40;
+              const chartWidth = width - 2 * padding;
+              const chartHeight = height - 2 * padding;
+              
+              const maxValue = Math.max(...data);
+              const minValue = Math.min(...data);
+              const range = maxValue - minValue || 1;
+              
+              const points = data.map((value, index) => {
+                const x = padding + (index / (data.length - 1)) * chartWidth;
+                const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+                return `${x},${y}`;
+              }).join(' L');
+              
+              const areaPoints = `M${padding},${padding + chartHeight} L${points} L${padding + chartWidth},${padding + chartHeight} Z`;
+              
+              return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:${color};stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:${color};stop-opacity:0.1" />
+                  </linearGradient>
+                </defs>
+                
+                <rect width="${width}" height="${height}" fill="#ffffff"/>
+                
+                ${[0, 0.25, 0.5, 0.75, 1].map(ratio => 
+                  `<line x1="${padding}" y1="${padding + chartHeight * ratio}" x2="${padding + chartWidth}" y2="${padding + chartHeight * ratio}" stroke="#e5e7eb" stroke-width="1"/>`
+                ).join('')}
+                
+                <path d="${areaPoints}" fill="url(#gradient)"/>
+                <path d="M${points}" stroke="${color}" stroke-width="2" fill="none"/>
+                
+                ${data.map((value, index) => {
+                  const x = padding + (index / (data.length - 1)) * chartWidth;
+                  const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+                  return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+                }).join('')}
+                
+                <text x="${width/2}" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">${title}</text>
+                <text x="15" y="${padding + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${maxValue}</text>
+                <text x="15" y="${padding + chartHeight + 5}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">${minValue}</text>
+              </svg>`;
+            }
+
+            // Commit charts to repository
+            async function commitChartsToRepo(monthlyData, targetBranch) {
+              const commits = monthlyData.map(d => d.stats?.totalCommitsAllBranches || 0);
+              const linesAdded = monthlyData.map(d => d.stats?.linesAdded || 0);
+              const prsOpened = monthlyData.map(d => d.prStats?.opened || 0);
+              
+              const commitsSvg = createSVGChart(commits, 'Monthly Commits', '#3b82f6');
+              const linesSvg = createSVGChart(linesAdded, 'Lines Added per Month', '#22c55e');
+              const prsSvg = createSVGChart(prsOpened, 'Pull Requests Opened', '#8b5cf6');
+              
+              const chartFiles = [
+                { path: 'docs/assets/commits-chart.svg', content: commitsSvg },
+                { path: 'docs/assets/lines-chart.svg', content: linesSvg },
+                { path: 'docs/assets/prs-chart.svg', content: prsSvg }
+              ];
+              
+              for (const file of chartFiles) {
+                try {
+                  const base64Content = Buffer.from(file.content).toString('base64');
+                  
+                  // Try to get existing file SHA
+                  let existingFileSha = null;
+                  try {
+                    const existingFile = await github.rest.repos.getContent({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      path: file.path,
+                      ref: targetBranch
+                    });
+                    existingFileSha = existingFile.data.sha;
+                  } catch (error) {
+                    // File doesn't exist, that's okay
+                    console.log(`File ${file.path} doesn't exist yet, creating new file`);
+                  }
+                  
+                  const params = {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    path: file.path,
+                    message: `Update repository activity chart: ${file.path}`,
+                    content: base64Content,
+                    branch: targetBranch
+                  };
+                  
+                  // Add SHA if file exists
+                  if (existingFileSha) {
+                    params.sha = existingFileSha;
+                  }
+                  
+                  await github.rest.repos.createOrUpdateFileContents(params);
+                  console.log(`Updated chart: ${file.path}`);
+                } catch (error) {
+                  console.log(`Error updating ${file.path}:`, error.message);
+                }
+              }
+            }
+
+            // Main execution
+            try {
+              console.log('Gathering repository data for last 12 months...');
+              
+              // Get current branch
+              let targetBranch;
+              if (context.eventName === 'pull_request') {
+                targetBranch = context.payload.pull_request.head.ref;
+                console.log(`Using PR branch: ${targetBranch}`);
+              } else {
+                targetBranch = context.ref.replace('refs/heads/', '') || 'main';
+                console.log(`Using branch: ${targetBranch}`);
+              }
+
+              // Gather data for last 12 months
+              const monthlyDataArray = [];
+              const now = new Date();
+              
+              for (let i = 12; i >= 1; i--) {
+                const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+                
+                const monthRange = {
+                  start: monthStart.toISOString(),
+                  end: monthEnd.toISOString(),
+                  monthName: monthStart.toLocaleString('default', { month: 'short', year: 'numeric' })
+                };
+
+                console.log(`Processing ${monthRange.monthName}...`);
+                
+                const [stats, prStats] = await Promise.all([
+                  getMonthCommitStats(monthRange.start, monthRange.end),
+                  getMonthPRStats(monthRange.start, monthRange.end)
+                ]);
+
+                monthlyDataArray.push({
+                  month: monthRange.monthName,
+                  stats,
+                  prStats
+                });
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+
+              // Create and commit SVG charts
+              console.log('Generating and committing SVG charts...');
+              await commitChartsToRepo(monthlyDataArray, targetBranch);
+
+              // Get language stats for current month
+              const languageStats = await getLanguageStats();
+
+              // Use latest month for Mattermost
+              const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
+
+              // Post to Mattermost with safe property access
+              const mattermostPayload = {
+                text: `📊 **${latestMonthData.month} Repository Activity**`,
+                attachments: [{
+                  color: '#22c55e',
+                  fields: [
+                    { title: '📝 Commits to Main', value: (latestMonthData.stats?.totalCommitsMain || 0).toString(), short: true },
+                    { title: '🌿 All Branch Commits', value: (latestMonthData.stats?.totalCommitsAllBranches || 0).toString(), short: true },
+                    { title: '📁 Files Changed', value: (latestMonthData.stats?.filesChangedMain || 0).toString(), short: true },
+                    { title: '🔀 PRs Merged', value: (latestMonthData.prStats?.merged || 0).toString(), short: true },
+                    { title: '🆕 PRs Opened', value: (latestMonthData.prStats?.opened || 0).toString(), short: true },
+                    { title: '👥 Authors', value: (latestMonthData.stats?.totalAuthors || 0).toString(), short: true }
+                  ],
+                  text: `**Code Changes:** +${(latestMonthData.stats?.linesAdded || 0).toLocaleString()} / -${(latestMonthData.stats?.linesRemoved || 0).toLocaleString()} lines\n` +
+                        `**Top Contributors:** ${(latestMonthData.stats?.authorsList || []).slice(0, 3).join(', ') || 'None'}\n` +
+                        `**Languages:** ${(languageStats || []).map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
+                        `*Excluding merges, ${latestMonthData.stats?.totalAuthors || 0} authors pushed ${latestMonthData.stats?.totalCommitsMain || 0} commits to main and ${latestMonthData.stats?.totalCommitsAllBranches || 0} commits to all branches*\n\n` +
+                        `Repository: ${context.repo.owner}/${context.repo.repo}`,
+                  footer: 'Charts updated in docs/assets/ for documentation'
+                }]
+              };
+
+              const response = await fetch(process.env.MATTERMOST_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(mattermostPayload)
+              });
+
+              if (!response.ok) {
+                throw new Error(`Mattermost webhook failed: ${response.status} ${response.statusText}`);
+              }
+
+              console.log('Monthly report with charts posted to Mattermost successfully');
+
+            } catch (error) {
+              console.error('Error generating monthly report:', error);
+              core.setFailed(`Monthly report generation failed: ${error.message}`);
             }
