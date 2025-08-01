@@ -4,9 +4,7 @@ on:
   schedule:
     # Runs at 9 AM UTC on the 1st day of every month
     - cron: '0 9 1 * *'
-
-  pull_request:
-
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   generate-monthly-report:
@@ -24,6 +22,8 @@ jobs:
         uses: actions/github-script@v7
         env:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MATTERMOST_WEBHOOK_URL }}
+        with:
+          script: |
             // Get date range for previous month
             function getLastMonthRange() {
               const now = new Date();
@@ -185,44 +185,6 @@ jobs:
               }
             }
 
-            // Generate markdown report
-            function generateReport(stats, dateRange) {
-              const { monthName } = dateRange;
-              
-              return `# 📊 Monthly Repository Report - ${monthName}
-
-            ## 🎯 Key Metrics
-
-            | Metric | Count |
-            |--------|--------|
-            | 📝 Total Commits | ${stats.commits.totalCommits} |
-            | 📁 Files Changed | ${stats.commits.filesChanged} |
-            | 🔀 PRs Merged | ${stats.prs.merged} |
-            | 🆕 PRs Opened | ${stats.prs.opened} |
-            | 🐛 Issues Opened | ${stats.issues.opened} |
-            | ✅ Issues Closed | ${stats.issues.closed} |
-            | 👥 Active Contributors | ${stats.commits.uniqueContributors} |
-
-            ## 📈 Code Changes
-
-            - **Lines Added:** +${stats.commits.linesAdded.toLocaleString()}
-            - **Lines Removed:** -${stats.commits.linesRemoved.toLocaleString()}
-            - **Net Change:** ${stats.commits.netLines >= 0 ? '+' : ''}${stats.commits.netLines.toLocaleString()} lines
-
-            ${stats.prs.avgReviewTimeHours > 0 ? `## ⏱️ Review Metrics\n\n- **Average PR Review Time:** ${stats.prs.avgReviewTimeHours} hours` : ''}
-
-            ## 👨‍💻 Top Contributors
-
-            ${stats.commits.contributorsList.slice(0, 5).map((contributor, i) => `${i + 1}. @${contributor}`).join('\n')}
-
-            ${stats.languages.length > 0 ? `## 💻 Language Breakdown\n\n${stats.languages.map(lang => `- **${lang.language}:** ${lang.percentage}%`).join('\n')}` : ''}
-
-            ${stats.prs.mergedPRTitles.length > 0 ? `## 🎉 Recent Merged PRs\n\n${stats.prs.mergedPRTitles.slice(0, 5).map(title => `- ${title}`).join('\n')}` : ''}
-
-            ---
-            *Generated automatically by Monthly Stats Bot on ${new Date().toLocaleDateString()}*`;
-            }
-
             // Main execution
             try {
               const dateRange = getLastMonthRange();
@@ -242,9 +204,6 @@ jobs:
                 issues: issueStats,
                 languages,
               };
-
-              // Generate the report
-              const reportBody = generateReport(stats, dateRange);
 
               // Post to Mattermost
               const mattermostPayload = {
