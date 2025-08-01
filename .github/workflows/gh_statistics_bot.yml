@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize]
   schedule:
-    - cron: '0 9 1 * *''
-
+    - cron: '0 9 1 * *'
+    
 jobs:
   generate-monthly-report:
     runs-on: ubuntu-latest
