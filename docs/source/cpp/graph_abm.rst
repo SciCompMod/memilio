@@ -4,7 +4,18 @@ Graph-based agent-based model
 Introduction
 -------------
 
-This model realizes multiple instances of the mobility-based agent-based model ``abm::Model`` (see :doc:`mobility_based_abm` for documentation) as nodes in a directed graph. One local model represents a geographical region. The regions are connected by the graph edges. Mobility within one node and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. Therefore this graph-based agent-based model can be reduced to a single mobility-based agent-based if simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal.
+This model realizes multiple instances of the mobility-based agent-based model (ABM) ``abm::Model`` (see :doc:`mobility_based_abm` for the documentation) 
+as nodes in a directed graph. One local model represents a geographical region. The regions are connected by the graph edges. Mobility within one node 
+and via the graph edges follows the same mobility rules that can be handed as argument to ``mio::GraphABModel``. 
+Therefore this graph-based agent-based (graph-ABM) model can be reduced to a single mobility-based agent-based model if 
+simulation time steps within the whole graph, i.e. the step size of each node and the step size of the edge exchange, are equal. 
+Preimplemented mobility rules can be found in `<https://github.com/SciCompMod/memilio/blob/main/cpp/models/abm/mobility_rules.h>`_. 
+The motivation behind the graph-ABM is to have multiple ABMs run independently from each other in parallel for different regions and only synchronize, 
+i.e. exchange agents via edges, in fixed time intervals. The synchronization time steps should be bigger than the internal 
+ABM time steps to reduce communication between nodes as much as possible.
+
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
+
 
 Simulation
 -----------
@@ -122,7 +133,9 @@ Assigning infection states and locations to persons in all models can be done vi
     adult2.set_assigned_location(mio::abm::LocationType::Work, work, model2.get_id());
     adult3.set_assigned_location(mio::abm::LocationType::Work, work, model2.get_id());
 
-For initializing the graph nodes and edges a ``mio::Graph`` is created which gets ``mio::ABMSimulationNode`` and ``mio::ABMMobilityEdge`` as templates. Additionally, every node needs a ``mio::History`` object to log its results during the simulation. See :doc:`io` for information on how to use ``mio::History``. Below, ``mio::abm::LogInfectionState`` is used as logger.
+For initializing the graph nodes and edges, a ``mio::Graph`` is created which gets ``mio::ABMSimulationNode`` and ``mio::ABMMobilityEdge`` as templates. 
+Additionally, every node needs a ``mio::History`` object to log its results during the simulation. See :ref:`history` for information on how to use ``mio::History``. 
+Below, ``mio::abm::LogInfectionState`` is used as logger.
 
 .. code-block:: cpp
 
@@ -135,7 +148,8 @@ For initializing the graph nodes and edges a ``mio::Graph`` is created which get
     graph.add_edge(model1.get_id(), model2.get_id());
     graph.add_edge(model2.get_id(), model1.get_id());
 
-To simulate the model from `start_date` to `end_date` with given graph step size `exchange_time_span`, a GraphSimulation has to be created. The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until `end_date` is done as follows:
+To simulate the model from `start_date` to `end_date` with given graph step size `exchange_time_span`, a GraphSimulation has to be created. 
+The step size is used to regularly exchange agents via the graph edges. Advancing the simulation until `end_date` is done as follows:
 
 .. code-block:: cpp
 

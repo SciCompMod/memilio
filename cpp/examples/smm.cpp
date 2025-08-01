@@ -19,6 +19,7 @@
 */
 
 #include "smm/simulation.h"
+#include "smm/model.h"
 #include "smm/parameters.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/epidemiology/adoption_rate.h"

@@ -1,11 +1,11 @@
 ODE-based SEIR-type model
 =========================
 
-The ODE-based SEIR-type module models and simulates the epidemic using an ODE-based SEIR-type model approach. The model
+The ODE-SEIR module models and simulates the epidemic using an ODE-based SEIR-type model approach. The model
 is particularly suited for simple simulations of infectious diseases in a population and getting started with the
 MEmilio code. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
 
-The infection states and the transitions are visualized in the following image.
+The infection states and the transitions are visualized in the following graph.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/69154294/80a36be5-57d9-4012-9b5f-25eb08ec8837
    :alt: SEIR_model
@@ -27,7 +27,7 @@ Infection State Transitions
 ---------------------------
 
 The ODE-SEIR model is implemented as **FlowModel**. With just minimal overhead, the **FlowModel** computes the new 
-transmissions, infections, and hospitalizations explicitly in every time step instead of only computing the aggregated 
+transmissions, infections, and recoveries explicitly in every time step instead of only computing the aggregated 
 compartment values. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
@@ -54,7 +54,7 @@ The number of age groups is specified in the model constructor and the model can
 Parameters
 ----------
 
-The model implements the following parameters.
+The model implements the following parameters:
 
 .. list-table::
    :header-rows: 1
@@ -115,7 +115,7 @@ and all other compartments:
 Nonpharmaceutical Interventions
 -------------------------------
 
-In the ODE-SEIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings in the contact matrix.
+In the ODE-SEIR model, nonpharmaceutical interventions (NPIs) are implemented through dampings to the contact matrix.
 These dampings reduce the contact rates between different sociodemographic groups to simulate interventions.
 
 Basic dampings can be added to the ContactPatterns as follows:
@@ -148,13 +148,13 @@ The ODE-SEIR model offers two simulation functions:
 1. **simulate**: Standard simulation that tracks the compartment sizes over time
 2. **simulate_flows**: Extended simulation that additionally tracks the flows between compartments
 
-Basic simulation:
+Standard simulation:
 
 .. code-block:: cpp
 
     double t0 = 0;       // Start time
     double tmax = 50;    // End time
-    double dt = 0.1;     // Time step
+    double dt = 0.1;     // Initial step size
     
     // Run a standard simulation
     mio::TimeSeries<double> result_sim = mio::oseir::simulate(t0, tmax, dt, model);
@@ -182,8 +182,8 @@ For both simulation types, you can also specify a custom integrator:
 Output
 ------
 
-The output of the **Simulation** is a ``TimeSeries`` containing the sizes of each compartment at each time point. For A
-basic simulation, you can access the results as follows:
+The output of the **Simulation** is a ``mio::TimeSeries`` containing the sizes of each compartment at each time point. For A
+standard simulation, you can access the results as follows:
 
 .. code-block:: cpp
 
@@ -191,14 +191,14 @@ basic simulation, you can access the results as follows:
     auto num_points = static_cast<size_t>(result_sim.get_num_time_points());
 
     // Access data at specific time point 
-    Eigen::VectorXd value_at_time_i = result_sim.get_value(i);
+    Eigen::VectorXd value_at_time_point_i = result_sim.get_value(i);
     double time_i = result_sim.get_time(i);
 
     // Access the last time point
     Eigen::VectorXd last_value = result_sim.get_last_value();
     double last_time = result_sim.get_last_time();
 
-For flow simulations, the result consists of two `TimeSeries` objects, one for compartment sizes and one for flows:
+For flow simulations, the result consists of two `mio::TimeSeries` objects, one for compartment sizes and one for flows:
 
 .. code-block:: cpp
 
@@ -208,7 +208,7 @@ For flow simulations, the result consists of two `TimeSeries` objects, one for c
   // Access flows between compartments
   auto flows = result_flowsim[1];
 
-You can print the simulation results as a formatted table:
+You can print the simulation results as a formatted table via:
 
 .. code-block:: cpp
 
@@ -226,7 +226,7 @@ Additionally, you can export the results to a CSV file:
     // Export results to CSV with default settings
     result_sim.export_csv("simulation_results.csv");
 
-The SEIR model also provides utility functions to extract specific measures, such as the reproduction number:
+The ODE-SEIR model also provides utility functions to extract specific measures, such as the reproduction number:
 
 .. code-block:: cpp
     // Calculate R value at a specific time index
@@ -239,7 +239,7 @@ The SEIR model also provides utility functions to extract specific measures, suc
 Visualization
 -------------
 
-To visualize the results of a simulation, you can use the Python package :doc:`memilio_plot <../python/memilio_plot>` 
+To visualize the results of a simulation, you can use the Python package :doc:`m-plot <../../python/m-plot>` 
 and its documentation.
 
 

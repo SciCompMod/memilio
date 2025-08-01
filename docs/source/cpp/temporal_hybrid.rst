@@ -12,6 +12,9 @@ We implemented conversion functions for the following model combinations:
 - The stochastic metapopulation model, see ``mio::smm`` and the diffusive agent-based model, see ``mio::dabm``, using the singlewell potential.
 - The ODE-based SECIR-type model, see ``mio::osecir`` and the diffusive agent-based model, see ``mio::dabm``, using the singlewell potential.
 
+In the following, we present more details of the temporal-hybrid including code examples. 
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
+
 Simulation
 ----------
 
