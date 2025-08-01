@@ -37,7 +37,27 @@ jobs:
           script: |
             const asciichart = require('asciichart');
 
-            // Get commit statistics for a specific month
+            // Get language statistics
+            async function getLanguageStats() {
+              try {
+                const languages = await github.rest.repos.listLanguages({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                });
+
+                const total = Object.values(languages.data).reduce((sum, bytes) => sum + bytes, 0);
+                return Object.entries(languages.data)
+                  .map(([lang, bytes]) => ({
+                    language: lang,
+                    percentage: ((bytes / total) * 100).toFixed(1)
+                  }))
+                  .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
+                  .slice(0, 3);
+              } catch (error) {
+                console.log('Error getting language stats:', error.message);
+                return [];
+              }
+            }
             async function getMonthCommitStats(since, until) {
               const commits = await github.paginate(github.rest.repos.listCommits, {
                 owner: context.repo.owner,
@@ -80,6 +100,7 @@ jobs:
               return {
                 totalCommits: commits.length,
                 uniqueContributors: contributors.size,
+                contributorsList: Array.from(contributors),
                 filesChanged: filesChanged.size,
                 linesAdded: totalAdditions,
                 linesRemoved: totalDeletions,
@@ -254,6 +275,9 @@ jobs:
               console.log('Generating and committing SVG charts...');
               await commitChartsToRepo(monthlyDataArray, targetBranch);
 
+              // Get language stats for current month
+              const languageStats = await getLanguageStats();
+
               // Use latest month for Mattermost
               const latestMonthData = monthlyDataArray[monthlyDataArray.length - 1];
 
@@ -263,14 +287,18 @@ jobs:
                 attachments: [{
                   color: '#22c55e',
                   fields: [
-                    { title: '📝 Commits', value: latestMonthData.stats.totalCommits.toString(), short: true },
-                    { title: '📁 Files Changed', value: latestMonthData.stats.filesChanged.toString(), short: true },
+                    { title: '📝 Commits to Main', value: latestMonthData.stats.totalCommitsMain.toString(), short: true },
+                    { title: '🌿 All Branch Commits', value: latestMonthData.stats.totalCommitsAllBranches.toString(), short: true },
+                    { title: '📁 Files Changed', value: latestMonthData.stats.filesChangedMain.toString(), short: true },
                     { title: '🔀 PRs Merged', value: latestMonthData.prStats.merged.toString(), short: true },
                     { title: '🆕 PRs Opened', value: latestMonthData.prStats.opened.toString(), short: true },
-                    { title: '👥 Contributors', value: latestMonthData.stats.uniqueContributors.toString(), short: true },
-                    { title: '📈 Lines Added', value: latestMonthData.stats.linesAdded.toLocaleString(), short: true }
+                    { title: '👥 Authors', value: latestMonthData.stats.totalAuthors.toString(), short: true }
                   ],
-                  text: `Repository: ${context.repo.owner}/${context.repo.repo}`,
+                  text: `**Code Changes:** +${latestMonthData.stats.linesAdded.toLocaleString()} / -${latestMonthData.stats.linesRemoved.toLocaleString()} lines\n` +
+                        `**Top Contributors:** ${latestMonthData.stats.authorsList.slice(0, 3).join(', ')}\n` +
+                        `**Languages:** ${languageStats.map(l => `${l.language} (${l.percentage}%)`).join(', ')}\n\n` +
+                        `*Excluding merges, ${latestMonthData.stats.totalAuthors} authors pushed ${latestMonthData.stats.totalCommitsMain} commits to main and ${latestMonthData.stats.totalCommitsAllBranches} commits to all branches*\n\n` +
+                        `Repository: ${context.repo.owner}/${context.repo.repo}`,
                   footer: 'Charts updated in docs/assets/ for documentation'
                 }]
               };
