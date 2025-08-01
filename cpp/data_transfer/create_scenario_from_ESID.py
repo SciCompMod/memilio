@@ -777,7 +777,7 @@ class Simulation:
             f"Processing {len(scenarios)} scenarios with {max_workers} workers.")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(self._process_scenario, scenario, self.headers, num_runs)
+            futures = [executor.submit(self._process_scenario, scenario, num_runs)
                        for scenario in scenarios]
 
             for future in concurrent.futures.as_completed(futures):
@@ -792,7 +792,7 @@ class Simulation:
 
 if __name__ == "__main__":
     cwd = os.getcwd()
-    run_data_url = "https://zam10063.zam.kfa-juelich.de/api-new/"
+    run_data_url = "https://zam10063.zam.kfa-juelich.de/api-dev/"
 
     # Information needed for authentication.
     service_realm = ""
