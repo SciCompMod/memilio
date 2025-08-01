@@ -417,10 +417,6 @@ jobs:
                     // Issue Management
                     { title: '🐛 Issues Opened', value: latest.issueStats.opened.toString(), short: true },
                     { title: '✅ Issues Closed', value: latest.issueStats.closed.toString(), short: true },
-                    
-                    // Release Activity
-                    { title: '🚀 Releases', value: latest.releaseStats.total.toString(), short: true },
-                    { title: '📦 Latest Release', value: latest.releaseStats.latestRelease || 'None', short: true },
                   ],
                   text: `**🏆 Top Contributors:** ${latest.stats.contributorsList.slice(0, 5).join(', ') || 'None'}\n` +
                         `**💻 Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
