@@ -1,10 +1,6 @@
 name: Monthly Repository Statistics
 
 on:
-  schedule:
-    # Runs at 9 AM UTC on the 1st day of every month
-    - cron: '0 9 1 * *'
-
   pull_request: 
 
 jobs:
