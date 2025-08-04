@@ -73,8 +73,7 @@ int main()
     auto model = mio::abm::Model(num_age_groups);
     mio::ParameterDistributionLogNormal log_norm(4., 1.);
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
-    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() =
-        mio::AbstractParameterDistribution(mio::ParameterDistributionLogNormal(4., 1.));
+    model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
     // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
