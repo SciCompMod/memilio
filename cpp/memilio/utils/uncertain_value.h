@@ -69,7 +69,7 @@ public:
      *
      * Enables implicit conversion from arithmetic types to UncertainValue.
      */
-    template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+    template <typename T, typename std::enable_if_t<std::is_convertible<T, FP>::value, int> = 0>
     UncertainValue(T v)
         : m_value(static_cast<FP>(v))
     {
@@ -116,7 +116,7 @@ public:
     /**
      * @brief Assign from any arithmetic type (distribution unchanged).
      */
-    template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+    template <typename T, typename std::enable_if_t<std::is_convertible<T, FP>::value, int> = 0>
     UncertainValue<FP>& operator=(T v)
     {
         m_value = static_cast<FP>(v);
