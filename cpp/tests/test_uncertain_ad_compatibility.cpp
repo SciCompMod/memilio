@@ -31,7 +31,7 @@
 
 using FP = ad::gt1s<double>::type;
 
-TEST(TestUncertainADCompatability, assign_constructor)
+TEST(TestUncertainADCompatibility, assign_constructor)
 {
     mio::UncertainValue<FP> a(2.0);
     mio::UncertainValue<FP> b(a);
@@ -39,7 +39,7 @@ TEST(TestUncertainADCompatability, assign_constructor)
     EXPECT_EQ(b, 2.0);
 }
 
-TEST(TestUncertainADCompatability, copy_constructor)
+TEST(TestUncertainADCompatibility, copy_constructor)
 {
     mio::UncertainValue<FP> a = 2.0;
     mio::UncertainValue<FP> b = a;
@@ -47,7 +47,7 @@ TEST(TestUncertainADCompatability, copy_constructor)
     EXPECT_EQ(b, 2.0);
 }
 
-TEST(TestUncertainADCompatability, addition)
+TEST(TestUncertainADCompatibility, addition)
 {
     mio::UncertainValue<FP> a      = 2.0;
     mio::UncertainValue<FP> b      = 3.0;
@@ -55,7 +55,7 @@ TEST(TestUncertainADCompatability, addition)
     EXPECT_EQ(result, 10.0);
 }
 
-TEST(TestUncertainADCompatability, subtraction)
+TEST(TestUncertainADCompatibility, subtraction)
 {
     mio::UncertainValue<FP> a      = 2.0;
     mio::UncertainValue<FP> b      = 3.0;
@@ -63,7 +63,7 @@ TEST(TestUncertainADCompatability, subtraction)
     EXPECT_EQ(result, -10.0);
 }
 
-TEST(TestUncertainADCompatability, multiplication)
+TEST(TestUncertainADCompatibility, multiplication)
 {
     mio::UncertainValue<FP> a      = 2.0;
     mio::UncertainValue<FP> b      = 3.0;
@@ -72,7 +72,7 @@ TEST(TestUncertainADCompatability, multiplication)
 }
 
 // Division operations
-TEST(TestUncertainADCompatability, division)
+TEST(TestUncertainADCompatibility, division)
 {
     mio::UncertainValue<FP> a      = 6.0;
     mio::UncertainValue<FP> b      = 3.0;
@@ -81,7 +81,7 @@ TEST(TestUncertainADCompatability, division)
 }
 
 // Compound assignment operators
-TEST(TestUncertainADCompatability, compound_assignment)
+TEST(TestUncertainADCompatibility, compound_assignment)
 {
     FP base                    = 10.0;
     mio::UncertainValue<FP> uv = 5.0;
@@ -100,7 +100,7 @@ TEST(TestUncertainADCompatability, compound_assignment)
 }
 
 // Comparison operators
-TEST(TestUncertainADCompatability, comparisons)
+TEST(TestUncertainADCompatibility, comparisons)
 {
     mio::UncertainValue<FP> a = 5.0;
     mio::UncertainValue<FP> b = 3.0;
@@ -130,7 +130,7 @@ TEST(TestUncertainADCompatability, comparisons)
     EXPECT_TRUE(4.0 != a);
 }
 
-TEST(TestUncertainADCompatability, create_model)
+TEST(TestUncertainADCompatibility, create_model)
 {
     FP tmax = 56.0;
 
