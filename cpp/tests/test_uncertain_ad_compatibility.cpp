@@ -153,7 +153,7 @@ TEST(TestUncertainADCompatibility, create_model)
         for (size_t current_day = 0; current_day <= tmax_days; current_day++) {
             mio::Index<mio::AgeGroup, mio::SimulationDay> index{mio::AgeGroup(age_group),
                                                                 mio::SimulationDay(current_day)};
-            FP num_vaccinations = static_cast<FP>(current_day * daily_vaccinations);
+            FP num_vaccinations = static_cast<double>(current_day * daily_vaccinations);
             params.template get<mio::osecirvvs::DailyPartialVaccinations<FP>>()[index] = num_vaccinations;
             params.template get<mio::osecirvvs::DailyFullVaccinations<FP>>()[index]    = num_vaccinations;
         }
