@@ -80,6 +80,21 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         mutable int val;
     };
 
+    template <class ...Integrands>
+    struct Core: public mio::IntegratorCore<double, Integrands...>
+    {
+        Core(int val_in)
+            : mio::IntegratorCore<double, Integrands...>(val_in, 0)
+        {
+        }
+
+        bool step(const Integrands&..., Eigen::Ref<const Eigen::VectorX<double>>, double&, double&,
+                      Eigen::Ref<Eigen::VectorX<double>>) const override
+        {
+            return true;
+        }
+    };
+
     MockSimulateSim(int model_in, double t0_in, double dt_in)
     {
         model = model_in;
@@ -88,9 +103,9 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
     }
 
     template <class... Integrands>
-    void set_integrator(std::shared_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
+    void set_integrator(std::unique_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
     {
-        integrator = (int)(size_t)integrator_in.get(); // no, do not use this elsewhere. do not even look at this
+        integrator = (int)integrator_in->get_dt_min();
     }
 
     auto get_result()
@@ -151,16 +166,10 @@ TEST(TestCompartmentSimulation, simulate_functions)
 
     // helpers to deal with different orders of cores. do not reuse this or something similar in actual code
     const auto evil_pointer_cast_1 = [](int i) {
-        return std::shared_ptr<mio::OdeIntegratorCore<double>>({
-            (mio::OdeIntegratorCore<double>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
-            [](auto&&) {} // this too
-        });
+        return std::make_unique<Sim::Core<mio::DerivFunction<double>>>(i);
     };
     const auto evil_pointer_cast_2 = [](int i) {
-        return std::shared_ptr<mio::SdeIntegratorCore<double>>({
-            (mio::SdeIntegratorCore<double>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
-            [](auto&&) {} // this too
-        });
+        return std::make_unique<Sim::Core<mio::DerivFunction<double>, mio::DerivFunction<double>>>(i);
     };
 
     // helper function to compose a "simulate" function
