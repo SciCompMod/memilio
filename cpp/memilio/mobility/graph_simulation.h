@@ -21,11 +21,12 @@
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
-
+#include <omp.h>
 namespace mio
 {
 
@@ -121,8 +122,10 @@ public:
     }
 
 private:
-    void insert_input_data(std::filebuf& input_data) {
+    void insert_input_data(std::filebuf& input_data)
+    {
         //...
+        mio::unused(input_data);
     };
 
     /**
@@ -224,6 +227,10 @@ public:
                 dt = t_max - Base::m_t;
             }
 
+            //          #pragma omp parallel for
+            //             for (size_t i = 0; i < Base::m_graph.nodes().size(); i++) {
+            //                 Base::m_node_func(Base::m_t, dt, Base::m_graph.nodes()[i].property);
+            //             }
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
