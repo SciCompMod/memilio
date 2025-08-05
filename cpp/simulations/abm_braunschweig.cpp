@@ -310,14 +310,14 @@ void create_model_from_data(mio::abm::Model& model, const std::string& filename,
         uint32_t home_id                                 = row[index["huid"]];
         uint32_t target_location_id                      = std::abs(row[index["loc_id_end"]]);
         uint32_t activity_end                            = row[index["activity_end"]];
-        mio::abm::GeographicalLocation location_long_lat = {(double)row[index["lon_end"]] / 1e+5,
+        mio::geo::GeographicalLocation location_long_lat = {(double)row[index["lon_end"]] / 1e+5,
                                                             (double)row[index["lat_end"]] / 1e+5};
         mio::abm::LocationId home;
         auto it_home = locations.find(home_id);
         if (it_home == locations.end()) {
             home = model.add_location(mio::abm::LocationType::Home, 1);
             locations.insert({home_id, home});
-            mio::abm::GeographicalLocation location_long_lat_home = {(double)row[index["lon_start"]] / 1e+5,
+            mio::geo::GeographicalLocation location_long_lat_home = {(double)row[index["lon_start"]] / 1e+5,
                                                                      (double)row[index["lat_start"]] / 1e+5};
             model.get_location(home).set_geographical_location(location_long_lat_home);
         }
