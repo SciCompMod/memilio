@@ -68,6 +68,8 @@ class Simulation:
 
         model.parameters.Seasonality = mio.UncertainValue(0.2)
 
+        model.parameters.end_commuter_detection = 50.
+
     def set_contact_matrices(self, model):
         """
 
@@ -124,14 +126,14 @@ class Simulation:
                                             "county_current_population_states.json")
 
         print("Setting nodes...")
-        mio.osecir.set_nodes(
+        mio.osecir.set_nodes_states(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
-            path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, 0, 0, False, False)
+            path_population_data, False, graph, scaling_factor_infected,
+            scaling_factor_icu, 0.5, 0, False, False)
 
         print("Setting edges...")
         mio.osecir.set_edges(

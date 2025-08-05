@@ -45,17 +45,27 @@ IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_fo
             }
         }
         else {
-            if (entry.district_id) {
+            if (entry.state_id) {
+                id.push_back(entry.state_id->get());
+            }
+            else if (entry.district_id) {
                 id.push_back(entry.district_id->get());
             }
             else {
-                return failure(StatusCode::InvalidValue, "Population data file is missing district ids.");
+                return failure(StatusCode::InvalidValue, "Population data file is missing district and state ids.");
             }
         }
     }
 
     //remove duplicate node ids
     id.erase(std::unique(id.begin(), id.end()), id.end());
+    return success(id);
+}
+
+IOResult<std::vector<int>> get_country_id(const std::string& /*path*/, bool /*is_node_for_county*/,
+                                          bool /*rki_age_groups*/)
+{
+    std::vector<int> id = {0};
     return success(id);
 }
 } // namespace mio
