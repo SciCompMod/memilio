@@ -26,7 +26,7 @@
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
-#include <omp.h>
+
 namespace mio
 {
 
@@ -227,10 +227,6 @@ public:
                 dt = t_max - Base::m_t;
             }
 
-            //          #pragma omp parallel for
-            //             for (size_t i = 0; i < Base::m_graph.nodes().size(); i++) {
-            //                 Base::m_node_func(Base::m_t, dt, Base::m_graph.nodes()[i].property);
-            //             }
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
