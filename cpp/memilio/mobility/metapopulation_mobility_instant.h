@@ -98,7 +98,7 @@ public:
         m_last_state = m_simulation.get_result().get_last_value();
     }
 
-private:
+protected:
     Sim m_simulation;
     Eigen::VectorXd m_last_state;
     double m_t0;
