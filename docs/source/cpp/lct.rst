@@ -45,7 +45,7 @@ We use different types of parameters to represent epidemiological parameters suc
 compartment or the contact rates between different age groups. Most model parameters are constants that describe 
 pathogen-specific characteristics (possibly resolved by sociodemographic groups) and are represented by a vector with a value for each sociodemographic group. 
 To model different contact rates between different sociodemographic groups, we use a parameter denoted **ContactPatterns** of type **UncertainContactMatrix**. 
-The **UncertainContactMatrix** contains anmarbitrary large set of contact matrices which can represent the different contact locations in the model like 
+The **UncertainContactMatrix** contains an arbitrary large set of contact matrices which can represent the different contact locations in the model like 
 schools, workplaces, or homes. The matrices can be loaded or stored in the particular example.
 In the **ContactPatterns**, each matrix element stores baseline contact rates :math:`c_{i,j}` between sociodemographic group :math:`i` to group :math:`j`. 
 The dimension of the matrix is automatically defined by the model initialization and is reduced to one value if no stratification is used. 

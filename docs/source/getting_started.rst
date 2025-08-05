@@ -207,4 +207,4 @@ For the latter, no regular testing is conducted. If you encounter errors, please
 
 Further questions
 ~~~~~~~~~~~~~~~~~~~~~
-If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discusion on `github <https://github.com/SciCompMod/memilio/>`_.
+If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`_.
