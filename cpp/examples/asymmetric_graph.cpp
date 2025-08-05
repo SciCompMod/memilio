@@ -24,8 +24,6 @@
 #include "smm/simulation.h"
 #include "smm/parameters.h"
 
-#include <iostream>
-
 enum class InfectionState
 {
     S,
@@ -37,9 +35,9 @@ enum class InfectionState
 
 int main(int /*argc*/, char** /*argv*/)
 {
-    const auto t0   = 0.;
-    const auto tmax = 100.;
-    const auto dt   = 1.; //initial time step
+    const auto t0 = 0.;
+    // const auto tmax = 100.;
+    const auto dt = 1.; //initial time step
 
     //total compartment sizes
     double num_total = 10000, num_exp = 200, num_ins = 50, num_rec = 0;
@@ -68,10 +66,10 @@ int main(int /*argc*/, char** /*argv*/)
     //modify model for second node
     auto model2 = model;
 
-    mio::Graph<mio::SimulationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
+    mio::Graph<mio::LocationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
     graph.add_node(0, model, t0);
     graph.add_node(1, model2, t0);
-    size_t num_nodes = 200000;
+    size_t num_nodes = 100;
     for (size_t i = 2; i < num_nodes; i++) {
         auto local_model = model;
         graph.add_node(i, local_model, t0);
@@ -86,7 +84,7 @@ int main(int /*argc*/, char** /*argv*/)
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
     std::vector<double> uniform_vector(num_nodes, 1.0);
     mio::log_info("Nodes generated");
-    for (size_t i = 0; i < 1 * num_nodes; ++i) {
+    for (size_t i = 0; i < 3 * num_nodes; ++i) {
         auto to   = distribution(rng, {uniform_vector});
         auto from = distribution(rng, {uniform_vector});
         graph.add_edge(from, to);
@@ -100,15 +98,27 @@ int main(int /*argc*/, char** /*argv*/)
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    for (size_t i = 0; i < 1 * num_nodes; i++) {
-        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
-    }
+    // for (size_t i = 0; i < 3 * num_nodes; i++) {
+    //     sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    // }
+    // for (size_t i = 0; i < 1 * num_nodes; i++) {
+    //     sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    // }
+    // for (size_t i = 0; i < 1 * num_nodes; i++) {
+    //     sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    // }
 
-    mio::log_info("Number of exchanges: {}", sim.get_parameters().size());
+    // mio::log_info("Number of exchanges: {}", sim.get_parameters().size());
 
-    mio::log_info("Exchanges added");
+    // mio::log_info("Exchanges added");
 
-    sim.advance(tmax);
+    // sim.advance(tmax);
+    // mio::log_info("Simulation finished");
+
+    // auto bonn   = mio::geo::GeographicalLocation(50.7333, 7.1000);
+    // auto berlin = mio::geo::GeographicalLocation(52.5200, 13.4050);
+    // mio::log_info("Distance from Bonn to Berlin: {}", bonn.distance(berlin));
+    // mio::log_info("Distance from Berlin to Bonn: {}", berlin.distance(bonn));
 
     // std::cout << "First table" << std::endl;
     // sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});

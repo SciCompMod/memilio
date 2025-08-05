@@ -20,23 +20,41 @@
 #ifndef METAPOPULATION_MOBILITY_STOCHASTIC_H
 #define METAPOPULATION_MOBILITY_STOCHASTIC_H
 
-#include "memilio/compartments/simulation.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/time_series.h"
+#include "memilio/geography/locations.h"
 
 #include "memilio/mobility/graph_simulation.h"
+#include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-
-#include "boost/filesystem.hpp"
 
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <cassert>
-#include <functional>
-#include <streambuf>
-#include <vector>
 
 namespace mio
 {
+
+template <class Sim>
+class LocationNode : public SimulationNode<Sim>
+{
+    using Base = SimulationNode<Sim>;
+
+public:
+    template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
+    LocationNode(Args&&... args)
+        : Base(std::forward<Args>(args)...)
+        , m_location(0.000, 0.000)
+    {
+    }
+
+    auto get_location() const
+    {
+        return m_location;
+    }
+
+private:
+    mio::geo::GeographicalLocation m_location; // location of the node
+};
 
 /**
  * represents the mobility between two nodes.
@@ -67,15 +85,14 @@ public:
          * @param node_to node that people changed to
          */
     template <class Sim>
-    void apply_mobility(double num_moving, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
+    void apply_mobility(double num_moving, LocationNode<Sim>& node_from, LocationNode<Sim>& node_to);
 
     // private:
     // MobilityParametersTimed m_parameters;
 };
 
 template <class Sim>
-void MobilityEdgeDirected::apply_mobility(double num_moving, SimulationNode<Sim>& node_from,
-                                          SimulationNode<Sim>& node_to)
+void MobilityEdgeDirected::apply_mobility(double num_moving, LocationNode<Sim>& node_from, LocationNode<Sim>& node_to)
 {
     // auto next_event = m_parameters.process_next_event();
     // auto num_moving = next_event.number;
@@ -91,12 +108,13 @@ void MobilityEdgeDirected::apply_mobility(double num_moving, SimulationNode<Sim>
 }
 
 template <class Sim>
-void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edge, SimulationNode<Sim>& node_from,
-                          SimulationNode<Sim>& node_to)
+void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edge, LocationNode<Sim>& node_from,
+                          LocationNode<Sim>& node_to)
 {
     // if (edge.next_event_time() >= t + dt) {
     //     return;
     // }
+    mio::unused(t);
     edge.apply_mobility(num_moving, node_from, node_to);
 }
 // /**get_last_value
@@ -121,23 +139,19 @@ void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edg
      * @{
      */
 template <typename FP, class Sim>
-AsymmetricGraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
-make_mobility_sim(FP t0, FP dt, const Graph<SimulationNode<Sim>, MobilityEdgeDirected>& graph)
+AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>>
+make_mobility_sim(FP t0, FP dt, const Graph<LocationNode<Sim>, MobilityEdgeDirected>& graph)
 {
     return make_asymmetric_graph_sim(
         t0, dt, graph, &advance_model<Sim>,
-        static_cast<void (*)(FP, FP, SimulationNode<Sim>&, SimulationNode<Sim>&)>(apply_mobility<FP, Sim>));
+        static_cast<void (*)(FP, FP, LocationNode<Sim>&, LocationNode<Sim>&)>(apply_timed_mobility<Sim>));
 }
-// static_cast<void (*)(MobilityEdgeStochastic&, size_t, SimulationNode<Sim>&, SimulationNode<Sim>&)>(&apply_mobility<Sim, MobilityEdgeStochastic>)
 
 template <typename FP, class Sim>
-AsymmetricGraphSimulation<Graph<SimulationNode<Sim>, MobilityEdgeDirected>>
-make_mobility_sim(FP t0, FP dt, Graph<SimulationNode<Sim>, MobilityEdgeDirected>&& graph)
+AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>>
+make_mobility_sim(FP t0, FP dt, Graph<LocationNode<Sim>, MobilityEdgeDirected>&& graph)
 {
-    return make_asymmetric_graph_sim(
-        t0, dt, std::move(graph), &advance_model<Sim>,
-        static_cast<void (*)(FP, FP, MobilityEdgeDirected&, SimulationNode<Sim>&, SimulationNode<Sim>&)>(
-            apply_timed_mobility<Sim>));
+    return make_asymmetric_graph_sim(t0, dt, std::move(graph), &advance_model<Sim>, &apply_timed_mobility<Sim>);
 }
 
 /** @} */
