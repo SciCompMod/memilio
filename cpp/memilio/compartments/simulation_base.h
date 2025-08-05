@@ -52,10 +52,9 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    SimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
-        : m_integratorCore(integrator)
-        , m_model(std::make_unique<Model>(model))
-        , m_integrator(m_integratorCore)
+    SimulationBase(Model const& model, std::unique_ptr<Core>&& integrator, FP t0, FP dt)
+        : m_model(std::make_unique<Model>(model))
+        , m_integrator(std::move(integrator))
         , m_result(t0, m_model->get_initial_values())
         , m_dt(dt)
     {
@@ -65,10 +64,9 @@ public:
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
      */
-    void set_integrator(std::shared_ptr<Core> integrator)
+    void set_integrator(std::unique_ptr<Core>&& integrator)
     {
-        m_integratorCore = std::move(integrator);
-        m_integrator.set_integrator(m_integratorCore);
+        m_integrator.set_integrator(std::move(integrator));
     }
 
     /**
@@ -78,11 +76,11 @@ public:
      */
     Core& get_integrator()
     {
-        return *m_integratorCore;
+        return m_integrator.get_integrator();
     }
     const Core& get_integrator() const
     {
-        return *m_integratorCore;
+        return m_integrator.get_integrator();
     }
     /** @} */
 
@@ -151,7 +149,6 @@ protected:
     }
 
 private:
-    std::shared_ptr<Core> m_integratorCore; ///< Defines the integration scheme via its step function.
     std::unique_ptr<Model> m_model; ///< The model defining the ODE system and initial conditions.
     SystemIntegrator<FP, Integrands...>
         m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.

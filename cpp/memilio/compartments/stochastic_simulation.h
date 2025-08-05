@@ -50,7 +50,7 @@ public:
      * @param[in] dt Initial step size of integration.
      */
     StochasticSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
-        : Base(model, std::make_shared<EulerMaruyamaIntegratorCore<FP>>(), t0, dt)
+        : Base(model, std::make_unique<EulerMaruyamaIntegratorCore<FP>>(), t0, dt)
     {
     }
 
@@ -77,12 +77,12 @@ public:
 
 template <typename FP, class Model, class Sim = StochasticSimulation<FP, Model>>
 TimeSeries<FP> simulate_stochastic(FP t0, FP tmax, FP dt, Model const& model,
-                                   std::shared_ptr<SdeIntegratorCore<FP>> integrator = nullptr)
+                                   std::unique_ptr<SdeIntegratorCore<FP>> integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
     if (integrator) {
-        sim.set_integrator(integrator);
+        sim.set_integrator(std::move(integrator));
     }
     sim.advance(tmax);
     return sim.get_result();

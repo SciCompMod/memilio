@@ -149,8 +149,8 @@ public:
      * @brief Create an integrator for a specific IVP.
      * @param[in] core Implements the solver.
      */
-    SystemIntegrator(std::shared_ptr<Core> core)
-        : m_core(core)
+    SystemIntegrator(std::unique_ptr<Core>&& core)
+        : m_core(std::move(core))
         , m_is_adaptive(false)
     {
     }
@@ -233,14 +233,28 @@ public:
      * @brief Change the IntegratorCore used for integration.
      * @param core The new integrator.
      */
-    void set_integrator(std::shared_ptr<Core> core)
+    void set_integrator(std::unique_ptr<Core>&& core)
     {
-        m_core        = core;
+        m_core.swap(core);
         m_is_adaptive = false;
     }
 
+    /**
+     * @brief Access the integrator core used for integration.
+     * @return A reference to the integrator core used for integration.
+     * @{
+     */
+    Core& get_integrator()
+    {
+        return *m_core;
+    }
+    const Core& get_integrator() const
+    {
+        return *m_core;
+    }
+
 private:
-    std::shared_ptr<Core> m_core;
+    std::unique_ptr<Core> m_core;
     bool m_is_adaptive;
 };
 
