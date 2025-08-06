@@ -65,7 +65,7 @@ public:
      * @brief Constructs a copy of another SimulationBase object.
      *
      * Performs a deep copy of the model, while sharing the same integrator core.
-     * The time series results and step size are also copied.
+     * The time series m_result and step size m_dt are also copied.
      *
      * @param[in] other The SimulationBase object to copy from.
      */
