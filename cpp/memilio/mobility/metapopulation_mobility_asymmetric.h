@@ -57,6 +57,16 @@ private:
 };
 
 /**
+ * node functor for mobility-based simulation.
+ * @see SimulationNode::advance
+ */
+template <class Sim>
+void advance_model(double t, double dt, LocationNode<Sim>& node)
+{
+    node.advance(t, dt);
+}
+
+/**
  * represents the mobility between two nodes.
  */
 class MobilityEdgeDirected
@@ -151,7 +161,11 @@ template <typename FP, class Sim>
 AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>>
 make_mobility_sim(FP t0, FP dt, Graph<LocationNode<Sim>, MobilityEdgeDirected>&& graph)
 {
-    return make_asymmetric_graph_sim(t0, dt, std::move(graph), &advance_model<Sim>, &apply_timed_mobility<Sim>);
+    using GraphSim = AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>, FP, FP,
+                                               void (*)(FP, FP, mio::MobilityEdgeDirected&, mio::LocationNode<Sim>&,
+                                                        mio::LocationNode<Sim>&),
+                                               void (*)(FP, FP, mio::LocationNode<Sim>&)>;
+    return GraphSim(t0, dt, std::move(graph), &advance_model<Sim>, &apply_timed_mobility<Sim>);
 }
 
 /** @} */
