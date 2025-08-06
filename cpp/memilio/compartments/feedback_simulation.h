@@ -406,9 +406,9 @@ public:
      */
     void apply_feedback(FP t)
     {
+        using std::exp;
         using std::log;
         using std::min;
-        using std::pow;
 
         // get model parameters
         auto& params          = m_simulation.get_model().parameters;
