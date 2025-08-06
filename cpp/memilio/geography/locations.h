@@ -29,6 +29,7 @@ namespace geo
 {
 
 const double earth_radius = 6371;
+const double radians      = M_PI / 180.0;
 
 class GeographicalLocation
 {
@@ -66,11 +67,11 @@ public:
     */
     double distance(const GeographicalLocation& other) const
     {
-        double delta_latitude  = (latitude - other.latitude) / 180 * M_PI;
-        double delta_longitude = (longitude - other.longitude) / 180 * M_PI;
-        double first_part      = sin(delta_latitude / 2) * sin(delta_latitude / 2);
-        double second_part = cos(latitude / 180 * M_PI) * cos(other.latitude / 180 * M_PI) * sin(delta_longitude / 2) *
-                             sin(delta_longitude / 2);
+        double delta_latitude  = (latitude - other.latitude) * radians;
+        double delta_longitude = (longitude - other.longitude) * radians;
+        double first_part      = sin(delta_latitude * 0.5) * sin(delta_latitude * 0.5);
+        double second_part     = cos(latitude * radians) * cos(other.latitude * radians) * sin(delta_longitude * 0.5) *
+                             sin(delta_longitude * 0.5);
         double distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
         return distance;
     }
