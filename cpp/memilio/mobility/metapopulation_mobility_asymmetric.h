@@ -41,9 +41,10 @@ class LocationNode : public SimulationNode<Sim>
 
 public:
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
-    LocationNode(Args&&... args)
+    LocationNode(double latitude, double longitude, Args&&... args)
         : Base(std::forward<Args>(args)...)
-        , m_location(0.000, 0.000)
+        , m_location(latitude, longitude)
+        , regional_neighbor_indices{}
     {
     }
 
@@ -52,8 +53,14 @@ public:
         return m_location;
     }
 
+    void set_location(double latitude, double longitude)
+    {
+        m_location = mio::geo::GeographicalLocation(latitude, longitude);
+    }
+
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
+    std::vector<std::vector<size_t>> regional_neighbor_indices;
 };
 
 /**

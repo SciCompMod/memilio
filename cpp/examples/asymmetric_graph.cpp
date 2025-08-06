@@ -35,9 +35,9 @@ enum class InfectionState
 
 int main(int /*argc*/, char** /*argv*/)
 {
-    const auto t0 = 0.;
-    // const auto tmax = 100.;
-    const auto dt = 1.; //initial time step
+    const auto t0   = 0.;
+    const auto tmax = 100.;
+    const auto dt   = 1.; //initial time step
 
     //total compartment sizes
     double num_total = 10000, num_exp = 200, num_ins = 50, num_rec = 0;
@@ -58,27 +58,19 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.5}}});
     model.parameters.get<mio::smm::AdoptionRates<InfectionState>>() = adoption_rates;
 
-    // std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
-    // for (size_t s = 0; s < static_cast<size_t>(InfectionState::Count); ++s) {
-    //     transition_rates.push_back({InfectionState(s), home, home, 0});
-    // }
-    // model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
-    //modify model for second node
     auto model2 = model;
 
     mio::Graph<mio::LocationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
-    graph.add_node(0, model, t0);
-    graph.add_node(1, model2, t0);
-    size_t num_nodes = 100;
+    graph.add_node(0, 12.0, 21.0, model, t0);
+    graph.add_node(1, 12.0, 21.0, model2, t0);
+    size_t num_nodes = 999;
     for (size_t i = 2; i < num_nodes; i++) {
         auto local_model = model;
-        graph.add_node(i, local_model, t0);
+        graph.add_node(i, 12.0, 21.0, local_model, t0);
     }
 
     auto param = mio::MobilityParametersTimed(2.0, 10, 1);
     graph.add_edge(0, 1);
-    // graph.edges()[0].property.add_exchange(5.0, 5, 1);
-    // graph.edges()[0].property.add_exchange(6.0, 500, 1);
 
     auto rng          = mio::RandomNumberGenerator();
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
@@ -88,37 +80,28 @@ int main(int /*argc*/, char** /*argv*/)
         auto to   = distribution(rng, {uniform_vector});
         auto from = distribution(rng, {uniform_vector});
         graph.add_edge(from, to);
-
-        // graph.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i)
-        // graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
-        // graph.edges().back().property.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 5, to);
     }
 
     mio::log_info("Graph generated");
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    // for (size_t i = 0; i < 3 * num_nodes; i++) {
-    //     sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
-    // }
-    // for (size_t i = 0; i < 1 * num_nodes; i++) {
-    //     sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
-    // }
-    // for (size_t i = 0; i < 1 * num_nodes; i++) {
-    //     sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
-    // }
+    for (size_t i = 0; i < 3 * num_nodes; i++) {
+        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    }
+    for (size_t i = 0; i < 3 * num_nodes; i++) {
+        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    }
+    for (size_t i = 0; i < 3 * num_nodes; i++) {
+        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    }
 
-    // mio::log_info("Number of exchanges: {}", sim.get_parameters().size());
+    mio::log_info("Number of exchanges: {}", sim.get_parameters().size());
 
-    // mio::log_info("Exchanges added");
+    mio::log_info("Exchanges added");
 
-    // sim.advance(tmax);
-    // mio::log_info("Simulation finished");
-
-    // auto bonn   = mio::geo::GeographicalLocation(50.7333, 7.1000);
-    // auto berlin = mio::geo::GeographicalLocation(52.5200, 13.4050);
-    // mio::log_info("Distance from Bonn to Berlin: {}", bonn.distance(berlin));
-    // mio::log_info("Distance from Berlin to Bonn: {}", berlin.distance(bonn));
+    sim.advance(tmax);
+    mio::log_info("Simulation finished");
 
     // std::cout << "First table" << std::endl;
     // sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});
