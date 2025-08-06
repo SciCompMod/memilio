@@ -152,9 +152,11 @@ template <typename FP, class Sim>
 AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>>
 make_mobility_sim(FP t0, FP dt, const Graph<LocationNode<Sim>, MobilityEdgeDirected>& graph)
 {
-    return make_asymmetric_graph_sim(
-        t0, dt, graph, &advance_model<Sim>,
-        static_cast<void (*)(FP, FP, LocationNode<Sim>&, LocationNode<Sim>&)>(apply_timed_mobility<Sim>));
+    using GraphSim = AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>, FP, FP,
+                                               void (*)(FP, FP, mio::MobilityEdgeDirected&, mio::LocationNode<Sim>&,
+                                                        mio::LocationNode<Sim>&),
+                                               void (*)(FP, FP, mio::LocationNode<Sim>&)>;
+    return GraphSim(t0, dt, graph, &advance_model<Sim>, &apply_timed_mobility<Sim>);
 }
 
 template <typename FP, class Sim>

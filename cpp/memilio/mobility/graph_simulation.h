@@ -442,13 +442,6 @@ auto make_graph_sim_stochastic(FP t0, FP dt, Graph&& g, NodeF&& node_func, EdgeF
         t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
-template <typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
-auto make_asymmetric_graph_sim(Timepoint t0, Timespan dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
-{
-    return AsymmetricGraphSimulation<std::decay_t<Graph>, Timepoint, Timespan, EdgeF, NodeF>(
-        t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
-}
-
 // FeedbackGraphSimulation is only allowed to be used with local FeedbackSimulation.
 // Therefore, we use type traits to check if the type is a specialization of FeedbackSimulation
 template <class T>
