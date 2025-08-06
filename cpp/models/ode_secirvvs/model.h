@@ -759,9 +759,9 @@ private:
  */
 template <typename FP = ScalarType>
 inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
-                     std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
+                     std::unique_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
 {
-    return mio::simulate<FP, Model<FP>, Simulation<FP>>(t0, tmax, dt, model, integrator);
+    return mio::simulate<FP, Model<FP>, Simulation<FP>>(t0, tmax, dt, model, std::move(integrator));
 }
 
 /**
@@ -778,10 +778,10 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
   */
 template <typename FP = ScalarType>
 inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
-                           std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
+                           std::unique_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
 {
     return mio::simulate_flows<FP, Model<FP>, Simulation<FP, mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
-                                                                                                  integrator);
+                                                                                                  std::move(integrator));
 }
 
 //see declaration above.
