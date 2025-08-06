@@ -330,7 +330,7 @@ public:
     }
 
     /**
-     * dimensions of the matrices.
+     * Get the dimensions of the matrices.
      */
     Shape get_shape() const
     {
