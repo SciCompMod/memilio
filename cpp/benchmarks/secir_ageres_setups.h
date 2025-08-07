@@ -33,8 +33,8 @@ namespace benchmark
 namespace detail
 {
 /**
-         * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
-         */
+ * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
+ */
 mio::osecir::Model<double> make_model(int num)
 {
 
@@ -94,8 +94,8 @@ mio::osecir::Model<double> make_model(int num)
 namespace model
 {
 /**
-         * @brief Secir model with consistent setup for use in benchmarking.
-         */
+ * @brief Secir model with consistent setup for use in benchmarking.
+ */
 mio::osecir::Model<double> SecirAgeres(size_t num_agegroups)
 {
     mio::osecir::Model<double> model = mio::benchmark::detail::make_model(num_agegroups);
@@ -112,8 +112,8 @@ mio::osecir::Model<double> SecirAgeres(size_t num_agegroups)
     return model;
 }
 /**
-         * @brief Secir model with consistent setup for use in benchmarking with added dampings.
-         */
+ * @brief Secir model with consistent setup for use in benchmarking with added dampings.
+ */
 mio::osecir::Model<double> SecirAgeresDampings(size_t num_agegroups)
 {
     mio::osecir::Model<double> model = mio::benchmark::detail::make_model(num_agegroups);
@@ -138,9 +138,9 @@ mio::osecir::Model<double> SecirAgeresDampings(size_t num_agegroups)
     return model;
 }
 /**
-         * @brief Secir model with consistent setup for use in benchmarking with added dampings.
-         * Dampings are set up to challenge the integrator, not to be realistic.
-         */
+ * @brief Secir model with consistent setup for use in benchmarking with added dampings.
+ * Dampings are set up to challenge the integrator, not to be realistic.
+ */
 mio::osecir::Model<double> SecirAgeresAbsurdDampings(size_t num_agegroups)
 {
     mio::osecir::Model<double> model = mio::benchmark::detail::make_model(num_agegroups);

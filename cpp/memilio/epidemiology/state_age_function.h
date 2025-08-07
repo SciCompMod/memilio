@@ -800,10 +800,10 @@ struct ErlangDensity : public StateAgeFunction<FP> {
 
 protected:
     /**
-         * @brief Implements clone for ErlangDensity.
-         *
-         * @return Pointer to StateAgeFunction.
-         */
+     * @brief Implements clone for ErlangDensity.
+     *
+     * @return Pointer to StateAgeFunction.
+     */
     StateAgeFunction<FP>* clone_impl() const override
     {
         return new ErlangDensity<FP>(*this);

@@ -35,9 +35,9 @@ struct IntegratorStepConfig {
     double t_init, dt_init, abs_tol, rel_tol, dt_min, dt_max;
     Eigen::VectorXd yt, ytp1;
     /**
-         * @brief creates configuration with default parameters for a secir model
-         * @return configuration for integrator-step benchmark
-         */
+     * @brief creates configuration with default parameters for a secir model
+     * @return configuration for integrator-step benchmark
+     */
     static IntegratorStepConfig initialize()
     {
         const double vals[8] = {6377.873644, 35.249156, 30.029611,   182.145865,
@@ -53,10 +53,10 @@ struct IntegratorStepConfig {
                                     Eigen::VectorXd::Zero(8)};
     }
     /**
-         * @brief reads configuration from json file
-         * @param path the path of the configfile
-         * @return configuration for integrator-step benchmark
-         */
+     * @brief reads configuration from json file
+     * @param path the path of the configfile
+     * @return configuration for integrator-step benchmark
+     */
     static IntegratorStepConfig initialize(std::string path)
     {
         auto result = mio::read_json(path, mio::Tag<IntegratorStepConfig>{});

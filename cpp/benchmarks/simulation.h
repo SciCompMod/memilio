@@ -34,10 +34,10 @@ struct SimulationConfig {
     int num_agegroups;
     double t0, t_max, dt, abs_tol, rel_tol, dt_min, dt_max;
     /**
-         * @brief creates configuration with default parameters for a secir model
-         * @param num_agegroups number of agegroups
-         * @return configuration for simulation benchmark
-         */
+     * @brief creates configuration with default parameters for a secir model
+     * @param num_agegroups number of agegroups
+     * @return configuration for simulation benchmark
+     */
     static SimulationConfig initialize(int num_agegroups = 10)
     {
         return SimulationConfig{num_agegroups,
@@ -50,10 +50,10 @@ struct SimulationConfig {
                                 std::numeric_limits<double>::max()};
     }
     /**
-         * @brief reads configuration from json file
-         * @param path the path of the configfile
-         * @return configuration for simulation benchmark
-         */
+     * @brief reads configuration from json file
+     * @param path the path of the configfile
+     * @return configuration for simulation benchmark
+     */
     static SimulationConfig initialize(std::string path)
     {
         auto result = mio::read_json(path, mio::Tag<SimulationConfig>{});
