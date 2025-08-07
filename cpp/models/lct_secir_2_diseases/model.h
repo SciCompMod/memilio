@@ -23,7 +23,7 @@
 
 #include "lct_secir_2_diseases/parameters.h"
 #include "lct_secir_2_diseases/infection_state.h"
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/lct2d_populations.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
