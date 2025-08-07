@@ -194,8 +194,8 @@ IOResult<Graph<Model, MobilityParameters<FP>>> read_graph(const std::string& dir
  * @param[in] filename Name of the file where the results will be saved.
  * @return Any io errors that occur during writing of the files.
  */
-IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
-                          const std::string& filename);
+IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
+                          const std::vector<std::pair<int, int>>& ids, const std::string& filename);
 
 /**
  * @brief Saves the results of a simulation for each edge in the graph.
@@ -206,7 +206,7 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
  * @param[in] save_percentiles [Default: true] Defines if percentiles are written.
  * @return Any io errors that occur during writing of the files.
  */
-IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
+IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_edges,
                           const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
                           bool save_single_runs = true, bool save_percentiles = true);
 
