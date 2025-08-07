@@ -182,7 +182,7 @@ public:
     /**
      * @brief Get a pointer to the distribution (const).
      *
-     * @return nullptr if no distribution is set.
+     * @return A pointer to the parameter distribution, or nullptr if no distribution is set.
      */
     observer_ptr<const ParameterDistribution> get_distribution() const
     {
