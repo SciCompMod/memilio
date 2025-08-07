@@ -26,11 +26,10 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
 #include "memilio/epidemiology/contact_matrix.h"
-//#include "memilio/math/eigen.h"
+#include "memilio/data/analyze_result.h"
 #include "memilio/compartments/simulation.h"
 #include "load_test_data.h"
 
-//#include <iostream>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -594,6 +593,39 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Dead],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Dead_b], 1e-5);
     }
+}
+
+TEST(TestLCTSecir2d, testSubcompartments)
+{
+    using InfState = mio::lsecir2d::InfectionState;
+    using LctState =
+        mio::LctInfectionState<InfState, 1, 2, 3, 3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 2, 3, 3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 1>;
+    using Model     = mio::lsecir2d::Model<LctState>;
+    ScalarType t0   = 0;
+    ScalarType tmax = 1;
+    ScalarType dt   = 0.1;
+
+    std::vector<std::vector<ScalarType>> init = {
+        {200},        {0, 0},    {30, 10, 10}, {0, 0, 0}, {10, 10, 10}, {0, 0, 0}, {0},       {0},       {0, 0},
+        {30, 10, 10}, {0, 0, 0}, {10, 10, 10}, {0, 0, 0}, {0, 0},       {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+        {0},          {0},       {0, 0},       {0, 0, 0}, {0, 0, 0},    {0, 0, 0}, {0, 0, 0}, {0}};
+
+    Model model;
+
+    // Transfer the initial values in initial_populations to the model.
+    std::vector<ScalarType> flat_init;
+    for (auto&& vec : init) {
+        flat_init.insert(flat_init.end(), vec.begin(), vec.end());
+    }
+    for (size_t i = 0; i < LctState::Count; i++) {
+        model.populations[i] = flat_init[i];
+    }
+
+    mio::TimeSeries<ScalarType> result                        = mio::simulate<ScalarType, Model>(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
+    auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
+
+    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
 }
 
 // Model setup to compare result with a previous output.
