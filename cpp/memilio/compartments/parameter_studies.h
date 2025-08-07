@@ -80,15 +80,15 @@ public:
     }
 
     /**
-         * create study for graph of compartment models.
-         * Creates distributions for all parameters of the models in the graph.
-         * @param graph graph of parameters
-         * @param t0 start time of simulations
-         * @param tmax end time of simulations
-         * @param dev_rel relative deviation of the created distributions from the initial value.
-         * @param graph_sim_dt time step of graph simulation
-         * @param num_runs number of runs
-         */
+     * create study for graph of compartment models.
+     * Creates distributions for all parameters of the models in the graph.
+     * @param graph graph of parameters
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param dev_rel relative deviation of the created distributions from the initial value.
+     * @param graph_sim_dt time step of graph simulation
+     * @param num_runs number of runs
+     */
     ParameterStudy(const ParametersGraph& graph, FP t0, FP tmax, FP dev_rel, FP graph_sim_dt, size_t num_runs)
         : ParameterStudy<FP, Simulation>(graph, t0, tmax, graph_sim_dt, num_runs)
     {
@@ -98,36 +98,36 @@ public:
     }
 
     /**
-         * @brief Create study for single compartment model.
-         * @param model compartment model with initial values
-         * @param t0 start time of simulations
-         * @param tmax end time of simulations
-         * @param num_runs number of runs in ensemble run
-         */
+     * @brief Create study for single compartment model.
+     * @param model compartment model with initial values
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param num_runs number of runs in ensemble run
+     */
     ParameterStudy(typename Simulation::Model const& model, FP t0, FP tmax, size_t num_runs)
         : ParameterStudy<FP, Simulation>({}, t0, tmax, tmax - t0, num_runs)
     {
         m_graph.add_node(0, model);
     }
 
-    /*
-         * @brief Carry out all simulations in the parameter study.
-         * Save memory and enable more runs by immediately processing and/or discarding the result.
-         * The result processing function is called when a run is finished. It receives the result of the run
-         * (a SimulationGraph object) and an ordered index. The values returned by the result processing function
-         * are gathered and returned as a list.
-         * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
-         * The MPI processes each contribute a share of the runs. The sample function and result processing function
-         * are called in the same process that performs the run. The results returned by the result processing function are
-         * gathered at the root process and returned as a list by the root in the same order as if the programm
-         * were running sequentially. Processes other than the root return an empty list.
-         * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
-         * @param result_processing_function Processing function for simulation results, e.g., output function.
-         * @returns At the root process, a list of values per run that have been returned from the result processing function.
-         *          At all other processes, an empty list.
-         * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
-         * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraph and an index of type size_t.
-         */
+    /**
+     * @brief Carry out all simulations in the parameter study.
+     * Save memory and enable more runs by immediately processing and/or discarding the result.
+     * The result processing function is called when a run is finished. It receives the result of the run
+     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function
+     * are gathered and returned as a list.
+     * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
+     * The MPI processes each contribute a share of the runs. The sample function and result processing function
+     * are called in the same process that performs the run. The results returned by the result processing function are
+     * gathered at the root process and returned as a list by the root in the same order as if the programm
+     * were running sequentially. Processes other than the root return an empty list.
+     * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
+     * @param result_processing_function Processing function for simulation results, e.g., output function.
+     * @returns At the root process, a list of values per run that have been returned from the result processing function.
+     *          At all other processes, an empty list.
+     * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
+     * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraph and an index of type size_t.
+     */
     template <class SampleGraphFunction, class HandleSimulationResultFunction>
     std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>>
     run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
@@ -209,12 +209,12 @@ public:
         return ensemble_result;
     }
 
-    /*
-         * @brief Carry out all simulations in the parameter study.
-         * Convenience function for a few number of runs, but can use more memory because it stores all runs until the end.
-         * Unlike the other overload, this function is not MPI-parallel.
-         * @return vector of SimulationGraph for each run.
-         */
+    /**
+     * @brief Carry out all simulations in the parameter study.
+     * Convenience function for a few number of runs, but can use more memory because it stores all runs until the end.
+     * Unlike the other overload, this function is not MPI-parallel.
+     * @return vector of SimulationGraph for each run.
+     */
     template <class SampleGraphFunction>
     std::vector<SimulationGraph> run(SampleGraphFunction sample_graph)
     {
@@ -251,36 +251,35 @@ public:
         return ensemble_result;
     }
 
-    /*
-         * @brief sets the number of Monte Carlo runs
-         * @param[in] num_runs number of runs
-         */
-
+    /**
+     * @brief sets the number of Monte Carlo runs
+     * @param[in] num_runs number of runs
+     */
     void set_num_runs(size_t num_runs)
     {
         m_num_runs = num_runs;
     }
 
-    /*
-         * @brief returns the number of Monte Carlo runs
-         */
+    /**
+     * @brief returns the number of Monte Carlo runs
+     */
     int get_num_runs() const
     {
         return static_cast<int>(m_num_runs);
     }
 
-    /*
-         * @brief sets end point in simulation
-         * @param[in] tmax end point in simulation
-         */
+    /**
+     * @brief sets end point in simulation
+     * @param[in] tmax end point in simulation
+     */
     void set_tmax(FP tmax)
     {
         m_tmax = tmax;
     }
 
-    /*
-         * @brief returns end point in simulation
-         */
+    /**
+     * @brief returns end point in simulation
+     */
     FP get_tmax() const
     {
         return m_tmax;
@@ -291,19 +290,19 @@ public:
         m_t0 = t0;
     }
 
-    /*
-         * @brief returns start point in simulation
-         */
+    /**
+     * @brief returns start point in simulation
+     */
     FP get_t0() const
     {
         return m_t0;
     }
 
     /**
-         * Get the input model that the parameter study is run for.
-         * Use for single node simulations, use get_model_graph for graph simulations.
-         * @{
-         */
+     * Get the input model that the parameter study is run for.
+     * Use for single node simulations, use get_model_graph for graph simulations.
+     * @{
+     */
     const typename Simulation::Model& get_model() const
     {
         return m_graph.nodes()[0].property;
@@ -315,10 +314,10 @@ public:
     /** @} */
 
     /**
-         * Get the input graph that the parameter study is run for.
-         * Use for graph simulations, use get_model for single node simulations.
-         * @{
-         */
+     * Get the input graph that the parameter study is run for.
+     * Use for graph simulations, use get_model for single node simulations.
+     * @{
+     */
     const ParametersGraph& get_model_graph() const
     {
         return m_graph;

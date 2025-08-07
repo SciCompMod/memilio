@@ -815,18 +815,18 @@ protected:
     *********************************/
 
 /**
-     * @brief Wrapper around StateAgeFunction so that one can work with an arbitrary StateAgeFunction.
-     *
-     * This way we can define e.g. the parameter TransmissionProbabilityOnContact as type StateAgeFunctionWrapper
-     * and set it with a specific StateAgeFunction for each example.
-     *
-     * Example from IDE-SECIR model:
-     *
-     * ExponentialSurvivalFunction exponential(1.0);
-     * StateAgeFunctionWrapper prob(exponential);
-     * model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
-     *
-     */
+ * @brief Wrapper around StateAgeFunction so that one can work with an arbitrary StateAgeFunction.
+ *
+ * This way we can define e.g. the parameter TransmissionProbabilityOnContact as type StateAgeFunctionWrapper
+ * and set it with a specific StateAgeFunction for each example.
+ *
+ * Example from IDE-SECIR model:
+ *
+ * ExponentialSurvivalFunction exponential(1.0);
+ * StateAgeFunctionWrapper prob(exponential);
+ * model.parameters.set<mio::isecir::TransmissionProbabilityOnContact>(prob);
+ *
+ */
 template <typename FP>
 struct StateAgeFunctionWrapper {
 
@@ -835,31 +835,31 @@ struct StateAgeFunctionWrapper {
     {
     }
     /**
-         * @brief Constructs a new StateAgeFunctionWrapper object
-         *
-         * @param[in] init_function specifies the initial function.
-         */
+     * @brief Constructs a new StateAgeFunctionWrapper object
+     *
+     * @param[in] init_function specifies the initial function.
+     */
     StateAgeFunctionWrapper(StateAgeFunction<FP>& init_function)
         : m_function(init_function.clone())
     {
     }
 
     /**
-         * @brief Copy constructor.
-         */
+     * @brief Copy constructor.
+     */
     StateAgeFunctionWrapper(StateAgeFunctionWrapper<FP> const& other)
         : m_function(other.m_function->clone())
     {
     }
 
     /**
-         * @brief Move constructor.
-         */
+     * @brief Move constructor.
+     */
     StateAgeFunctionWrapper(StateAgeFunctionWrapper<FP>&& other) = default;
 
     /**
-         * @brief Copy assignment.
-         */
+     * @brief Copy assignment.
+     */
     StateAgeFunctionWrapper<FP>& operator=(StateAgeFunctionWrapper<FP> const& other)
     {
         m_function = other.m_function->clone();
@@ -867,18 +867,18 @@ struct StateAgeFunctionWrapper {
     }
 
     /**
-         * @brief Move assignment.
-         */
+     * @brief Move assignment.
+     */
     StateAgeFunctionWrapper<FP>& operator=(StateAgeFunctionWrapper<FP>&& other) = default;
 
     /**
-         * @brief Destructor.
-         */
+     * @brief Destructor.
+     */
     ~StateAgeFunctionWrapper() = default;
 
     /**
-         * @brief Comparison operator.
-         */
+     * @brief Comparison operator.
+     */
     bool operator==(const StateAgeFunctionWrapper<FP>& other) const
     {
         return (m_function->get_state_age_function_type() == other.get_state_age_function_type() &&
@@ -887,114 +887,114 @@ struct StateAgeFunctionWrapper {
     }
 
     /**
-         * @brief Set the StateAgeFunction object
-         *
-         * @param[in] new_function function that we want to set member m_function to.
-         */
+     * @brief Set the StateAgeFunction object
+     *
+     * @param[in] new_function function that we want to set member m_function to.
+     */
     void set_state_age_function(StateAgeFunction<FP>& new_function)
     {
         m_function = new_function.clone();
     }
 
     /**
-         * @brief Get type of StateAgeFunction, i.e. which derived class is used.
-         *
-         * @return string
-         */
+     * @brief Get type of StateAgeFunction, i.e. which derived class is used.
+     *
+     * @return string
+     */
     std::string get_state_age_function_type() const
     {
         return m_function->get_state_age_function_type();
     }
 
     /**
-         * @brief Accesses eval of m_function.
-         *
-         * @param[in] state_age Time at which the function is evaluated.
-         * @return Evaluation of the function at state_age.
-         */
+     * @brief Accesses eval of m_function.
+     *
+     * @param[in] state_age Time at which the function is evaluated.
+     * @return Evaluation of the function at state_age.
+     */
     FP eval(FP state_age) const
     {
         return m_function->eval(state_age);
     }
 
     /**
-         * @brief Get the m_distribution_parameter object of m_function.
-         *
-         * @return ScalarType
-         */
+     * @brief Get the m_distribution_parameter object of m_function.
+     *
+     * @return ScalarType
+     */
     FP get_distribution_parameter() const
     {
         return m_function->get_distribution_parameter();
     }
 
     /**
-         * @brief Set the m_distribution_parameter object of m_function.
-         *
-         * @param[in] new_distribution_parameter New parameter for StateAgeFunction.
-         */
+     * @brief Set the m_distribution_parameter object of m_function.
+     *
+     * @param[in] new_distribution_parameter New parameter for StateAgeFunction.
+     */
     void set_distribution_parameter(FP new_distribution_parameter)
     {
         m_function->set_distribution_parameter(new_distribution_parameter);
     }
 
     /**
-         * @brief Get the m_location object of m_function.
-         *
-         * @return ScalarType
-         */
+     * @brief Get the m_location object of m_function.
+     *
+     * @return ScalarType
+     */
     FP get_location() const
     {
         return m_function->get_location();
     }
 
     /**
-         * @brief Set the m_location object of m_function.
-         *
-         * @param[in] new_location New location for StateAgeFunction.
-         */
+     * @brief Set the m_location object of m_function.
+     *
+     * @param[in] new_location New location for StateAgeFunction.
+     */
     void set_location(FP new_location)
     {
         m_function->set_location(new_location);
     }
     /**
-         * @brief Get the m_scale object of m_function.
-         *
-         * @return ScalarType
-         */
+     * @brief Get the m_scale object of m_function.
+     *
+     * @return ScalarType
+     */
     FP get_scale() const
     {
         return m_function->get_scale();
     }
 
     /**
-         * @brief Set the m_scale object of m_function.
-         *
-         * @param[in] new_scale New scale for StateAgeFunction.
-         */
+     * @brief Set the m_scale object of m_function.
+     *
+     * @param[in] new_scale New scale for StateAgeFunction.
+     */
     void set_scale(FP new_scale)
     {
         m_function->set_scale(new_scale);
     }
 
-    /*
-         * @brief Get the m_support_max object of m_function.
-         *
-         * @param[in] dt Time step size at which function will be evaluated.
-         * @param[in] tol Tolerance used for cutting the support if the function value falls below.
-         * @return ScalarType m_support_max
-         */
+    /**
+     * @brief Get the m_support_max object of m_function.
+     *
+     * @param[in] dt Time step size at which function will be evaluated.
+     * @param[in] tol Tolerance used for cutting the support if the function value falls below.
+     * @return ScalarType m_support_max
+     */
     FP get_support_max(FP dt, FP tol = 1e-10) const
     {
         return m_function->get_support_max(dt, tol);
     }
 
     /**
-         * @brief Get the m_mean object of m_function.
-         *
-         * @param[in] dt Time step size used for the numerical integration.
-         * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance.
-         * @return ScalarType m_mean
-         */
+     * @brief Get the m_mean object of m_function.
+     *
+     * @param[in] dt Time step size used for the numerical integration.
+     * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance.
+     * @return ScalarType m_mean
+     */
     FP get_mean(FP dt = 1.0, FP tol = 1e-10) const
     {
         return m_function->get_mean(dt, tol);
