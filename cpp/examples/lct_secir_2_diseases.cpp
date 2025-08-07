@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Lena Ploetzke
+* Authors: Annika Jungklaus, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -22,18 +22,15 @@
 #include "lct_secir_2_diseases/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
-//#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/lct2d_infection_state.h"
-//#include "memilio/math/eigen.h"
 #include "memilio/utils/logging.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
-
 #include <vector>
 
 int main()
 {
-    // Simple example to demonstrate how to run a simulation using an LCT-SECIR model.
+    // Simple example to demonstrate how to run a simulation using an LCT-SECIR-2-DISEASE model.
     // One single AgeGroup/Category member is used here.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
     constexpr size_t NumExposed_1a = 1, NumInfectedNoSymptoms_1a = 1, NumInfectedSymptoms_1a = 1,
@@ -45,16 +42,13 @@ int main()
                      NumInfectedSevere_2b = 1, NumInfectedCritical_2b = 1;
     using InfState = mio::lsecir2d::InfectionState;
     using LctState = mio::LctInfectionState<
-        InfState, 3, NumExposed_1a, NumInfectedNoSymptoms_1a, NumInfectedSymptoms_1a, NumInfectedSevere_1a,
+        InfState, 1, NumExposed_1a, NumInfectedNoSymptoms_1a, NumInfectedSymptoms_1a, NumInfectedSevere_1a,
         NumInfectedCritical_1a, 1, 1, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
         NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b, NumInfectedSymptoms_1b,
         NumInfectedSevere_1b, NumInfectedCritical_1b, 1, 1, NumExposed_2b, NumInfectedNoSymptoms_2b,
         NumInfectedSymptoms_2b, NumInfectedSevere_2b, NumInfectedCritical_2b, 1>;
     using Model = mio::lsecir2d::Model<LctState>;
     Model model;
-
-    // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
-    // defined initial vector is used to initialize the LCT model.
 
     ScalarType tmax = 5;
 
@@ -96,9 +90,9 @@ int main()
     // This method of defining the initial values using a vector of vectors is not necessary, but should remind you
     // how the entries of the initial value vector relate to the defined template parameters of the model or the number
     // of subcompartments. It is also possible to define the initial values directly.
-    std::vector<std::vector<ScalarType>> initial_populations = {{0, 0, 0}, {0}, {0},    {0}, {0}, {0}, {9000}, {0}, {0},
-                                                                {0},       {0}, {0},    {0}, {0}, {0}, {0},    {0}, {0},
-                                                                {0},       {0}, {1000}, {0}, {0}, {0}, {0},    {0}};
+    std::vector<std::vector<ScalarType>> initial_populations = {{2000}, {0},   {0},   {0}, {0}, {0}, {0}, {0}, {0},
+                                                                {0},    {100}, {0},   {0}, {0}, {0}, {0}, {0}, {0},
+                                                                {0},    {0},   {100}, {0}, {0}, {0}, {0}, {0}};
 
     // Assert that initial_populations has the right shape.
     if (initial_populations.size() != (size_t)InfState::Count) {
@@ -157,5 +151,5 @@ int main()
                                       "   Da",  "   E2a", "   C2a", "   I2a", "   H2a", "   U2a", "   E1b",
                                       "   C1b", "   I1b", "   H1b", "   U1b", "   Rb",  "   Db",  "   E2b",
                                       "   C2b", "   I2b", "   H2b", "   U2b", "   Rab"},
-                                     7, 3);
+                                     6, 2);
 }

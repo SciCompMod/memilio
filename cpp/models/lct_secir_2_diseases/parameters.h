@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Lena Ploetzke
+* Authors: Annika Jungklaus, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,20 +25,16 @@
 #include "memilio/utils/parameter_set.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/uncertain_value.h"
-//#include "memilio/math/eigen.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-/*
-#include "memilio/math/eigen.h"
-#include "memilio/epidemiology/uncertain_matrix.h" */
 
 namespace mio
 {
 namespace lsecir2d
 {
 
-/**********************************************
+/*********************************************************
 * Define Parameters of the LCT-SECIHURD-2-DISEASES model *
-**********************************************/
+**********************************************************/
 
 /**
  * @brief Average time spent in the Exposed compartment for disease a.
@@ -474,7 +470,7 @@ class Parameters : public ParametersBase
 public:
     /**
      * @brief Constructor.
-     * @param num_groups The number of groups considered in the LCT model.
+     * @param num_groups The number of groups considered in the LCT2D model.
      */
     Parameters(size_t num_groups)
         : ParametersBase(num_groups)

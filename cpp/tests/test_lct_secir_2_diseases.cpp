@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Lena Ploetzke
+* Authors: Annika Jungklaus, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -68,7 +68,7 @@ TEST(TestLCTSecir2d, simulateDefault)
     }
 }
 
-/* Tests comparing the result for an LCT SECIR 2 DISEASE model with transmission prob. 0 for one disease 
+/* Tests comparing the result for an LCT SECIR 2 DISEASE model (with transmission prob. 0 for one disease and 2 age groups) 
     with the result of the equivalent LCT SECIR model. */
 // 1. Test: First infection for disease a (transmission prob. of disease b = 0)
 TEST(TestLCTSecir2d, compareWithLCTSecir1)
@@ -76,11 +76,11 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     using InfState2d = mio::lsecir2d::InfectionState;
     using LctState2d = mio::LctInfectionState<InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                               1, 1, 1, 1, 1>;
-    using Model_2d   = mio::lsecir2d::Model<LctState2d>;
+    using Model_2d   = mio::lsecir2d::Model<LctState2d, LctState2d>;
 
     using InfState_lct = mio::lsecir::InfectionState;
     using LctState_lct = mio::LctInfectionState<InfState_lct, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model_lct    = mio::lsecir::Model<LctState_lct>;
+    using Model_lct    = mio::lsecir::Model<LctState_lct, LctState_lct>;
 
     ScalarType t0   = 0;
     ScalarType tmax = 5;
@@ -115,7 +115,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.;
 
     mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
@@ -156,7 +156,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
@@ -208,7 +208,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
     using InfState2d = mio::lsecir2d::InfectionState;
     using LctState2d = mio::LctInfectionState<InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                               1, 1, 1, 1, 1>;
-    using Model_2d   = mio::lsecir2d::Model<LctState2d>;
+    using Model_2d   = mio::lsecir2d::Model<LctState2d, LctState2d>;
     ScalarType t0    = 0;
     ScalarType tmax  = 5;
     ScalarType dt    = 0.1;
@@ -242,7 +242,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
     model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
@@ -262,7 +262,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
 
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using Model    = mio::lsecir::Model<LctState, LctState>;
 
     // Initialization vector for LCT model.
     Eigen::VectorX<ScalarType> init_lct = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState::Count, 0);
@@ -287,7 +287,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
     model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
@@ -339,11 +339,11 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
     using InfState_2d = mio::lsecir2d::InfectionState;
     using LctState_2d = mio::LctInfectionState<InfState_2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                                1, 1, 1, 1, 1, 1>;
-    using Model_2d    = mio::lsecir2d::Model<LctState_2d>;
+    using Model_2d    = mio::lsecir2d::Model<LctState_2d, LctState_2d>;
 
     using InfState_lct = mio::lsecir::InfectionState;
     using LctState_lct = mio::LctInfectionState<InfState_lct, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model_lct    = mio::lsecir::Model<LctState_lct>;
+    using Model_lct    = mio::lsecir::Model<LctState_lct, LctState_lct>;
 
     ScalarType t0   = 0;
     ScalarType tmax = 5;
@@ -378,7 +378,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
     model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.;
 
     mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
@@ -419,7 +419,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
     model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
@@ -471,7 +471,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     using InfState2d = mio::lsecir2d::InfectionState;
     using LctState2d = mio::LctInfectionState<InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                               1, 1, 1, 1, 1>;
-    using Model_2d   = mio::lsecir2d::Model<LctState2d>;
+    using Model_2d   = mio::lsecir2d::Model<LctState2d, LctState2d>;
     ScalarType t0    = 0;
     ScalarType tmax  = 5;
     ScalarType dt    = 0.1;
@@ -505,7 +505,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
@@ -525,7 +525,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
 
     using InfState = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using Model    = mio::lsecir::Model<LctState, LctState>;
 
     // Initialization vector for LCT model.
     Eigen::VectorX<ScalarType> init_lct = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState::Count, 0);
@@ -550,7 +550,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
 
     mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
 
     model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;

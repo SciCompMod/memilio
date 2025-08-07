@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Lena Ploetzke
+* Authors: Annika Jungklaus, Lena Ploetzke
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -33,7 +33,7 @@ namespace lsecir2d
 enum class InfectionState
 {
     Susceptible = 0,
-    // State_[Infection number][disease]
+    // Notation: State_[Infection number][disease]
     // first infection with disease a
     Exposed_1a            = 1,
     InfectedNoSymptoms_1a = 2,
@@ -48,8 +48,6 @@ enum class InfectionState
     InfectedSymptoms_2a   = 10,
     InfectedSevere_2a     = 11,
     InfectedCritical_2a   = 12,
-    // R and D for disease a
-
     // first infection with disease b
     Exposed_1b            = 13,
     InfectedNoSymptoms_1b = 14,
@@ -64,8 +62,6 @@ enum class InfectionState
     InfectedSymptoms_2b   = 22,
     InfectedSevere_2b     = 23,
     InfectedCritical_2b   = 24,
-    // R and D for disease b
-
     // Recovered from both diseases
     Recovered_ab = 25,
     Count        = 26

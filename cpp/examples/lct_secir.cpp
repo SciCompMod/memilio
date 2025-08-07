@@ -42,7 +42,7 @@ int main()
     using InfState                       = mio::lsecir::InfectionState;
     using LctState = mio::LctInfectionState<InfState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
                                             NumInfectedSevere, NumInfectedCritical, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using Model    = mio::lsecir::Model<LctState, LctState>;
     Model model;
 
     // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
@@ -61,7 +61,7 @@ int main()
     model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.1;
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
     // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
 
