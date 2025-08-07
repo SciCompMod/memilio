@@ -28,7 +28,7 @@ from matplotlib.markers import MarkerStyle
 from matplotlib.transforms import Affine2D
 
 
-def read_groundtruth(data_dir, groundtruth_exponent, gregory_order):
+def read_groundtruth_ide(data_dir, groundtruth_exponent, gregory_order):
     """ Read groundtruth from data. We define the groundtruth as the results obtained by the ODE model with timestep dt=1e-6.
 
     @param[in] data_dir Directory where h5 files are stored.
@@ -100,6 +100,20 @@ def read_groundtruth_ode(data_dir, groundtruth_exponent):
     return results
 
 
+def read_groundtruth(result_dir, groundtruth_exponent, gregory_order_groundtruth=3, groundtruth_ode=True):
+
+    # if "ode" in result_dir.split("/")[-2]:
+    #     return read_groundtruth_ode(result_dir, groundtruth_exponent)
+
+    # if "ide" in result_dir.split("/")[-2]:
+    if not groundtruth_ode:
+        return read_groundtruth_ide(
+            result_dir, groundtruth_exponent, gregory_order_groundtruth)
+
+    return read_groundtruth_ode(
+        result_dir, groundtruth_exponent)
+
+
 def read_data(data_dir, exponents_ide, gregory_order):
     """ Read data into a dict, where the keys correspond to the respective model.
     At the moment we are only storing results of the IDE model here. There, we have an array that contains all results
@@ -167,7 +181,8 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
     return np.array(errors)
 
 
-def plot_convergence(errors, timesteps_ide, gregory_order, save_dir=""):
+def plot_convergence(errors_all_gregory_orders, timesteps_ide,
+                     gregory_orders_simulation, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
@@ -179,17 +194,23 @@ def plot_convergence(errors, timesteps_ide, gregory_order, save_dir=""):
     # Define subplots and labels.
 
     num_plots = 3
-    fig, axs = plt.subplots(1, num_plots, sharex=True, figsize=(10, 8))
-    secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
-    labels = [f"Gregory order {gregory_order}", r"$\mathcal{O}(\Delta t)$"]
+    num_plotted_results = len(gregory_orders_simulation)
 
-    # Define colors, we use helmholtzdarkblue and helmholtzclaim.
-    colors = ["C0", "limegreen"]
+    fig, axs = plt.subplots(num_plots, 1, sharex=True, figsize=(6, 8))
+    secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
+    labels = [
+        f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
+    labels.append(r"$\mathcal{O}(\Delta t)$")
+
+    # Define colors.
+    colors = [plt.cm.viridis(x)
+              for x in np.linspace(0, 1, num_plotted_results)]
 
     for i in range(num_plots):
-        # Plot results.
-        axs[i].plot(timesteps_ide,
-                    errors[:, i], '-o', color=colors[1])
+        for j in range(len(gregory_orders_simulation)):
+            # Plot results.
+            axs[i].plot(timesteps_ide,
+                        errors_all_gregory_orders[j][:, i], '-o', color=colors[j])
 
         # Plot comparison line for linear convergence.
         comparison = [dt for dt in timesteps_ide]
@@ -240,8 +261,23 @@ def compute_order_of_convergence(errors, timesteps_ide):
 
 def main():
 
-    dir_name = "messina_model_extended_test"
+    groundtruth_exponent = 6
+    gregory_order_groundtruth = 3
+
+    abstol_exponent = 10
+    reltol_exponent = 5
+
+    # dir_name = f"exponential_experiments_23072025/exponential_paper_example_dt_ode=1e-{groundtruth_exponent}_abstol=1e-{abstol_exponent}_reltol={reltol_exponent}"
+    # dir_name = f"detailed_init_exponential_dt_ode=1e-{groundtruth_exponent}"
+    dir_name = f"exponential_paper_example_dt_ode=1e-{groundtruth_exponent}"
     print(dir_name)
+
+    groundtruth_ode = True
+
+    gregory_orders_simulation = [1, 2, 3]
+    ide_exponents = [0, 1, 2, 3, 4]
+
+    ###################################################################################################################
 
     # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
     result_dir = os.path.join(os.path.dirname(
@@ -251,23 +287,18 @@ def main():
     plot_dir = os.path.join(os.path.dirname(
         __file__),  f"../plots/{dir_name}/")
 
-    groundtruth_exponent = 4
-    gregory_order_groundtruth = 3
-
-    gregory_orders_simulation = [1, 2, 3]
-
     # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-    ide_exponents = [1, 2, 3]
+
     # Calculate time steps resulting from exponents_ide.
     timesteps_ide = []
     for exp in ide_exponents:
         timesteps_ide.append(pow(10, -exp))
 
     # # Read groundtruth.
-    # groundtruth = read_groundtruth_ode(
-    #     result_dir, groundtruth_exponent)
     groundtruth = read_groundtruth(
-        result_dir, groundtruth_exponent, gregory_order_groundtruth)
+        result_dir, groundtruth_exponent, gregory_order_groundtruth, groundtruth_ode)
+
+    errors_all_gregory_orders = []
 
     for gregory_order_simulation in gregory_orders_simulation:
         # Read results from IDE simulations.
@@ -278,17 +309,24 @@ def main():
         errors = compute_errors(
             groundtruth, results, groundtruth_exponent, timesteps_ide, gregory_order_simulation)
 
-        # # Plot convergence of all compartments/flows separately.
-        # plot_convergence(relerrors_l2, timesteps_ide,
-        #                  gregory_order_simulation, plot_dir)
+        errors_all_gregory_orders.append(errors)
+
+        print()
+        print(f"Gregory order {gregory_order_simulation}")
+        print("Errors: ")
+        print(errors[:, :])
 
         # Determine order of convergence
         order = compute_order_of_convergence(
             errors, timesteps_ide)
 
         print(
-            f'Orders of convergence (Gregory order {gregory_order_simulation}): ')
+            f"Orders of convergence: ")
         print(order)
+
+    # Plot convergence of all compartments separately.
+    plot_convergence(errors_all_gregory_orders, timesteps_ide,
+                     gregory_orders_simulation, plot_dir)
 
 
 if __name__ == '__main__':

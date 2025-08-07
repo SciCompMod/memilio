@@ -34,8 +34,9 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-ScalarType t0   = 0.;
-ScalarType tmax = 1.;
+ScalarType t0_ode = 0.;
+ScalarType t0_ide = 1.;
+ScalarType tmax   = 2.;
 
 ScalarType TimeInfected = 2.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
@@ -61,11 +62,9 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
     ScalarType dt_ode = pow(10, -ode_exponent);
 
-    mio::log_info("Simulating ODE-SIR; t={} ... {} with dt = {}.", t0, tmax, dt_ode);
+    mio::log_info("Simulating ODE-SIR; t={} ... {} with dt = {}.", t0_ode, tmax, dt_ode);
 
     mio::osir::Model<ScalarType> model(num_agegroups);
-
-    // ScalarType total_population = 10000;
 
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Susceptible}] = S0;
     model.populations[{mio::AgeGroup(0), mio::osir::InfectionState::Infected}]    = I0;
@@ -81,11 +80,11 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
     model.check_constraints();
 
     std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>(
             1e-10, 1e-5, dt_ode, dt_ode);
     // integrator->set_dt_min(dt_ode);
     // integrator->set_dt_max(dt_ode);
-    auto sir = simulate(t0, tmax, dt_ode, model, integrator);
+    auto sir = simulate(t0_ode, tmax, dt_ode, model, integrator);
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -111,11 +110,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
     for (ScalarType ide_exponent : ide_exponents) {
 
-        ScalarType dt = pow(10, -ide_exponent);
-        std::cout << "Simulation with " << dt << std::endl;
+        ScalarType dt_ide = pow(10, -ide_exponent);
+        std::cout << "Simulation with " << dt_ide << std::endl;
 
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
-        // ScalarType total_population = 0.;
 
         if (result_groundtruth.get_num_time_points() == 0) {
             std::cout << "No groundtruth was given.\n";
@@ -123,28 +121,35 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         else {
             std::cout << "Initializing with given groundtruth.\n";
 
-            // Initialize first (gregory_order-1) time points based on groundtruth.
+            // Initialize time points before t0_ide based on groundtruth.
             ScalarType dt_groundtruth = result_groundtruth.get_time(1) - result_groundtruth.get_time(0);
             // std::cout << "dt groundtruth: " << dt_groundtruth << std::endl;
-            size_t groundtruth_index = size_t(dt / dt_groundtruth);
+            size_t groundtruth_index_factor = size_t(dt_ide / dt_groundtruth);
             // std::cout << "groundtruth_index: " << groundtruth_index << std::endl;
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
-            vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
-                result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Susceptible];
 
-            init_populations.add_time_point(0, vec_init);
-            while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
+            std::vector<size_t> compartments = {(size_t)mio::isir::InfectionState::Susceptible,
+                                                (size_t)mio::isir::InfectionState::Infected,
+                                                (size_t)mio::isir::InfectionState::Recovered};
+
+            // Add values to init_populations.
+            for (size_t compartment : compartments) {
+                vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
+            }
+            init_populations.add_time_point(t0_ode, vec_init);
+
+            while (init_populations.get_last_time() < t0_ide - 1e-10) {
                 // std::cout << size_t(init_populations.get_num_time_points() * groundtruth_index) << std::endl;
                 vec_init[(size_t)mio::isir::InfectionState::Susceptible] = result_groundtruth.get_value(
                     size_t(init_populations.get_num_time_points() *
-                           groundtruth_index))[(size_t)mio::isir::InfectionState::Susceptible];
-                init_populations.add_time_point(init_populations.get_last_time() + dt, vec_init);
+                           groundtruth_index_factor))[(size_t)mio::isir::InfectionState::Susceptible];
+                init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
             }
         }
 
         // Initialize model.
-        mio::isir::ModelMessina model(std::move(init_populations), total_population, gregory_order);
+        mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order);
 
         mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
         mio::StateAgeFunctionWrapper dist(exp);
@@ -161,7 +166,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         model.parameters.get<mio::isir::beta>() = beta;
         // Carry out simulation.
-        mio::isir::SimulationMessina sim(model, dt);
+        mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
         sim.advance_messina(tmax);
 
         if (!save_dir.empty()) {
@@ -184,21 +189,22 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
 int main()
 {
+    // Compute groundtruth with ODE model.
+    ScalarType ode_exponent = 6;
+
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-    std::string save_dir = "../../simulation_results/exponential_paper_example_dt_ode=1e-6/";
+    std::string save_dir =
+        fmt::format("../../simulation_results/detailed_init_exponential_rkf78_dt_ode=1e-{:.0f}/", ode_exponent);
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
-
-    // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 6;
 
     auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 
     // Do IDE simulations.
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+    std::vector<ScalarType> ide_exponents = {2};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (size_t gregory_order : gregory_orders) {

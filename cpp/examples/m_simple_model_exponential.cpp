@@ -36,7 +36,7 @@ namespace params
 size_t num_agegroups = 1;
 
 ScalarType t0   = 0.;
-ScalarType tmax = 1.;
+ScalarType tmax = 3.;
 
 ScalarType TimeInfected = 2.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
@@ -135,9 +135,9 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
-                result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Susceptible];
+                result_groundtruth.get_value(t0)[(size_t)mio::isir::InfectionState::Susceptible];
 
-            init_populations.add_time_point(0, vec_init);
+            init_populations.add_time_point(t0, vec_init);
             while (init_populations.get_last_time() < (gregory_order - 1) * dt - 1e-10) {
                 // std::cout << size_t(init_populations.get_num_time_points() * groundtruth_index) << std::endl;
                 vec_init[(size_t)mio::isir::InfectionState::Susceptible] = result_groundtruth.get_value(
@@ -200,7 +200,7 @@ int main()
     // std::vector<int> abs_tol_exponents = {9, 10, 11};
     // std::vector<int> rel_tol_exponents = {5, 6, 7};
 
-    std::vector<int> ode_exponents     = {5};
+    std::vector<int> ode_exponents     = {6};
     std::vector<int> abs_tol_exponents = {10};
     std::vector<int> rel_tol_exponents = {5};
 
@@ -208,9 +208,8 @@ int main()
         for (int abs_tol_exponent : abs_tol_exponents) {
             for (int rel_tol_exponent : rel_tol_exponents) {
 
-                std::string save_dir = fmt::format(
-                    "../../simulation_results/exponential_paper_example_dt_ode=1e-{}_abstol=1e-{}_reltol={}/",
-                    std::to_string(ode_exponent), std::to_string(abs_tol_exponent), std::to_string(rel_tol_exponent));
+                std::string save_dir = fmt::format("../../simulation_results/exponential_paper_example_dt_ode=1e-{}/",
+                                                   std::to_string(ode_exponent));
                 std::cout << "Save dir: " << save_dir << std::endl;
                 // Make folder if not existent yet.
                 boost::filesystem::path dir(save_dir);
@@ -220,7 +219,7 @@ int main()
 
                 // Do IDE simulations.
 
-                std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+                std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
                 std::vector<size_t> gregory_orders    = {1, 2, 3};
 
                 for (size_t gregory_order : gregory_orders) {

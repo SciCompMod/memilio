@@ -168,7 +168,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
 int main()
 {
-    std::string result_dir = "../../simulation_results/messina_model_extended_detailed_init_finite_diff_order=4/";
+    std::string result_dir = "../../simulation_results/messina_model_extended_detailed_init_test/";
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
@@ -176,19 +176,19 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {6};
+    std::vector<ScalarType> ide_exponents_groundtruth = {4};
 
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
         simulate_ide(ide_exponents_groundtruth, gregory_order_groundtruth, result_dir);
 
-    // Simulate with larger timesteps and use result_groundtruth for initialization.
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
-    std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+    // // Simulate with larger timesteps and use result_groundtruth for initialization.
+    // std::vector<size_t> gregory_orders    = {1, 2, 3};
+    // std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
 
-    for (size_t gregory_order : gregory_orders) {
-        std::cout << "Using Gregory order = " << gregory_order << std::endl;
-        mio::IOResult<mio::TimeSeries<ScalarType>> result =
-            simulate_ide(ide_exponents, gregory_order, result_dir, result_groundtruth.value());
-    }
+    // for (size_t gregory_order : gregory_orders) {
+    //     std::cout << "Using Gregory order = " << gregory_order << std::endl;
+    //     mio::IOResult<mio::TimeSeries<ScalarType>> result =
+    //         simulate_ide(ide_exponents, gregory_order, result_dir, result_groundtruth.value());
+    // }
 }
