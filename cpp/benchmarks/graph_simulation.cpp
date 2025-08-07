@@ -27,9 +27,9 @@
 
 const std::string config_path = "../../benchmarks/graph_simulation.config";
 
-mio::osecirvvs::Model<double> create_model(size_t num_agegroups, const double tmax)
+mio::osecirvvs::Model<ScalarType> create_model(size_t num_agegroups, const ScalarType tmax)
 {
-    mio::osecirvvs::Model<double> model(num_agegroups);
+    mio::osecirvvs::Model<ScalarType> model(num_agegroups);
     const size_t pop_total = 10000;
     const size_t init_val  = 20;
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
@@ -55,9 +55,9 @@ mio::osecirvvs::Model<double> create_model(size_t num_agegroups, const double tm
         model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalPartialImmunity}]             = init_val;
         model.populations[{i, mio::osecirvvs::InfectionState::InfectedCriticalImprovedImmunity}]            = init_val;
         model.populations[{i, mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity}] =
-            static_cast<double>(pop_total) / 3;
+            static_cast<ScalarType>(pop_total) / 3;
         model.populations[{i, mio::osecirvvs::InfectionState::SusceptiblePartialImmunity}] =
-            static_cast<double>(pop_total) / 3;
+            static_cast<ScalarType>(pop_total) / 3;
         model.populations[{i, mio::osecirvvs::InfectionState::DeadNaive}]            = 0;
         model.populations[{i, mio::osecirvvs::InfectionState::DeadPartialImmunity}]  = 0;
         model.populations[{i, mio::osecirvvs::InfectionState::DeadImprovedImmunity}] = 0;
@@ -65,48 +65,48 @@ mio::osecirvvs::Model<double> create_model(size_t num_agegroups, const double tm
             {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, pop_total);
     }
 
-    const size_t vacc_first                                              = 5;
-    const size_t vacc_full                                               = 5;
-    model.parameters.get<mio::osecirvvs::ICUCapacity<double>>()          = 100;
-    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<double>>() = 0.0143;
-    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<double>>().array().setConstant(vacc_first);
-    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().resize(mio::SimulationDay(tmax));
-    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<double>>().array().setConstant(vacc_full);
+    const size_t vacc_first                                                  = 5;
+    const size_t vacc_full                                                   = 5;
+    model.parameters.get<mio::osecirvvs::ICUCapacity<ScalarType>>()          = 100;
+    model.parameters.get<mio::osecirvvs::TestAndTraceCapacity<ScalarType>>() = 0.0143;
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyPartialVaccinations<ScalarType>>().array().setConstant(vacc_first);
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().resize(mio::SimulationDay(tmax));
+    model.parameters.get<mio::osecirvvs::DailyFullVaccinations<ScalarType>>().array().setConstant(vacc_full);
 
-    auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<double>>();
+    auto& contacts       = model.parameters.get<mio::osecirvvs::ContactPatterns<ScalarType>>();
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime<double>(5.0));
+    contact_matrix[0].add_damping(0.3, mio::SimulationTime<ScalarType>(5.0));
 
     for (mio::AgeGroup i = 0; i < (mio::AgeGroup)num_agegroups; i++) {
         //times
-        model.parameters.get<mio::osecirvvs::TimeExposed<double>>()[i]            = 3.33;
-        model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms<double>>()[i] = 1.87;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<double>>()[i]   = 7;
-        model.parameters.get<mio::osecirvvs::TimeInfectedSevere<double>>()[i]     = 6;
-        model.parameters.get<mio::osecirvvs::TimeInfectedCritical<double>>()[i]   = 7;
+        model.parameters.get<mio::osecirvvs::TimeExposed<ScalarType>>()[i]            = 3.33;
+        model.parameters.get<mio::osecirvvs::TimeInfectedNoSymptoms<ScalarType>>()[i] = 1.87;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSymptoms<ScalarType>>()[i]   = 7;
+        model.parameters.get<mio::osecirvvs::TimeInfectedSevere<ScalarType>>()[i]     = 6;
+        model.parameters.get<mio::osecirvvs::TimeInfectedCritical<ScalarType>>()[i]   = 7;
 
         //probabilities
-        model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<double>>()[i]  = 0.15;
-        model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.5;
-        model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.0;
-        model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.4;
-        model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.2;
-        model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms<double>>()[i]         = 0.1;
-        model.parameters.get<mio::osecirvvs::CriticalPerSevere<double>>()[i]                 = 0.1;
-        model.parameters.get<mio::osecirvvs::DeathsPerCritical<double>>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirvvs::TransmissionProbabilityOnContact<ScalarType>>()[i]  = 0.15;
+        model.parameters.get<mio::osecirvvs::RelativeTransmissionNoSymptoms<ScalarType>>()[i]    = 0.5;
+        model.parameters.get<mio::osecirvvs::RiskOfInfectionFromSymptomatic<ScalarType>>()[i]    = 0.0;
+        model.parameters.get<mio::osecirvvs::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[i] = 0.4;
+        model.parameters.get<mio::osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]    = 0.2;
+        model.parameters.get<mio::osecirvvs::SeverePerInfectedSymptoms<ScalarType>>()[i]         = 0.1;
+        model.parameters.get<mio::osecirvvs::CriticalPerSevere<ScalarType>>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirvvs::DeathsPerCritical<ScalarType>>()[i]                 = 0.1;
 
-        model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<double>>()[i]                     = 0.8;
-        model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<double>>()[i]                    = 0.331;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<double>>()[i]            = 0.65;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<double>>()[i]           = 0.243;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[i]  = 0.1;
-        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[i] = 0.091;
-        model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[i]                           = 0.9;
+        model.parameters.get<mio::osecirvvs::ReducExposedPartialImmunity<ScalarType>>()[i]                     = 0.8;
+        model.parameters.get<mio::osecirvvs::ReducExposedImprovedImmunity<ScalarType>>()[i]                    = 0.331;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsPartialImmunity<ScalarType>>()[i]            = 0.65;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSymptomsImprovedImmunity<ScalarType>>()[i]           = 0.243;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadPartialImmunity<ScalarType>>()[i]  = 0.1;
+        model.parameters.get<mio::osecirvvs::ReducInfectedSevereCriticalDeadImprovedImmunity<ScalarType>>()[i] = 0.091;
+        model.parameters.get<mio::osecirvvs::ReducTimeInfectedMild<ScalarType>>()[i]                           = 0.9;
     }
-    model.parameters.get<mio::osecirvvs::Seasonality<double>>() = 0.2;
+    model.parameters.get<mio::osecirvvs::Seasonality<ScalarType>>() = 0.2;
     return model;
 }
 
@@ -115,10 +115,10 @@ auto create_simulation()
 {
     auto cfg = mio::benchmark::GraphConfig::initialize(config_path);
 
-    mio::osecirvvs::Model<double> model = create_model(cfg.num_agegroups, cfg.t_max);
+    mio::osecirvvs::Model<ScalarType> model = create_model(cfg.num_agegroups, cfg.t_max);
 
-    mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::osecirvvs::Model<double>>>,
-               mio::MobilityEdge<double>>
+    mio::Graph<mio::SimulationNode<ScalarType, mio::Simulation<ScalarType, mio::osecirvvs::Model<ScalarType>>>,
+               mio::MobilityEdge<ScalarType>>
         g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
@@ -130,9 +130,9 @@ auto create_simulation()
         for (size_t county_idx_j = 0; county_idx_j < g.nodes().size(); ++county_idx_j) {
             if (county_idx_i == county_idx_j)
                 continue;
-            g.add_edge(
-                county_idx_i, county_idx_j,
-                Eigen::VectorXd::Constant((size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
+            g.add_edge(county_idx_i, county_idx_j,
+                       Eigen::VectorX<ScalarType>::Constant(
+                           (size_t)mio::osecirvvs::InfectionState::Count * cfg.num_agegroups, 0.01));
         }
     }
 
@@ -163,21 +163,21 @@ void graph_sim_secirvvs(::benchmark::State& state)
 
 // register functions as a benchmarks and set a name
 // mitigate influence of cpu scaling
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<double>)->Name("Dummy 1/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<double>)->Name("Dummy 2/3");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<double>)->Name("Dummy 3/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 1/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 2/3");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
-BENCHMARK_TEMPLATE(init_benchmark, mio::RKIntegratorCore<double>)->Name("Initialize Graph without simulation");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore<double>)
+BENCHMARK_TEMPLATE(init_benchmark, mio::RKIntegratorCore<ScalarType>)->Name("Initialize Graph without simulation");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::EulerIntegratorCore<ScalarType>)
     ->Name("Graph Simulation - simple explicit euler");
-BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<double>)->Name("Graph Simulation - adapt_rk");
+BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::RKIntegratorCore<ScalarType>)->Name("Graph Simulation - adapt_rk");
 BENCHMARK_TEMPLATE(graph_sim_secirvvs,
-                   mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>)
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("Graph Simulation - rk_ck54 (boost)");
 // BENCHMARK_TEMPLATE(graph_sim_secirvvs, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
 // ->Name("Graph Simulation - rk_dopri5 (boost)"); // TODO: reenable once boost bug is fixed
 BENCHMARK_TEMPLATE(graph_sim_secirvvs,
-                   mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>)
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("Graph Simulation - rkf78 (boost)");
 // run all benchmarks
 BENCHMARK_MAIN();

@@ -35,23 +35,25 @@ void simulation(::benchmark::State& state)
 
     for (auto _ : state) {
         // This code gets timed
-        std::shared_ptr<mio::OdeIntegratorCore<double>> I =
+        std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> I =
             std::make_shared<Integrator>(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
         simulate(cfg.t0, cfg.t_max, cfg.dt, model, I);
     }
 }
 
 // dummy runs to avoid large effects of cpu scaling on times of actual benchmarks
-BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<double>)->Name("Dummy 1/3");
-BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<double>)->Name("Dummy 2/3");
-BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<double>)->Name("Dummy 3/3");
+BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 1/3");
+BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 2/3");
+BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
-BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<double>)->Name("simulate SecirModel adapt_rk");
-BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>)
+BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore<ScalarType>)->Name("simulate SecirModel adapt_rk");
+BENCHMARK_TEMPLATE(simulation,
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("simulate SecirModel boost rk_ck54");
 // BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
 //     ->Name("simulate SecirModel boost rk_dopri5"); // TODO: reenable once boost bug is fixed
-BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>)
+BENCHMARK_TEMPLATE(simulation,
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("simulate SecirModel boost rkf78");
 // run all benchmarks
 BENCHMARK_MAIN();

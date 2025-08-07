@@ -32,19 +32,19 @@ namespace mio
 namespace benchmark
 {
 
-using FlowModel = ::mio::oseir::Model<double>;
+using FlowModel = ::mio::oseir::Model<ScalarType>;
 
 using namespace oseir;
 
 // For comparison benchmarks, the ODE-SEIR model has been adapted into
 // a compartmental model that does not rely on flows.
 class FlowlessModel
-    : public CompartmentalModel<double, oseir::InfectionState, Populations<double, AgeGroup, oseir::InfectionState>,
-                                oseir::Parameters<double>>
+    : public CompartmentalModel<ScalarType, oseir::InfectionState,
+                                Populations<ScalarType, AgeGroup, oseir::InfectionState>, oseir::Parameters<ScalarType>>
 {
-    using Base =
-        CompartmentalModel<double, oseir::InfectionState, mio::Populations<double, AgeGroup, oseir::InfectionState>,
-                           oseir::Parameters<double>>;
+    using Base = CompartmentalModel<ScalarType, oseir::InfectionState,
+                                    mio::Populations<ScalarType, AgeGroup, oseir::InfectionState>,
+                                    oseir::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(int num_agegroups)
@@ -52,8 +52,9 @@ public:
     {
     }
 
-    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    void get_derivatives(Eigen::Ref<const Eigen::VectorX<ScalarType>> pop,
+                         Eigen::Ref<const Eigen::VectorX<ScalarType>> y, ScalarType t,
+                         Eigen::Ref<Eigen::VectorX<ScalarType>> dydt) const override
     {
         auto& params                     = this->parameters;
         const Index<AgeGroup> age_groups = reduce_index<Index<AgeGroup>>(this->populations.size());
@@ -71,19 +72,19 @@ public:
                 size_t Ij = this->populations.get_flat_index({j, InfectionState::Infected});
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
-                const double Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
-                const double coeffStoE =
-                    params.template get<ContactPatterns<double>>().get_cont_freq_mat().get_matrix_at(
-                        SimulationTime<double>(t))(i.get(), j.get()) *
-                    params.template get<TransmissionProbabilityOnContact<double>>()[i] * Nj_inv;
+                const ScalarType Nj_inv = 1.0 / (pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj]);
+                const ScalarType coeffStoE =
+                    params.template get<ContactPatterns<ScalarType>>().get_cont_freq_mat().get_matrix_at(
+                        SimulationTime<ScalarType>(t))(i.get(), j.get()) *
+                    params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i] * Nj_inv;
 
                 dydt[Si] -= y[Si] * pop[Ij] * coeffStoE;
                 dydt[Ei] += y[Si] * pop[Ij] * coeffStoE;
             }
 
-            dydt[Ii] += (1.0 / params.get<TimeExposed<double>>()[i]) * y[Ei];
-            dydt[Ii] -= (1.0 / params.get<TimeInfected<double>>()[i]) * y[Ii];
-            dydt[Ri] = (1.0 / params.get<TimeInfected<double>>()[i]) * y[Ii];
+            dydt[Ii] += (1.0 / params.get<TimeExposed<ScalarType>>()[i]) * y[Ei];
+            dydt[Ii] -= (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
+            dydt[Ri] = (1.0 / params.get<TimeInfected<ScalarType>>()[i]) * y[Ii];
         }
     }
 };
@@ -91,8 +92,8 @@ public:
 template <class Model>
 void setup_model(Model& model)
 {
-    const double total_population = 10000.0;
-    const auto num_groups         = model.parameters.get_num_groups();
+    const ScalarType total_population = 10000.0;
+    const auto num_groups             = model.parameters.get_num_groups();
     for (AgeGroup i = 0; i < num_groups; i++) {
         model.populations[{i, oseir::InfectionState::Exposed}]   = 100.0 / static_cast<size_t>(num_groups);
         model.populations[{i, oseir::InfectionState::Infected}]  = 100.0 / static_cast<size_t>(num_groups);
@@ -103,11 +104,11 @@ void setup_model(Model& model)
             model.populations[{i, oseir::InfectionState::Infected}] -
             model.populations[{i, oseir::InfectionState::Recovered}];
     }
-    model.parameters.template set<mio::oseir::TimeExposed<double>>(5.2);
-    model.parameters.template set<mio::oseir::TimeInfected<double>>(6);
-    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
-    mio::ContactMatrixGroup<double>& contact_matrix =
-        model.parameters.template get<mio::oseir::ContactPatterns<double>>();
+    model.parameters.template set<mio::oseir::TimeExposed<ScalarType>>(5.2);
+    model.parameters.template set<mio::oseir::TimeInfected<ScalarType>>(6);
+    model.parameters.template set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::oseir::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(10.0);
 }
 
@@ -126,10 +127,10 @@ void flowless_sim(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::OdeIntegratorCore<double>> I =
-        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<double> results(static_cast<size_t>(Model::Compartments::Count));
+    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -149,10 +150,10 @@ void flow_sim_comp_only(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::OdeIntegratorCore<double>> I =
-        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<double> results(static_cast<size_t>(Model::Compartments::Count));
+    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
         // This code gets timed
@@ -172,10 +173,10 @@ void flow_sim(::benchmark::State& state)
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
     // create simulation
-    std::shared_ptr<mio::OdeIntegratorCore<double>> I =
-        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+    std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
             cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
-    mio::TimeSeries<double> results(static_cast<size_t>(Model::Compartments::Count));
+    mio::TimeSeries<ScalarType> results(static_cast<size_t>(Model::Compartments::Count));
     // run benchmark
     for (auto _ : state) {
         // This code gets timed

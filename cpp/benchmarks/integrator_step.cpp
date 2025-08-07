@@ -36,13 +36,13 @@ void integrator_step(::benchmark::State& state)
     //auto cfg = mio::benchmark::IntegratorStepConfig::initialize();
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
     // set deriv function and integrator
-    mio::DerivFunction<double> f = [model](Eigen::Ref<const Eigen::VectorXd> x, double s,
-                                           Eigen::Ref<Eigen::VectorXd> dxds) {
+    mio::DerivFunction<ScalarType> f = [model](Eigen::Ref<const Eigen::VectorX<ScalarType>> x, ScalarType s,
+                                               Eigen::Ref<Eigen::VectorX<ScalarType>> dxds) {
         model.eval_right_hand_side(x, x, s, dxds);
     };
     auto I = Integrator(cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
 
-    double t, dt;
+    ScalarType t, dt;
     for (auto _ : state) {
         // This code gets timed
         t  = cfg.t_init;
@@ -52,18 +52,18 @@ void integrator_step(::benchmark::State& state)
 }
 
 // dummy runs to avoid large effects of cpu scaling on times of actual benchmarks
-BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<double>)->Name("Dummy 1/3");
-BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<double>)->Name("Dummy 2/3");
-BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<double>)->Name("Dummy 3/3");
+BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 1/3");
+BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 2/3");
+BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<ScalarType>)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
-BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<double>)->Name("simulate SecirModel adapt_rk");
+BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore<ScalarType>)->Name("simulate SecirModel adapt_rk");
 BENCHMARK_TEMPLATE(integrator_step,
-                   mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>)
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("simulate SecirModel boost rk_ck54");
 // BENCHMARK_TEMPLATE(integrator_step, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
 // ->Name("simulate SecirModel boost rk_dopri5"); // TODO: reenable once boost bug is fixed
 BENCHMARK_TEMPLATE(integrator_step,
-                   mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>)
+                   mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>)
     ->Name("simulate SecirModel boost rkf78");
 // run all benchmarks
 BENCHMARK_MAIN();

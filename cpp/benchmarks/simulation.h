@@ -32,7 +32,7 @@ namespace benchmark
 /// @brief parameters for simulation benchmark
 struct SimulationConfig {
     int num_agegroups;
-    double t0, t_max, dt, abs_tol, rel_tol, dt_min, dt_max;
+    ScalarType t0, t_max, dt, abs_tol, rel_tol, dt_min, dt_max;
     /**
      * @brief creates configuration with default parameters for a secir model
      * @param num_agegroups number of agegroups
@@ -46,8 +46,8 @@ struct SimulationConfig {
                                 0.5,
                                 1e-10,
                                 1e-5,
-                                std::numeric_limits<double>::min(),
-                                std::numeric_limits<double>::max()};
+                                std::numeric_limits<ScalarType>::min(),
+                                std::numeric_limits<ScalarType>::max()};
     }
     /**
      * @brief reads configuration from json file
@@ -69,13 +69,13 @@ struct SimulationConfig {
     {
         auto obj              = io.expect_object("bench_simulation");
         auto num_agegroups_io = obj.expect_element("num_agegroups", mio::Tag<int>{});
-        auto t_io             = obj.expect_element("t0", mio::Tag<double>{});
-        auto t_max_io         = obj.expect_element("t_max", mio::Tag<double>{});
-        auto dt_io            = obj.expect_element("dt", mio::Tag<double>{});
-        auto abs_tol_io       = obj.expect_element("abs_tol", mio::Tag<double>{});
-        auto rel_tol_io       = obj.expect_element("rel_tol", mio::Tag<double>{});
-        auto dt_min_io        = obj.expect_element("dt_min", mio::Tag<double>{});
-        auto dt_max_io        = obj.expect_element("dt_max", mio::Tag<double>{});
+        auto t_io             = obj.expect_element("t0", mio::Tag<ScalarType>{});
+        auto t_max_io         = obj.expect_element("t_max", mio::Tag<ScalarType>{});
+        auto dt_io            = obj.expect_element("dt", mio::Tag<ScalarType>{});
+        auto abs_tol_io       = obj.expect_element("abs_tol", mio::Tag<ScalarType>{});
+        auto rel_tol_io       = obj.expect_element("rel_tol", mio::Tag<ScalarType>{});
+        auto dt_min_io        = obj.expect_element("dt_min", mio::Tag<ScalarType>{});
+        auto dt_max_io        = obj.expect_element("dt_max", mio::Tag<ScalarType>{});
         return mio::apply(
             io,
             [](auto&& num_agegroups_, auto&& t0_, auto&& t_max_, auto&& dt_, auto&& abs_tol_, auto&& rel_tol_,
