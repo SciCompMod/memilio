@@ -272,6 +272,23 @@ Former Core Developers
 
 .. _contributors:
 
+Agatha Schmidt
+^^^^^^^^^^^^^
+
+**Research Focus:** Machine Learning, Surrogate Modelling, Graph Neural Networks, High-Performance Computing
+
+Agatha Schmidt completed her Master's degree at the University of Cologne in collaboration with the German Aerospace Center (DLR), where she worked on machine learning-based surrogate models for ODE-based systems. After graduating, she continued her research by writing a paper focused on the application of graph neural networks as surrogate models. She was part of the team from May 2022 to December 2024. 
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * **Schmidt A**, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0009-0006-5766-8804 <https://orcid.org/0009-0006-5766-8804>`_
+
 Further Active or Former Contributors
 --------------------------------------
 
