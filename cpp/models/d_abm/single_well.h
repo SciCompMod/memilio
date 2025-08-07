@@ -41,7 +41,7 @@ public:
      * @param[in] top_right Coordinates of the top right corner of the range in which should be samples.
      * @param[in] margin Margin defining the distance that should be kept from the borders defined by bottom_left and top_right when sampling a position.
      */
-    SWPositionSampler(const Position& bottom_left, const Position& top_right, double margin)
+    SWPositionSampler(const Position& bottom_left, const Position& top_right, ScalarType margin)
     {
         auto assign_range = [&](Position range_x, Position range_y) {
             range_x += Position{margin, -margin};
@@ -57,10 +57,10 @@ public:
      */
     Position operator()() const
     {
-        return {mio::UniformDistribution<double>::get_instance()(mio::thread_local_rng(), m_range.first[0],
-                                                                 m_range.first[1]),
-                mio::UniformDistribution<double>::get_instance()(mio::thread_local_rng(), m_range.second[0],
-                                                                 m_range.second[1])};
+        return {mio::UniformDistribution<ScalarType>::get_instance()(mio::thread_local_rng(), m_range.first[0],
+                                                                     m_range.first[1]),
+                mio::UniformDistribution<ScalarType>::get_instance()(mio::thread_local_rng(), m_range.second[0],
+                                                                     m_range.second[1])};
     }
 
 private:
@@ -172,8 +172,9 @@ public:
     {
         if (std::find(m_non_moving_states.begin(), m_non_moving_states.end(), agent.status) ==
             m_non_moving_states.end()) {
-            Position p = {mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0),
-                          mio::DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
+            Position p = {
+                mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0),
+                mio::DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0)};
 
             agent.position = agent.position - dt * grad_U(agent.position) + (m_sigma * std::sqrt(dt)) * p;
         }
@@ -184,16 +185,17 @@ public:
      * @brief Calculate the current system state i.e. the populations for each infection state.
      * @return Vector containing the number of agents per infection state.
      */
-    Eigen::VectorXd time_point() const
+    Eigen::VectorX<ScalarType> time_point() const
     {
-        Eigen::VectorXd val = Eigen::VectorXd::Zero(static_cast<size_t>(Status::Count));
+        Eigen::VectorX<ScalarType> val = Eigen::VectorX<ScalarType>::Zero(static_cast<size_t>(Status::Count));
         for (auto& agent : populations) {
             val[static_cast<size_t>(agent.status)] += 1;
         }
         return val;
     }
 
-    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>& get_adoption_rates()
+    std::map<std::tuple<mio::regions::Region, Status, Status>, mio::AdoptionRate<ScalarType, Status>>&
+    get_adoption_rates()
     {
         return m_adoption_rates;
     }
@@ -239,7 +241,8 @@ private:
      * @param[in] p Position to check.
      * @return Boolean specifying whether p is in [-2, 2]^2.
     */
-    bool is_in_domain(const Position& p, const double lower_domain_border = -2, const double upper_domain_border = 2) const
+    bool is_in_domain(const Position& p, const ScalarType lower_domain_border = -2,
+                      const ScalarType upper_domain_border = 2) const
     {
         // restrict domain to [lower_domain_border, upper_domain_border]^2 where "escaping" is impossible, i.e. it holds x <= grad_U(x) for dt <= 0.1
         return lower_domain_border <= p[0] && p[0] <= upper_domain_border && lower_domain_border <= p[1] &&

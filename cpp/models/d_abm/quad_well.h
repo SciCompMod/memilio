@@ -68,12 +68,12 @@ public:
      * @param[in] non_moving_state InfectionStates that are excluded from movement e.g. Dead.
      */
     QuadWell(const std::vector<Agent>& agents, const std::vector<mio::AdoptionRate<ScalarType, Status>>& rates,
-             double contact_radius = 0.4, double sigma = 0.4, std::vector<Status> non_moving_states = {})
+             ScalarType contact_radius = 0.4, ScalarType sigma = 0.4, std::vector<Status> non_moving_states = {})
         : populations(agents)
         , m_contact_radius(contact_radius)
         , m_sigma(sigma)
         , m_non_moving_states(non_moving_states)
-        , m_number_transitions(static_cast<size_t>(Status::Count), Eigen::MatrixXd::Zero(4, 4))
+        , m_number_transitions(static_cast<size_t>(Status::Count), Eigen::MatrixX<ScalarType>::Zero(4, 4))
     {
         for (auto& agent : populations) {
             mio::unused(agent);
@@ -167,9 +167,9 @@ public:
      * @brief Calculate the current system state i.e. the populations for each region and infection state.
      * @return Vector containing the number of agents per infection state for each region.
      */
-    Eigen::VectorXd time_point() const
+    Eigen::VectorX<ScalarType> time_point() const
     {
-        Eigen::VectorXd val = Eigen::VectorXd::Zero(4 * static_cast<size_t>(Status::Count));
+        Eigen::VectorX<ScalarType> val = Eigen::VectorX<ScalarType>::Zero(4 * static_cast<size_t>(Status::Count));
         for (auto& agent : populations) {
             // split population into the wells given by grad_U
             auto position =
@@ -183,12 +183,12 @@ public:
      * @brief Get the  number of spatial transitions that happened until the current system state.
      * @return Matrix with entries (from_well, to_well) for every infection state.
      */
-    const std::vector<Eigen::MatrixXd>& number_transitions() const
+    const std::vector<Eigen::MatrixX<ScalarType>>& number_transitions() const
     {
         return m_number_transitions;
     }
 
-    std::vector<Eigen::MatrixXd>& number_transitions()
+    std::vector<Eigen::MatrixX<ScalarType>>& number_transitions()
     {
         return m_number_transitions;
     }
@@ -264,7 +264,7 @@ private:
     ScalarType m_sigma; ///< Noise term of the diffusion process.
     std::vector<Status> m_non_moving_states; ///< Infection states within which agents do not change their location.
     std::vector<size_t> m_non_moving_regions{}; ///< Regions without movement.
-    std::vector<Eigen::MatrixXd>
+    std::vector<Eigen::MatrixX<ScalarType>>
         m_number_transitions; ///< Vector that contains for every infection state a matrix with entry (k,l) the number of spatial transitions from Region k to Regionl.
     mio::RandomNumberGenerator m_rng; ///< Model's random number generator.
 };

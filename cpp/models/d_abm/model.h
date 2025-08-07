@@ -66,7 +66,7 @@ public:
 
     /**
      * @brief Aggregate the population by their Status for the simulation result.
-     * Expected signature: `Eigen::VectorXd time_point()`
+     * Expected signature: `Eigen::VectorX<ScalarType> time_point()`
      */
     using Implementation::time_point;
 
