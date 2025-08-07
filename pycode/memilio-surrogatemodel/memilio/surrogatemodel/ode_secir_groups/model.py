@@ -19,6 +19,8 @@
 #############################################################################
 from memilio.surrogatemodel.ode_secir_groups import network_architectures
 from memilio.simulation.osecir import InfectionState
+from memilio.surrogatemodel.utils.helper_functions import (
+    calc_split_index, flat_input)
 import os
 import pickle
 
@@ -38,10 +40,9 @@ def plot_compartment_prediction_model(
     :param inputs: test inputs for model prediction.
     :param labels: test labels.
     :param modeltype: type of model. Can be 'classic' or 'timeseries'
-    :param model: trained model. (Default value = None)
-    :param plot_col: string name of compartment to be plotted.
-    :param max_subplots: Number of the simulation runs to be plotted and compared against. (Default value = 8)
+    :param model: trained model. (Default value = None) 
     :param plot_compartment:  (Default value = 'InfectedSymptoms')
+    :param max_subplots: Number of the simulation runs to be plotted and compared against. (Default value = 8)
     :returns: No return 
     """
     num_groups = 6
@@ -53,6 +54,9 @@ def plot_compartment_prediction_model(
             (inputs.shape[1] - (1 + num_groups * num_groups)) / (num_groups * num_compartments))
     elif modeltype == 'timeseries':
         input_width = int(inputs.shape[1])
+    else:
+        ValueError("Modeltype "+modeltype + " not known.")
+
     label_width = int(labels.shape[1])
 
     plt.figure(figsize=(12, 8))
@@ -117,7 +121,7 @@ def plot_compartment_prediction_model(
             input_series = tf.expand_dims(inputs[n], axis=0)
             pred = model(input_series)
             pred = pred.numpy()
-            pred = pred.reshape((30, 48))
+            pred = pred.reshape((label_width, number_groups*num_compartments))
 
             mean_per_day_pred = []
             for i in pred:
@@ -140,45 +144,12 @@ def plot_compartment_prediction_model(
 ####################
 # Helper functions #
 ####################
-def calc_split_index(n, split_train=0.7,
-                     split_valid=0.2, split_test=0.1):
-    """
-    Calculating the indixes for a split_train:split_valid:split_test decomposition of a set with size n 
-
-    It must hold split_train + split_valid + split_test = 1
-
-    :param n: integer value 
-    :param split_train: value between 0 and 1
-    :param split_valid: value between 0 and 1
-    :param split_test: value between 0 and 1
-    :returns: a list of the form [i_train, i_valid, i_test]
-    """
-    if split_train + split_valid + split_test > 1 + 1e-10:
-        raise ValueError(
-            "Summed data set shares are greater than 1. Please adjust the values.")
-    n_train = int(n * split_train)
-    n_valid = int(n * split_valid)
-    n_test = n - n_train - n_valid
-
-    return [n_train, n_valid, n_test]
-
-
-def flat_input(input):
-    """ Flatten input dimension
-
-    :param input: input array of size (n,k,l)
-    :returns: reshaped array of size (n, k*l)
-
-    """
-    dim = tf.reduce_prod(tf.shape(input)[1:])
-    return tf.reshape(input, [-1, dim])
-
 
 def prepare_data_classic(data):
     """
     Transforming data to be processable by "classic" network, simply flattening and concatenating for each data instance.
 
-    :param data: dictionary produces by data_generation
+    :param data: dictionary produced by data_generation
     :returns: dictionary with entries {
         "train_inputs", "train_labels", "valid_inputs",
         "valid_labels", "test_inputs", "test_labels"}
@@ -192,35 +163,20 @@ def prepare_data_classic(data):
     # Flattening all inputs
     inputs = flat_input(data["inputs"])
     labels = data["labels"]
-    cmatrix = flat_input(data["contact_matrix"])
-    dampdays = data["damping_day"]
+    cmatrices = flat_input(data["contact_matrices"])
+    dampdays = flat_input(data["damping_days"])
+
+    aggregated_inputs = tf.concat(
+        [tf.cast(inputs, tf.float32),
+         tf.cast(cmatrices, tf.float32),
+         tf.cast(dampdays, tf.float32)],
+        axis=1, name='concat')
 
     # Splitting the data
-    compinputs_train, compinputs_valid, compinputs_test = tf.split(
-        inputs, split_indices, 0)
     labels_train, labels_valid, labels_test = tf.split(
         labels, split_indices, 0)
-    cmatrix_train, cmatrix_valid, cmatrix_test = tf.split(
-        cmatrix, split_indices, 0)
-    dampdays_train, dampdays_valid, dampdays_test = tf.split(
-        dampdays, split_indices, 0)
-
-    # Combining the ingredients to one input object
-    inputs_train = tf.concat(
-        [tf.cast(compinputs_train, tf.float32),
-         tf.cast(cmatrix_train, tf.float32),
-         tf.cast(dampdays_train, tf.float32)],
-        axis=1, name='concat')
-    inputs_valid = tf.concat(
-        [tf.cast(compinputs_valid, tf.float32),
-         tf.cast(cmatrix_valid, tf.float32),
-         tf.cast(dampdays_valid, tf.float32)],
-        axis=1, name='concat')
-    inputs_test = tf.concat(
-        [tf.cast(compinputs_test, tf.float32),
-         tf.cast(cmatrix_test, tf.float32),
-         tf.cast(dampdays_test, tf.float32)],
-        axis=1, name='concat')
+    inputs_train, inputs_valid, inputs_test = tf.split(
+        aggregated_inputs, split_indices, 0)
 
     return {
         "train_inputs": inputs_train,
@@ -236,7 +192,7 @@ def prod_time_series(obj, n, length_input):
     """
     Repeating static informations to fit into a time series framework 
 
-    :param obj: an array of objects, which should be repeated
+    :param obj: an array of objects of shape (n, shape_rest), which should be repeated
     :param n: total number of samples 
     :param length_input: number of days observed per input 
     :returns: a tensor of shape [n, length_input, -1], where for each sample the static object is repeated length_input times
@@ -253,7 +209,7 @@ def prod_time_series(obj, n, length_input):
 
 def prepare_data_timeseries(data):
     """
-    Transforming data to be processable by "time_series" network, simply repeating static values, flattening and concatenating for each data instance.
+    Transforming data to be processable by "timeseries" network, simply repeating static values, flattening and concatenating for each data instance.
 
     :param data: dictionary produces by data_generation
     :returns: dictionary with entries {
@@ -265,16 +221,17 @@ def prepare_data_timeseries(data):
     n = data["inputs"].shape[0]
 
     # number of days per input sample
-    input_width = 5
+    input_width = data["inputs"][0].shape[0]
 
     # Reshaping the matrix input
-    cmatrix = flat_input(tf.stack(data["contact_matrix"]))
+    cmatrices = flat_input(tf.stack(data["contact_matrices"]))
+    dampdays = flat_input(tf.stack(data["damping_days"]))
 
-    # Repeat data (contact matrix and dampinhg day) to produce time series
-    cmatrix_repeated = prod_time_series(cmatrix, n, input_width)
-    dampdays_repeated = prod_time_series(data["damping_day"], n, input_width)
+    # Repeat data (contact matrix and damping day) to produce time series
+    cmatrices_repeated = prod_time_series(cmatrices, n, input_width)
+    dampdays_repeated = prod_time_series(dampdays, n, input_width)
 
-    # Calculate split inidces
+    # Calculate split indices
     split_indices = calc_split_index(n)
 
     # Splitting the data
@@ -282,26 +239,26 @@ def prepare_data_timeseries(data):
         data["inputs"], split_indices, 0)
     labels_train, labels_valid, labels_test = tf.split(
         data["labels"], split_indices, 0)
-    cmatrix_train, cmatrix_valid, cmatrix_test = tf.split(
-        cmatrix_repeated, split_indices, 0)
+    cmatrices_train, cmatrices_valid, cmatrices_test = tf.split(
+        cmatrices_repeated, split_indices, 0)
     dampdays_train, dampdays_valid, dampdays_test = tf.split(
         dampdays_repeated, split_indices, 0)
 
     # Combining the ingredients to one input object
     inputs_train = tf.concat(
-        [tf.cast(compinputs_train, tf.float16),
-         tf.cast(cmatrix_train, tf.float16),
-         tf.cast(dampdays_train, tf.float16)],
+        [tf.cast(compinputs_train, tf.float32),
+         tf.cast(cmatrices_train, tf.float32),
+         tf.cast(dampdays_train, tf.float32)],
         axis=2, name='concat')
     inputs_valid = tf.concat(
-        [tf.cast(compinputs_valid, tf.float16),
-         tf.cast(cmatrix_valid, tf.float16),
-         tf.cast(dampdays_valid, tf.float16)],
+        [tf.cast(compinputs_valid, tf.float32),
+         tf.cast(cmatrices_valid, tf.float32),
+         tf.cast(dampdays_valid, tf.float32)],
         axis=2, name='concat')
     inputs_test = tf.concat(
-        [tf.cast(compinputs_test, tf.float16),
-         tf.cast(cmatrix_test, tf.float16),
-         tf.cast(dampdays_test, tf.float16)],
+        [tf.cast(compinputs_test, tf.float32),
+         tf.cast(cmatrices_test, tf.float32),
+         tf.cast(dampdays_test, tf.float32)],
         axis=2, name='concat')
 
     return {
@@ -362,7 +319,7 @@ def initialize_model(parameters):
 
 
 def network_fit(
-        model, modeltype, training_parameter, path, filename='data_secir_groups_30days_Germany_10k_damp.pickle', plot=True):
+        model, modeltype, training_parameter, path, filename='data_secir_groups_30days_10k_active.pickle', plot_stats=True):
     """ Training and evaluation of a given model with mean squared error loss and Adam optimizer using the mean absolute error as a metric.
 
     :param model: Keras sequential model.
@@ -372,7 +329,7 @@ def network_fit(
         metrics is a list of used training metrics, e.g. [tf.keras.metrics.MeanAbsoluteError(), tf.keras.metrics.MeanAbsolutePercentageError()]
     :param path: path of the dataset.
     :param filename: name of the file containing the data 
-    :param plot:  (Default value = True)
+    :param plot_stats:  (Default value = True)
     :returns: training history as returned by the keras fit() method. 
     """
     # Unpacking training parameters
@@ -393,6 +350,9 @@ def network_fit(
     elif modeltype == 'timeseries':
         data_prep = prepare_data_timeseries(data)
 
+    else:
+        raise ValueError("modeltype must be either classic or timeseries!")
+
     # Setting up the training parameters
     batch_size = 32
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
@@ -412,19 +372,20 @@ def network_fit(
                         batch_size=batch_size,
                         callbacks=[early_stopping])
 
-    if (plot):
+    if (plot_stats):
         plot_losses(history)
         plot_compartment_prediction_model(
-            test_inputs, test_labels, modeltype, model=model,
+            data_prep["test_inputs"], data_prep["test_labels"], modeltype, model=model,
             plot_compartment='InfectedSymptoms', max_subplots=3)
-        df = get_test_statistic(test_inputs, test_labels, model)
+        df = get_test_statistic(
+            data_prep["test_inputs"], data_prep["test_labels"], model)
         print(df)
     return history
-
 
 #####################
 # Plots etc.
 #####################
+
 
 def plot_losses(history):
     """ Plots the losses of the model training.
@@ -474,21 +435,6 @@ def get_test_statistic(test_inputs, test_labels, model):
     return mean_percentage
 
 
-def get_input_dim_lstm(path):
-    """ Extract the dimension of the input data
-
-    :param path: path to the data
-
-    """
-    file = open(os.path.join(path, 'data_secir_groups.pickle'), 'rb')
-
-    data = pickle.load(file)
-    input_dim = data['inputs'].shape[2] + np.asarray(
-        data['contact_matrix']).shape[1] * np.asarray(data['contact_matrix']).shape[2]+1
-
-    return input_dim
-
-
 if __name__ == "__main__":
     path = os.path.dirname(os.path.realpath(__file__))
     path_data = os.path.join(os.path.dirname(os.path.realpath(
@@ -502,7 +448,7 @@ if __name__ == "__main__":
     neurons_in_hidden_layer = 512
     activation_function = 'relu'
     modelname = "Dense"
-    modeltype = "classic"  # or "classic"
+    modeltype = "classic"  # or "timeseries"
 
     model_parameters = (label_width, number_age_groups, number_compartments,
                         hidden_layers, neurons_in_hidden_layer, activation_function, modelname)
@@ -515,7 +461,6 @@ if __name__ == "__main__":
     metrics = [tf.keras.metrics.MeanAbsoluteError()]
     training_parameters = (early_stop, max_epochs, loss, optimizer, metrics)
 
-    # input_dim = get_input_dim_lstm(path_data) -> Warum?
     model = initialize_model(model_parameters)
 
     model_output = network_fit(

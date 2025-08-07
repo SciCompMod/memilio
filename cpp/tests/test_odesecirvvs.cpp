@@ -28,6 +28,7 @@
 #include "memilio/epidemiology/simulation_day.h"
 #include "memilio/io/io.h"
 #include "memilio/io/result_io.h"
+#include "memilio/io/parameters_io.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
@@ -875,7 +876,7 @@ TEST(TestOdeSECIRVVS, export_time_series_init_old_date)
     // read population data
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{0};
-    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     for (auto i = 0; i < num_age_groups; i++) {
@@ -946,7 +947,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date)
     // read population data
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{0};
-    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     for (auto i = 0; i < num_age_groups; i++) {
@@ -983,7 +984,7 @@ TEST(TestOdeSECIRVVS, model_initialization_old_date_county)
     // read population data
     std::string path = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{0};
-    auto population_data = mio::osecirvvs::details::read_population_data(path, region).value();
+    auto population_data = mio::read_population_data(path, region).value();
 
     // So, the expected values are the population data in the susceptible compartments and zeros in the other compartments.
     for (auto i = 0; i < num_age_groups; i++) {
@@ -1016,7 +1017,7 @@ TEST(TestOdeSECIRVVS, set_population_data_overflow_vacc)
 
     std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{0};
-    auto population_data = mio::osecirvvs::details::read_population_data(path_pop_data, region).value();
+    auto population_data = mio::read_population_data(path_pop_data, region).value();
 
     // we choose the date so that no case data is available
     ASSERT_THAT(mio::osecirvvs::details::set_population_data(
@@ -1056,7 +1057,7 @@ TEST(TestOdeSECIRVVS, set_population_data_no_data_avail)
 
     std::string path_pop_data = mio::path_join(TEST_DATA_DIR, "county_current_population.json");
     const std::vector<int> region{0};
-    auto population_data = mio::osecirvvs::details::read_population_data(path_pop_data, region).value();
+    auto population_data = mio::read_population_data(path_pop_data, region).value();
 
     // we choose the date so that no case data is available
     ASSERT_THAT(mio::osecirvvs::details::set_population_data(

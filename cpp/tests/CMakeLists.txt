@@ -58,7 +58,7 @@ set(TESTSOURCES
     test_io_cli.cpp
     test_io_framework.cpp
     test_binary_serializer.cpp
-    test_compartmentsimulation.cpp
+    test_compartments_simulation.cpp
     test_mobility_io.cpp
     test_transform_iterator.cpp
     test_metaprogramming.cpp
@@ -87,6 +87,7 @@ set(TESTSOURCES
     temp_file_register.h
     test_graph_abm.cpp
     test_abstract_parameter_dist.cpp
+    test_temporal_hybrid_model.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)

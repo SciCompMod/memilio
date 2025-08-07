@@ -338,7 +338,7 @@ void create_assign_locations(mio::abm::Model& model)
     auto testing_scheme = mio::abm::TestingScheme(testing_criteria, validity_period, start_date, end_date, test_params,
                                                   probability.draw_sample());
 
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::SocialEvent, testing_scheme);
 
     // Add hospital and ICU with 5 maximum contacs.
     // For the number of agents in this example we assume a capacity of 584 persons (80 beds per 10000 residents in
@@ -432,7 +432,7 @@ void create_assign_locations(mio::abm::Model& model)
     validity_period              = mio::abm::days(7);
     auto testing_scheme_school = mio::abm::TestingScheme(testing_criteria_school, validity_period, start_date, end_date,
                                                          test_params, probability.draw_sample());
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::School, testing_scheme_school);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::School, testing_scheme_school);
 
     auto test_at_work          = std::vector<mio::abm::LocationType>{mio::abm::LocationType::Work};
     auto testing_criteria_work = mio::abm::TestingCriteria();
@@ -440,7 +440,7 @@ void create_assign_locations(mio::abm::Model& model)
     assign_uniform_distribution(probability, 0.1, 0.5);
     auto testing_scheme_work = mio::abm::TestingScheme(testing_criteria_work, validity_period, start_date, end_date,
                                                        test_params, probability.draw_sample());
-    model.get_testing_strategy().add_testing_scheme(mio::abm::LocationType::Work, testing_scheme_work);
+    model.get_testing_strategy().add_scheme(mio::abm::LocationType::Work, testing_scheme_work);
 }
 
 /**
