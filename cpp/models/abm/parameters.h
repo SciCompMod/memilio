@@ -568,7 +568,7 @@ struct WorkRatio {
         DampingMatrixExpression<ScalarType, Dampings<ScalarType, Damping<ScalarType, ColumnVectorShape<ScalarType>>>>;
     static auto get_default(AgeGroup /*size*/)
     {
-        return Type(Eigen::VectorXd::Constant(1, 1.0));
+        return Type(Eigen::VectorX<ScalarType>::Constant(1, 1.0));
     }
     static std::string name()
     {
@@ -584,7 +584,7 @@ struct SchoolRatio {
         DampingMatrixExpression<ScalarType, Dampings<ScalarType, Damping<ScalarType, ColumnVectorShape<ScalarType>>>>;
     static auto get_default(AgeGroup /*size*/)
     {
-        return Type(Eigen::VectorXd::Constant(1, 1.0));
+        return Type(Eigen::VectorX<ScalarType>::Constant(1, 1.0));
     }
     static std::string name()
     {
@@ -600,7 +600,7 @@ struct SocialEventRate {
         DampingMatrixExpression<ScalarType, Dampings<ScalarType, Damping<ScalarType, ColumnVectorShape<ScalarType>>>>;
     static auto get_default(AgeGroup size)
     {
-        return Type(Eigen::VectorXd::Constant((size_t)size, 1.0));
+        return Type(Eigen::VectorX<ScalarType>::Constant((size_t)size, 1.0));
     }
     static std::string name()
     {

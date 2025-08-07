@@ -52,10 +52,10 @@ Person::Person(mio::RandomNumberGenerator& rng, LocationType location_type, Loca
     , m_rng_key(rng.get_key())
     , m_rng_index(static_cast<uint32_t>(person_id.get()))
 {
-    m_random_workgroup        = UniformDistribution<double>::get_instance()(rng);
-    m_random_schoolgroup      = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()(rng);
-    m_random_goto_school_hour = UniformDistribution<double>::get_instance()(rng);
+    m_random_workgroup        = UniformDistribution<ScalarType>::get_instance()(rng);
+    m_random_schoolgroup      = UniformDistribution<ScalarType>::get_instance()(rng);
+    m_random_goto_work_hour   = UniformDistribution<ScalarType>::get_instance()(rng);
+    m_random_goto_school_hour = UniformDistribution<ScalarType>::get_instance()(rng);
 }
 
 Person::Person(const Person& other, PersonId person_id)
@@ -167,7 +167,7 @@ void Person::remove_quarantine()
 
 bool Person::get_tested(PersonalRandomNumberGenerator& rng, TimePoint t, const TestParameters& params)
 {
-    ScalarType random = UniformDistribution<double>::get_instance()(rng);
+    ScalarType random = UniformDistribution<ScalarType>::get_instance()(rng);
     if (is_infected(t)) {
         // true positive
         if (random < params.sensitivity) {
@@ -221,7 +221,7 @@ ScalarType Person::get_mask_protective_factor(const Parameters& params) const
 
 bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType intervention) const
 {
-    ScalarType compliance_check = UniformDistribution<double>::get_instance()(rng);
+    ScalarType compliance_check = UniformDistribution<ScalarType>::get_instance()(rng);
     return compliance_check <= get_compliance(intervention);
 }
 

@@ -51,17 +51,17 @@ public:
     /**
      * @brief Length of time in days.
      */
-    double days() const
+    ScalarType days() const
     {
-        return double(m_seconds) / (24 * 60 * 60);
+        return ScalarType(m_seconds) / (24 * 60 * 60);
     }
 
     /**
      * @brief Length of time in hours.
      */
-    double hours() const
+    ScalarType hours() const
     {
-        return double(m_seconds) / (60 * 60);
+        return ScalarType(m_seconds) / (60 * 60);
     };
 
     /**
@@ -178,16 +178,16 @@ public:
     /**
      * @brief Time since the epoch in days.
      */
-    double days() const
+    ScalarType days() const
     {
-        return double(m_seconds) / (24 * 60 * 60);
+        return ScalarType(m_seconds) / (24 * 60 * 60);
     }
     /**
      * @brief Time since the epoch in hours.
      */
-    double hours() const
+    ScalarType hours() const
     {
-        return double(m_seconds) / (60 * 60);
+        return ScalarType(m_seconds) / (60 * 60);
     };
     /**
      * @brief Time since the epoch in seconds.
@@ -338,7 +338,7 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
-inline TimeSpan days(double days)
+inline TimeSpan days(ScalarType days)
 {
     return TimeSpan((int)(days * 24 * 60 * 60));
 }
