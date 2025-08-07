@@ -150,7 +150,21 @@ def get_mcmc_model_params(url, t, data_dir, headers):
     return modelparameters_entry
 
 
-def post_mcmc_parameters(url, t, data_dir, headers):
+def post_mcmc_parameters(url, t, data_dir, service_realm="", client_id="", username="", password=""):
+
+    # Request access token from idp.
+    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+
+    # Raise error if response not ok.
+    req_auth.raise_for_status()
+
+    # Parse response and get access token.
+    res = req_auth.json()
+    token = res['access_token']
+
+    # Set up headers with token.
+    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
     modelparameters_entry = []
     data_t = get_mcmc_data_at_t(t, data_dir)
@@ -228,23 +242,23 @@ def main():
     username = ""
     password = ""
 
-    # Request access token from idp.
-    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
-        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+    # # Request access token from idp.
+    # req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+    #     'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
 
-    # Raise error if response not ok.
-    req_auth.raise_for_status()
+    # # Raise error if response not ok.
+    # req_auth.raise_for_status()
 
-    # Parse response and get access token.
-    res = req_auth.json()
-    token = res['access_token']
+    # # Parse response and get access token.
+    # res = req_auth.json()
+    # token = res['access_token']
 
-    # Set up headers with token.
-    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
+    # # Set up headers with token.
+    # headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
     # Update scenarios with mcmc parameters.
-    post_mcmc_parameters(url, date_today, mcmc_dir,
-                         headers)
+    post_mcmc_parameters(url, date_today, mcmc_dir, service_realm=service_realm,
+                         client_id=client_id, username=username, password=password)
 
 
 if __name__ == "__main__":
