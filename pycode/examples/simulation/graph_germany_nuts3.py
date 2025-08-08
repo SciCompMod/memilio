@@ -198,22 +198,35 @@ def prior():
     damping_values = np.random.uniform(0.0, 1.0, 400)
     return {'damping_values': damping_values}
 
-# def load_divi_data():
-#     file_path = os.path.dirname(os.path.abspath(__file__))
-#     divi_path = os.path.join(file_path, "../../../data/Germany/pydata")
+def load_divi_data():
+    file_path = os.path.dirname(os.path.abspath(__file__))
+    divi_path = os.path.join(file_path, "../../../data/Germany/pydata")
 
-#     data = pd.read_json(os.path.join(divi_path, "county_divi_ma7.json"))
-#     data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
-#     divi_dict = {f"region{i}": data[f'region{i}'] for i in range(399)}
-#     print(divi_dict)
+    data = pd.read_json(os.path.join(divi_path, "county_divi.json"))
+    print(data["ID_County"].drop_duplicates().shape)
+    data = data[data['Date']>= np.datetime64(datetime.date(2020, 8, 1))]
+    data = data[data['Date'] <= np.datetime64(datetime.date(2020, 8, 1) + datetime.timedelta(days=50))]
+    print(data["ID_County"].drop_duplicates().shape)
+    data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
+    region_ids = [*dd.County]
+    divi_dict = {f"region{i}": data[data['ID_County'] == region_ids[i]]['ICU'].to_numpy() for i in range(400)}
+    # for i in range(100):
+    #     if divi_dict[f'region{i+100}'].size==0:
+    #         print(region_ids[i+100])
+    #     print(divi_dict[f'region{i+100}'].shape)
 
 
 if __name__ == "__main__":
-
     # import pandas as pd
+
+    # file_path = os.path.dirname(os.path.abspath(__file__))
+    # casedata_path = os.path.join(file_path, "../../../data/Germany/pydata/cases_all_county_ma7.jsons")
+    # county = test[test['ID_County']==7320]
+    # print(county[county['Date']>= np.datetime64(datetime.date(2020, 8, 1))])
+    # from memilio.epidata import defaultDict as dd
     # load_divi_data()
     import os 
-    os.environ["KERAS_BACKEND"] = "jax"
+    os.environ["KERAS_BACKEND"] = "tensorflow"
 
     import bayesflow as bf
 
@@ -223,17 +236,17 @@ if __name__ == "__main__":
     # for region in range(400):
     #     trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
 
-    # with open('trainings_data7.pickle', 'wb') as f:
+    # with open('validation_data_400params.pickle', 'wb') as f:
     #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('trainings_data1.pickle', 'rb') as f:
+    with open('trainings_data1_400params.pickle', 'rb') as f:
         trainings_data = pickle.load(f)
     for i in range(9):
-        with open(f'trainings_data{i+2}.pickle', 'rb') as f:
+        with open(f'trainings_data{i+2}_400params.pickle', 'rb') as f:
             data = pickle.load(f)
         trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    with open('validation_data.pickle', 'rb') as f:
+    with open('validation_data_400params.pickle', 'rb') as f:
         validation_data = pickle.load(f)
 
     adapter = (
@@ -246,24 +259,25 @@ if __name__ == "__main__":
         .log("summary_variables", p1=True)
     )
 
-    print("inference_variables shape:", adapter(trainings_data)["inference_variables"].shape)
+    print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
 
-    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=4)
-    inference_network = bf.networks.CouplingFlow()
+    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=700, recurrent_dim=256)
+    inference_network = bf.networks.DiffusionModel(subnet_kwargs={'widths': {512, 512, 512, 512, 512}})
 
     workflow = bf.BasicWorkflow(
         simulator=simulator, 
         adapter=adapter,
         summary_network=summary_network,
-        inference_network=inference_network
+        inference_network=inference_network,
+        standardize='all'  
     )
 
-    history = workflow.fit_offline(data=trainings_data, epochs=1, batch_size=32, validation_data=validation_data)
+    history = workflow.fit_offline(data=trainings_data, epochs=1000, batch_size=32, validation_data=validation_data)
 
-    workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model.keras"))
+    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_10params.keras"))
 
-    plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True})
-    plots['losses'].savefig('losses_couplingflow.png')
-    plots['recovery'].savefig('recovery_couplingflow.png')
-    plots['calibration_ecdf'].savefig('calibration_ecdf_couplingflow.png')
-    plots['z_score_contraction'].savefig('z_score_contraction_couplingflow.png')
+    plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
+    plots['losses'].savefig('losses_diffusionmodel_400params.png')
+    plots['recovery'].savefig('recovery_diffusionmodel_400params.png')
+    plots['calibration_ecdf'].savefig('calibration_ecdf_diffusionmodel_400params.png')
+    plots['z_score_contraction'].savefig('z_score_contraction_diffusionmodel_400params.png')

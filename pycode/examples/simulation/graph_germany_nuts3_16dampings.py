@@ -80,7 +80,7 @@ class Simulation:
         minimum = np.ones((self.num_groups, self.num_groups)) * 0
         contact_matrices[0] = mio.ContactMatrix(baseline, minimum)
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
-
+        
     def set_npis(self, params, end_date, damping_value):
         """
 
@@ -116,20 +116,20 @@ class Simulation:
 
         data_dir_Germany = os.path.join(self.data_dir, "Germany")
         mobility_data_file = os.path.join(
-            data_dir_Germany, "mobility", "commuter_mobility_2022_states.txt")
+            data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
         path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population_states.json")
+                                            "county_current_population_aggregated.json")
 
         print("Setting nodes...")
-        mio.osecir.set_nodes_states(
+        mio.osecir.set_nodes(
             model.parameters,
             mio.Date(self.start_date.year,
                      self.start_date.month, self.start_date.day),
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
-            path_population_data, False, graph, scaling_factor_infected,
+            path_population_data, True, graph, scaling_factor_infected,
             scaling_factor_icu, 0, 0, False, False)
 
         print("Setting edges...")
@@ -162,14 +162,9 @@ class Simulation:
 
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
-            # if node_idx < 5:
             node = graph.get_node(node_idx)
             self.set_npis(node.property.parameters, end_date, damping_values[node_idx])
             mobility_graph.add_node(node.id, node.property)
-            # else:
-            #     node = graph.get_node(node_idx)
-            #     self.set_npis(node.property.parameters, end_date, 0.5)
-            #     mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
                 graph.get_edge(edge_idx).start_node_idx,
@@ -178,6 +173,7 @@ class Simulation:
         mobility_sim = osecir.MobilitySimulation(mobility_graph, t0=0, dt=0.5)
         mobility_sim.advance(num_days_sim)
 
+        print("Simulation finished.")
         results = []
         for node_idx in range(graph.num_nodes):
             results.append(osecir.interpolate_simulation_result(
@@ -185,7 +181,7 @@ class Simulation:
          
         return results
 
-def run_germany_nuts1_simulation(damping_values):
+def run_germany_nuts3_simulation(damping_values):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -200,37 +196,55 @@ def run_germany_nuts1_simulation(damping_values):
     return {f'region{region}': results[region] for region in range(len(results))}
 
 def prior():
-    damping_values = np.random.uniform(0.0, 1.0, 16)
+    damping_values = np.random.uniform(0.0, 1.0, 400)
     return {'damping_values': damping_values}
+
+def load_divi_data():
+    file_path = os.path.dirname(os.path.abspath(__file__))
+    divi_path = os.path.join(file_path, "../../../data/Germany/pydata")
+
+    data = pd.read_json(os.path.join(divi_path, "county_divi.json"))
+    print(data["ID_County"].drop_duplicates().shape)
+    data = data[data['Date']>= np.datetime64(datetime.date(2020, 8, 1))]
+    data = data[data['Date'] <= np.datetime64(datetime.date(2020, 8, 1) + datetime.timedelta(days=50))]
+    print(data["ID_County"].drop_duplicates().shape)
+    data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
+    region_ids = [*dd.County]
+    divi_dict = {f"region{i}": data[data['ID_County'] == region_ids[i]]['ICU'].to_numpy() for i in range(400)}
+    # for i in range(100):
+    #     if divi_dict[f'region{i+100}'].size==0:
+    #         print(region_ids[i+100])
+    #     print(divi_dict[f'region{i+100}'].shape)
+
 
 if __name__ == "__main__":
 
+    # from memilio.epidata import defaultDict as dd
+    # import pandas as pd
+    # load_divi_data()
     import os 
     os.environ["KERAS_BACKEND"] = "tensorflow"
 
     import bayesflow as bf
 
-    simulator = bf.simulators.make_simulator([prior, run_germany_nuts1_simulation])
+    simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
     # trainings_data = simulator.sample(1000)
 
-    # for region in range(16):
+    # for region in range(400):
     #     trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
 
-    # with open('validation_data_16param.pickle', 'wb') as f:
+    # with open('validation_data_400params.pickle', 'wb') as f:
     #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('trainings_data1_16param.pickle', 'rb') as f:
+    with open('trainings_data1_16params_countylvl.pickle', 'rb') as f:
         trainings_data = pickle.load(f)
-        trainings_data['damping_values'] = trainings_data['damping_values'][:, :16]
     for i in range(9):
-        with open(f'trainings_data{i+2}_16param.pickle', 'rb') as f:
+        with open(f'trainings_data{i+2}_16params_countylvl.pickle', 'rb') as f:
             data = pickle.load(f)
-            data['damping_values'] = data['damping_values'][:, :16]
         trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    with open('validation_data_16param.pickle', 'rb') as f:
+    with open('validation_data_16params_countylvl.pickle', 'rb') as f:
         validation_data = pickle.load(f)
-        validation_data['damping_values'] = validation_data['damping_values'][:, :16]
 
     adapter = (
         bf.Adapter()
@@ -238,27 +252,29 @@ if __name__ == "__main__":
         .convert_dtype("float64", "float32")
         .constrain("damping_values", lower=0.0, upper=1.0)
         .rename("damping_values", "inference_variables")
-        .concatenate([f'region{i}' for i in range(16)], into="summary_variables", axis=-1)
+        .concatenate([f'region{i}' for i in range(400)], into="summary_variables", axis=-1)
         .log("summary_variables", p1=True)
     )
-    
-    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32)
-    inference_network = bf.networks.CouplingFlow()
+
+    print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
+
+    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32) #, recurrent_dim=256)
+    inference_network = bf.networks.CouplingFlow()#subnet_kwargs={'widths': {512, 512, 512, 512, 512}})
 
     workflow = bf.BasicWorkflow(
         simulator=simulator, 
         adapter=adapter,
         summary_network=summary_network,
         inference_network=inference_network,
-        standardize='all'
+        standardize='all'  
     )
 
     history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
 
-    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_1params.keras"))
+    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_10params.keras"))
 
     plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
-    plots['losses'].savefig('losses_couplingflow_16param.png')
-    plots['recovery'].savefig('recovery_couplingflow_16param.png')
-    plots['calibration_ecdf'].savefig('calibration_ecdf_couplingflow_16param.png')
-    plots['z_score_contraction'].savefig('z_score_contraction_couplingflow_16param.png')
+    plots['losses'].savefig('losses_couplingflow_16params_countylvl.png')
+    plots['recovery'].savefig('recovery_couplingflow_16params_countylvl.png')
+    plots['calibration_ecdf'].savefig('calibration_ecdf_couplingflow_16params_countylvl.png')
+    plots['z_score_contraction'].savefig('z_score_contraction_couplingflow_16params_countylvl.png')
