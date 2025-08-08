@@ -270,7 +270,23 @@ He is interested in the development of agent-based models for infectious disease
 Former Core Developers
 ----------------------   
 
-.. _contributors:
+Daniel Abele
+^^^^^^^^^^^^
+
+**Research Focus:** Scientific Computing, Software Architecture, Ordinary and Partial Differential Equations
+
+Daniel Abele is a research software engineer at the Institute of Software Technology at the German Aerospace Center (DLR) and was part of the MEmilio team from its beginnings in 2020 until 2024. As one of its leading software engineers, he contributed to the early architecture of the code, including ODE and agent based models, as well as to the development processes and infrastructure. He left the project to focus on his PhD in numerical simulation of continental ice sheets.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * Kühn MJ, **Abele D**, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences*. https://doi.org/10.1016/j.mbs.2021.108648
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0001-7021-1573 <https://orcid.org/0000-0001-7021-1573>`_
+
 
 Agatha Schmidt
 ^^^^^^^^^^^^^
@@ -288,6 +304,9 @@ Agatha Schmidt completed her Master's degree at the University of Cologne in col
    :animate: fade-in-slide-down
 
    * `ORCID Profile: 0009-0006-5766-8804 <https://orcid.org/0009-0006-5766-8804>`_
+
+
+.. _contributors:
 
 Further Active or Former Contributors
 --------------------------------------
