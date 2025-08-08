@@ -101,7 +101,7 @@ void bind_time_series(py::module_& m, std::string const& name)
             auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
                                                                  self.get_num_time_points());
             return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
-        });
+        }, py::return_value_policy::reference_internal);
 }
 
 } // namespace pymio
