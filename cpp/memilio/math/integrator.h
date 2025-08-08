@@ -62,6 +62,8 @@ public:
 
     virtual ~IntegratorCore(){};
 
+    virtual std::unique_ptr<IntegratorCore<FP, Integrands...>> clone() const = 0;
+
     /**
      * @brief Make a single integration step.
      *
@@ -153,6 +155,22 @@ public:
         : m_core(std::move(core))
         , m_is_adaptive(false)
     {
+    }
+
+    SystemIntegrator(const SystemIntegrator& other)
+        : m_core(other.m_core->clone())
+        , m_is_adaptive(other.m_is_adaptive)
+    {
+    }
+
+    SystemIntegrator& operator=(const SystemIntegrator& other) 
+    {
+        if(this != &other)
+        {
+            m_core = other.m_core->clone();
+            m_is_adaptive = other.m_is_adaptive;
+        }
+        return *this; 
     }
 
     /**

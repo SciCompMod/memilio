@@ -60,6 +60,30 @@ public:
     {
     }
 
+    SimulationBase(const SimulationBase& other)
+        : m_model(std::make_unique<Model>(*other.m_model))
+        , m_integrator(other.m_integrator)
+        , m_result(other.m_result)
+        , m_dt(other.m_dt)
+    {
+    }
+
+    SimulationBase& operator=(const SimulationBase& other) 
+    {
+        if(this != &other)
+        {
+            m_model = std::make_unique<Model>(*other.m_model);
+            m_integrator = other.m_integratorCore;
+            m_result = other.m_result;
+            m_dt = other.m_dt;
+        }
+        return *this; 
+    }
+
+    ~SimulationBase() = default;
+    // SimulationBase(SimulationBase && other) = default;
+    // SimulationBase& operator=(SimulationBase && other) = default;
+
     /**
      * @brief Set the integrator core used in the simulation.
      * @param[in] integrator A shared pointer to an object derived from IntegratorCore.

@@ -93,6 +93,11 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         {
             return true;
         }
+
+        std::unique_ptr<mio::IntegratorCore<double, Integrands...>> clone() const override 
+        {
+            throw std::runtime_error("Core clone() called unexpectedly");
+        }
     };
 
     MockSimulateSim(int model_in, double t0_in, double dt_in)

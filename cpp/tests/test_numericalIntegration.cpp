@@ -268,6 +268,11 @@ public:
                 (const mio::DerivFunction<double>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
+    
+    std::unique_ptr<mio::OdeIntegratorCore<double>> clone() const override 
+    {
+        throw std::runtime_error("MockIntegratorCore clone() called unexpectedly");
+    }
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
@@ -381,8 +386,8 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
     const double t_max   = 3.0; // must not be an integer multiple of dt_min
     auto mock_core       = std::make_unique<testing::StrictMock<MockIntegratorCore>>(dt_min, t_max);
     auto f               = [](auto&&, auto&&, auto&&) {};
-    auto step_fct        = [&dt_min](auto&&, auto&&, auto& t_, auto& dt_, auto&&) {
-        dt_ = std::max(dt_, dt_min);
+    auto step_fct        = [&mock = *mock_core](auto&&, auto&&, auto& t_, auto& dt_, auto&&) {
+        dt_ = std::max(dt_, mock.get_dt_min());
         t_ += dt_;
         return true;
     };
