@@ -14,11 +14,11 @@ EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equa
 # EVENT_TYPE="work_meeting_many"
 # EVENT_TYPE="work_meeting_few"  # Options: work_meeting_many, work_meeting_few, work_meeting_low
 # EVENT_TYPE="work_meeting_low"  # Options: work_meeting_many, work
+# SIM_TYPE="memilio"  # Options: panvadere, memilio
 SIM_TYPE="memilio"  # Options: panvadere, memilio
-# SIM_TYPE="panvadere"  # Options: panvadere, memilio
 VIZ_OPTIONS="--s90percentile"
-NUM_DAYS=10
-NUM_PERSONS=3000
+NUM_DAYS=4
+NUM_PERSONS=400
 # Set environment variables
 export OMP_NUM_THREADS=$OMP_NUM_THREADS
 

@@ -86,19 +86,24 @@ LogInfectionDetailed::Type LogInfectionDetailed::log(const mio::abm::Simulation&
 
 LogAmountOfInfections::Type LogAmountOfInfections::log(const mio::abm::Simulation& sim)
 {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
 
-    static Type log(const mio::abm::Simulation& sim)
-    {
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(1);
-        auto curr_time      = sim.get_time();
-        const auto persons  = sim.get_world().get_persons();
+    Eigen::VectorXd sum = Eigen::VectorXd::Zero(1);
+    auto curr_time      = sim.get_time();
 
-        for (auto&& person : sim.get_world().get_persons()) {
-            if (person.get_infection_state(curr_time) != mio::abm::InfectionState::Susceptible) {
-                sum[0] += 1;
-            }
+    for (auto&& person : sim.get_world().get_persons()) {
+        if (person.get_infection_state(curr_time) != mio::abm::InfectionState::Susceptible) {
+            sum[0] += 1;
         }
-        return std::make_pair(curr_time, sum);
     }
-};
+    return std::make_pair(curr_time, sum);
+}
+
+LogLocationIdAndType::Type LogLocationIdAndType::log(const mio::abm::Simulation& sim)
+{
+    Type location_information{};
+    location_information.reserve(sim.get_world().get_locations().size());
+    for (auto&& location : sim.get_world().get_locations()) {
+        location_information.push_back(std::make_tuple(location.get_index(), location.get_type()));
+    }
+    return location_information;
+}

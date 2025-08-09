@@ -8,29 +8,6 @@ import matplotlib
 import h5py
 from datetime import datetime
 
-state_labels = {
-    1: 'Exposed',
-    2: 'I_Asymp',
-    3: 'I_Symp',
-    4: 'I_Severe',
-    5: 'I_Critical',
-    7: 'Dead'
-}
-
-
-age_groups_dict = {
-    'Group1': 'Ages 0-4',
-    'Group2': 'Ages 5-14',
-    'Group3': 'Ages 15-34',
-    'Group4': 'Ages 35-59',
-    'Group5': 'Ages 60-79',
-    'Group6': 'Ages 80+',
-    'Total': 'All Ages'
-}
-
-age_groups = ['Group1', 'Group2', 'Group3', 'Group4',
-              'Group5', 'Group6', 'Total']
-
 
 def load_h5_results(base_path, percentile):
     """ Reads HDF5 results for a given group and percentile.
@@ -55,9 +32,7 @@ def calculate_cumulative_infections(data):
     """
     # Sum all infection states (excluding susceptible state 0)
     # States: 1=Exposed, 2=I_Asymp, 3=I_Symp, 4=I_Severe, 5=I_Critical, 7=Dead
-    infected_states = [1, 2, 3, 4, 5, 7]
-    current_infections = np.sum(data[:, infected_states], axis=1)
-
+    current_infections = data.sum(axis=1)
     # Calculate cumulative infections
     cumulative = current_infections
 

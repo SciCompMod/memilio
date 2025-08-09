@@ -18,9 +18,15 @@ struct SimulationResults {
     std::vector<mio::TimeSeries<ScalarType>> infection_per_loc_type;
     std::vector<mio::TimeSeries<ScalarType>> infection_state_per_age_group;
     std::vector<mio::abm::World> ensemble_params;
-    std::vector<mio::TimeSeries<ScalarType>> history_infected_amount;
-    std::vector<std::vector<std::tuple<uint32_t, mio::abm::LocationType>>> infection_per_location_type_and_id;
-    std::vector<std::vector<std::tuple<uint32_t, uint32_t>>> history_contact_network;
+    std::vector<mio::abm::World> ensemble_params_no_agegroups;
+    // std::vector<std::vector<std::tuple<uint32_t, mio::abm::LocationType>>> infection_per_location_type_and_id;
+
+    std::vector<mio::TimeSeries<ScalarType>> history_infected_amount; // Figure 1
+    std::vector<std::tuple<uint32_t, uint32_t>> history_household_id; // Figure 2
+    std::vector<std::tuple<uint32_t, mio::abm::LocationType>> loc_id_and_type;
+    std::vector<std::vector<std::tuple<uint32_t, uint32_t>>> history_person_and_location_id; // Figure 2 / 3
+    std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>
+        history_detailed_infection; // Figure 2/3
 };
 
 struct MultiRunResults {

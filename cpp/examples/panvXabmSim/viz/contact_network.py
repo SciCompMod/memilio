@@ -1166,10 +1166,10 @@ def main():
         f'{base_dir}/medium_household_data.csv')
 
     contact_data = load_contact_data(f'{base_dir}/medium_contact_data.csv')
-    infection_data2 = load_infection_data(
-        f'{base_dir}/medium_infection_data2.csv')
-    household_data2 = load_household_data(
-        f'{base_dir}/medium_household_data2.csv')
+    # infection_data2 = load_infection_data(
+    #     f'{base_dir}/medium_infection_data2.csv')
+    # household_data2 = load_household_data(
+    #     f'{base_dir}/medium_household_data2.csv')
 
     total_runs = 25
 

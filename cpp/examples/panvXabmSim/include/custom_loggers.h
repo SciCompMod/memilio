@@ -54,3 +54,8 @@ struct LogAmountOfInfections : mio::LogAlways {
     using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
     static Type log(const mio::abm::Simulation& sim);
 };
+
+struct LogLocationIdAndType : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType>>;
+    static Type log(const mio::abm::Simulation& sim);
+};
