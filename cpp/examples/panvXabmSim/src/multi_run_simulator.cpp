@@ -196,15 +196,22 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
         Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
 
-    mio::History<mio::abm::DataWriterToMemoryDelta, LogLocationTypeAndId> historyLocationTypeAndId;
+    mio::History<mio::abm::TimeSeriesWriter, LogAmountOfInfections> historyAmountInfected{
+        Eigen::Index(1)}; // 1st figure
+    mio::History<mio::abm::DataWriterToMemoryDelta, LogHouseholdId, LogLocationIdAndPersonId, LogWhoInfected>
+        historyContactNetwork; // 2nd figure
+    mio::History<mio::abm::DataWriterToMemoryDelta, LogInfectionDetailed> historyInfectionDetailed; // 3rd figure
 
-    sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyLocationTypeAndId);
+    sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyAmountInfected,
+                historyContactNetwork, historyInfectionDetailed);
 
     results.infection_per_loc_type =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
-    results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
+    results.ensemble_params = std::vector<mio::abm::World>{sim.get_world()};
+    results.history_infected_amount =
+        std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyAmountInfected.get_log())};
     results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // Placeholder implementation

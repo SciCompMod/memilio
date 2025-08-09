@@ -42,9 +42,63 @@ LogLocationTypeAndId::Type LogLocationTypeAndId::log(const mio::abm::Simulation&
 {
 
     Type location_information{};
-    location_information.reserve(sim.get_world().get_locations().size());
+    location_information.reserve(sim.get_world().get_persons().size());
     for (auto&& person : sim.get_world().get_persons()) {
         location_information.push_back(std::make_tuple(person.get_person_id(), person.get_location().get_type()));
     }
     return location_information;
 }
+
+LogWhoInfected::Type LogWhoInfected::log(const mio::abm::Simulation& sim)
+{
+    Type who_infected{};
+    who_infected.reserve(sim.get_world().get_persons().size());
+    for (auto&& location : sim.get_world().get_locations()) {
+        for (auto&& person_id : location.get_infected_persons()) {
+            who_infected.push_back(person_id);
+        }
+    }
+    return who_infected;
+}
+
+LogLocationIdAndPersonId::Type LogLocationIdAndPersonId::log(const mio::abm::Simulation& sim)
+{
+
+    Type location_information{};
+    location_information.reserve(sim.get_world().get_persons().size());
+    for (auto&& person : sim.get_world().get_persons()) {
+        location_information.push_back(std::make_tuple(person.get_person_id(), person.get_location().get_index()));
+    }
+    return location_information;
+}
+
+LogInfectionDetailed::Type LogInfectionDetailed::log(const mio::abm::Simulation& sim)
+{
+    Type infected_detailed{};
+    infected_detailed.reserve(sim.get_world().get_persons().size());
+    for (auto&& location : sim.get_world().get_locations()) {
+        for (auto&& person_id : location.get_infected_persons()) {
+            infected_detailed.push_back(std::make_tuple(person_id, location.get_index(), location.get_type()));
+        }
+    }
+    return infected_detailed;
+}
+
+LogAmountOfInfections::Type LogAmountOfInfections::log(const mio::abm::Simulation& sim)
+{
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Eigen::VectorXd sum = Eigen::VectorXd::Zero(1);
+        auto curr_time      = sim.get_time();
+        const auto persons  = sim.get_world().get_persons();
+
+        for (auto&& person : sim.get_world().get_persons()) {
+            if (person.get_infection_state(curr_time) != mio::abm::InfectionState::Susceptible) {
+                sum[0] += 1;
+            }
+        }
+        return std::make_pair(curr_time, sum);
+    }
+};

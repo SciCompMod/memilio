@@ -18,7 +18,9 @@ struct SimulationResults {
     std::vector<mio::TimeSeries<ScalarType>> infection_per_loc_type;
     std::vector<mio::TimeSeries<ScalarType>> infection_state_per_age_group;
     std::vector<mio::abm::World> ensemble_params;
+    std::vector<mio::TimeSeries<ScalarType>> history_infected_amount;
     std::vector<std::vector<std::tuple<uint32_t, mio::abm::LocationType>>> infection_per_location_type_and_id;
+    std::vector<std::vector<std::tuple<uint32_t, uint32_t>>> history_contact_network;
 };
 
 struct MultiRunResults {

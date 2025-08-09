@@ -1195,17 +1195,17 @@ def main():
                                 reduction_strategy='smart',
                                 save_path='household_network.png')
 
-    # Create time-filtered visualization (example: first 24 hours)
-    print("\nCreating time-filtered visualization (first 24 hours)...")
-    contact_data_24h = contact_data[contact_data['time'] <= 24]
-    visualize_household_network(contact_data_24h, household_data, infection_rates,
-                                figsize=(18, 12),
-                                total_runs=total_runs,
-                                enable_reduction=True,
-                                max_persons=100,
-                                save_path='household_network_24h.png')
+    # # Create time-filtered visualization (example: first 24 hours)
+    # print("\nCreating time-filtered visualization (first 24 hours)...")
+    # contact_data_24h = contact_data[contact_data['time'] <= 24]
+    # visualize_household_network(contact_data_24h, household_data, infection_rates,
+    #                             figsize=(18, 12),
+    #                             total_runs=total_runs,
+    #                             enable_reduction=True,
+    #                             max_persons=100,
+    #                             save_path='household_network_24h.png')
 
-    print("Analysis complete!")
+    # print("Analysis complete!")
 
 
 if __name__ == "__main__":
