@@ -638,19 +638,24 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
         }
     }
 
-    // Summarize the household map
-    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
-    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
-    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
-    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
-    //               << std::endl;
-    // }
-
+    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    for (const auto& [person_id_pre, person_id_sim] : household_map) {
+        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+                  << "House has "
+                  << city
+                         .get_individualized_location(mio::abm::LocationId{
+                             city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home),
+                             mio::abm::LocationType::Home})
+                         .get_persons()
+                         .size()
+                  << " persons." << std::endl;
+    }
     return mio::success(household_map);
 }
 
 mio::IOResult<std::map<uint32_t, uint32_t>>
-EventSimulator::map_two_person_per_household_restaurant_tables_to_households(mio::abm::World& city)
+EventSimulator::map_three_person_per_household_restaurant_tables_to_households(mio::abm::World& city)
 {
     // This funciton maps a simulation id to a household id in the world simulation.
 
@@ -699,26 +704,26 @@ EventSimulator::map_two_person_per_household_restaurant_tables_to_households(mio
     // Secondly we now assign each table a vector of household sizes, we want to assign two seats at each table to a household
     std::map<std::string, std::vector<uint32_t>> table_household_sizes;
     for (const auto& [table, count] : tables) {
-        if (count <= 2) {
-            // If the table has 2 or less people, we assign it to one household
+        if (count <= 3) {
+            // If the table has 3 or less people, we assign it to one household
             table_household_sizes[table].push_back(count);
         }
-        else if (count > 2 && count <= 4) {
-            // If the table has more than 2 people, we divide it into two households
+        else if (count > 3 && count <= 4) {
+            // If the table has more than 3 people, we divide it into two households
             uint32_t household_size1 = 2; // First household takes 2 people
             uint32_t household_size2 = count - 2; // Second household takes the rest
             table_household_sizes[table].push_back(household_size1);
             table_household_sizes[table].push_back(household_size2);
         }
         else {
-            // If the table has more than 4 people, we divide it into multiple households of 2 people each
-            uint32_t num_households = count / 2;
+            // If the table has more than 6 people, we divide it into multiple households of 2 people each
+            uint32_t num_households = count / 3;
             for (uint32_t i = 0; i < num_households; ++i) {
-                table_household_sizes[table].push_back(2);
+                table_household_sizes[table].push_back(3);
             }
-            if (count % 2 != 0) {
+            if (count % 3 != 0) {
                 // Add remaining person as a smaller household
-                table_household_sizes[table].push_back(count % 2);
+                table_household_sizes[table].push_back(count % 3);
             }
         }
     }
@@ -812,7 +817,7 @@ EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city
     //Delete all households which have less than 2 persons, as we want to assign at least two persons to a household
     households.erase(std::remove_if(households.begin(), households.end(),
                                     [](const std::tuple<mio::abm::LocationId, uint32_t>& household) {
-                                        return std::get<1>(household) < 4; // Remove households with less than 2 persons
+                                        return std::get<1>(household) < 2; // Remove households with less than 2 persons
                                     }),
                      households.end());
 
@@ -829,7 +834,14 @@ EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city
     // for (const auto& [person_id_pre, person_id_sim] : household_map) {
     //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
     //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
-    //               << std::endl;
+    //               << "House has "
+    //               << city
+    //                      .get_individualized_location(mio::abm::LocationId{
+    //                          city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home),
+    //                          mio::abm::LocationType::Home})
+    //                      .get_persons()
+    //                      .size()
+    //               << " persons." << std::endl;
     // }
 
     return mio::success(household_map);
@@ -863,10 +875,10 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_work_meeting_to_
 
     std::vector<uint32_t> work_teams = {0, 1, 2, 3, 4}; // Work teams for the event simulation
     std::vector<std::vector<uint32_t>> work_persons(work_teams.size());
-    work_persons[0] = {1, 2, 9, 10, 11}; // Work team 1 Room 1 and 5
-    work_persons[1] = {3, 4, 12, 13, 14}; // Work team 2 Room 2 and 6
-    work_persons[2] = {5, 6, 14, 15, 16, 17}; // Work team 3 Room 3 and 7
-    work_persons[3] = {7, 8, 18, 19, 20}; // Work team 4 Room 4 and 8
+    work_persons[0] = {1, 2, 3, 4}; // Work team 1 Room 1 and 2
+    work_persons[1] = {5, 6, 7, 8}; // Work team 2 Room 3 and 4
+    work_persons[2] = {9, 10, 11, 12, 13, 14}; // Work team 3 Room 5 and 6
+    work_persons[3] = {15, 16, 17, 18, 19, 20}; // Work team 4 Room 7 and 8
     work_persons[4] = {21, 22, 23, 24, 25, 26}; // Work team 5 Room 9 and 10
     std::vector<uint32_t> workplace_id_per_work_team(work_teams.size()); // Workplace IDs for each work team
 
@@ -974,7 +986,7 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_person
     }
     case EventType::Restaurant_Table_Equals_Half_Household: {
         BOOST_OUTCOME_TRY(auto household_map,
-                          EventSimulator::map_two_person_per_household_restaurant_tables_to_households(
+                          EventSimulator::map_three_person_per_household_restaurant_tables_to_households(
                               const_cast<mio::abm::World&>(city)));
         return mio::success(household_map);
     }

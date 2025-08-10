@@ -128,7 +128,7 @@ public:
      * @brief Map restaurant tables to households for infection tracking
      */
     static mio::IOResult<std::map<uint32_t, uint32_t>>
-    map_two_person_per_household_restaurant_tables_to_households(mio::abm::World& city);
+    map_three_person_per_household_restaurant_tables_to_households(mio::abm::World& city);
 
     /**
      * @brief Map restaurant tables to households for infection tracking

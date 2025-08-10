@@ -503,6 +503,10 @@ void CityBuilder::print_city_summary(const CityConfig& config)
     std::cout << "Households: " << total_households << "\n";
     std::cout << "Average household size: " << std::setprecision(2)
               << static_cast<double>(config.total_population) / total_households << " people\n";
+    std::cout << "Households by size:\n";
+    for (size_t i = 0; i < infra.num_households_hh_size.size(); ++i) {
+        std::cout << "  • " << (i + 1) << " person: " << infra.num_households_hh_size[i] << "\n";
+    }
 
     // Employment
     std::cout << "💼 EMPLOYMENT\n";
