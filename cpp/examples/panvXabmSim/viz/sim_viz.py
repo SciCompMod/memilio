@@ -307,23 +307,23 @@ def plot_infection_states_comparison(
         plt.plot(x2, y50_2[:, i], color=color_plot[i],
                  linewidth=2.5, linestyle='--', label=f'{state_labels[i]} - {label2}')
 
-    # Add percentile bands for first simulation
-    for i in states_plot:
-        plt.fill_between(x1, y25_1[:, i], y75_1[:, i],
-                         alpha=0.15, color=color_plot[i])
-        # Optional: 90% percentile for first simulation
-        if show_90 and y05_1 is not None and y95_1 is not None:
-            plt.fill_between(x1, y05_1[:, i], y95_1[:, i],
-                             alpha=0.1, color=color_plot[i])
+    # # Add percentile bands for first simulation
+    # for i in states_plot:
+    #     plt.fill_between(x1, y25_1[:, i], y75_1[:, i],
+    #                      alpha=0.15, color=color_plot[i])
+    #     # Optional: 90% percentile for first simulation
+    #     if show_90 and y05_1 is not None and y95_1 is not None:
+    #         plt.fill_between(x1, y05_1[:, i], y95_1[:, i],
+    #                          alpha=0.1, color=color_plot[i])
 
-    # Add percentile bands for second simulation
-    for i in states_plot:
-        plt.fill_between(x2, y25_2[:, i], y75_2[:, i],
-                         alpha=0.15, color=color_plot[i], linestyle='--')
-        # Optional: 90% percentile for second simulation
-        if show_90 and y05_2 is not None and y95_2 is not None:
-            plt.fill_between(x2, y05_2[:, i], y95_2[:, i],
-                             alpha=0.1, color=color_plot[i])
+    # # Add percentile bands for second simulation
+    # for i in states_plot:
+    #     plt.fill_between(x2, y25_2[:, i], y75_2[:, i],
+    #                      alpha=0.15, color=color_plot[i], linestyle='--')
+    #     # Optional: 90% percentile for second simulation
+    #     if show_90 and y05_2 is not None and y95_2 is not None:
+    #         plt.fill_between(x2, y05_2[:, i], y95_2[:, i],
+    #                          alpha=0.1, color=color_plot[i])
 
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     # Assuming x1 and x2 have similar ranges

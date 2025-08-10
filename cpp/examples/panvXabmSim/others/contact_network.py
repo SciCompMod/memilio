@@ -159,8 +159,6 @@ def create_comparison_visualization(contact_data, household_data,
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
-    plt.show()
-
 
 def draw_basic_network_elements(ax, all_pos, location_nodes, location_areas, household_positions, households):
     """Helper function to draw basic network elements"""
@@ -297,8 +295,6 @@ def create_comparison_with_statistics(contact_data, household_data,
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
-    plt.show()
-
 
 def create_difference_visualization(contact_data, household_data,
                                     infection_rates_sim1, infection_rates_sim2,
@@ -413,8 +409,6 @@ Max decrease: {min(differences.values()):.1f}%"""
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-
-    plt.show()
 
 
 def load_contact_data(contact_file):
@@ -1114,8 +1108,6 @@ def visualize_household_network(contact_data, household_data, infection_rates,
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-
-    plt.show()
 
 
 def print_network_stats(contact_data, infection_data, household_data, total_runs=25):

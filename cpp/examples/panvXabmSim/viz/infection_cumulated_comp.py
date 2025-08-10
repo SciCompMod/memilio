@@ -45,11 +45,12 @@ def _format_x_axis_days(x, xtick_step):
     plt.gca().set_xticklabels([int(day) for day in x[::xtick_step]])
 
 
-def plot_both_simulations_in_one_figure(path_memilio, path_panvXabmSim, colormap='Set1', xtick_step=150, show90=False):
+def plot_both_simulations_in_one_figure(path_memilio, path_panvXabmSim, output_path=None, colormap='Set1', xtick_step=150, show90=False):
     """ Plots cumulative infections for both simulations in one figure with percentiles.
 
     @param[in] path_memilio Path to Memilio simulation results.
     @param[in] path_panvXabmSim Path to panvXabmSim simulation results.
+    @param[in] output_path Path where to save the comparison plots.
     @param[in] colormap Matplotlib colormap name.
     @param[in] xtick_step Step size for x-axis ticks.
     @param[in] show90 If True, plot 90% percentile bands in addition to 50% percentile.
@@ -153,31 +154,49 @@ def plot_both_simulations_in_one_figure(path_memilio, path_panvXabmSim, colormap
     # Save the plot with error handling
     saved_successfully = False
 
-    # Try to save to Memilio directory
-    try:
-        output_dir = os.path.dirname(path_memilio)
-        output_file = os.path.join(
-            output_dir, "cumulative_infections_comparison.png")
-        plt.savefig(output_file, bbox_inches='tight', dpi=300)
-        print(f"Comparison plot saved to {output_file}")
-        saved_successfully = True
-    except PermissionError:
-        print(f"Permission denied: Cannot save to {output_dir}")
-    except Exception as e:
-        print(f"Error saving to Memilio directory: {e}")
+    # Try to save to specified output path first
+    if output_path:
+        try:
+            if os.path.isdir(output_path):
+                output_file = os.path.join(
+                    output_path, "cumulative_infections_comparison.png")
+            else:
+                output_file = output_path
+
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            plt.savefig(output_file, bbox_inches='tight', dpi=300)
+            print(f"Comparison plot saved to {output_file}")
+            saved_successfully = True
+        except Exception as e:
+            print(f"Error saving to specified output path: {e}")
+
+    # Try to save to Memilio directory if output path failed or not specified
+    if not saved_successfully:
+        try:
+            output_dir = os.path.dirname(path_memilio)
+            output_file = os.path.join(
+                output_dir, "cumulative_infections_comparison.png")
+            plt.savefig(output_file, bbox_inches='tight', dpi=300)
+            print(f"Comparison plot saved to {output_file}")
+            saved_successfully = True
+        except PermissionError:
+            print(f"Permission denied: Cannot save to {output_dir}")
+        except Exception as e:
+            print(f"Error saving to Memilio directory: {e}")
 
     # Try to save to panvXabmSim directory
-    try:
-        output_dir_panv = os.path.dirname(path_panvXabmSim)
-        output_file_panv = os.path.join(
-            output_dir_panv, "cumulative_infections_comparison.png")
-        plt.savefig(output_file_panv, bbox_inches='tight', dpi=300)
-        print(f"Comparison plot also saved to {output_file_panv}")
-        saved_successfully = True
-    except PermissionError:
-        print(f"Permission denied: Cannot save to {output_dir_panv}")
-    except Exception as e:
-        print(f"Error saving to panvXabmSim directory: {e}")
+    if not saved_successfully:
+        try:
+            output_dir_panv = os.path.dirname(path_panvXabmSim)
+            output_file_panv = os.path.join(
+                output_dir_panv, "cumulative_infections_comparison.png")
+            plt.savefig(output_file_panv, bbox_inches='tight', dpi=300)
+            print(f"Comparison plot also saved to {output_file_panv}")
+            saved_successfully = True
+        except PermissionError:
+            print(f"Permission denied: Cannot save to {output_dir_panv}")
+        except Exception as e:
+            print(f"Error saving to panvXabmSim directory: {e}")
 
     # Fallback: save to current working directory
     if not saved_successfully:
@@ -202,9 +221,6 @@ def plot_both_simulations_in_one_figure(path_memilio, path_panvXabmSim, colormap
         except Exception as e:
             print(f"Error saving to home directory: {e}")
             print("Could not save plot to any location. Please check file permissions.")
-
-    plt.show()
-    plt.close()
 
     # Print summary statistics
     print("\nSummary Statistics:")
@@ -234,6 +250,8 @@ def main():
                         help="Path to the Memilio simulation results file")
     parser.add_argument("--path-to-panvXabmSim",
                         help="Path to the panvXabmSim simulation results file")
+    parser.add_argument("--output-path", type=str,
+                        help="Output path for comparison plots")
     parser.add_argument("--colormap", type=str,
                         default='Set1', help="Matplotlib colormap")
     parser.add_argument("--xtick-step", type=int,
@@ -247,6 +265,7 @@ def main():
         plot_both_simulations_in_one_figure(
             path_memilio=args.path_to_memilio_sim,
             path_panvXabmSim=args.path_to_panvXabmSim,
+            output_path=args.output_path,
             colormap=args.colormap,
             xtick_step=args.xtick_step,
             show90=args.s90percentile
@@ -254,7 +273,7 @@ def main():
     else:
         print("Please provide paths to both Memilio and panvXabmSim results.")
         print("Usage example:")
-        print("python viz_paper.py --path-to-memilio-sim /path/to/memilio/results --path-to-panvXabmSim /path/to/panv/results")
+        print("python infection_cumulated_comp.py --path-to-memilio-sim /path/to/memilio/results --path-to-panvXabmSim /path/to/panv/results")
 
 
 if __name__ == "__main__":

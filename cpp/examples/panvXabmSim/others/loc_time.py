@@ -242,7 +242,6 @@ def create_pie_charts(person_totals, location_types, num_days, workers, school_a
     plt.tight_layout()
     plt.suptitle('Average Daily Hours by Group',
                  fontsize=16, fontweight='bold', y=1.05)
-    plt.show()
 
 
 def print_detailed_summary(person_totals, location_types, num_days, workers, school_attendees):

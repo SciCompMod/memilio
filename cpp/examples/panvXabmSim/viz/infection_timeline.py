@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import os
+import sys
 
 
 def load_simulation_data(contact_file, infection_file):
@@ -356,11 +359,10 @@ High uncertainty events: {high_uncertainty_count}"""
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Infection timeline saved to {save_path}")
 
-    plt.show()
 
-
-def analyze_simulation_infections(contact_file, infection_file, max_display=50, save_path=None):
+def analyze_simulation_infections(contact_file, infection_file, max_display=50, save_path=None, scenario_name="Simulation"):
     """Main function to analyze and visualize simulation infections"""
 
     # Load data
@@ -375,7 +377,7 @@ def analyze_simulation_infections(contact_file, infection_file, max_display=50, 
         contact_df, infection_df)
 
     # Print summary
-    print(f"\n=== SIMULATION ANALYSIS SUMMARY ===")
+    print(f"\n=== {scenario_name.upper()} ANALYSIS SUMMARY ===")
     print(f"Total infections: {len(infection_events)}")
     print(
         f"Timeline: Timesteps {infection_events[0]['time']:.0f} to {infection_events[-1]['time']:.0f}")
@@ -406,13 +408,49 @@ def analyze_simulation_infections(contact_file, infection_file, max_display=50, 
     return infection_events, contact_analysis_df
 
 
-# Main execution function
-if __name__ == "__main__":
+def main():
+    """Main function for command line usage"""
+    parser = argparse.ArgumentParser(
+        description='Analyze infection timeline from simulation data')
+    parser.add_argument('--contact-file', required=True,
+                        help='Path to contact data CSV file')
+    parser.add_argument('--infection-file', required=True,
+                        help='Path to infection data CSV file')
+    parser.add_argument(
+        '--output-path', help='Output path for visualization (optional)')
+    parser.add_argument('--scenario-name', default='Simulation',
+                        help='Scenario name for titles')
+    parser.add_argument('--max-display', type=int, default=50,
+                        help='Maximum infections to display')
+
+    args = parser.parse_args()
+
+    # Check if files exist
+    if not os.path.exists(args.contact_file):
+        print(f"Error: Contact file {args.contact_file} does not exist")
+        sys.exit(1)
+
+    if not os.path.exists(args.infection_file):
+        print(f"Error: Infection file {args.infection_file} does not exist")
+        sys.exit(1)
+
+    # Set output path
+    if args.output_path:
+        save_path = args.output_path
+    else:
+        base_dir = os.path.dirname(args.contact_file)
+        save_path = os.path.join(
+            base_dir, f'infection_timeline_{args.scenario_name.lower()}.png')
+
     # Analyze the simulation data
-    base_dir = '/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250809_231228/best_run_'
     infection_events, contact_data = analyze_simulation_infections(
-        f'{base_dir}contact_data.csv',
-        f'{base_dir}detailed_infection.csv',
-        max_display=100,  # Show first 30 infections for readability
-        save_path='simulation_infection_timeline.png'
+        args.contact_file,
+        args.infection_file,
+        max_display=args.max_display,
+        save_path=save_path,
+        scenario_name=args.scenario_name
     )
+
+
+if __name__ == "__main__":
+    main()

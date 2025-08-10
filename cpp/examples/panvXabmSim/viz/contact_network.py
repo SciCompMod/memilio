@@ -9,6 +9,9 @@ from collections import defaultdict
 import seaborn as sns
 from matplotlib.patches import Circle
 import matplotlib.patches as mpatches
+import argparse
+import os
+import sys
 
 
 def load_household_data(household_file):
@@ -552,8 +555,7 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-
-    plt.show()
+        print(f"Contact network visualization saved to {save_path}")
 
     # Print summary statistics
     print("\n=== Network Summary ===")
@@ -569,23 +571,59 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
 
 def main():
     """Main function to run the analysis"""
+    parser = argparse.ArgumentParser(
+        description='Generate contact network visualization from simulation data')
+    parser.add_argument('--data-dir', required=True,
+                        help='Directory containing CSV files')
+    parser.add_argument(
+        '--output-path', help='Output path for visualization (optional)')
+    parser.add_argument('--scenario-name', default='Simulation',
+                        help='Scenario name for titles')
+    parser.add_argument('--total-runs', type=int, default=5,
+                        help='Total number of simulation runs')
+    parser.add_argument('--min-contact-hours', type=int,
+                        default=10, help='Minimum contact hours to show')
+    parser.add_argument('--max-persons', type=int,
+                        default=200, help='Maximum persons to display')
+    parser.add_argument('--min-infection-rate', type=float,
+                        default=0, help='Minimum infection rate (%) to display')
+
+    args = parser.parse_args()
+
+    # Check if directory exists
+    if not os.path.exists(args.data_dir):
+        print(f"Error: Directory {args.data_dir} does not exist")
+        sys.exit(1)
 
     # Load data files
     print("Loading data...")
-    base_dir = '/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250809_231228/'
-    household_data = load_household_data(
-        f'{base_dir}/household_id.csv')
-    infection_count_data = load_infection_count_data(
-        f'{base_dir}/infection_count.csv')
-    contact_data = load_contact_data(
-        f'{base_dir}/contact_intensiveness.csv')
-    location_data = load_location_data(
-        f'{base_dir}/location_id_and_type.csv')
+    try:
+        household_data = load_household_data(
+            os.path.join(args.data_dir, 'household_id.csv'))
+        infection_count_data = load_infection_count_data(
+            os.path.join(args.data_dir, 'infection_count.csv'))
+        contact_data = load_contact_data(os.path.join(
+            args.data_dir, 'contact_intensiveness.csv'))
+        location_data = load_location_data(os.path.join(
+            args.data_dir, 'location_id_and_type.csv'))
+    except FileNotFoundError as e:
+        print(f"Error: Required CSV file not found: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error loading data: {e}")
+        sys.exit(1)
 
     print(f"Loaded {len(household_data)} household assignments")
     print(f"Loaded {len(infection_count_data)} infection records")
     print(f"Loaded {len(contact_data)} contact records")
     print(f"Loaded {len(location_data)} location types")
+
+    # Set output path
+    if args.output_path:
+        save_path = args.output_path
+    else:
+        save_path = os.path.join(
+            args.data_dir, f'contact_network_{args.scenario_name.lower()}.png')
 
     # Create visualization
     visualize_contact_network(
@@ -593,12 +631,12 @@ def main():
         infection_count_data=infection_count_data,
         contact_data=contact_data,
         location_data=location_data,
-        total_runs=5,  # Adjust based on your simulation runs
+        total_runs=args.total_runs,
         figsize=(24, 18),
-        save_path='contact_network_simulation.png',
-        min_contact_hours=10,  # Only show contacts with 5+ hours
-        max_persons=3000,  # Limit for performance
-        min_infection_rate=5  # Filter persons below this infection rate (%)
+        save_path=save_path,
+        min_contact_hours=args.min_contact_hours,
+        max_persons=args.max_persons,
+        min_infection_rate=args.min_infection_rate
     )
 
 

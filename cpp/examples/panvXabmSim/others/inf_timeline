@@ -265,7 +265,6 @@ def create_probabilistic_infection_tree(infection_events, contact_data, figsize=
     plt.axis('equal')
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.show()
 
 
 def create_uncertainty_cloud_network(infection_events, contact_data, figsize=(16, 12)):
@@ -381,7 +380,6 @@ def create_uncertainty_cloud_network(infection_events, contact_data, figsize=(16
               fontsize=14, fontweight='bold')
     plt.axis('off')
     plt.tight_layout()
-    plt.show()
 
 
 def create_timeline_with_probability_bars(infection_events, contact_data, figsize=(20, 10)):
@@ -478,7 +476,6 @@ def create_timeline_with_probability_bars(infection_events, contact_data, figsiz
     ax2.set_ylim(0, max(uncertainty_scores) * 1.1 if uncertainty_scores else 1)
 
     plt.tight_layout()
-    plt.show()
 
 
 def run_sample_visualizations():
@@ -519,7 +516,6 @@ def run_sample_visualizations():
 
 def analyze_transmission_patterns(infection_events, contact_data):
     """Analyze patterns in the transmission data"""
-    
 
     contact_df = pd.DataFrame(contact_data) if isinstance(
         contact_data, list) else contact_data

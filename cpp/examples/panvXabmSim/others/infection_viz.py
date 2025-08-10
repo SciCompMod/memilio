@@ -283,8 +283,6 @@ High uncertainty events: {high_uncertainty_count}"""
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
-    plt.show()
-
 
 # Sample data for testing
 sample_infection_events = [
