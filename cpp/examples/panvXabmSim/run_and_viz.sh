@@ -13,11 +13,11 @@ VIZ_OUTPUT_DIR="$MAIN_PATH/examples/panvXabmSim/results/results_viz"
 PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 
 # Simulation parameters
-EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equals_half_household, restaurant_table_equals_full_household, work_meeting_many, work_meeting_few, work_meeting_low
+EVENT_TYPE="restaurant_table_equals_half_household"  # Options: restaurant_table_equals_household restaurant_table_equals_half_household restaurant_table_equals_random_household work_meeting_many work_meeting_baseline
 VIZ_OPTIONS="--s90percentile"
 NUM_DAYS=10
 NUM_PERSONS=1000
-RUNS=25
+RUNS=100
 
 # BOOL for visualization
 VISUALIZE=true
@@ -84,13 +84,13 @@ run_comparison_visualizations() {
         $VIZ_OPTIONS
     
     # 3. Contact network analysis (if CSV files exist)
-    if [ -f "$memilio_dir/contact_intensiveness.csv" ] && [ -f "$memilio_dir/infection_count.csv" ]; then
-        echo "  -> Running contact network analysis..."
-        $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
-            --data-dir "$memilio_dir" \
-            --output-path "$viz_output_dir/contact_network_memilio.png" \
-            --scenario-name "Memilio"
-    fi
+    # if [ -f "$memilio_dir/contact_intensiveness.csv" ] && [ -f "$memilio_dir/infection_count.csv" ]; then
+    #     echo "  -> Running contact network analysis..."
+    #     $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
+    #         --data-dir "$memilio_dir" \
+    #         --output-path "$viz_output_dir/contact_network_memilio.png" \
+    #         --scenario-name "Memilio"
+    # fi
     
     # if [ -f "$panvadere_dir/contact_intensiveness.csv" ] && [ -f "$panvadere_dir/infection_count.csv" ]; then
     #     echo "  -> Running contact network analysis for Panvadere..."

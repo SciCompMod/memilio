@@ -611,7 +611,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
     results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
-    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(6)};
+    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(1)};
     results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // FIGURES
