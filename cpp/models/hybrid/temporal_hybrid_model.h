@@ -24,6 +24,9 @@
 #include <algorithm>
 #include <functional>
 #include <type_traits>
+
+#include "memilio/config.h"
+
 namespace mio
 {
 namespace hybrid
