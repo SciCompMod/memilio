@@ -26,11 +26,11 @@ enum class SimType
 // Mapping from EventType to corresponding Panvadere data file
 const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
     {EventType::Restaurant_Table_Equals_Household,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/base_scenario/infections.txt"},
     {EventType::Restaurant_Table_Equals_Half_Household,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/base_scenario/infections.txt"},
     {EventType::Restaurant_Table_Equals_Random,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/base_scenario/infections.txt"},
     {EventType::WorkMeeting_Many_Meetings,
      std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_many_meetings/infections.txt"},
     {EventType::WorkMeeting_Baseline_Meetings,

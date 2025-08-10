@@ -296,7 +296,7 @@ def main():
     Main function to create group-based pie charts
     """
     # Use the uploaded file directly
-    filename = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/results_2025-07-23203930/location_type_and_id.txt"
+    filename = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-10151633/location_type_and_id.txt"
 
     print(f"Reading location data from {filename}...")
     print("Creating pie charts for different groups...")

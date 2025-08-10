@@ -529,6 +529,8 @@ std::string EventSimulator::event_type_to_string(EventType type)
         return "RestaurantNotEqualHH";
     case EventType::WorkMeeting_Many_Meetings:
         return "WorkMeetingMany";
+    case EventType::WorkMeeting_Baseline_Meetings:
+        return "WorkMeetingBaseline";
     default:
         return "Unknown";
     }
@@ -541,8 +543,6 @@ std::string EventSimulator::simulation_type_to_string(SimType type)
         return "Panvadere";
     case SimType::Memilio:
         return "Memilio";
-    case SimType::Both:
-        return "Both";
     default:
         return "Unknown";
     }
@@ -797,12 +797,12 @@ EventSimulator::map_two_person_per_household_restaurant_tables_to_households(mio
     }
 
     // // Summarize the household map
-    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
-    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
-    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
-    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
-    //               << std::endl;
-    // }
+    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    for (const auto& [person_id_pre, person_id_sim] : household_map) {
+        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+                  << std::endl;
+    }
 
     return mio::success(household_map);
 }
@@ -851,6 +851,13 @@ EventSimulator::map_random_restaurant_tables_to_households(mio::abm::World& city
         auto household_persons   = city.get_individualized_location(std::get<0>(households[counter_hh])).get_persons();
         household_map[person_id] = household_persons[0].get()->get_person_id(); // Map person ID to household ID
         counter_hh++; // Increment household counter
+    }
+
+    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    for (const auto& [person_id_pre, person_id_sim] : household_map) {
+        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+                  << std::endl;
     }
 
     return mio::success(household_map);

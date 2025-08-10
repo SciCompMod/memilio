@@ -53,7 +53,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
             mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(0), mio::Counter<uint32_t>(0));
         rng.set_counter(run_rng_counter);
         auto base_world = CityBuilder::build_world(config.city_config, rng);
-        CityBuilder::print_city_summary(config.city_config);
+        // CityBuilder::print_city_summary(config.city_config);
         for (auto& person : base_world.get_persons()) {
             // Reset the infection state for each person
             person.get_rng_counter() =
@@ -486,7 +486,20 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         }
         household_file.close();
     }
-
+    //Location id and person id
+    std::string location_type_and_id_file = base_dir + "/location_type_and_id.txt";
+    std::ofstream location_file(location_type_and_id_file);
+    if (location_file.is_open()) {
+        location_file << "Person ID, Location Type\n";
+        for (const auto& timestep : results.all_runs[0].infection_per_location_type_and_id) {
+            for (const auto& person_info : timestep) {
+                location_file << std::get<0>(person_info) << ", " << location_type_to_string(std::get<1>(person_info))
+                              << "\n";
+            }
+            location_file << "\n"; // Separate time steps with a newline
+        }
+        location_file.close();
+    }
     // Save id to location_type
     auto loc_id_and_type_file = base_dir + "/location_id_and_type.csv";
     std::ofstream loc_id_and_type_stream(loc_id_and_type_file);
@@ -578,6 +591,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
         Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
         Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
+    mio::History<mio::abm::DataWriterToMemoryDelta, LogLocationTypeAndId> historyLocationTypeAndId;
 
     // FIGURES
     mio::History<mio::abm::TimeSeriesWriter, LogAmountOfInfections> historyAmountInfected{
@@ -588,15 +602,16 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     mio::History<mio::abm::DataWriterToMemoryDelta, LogLocationIdAndType> historyLocationIdAndType; // 4th figure
 
     sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyAmountInfected,
-                historyContactNetwork, historyInfectionDetailed, historyLocationIdAndType);
+                historyContactNetwork, historyInfectionDetailed, historyLocationIdAndType, historyLocationTypeAndId);
 
     // DEBUG
     results.infection_per_loc_type =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionPerLocationType.get_log())};
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
-    results.ensemble_params              = std::vector<mio::abm::World>{sim.get_world()};
-    results.ensemble_params_no_agegroups = std::vector<mio::abm::World>{mio::abm::World(1)};
+    results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
+    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(6)};
+    results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // FIGURES
     results.history_infected_amount =

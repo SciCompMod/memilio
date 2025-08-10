@@ -16,8 +16,8 @@ constexpr double MIN_INFECTION_K = 0.01;
 constexpr double MAX_INFECTION_K = 100.0;
 
 // Default values
-constexpr int DEFAULT_RUNS               = 25;
-constexpr int DEFAULT_DAYS               = 10;
+constexpr int DEFAULT_RUNS               = 5;
+constexpr int DEFAULT_DAYS               = 7;
 constexpr int DEFAULT_POPULATION         = 1000;
 constexpr double DEFAULT_INFECTION_K     = 20.0;
 constexpr int DEFAULT_EVENT_HOURS        = 2;
