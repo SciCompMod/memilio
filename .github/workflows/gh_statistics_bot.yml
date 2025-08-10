@@ -219,7 +219,7 @@ jobs:
               const chartHeight = height - 2 * padding - 20;
               
               const maxValue = Math.max(...data);
-              const minValue = Math.max(0, Math.min(...data) - Math.max(...data) * 0.1);
+              const minValue = Math.max(Math.max(0, Math.min(...data) - Math.max(...data) * 0.1), 0);
               const range = maxValue - minValue || 1;
               
               const points = data.map((value, index) => {
