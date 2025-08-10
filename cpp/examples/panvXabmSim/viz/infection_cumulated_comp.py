@@ -255,7 +255,7 @@ def main():
     parser.add_argument("--colormap", type=str,
                         default='Set1', help="Matplotlib colormap")
     parser.add_argument("--xtick-step", type=int,
-                        default=150, help="Step for x-axis ticks (usually hours)")
+                        default=48, help="Step for x-axis ticks (usually hours)")
     parser.add_argument("--s90percentile", action="store_true",
                         help="If set, plot 90% percentile as well")
     args = parser.parse_args()

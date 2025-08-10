@@ -7,7 +7,7 @@
 #include "abm/location.h"
 #include "abm/person.h"
 #include "city_parameters.h"
-#include "config_validation.h"
+#include "defaults.h"
 
 // Configuration for representative German city simulation
 struct CityConfig {
@@ -23,7 +23,7 @@ struct CityConfig {
 class CityBuilder
 {
 public:
-    static mio::IOResult<mio::abm::World> build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng);
+    static mio::abm::World build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng);
     static void print_city_summary(const CityConfig& config);
 
 private:
@@ -33,7 +33,7 @@ private:
     static std::vector<mio::abm::LocationId> create_shops(mio::abm::World& world, int num_shops);
     static std::vector<mio::abm::LocationId> create_events(mio::abm::World& world, int num_events);
     static std::vector<int> create_age_vector(int total_population);
-    static mio::IOResult<void> create_and_assign_people_to_locations(
+    static void create_and_assign_people_to_locations(
         mio::abm::World& world, const std::vector<mio::abm::LocationId>& households,
         const std::vector<mio::abm::LocationId>& workplaces, const std::vector<mio::abm::LocationId>& prim_schools,
         const std::vector<mio::abm::LocationId>& sec_schools, const std::vector<mio::abm::LocationId>& shops,

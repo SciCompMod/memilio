@@ -39,20 +39,21 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
                                                                        mio::RandomNumberGenerator rng)
 {
     MultiRunResults results;
+    results.event_type      = config.event_config.type;
+    results.simulation_type = config.simulation_type;
+
     for (int run = 0; run < config.num_runs; ++run) {
         if (run % 10 == 0 || run == config.num_runs - 1) {
             std::cout << "Run " << run + 1 << "/" << config.num_runs << std::endl;
         }
-
-        results.event_type      = config.event_config.type;
-        results.simulation_type = config.simulation_type;
 
         // Step 1: Build city
         // std::cout << "Building city..." << std::endl;
         auto run_rng_counter =
             mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(0), mio::Counter<uint32_t>(0));
         rng.set_counter(run_rng_counter);
-        BOOST_OUTCOME_TRY(auto base_world, CityBuilder::build_world(config.city_config, rng));
+        auto base_world = CityBuilder::build_world(config.city_config, rng);
+        CityBuilder::print_city_summary(config.city_config);
         for (auto& person : base_world.get_persons()) {
             // Reset the infection state for each person
             person.get_rng_counter() =
@@ -63,8 +64,6 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         rng.set_counter(run_rng_counter);
         // We could reset it to zero if we dont want random assignment of infections.
 
-        // CityBuilder::print_city_summary(config.city_config);
-
         // Step 2: Get map from specific event to ids of persons in simulation
         // std::cout << "Mapping events to person IDs..." << std::endl;
         BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config.type));
@@ -74,7 +73,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
             std::cout << "Calculating infection parameter K..." << std::endl;
             // BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
             //                                                      config.event_config, base_world, event_map));
-            results.infection_parameter_k = 10; // Placeholder value for K parameter
+            results.infection_parameter_k = 20; // Placeholder value for K parameter
         }
 
         // Step 3: Get initial infections

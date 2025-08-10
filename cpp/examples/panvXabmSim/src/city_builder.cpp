@@ -11,7 +11,7 @@
 #include <iostream>
 #include <iomanip>
 
-mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng)
+mio::abm::World CityBuilder::build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng)
 {
     auto world      = mio::abm::World(num_age_groups);
     world.get_rng() = rng; // Set the random number generator for the world
@@ -40,14 +40,14 @@ mio::IOResult<mio::abm::World> CityBuilder::build_world(const CityConfig& config
     auto events       = create_events(world, infra.num_events);
 
     // Assign people to locations using German demographic distribution
-    BOOST_OUTCOME_TRY(create_and_assign_people_to_locations(world, households, workplaces, prim_schools, sec_schools,
-                                                            shops, events, hospitals, icus, config.total_population,
-                                                            infra.num_households_hh_size, infra));
+    create_and_assign_people_to_locations(world, households, workplaces, prim_schools, sec_schools, shops, events,
+                                          hospitals, icus, config.total_population, infra.num_households_hh_size,
+                                          infra);
 
     set_local_parameters(world);
     set_parameters(world.parameters);
 
-    return mio::success(std::move(world));
+    return world;
 }
 
 std::vector<mio::abm::LocationId> CityBuilder::create_households(mio::abm::World& world, int num_households)
@@ -163,7 +163,7 @@ int CityBuilder::ageGroupTInt6(mio::AgeGroup age_group)
     }
 }
 
-mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
+void CityBuilder::create_and_assign_people_to_locations(
     mio::abm::World& world, const std::vector<mio::abm::LocationId>& household_locations,
     const std::vector<mio::abm::LocationId>& workplaces, const std::vector<mio::abm::LocationId>& prim_schools,
     const std::vector<mio::abm::LocationId>& sec_schools, const std::vector<mio::abm::LocationId>& shops,
@@ -468,9 +468,8 @@ mio::IOResult<void> CityBuilder::create_and_assign_people_to_locations(
         std::cerr << "Error: Expected " << (infra.num_persons_elementary_schools + infra.num_persons_secondary_schools)
                   << " school attendees, but found " << school_attendees << ".\n";
     }
-
-    return mio::success();
 }
+
 void CityBuilder::print_city_summary(const CityConfig& config)
 {
     auto infra = config.infrastructure();

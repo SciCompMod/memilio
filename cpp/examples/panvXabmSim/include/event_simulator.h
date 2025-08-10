@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include "abm/world.h"
 #include "abm/location_type.h"
-#include "config_validation.h"
+#include "defaults.h"
 
 enum class EventType
 {
@@ -13,8 +13,7 @@ enum class EventType
     Restaurant_Table_Equals_Half_Household,
     Restaurant_Table_Equals_Random,
     WorkMeeting_Many_Meetings,
-    WorkMeeting_Few_Meetings,
-    WorkMeeting_Low_Meetings
+    WorkMeeting_Baseline_Meetings
 };
 
 enum class SimType
@@ -34,10 +33,8 @@ const std::unordered_map<EventType, std::string> EVENT_TYPE_TO_FILE = {
      std::string(Config::DEFAULT_BASE_DIR) + "/data/restaurant_scenario/infections.txt"},
     {EventType::WorkMeeting_Many_Meetings,
      std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_many_meetings/infections.txt"},
-    {EventType::WorkMeeting_Few_Meetings,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_few_meetings/infections.txt"},
-    {EventType::WorkMeeting_Low_Meetings,
-     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_super_low/infections.txt"}};
+    {EventType::WorkMeeting_Baseline_Meetings,
+     std::string(Config::DEFAULT_BASE_DIR) + "/data/work_scenario/scenario_baseline/infections.txt"}};
 
 struct EventSimulationConfig {
     EventType type;

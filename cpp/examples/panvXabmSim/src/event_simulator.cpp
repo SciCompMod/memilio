@@ -53,7 +53,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
         event_duration_hours = 2; // Default event duration for restaurant events
     }
     else if (config.type == EventType::WorkMeeting_Many_Meetings ||
-             config.type == EventType::WorkMeeting_Few_Meetings || config.type == EventType::WorkMeeting_Low_Meetings) {
+             config.type == EventType::WorkMeeting_Baseline_Meetings) {
         // For work meeting events, read the work-specific Panvadere file
         BOOST_OUTCOME_TRY(panvadere_data_work, read_panv_file_work(panvadere_file));
         event_duration_hours = 8; // Default event duration for work meetings
@@ -78,7 +78,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
         }
     }
     else if (config.type == EventType::WorkMeeting_Many_Meetings ||
-             config.type == EventType::WorkMeeting_Few_Meetings || config.type == EventType::WorkMeeting_Low_Meetings) {
+             config.type == EventType::WorkMeeting_Baseline_Meetings) {
         for (const auto& entry : panvadere_data_work) {
             if (std::get<2>(entry)) { // Check if infected status is true
                 infected_count++;
@@ -122,8 +122,7 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
                 ratio = 4.0 / 2.0; // 4 hours divided by event duration
             }
             else if (config.type == EventType::WorkMeeting_Many_Meetings ||
-                     config.type == EventType::WorkMeeting_Few_Meetings ||
-                     config.type == EventType::WorkMeeting_Low_Meetings) {
+                     config.type == EventType::WorkMeeting_Baseline_Meetings) {
                 ratio = 7.0 / 8.0; // 6 hours divided by event duration
             }
             set_local_parameters_event(calculation_world, ratio);
@@ -432,17 +431,7 @@ EventSimulator::initialize_from_event_simulation(EventType event_type, std::map<
         }
         break;
     }
-    case EventType::WorkMeeting_Few_Meetings: {
-        std::vector<uint32_t> return_vector;
-        // mio::unused(rng); // Avoid unused variable warning
-        return_vector.reserve(8); // Reserve space for 13 households -> this is one of the worst case scenarios
-        return_vector = {0, 4, 8, 14, 20, 1, 5, 9};
-        for (size_t i = 0; i < return_vector.size(); ++i) {
-            household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
-        }
-        break;
-    }
-    case EventType::WorkMeeting_Low_Meetings: {
+    case EventType::WorkMeeting_Baseline_Meetings: {
         std::vector<uint32_t> return_vector;
         // mio::unused(rng); // Avoid unused variable warning
         return_vector.reserve(3); // Reserve space for 3 households
@@ -498,8 +487,7 @@ mio::IOResult<std::vector<uint32_t>> EventSimulator::initialize_from_panvadere(E
         break;
     }
     case EventType::WorkMeeting_Many_Meetings:
-    case EventType::WorkMeeting_Low_Meetings:
-    case EventType::WorkMeeting_Few_Meetings: {
+    case EventType::WorkMeeting_Baseline_Meetings: {
         // Read Panvadere infection data
         BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_work(panvadere_file));
         for (const auto& entry : panvadere_data) {
@@ -541,8 +529,6 @@ std::string EventSimulator::event_type_to_string(EventType type)
         return "RestaurantNotEqualHH";
     case EventType::WorkMeeting_Many_Meetings:
         return "WorkMeetingMany";
-    case EventType::WorkMeeting_Few_Meetings:
-        return "WorkMeetingFew";
     default:
         return "Unknown";
     }
@@ -886,15 +872,9 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_work_meeting_to_
         panvadere_file = panvadere_file_read;
         break;
     }
-    case EventType::WorkMeeting_Few_Meetings: {
+    case EventType::WorkMeeting_Baseline_Meetings: {
         BOOST_OUTCOME_TRY(auto panvadere_file_read,
-                          get_panvadere_file_for_event_type(EventType::WorkMeeting_Few_Meetings));
-        panvadere_file = panvadere_file_read;
-        break;
-    }
-    case EventType::WorkMeeting_Low_Meetings: {
-        BOOST_OUTCOME_TRY(auto panvadere_file_read,
-                          get_panvadere_file_for_event_type(EventType::WorkMeeting_Low_Meetings));
+                          get_panvadere_file_for_event_type(EventType::WorkMeeting_Baseline_Meetings));
         panvadere_file = panvadere_file_read;
         break;
     }
@@ -970,7 +950,7 @@ mio::IOResult<mio::abm::World> EventSimulator::create_event_world(const EventSim
         loc_id = world.add_location(mio::abm::LocationType::SocialEvent); // Add one event location
     }
     else if (config.type == EventType::WorkMeeting_Many_Meetings ||
-             config.type == EventType::WorkMeeting_Few_Meetings || config.type == EventType::WorkMeeting_Low_Meetings) {
+             config.type == EventType::WorkMeeting_Baseline_Meetings) {
         loc_id = world.add_location(mio::abm::LocationType::Work); // Add one work meeting location
     }
     // We at least need one house, hospital and icu
@@ -1025,8 +1005,7 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_events_to_person
         return mio::success(household_map);
     }
     case EventType::WorkMeeting_Many_Meetings:
-    case EventType::WorkMeeting_Low_Meetings:
-    case EventType::WorkMeeting_Few_Meetings: {
+    case EventType::WorkMeeting_Baseline_Meetings: {
         BOOST_OUTCOME_TRY(auto household_map, EventSimulator::map_work_meeting_to_households(
                                                   const_cast<mio::abm::World&>(city), event_type));
         return mio::success(household_map);

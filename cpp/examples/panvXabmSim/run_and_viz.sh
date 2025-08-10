@@ -17,8 +17,7 @@ EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equa
 VIZ_OPTIONS="--s90percentile"
 NUM_DAYS=10
 NUM_PERSONS=1000
-# Set environment variables
-export OMP_NUM_THREADS=$OMP_NUM_THREADS
+RUNS=25
 
 # BOOL for visualization
 VISUALIZE=true
@@ -43,7 +42,7 @@ run_simulation() {
     local sim_type=$2
     echo "Running $sim_type simulation..."
     $MAIN_EXECUTABLE --event "$EVENT_TYPE" --sim "$sim_type" --output_dir "$results_dir" \
-        --days "$NUM_DAYS" --n_persons "$NUM_PERSONS"
+        --days "$NUM_DAYS" --n_persons "$NUM_PERSONS" --runs "$RUNS"
     return $?
 }
 
@@ -69,11 +68,11 @@ run_comparison_visualizations() {
     # 1. Main cumulative infections comparison
     echo "  -> Running cumulative infections comparison..."
     $PYTHON3_DIR $COMPARISON_VIZ_SCRIPT \
-        --path-to-memilio-sim "$memilio_dir/infection_state_per_age_group" \
-        --path-to-panvXabmSim "$panvadere_dir/infection_state_per_age_group" \
+        --path-to-memilio-sim "$memilio_dir/amount_of_infections" \
+        --path-to-panvXabmSim "$panvadere_dir/amount_of_infections" \
         --output-path "$viz_output_dir" \
         $VIZ_OPTIONS
-    
+
     # 2. Side-by-side infection states comparison
     echo "  -> Running infection states comparison..."
     $PYTHON3_DIR $SIM_VIZ_SCRIPT \
@@ -93,54 +92,54 @@ run_comparison_visualizations() {
             --scenario-name "Memilio"
     fi
     
-    if [ -f "$panvadere_dir/contact_intensiveness.csv" ] && [ -f "$panvadere_dir/infection_count.csv" ]; then
-        echo "  -> Running contact network analysis for Panvadere..."
-        $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
-            --data-dir "$panvadere_dir" \
-            --output-path "$viz_output_dir/contact_network_panvadere.png" \
-            --scenario-name "Panvadere"
-    fi
+    # if [ -f "$panvadere_dir/contact_intensiveness.csv" ] && [ -f "$panvadere_dir/infection_count.csv" ]; then
+    #     echo "  -> Running contact network analysis for Panvadere..."
+    #     $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
+    #         --data-dir "$panvadere_dir" \
+    #         --output-path "$viz_output_dir/contact_network_panvadere.png" \
+    #         --scenario-name "Panvadere"
+    # fi
     
-    # 4. Infection timeline analysis (if detailed infection files exist)
-    if [ -f "$memilio_dir/best_run_detailed_infection.csv" ] && [ -f "$memilio_dir/best_run_contact_data.csv" ]; then
-        echo "  -> Running infection timeline analysis for Memilio..."
-        $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
-            --contact-file "$memilio_dir/best_run_contact_data.csv" \
-            --infection-file "$memilio_dir/best_run_detailed_infection.csv" \
-            --output-path "$viz_output_dir/infection_timeline_memilio.png" \
-            --scenario-name "Memilio"
-    fi
+    # # 4. Infection timeline analysis (if detailed infection files exist)
+    # if [ -f "$memilio_dir/best_run_detailed_infection.csv" ] && [ -f "$memilio_dir/best_run_contact_data.csv" ]; then
+    #     echo "  -> Running infection timeline analysis for Memilio..."
+    #     $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
+    #         --contact-file "$memilio_dir/best_run_contact_data.csv" \
+    #         --infection-file "$memilio_dir/best_run_detailed_infection.csv" \
+    #         --output-path "$viz_output_dir/infection_timeline_memilio.png" \
+    #         --scenario-name "Memilio"
+    # fi
     
-    if [ -f "$panvadere_dir/best_run_detailed_infection.csv" ] && [ -f "$panvadere_dir/best_run_contact_data.csv" ]; then
-        echo "  -> Running infection timeline analysis for Panvadere..."
-        $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
-            --contact-file "$panvadere_dir/best_run_contact_data.csv" \
-            --infection-file "$panvadere_dir/best_run_detailed_infection.csv" \
-            --output-path "$viz_output_dir/infection_timeline_panvadere.png" \
-            --scenario-name "Panvadere"
-    fi
+    # if [ -f "$panvadere_dir/best_run_detailed_infection.csv" ] && [ -f "$panvadere_dir/best_run_contact_data.csv" ]; then
+    #     echo "  -> Running infection timeline analysis for Panvadere..."
+    #     $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
+    #         --contact-file "$panvadere_dir/best_run_contact_data.csv" \
+    #         --infection-file "$panvadere_dir/best_run_detailed_infection.csv" \
+    #         --output-path "$viz_output_dir/infection_timeline_panvadere.png" \
+    #         --scenario-name "Panvadere"
+    # fi
     
-    # 5. Statistical analysis tables
-    echo "  -> Running statistical analysis..."
-    if [ -d "$memilio_dir" ]; then
-        $PYTHON3_DIR $STAT_TABLE_SCRIPT \
-            --input_dir "$memilio_dir" \
-            --scenario_name "Memilio"
-    fi
+    # # 5. Statistical analysis tables
+    # echo "  -> Running statistical analysis..."
+    # if [ -d "$memilio_dir" ]; then
+    #     $PYTHON3_DIR $STAT_TABLE_SCRIPT \
+    #         --input_dir "$memilio_dir" \
+    #         --scenario_name "Memilio"
+    # fi
     
-    if [ -d "$panvadere_dir" ]; then
-        $PYTHON3_DIR $STAT_TABLE_SCRIPT \
-            --input_dir "$panvadere_dir" \
-            --scenario_name "Panvadere"
-    fi
+    # if [ -d "$panvadere_dir" ]; then
+    #     $PYTHON3_DIR $STAT_TABLE_SCRIPT \
+    #         --input_dir "$panvadere_dir" \
+    #         --scenario_name "Panvadere"
+    # fi
     
-    # Copy statistical reports to viz output directory
-    if [ -f "$memilio_dir/epidemic_metrics.txt" ]; then
-        cp "$memilio_dir/epidemic_metrics.txt" "$viz_output_dir/epidemic_metrics_memilio.txt"
-    fi
-    if [ -f "$panvadere_dir/epidemic_metrics.txt" ]; then
-        cp "$panvadere_dir/epidemic_metrics.txt" "$viz_output_dir/epidemic_metrics_panvadere.txt"
-    fi
+    # # Copy statistical reports to viz output directory
+    # if [ -f "$memilio_dir/epidemic_metrics.txt" ]; then
+    #     cp "$memilio_dir/epidemic_metrics.txt" "$viz_output_dir/epidemic_metrics_memilio.txt"
+    # fi
+    # if [ -f "$panvadere_dir/epidemic_metrics.txt" ]; then
+    #     cp "$panvadere_dir/epidemic_metrics.txt" "$viz_output_dir/epidemic_metrics_panvadere.txt"
+    # fi
     
     return $?
 }
@@ -212,7 +211,7 @@ main() {
         fi
         
         echo "All visualizations completed. Results saved in $viz_output_dir"
-        echo ""
+        # echo ""
     fi
     
     # Copy results to last_result folders

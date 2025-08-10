@@ -8,10 +8,10 @@
 struct MultiRunConfig {
     CityConfig city_config;
     EventSimulationConfig event_config;
-    SimType simulation_type     = SimType::Panvadere;
-    int num_runs                = 100;
-    int simulation_days         = 1;
-    std::string output_base_dir = "/results";
+    SimType simulation_type;
+    int num_runs;
+    int simulation_days;
+    std::string output_base_dir;
 };
 
 struct SimulationResults {

@@ -4,7 +4,7 @@
 #include "boost/filesystem.hpp"
 #include "memilio/io/result_io.h"
 
-#include "include/config_validation.h"
+#include "include/defaults.h"
 #include "include/multi_run_simulator.h"
 #include "include/event_simulator.h"
 #include "include/file_utils.h"
@@ -19,12 +19,11 @@ const std::unordered_map<std::string, EventType> EVENT_TYPE_MAP = {
     {"restaurant_table_equals_half_household", EventType::Restaurant_Table_Equals_Half_Household},
     {"restaurant_table_equals_random_household", EventType::Restaurant_Table_Equals_Random},
     {"work_meeting_many", EventType::WorkMeeting_Many_Meetings},
-    {"work_meeting_few", EventType::WorkMeeting_Few_Meetings},
-    {"work_meeting_low", EventType::WorkMeeting_Low_Meetings}};
+    {"work_meeting_baseline", EventType::WorkMeeting_Baseline_Meetings}};
 
 // Simulation type mapping
-const std::unordered_map<std::string, SimType> SIM_TYPE_MAP = {
-    {"panvadere", SimType::Panvadere}, {"memilio", SimType::Memilio}, {"both", SimType::Both}};
+const std::unordered_map<std::string, SimType> SIM_TYPE_MAP = {{"panvadere", SimType::Panvadere},
+                                                               {"memilio", SimType::Memilio}};
 } // namespace
 
 void print_help(const char* program_name)
@@ -89,8 +88,8 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     // Set defaults
     config.city_config                  = CityConfig{};
     config.city_config.total_population = Config::DEFAULT_POPULATION;
-    config.event_config.type            = EventType::WorkMeeting_Low_Meetings;
-    config.simulation_type              = SimType::Memilio; // Default to Panvadere simulatio
+    config.event_config.type            = EventType::Restaurant_Table_Equals_Household;
+    config.simulation_type              = SimType::Memilio;
     config.num_runs                     = Config::DEFAULT_RUNS;
     config.simulation_days              = Config::DEFAULT_DAYS;
     config.output_base_dir              = Config::DEFAULT_OUTPUT_DIR;
@@ -169,34 +168,6 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     return config;
 }
 
-bool validate_config(const MultiRunConfig& config)
-{
-    // Validate event configuration
-    // if (!config.event_config.is_valid()) {
-    //     std::cerr << "Error: Invalid event configuration\n";
-    //     return false;
-    // }
-
-    // Validate simulation parameters
-    if (config.num_runs < Config::MIN_RUNS || config.num_runs > Config::MAX_RUNS) {
-        std::cerr << "Error: Invalid number of runs\n";
-        return false;
-    }
-
-    if (config.simulation_days < Config::MIN_DAYS || config.simulation_days > Config::MAX_DAYS) {
-        std::cerr << "Error: Invalid number of simulation days\n";
-        return false;
-    }
-
-    if (config.city_config.total_population < Config::MIN_POPULATION ||
-        config.city_config.total_population > Config::MAX_POPULATION) {
-        std::cerr << "Error: Invalid population size\n";
-        return false;
-    }
-
-    return true;
-}
-
 void print_config_summary(const MultiRunConfig& config)
 {
     std::cout << "\n=== Multi-Run Simulation Setup ===" << std::endl;
@@ -205,12 +176,18 @@ void print_config_summary(const MultiRunConfig& config)
     std::cout << "Number of runs: " << config.num_runs << std::endl;
     std::cout << "Population: " << config.city_config.total_population << std::endl;
     std::cout << "Simulation days: " << config.simulation_days << std::endl;
+    std::cout << "Output Directory: " << config.output_base_dir << std::endl;
     std::cout << "===================================" << std::endl;
 }
 
-void print_summary(const MultiRunResults& results)
+void print_summary(const MultiRunResults& results, const MultiRunConfig& config,
+                   const std::chrono::duration<double>& duration, const std::string& output_dir)
 {
     std::cout << "\n=== Simulation Summary ===" << std::endl;
+    std::cout << "\n✓ Multi-run simulation completed successfully!" << std::endl;
+    std::cout << "Total execution time: " << duration.count() << " seconds" << std::endl;
+    std::cout << "Results saved to: " << output_dir << std::endl;
+    std::cout << "Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
     std::cout << "Infection Parameter K: " << results.infection_parameter_k << std::endl;
     std::cout << "=========================" << std::endl;
 }
@@ -225,16 +202,11 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     rng.seed(seeds);
     rng.synchronize();
 
+    // Measure execution time
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // Parse configuration
     auto config = parse_multi_run_config(argc, argv);
-
-    // Validate complete configuration
-    if (!validate_config(config)) {
-        return mio::failure(mio::StatusCode::InvalidValue, "Configuration validation failed");
-    }
-
     print_config_summary(config);
 
     // Run multi-simulation
@@ -242,20 +214,14 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
 
     // Save results
     if (config.output_base_dir == Config::DEFAULT_OUTPUT_DIR) {
-        config.output_base_dir = config.output_base_dir + "/results_" + currentDateTime();
+        config.output_base_dir = config.output_base_dir + "/run_default_" + currentDateTime();
     }
     BOOST_OUTCOME_TRY(MultiRunSimulator::save_multi_run_results(results, config.output_base_dir));
 
-    // Print final results
-    auto end_time       = std::chrono::high_resolution_clock::now();
-    auto total_duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
-
-    print_summary(results);
-
-    std::cout << "\n✓ Multi-run simulation completed successfully!" << std::endl;
-    std::cout << "Total execution time: " << total_duration.count() << " seconds" << std::endl;
-    std::cout << "Results saved to: " << config.output_base_dir << std::endl;
-    std::cout << "Successful runs: " << results.successful_runs << "/" << config.num_runs << std::endl;
+    print_summary(
+        results, config,
+        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - start_time),
+        config.output_base_dir);
 
     return mio::success();
 }
