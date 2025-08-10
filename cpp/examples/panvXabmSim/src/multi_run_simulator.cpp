@@ -70,10 +70,11 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
 
         // Step 3: Calculate K parameter
         if (results.infection_parameter_k < 0.0) {
-            std::cout << "Calculating infection parameter K..." << std::endl;
+            // std::cout << "Calculating infection parameter K..." << std::endl;
             // BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
             //                                                      config.event_config, base_world, event_map));
-            results.infection_parameter_k = 20; // Placeholder value for K parameter
+            // std::cout << "Calculated infection parameter K: " << results.infection_parameter_k << std::endl;
+            results.infection_parameter_k = 22.6; // Placeholder value for K parameter
         }
 
         // Step 3: Get initial infections

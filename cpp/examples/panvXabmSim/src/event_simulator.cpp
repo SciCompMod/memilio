@@ -90,9 +90,9 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
 
     // Rudimentary grid search for K parameter
     double k_min = 1.0; // Minimum K value
-    double k_max = 1000.0; // Maximum K value
+    double k_max = 50.0; // Maximum K value
 
-    double k_step                  = 1.0; // Step size for K value
+    double k_step                  = 0.2; // Step size for K value
     double best_k                  = k_min;
     size_t best_infected_count     = 0;
     const int num_runs             = 100; // Number of runs for averaging
@@ -119,11 +119,11 @@ mio::IOResult<double> EventSimulator::calculate_infection_parameter_k(const Even
                 config.type == EventType::Restaurant_Table_Equals_Household ||
                 config.type == EventType::Restaurant_Table_Equals_Random) {
                 // Set restaurant-specific parameters
-                ratio = 4.0 / 2.0; // 4 hours divided by event duration
+                ratio = 4.0 * 4.0 / event_duration_hours; // 4 hours divided by event duration
             }
             else if (config.type == EventType::WorkMeeting_Many_Meetings ||
                      config.type == EventType::WorkMeeting_Baseline_Meetings) {
-                ratio = 7.0 / 8.0; // 6 hours divided by event duration
+                ratio = 7.0 / event_duration_hours; // 7 hours divided by event duration
             }
             set_local_parameters_event(calculation_world, ratio);
 
@@ -366,9 +366,8 @@ EventSimulator::initialize_from_event_simulation(EventType event_type, std::map<
     switch (event_type) {
     case EventType::Restaurant_Table_Equals_Half_Household: {
         std::vector<uint32_t> return_vector;
-        // mio::unused(rng); // Avoid unused variable warning
-        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
-        return_vector = {0, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25};
+        return_vector.reserve(9); // Reserve space for 9 households
+        return_vector = {1, 10, 19, 28, 37, 46, 55, 64, 73};
         for (size_t i = 0; i < return_vector.size(); ++i) {
             household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
         }
@@ -377,9 +376,8 @@ EventSimulator::initialize_from_event_simulation(EventType event_type, std::map<
     }
     case EventType::Restaurant_Table_Equals_Random: {
         std::vector<uint32_t> return_vector;
-        // mio::unused(rng); // Avoid unused variable warning
-        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
-        return_vector = {13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25}; // Randomly selected households
+        return_vector.reserve(9); // Reserve space for 9 households
+        return_vector = {1, 10, 19, 28, 37, 46, 55, 64, 73};
         for (size_t i = 0; i < return_vector.size(); ++i) {
             household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
         }
@@ -388,33 +386,9 @@ EventSimulator::initialize_from_event_simulation(EventType event_type, std::map<
     }
 
     case EventType::Restaurant_Table_Equals_Household: {
-        // BOOST_OUTCOME_TRY(auto panvadere_file, get_panvadere_file_for_event_type(event_type));
-
-        // // Read Panvadere infection data
-        // BOOST_OUTCOME_TRY(auto panvadere_data, read_panv_file_restaurant(panvadere_file));
-
-        // size_t amount_of_infected = 0;
-        // for (const auto& entry : panvadere_data) {
-        //     bool is_infected = std::get<2>(entry);
-        //     if (is_infected) {
-        //         amount_of_infected++;
-        //     }
-        // }
-
-        // auto event_map_copy = event_map;
-        // //shuffle the event_map_copy to randomize the household mapping
-        // std::vector<std::pair<uint32_t, uint32_t>> event_map_vector(event_map_copy.begin(), event_map_copy.end());
-        // std::shuffle(event_map_vector.begin(), event_map_vector.end(), rng);
-
-        // // take amount_of_infected households from the shuffled event_map_vector
-        // for (size_t i = 0; i < amount_of_infected && i < event_map_vector.size(); ++i) {
-        //     household_infections.push_back(event_map_vector[i].second);
-        // }
-
         std::vector<uint32_t> return_vector;
-        // mio::unused(rng); // Avoid unused variable warning
-        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
-        return_vector = {0, 4, 9, 13, 18, 20, 25, 1, 5, 10, 14, 21, 26, 27};
+        return_vector.reserve(9); // Reserve space for 9 households
+        return_vector = {1, 10, 19, 28, 37, 46, 55, 64, 73};
         for (size_t i = 0; i < return_vector.size(); ++i) {
             household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
         }
@@ -423,9 +397,8 @@ EventSimulator::initialize_from_event_simulation(EventType event_type, std::map<
     }
     case EventType::WorkMeeting_Many_Meetings: {
         std::vector<uint32_t> return_vector;
-        // mio::unused(rng); // Avoid unused variable warning
-        return_vector.reserve(13); // Reserve space for 13 households -> this is one of the worst case scenarios
-        return_vector = {0, 4, 9, 13, 18, 20, 25, 1, 5, 10, 14, 21, 26, 27};
+        return_vector.reserve(6); // Reserve space for 6 households
+        return_vector = {1, 5, 9, 14, 18, 22};
         for (size_t i = 0; i < return_vector.size(); ++i) {
             household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
         }
@@ -433,9 +406,8 @@ EventSimulator::initialize_from_event_simulation(EventType event_type, std::map<
     }
     case EventType::WorkMeeting_Baseline_Meetings: {
         std::vector<uint32_t> return_vector;
-        // mio::unused(rng); // Avoid unused variable warning
         return_vector.reserve(3); // Reserve space for 3 households
-        return_vector = {0, 4, 8};
+        return_vector = {1, 12, 23};
         for (size_t i = 0; i < return_vector.size(); ++i) {
             household_infections.push_back(event_map[return_vector[i]]); // Map to household IDs
         }
@@ -667,12 +639,12 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
     }
 
     // Summarize the household map
-    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
-    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
-    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
-    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
-    //               << std::endl;
-    // }
+    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    for (const auto& [person_id_pre, person_id_sim] : household_map) {
+        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+                  << std::endl;
+    }
 
     return mio::success(household_map);
 }
@@ -891,11 +863,11 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_work_meeting_to_
 
     std::vector<uint32_t> work_teams = {0, 1, 2, 3, 4}; // Work teams for the event simulation
     std::vector<std::vector<uint32_t>> work_persons(work_teams.size());
-    work_persons[0] = {0, 1, 8, 9, 10}; // Work team 1 Room 1 and 5
-    work_persons[1] = {2, 3, 11, 12, 13}; // Work team 2 Room 2 and 6
-    work_persons[2] = {4, 5, 13, 14, 15, 16}; // Work team 3 Room 3 and 7
-    work_persons[3] = {6, 7, 17, 18, 19}; // Work team 4 Room 4 and 8
-    work_persons[4] = {20, 21, 22, 23, 24, 25}; // Work team 5 Room 9 and 10
+    work_persons[0] = {1, 2, 9, 10, 11}; // Work team 1 Room 1 and 5
+    work_persons[1] = {3, 4, 12, 13, 14}; // Work team 2 Room 2 and 6
+    work_persons[2] = {5, 6, 14, 15, 16, 17}; // Work team 3 Room 3 and 7
+    work_persons[3] = {7, 8, 18, 19, 20}; // Work team 4 Room 4 and 8
+    work_persons[4] = {21, 22, 23, 24, 25, 26}; // Work team 5 Room 9 and 10
     std::vector<uint32_t> workplace_id_per_work_team(work_teams.size()); // Workplace IDs for each work team
 
     int current_work_team = 0; // Current work team index
