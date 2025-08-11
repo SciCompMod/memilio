@@ -2,9 +2,12 @@ add_library(ide_endemic_secir
     infection_state.h
     model.h
     model.cpp
+    normalized_model.h
+    normalized_model.cpp
     simulation.h
     simulation.cpp
     parameters.h
+    computed_parameters.h
 )
 target_link_libraries(ide_endemic_secir PUBLIC memilio)
 target_include_directories(ide_endemic_secir PUBLIC

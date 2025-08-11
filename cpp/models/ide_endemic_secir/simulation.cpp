@@ -15,16 +15,13 @@ void Simulation::advance(ScalarType tmax)
     mio::log_info("Simulating IDE-END-SECIR from t0 = {} until tmax = {} with dt = {}.",
                   m_model->transitions.get_last_time(), tmax, m_dt);
 
-    m_model->set_transitiondistributions_support_max(m_dt);
-    m_model->set_calctime();
-    m_model->set_transitiondistributions(m_dt);
-    m_model->set_transitiondistributions_derivative(m_dt);
-    m_model->set_meaninfectivity(m_dt);
-    // m_model->set_initalvaluesforceofinfection(m_dt);
-    m_model->set_reproductionnumber_c(m_dt);
-    m_model->set_probability_of_transition(m_dt);
-    m_model->set_meansojourntime(m_dt);
-    m_model->set_equilibrium();
+    m_model->compparameters->set_transitiondistributions_support_max(m_dt);
+    m_model->compparameters->set_transitiondistributions(m_dt);
+    m_model->compparameters->set_transitiondistributions_derivative(m_dt);
+    m_model->compparameters->set_infectivity(m_dt);
+    m_model->compparameters->set_reproductionnumber_c(m_dt);
+    m_model->compparameters->set_FoI_0();
+    m_model->compparameters->set_InitFoI(m_dt);
 
     // For every time step:
     while (m_model->transitions.get_last_time() < tmax - m_dt / 2) {
@@ -37,9 +34,6 @@ void Simulation::advance(ScalarType tmax)
         m_model->m_forceofinfectionupdate.add_time_point(m_model->m_forceofinfectionupdate.get_last_time() + m_dt);
         m_model->m_totalpopulation.add_time_point(m_model->m_totalpopulation.get_last_time() + m_dt);
         m_model->m_totalpopulationupdate.add_time_point(m_model->m_totalpopulationupdate.get_last_time() + m_dt);
-        // m_model->m_totalpopulationincludingD.add_time_point(m_model->m_totalpopulationupdate.get_last_time() + m_dt);
-        // m_model->m_totalpopulationupdateincludingD.add_time_point(m_model->m_totalpopulationupdate.get_last_time() +
-        //                                                           m_dt);
         m_model->m_normalizedpopulations.add_time_point(m_model->m_normalizedpopulations.get_last_time() + m_dt);
 
         // Compute susceptibles:

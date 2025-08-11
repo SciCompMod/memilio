@@ -1,6 +1,7 @@
 #ifndef IDE_END_SECIR_SIMULATION_H
 #define IDE_END_SECIR_SIMULATION_H
 
+#include "ide_endemic_secir/computed_parameters.h"
 #include "ide_endemic_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
@@ -97,29 +98,9 @@ public:
         return m_model->m_totalpopulationupdate;
     }
 
-    // TimeSeries<ScalarType> const& get_totalpopulations_includingD()
-    // {
-    //     return m_model->m_totalpopulationincludingD;
-    // }
-
-    // TimeSeries<ScalarType> const& get_totalpopulations_update_includingD()
-    // {
-    //     return m_model->m_totalpopulationupdateincludingD;
-    // }
-
     ScalarType const& get_reproductionnumber_c()
     {
-        return m_model->m_reproductionnumber_c;
-    }
-
-    std::vector<ScalarType> const& get_equilibriumcompartments()
-    {
-        return m_model->m_equilibriumnormalizedcompartments;
-    }
-
-    ScalarType const& get_equilibrium_forceofinfection()
-    {
-        return m_model->m_equilibriumforceofinfection;
+        return m_model->compparameters->m_reproductionnumber_c;
     }
 
     /**
