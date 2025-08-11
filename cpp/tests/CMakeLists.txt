@@ -74,6 +74,7 @@ set(TESTSOURCES
     test_glct_secir.cpp
     test_ad.cpp
     test_smm_model.cpp
+    test_geography.cpp
     abm_helpers.h
     abm_helpers.cpp
     actions.h
