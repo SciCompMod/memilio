@@ -291,6 +291,12 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 Agatha Schmidt
 ^^^^^^^^^^^^^
 
+.. image:: https://martinkuehn.eu/research/images/agatha.png
+   :alt: Agatha Schmidt
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
 **Research Focus:** Machine Learning, Surrogate Modelling, Graph Neural Networks, High-Performance Computing
 
 Agatha Schmidt completed her Master's degree at the University of Cologne in collaboration with the German Aerospace Center (DLR), where she worked on machine learning-based surrogate models for ODE-based systems. After graduating, she continued her research by writing a paper focused on the application of graph neural networks as surrogate models. She was part of the team from May 2022 to December 2024. 
