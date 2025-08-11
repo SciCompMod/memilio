@@ -157,7 +157,7 @@ void set_covid_parameters(mio::osecir::Parameters<double>& params)
 
     assign_uniform_distribution(params.get<mio::osecir::Seasonality<double>>(), seasonality_min, seasonality_max);
 
-    params.set<mio::osecir::StartDay>(0);
+    params.set<mio::osecir::StartDay<double>>(0);
 }
 
 /**
@@ -212,7 +212,7 @@ std::vector<std::vector<size_t>> get_indices_of_symptomatic_and_nonsymptomatic(m
 
 /**
  * Run the parameter study.
- * Load a previously stored graph or create a new one from data. 
+ * Load a previously stored graph or create a new one from data.
  * The graph is the input for the parameter study.
  * A newly created graph is saved and can be reused.
  * @param mode Mode for running the parameter study.
@@ -231,15 +231,15 @@ int main()
     mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
 
     const int num_age_groups = 6;
-    mio::osecir::Model model(num_age_groups);
+    mio::osecir::Model<double> model(num_age_groups);
 
     // set parameters
     set_covid_parameters(model.parameters);
 
     // set contact matrix
-    const auto cont_freq                    = 10.0;
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(
+    const auto cont_freq                            = 10.0;
+    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0]                               = mio::ContactMatrix<double>(
         Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, (1. / num_age_groups) * cont_freq));
 
     // set population data
@@ -264,8 +264,8 @@ int main()
                           indices_save_edges);
 
     //run parameter study
-    auto parameter_study =
-        mio::ParameterStudy<mio::osecir::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+    auto parameter_study = mio::ParameterStudy<double, mio::osecir::Simulation<double>>{params_graph, 0.0, num_days_sim,
+                                                                                        0.5, size_t(num_runs)};
 
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
@@ -286,14 +286,14 @@ int main()
             auto params = std::vector<mio::osecir::Model<double>>{};
             params.reserve(results_graph.nodes().size());
             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
+                                         [](auto&& node) {
                                return node.property.get_simulation().get_model();
                            });
 
             auto edges = std::vector<mio::TimeSeries<ScalarType>>{};
             edges.reserve(results_graph.edges().size());
             std::transform(results_graph.edges().begin(), results_graph.edges().end(), std::back_inserter(edges),
-                           [](auto&& edge) {
+                                         [](auto&& edge) {
                                return edge.property.get_mobility_results();
                            });
 

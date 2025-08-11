@@ -166,7 +166,7 @@ struct LogDataForMobility : mio::LogAlways {
 * @brief Logger to log the TimeSeries of the number of Person%s in an #InfectionState.
 */
 struct LogInfectionState : mio::LogAlways {
-    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorXd>;
+    using Type = std::pair<mio::abm::TimePoint, Eigen::VectorX<ScalarType>>;
     /** 
      * @brief Log the TimeSeries of the number of Person%s in an #InfectionState.
      * @param[in] sim The simulation of the abm.
@@ -175,8 +175,9 @@ struct LogInfectionState : mio::LogAlways {
     static Type log(const mio::abm::Simulation<>& sim)
     {
 
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(Eigen::Index(mio::abm::InfectionState::Count));
-        auto curr_time      = sim.get_time();
+        Eigen::VectorX<ScalarType> sum =
+            Eigen::VectorX<ScalarType>::Zero(Eigen::Index(mio::abm::InfectionState::Count));
+        auto curr_time = sim.get_time();
         PRAGMA_OMP(for)
         for (auto& location : sim.get_model().get_locations()) {
             for (uint32_t inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
@@ -197,7 +198,7 @@ struct TimeSeriesWriter {
     using Data = std::tuple<mio::TimeSeries<ScalarType>>;
     template <class Logger>
     /**
-     * @brief This function adds an entry to the TimeSeries consisting of the TimePoint and the value. The Loggers must return a touple with a TimePoint and a value of return type Eigen::VectorXd.
+     * @brief This function adds an entry to the TimeSeries consisting of the TimePoint and the value. The Loggers must return a touple with a TimePoint and a value of return type Eigen::VectorX<ScalarType>.
      * @param[in] t The data from the logger.
      * @param[in,out] data The data tuple.
     */

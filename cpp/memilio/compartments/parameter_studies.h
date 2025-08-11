@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -43,7 +43,7 @@ namespace mio
  * Can simulate mobility graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
  */
-template <class S>
+template <typename FP, class S>
 class ParameterStudy
 {
 public:
@@ -55,12 +55,12 @@ public:
     * The Graph type that stores the parametes of the simulation.
     * This is the input of ParameterStudies.
     */
-    using ParametersGraph = mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>;
+    using ParametersGraph = Graph<typename Simulation::Model, MobilityParameters<FP>>;
     /**
     * The Graph type that stores simulations and their results of each run.
     * This is the output of ParameterStudies for each run.
     */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>;
+    using SimulationGraph = Graph<SimulationNode<FP, Simulation>, MobilityEdge<FP>>;
 
     /**
      * create study for graph of compartment models.
@@ -70,7 +70,7 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const ParametersGraph& graph, double t0, double tmax, double graph_sim_dt, size_t num_runs)
+    ParameterStudy(const ParametersGraph& graph, FP t0, FP tmax, FP graph_sim_dt, size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
         , m_t0{t0}
@@ -89,9 +89,8 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const ParametersGraph& graph, double t0, double tmax, double dev_rel, double graph_sim_dt,
-                   size_t num_runs)
-        : ParameterStudy(graph, t0, tmax, graph_sim_dt, num_runs)
+    ParameterStudy(const ParametersGraph& graph, FP t0, FP tmax, FP dev_rel, FP graph_sim_dt, size_t num_runs)
+        : ParameterStudy<FP, Simulation>(graph, t0, tmax, graph_sim_dt, num_runs)
     {
         for (auto& params_node : m_graph.nodes()) {
             set_params_distributions_normal(params_node, t0, tmax, dev_rel);
@@ -105,22 +104,22 @@ public:
      * @param tmax end time of simulations
      * @param num_runs number of runs in ensemble run
      */
-    ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, size_t num_runs)
-        : ParameterStudy({}, t0, tmax, tmax - t0, num_runs)
+    ParameterStudy(typename Simulation::Model const& model, FP t0, FP tmax, size_t num_runs)
+        : ParameterStudy<FP, Simulation>({}, t0, tmax, tmax - t0, num_runs)
     {
         m_graph.add_node(0, model);
     }
 
-    /*
+    /**
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.
-     * The result processing function is called when a run is finished. It receives the result of the run 
-     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function 
+     * The result processing function is called when a run is finished. It receives the result of the run
+     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function
      * are gathered and returned as a list.
      * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
-     * The MPI processes each contribute a share of the runs. The sample function and result processing function 
-     * are called in the same process that performs the run. The results returned by the result processing function are 
-     * gathered at the root process and returned as a list by the root in the same order as if the programm 
+     * The MPI processes each contribute a share of the runs. The sample function and result processing function
+     * are called in the same process that performs the run. The results returned by the result processing function are
+     * gathered at the root process and returned as a list by the root in the same order as if the programm
      * were running sequentially. Processes other than the root return an empty list.
      * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
      * @param result_processing_function Processing function for simulation results, e.g., output function.
@@ -210,7 +209,7 @@ public:
         return ensemble_result;
     }
 
-    /*
+    /**
      * @brief Carry out all simulations in the parameter study.
      * Convenience function for a few number of runs, but can use more memory because it stores all runs until the end.
      * Unlike the other overload, this function is not MPI-parallel.
@@ -252,17 +251,16 @@ public:
         return ensemble_result;
     }
 
-    /*
+    /**
      * @brief sets the number of Monte Carlo runs
      * @param[in] num_runs number of runs
      */
-
     void set_num_runs(size_t num_runs)
     {
         m_num_runs = num_runs;
     }
 
-    /*
+    /**
      * @brief returns the number of Monte Carlo runs
      */
     int get_num_runs() const
@@ -270,32 +268,32 @@ public:
         return static_cast<int>(m_num_runs);
     }
 
-    /*
+    /**
      * @brief sets end point in simulation
      * @param[in] tmax end point in simulation
      */
-    void set_tmax(double tmax)
+    void set_tmax(FP tmax)
     {
         m_tmax = tmax;
     }
 
-    /*
+    /**
      * @brief returns end point in simulation
      */
-    double get_tmax() const
+    FP get_tmax() const
     {
         return m_tmax;
     }
 
-    void set_t0(double t0)
+    void set_t0(FP t0)
     {
         m_t0 = t0;
     }
 
-    /*
+    /**
      * @brief returns start point in simulation
      */
-    double get_t0() const
+    FP get_t0() const
     {
         return m_t0;
     }
@@ -338,7 +336,7 @@ public:
 private:
     //sample parameters and create simulation
     template <class SampleGraphFunction>
-    mio::GraphSimulation<SimulationGraph> create_sampled_simulation(SampleGraphFunction sample_graph)
+    GraphSimulation<FP, SimulationGraph, FP, FP> create_sampled_simulation(SampleGraphFunction sample_graph)
     {
         SimulationGraph sim_graph;
 
@@ -350,7 +348,7 @@ private:
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
-        return make_mobility_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
+        return make_mobility_sim<FP, Simulation>(m_t0, m_dt_graph_sim, std::move(sim_graph));
     }
 
     std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
@@ -374,13 +372,13 @@ private:
     size_t m_num_runs;
 
     // Start time (should be the same for all simulations)
-    double m_t0;
+    FP m_t0;
     // End time (should be the same for all simulations)
-    double m_tmax;
+    FP m_tmax;
     // time step of the graph
-    double m_dt_graph_sim;
+    FP m_dt_graph_sim;
     // adaptive time step of the integrator (will be corrected if too large/small)
-    double m_dt_integration = 0.1;
+    FP m_dt_integration = 0.1;
     //
     RandomNumberGenerator m_rng;
 };

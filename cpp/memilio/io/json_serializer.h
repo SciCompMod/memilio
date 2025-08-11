@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -37,9 +37,9 @@ namespace mio
 
 /**
  * JsonType allows the conversion of basic types for serialization.
- * All types that are directly handled by the json serializer inherit 
- * from std::true_type. They also define the transform functions for 
- * conversion from and to Json::Value. All others inherit from 
+ * All types that are directly handled by the json serializer inherit
+ * from std::true_type. They also define the transform functions for
+ * conversion from and to Json::Value. All others inherit from
  * std::false_type, external serialization functions need to be available.
  * @tparam T the type to be serialized.
  * @{

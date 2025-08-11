@@ -79,7 +79,7 @@ public:
      */
     FP sample_standard_normal_distribution() const
     {
-        return FP{DistributionAdapter<std::normal_distribution<double>>::get_instance()(m_rng, 0.0, 1.0)};
+        return FP{DistributionAdapter<std::normal_distribution<ScalarType>>::get_instance()(m_rng, 0.0, 1.0)};
     }
 
     /// @brief Access the model's RNG.

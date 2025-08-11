@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Wadim Koslow, Henrik Zunker, Martin J. Kuehn
@@ -159,7 +159,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
 }
 
 #ifdef MEMILIO_HAS_HDF5
-IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& ensemble_edges,
+IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_edges,
                           const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
                           bool save_single_runs, bool save_percentiles)
 {
@@ -203,8 +203,8 @@ IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<double>>>& en
     return success();
 }
 
-IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const std::vector<std::pair<int, int>>& ids,
-                          const std::string& filename)
+IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
+                          const std::vector<std::pair<int, int>>& ids, const std::string& filename)
 {
     const auto num_edges = results.size();
     size_t edge_indx     = 0;
@@ -237,18 +237,18 @@ IOResult<void> save_edges(const std::vector<TimeSeries<double>>& results, const 
                              "Failed to create the 'Time' DataSet in group " + h5group_name +
                                  " in the file: " + filename);
 
-            auto values_t = std::vector<double>(result.get_times().begin(), result.get_times().end());
+            auto values_t = std::vector<ScalarType>(result.get_times().begin(), result.get_times().end());
             MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
                              StatusCode::UnknownError,
                              "Failed to write 'Time' data in group " + h5group_name + " in the file: " + filename);
 
             int start_id = ids[edge_indx].first;
-            auto total   = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
-                                                                                                      num_elements)
+            auto total   = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+                             num_timepoints, num_elements)
                              .eval();
             while (edge_indx < num_edges && ids[edge_indx].first == start_id) {
                 const auto& result_edge = results[edge_indx];
-                auto edge_result        = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+                auto edge_result = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
                                        num_timepoints, num_elements)
                                        .eval();
                 for (Eigen::Index t_idx = 0; t_idx < result_edge.get_num_time_points(); ++t_idx) {

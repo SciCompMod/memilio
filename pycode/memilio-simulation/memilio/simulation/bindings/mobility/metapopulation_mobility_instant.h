@@ -32,7 +32,7 @@ namespace pymio
 template <class Simulation>
 void bind_MobilityGraph(pybind11::module_& m, std::string const& name)
 {
-    using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>;
+    using G = mio::Graph<mio::SimulationNode<double, Simulation>, mio::MobilityEdge<double>>;
     bind_class<G, EnablePickling::IfAvailable>(m, name.c_str())
         .def(pybind11::init<>())
         .def(
@@ -105,14 +105,14 @@ void bind_ModelNode(pybind11::module_& m, std::string const& name)
 template <typename Simulation>
 void bind_SimulationNode(pybind11::module_& m, std::string const& name)
 {
-    bind_class<mio::Node<mio::SimulationNode<Simulation>>, EnablePickling::IfAvailable>(m, name.c_str())
+    bind_class<mio::Node<mio::SimulationNode<double, Simulation>>, EnablePickling::IfAvailable>(m, name.c_str())
         .def_property_readonly("id",
-                               [](const mio::Node<mio::SimulationNode<Simulation>>& self) {
+                               [](const mio::Node<mio::SimulationNode<double, Simulation>>& self) {
                                    return self.id;
                                })
         .def_property_readonly(
             "property",
-            [](const mio::Node<mio::SimulationNode<Simulation>>& self) -> auto& {
+            [](const mio::Node<mio::SimulationNode<double, Simulation>>& self) -> auto& {
                 return self.property.get_simulation();
             },
             pybind11::return_value_policy::reference_internal);

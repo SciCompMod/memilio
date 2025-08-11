@@ -37,18 +37,18 @@ namespace hybrid
 
 template <>
 void convert_model(const dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& current_model,
-                   smm::Simulation<1, mio::osecir::InfectionState>& target_model);
+                   smm::Simulation<ScalarType, 1, mio::osecir::InfectionState>& target_model);
 
 template <>
-void convert_model(const smm::Simulation<1, mio::osecir::InfectionState>& current_model,
+void convert_model(const smm::Simulation<ScalarType, 1, mio::osecir::InfectionState>& current_model,
                    dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& target_model);
 
 template <>
 void convert_model(const dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& current_model,
-                   mio::Simulation<double, mio::osecir::Model<double>>& target_model);
+                   mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>& target_model);
 
 template <>
-void convert_model(const mio::Simulation<double, mio::osecir::Model<double>>& current_model,
+void convert_model(const mio::Simulation<ScalarType, mio::osecir::Model<ScalarType>>& current_model,
                    dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& target_model);
 
 } //namespace hybrid

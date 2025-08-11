@@ -119,7 +119,7 @@ mio::IOResult<void> set_edges(mio::Graph<mio::osecir::Model<double>, mio::Mobili
     for (size_t node_i = 0; node_i < params_graph.nodes().size(); ++node_i) {
         for (size_t node_j = 0; node_j < params_graph.nodes().size(); ++node_j) {
             auto& populations    = params_graph.nodes()[node_i].property.populations;
-            auto mobility_coeffs = mio::MobilityCoefficientGroup(1, populations.numel());
+            auto mobility_coeffs = mio::MobilityCoefficientGroup<double>(1, populations.numel());
 
             auto coeff =
                 mobility_data(node_i, node_j) < 1 ? 0 : mobility_data(node_i, node_j) / populations.get_total();
@@ -145,15 +145,15 @@ mio::IOResult<mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<dou
 get_graph(mio::Date start_date, const fs::path& data_dir)
 {
     const int num_age_groups = 1;
-    mio::osecir::Parameters params(num_age_groups);
-    params.get<mio::osecir::StartDay>() = mio::get_day_in_year(start_date);
+    mio::osecir::Parameters<double> params(num_age_groups);
+    params.get<mio::osecir::StartDay<double>>() = mio::get_day_in_year(start_date);
 
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
-    double contact_freq                     = 10;
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_freq));
-    contact_matrix.add_damping(0.7, mio::SimulationTime(30));
-    contact_matrix.add_damping(0.1, mio::SimulationTime(50));
+    double contact_freq                             = 10;
+    mio::ContactMatrixGroup<double>& contact_matrix = params.template get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, contact_freq));
+    contact_matrix.add_damping(0.7, mio::SimulationTime<double>(30));
+    contact_matrix.add_damping(0.1, mio::SimulationTime<double>(50));
 
     mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params_graph, params, data_dir, start_date));
@@ -196,7 +196,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //create simulation graph
-    mio::Graph<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdge<double>>
+    mio::Graph<mio::SimulationNode<double, mio::Simulation<double, mio::osecir::Model<double>>>,
+               mio::MobilityEdge<double>>
         sim_graph;
 
     for (auto&& node : params_graph.nodes()) {
@@ -206,7 +207,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
     }
 
-    auto sim = mio::make_mobility_sim(0.0, 0.5, std::move(sim_graph));
+    auto sim = mio::make_mobility_sim<double>(0.0, 0.5, std::move(sim_graph));
     sim.advance(num_days);
 
     auto params = std::vector<mio::osecir::Model<double>>{};
