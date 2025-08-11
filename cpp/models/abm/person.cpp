@@ -225,24 +225,39 @@ bool Person::is_compliant(PersonalRandomNumberGenerator& rng, InterventionType i
     return compliance_check <= get_compliance(intervention);
 }
 
-ProtectionEvent Person::get_latest_protection() const
+ProtectionEvent Person::get_latest_protection(TimePoint t) const
 {
     ProtectionType latest_protection_type = ProtectionType::NoProtection;
-    TimePoint infection_time              = TimePoint(0);
-    if (!m_infections.empty()) {
-        latest_protection_type = ProtectionType::NaturalInfection;
-        infection_time         = m_infections.back().get_start_date();
+    TimePoint latest_time                 = TimePoint(std::numeric_limits<int>::min());
+
+    // Use reverse iterators to start from the most recent infection
+    for (auto it = m_infections.rbegin(); it != m_infections.rend(); ++it) {
+        if (it->get_start_date() <= t) {
+            latest_exposure_type = ExposureType::NaturalInfection;
+            latest_time          = it->get_start_date();
+            break; // Stop once we find the latest infection before time t
+        }
     }
-    if (!m_vaccinations.empty() && infection_time.days() <= m_vaccinations.back().time.days()) {
-        latest_protection_type = m_vaccinations.back().type;
-        infection_time         = m_vaccinations.back().time;
+
+    // Look for any Vaccination that happens after the latest Infection and before time t
+    for (auto it = m_vaccinations.rbegin(); it != m_vaccinations.rend(); ++it) {
+        if (it->time <= t) {
+            if (it->time > latest_time) {
+                latest_exposure_type = it->exposure_type;
+                latest_time          = it->time;
+            }
+        }
+        else {
+            break; // Stop once we find a vaccination after time t
+        }
     }
-    return ProtectionEvent{latest_protection_type, infection_time};
+
+    return ProtectionEvent{latest_protection_type, latest_time};
 }
 
 ScalarType Person::get_protection_factor(TimePoint t, VirusVariant virus, const Parameters& params) const
 {
-    auto latest_protection = get_latest_protection();
+    auto latest_protection = get_latest_protection(t);
     // If there is no previous protection or vaccination, return 0.
     if (latest_protection.type == ProtectionType::NoProtection) {
         return 0;
