@@ -70,8 +70,8 @@ def run_ode_seir_flows_simulation():
     # Run flow simulation
     (result, flows) = simulate_flows(0, days, dt, model)
 
-    result.print_table(["S", "E", "I", "R"], 16, 5)
-    flows.print_table(["S->E", "E->I", "I->R"], 16, 5)
+    result.print_table(False, ["S", "E", "I", "R"], 16, 5)
+    flows.print_table(False, ["S->E", "E->I", "I->R"], 16, 5)
 
 
 if __name__ == "__main__":
