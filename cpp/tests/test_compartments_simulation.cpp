@@ -28,20 +28,21 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+struct MockModel {
+    Eigen::VectorXd get_initial_values() const
+    {
+        return Eigen::VectorXd::Zero(1);
+    }
+    void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&,
+                                double, Eigen::Ref<Eigen::VectorXd> dydt) const
+    {
+        dydt[0] = this->m_dydt;
+    }
+    double m_dydt = 1.0;
+};
+
 TEST(TestCompartmentSimulation, integrator_uses_model_reference)
 {
-    struct MockModel {
-        Eigen::VectorXd get_initial_values() const
-        {
-            return Eigen::VectorXd::Zero(1);
-        }
-        void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&,
-                                  double, Eigen::Ref<Eigen::VectorXd> dydt) const
-        {
-            dydt[0] = this->m_dydt;
-        }
-        double m_dydt = 1.0;
-    };
 
     auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
     sim.advance(1.0);
@@ -53,6 +54,38 @@ TEST(TestCompartmentSimulation, integrator_uses_model_reference)
     sim.advance(2.0);
 
     ASSERT_NEAR(sim.get_result().get_last_value()[0], 3.0, 1e-5);
+}
+
+TEST(TestCompartmentSimulation, copy_simulation)
+{
+
+    auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
+
+    auto sim_copy_cnstr = mio::Simulation<double, MockModel>(sim);
+    auto sim_copy_assign = sim;
+
+    EXPECT_EQ(sim.get_model().m_dydt, sim_copy_cnstr.get_model().m_dydt);
+    EXPECT_EQ(sim.get_model().m_dydt, sim_copy_assign.get_model().m_dydt);
+
+    // modifying model should not effect copies
+    sim.get_model().m_dydt = 2.0;
+    sim.advance(1.0);
+    sim.get_integrator().get_dt_max() = 2.0; 
+
+    EXPECT_NE(sim_copy_cnstr.get_model().m_dydt, 2.0);
+    EXPECT_NE(sim_copy_assign.get_model().m_dydt, 2.0);
+    EXPECT_NE(sim_copy_cnstr.get_integrator().get_dt_max(), 2.0);
+    EXPECT_NE(sim_copy_assign.get_integrator().get_dt_max(), 2.0);
+    
+    // copy simulation after advance
+    sim_copy_cnstr = mio::Simulation<double, MockModel>(sim);
+    sim_copy_assign = sim;
+
+    EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_cnstr.get_result().get_last_value()[0]);
+    EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_assign.get_result().get_last_value()[0]);
+    EXPECT_EQ(sim_copy_cnstr.get_integrator().get_dt_max(), 2.0);
+    EXPECT_EQ(sim_copy_assign.get_integrator().get_dt_max(), 2.0);
+
 }
 
 struct MockSimulateSim { // looks just enough like a simulation for the simulate functions not to notice
