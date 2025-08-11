@@ -58,6 +58,16 @@ public:
         m_location = mio::geo::GeographicalLocation(latitude, longitude);
     }
 
+    double get_longitude() const
+    {
+        return m_location.longitude;
+    }
+
+    double get_latitude() const
+    {
+        return m_location.latitude;
+    }
+
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
     std::vector<std::vector<size_t>> regional_neighbor_indices;
