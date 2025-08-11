@@ -48,6 +48,7 @@ class Location(Enum):
     Other = 3
 
 
+# Define the start and the latest end date for the simulation
 start_date = mio.Date(2019, 1, 1)
 end_date = mio.Date(2021, 12, 31)
 
@@ -84,7 +85,7 @@ def set_covid_parameters(model, num_groups=6):
         model.parameters.TimeInfectedSevere[AgeGroup(i)] = th
         model.parameters.TimeInfectedCritical[AgeGroup(i)] = tu
 
-        # Compartment transition propabilities
+        # Compartment transition probabilities
         model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 1
         model.parameters.TransmissionProbabilityOnContact[AgeGroup(i)] = rho
         model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(i)] = muCR
@@ -190,23 +191,25 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, graph, num_
     start_date_num = start_date.day_in_year - min_date_num
 
     # Load the ground truth data
-    with open("/localdata1/hege_mn/memilio/data/Germany/pydata/ground_truth_all_nodes.pickle", 'rb') as f:
-        ground_truth_all_nodes_np = pickle.load(f)
+    pydata_dir = os.path.join(data_dir, "Germany", "pydata")
+    ground_truth_dir = os.path.join(
+        pydata_dir, "ground_truth_all_nodes.pickle")
+    with open(ground_truth_dir, 'rb') as f:
+        ground_truth_all_nodes = pickle.load(f)
 
     # Initialize model for each node, using the population data and sampling the number of
     # individuals in the different compartments
     for node_indx in range(graph.num_nodes):
         model = graph.get_node(node_indx).property
-        data = ground_truth_all_nodes_np[node_indx][start_date_num]
+        data = ground_truth_all_nodes[node_indx][start_date_num]
 
-        # Set parameters
-        # TODO: Put This in the draw_sample function in the ParameterStudy
         # Iterate over the different age groups
         for i in range(num_groups):
             age_group = AgeGroup(i)
             pop_age_group = model.populations.get_group_total_AgeGroup(
                 age_group)
 
+            # Generating valid, noisy configuration of the compartments
             valid_configuration = False
             while valid_configuration is False:
                 comp_data = data[:, i]
@@ -245,7 +248,6 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, graph, num_
                               ) * np.float16(factor)
             model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
                 coeffs=(damping), t=day, level=0, type=0))
-# damping matrices and damping_coefficients werden überschrieben -> am Ende nur von letztem Knoten übergeben ???
             damped_matrices.append(model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
                 day+1))
             damping_coefficients.append(damping)
@@ -303,8 +305,9 @@ def generate_data(
 
     # Setting basic parameter
     num_groups = 6
-    mobility_dir = "/localdata1/hege_mn/memilio/data/Germany/mobility/commuter_mobility_2022.txt"
+    mobility_dir = data_dir + "/Germany/mobility/commuter_mobility_2022.txt"
     graph = get_graph(num_groups, data_dir, mobility_dir)
+    # Define possible start dates for the simulation
     start_dates = [
         mio.Date(2020, 6, 1),
         mio.Date(2020, 7, 1),
@@ -316,7 +319,7 @@ def generate_data(
     ]
 
     # show progess in terminal for longer runs
-    # Due to the random structure, theres currently no need to shuffle the data
+    # Due to the random structure, there is currently no need to shuffle the data
     bar = Bar('Number of Runs done', max=num_runs)
 
     times = []
