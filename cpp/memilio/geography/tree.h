@@ -20,16 +20,12 @@
 #ifndef TREE_H
 #define TREE_H
 
-#include "math.h"
-#include "locations.h"
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 #include <boost/geometry/strategies/geographic/buffer_point_circle.hpp>
-#include <concepts>
-
-#include "boost/geometry/geometry.hpp"
-
+#include <boost/geometry/geometry.hpp>
+#include <math.h>
 #include <iterator>
 #include <type_traits>
 #include <vector>

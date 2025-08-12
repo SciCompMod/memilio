@@ -21,17 +21,16 @@
 #define LOCATIONS_H
 
 #include "memilio/io/default_serialize.h"
-#include <cmath>
-#include <math.h>
 #include <boost/geometry/algorithms/distance.hpp>
-#include "memilio/utils/logging.h"
+#include <cmath>
+#include <numbers>
 namespace mio
 {
 namespace geo
 {
 
 const double earth_radius = 6371;
-const double radians      = M_PI / 180.0;
+const double radians      = std::numbers::pi / 180.0;
 
 class GeographicalLocation
 {
