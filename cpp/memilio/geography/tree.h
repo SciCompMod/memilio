@@ -124,7 +124,7 @@ public:
     {
         Point point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
-        bgi::query(rtree, bgi::nearest(point, number), back_inserter_second_element{indices});
+        bgi::query(rtree, bgi::nearest(point, number), back_inserter_second_element<std::vector<size_t>>{indices});
         return indices;
     }
 
@@ -140,7 +140,7 @@ public:
         auto radius_in_meter = 1000 * radius;
         auto circle          = create_circle_approximation(location, radius_in_meter);
         std::vector<size_t> indices;
-        bgi::query(rtree, bgi::covered_by(circle), back_inserter_second_element{indices});
+        bgi::query(rtree, bgi::covered_by(circle), back_inserter_second_element<std::vector<size_t>>{indices});
         return indices;
     }
 
