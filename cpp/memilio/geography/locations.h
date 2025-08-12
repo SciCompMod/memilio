@@ -37,6 +37,19 @@ public:
     double latitude;
     double longitude;
 
+    GeographicalLocation(double lat, double lon)
+        : latitude(lat)
+        , longitude(lon)
+    {
+    }
+    GeographicalLocation(std::pair<double, double> coordinates)
+        : latitude(coordinates.first)
+        , longitude(coordinates.second)
+    {
+    }
+
+    GeographicalLocation() = default;
+
     /**
      * @brief Compare two GeographicalLocation%s.
      */
