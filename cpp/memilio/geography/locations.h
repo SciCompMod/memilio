@@ -17,6 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef LOCATIONS_H
+#define LOCATIONS_H
 
 #include "memilio/io/default_serialize.h"
 #include <cmath>
@@ -115,3 +117,5 @@ private:
 } // namespace geo
 
 } // namespace mio
+
+#endif // LOCATIONS_H

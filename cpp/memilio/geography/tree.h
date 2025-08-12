@@ -17,6 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef TREE_H
+#define TREE_H
 
 #include "math.h"
 #include "locations.h"
@@ -221,3 +223,5 @@ private:
 
 } // namespace geo
 } // namespace mio
+
+#endif // TREE_H
