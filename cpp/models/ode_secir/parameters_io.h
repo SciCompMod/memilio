@@ -352,14 +352,14 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::str
     return success();
 }
 
-template <typename FP = double>
-IOResult<void> set_population_data_provincias(std::vector<Model<FP>>& model, const std::string& path,
-                                              const std::vector<int>& vregion)
-{
-    BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data_spain(path, vregion));
-    BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
-    return success();
-}
+// template <typename FP = double>
+// IOResult<void> set_population_data_provincias(std::vector<Model<FP>>& model, const std::string& path,
+//                                               const std::vector<int>& vregion)
+// {
+//     BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data_spain(path, vregion));
+//     BOOST_OUTCOME_TRY(set_population_data(model, num_population, vregion));
+//     return success();
+// }
 
 } //namespace details
 
@@ -525,32 +525,32 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
  * @param[in] num_days [Default: 0] Number of days to be simulated; required to extrapolate real data.
  * @param[in] export_time_series [Default: false] If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
-template <class Model>
-IOResult<void> read_input_data_provincias(std::vector<Model>& model, Date date, const std::vector<int>& county,
-                                          const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                          const std::string& pydata_dir, int num_days = 0,
-                                          bool export_time_series = false)
-{
-    // BOOST_OUTCOME_TRY(
-    //     details::set_divi_data(model, path_join(pydata_dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
-    // BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_county_ma7.json"),
-    //                                                     county, date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data_provincias(
-        model, path_join(pydata_dir, "provincias_current_population.json"), county));
+// template <class Model>
+// IOResult<void> read_input_data_provincias(std::vector<Model>& model, Date date, const std::vector<int>& county,
+//                                           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+//                                           const std::string& pydata_dir, int num_days = 0,
+//                                           bool export_time_series = false)
+// {
+//     // BOOST_OUTCOME_TRY(
+//     //     details::set_divi_data(model, path_join(pydata_dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
+//     // BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_county_ma7.json"),
+//     //                                                     county, date, scaling_factor_inf));
+//     BOOST_OUTCOME_TRY(details::set_population_data_provincias(
+//         model, path_join(pydata_dir, "provincias_current_population.json"), county));
 
-    if (export_time_series) {
-        // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
-        // Run time equals run time of the previous functions times the num_days !
-        // (This only represents the vectorization of the previous function over all simulation days...)
-        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
-                    "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(pydata_dir, "county_divi_ma7.json"), path_join(pydata_dir, "cases_all_county_age_ma7.json"),
-            path_join(pydata_dir, "county_current_population.json")));
-    }
-    return success();
-}
+//     if (export_time_series) {
+//         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
+//         // Run time equals run time of the previous functions times the num_days !
+//         // (This only represents the vectorization of the previous function over all simulation days...)
+//         log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
+//                     "For simulation runs over the same time period, deactivate it.");
+//         BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
+//             model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
+//             path_join(pydata_dir, "county_divi_ma7.json"), path_join(pydata_dir, "cases_all_county_age_ma7.json"),
+//             path_join(pydata_dir, "county_current_population.json")));
+//     }
+//     return success();
+// }
 
 /**
  * @brief reads population data from population files for the specified nodes

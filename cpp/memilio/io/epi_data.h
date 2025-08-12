@@ -337,34 +337,34 @@ public:
     }
 };
 
-class PopulationDataEntrySpain
-{
-public:
-    static std::vector<const char*> age_group_names;
+// class PopulationDataEntrySpain
+// {
+// public:
+//     static std::vector<const char*> age_group_names;
 
-    CustomIndexArray<double, AgeGroup> population;
-    boost::optional<regions::ProvinciaId> provincia_id;
+//     CustomIndexArray<double, AgeGroup> population;
+//     boost::optional<regions::ProvinciaId> provincia_id;
 
-    template <class IoContext>
-    static IOResult<PopulationDataEntrySpain> deserialize(IoContext& io)
-    {
-        auto obj      = io.expect_object("PopulationDataEntrySpain");
-        auto state_id = obj.expect_optional("ID_Provincia", Tag<regions::ProvinciaId>{});
-        std::vector<IOResult<double>> age_groups;
-        age_groups.reserve(age_group_names.size());
-        std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
-                       [&obj](auto&& age_name) {
-                           return obj.expect_element(age_name, Tag<double>{});
-                       });
-        return apply(
-            io,
-            [](auto&& ag, auto&& pid) {
-                return PopulationDataEntrySpain{
-                    CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), pid};
-            },
-            details::unpack_all(age_groups), provincia_id);
-    }
-};
+//     template <class IoContext>
+//     static IOResult<PopulationDataEntrySpain> deserialize(IoContext& io)
+//     {
+//         auto obj      = io.expect_object("PopulationDataEntrySpain");
+//         auto state_id = obj.expect_optional("ID_Provincia", Tag<regions::ProvinciaId>{});
+//         std::vector<IOResult<double>> age_groups;
+//         age_groups.reserve(age_group_names.size());
+//         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
+//                        [&obj](auto&& age_name) {
+//                            return obj.expect_element(age_name, Tag<double>{});
+//                        });
+//         return apply(
+//             io,
+//             [](auto&& ag, auto&& pid) {
+//                 return PopulationDataEntrySpain{
+//                     CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), pid};
+//             },
+//             details::unpack_all(age_groups), provincia_id);
+//     }
+// };
 
 namespace details
 {
@@ -477,11 +477,11 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
  * @param rki_age_groups Specifies whether population data should be interpolated to rki age groups.
  * @return list of population data.
  */
-inline IOResult<std::vector<PopulationDataEntrySpain>> deserialize_population_data_spain(const Json::Value& jsvalue)
-{
-    BOOST_OUTCOME_TRY(auto&& population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntrySpain>>{}));
-    return success(population_data);
-}
+// inline IOResult<std::vector<PopulationDataEntrySpain>> deserialize_population_data_spain(const Json::Value& jsvalue)
+// {
+//     BOOST_OUTCOME_TRY(auto&& population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntrySpain>>{}));
+//     return success(population_data);
+// }
 
 /**
  * Deserialize population data from a JSON file.
@@ -502,11 +502,11 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
  * @param filename JSON file that contains the population data.
  * @return list of population data.
  */
-inline IOResult<std::vector<PopulationDataEntrySpain>> read_population_data_spain(const std::string& filename)
-{
-    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
-    return deserialize_population_data_spain(jsvalue);
-}
+// inline IOResult<std::vector<PopulationDataEntrySpain>> read_population_data_spain(const std::string& filename)
+// {
+//     BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
+//     return deserialize_population_data_spain(jsvalue);
+// }
 
 /**
  * @brief Sets the age groups' names for the ConfirmedCasesDataEntry%s.
