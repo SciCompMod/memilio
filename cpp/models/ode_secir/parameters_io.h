@@ -220,24 +220,21 @@ set_confirmed_cases_noage(std::vector<Model<FP>>& model, std::vector<ConfirmedCa
                                                  t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t node = 0; node < model.size(); node++) {
-        if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), 0.0) > 0) {
-            size_t num_groups = (size_t)model[node].parameters.get_num_groups();
-            for (size_t i = 0; i < num_groups; i++) {
-                model[node].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
-                    num_InfectedNoSymptoms[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
-                    num_InfectedSymptoms[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] = num_InfectedSevere[node][i];
+        if (num_InfectedSymptoms[node] > 0) {
+                model[node].populations[{InfectionState::Exposed}] = num_Exposed[node];
+                model[node].populations[{InfectionState::InfectedNoSymptoms}] =
+                    num_InfectedNoSymptoms[node];
+                model[node].populations[{InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+                model[node].populations[{InfectionState::InfectedSymptoms}] =
+                    num_InfectedSymptoms[node];
+                model[node].populations[{InfectionState::InfectedSymptomsConfirmed}] = 0;
+                model[node].populations[{InfectionState::InfectedSevere}] = num_InfectedSevere[node];
                 // Only set the number of ICU patients here, if the date is not available in the data.
                 if (!is_divi_data_available(date)) {
-                    model[node].populations[{AgeGroup(i), InfectionState::InfectedCritical}] = num_icu[node][i];
+                    model[node].populations[{InfectionState::InfectedCritical}] = num_icu[node];
                 }
-                model[node].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[node][i];
-            }
+                model[node].populations[{InfectionState::Dead}]      = num_death[node];
+                model[node].populations[{InfectionState::Recovered}] = num_rec[node];
         }
         else {
             log_warning("No infections reported on date {} for region {}. Population data has not been set.", date,
