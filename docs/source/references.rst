@@ -1,7 +1,7 @@
 References
 ===========
 
-The following gives an overview on (peer-reviewed) publications extending or using MEmilio. If you would like to add a publication, `contact us <mailto:Martin.Kuehn@DLR.de>`.
+The following gives an overview on (peer-reviewed) publications extending or using MEmilio. If you would like to add a publication, `contact us <mailto:Martin.Kuehn@DLR.de>`_.
 
 Recently submitted publications
 --------------------------------------
