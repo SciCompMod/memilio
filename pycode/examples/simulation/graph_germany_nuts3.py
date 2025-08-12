@@ -110,7 +110,7 @@ class Simulation:
 
         graph = osecir.ModelGraph()
 
-        scaling_factor_infected = [2.5]
+        scaling_factor_infected = [1.0]
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
 

@@ -189,15 +189,15 @@ IOResult<void> read_confirmed_cases_data(
 
 IOResult<void> read_confirmed_cases_noage(
     std::vector<ConfirmedCasesNoAgeEntry>& rki_data, std::vector<int> const& vregion, Date date,
-    std::vector<std::vector<double>>& vnum_Exposed, std::vector<std::vector<double>>& vnum_InfectedNoSymptoms,
-    std::vector<std::vector<double>>& vnum_InfectedSymptoms, std::vector<std::vector<double>>& vnum_InfectedSevere,
-    std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
-    std::vector<std::vector<double>>& vnum_rec, const std::vector<std::vector<int>>& vt_Exposed,
-    const std::vector<std::vector<int>>& vt_InfectedNoSymptoms,
-    const std::vector<std::vector<int>>& vt_InfectedSymptoms, const std::vector<std::vector<int>>& vt_InfectedSevere,
-    const std::vector<std::vector<int>>& vt_InfectedCritical, const std::vector<std::vector<double>>& vmu_C_R,
-    const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
-    const std::vector<double>& scaling_factor_inf)
+    std::vector<double> vnum_Exposed, std::vector<double> vnum_InfectedNoSymptoms,
+    std::vector<double> vnum_InfectedSymptoms, std::vector<double> vnum_InfectedSevere,
+    std::vector<double> vnum_icu, std::vector<double> vnum_death,
+    std::vector<double> vnum_rec, const std::vector<int> vt_Exposed,
+    const std::vector<int> vt_InfectedNoSymptoms,
+    const std::vector<int> vt_InfectedSymptoms, const std::vector<int> vt_InfectedSevere,
+    const std::vector<int> vt_InfectedCritical, const std::vector<double> vmu_C_R,
+    const std::vector<double> vmu_I_H, const std::vector<double> vmu_H_U,
+    const double scaling_factor_inf)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -251,36 +251,35 @@ IOResult<void> read_confirmed_cases_noage(
             auto& mu_H_U = vmu_H_U[region_idx];
 
             auto date_df = region_entry.date;
-            auto age     = 0;
 
             if (date_df == offset_date_by_days(date, 0)) {
-                num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
-                num_rec[age] += region_entry.num_confirmed;
+                num_InfectedSymptoms += scaling_factor_inf * region_entry.num_confirmed;
+                num_rec += region_entry.num_confirmed;
             }
             if (date_df == offset_date_by_days(date, days_surplus)) {
-                num_InfectedNoSymptoms[age] -=
-                    1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                num_InfectedNoSymptoms -=
+                    1 / (1 - mu_C_R) * scaling_factor_inf * region_entry.num_confirmed;
             }
-            if (date_df == offset_date_by_days(date, t_InfectedNoSymptoms[age] + days_surplus)) {
-                num_InfectedNoSymptoms[age] +=
-                    1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
-                num_Exposed[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+            if (date_df == offset_date_by_days(date, t_InfectedNoSymptoms + days_surplus)) {
+                num_InfectedNoSymptoms +=
+                    1 / (1 - mu_C_R) * scaling_factor_inf * region_entry.num_confirmed;
+                num_Exposed -= 1 / (1 - mu_C_R) * scaling_factor_inf * region_entry.num_confirmed;
             }
-            if (date_df == offset_date_by_days(date, t_Exposed[age] + t_InfectedNoSymptoms[age] + days_surplus)) {
-                num_Exposed[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+            if (date_df == offset_date_by_days(date, t_Exposed + t_InfectedNoSymptoms + days_surplus)) {
+                num_Exposed += 1 / (1 - mu_C_R) * scaling_factor_inf * region_entry.num_confirmed;
             }
-            if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age])) {
-                num_InfectedSymptoms[age] -= scaling_factor_inf[age] * region_entry.num_confirmed;
-                num_InfectedSevere[age] += mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+            if (date_df == offset_date_by_days(date, -t_InfectedSymptoms)) {
+                num_InfectedSymptoms -= scaling_factor_inf * region_entry.num_confirmed;
+                num_InfectedSevere += mu_I_H * scaling_factor_inf * region_entry.num_confirmed;
             }
-            if (date_df == offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age])) {
-                num_InfectedSevere[age] -= mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
-                num_icu[age] += mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+            if (date_df == offset_date_by_days(date, -t_InfectedSymptoms - t_InfectedSevere)) {
+                num_InfectedSevere -= mu_I_H * scaling_factor_inf * region_entry.num_confirmed;
+                num_icu += mu_I_H * mu_H_U * scaling_factor_inf * region_entry.num_confirmed;
             }
             if (date_df ==
-                offset_date_by_days(date, -t_InfectedSymptoms[age] - t_InfectedSevere[age] - t_InfectedCritical[age])) {
-                num_death[age] += region_entry.num_deaths;
-                num_icu[age] -= mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                offset_date_by_days(date, -t_InfectedSymptoms - t_InfectedSevere - t_InfectedCritical)) {
+                num_death += region_entry.num_deaths;
+                num_icu -= mu_I_H * mu_H_U * scaling_factor_inf * region_entry.num_confirmed;
             }
         }
     }
@@ -309,13 +308,13 @@ IOResult<void> read_confirmed_cases_noage(
             }
         };
 
-        try_fix_constraints(num_InfectedSymptoms[0], -5, "InfectedSymptoms");
-        try_fix_constraints(num_InfectedNoSymptoms[0], -5, "InfectedNoSymptoms");
-        try_fix_constraints(num_Exposed[0], -5, "Exposed");
-        try_fix_constraints(num_InfectedSevere[0], -5, "InfectedSevere");
-        try_fix_constraints(num_death[0], -5, "Dead");
-        try_fix_constraints(num_icu[0], -5, "InfectedCritical");
-        try_fix_constraints(num_rec[0], -20, "Recovered");
+        try_fix_constraints(num_InfectedSymptoms, -5, "InfectedSymptoms");
+        try_fix_constraints(num_InfectedNoSymptoms, -5, "InfectedNoSymptoms");
+        try_fix_constraints(num_Exposed, -5, "Exposed");
+        try_fix_constraints(num_InfectedSevere, -5, "InfectedSevere");
+        try_fix_constraints(num_death, -5, "Dead");
+        try_fix_constraints(num_icu, -5, "InfectedCritical");
+        try_fix_constraints(num_rec, -20, "Recovered");
     }
 
     return success();
