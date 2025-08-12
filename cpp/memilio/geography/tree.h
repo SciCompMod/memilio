@@ -45,7 +45,7 @@ typedef std::pair<Point, size_t> Node;
 
 template <class Location>
 concept IsSphericalLocation = requires(const Location& loc) {
-    std::is_floating_point_v<decltype(loc.latitude)> && std::is_floating_point_v<decltype(loc.longitude)>;
+    std::is_floating_point_v<decltype(loc.get_latitude())> && std::is_floating_point_v<decltype(loc.get_longitude())>;
 };
 
 template <class Iter>
@@ -55,7 +55,7 @@ concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLo
  * @brief R-Tree for spatial queries of geographical locations on the sphere
  * 
  * Wraps the Boost::geometry::index::rtree. Can be initialized with a vector of geographical location data or a range.
- * The provided location data needs to expose a latitude and a longitude parameter.
+ * The provided location data needs to provide get_latitude() and get_longitude().
  */
 
 class RTree
@@ -70,14 +70,14 @@ public:
     /**
      * @brief Construct a new RTree object with data given in a vector
      * 
-     * @param locations A vector of geographical locations, they need to expose a latitude and a longitude parameter.
+     * @param locations A vector of geographical locations, they need to provide get_latitude() and get_longitude().
      */
     template <IsSphericalLocation Location>
     RTree(const std::vector<Location>& locations)
         : rtree{}
     {
         for (size_t index = 0; index < locations.size(); index++) {
-            Point point(locations[index].longitude, locations[index].latitude);
+            Point point(locations[index].get_longitude(), locations[index].get_latitude());
             rtree.insert(Node(point, index));
         }
     }
@@ -87,7 +87,7 @@ public:
      * 
      * @param first The beginning of the range
      * @param last The end of the range
-     * The provided location data needs to expose a latitude and a longitude parameter.
+     * The provided location data needs to provide get_latitude() and get_longitude().
      */
     template <IsSphericalLocationIterator Iter>
     RTree(Iter first, Iter last)
@@ -95,7 +95,7 @@ public:
     {
         size_t index = 0;
         while (first != last) {
-            Point point(first->longitude, first->latitude);
+            Point point(first->get_longitude(), first->get_latitude());
             rtree.insert(Node(point, index));
             ++first;
             ++index;
@@ -114,13 +114,13 @@ public:
     /**
      * @brief Return the indices of the k nearest neighbours of a given location
      * 
-     * @param location Midpoint for the query, exposes latitude and longitude
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
      * @param number The number of nearest neighbours to find
      * @return Vector with indices of the nearest neighbours
      */
     auto nearest_neighbor_indices(const IsSphericalLocation auto& location, size_t number) const
     {
-        Point point(location.longitude, location.latitude);
+        Point point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         bgi::query(rtree, bgi::nearest(point, number), back_inserter_second_element<std::vector<size_t>>(indices));
         return indices;
@@ -129,7 +129,7 @@ public:
     /**
      * @brief Return the indices of the points within a given radius where the circle is approximated by a polygon
      * 
-     * @param location Midpoint for the query, exposes latitude and longitude
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
      * @param radius The radius of the query
      * @return Vector with indices of the points found
      */
@@ -145,7 +145,7 @@ public:
     /**
      * @brief Return the indices of the points within a given radius
      * 
-     * @param location Midpoint for the query, exposes latitude and longitude
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
      * @param radius The radius of the query
      * @return Vector with indices of the points found
      *
@@ -158,7 +158,7 @@ public:
         auto circle = create_circle_approximation(location, radius_in_meter);
         std::vector<Node> nodes;
         bgi::query(rtree, bgi::covered_by(circle), std::back_inserter(nodes));
-        auto midpoint = Point(location.longitude, location.latitude);
+        auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         for (auto& node : nodes) {
             mio::log_info("Distance: {}", bg::distance(midpoint, node.first));
@@ -172,8 +172,8 @@ public:
 private:
     /**
      * @brief Create a circle approximation object
-     * 
-     * @param location Midpoint, needs to expose latitude and longitude
+     *
+     * @param location Midpoint, needs to provide get_latitude() and get_longitude()
      * @param radius in meters
      * @return auto 
      */
@@ -185,7 +185,7 @@ private:
         bgsb::end_round end_strategy;
         bgsb::side_straight side_strategy;
 
-        Point midpoint(location.longitude, location.latitude);
+        Point midpoint(location.get_longitude(), location.get_latitude());
 
         bg::model::multi_polygon<bg::model::polygon<Point>> circle;
         bg::buffer(midpoint, circle, distance_strategy, side_strategy, join_strategy, end_strategy, point_strategy);
