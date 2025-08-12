@@ -274,6 +274,22 @@ struct TimeSeriesWriter {
     }
 };
 
+template <class... Loggers>
+struct DataWriterToMemory {
+    using Data = std::tuple<std::vector<typename Loggers::Type>...>;
+    template <class Logger>
+    /**
+     * @brief This function adds an entry to the data vector. 
+     * @param[in] t The data from the logger.
+     * @param[in,out] data The data tuple.
+     * @details The data is only added if it differs from the last entry. For this we use the first entry as a reference for the current position.
+    */
+    static void add_record(const typename Logger::Type& t, Data& data)
+    {
+        std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
+    }
+};
+
 /**
 * @brief This class writes data retrieved from loggers to memory. It can be used as the Writer template parameter for the History class.
 * This specialization just saves the difference to the last saved data. Suitable when one wants to save huge data with a few changes.
@@ -291,29 +307,24 @@ struct DataWriterToMemoryDelta {
     */
     static void add_record(const typename Logger::Type& t, Data& data)
     {
-        std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
+
+        if (std::get<index_of_type_v<Logger, Loggers...>>(data).size() > 0) {
+            typename Logger::Type diff_vector{};
+            auto& current_state_vec = std::get<index_of_type_v<Logger, Loggers...>>(data).front();
+            for (auto i = 0; i < (int)current_state_vec.size(); i++) {
+                if (std::get<1>(t[i]) != std::get<1>(current_state_vec[i])) {
+                    std::get<1>(current_state_vec[i]) = std::get<1>(t[i]);
+                    diff_vector.push_back(t[i]);
+                }
+            }
+            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(diff_vector);
+        }
+        else {
+            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(
+                t); // We use the first entry as a reference for the current position.
+            std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
+        }
     }
-
-    // static void add_record(const typename Logger::Type& t, Data& data)
-    // {
-
-    //     if (std::get<index_of_type_v<Logger, Loggers...>>(data).size() > 0) {
-    //         typename Logger::Type diff_vector{};
-    //         auto& current_state_vec = std::get<index_of_type_v<Logger, Loggers...>>(data).front();
-    //         for (auto i = 0; i < (int)current_state_vec.size(); i++) {
-    //             if (std::get<1>(t[i]) != std::get<1>(current_state_vec[i])) {
-    //                 std::get<1>(current_state_vec[i]) = std::get<1>(t[i]);
-    //                 diff_vector.push_back(t[i]);
-    //             }
-    //         }
-    //         std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(diff_vector);
-    //     }
-    //     else {
-    //         std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(
-    //             t); // We use the first entry as a reference for the current position.
-    //         std::get<index_of_type_v<Logger, Loggers...>>(data).push_back(t);
-    //     }
-    // }
 };
 
 } // namespace abm

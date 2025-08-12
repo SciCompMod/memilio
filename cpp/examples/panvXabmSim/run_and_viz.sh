@@ -89,7 +89,9 @@ run_comparison_visualizations() {
         $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
             --data-dir "$memilio_dir" \
             --output-path "$viz_output_dir/contact_network_memilio.png" \
-            --scenario-name "Memilio"
+            --scenario-name "Memilio" \
+            --total-runs "$RUNS"
+
     fi
     
     if [ -f "$panvadere_dir/contact_intensiveness.csv" ] && [ -f "$panvadere_dir/infection_count.csv" ]; then
@@ -97,7 +99,8 @@ run_comparison_visualizations() {
         $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
             --data-dir "$panvadere_dir" \
             --output-path "$viz_output_dir/contact_network_panvadere.png" \
-            --scenario-name "Panvadere"
+            --scenario-name "Panvadere" \
+            --total-runs "$RUNS"
     fi
     
     # # 4. Infection timeline analysis (if detailed infection files exist)

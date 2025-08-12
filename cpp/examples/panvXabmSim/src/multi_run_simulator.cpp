@@ -592,15 +592,15 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
         Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
         Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
-    mio::History<mio::abm::DataWriterToMemoryDelta, LogLocationTypeAndId> historyLocationTypeAndId;
+    mio::History<mio::abm::DataWriterToMemory, LogLocationTypeAndId> historyLocationTypeAndId;
 
     // FIGURES
     mio::History<mio::abm::TimeSeriesWriter, LogAmountOfInfections> historyAmountInfected{
         Eigen::Index(1)}; // 1st figure
-    mio::History<mio::abm::DataWriterToMemoryDelta, LogHouseholdId, LogLocationIdAndPersonId, LogWhoInfected>
+    mio::History<mio::abm::DataWriterToMemory, LogHouseholdId, LogLocationIdAndPersonId, LogWhoInfected>
         historyContactNetwork; // 2nd figure
-    mio::History<mio::abm::DataWriterToMemoryDelta, LogInfectionDetailed> historyInfectionDetailed; // 3rd figure
-    mio::History<mio::abm::DataWriterToMemoryDelta, LogLocationIdAndType> historyLocationIdAndType; // 4th figure
+    mio::History<mio::abm::DataWriterToMemory, LogInfectionDetailed> historyInfectionDetailed; // 3rd figure
+    mio::History<mio::abm::DataWriterToMemory, LogLocationIdAndType> historyLocationIdAndType; // 4th figure
 
     sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyAmountInfected,
                 historyContactNetwork, historyInfectionDetailed, historyLocationIdAndType, historyLocationTypeAndId);

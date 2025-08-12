@@ -638,19 +638,19 @@ mio::IOResult<std::map<uint32_t, uint32_t>> EventSimulator::map_restaurant_table
         }
     }
 
-    std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
-    for (const auto& [person_id_pre, person_id_sim] : household_map) {
-        std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
-                  << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
-                  << "House has "
-                  << city
-                         .get_individualized_location(mio::abm::LocationId{
-                             city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home),
-                             mio::abm::LocationType::Home})
-                         .get_persons()
-                         .size()
-                  << " persons." << std::endl;
-    }
+    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
+    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+    //               << "House has "
+    //               << city
+    //                      .get_individualized_location(mio::abm::LocationId{
+    //                          city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home),
+    //                          mio::abm::LocationType::Home})
+    //                      .get_persons()
+    //                      .size()
+    //               << " persons." << std::endl;
+    // }
     return mio::success(household_map);
 }
 

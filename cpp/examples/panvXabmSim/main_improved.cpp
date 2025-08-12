@@ -88,7 +88,7 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     // Set defaults
     config.city_config                  = CityConfig{};
     config.city_config.total_population = Config::DEFAULT_POPULATION;
-    config.event_config.type            = EventType::WorkMeeting_Baseline_Meetings;
+    config.event_config.type            = EventType::Restaurant_Table_Equals_Household;
     config.simulation_type              = SimType::Memilio;
     config.num_runs                     = Config::DEFAULT_RUNS;
     config.simulation_days              = Config::DEFAULT_DAYS;
