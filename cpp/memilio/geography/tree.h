@@ -159,7 +159,6 @@ public:
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         for (auto& node : nodes) {
-            mio::log_info("Distance: {}", bg::distance(midpoint, node.first));
             if (bg::distance(midpoint, node.first) < radius_in_meter) {
                 indices.push_back(node.second);
             }

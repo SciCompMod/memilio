@@ -19,6 +19,7 @@
 */
 
 #include "memilio/geography/tree.h"
+#include "memilio/geography/locations.h"
 #include "random_number_test.h"
 
 using TestGeography = RandomNumberTest;
