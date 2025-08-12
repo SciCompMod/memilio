@@ -19,14 +19,15 @@
 */
 
 #include "memilio/geography/tree.h"
+#include "memilio/geography/locations.h"
 #include "random_number_test.h"
 
-using TestLocation = RandomNumberTest;
+using TestGeography = RandomNumberTest;
 
 /**
  * @brief Test comparing geographical locations for equality.
  */
-TEST_F(TestLocation, compareGeographicalLocation)
+TEST_F(TestGeography, compareGeographicalLocation)
 {
     // Set a geographical location for the location.
     mio::geo::GeographicalLocation geographical_location  = {10.5100470359749, 52.2672785559812};
@@ -38,7 +39,7 @@ TEST_F(TestLocation, compareGeographicalLocation)
 /**
  * @brief Test comparing geographical locations for inequality.
  */
-TEST_F(TestLocation, compareGeographicalLocation2)
+TEST_F(TestGeography, compareGeographicalLocation2)
 {
     // Set a geographical location for the location.
     mio::geo::GeographicalLocation geographical_location  = {10.5100470359749, 52.2672785559812};
@@ -50,7 +51,7 @@ TEST_F(TestLocation, compareGeographicalLocation2)
 /**
  * @brief Test calculating the distance between two locations
  */
-TEST_F(TestLocation, Distance)
+TEST_F(TestGeography, Distance)
 {
     auto bonn   = mio::geo::GeographicalLocation(50.7333, 7.1000);
     auto berlin = mio::geo::GeographicalLocation(52.5200, 13.4050);
@@ -62,7 +63,7 @@ TEST_F(TestLocation, Distance)
 /**
  * @brief Test the default r-Tree Constructor
  */
-TEST_F(TestLocation, rtreeConstructionNoData)
+TEST_F(TestGeography, rtreeConstructionNoData)
 {
     EXPECT_NO_THROW(mio::geo::RTree());
 }
@@ -70,7 +71,7 @@ TEST_F(TestLocation, rtreeConstructionNoData)
 /**
  * @brief Test the r-Tree Constructor given a vector
  */
-TEST_F(TestLocation, rtreeConstructionVector)
+TEST_F(TestGeography, rtreeConstructionVector)
 {
     std::vector<mio::geo::GeographicalLocation> locations;
     locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
@@ -82,7 +83,7 @@ TEST_F(TestLocation, rtreeConstructionVector)
 /**
  * @brief Test the r-Tree Constructor given a range
  */
-TEST_F(TestLocation, rtreeConstructionRange)
+TEST_F(TestGeography, rtreeConstructionRange)
 {
     std::vector<mio::geo::GeographicalLocation> locations;
     locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
@@ -94,7 +95,7 @@ TEST_F(TestLocation, rtreeConstructionRange)
 /**
  * @brief Test the size function of an r-Tree
  */
-TEST_F(TestLocation, rtreesize)
+TEST_F(TestGeography, rtreesize)
 {
     std::vector<mio::geo::GeographicalLocation> locations;
     locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
@@ -107,7 +108,7 @@ TEST_F(TestLocation, rtreesize)
 /**
  * @brief Test the nearest neighbours query of an r-Tree
  */
-TEST_F(TestLocation, rtreeNN)
+TEST_F(TestGeography, rtreeNN)
 {
     std::vector<mio::geo::GeographicalLocation> locations;
     locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
@@ -120,7 +121,7 @@ TEST_F(TestLocation, rtreeNN)
 /**
  * @brief Test the in-range query of an r-Tree
  */
-TEST_F(TestLocation, rtreeinrange_approx)
+TEST_F(TestGeography, rtreeinrange_approx)
 {
     std::vector<mio::geo::GeographicalLocation> locations;
     locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
@@ -133,7 +134,7 @@ TEST_F(TestLocation, rtreeinrange_approx)
 /**
  * @brief Test the exact in-range query of an r-Tree
  */
-TEST_F(TestLocation, rtreeinrange)
+TEST_F(TestGeography, rtreeinrange)
 {
     std::vector<mio::geo::GeographicalLocation> locations;
     locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));

@@ -17,17 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef TREE_H
+#define TREE_H
 
-#include "math.h"
-#include "locations.h"
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 #include <boost/geometry/strategies/geographic/buffer_point_circle.hpp>
-#include <concepts>
-
-#include "boost/geometry/geometry.hpp"
-
+#include <boost/geometry/geometry.hpp>
+#include <math.h>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -122,7 +120,7 @@ public:
     {
         Point point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
-        bgi::query(rtree, bgi::nearest(point, number), back_inserter_second_element<std::vector<size_t>>(indices));
+        bgi::query(rtree, bgi::nearest(point, number), back_inserter_second_element<std::vector<size_t>>{indices});
         return indices;
     }
 
@@ -138,7 +136,7 @@ public:
         auto radius_in_meter = 1000 * radius;
         auto circle          = create_circle_approximation(location, radius_in_meter);
         std::vector<size_t> indices;
-        bgi::query(rtree, bgi::covered_by(circle), back_inserter_second_element<std::vector<size_t>>(indices));
+        bgi::query(rtree, bgi::covered_by(circle), back_inserter_second_element<std::vector<size_t>>{indices});
         return indices;
     }
 
@@ -161,7 +159,6 @@ public:
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         for (auto& node : nodes) {
-            mio::log_info("Distance: {}", bg::distance(midpoint, node.first));
             if (bg::distance(midpoint, node.first) < radius_in_meter) {
                 indices.push_back(node.second);
             }
@@ -221,3 +218,5 @@ private:
 
 } // namespace geo
 } // namespace mio
+
+#endif // TREE_H
