@@ -177,21 +177,21 @@ IOResult<void>
 set_confirmed_cases_noage(std::vector<Model<FP>>& model, std::vector<ConfirmedCasesNoAgeEntry>& case_data,
                           const std::vector<int>& region, Date date, const double scaling_factor_inf)
 {
-    std::vector<int> t_InfectedNoSymptoms{model.size()};
-    std::vector<int> t_Exposed{model.size()};
-    std::vector<int> t_InfectedSymptoms{model.size()};
-    std::vector<int> t_InfectedSevere{model.size()};
-    std::vector<int> t_InfectedCritical{model.size()};
+    std::vector<int> t_InfectedNoSymptoms{1};
+    std::vector<int> t_Exposed{1};
+    std::vector<int> t_InfectedSymptoms{1};
+    std::vector<int> t_InfectedSevere{1};
+    std::vector<int> t_InfectedCritical{1};
 
-    std::vector<double> mu_C_R{model.size()};
-    std::vector<double> mu_I_H{model.size()};
-    std::vector<double> mu_H_U{model.size()};
-    std::vector<double> mu_U_D{model.size()};
+    std::vector<double> mu_C_R{1};
+    std::vector<double> mu_I_H{1};
+    std::vector<double> mu_H_U{1};
+    std::vector<double> mu_U_D{1};
 
     for (size_t node = 0; node < model.size(); ++node) {
 
         t_Exposed[node] = 
-            static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()));
+            static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()[AgeGroup(0)]));
         t_InfectedNoSymptoms[node]= static_cast<int>(
             std::round(model[node].parameters.template get<TimeInfectedNoSymptoms<FP>>()[AgeGroup(0)]));
         t_InfectedSymptoms[node] = 
@@ -206,13 +206,13 @@ set_confirmed_cases_noage(std::vector<Model<FP>>& model, std::vector<ConfirmedCa
         mu_H_U[node] = model[node].parameters.template get<CriticalPerSevere<FP>>()[AgeGroup(0)];
         mu_U_D[node] = model[node].parameters.template get<DeathsPerCritical<FP>>()[AgeGroup(0)];
     }
-    std::vector<double> num_InfectedSymptoms(model.size(), 0.0);
-    std::vector<double> num_death(model.size(), 0.0);
-    std::vector<double> num_rec(model.size(), 0.0);
-    std::vector<double> num_Exposed(model.size(), 0.0);
-    std::vector<double> num_InfectedNoSymptoms(model.size(), 0.0);
-    std::vector<double> num_InfectedSevere(model.size(), 0.0);
-    std::vector<double> num_icu(model.size(), 0.0);
+    std::vector<double> num_InfectedSymptoms(1, 0.0);
+    std::vector<double> num_death(1, 0.0);
+    std::vector<double> num_rec(1, 0.0);
+    std::vector<double> num_Exposed(1, 0.0);
+    std::vector<double> num_InfectedNoSymptoms(1, 0.0);
+    std::vector<double> num_InfectedSevere(1, 0.0);
+    std::vector<double> num_icu(1, 0.0);
 
     BOOST_OUTCOME_TRY(read_confirmed_cases_noage(case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
                                                  num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
@@ -221,20 +221,20 @@ set_confirmed_cases_noage(std::vector<Model<FP>>& model, std::vector<ConfirmedCa
 
     for (size_t node = 0; node < model.size(); node++) {
         if (num_InfectedSymptoms[node] > 0) {
-                model[node].populations[{InfectionState::Exposed}] = num_Exposed[node];
-                model[node].populations[{InfectionState::InfectedNoSymptoms}] =
+                model[node].populations[{AgeGroup(0), InfectionState::Exposed}] = num_Exposed[node];
+                model[node].populations[{AgeGroup(0), InfectionState::InfectedNoSymptoms}] =
                     num_InfectedNoSymptoms[node];
-                model[node].populations[{InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-                model[node].populations[{InfectionState::InfectedSymptoms}] =
+                model[node].populations[{AgeGroup(0), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+                model[node].populations[{AgeGroup(0), InfectionState::InfectedSymptoms}] =
                     num_InfectedSymptoms[node];
-                model[node].populations[{InfectionState::InfectedSymptomsConfirmed}] = 0;
-                model[node].populations[{InfectionState::InfectedSevere}] = num_InfectedSevere[node];
+                model[node].populations[{AgeGroup(0), InfectionState::InfectedSymptomsConfirmed}] = 0;
+                model[node].populations[{AgeGroup(0), InfectionState::InfectedSevere}] = num_InfectedSevere[node];
                 // Only set the number of ICU patients here, if the date is not available in the data.
                 if (!is_divi_data_available(date)) {
-                    model[node].populations[{InfectionState::InfectedCritical}] = num_icu[node];
+                    model[node].populations[{AgeGroup(0), InfectionState::InfectedCritical}] = num_icu[node];
                 }
-                model[node].populations[{InfectionState::Dead}]      = num_death[node];
-                model[node].populations[{InfectionState::Recovered}] = num_rec[node];
+                model[node].populations[{AgeGroup(0), InfectionState::Dead}]      = num_death[node];
+                model[node].populations[{AgeGroup(0), InfectionState::Recovered}] = num_rec[node];
         }
         else {
             log_warning("No infections reported on date {} for region {}. Population data has not been set.", date,
@@ -261,7 +261,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
 {
     printf("Path\n");
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_noage(path));
-    BOOST_OUTCOME_TRY(set_confirmed_cases_noage(model, case_data, region, date, scaling_factor_inf));
+    BOOST_OUTCOME_TRY(set_confirmed_cases_noage(model, case_data, region, date, scaling_factor_inf[0]));
     return success();
 }
 
@@ -498,17 +498,17 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     BOOST_OUTCOME_TRY(details::set_population_data(
         model, path_join(pydata_dir, "county_current_population_aggregated.json"), county));
 
-    if (export_time_series) {
-        // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
-        // Run time equals run time of the previous functions times the num_days !
-        // (This only represents the vectorization of the previous function over all simulation days...)
-        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
-                    "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(pydata_dir, "county_divi_ma7.json"), path_join(pydata_dir, "cases_all_county_age_ma7.json"),
-            path_join(pydata_dir, "county_current_population.json")));
-    }
+    // if (export_time_series) {
+    //     // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
+    //     // Run time equals run time of the previous functions times the num_days !
+    //     // (This only represents the vectorization of the previous function over all simulation days...)
+    //     log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
+    //                 "For simulation runs over the same time period, deactivate it.");
+    //     // BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
+    //     //     model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
+    //     //     path_join(pydata_dir, "county_divi_ma7.json"), path_join(pydata_dir, "cases_all_county_age_ma7.json"),
+    //     //     path_join(pydata_dir, "county_current_population.json")));
+    // }
     return success();
 }
 
