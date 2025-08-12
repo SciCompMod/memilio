@@ -49,6 +49,12 @@ concept IsSphericalLocation = requires(const Location& loc) {
 template <class Iter>
 concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLocation<decltype(*std::declval<Iter>())>;
 
+template <class Iter>
+concept IsSphericalLocationIt = std::indirectly_readable<Iter> && requires(const Iter& loc) {
+    std::is_floating_point_v<decltype((*loc)->get_latitude())> &&
+        std::is_floating_point_v<decltype((*loc)->get_longitude())>;
+};
+
 /**
  * @brief R-Tree for spatial queries of geographical locations on the sphere
  * 
@@ -94,6 +100,25 @@ public:
         size_t index = 0;
         while (first != last) {
             Point point(first->get_longitude(), first->get_latitude());
+            rtree.insert(Node(point, index));
+            ++first;
+            ++index;
+        }
+    }
+    /**
+     * @brief Construct a new RTree object with data given in a range
+     * 
+     * @param first The beginning of the range
+     * @param last The end of the range
+     * The provided location data needs to provide get_latitude() and get_longitude().
+     */
+    template <IsSphericalLocationIt Iter>
+    RTree(Iter first, Iter last)
+        : rtree{}
+    {
+        size_t index = 0;
+        while (first != last) {
+            Point point((*first)->get_longitude(), (*first)->get_latitude());
             rtree.insert(Node(point, index));
             ++first;
             ++index;

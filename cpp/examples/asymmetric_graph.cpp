@@ -17,12 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/geography/locations.h"
+#include "memilio/geography/tree.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
 #include "smm/simulation.h"
 #include "smm/parameters.h"
+#include <ranges>
 
 enum class InfectionState
 {
@@ -59,21 +64,25 @@ int main(int /*argc*/, char** /*argv*/)
     model.parameters.get<mio::smm::AdoptionRates<InfectionState>>() = adoption_rates;
 
     auto model2 = model;
+    auto rng    = mio::RandomNumberGenerator();
 
     mio::Graph<mio::LocationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
-    graph.add_node(0, 12.0, 21.0, model, t0);
-    graph.add_node(1, 12.0, 21.0, model2, t0);
-    size_t num_nodes = 999;
+    graph.add_node(0, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
+                   mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model, t0);
+    graph.add_node(1, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
+                   mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model2, t0);
+    size_t num_nodes = 200000;
     for (size_t i = 2; i < num_nodes; i++) {
         auto local_model = model;
-        graph.add_node(i, 12.0, 21.0, local_model, t0);
+        graph.add_node(i, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
+                       mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), local_model, t0);
     }
 
     auto param = mio::MobilityParametersTimed(2.0, 10, 1);
     graph.add_edge(0, 1);
 
-    auto rng          = mio::RandomNumberGenerator();
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
+
     std::vector<double> uniform_vector(num_nodes, 1.0);
     mio::log_info("Nodes generated");
     for (size_t i = 0; i < 3 * num_nodes; ++i) {
@@ -83,6 +92,23 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     mio::log_info("Graph generated");
+
+    auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
+                     return &node.property;
+                 });
+    // mio::log_info("Value: {}", nodes.begin()->get_latitude());
+    auto tree = mio::geo::RTree(nodes.begin(), nodes.end());
+    mio::log_info("RTree generated");
+
+    for (auto& node : graph.nodes()) {
+        std::vector<std::vector<size_t>> neighbors;
+        neighbors.push_back(tree.inrange_indices_approximate(node.property.get_location(), 3));
+        neighbors.push_back(tree.inrange_indices_approximate(node.property.get_location(), 5));
+        neighbors.push_back(tree.inrange_indices_approximate(node.property.get_location(), 10));
+        node.property.set_regional_neighbors(neighbors);
+    }
+
+    mio::log_info("Neighbors set");
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 

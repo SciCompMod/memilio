@@ -60,12 +60,17 @@ public:
 
     double get_longitude() const
     {
-        return m_location.longitude;
+        return m_location.get_longitude();
     }
 
     double get_latitude() const
     {
-        return m_location.latitude;
+        return m_location.get_latitude();
+    }
+
+    void set_regional_neighbors(const std::vector<std::vector<size_t>>& neighbors)
+    {
+        regional_neighbor_indices = neighbors;
     }
 
 private:
