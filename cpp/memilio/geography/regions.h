@@ -77,6 +77,8 @@ DECL_TYPESAFE(int, CountyId);
 
 DECL_TYPESAFE(int, DistrictId);
 
+DECL_TYPESAFE(int, ProvinciaId);
+
 /**
          * get the id of the state that the specified county is in. 
          * @param[in, out] county a county id.
