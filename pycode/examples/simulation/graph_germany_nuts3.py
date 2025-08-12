@@ -186,7 +186,7 @@ def run_germany_nuts3_simulation(damping_values):
 
     sim = Simulation(
         data_dir=os.path.join(file_path, "../../../data"),
-        start_date=datetime.date(year=2020, month=12, day=12),
+        start_date=datetime.date(year=2020, month=7, day=1),
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
     
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     import bayesflow as bf
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    # trainings_data = simulator.sample(1000)
+    trainings_data = simulator.sample(1)
 
     # for region in range(400):
     #     trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
@@ -239,45 +239,45 @@ if __name__ == "__main__":
     # with open('validation_data_400params.pickle', 'wb') as f:
     #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('trainings_data1_400params.pickle', 'rb') as f:
-        trainings_data = pickle.load(f)
-    for i in range(9):
-        with open(f'trainings_data{i+2}_400params.pickle', 'rb') as f:
-            data = pickle.load(f)
-        trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
+    # with open('trainings_data1_400params.pickle', 'rb') as f:
+    #     trainings_data = pickle.load(f)
+    # for i in range(9):
+    #     with open(f'trainings_data{i+2}_400params.pickle', 'rb') as f:
+    #         data = pickle.load(f)
+    #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    with open('validation_data_400params.pickle', 'rb') as f:
-        validation_data = pickle.load(f)
+    # with open('validation_data_400params.pickle', 'rb') as f:
+    #     validation_data = pickle.load(f)
 
-    adapter = (
-        bf.Adapter()
-        .to_array()
-        .convert_dtype("float64", "float32")
-        .constrain("damping_values", lower=0.0, upper=1.0)
-        .rename("damping_values", "inference_variables")
-        .concatenate([f'region{i}' for i in range(400)], into="summary_variables", axis=-1)
-        .log("summary_variables", p1=True)
-    )
+    # adapter = (
+    #     bf.Adapter()
+    #     .to_array()
+    #     .convert_dtype("float64", "float32")
+    #     .constrain("damping_values", lower=0.0, upper=1.0)
+    #     .rename("damping_values", "inference_variables")
+    #     .concatenate([f'region{i}' for i in range(400)], into="summary_variables", axis=-1)
+    #     .log("summary_variables", p1=True)
+    # )
 
-    print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
+    # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
 
-    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=700, recurrent_dim=256)
-    inference_network = bf.networks.DiffusionModel(subnet_kwargs={'widths': {512, 512, 512, 512, 512}})
+    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=700, recurrent_dim=512)
+    # inference_network = bf.networks.DiffusionModel(subnet_kwargs={'widths': {512, 512, 512, 512, 512}})
 
-    workflow = bf.BasicWorkflow(
-        simulator=simulator, 
-        adapter=adapter,
-        summary_network=summary_network,
-        inference_network=inference_network,
-        standardize='all'  
-    )
+    # workflow = bf.BasicWorkflow(
+    #     simulator=simulator, 
+    #     adapter=adapter,
+    #     summary_network=summary_network,
+    #     inference_network=inference_network,
+    #     standardize='all'  
+    # )
 
-    history = workflow.fit_offline(data=trainings_data, epochs=1000, batch_size=32, validation_data=validation_data)
+    # history = workflow.fit_offline(data=trainings_data, epochs=1000, batch_size=32, validation_data=validation_data)
 
-    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_10params.keras"))
+    # # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_10params.keras"))
 
-    plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
-    plots['losses'].savefig('losses_diffusionmodel_400params.png')
-    plots['recovery'].savefig('recovery_diffusionmodel_400params.png')
-    plots['calibration_ecdf'].savefig('calibration_ecdf_diffusionmodel_400params.png')
-    plots['z_score_contraction'].savefig('z_score_contraction_diffusionmodel_400params.png')
+    # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
+    # plots['losses'].savefig('losses_diffusionmodel_400params.png')
+    # plots['recovery'].savefig('recovery_diffusionmodel_400params.png')
+    # plots['calibration_ecdf'].savefig('calibration_ecdf_diffusionmodel_400params.png')
+    # plots['z_score_contraction'].savefig('z_score_contraction_diffusionmodel_400params.png')
