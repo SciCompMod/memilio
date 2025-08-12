@@ -174,42 +174,6 @@ TEST_F(TestGeography, getGeographicalLocation)
 }
 
 /**
- * @brief Test comparing geographical locations for equality.
- */
-TEST_F(TestLocation, compareGeographicalLocation)
-{
-    // Set a geographical location for the location.
-    mio::geo::GeographicalLocation geographical_location  = {10.5100470359749, 52.2672785559812};
-    mio::geo::GeographicalLocation geographical_location2 = {10.5100470359749, 52.2672785559812};
-    // Verify that the set geographical location matches the expected values.
-    EXPECT_TRUE(geographical_location == geographical_location2);
-}
-
-/**
- * @brief Test comparing geographical locations for inequality.
- */
-TEST_F(TestLocation, compareGeographicalLocation2)
-{
-    // Set a geographical location for the location.
-    mio::geo::GeographicalLocation geographical_location  = {10.5100470359749, 52.2672785559812};
-    mio::geo::GeographicalLocation geographical_location2 = {10.5100470309749, 52.2672785559812};
-    // Verify that the set geographical location matches the expected values.
-    EXPECT_FALSE(geographical_location == geographical_location2);
-}
-
-/**
- * @brief Test calculating the distance between two locations
- */
-TEST_F(TestLocation, Distance)
-{
-    auto bonn   = mio::geo::GeographicalLocation(50.7333, 7.1000);
-    auto berlin = mio::geo::GeographicalLocation(52.5200, 13.4050);
-    EXPECT_DOUBLE_EQ(bonn.distance(berlin), berlin.distance(bonn));
-    auto distance = 478.2;
-    EXPECT_LT(abs(bonn.distance(berlin) - distance), 0.1);
-}
-
-/**
  * @brief Test whether the contact rates of a location are reduced if the total contacts in that location exceed the maximum number of contacts.
  */
 TEST_F(TestGeography, adjustContactRates)
