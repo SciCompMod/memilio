@@ -35,8 +35,8 @@ namespace pymio
 
 void bind_Integrator_Core(pybind11::module_& m)
 {
-    pymio::bind_class<mio::OdeIntegratorCore<double>, pymio::EnablePickling::Never,
-                      std::unique_ptr<mio::OdeIntegratorCore<double>>>(m, "IntegratorCore")
+    pymio::bind_class<mio::OdeIntegratorCore<double>, pymio::EnablePickling::Never, 
+                      pybind11::smart_holder>(m, "IntegratorCore")
         .def_property("dt_max",
                       pybind11::overload_cast<>(&mio::OdeIntegratorCore<double>::get_dt_max, pybind11::const_),
                       [](mio::OdeIntegratorCore<double>& self, double dt_max) {
@@ -49,7 +49,7 @@ void bind_Integrator_Core(pybind11::module_& m)
                       });
 
     pymio::bind_class<mio::EulerIntegratorCore<double>, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
-                      std::unique_ptr<mio::EulerIntegratorCore<double>>>(m, "EulerIntegratorCore")
+                      pybind11::smart_holder>(m, "EulerIntegratorCore")
         .def(pybind11::init<>())
         .def(
             "step",
@@ -67,7 +67,7 @@ void bind_Integrator_Core(pybind11::module_& m)
     using RungeKuttaCashKarp54Integrator =
         mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>;
     pymio::bind_class<RungeKuttaCashKarp54Integrator, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
-                      std::unique_ptr<RungeKuttaCashKarp54Integrator>>(m, "RungeKuttaCashKarp54IntegratorCore")
+                      pybind11::smart_holder>(m, "RungeKuttaCashKarp54IntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<const double, const double, const double, const double>(), pybind11::arg("abs_tol"),
              pybind11::arg("rel_tol"), pybind11::arg("dt_min"), pybind11::arg("dt_max"))
@@ -75,7 +75,7 @@ void bind_Integrator_Core(pybind11::module_& m)
         .def("set_rel_tolerance", &RungeKuttaCashKarp54Integrator::set_rel_tolerance, pybind11::arg("tol"));
 
     pymio::bind_class<mio::RKIntegratorCore<double>, pymio::EnablePickling::Never, mio::OdeIntegratorCore<double>,
-                      std::unique_ptr<mio::RKIntegratorCore<double>>>(m, "RKIntegratorCore")
+                      pybind11::smart_holder>(m, "RKIntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<double, double, double, double>(), pybind11::arg("abs_tol") = 1e-10,
              pybind11::arg("rel_tol") = 1e-5, pybind11::arg("dt_min") = std::numeric_limits<double>::min(),
