@@ -26,12 +26,12 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "random_number_test.h"
 
-using TestLocation = RandomNumberTest;
+using TestGeography = RandomNumberTest;
 
 /**
  * @brief Test that initializing a location with cells correctly creates the given number of cells.
  */
-TEST_F(TestLocation, initCell)
+TEST_F(TestGeography, initCell)
 {
     // Create a location of type PublicTransport with 2 cells.
     mio::abm::Location location(mio::abm::LocationType::PublicTransport, 0, 6, 0, 2);
@@ -42,7 +42,7 @@ TEST_F(TestLocation, initCell)
 /**
  * @brief Test that a location correctly returns its ID.
  */
-TEST_F(TestLocation, getId)
+TEST_F(TestGeography, getId)
 {
     // Create a location of type Home with an ID of 0.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -53,7 +53,7 @@ TEST_F(TestLocation, getId)
 /**
  * @brief Test that the computation of space per person relative to capacity works correctly.
  */
-TEST_F(TestLocation, computeSpacePerPersonRelative)
+TEST_F(TestGeography, computeSpacePerPersonRelative)
 {
     using testing::Return;
 
@@ -74,7 +74,7 @@ TEST_F(TestLocation, computeSpacePerPersonRelative)
 /**
  * @brief Test the interaction between infected and susceptible persons at a location.
  */
-TEST_F(TestLocation, interact)
+TEST_F(TestGeography, interact)
 {
     using testing::Return;
 
@@ -134,7 +134,7 @@ TEST_F(TestLocation, interact)
 /**
  * @brief Test setting and getting the capacity of a location.
  */
-TEST_F(TestLocation, setCapacity)
+TEST_F(TestGeography, setCapacity)
 {
     // Create a location of type Home.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -147,7 +147,7 @@ TEST_F(TestLocation, setCapacity)
 /**
  * @brief Test setting and getting the required mask type at a location.
  */
-TEST_F(TestLocation, setRequiredMask)
+TEST_F(TestGeography, setRequiredMask)
 {
     // Create a location of type Home.
     mio::abm::Location location(mio::abm::LocationType::Home, 0, num_age_groups);
@@ -162,7 +162,7 @@ TEST_F(TestLocation, setRequiredMask)
 /**
  * @brief Test setting and getting the geographical location of a location.
  */
-TEST_F(TestLocation, getGeographicalLocation)
+TEST_F(TestGeography, getGeographicalLocation)
 {
     // Create a location of type Home.
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
@@ -212,7 +212,7 @@ TEST_F(TestLocation, Distance)
 /**
  * @brief Test whether the contact rates of a location are reduced if the total contacts in that location exceed the maximum number of contacts.
  */
-TEST_F(TestLocation, adjustContactRates)
+TEST_F(TestGeography, adjustContactRates)
 {
     mio::abm::Location loc(mio::abm::LocationType::SocialEvent, mio::abm::LocationId(0));
     //Set the maximum contacts smaller than the contact rates

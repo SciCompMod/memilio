@@ -879,8 +879,8 @@ void write_log_to_file_person_and_location_data(const T& history)
     for (uint32_t loc_id_index = 0; loc_id_index < loc_id.size(); ++loc_id_index) {
         auto id            = std::get<0>(loc_id[loc_id_index]);
         auto location_type = (int)std::get<1>(loc_id[loc_id_index]);
-        auto id_longitute  = std::get<2>(loc_id[loc_id_index]).longitude;
-        auto id_latitude   = std::get<2>(loc_id[loc_id_index]).latitude;
+        auto id_longitute  = std::get<2>(loc_id[loc_id_index]).get_longitude();
+        auto id_latitude   = std::get<2>(loc_id[loc_id_index]).get_latitude();
         myfile << id << ", " << location_type << ", " << id_longitute << ", " << id_latitude << "\n";
     }
     myfile.close();

@@ -33,9 +33,20 @@ const double radians      = M_PI / 180.0;
 
 class GeographicalLocation
 {
+
 public:
-    double latitude;
-    double longitude;
+    GeographicalLocation(double lat, double lon)
+        : latitude(lat)
+        , longitude(lon)
+    {
+    }
+    GeographicalLocation(std::pair<double, double> coordinates)
+        : latitude(coordinates.first)
+        , longitude(coordinates.second)
+    {
+    }
+
+    GeographicalLocation() = default;
 
     /**
      * @brief Compare two GeographicalLocation%s.
@@ -75,6 +86,30 @@ public:
         double distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
         return distance;
     }
+
+    auto get_latitude() const -> double
+    {
+        return latitude;
+    }
+
+    auto get_longitude() const -> double
+    {
+        return longitude;
+    }
+
+    auto set_latitude(double lat) -> void
+    {
+        latitude = lat;
+    }
+
+    auto set_longitude(double lon) -> void
+    {
+        longitude = lon;
+    }
+
+private:
+    double latitude;
+    double longitude;
 };
 
 } // namespace geo
