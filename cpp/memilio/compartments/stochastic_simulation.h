@@ -77,7 +77,7 @@ public:
 
 template <typename FP, class Model, class Sim = StochasticSimulation<FP, Model>>
 TimeSeries<FP> simulate_stochastic(FP t0, FP tmax, FP dt, Model const& model,
-                                   std::unique_ptr<SdeIntegratorCore<FP>> integrator = nullptr)
+                                   std::unique_ptr<SdeIntegratorCore<FP>>&& integrator = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);

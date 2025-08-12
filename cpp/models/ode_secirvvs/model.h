@@ -759,7 +759,7 @@ private:
  */
 template <typename FP = ScalarType>
 inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
-                     std::unique_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
+                     std::unique_ptr<OdeIntegratorCore<FP>>&& integrator = nullptr)
 {
     return mio::simulate<FP, Model<FP>, Simulation<FP>>(t0, tmax, dt, model, std::move(integrator));
 }
