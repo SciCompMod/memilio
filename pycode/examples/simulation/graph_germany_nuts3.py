@@ -27,9 +27,12 @@ import matplotlib.pyplot as plt
 from enum import Enum
 from memilio.simulation.osecir import (Model, Simulation,
                                        interpolate_simulation_result)
-
+import pandas as pd
+from memilio.epidata import defaultDict as dd
 import pickle
 
+excluded_ids = [11001, 11002, 11003, 11004, 11005, 11006, 11007, 11008, 11009, 11010, 11011, 11012, 16056, 7338, 9374, 9473, 9573]
+region_ids = [region_id for region_id in dd.County.keys() if region_id not in excluded_ids]
 
 class Simulation:
     """ """
@@ -90,7 +93,7 @@ class Simulation:
         """
 
         start_damping = datetime.date(
-            2020, 12, 18)
+            2020, 7, 8)
 
         if start_damping < end_date:
             start_date = (start_damping - self.start_date).days
@@ -110,7 +113,7 @@ class Simulation:
 
         graph = osecir.ModelGraph()
 
-        scaling_factor_infected = [1.0]
+        scaling_factor_infected = [1]
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
 
@@ -163,7 +166,7 @@ class Simulation:
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
             node = graph.get_node(node_idx)
-            self.set_npis(node.property.parameters, end_date, damping_values[node_idx])
+            self.set_npis(node.property.parameters, end_date, damping_values[node_idx // 1000 -1])
             mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
@@ -192,59 +195,47 @@ def run_germany_nuts3_simulation(damping_values):
     
     results = sim.run(num_days_sim, damping_values)
 
-    return {f'region{region}': results[region] for region in range(len(results))}
+    return {f'region{region_idx}': results[region_idx] for region_idx, region_id in enumerate(region_ids)}
 
 def prior():
-    damping_values = np.random.uniform(0.0, 1.0, 400)
+    damping_values = np.random.uniform(0.0, 1.0, 16)
     return {'damping_values': damping_values}
 
 def load_divi_data():
     file_path = os.path.dirname(os.path.abspath(__file__))
     divi_path = os.path.join(file_path, "../../../data/Germany/pydata")
 
-    data = pd.read_json(os.path.join(divi_path, "county_divi.json"))
-    print(data["ID_County"].drop_duplicates().shape)
-    data = data[data['Date']>= np.datetime64(datetime.date(2020, 8, 1))]
-    data = data[data['Date'] <= np.datetime64(datetime.date(2020, 8, 1) + datetime.timedelta(days=50))]
-    print(data["ID_County"].drop_duplicates().shape)
+    data = pd.read_json(os.path.join(divi_path, "county_divi_ma7.json"))
+    data = data[data['Date']>= np.datetime64(datetime.date(2020, 7, 1))]
+    data = data[data['Date'] <= np.datetime64(datetime.date(2020, 7, 1) + datetime.timedelta(days=50))]
     data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
-    region_ids = [*dd.County]
-    divi_dict = {f"region{i}": data[data['ID_County'] == region_ids[i]]['ICU'].to_numpy() for i in range(400)}
-    # for i in range(100):
-    #     if divi_dict[f'region{i+100}'].size==0:
-    #         print(region_ids[i+100])
-    #     print(divi_dict[f'region{i+100}'].shape)
+    divi_dict = {f"region{i}": data[data['ID_County'] == region_id]['ICU'].to_numpy().reshape((1, 51, 1)) for i, region_id in enumerate(region_ids)}
+
+    return divi_dict
 
 
 if __name__ == "__main__":
-    # import pandas as pd
-
-    # file_path = os.path.dirname(os.path.abspath(__file__))
-    # casedata_path = os.path.join(file_path, "../../../data/Germany/pydata/cases_all_county_ma7.jsons")
-    # county = test[test['ID_County']==7320]
-    # print(county[county['Date']>= np.datetime64(datetime.date(2020, 8, 1))])
-    # from memilio.epidata import defaultDict as dd
-    # load_divi_data()
+    
     import os 
     os.environ["KERAS_BACKEND"] = "tensorflow"
 
     import bayesflow as bf
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    trainings_data = simulator.sample(1)
+    trainings_data = simulator.sample(100)
 
-    # for region in range(400):
-    #     trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
+    for region in range(len(region_ids)):
+        trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
 
-    # with open('validation_data_400params.pickle', 'wb') as f:
-    #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
+    with open('validation_data_counties.pickle', 'wb') as f:
+        pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
     # with open('trainings_data1_400params.pickle', 'rb') as f:
     #     trainings_data = pickle.load(f)
-    # for i in range(9):
-    #     with open(f'trainings_data{i+2}_400params.pickle', 'rb') as f:
-    #         data = pickle.load(f)
-    #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
+    # # for i in range(9):
+    # #     with open(f'trainings_data{i+2}_400params.pickle', 'rb') as f:
+    # #         data = pickle.load(f)
+    # #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
     # with open('validation_data_400params.pickle', 'rb') as f:
     #     validation_data = pickle.load(f)
@@ -261,8 +252,8 @@ if __name__ == "__main__":
 
     # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
 
-    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=700, recurrent_dim=512)
-    # inference_network = bf.networks.DiffusionModel(subnet_kwargs={'widths': {512, 512, 512, 512, 512}})
+    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32, recurrent_dim=32)
+    # inference_network = bf.networks.CouplingFlow()
 
     # workflow = bf.BasicWorkflow(
     #     simulator=simulator, 
@@ -272,9 +263,9 @@ if __name__ == "__main__":
     #     standardize='all'  
     # )
 
-    # history = workflow.fit_offline(data=trainings_data, epochs=1000, batch_size=32, validation_data=validation_data)
+    # history = workflow.fit_offline(data=trainings_data, epochs=1, batch_size=32, validation_data=validation_data)
 
-    # # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_10params.keras"))
+    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_test.keras"))
 
     # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
     # plots['losses'].savefig('losses_diffusionmodel_400params.png')

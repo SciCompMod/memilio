@@ -254,7 +254,7 @@ IOResult<void> read_confirmed_cases_noage(
 
             if (date_df == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms += scaling_factor_inf * region_entry.num_confirmed;
-                num_rec += region_entry.num_confirmed;
+                num_rec += region_entry.num_recovered;
             }
             if (date_df == offset_date_by_days(date, days_surplus)) {
                 num_InfectedNoSymptoms -=
