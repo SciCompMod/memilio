@@ -26,6 +26,7 @@
 #include <boost/geometry/strategies/geographic/buffer_point_circle.hpp>
 #include <boost/geometry/geometry.hpp>
 #include <math.h>
+#include <algorithm>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -163,6 +164,34 @@ public:
         std::vector<size_t> indices;
         bgi::query(rtree, bgi::covered_by(circle), back_inserter_second_element<std::vector<size_t>>{indices});
         return indices;
+    }
+
+    /**
+     * @brief Return the indices of the points within a given radius for multiple radii at the same time
+     * 
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
+     * @param radii Vector containing the radii of the query
+     * @return Vector of vectors with indices of the points found
+     */
+    auto inrange_indices_query(const IsSphericalLocation auto& location, std::vector<double> radii) const
+    {
+        auto max_radius      = std::max_element(radii.begin(), radii.end());
+        auto radius_in_meter = 1000 * (*max_radius);
+        auto circle          = create_circle_approximation(location, radius_in_meter);
+        std::vector<Node> nodes;
+        bgi::query(rtree, bgi::covered_by(circle), std::back_inserter(nodes));
+        auto midpoint = Point(location.get_longitude(), location.get_latitude());
+        std::vector<std::vector<size_t>> result;
+        for (const auto& radius : radii) {
+            std::vector<size_t> indices;
+            for (auto& node : nodes) {
+                if (bg::distance(midpoint, node.first) < radius) {
+                    indices.push_back(node.second);
+                }
+            }
+            result.push_back(indices);
+        }
+        return result;
     }
 
     /**

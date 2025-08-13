@@ -101,11 +101,8 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
-        std::vector<std::vector<size_t>> neighbors;
-        neighbors.push_back(tree.inrange_indices_approximate(node.property.get_location(), 3));
-        neighbors.push_back(tree.inrange_indices_approximate(node.property.get_location(), 5));
-        neighbors.push_back(tree.inrange_indices_approximate(node.property.get_location(), 10));
-        node.property.set_regional_neighbors(neighbors);
+        node.property.set_regional_neighbors(
+            tree.inrange_indices_query(node.property.get_location(), {3.0, 5.0, 10.0}));
     }
 
     mio::log_info("Neighbors set");
