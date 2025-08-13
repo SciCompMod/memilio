@@ -207,11 +207,13 @@ mio::IOResult<void> save_amount_infected_per_id(
 
     for (const auto& time_series : detailed_infection) {
         for (const auto& entry : time_series) {
-            if (entry.size() < 2) {
-                continue; // Skip entries that do not have enough data
+            for (size_t i = 0; i < entry.size(); ++i) {
+                if (entry.size() < 2) {
+                    continue; // Skip entries that do not have enough data
+                }
+                uint32_t person_id = std::get<0>(entry[i]);
+                infection_count[person_id] += 1;
             }
-            uint32_t person_id = std::get<0>(entry[0]);
-            infection_count[person_id] += 1;
         }
     }
 
@@ -592,7 +594,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
         Eigen::Index((size_t)mio::abm::LocationType::Count * sim.get_world().parameters.get_num_groups())};
     mio::History<mio::abm::TimeSeriesWriter, LogInfectionStatePerAgeGroup> historyInfectionStatePerAgeGroup{
         Eigen::Index((size_t)mio::abm::InfectionState::Count * sim.get_world().parameters.get_num_groups())};
-    mio::History<mio::abm::DataWriterToMemory, LogLocationTypeAndId> historyLocationTypeAndId;
+    mio::History<mio::abm::DataWriterToMemory, LogPersonIdAbndLocationTyoe> historyLocationTypeAndId;
 
     // FIGURES
     mio::History<mio::abm::TimeSeriesWriter, LogAmountOfInfections> historyAmountInfected{

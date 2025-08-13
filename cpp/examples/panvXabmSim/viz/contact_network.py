@@ -155,16 +155,16 @@ def create_household_layout(household_data, household_spacing=15.0, person_spaci
             for j, person_id in enumerate(members):
                 x_pos = member_start_x + j * person_spacing
                 pos[person_id] = (x_pos, household_center_y)
-        else:
-            # For large households, show representative members only
-            visible_members = members[:3] + members[-2:]
-            for j, person_id in enumerate(visible_members):
-                if j < 3:
-                    x_offset = (j - 1) * person_spacing
-                else:
-                    x_offset = (j - 1.5) * person_spacing
-                pos[person_id] = (household_center_x +
-                                  x_offset, household_center_y)
+        # else:
+        #     # For large households, show representative members only
+        #     visible_members = members[:3] + members[-2:]
+        #     for j, person_id in enumerate(visible_members):
+        #         if j < 3:
+        #             x_offset = (j - 1) * person_spacing
+        #         else:
+        #             x_offset = (j - 1.5) * person_spacing
+        #         pos[person_id] = (household_center_x +
+        #                           x_offset, household_center_y)
 
             household_positions[f"{household_id}_hidden"] = len(members) - 5
 
@@ -199,11 +199,11 @@ def create_location_layout(contact_data_with_types, household_positions, area_di
 
     # Define location areas around the household area
     location_area_mapping = {
-        'Work': (center_x - width/4, -(area_distance + household_area_height/2)),
-        'School': (center_x + width/4, -(area_distance + household_area_height/2)),
-        'Social': (center_x - width/4, area_distance + household_area_height/2),
-        'Shopping': (center_x + width/4, area_distance + household_area_height/2),
-        'Unknown': (center_x, area_distance + household_area_height/2 + 20)
+        'Work': (center_x - width/2, -(area_distance + household_area_height/4)),
+        'School': (center_x + width/2, -(area_distance + household_area_height/4)),
+        'SocialEvent': (center_x - width/2, area_distance + household_area_height / 4),
+        'BasicsShop': (center_x + width/2, area_distance + household_area_height/4),
+        'Home': (center_x, area_distance + household_area_height/2 + 20)
     }
 
     location_positions = {}
@@ -216,6 +216,7 @@ def create_location_layout(contact_data_with_types, household_positions, area_di
             area_pos = location_area_mapping[location_type]
         else:
             # Place unknown types in a default area
+            print(f"Unknown location type: {location_type}")
             area_pos = location_area_mapping['Unknown']
 
         location_areas[location_type] = area_pos
@@ -227,18 +228,37 @@ def create_location_layout(contact_data_with_types, household_positions, area_di
 
         area_x, area_y = area_pos
 
-        # Arrange locations with spacing
+        # Arrange locations with spacing in multiple rows
         n_locations = len(type_locations)
         if n_locations == 1:
             location_node = f"{location_type}_{type_locations[0]}"
             location_positions[location_node] = (area_x, area_y)
             location_nodes.add(location_node)
         else:
+            max_locations_per_row = 16  # Maximum locations per row
             spacing = 6.0
+            row_spacing = 8.0
+
+            # Calculate number of rows needed
+            locations_per_row = min(max_locations_per_row, n_locations)
+            num_rows = int(np.ceil(n_locations / locations_per_row))
+
             for i, location_id in enumerate(type_locations):
-                x_offset = (i - (n_locations - 1) / 2) * spacing
+                row = i // locations_per_row
+                col = i % locations_per_row
+
+                # Calculate position for this row
+                actual_locations_in_row = min(
+                    locations_per_row, n_locations - row * locations_per_row)
+                total_width_this_row = (actual_locations_in_row - 1) * spacing
+                start_x = area_x - total_width_this_row / 2
+
+                x_pos = start_x + col * spacing
+                y_pos = area_y + row * row_spacing - \
+                    ((num_rows - 1) * row_spacing / 2)
+
                 location_node = f"{location_type}_{location_id}"
-                location_positions[location_node] = (area_x + x_offset, area_y)
+                location_positions[location_node] = (x_pos, y_pos)
                 location_nodes.add(location_node)
 
     return location_positions, location_nodes, location_areas
@@ -250,8 +270,8 @@ def get_location_edge_colors():
         'Home': '#2E8B57',
         'Work': '#4169E1',
         'School': '#FF6347',
-        'Social': '#9370DB',
-        'Shopping': '#FF8C00',
+        'SocialEvent': '#9370DB',
+        'BasicsShop': '#FF8C00',
         'Unknown': '#808080'
     }
 
@@ -264,14 +284,22 @@ def get_infection_color(infection_rate):
     return cmap(infection_rate / 100)
 
 
+def get_infection_outline(infection_rate):
+    """ Outer ring of person is either white for an infection rate below 50% or red for above """
+    if infection_rate < 10:
+        return '#FFFFFF'  # White
+    else:
+        return '#FF0000'  # Red
+
+
 def get_edge_width_from_hours(contact_hours, max_hours=None):
     """Convert contact hours to edge width"""
     if max_hours is None:
         max_hours = 100  # Default max hours
 
-    # Normalize to 0.2-3.0 range for edge width
-    min_width = 0.2
-    max_width = 3.0
+    # Normalize to 0.1-1.0 range for edge width
+    min_width = 0.1
+    max_width = 1.0
 
     normalized = min(contact_hours / max_hours, 1.0)
     width = min_width + (max_width - min_width) * normalized
@@ -281,7 +309,8 @@ def get_edge_width_from_hours(contact_hours, max_hours=None):
 
 def visualize_contact_network(household_data, infection_count_data, contact_data, location_data,
                               total_runs=5, figsize=(24, 18), save_path=None,
-                              min_contact_hours=5, max_persons=200, min_infection_rate=0):
+                              min_contact_hours=5, max_persons=200, min_infection_rate=0,
+                              viz_home_contacts=False):
     """
     Create the contact network visualization based on your simulation data
 
@@ -352,6 +381,18 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
         contact_data_with_types['contact_hours'] >= min_contact_hours
     ]
 
+    # Filter out Hospital and ICU for location types
+    contact_data_with_types = contact_data_with_types[
+        contact_data_with_types['location_type'].isin(
+            ['Hospital', 'ICU']) == False
+    ]
+
+    # Filter out homes, if not visualizing home contacts
+    if not viz_home_contacts:
+        contact_data_with_types = contact_data_with_types[
+            contact_data_with_types['location_type'] != 'Home'
+        ]
+
     print(
         f"Visualizing {len(household_data)} persons with {len(contact_data_with_types)} significant contacts...")
     if min_infection_rate > 0:
@@ -393,7 +434,7 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
 
         if len(members) > 1:
             fancy_box = FancyBboxPatch(
-                (household_center_x - 6, household_center_y - 1), 12, 2,
+                (household_center_x - 3, household_center_y - 1), 6, 2,
                 boxstyle="round,pad=0.1",
                 facecolor='lightgray',
                 alpha=0.25,
@@ -410,12 +451,34 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
     # Draw location areas
     for location_type, (area_x, area_y) in location_areas.items():
         if any(location_type in node for node in location_nodes):
-            rect = plt.Rectangle((area_x - 8, area_y - 8), 16, 16,
+            # Count locations of this type to determine rectangle size
+            type_locations = contact_data_with_types[
+                contact_data_with_types['location_type'] == location_type
+            ]['location_id'].unique()
+            n_locations = len(type_locations)
+
+            # Calculate dynamic rectangle size based on location layout
+            max_locations_per_row = 16
+            spacing = 6.0
+            row_spacing = 8.0
+
+            if n_locations <= max_locations_per_row:
+                # Single row
+                rect_width = max(16, n_locations * spacing + 4)
+                rect_height = 16
+            else:
+                # Multiple rows
+                num_rows = int(np.ceil(n_locations / max_locations_per_row))
+                rect_width = max_locations_per_row * spacing + 4
+                rect_height = max(16, num_rows * row_spacing + 4)
+
+            rect = plt.Rectangle((area_x - rect_width/2, area_y - rect_height/2),
+                                 rect_width, rect_height,
                                  facecolor='lightblue', alpha=0.1, zorder=0,
                                  edgecolor='blue', linewidth=1)
             plt.gca().add_patch(rect)
 
-            label_y = area_y + 10 if area_y > 0 else area_y - 10
+            label_y = area_y + rect_height/2 + 5 if area_y > 0 else area_y - rect_height/2 - 5
             plt.text(area_x, label_y, location_type.replace('_', ' '),
                      ha='center', va='center', fontsize=10, fontweight='bold',
                      bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
@@ -423,13 +486,15 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
     # Draw person nodes with infection rate colors
     person_colors = [get_infection_color(
         infection_rates.get(p, 0)) for p in person_pos.keys()]
+    person_outlines = [get_infection_outline(
+        infection_rates.get(p, 0)) for p in person_pos.keys()]
 
     nx.draw_networkx_nodes(G, all_pos,
                            nodelist=list(person_pos.keys()),
                            node_color=person_colors,
                            node_size=120,
                            alpha=0.9,
-                           edgecolors='white',
+                           edgecolors=person_outlines,
                            linewidths=1.5)
 
     # Draw location nodes
@@ -451,43 +516,45 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
     edges_by_type = defaultdict(list)
     edge_widths_by_type = defaultdict(list)
 
-    # Add person-to-location edges
-    for (person1, person2, location_type), total_hours in contact_strength.items():
-        if total_hours >= min_contact_hours:
-            locations = contact_locations[(person1, person2, location_type)]
+    # # Add person-to-location edges
+    # for (person1, person2, location_type), total_hours in contact_strength.items():
+    #     if total_hours >= min_contact_hours:
+    #         locations = contact_locations[(person1, person2, location_type)]
 
-            for location_id in locations:
-                location_node = f"{location_type}_{location_id}"
-                if location_node in location_nodes:
-                    # Add edges from both persons to location
-                    edge_width = get_edge_width_from_hours(
-                        total_hours, max_contact_hours)
+    #         for location_id in locations:
+    #             location_node = f"{location_type}_{location_id}"
+    #             if location_node in location_nodes:
+    #                 # Add edges from both persons to location
+    #                 edge_width = get_edge_width_from_hours(
+    #                     total_hours, max_contact_hours)
 
-                    edges_by_type[location_type].append(
-                        (person1, location_node))
-                    edges_by_type[location_type].append(
-                        (person2, location_node))
-                    edge_widths_by_type[location_type].extend(
-                        [edge_width, edge_width])
+    #                 edges_by_type[location_type].append(
+    #                     (person1, location_node))
+    #                 edges_by_type[location_type].append(
+    #                     (person2, location_node))
+    #                 edge_widths_by_type[location_type].extend(
+    #                     [edge_width, edge_width])
 
-                    G.add_edge(person1, location_node, weight=total_hours)
-                    G.add_edge(person2, location_node, weight=total_hours)
+    #                 G.add_edge(person1, location_node,
+    #                            weight=total_hours, opacity=edge_width)
+    #                 G.add_edge(person2, location_node,
+    #                            weight=total_hours, opacity=edge_width)
 
-    # Draw edges by type with appropriate colors and widths
-    for location_type, edges in edges_by_type.items():
-        if edges:
-            color = edge_colors.get(location_type, 'gray')
-            widths = edge_widths_by_type[location_type]
+    # # Draw edges by type with appropriate colors and widths
+    # for location_type, edges in edges_by_type.items():
+    #     if edges:
+    #         color = edge_colors.get(location_type, 'gray')
+    #         widths = edge_widths_by_type[location_type]
 
-            # Draw edges with varying widths
-            for i, (person, location) in enumerate(edges):
-                width = widths[i] if i < len(widths) else 0.5
-                nx.draw_networkx_edges(G, all_pos,
-                                       edgelist=[(person, location)],
-                                       width=width,
-                                       edge_color=color,
-                                       alpha=0.6,
-                                       connectionstyle="arc3,rad=0.1")
+    #         # Draw edges with varying widths
+    #         for i, (person, location) in enumerate(edges):
+    #             width = widths[i] if i < len(widths) else 0.5
+    #             nx.draw_networkx_edges(G, all_pos,
+    #                                    edgelist=[(person, location)],
+    #                                    width=width,
+    #                                    edge_color=color,
+    #                                    alpha=0.6,
+    #                                    connectionstyle="arc3,rad=0.1")
 
     # Draw location labels
     location_labels = {loc: loc.split('_')[-1] for loc in location_nodes}
@@ -528,7 +595,7 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
     legend_elements.append(plt.Line2D([0], [0], color='gray', lw=3,
                                       label=f'Thick: {max_contact_hours:.0f}h contact'))
 
-    plt.legend(handles=legend_elements, loc='upper left',
+    plt.legend(handles=legend_elements, loc='center left',
                bbox_to_anchor=(0.02, 0.98),
                frameon=True, fancybox=True, shadow=True,
                fontsize=9, title='Legend', title_fontsize=10)
@@ -546,6 +613,11 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
 
     if min_infection_rate > 0:
         title_text += f'\n(Showing only persons with ≥{min_infection_rate}% infection rate)'
+
+    # Amount of persons with over 50% infection rate:
+    num_high_infection = sum(
+        1 for rate in infection_rates.values() if rate > 99)
+    title_text += f'\n{num_high_infection} persons with >50% infection rate'
 
     plt.title(title_text, fontsize=14, pad=20)
 
@@ -573,7 +645,7 @@ def main():
     """Main function to run the analysis"""
     parser = argparse.ArgumentParser(
         description='Generate contact network visualization from simulation data')
-    parser.add_argument('--data-dir', required=True,
+    parser.add_argument('--data-dir',
                         help='Directory containing CSV files')
     parser.add_argument(
         '--output-path', help='Output path for visualization (optional)')
@@ -587,8 +659,16 @@ def main():
                         default=200, help='Maximum persons to display')
     parser.add_argument('--min-infection-rate', type=float,
                         default=0, help='Minimum infection rate (%) to display')
+    parser.add_argument('--viz_home_contacts', action='store_true',
+                        help='Visualize home contacts')
 
     args = parser.parse_args()
+
+    # # For debug, set a path:
+    # args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result"
+    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/contact_network.png"
+    # args.scenario_name = "Test Scenario"
+    # args.total_runs = 10
 
     # Check if directory exists
     if not os.path.exists(args.data_dir):
@@ -636,7 +716,8 @@ def main():
         save_path=save_path,
         min_contact_hours=args.min_contact_hours,
         max_persons=args.max_persons,
-        min_infection_rate=args.min_infection_rate
+        min_infection_rate=args.min_infection_rate,
+        viz_home_contacts=args.viz_home_contacts
     )
 
 

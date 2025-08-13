@@ -38,7 +38,7 @@ LogInfectionPerLocationTypePerAgeGroup::log(const mio::abm::Simulation& sim)
     return std::make_pair(curr_time, sum);
 }
 
-LogLocationTypeAndId::Type LogLocationTypeAndId::log(const mio::abm::Simulation& sim)
+LogPersonIdAbndLocationTyoe::Type LogPersonIdAbndLocationTyoe::log(const mio::abm::Simulation& sim)
 {
 
     Type location_information{};
@@ -56,6 +56,13 @@ LogWhoInfected::Type LogWhoInfected::log(const mio::abm::Simulation& sim)
     for (auto&& location : sim.get_world().get_locations()) {
         for (auto&& person_id : location.get_infected_persons()) {
             who_infected.push_back(person_id);
+        }
+    }
+    if (sim.get_time() == mio::abm::TimePoint(0)) {
+        for (auto&& persons : sim.get_world().get_persons()) {
+            if (persons.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Susceptible) {
+                who_infected.push_back(persons.get_person_id());
+            }
         }
     }
     return who_infected;
@@ -79,6 +86,14 @@ LogInfectionDetailed::Type LogInfectionDetailed::log(const mio::abm::Simulation&
     for (auto&& location : sim.get_world().get_locations()) {
         for (auto&& person_id : location.get_infected_persons()) {
             infected_detailed.push_back(std::make_tuple(person_id, location.get_index(), location.get_type()));
+        }
+    }
+    if (sim.get_time() == mio::abm::TimePoint(0)) {
+        for (auto&& persons : sim.get_world().get_persons()) {
+            if (persons.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Susceptible) {
+                infected_detailed.push_back(std::make_tuple(persons.get_person_id(), persons.get_location().get_index(),
+                                                            persons.get_location().get_type()));
+            }
         }
     }
     return infected_detailed;
