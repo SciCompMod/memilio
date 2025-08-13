@@ -23,6 +23,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/utils/abstract_parameter_distribution.h"
+#include "memilio/utils/time_series.h"
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/model.h"
 
@@ -631,4 +632,79 @@ TEST(TestDistance, one_compartment)
 
     ASSERT_EQ(mio::result_distance_2norm(v1, v2, mio::osecir::InfectionState::Exposed),
               std::sqrt(4.0 + 1.0 + 0.0 + 36.0));
+}
+
+TEST(TestMergeTimeSeries, no_joint_tp)
+{
+    mio::TimeSeries<double> ts1(2);
+    mio::TimeSeries<double> ts2(2);
+    ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
+    ts1.add_time_point(0.2, mio::TimeSeries<ScalarType>::Vector::Constant(2, 1.));
+    ts2.add_time_point(0.3, mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts2.add_time_point(0.4, mio::TimeSeries<ScalarType>::Vector::Constant(2, 3.));
+
+    auto merged_ts_status = mio::merge_time_series(ts1, ts2);
+    auto merged_ts        = merged_ts_status.value();
+    ASSERT_TRUE(merged_ts_status);
+    ASSERT_EQ(merged_ts.get_num_time_points(), 4);
+    EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
+    EXPECT_NEAR(merged_ts.get_time(2), 0.3, 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[1], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[0], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(2)[0], 2., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(2)[1], 2., 1e-12);
+}
+
+TEST(TestMergeTimeSeries, joint_tp_add)
+{
+    mio::TimeSeries<double> ts1(2);
+    mio::TimeSeries<double> ts2(2);
+    ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
+    ts2.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts1.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts2.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 3.));
+
+    auto merged_ts_status = mio::merge_time_series(ts1, ts2, true);
+    auto merged_ts        = merged_ts_status.value();
+    ASSERT_TRUE(merged_ts_status);
+    ASSERT_EQ(merged_ts.get_num_time_points(), 2);
+    EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[0], 3., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[1], 3., 1e-12);
+    EXPECT_NEAR(merged_ts.get_time(1), 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[0], 5., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[1], 5., 1e-12);
+}
+
+TEST(TestMergeTimeSeries, joint_tp)
+{
+    mio::TimeSeries<double> ts1(2);
+    mio::TimeSeries<double> ts2(2);
+    ts1.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 1.));
+    ts2.add_time_point(0., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+
+    //Check for both TimeSeries having only one time point
+    auto merged_ts_status = mio::merge_time_series(ts1, ts2, false);
+    auto merged_ts        = merged_ts_status.value();
+    ASSERT_TRUE(merged_ts_status);
+    ASSERT_EQ(merged_ts.get_num_time_points(), 1);
+    EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[1], 1., 1e-12);
+
+    //Check for both TimeSeries having two time points
+    ts1.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 2.));
+    ts2.add_time_point(1., mio::TimeSeries<double>::Vector::Constant(2, 3.));
+
+    merged_ts_status = mio::merge_time_series(ts1, ts2, false);
+    merged_ts        = merged_ts_status.value();
+    ASSERT_TRUE(merged_ts_status);
+    ASSERT_EQ(merged_ts.get_num_time_points(), 2);
+    EXPECT_NEAR(merged_ts.get_time(0), 0., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[0], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(0)[1], 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_time(1), 1., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[0], 2., 1e-12);
+    EXPECT_NEAR(merged_ts.get_value(1)[1], 2., 1e-12);
 }

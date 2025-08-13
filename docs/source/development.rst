@@ -1,12 +1,13 @@
-Development
-===========
+Developer workflow
+========================
 
 We are always happy about contributions to the project! Here you can find more information on our coding guidelines, our git workflow, benchmarking our models and writing documentation. 
 
 Coding guidelines
 ---------------------
 
-All software is built in modules, unit tests have to be added for each module/functionality.
+All software is built in modules, unit tests have to be added for each module/functionality. We use  `GoogleTest <https://google.github.io/googletest/>`_ for that
+and refer to their documentation for further information.
 
 The CI pipeline also automates some code style enforcement via a ``pre-commit``.
 We recommend to configure it locally such that it runs automatically on every commit:
@@ -17,18 +18,19 @@ We recommend to configure it locally such that it runs automatically on every co
     pre-commit install
 
 
-For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`_ and this short video series: https://calmcode.io/pre-commit/the-problem.html
+For more information about ``pre-commit`` check `here <https://docs.pymc.io/en/latest/contributing/python_style.html>`_ and this short video series: https://calmcode.io/pre-commit/the-problem.html.
 
-Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068 . Be therefore sure to not commit python code from a worktree.
+Please be aware that the ``isort`` pre-commit hook accidentally sorts our own code with third party libraries, also see: https://github.com/PyCQA/isort/issues/2068. Be therefore sure to not commit python code from a worktree.
 
-C++ Coding guidelines
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+C++ coding guidelines
+~~~~~~~~~~~~~~~~~~~~~
 
 
 
 C++ Standard:
 
- - C++ 17, higher standards are currently not allowed
+ - C++ 20, other standards are currently not supported.
 
 Namespaces:
 
@@ -36,14 +38,14 @@ Namespaces:
 
 Naming rules:
 
-  - Classes begin with large Letters , e.g. ``class MyClass``
-  - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function`` 
-  - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading "m_", e.g. ``m_my_member``.
+  - Classes begin with large Letters , e.g. ``class MyClass``.
+  - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function``.
+  - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading ``m_``, e.g. ``m_my_member``.
 
 Return Values:
 
-  - If only one object is output, use return, for multiple objects, pass by reference (we still have to check ``std::expected``)
-  - The semantics of return value arguments have to make clear, how the ownership is handled
+  - If only one object is output, use return, for multiple objects, pass by reference (we still have to check ``std::expected``).
+  - The semantics of return value arguments have to make clear, how the ownership is handled.
 
     - If the function creates an object (allocates), pass it as ``std::unique_ptr<T>&``
     - If the function simply changes an object, pass is as ``T&``
@@ -56,13 +58,13 @@ Exceptions:
 
 Logging:
 
-  - Do not use printfs
-  - Use the logging functions from ``logging.h``
-  - For debug logs, use ``mio::log_debug(msg)``
+  - Do not use printfs.
+  - Use the logging functions from ``logging.h``.
+  - For debug logs, use ``mio::log_debug(msg)``.
 
 Includes:
 
-  - Please use include guards with capitalized name of the header file (``test.h -> #ifndefine TEST_H``)
+  - Please use include guards with capitalized name of the header file (``test.h -> #ifndefine TEST_H``).
   - Sort includes according to
 
      1. own header
@@ -80,10 +82,10 @@ Code Documentation:
     - The plural of classes, objects etc. should be denoted with a `%` sign between class name and plural s, e.g., `Household%s`. This is in order to visualize it correctly and provide a link on the doxygen page.
     - Use `[in]`, `[out]`, or `[in, out]` after `@param` in order to clarify if parameters are used as input, output or in- and output parameters.
     - To reference to enums put a # sign before the name.
-    - Plase also provide a description for member variables; use ``///< DESCRIPTION`  or `/**< DESCRIPTION */`` for two lines. Keep it short.
+    - Please also provide a description for member variables; use ``///< DESCRIPTION`  or `/**< DESCRIPTION */`` for two lines. Keep it short.
 
 
-Mandatory C++ Style Guidelines
+Mandatory C++ style guidelines
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The style guidelines are adopted from `TiGL <https://github.com/DLR-SC/tigl>`_.
@@ -194,7 +196,7 @@ These settings are set in the file ``.clang-format`` in the root directory of th
 
 **Using clang-format with either Qt, Visual Studio Code, or VSCodium**
 
-The Beautifier plugin shipped with QtCreator supports clang-format (help could also be provided by https://www.vikingsoftware.com/using-clang-format-with-qtcreator/ ), so you will be able to automatically format your code. For Visual Studio Code, install the Clang-format extension and add the lines:
+The Beautifier plugin shipped with QtCreator supports clang-format (help could also be provided by https://www.vikingsoftware.com/using-clang-format-with-qtcreator/), so you will be able to automatically format your code. For Visual Studio Code, install the Clang-format extension and add the lines:
 
 .. code:: 
 
@@ -219,7 +221,7 @@ might appear. In that case, update ``clang-format`` or install a newer version (
 Python coding guidelines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Please follow the `PEP 8 -- Style Guide for Python. <https://www.python.org/dev/peps/pep-0008/>`_
+Please follow the `PEP 8 -- Style Guide for Python. <https://www.python.org/dev/peps/pep-0008/>`_.
 
 
 **Note on maximum line length**
@@ -235,8 +237,34 @@ to your corresponding ``settings.json``.
 
 **Docstrings**
 
-Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html . 
+Docstrings in Python should be added for every function, as detailed in the C++ coding guidelines. However, the syntax is slightly different than for C++ code. An overview and examples can be found at https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html. 
 
+Figure colors and settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to ensure that figures in the documentation and in the code have a consistent look, we use the following settings:
+
+**Default color scheme**
+
+- For figures in the documentation, we usually use the `matplotlib <https://matplotlib.org/>`_ library. 
+- The default color cycle is set to the `Set1 <https://matplotlib.org/stable/tutorials/colors/colormaps.html#Qualitative>`_ colormap.
+
+**Colorblind-friendly alternatives**
+
+For better accessibility and when creating figures with many categories, consider using colorblind-friendly alternatives:
+
+- Use the `tab10 <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ colormap for up to 10 distinct categories
+- For sequential data, prefer `viridis <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_, `plasma`, or `cividis` colormaps
+- For diverging data, use `RdBu <https://matplotlib.org/stable/tutorials/colors/colormaps.html>`_ or `RdYlBu` colormaps
+- Avoid using red-green color combinations without additional visual cues (patterns, shapes, etc.)
+
+**General figure guidelines**
+
+- Use consistent font sizes across all figures (typically 10-12pt for labels, 8-10pt for tick labels)
+- Ensure sufficient contrast between colors and background
+- Add appropriate legends and axis labels with units
+- For line plots with multiple series, vary both color and line style (solid, dashed, dotted) for better distinction
+- When possible, test figures with a colorblind simulator to ensure accessibility
 
 Git workflow
 ----------------------
@@ -258,7 +286,7 @@ General
 - If we release a new version of the software, we create a tag for the version on the main branch.
 - Please keep all issue-related communication within the issue or pull request.
 
-Software Development in Sprints
+Software development in sprints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The software development process is inspired by `Scrum <https://en.wikipedia.org/wiki/Scrum_(software_development)>`_ and the development of the core developers is organized in sprints. The rules below only partially apply to external (non-core) contributors.
@@ -269,7 +297,7 @@ The software development process is inspired by `Scrum <https://en.wikipedia.org
 - A sprint is a temporally limited cycle of a fixed time, in our case **three** weeks.
 - The scope of work will be defined in a sprint meeting where work is related to issues.
 - MEmilio-related issues are categorized in three different classes: agent-based modeling, equation-based modeling and MEmilio: data, tools and more. If a clear categorization is not possible, issues may be assigned to more than one class.
-- Sprints are organized via the new GitHub Project boards: https://github.com/DLR-SC/memilio/projects
+- Sprints are organized via the new GitHub Project boards: https://github.com/DLR-SC/memilio/projects.
 
 **Procedure**
 
@@ -319,79 +347,34 @@ To honor original authors as well as reviewers and their suggestions, reviewers 
 The full list of labels that should be used to identify issues can be found at: https://github.com/DLR-SC/memilio/labels
 
 
-Agent-based model development 
-------------------------------------------------
-
-Benchmarks
-~~~~~~~~~~~~~~~~~~~~~
-
-There is a suite of benchmarks for the ABM that can be used to check performance. The suite contains setups of different sizes. If you added a new feature (i.e., you didn't just fix a bug in an existing feature), make sure the feature is actually used by the benchmark. Add it to the benchmark if necessary, then run the benchmark to see if the cost for the new feature is acceptable and as expected.
-
-Most new features will add some overhead, but this needs to be limited and in proportion to the added value of the feature so runtime doesn't grow out of control. Optional features that can be disabled should only incur minimal overhead. If you did not add any new feature, just run the benchmark before and after your changes to make sure there are no performance regressions. This process will hopefully be automated soon by running benchmarks in the CI.
-
-Build the benchmarks by defining the CMake variable ``MEMILIO_BUILD_BENCHMARKS=ON`` in the build. Make sure to use a **Release** build to test performance.
-
-.. code-block:: bash
-
-    cmake .. -DMEMILIO_BUILD_BENCHMARKS=ON -DCMAKE_BUILD_TYPE=Release
-    cmake --build .
-
-Run the benchmark executable:
-
-.. code-block:: bash
-
-    ./build/bin/abm_benchmark
-
-Each benchmark is run for a number of iterations and the average time is reported.
-
-.. code-block:: text
-
-    Benchmark                                 Time             CPU   Iterations
-    ---------------------------------------------------------------------------
-    abm_benchmark/abm_benchmark_50k        7583 ms         7583 ms            1
-    abm_benchmark/abm_benchmark_100k      18216 ms        18214 ms            1
-    abm_benchmark/abm_benchmark_200k      41492 ms        41489 ms            1
-
-You may get a warning:
-
-.. code-block:: text
-
-    ***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
-
-If possible, disable CPU scaling to improve the consistency of results. See the Google Benchmark documentation here:
-https://google.github.io/benchmark/reducing_variance.html
-
-Also, try to reduce other system load during the benchmark run.
-
-If it is not possible to disable frequency scaling, increase the runtime of the benchmark using the commands below. Constant CPU frequency is necessary to get the most reliable results and to measure small differences.
-
-**REMINDER:** Don't forget to re-enable CPU scaling after you ran the benchmarks to save energy. Rebooting may restore the settings as well.
-
-The benchmark executable has a number of command line arguments that customize execution. Use ``--help`` to list them all.
-
-Two important options for consistency and stability:
-
-- ``--benchmark_min_time=<T>``: Iterate each benchmark so that the total runtime is at least ``T`` seconds.  
-  Default is 1 second, which may not be enough.  
-  Try 60 seconds for better stability (you may need to experiment).
-
-- ``--benchmark_repetitions=<N>``: Repeat each benchmark ``N`` times and report mean, median, and variance.  
-  (Repetitions are **not** iterations; a benchmark can be repeated 10 times with 5 iterations each. Each repetition runs for at least the minimum time.)
-
-``benchmark_repetitions`` is useful to check timing consistency, as it reports variance.  
-However, it can be expensive because long-running benchmarks are repeated.  
-``benchmark_min_time`` increases iterations only for fast-running benchmarks, which tend to be less stable.
-
-**Suggested workflow:**
-
-1. Run with 5–10 repetitions to check variance.
-2. Increase ``benchmark_min_time`` until variance is acceptable.
-3. Continue benchmarking with 1 repetition and the adjusted minimum time.
-
-
-
 Documentation
 --------------------
 
+The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is written in reStructuredText, that uses a 
+slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
+This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
+a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
 
-For the documentation, please keep in mind that it is written in reStructuredText (RST) and uses a slightly different syntax than Markdown. A documentation can be found at `<https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
+
+Please make sure to have a working python environment with a python version that is compatible with 
+our :doc:`memilio-python packages <python/python_packages>` as well as 
+all packages listed in ``docs/requirements.txt`` and `doxygen <https://doxygen.nl/>`_ installed.
+
+First generate the doxygen output by running 
+
+.. code-block:: bash
+
+    cd docs
+    doxygen
+
+
+In the ``docs/Doxyfile`` (line 736), you can change for which folders the doxygen output should be generated. For faster 
+build times while testing we recommend to only use e.g. ``../cpp/models/abm``. **Don't commit this change!**
+
+Then sphinx can be used to build the documentation:
+
+.. code-block:: bash
+
+    make html # alternatively: sphinx-build source html
+
+The generated documentation can be found in ``docs/build/html`` (``docs/source/html`` if built without make).

@@ -28,6 +28,7 @@
 #include <iterator>
 #include <vector>
 #include <ostream>
+#include <fstream>
 
 namespace mio
 {
@@ -177,7 +178,7 @@ public:
     }
 
     /** move ctor and assignment */
-    TimeSeries(TimeSeries&& other)            = default;
+    TimeSeries(TimeSeries&& other) = default;
     TimeSeries& operator=(TimeSeries&& other) = default;
 
     /// Check if the time is strictly monotonic increasing.
@@ -485,7 +486,8 @@ public:
     /**
      * @brief Print out the TimeSeries as a table.
      *
-     * All entries in the table are spaced separatedly with at least one space. The first row of the table starts with
+     * All row entries in the table are separated by the given separator, followed by additional spaces filling the width
+     * of the next entry. Each row is terminated by a newline character '\n'. The first row of the table starts with
      * "Time", followed by other column labels. Each row after that contains the time (see get_time) followed by the
      * value (see get_value) for every row (i.e. time point) in the TimeSeries.
      * The width parameter sets the minimum width of each table entry. For the numbers from the TimeSeries, this width
@@ -495,26 +497,34 @@ public:
      * (starting at 1, as "Time" is used for column 0). Labels in the column_labels vector that go beyond the TimeSeries column
      * numbers are ignored.
      *
-     * @param column_labels Vector of custom labels for each column.
-     * @param width The number of characters reserved for each number.
-     * @param precision The number of decimals.
-     * @param out Which ostream to use. Prints to terminal by default.
+     * This method can be called in two ways:
+     * 1. With an output stream as the first parameter: print_table(out, column_labels, width, precision, separator, header_prefix)
+     * 2. Without specifying an output stream (defaults to std::cout): print_table(column_labels, width, precision, separator, header_prefix)
+     *
+     * @param[in,out] out Which ostream to use (optional, see above).
+     * @param[in] column_labels Vector of custom labels for each column.
+     * @param[in] width The number of characters reserved for each number.
+     * @param[in] precision The number of decimals.
+     * @param[in] separator Separator character between columns.
+     * @param[in] header_prefix Prefix before the header row.
+     *
+     * @{
      */
-    void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
-                     std::ostream& out = std::cout) const
+    void print_table(std::ostream& out, const std::vector<std::string>& column_labels = {}, size_t width = 16,
+                     size_t precision = 5, char separator = ' ', const std::string header_prefix = "\n") const
     {
         // Note: input manipulators (like std::setw, std::left) are consumed by the first argument written to the stream
         // print column labels
         const auto w = width, p = precision;
-        set_ostream_format(out, w, p) << std::left << "\nTime";
+        out << header_prefix;
+        set_ostream_format(out, w, p) << std::left << "Time";
         for (size_t k = 0; k < static_cast<size_t>(get_num_elements()); k++) {
+            out << separator;
             if (k < column_labels.size()) {
-                out << " ";
                 set_ostream_format(out, w, p) << std::left << column_labels[k];
             }
             else {
-                out << " ";
-                set_ostream_format(out, w, p) << std::left << "#" + std::to_string(k + 1);
+                set_ostream_format(out, w, p) << std::left << "C" + std::to_string(k + 1);
             }
         }
         // print values as table
@@ -524,11 +534,44 @@ public:
             set_ostream_format(out, w, p) << std::right << get_time(i);
             auto res_i = get_value(i);
             for (size_t j = 0; j < static_cast<size_t>(res_i.size()); j++) {
-                out << " ";
+                out << separator;
                 set_ostream_format(out, w, p) << std::right << res_i[j];
             }
         }
         out << "\n";
+    }
+
+    void print_table(const std::vector<std::string>& column_labels = {}, size_t width = 16, size_t precision = 5,
+                     char separator = ' ', const std::string header_prefix = "\n") const
+    {
+        print_table(std::cout, column_labels, width, precision, separator, header_prefix);
+    }
+    /** @} */
+
+    /**
+     * @brief Exports a TimeSeries object into a CSV file.
+     *
+     * The first column of the CSV file contains the time points. The remaining columns
+     * contain the values at each time point. Column headers can be specified with column_labels.
+     * This function utilizes the print_table method with a width of 1, the 
+     * specified separator, and an empty string as header prefix.
+     *
+     * @param[in] filepath Path to the CSV file.
+     * @param[in] column_labels [Default: {}] Vector of labels for each column after the time column.
+     * @param[in] separator [Default: ','] Separator character.
+     * @param[in] precision [Default: 6] Number of decimals for floating point values.
+     * @return IOResult<void> indicating success or failure.
+     */
+    IOResult<void> export_csv(const std::string& filename, const std::vector<std::string>& column_labels = {},
+                              char separator = ',', int precision = 6) const
+    {
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+            return mio::failure(mio::StatusCode::FileNotFound, "Failed to export TimeSeries as CSV to " + filename);
+        }
+
+        print_table(file, column_labels, 1, precision, separator, "");
+        return mio::success();
     }
 
     /**
@@ -607,8 +650,8 @@ inline Eigen::Index next_pow2(Eigen::Index i)
 }
 
 /**
-     * type traits for time series iterators
-     */
+ * type traits for time series iterators
+ */
 template <class FP, bool IsConst>
 struct TimeSeriesIterTraits {
     static bool is_const()
@@ -617,9 +660,8 @@ struct TimeSeriesIterTraits {
     }
     using Matrix      = typename TimeSeries<FP>::Matrix;
     using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
-    using VectorValue = typename decltype(std::declval<MatrixPtr>()
-                                              ->col(std::declval<Eigen::Index>())
-                                              .tail(std::declval<Eigen::Index>()))::PlainObject;
+    using VectorValue = typename decltype(
+        std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()))::PlainObject;
     using VectorReference =
         decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
     using TimeValue     = FP;
@@ -627,12 +669,12 @@ struct TimeSeriesIterTraits {
 };
 
 /** base class for TimeSeries iterators that iterate by time point (i.e. column) 
-     * @tparam Derived Iterator derived type, provides get_reference member function
-     * @tparam FP floating point type of the TimeSeries
-     * @tparam IsConstIter true for const_iterator
-     * @tparam ValueType define iterator::value_type
-     * @tparam ReferenceType define iterator::reference, must be the same type as returned by Derived::get_reference
-    */
+ * @tparam Derived Iterator derived type, provides get_reference member function
+ * @tparam FP floating point type of the TimeSeries
+ * @tparam IsConstIter true for const_iterator
+ * @tparam ValueType define iterator::value_type
+ * @tparam ReferenceType define iterator::reference, must be the same type as returned by Derived::get_reference
+ */
 template <class Derived, class FP, bool IsConstIter, class ValueType, class ReferenceType>
 class TimeSeriesIteratorBase
 {
@@ -643,6 +685,8 @@ protected:
     Eigen::Index m_col_idx = -1;
 
 public:
+    TimeSeriesIteratorBase() = default;
+
     TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
         : m_matrix(m)
         , m_col_idx(col_idx)
@@ -654,9 +698,14 @@ public:
     using iterator_category = std::random_access_iterator_tag;
     using reference         = ReferenceType;
     using value_type        = ValueType;
+
+    /**
+     * @brief Dereferencable type with a copy of a reference.
+     * This is needed in case Derived::get_reference returns a temporary object, like Eigen::Ref.
+     */
     struct pointer {
         reference m_ref;
-        reference* operator->()
+        auto operator->()
         {
             return &m_ref;
         }

@@ -19,8 +19,13 @@
 */
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/mioomp.h"
+#include "utils.h"
 
+#include "gmock/gmock.h"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -101,4 +106,57 @@ TEST(TestUtils, IndexRange)
         EXPECT_EQ(flat_index, reference_flat_index);
         iterator++;
     }
+}
+
+TEST(TestUtils, OpenMP)
+{
+    using namespace mio::omp;
+    // check getters outside of a parallel region
+    EXPECT_EQ(get_thread_id(), 0);
+    EXPECT_EQ(get_num_threads(), 1);
+#ifndef MEMILIO_ENABLE_OPENMP
+    EXPECT_EQ(get_max_threads(), 1); // without OpenMP we can be stricter here
+#else
+    EXPECT_GE(get_max_threads(), 1);
+#endif
+    // check num_threads and thread_id inside a parallel region
+    int num_threads = 0;
+    int sum         = 0; // accumulated ids
+    PRAGMA_OMP(parallel)
+    {
+        PRAGMA_OMP(single)
+        {
+            num_threads = get_num_threads();
+        }
+        PRAGMA_OMP(atomic)
+        sum += get_thread_id();
+    }
+    EXPECT_EQ(num_threads, get_max_threads());
+    EXPECT_EQ(get_num_threads(), 1); // repeated check
+    // check that all thread ids are uniqueliy present via summation over 0,...,get_max_threads()
+    // (this check is mathematically not sufficient, but should be good enough pragmatically)
+    EXPECT_EQ(sum, (get_max_threads() * (get_max_threads() - 1)) / 2);
+}
+
+TEST(TestUtils, RedirectLogger)
+{
+    // test basic functionality of this testing utility
+    // in particular, verify that it can capture log calls, that view() does not erase the log, and that read() does
+    mio::RedirectLogger logger;
+    logger.capture();
+    // log should start out empty
+    EXPECT_TRUE(logger.view().empty());
+    EXPECT_TRUE(logger.read().empty());
+    // write a message, and copy the log output
+    const std::string msg = "Test Message";
+    mio::log_warning(msg);
+    const std::string log{logger.view()};
+
+    EXPECT_FALSE(logger.view().empty()); // check that view() did not clear the log
+    EXPECT_THAT(log, testing::HasSubstr("[redirect] [warning] " +
+                                        msg)); // check the message. ignore the time stamp at the start
+    EXPECT_EQ(logger.read(), log); // check that view() did not modify the buffer
+    EXPECT_TRUE(logger.view().empty()); // check that read() cleared the buffer
+
+    logger.release();
 }
