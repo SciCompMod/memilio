@@ -445,7 +445,7 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
                         persons_at_event.push_back(std::get<0>(infection_entry));
                         use_timestep = timestep - 48;
                         if (patient_zero) {
-                            use_timestep = timestep - 72;
+                            use_timestep = timestep - 96;
                             patient_zero = false;
                         }
                     }

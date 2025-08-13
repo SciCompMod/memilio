@@ -13,9 +13,9 @@ VIZ_OUTPUT_DIR="$MAIN_PATH/examples/panvXabmSim/results/results_viz"
 PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 
 # Simulation parameters
-EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equals_household restaurant_table_equals_half_household restaurant_table_equals_random_household work_meeting_many work_meeting_baseline
+EVENT_TYPE="work_meeting_baseline"  # Options: restaurant_table_equals_household restaurant_table_equals_half_household restaurant_table_equals_random_household work_meeting_many work_meeting_baseline
 VIZ_OPTIONS="--s90percentile"
-NUM_DAYS=2
+NUM_DAYS=5
 NUM_PERSONS=1000
 RUNS=10
 

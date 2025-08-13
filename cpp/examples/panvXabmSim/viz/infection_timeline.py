@@ -108,7 +108,7 @@ def get_contact_strength_between(person1, person2, location, contact_data):
 
 
 def find_potential_infectors(infected_person, infection_time, location,
-                             infection_events, contact_data, time_window=8):
+                             infection_events, contact_data, time_window=24):
     """Find who could have infected this person and calculate probabilities"""
 
     # Find people who were infectious at the same location within time window
@@ -424,9 +424,9 @@ def main():
     args = parser.parse_args()
 
     # for debugging hardcode filepath
-    args.contact_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/best_run_contact_data.csv"
-    args.infection_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/best_run_detailed_infection.csv"
-    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/infection_timeline_simulation.png"
+    # args.contact_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/best_run_contact_data.csv"
+    # args.infection_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/best_run_detailed_infection.csv"
+    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/infection_timeline_simulation.png"
 
     # Check if files exist
     if not os.path.exists(args.contact_file):
