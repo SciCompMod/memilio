@@ -161,7 +161,7 @@ IOResult<void> read_confirmed_cases_noage(
     const std::vector<int>& vt_InfectedSymptoms, const std::vector<int>& vt_InfectedSevere,
     const std::vector<int>& vt_InfectedCritical, const std::vector<double>& vmu_C_R,
     const std::vector<double>& vmu_I_H, const std::vector<double>& vmu_H_U,
-    const double& scaling_factor_inf);
+    const double scaling_factor_inf);
 
 /**
  * @brief Sets populations data from already read case data with multiple age groups into a Model with one age group.
@@ -177,16 +177,16 @@ IOResult<void>
 set_confirmed_cases_noage(std::vector<Model<FP>>& model, std::vector<ConfirmedCasesNoAgeEntry>& case_data,
                           const std::vector<int>& region, Date date, const double scaling_factor_inf)
 {
-    std::vector<int> t_InfectedNoSymptoms{1};
-    std::vector<int> t_Exposed{1};
-    std::vector<int> t_InfectedSymptoms{1};
-    std::vector<int> t_InfectedSevere{1};
-    std::vector<int> t_InfectedCritical{1};
+    std::vector<int> t_InfectedNoSymptoms(model.size());
+    std::vector<int> t_Exposed(model.size());
+    std::vector<int> t_InfectedSymptoms(model.size());
+    std::vector<int> t_InfectedSevere(model.size());
+    std::vector<int> t_InfectedCritical(model.size());
 
-    std::vector<double> mu_C_R{1};
-    std::vector<double> mu_I_H{1};
-    std::vector<double> mu_H_U{1};
-    std::vector<double> mu_U_D{1};
+    std::vector<double> mu_C_R(model.size());
+    std::vector<double> mu_I_H(model.size());
+    std::vector<double> mu_H_U(model.size());
+    std::vector<double> mu_U_D(model.size());
 
     for (size_t node = 0; node < model.size(); ++node) {
 
@@ -206,13 +206,13 @@ set_confirmed_cases_noage(std::vector<Model<FP>>& model, std::vector<ConfirmedCa
         mu_H_U[node] = model[node].parameters.template get<CriticalPerSevere<FP>>()[AgeGroup(0)];
         mu_U_D[node] = model[node].parameters.template get<DeathsPerCritical<FP>>()[AgeGroup(0)];
     }
-    std::vector<double> num_InfectedSymptoms(1, 0.0);
-    std::vector<double> num_death(1, 0.0);
-    std::vector<double> num_rec(1, 0.0);
-    std::vector<double> num_Exposed(1, 0.0);
-    std::vector<double> num_InfectedNoSymptoms(1, 0.0);
-    std::vector<double> num_InfectedSevere(1, 0.0);
-    std::vector<double> num_icu(1, 0.0);
+    std::vector<double> num_InfectedSymptoms(model.size(), 0.0);
+    std::vector<double> num_death(model.size(), 0.0);
+    std::vector<double> num_rec(model.size(), 0.0);
+    std::vector<double> num_Exposed(model.size(), 0.0);
+    std::vector<double> num_InfectedNoSymptoms(model.size(), 0.0);
+    std::vector<double> num_InfectedSevere(model.size(), 0.0);
+    std::vector<double> num_icu(model.size(), 0.0);
 
     BOOST_OUTCOME_TRY(read_confirmed_cases_noage(case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
                                                  num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
@@ -259,7 +259,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
 {
-    printf("Path\n");
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_noage(path));
     BOOST_OUTCOME_TRY(set_confirmed_cases_noage(model, case_data, region, date, scaling_factor_inf[0]));
     return success();
@@ -489,7 +488,7 @@ IOResult<void> read_input_data_state(std::vector<Model>& model, Date date, std::
 template <class Model>
 IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                       const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                      const std::string& pydata_dir, int num_days = 0, bool export_time_series = false)
+                                      const std::string& pydata_dir,int /*num_days*/ = 0, bool /*export_time_series*/ = false)
 {
     BOOST_OUTCOME_TRY(
         details::set_divi_data(model, path_join(pydata_dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));

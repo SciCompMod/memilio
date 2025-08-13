@@ -189,14 +189,14 @@ IOResult<void> read_confirmed_cases_data(
 
 IOResult<void> read_confirmed_cases_noage(
     std::vector<ConfirmedCasesNoAgeEntry>& rki_data, std::vector<int> const& vregion, Date date,
-    std::vector<double> vnum_Exposed, std::vector<double> vnum_InfectedNoSymptoms,
-    std::vector<double> vnum_InfectedSymptoms, std::vector<double> vnum_InfectedSevere,
-    std::vector<double> vnum_icu, std::vector<double> vnum_death,
-    std::vector<double> vnum_rec, const std::vector<int> vt_Exposed,
-    const std::vector<int> vt_InfectedNoSymptoms,
-    const std::vector<int> vt_InfectedSymptoms, const std::vector<int> vt_InfectedSevere,
-    const std::vector<int> vt_InfectedCritical, const std::vector<double> vmu_C_R,
-    const std::vector<double> vmu_I_H, const std::vector<double> vmu_H_U,
+    std::vector<double>& vnum_Exposed, std::vector<double>& vnum_InfectedNoSymptoms,
+    std::vector<double>& vnum_InfectedSymptoms, std::vector<double>& vnum_InfectedSevere,
+    std::vector<double>& vnum_icu, std::vector<double>& vnum_death,
+    std::vector<double>& vnum_rec, const std::vector<int>& vt_Exposed,
+    const std::vector<int>& vt_InfectedNoSymptoms,
+    const std::vector<int>& vt_InfectedSymptoms, const std::vector<int>& vt_InfectedSevere,
+    const std::vector<int>& vt_InfectedCritical, const std::vector<double>& vmu_C_R,
+    const std::vector<double>& vmu_I_H, const std::vector<double>& vmu_H_U,
     const double scaling_factor_inf)
 {
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
