@@ -412,9 +412,9 @@ def main():
     """Main function for command line usage"""
     parser = argparse.ArgumentParser(
         description='Analyze infection timeline from simulation data')
-    parser.add_argument('--contact-file', required=True,
+    parser.add_argument('--contact-file',
                         help='Path to contact data CSV file')
-    parser.add_argument('--infection-file', required=True,
+    parser.add_argument('--infection-file',
                         help='Path to infection data CSV file')
     parser.add_argument(
         '--output-path', help='Output path for visualization (optional)')
@@ -424,6 +424,10 @@ def main():
                         help='Maximum infections to display')
 
     args = parser.parse_args()
+
+    # for debugging hardcode filepath
+    args.contact_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/best_run_contact_data.csv"
+    args.infection_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/best_run_detailed_infection.csv"
 
     # Check if files exist
     if not os.path.exists(args.contact_file):

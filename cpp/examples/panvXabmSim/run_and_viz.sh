@@ -15,7 +15,7 @@ PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 # Simulation parameters
 EVENT_TYPE="restaurant_table_equals_household"  # Options: restaurant_table_equals_household restaurant_table_equals_half_household restaurant_table_equals_random_household work_meeting_many work_meeting_baseline
 VIZ_OPTIONS="--s90percentile"
-NUM_DAYS=10
+NUM_DAYS=2
 NUM_PERSONS=1000
 RUNS=10
 
@@ -65,7 +65,7 @@ run_comparison_visualizations() {
     
     echo "Creating comparison visualizations in $viz_output_dir..."
     
-    # 1. Main cumulative infections comparison
+    # # 1. Main cumulative infections comparison
     # echo "  -> Running cumulative infections comparison..."
     # $PYTHON3_DIR $COMPARISON_VIZ_SCRIPT \
     #     --path-to-memilio-sim "$memilio_dir/amount_of_infections" \
@@ -83,44 +83,46 @@ run_comparison_visualizations() {
     #     --output-path "$viz_output_dir" \
     #     $VIZ_OPTIONS
     
-    # 3. Contact network analysis (if CSV files exist)
-    if [ -f "$memilio_dir/contact_intensiveness.csv" ] && [ -f "$memilio_dir/infection_count.csv" ]; then
-        echo "  -> Running contact network analysis..."
-        $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
-            --data-dir "$memilio_dir" \
-            --output-path "$viz_output_dir/contact_network_memilio.png" \
-            --scenario-name "Memilio" \
-            --total-runs "$RUNS"
+    # # 3. Contact network analysis (if CSV files exist)
+    # if [ -f "$memilio_dir/contact_intensiveness.csv" ] && [ -f "$memilio_dir/infection_count.csv" ]; then
+    #     echo "  -> Running contact network analysis..."
+    #     $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
+    #         --data-dir "$memilio_dir" \
+    #         --output-path "$viz_output_dir/contact_network_memilio.png" \
+    #         --scenario-name "Memilio" \
+    #         --total-runs "$RUNS" \
+    #         --max-persons 1000
 
-    fi
-    
-    if [ -f "$panvadere_dir/contact_intensiveness.csv" ] && [ -f "$panvadere_dir/infection_count.csv" ]; then
-        echo "  -> Running contact network analysis for Panvadere..."
-        $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
-            --data-dir "$panvadere_dir" \
-            --output-path "$viz_output_dir/contact_network_panvadere.png" \
-            --scenario-name "Panvadere" \
-            --total-runs "$RUNS"
-    fi
-    
-    # # 4. Infection timeline analysis (if detailed infection files exist)
-    # if [ -f "$memilio_dir/best_run_detailed_infection.csv" ] && [ -f "$memilio_dir/best_run_contact_data.csv" ]; then
-    #     echo "  -> Running infection timeline analysis for Memilio..."
-    #     $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
-    #         --contact-file "$memilio_dir/best_run_contact_data.csv" \
-    #         --infection-file "$memilio_dir/best_run_detailed_infection.csv" \
-    #         --output-path "$viz_output_dir/infection_timeline_memilio.png" \
-    #         --scenario-name "Memilio"
     # fi
     
-    # if [ -f "$panvadere_dir/best_run_detailed_infection.csv" ] && [ -f "$panvadere_dir/best_run_contact_data.csv" ]; then
-    #     echo "  -> Running infection timeline analysis for Panvadere..."
-    #     $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
-    #         --contact-file "$panvadere_dir/best_run_contact_data.csv" \
-    #         --infection-file "$panvadere_dir/best_run_detailed_infection.csv" \
-    #         --output-path "$viz_output_dir/infection_timeline_panvadere.png" \
-    #         --scenario-name "Panvadere"
+    # if [ -f "$panvadere_dir/contact_intensiveness.csv" ] && [ -f "$panvadere_dir/infection_count.csv" ]; then
+    #     echo "  -> Running contact network analysis for Panvadere..."
+    #     $PYTHON3_DIR $CONTACT_NETWORK_SCRIPT \
+    #         --data-dir "$panvadere_dir" \
+    #         --output-path "$viz_output_dir/contact_network_panvadere.png" \
+    #         --scenario-name "Panvadere" \
+    #         --total-runs "$RUNS" \
+    #         --max-persons 1000
     # fi
+    
+    # 4. Infection timeline analysis (if detailed infection files exist)
+    if [ -f "$memilio_dir/best_run_detailed_infection.csv" ] && [ -f "$memilio_dir/best_run_contact_data.csv" ]; then
+        echo "  -> Running infection timeline analysis for Memilio..."
+        $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
+            --contact-file "$memilio_dir/best_run_contact_data.csv" \
+            --infection-file "$memilio_dir/best_run_detailed_infection.csv" \
+            --output-path "$viz_output_dir/infection_timeline_memilio.png" \
+            --scenario-name "Memilio"
+    fi
+    
+    if [ -f "$panvadere_dir/best_run_detailed_infection.csv" ] && [ -f "$panvadere_dir/best_run_contact_data.csv" ]; then
+        echo "  -> Running infection timeline analysis for Panvadere..."
+        $PYTHON3_DIR $INFECTION_TIMELINE_SCRIPT \
+            --contact-file "$panvadere_dir/best_run_contact_data.csv" \
+            --infection-file "$panvadere_dir/best_run_detailed_infection.csv" \
+            --output-path "$viz_output_dir/infection_timeline_panvadere.png" \
+            --scenario-name "Panvadere"
+    fi
     
     # # 5. Statistical analysis tables
     # echo "  -> Running statistical analysis..."

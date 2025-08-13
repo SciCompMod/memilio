@@ -16,7 +16,7 @@ struct LogInfectionPerLocationTypePerAgeGroup : mio::LogAlways {
     static Type log(const mio::abm::Simulation& sim);
 };
 
-struct LogLocationTypeAndId : mio::LogAlways {
+struct LogPersonIdAbndLocationTyoe : mio::LogAlways {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType>>;
     static Type log(const mio::abm::Simulation& sim);
 };
