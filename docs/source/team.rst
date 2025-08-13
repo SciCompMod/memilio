@@ -317,6 +317,14 @@ Agatha Schmidt completed her Master's degree at the University of Cologne in col
 Further Active or Former Contributors
 --------------------------------------
 
+Paul Johannssen
+^^^^^^^^^^^^^^^
+ 
+**Research Focus:** ODE models, Runge-Kutta methods, reproduction numbers.
+ 
+Paul Johannssen studied mathematics at the University of Bonn. He worked on the MEmilio project from March 2023 to March 2024 as a working student. In this time, he manually derived and implemented formulas in closed form for the computation of reproduction numbers in the ODE-based SEIR, SECIR, and SECIRVVS models
+
+
 We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`_.
 
 .. _collaboration:
