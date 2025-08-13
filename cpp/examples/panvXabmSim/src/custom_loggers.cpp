@@ -76,6 +76,14 @@ LogLocationIdAndPersonId::Type LogLocationIdAndPersonId::log(const mio::abm::Sim
     for (auto&& person : sim.get_world().get_persons()) {
         location_information.push_back(std::make_tuple(person.get_person_id(), person.get_location().get_index()));
     }
+    if (sim.get_time() == mio::abm::TimePoint(0)) {
+        for (auto&& persons : sim.get_world().get_persons()) {
+            if (persons.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Susceptible) {
+                location_information.push_back(
+                    std::make_tuple(persons.get_person_id(), mio::abm::INVALID_LOCATION_INDEX));
+            }
+        }
+    }
     return location_information;
 }
 
@@ -91,8 +99,8 @@ LogInfectionDetailed::Type LogInfectionDetailed::log(const mio::abm::Simulation&
     if (sim.get_time() == mio::abm::TimePoint(0)) {
         for (auto&& persons : sim.get_world().get_persons()) {
             if (persons.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Susceptible) {
-                infected_detailed.push_back(std::make_tuple(persons.get_person_id(), persons.get_location().get_index(),
-                                                            persons.get_location().get_type()));
+                infected_detailed.push_back(std::make_tuple(persons.get_person_id(), mio::abm::INVALID_LOCATION_INDEX,
+                                                            mio::abm::LocationType::EventPanvadere));
             }
         }
     }

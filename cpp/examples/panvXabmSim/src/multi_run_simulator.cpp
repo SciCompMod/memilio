@@ -30,6 +30,8 @@ std::string location_type_to_string(mio::abm::LocationType type)
         return "Hospital";
     case mio::abm::LocationType::ICU:
         return "ICU";
+    case mio::abm::LocationType::EventPanvadere:
+        return "EventPanvadere";
     default:
         return "Unknown";
     }
@@ -236,7 +238,7 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
         detailed_infection,
     const std::string& dir_h5_50_percentile_run,
     std::vector<std::vector<mio::TimeSeries<ScalarType>>>& history_infected_amount,
-    std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t>>>>& history_contact_hours)
+    std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t>>>>& history_contact_hours, EventType event_type)
 {
     // First we need to find the run, which has the lowest discrete L2 norm in relation to the median value of all runs, saved in dir_h5_50_percentile_run(saved as h5)
     // First we calculate a vector of all runs and the amount of infected at each timestep from history_infected_amount
@@ -426,6 +428,9 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
     }
 
     // Save the detailed infection data for the best run
+    // we also save the infected
+    std::vector<uint32_t> persons_at_event;
+    bool patient_zero = true;
     if (best_run_index < detailed_infection.size()) {
         std::string best_run_file = dir_h5_50_percentile_run + "/../../best_run_detailed_infection.csv";
         std::ofstream best_run_output(best_run_file);
@@ -433,9 +438,18 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
         if (best_run_output.is_open()) {
             best_run_output << "Timestep,Person_ID,Location_ID,Location_Type\n";
 
-            for (size_t timestep = 0; timestep < detailed_infection[best_run_index].size(); ++timestep) {
+            for (int timestep = 0; timestep < (int)detailed_infection[best_run_index].size(); ++timestep) {
                 for (const auto& infection_entry : detailed_infection[best_run_index][timestep]) {
-                    best_run_output << timestep << "," << std::get<0>(infection_entry) << ","
+                    auto use_timestep = timestep;
+                    if (std::get<2>(infection_entry) == mio::abm::LocationType::EventPanvadere) {
+                        persons_at_event.push_back(std::get<0>(infection_entry));
+                        use_timestep = timestep - 48;
+                        if (patient_zero) {
+                            use_timestep = timestep - 72;
+                            patient_zero = false;
+                        }
+                    }
+                    best_run_output << use_timestep << "," << std::get<0>(infection_entry) << ","
                                     << std::get<1>(infection_entry) << ","
                                     << location_type_to_string(std::get<2>(infection_entry)) << "\n";
                 }
@@ -447,8 +461,23 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
     // We also want to save who was where at which timepoint
     std::string contact_hours_file = dir_h5_50_percentile_run + "/../../best_run_contact_data.csv";
     std::ofstream contact_hours_output(contact_hours_file);
+    auto event_time = 0;
+    if (event_type == EventType::WorkMeeting_Baseline_Meetings || event_type == EventType::WorkMeeting_Many_Meetings) {
+        event_time = 8;
+    }
+    else {
+        event_time = 2; // For other events, we assume 2 hours
+    }
     if (contact_hours_output.is_open()) {
         contact_hours_output << "Timestep,Person_ID,Location_ID\n";
+
+        // We need to add the time at the Event where persons infected each other, we asusme it was 2 days before so -48hours and then for the work event 8 hours and for the restaurant event 2 hours.
+        for (auto&& entry : persons_at_event) {
+            for (int hours = 0; hours < event_time; ++hours) {
+                contact_hours_output << -48 + hours << "," << entry << "," << mio::abm::INVALID_LOCATION_INDEX
+                                     << "\n"; // Assuming location ID 0 for the event
+            }
+        }
 
         for (size_t timestep = 0; timestep < history_contact_hours[best_run_index].size(); ++timestep) {
             for (const auto& contact_entry : history_contact_hours[best_run_index][timestep]) {
@@ -552,7 +581,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
 
     BOOST_OUTCOME_TRY(save_detailed_infection_and_contact_for_best_run(
         ensemble_detailed_infection, base_dir + "/amount_of_infections/p50", ensemble_amount_of_infections,
-        ensemble_contact_hours));
+        ensemble_contact_hours, results.event_type));
 
     return mio::success();
 }

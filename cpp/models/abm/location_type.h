@@ -45,6 +45,7 @@ enum class LocationType : std::uint32_t
     PublicTransport,
     TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
     Cemetery, // Location for all the dead persons. It is created once for the World.
+    EventPanvadere,
 
     Count //last!
 };

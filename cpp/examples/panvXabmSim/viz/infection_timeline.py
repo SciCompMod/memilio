@@ -34,6 +34,10 @@ def transform_infection_data(infection_df):
             'location_type': row['Location_Type']
         })
 
+    # First person is patient zero
+    sorted_infection_events = sorted(infection_events, key=lambda x: x['time'])
+    sorted_infection_events[0]['location_type'] = 'Patient Zero'
+    sorted_infection_events[0]['location'] = 'Unknown'
     return sorted(infection_events, key=lambda x: x['time'])
 
 
@@ -49,7 +53,7 @@ def create_contact_data_for_analysis(contact_df, infection_df, time_window=5):
     relevant_times = set()
 
     for inf_time in infection_times:
-        for t in range(max(0, inf_time - time_window), inf_time + time_window + 1):
+        for t in range(inf_time - time_window, inf_time + time_window + 1):
             relevant_times.add(t)
 
     print(f"Filtering to {len(relevant_times)} relevant timesteps...")
@@ -104,7 +108,7 @@ def get_contact_strength_between(person1, person2, location, contact_data):
 
 
 def find_potential_infectors(infected_person, infection_time, location,
-                             infection_events, contact_data, time_window=5):
+                             infection_events, contact_data, time_window=8):
     """Find who could have infected this person and calculate probabilities"""
 
     # Find people who were infectious at the same location within time window
@@ -113,7 +117,7 @@ def find_potential_infectors(infected_person, infection_time, location,
     for event in infection_events:
         if (event['person_id'] != infected_person and
             event['time'] < infection_time and
-                event['time'] > infection_time - time_window):
+                event['time'] + time_window < infection_time):
 
             # Check if they were at same location
             if has_contact_at_location(event['person_id'], infected_person,
@@ -123,13 +127,7 @@ def find_potential_infectors(infected_person, infection_time, location,
                 time_diff = infection_time - event['time']
                 contact_strength = get_contact_strength_between(
                     event['person_id'], infected_person, location, contact_data)
-
-                # Simple probability model
-                time_factor = max(0, 1 - time_diff / time_window)
-                # Normalize contact strength
-                contact_factor = min(contact_strength / 3,
-                                     1.0) if contact_strength > 0 else 0.1
-                probability = time_factor * contact_factor
+                probability = 1
 
                 if probability > 0:
                     potential_infectors.append(
@@ -165,6 +163,8 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
         'School': '#FF6347',      # Tomato Red
         'SocialEvent': '#9370DB',  # Medium Purple
         'BasicsShop': '#FF8C00',  # Dark Orange
+        'EventPanvadere': '#8A2BE2',  # Blue Violet
+        'Patient Zero': "#FF0000"  # Gray
     }
 
     # Main timeline (top)
@@ -183,16 +183,13 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
 
     # Add person labels
     for i, event in enumerate(infection_events):
-        label_text = f"P{event['person_id']}"
-        if event['time'] == min(times):
-            label_text = f"P{event['person_id']}\n(First)"
-
-        ax1.annotate(f"{label_text}\n{event['location_type']}\nLoc:{event['location']}",
-                     (event['time'], event['person_id']),
-                     xytext=(10, 0), textcoords='offset points',
-                     fontsize=8, fontweight='bold',
-                     bbox=dict(boxstyle='round,pad=0.3',
-                               facecolor='white', alpha=0.9, edgecolor='gray'))
+        if event['time'] < 0.0:
+            ax1.annotate(f"{event['location_type']}",
+                         (event['time'], event['person_id']),
+                         xytext=(12, 1), textcoords='offset points',
+                         fontsize=8, fontweight='bold',
+                         bbox=dict(boxstyle='round,pad=0.3',
+                                   facecolor='white', alpha=0.9, edgecolor='gray'))
 
     # Draw transmission probability analysis
     for i, event in enumerate(infection_events[1:], 1):  # Skip first infection
@@ -203,43 +200,44 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
             infection_events[:i], contact_data)
 
         if len(potential_infectors) > 1:
-            # Create a grouped bar chart for potential infectors
-            bar_width = 2.0
-            bar_spacing = 0.3
-            total_width = len(potential_infectors) * (bar_width + bar_spacing)
-            start_x = event['time'] - total_width - 1
-
-            # Draw connection lines from each potential infector to infected person
+            # Multiple infectors - draw direct arrows from each infector to infected person
             for j, (infector, probability) in enumerate(potential_infectors):
-                bar_x = start_x + j * (bar_width + bar_spacing)
-                bar_y = infected_person - 0.4
-                bar_height = probability * 0.6
+                # Find infector position
+                infector_time = None
+                for e in infection_events:
+                    if e['person_id'] == infector:
+                        infector_time = e['time']
+                        break
 
-                # Color bar based on probability
-                alpha_intensity = 0.5 + 0.5 * probability
-                bar_color = location_colors.get(event['location_type'], 'gray')
+                if infector_time:
+                    # Calculate arrow width based on probability (thinner for uncertain)
+                    arrow_width = 0.8 + 1.2 * probability  # Range: 0.8 to 2.0
+                    alpha_intensity = 0.4 + 0.4 * probability  # Range: 0.4 to 0.8
 
-                # Draw probability bar
-                ax1.barh(bar_y, bar_width, height=bar_height,
-                         left=bar_x, alpha=alpha_intensity,
-                         color=bar_color, edgecolor='black', linewidth=1)
+                    # Use orange color for uncertain transmissions
+                    arrow_color = 'orange'
 
-                # Add infector label on the bar
-                ax1.text(bar_x + bar_width/2, bar_y + bar_height/2,
-                         f'P{infector}\n{probability:.0%}',
-                         ha='center', va='center', fontsize=7, fontweight='bold',
-                         color='white')
+                    # Add slight curve to avoid overlapping arrows
+                    connection_style = f"arc3,rad={0.1 + j * 0.05}"
 
-                # Draw arrow from bar to infected person
-                arrow_start = (bar_x + bar_width, bar_y + bar_height/2)
-                arrow_end = (event['time'] - 0.5, infected_person)
+                    # Draw direct arrow from infector to infected person
+                    ax1.annotate('', xy=(event['time'], infected_person),
+                                 xytext=(infector_time, infector),
+                                 arrowprops=dict(arrowstyle='->',
+                                                 color=arrow_color,
+                                                 alpha=alpha_intensity,
+                                                 lw=arrow_width,
+                                                 connectionstyle=connection_style))
 
-                arrow_width = 1 + 2 * probability
-                ax1.annotate('', xy=arrow_end, xytext=arrow_start,
-                             arrowprops=dict(arrowstyle='->',
-                                             color=bar_color,
-                                             alpha=alpha_intensity,
-                                             lw=arrow_width))
+                    # Add probability label near the arrow
+                    mid_x = (infector_time + event['time']) / 2
+                    mid_y = (infector + infected_person) / \
+                        2 + j * max(persons) * 0.015
+                    ax1.text(mid_x, mid_y,
+                             f'{probability:.0%}',
+                             ha='center', va='center', fontsize=6, fontweight='bold',
+                             bbox=dict(boxstyle='round,pad=0.2',
+                                       facecolor='orange', alpha=0.6, edgecolor='darkorange'))
 
         elif len(potential_infectors) == 1:
             # Single infector - draw simple arrow
@@ -253,7 +251,7 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
                     break
 
             if infector_time:
-                # Draw direct arrow
+                # Draw direct arrow with thicker line for certain transmission
                 ax1.annotate('', xy=(event['time'], infected_person),
                              xytext=(infector_time, infector),
                              arrowprops=dict(arrowstyle='->',
@@ -347,9 +345,9 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
             1 for u in uncertainty_scores if u > max_uncertainty * 0.7)
 
         stats_text = f"""UNCERTAINTY SUMMARY:
-Average: {avg_uncertainty:.2f}
-Maximum: {max_uncertainty:.2f}
-High uncertainty events: {high_uncertainty_count}"""
+                        Average: {avg_uncertainty:.2f}
+                        Maximum: {max_uncertainty:.2f}
+                        High uncertainty events: {high_uncertainty_count}"""
 
         ax2.text(0.98, 0.98, stats_text, transform=ax2.transAxes,
                  fontsize=10, ha='right', va='top',
@@ -426,8 +424,9 @@ def main():
     args = parser.parse_args()
 
     # for debugging hardcode filepath
-    args.contact_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/best_run_contact_data.csv"
-    args.infection_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/best_run_detailed_infection.csv"
+    args.contact_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/best_run_contact_data.csv"
+    args.infection_file = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/best_run_detailed_infection.csv"
+    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250813_144038_memilio/infection_timeline_simulation.png"
 
     # Check if files exist
     if not os.path.exists(args.contact_file):
