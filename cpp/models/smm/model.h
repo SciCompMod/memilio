@@ -37,17 +37,18 @@ namespace smm
  * @tparam regions Number of regions.
  * @tparam Status An infection state enum.
  */
-template <size_t regions, class Status>
-class Model
-    : public mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, mio::regions::Region, Status>,
-                                     ParametersBase<Status>>
+template <size_t regions, class Status, class AgeGroup>
+class Model : public mio::CompartmentalModel<ScalarType, Status,
+                                             mio::Populations<ScalarType, mio::regions::Region, Status, AgeGroup>,
+                                             ParametersBase<Status, AgeGroup>>
 {
-    using Base = mio::CompartmentalModel<ScalarType, Status, mio::Populations<ScalarType, mio::regions::Region, Status>,
-                                         ParametersBase<Status>>;
+    using Base = mio::CompartmentalModel<ScalarType, Status,
+                                         mio::Populations<ScalarType, mio::regions::Region, Status, AgeGroup>,
+                                         ParametersBase<Status, AgeGroup>>;
 
 public:
     Model()
-        : Base(typename Base::Populations({static_cast<mio::regions::Region>(regions), Status::Count}, 0.),
+        : Base(typename Base::Populations({static_cast<mio::regions::Region>(regions), Status::Count, AgeGroup::Count}),
                typename Base::ParameterSet())
     {
     }
@@ -58,10 +59,11 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
-    ScalarType evaluate(const AdoptionRate<Status>& rate, const Eigen::VectorXd& x) const
+    ScalarType evaluate(const AdoptionRate<Status, AgeGroup>& rate, const Eigen::VectorXd& x) const
     {
-        const auto& pop   = this->populations;
-        const auto source = pop.get_flat_index({rate.region, rate.from});
+        const auto& pop = this->populations;
+        const auto source =
+            pop.get_flat_index({rate.region, rate.from, rate.age_group}); // Why is here rate.from used? KV
         // determine order and calculate rate
         if (rate.influences.size() == 0) { // first order adoption
             return rate.factor * x[source];
@@ -69,13 +71,16 @@ public:
         else { // second order adoption
             ScalarType N = 0;
             for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
-                N += x[pop.get_flat_index({rate.region, Status(s)})];
+                for (size_t age = 0; age < static_cast<size_t>(AgeGroup::Count); ++age) {
+                    N += x[pop.get_flat_index({rate.region, Status(s), AgeGroup(age)})];
+                }
             }
             // accumulate influences
             ScalarType influences = 0.0;
             for (size_t i = 0; i < rate.influences.size(); i++) {
                 influences +=
-                    rate.influences[i].factor * x[pop.get_flat_index({rate.region, rate.influences[i].status})];
+                    rate.influences[i].factor *
+                    x[pop.get_flat_index({rate.region, rate.influences[i].status, rate.influences[i].age_group})];
             }
             return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
         }
@@ -87,9 +92,9 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
      */
-    ScalarType evaluate(const TransitionRate<Status>& rate, const Eigen::VectorXd& x) const
+    ScalarType evaluate(const TransitionRate<Status, AgeGroup>& rate, const Eigen::VectorXd& x) const
     {
-        const auto source = this->populations.get_flat_index({rate.from, rate.status});
+        const auto source = this->populations.get_flat_index({rate.from, rate.status, rate.age_group});
         return rate.factor * x[source];
     }
 

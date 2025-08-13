@@ -35,9 +35,9 @@ namespace smm
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
  * @tparam Status An infection state enum.
  */
-template <class Status>
+template <class Status, class AgeGroup>
 struct AdoptionRates {
-    using Type = std::vector<AdoptionRate<Status>>;
+    using Type = std::vector<AdoptionRate<Status, AgeGroup>>;
     const static std::string name()
     {
         return "AdoptionRates";
@@ -48,25 +48,25 @@ struct AdoptionRates {
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
  * @tparam Status An infection state enum.
  */
-template <class Status>
+template <class Status, class AgeGroup>
 struct TransitionRate {
     Status status; // i
+    AgeGroup age_group;
     mio::regions::Region from; // k
     mio::regions::Region to; // l
     ScalarType factor; // lambda_i^{kl}
 };
-
-template <class Status>
+template <class Status, class AgeGroup>
 struct TransitionRates {
-    using Type = std::vector<TransitionRate<Status>>;
+    using Type = std::vector<TransitionRate<Status, AgeGroup>>;
     const static std::string name()
     {
         return "TransitionRates";
     }
 };
 
-template <class Status>
-using ParametersBase = mio::ParameterSet<AdoptionRates<Status>, TransitionRates<Status>>;
+template <class Status, class AgeGroup>
+using ParametersBase = mio::ParameterSet<AdoptionRates<Status, AgeGroup>, TransitionRates<Status, AgeGroup>>;
 
 } // namespace smm
 

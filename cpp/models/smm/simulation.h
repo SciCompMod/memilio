@@ -37,12 +37,12 @@ namespace smm
  * @tparam regions The number of regions.
  * @tparam Status An infection state enum.
  */
-template <size_t regions, class Status>
+template <size_t regions, class Status, class AgeGroup>
 class Simulation
 {
 public:
 public:
-    using Model = smm::Model<regions, Status>;
+    using Model = smm::Model<regions, Status, AgeGroup>;
 
     /**
      * @brief Set up the simulation for a Stochastic Metapopulation Model.
@@ -100,18 +100,24 @@ public:
             if (next_event < adoption_rates().size()) {
                 // perform adoption event
                 const auto& rate = adoption_rates()[next_event];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
-                m_model->populations[{rate.region, rate.from}] -= 1;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
-                m_model->populations[{rate.region, rate.to}] += 1;
+                m_result
+                    .get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from, rate.age_group})] -=
+                    1;
+                m_model->populations[{rate.region, rate.from, rate.age_group}] -= 1;
+                m_result
+                    .get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to, rate.age_group})] += 1;
+                m_model->populations[{rate.region, rate.to, rate.age_group}] += 1;
             }
             else {
                 // perform transition event
                 const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
-                m_model->populations[{rate.from, rate.status}] -= 1;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
-                m_model->populations[{rate.to, rate.status}] += 1;
+                m_result
+                    .get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status, rate.age_group})] -=
+                    1;
+                m_model->populations[{rate.from, rate.status, rate.age_group}] -= 1;
+                m_result
+                    .get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status, rate.age_group})] += 1;
+                m_model->populations[{rate.to, rate.status, rate.age_group}] += 1;
             }
             // update internal times
             for (size_t i = 0; i < m_internal_time.size(); i++) {
@@ -161,17 +167,17 @@ private:
     /**
      * @brief Returns the model's transition rates.
      */
-    inline constexpr const typename smm::TransitionRates<Status>::Type& transition_rates()
+    inline constexpr const typename smm::TransitionRates<Status, AgeGroup>::Type& transition_rates()
     {
-        return m_model->parameters.template get<smm::TransitionRates<Status>>();
+        return m_model->parameters.template get<smm::TransitionRates<Status, AgeGroup>>();
     }
 
     /**
      * @brief Returns the model's adoption rates.
      */
-    inline constexpr const typename smm::AdoptionRates<Status>::Type& adoption_rates()
+    inline constexpr const typename smm::AdoptionRates<Status, AgeGroup>::Type& adoption_rates()
     {
-        return m_model->parameters.template get<smm::AdoptionRates<Status>>();
+        return m_model->parameters.template get<smm::AdoptionRates<Status, AgeGroup>>();
     }
 
     /**
