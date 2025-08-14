@@ -45,6 +45,13 @@ def __getattr__(attr):
     elif attr == "osecirvvs":
         import memilio.simulation.osecirvvs as osecirvvs
         return osecirvvs
+    elif attr == "ssir":
+        import memilio.simulation.ssir as ssir
+        return ssir
+
+    elif attr == "ssirs":
+        import memilio.simulation.ssirs as ssirs
+        return ssirs
 
     raise AttributeError("module {!r} has no attribute "
                          "{!r}".format(__name__, attr))

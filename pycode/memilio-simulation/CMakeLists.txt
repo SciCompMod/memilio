@@ -85,3 +85,13 @@ add_pymio_module(_simulation_osecirvvs
     LINKED_LIBRARIES memilio ode_secirvvs
     SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
 )
+
+add_pymio_module(_simulation_ssir
+    LINKED_LIBRARIES memilio sde_sir
+    SOURCES memilio/simulation/bindings/models/ssir.cpp
+)
+
+add_pymio_module(_simulation_ssirs
+    LINKED_LIBRARIES memilio sde_sirs
+    SOURCES memilio/simulation/bindings/models/ssirs.cpp
+)
