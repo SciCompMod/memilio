@@ -89,9 +89,10 @@ public:
     std::string read()
     {
         assert(m_is_captured);
-        std::string out = m_output.str();
-        m_output.str()  = "";
-        return out;
+        m_logger.flush();
+        std::ostringstream out;
+        std::swap(out, m_output);
+        return out.str();
     }
 
 private:
