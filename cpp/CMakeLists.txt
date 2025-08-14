@@ -132,6 +132,7 @@ if(MEMILIO_ENABLE_WARNINGS)
             "-Wall;-Wextra;-Wshadow;--pedantic;")
     endif()
 endif()
+
 # exclude some warnings we accept
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
@@ -140,13 +141,14 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
         "-Wno-unknown-warning-option;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments;")
 endif()
+
 # woyrkarounds for compiler bugs or overzealous optimization/analysis
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
-               "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
-               "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
-               "-Wno-stringop-overread;"
+            "-Wno-restrict;" # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=105329
+            "-Wno-maybe-uninitialized;" # https://gcc.gnu.org/bugzilla/buglist.cgi?quicksearch=may%20be%20uninitialized
+            "-Wno-stringop-overread;"
         )
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         string(APPEND MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
@@ -154,6 +156,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RELEASE")
         )
     endif()
 endif()
+
 # finalize string by setting warnings as errors
 if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -164,8 +167,6 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
             "-Werror")
     endif()
 endif()
-
-
 
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
@@ -191,6 +192,7 @@ if(MEMILIO_BUILD_MODELS)
     add_subdirectory(models/graph_abm)
     add_subdirectory(models/smm)
     add_subdirectory(models/hybrid)
+    add_subdirectory(models/ode_mseirs4)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
