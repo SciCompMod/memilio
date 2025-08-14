@@ -3,9 +3,9 @@
 #SBATCH -n 1
 #SBATCH -c 1
 #SBATCH -t 5-0:00:00
-#SBATCH --output=shellscripts/train_diffusion_model-%A.out
-#SBATCH --error=shellscripts/train_diffusion_model-%A.err
-#SBATCH --job-name=train_diffusion_model
+#SBATCH --output=shellscripts/train_countylvl-%A.out
+#SBATCH --error=shellscripts/train_countylvl-%A.err
+#SBATCH --job-name=train_countylvl
 #SBATCH --partition=gpu
 #SBATCH --gpus=1
 

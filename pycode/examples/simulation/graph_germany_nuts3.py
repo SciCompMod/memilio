@@ -181,9 +181,9 @@ class Simulation:
         for node_idx in range(mobility_sim.graph.num_nodes):
             node = mobility_sim.graph.get_node(node_idx)
             if node.id in no_icu_ids:
-                results[f'no_icu_region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result)
+                results[f'no_icu_region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result).as_ndarray()
             else:
-                results[f'region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result)
+                results[f'region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result).as_ndarray()
          
         return results
 
@@ -213,7 +213,7 @@ def load_divi_data():
     data = data[data['Date']>= np.datetime64(datetime.date(2020, 7, 1))]
     data = data[data['Date'] <= np.datetime64(datetime.date(2020, 7, 1) + datetime.timedelta(days=50))]
     data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
-    divi_dict = {f"region{i}": data[data['ID_County'] == region_id]['ICU'].to_numpy().reshape((1, 51, 1)) for i, region_id in enumerate(region_ids) if region_id not in no_icu_ids}
+    divi_dict = {f"region{i}": data[data['ID_County'] == region_id]['ICU'].to_numpy()[None, :, None] for i, region_id in enumerate(region_ids) if region_id not in no_icu_ids}
 
     return divi_dict
 
@@ -224,16 +224,17 @@ if __name__ == "__main__":
     os.environ["KERAS_BACKEND"] = "tensorflow"
 
     import bayesflow as bf
+    from tensorflow import keras
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    trainings_data = simulator.sample(1000)
+    # trainings_data = simulator.sample(100)
 
-    for key in trainings_data.keys():
-        if key != 'damping_values':
-            trainings_data[key] = trainings_data[key][:, :, 8][..., np.newaxis]
+    # for key in trainings_data.keys():
+    #     if key != 'damping_values':
+    #         trainings_data[key] = trainings_data[key][:, :, 8][..., np.newaxis]
 
-    with open('trainings_data10_counties.pickle', 'wb') as f:
-        pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
+    # with open('validation_data_counties.pickle', 'wb') as f:
+    #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
     # with open('trainings_data1_counties.pickle', 'rb') as f:
     #     trainings_data = pickle.load(f)
@@ -245,28 +246,28 @@ if __name__ == "__main__":
     # with open('validation_data_counties.pickle', 'rb') as f:
     #     validation_data = pickle.load(f)
 
-    # adapter = (
-    #     bf.Adapter()
-    #     .to_array()
-    #     .convert_dtype("float64", "float32")
-    #     .constrain("damping_values", lower=0.0, upper=1.0)
-    #     .rename("damping_values", "inference_variables")
-    #     .concatenate([f'region{i}' for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids], into="summary_variables", axis=-1)
-    #     .log("summary_variables", p1=True)
-    # )
+    adapter = (
+        bf.Adapter()
+        .to_array()
+        .convert_dtype("float64", "float32")
+        .constrain("damping_values", lower=0.0, upper=1.0)
+        .rename("damping_values", "inference_variables")
+        .concatenate([f'region{i}' for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids], into="summary_variables", axis=-1)
+        .log("summary_variables", p1=True)
+    )
 
     # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
 
-    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32, recurrent_dim=32)
-    # inference_network = bf.networks.CouplingFlow()
+    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32, recurrent_dim=32)
+    inference_network = bf.networks.CouplingFlow()
 
-    # workflow = bf.BasicWorkflow(
-    #     simulator=simulator, 
-    #     adapter=adapter,
-    #     summary_network=summary_network,
-    #     inference_network=inference_network,
-    #     standardize='all'  
-    # )
+    workflow = bf.BasicWorkflow(
+        simulator=simulator, 
+        adapter=adapter,
+        summary_network=summary_network,
+        inference_network=inference_network,
+        standardize='all'  
+    )
 
     # history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
 
@@ -277,3 +278,14 @@ if __name__ == "__main__":
     # plots['recovery'].savefig('recovery_countylvl.png')
     # plots['calibration_ecdf'].savefig('calibration_ecdf_countylvl.png')
     # plots['z_score_contraction'].savefig('z_score_contraction_countylvl.png')
+
+    test = load_divi_data()
+    workflow.approximator = keras.models.load_model(os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
+
+    samples = workflow.sample(conditions=test, num_samples=10)
+    # samples = workflow.samples_to_data_frame(samples)
+    # print(samples.head())
+    samples['damping_values'] = np.squeeze(samples['damping_values'])
+    for i in range(samples['damping_values'].shape[0]):
+        test = run_germany_nuts3_simulation(samples['damping_values'][i])
+        print(test)
