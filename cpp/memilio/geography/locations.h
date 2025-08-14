@@ -23,14 +23,14 @@
 #include "memilio/io/default_serialize.h"
 #include <boost/geometry/algorithms/distance.hpp>
 #include <cmath>
-#include <numbers>
 namespace mio
 {
 namespace geo
 {
 
+const double pi           = 3.141592653589793238462643383279502884;
 const double earth_radius = 6371;
-const double radians      = std::numbers::pi / 180.0;
+const double radians      = pi / 180.0;
 
 class GeographicalLocation
 {
