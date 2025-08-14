@@ -143,3 +143,19 @@ TEST_F(TestGeography, rtreeinrange)
     auto rtree = mio::geo::RTree(locations.begin(), locations.end());
     EXPECT_EQ(rtree.inrange_indices(mio::geo::GeographicalLocation(50.933501, 6.875124), 150).size(), 2);
 }
+
+/**
+ * @brief Test the in-range query of an r-Tree with multiple radii
+ */
+TEST_F(TestGeography, rtreeinrange_multiple_radii)
+{
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
+    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
+    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    auto rtree  = mio::geo::RTree(locations.begin(), locations.end());
+    auto result = rtree.inrange_indices_query(mio::geo::GeographicalLocation(51.492599, 7.451810), {130, 310, 80});
+    EXPECT_EQ(result[0].size(), 2);
+    EXPECT_EQ(result[1].size(), 3);
+    EXPECT_EQ(result[2].size(), 1);
+}
