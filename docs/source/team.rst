@@ -374,6 +374,10 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
 * by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant agreement 528702961,
 * by German Federal Ministry of Education and Research under grant agreement 031L0319A and 031L0319B (Project AIMS).
 
+.. |bmbf| image:: _static/funder/bmftr.jpg
+   :width: 200px
+   :alt: Bundesministerium für Forschung, Technologie und Raumfahrt
+
 .. |helmholtz| image:: _static/funder/helmholtz.jpg
    :width: 200px
    :alt: Helmholtz Association
