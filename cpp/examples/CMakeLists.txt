@@ -171,6 +171,10 @@ if(MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_parameter_study_graph ode_secir_parameter_study_graph.cpp)
     target_link_libraries(ode_secir_parameter_study_graph PRIVATE memilio ode_secir)
     target_compile_options(ode_secir_parameter_study_graph PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+    add_executable(ode_secir_read_input_one_age_example ode_secir_read_input_one_age.cpp)
+    target_link_libraries(ode_secir_read_input_one_age_example PRIVATE memilio ode_secir)
+    target_compile_options(ode_secir_read_input_one_age_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
 
 if(MEMILIO_HAS_JSONCPP)
