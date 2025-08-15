@@ -159,6 +159,7 @@ public:
         for (const auto& radius : radii) {
             radius_in_meter = 1000 * radius;
             std::vector<size_t> indices;
+            indices.reserve(nodes.size());
             for (auto& node : nodes) {
                 if (bg::distance(midpoint, node.first) < radius_in_meter) {
                     indices.push_back(node.second);
@@ -187,6 +188,7 @@ public:
         bgi::query(rtree, bgi::covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
+        indices.reserve(nodes.size());
         for (auto& node : nodes) {
             if (bg::distance(midpoint, node.first) < radius_in_meter) {
                 indices.push_back(node.second);
