@@ -117,7 +117,7 @@ IOResult<void> read_confirmed_cases_data(
 
             if (date_df == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
-                num_rec[age] += region_entry.num_confirmed;
+                num_rec[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
             }
             if (date_df == offset_date_by_days(date, days_surplus)) {
                 num_InfectedNoSymptoms[age] -=
@@ -159,6 +159,10 @@ IOResult<void> read_confirmed_cases_data(
         auto& num_icu                = vnum_icu[region_idx];
 
         for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
+            // R(t0) = ΣC(t0) − I(t0) − H(t0) − U(t0) − D(t0)
+            // subtract currently infectious/hospitalized/ICU/dead
+            num_rec[i] -= num_InfectedSymptoms[i] - num_InfectedSevere[i] - num_icu[i] - num_death[i];
+
             auto try_fix_constraints = [region, i](double& value, double error, auto str) {
                 if (value < error) {
                     //this should probably return a failure
