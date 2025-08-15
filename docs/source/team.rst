@@ -299,7 +299,7 @@ Margrit Klitz
 
 **Research Focus:** High-Performance Computing, Data Management, Digitalization, Software Development
 
-Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked in the High-Performance Computing department at the German Aerospace Center (DLR) before joining the German Center for Neurodegenerative Diseases (DZNE), where she led IT and data management for the Rhineland Study. Since 2024, she heads the group “Digitalisation, Software, and AI” at the Space Agency at DLR. In the MEmilio project, she made the very first commit and supported the team through project coordination, scientific writing, and proposal development for PANDEMOS and LOKI-Pandemics.
+Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked in the High-Performance Computing department at the German Aerospace Center (DLR) before joining the German Center for Neurodegenerative Diseases (DZNE), where she led IT and data management for the Rhineland Study. Since 2025, she heads the group “Digitalisation, Software, and AI” at the Space Agency at DLR. In the MEmilio project, she made the very first commit and supported the team through project coordination, scientific writing, and proposal development for PANDEMOS and LOKI-Pandemics.
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
