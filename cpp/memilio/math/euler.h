@@ -38,6 +38,11 @@ public:
     {
     }
 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    {
+        return std::make_unique<EulerIntegratorCore>(*this);
+    }
+
     /**
      * @brief Fixed step width of the integration
      *

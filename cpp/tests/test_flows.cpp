@@ -119,8 +119,7 @@ TEST(TestFlows, FlowSimulation)
 
     mio::set_log_level(mio::LogLevel::off); // Suppress log output of check_constraints and the Simulation.
     model.check_constraints();
-    auto IC   = std::make_shared<mio::DefaultIntegratorCore<double>>();
-    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, IC);
+    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::DefaultIntegratorCore<double>>());
     mio::set_log_level(mio::LogLevel::warn);
 
     // verify results (computed using flows)

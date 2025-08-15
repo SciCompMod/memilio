@@ -141,9 +141,8 @@ TEST(TestOdeSECIRTS, get_flows)
 
 TEST(TestOdeSECIRTS, Simulation)
 {
-    auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
     auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
-    sim.set_integrator(integrator);
+    sim.set_integrator(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
@@ -158,10 +157,9 @@ using FlowSim = mio::osecirts::Simulation<double, mio::FlowSimulation<double, mi
 
 TEST(TestOdeSECIRTS, FlowSimulation)
 {
-    auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
     FlowSim sim(osecirts_testing_model(), 0, 1);
 
-    sim.set_integrator(integrator);
+    sim.set_integrator(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
@@ -260,8 +258,7 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     }
 
     // simulate one step with explicit Euler
-    auto integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, integrator);
+    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =

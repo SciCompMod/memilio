@@ -53,11 +53,31 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
-        : Base(model, integrator, t0, dt)
+    FlowSimulationBase(Model const& model, std::unique_ptr<Core>&& integrator, FP t0, FP dt)
+        : Base(model, std::move(integrator), t0, dt)
         , m_flow_result(t0, model.get_initial_flows())
     {
     }
+
+    FlowSimulationBase(const FlowSimulationBase& other)
+        : Base(other)
+        , m_flow_result(other.m_flow_result)
+    {
+    }
+
+    FlowSimulationBase& operator=(const FlowSimulationBase& other) 
+    {
+        if(this != &other)
+        {
+            Base::operator=(other);
+            m_flow_result = other.m_flow_result;
+        }
+        return *this; 
+    }
+
+    ~FlowSimulationBase() = default;
+    // FlowSimulationBase(FlowSimulationBase && other) = default;
+    // FlowSimulationBase& operator=(FlowSimulationBase && other) = default;
 
     /**
      * @brief Returns the simulation result describing the transitions between compartments for each time step.

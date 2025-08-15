@@ -158,12 +158,12 @@ TEST(TestOdeSECIRVVS, reduceToSecirAndCompareWithPreviousRun)
     model.apply_constraints();
     mio::set_log_level(mio::LogLevel::warn);
     // TODO: gets stuck by division by zero!!
-    // auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    // auto integrator = std::make_unique<mio::RKIntegratorCore>();
     // integrator->set_dt_min(0.3);
     // integrator->set_dt_max(1.0);
     // integrator->set_rel_tolerance(1e-4);
     // integrator->set_abs_tolerance(1e-1);
-    // mio::TimeSeries<double> secihurd = simulate(t0, tmax, 0.1, model, integrator);
+    // mio::TimeSeries<double> secihurd = simulate(t0, tmax, 0.1, model, std::move(integrator));
 
     // auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 

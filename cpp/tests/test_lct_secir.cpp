@@ -114,7 +114,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     // Simulate.
     mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model>(
         t0, tmax, dt, model_lct,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Initialize ODE model with one age group.
     mio::osecir::Model model_ode(1);
@@ -165,7 +165,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     // Simulate.
     mio::TimeSeries<double> result_ode = mio::osecir::simulate<double>(
         t0, tmax, dt, model_ode,
-        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_unique<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Simulation results should be equal.
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
@@ -479,7 +479,7 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
     ScalarType tmax                    = 3;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, ModelTestLCTSecir::Model>(
         0, tmax, 0.5, *model,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Compare subcompartments.
     auto compare = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");
@@ -561,12 +561,13 @@ TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)
     auto compare    = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");
     ScalarType dt   = compare[1][0] - compare[0][0];
     ScalarType tmax = 2 * dt;
-    auto integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+
+    auto integrator = 
+        std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, std::move(integrator));
 
     // Compare subcompartments.
     EXPECT_NEAR(result.get_time(1), compare[1][0], 1e-7);
