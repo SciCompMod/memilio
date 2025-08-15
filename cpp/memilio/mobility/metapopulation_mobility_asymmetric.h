@@ -23,13 +23,15 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/geography/locations.h"
-
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
+#include <algorithm>
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <cassert>
+#include <numeric>
+#include <vector>
 
 namespace mio
 {
@@ -98,17 +100,37 @@ public:
      * create edge with timed movement parameters.
      * @param params mobility rate for each group and compartment
      */
-    // MobilityEdgeDirected(const MobilityParametersTimed& params)
-    //     : m_parameters(params)
-    // {
-    // }
 
-    // auto next_event_time() const
-    // {
-    //     return m_parameters.next_event_time();
-    // }
+    MobilityEdgeDirected(size_t size)
+        : m_mobility_results(size)
+    {
+    }
 
-    MobilityEdgeDirected() = default;
+    MobilityEdgeDirected(size_t size, const std::vector<std::vector<size_t>>& saved_compartment_indices)
+        : m_mobility_results(size)
+        , m_saved_compartment_indices(saved_compartment_indices)
+    {
+    }
+
+    MobilityEdgeDirected(const std::vector<std::vector<size_t>>& saved_compartment_indices)
+        : m_mobility_results(saved_compartment_indices.size() + 1)
+        , m_saved_compartment_indices(saved_compartment_indices)
+    {
+    }
+
+    /**
+     * @brief Get the count of exchanges in selected compartments, along with the total number of exchanges.
+     *
+     * @return A reference to the TimeSeries object representing the mobility results.
+     */
+    TimeSeries<ScalarType>& get_mobility_results()
+    {
+        return m_mobility_results;
+    }
+    const TimeSeries<ScalarType>& get_mobility_results() const
+    {
+        return m_mobility_results;
+    }
 
     /**
          * compute mobility from node_from to node_to for a given event
@@ -117,48 +139,63 @@ public:
          * @param node_to node that people changed to
          */
     template <class Sim>
-    void apply_mobility(double num_moving, LocationNode<Sim>& node_from, LocationNode<Sim>& node_to);
+    void apply_mobility(double& t, double& num_moving, LocationNode<Sim>& node_from, LocationNode<Sim>& node_to);
 
-    // private:
+private:
     // MobilityParametersTimed m_parameters;
+    TimeSeries<double> m_mobility_results;
+    std::vector<std::vector<size_t>> m_saved_compartment_indices;
+
+    void add_mobility_result_time_point(const double t, std::vector<size_t>& travellers)
+    {
+        const size_t save_indices_size = this->m_saved_compartment_indices.size();
+        if (save_indices_size > 0) {
+
+            Eigen::VectorXd condensed_values = Eigen::VectorXd::Zero(save_indices_size + 1);
+
+            // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
+            std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
+                           condensed_values.data(), [&travellers](const auto& indices) {
+                               return std::accumulate(indices.begin(), indices.end(), 0.0,
+                                                      [&travellers](double sum, auto i) {
+                                                          return sum + travellers[i];
+                                                      });
+                           });
+
+            // the last value is the sum of commuters
+            condensed_values[save_indices_size] = std::accumulate(travellers.begin(), travellers.end(), 0);
+
+            // Move the condensed values to the m_mobility_results time series
+            m_mobility_results.add_time_point(t, std::move(condensed_values));
+        }
+    }
 };
 
 template <class Sim>
-void MobilityEdgeDirected::apply_mobility(double num_moving, LocationNode<Sim>& node_from, LocationNode<Sim>& node_to)
+void MobilityEdgeDirected::apply_mobility(double& t, double& num_moving, LocationNode<Sim>& node_from,
+                                          LocationNode<Sim>& node_to)
 {
     // auto next_event = m_parameters.process_next_event();
     // auto num_moving = next_event.number;
     // auto num_available = boost::numeric::ublas::sum(node_from.get_result().get_last_value());
     auto rng          = mio::RandomNumberGenerator();
     auto distribution = DiscreteDistributionInPlace<int>();
-
+    std::vector<size_t> travellers(node_from.get_result().get_last_value().size(), 0);
     for (int i = 0; i < num_moving; ++i) {
         auto group = distribution(rng, {node_from.get_result().get_last_value()});
         node_from.get_result().get_last_value()[group] -= 1;
+        travellers[group] += 1;
         node_to.get_result().get_last_value()[group] += 1;
     }
+    add_mobility_result_time_point(t, travellers);
 }
 
 template <class Sim>
 void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edge, LocationNode<Sim>& node_from,
                           LocationNode<Sim>& node_to)
 {
-    // if (edge.next_event_time() >= t + dt) {
-    //     return;
-    // }
-    mio::unused(t);
-    edge.apply_mobility(num_moving, node_from, node_to);
+    edge.apply_mobility(t, num_moving, node_from, node_to);
 }
-// /**get_last_value
-//      * edge functor for mobility-based simulation.
-//      * @see MobilityEdgeDirected::apply_mobility
-//      */
-// template <class Sim, class StochasticEdge>
-// void apply_mobility(StochasticEdge& mobilityEdge, size_t event, SimulationNode<Sim>& node_from,
-//                     SimulationNode<Sim>& node_to)
-// {
-//     mobilityEdge.apply_mobility(event, node_from, node_to);
-// }
 
 /**
      * create a mobility-based simulation.

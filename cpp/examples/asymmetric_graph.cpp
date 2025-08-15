@@ -63,23 +63,29 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.5}}});
     model.parameters.get<mio::smm::AdoptionRates<InfectionState>>() = adoption_rates;
 
-    auto model2 = model;
-    auto rng    = mio::RandomNumberGenerator();
+    auto model2                                   = model;
+    model2.populations[{home, InfectionState::I}] = 9000;
+    model2.populations[{home, InfectionState::S}] = 800;
+
+    auto rng = mio::RandomNumberGenerator();
 
     mio::Graph<mio::LocationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
     graph.add_node(0, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
-                   mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model, t0);
+                   mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model2, t0);
     graph.add_node(1, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
                    mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model2, t0);
-    size_t num_nodes = 200000;
+    size_t num_nodes = 2000;
     for (size_t i = 2; i < num_nodes; i++) {
         auto local_model = model;
         graph.add_node(i, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
                        mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), local_model, t0);
     }
 
+    std::vector<std::vector<size_t>> interesting_indices;
+    interesting_indices.push_back({model.populations.get_flat_index({home, InfectionState::I})});
+
     auto param = mio::MobilityParametersTimed(2.0, 10, 1);
-    graph.add_edge(0, 1);
+    graph.add_edge(0, 1, interesting_indices);
 
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
 
@@ -88,7 +94,7 @@ int main(int /*argc*/, char** /*argv*/)
     for (size_t i = 0; i < 3 * num_nodes; ++i) {
         auto to   = distribution(rng, {uniform_vector});
         auto from = distribution(rng, {uniform_vector});
-        graph.add_edge(from, to);
+        graph.add_edge(from, to, interesting_indices);
     }
 
     mio::log_info("Graph generated");
@@ -130,6 +136,10 @@ int main(int /*argc*/, char** /*argv*/)
     // sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});
     // std::cout << "Second Table" << std::endl;
     // sim.get_graph().nodes()[1].property.get_result().print_table({"S", "E", "I", "R"});
+
+    auto& edge_1_0 = sim.get_graph().edges()[1];
+    auto& results  = edge_1_0.property.get_mobility_results();
+    results.print_table({"Commuter Sick", "Commuter Total"});
 
     return 0;
 }
