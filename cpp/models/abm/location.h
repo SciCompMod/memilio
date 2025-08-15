@@ -25,6 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 
+#include "memilio/geography/locations.h"
 #include "memilio/io/default_serialize.h"
 #include "boost/atomic/atomic.hpp"
 
@@ -32,30 +33,6 @@ namespace mio
 {
 namespace abm
 {
-
-struct GeographicalLocation {
-    double latitude;
-    double longitude;
-
-    /**
-     * @brief Compare two GeographicalLocation%s.
-     */
-    bool operator==(const GeographicalLocation& other) const
-    {
-        return (latitude == other.latitude && longitude == other.longitude);
-    }
-
-    bool operator!=(const GeographicalLocation& other) const
-    {
-        return !(latitude == other.latitude && longitude == other.longitude);
-    }
-
-    /// This method is used by the default serialization feature.
-    auto default_serialize()
-    {
-        return Members("GraphicalLocation").add("latitude", latitude).add("longitude", longitude);
-    }
-};
 
 struct CellIndex : public mio::Index<CellIndex> {
     CellIndex(size_t i)
@@ -248,7 +225,7 @@ public:
      * @brief Get the geographical location of the Location.
      * @return The geographical location of the Location.
      */
-    GeographicalLocation get_geographical_location() const
+    mio::geo::GeographicalLocation get_geographical_location() const
     {
         return m_geographical_location;
     }
@@ -257,7 +234,7 @@ public:
      * @brief Set the geographical location of the Location.
      * @param[in] location The geographical location of the Location.
      */
-    void set_geographical_location(GeographicalLocation location)
+    void set_geographical_location(mio::geo::GeographicalLocation location)
     {
         m_geographical_location = location;
     }
@@ -292,7 +269,8 @@ private:
     LocalInfectionParameters m_parameters; ///< Infection parameters for the Location.
     std::vector<Cell> m_cells{}; ///< A vector of all Cell%s that the Location is divided in.
     MaskType m_required_mask; ///< Least secure type of Mask that is needed to enter the Location.
-    GeographicalLocation m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
+    mio::geo::GeographicalLocation
+        m_geographical_location; ///< Geographical location (longitude and latitude) of the Location.
     int m_model_id; ///< Model id the location is in. Only used for ABM graph model or hybrid graph model.
 };
 
