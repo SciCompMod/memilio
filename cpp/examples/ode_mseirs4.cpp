@@ -76,7 +76,7 @@ int main()
 
     // simulate
     double t0   = 0.0;
-    double tmax = 3650.0; // days (10 years)
+    double tmax = 20.0; // days
     double dt   = 1.0; // daily output
     auto result = mio::simulate(t0, tmax, dt, model);
 

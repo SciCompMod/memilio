@@ -76,9 +76,9 @@ def run_ode_omseirs4_simulation():
 
     model.check_constraints()
 
-    # simulate 10 years with daily time steps
+    # simulate 10 days with daily time steps
     t0 = 0.0
-    tmax = 3650.0
+    tmax = 10.0
     dt = 1.0
 
     result = simulate(t0, tmax, dt, model)
