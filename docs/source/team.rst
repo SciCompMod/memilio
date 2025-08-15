@@ -264,10 +264,86 @@ He is interested in the development of agent-based models for infectious disease
 
    * `ORCID Profile: 0009-0007-9109-096X <https://orcid.org/0009-0007-9109-096X>`_
 
+
+.. _former_core_developers:
+
+Former Core Developers
+----------------------   
+
+Daniel Abele
+^^^^^^^^^^^^
+
+**Research Focus:** Scientific Computing, Software Architecture, Ordinary and Partial Differential Equations
+
+Daniel Abele is a research software engineer at the Institute of Software Technology at the German Aerospace Center (DLR) and was part of the MEmilio team from its beginnings in 2020 until 2024. As one of its leading software engineers, he contributed to the early architecture of the code, including ODE and agent based models, as well as to the development processes and infrastructure. He left the project to focus on his PhD in numerical simulation of continental ice sheets.
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * Kühn MJ, **Abele D**, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences*. https://doi.org/10.1016/j.mbs.2021.108648
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0001-7021-1573 <https://orcid.org/0000-0001-7021-1573>`_
+
+
+Margrit Klitz
+^^^^^^^^^^^^^^
+
+.. image:: https://martinkuehn.eu/research/images/margrit.png
+   :alt: Margrit Klitz
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** High-Performance Computing, Data Management, Digitalization, Software Development
+
+Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked in the High-Performance Computing department at the German Aerospace Center (DLR) before joining the German Center for Neurodegenerative Diseases (DZNE), where she led IT and data management for the Rhineland Study. Since 2025, she heads the group “Digitalisation, Software, and AI” at the Space Agency at DLR. In the MEmilio project, she made the very first commit and supported the team through project coordination, scientific writing, and proposal development for PANDEMOS and LOKI-Pandemics.
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0000-0003-3657-4180 <https://orcid.org/0000-0003-3657-4180>`_
+
+
+
+Agatha Schmidt
+^^^^^^^^^^^^^
+
+.. image:: https://martinkuehn.eu/research/images/agatha.png
+   :alt: Agatha Schmidt
+   :width: 150px
+   :align: left
+   :class: developer-photo
+
+**Research Focus:** Machine Learning, Surrogate Modelling, Graph Neural Networks, High-Performance Computing
+
+Agatha Schmidt completed her Master's degree at the University of Cologne in collaboration with the German Aerospace Center (DLR), where she worked on machine learning-based surrogate models for ODE-based systems. After graduating, she continued her research by writing a paper focused on the application of graph neural networks as surrogate models. She was part of the team from May 2022 to December 2024. 
+
+.. dropdown:: Selected Publications
+   :animate: fade-in-slide-down
+
+   * **Schmidt A**, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
+
+.. dropdown:: Links
+   :animate: fade-in-slide-down
+
+   * `ORCID Profile: 0009-0006-5766-8804 <https://orcid.org/0009-0006-5766-8804>`_
+
+
 .. _contributors:
 
-Contributors
-------------
+Further Active or Former Contributors
+--------------------------------------
+
+Paul Johannssen
+^^^^^^^^^^^^^^^
+ 
+**Research Focus:** ODE models, Runge-Kutta methods, reproduction numbers.
+ 
+Paul Johannssen studied mathematics at the University of Bonn. He worked on the MEmilio project from March 2023 to March 2024 as a working student. In this time, he manually derived and implemented formulas in closed form for the computation of reproduction numbers in the ODE-based SEIR, SECIR, and SECIRVVS models.
+
 
 We thank all contributors, who have contributed to MEmilio. For a complete list of contributors, please see our `GitHub Contributors page <https://github.com/SciCompMod/memilio/graphs/contributors>`_.
 
@@ -297,6 +373,10 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
 * by German Federal Ministry of Education and Research under grant agreement 031L0297B (Project INSIDe),
 * by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant agreement 528702961,
 * by German Federal Ministry of Education and Research under grant agreement 031L0319A and 031L0319B (Project AIMS).
+
+.. |bmbf| image:: _static/funder/bmftr.jpg
+   :width: 200px
+   :alt: Bundesministerium für Forschung, Technologie und Raumfahrt
 
 .. |helmholtz| image:: _static/funder/helmholtz.jpg
    :width: 200px

@@ -97,7 +97,7 @@ and all other compartments.
 .. code-block:: cpp
 
    for (auto i = mio::AgeGroup(0); i < nb_groups; i++){
-      model.populations[{i, mio::osir::InfectionState::Exposed}] = 1/nb_groups * nb_exp_t0;
+      model.populations[{i, mio::osir::InfectionState::Infected}] = 1/nb_groups * nb_inf_t0;
       model.populations[{i, mio::osir::InfectionState::Recovered}] = 1/nb_groups * nb_rec_t0;
 
       model.populations.set_difference_from_group_total<mio::AgeGroup>(
@@ -117,7 +117,7 @@ Basic dampings can be added to the ContactPatterns as follows:
 
    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 1/nb_groups * cont_freq));
 
-   // Add a uniform damping acress all age groups
+   // Add a uniform damping across all age groups
    contact_matrix.add_damping(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.7), mio::SimulationTime(30.));
 
 

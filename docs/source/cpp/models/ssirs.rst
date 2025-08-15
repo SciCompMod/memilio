@@ -31,7 +31,7 @@ Below is an overview of the model architecture and its compartments.
 +-------------------------------+-----------------------------------------------+--------------------------------------------------------------------------------------------------+
 
 An example can be found in the
-`examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_sir.cpp>`_.
+`examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/sde_sirs.cpp>`_.
 
 
 Overview of the ``ssirs`` namespace:
