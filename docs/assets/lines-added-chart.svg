@@ -1,0 +1,24 @@
+<svg width="600" height="200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.3" />
+        <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.1" />
+      </linearGradient>
+    </defs>
+    
+    <rect width="600" height="200" fill="#ffffff"/>
+    
+    <line x1="40" y1="40" x2="560" y2="40" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="65" x2="560" y2="65" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="90" x2="560" y2="90" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="115" x2="560" y2="115" stroke="#e5e7eb" stroke-width="1"/><line x1="40" y1="140" x2="560" y2="140" stroke="#e5e7eb" stroke-width="1"/>
+    
+    <path d="M40,140 L40,133.43833031691634 L87.27272727272728,131.93653972043592 L134.54545454545456,140 L181.8181818181818,114.64284339019599 L229.0909090909091,40 L276.3636363636364,128.20516769994995 L323.6363636363636,132.62197235165004 L370.9090909090909,105.4703685163079 L418.1818181818182,127.80469020755517 L465.4545454545455,132.34086795794985 L512.7272727272727,125.29015364473025 L560,118.55520043128345 L560,140 Z" fill="url(#gradient)"/>
+    <path d="M40,133.43833031691634 L87.27272727272728,131.93653972043592 L134.54545454545456,140 L181.8181818181818,114.64284339019599 L229.0909090909091,40 L276.3636363636364,128.20516769994995 L323.6363636363636,132.62197235165004 L370.9090909090909,105.4703685163079 L418.1818181818182,127.80469020755517 L465.4545454545455,132.34086795794985 L512.7272727272727,125.29015364473025 L560,118.55520043128345" stroke="#22c55e" stroke-width="2" fill="none"/>
+    
+    <circle cx="40" cy="133.43833031691634" r="3" fill="#22c55e"/><circle cx="87.27272727272728" cy="131.93653972043592" r="3" fill="#22c55e"/><circle cx="134.54545454545456" cy="140" r="3" fill="#22c55e"/><circle cx="181.8181818181818" cy="114.64284339019599" r="3" fill="#22c55e"/><circle cx="229.0909090909091" cy="40" r="3" fill="#22c55e"/><circle cx="276.3636363636364" cy="128.20516769994995" r="3" fill="#22c55e"/><circle cx="323.6363636363636" cy="132.62197235165004" r="3" fill="#22c55e"/><circle cx="370.9090909090909" cy="105.4703685163079" r="3" fill="#22c55e"/><circle cx="418.1818181818182" cy="127.80469020755517" r="3" fill="#22c55e"/><circle cx="465.4545454545455" cy="132.34086795794985" r="3" fill="#22c55e"/><circle cx="512.7272727272727" cy="125.29015364473025" r="3" fill="#22c55e"/><circle cx="560" cy="118.55520043128345" r="3" fill="#22c55e"/>
+    
+    <!-- Month labels -->
+    <text x="40" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Aug 2024</text><text x="181.8181818181818" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Nov 2024</text><text x="323.6363636363636" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">Feb 2025</text><text x="465.4545454545455" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#6b7280">May 2025</text>
+    
+    <text x="300" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#374151">Total Lines Added</text>
+    <text x="15" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">26179</text>
+    <text x="15" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#6b7280">210</text>
+  </svg>
