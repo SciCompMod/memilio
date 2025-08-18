@@ -101,28 +101,28 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
     for (size_t node = 0; node < model.size(); ++node) {
         const size_t model_groups = (size_t)model[node].parameters.get_num_groups();
         assert(model_groups == 1 || model_groups == num_age_groups);
-        for (size_t group = 0; group < num_age_groups; group++) {
+        for (size_t ag = 0; ag < num_age_groups; ag++) {
             // If the model has fewer groups than casedata entries available,
             // reuse group 0 parameters for all RKI age groups
-            const size_t pidx = (model_groups == num_age_groups) ? group : 0;
+            const size_t group = (model_groups == num_age_groups) ? ag : 0;
 
             t_Exposed[node].push_back(
-                static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()[(AgeGroup)pidx])));
+                static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
             t_InfectedNoSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)pidx])));
+                std::round(model[node].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group])));
             t_InfectedSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)pidx])));
+                std::round(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group])));
             t_InfectedSevere[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)pidx])));
+                std::round(model[node].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
             t_InfectedCritical[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)pidx])));
+                std::round(model[node].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
 
             mu_C_R[node].push_back(
-                model[node].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)pidx]);
+                model[node].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)group]);
             mu_I_H[node].push_back(
-                model[node].parameters.template get<SeverePerInfectedSymptoms<FP>>()[(AgeGroup)pidx]);
-            mu_H_U[node].push_back(model[node].parameters.template get<CriticalPerSevere<FP>>()[(AgeGroup)pidx]);
-            mu_U_D[node].push_back(model[node].parameters.template get<DeathsPerCritical<FP>>()[(AgeGroup)pidx]);
+                model[node].parameters.template get<SeverePerInfectedSymptoms<FP>>()[(AgeGroup)group]);
+            mu_H_U[node].push_back(model[node].parameters.template get<CriticalPerSevere<FP>>()[(AgeGroup)group]);
+            mu_U_D[node].push_back(model[node].parameters.template get<DeathsPerCritical<FP>>()[(AgeGroup)group]);
         }
     }
     std::vector<std::vector<double>> num_InfectedSymptoms(model.size(), std::vector<double>(num_age_groups, 0.0));
