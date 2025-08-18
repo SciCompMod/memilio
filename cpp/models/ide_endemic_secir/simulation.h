@@ -32,21 +32,25 @@ public:
     void advance(ScalarType tmax);
 
     /**
-     * @brief Get the result of the simulation for the compartments
+     * @brief Get the result of the simulation for the compartments of m_model
      * Return the number of persons in all #InfectionState%s
      */
     TimeSeries<ScalarType> get_compartments()
     {
         return m_model->populations;
     }
-
+    /**
+     * @brief Get the result of the simulation for the compartments of m_model, where we use the update scheme.
+     * Return the number of persons in all #InfectionState%s
+     */
     TimeSeries<ScalarType> get_compartments_update()
     {
         return m_model->populations_update;
     }
 
     /**
-     * @brief Get the result of the simulation for the normalized compartments, where we use m_model.
+     * @brief Get the result of the simulation for the normalized compartments, where we use m_model and the compartments
+     * computed using the sum scheme.
      * Return the number of persons in all #InfectionState%s
      */
     TimeSeries<ScalarType> get_normalizedcompartments()
@@ -71,6 +75,10 @@ public:
         return m_model->populations;
     }
 
+    /**
+     * @brief Get the result of the simulation for the compartments of m_model, where we use the update scheme.
+     * Return the number of persons in all #InfectionState%s
+     */
     TimeSeries<ScalarType>& get_compartments_update() const
     {
         return m_model->populations_update;
@@ -95,61 +103,87 @@ public:
     }
 
     /**
-     * @brief Get the transitions between the different #InfectionState%s.
+     * @brief Get the transitions between the different #InfectionState%s for m_model.
      */
     TimeSeries<ScalarType> const& get_transitions()
     {
         return m_model->transitions;
     }
-
+    /**
+     * @brief Get the transitions between the different #InfectionState%s for m_model using the update scheme.
+     */
     TimeSeries<ScalarType> const& get_transitions_update()
     {
         return m_model->transitions_update;
     }
 
     /**
-     * @brief Get the transitions between the different #InfectionState%s  of the normalized Model.
+     * @brief Get the transitions between the different #InfectionState%s  of m_normmodel.
      */
     TimeSeries<ScalarType> const& get_normmodel_transitions()
     {
         return m_normmodel->transitions;
     }
 
+    /**
+     * @brief Get the force of infection term of m_model.
+     */
     TimeSeries<ScalarType> const& get_forceofinfections()
     {
         return m_model->m_forceofinfection;
     }
 
+    /**
+     * @brief Get the force of infection term of m_model using the update scheme.
+     */
     TimeSeries<ScalarType> const& get_forceofinfections_update()
     {
         return m_model->m_forceofinfectionupdate;
     }
 
+    /**
+     * @brief Get the force of infection term of m_normmodel.
+     */
     TimeSeries<ScalarType> const& get_normmodel_forceofinfections()
     {
         return m_normmodel->m_forceofinfection;
     }
 
+    /**
+     * @brief Get the total population of m_model.
+     */
     TimeSeries<ScalarType> const& get_totalpopulations()
     {
         return m_model->m_totalpopulation;
     }
 
+    /**
+     * @brief Get the total population of m_model using the update scheme.
+     */
     TimeSeries<ScalarType> const& get_totalpopulations_update()
     {
         return m_model->m_totalpopulationupdate;
     }
 
+    /**
+     * @brief Get the reproduction numer.
+     */
     ScalarType const& get_reproductionnumber_c()
     {
         return m_model->compparameters->m_reproductionnumber_c;
     }
 
+    /**
+     * @brief Get T.
+     */
     std::vector<ScalarType> const& get_T()
     {
         return m_model->compparameters->m_T;
     }
 
+    /**
+     * @brief Get W.
+     */
     std::vector<ScalarType> const& get_W()
     {
         return m_model->compparameters->m_W;

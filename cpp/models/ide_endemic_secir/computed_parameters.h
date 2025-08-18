@@ -85,12 +85,8 @@ private:
     /**
      * @brief Setter for the vector m_transitiondistributions.
      *
-     * In the computation of the force of infection in the initialization function of the force of infection term,
-     * we evaluate the survival functions of the TransitionDistributions InfectedNoSymptomsToInfectedSymptoms, 
-     * InfectedNoSymptomsToRecovered, InfectedSymptomsToInfectedSevere and InfectedSymptomsToRecovered, weighted by 
-     * the corresponding TransitionProbabilities, at the same time points.
-     * Here, we compute these contributions to the force of infection term, an store the vector 
-     * m_transitiondistributions_in_forceofinfection so that we can access this vector for all following computations.
+     * Here we compute the weighted transition distributions for every compartment. Meaning for every compartment we weight
+     * the distributions of the outgoing transitions with their probability and compute the sum of the two weighed distributions.
      * 
      * @param[in] dt Time step size.
      */
@@ -189,6 +185,9 @@ private:
     /**
      *@brief Setter for the vector m_B that contains the approximated value of B for all for all necessary time points.
      * 
+     * The value m_B is needed for the compuation of the force of infection term and also for the compuation of 
+     * m_infectivity.
+     *
      * @param[in] dt Time step size.
      */
     void set_B(ScalarType dt)
@@ -227,6 +226,8 @@ private:
      *@brief Setter for the vector m_meaninfectivity that contains the approximated value of the mean infectivity for all
      * for all necessary time points.
      * 
+     * This values is needed the compute the reproduction numer and the force of infection term.
+     *
      * @param[in] dt Time step size.
      */
     void set_infectivity(ScalarType dt)
@@ -283,7 +284,10 @@ private:
         }
     }
 
-    //TODO Erklärung
+    /**
+     *@brief Setter for the vectors m_FoI_0 and m_NormFoI_0 that contain the approximated values of the function FoI_0,
+     * that is a part of the force of infection term for all necessary time points.
+     */
     void set_FoI_0()
     {
         Eigen::Index calc_time_index = m_infectivity.size();
@@ -302,6 +306,13 @@ private:
         }
     }
 
+    /**
+     * @brief Setter for the vectors m_InitFoI and m_NormInitFoI that contain the approximated values of the functions 
+     * f(standard model) and g(normalized model) that is a part of the force of infection term for all necessary time 
+     * points.
+     *
+     * @param[in] dt Time step size.
+     */
     void set_InitFoI(ScalarType dt)
     {
         Eigen::Index calc_time_index = std::max(m_infectivity.size(), m_B.size());
@@ -328,7 +339,7 @@ private:
 
     // ---- Parameters needed for the analysis of the model ----
     /**
-     * @brief Setter for the Reproduction number R_c.
+     * @brief Setter for the Reproduction number m_reproductionnumber_c.
      *
      */
     void set_reproductionnumber_c(ScalarType dt)
@@ -346,12 +357,13 @@ private:
     }
 
     /**
-     * @brief TODO
+     * @brief Setter for m_T.
      *
+    * @param[in] dt step size.
      */
     void set_T(ScalarType dt)
     {
-        // The transition SusceptibleToExposed is not needed in the computations.
+        // The value T_z1^z2 is not defined for the transition SusceptiblesToExposed.
         for (int transition = 1; transition < (int)InfectionTransition::Count; transition++) {
             Eigen::Index support_max_index =
                 (Eigen::Index)std::ceil(m_transitiondistributions_support_max[transition] / dt);
@@ -369,8 +381,12 @@ private:
     }
 
     /**
-     * @brief TODO
+     * @brief Setter for m_W.
      *
+     * m_W contains the values W_z for compartments z. As W_z is only defined for the compartments Exposed, InfectedNoSymptoms,
+     * InfectedSymptoms, InfectedSevere and InfectedCrititcal we will set W_z for the other compartments to zero.
+     * 
+     * @param[in] dt step size.
      */
     void set_W(ScalarType dt)
     {
@@ -406,12 +422,18 @@ private:
     std::vector<ScalarType> m_infectivity{
         std::vector<ScalarType>(1, 0.)}; ///< A vector containing the approximated mean infectivity for all time points.
     ScalarType m_reproductionnumber_c; ///< The control Reproduction number
-    std::vector<ScalarType> m_FoI_0{std::vector<ScalarType>(1, 0.)}; ///< TODO
-    std::vector<ScalarType> m_NormFoI_0{std::vector<ScalarType>(1, 0.)}; ///< TODO
-    std::vector<ScalarType> m_InitFoI = std::vector<ScalarType>(1, 0.); ///< TODO
-    std::vector<ScalarType> m_NormInitFoI{std::vector<ScalarType>(1, 0.)}; ///< TODO
-    std::vector<ScalarType> m_T{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< TODO
-    std::vector<ScalarType> m_W{std::vector<ScalarType>((int)InfectionState::Count, 0.)}; ///<TODO
+    std::vector<ScalarType> m_FoI_0{std::vector<ScalarType>(1, 0.)}; ///< A vector containing the approcimated
+    // value of the function FoI_0 used for the computation of the force of infection in the standard model
+    std::vector<ScalarType> m_NormFoI_0{std::vector<ScalarType>(1, 0.)}; ///< A vector containing the approcimated
+    // value of the function FoI_0 used for the computation of the force of infection in the normalized model
+    std::vector<ScalarType> m_InitFoI = std::vector<ScalarType>(1, 0.); ///< A vector containing the approcimated
+    // value of the function FoI_0 used for the computation of the force of infection in the standard model
+    std::vector<ScalarType> m_NormInitFoI{std::vector<ScalarType>(1, 0.)}; ///< A vector containing the approcimated
+    // value of the function FoI_0 used for the computation of the force of infection in the normalized model
+    std::vector<ScalarType> m_T{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< A vector
+    // containing the approximated value for T_z1^z2 for every Flow z1 to z2.
+    std::vector<ScalarType> m_W{std::vector<ScalarType>((int)InfectionState::Count, 0.)}; ///< A vector containing+
+    // the approximated value for W_z for every compartment z.
     // ---- Friend classes/functions. ----
     friend class Model;
     friend class NormModel;
