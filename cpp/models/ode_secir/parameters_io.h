@@ -272,10 +272,22 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
     assert(num_population.size() == vregion.size());
     assert(model.size() == vregion.size());
     for (size_t region = 0; region < vregion.size(); region++) {
-        auto num_groups = model[region].parameters.get_num_groups();
-        for (auto i = AgeGroup(0); i < num_groups; i++) {
+        const auto model_groups = (size_t)model[region].parameters.get_num_groups();
+        const auto data_groups  = num_population[region].size();
+
+        if (data_groups == model_groups) {
+            for (auto i = AgeGroup(0); i < model[region].parameters.get_num_groups(); i++) {
+                model[region].populations.template set_difference_from_group_total<AgeGroup>(
+                    {i, InfectionState::Susceptible}, num_population[region][(size_t)i]);
+            }
+        }
+        else if (model_groups == 1 && data_groups >= 1) {
+            const double total = std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0);
             model[region].populations.template set_difference_from_group_total<AgeGroup>(
-                {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
+                {AgeGroup(0), InfectionState::Susceptible}, total);
+        }
+        else {
+            assert(false && "Dimension of population data not supported.");
         }
     }
     return success();
