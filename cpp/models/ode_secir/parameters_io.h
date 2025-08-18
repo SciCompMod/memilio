@@ -180,9 +180,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                 model[node].populations[{AgeGroup(i0), InfectionState::Dead}]      = sum_vec(num_death[node]);
                 model[node].populations[{AgeGroup(i0), InfectionState::Recovered}] = sum_vec(num_rec[node]);
             }
-            else {
-                assert(false && "Unsupported number of age groups in model; expected 1 or RKI groups.");
-            }
         }
         else {
             log_warning("No infections reported on date {} for region {}. Population data has not been set.", date,
@@ -274,6 +271,7 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
     for (size_t region = 0; region < vregion.size(); region++) {
         const auto model_groups = (size_t)model[region].parameters.get_num_groups();
         const auto data_groups  = num_population[region].size();
+        assert(data_groups == model_groups || (model_groups == 1 && data_groups >= 1));
 
         if (data_groups == model_groups) {
             for (auto i = AgeGroup(0); i < model[region].parameters.get_num_groups(); i++) {
@@ -285,9 +283,6 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
             const double total = std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0);
             model[region].populations.template set_difference_from_group_total<AgeGroup>(
                 {AgeGroup(0), InfectionState::Susceptible}, total);
-        }
-        else {
-            assert(false && "Dimension of population data not supported.");
         }
     }
     return success();
