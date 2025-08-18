@@ -5,7 +5,6 @@
 #include "ide_endemic_secir/parameters.h"
 #include "ide_endemic_secir/computed_parameters.h"
 #include "memilio/config.h"
-#include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/time_series.h"
 
 #include "vector"

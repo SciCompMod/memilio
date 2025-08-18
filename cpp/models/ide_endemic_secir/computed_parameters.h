@@ -124,20 +124,31 @@ private:
             {(int)InfectionTransition::InfectedCriticalToDead, (int)InfectionTransition::InfectedCriticalToRecovered}};
 
         for (int state = 2; state < (int)InfectionState::Count - 2; state++) {
-            Eigen::Index calc_time_index = std::max((Eigen::Index)std::ceil(vector_transitions[state - 2][0]),
-                                                    (Eigen::Index)std::ceil(vector_transitions[state - 2][1])) /
-                                           dt;
+            Eigen::Index calc_time_index =
+                std::max(
+                    m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][0])],
+                    m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][1])]) /
+                dt;
 
             // Create vec_derivative that stores the value of the approximated derivative for all necessary time points.
             std::vector<ScalarType> vec_contribution_to_foi_2(calc_time_index + 1, 0.);
             for (Eigen::Index i = 0; i <= calc_time_index; i++) {
                 ///Compute the state_age.
                 ScalarType state_age = (ScalarType)i * dt;
-                vec_contribution_to_foi_2[i] =
-                    parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][0]] *
-                        parameters.get<TransitionDistributions>()[vector_transitions[state - 2][0]].eval(state_age) +
-                    parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][1]] *
+                if (m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][0])] /
+                        dt <=
+                    calc_time_index) {
+                    vec_contribution_to_foi_2[i] +=
+                        parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][0]] *
+                        parameters.get<TransitionDistributions>()[vector_transitions[state - 2][0]].eval(state_age);
+                }
+                if (m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][1])] /
+                        dt <=
+                    calc_time_index) {
+                    vec_contribution_to_foi_2[i] +=
+                        parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][1]] *
                         parameters.get<TransitionDistributions>()[vector_transitions[state - 2][1]].eval(state_age);
+                }
             }
             m_transitiondistributions[state] = vec_contribution_to_foi_2;
         }
@@ -196,15 +207,14 @@ private:
             ScalarType sum = 0;
 
             Eigen::Index starting_point =
-                std::max(0, (int)time_point_index - 1 -
-                                (int)m_transitiondistributions_support_max[(
-                                    int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]);
+                std::max(0, (int)time_point_index - (int)m_transitiondistributions_support_max[(
+                                                        int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]);
 
             for (int i = starting_point; i <= time_point_index - 1; i++) {
                 ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
 
                 sum +=
-                    parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age_i) *
+                    parameters.get<RiskOfInfectionFromSymptomatic>().eval(state_age_i) *
                     m_transitiondistributions[static_cast<int>(InfectionState::InfectedSymptoms)][i] *
                     m_transitiondistributions_derivative[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
                                                         [time_point_index - i];
@@ -241,35 +251,82 @@ private:
 
             ScalarType time_point_age = (ScalarType)time_point_index * dt;
             //We compute a_1 and a_2 at time_point.
-            Eigen::Index starting_point_1 = std::max(
+            Eigen::Index starting_point = std::max(
                 0,
-                (int)time_point_index - 1 -
+                (int)time_point_index -
                     (int)m_transitiondistributions_support_max[(int)InfectionTransition::ExposedToInfectedNoSymptoms]);
-            Eigen::Index starting_point_2 =
-                std::max(0, (int)time_point_index - 1 -
-                                (int)m_transitiondistributions_support_max[(
-                                    int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]);
 
             //compute a_1:
-            for (int i = starting_point_1; i < std::min(calc_time_index_1, calc_time_index); i++) {
+            if (time_point_index <= calc_time_index_1) {
 
-                ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
-                a_1 += parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age_i) *
-                       m_transitiondistributions[static_cast<int>(InfectionState::InfectedNoSymptoms)][i] *
-                       m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                                                           [time_point_index - i];
+                for (int i = starting_point; i < time_point_index; i++) {
+
+                    ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
+                    a_1 += parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age_i) *
+                           m_transitiondistributions[static_cast<int>(InfectionState::InfectedNoSymptoms)][i] *
+                           m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+                                                               [time_point_index - i];
+                }
             }
             //compute a_2:
-            for (int i = starting_point_2; i < std::min(calc_time_index_2, calc_time_index); i++) {
+            if (time_point_index <= calc_time_index_2) {
 
-                a_2 += m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                                                           [time_point_index - i] *
-                       m_B[i];
+                for (int i = starting_point; i < time_point_index; i++) {
+
+                    a_2 += m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+                                                               [time_point_index - i] *
+                           m_B[i];
+                }
             }
             m_infectivity[time_point_index] =
                 dt * std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * (a_2 - a_1);
         }
     }
+
+    //TODO Erklärung
+    void set_FoI_0()
+    {
+        Eigen::Index calc_time_index = m_infectivity.size();
+        m_FoI_0                      = std::vector<ScalarType>(calc_time_index, 0.);
+        m_NormFoI_0                  = std::vector<ScalarType>(calc_time_index, 0.);
+        // m_InitFoI.resize(calc_time_index, 0.);
+        // m_NormInitFoI.resize(calc_time_index, 0.);
+        for (Eigen::Index time_point_index = 0; time_point_index < calc_time_index; time_point_index++) {
+            m_FoI_0[time_point_index] =
+                m_infectivity[time_point_index] * (m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] +
+                                                   m_statesinit[0][(int)InfectionState::InfectedNoSymptoms]);
+            m_NormFoI_0[time_point_index] =
+                m_infectivity[time_point_index] * ((m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] +
+                                                    m_statesinit[0][(int)InfectionState::InfectedNoSymptoms]) /
+                                                   m_totalpopulationinit);
+        }
+    }
+
+    void set_InitFoI(ScalarType dt)
+    {
+        Eigen::Index calc_time_index = std::max(m_infectivity.size(), m_B.size());
+        m_InitFoI.resize(calc_time_index, 0.);
+        m_NormInitFoI.resize(calc_time_index, 0.);
+        for (Eigen::Index time_point_index = 0; time_point_index < calc_time_index; time_point_index++) {
+            ScalarType time_point_age = (ScalarType)time_point_index * dt;
+            if (time_point_index <= (int)m_B.size()) {
+                m_InitFoI[time_point_index] -= m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
+                                               std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) *
+                                               m_B[time_point_index];
+                m_NormInitFoI[time_point_index] -=
+                    m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] / m_totalpopulationinit *
+                    std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
+            }
+            if (time_point_index <= (int)m_infectivity.size()) {
+                m_InitFoI[time_point_index] +=
+                    m_statesinit[0][(int)InfectionState::Exposed] * m_infectivity[time_point_index];
+                m_NormInitFoI[time_point_index] += m_statesinit[0][(int)InfectionState::Exposed] /
+                                                   m_totalpopulationinit * m_infectivity[time_point_index];
+            }
+        }
+    }
+
+    // ---- Parameters needed for the analysis of the model ----
     /**
      * @brief Setter for the Reproduction number R_c.
      *
@@ -288,45 +345,46 @@ private:
                                  sum;
     }
 
-    //TODO Erklärung
-    void set_FoI_0()
+    /**
+     * @brief TODO
+     *
+     */
+    void set_T(ScalarType dt)
     {
-        Eigen::Index calc_time_index = m_infectivity.size() - 1;
-        m_FoI_0                      = std::vector<ScalarType>(calc_time_index, 0.);
-        m_NormFoI_0                  = std::vector<ScalarType>(calc_time_index, 0.);
+        // The transition SusceptibleToExposed is not needed in the computations.
+        for (int transition = 1; transition < (int)InfectionTransition::Count; transition++) {
+            Eigen::Index support_max_index =
+                (Eigen::Index)std::ceil(m_transitiondistributions_support_max[transition] / dt);
+            ScalarType sum = 0;
 
-        for (Eigen::Index time_point_index = 0; time_point_index <= calc_time_index; time_point_index++) {
-            m_FoI_0[time_point_index] =
-                m_infectivity[time_point_index] * (m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] +
-                                                   m_statesinit[0][(int)InfectionState::InfectedNoSymptoms]);
-            m_NormFoI_0[time_point_index] =
-                m_infectivity[time_point_index] * ((m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] +
-                                                    m_statesinit[0][(int)InfectionState::InfectedNoSymptoms]) /
-                                                   m_totalpopulationinit);
+            for (Eigen::Index i = 0; i <= support_max_index; i++) {
+                // Compute state_age.
+                ScalarType state_age = (ScalarType)i * dt;
+                //Compute the apprximate derivative by a backwards difference scheme.
+                sum -= std::exp(-parameters.get<NaturalDeathRate>() * state_age) *
+                       m_transitiondistributions_derivative[transition][i];
+            }
+            m_T[transition] = parameters.get<TransitionProbabilities>()[transition] * sum;
         }
     }
 
-    void set_InitFoI(ScalarType dt)
+    /**
+     * @brief TODO
+     *
+     */
+    void set_W(ScalarType dt)
     {
-        Eigen::Index calc_time_index = std::max(m_infectivity.size(), m_B.size()) - 1;
-        m_InitFoI                    = std::vector<ScalarType>(calc_time_index, 0.);
-        m_NormInitFoI                = std::vector<ScalarType>(calc_time_index, 0.);
-        for (Eigen::Index time_point_index = 0; time_point_index <= calc_time_index; time_point_index++) {
-            ScalarType time_point_age = (ScalarType)time_point_index * dt;
-            if (time_point_index <= (int)m_B.size()) {
-                m_InitFoI[time_point_index] += m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
-                                               std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) *
-                                               m_B[time_point_index];
-                m_NormInitFoI[time_point_index] +=
-                    m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] / m_totalpopulationinit *
-                    std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
+        for (int state = 1; state < (int)InfectionState::Count - 2; state++) {
+            Eigen::Index calc_time_index = m_transitiondistributions[state].size();
+            ScalarType sum               = 0;
+
+            for (Eigen::Index i = 0; i <= calc_time_index; i++) {
+                // Compute state_age.
+                ScalarType state_age = (ScalarType)i * dt;
+                //Compute the apprximate derivative by a backwards difference scheme.
+                sum += std::exp(-parameters.get<NaturalDeathRate>() * state_age) * m_transitiondistributions[state][i];
             }
-            if (time_point_index <= (int)m_infectivity.size()) {
-                m_InitFoI[time_point_index] +=
-                    m_statesinit[0][(int)InfectionState::Exposed] * m_infectivity[time_point_index];
-                m_NormInitFoI[time_point_index] += m_statesinit[0][(int)InfectionState::Exposed] /
-                                                   m_totalpopulationinit * m_infectivity[time_point_index];
-            }
+            m_W[state] = sum;
         }
     }
 
@@ -346,13 +404,14 @@ private:
     std::vector<ScalarType> m_B{std::vector<ScalarType>(1, 0.)}; ///< A Vector contaiing the appriximated
     // values for B.
     std::vector<ScalarType> m_infectivity{
-        std::vector<ScalarType>(1, 0.)}; ///> a vector containing the approximated mean infectivity for all time points.
+        std::vector<ScalarType>(1, 0.)}; ///< A vector containing the approximated mean infectivity for all time points.
     ScalarType m_reproductionnumber_c; ///< The control Reproduction number
     std::vector<ScalarType> m_FoI_0{std::vector<ScalarType>(1, 0.)}; ///< TODO
     std::vector<ScalarType> m_NormFoI_0{std::vector<ScalarType>(1, 0.)}; ///< TODO
-    std::vector<ScalarType> m_InitFoI{std::vector<ScalarType>(1, 0.)}; ///< TODO
+    std::vector<ScalarType> m_InitFoI = std::vector<ScalarType>(1, 0.); ///< TODO
     std::vector<ScalarType> m_NormInitFoI{std::vector<ScalarType>(1, 0.)}; ///< TODO
-
+    std::vector<ScalarType> m_T{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< TODO
+    std::vector<ScalarType> m_W{std::vector<ScalarType>((int)InfectionState::Count, 0.)}; ///<TODO
     // ---- Friend classes/functions. ----
     friend class Model;
     friend class NormModel;

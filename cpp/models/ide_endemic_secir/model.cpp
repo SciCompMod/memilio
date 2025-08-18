@@ -23,13 +23,10 @@ Model::Model(CompParameters const& compparams)
     , compparameters{std::make_shared<CompParameters>(compparams)}
     , transitions{TimeSeries<ScalarType>(Eigen::Index(InfectionTransition::Count))}
     , transitions_update{TimeSeries<ScalarType>(Eigen::Index(InfectionTransition::Count))}
-    , populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
-    , populations_update{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count))}
+    , populations{compparameters->m_statesinit}
+    , populations_update{compparameters->m_statesinit}
 
 {
-    // Set States at start time t_0.
-    populations.add_time_point(0, compparameters->m_statesinit)[0];
-    populations_update.add_time_point(0, compparameters->m_statesinit[0]);
 
     // Set flows at start time t0.
     // As we assume that all individuals have infectio age 0 at time t0, the flows at t0 are set to 0.
@@ -386,13 +383,13 @@ void Model::compute_forceofinfection(ScalarType dt)
         m_totalpopulationupdate[num_time_points - 1][0];
 
     // Add inital functions for the force of infection in case they still have an influence.
-    if ((int)compparameters->m_FoI_0.size() <= num_time_points) {
+    if (num_time_points <= (int)compparameters->m_FoI_0.size()) {
         m_forceofinfection.get_last_value()[0] +=
             compparameters->m_FoI_0[num_time_points - 1] / m_totalpopulation[num_time_points - 1][0];
         m_forceofinfectionupdate.get_last_value()[0] +=
             compparameters->m_FoI_0[num_time_points - 1] / m_totalpopulationupdate[num_time_points - 1][0];
     }
-    if ((int)compparameters->m_InitFoI.size() <= num_time_points) {
+    if (num_time_points <= (int)compparameters->m_InitFoI.size()) {
         m_forceofinfection.get_last_value()[0] +=
             compparameters->m_InitFoI[num_time_points - 1] *
             parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
@@ -406,6 +403,6 @@ void Model::compute_forceofinfection(ScalarType dt)
     }
 }
 
-} // namespace endisecir
+}; // namespace endisecir
 
 } // namespace mio

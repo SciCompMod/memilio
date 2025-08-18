@@ -3,7 +3,9 @@
 
 #include "ide_endemic_secir/computed_parameters.h"
 #include "ide_endemic_secir/model.h"
+#include "ide_endemic_secir/normalized_model.h"
 #include "memilio/config.h"
+#include "memilio/utils/miompi.h"
 #include "memilio/utils/time_series.h"
 #include <memory>
 #include <vector>
@@ -16,8 +18,10 @@ namespace endisecir
 class Simulation
 {
 public:
-    Simulation(Model const& model, ScalarType dt = 0.1)
-        : m_model(std::make_unique<Model>(model))
+    Simulation(CompParameters const& compparams, Model const& model, NormModel const& normmodel, ScalarType dt = 0.1)
+        : m_compparams(std::make_unique<CompParameters>(compparams))
+        , m_model(std::make_unique<Model>(model))
+        , m_normmodel(std::make_unique<NormModel>(normmodel))
         , m_dt(dt)
     {
     }
@@ -41,13 +45,25 @@ public:
         return m_model->populations_update;
     }
 
+    /**
+     * @brief Get the result of the simulation for the normalized compartments, where we use m_model.
+     * Return the number of persons in all #InfectionState%s
+     */
     TimeSeries<ScalarType> get_normalizedcompartments()
     {
         return m_model->m_normalizedpopulations;
     }
+    /**
+     * @brief Get the result of the simulation for the compartments of the normalized model.
+     * Return the number of persons in all #InfectionState%s
+     */
+    TimeSeries<ScalarType> get_normmodel_compartments()
+    {
+        return m_normmodel->populations;
+    }
 
     /**
-     * @brief Get the result of the simulation for the compartments
+     * @brief Get the result of the simulation for the compartments.
      * Return the number of persons in all #InfectionState%s
      */
     TimeSeries<ScalarType>& get_compartments() const
@@ -60,9 +76,22 @@ public:
         return m_model->populations_update;
     }
 
+    /**
+     * @brief Get the result of the simulation for the normalized compartments, where we use m_model.
+     * Return the number of persons in all #InfectionState%s
+     */
     TimeSeries<ScalarType>& get_normalizedcompartments() const
     {
         return m_model->m_normalizedpopulations;
+    }
+
+    /**
+     * @brief Get the result of the simulation for the compartments of the normalized model.
+     * Return the number of persons in all #InfectionState%s
+     */
+    TimeSeries<ScalarType>& get_normmodel_compartments() const
+    {
+        return m_normmodel->populations;
     }
 
     /**
@@ -78,6 +107,14 @@ public:
         return m_model->transitions_update;
     }
 
+    /**
+     * @brief Get the transitions between the different #InfectionState%s  of the normalized Model.
+     */
+    TimeSeries<ScalarType> const& get_normmodel_transitions()
+    {
+        return m_normmodel->transitions;
+    }
+
     TimeSeries<ScalarType> const& get_forceofinfections()
     {
         return m_model->m_forceofinfection;
@@ -86,6 +123,11 @@ public:
     TimeSeries<ScalarType> const& get_forceofinfections_update()
     {
         return m_model->m_forceofinfectionupdate;
+    }
+
+    TimeSeries<ScalarType> const& get_normmodel_forceofinfections()
+    {
+        return m_normmodel->m_forceofinfection;
     }
 
     TimeSeries<ScalarType> const& get_totalpopulations()
@@ -101,6 +143,16 @@ public:
     ScalarType const& get_reproductionnumber_c()
     {
         return m_model->compparameters->m_reproductionnumber_c;
+    }
+
+    std::vector<ScalarType> const& get_T()
+    {
+        return m_model->compparameters->m_T;
+    }
+
+    std::vector<ScalarType> const& get_W()
+    {
+        return m_model->compparameters->m_W;
     }
 
     /**
@@ -119,6 +171,22 @@ public:
         return *m_model;
     }
 
+    /**
+     * @brief returns the simulation normmodel used in simulation.
+     */
+    const NormModel& get_normmodel() const
+    {
+        return *m_normmodel;
+    }
+
+    /**
+      * @brief returns the simulation normmodel used in simulation.
+      */
+    NormModel& get_normmodel()
+    {
+        return *m_normmodel;
+    }
+
     /** 
      * @brief get the size of the time step of the simulation.
      */
@@ -128,7 +196,9 @@ public:
     }
 
 private:
+    std::unique_ptr<CompParameters> m_compparams; ///< Unique pointer to the computed Parameters.
     std::unique_ptr<Model> m_model; ///< Unique pointer to the simulated Model.
+    std::unique_ptr<NormModel> m_normmodel; ///< Unique pointer to the simulated normalized Model.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
 };
 

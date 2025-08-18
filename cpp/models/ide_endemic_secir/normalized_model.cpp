@@ -31,7 +31,7 @@ NormModel::NormModel(CompParameters const& compparams)
         TimeSeries<ScalarType>::Vector(Eigen::Index(InfectionState::Count) - 1);
     for (int infection_state = 0; infection_state < Eigen::Index(InfectionState::Count) - 1; infection_state++) {
         vec_initnormalizedpopulations[infection_state] =
-            compparameters->m_statesinit[0][infection_state] / compparameters->m_totalpopulationinit[0][0];
+            compparameters->m_statesinit[0][infection_state] / compparameters->m_totalpopulationinit;
     }
     populations.add_time_point(0, vec_initnormalizedpopulations);
 
@@ -39,6 +39,8 @@ NormModel::NormModel(CompParameters const& compparams)
     // As we assume that all individuals have infectio age 0 at time t0, the flows at t0 are set to 0.
     transitions.add_time_point(
         0, TimeSeries<ScalarType>::Vector::Constant(static_cast<size_t>(InfectionTransition::Count), 0.));
+
+    m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0));
 }
 
 bool NormModel::check_constraints() const
@@ -88,7 +90,6 @@ void NormModel::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index
                  parameters.get<NaturalBirthRate>()) *
                     populations[i][idx_CurrentCompartment]) *
                std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
-               parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
                compparameters->m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index - i];
     }
     if (current_time_index <= calc_time_index) {
@@ -101,18 +102,18 @@ void NormModel::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index
     }
     else {
         transitions.get_value(current_time_index)[idx_InfectionTransitions] =
-            (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions]*;
+            (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
     }
 }
 
-void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow,
-                         Eigen::Index idx_CurrentCompartment, ScalarType dt)
+void NormModel::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx_IncomingFlow,
+                             Eigen::Index idx_CurrentCompartment, ScalarType dt)
 {
     Eigen::Index current_time_index = transitions.get_num_time_points() - 1;
     compute_flow(idx_InfectionTransitions, idx_IncomingFlow, idx_CurrentCompartment, current_time_index, dt);
 }
 
-void Model::flows_currents_timestep(ScalarType dt)
+void NormModel::flows_currents_timestep(ScalarType dt)
 {
     Eigen::Index current_time_index = populations.get_num_time_points() - 1;
     // Calculate the transition SusceptibleToExposed with force of infection from previous time step and Susceptibles from
@@ -251,26 +252,81 @@ void NormModel::compute_forceofinfection(ScalarType dt)
     ScalarType current_time      = populations.get_last_time();
 
     // Determine the starting point of the for loop.
-    Eigen::Index starting_point = std::max(0, (int)num_time_points - 1 - (int)compparameters->m_FoI_0.size());
+    Eigen::Index starting_point1 = std::max(0, (int)num_time_points - 1 - (int)compparameters->m_infectivity.size());
 
-    ScalarType sum = 0.;
-    // Compute the sum in the force of infection term.
-    for (Eigen::Index i = starting_point; i < num_time_points - 1; i++) {
-        sum += compparameters->m_infectivity[num_time_points - 1 - i] *
-               populations[i + 1][(int)InfectionState::Susceptible] * m_forceofinfection[i][0];
+    ScalarType sum1 = 0.;
+    // Compute the first sum in the force of infection term.
+    for (Eigen::Index i = starting_point1; i < num_time_points - 1; i++) {
+        sum1 += compparameters->m_infectivity[num_time_points - 1 - i] *
+                (populations[i + 1][(int)InfectionState::Susceptible] * m_forceofinfection[i][0] +
+                 (parameters.get<NaturalDeathRate>() +
+                  transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+                  parameters.get<NaturalBirthRate>()) *
+                     populations[i + 1][(int)InfectionState::Exposed]);
     }
+
+    // Determine the starting point of the for loop.
+    Eigen::Index starting_point2 = std::max(0, (int)num_time_points - 1 - (int)compparameters->m_B.size());
+
+    ScalarType sum2 = 0.;
+    // Compute the second sum in the force of infection term.
+    for (Eigen::Index i = starting_point2; i < num_time_points - 1; i++) {
+        ScalarType state_age = static_cast<ScalarType>(i) * dt;
+        sum2 +=
+            (parameters.get<NaturalDeathRate>() + transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+             parameters.get<NaturalBirthRate>()) *
+            std::exp(-parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
+            populations[i + 1][(int)InfectionState::InfectedNoSymptoms] * compparameters->m_B[num_time_points - 1 - i];
+    }
+
+    // Determine the starting point of the for loop.
+    Eigen::Index starting_point3 =
+        std::max(0, (int)num_time_points - 1 -
+                        (int)compparameters->m_transitiondistributions[(int)InfectionState::InfectedNoSymptoms].size());
+
+    ScalarType sum3 = 0.;
+    // Compute the third sum in the force of infection term.
+    for (Eigen::Index i = starting_point3; i < num_time_points - 1; i++) {
+        ScalarType state_age = static_cast<ScalarType>(i) * dt;
+        sum3 +=
+            (parameters.get<NaturalDeathRate>() + transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+             parameters.get<NaturalBirthRate>()) *
+            std::exp(-parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
+            populations[i + 1][(int)InfectionState::InfectedNoSymptoms] *
+            parameters.get<RelativeTransmissionNoSymptoms>().eval(current_time - state_age) *
+            compparameters->m_transitiondistributions[(int)InfectionState::InfectedNoSymptoms][num_time_points - 1 - i];
+    }
+
+    // Determine the starting point of the for loop.
+    Eigen::Index starting_point4 =
+        std::max(0, (int)num_time_points - 1 -
+                        (int)compparameters->m_transitiondistributions[(int)InfectionState::InfectedSymptoms].size());
+
+    ScalarType sum4 = 0.;
+    // Compute the third sum in the force of infection term.
+    for (Eigen::Index i = starting_point4; i < num_time_points - 1; i++) {
+        ScalarType state_age = static_cast<ScalarType>(i) * dt;
+        sum4 +=
+            (parameters.get<NaturalDeathRate>() + transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+             parameters.get<NaturalBirthRate>()) *
+            std::exp(-parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
+            populations[i + 1][(int)InfectionState::InfectedSymptoms] *
+            parameters.get<RiskOfInfectionFromSymptomatic>().eval(current_time - state_age) *
+            compparameters->m_transitiondistributions[(int)InfectionState::InfectedSymptoms][num_time_points - 1 - i];
+    }
+    ScalarType sum = sum1 + sum2 + sum3 + sum4;
 
     m_forceofinfection.get_last_value()[0] =
         (dt * sum) * (parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
                       parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0));
 
     // Add inital functions for the force of infection in case they still have an influence.
-    if ((int)compparameters->m_FoI_0.size() <= num_time_points) {
-        m_forceofinfection.get_last_value()[0] += compparameters->m_FoI_0[num_time_points - 1];
+    if (num_time_points <= (int)compparameters->m_NormFoI_0.size()) {
+        m_forceofinfection.get_last_value()[0] += compparameters->m_NormFoI_0[num_time_points - 1];
     }
-    if ((int)compparameters->m_InitFoI.size() <= num_time_points) {
+    if (num_time_points <= (int)compparameters->m_NormInitFoI.size()) {
         m_forceofinfection.get_last_value()[0] +=
-            compparameters->m_InitFoI[num_time_points - 1] *
+            compparameters->m_NormInitFoI[num_time_points - 1] *
             parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
             parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0);
     }
