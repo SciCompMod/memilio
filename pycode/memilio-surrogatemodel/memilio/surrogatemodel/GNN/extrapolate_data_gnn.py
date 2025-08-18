@@ -160,15 +160,35 @@ def extrapolate_ground_truth_data(data_dir, num_days=360):
     print(f"Ground truth data saved to {output_path}")
 
 
+def generate_bounds(data_dir):
+    path = data_dir + "/Germany/pydata/ground_truth_all_nodes.pickle"
+    with open(path, 'rb') as f:
+        ground_truth_all_nodes_np = pd.read_pickle(f)
+
+    # Calculate the bounds
+    lower_bound = np.min(ground_truth_all_nodes_np, axis=1)
+    upper_bound = np.max(ground_truth_all_nodes_np, axis=1)
+    path_upper_bound = data_dir + "/Germany/pydata/ground_truth_upper_bound.pickle"
+    path_lower_bound = data_dir + "/Germany/pydata/ground_truth_lower_bound.pickle"
+    with open(path_upper_bound, 'wb') as f:
+        pd.to_pickle(upper_bound, f)
+    with open(path_lower_bound, 'wb') as f:
+        pd.to_pickle(lower_bound, f)
+
+    print(f"Upper bound saved to {path_upper_bound}")
+    print(f"Lower bound saved to {path_lower_bound}")
+
+
 def main():
     cwd = os.getcwd()
-    num_days = 360
+    num_days = 180
     data_dir = os.path.join(cwd, "data")
 
     extrapolate_ground_truth_data(
         data_dir,
         num_days
     )
+    generate_bounds(data_dir)
 
 
 if __name__ == "__main__":

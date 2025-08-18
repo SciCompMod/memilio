@@ -1,0 +1,303 @@
+import os
+import pickle
+import spektral
+import time
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import FunctionTransformer
+
+
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import MeanAbsolutePercentageError
+from tensorflow.keras.models import Model
+import tensorflow.keras.initializers as initializers
+
+import copy
+import tensorflow as tf
+import memilio.surrogatemodel.GNN.network_architectures as network_architectures
+from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
+
+from spektral.transforms.normalize_adj import NormalizeAdj
+from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
+from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv
+from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
+
+
+def create_dataset(path_cases, path_mobility):
+    """
+    Create a dataset from the given file path.
+    """
+    file = open(
+        path_cases, 'rb')
+    data = pickle.load(file)
+
+    number_of_nodes = 400
+
+    inputs = data['inputs']
+    labels = data['labels']
+
+    len_dataset = len(inputs)
+
+    shape_input_flat = np.asarray(
+        inputs).shape[1]*np.asarray(inputs).shape[2]
+    shape_labels_flat = np.asarray(
+        labels).shape[1]*np.asarray(labels).shape[2]
+
+    new_inputs = np.asarray(
+        inputs.transpose(0, 3, 1, 2)).reshape(
+        len_dataset, number_of_nodes, shape_input_flat)
+    new_labels = np.asarray(labels.transpose(0, 3, 1, 2)).reshape(
+        len_dataset, number_of_nodes, shape_labels_flat)
+
+    commuter_file = open(os.path.join(
+        path_mobility, 'commuter_mobility_2022.txt'), 'rb')
+    commuter_data = pd.read_csv(commuter_file, sep=" ", header=None)
+    sub_matrix = commuter_data.iloc[:number_of_nodes, 0:number_of_nodes]
+
+    adjacency_matrix = np.asarray(sub_matrix)
+
+    adjacency_matrix[adjacency_matrix > 0] = 1  # make the adjacency binary
+    node_features = new_inputs
+
+    node_labels = new_labels
+
+    class MyDataset(spektral.data.dataset.Dataset):
+        def read(self):
+            self.a = adjacency_matrix
+
+            # self.a = normalized_adjacency(adjacency_matrix)
+            # self.a = rescale_laplacian(normalized_laplacian(adjacency_matrix))
+
+            return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, node_labels)]
+
+            super().__init__(**kwargs)
+
+        # data = MyDataset()
+    data = MyDataset()
+
+    return data
+
+
+def train_step(inputs, target, loss_fn, model, optimizer):
+    with tf.GradientTape() as tape:
+        predictions = model(inputs, training=True)
+        loss = loss_fn(target, predictions) + \
+            sum(model.losses)  # Add regularization losses
+    gradients = tape.gradient(loss, model.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    acc = tf.reduce_mean(loss_fn(target, predictions))
+    return loss, acc
+
+
+def evaluate(loader, model, loss_fn, retransform=False):
+    output = []
+    step = 0
+    while step < loader.steps_per_epoch:
+        step += 1
+        inputs, target = loader.__next__()
+        pred = model(inputs, training=False)
+        if retransform:
+            target = np.expm1(target)
+            pred = np.expm1(pred)
+        # Calculate loss and metrics
+        outs = (
+            loss_fn(target, pred),
+            tf.reduce_mean(loss_fn(target, pred)),
+            len(target),  # Keep track of batch size
+        )
+        output.append(outs)
+        if step == loader.steps_per_epoch:
+            output = np.array(output)
+            return np.average(output[:, :-1], 0, weights=output[:, -1])
+
+
+def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_patience, save_name):
+    n = len(data)
+    n_train, n_valid, n_test = calc_split_index(
+        n, split_train=0.7, split_valid=0.2, split_test=0.1)
+
+    # Split data into train, validation, and test sets
+    train_data, valid_data, test_data = data[:n_train], data[n_train:n_train +
+                                                             n_valid], data[n_train+n_valid:]
+
+    # Define Data Loaders
+    loader_tr = MixedLoader(
+        train_data, batch_size=batch_size, epochs=epochs, shuffle=False)
+    loader_val = MixedLoader(
+        valid_data, batch_size=batch_size, shuffle=False)
+    loader_test = MixedLoader(
+        test_data, batch_size=n_test, shuffle=False)
+
+    df = pd.DataFrame(columns=[
+        "train_loss", "val_loss", "test_loss",
+        "test_loss_orig", "training_time",
+        "loss_history", "val_loss_history"])
+
+    test_scores = []
+    test_scores_r = []
+    train_losses = []
+    val_losses = []
+
+    losses_history_all = []
+    val_losses_history_all = []
+
+    best_val_loss = np.inf
+    best_weights = None
+    patience = es_patience
+    results = []
+    losses_history = []
+    val_losses_history = []
+
+    start = time.perf_counter()
+    step = 0
+    epoch = 0
+    for batch in loader_tr:
+        step += 1
+        loss, acc = train_step(*batch, loss_fn, model, optimizer)
+        results.append((loss, acc))
+
+    # Compute validation loss and accuracy
+        if step == loader_tr.steps_per_epoch:
+            step = 0
+            epoch += 1
+            val_loss, val_acc = evaluate(loader_val, model, loss_fn)
+            print(
+                "Ep. {} - Loss: {:.3f} - Acc: {:.3f} - Val loss: {:.3f} - Val acc: {:.3f}".format(
+                    epoch, *np.mean(results, 0), val_loss, val_acc
+                )
+            )
+            # Check if loss improved for early stopping
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                patience = es_patience
+                print(f"New best val_loss {val_loss:.3f}")
+                best_weights = model.get_weights()
+            else:
+                patience -= 1
+                if patience == 0:
+                    print(
+                        "Early stopping (best val_loss: {})".format(
+                            best_val_loss))
+                    break
+            results = []
+            losses_history.append(loss)
+            val_losses_history.append(val_loss)
+    ################################################################################
+    # Evaluate model
+    ################################################################################
+    model.set_weights(best_weights)  # Load best model
+    test_loss, test_acc = evaluate(loader_test, model, loss_fn)
+    test_loss_r, test_acc_r = evaluate(
+        loader_test, model, loss_fn, retransform=True)
+
+    print(
+        "Done. Test loss: {:.4f}. Test acc: {:.2f}".format(
+            test_loss, test_acc))
+    test_scores.append(test_loss)
+    test_scores_r.append(test_loss_r)
+    train_losses.append(np.asarray(losses_history).min())
+    val_losses.append(np.asarray(val_losses_history).min())
+    losses_history_all.append(np.asarray(losses_history))
+    val_losses_history_all.append(val_losses_history)
+
+    elapsed = time.perf_counter() - start
+
+    # print out stats
+    print(f"Best train losses: {train_losses} ")
+    print(f"Best validation losses: {val_losses}")
+    print(f"Test values: {test_scores}")
+    print("--------------------------------------------")
+    print(f"Train Score:{np.mean(train_losses)}")
+    print(f"Validation Score:{np.mean(val_losses)}")
+    print(f"Test Score (log): {np.mean(test_scores)}")
+    print(f"Test Score (orig.): {np.mean(test_scores_r)}")
+
+    print(f"Time for training: {elapsed:.4f} seconds")
+    print(f"Time for training: {elapsed/60:.4f} minutes")
+
+
+# save df
+    df.loc[len(df.index)] = [  # layer_name, number_of_layer, channels,
+        np.mean(train_losses),
+        np.mean(val_losses),
+        np.mean(test_scores),
+        np.mean(test_scores_r),
+        (elapsed / 60),
+        [losses_history_all],
+        [val_losses_history_all]]
+    print(df)
+
+    # Ensure that save_name has the .pickle extension
+    if not save_name.endswith('.pickle'):
+        save_name += '.pickle'
+
+    # Save best weights as pickle
+    path = os.path.dirname(os.path.realpath(__file__))
+    file_path_w = os.path.join(path, 'saved_weights')
+    # Ensure the directory exists
+    if not os.path.isdir(file_path_w):
+        os.mkdir(file_path_w)
+
+    # Construct the full file path by joining the directory with save_name
+    file_path_w = os.path.join(file_path_w, save_name)
+
+    # Save the weights to the file
+    with open(file_path_w, 'wb') as f:
+        pickle.dump(best_weights, f)
+
+    file_path_df = os.path.join(
+        os.path.dirname(
+            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+        'model_evaluations_paper')
+    if not os.path.isdir(file_path_df):
+        os.mkdir(file_path_df)
+    file_path_df = file_path_df+save_name.replace('.pickle', '.csv')
+    df.to_csv(file_path_df)
+
+
+if __name__ == "__main__":
+    start_hyper = time.perf_counter()
+    epochs = 10
+    batch_size = 2
+    es_patience = 10
+    optimizer = Adam(learning_rate=0.001)
+    loss_fn = MeanAbsolutePercentageError()
+
+    # Generate the Dataset
+    path_cases = "/localdata1/hege_mn/memilio/saves/GNN_data_30days_3dampings_classic5.pickle"
+    path_mobility = '/localdata1/hege_mn/memilio/data/Germany/mobility'
+    data = create_dataset(path_cases, path_mobility)
+
+    # Define the model architecture
+    def transform_a(adjacency_matrix):
+        a = adjacency_matrix.numpy()
+        a = rescale_laplacian(normalized_laplacian(a))
+        return tf.convert_to_tensor(a, dtype=tf.float32)
+
+    layer_types = [
+        # Dense layer (only uses x)
+        lambda: ARMAConv(512, activation='elu',
+                         kernel_initializer=initializers.GlorotUniform(seed=None))
+    ]
+    num_repeat = [7]
+
+    model_class = network_architectures.generate_model_class(
+        "ARMA", layer_types, num_repeat, num_output=1440, transform=transform_a)
+
+    model = model_class()
+
+    # early stopping patience
+    # name for df
+    save_name = 'GNN_30days'  # name for model
+    # for param in parameters:
+
+    train_and_evaluate(data, batch_size, epochs, model,
+                       loss_fn, optimizer, es_patience, save_name)
+
+    elapsed_hyper = time.perf_counter() - start_hyper
+    print(
+        "Time for hyperparameter testing: {:.4f} minutes".format(
+            elapsed_hyper / 60))
+    print(
+        "Time for hyperparameter testing: {:.4f} hours".format(
+            elapsed_hyper / 60 / 60))

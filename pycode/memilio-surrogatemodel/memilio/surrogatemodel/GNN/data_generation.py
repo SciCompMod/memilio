@@ -167,7 +167,7 @@ def get_graph(num_groups, data_dir, mobility_directory):
     return graph
 
 
-def run_secir_groups_simulation(days, damping_days, damping_factors, graph, num_groups=6, start_date=mio.Date(2020, 6, 1)):
+def run_secir_groups_simulation1(days, damping_days, damping_factors, graph, num_groups=6, start_date=mio.Date(2020, 6, 1)):
     """ Uses an ODE SECIR model allowing for asymptomatic infection with 6
         different age groups. The model is not stratified by region.
         Virus-specific parameters are fixed and initial number of person
@@ -214,25 +214,142 @@ def run_secir_groups_simulation(days, damping_days, damping_factors, graph, num_
             while valid_configuration is False:
                 comp_data = data[:, i]
                 ratios = np.random.uniform(0.8, 1.2, size=8)
-                modified_data = comp_data * ratios
-                if np.sum(modified_data[1:]) < pop_age_group:
+                init_data = comp_data * ratios
+                if np.sum(init_data[1:]) < pop_age_group:
                     valid_configuration = True
 
             # Set the populations for the different compartments
             model.populations[age_group, Index_InfectionState(
-                InfectionState.Exposed)] = modified_data[1]
+                InfectionState.Exposed)] = init_data[1]
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedNoSymptoms)] = modified_data[2]
+                InfectionState.InfectedNoSymptoms)] = init_data[2]
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedSymptoms)] = modified_data[3]
+                InfectionState.InfectedSymptoms)] = init_data[3]
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedSevere)] = modified_data[4]
+                InfectionState.InfectedSevere)] = init_data[4]
             model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedCritical)] = modified_data[5]
+                InfectionState.InfectedCritical)] = init_data[5]
             model.populations[age_group, Index_InfectionState(
-                InfectionState.Recovered)] = modified_data[6]
+                InfectionState.Recovered)] = init_data[6]
             model.populations[age_group, Index_InfectionState(
-                InfectionState.Dead)] = modified_data[7]
+                InfectionState.Dead)] = init_data[7]
+            model.populations.set_difference_from_group_total_AgeGroup((
+                age_group, InfectionState.Susceptible), pop_age_group)
+
+        # Introduce the damping information, in general dampings can be local, but till now the code just allows global dampings
+        damped_matrices = []
+        damping_coefficients = []
+
+        for i in np.arange(len(damping_days)):
+            day = damping_days[i]
+            factor = damping_factors[i]
+
+            damping = np.ones((num_groups, num_groups)
+                              ) * np.float16(factor)
+            model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
+                coeffs=(damping), t=day, level=0, type=0))
+            damped_matrices.append(model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
+                day+1))
+            damping_coefficients.append(damping)
+
+        # Apply mathematical constraints to parameters
+        model.apply_constraints()
+
+        # set model to graph
+        graph.get_node(node_indx).property.populations = model.populations
+
+    # Start simulation
+    study = ParameterStudy(graph, 0, days, dt=0.5, num_runs=1)
+    start_time = time.perf_counter()
+    study.run()
+    runtime = time.perf_counter() - start_time
+
+    graph_run = study.run()[0]
+    results = interpolate_simulation_result(graph_run)
+
+    for result_indx in range(len(results)):
+        results[result_indx] = remove_confirmed_compartments(
+            np.asarray(results[result_indx]), num_groups)
+
+    dataset_entry = copy.deepcopy(results)
+
+    return dataset_entry, damped_matrices, damping_coefficients, runtime
+
+
+def run_secir_groups_simulation(days, damping_days, damping_factors, graph, num_groups=6, start_date=mio.Date(2020, 6, 1)):
+    """ Uses an ODE SECIR model allowing for asymptomatic infection with 6
+        different age groups. The model is not stratified by region.
+        Virus-specific parameters are fixed and initial number of person
+        in the particular infection states are chosen randomly from defined ranges.
+
+    :param days: Number of days simulated within a single run.
+    :param damping_days: Days, where a damping is applied
+    :param damping_factors: damping factors associated to the damping days 
+    :param graph: Graph initialized for the start_date with the population data which
+            is sampled during the run.
+    :param num_groups: Number of age groups considered in the simulation
+    :param start_date: Date, when the simulation starts
+    :returns: List containing the populations in each compartment used to initialize
+            the run.
+   """
+    if len(damping_days) != len(damping_factors):
+        raise ValueError("Length of damping_days and damping_factors differ!")
+
+    min_date = mio.Date(2020, 6, 1)
+    min_date_num = min_date.day_in_year
+    start_date_num = start_date.day_in_year - min_date_num
+
+    # Load the ground truth data
+    pydata_dir = os.path.join(data_dir, "Germany", "pydata")
+    upper_bound_dir = os.path.join(
+        pydata_dir, "ground_truth_upper_bound.pickle")
+    lower_bound_dir = os.path.join(
+        pydata_dir, "ground_truth_lower_bound.pickle")
+    with open(upper_bound_dir, 'rb') as f:
+        ground_truth_upper_bound = pickle.load(f)
+
+    with open(lower_bound_dir, 'rb') as f:
+        ground_truth_lower_bound = pickle.load(f)
+
+    # Initialize model for each node, using the population data and sampling the number of
+    # individuals in the different compartments
+    for node_indx in range(graph.num_nodes):
+        model = graph.get_node(node_indx).property
+        max_data = ground_truth_upper_bound[node_indx]
+        min_data = ground_truth_lower_bound[node_indx]
+
+        # Iterate over the different age groups
+        for i in range(num_groups):
+            age_group = AgeGroup(i)
+            pop_age_group = model.populations.get_group_total_AgeGroup(
+                age_group)
+
+            # Generating valid, noisy configuration of the compartments
+            valid_configuration = False
+            while valid_configuration is False:
+                init_data = np.asarray([0 for _ in range(8)])
+                max_val = max_data[:, i]
+                min_val = min_data[:, i]
+                for j in range(1, 8):
+                    init_data[j] = random.uniform(min_val[j], max_val[j])
+                if np.sum(init_data[1:]) < pop_age_group:
+                    valid_configuration = True
+
+            # Set the populations for the different compartments
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.Exposed)] = init_data[1]
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.InfectedNoSymptoms)] = init_data[2]
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.InfectedSymptoms)] = init_data[3]
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.InfectedSevere)] = init_data[4]
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.InfectedCritical)] = init_data[5]
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.Recovered)] = init_data[6]
+            model.populations[age_group, Index_InfectionState(
+                InfectionState.Dead)] = init_data[7]
             model.populations.set_difference_from_group_total_AgeGroup((
                 age_group, InfectionState.Susceptible), pop_age_group)
 
@@ -308,15 +425,15 @@ def generate_data(
     mobility_dir = data_dir + "/Germany/mobility/commuter_mobility_2022.txt"
     graph = get_graph(num_groups, data_dir, mobility_dir)
     # Define possible start dates for the simulation
-    start_dates = [
-        mio.Date(2020, 6, 1),
-        mio.Date(2020, 7, 1),
-        mio.Date(2020, 8, 1),
-        mio.Date(2020, 9, 1),
-        mio.Date(2020, 10, 1),
-        mio.Date(2020, 11, 1),
-        mio.Date(2020, 12, 1)
-    ]
+    # start_dates = [
+    #    mio.Date(2020, 6, 1),
+    #    mio.Date(2020, 7, 1),
+    #    mio.Date(2020, 8, 1),
+    #    mio.Date(2020, 9, 1),
+    #    mio.Date(2020, 10, 1),
+    #    mio.Date(2020, 11, 1),
+    #    mio.Date(2020, 12, 1)
+    # ]
 
     # show progess in terminal for longer runs
     # Due to the random structure, there is currently no need to shuffle the data
@@ -324,11 +441,15 @@ def generate_data(
 
     times = []
     for i in range(0, num_runs):
-        start_date = start_dates[i % len(start_dates)]
+        # start_date = start_dates[i % len(start_dates)]
         # Generate random damping days and damping factors
-        damping_days, damping_factors = dampings.generate_dampings(
-            days, max_number_damping, method=damping_method, min_distance=2,
-            min_damping_day=2)
+        if max_number_damping > 0:
+            damping_days, damping_factors = dampings.generate_dampings(
+                days, max_number_damping, method=damping_method, min_distance=2,
+                min_damping_day=2)
+        else:
+            damping_days = []
+            damping_factors = []
         # Run simulation
         data_run, damped_matrices, damping_coefficients, t_run = run_secir_groups_simulation(
             days, damping_days, damping_factors, graph, num_groups, start_date)
@@ -355,8 +476,8 @@ def generate_data(
         if transform:
             inputs, labels = scale_data(data)
 
-        all_data = {"inputs": scaled_inputs,
-                    "labels": scaled_labels,
+        all_data = {"inputs": inputs,
+                    "labels": labels,
                     "damping_day": data["damping_days"],
                     "contact_matrix": data["contact_matrix"],
                     "damping_coeff": data["damping_factors"]
@@ -388,8 +509,8 @@ if __name__ == "__main__":
     # data_dir = os.path.join(os.getcwd(), 'data')
     data_dir = "/localdata1/hege_mn/memilio/data"
     input_width = 5
-    number_of_dampings = 3
-    num_runs = 30
+    number_of_dampings = 0
+    num_runs = 100
     label_width_list = [30]
 
     random.seed(10)
@@ -399,5 +520,6 @@ if __name__ == "__main__":
                       path=path_output,
                       input_width=input_width,
                       label_width=label_width,
-                      save_data=False,
+                      save_data=True,
+                      damping_method="active",
                       max_number_damping=number_of_dampings)
