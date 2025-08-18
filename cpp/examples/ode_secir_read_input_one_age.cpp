@@ -77,18 +77,18 @@ int main()
         std::cerr << io.error().formatted_message() << std::endl;
         return 1;
     }
-
-    // icu should be 7.
-
     // check output
     const auto& m = graph.nodes()[0].property;
     const auto ag = mio::AgeGroup(0);
     std::cout << "Initialized via set_nodes for county 1002 on " << date << "\n";
-    std::cout << "S=" << m.populations[{ag, mio::osecir::InfectionState::Susceptible}].value() << ", ";
-    std::cout << "E=" << m.populations[{ag, mio::osecir::InfectionState::Exposed}].value() << ", ";
-    std::cout << "I=" << m.populations[{ag, mio::osecir::InfectionState::InfectedSymptoms}].value() << ", ";
-    std::cout << "R=" << m.populations[{ag, mio::osecir::InfectionState::Recovered}].value() << ", ";
-    std::cout << "D=" << m.populations[{ag, mio::osecir::InfectionState::Dead}].value() << std::endl;
+    std::cout << "S =" << m.populations[{ag, mio::osecir::InfectionState::Susceptible}].value() << ", ";
+    std::cout << "E =" << m.populations[{ag, mio::osecir::InfectionState::Exposed}].value() << ", ";
+    std::cout << "C =" << m.populations[{ag, mio::osecir::InfectionState::InfectedNoSymptoms}].value() << ", ";
+    std::cout << "I =" << m.populations[{ag, mio::osecir::InfectionState::InfectedSymptoms}].value() << ", ";
+    std::cout << "H =" << m.populations[{ag, mio::osecir::InfectionState::InfectedSevere}].value() << ", ";
+    std::cout << "U =" << m.populations[{ag, mio::osecir::InfectionState::InfectedCritical}].value() << ", ";
+    std::cout << "R =" << m.populations[{ag, mio::osecir::InfectionState::Recovered}].value() << ", ";
+    std::cout << "D =" << m.populations[{ag, mio::osecir::InfectionState::Dead}].value() << std::endl;
 
     return 0;
 }
