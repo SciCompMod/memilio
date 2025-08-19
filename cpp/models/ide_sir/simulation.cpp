@@ -142,7 +142,6 @@ void SimulationMessinaExtended::advance_messina(ScalarType tmax)
 // In this advance function, we only consider S as in the paper by Messina et al.
 void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
 {
-
     // Get index of t0, i.e. index of last time point of given initial values.
     size_t t0_index = m_model->populations.get_num_time_points() - 1;
     std::cout << "t0 index: " << t0_index << std::endl;
@@ -176,6 +175,10 @@ void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
+        // std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
+        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
+        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
+
         // Add new time point to populations.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
@@ -208,6 +211,10 @@ void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
         //                  m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered]
         //           << std::endl;
     }
+
+    // std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
+    //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
+    //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
 
     std::cout << "Total population at start of simulation is "
               << m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Susceptible] +

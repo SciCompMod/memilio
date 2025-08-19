@@ -666,7 +666,6 @@ ScalarType ModelMessinaExtendedDetailedInit::sum_part2_weight(size_t n, size_t j
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType susceptibles, ScalarType dt,
                                                                   size_t t0_index)
 {
-
     // Get the index of the current time step.
     size_t current_time_index = populations.get_num_time_points() - 1;
 
@@ -684,22 +683,28 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             m_riskofinffromsymptomatic_vector[current_time_index - j] *
             m_transitiondistribution_vector[current_time_index - j] *
             populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
+
+        // std::cout << "gamma1: " << m_transitiondistribution_vector[current_time_index - j] << std::endl;
+        // std::cout << "Susceptibles: " << populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]
+        //           << std::endl;
     }
 
-    if (current_time_index >= t0_index) {
-        for (size_t j = t0_index; j < std::min(current_time_index, m_gregory_order + t0_index); j++) {
-            // Compute first part of sum of second integral (from 0 to t)
-            ScalarType gregory_weight_second_integral = sum_part1_weight(current_time_index - t0_index, j - t0_index);
+    for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
+        // Compute first part of sum of second integral (from 0 to t)
+        ScalarType gregory_weight_second_integral = sum_part1_weight(current_time_index, j);
 
-            // For each index, the corresponding summand is computed here.
-            sum_second_integral += gregory_weight_second_integral *
-                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j) * dt)(0, 0) *
-                                   m_transmissionproboncontact_vector[current_time_index - j + t0_index] *
-                                   m_riskofinffromsymptomatic_vector[current_time_index - j + t0_index] *
-                                   m_transitiondistribution_vector[current_time_index - j + t0_index];
-        }
+        // For each index, the corresponding summand is computed here.
+        sum_second_integral += gregory_weight_second_integral *
+                               parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0) *
+                               m_transmissionproboncontact_vector[j + t0_index] *
+                               m_riskofinffromsymptomatic_vector[j + t0_index] *
+                               m_transitiondistribution_vector[j + t0_index];
+
+        // std::cout << "gamma2: " << m_transitiondistribution_vector[j + t0_index] << std::endl;
+        // std::cout << "Susceptibles: " << populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]
+        //           << std::endl;
     }
+    // }
     // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
     // current time step from the fixed point iteration.
 
@@ -726,23 +731,31 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
             m_riskofinffromsymptomatic_vector[current_time_index - j] *
             m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
+
+        // std::cout << "gamma1: " << m_transitiondistribution_vector[current_time_index - j] << std::endl;
+        // std::cout << "Susceptibles: " << relevant_susceptibles << std::endl;
     }
 
-    if (current_time_index >= t0_index) {
-        for (size_t j = std::min(current_time_index, m_gregory_order + t0_index); j <= current_time_index; j++) {
-            // Compute second part of second integral here as the second integral is a subintegral of the first integral.
+    for (size_t j = std::min(current_time_index, m_gregory_order); j <= current_time_index; j++) {
+        // Compute second part of second integral here as the second integral is a subintegral of the first integral.
+        ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
-            ScalarType gregory_weight = sum_part2_weight(current_time_index - t0_index, j - t0_index);
+        // For each index, the corresponding summand is computed here.
+        sum_second_integral +=
+            gregory_weight * (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0)) *
+            m_transmissionproboncontact_vector[j + t0_index] * m_riskofinffromsymptomatic_vector[j + t0_index] *
+            m_transitiondistribution_vector[j + t0_index];
 
-            // For each index, the corresponding summand is computed here.
-            sum_second_integral += gregory_weight *
-                                   parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
-                                       (current_time_index - j) * dt)(0, 0) *
-                                   m_transmissionproboncontact_vector[current_time_index - j + t0_index] *
-                                   m_riskofinffromsymptomatic_vector[current_time_index - j + t0_index] *
-                                   m_transitiondistribution_vector[current_time_index - j + t0_index];
-        }
+        // std::cout << "gamma2: " << m_transitiondistribution_vector[j + t0_index] << std::endl;
+        // std::cout << "Susceptibles: " << populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]
+        //           << std::endl;
     }
+
+    // }
+
+    // std::cout << "sum first integral: " << sum_first_integral << std::endl;
+    // std::cout << "sum second integral: " << sum_second_integral << std::endl;
+    // std::cout << "exponent: " << dt * (sum_first_integral - sum_second_integral) << std::endl;
 
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *
            std::exp(dt * (sum_first_integral - sum_second_integral));

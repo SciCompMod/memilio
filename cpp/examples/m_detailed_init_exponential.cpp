@@ -34,19 +34,21 @@ namespace params
 {
 size_t num_agegroups = 1;
 
+size_t finite_difference_order = 1;
+
 ScalarType t0_ode = 0.;
 ScalarType t0_ide = 1.;
 ScalarType tmax   = 2.;
 
-ScalarType TimeInfected = 2.;
+ScalarType TimeInfected = 7.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
 // Instead we scale the contact frequency with a factor of 1.5.
 ScalarType TransmissionProbabilityOnContact = 1.;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType S0 = 90.;
-ScalarType I0 = 10.;
+ScalarType S0 = 85.;
+ScalarType I0 = 15.;
 ScalarType R0 = 0.;
 
 ScalarType total_population = S0 + I0 + R0;
@@ -141,15 +143,17 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
             while (init_populations.get_last_time() < t0_ide - 1e-10) {
                 // std::cout << size_t(init_populations.get_num_time_points() * groundtruth_index) << std::endl;
-                vec_init[(size_t)mio::isir::InfectionState::Susceptible] = result_groundtruth.get_value(
-                    size_t(init_populations.get_num_time_points() *
-                           groundtruth_index_factor))[(size_t)mio::isir::InfectionState::Susceptible];
+                for (size_t compartment : compartments) {
+                    vec_init[compartment] = result_groundtruth.get_value(
+                        size_t(init_populations.get_num_time_points() * groundtruth_index_factor))[compartment];
+                }
                 init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
             }
         }
 
         // Initialize model.
-        mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order);
+        mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
+                                                          finite_difference_order);
 
         mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
         mio::StateAgeFunctionWrapper dist(exp);
@@ -164,7 +168,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
         model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
 
-        model.parameters.get<mio::isir::beta>() = beta;
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
         sim.advance_messina(tmax);
@@ -204,7 +207,7 @@ int main()
 
     // Do IDE simulations.
 
-    std::vector<ScalarType> ide_exponents = {2};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     for (size_t gregory_order : gregory_orders) {
