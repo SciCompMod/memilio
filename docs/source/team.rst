@@ -48,7 +48,7 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
 Henrik Zunker
 ^^^^^^^^^^^^^
 
-.. image:: _static/team/max_mustermann.jpg
+.. image:: https://martinkuehn.eu/research/images/henrik.png
    :alt: Henrik Zunker
    :width: 150px
    :align: left
