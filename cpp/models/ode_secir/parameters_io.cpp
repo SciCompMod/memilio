@@ -161,7 +161,9 @@ IOResult<void> read_confirmed_cases_data(
         for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
             // R(t0) = ΣC(t0) − I(t0) − H(t0) − U(t0) − D(t0)
             // subtract currently infectious/hospitalized/ICU/dead
-            num_rec[i] -= (num_InfectedSymptoms[i] + num_InfectedSevere[i] + num_icu[i] + num_death[i]);
+            num_rec[i] -=
+                (num_InfectedSymptoms[i] / scaling_factor_inf[i] + num_InfectedSevere[i] / scaling_factor_inf[i] +
+                 num_icu[i] / scaling_factor_inf[i] + num_death[i] / scaling_factor_inf[i]);
 
             auto try_fix_constraints = [region, i](double& value, double error, auto str) {
                 if (value < error) {
