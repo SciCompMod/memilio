@@ -4,6 +4,12 @@ MSEIRS4 model (ODE)
 The ODE-MSEIRS4 module models a pathogen with partial and waning immunity across multiple infection episodes,
 including a maternal immunity class. It is suited for pathogens with repeat infections and seasonality.
 
+The infection states and the transitions are visualized in the following graph.
+
+.. image:: https://martinkuehn.eu/research/images/ode_mseirs4.png
+   :alt: mseirs4_model
+
+
 This implementation is designed for Respiratory Syncytial Virus (RSV) and is based on:
 
 - Weber A, Weber M, Milligan P. (2001). *Modeling epidemics caused by respiratory syncytial virus (RSV).* Mathematical Biosciences 172(2): 95–113. `DOI:10.1016/S0025-5564(01)00066-9 <https://doi.org/10.1016/S0025-5564(01)00066-9>`_
