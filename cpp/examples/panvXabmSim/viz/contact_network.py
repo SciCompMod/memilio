@@ -203,7 +203,8 @@ def create_location_layout(contact_data_with_types, household_positions, area_di
         'School': (center_x + width/2, -(area_distance + household_area_height/4)),
         'SocialEvent': (center_x - width/2, area_distance + household_area_height / 4),
         'BasicsShop': (center_x + width/2, area_distance + household_area_height/4),
-        'Home': (center_x, area_distance + household_area_height/2 + 20)
+        'Home': (center_x, area_distance + household_area_height/2 + 20),
+        'Unknown': (center_x, area_distance + household_area_height/2 + 20)
     }
 
     location_positions = {}
@@ -665,10 +666,10 @@ def main():
     args = parser.parse_args()
 
     # # For debug, set a path:
-    # args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result"
-    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/contact_network.png"
-    # args.scenario_name = "Test Scenario"
-    # args.total_runs = 10
+    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result"
+    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/contact_network.png"
+    args.scenario_name = "Test Scenario"
+    args.total_runs = 10
 
     # Check if directory exists
     if not os.path.exists(args.data_dir):

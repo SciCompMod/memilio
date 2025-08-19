@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
@@ -123,10 +122,7 @@ def find_potential_infectors(infected_person, infection_time, location,
             if has_contact_at_location(event['person_id'], infected_person,
                                        location, infection_time, contact_data):
 
-                # Calculate probability based on time proximity and contact strength
-                time_diff = infection_time - event['time']
-                contact_strength = get_contact_strength_between(
-                    event['person_id'], infected_person, location, contact_data)
+                # Calculate probability (simplified for now)
                 probability = 1
 
                 if probability > 0:
@@ -142,10 +138,94 @@ def find_potential_infectors(infected_person, infection_time, location,
     return potential_infectors
 
 
+def build_transmission_tree(infection_events, contact_data, show_all_potential_infectors=False):
+    """Build a transmission tree to organize the layout hierarchically"""
+    print("Building transmission tree...")
+
+    # Build transmission relationships
+    transmission_tree = {}
+    infection_generations = {}
+    all_potential_transmissions = {}  # Store all potential infectors for visualization
+
+    # Patient zero is generation 0
+    patient_zero = min(infection_events, key=lambda x: x['time'])
+    transmission_tree[patient_zero['person_id']] = []
+    infection_generations[patient_zero['person_id']] = 0
+
+    # For each subsequent infection, find most likely infector
+    for i, event in enumerate(infection_events[1:], 1):
+        infected_person = event['person_id']
+        potential_infectors = find_potential_infectors(
+            infected_person, event['time'], event['location'],
+            infection_events[:i], contact_data)
+
+        if potential_infectors:
+            # Store all potential infectors for optional visualization
+            all_potential_transmissions[infected_person] = potential_infectors
+
+            # Choose most likely infector for primary tree structure
+            most_likely_infector = max(
+                potential_infectors, key=lambda x: x[1])[0]
+
+            # Add to transmission tree
+            if most_likely_infector not in transmission_tree:
+                transmission_tree[most_likely_infector] = []
+            transmission_tree[most_likely_infector].append(infected_person)
+
+            # Set generation (one more than infector)
+            if most_likely_infector in infection_generations:
+                infection_generations[infected_person] = infection_generations[most_likely_infector] + 1
+            else:
+                infection_generations[infected_person] = 1
+        else:
+            # Orphan infection - assign to generation 1
+            infection_generations[infected_person] = 1
+
+    return transmission_tree, infection_generations, all_potential_transmissions
+
+
+def calculate_tree_positions(infection_events, infection_generations):
+    """Calculate Y positions based on transmission tree structure with proper tree layout"""
+    print("Calculating tree-based positions...")
+
+    # Group people by generation
+    generations = {}
+    for person_id, generation in infection_generations.items():
+        if generation not in generations:
+            generations[generation] = []
+        generations[generation].append(person_id)
+
+    # Create tree positions with proper spacing
+    person_positions = {}
+    current_y = 0
+
+    for gen in sorted(generations.keys()):
+        people_in_gen = generations[gen]
+
+        # Get infection times for sorting within generation
+        people_with_times = []
+        for person_id in people_in_gen:
+            event = next(
+                e for e in infection_events if e['person_id'] == person_id)
+            people_with_times.append((person_id, event['time']))
+
+        # Sort by time within generation
+        people_with_times.sort(key=lambda x: x[1])
+
+        # Assign positions with consistent spacing
+        for i, (person_id, _) in enumerate(people_with_times):
+            person_positions[person_id] = current_y + i
+
+        # Move to next generation with spacing
+        current_y += len(people_in_gen) + 2  # Add spacing between generations
+
+    return person_positions
+
+
 def create_timeline_with_probability_bars(infection_events, contact_data,
-                                          max_infections=50, figsize=(20, 12), save_path=None):
+                                          max_infections=50, figsize=(20, 12), save_path=None, show_all_potential_infectors=False):
     """
-    Create timeline showing infection events with clear potential infector visualization
+    Create timeline showing infection events with tree-based layout and clear transmission lines
     Limited to first max_infections for readability
     """
     # Limit to first N infections for visualization clarity
@@ -154,7 +234,14 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
         print(
             f"Limiting visualization to first {max_infections} infections for clarity")
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figsize, height_ratios=[3, 1])
+    # Build transmission tree for better layout
+    transmission_tree, infection_generations, all_potential_transmissions = build_transmission_tree(
+        infection_events, contact_data, show_all_potential_infectors)
+    person_positions = calculate_tree_positions(
+        infection_events, infection_generations)
+
+    # Create single plot instead of subplots
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
 
     # Location colors - updated for simulation data
     location_colors = {
@@ -164,122 +251,197 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
         'SocialEvent': '#9370DB',  # Medium Purple
         'BasicsShop': '#FF8C00',  # Dark Orange
         'EventPanvadere': '#8A2BE2',  # Blue Violet
-        'Patient Zero': "#FF0000"  # Gray
+        'Patient Zero': "#FF0000"  # Red
     }
 
-    # Main timeline (top)
+    # Main timeline (top) - using tree-based positioning
     times = [event['time'] for event in infection_events]
-    persons = [event['person_id'] for event in infection_events]
 
-    # Plot infection points with location-based colors
+    # Draw tree structure with straight vertical and horizontal lines
+    # First, remove the old spine drawing
+
+    # Draw the tree connections using straight lines only
+    for infector_id, infected_list in transmission_tree.items():
+        if not infected_list:
+            continue
+
+        # Find infector event and position
+        infector_event = next(
+            e for e in infection_events if e['person_id'] == infector_id)
+        infector_y = person_positions[infector_id]
+        infector_time = infector_event['time']
+
+        if len(infected_list) == 1:
+            # Single infection - use L-shaped path (horizontal then vertical)
+            infected_id = infected_list[0]
+            infected_event = next(
+                e for e in infection_events if e['person_id'] == infected_id)
+            infected_y = person_positions[infected_id]
+            infected_time = infected_event['time']
+
+            # Draw L-shaped connection: horizontal then vertical
+            # Step 1: Horizontal line from infector to infected person's time
+            ax.plot([infector_time, infected_time], [infector_y, infector_y],
+                    color='black', linewidth=2, alpha=0.8, zorder=2)
+
+            # Step 2: Vertical line from infector's Y to infected person's Y
+            ax.plot([infected_time, infected_time], [infector_y, infected_y],
+                    color='black', linewidth=2, alpha=0.8, zorder=2)
+
+            # Add small arrow at the end
+            ax.annotate('', xy=(infected_time, infected_y),
+                        xytext=(infected_time, infected_y -
+                                (infected_y - infector_y) * 0.1),
+                        arrowprops=dict(arrowstyle='->', color='black', lw=2))
+
+        else:
+            # Multiple infections - use tree structure with vertical and horizontal lines
+
+            # Find the horizontal position for the vertical line (between infector and earliest infected)
+            earliest_infected_time = min(
+                next(e for e in infection_events if e['person_id'] == iid)[
+                    'time']
+                for iid in infected_list
+            )
+            vertical_line_x = infector_time + \
+                (earliest_infected_time - infector_time) * 0.3
+
+            # Draw horizontal line from infector to vertical line position
+            ax.plot([infector_time, vertical_line_x], [infector_y, infector_y],
+                    color='black', linewidth=2, alpha=0.8, zorder=2)
+
+            # Find Y range for vertical line
+            infected_y_positions = [person_positions[iid]
+                                    for iid in infected_list]
+            min_y = min(infected_y_positions + [infector_y])
+            max_y = max(infected_y_positions + [infector_y])
+
+            # Draw vertical line connecting all infected people
+            ax.plot([vertical_line_x, vertical_line_x], [min_y, max_y],
+                    color='black', linewidth=2, alpha=0.8, zorder=2)
+
+            # Draw horizontal lines from vertical line to each infected person
+            for infected_id in infected_list:
+                infected_event = next(
+                    e for e in infection_events if e['person_id'] == infected_id)
+                infected_y = person_positions[infected_id]
+                infected_time = infected_event['time']
+
+                # Horizontal line from vertical line to infected person
+                ax.plot([vertical_line_x, infected_time], [infected_y, infected_y],
+                        color='black', linewidth=2, alpha=0.8, zorder=2)
+
+                # Small arrow at the end
+                ax.annotate('', xy=(infected_time, infected_y),
+                            xytext=(infected_time - (infected_time -
+                                                     vertical_line_x) * 0.1, infected_y),
+                            arrowprops=dict(arrowstyle='->', color='black', lw=2))
+
+    # Draw all potential infectors if requested (with less saturated colors)
+    if show_all_potential_infectors:
+        for infected_person, potential_infectors in all_potential_transmissions.items():
+            if len(potential_infectors) > 1:  # Only show if there are multiple options
+                # Find infected person's position and time
+                infected_event = next(
+                    e for e in infection_events if e['person_id'] == infected_person)
+                infected_y = person_positions[infected_person]
+                infected_time = infected_event['time']
+
+                # Draw lines to all potential infectors (except the most likely one)
+                most_likely_infector = max(
+                    potential_infectors, key=lambda x: x[1])[0]
+
+                for infector_id, probability in potential_infectors:
+                    # Skip the most likely one (already drawn)
+                    if infector_id != most_likely_infector:
+                        # Find infector position
+                        infector_event = next(
+                            e for e in infection_events if e['person_id'] == infector_id)
+                        infector_y = person_positions[infector_id]
+                        infector_time = infector_event['time']
+
+                        # Draw with more prominent styling for better readability
+                        # Increased base alpha for better visibility
+                        alpha_val = 0.6 + (probability * 0.3)
+                        line_color = 'darkorange'  # More visible color than lightgray
+                        line_width = 2.5  # Thicker lines for better readability
+
+                        # Use L-shaped path like the main tree structure
+                        # Step 1: Horizontal line from infector towards infected person's time
+                        intermediate_x = infector_time + \
+                            (infected_time - infector_time) * 0.7
+                        ax.plot([infector_time, intermediate_x], [infector_y, infector_y],
+                                color=line_color, linewidth=line_width, alpha=alpha_val,
+                                linestyle='--', zorder=2)  # Dashed instead of dotted, higher zorder
+
+                        # Step 2: Vertical line from infector's Y to infected person's Y
+                        ax.plot([intermediate_x, intermediate_x], [infector_y, infected_y],
+                                color=line_color, linewidth=line_width, alpha=alpha_val,
+                                linestyle='--', zorder=2)
+
+                        # Step 3: Short horizontal line to infected person
+                        ax.plot([intermediate_x, infected_time], [infected_y, infected_y],
+                                color=line_color, linewidth=line_width, alpha=alpha_val,
+                                linestyle='--', zorder=2)
+
+                        # End with a more prominent dot to show uncertainty
+                        ax.scatter(infected_time, infected_y, s=50, c='red',
+                                   alpha=alpha_val, zorder=5, marker='o', edgecolors='darkred', linewidth=2)
+
+                        # Add probability label for uncertain transmissions with better styling
+                        mid_x = (infector_time + infected_time) / 2
+                        mid_y = (infector_y + infected_y) / 2
+                        ax.text(mid_x, mid_y, f'{probability:.0%}',
+                                ha='center', va='center', fontsize=7, fontweight='bold', alpha=0.9,
+                                bbox=dict(boxstyle='round,pad=0.2',
+                                          facecolor='yellow', alpha=0.8, edgecolor='darkorange'),
+                                zorder=6)
+
+    # Plot infection points AFTER drawing the tree lines so they appear on top
     for event in infection_events:
+        y_pos = person_positions[event['person_id']]
         color = location_colors.get(event['location_type'], 'gray')
-        size = 200 if event['time'] == min(
-            times) else 120  # Larger for first infection
-        alpha = 1.0 if event['time'] == min(times) else 0.8
+        size = 300 if event['time'] == min(
+            times) else 200  # Larger for patient zero
+        alpha = 1.0
 
-        ax1.scatter(event['time'], event['person_id'], s=size, c=color,
-                    alpha=alpha, zorder=3, edgecolors='black', linewidth=2)
+        # Plot the infection point
+        ax.scatter(event['time'], y_pos, s=size, c=color,
+                   alpha=alpha, zorder=5, edgecolors='black', linewidth=2)
 
-    # Add person labels
-    for i, event in enumerate(infection_events):
-        if event['time'] < 0.0:
-            ax1.annotate(f"{event['location_type']}",
-                         (event['time'], event['person_id']),
-                         xytext=(12, 1), textcoords='offset points',
-                         fontsize=8, fontweight='bold',
-                         bbox=dict(boxstyle='round,pad=0.3',
-                                   facecolor='white', alpha=0.9, edgecolor='gray'))
+    # Add person labels for key events
+    for event in infection_events:
+        y_pos = person_positions[event['person_id']]
+        if event['time'] == min(times):  # Patient zero
+            ax.annotate(f"P{event['person_id']} (Patient Zero)",
+                        (event['time'], y_pos),
+                        xytext=(20, 0), textcoords='offset points',
+                        fontsize=10, fontweight='bold',
+                        bbox=dict(boxstyle='round,pad=0.4',
+                                  facecolor='white', alpha=0.9, edgecolor='red', linewidth=2),
+                        zorder=6)
+        else:
+            # Add person ID labels
+            ax.annotate(f"P{event['person_id']}",
+                        (event['time'], y_pos),
+                        xytext=(15, 0), textcoords='offset points',
+                        fontsize=9, fontweight='bold', alpha=1.0,
+                        bbox=dict(boxstyle='round,pad=0.2',
+                                  facecolor='white', alpha=0.9, edgecolor='gray'),
+                        zorder=6)
 
-    # Draw transmission probability analysis
-    for i, event in enumerate(infection_events[1:], 1):  # Skip first infection
-        infected_person = event['person_id']
-        potential_infectors = find_potential_infectors(
-            infected_person, event['time'], event['location'],
-            # Only consider earlier infections
-            infection_events[:i], contact_data)
+    ax.set_xlabel('Time (Simulation Timesteps)', fontsize=12)
+    ax.set_ylabel('Transmission Order', fontsize=12)
+    ax.set_title('Infection Transmission Tree\n' +
+                 f'First {len(infection_events)} infections (Timesteps {min(times):.0f}-{max(times):.0f})',
+                 fontsize=14, fontweight='bold')
+    ax.grid(True, alpha=0.3)
 
-        if len(potential_infectors) > 1:
-            # Multiple infectors - draw direct arrows from each infector to infected person
-            for j, (infector, probability) in enumerate(potential_infectors):
-                # Find infector position
-                infector_time = None
-                for e in infection_events:
-                    if e['person_id'] == infector:
-                        infector_time = e['time']
-                        break
-
-                if infector_time:
-                    # Calculate arrow width based on probability (thinner for uncertain)
-                    arrow_width = 0.8 + 1.2 * probability  # Range: 0.8 to 2.0
-                    alpha_intensity = 0.4 + 0.4 * probability  # Range: 0.4 to 0.8
-
-                    # Use orange color for uncertain transmissions
-                    arrow_color = 'orange'
-
-                    # Add slight curve to avoid overlapping arrows
-                    connection_style = f"arc3,rad={0.1 + j * 0.05}"
-
-                    # Draw direct arrow from infector to infected person
-                    ax1.annotate('', xy=(event['time'], infected_person),
-                                 xytext=(infector_time, infector),
-                                 arrowprops=dict(arrowstyle='->',
-                                                 color=arrow_color,
-                                                 alpha=alpha_intensity,
-                                                 lw=arrow_width,
-                                                 connectionstyle=connection_style))
-
-                    # Add probability label near the arrow
-                    mid_x = (infector_time + event['time']) / 2
-                    mid_y = (infector + infected_person) / \
-                        2 + j * max(persons) * 0.015
-                    ax1.text(mid_x, mid_y,
-                             f'{probability:.0%}',
-                             ha='center', va='center', fontsize=6, fontweight='bold',
-                             bbox=dict(boxstyle='round,pad=0.2',
-                                       facecolor='orange', alpha=0.6, edgecolor='darkorange'))
-
-        elif len(potential_infectors) == 1:
-            # Single infector - draw simple arrow
-            infector, probability = potential_infectors[0]
-
-            # Find infector position
-            infector_time = None
-            for e in infection_events:
-                if e['person_id'] == infector:
-                    infector_time = e['time']
-                    break
-
-            if infector_time:
-                # Draw direct arrow with thicker line for certain transmission
-                ax1.annotate('', xy=(event['time'], infected_person),
-                             xytext=(infector_time, infector),
-                             arrowprops=dict(arrowstyle='->',
-                                             color='darkgreen',
-                                             alpha=0.8,
-                                             lw=3,
-                                             connectionstyle="arc3,rad=0.1"))
-
-                # Add certainty label
-                mid_x = (infector_time + event['time']) / 2
-                mid_y = (infector + infected_person) / 2
-                ax1.text(mid_x, mid_y + max(persons) * 0.02,
-                         f'P{infector}→P{infected_person}',
-                         ha='center', va='center', fontsize=6, fontweight='bold',
-                         bbox=dict(boxstyle='round,pad=0.2',
-                                   facecolor='lightgreen', alpha=0.8))
-
-    ax1.set_xlabel('Time (Simulation Timesteps)', fontsize=12)
-    ax1.set_ylabel('Person ID', fontsize=12)
-    ax1.set_title(f'Infection Timeline - Simulation Data\n' +
-                  f'First {len(infection_events)} infections (Timesteps {min(times)}-{max(times)})',
-                  fontsize=14, fontweight='bold')
-    ax1.grid(True, alpha=0.3)
-
-    # Set y-axis limits with some padding
-    person_range = max(persons) - min(persons)
-    ax1.set_ylim(min(persons) - person_range * 0.1,
-                 max(persons) + person_range * 0.1)
+    # Set y-axis limits with some padding based on tree positions
+    y_positions_values = list(person_positions.values())
+    y_range = max(y_positions_values) - min(y_positions_values)
+    ax.set_ylim(min(y_positions_values) - y_range * 0.1,
+                max(y_positions_values) + y_range * 0.1)
 
     # Create legend
     legend_elements = []
@@ -289,69 +451,22 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
                                           label=loc_type))
 
     legend_elements.extend([
-        plt.Line2D([0], [0], color='darkgreen', lw=3,
+        plt.Line2D([0], [0], color='black', lw=2,
                    label='Certain Transmission'),
-        plt.Line2D([0], [0], color='orange', lw=2,
-                   label='Uncertain Transmission')
+        plt.Line2D([0], [0], color='black', lw=0, marker='>', markersize=8,
+                   label='Transmission Direction')
     ])
 
-    ax1.legend(handles=legend_elements, loc='upper left',
-               title='Legend', title_fontsize=10)
+    if show_all_potential_infectors:
+        legend_elements.extend([
+            plt.Line2D([0], [0], color='darkorange', lw=2.5, linestyle='--',
+                       label='Uncertain Transmission'),
+            plt.Line2D([0], [0], color='red', lw=0, marker='o', markersize=8,
+                       label='Uncertainty Indicator')
+        ])
 
-    # Uncertainty summary (bottom)
-    uncertainty_scores = []
-    times_uncertain = []
-
-    for i, event in enumerate(infection_events[1:], 1):
-        potential_infectors = find_potential_infectors(
-            event['person_id'], event['time'], event['location'],
-            infection_events[:i], contact_data)
-
-        if potential_infectors:
-            probs = [prob for _, prob in potential_infectors]
-            if len(probs) > 1:
-                entropy = -sum(p * np.log2(p) if p > 0 else 0 for p in probs)
-            else:
-                entropy = 0
-            uncertainty_scores.append(entropy)
-            times_uncertain.append(event['time'])
-
-    if uncertainty_scores:
-        ax2.plot(times_uncertain, uncertainty_scores, 'o-', color='red',
-                 linewidth=2, markersize=6, alpha=0.7)
-        ax2.fill_between(times_uncertain, uncertainty_scores,
-                         alpha=0.3, color='red')
-
-        if max(uncertainty_scores) > 0:
-            high_uncertainty_threshold = max(uncertainty_scores) * 0.7
-            ax2.axhline(y=high_uncertainty_threshold, color='orange',
-                        linestyle='--', alpha=0.7,
-                        label=f'High Uncertainty (>{high_uncertainty_threshold:.1f})')
-            ax2.legend()
-
-    ax2.set_xlabel('Time (Simulation Timesteps)', fontsize=12)
-    ax2.set_ylabel('Uncertainty\n(Entropy)', fontsize=12)
-    ax2.set_title('Transmission Uncertainty Over Time',
-                  fontsize=12, fontweight='bold')
-    ax2.grid(True, alpha=0.3)
-    if uncertainty_scores:
-        ax2.set_ylim(0, max(uncertainty_scores) * 1.1)
-
-    # Add summary statistics
-    if uncertainty_scores:
-        avg_uncertainty = np.mean(uncertainty_scores)
-        max_uncertainty = max(uncertainty_scores)
-        high_uncertainty_count = sum(
-            1 for u in uncertainty_scores if u > max_uncertainty * 0.7)
-
-        stats_text = f"""UNCERTAINTY SUMMARY:
-                        Average: {avg_uncertainty:.2f}
-                        Maximum: {max_uncertainty:.2f}
-                        High uncertainty events: {high_uncertainty_count}"""
-
-        ax2.text(0.98, 0.98, stats_text, transform=ax2.transAxes,
-                 fontsize=10, ha='right', va='top',
-                 bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.9))
+    ax.legend(handles=legend_elements, loc='upper left',
+              title='Legend', title_fontsize=10)
 
     plt.tight_layout()
 
@@ -360,7 +475,7 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
         print(f"Infection timeline saved to {save_path}")
 
 
-def analyze_simulation_infections(contact_file, infection_file, max_display=50, save_path=None, scenario_name="Simulation"):
+def analyze_simulation_infections(contact_file, infection_file, max_display=50, save_path=None, scenario_name="Simulation", show_all_potential_infectors=False):
     """Main function to analyze and visualize simulation infections"""
 
     # Load data
@@ -388,16 +503,17 @@ def analyze_simulation_infections(contact_file, infection_file, max_display=50, 
         loc_type = event['location_type']
         location_counts[loc_type] = location_counts.get(loc_type, 0) + 1
 
-    print(f"\nInfections by location type:")
+    print("\nInfections by location type:")
     for loc_type, count in sorted(location_counts.items(), key=lambda x: -x[1]):
         percentage = count / len(infection_events) * 100
         print(f"  {loc_type}: {count} ({percentage:.1f}%)")
 
     # Create visualization
-    print(f"\nCreating visualization...")
+    print("\nCreating visualization...")
     create_timeline_with_probability_bars(
         infection_events, contact_analysis_df,
-        max_infections=max_display, save_path=save_path
+        max_infections=max_display, save_path=save_path,
+        show_all_potential_infectors=show_all_potential_infectors
     )
 
     if save_path:
@@ -420,6 +536,10 @@ def main():
                         help='Scenario name for titles')
     parser.add_argument('--max-display', type=int, default=50,
                         help='Maximum infections to display')
+    parser.add_argument('--show-all-potential-infectors', action="store_true",
+                        help='Show all potential infectors with less saturated colors')
+    parser.add_argument('--display-one-infection', action="store_true",
+                        help='Whether to display only one infection')
 
     args = parser.parse_args()
 
@@ -446,12 +566,13 @@ def main():
             base_dir, f'infection_timeline_{args.scenario_name.lower()}.png')
 
     # Analyze the simulation data
-    infection_events, contact_data = analyze_simulation_infections(
+    analyze_simulation_infections(
         args.contact_file,
         args.infection_file,
         max_display=args.max_display,
         save_path=save_path,
-        scenario_name=args.scenario_name
+        scenario_name=args.scenario_name,
+        show_all_potential_infectors=args.show_all_potential_infectors
     )
 
 
