@@ -20,6 +20,8 @@ def delete_scenarios(url, headers):
         if (delete_response.status_code != 200):
             print(delete_response.status_code)
             print(delete_response.reason)
+        else:
+            print("Deleting scenarios has been successful.")
 
     print(requests.get(url + "scenarios/", headers=headers).json())
 
@@ -213,6 +215,21 @@ def post_mcmc_parameters(url, t, data_dir, service_realm="", client_id="", usern
 
     # delete scenarios with old parameters
     delete_scenarios(url, headers)
+
+    # Create new headers for posting scenarios.
+    # Request access token from idp.
+    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
+        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+
+    # Raise error if response not ok.
+    req_auth.raise_for_status()
+
+    # Parse response and get access token.
+    res = req_auth.json()
+    token = res['access_token']
+
+    # Set up headers with token.
+    headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
     # post scenarios with updated parameters
     for scenario in new_scenarios:
