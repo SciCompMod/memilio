@@ -117,6 +117,9 @@ IOResult<void> read_confirmed_cases_data(
 
             if (date_df == offset_date_by_days(date, 0)) {
                 num_InfectedSymptoms[age] += scaling_factor_inf[age] * region_entry.num_confirmed;
+                // We intentionally do NOT multiply recovered with the scaling_factor_inf here.
+                // If we apply the scaling factor to recovered as well, we would implicitly
+                // assume that this factor holds for the entire historical period up to t0, which is not valid.
                 num_rec[age] += region_entry.num_confirmed;
             }
             if (date_df == offset_date_by_days(date, days_surplus)) {
@@ -161,6 +164,11 @@ IOResult<void> read_confirmed_cases_data(
         for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
             // R(t0) = ΣC(t0) − I(t0) − H(t0) − U(t0) − D(t0)
             // subtract currently infectious/hospitalized/ICU/dead
+            // Note: We divide I/H/U/D by scaling_factor_inf to "unscale" these contributions back to the
+            // reported level before subtracting from recovered. If we also applied the scaling factor to
+            // recovered, we would implicitly assume that the same underreporting applies to the entire
+            // history up to t0, which would be wrong. The scaling factor should reflect underreporting
+            // around t0 only.
             num_rec[i] -=
                 (num_InfectedSymptoms[i] / scaling_factor_inf[i] + num_InfectedSevere[i] / scaling_factor_inf[i] +
                  num_icu[i] / scaling_factor_inf[i] + num_death[i] / scaling_factor_inf[i]);
