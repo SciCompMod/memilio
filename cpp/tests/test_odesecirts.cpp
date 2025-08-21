@@ -353,7 +353,7 @@ void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, dou
     auto invalid_initial = max == 0 ? 1.0 : max * 1.001;
     auto valid_initial   = (max + min) * 0.5;
     auto initial         = set_invalid_initial_value ? invalid_initial : valid_initial;
-    p                    = mio::UncertainValue(initial);
+    p                    = mio::UncertainValue<double>(initial);
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -460,7 +460,7 @@ void set_contact_parameters(mio::osecirts::Model<double>::ParameterSet& paramete
 
     auto& npis      = parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>();
     auto npi_groups = Eigen::VectorXd::Ones(contact_matrix[0].get_num_groups());
-    auto npi_value  = mio::UncertainValue(0.5);
+    auto npi_value  = mio::UncertainValue<double>(0.5);
     assign_uniform_distribution(npi_value, 0.25, 0.75, set_invalid_initial_value);
     npis.set_threshold(10.0, {mio::DampingSampling<double>(npi_value, mio::DampingLevel(0), mio::DampingType(0),
                                                            mio::SimulationTime<double>(0), {0}, npi_groups)});

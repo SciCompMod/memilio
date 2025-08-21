@@ -748,8 +748,8 @@ TEST(TestOdeSecir, testModelConstraints)
 
     // temporary test for random variables
     set_params_distributions_normal(model, t0, tmax, 0.2);
-    model.parameters.set<mio::osecir::Seasonality<double>>(mio::UncertainValue(0.0));
-    model.parameters.set<mio::osecir::ICUCapacity<double>>(mio::UncertainValue(8000));
+    model.parameters.set<mio::osecir::Seasonality<double>>(mio::UncertainValue<double>(0.0));
+    model.parameters.set<mio::osecir::ICUCapacity<double>>(mio::UncertainValue<double>(8000));
     for (size_t j = 0; j < 10; j++) {
         draw_sample(model);
         secihurd = mio::simulate<double>(t0, tmax, dt, model);
