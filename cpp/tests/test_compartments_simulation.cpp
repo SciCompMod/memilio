@@ -61,30 +61,33 @@ TEST(TestCompartmentSimulation, copy_simulation)
 
     auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
 
-    auto sim_copy_cnstr = mio::Simulation<double, MockModel>(sim);
+    mio::Simulation<double, MockModel> sim_copy_cnstr(sim);
     auto sim_copy_assign = sim;
 
     EXPECT_EQ(sim.get_model().m_dydt, sim_copy_cnstr.get_model().m_dydt);
     EXPECT_EQ(sim.get_model().m_dydt, sim_copy_assign.get_model().m_dydt);
 
-    // modifying model should not effect copies
-    sim.get_model().m_dydt = 2.0;
-    sim.advance(1.0);
-    sim.get_integrator().get_dt_max() = 2.0; 
+    // modifying original simulation should not effect copies
+    auto adapt_sim = [](auto& sim_) {
+        sim_.get_model().m_dydt = 2.0;
+        sim_.advance(1.0);
+        sim_.get_integrator_core().get_dt_max() = 2.0; 
+    };
+    adapt_sim(sim);
 
     EXPECT_NE(sim_copy_cnstr.get_model().m_dydt, 2.0);
     EXPECT_NE(sim_copy_assign.get_model().m_dydt, 2.0);
-    EXPECT_NE(sim_copy_cnstr.get_integrator().get_dt_max(), 2.0);
-    EXPECT_NE(sim_copy_assign.get_integrator().get_dt_max(), 2.0);
+    EXPECT_NE(sim_copy_cnstr.get_integrator_core().get_dt_max(), 2.0);
+    EXPECT_NE(sim_copy_assign.get_integrator_core().get_dt_max(), 2.0);
     
-    // copy simulation after advance
-    sim_copy_cnstr = mio::Simulation<double, MockModel>(sim);
-    sim_copy_assign = sim;
+    // modifying copied simulation to same state
+    adapt_sim(sim_copy_cnstr);
+    adapt_sim(sim_copy_assign);
 
     EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_cnstr.get_result().get_last_value()[0]);
     EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_assign.get_result().get_last_value()[0]);
-    EXPECT_EQ(sim_copy_cnstr.get_integrator().get_dt_max(), 2.0);
-    EXPECT_EQ(sim_copy_assign.get_integrator().get_dt_max(), 2.0);
+    EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_cnstr.get_integrator_core().get_dt_max());
+    EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_assign.get_integrator_core().get_dt_max());
 
 }
 
@@ -141,7 +144,7 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
     }
 
     template <class... Integrands>
-    void set_integrator(std::unique_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
+    void set_integrator_core(std::unique_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
     {
         integrator = (int)integrator_in->get_dt_min();
     }

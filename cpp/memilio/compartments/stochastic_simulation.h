@@ -77,12 +77,12 @@ public:
 
 template <typename FP, class Model, class Sim = StochasticSimulation<FP, Model>>
 TimeSeries<FP> simulate_stochastic(FP t0, FP tmax, FP dt, Model const& model,
-                                   std::unique_ptr<SdeIntegratorCore<FP>>&& integrator = nullptr)
+                                   std::unique_ptr<SdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(std::move(integrator));
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
     }
     sim.advance(tmax);
     return sim.get_result();

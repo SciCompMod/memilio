@@ -249,24 +249,24 @@ public:
 
     /**
      * @brief Change the IntegratorCore used for integration.
-     * @param core The new integrator.
+     * @param core The new IntegratorCore.
      */
-    void set_integrator(std::unique_ptr<Core>&& core)
+    void set_integrator_core(std::unique_ptr<Core>&& core)
     {
         m_core.swap(core);
         m_is_adaptive = false;
     }
 
     /**
-     * @brief Access the integrator core used for integration.
-     * @return A reference to the integrator core used for integration.
+     * @brief Access the IntegratorCore used for integration.
+     * @return A reference to the IntegratorCore used for integration.
      * @{
      */
-    Core& get_integrator()
+    Core& get_integrator_core()
     {
         return *m_core;
     }
-    const Core& get_integrator() const
+    const Core& get_integrator_core() const
     {
         return *m_core;
     }

@@ -122,7 +122,7 @@ auto create_simulation()
         g;
     for (size_t county_id = 0; county_id < cfg.num_regions; county_id++) {
         g.add_node(county_id, model, cfg.t0);
-        g.nodes()[county_id].property.get_simulation().set_integrator(std::make_unique<Integrator>());
+        g.nodes()[county_id].property.get_simulation().set_integrator_core(std::make_unique<Integrator>());
     }
 
     // Graph is always complete here

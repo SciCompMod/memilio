@@ -103,7 +103,7 @@ using is_compartment_model_simulation =
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of a CompartmentalModel.
- * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
+ * @param[in] integrator_core Optionally override the IntegratorCore used by the Simulation.
  * @return A TimeSeries to represent the final Simulation result
  * @tparam FP floating point type, e.g., double
  * @tparam Model The particular Model derived from CompartmentModel to simulate.
@@ -111,12 +111,12 @@ using is_compartment_model_simulation =
  */
 template <typename FP, class Model, class Sim = Simulation<FP, Model>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
-                        std::unique_ptr<OdeIntegratorCore<FP>>&& integrator = nullptr)
+                        std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(std::move(integrator));
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
     }
     sim.advance(tmax);
     return sim.get_result();

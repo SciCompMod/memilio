@@ -285,7 +285,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt = 1e-2;
-    integrator.advance({f}, 1, dt, result);
+    integrator.advance(f, 1, dt, result);
     EXPECT_EQ(result.get_num_time_points(), 101);
 }
 
@@ -295,7 +295,7 @@ TEST(TestOdeIntegrator, integratorStopsAtTMax)
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 0.137;
     auto integrator = mio::OdeIntegrator<double>(std::make_unique<testing::NiceMock<MockIntegratorCore>>());
-    integrator.advance({f}, 2.34, dt, result);
+    integrator.advance(f, 2.34, dt, result);
     EXPECT_DOUBLE_EQ(result.get_last_time(), 2.34);
 }
 
@@ -339,8 +339,8 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 1.0;
     auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
-    integrator.advance({f}, 10.0, dt, result);
-    integrator.advance({f}, 23.0, dt, result);
+    integrator.advance(f, 10.0, dt, result);
+    integrator.advance(f, 23.0, dt, result);
 }
 
 auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
@@ -372,8 +372,8 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     auto f          = [](auto&&, auto&&, auto&&) {};
     auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
     mio::TimeSeries<double> result(0, y0);
-    integrator.advance({f}, 4 * dt0, dt, result);
-    integrator.advance({f}, 5 * dt0, dt, result);
+    integrator.advance(f, 4 * dt0, dt, result);
+    integrator.advance(f, 5 * dt0, dt, result);
 }
 
 TEST(TestOdeIntegrator, integratorForcesLastStepSize)
@@ -395,13 +395,11 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
 
     const auto num_calls = Eigen::Index(t_max / dt_min) + 1;
     EXPECT_CALL(*mock_core, step).Times(num_calls).WillRepeatedly(testing::Invoke(step_fct));
-    std::cout << "After Mock calls\n";
+
     // run a mock integration to examine whether only the last step is forced
     mio::TimeSeries<double> mock_result(0, Eigen::VectorXd::Constant(1, 0));
-    std::cout << "After Mock calls\n";
     auto integrator      = mio::OdeIntegrator<double>(std::move(mock_core));
-    integrator.advance({f}, t_max, dt, mock_result);
-    std::cout << "After Mock calls\n";
+    integrator.advance(f, t_max, dt, mock_result);
     EXPECT_EQ(mock_result.get_num_time_points(), num_calls + 1);
     for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
         EXPECT_DOUBLE_EQ(mock_result.get_time(i), std::min(i * dt_min, t_max));

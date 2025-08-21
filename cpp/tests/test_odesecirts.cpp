@@ -142,7 +142,7 @@ TEST(TestOdeSECIRTS, get_flows)
 TEST(TestOdeSECIRTS, Simulation)
 {
     auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
-    sim.set_integrator(std::make_unique<mio::EulerIntegratorCore<double>>());
+    sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step
@@ -159,7 +159,7 @@ TEST(TestOdeSECIRTS, FlowSimulation)
 {
     FlowSim sim(osecirts_testing_model(), 0, 1);
 
-    sim.set_integrator(std::make_unique<mio::EulerIntegratorCore<double>>());
+    sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
     EXPECT_EQ(sim.get_result().get_num_time_points(), 2); // stores initial value and single step

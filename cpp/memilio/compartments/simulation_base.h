@@ -49,12 +49,13 @@ public:
     /**
      * @brief Create a SimulationBase.
      * @param[in] model An instance of a compartmental model
+     * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration
      */
-    SimulationBase(Model const& model, std::unique_ptr<Core>&& integrator, FP t0, FP dt)
+    SimulationBase(Model const& model, std::unique_ptr<Core>&& integrator_core, FP t0, FP dt)
         : m_model(std::make_unique<Model>(model))
-        , m_integrator(std::move(integrator))
+        , m_integrator(std::move(integrator_core))
         , m_result(t0, m_model->get_initial_values())
         , m_dt(dt)
     {
@@ -80,31 +81,28 @@ public:
         return *this; 
     }
 
-    ~SimulationBase() = default;
-    // SimulationBase(SimulationBase && other) = default;
-    // SimulationBase& operator=(SimulationBase && other) = default;
 
     /**
-     * @brief Set the integrator core used in the simulation.
-     * @param[in] integrator A shared pointer to an object derived from IntegratorCore.
+     * @brief Set the IntegratorCore used in the simulation.
+     * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
      */
-    void set_integrator(std::unique_ptr<Core>&& integrator)
+    void set_integrator_core(std::unique_ptr<Core>&& integrator_core)
     {
-        m_integrator.set_integrator(std::move(integrator));
+        m_integrator.set_integrator_core(std::move(integrator_core));
     }
 
     /**
-     * @brief Access the integrator core used in the simulation.
-     * @return A reference to the integrator core used in the simulation
+     * @brief Access the IntegratorCore used in the simulation.
+     * @return A reference to the IntegratorCore used in the simulation
      * @{
      */
-    Core& get_integrator()
+    Core& get_integrator_core()
     {
-        return m_integrator.get_integrator();
+        return m_integrator.get_integrator_core();
     }
-    const Core& get_integrator() const
+    const Core& get_integrator_core() const
     {
-        return m_integrator.get_integrator();
+        return m_integrator.get_integrator_core();
     }
     /** @} */
 
@@ -177,7 +175,7 @@ private:
     SystemIntegrator<FP, Integrands...>
         m_integrator; ///< Integrates the DerivFunction (see advance) and stores resutls in m_result.
     TimeSeries<FP> m_result; ///< The simulation results.
-    FP m_dt; ///< The time step used (and possibly set) by m_integratorCore::step.
+    FP m_dt; ///< The time step used (and possibly set) by m_integrator::m_core::step.
 };
 
 /// @brief Specialization of SimulationBase that takes a SystemIntegrator instead of it's Integrands.
