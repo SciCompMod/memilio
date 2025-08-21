@@ -124,7 +124,7 @@ class Simulation:
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
         path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population_aggregated.json")
+                                            "county_current_population.json")
 
         print("Setting nodes...")
         mio.osecir.set_nodes(
@@ -134,7 +134,7 @@ class Simulation:
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
             path_population_data, True, graph, scaling_factor_infected,
-            scaling_factor_icu, 0, 0, False, False)
+            scaling_factor_icu, 0, 0, False)
 
         print("Setting edges...")
         mio.osecir.set_edges(
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     from tensorflow import keras
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    # trainings_data = simulator.sample(100)
+    trainings_data = simulator.sample(1)
 
     # for key in trainings_data.keys():
     #     if key != 'damping_values':
@@ -246,46 +246,46 @@ if __name__ == "__main__":
     # with open('validation_data_counties.pickle', 'rb') as f:
     #     validation_data = pickle.load(f)
 
-    adapter = (
-        bf.Adapter()
-        .to_array()
-        .convert_dtype("float64", "float32")
-        .constrain("damping_values", lower=0.0, upper=1.0)
-        .rename("damping_values", "inference_variables")
-        .concatenate([f'region{i}' for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids], into="summary_variables", axis=-1)
-        .log("summary_variables", p1=True)
-    )
+    # adapter = (
+    #     bf.Adapter()
+    #     .to_array()
+    #     .convert_dtype("float64", "float32")
+    #     .constrain("damping_values", lower=0.0, upper=1.0)
+    #     .rename("damping_values", "inference_variables")
+    #     .concatenate([f'region{i}' for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids], into="summary_variables", axis=-1)
+    #     .log("summary_variables", p1=True)
+    # )
 
-    # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
+    # # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
 
-    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32, recurrent_dim=32)
-    inference_network = bf.networks.CouplingFlow()
+    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32, recurrent_dim=32)
+    # inference_network = bf.networks.CouplingFlow()
 
-    workflow = bf.BasicWorkflow(
-        simulator=simulator, 
-        adapter=adapter,
-        summary_network=summary_network,
-        inference_network=inference_network,
-        standardize='all'  
-    )
+    # workflow = bf.BasicWorkflow(
+    #     simulator=simulator, 
+    #     adapter=adapter,
+    #     summary_network=summary_network,
+    #     inference_network=inference_network,
+    #     standardize='all'  
+    # )
 
-    # history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
+    # # history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
 
-    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
+    # # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
 
-    # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
-    # plots['losses'].savefig('losses_countylvl.png')
-    # plots['recovery'].savefig('recovery_countylvl.png')
-    # plots['calibration_ecdf'].savefig('calibration_ecdf_countylvl.png')
-    # plots['z_score_contraction'].savefig('z_score_contraction_countylvl.png')
+    # # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
+    # # plots['losses'].savefig('losses_countylvl.png')
+    # # plots['recovery'].savefig('recovery_countylvl.png')
+    # # plots['calibration_ecdf'].savefig('calibration_ecdf_countylvl.png')
+    # # plots['z_score_contraction'].savefig('z_score_contraction_countylvl.png')
 
-    test = load_divi_data()
-    workflow.approximator = keras.models.load_model(os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
+    # test = load_divi_data()
+    # workflow.approximator = keras.models.load_model(os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
 
-    samples = workflow.sample(conditions=test, num_samples=10)
-    # samples = workflow.samples_to_data_frame(samples)
-    # print(samples.head())
-    samples['damping_values'] = np.squeeze(samples['damping_values'])
-    for i in range(samples['damping_values'].shape[0]):
-        test = run_germany_nuts3_simulation(samples['damping_values'][i])
-        print(test)
+    # samples = workflow.sample(conditions=test, num_samples=10)
+    # # samples = workflow.samples_to_data_frame(samples)
+    # # print(samples.head())
+    # samples['damping_values'] = np.squeeze(samples['damping_values'])
+    # for i in range(samples['damping_values'].shape[0]):
+    #     test = run_germany_nuts3_simulation(samples['damping_values'][i])
+    #     print(test)

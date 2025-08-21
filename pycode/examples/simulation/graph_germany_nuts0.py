@@ -128,7 +128,7 @@ class Simulation:
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
             path_population_data, False, graph, scaling_factor_infected,
-            scaling_factor_icu, 0.9, 0, False, False)
+            scaling_factor_icu, 0.9, 0, False)
         
         print("Graph created.")
 

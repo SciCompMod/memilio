@@ -130,7 +130,7 @@ class Simulation:
             mio.Date(end_date.year,
                      end_date.month, end_date.day), pydata_dir,
             path_population_data, False, graph, scaling_factor_infected,
-            scaling_factor_icu, 0, 0, False, False)
+            scaling_factor_icu, 0, 0, False)
 
         print("Setting edges...")
         mio.osecir.set_edges(
@@ -196,6 +196,7 @@ def run_germany_nuts1_simulation(damping_values):
     num_days_sim = 50
     
     results = sim.run(num_days_sim, damping_values)
+    results[0].export_csv('test.csv')
 
     return {f'region{region}': results[region] for region in range(len(results))}
 
@@ -204,14 +205,16 @@ def prior():
     return {'damping_values': damping_values}
 
 if __name__ == "__main__":
+    test = prior()
+    run_germany_nuts1_simulation(test['damping_values'])
 
-    import os 
-    os.environ["KERAS_BACKEND"] = "tensorflow"
+    # import os 
+    # os.environ["KERAS_BACKEND"] = "tensorflow"
 
-    import bayesflow as bf
+    # import bayesflow as bf
 
-    simulator = bf.simulators.make_simulator([prior, run_germany_nuts1_simulation])
-    # trainings_data = simulator.sample(1000)
+    # simulator = bf.simulators.make_simulator([prior, run_germany_nuts1_simulation])
+    # trainings_data = simulator.sample(1)
 
     # for region in range(16):
     #     trainings_data[f'region{region}'] = trainings_data[f'region{region}'][:,:, 8][..., np.newaxis]
@@ -219,46 +222,46 @@ if __name__ == "__main__":
     # with open('validation_data_16param.pickle', 'wb') as f:
     #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    with open('trainings_data1_16param.pickle', 'rb') as f:
-        trainings_data = pickle.load(f)
-        trainings_data['damping_values'] = trainings_data['damping_values'][:, :16]
-    for i in range(9):
-        with open(f'trainings_data{i+2}_16param.pickle', 'rb') as f:
-            data = pickle.load(f)
-            data['damping_values'] = data['damping_values'][:, :16]
-        trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
+    # with open('trainings_data1_16param.pickle', 'rb') as f:
+    #     trainings_data = pickle.load(f)
+    #     trainings_data['damping_values'] = trainings_data['damping_values'][:, :16]
+    # for i in range(9):
+    #     with open(f'trainings_data{i+2}_16param.pickle', 'rb') as f:
+    #         data = pickle.load(f)
+    #         data['damping_values'] = data['damping_values'][:, :16]
+    #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    with open('validation_data_16param.pickle', 'rb') as f:
-        validation_data = pickle.load(f)
-        validation_data['damping_values'] = validation_data['damping_values'][:, :16]
+    # with open('validation_data_16param.pickle', 'rb') as f:
+    #     validation_data = pickle.load(f)
+    #     validation_data['damping_values'] = validation_data['damping_values'][:, :16]
 
-    adapter = (
-        bf.Adapter()
-        .to_array()
-        .convert_dtype("float64", "float32")
-        .constrain("damping_values", lower=0.0, upper=1.0)
-        .rename("damping_values", "inference_variables")
-        .concatenate([f'region{i}' for i in range(16)], into="summary_variables", axis=-1)
-        .log("summary_variables", p1=True)
-    )
+    # adapter = (
+    #     bf.Adapter()
+    #     .to_array()
+    #     .convert_dtype("float64", "float32")
+    #     .constrain("damping_values", lower=0.0, upper=1.0)
+    #     .rename("damping_values", "inference_variables")
+    #     .concatenate([f'region{i}' for i in range(16)], into="summary_variables", axis=-1)
+    #     .log("summary_variables", p1=True)
+    # )
     
-    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32)
-    inference_network = bf.networks.CouplingFlow()
+    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32)
+    # inference_network = bf.networks.CouplingFlow()
 
-    workflow = bf.BasicWorkflow(
-        simulator=simulator, 
-        adapter=adapter,
-        summary_network=summary_network,
-        inference_network=inference_network,
-        standardize='all'
-    )
+    # workflow = bf.BasicWorkflow(
+    #     simulator=simulator, 
+    #     adapter=adapter,
+    #     summary_network=summary_network,
+    #     inference_network=inference_network,
+    #     standardize='all'
+    # )
 
-    history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
+    # history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
 
-    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_1params.keras"))
+    # # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_1params.keras"))
 
-    plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
-    plots['losses'].savefig('losses_couplingflow_16param.png')
-    plots['recovery'].savefig('recovery_couplingflow_16param.png')
-    plots['calibration_ecdf'].savefig('calibration_ecdf_couplingflow_16param.png')
-    plots['z_score_contraction'].savefig('z_score_contraction_couplingflow_16param.png')
+    # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
+    # plots['losses'].savefig('losses_couplingflow_16param.png')
+    # plots['recovery'].savefig('recovery_couplingflow_16param.png')
+    # plots['calibration_ecdf'].savefig('calibration_ecdf_couplingflow_16param.png')
+    # plots['z_score_contraction'].savefig('z_score_contraction_couplingflow_16param.png')

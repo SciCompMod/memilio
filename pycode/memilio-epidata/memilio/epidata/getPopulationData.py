@@ -140,10 +140,10 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
         columns=dd.EngEng["idCounty"])
 
     gd.write_dataframe(df_pop_export, directory, filename, file_format)
-    gd.write_dataframe(df_pop_export.drop(columns=new_cols[2:]), directory, filename + '_aggregated', file_format)
-    gd.write_dataframe(aggregate_to_state_level(df_pop_export.drop(columns=new_cols[2:])), directory, filename + '_states', file_format)
-    df_pop_germany = pd.DataFrame({"ID": [0], "Population": [df_pop_export["Population"].sum()]})
-    gd.write_dataframe(df_pop_germany, directory, filename + '_germany', file_format)
+    gd.write_dataframe(aggregate_to_state_level(df_pop_export), directory, filename + '_states', file_format)
+    gd.write_dataframe(aggregate_to_country_level(df_pop_export), directory, filename + '_germany', file_format)
+    # df_pop_germany = pd.DataFrame({"ID": [0], "Population": [df_pop_export["Population"].sum()]})
+    # gd.write_dataframe(df_pop_germany, directory, filename + '_germany', file_format)
 
     return df_pop_export
 
@@ -456,6 +456,12 @@ def aggregate_to_state_level(df_pop: pd.DataFrame):
     df_pop['ID_State'] = df_pop.index
     return df_pop
 
+def aggregate_to_country_level(df_pop: pd.DataFrame):
+
+    df_pop['ID_Country'] = 0
+    df_pop = df_pop.drop(columns=['ID_County', 'ID_State']).groupby('ID_Country', as_index=True).sum()
+    df_pop['ID_Country'] = df_pop.index
+    return df_pop
 
 def main():
     """ Main program entry."""
