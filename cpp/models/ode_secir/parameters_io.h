@@ -75,7 +75,17 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                                         const std::vector<double>& scaling_factor_inf)
 {
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
-    assert(scaling_factor_inf.size() == num_age_groups);
+    // allow single scalar scaling that is broadcast to all age groups
+    assert(scaling_factor_inf.size() == 1 || scaling_factor_inf.size() == num_age_groups);
+
+    // Broadcast scaling factors to match RKI age groups (6)
+    std::vector<double> scaling_factor_inf_full(num_age_groups, 1.0);
+    if (scaling_factor_inf.size() == 1) {
+        scaling_factor_inf_full.assign(num_age_groups, scaling_factor_inf[0]);
+    }
+    else {
+        scaling_factor_inf_full = scaling_factor_inf;
+    }
 
     std::vector<std::vector<int>> t_InfectedNoSymptoms{model.size()};
     std::vector<std::vector<int>> t_Exposed{model.size()};
@@ -89,7 +99,12 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
     std::vector<std::vector<double>> mu_U_D{model.size()};
 
     for (size_t node = 0; node < model.size(); ++node) {
-        for (size_t group = 0; group < num_age_groups; group++) {
+        const size_t model_groups = (size_t)model[node].parameters.get_num_groups();
+        assert(model_groups == 1 || model_groups == num_age_groups);
+        for (size_t ag = 0; ag < num_age_groups; ag++) {
+            // If the model has fewer groups than casedata entries available,
+            // reuse group 0 parameters for all RKI age groups
+            const size_t group = (model_groups == num_age_groups) ? ag : 0;
 
             t_Exposed[node].push_back(
                 static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
@@ -121,26 +136,49 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
     BOOST_OUTCOME_TRY(read_confirmed_cases_data(case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
                                                 num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
                                                 t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
-                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+                                                t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_full));
 
     for (size_t node = 0; node < model.size(); node++) {
         if (std::accumulate(num_InfectedSymptoms[node].begin(), num_InfectedSymptoms[node].end(), 0.0) > 0) {
             size_t num_groups = (size_t)model[node].parameters.get_num_groups();
-            for (size_t i = 0; i < num_groups; i++) {
-                model[node].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
-                    num_InfectedNoSymptoms[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
-                    num_InfectedSymptoms[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
-                model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] = num_InfectedSevere[node][i];
-                // Only set the number of ICU patients here, if the date is not available in the data.
-                if (!is_divi_data_available(date)) {
-                    model[node].populations[{AgeGroup(i), InfectionState::InfectedCritical}] = num_icu[node][i];
+            if (num_groups == num_age_groups) {
+                for (size_t i = 0; i < num_groups; i++) {
+                    model[node].populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[node][i];
+                    model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
+                        num_InfectedNoSymptoms[node][i];
+                    model[node].populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+                    model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
+                        num_InfectedSymptoms[node][i];
+                    model[node].populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
+                    model[node].populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
+                        num_InfectedSevere[node][i];
+                    // Only set the number of ICU patients here, if the date is not available in the data.
+                    if (!is_divi_data_available(date)) {
+                        model[node].populations[{AgeGroup(i), InfectionState::InfectedCritical}] = num_icu[node][i];
+                    }
+                    model[node].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[node][i];
+                    model[node].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[node][i];
                 }
-                model[node].populations[{AgeGroup(i), InfectionState::Dead}]      = num_death[node][i];
-                model[node].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[node][i];
+            }
+            else if (num_groups == 1) {
+                const auto sum_vec = [](const std::vector<double>& v) {
+                    return std::accumulate(v.begin(), v.end(), 0.0);
+                };
+                const size_t i0                                                  = 0;
+                model[node].populations[{AgeGroup(i0), InfectionState::Exposed}] = sum_vec(num_Exposed[node]);
+                model[node].populations[{AgeGroup(i0), InfectionState::InfectedNoSymptoms}] =
+                    sum_vec(num_InfectedNoSymptoms[node]);
+                model[node].populations[{AgeGroup(i0), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+                model[node].populations[{AgeGroup(i0), InfectionState::InfectedSymptoms}] =
+                    sum_vec(num_InfectedSymptoms[node]);
+                model[node].populations[{AgeGroup(i0), InfectionState::InfectedSymptomsConfirmed}] = 0;
+                model[node].populations[{AgeGroup(i0), InfectionState::InfectedSevere}] =
+                    sum_vec(num_InfectedSevere[node]);
+                if (!is_divi_data_available(date)) {
+                    model[node].populations[{AgeGroup(i0), InfectionState::InfectedCritical}] = sum_vec(num_icu[node]);
+                }
+                model[node].populations[{AgeGroup(i0), InfectionState::Dead}]      = sum_vec(num_death[node]);
+                model[node].populations[{AgeGroup(i0), InfectionState::Recovered}] = sum_vec(num_rec[node]);
             }
         }
         else {
@@ -231,10 +269,20 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
     assert(num_population.size() == vregion.size());
     assert(model.size() == vregion.size());
     for (size_t region = 0; region < vregion.size(); region++) {
-        auto num_groups = model[region].parameters.get_num_groups();
-        for (auto i = AgeGroup(0); i < num_groups; i++) {
+        const auto model_groups = (size_t)model[region].parameters.get_num_groups();
+        const auto data_groups  = num_population[region].size();
+        assert(data_groups == model_groups || (model_groups == 1 && data_groups >= 1));
+
+        if (data_groups == model_groups) {
+            for (auto i = AgeGroup(0); i < model[region].parameters.get_num_groups(); i++) {
+                model[region].populations.template set_difference_from_group_total<AgeGroup>(
+                    {i, InfectionState::Susceptible}, num_population[region][(size_t)i]);
+            }
+        }
+        else if (model_groups == 1 && data_groups >= 1) {
+            const double total = std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0);
             model[region].populations.template set_difference_from_group_total<AgeGroup>(
-                {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
+                {AgeGroup(0), InfectionState::Susceptible}, total);
         }
     }
     return success();
@@ -292,8 +340,8 @@ IOResult<void> export_input_data_county_timeseries(
     const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path)
 {
     const auto num_age_groups = (size_t)models[0].parameters.get_num_groups();
-    assert(scaling_factor_inf.size() == num_age_groups);
-    assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
+    // allow scalar scaling factor as convenience for 1-group models
+    assert(scaling_factor_inf.size() == 1 || scaling_factor_inf.size() == num_age_groups);
     assert(models.size() == region.size());
     std::vector<TimeSeries<double>> extrapolated_data(
         region.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
