@@ -79,7 +79,6 @@ public:
 
     /**
      * @brief Assigns another SimulationBase object to this one.
-     *
      * Performs a deep copy of the model, while sharing the same integrator core.
      * The time series m_result and step size m_dt are also copied.
      *
