@@ -37,18 +37,18 @@ size_t num_agegroups = 1;
 size_t finite_difference_order = 1;
 
 ScalarType t0_ode = 0.;
-ScalarType t0_ide = 1.;
-ScalarType tmax   = 2.;
+ScalarType t0_ide = 12.;
+ScalarType tmax   = 13.;
 
-ScalarType TimeInfected = 7.;
+ScalarType TimeInfected = 2.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
 // Instead we scale the contact frequency with a factor of 1.5.
 ScalarType TransmissionProbabilityOnContact = 1.;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType S0 = 85.;
-ScalarType I0 = 15.;
+ScalarType S0 = 95.;
+ScalarType I0 = 5.;
 ScalarType R0 = 0.;
 
 ScalarType total_population = S0 + I0 + R0;
@@ -156,6 +156,8 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                                           finite_difference_order);
 
         mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
+        std::cout << "max support: " << exp.get_support_max(dt_ide) << std::endl;
+        ;
         mio::StateAgeFunctionWrapper dist(exp);
         std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
@@ -167,6 +169,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         mio::ConstantFunction riskofinfection(RiskOfInfectionFromSymptomatic);
         mio::StateAgeFunctionWrapper riskofinfection_wrapper(riskofinfection);
         model.parameters.get<mio::isir::RiskOfInfectionFromSymptomatic>() = riskofinfection_wrapper;
+
+        mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+        contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+        model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
@@ -207,8 +213,11 @@ int main()
 
     // Do IDE simulations.
 
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
+    // std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+    // std::vector<size_t> gregory_orders    = {1, 2, 3};
+
+    std::vector<ScalarType> ide_exponents = {1};
+    std::vector<size_t> gregory_orders    = {1};
 
     for (size_t gregory_order : gregory_orders) {
         std::cout << "Gregory order: " << gregory_order << std::endl;
