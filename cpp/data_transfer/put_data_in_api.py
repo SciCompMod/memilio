@@ -90,10 +90,10 @@ def put_scenarios(path_to_scenario_results, url, delay, service_realm, client_id
     scenarios = scenarios.json()
     for scenario in scenarios:
         if scenario["name"] == "casedata":
-            if not os.path.exists(os.path.join(path_to_scenario_results+"Results.h5")):
-                log.error(
-                    f'Path {os.path.join(path_to_scenario_results+"Results.h5")} does not exist')
-                continue
+            # if not os.path.exists(os.path.join(path_to_scenario_results+"Results.h5")):
+            #     log.error(
+            #         f'Path {os.path.join(path_to_scenario_results+"Results.h5")} does not exist')
+            #     continue
 
             percentiles = ['p50']
             zip_file = write_zip(path_to_saved_zips=path_to_scenario_results,
