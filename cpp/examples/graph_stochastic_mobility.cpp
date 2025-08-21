@@ -74,7 +74,7 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     //add contact pattern and contact damping
-    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0]                               = mio::ContactMatrix<double>(
         Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, fact * 10));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
