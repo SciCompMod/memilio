@@ -114,9 +114,9 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
          ++i) {
         matrices.push_back(i);
     }
-    auto groups = Eigen::VectorXd::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
+    auto groups = Eigen::VectorX<FP>::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
     model.parameters.template get<ContactPatterns<FP>>().get_dampings().emplace_back(
-        mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0),
+        mio::UncertainValue<FP>(0.5), mio::DampingLevel(0), mio::DampingType(0),
         mio::SimulationTime<FP>(t0 + (tmax - t0) / 2), matrices, groups);
     set_distribution(model.parameters.template get<ContactPatterns<FP>>().get_dampings()[0].get_value(), 0.0);
 }
