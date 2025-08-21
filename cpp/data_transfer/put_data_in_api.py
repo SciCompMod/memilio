@@ -46,9 +46,10 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
     return zipfile
 
 
-def put_scenario(scenario_id, zip_file, url, delay, headers):
+def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, username, password):
     # https://stackoverflow.com/questions/18208109/python-requests-post-a-zip-file-with-multipart-form-data
     fileobj = open(zip_file, 'rb')
+    headers = define_headers(service_realm, client_id, username, password)
     put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
                                 files={"file": (zip_file, fileobj)})
     print(
@@ -70,7 +71,7 @@ def put_scenario(scenario_id, zip_file, url, delay, headers):
             f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
 
 
-def put_scenarios(path_to_scenario_results, url, delay, headers):
+def put_scenarios(path_to_scenario_results, url, delay, service_realm, client_id, username, password):
     """ Puts scenarios into database.
 
     @param[in] path_to_scenario_results Directory from where we can access simulation results and where the zips for 
@@ -82,6 +83,7 @@ def put_scenarios(path_to_scenario_results, url, delay, headers):
     @param[in] url URL of API.
     """
     print(f'Uploading scenarios to {url} from {path_to_scenario_results}')
+    headers = define_headers(service_realm, client_id, username, password)
     scenarios = requests.get(url + "scenarios/", headers=headers)
     print(f'scenarios response code was {scenarios.status_code}')
     print(f'scenarios response was {scenarios.content}')
@@ -112,21 +114,10 @@ def put_scenarios(path_to_scenario_results, url, delay, headers):
 
         print(f'Uploading {scenario["name"]} with id {scenario["id"]}')
         put_scenario(scenario['id'], zip_file=zip_file, url=url, delay=delay,
-                     headers=headers)
+                     service_realm=service_realm, client_id=client_id, username=username, password=password)
 
 
-def main():
-    url = 'https://zam10063.zam.kfa-juelich.de/api-dev/'
-
-    # Delay for time between upload of scenarios.
-    delay = 420
-
-    # Information needed for authentication.
-    service_realm = ""
-    client_id = ""
-    username = ""
-    password = ""
-
+def define_headers(service_realm, client_id, username, password):
     # Request access token from idp.
     req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
         'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
@@ -141,9 +132,24 @@ def main():
     # Set up headers with token.
     headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
+    return headers
+
+
+def main():
+    url = 'https://zam10063.zam.kfa-juelich.de/api-dev/'
+
+    # Delay for time between upload of scenarios.
+    delay = 420
+
+    # Information needed for authentication.
+    service_realm = ""
+    client_id = ""
+    username = ""
+    password = ""
+
     # put_scenarios(os.path.join('/home/jadebeck/', "results_osecirvvs/"), url)
     put_scenarios(os.path.join(
-        os.getcwd(), "results_retros_test/"), url, delay, headers)
+        os.getcwd(), "results_retros_test/"), url, delay, service_realm, client_id, username, password)
 
 
 if __name__ == '__main__':
