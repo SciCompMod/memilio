@@ -208,8 +208,8 @@ int main()
         for (int abs_tol_exponent : abs_tol_exponents) {
             for (int rel_tol_exponent : rel_tol_exponents) {
 
-                std::string save_dir = fmt::format("../../simulation_results/exponential_paper_example_dt_ode=1e-{}/",
-                                                   std::to_string(ode_exponent));
+                std::string save_dir =
+                    fmt::format("../../simulation_results/simple_model_exponential/", std::to_string(ode_exponent));
                 std::cout << "Save dir: " << save_dir << std::endl;
                 // Make folder if not existent yet.
                 boost::filesystem::path dir(save_dir);

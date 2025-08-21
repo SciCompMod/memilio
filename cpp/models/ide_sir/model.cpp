@@ -22,6 +22,7 @@
 #include "ide_sir/infection_state.h"
 #include "memilio/config.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/time_series.h"
 #include <Eigen/src/Core/util/Meta.h>
 #include <boost/numeric/odeint/util/ublas_wrapper.hpp>
@@ -239,8 +240,7 @@ ScalarType ModelMessina::fixed_point_function(ScalarType susceptibles, ScalarTyp
                m_transitiondistribution_vector[current_time_index - j] * (m_N - relevant_susceptibles);
     }
 
-    ScalarType prefactor = dt * parameters.get<beta>();
-    return S0 * std::exp(-prefactor * sum);
+    return S0 * std::exp(-dt * parameters.get<beta>() * sum);
 }
 
 size_t ModelMessina::compute_S(ScalarType s_init, ScalarType dt, ScalarType tol, size_t max_iterations)
@@ -666,11 +666,12 @@ ScalarType ModelMessinaExtendedDetailedInit::sum_part2_weight(size_t n, size_t j
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType susceptibles, ScalarType dt,
                                                                   size_t t0_index)
 {
+    unused(t0_index);
     // Get the index of the current time step.
     size_t current_time_index = populations.get_num_time_points() - 1;
 
     // Compute first part of sum where already known initial values of Susceptibles are used.
-    ScalarType sum_first_integral = 0., sum_second_integral = 0.;
+    ScalarType sum_first_integral = 0., sum_second_integral = 0., sum_third_integral = 0.;
 
     for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
         ScalarType gregory_weight_first_integral = sum_part1_weight(current_time_index, j);
@@ -683,28 +684,20 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             m_riskofinffromsymptomatic_vector[current_time_index - j] *
             m_transitiondistribution_vector[current_time_index - j] *
             populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
-
-        // std::cout << "gamma1: " << m_transitiondistribution_vector[current_time_index - j] << std::endl;
-        // std::cout << "Susceptibles: " << populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible]
-        //           << std::endl;
     }
 
     for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
         // Compute first part of sum of second integral (from 0 to t)
-        ScalarType gregory_weight_second_integral = sum_part1_weight(current_time_index, j);
+        ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
-        sum_second_integral += gregory_weight_second_integral *
+        sum_second_integral += gregory_weight *
                                parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0) *
-                               m_transmissionproboncontact_vector[j + t0_index] *
-                               m_riskofinffromsymptomatic_vector[j + t0_index] *
-                               m_transitiondistribution_vector[j + t0_index];
-
-        // std::cout << "gamma2: " << m_transitiondistribution_vector[j + t0_index] << std::endl;
-        // std::cout << "Susceptibles: " << populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]
-        //           << std::endl;
+                               m_transmissionproboncontact_vector[current_time_index - j] *
+                               m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                               m_transitiondistribution_vector[current_time_index - j];
     }
-    // }
+
     // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
     // current time step from the fixed point iteration.
 
@@ -731,9 +724,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
             m_riskofinffromsymptomatic_vector[current_time_index - j] *
             m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
-
-        // std::cout << "gamma1: " << m_transitiondistribution_vector[current_time_index - j] << std::endl;
-        // std::cout << "Susceptibles: " << relevant_susceptibles << std::endl;
     }
 
     for (size_t j = std::min(current_time_index, m_gregory_order); j <= current_time_index; j++) {
@@ -741,24 +731,15 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
-        sum_second_integral +=
-            gregory_weight * (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0)) *
-            m_transmissionproboncontact_vector[j + t0_index] * m_riskofinffromsymptomatic_vector[j + t0_index] *
-            m_transitiondistribution_vector[j + t0_index];
-
-        // std::cout << "gamma2: " << m_transitiondistribution_vector[j + t0_index] << std::endl;
-        // std::cout << "Susceptibles: " << populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]
-        //           << std::endl;
+        sum_second_integral += gregory_weight *
+                               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0)) *
+                               m_transmissionproboncontact_vector[current_time_index - j] *
+                               m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                               m_transitiondistribution_vector[current_time_index - j];
     }
 
-    // }
-
-    // std::cout << "sum first integral: " << sum_first_integral << std::endl;
-    // std::cout << "sum second integral: " << sum_second_integral << std::endl;
-    // std::cout << "exponent: " << dt * (sum_first_integral - sum_second_integral) << std::endl;
-
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *
-           std::exp(dt * (sum_first_integral - sum_second_integral));
+           std::exp(dt * (sum_first_integral - sum_second_integral - sum_third_integral));
 }
 
 size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType dt, size_t t0_index, ScalarType tol,
@@ -795,17 +776,6 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
             -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
             dt;
-    }
-
-    // Compute S' with backwards finite difference scheme of second order, flow from S to I is then given by -S'.
-    if (m_finite_difference_order == 2) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-            -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
-              16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
-              36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
-              48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
-              25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
-            (12 * dt);
     }
 
     // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
@@ -884,81 +854,6 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t t0_
 //           8 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
 //           1 * populations[time_point_index + 2][(Eigen::Index)InfectionState::Susceptible]) /
 //         (12 * dt);
-// }
-
-// void Model::compute_I_and_R_centered(ScalarType dt, size_t t0_index, size_t time_point_index,
-//                                      bool enforce_mass_conservation)
-// {
-//     size_t num_time_points_simulated = time_point_index + m_gregory_order;
-
-//     // Compute I and R.
-//     ScalarType sum_part1_I = 0;
-//     ScalarType sum_part1_R = 0;
-//     size_t row_index, column_index;
-//     for (size_t j = 0; j < std::min(m_gregory_order, time_point_index); j++) {
-//         if (num_time_points_simulated - m_gregory_order < m_gregory_order) {
-//             row_index = num_time_points_simulated - m_gregory_order;
-//         }
-//         else {
-//             row_index = m_gregory_order - 1;
-//         }
-//         column_index = j;
-
-//         ScalarType state_age = (num_time_points_simulated - j) * dt;
-
-//         sum_part1_I += sum_part1_term(row_index, column_index, state_age,
-//                                       flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
-
-//         sum_part1_R += sum_part1_term(row_index, column_index, state_age,
-//                                       flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
-//     }
-
-//     ScalarType sum_part2_I = 0;
-//     ScalarType sum_part2_R = 0;
-
-//     size_t weight_index;
-//     for (size_t j = m_gregory_order; j < time_point_index; j++) {
-//         if (num_time_points_simulated - j <= m_gregory_order) {
-//             weight_index = num_time_points_simulated - j;
-//         }
-//         else {
-//             weight_index = m_gregory_order;
-//         }
-
-//         ScalarType state_age = (num_time_points_simulated - j) * dt;
-
-//         sum_part2_I +=
-//             sum_part2_term(weight_index, state_age, flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected]);
-
-//         sum_part2_R += sum_part2_term(weight_index, state_age,
-//                                       flows[j][(Eigen::Index)InfectionTransition::SusceptibleToInfected], true);
-//     }
-
-//     populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] = dt * (sum_part1_I + sum_part2_I);
-
-//     populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered] =
-//         populations[t0_index][(Eigen::Index)InfectionState::Recovered] + dt * (sum_part1_R + sum_part2_R);
-
-//     if (enforce_mass_conservation) {
-//         ScalarType mass_conservation_scaling =
-//             (m_N - populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Susceptible]) /
-//             (populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] +
-//              populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered]);
-
-//         // std::cout << "mass_conservation_scaling: " << mass_conservation_scaling << std::endl;
-//         populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Infected] *= mass_conservation_scaling;
-//         populations[time_point_index + t0_index][(Eigen::Index)InfectionState::Recovered] *= mass_conservation_scaling;
-//     }
-// }
-
-// void Model::compute_susceptible_difference(ScalarType dt, size_t t0_index)
-// {
-//     for (Eigen::Index i = 1; i < populations.get_num_time_points(); i++) {
-//         susceptibles_difference.add_time_point(
-//             ((ScalarType)i - t0_index) * dt,
-//             Vec::Constant(1, populations[i][(Eigen::Index)InfectionState::Susceptible] -
-//                                  populations[i - 1][(Eigen::Index)InfectionState::Susceptible]));
-//     }
 // }
 
 } // namespace isir

@@ -213,11 +213,11 @@ int main()
 
     // Do IDE simulations.
 
-    // std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-    // std::vector<size_t> gregory_orders    = {1, 2, 3};
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+    std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    std::vector<ScalarType> ide_exponents = {1};
-    std::vector<size_t> gregory_orders    = {1};
+    // std::vector<ScalarType> ide_exponents = {1};
+    // std::vector<size_t> gregory_orders    = {1};
 
     for (size_t gregory_order : gregory_orders) {
         std::cout << "Gregory order: " << gregory_order << std::endl;

@@ -175,9 +175,9 @@ void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {
 
-        // std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
-        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
-        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
+        std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
+                  << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
+                  << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
 
         // Add new time point to populations.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
@@ -205,16 +205,11 @@ void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
 
         // Compute I and R.
         m_model->compute_I_and_R(m_dt, t0_index);
-        // std::cout << "Total population: "
-        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] +
-        //                  m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] +
-        //                  m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered]
-        //           << std::endl;
     }
 
-    // std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
-    //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
-    //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
+    std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
+              << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
+              << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
 
     std::cout << "Total population at start of simulation is "
               << m_model->populations.get_value(t0_index)[(Eigen::Index)InfectionState::Susceptible] +
