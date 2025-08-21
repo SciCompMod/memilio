@@ -60,7 +60,7 @@ public:
     {
     }
 
-    virtual ~IntegratorCore() {};
+    virtual ~IntegratorCore(){};
 
     /**
      * @brief Make a single integration step.
