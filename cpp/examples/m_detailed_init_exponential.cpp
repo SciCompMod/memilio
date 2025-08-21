@@ -34,11 +34,9 @@ namespace params
 {
 size_t num_agegroups = 1;
 
-size_t finite_difference_order = 1;
-
 ScalarType t0_ode = 0.;
-ScalarType t0_ide = 12.;
-ScalarType tmax   = 13.;
+ScalarType t0_ide = 1.;
+ScalarType tmax   = 2.;
 
 ScalarType TimeInfected = 2.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
@@ -103,7 +101,8 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
     return mio::success(sir);
 }
 
-mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::string save_dir = "",
+mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
+                                 size_t finite_difference_order, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
 {
@@ -142,7 +141,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
             init_populations.add_time_point(t0_ode, vec_init);
 
             while (init_populations.get_last_time() < t0_ide - 1e-10) {
-                // std::cout << size_t(init_populations.get_num_time_points() * groundtruth_index) << std::endl;
                 for (size_t compartment : compartments) {
                     vec_init[compartment] = result_groundtruth.get_value(
                         size_t(init_populations.get_num_time_points() * groundtruth_index_factor))[compartment];
@@ -156,7 +154,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                                           finite_difference_order);
 
         mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
-        std::cout << "max support: " << exp.get_support_max(dt_ide) << std::endl;
+        // std::cout << "max support: " << exp.get_support_max(dt_ide) << std::endl;
         ;
         mio::StateAgeFunctionWrapper dist(exp);
         std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
@@ -177,6 +175,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
         sim.advance_messina(tmax);
+        // sim.advance_messina_central(tmax);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -201,10 +200,13 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
+    size_t finite_difference_order = 4;
+
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
     std::string save_dir =
-        fmt::format("../../simulation_results/detailed_init_exponential_rkf78_dt_ode=1e-{:.0f}/", ode_exponent);
+        fmt::format("../../simulation_results/detailed_init_exponential_rkf78_dt_ode=1e-{:.0f}_finite_diff={}/",
+                    ode_exponent, finite_difference_order);
     // Make folder if not existent yet.
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
@@ -212,7 +214,6 @@ int main()
     auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 
     // Do IDE simulations.
-
     std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
@@ -220,7 +221,9 @@ int main()
     // std::vector<size_t> gregory_orders    = {1};
 
     for (size_t gregory_order : gregory_orders) {
+        std::cout << std::endl;
         std::cout << "Gregory order: " << gregory_order << std::endl;
-        mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, save_dir, result_ode);
+        mio::IOResult<void> result_ide =
+            simulate_ide(ide_exponents, gregory_order, finite_difference_order, save_dir, result_ode);
     }
 }

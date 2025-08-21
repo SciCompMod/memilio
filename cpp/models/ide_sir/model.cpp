@@ -771,16 +771,28 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
 void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t time_point_index)
 {
     // Linear backwards finite difference scheme.
-    if (m_finite_difference_order == 1) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+    if (std::min(m_finite_difference_order, time_point_index) == 1) {
+        // std::cout << "First order finite difference \n";
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
             dt;
     }
 
+    // Compute S' with backwards finite difference scheme of second order, flow from S to I is then given by -S'.
+    if (std::min(m_finite_difference_order, time_point_index) == 2) {
+        // std::cout << "Second order finite difference \n";
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(1 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              4 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              3 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
+            (2 * dt);
+    }
+
     // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
-    if (m_finite_difference_order == 4) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+    if (std::min(m_finite_difference_order, time_point_index) == 4) {
+        // std::cout << "Fourth order finite difference \n";
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
               16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
               36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
@@ -797,8 +809,45 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt)
     compute_S_deriv(dt, time_point_index);
 }
 
+void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt, size_t time_point_index)
+{
+    // Linear backwards finite difference scheme.
+    if (m_finite_difference_order == 1) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
+              populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
+            dt;
+    }
+
+    // Compute S' with central finite difference scheme of second order, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 2) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(-populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible]) /
+            (2 * dt);
+    }
+
+    // Compute S' with central finite difference scheme of fourth order, flow from S to I is then given by -S'.
+    if (m_finite_difference_order == 4) {
+        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+            -(populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              8 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
+              8 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
+              populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible]) /
+            (12 * dt);
+    }
+}
+
+void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt)
+{
+    // Use the number of time points to determine time_point_index, hence we are calculating S deriv for last time point.
+    size_t time_point_index = flows.get_num_time_points() - 1;
+    compute_S_deriv_central(dt, time_point_index);
+}
+
 void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t t0_index)
 {
+    unused(t0_index);
     // ScalarType current_time = populations.get_last_time();
     size_t current_time_index = populations.get_num_time_points() - 1;
 
@@ -806,7 +855,7 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t t0_
 
     // Add first part of sum.
     // TODO: Check start and end of index j.
-    for (size_t j = 0; j < std::min(current_time_index - t0_index, m_gregory_order); j++) {
+    for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
         ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
@@ -818,7 +867,7 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t t0_
     }
 
     // Add second part of sum.
-    for (size_t j = std::min(current_time_index - t0_index, m_gregory_order); j <= current_time_index; j++) {
+    for (size_t j = std::min(current_time_index, m_gregory_order); j <= current_time_index; j++) {
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.

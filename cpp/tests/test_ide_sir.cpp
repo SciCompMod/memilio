@@ -335,8 +335,6 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
                 model.flows.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(
                                                        (size_t)mio::isir::InfectionTransition::Count, 0.));
                 model.compute_S_deriv(dt, i);
-                // EXPECT_NEAR(-model.flows[i][(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected],
-                //             cos(i * dt), 1e-6);
             }
             // Append error.
             errors.push_back(

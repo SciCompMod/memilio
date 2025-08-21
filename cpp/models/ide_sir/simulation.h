@@ -223,6 +223,8 @@ public:
      */
     void advance_messina(ScalarType tmax);
 
+    void advance_messina_central(ScalarType tmax);
+
     /**
      * @brief Get the result of the simulation.
      * Return the number of persons in all #InfectionState%s.
