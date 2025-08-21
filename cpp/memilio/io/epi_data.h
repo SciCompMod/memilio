@@ -490,7 +490,7 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
  * @return list of population data.
  */
 inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename,
-                                                                       bool rki_age_group = false)
+                                                                       bool rki_age_group = true)
 {
     BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_population_data(jsvalue, rki_age_group);
