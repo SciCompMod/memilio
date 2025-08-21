@@ -205,7 +205,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
                                         const std::vector<double>& scaling_factor_inf)
 {
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
-    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf[0]));
+    BOOST_OUTCOME_TRY(set_confirmed_cases_data(model, case_data, region, date, scaling_factor_inf));
     return success();
 }
 
@@ -448,10 +448,10 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
 {
     BOOST_OUTCOME_TRY(
         details::set_divi_data(model, path_join(pydata_dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_county_ma7.json"),
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_county_age_ma7.json"),
                                                         county, date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(details::set_population_data(
-        model, path_join(pydata_dir, "county_current_population_aggregated.json"), county));
+    BOOST_OUTCOME_TRY(
+        details::set_population_data(model, path_join(pydata_dir, "county_current_population.json"), county));
 
     // if (export_time_series) {
     //     // Use only if extrapolated real data is needed for comparison. EXPENSIVE !

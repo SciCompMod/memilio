@@ -25,8 +25,11 @@
 namespace mio
 {
 
-std::vector<const char*> ConfirmedCasesDataEntry::age_group_names  = {"Population"};
-std::vector<const char*> PopulationDataEntry::age_group_names      = {"Population"};
+std::vector<const char*> ConfirmedCasesDataEntry::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
+                                                                     "A35-A59", "A60-A79", "A80+"};
+std::vector<const char*> PopulationDataEntry::age_group_names     = {
+    "<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
+    "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"};
 // std::vector<const char*> PopulationDataEntrySpain::age_group_names = {"Population"};
 
 std::vector<const char*> VaccinationDataEntry::age_group_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
