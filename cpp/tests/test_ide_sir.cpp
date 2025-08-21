@@ -27,6 +27,7 @@
 #include "memilio/utils/time_series.h"
 #include <gtest/gtest.h>
 #include <vector>
+#include <cmath>
 
 // Check that the Gregory weights are set correctly for orders 1, 2 and 3.
 TEST(IdeSir, checkGregoryWeights)
@@ -279,6 +280,79 @@ TEST(IdeSir, compareModelMessinaExtendedAndModelMessinaExtendedDetailedInit)
     for (size_t i = 0; i < (size_t)results_extended.get_num_time_points(); i++) {
         for (size_t compartment = 0; compartment < (size_t)mio::isir::InfectionState::Count; compartment++) {
             EXPECT_NEAR(results_extended[i][compartment], results_extended_detailed_init[i][compartment], 1e-6);
+        }
+    }
+}
+
+TEST(IdeSir, testFiniteDifferenceApproximation)
+{
+    using Vec = mio::TimeSeries<ScalarType>::Vector;
+
+    ScalarType t0   = 0.;
+    ScalarType tmax = 2.;
+
+    size_t gregory_order        = 1;
+    ScalarType total_population = 2.;
+
+    std::vector<size_t> finite_difference_orders = {1, 2, 4};
+
+    for (size_t finite_difference_order : finite_difference_orders) {
+        std::cout << "Finite diff order: " << finite_difference_order << std::endl;
+
+        // Set values of S to sin(x) on interval from 0 to 2.
+
+        std::vector<ScalarType> dt_exponents = {0, 1, 2, 3, 4};
+
+        std::vector<ScalarType> errors = {};
+
+        for (size_t dt_exponent : dt_exponents) {
+
+            ScalarType dt = pow(10, -(ScalarType)dt_exponent);
+
+            mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
+
+            for (size_t i = t0 / dt; i <= std::round(tmax / dt); i++) {
+                Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
+                vec_init[(size_t)mio::isir::InfectionState::Susceptible] = sin(i * dt);
+                vec_init[(size_t)mio::isir::InfectionState::Infected] =
+                    total_population - vec_init[(size_t)mio::isir::InfectionState::Susceptible];
+                // vec_init[(size_t)mio::isir::InfectionState::Recovered]   = 0.;
+
+                // Add time points t0 to init_populations.
+                init_populations.add_time_point(i * dt, vec_init);
+            }
+
+            mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population,
+                                                              gregory_order, finite_difference_order);
+
+            model.flows.add_time_point(
+                0., mio::TimeSeries<ScalarType>::Vector::Constant((size_t)mio::isir::InfectionTransition::Count, 0.));
+            model.flows.get_value(0)[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] =
+                -(model.populations.get_value(1)[(Eigen::Index)mio::isir::InfectionState::Susceptible] -
+                  model.populations.get_value(0)[(Eigen::Index)mio::isir::InfectionState::Susceptible]) /
+                dt;
+            for (size_t i = 1; i < (size_t)model.populations.get_num_time_points(); i++) {
+                model.flows.add_time_point(i * dt, mio::TimeSeries<ScalarType>::Vector::Constant(
+                                                       (size_t)mio::isir::InfectionTransition::Count, 0.));
+                model.compute_S_deriv(dt, i);
+                // EXPECT_NEAR(-model.flows[i][(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected],
+                //             cos(i * dt), 1e-6);
+            }
+            // Append error.
+            errors.push_back(
+                abs(-model.flows.get_last_value()[(Eigen::Index)mio::isir::InfectionTransition::SusceptibleToInfected] -
+                    cos(tmax)));
+        }
+
+        for (size_t i = 0; i < errors.size(); i++) {
+            // std::cout << "error: " << errors[i] << std::endl;
+        }
+
+        // Compute order of convergence.
+        for (size_t i = 0; i < errors.size() - 1; i++) {
+            ScalarType order =
+                log(errors[i + 1] / errors[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
+            std::cout << "Order: " << order << std::endl;
         }
     }
 }
