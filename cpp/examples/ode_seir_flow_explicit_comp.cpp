@@ -22,7 +22,7 @@ int main()
     // Time parameters
     ScalarType t0   = 0.;
     ScalarType dt   = 0.5;
-    ScalarType tmax = 10.;
+    ScalarType tmax = 150.;
 
     // Initialize flow-based SEIR model
     mio::oseir::Model<ScalarType> model_flow(1); // one age group
@@ -134,8 +134,11 @@ int main()
     // print results to CSV file
     const std::string save_dir                        = "/localdata1/code/memilio/saves";
     const std::vector<std::string> compartment_labels = {"S", "E", "I", "R"};
-    explicit_results_full.export_csv(save_dir + "/explicit_commuter_compare_sol.csv", compartment_labels, ',', 12);
-    flow_commuter_results.export_csv(save_dir + "/flow_commuter_compare_sol.csv", compartment_labels, ',', 12);
+    const auto precision_csv                          = 20;
+    explicit_results_full.export_csv(save_dir + "/explicit_commuter_compare_sol.csv", compartment_labels, ',',
+                                     precision_csv);
+    flow_commuter_results.export_csv(save_dir + "/flow_commuter_compare_sol.csv", compartment_labels, ',',
+                                     precision_csv);
 
     // Extract commuter compartments from explicit results
     // For 1 age group, NonCommuter (4 states), CommuterBase (4 states) -> CommuterBase is tail(4)
