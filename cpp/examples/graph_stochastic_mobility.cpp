@@ -101,7 +101,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.add_node(1002, model2, t0);
 
     auto transition_rates = mio::MobilityCoefficients<ScalarType>(model.populations.numel());
-    double kappa          = 0.01;
+    ScalarType kappa          = 0.01;
 
     for (auto age = mio::AgeGroup(0); age < num_age_groups; age++) {
         for (auto compartment = mio::Index<mio::osecir::InfectionState>(0);
