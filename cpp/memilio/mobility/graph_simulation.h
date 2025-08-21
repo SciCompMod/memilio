@@ -171,7 +171,7 @@ public:
                     size_t event = mio::DiscreteDistribution<size_t>::get_instance()(m_rng, m_rates);
                     //edge that performs transition event
                     auto& event_edge = Base::m_graph.edges()[event / parameters_per_edge];
-                    //index for compartment and age group migrating
+                    //index for compartment and age group moving
                     auto flat_index = event % parameters_per_edge;
 
                     //advance nodes until t + (waiting_time / cumulative_rate)
