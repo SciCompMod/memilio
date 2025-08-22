@@ -1,7 +1,7 @@
 LCT-based SECIR-type model
 ==========================
 
-The LCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Linear Chain 
+The LCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Linear Chain Trick.
 This provides the option of Erlang distributed stay times in the compartments through the use of subcompartments. 
 The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
 

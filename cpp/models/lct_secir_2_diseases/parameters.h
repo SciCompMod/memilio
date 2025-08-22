@@ -37,7 +37,7 @@ namespace lsecir2d
 **********************************************************/
 
 /**
- * @brief Average time spent in the Exposed compartment for disease a.
+ * @brief Average time spent in the Exposed compartment for disease a in day unit.
  */
 struct TimeExposed_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -129,7 +129,7 @@ struct TransmissionProbabilityOnContact_a {
 };
 
 /**
- * @brief Average time spent in the Exposed compartment for disease b.
+ * @brief Average time spent in the Exposed compartment for disease b in day unit.
  */
 struct TimeExposed_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;

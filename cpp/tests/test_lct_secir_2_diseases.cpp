@@ -29,9 +29,7 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/compartments/simulation.h"
 #include "load_test_data.h"
-
 #include <vector>
-
 #include <gtest/gtest.h>
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 
@@ -595,6 +593,8 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     }
 }
 
+// Run the model with more than one subcompartment for states E,I,C,H,U
+// and calculate the TimeSeries with no subcompartments from the result
 TEST(TestLCTSecir2d, testSubcompartments)
 {
     using InfState = mio::lsecir2d::InfectionState;
@@ -605,6 +605,7 @@ TEST(TestLCTSecir2d, testSubcompartments)
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
 
+    // Initial population, split into subcompartments
     std::vector<std::vector<ScalarType>> init = {
         {200},        {0, 0},    {30, 10, 10}, {0, 0, 0}, {10, 10, 10}, {0, 0, 0}, {0},       {0},       {0, 0},
         {30, 10, 10}, {0, 0, 0}, {10, 10, 10}, {0, 0, 0}, {0, 0},       {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
@@ -694,44 +695,6 @@ protected:
 public:
     Model* model = nullptr;
 };
-
-/*
-// Test compares a simulation with the result of a previous run stored in a.csv file.
-// to do
-TEST_F(ModelTestLCTSecir2d, compareWithPreviousRun)
-{
-    ScalarType tmax                    = 3;
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, ModelTestLCTSecir2d::Model>(
-        0, tmax, 0.5, *model,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
-
-    // Compare subcompartments.
-    auto compare = load_test_data_csv<ScalarType>("lct-secir-2d-subcompartments-compare.csv");
-
-    ASSERT_EQ(compare.size(), static_cast<size_t>(result.get_num_time_points()));
-    for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size(), static_cast<size_t>(result.get_num_elements()) + 1) << "at row " << i;
-        EXPECT_NEAR(result.get_time(i), compare[i][0], 1e-7) << "at row " << i;
-        for (size_t j = 1; j < compare[i].size(); j++) {
-            EXPECT_NEAR(result.get_value(i)[j - 1], compare[i][j], 1e-7) << " at row " << i;
-        }
-    }
-
-    // Compare InfectionState compartments.
-    mio::TimeSeries<ScalarType> population = model->calculate_compartments(result);
-    auto compare_population                = load_test_data_csv<ScalarType>("lct-secir-2d-compartments-compare.csv");
-
-    ASSERT_EQ(compare_population.size(), static_cast<size_t>(population.get_num_time_points()));
-    for (size_t i = 0; i < compare_population.size(); i++) {
-        ASSERT_EQ(compare_population[i].size(), static_cast<size_t>(population.get_num_elements()) + 1)
-            << "at row " << i;
-        EXPECT_NEAR(population.get_time(i), compare_population[i][0], 1e-7) << "at row " << i;
-        for (size_t j = 1; j < compare_population[i].size(); j++) {
-            EXPECT_NEAR(population.get_value(i)[j - 1], compare_population[i][j], 1e-7) << " at row " << i;
-        }
-    }
-}
-*/
 
 // Test calculate_compartments with a TimeSeries that has an incorrect number of elements.
 TEST_F(ModelTestLCTSecir2d, testCalculatePopWrongSize)
