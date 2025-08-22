@@ -122,7 +122,7 @@ void SimulationMessinaExtended::advance_messina(ScalarType tmax)
         m_model->compute_I_and_R(m_dt);
     }
 
-    std::cout << "Total population at start of simulation is is "
+    std::cout << "Total population at start of simulation is "
               << m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] +
                      m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
                      m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Recovered]

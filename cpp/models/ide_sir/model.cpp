@@ -22,7 +22,6 @@
 #include "ide_sir/infection_state.h"
 #include "ide_sir/gregory_weights.h"
 #include "memilio/config.h"
-#include "memilio/math/floating_point.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/time_series.h"
 #include <Eigen/src/Core/util/Meta.h>

@@ -300,11 +300,11 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
     std::vector<size_t> finite_difference_orders = {1, 2, 4};
 
     for (size_t finite_difference_order : finite_difference_orders) {
-        std::cout << "Finite diff order: " << finite_difference_order << std::endl;
+        // std::cout << "Finite diff order: " << finite_difference_order << std::endl;
 
         // Set values of S to sin(x) on interval from 0 to 2.
 
-        std::vector<ScalarType> dt_exponents = {0, 1, 2, 3, 4};
+        std::vector<ScalarType> dt_exponents = {0, 1, 2, 3};
 
         std::vector<ScalarType> errors = {};
 
@@ -353,7 +353,8 @@ TEST(IdeSir, testFiniteDifferenceApproximation)
         for (size_t i = 0; i < errors.size() - 1; i++) {
             ScalarType order =
                 log(errors[i + 1] / errors[i]) / log(pow(10, -dt_exponents[i + 1]) / pow(10, -dt_exponents[i]));
-            std::cout << "Order: " << order << std::endl;
+            // std::cout << "Order: " << order << std::endl;
+            EXPECT_NEAR(order, finite_difference_order, 0.3);
         }
     }
 }
