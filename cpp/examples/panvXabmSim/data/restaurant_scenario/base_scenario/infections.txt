@@ -62,7 +62,7 @@ pedestrianId	table	infected
 61	T09	0
 62	T09	0
 63	T09	0
-64  A   1
+64	A	1
 65	A	1
 66	A	1
 67	A	1
