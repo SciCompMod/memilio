@@ -157,21 +157,16 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     ScalarType sum_first_integral = 0., sum_second_integral = 0., sum_third_integral = 0.;
 
     for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
-        ScalarType gregory_weight_first_integral = sum_part1_weight(current_time_index, j);
+        ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
         sum_first_integral +=
-            gregory_weight_first_integral *
+            gregory_weight *
             (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time_index * dt)(0, 0) / m_N) *
             m_transmissionproboncontact_vector[current_time_index - j] *
             m_riskofinffromsymptomatic_vector[current_time_index - j] *
             m_transitiondistribution_vector[current_time_index - j] *
             populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
-    }
-
-    for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
-        // Compute first part of sum of second integral (from 0 to t)
-        ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
         sum_second_integral += gregory_weight *
@@ -207,11 +202,6 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             gregory_weight * m_transmissionproboncontact_vector[current_time_index - j] *
             m_riskofinffromsymptomatic_vector[current_time_index - j] *
             m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
-    }
-
-    for (size_t j = std::min(current_time_index, m_gregory_order); j <= current_time_index; j++) {
-        // Compute second part of second integral here as the second integral is a subintegral of the first integral.
-        ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
         sum_second_integral += gregory_weight *
