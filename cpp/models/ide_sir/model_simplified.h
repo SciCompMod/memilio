@@ -1,0 +1,129 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Anna Wendler
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+/* This file contains ModelMessina and ModelMessinaExtended, which are both simplified versions of 
+ModelMessinaDetailedInit. */
+
+#ifndef IDESIR_MODEL_SIMPLIFIED_H
+#define IDESIR_MODEL_SIMPLIFIED_H
+
+#include "ide_sir/parameters.h"
+#include "memilio/config.h"
+#include "memilio/utils/time_series.h"
+
+namespace mio
+{
+namespace isir
+{
+// std::vector<Eigen::MatrixX<ScalarType>> get_gregoryweights(size_t gregory_order);
+
+// We define a separate class to recreate the numerical scheme of Messina where we only consider S and not the other compartments.
+class ModelMessina
+{
+    using ParameterSet = Parameters;
+
+public:
+    ModelMessina(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order);
+
+    ScalarType get_totalpop() const;
+
+    size_t get_gregory_order() const
+    {
+        return m_gregory_order;
+    }
+
+    ScalarType sum_part1_weight(size_t n, size_t j);
+    ScalarType sum_part2_weight(size_t n, size_t j);
+
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt);
+
+    size_t compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
+
+    void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
+    void set_parameter_vectors(ScalarType dt, ScalarType tmax);
+
+    // ---- Public parameters. ----
+    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
+        // people in defined #InfectionState%s for every AgeGroup.
+
+private:
+    // ---- Private parameters. ----
+    ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    size_t m_gregory_order;
+    std::vector<ScalarType> m_transitiondistribution_vector;
+    std::vector<ScalarType> m_transmissionproboncontact_vector;
+    std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
+};
+
+// In this class, we extend ModelMessina by a contact rate that is not constant as before but can change with time.
+// For this, we model the contacts by $\phi(t)/N$ instead of the constant $\beta$ as in ModelMessina.
+// Here, we also compute the remaining compartments I and R where we use an approximation of the derivative S'.
+class ModelMessinaExtended
+{
+    using ParameterSet = Parameters;
+
+public:
+    ModelMessinaExtended(TimeSeries<ScalarType>&& populations_init, ScalarType N_init, size_t gregory_order,
+                         size_t finite_difference_order = 1);
+
+    ScalarType get_totalpop() const;
+
+    size_t get_gregory_order() const
+    {
+        return m_gregory_order;
+    }
+
+    ScalarType sum_part1_weight(size_t n, size_t j);
+    ScalarType sum_part2_weight(size_t n, size_t j);
+
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt);
+
+    // Returns the number of iterations needed in fixed point iteration.
+    size_t compute_S(ScalarType s_init, ScalarType dt, ScalarType tol = 1e-10, size_t max_iterations = 100);
+
+    void compute_S_deriv(ScalarType dt, size_t time_point_index);
+    void compute_S_deriv(ScalarType dt);
+
+    void compute_I_and_R(ScalarType dt);
+
+    void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax);
+    void set_parameter_vectors(ScalarType dt, ScalarType tmax);
+
+    // ---- Public parameters. ----
+    ParameterSet parameters{}; ///< ParameterSet of Model Parameters.
+    TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
+    // people in defined #InfectionState%s for every AgeGroup.
+    TimeSeries<ScalarType> flows;
+
+private:
+    // ---- Private parameters. ----
+    ScalarType m_N; ///< Vector containing the total population size of the considered region for every AgeGroup.
+    size_t m_gregory_order;
+    size_t m_finite_difference_order;
+    std::vector<ScalarType> m_transitiondistribution_vector;
+    std::vector<ScalarType> m_transmissionproboncontact_vector;
+    std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
+};
+
+} // namespace isir
+} // namespace mio
+
+#endif // IDESIR_MODEL_H

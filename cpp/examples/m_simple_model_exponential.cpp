@@ -18,10 +18,10 @@
 * limitations under the License.
 */
 
-#include "ide_sir/model.h"
+#include "ide_sir/model_simplified.h"
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
-#include "ide_sir/simulation.h"
+#include "ide_sir/simulation_simplified.h"
 #include "memilio/utils/logging.h"
 #include "ode_sir/model.h"
 #include "memilio/config.h"

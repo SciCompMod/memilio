@@ -18,12 +18,12 @@
 * limitations under the License.
 */
 
-/* This file contains the SImulation class for the model ModelMessinaExtendedDetailedInit which will be further investiagted and developed. */
+/* This file contains the respective Simulation classes for the models ModelMessina and ModelMessinaExtended. */
 
-#ifndef IDE_SIR_SIMULATION_H
-#define IDE_SIR_SIMULATION_H
+#ifndef IDE_SIR_SIMULATION_SIMPLIFIED_H
+#define IDE_SIR_SIMULATION_SIMPLIFIED_H
 
-#include "ide_sir/model.h"
+#include "ide_sir/model_simplified.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 #include <cstdio>
@@ -32,8 +32,7 @@ namespace mio
 {
 namespace isir
 {
-
-class SimulationMessinaExtendedDetailedInit
+class SimulationMessina
 {
 
 public:
@@ -42,8 +41,8 @@ public:
      * @param[in] model An instance of the IDE model.
      * @param[in] dt Step size of numerical solver.
      */
-    SimulationMessinaExtendedDetailedInit(ModelMessinaExtendedDetailedInit const& model, ScalarType dt)
-        : m_model(std::make_unique<ModelMessinaExtendedDetailedInit>(model))
+    SimulationMessina(ModelMessina const& model, ScalarType dt)
+        : m_model(std::make_unique<ModelMessina>(model))
         , m_dt(dt)
     {
         assert(m_dt > 0);
@@ -55,7 +54,81 @@ public:
      */
     void advance_messina(ScalarType tmax);
 
-    void advance_messina_central(ScalarType tmax);
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    TimeSeries<ScalarType> get_result()
+    {
+        return m_model->populations;
+    }
+
+    /**
+     * @brief Get the result of the simulation.
+     * Return the number of persons in all #InfectionState%s.
+     * @return The result of the simulation.
+     */
+    const TimeSeries<ScalarType>& get_result() const
+    {
+        return m_model->populations;
+    }
+
+    /**
+     * @brief returns the simulation model used in simulation.
+     */
+    const ModelMessina& get_model() const
+    {
+        return *m_model;
+    }
+
+    /**
+     * @brief returns the simulation model used in simulation.
+     */
+    ModelMessina& get_model()
+    {
+        return *m_model;
+    }
+
+    /**
+     * @brief get the time step of the simulation.
+     * 
+     */
+    ScalarType get_dt()
+    {
+        return m_dt;
+    }
+
+private:
+    std::unique_ptr<ModelMessina> m_model; ///< Unique pointer to the Model simulated.
+    ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+    size_t m_max_number_iterations =
+        0; ///< Get maximal number of iterations that was necessary throughout the simulation.
+};
+
+/*********************************************************************************************************************/
+
+class SimulationMessinaExtended
+{
+
+public:
+    /**
+     * @brief setup the Simulation for an IDE model.
+     * @param[in] model An instance of the IDE model.
+     * @param[in] dt Step size of numerical solver.
+     */
+    SimulationMessinaExtended(ModelMessinaExtended const& model, ScalarType dt)
+        : m_model(std::make_unique<ModelMessinaExtended>(model))
+        , m_dt(dt)
+    {
+        assert(m_dt > 0);
+    }
+
+    /** 
+     * Run the simulation from the current time to tmax.
+     * @param tmax Time to stop.
+     */
+    void advance_messina(ScalarType tmax);
 
     /**
      * @brief Get the result of the simulation.
@@ -100,7 +173,7 @@ public:
     /**
      * @brief returns the simulation model used in simulation.
      */
-    const ModelMessinaExtendedDetailedInit& get_model() const
+    const ModelMessinaExtended& get_model() const
     {
         return *m_model;
     }
@@ -108,7 +181,7 @@ public:
     /**
      * @brief returns the simulation model used in simulation.
      */
-    ModelMessinaExtendedDetailedInit& get_model()
+    ModelMessinaExtended& get_model()
     {
         return *m_model;
     }
@@ -123,7 +196,7 @@ public:
     }
 
 private:
-    std::unique_ptr<ModelMessinaExtendedDetailedInit> m_model; ///< Unique pointer to the Model simulated.
+    std::unique_ptr<ModelMessinaExtended> m_model; ///< Unique pointer to the Model simulated.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
     size_t m_max_number_iterations =
         0; ///< Get maximal number of iterations that was necessary throughout the simulation.

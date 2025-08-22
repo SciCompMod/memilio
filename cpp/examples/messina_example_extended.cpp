@@ -18,11 +18,10 @@
 * limitations under the License.
 */
 
-#include "ide_sir/model.h"
+#include "ide_sir/model_simplified.h"
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
-#include "ide_sir/simulation.h"
-#include "ode_sir/model.h"
+#include "ide_sir/simulation_simplified.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/utils/time_series.h"
