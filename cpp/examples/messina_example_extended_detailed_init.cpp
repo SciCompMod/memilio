@@ -137,7 +137,7 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt);
-        sim.advance_messina(tmax);
+        sim.advance(tmax);
 
         // If no groundtruth is gibven as input, we set the here computed results as groundtruth.
         if (result_groundtruth.get_num_time_points() == 0) {

@@ -104,7 +104,8 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
                                  size_t finite_difference_order, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
-                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count))
+                                     mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
+                                 bool backwarts_fd = true)
 {
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
@@ -174,8 +175,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance_messina(tmax);
-        // sim.advance_messina_central(tmax);
+        sim.advance(tmax, backwarts_fd);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -201,6 +201,7 @@ int main()
     ScalarType ode_exponent = 6;
 
     size_t finite_difference_order = 4;
+    bool backwarts_fd              = false;
 
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
@@ -214,16 +215,16 @@ int main()
     auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 
     // Do IDE simulations.
-    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-    std::vector<size_t> gregory_orders    = {1, 2, 3};
+    // std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+    // std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    // std::vector<ScalarType> ide_exponents = {1};
-    // std::vector<size_t> gregory_orders    = {1};
+    std::vector<ScalarType> ide_exponents = {1};
+    std::vector<size_t> gregory_orders    = {1};
 
     for (size_t gregory_order : gregory_orders) {
         std::cout << std::endl;
         std::cout << "Gregory order: " << gregory_order << std::endl;
         mio::IOResult<void> result_ide =
-            simulate_ide(ide_exponents, gregory_order, finite_difference_order, save_dir, result_ode);
+            simulate_ide(ide_exponents, gregory_order, finite_difference_order, save_dir, result_ode, backwarts_fd);
     }
 }

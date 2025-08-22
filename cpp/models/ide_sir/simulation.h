@@ -53,9 +53,7 @@ public:
      * Run the simulation from the current time to tmax.
      * @param tmax Time to stop.
      */
-    void advance_messina(ScalarType tmax);
-
-    void advance_messina_central(ScalarType tmax);
+    void advance(ScalarType tmax, bool backwards_fd = true);
 
     /**
      * @brief Get the result of the simulation.

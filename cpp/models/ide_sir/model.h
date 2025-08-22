@@ -48,6 +48,11 @@ public:
         return m_gregory_order;
     }
 
+    size_t get_finite_difference_order() const
+    {
+        return m_finite_difference_order;
+    }
+
     ScalarType sum_part1_weight(size_t n, size_t j);
     ScalarType sum_part2_weight(size_t n, size_t j);
 
@@ -62,7 +67,8 @@ public:
     void compute_S_deriv_central(ScalarType dt, size_t time_point_index);
     void compute_S_deriv_central(ScalarType dt);
 
-    void compute_I_and_R(ScalarType dt, size_t t0_index);
+    void compute_I_and_R(ScalarType dt, size_t time_point_index);
+    void compute_I_and_R(ScalarType dt);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);

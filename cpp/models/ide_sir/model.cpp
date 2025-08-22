@@ -288,7 +288,7 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
 void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt)
 {
     // Use the number of time points to determine time_point_index, hence we are calculating S deriv for last time point.
-    size_t time_point_index = populations.get_num_time_points() - 1;
+    size_t time_point_index = flows.get_num_time_points() - 1;
     compute_S_deriv(dt, time_point_index);
 }
 
@@ -296,7 +296,7 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt, si
 {
     // Linear backwards finite difference scheme.
     if (m_finite_difference_order == 1) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
             dt;
@@ -304,7 +304,7 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt, si
 
     // Compute S' with central finite difference scheme of second order, flow from S to I is then given by -S'.
     if (m_finite_difference_order == 2) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(-populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
               populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible]) /
             (2 * dt);
@@ -312,7 +312,7 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt, si
 
     // Compute S' with central finite difference scheme of fourth order, flow from S to I is then given by -S'.
     if (m_finite_difference_order == 4) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
               8 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
               8 * populations[time_point_index + 1][(Eigen::Index)InfectionState::Susceptible] -
@@ -328,11 +328,10 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt)
     compute_S_deriv_central(dt, time_point_index);
 }
 
-void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t t0_index)
+void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t time_point_index)
 {
-    unused(t0_index);
     // ScalarType current_time = populations.get_last_time();
-    size_t current_time_index = populations.get_num_time_points() - 1;
+    size_t current_time_index = flows.get_num_time_points() - 1;
 
     ScalarType sum_infected = 0., sum_recovered = 0.;
 
@@ -362,16 +361,24 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t t0_
                          flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
-    populations.get_last_value()[(Eigen::Index)InfectionState::Infected] =
+    populations[time_point_index][(Eigen::Index)InfectionState::Infected] =
         m_transitiondistribution_vector[current_time_index - m_gregory_order] *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_infected;
 
-    populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
+    populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
         (1 - m_transitiondistribution_vector[current_time_index - m_gregory_order]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_recovered;
+}
+
+void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt)
+{
+    // Use the number of time points to determine time_point_index, hence we are calculating I and R for last
+    // time point of flows.
+    size_t time_point_index = flows.get_num_time_points() - 1;
+    compute_I_and_R(dt, time_point_index);
 }
 
 } // namespace isir

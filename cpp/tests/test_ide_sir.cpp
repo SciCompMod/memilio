@@ -275,7 +275,7 @@ TEST(IdeSir, compareModelMessinaExtendedAndModelMessinaExtendedDetailedInit)
     mio::TimeSeries<ScalarType> flows_extended   = sim_extended.get_flows();
 
     mio::isir::SimulationMessinaExtendedDetailedInit sim_extended_detailed_init(model_extended_detailed_init, dt);
-    sim_extended_detailed_init.advance_messina(tmax);
+    sim_extended_detailed_init.advance(tmax);
     mio::TimeSeries<ScalarType> results_extended_detailed_init = sim_extended_detailed_init.get_result();
     mio::TimeSeries<ScalarType> flows_extended_detailed_init   = sim_extended_detailed_init.get_flows();
 
