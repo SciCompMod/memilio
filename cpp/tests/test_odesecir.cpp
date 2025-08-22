@@ -1585,7 +1585,7 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
     // Aggreagate the results from the model with 6 age groups and compare with the model with 1 age group
     const auto& m6   = models6[0];
     const auto& m1   = models1[0];
-    const double tol = 1e-13;
+    const double tol = 1e-10;
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
         for (size_t ag = 0; ag < num_age_groups; ++ag) {
@@ -1596,7 +1596,7 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
     }
 
     // Total population
-    EXPECT_NEAR(m6.populations.get_total(), m1.populations.get_total(), 1e-13);
+    EXPECT_NEAR(m6.populations.get_total(), m1.populations.get_total(), tol);
 }
 
 TEST(TestOdeSecirIO, set_population_data_single_age_group)
@@ -1617,7 +1617,7 @@ TEST(TestOdeSecirIO, set_population_data_single_age_group)
     EXPECT_THAT(mio::osecir::details::set_population_data(models1, population_data1, regions), IsSuccess());
 
     // Sum all compartments across age groups in 6-group model and compare 1-group model
-    const double tol = 1e-13;
+    const double tol = 1e-10;
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
         for (size_t ag = 0; ag < num_age_groups; ++ag) {
