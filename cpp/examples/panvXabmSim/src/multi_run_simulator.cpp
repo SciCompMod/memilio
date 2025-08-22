@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 #include <hdf5.h>
+#include "city_builder.h"
 
 std::string location_type_to_string(mio::abm::LocationType type)
 {
@@ -56,6 +57,7 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         rng.set_counter(run_rng_counter);
         auto base_world = CityBuilder::build_world(config.city_config, rng);
         // CityBuilder::print_city_summary(config.city_config);
+
         for (auto& person : base_world.get_persons()) {
             // Reset the infection state for each person
             person.get_rng_counter() =
@@ -76,7 +78,8 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
             // BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
             //                                                      config.event_config, base_world, event_map));
             // std::cout << "Calculated infection parameter K: " << results.infection_parameter_k << std::endl;
-            results.infection_parameter_k = 22.6; // Placeholder value for K parameter
+            // results.infection_parameter_k = 22.6; // Placeholder value for K parameter
+            results.infection_parameter_k = 0.0; // Placeholder value for K parameter
         }
 
         // Step 3: Get initial infections
@@ -492,7 +495,7 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
 }
 
 mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResults& results,
-                                                              const std::string& base_dir)
+                                                              const std::string& base_dir, const MultiRunConfig& config)
 {
     BOOST_OUTCOME_TRY(create_result_folders(base_dir));
 
@@ -543,6 +546,8 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         }
         loc_id_and_type_stream.close();
     }
+
+    CityBuilder::save_city_to_file(config.city_config, base_dir + "/city_config.txt");
 
     //Save percentile results
     auto ensembl_inf_per_loc_type      = std::vector<std::vector<mio::TimeSeries<ScalarType>>>{};
@@ -642,7 +647,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
     results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
-    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(1)};
+    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(6)};
     results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // FIGURES

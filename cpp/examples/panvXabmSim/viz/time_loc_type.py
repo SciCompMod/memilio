@@ -126,7 +126,10 @@ def calculate_group_averages(person_totals, group_people, num_days):
 
     # Calculate average per day per person
     num_people = len(group_people)
-    averages = [total / (num_days * num_people) for total in group_totals]
+    if num_days > 0:
+        averages = [total / (num_days * num_people) for total in group_totals]
+    else:
+        averages = [0, 0, 0, 0, 0]
 
     return averages
 
@@ -296,7 +299,7 @@ def main():
     Main function to create group-based pie charts
     """
     # Use the uploaded file directly
-    filename = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-10151633/location_type_and_id.txt"
+    filename = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19152307/location_type_and_id.txt"
 
     print(f"Reading location data from {filename}...")
     print("Creating pie charts for different groups...")

@@ -25,6 +25,7 @@ class CityBuilder
 public:
     static mio::abm::World build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng);
     static void print_city_summary(const CityConfig& config);
+    static void save_city_to_file(const CityConfig& config, const std::string& filename);
 
 private:
     static std::vector<mio::abm::LocationId> create_households(mio::abm::World& world, int num_households);

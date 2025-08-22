@@ -568,3 +568,193 @@ void CityBuilder::print_city_summary(const CityConfig& config)
 
     std::cout << "\n" << std::string(50, '=') << "\n\n";
 }
+
+void CityBuilder::save_city_to_file(const CityConfig& config, const std::string& filename)
+{
+    auto infra = config.infrastructure();
+    std::ofstream ofs(filename);
+    if (!ofs) {
+        std::cerr << "Error: Could not open file " << filename << " for writing\n";
+        return;
+    }
+
+    // Write header
+    ofs << "City Simulation Statistics\n";
+    ofs << "=========================\n";
+
+    // Population Statistics
+    ofs << "POPULATION STATISTICS\n";
+    ofs << "--------------------\n";
+    ofs << "total_population," << config.total_population << "\n";
+
+    // Age group distribution
+    ofs << "age_group_0_to_4," << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[0])
+        << "\n";
+    ofs << "age_group_5_to_14,"
+        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[1]) << "\n";
+    ofs << "age_group_15_to_34,"
+        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[2]) << "\n";
+    ofs << "age_group_35_to_59,"
+        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[3]) << "\n";
+    ofs << "age_group_60_to_79,"
+        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[4]) << "\n";
+    ofs << "age_group_80_plus,"
+        << static_cast<int>(config.total_population * CityParameters::GERMAN_AGE_DISTRIBUTION[5]) << "\n";
+
+    // Age percentages
+    ofs << "age_percentage_0_to_4," << std::fixed << std::setprecision(2)
+        << (CityParameters::GERMAN_AGE_DISTRIBUTION[0] * 100) << "\n";
+    ofs << "age_percentage_5_to_14," << (CityParameters::GERMAN_AGE_DISTRIBUTION[1] * 100) << "\n";
+    ofs << "age_percentage_15_to_34," << (CityParameters::GERMAN_AGE_DISTRIBUTION[2] * 100) << "\n";
+    ofs << "age_percentage_35_to_59," << (CityParameters::GERMAN_AGE_DISTRIBUTION[3] * 100) << "\n";
+    ofs << "age_percentage_60_to_79," << (CityParameters::GERMAN_AGE_DISTRIBUTION[4] * 100) << "\n";
+    ofs << "age_percentage_80_plus," << (CityParameters::GERMAN_AGE_DISTRIBUTION[5] * 100) << "\n\n";
+
+    // Household Statistics
+    ofs << "HOUSEHOLD STATISTICS\n";
+    ofs << "-------------------\n";
+    int total_households = std::accumulate(infra.num_households_hh_size.begin(), infra.num_households_hh_size.end(), 0);
+    ofs << "total_households," << total_households << "\n";
+    ofs << "average_household_size," << std::setprecision(2)
+        << static_cast<double>(config.total_population) / total_households << "\n";
+
+    // Household size distribution
+    for (size_t i = 0; i < infra.num_households_hh_size.size(); ++i) {
+        ofs << "households_size_" << (i + 1) << "," << infra.num_households_hh_size[i] << "\n";
+        ofs << "households_size_" << (i + 1) << "_percentage," << std::setprecision(2)
+            << (static_cast<double>(infra.num_households_hh_size[i]) / total_households * 100) << "\n";
+    }
+    ofs << "\n";
+
+    // Employment Statistics
+    ofs << "EMPLOYMENT STATISTICS\n";
+    ofs << "--------------------\n";
+    ofs << "num_workplaces," << infra.num_workplaces << "\n";
+    ofs << "num_workers," << infra.num_worker << "\n";
+    ofs << "employment_rate," << std::setprecision(2) << (CityParameters::InfrastructureRatios::EMPLOYMENT_RATE * 100)
+        << "\n";
+    ofs << "average_employees_per_workplace," << std::setprecision(1)
+        << static_cast<double>(infra.num_worker) / infra.num_workplaces << "\n";
+
+    // Calculate workers by age group
+    auto age_vector     = create_age_vector(config.total_population);
+    int workers_15_34   = std::min(age_vector[2], infra.num_worker);
+    int workers_35_59   = std::min(age_vector[3], std::max(0, infra.num_worker - workers_15_34));
+    int workers_60_plus = std::max(0, infra.num_worker - workers_15_34 - workers_35_59);
+
+    ofs << "workers_age_15_34," << workers_15_34 << "\n";
+    ofs << "workers_age_35_59," << workers_35_59 << "\n";
+    ofs << "workers_age_60_plus," << workers_60_plus << "\n\n";
+
+    // Education Statistics
+    ofs << "EDUCATION STATISTICS\n";
+    ofs << "-------------------\n";
+    ofs << "num_elementary_schools," << infra.num_elementary_schools << "\n";
+    ofs << "num_secondary_schools," << infra.num_secondary_schools << "\n";
+    ofs << "total_schools," << (infra.num_elementary_schools + infra.num_secondary_schools) << "\n";
+    ofs << "elementary_school_students," << infra.num_persons_elementary_schools << "\n";
+    ofs << "secondary_school_students," << infra.num_persons_secondary_schools << "\n";
+    ofs << "total_students," << (infra.num_persons_elementary_schools + infra.num_persons_secondary_schools) << "\n";
+    ofs << "students_per_elementary_school," << std::setprecision(1)
+        << static_cast<double>(infra.num_persons_elementary_schools) / infra.num_elementary_schools << "\n";
+    ofs << "students_per_secondary_school," << std::setprecision(1)
+        << static_cast<double>(infra.num_persons_secondary_schools) / infra.num_secondary_schools << "\n";
+    ofs << "school_age_population_5_14," << age_vector[1] << "\n\n";
+
+    // Healthcare Statistics
+    ofs << "HEALTHCARE STATISTICS\n";
+    ofs << "--------------------\n";
+    ofs << "num_hospitals," << infra.num_hospitals << "\n";
+    ofs << "num_icus," << infra.num_icus << "\n";
+    ofs << "people_per_hospital," << std::setprecision(0)
+        << static_cast<double>(config.total_population) / infra.num_hospitals << "\n";
+    ofs << "people_per_icu," << std::setprecision(0) << static_cast<double>(config.total_population) / infra.num_icus
+        << "\n\n";
+
+    // Retail & Services Statistics
+    ofs << "RETAIL & SERVICES STATISTICS\n";
+    ofs << "---------------------------\n";
+    ofs << "num_stores," << infra.num_stores << "\n";
+    ofs << "people_per_store," << std::setprecision(0)
+        << static_cast<double>(config.total_population) / infra.num_stores << "\n";
+    ofs << "shoppers," << (config.total_population - age_vector[0]) << "\n"; // All except 0-4 age group
+    ofs << "shoppers_per_store," << std::setprecision(1)
+        << static_cast<double>(config.total_population - age_vector[0]) / infra.num_stores << "\n\n";
+
+    // Social & Entertainment Statistics
+    ofs << "SOCIAL & ENTERTAINMENT STATISTICS\n";
+    ofs << "--------------------------------\n";
+    ofs << "num_events," << infra.num_events << "\n";
+    ofs << "people_per_event_venue," << std::setprecision(0)
+        << static_cast<double>(config.total_population) / infra.num_events << "\n\n";
+
+    // Infrastructure Density
+    ofs << "INFRASTRUCTURE DENSITY\n";
+    ofs << "---------------------\n";
+    int total_locations = total_households + infra.num_workplaces + infra.num_elementary_schools +
+                          infra.num_secondary_schools + infra.num_hospitals + infra.num_icus + infra.num_stores +
+                          infra.num_events;
+    ofs << "total_locations," << total_locations << "\n";
+    ofs << "locations_per_1000_people," << std::setprecision(1)
+        << static_cast<double>(total_locations) * 1000.0 / config.total_population << "\n";
+    ofs << "households_per_1000_people," << std::setprecision(1)
+        << static_cast<double>(total_households) * 1000.0 / config.total_population << "\n";
+    ofs << "workplaces_per_1000_people," << std::setprecision(1)
+        << static_cast<double>(infra.num_workplaces) * 1000.0 / config.total_population << "\n";
+    ofs << "schools_per_1000_people," << std::setprecision(1)
+        << static_cast<double>(infra.num_elementary_schools + infra.num_secondary_schools) * 1000.0 /
+               config.total_population
+        << "\n\n";
+
+    // Contact Network Potential
+    ofs << "CONTACT NETWORK POTENTIAL\n";
+    ofs << "------------------------\n";
+    ofs << "max_workplace_contacts," << infra.num_worker << "\n";
+    ofs << "max_school_contacts," << (infra.num_persons_elementary_schools + infra.num_persons_secondary_schools)
+        << "\n";
+    ofs << "max_shopping_contacts," << (config.total_population - age_vector[0]) << "\n";
+    ofs << "max_social_event_contacts," << config.total_population << "\n";
+    ofs << "non_working_non_school_population,"
+        << (config.total_population - infra.num_worker - infra.num_persons_elementary_schools -
+            infra.num_persons_secondary_schools)
+        << "\n\n";
+
+    // German Demographic Ratios Used
+    ofs << "GERMAN DEMOGRAPHIC RATIOS USED\n";
+    ofs << "------------------------------\n";
+    ofs << "employment_rate_used," << std::setprecision(3) << CityParameters::InfrastructureRatios::EMPLOYMENT_RATE
+        << "\n";
+
+    // Infrastructure ratios (you may need to expose these from CityParameters)
+    ofs << "households_per_person," << std::setprecision(4)
+        << static_cast<double>(total_households) / config.total_population << "\n";
+    ofs << "workplaces_per_person," << std::setprecision(4)
+        << static_cast<double>(infra.num_workplaces) / config.total_population << "\n";
+    ofs << "stores_per_person," << std::setprecision(4)
+        << static_cast<double>(infra.num_stores) / config.total_population << "\n";
+    ofs << "events_per_person," << std::setprecision(4)
+        << static_cast<double>(infra.num_events) / config.total_population << "\n\n";
+
+    // Summary Statistics for Quick Reference
+    ofs << "SUMMARY STATISTICS\n";
+    ofs << "-----------------\n";
+    ofs << "population_density_category,";
+    if (config.total_population <= 500)
+        ofs << "small_town\n";
+    else if (config.total_population <= 2000)
+        ofs << "medium_town\n";
+    else
+        ofs << "large_town\n";
+
+    ofs << "average_persons_per_household," << std::setprecision(2)
+        << static_cast<double>(config.total_population) / total_households << "\n";
+    ofs << "worker_to_population_ratio," << std::setprecision(3)
+        << static_cast<double>(infra.num_worker) / config.total_population << "\n";
+    ofs << "student_to_population_ratio," << std::setprecision(3)
+        << static_cast<double>(infra.num_persons_elementary_schools + infra.num_persons_secondary_schools) /
+               config.total_population
+        << "\n";
+
+    ofs.close();
+    std::cout << "City statistics saved to " << filename << "\n";
+}

@@ -43,7 +43,8 @@ class MultiRunSimulator
 public:
     static mio::IOResult<MultiRunResults> run_multi_simulation(const MultiRunConfig& config,
                                                                mio::RandomNumberGenerator rng);
-    static mio::IOResult<void> save_multi_run_results(const MultiRunResults& results, const std::string& base_dir);
+    static mio::IOResult<void> save_multi_run_results(const MultiRunResults& results, const std::string& base_dir,
+                                                      const MultiRunConfig& config);
 
 private:
     static mio::IOResult<SimulationResults>

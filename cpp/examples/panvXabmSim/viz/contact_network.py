@@ -122,7 +122,7 @@ def create_household_layout(household_data, household_spacing=15.0, person_spaci
     # Calculate number of rows needed
     households_per_row = min(max_households_per_row, num_households)
     num_rows = int(np.ceil(num_households / households_per_row))
-    row_spacing = 12.0
+    row_spacing = 60.0
 
     household_items = list(households.items())
 
@@ -195,7 +195,7 @@ def create_location_layout(contact_data_with_types, household_positions, area_di
     else:
         center_x = 0
         width = 100
-        household_area_height = 5
+        household_area_height = 10
 
     # Define location areas around the household area
     location_area_mapping = {
@@ -237,8 +237,8 @@ def create_location_layout(contact_data_with_types, household_positions, area_di
             location_nodes.add(location_node)
         else:
             max_locations_per_row = 16  # Maximum locations per row
-            spacing = 6.0
-            row_spacing = 8.0
+            spacing = 50.0
+            row_spacing = 60.0
 
             # Calculate number of rows needed
             locations_per_row = min(max_locations_per_row, n_locations)
@@ -666,8 +666,8 @@ def main():
     args = parser.parse_args()
 
     # # For debug, set a path:
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result"
-    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/last_result/contact_network.png"
+    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358"
+    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358/contact_network.png"
     args.scenario_name = "Test Scenario"
     args.total_runs = 10
 
