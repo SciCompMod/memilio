@@ -23,16 +23,6 @@
 
 #include "memilio/config.h"
 #include "memilio/math/eigen.h"
-// #include "memilio/math/eigen_util.h"
-// #include "memilio/io/io.h"
-// #include "memilio/utils/stl_util.h"
-// #include "memilio/math/floating_point.h"
-
-// #include <algorithm>
-// #include <iterator>
-// #include <vector>
-// #include "memilio/utils/time_series.h"
-// #include <Eigen/src/Core/util/Meta.h>
 #include <cmath>
 
 namespace mio

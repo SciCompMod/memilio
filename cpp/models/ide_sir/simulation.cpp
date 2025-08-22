@@ -47,13 +47,10 @@ void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
                   tmax, m_dt);
 
     // Compute S' for t_0,..., t_{n0-1}.
-    // Compute S'(0) with forward difference operator due to lack of knowledge of previous values of S.
+    // We set S'(0) due to lack of knowledge of previous values of S.
     // The corresponding flow is then given by -S'.
+    // TODO: Initialize S'(0) in a different way?
     m_model->flows.add_time_point(0., TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
-    m_model->flows.get_value(0)[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-        -(m_model->populations.get_value(1)[(Eigen::Index)InfectionState::Susceptible] -
-          m_model->populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible]) /
-        m_dt;
 
     // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
     for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
@@ -61,10 +58,6 @@ void SimulationMessinaExtendedDetailedInit::advance_messina(ScalarType tmax)
         m_model->flows.add_time_point(i * m_dt,
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
         m_model->compute_S_deriv(m_dt, i);
-        // m_model->flows.get_value(i)[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-        //     -(m_model->populations.get_value(i)[(Eigen::Index)InfectionState::Susceptible] -
-        //       m_model->populations.get_value(i - 1)[(Eigen::Index)InfectionState::Susceptible]) /
-        //     m_dt;
     }
 
     while (m_model->populations.get_last_time() < tmax - 1e-10) {

@@ -416,16 +416,16 @@ size_t ModelMessinaExtended::compute_S(ScalarType s_init, ScalarType dt, ScalarT
 void ModelMessinaExtended::compute_S_deriv(ScalarType dt, size_t time_point_index)
 {
     // Linear backwards finite difference scheme.
-    if (m_finite_difference_order == 1) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+    if (std::min(m_finite_difference_order, time_point_index) == 1) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
             dt;
     }
 
     // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
-    if (m_finite_difference_order == 4) {
-        flows.get_last_value()[(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
+    if (std::min(m_finite_difference_order, time_point_index) == 4) {
+        flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
               16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
               36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
