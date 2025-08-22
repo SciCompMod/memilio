@@ -44,7 +44,8 @@ enum class LocationType : std::uint32_t
     TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
     Cemetery, // Location for all the dead persons. It is created once for the Model.
 
-    Count //last!
+    Count, //last!
+    Invalid
 };
 
 } // namespace abm

@@ -56,8 +56,7 @@ ScalarType cont_freq = 1.5 * 0.1;
 ScalarType beta      = cont_freq / total_population;
 } // namespace params
 
-mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(int ode_exponent, int abs_tol_exponent, int rel_tol_exponent,
-                                                        std::string save_dir = "")
+mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(int ode_exponent, std::string save_dir = "")
 {
     using namespace params;
 
@@ -82,13 +81,9 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(int ode_exponent, int ab
 
     model.check_constraints();
 
-    ScalarType abs_tol = pow(10, -abs_tol_exponent);
-    ScalarType rel_tol = pow(10, -rel_tol_exponent);
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            abs_tol, rel_tol, dt_ode, dt_ode);
-    // integrator->set_dt_min(dt_ode);
-    // integrator->set_dt_max(dt_ode);
+    std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
+        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
+
     auto sir = simulate(t0, tmax, dt_ode, model, integrator);
 
     if (!save_dir.empty()) {
@@ -197,36 +192,28 @@ int main()
     // int rel_tol_exponent = 1; // 5
 
     // std::vector<int> ode_exponents     = {6, 7, 8, 9, 10};
-    // std::vector<int> abs_tol_exponents = {9, 10, 11};
-    // std::vector<int> rel_tol_exponents = {5, 6, 7};
 
-    std::vector<int> ode_exponents     = {6};
-    std::vector<int> abs_tol_exponents = {10};
-    std::vector<int> rel_tol_exponents = {5};
+    std::vector<int> ode_exponents = {6};
 
     for (int ode_exponent : ode_exponents) {
-        for (int abs_tol_exponent : abs_tol_exponents) {
-            for (int rel_tol_exponent : rel_tol_exponents) {
 
-                std::string save_dir =
-                    fmt::format("../../simulation_results/simple_model_exponential/", std::to_string(ode_exponent));
-                std::cout << "Save dir: " << save_dir << std::endl;
-                // Make folder if not existent yet.
-                boost::filesystem::path dir(save_dir);
-                boost::filesystem::create_directories(dir);
+        std::string save_dir =
+            fmt::format("../../simulation_results/simple_model_exponential/", std::to_string(ode_exponent));
+        std::cout << "Save dir: " << save_dir << std::endl;
+        // Make folder if not existent yet.
+        boost::filesystem::path dir(save_dir);
+        boost::filesystem::create_directories(dir);
 
-                auto result_ode = simulate_ode(ode_exponent, abs_tol_exponent, rel_tol_exponent, save_dir).value();
+        auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 
-                // Do IDE simulations.
+        // Do IDE simulations.
 
-                std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-                std::vector<size_t> gregory_orders    = {1, 2, 3};
+        std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+        std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-                for (size_t gregory_order : gregory_orders) {
-                    std::cout << "Gregory order: " << gregory_order << std::endl;
-                    mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, save_dir, result_ode);
-                }
-            }
+        for (size_t gregory_order : gregory_orders) {
+            std::cout << "Gregory order: " << gregory_order << std::endl;
+            mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, save_dir, result_ode);
         }
     }
 }

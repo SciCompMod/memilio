@@ -28,6 +28,7 @@
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/io/result_io.h"
+#include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 #include <vector>
 
 namespace params
@@ -79,12 +80,12 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>(
-            1e-10, 1e-5, dt_ode, dt_ode);
-    // integrator->set_dt_min(dt_ode);
-    // integrator->set_dt_max(dt_ode);
-    auto sir = simulate(t0_ode, tmax, dt_ode, model, integrator);
+    std::shared_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
+        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
+
+    auto sir = simulate<ScalarType, mio::osir::Model<ScalarType>>(t0_ode, tmax, dt_ode, model, integrator);
+
+    sir.print_table();
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -198,10 +199,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 int main()
 {
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 6;
+    ScalarType ode_exponent = 1;
 
     size_t finite_difference_order = 4;
-    bool backwarts_fd              = false;
+    bool backwarts_fd              = true;
 
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
