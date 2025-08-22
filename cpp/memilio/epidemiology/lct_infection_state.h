@@ -104,8 +104,8 @@ public:
                 index = index + m_subcompartment_numbers[j];
             }
             // number of subcompartments:
-            int num_subcomp = m_subcompartment_numbers[(size_t)State];
-            compartments[i] = subcompartments.segment(index, num_subcomp).sum();
+            size_t num_subcomp = m_subcompartment_numbers[(size_t)State];
+            compartments[i]    = subcompartments.segment(index, num_subcomp).sum();
         }
 
         return compartments;
