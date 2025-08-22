@@ -865,6 +865,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         auto pid     = model.add_person(home, determine_age_group(age));
         auto& person = model.get_person(pid);
         person.set_assigned_location(mio::abm::LocationType::Home, home);
+        model.get_location(home).increase_size();
 
         int shop_id   = row[index["shop_id"]];
         int shop_zone = row[index["shop_zone"]];
@@ -895,6 +896,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         }
         // Assign shop to person
         person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop);
+        model.get_location(shop).increase_size();
 
         int event_id   = row[index["event_id"]];
         int event_zone = row[index["event_zone"]];
@@ -925,6 +927,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
         }
         // Assign event location to person
         person.set_assigned_location(mio::abm::LocationType::SocialEvent, event);
+        model.get_location(event).increase_size();
 
         // Check if person is school-aged
         if (person.get_age() == mio::AgeGroup(1)) {
@@ -990,6 +993,7 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
             }
             // Assign school location to person
             person.set_assigned_location(mio::abm::LocationType::School, school);
+            model.get_location(school).increase_size();
         }
         // Check if person is work-aged
         if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
@@ -1059,18 +1063,23 @@ void initialize_model(mio::abm::Model& model, std::string person_file, std::stri
             }
             // Assign work location to person
             person.set_assigned_location(mio::abm::LocationType::Work, work);
+            model.get_location(work).increase_size();
         }
         // Assign Hospital and ICU
         size_t hosp = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), hospital_weights);
         person.set_assigned_location(mio::abm::LocationType::Hospital, hospitals[hosp]);
+        model.get_location(hospitals[hosp]).increase_size();
         if (hosp_to_icu.count(std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])) > 0) {
             person.set_assigned_location(
                 mio::abm::LocationType::ICU,
                 hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])]);
+            model.get_location(hosp_to_icu[std::make_pair(mio::abm::LocationType::Hospital, hospitals[hosp])])
+                .increase_size();
         }
         else {
             size_t icu = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), icu_weights);
             person.set_assigned_location(mio::abm::LocationType::ICU, icus[icu]);
+            model.get_location(icus[icu]).increase_size();
         }
     }
 
@@ -1333,7 +1342,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def("add_infection_rate_damping", &mio::abm::Model::add_infection_rate_damping, py::arg("t"),
              py::arg("factor"))
         .def("add_location_closure", &mio::abm::Model::add_location_closure, py::arg("t"), py::arg("loc_type"),
-             py::arg("percentage"))
+             py::arg("percentage"), py::arg("scheme"))
         .def("get_rng", &mio::abm::Model::get_rng, py::return_value_policy::reference_internal)
         .def_property_readonly("locations", py::overload_cast<>(&mio::abm::Model::get_locations, py::const_),
                                py::keep_alive<1, 0>{}) //keep this model alive while contents are referenced in ranges

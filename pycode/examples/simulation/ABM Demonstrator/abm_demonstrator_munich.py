@@ -675,6 +675,9 @@ def run_abm_simulation(sim_num):
     input_path = sys.path[0] + '/input/'
     output_path = sys.path[0] + '/output/'
     local_outbreak = False
+    # Possible schemes are 'random' and 'maximum'
+    location_closure_scheme_random = 'random'
+    location_closure_scheme_maximum = 'maximum'
     max_work_size = 40
     max_school_size = 45
     # Timing for initialization, simulation and output writing
@@ -717,14 +720,14 @@ def run_abm_simulation(sim_num):
     # sim.model.add_infection_rate_damping(
     #     abm.TimePoint(abm.days(5).seconds), 0.2)
     # add closure for work, event, shop and school locations at day 5
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.Work, 1.0)
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.School, 1.0)
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.SocialEvent, 1.0)
-    # sim.model.add_location_closure(abm.TimePoint(
-    #     abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.Work, 1.0, location_closure_scheme_random)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.School, 1.0, location_closure_scheme_random)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.SocialEvent, 0.1, location_closure_scheme_maximum)
+    sim.model.add_location_closure(abm.TimePoint(
+        abm.days(5).seconds), abm.LocationType.BasicsShop, 1.0, location_closure_scheme_maximum)
     end_init = time.time()
     print(f'Time for model initialization: {end_init - start_init} seconds')
     total_init_time += (end_init - start_init)
