@@ -160,7 +160,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                     model[node].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[node][i];
                 }
             }
-            else if (num_groups == 1) {
+            else  {
                 const auto sum_vec = [](const std::vector<double>& v) {
                     return std::accumulate(v.begin(), v.end(), 0.0);
                 };

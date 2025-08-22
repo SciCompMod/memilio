@@ -1521,7 +1521,7 @@ TEST(TestOdeSecir, read_population_data_failure)
 
 TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
 {
-    // Set up two models with different age groups.
+    // Set up two models with different number of age groups.
     const size_t num_age_groups = 6;
     std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
     std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
