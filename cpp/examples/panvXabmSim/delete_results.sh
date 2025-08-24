@@ -17,6 +17,7 @@ delete_run_folders() {
     run_folders+=("$RESULTS_BASE_DIR"/results_*)
     run_folders+=("$RESULTS_BASE_DIR"/results_viz/comparison_*)
     run_folders+=("$RESULTS_BASE_DIR"/debug_*)
+    run_folders+=("$RESULTS_BASE_DIR"/multiseed_*)
 
     if [ ${#run_folders[@]} -eq 1 ] && [ ! -d "${run_folders[0]}" ]; then
         echo "No run_* or results_* folders found to delete."

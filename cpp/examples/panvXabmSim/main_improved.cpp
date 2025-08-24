@@ -44,6 +44,7 @@ void print_help(const char* program_name)
     std::cout << "  --output_dir <path>   Set the output directory (default: " << Config::DEFAULT_OUTPUT_DIR << ")\n";
     std::cout << "                        The directory will be created if it does not exist.\n";
     std::cout << "                        If not set, results will be saved in the current directory.\n";
+    std::cout << "  --seed <number>       Set a custom seed for reproducibility (default: predefined seeds)\n";
     std::cout << "  --help                Show this help message\n";
     std::cout << "\nExamples:\n";
     std::cout << "  " << program_name << " --event restaurant_table_equals_household --runs 50\n";
@@ -88,11 +89,13 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
     // Set defaults
     config.city_config                  = CityConfig{};
     config.city_config.total_population = Config::DEFAULT_POPULATION;
-    config.event_config.type            = EventType::Restaurant_Table_Equals_Household;
-    config.simulation_type              = SimType::Memilio;
+    config.event_config.type            = EventType::Restaurant_Table_Equals_Half_Household;
+    config.simulation_type              = SimType::Panvadere;
     config.num_runs                     = Config::DEFAULT_RUNS;
     config.simulation_days              = Config::DEFAULT_DAYS;
     config.output_base_dir              = Config::DEFAULT_OUTPUT_DIR;
+    config.infection_parameter_k        = Config::DEFAULT_INFECTION_K;
+    config.custom_seed                  = 0; // Default: use predefined seeds
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -154,9 +157,27 @@ MultiRunConfig parse_multi_run_config(int argc, char* argv[])
         else if (arg == "--output_dir" && i + 1 < argc) {
             config.output_base_dir = argv[++i];
         }
+        else if (arg == "--seed" && i + 1 < argc) {
+            try {
+                config.custom_seed = std::stoul(argv[++i]);
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error: Invalid number for --seed: " << argv[i] << "\n";
+                exit(1);
+            }
+        }
         else if (arg == "--help") {
             print_help(argv[0]);
             exit(0);
+        }
+        else if (arg == "--infection_k" && i + 1 < argc) {
+            try {
+                config.infection_parameter_k = std::stod(argv[++i]);
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error: Invalid number for --infection_k: " << argv[i] << "\n";
+                exit(1);
+            }
         }
         else {
             std::cerr << "Error: Unknown argument '" << arg << "'\n";
@@ -196,17 +217,26 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
 {
     mio::set_log_level(mio::LogLevel::critical);
 
-    // Initialize random number generator with fixed seeds for reproducibility
-    std::initializer_list<uint32_t> seeds = {1402121u, 35897932u, 27182818u, 18284590u, 45235360u, 28747135u};
-    auto rng                              = mio::RandomNumberGenerator();
-    rng.seed(seeds);
+    // Parse configuration first to check if custom seed is provided
+    auto config = parse_multi_run_config(argc, argv);
+
+    // Initialize random number generator with custom seed or fixed seeds for reproducibility
+    auto rng = mio::RandomNumberGenerator();
+    if (config.custom_seed != 0) {
+        // Use custom seed for specific runs
+        rng.seed({config.custom_seed, config.custom_seed + 1, config.custom_seed + 2, config.custom_seed + 3,
+                  config.custom_seed + 4, config.custom_seed + 5});
+    }
+    else {
+        // Use default seeds for reproducibility
+        std::initializer_list<uint32_t> seeds = {1402121u, 35897932u, 27182818u, 18284590u, 45235360u, 28747135u};
+        rng.seed(seeds);
+    }
     rng.synchronize();
 
     // Measure execution time
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    // Parse configuration
-    auto config = parse_multi_run_config(argc, argv);
     print_config_summary(config);
 
     // Run multi-simulation
@@ -216,7 +246,7 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     if (config.output_base_dir == Config::DEFAULT_OUTPUT_DIR) {
         config.output_base_dir = config.output_base_dir + "/run_default_" + currentDateTime();
     }
-    BOOST_OUTCOME_TRY(MultiRunSimulator::save_multi_run_results(results, config.output_base_dir));
+    BOOST_OUTCOME_TRY(MultiRunSimulator::save_multi_run_results(results, config.output_base_dir, config));
 
     print_summary(
         results, config,
