@@ -666,10 +666,10 @@ def main():
     args = parser.parse_args()
 
     # # For debug, set a path:
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358"
-    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358/contact_network.png"
-    args.scenario_name = "Test Scenario"
-    args.total_runs = 10
+    # args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358"
+    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358/contact_network.png"
+    # args.scenario_name = "Test Scenario"
+    # args.total_runs = 10
 
     # Check if directory exists
     if not os.path.exists(args.data_dir):

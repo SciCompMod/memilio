@@ -72,16 +72,6 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         // std::cout << "Mapping events to person IDs..." << std::endl;
         BOOST_OUTCOME_TRY(auto event_map, EventSimulator::map_events_to_persons(base_world, config.event_config.type));
 
-        // Step 3: Calculate K parameter
-        if (results.infection_parameter_k < 0.0) {
-            // std::cout << "Calculating infection parameter K..." << std::endl;
-            // BOOST_OUTCOME_TRY(results.infection_parameter_k, EventSimulator::calculate_infection_parameter_k(
-            //                                                      config.event_config, base_world, event_map));
-            // std::cout << "Calculated infection parameter K: " << results.infection_parameter_k << std::endl;
-            // results.infection_parameter_k = 22.6; // Placeholder value for K parameter
-            results.infection_parameter_k = 0.0; // Placeholder value for K parameter
-        }
-
         // Step 3: Get initial infections
         std::vector<uint32_t> initial_infections;
         if (config.simulation_type == SimType::Panvadere) {
@@ -102,10 +92,11 @@ mio::IOResult<MultiRunResults> MultiRunSimulator::run_multi_simulation(const Mul
         results.all_runs.reserve(config.num_runs);
 
         auto single_result = run_single_simulation_with_infections(
-            base_world, initial_infections, results.infection_parameter_k, config.simulation_days);
+            base_world, initial_infections, config.infection_parameter_k, config.simulation_days);
 
         if (single_result.has_value()) {
             results.all_runs.push_back(single_result.value());
+            results.infection_parameter_k = config.infection_parameter_k;
             results.successful_runs++;
         }
         else {
@@ -647,7 +638,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
     results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
-    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(6)};
+    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(1)};
     results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // FIGURES

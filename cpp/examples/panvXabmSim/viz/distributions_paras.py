@@ -8,6 +8,17 @@ import seaborn as sns
 plt.style.use('seaborn-v0_8')
 sns.set_palette("husl")
 
+# Set larger font sizes globally
+plt.rcParams.update({
+    'font.size': 16,           # Default font size
+    'axes.titlesize': 18,      # Subplot titles
+    'axes.labelsize': 16,      # Axis labels
+    'xtick.labelsize': 14,     # X-axis tick labels
+    'ytick.labelsize': 14,     # Y-axis tick labels
+    'legend.fontsize': 13,     # Legend text
+    'figure.titlesize': 22     # Main figure title
+})
+
 # Parameters from the table - Age group specific values
 # Age groups: 0-4, 5-14, 15-34, 35-59, 60-79, 80+
 age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
@@ -19,7 +30,7 @@ vd = -0.17  # Viral load decline
 alpha = -7  # Viral shed parameter
 beta = 1   # Viral shed parameter
 sr = 1.6   # Viral shed factor (Gamma shape parameter for Gamma(1.6, 1/22))
-lambda_shed = 22.6  # Infection rate from viral shed
+lambda_shed = 22  # Infection rate from viral shed
 
 # Age-specific probability parameters from the table
 p_sym_ages = [0.5, 0.55, 0.6, 0.7, 0.83, 0.9]  # Chance to develop symptoms
@@ -107,7 +118,8 @@ def logistic_function(t, s_fp, alpha, beta, vp_t):
     Logistic function: Sp(t) = s_fp / (1 + exp(-(alpha + beta * vp(t))))
     vp_t should be an array of viral load values at time t
     """
-    return s_fp / (1 + np.exp(-(alpha + beta * vp_t)))
+    values = 1 / (1 + np.exp(-(alpha + beta * vp_t)))
+    return s_fp * values
 
 
 def gamma_pdf(x, shape, scale):
@@ -122,11 +134,11 @@ def lognormal_pdf(x, mean_log, std_log):
 
 # Create time arrays
 t_short = np.linspace(0, 30, 1000)  # For shorter time scales
-t_long = np.linspace(0, 60, 1000)   # For longer time scales
+t_long = np.linspace(0, 70, 1000)   # For longer time scales
 t_very_short = np.linspace(0, 10, 1000)  # For very short time scales
 
 # Create a large figure with subplots
-fig = plt.figure(figsize=(20, 24))
+fig = plt.figure(figsize=(20, 16))
 
 # 1. Viral shed factor (Gamma distribution)
 ax1 = plt.subplot(4, 3, 1)
@@ -156,23 +168,24 @@ shed_samples = np.random.gamma(sr, gamma_scale, 100)
 ax2_twin = ax2.twinx()
 ax2.plot(t_logistic, vp_t, 'g-', linewidth=3,
          label='Viral Load V(t)', zorder=10)
-
+max_y_logistic = 0  # To track maximum y value for shedding curves
 # Plot 100 shedding curves with different shed factors
 for i, shed_factor in enumerate(shed_samples):
     y_logistic_sample = logistic_function(
-        t_logistic, s_fp, alpha, beta * shed_factor, vp_t)
-    alpha_val = 0.9 if i < 99 else 1.0  # Make last curve more visible
-    linewidth = 0.9 if i < 99 else 2.0
+        t_logistic, shed_factor, alpha, beta, vp_t)
+    alpha_val = 1.0 if i < 99 else 1.0  # Make last curve more visible
+    linewidth = 1.0 if i < 99 else 1.0
     color = 'lightcoral' if i < 99 else 'lightcoral'
     label = None if i < 99 else 'Shedding Sp(t) samples'
     ax2_twin.plot(t_logistic, y_logistic_sample, color=color,
                   linewidth=linewidth, alpha=alpha_val, label=label)
+    max_y_logistic = max(max(y_logistic_sample), max_y_logistic)
 
 # Plot mean shedding curve
 mean_shed_factor = np.mean(shed_samples)
 y_logistic_mean = logistic_function(
-    t_logistic, s_fp, alpha, beta * mean_shed_factor, vp_t)
-ax2_twin.plot(t_logistic, y_logistic_mean, 'darkred', linewidth=2,
+    t_logistic,  mean_shed_factor, alpha, beta, vp_t)
+ax2_twin.plot(t_logistic, y_logistic_mean, 'darkred', linewidth=3,
               linestyle='--', label=f'Mean Shedding (sf={mean_shed_factor:.3f})')
 
 ax2.set_xlabel('t (days)')
@@ -180,6 +193,12 @@ ax2.set_ylabel('Viral Load', color='g')
 ax2_twin.set_ylabel('Shedding Probability', color='r')
 ax2.set_title(
     'Viral Load and Shedding Function\n(100 random shed factor samples)')
+
+# Set different y-axis ranges to avoid overlap
+ax2.set_ylim(0, max(vp_t) * 1.2)  # Viral load axis
+# Shedding probability axis (0-1)
+ax2_twin.set_ylim(0,  max_y_logistic * 1.2)
+
 ax2.legend(loc='upper left')
 ax2_twin.legend(loc='upper right')
 ax2.grid(True, alpha=0.3)
@@ -312,8 +331,10 @@ plt.title('Disease Progression Probabilities by Age Group')
 plt.ylabel('Probability')
 plt.xlabel('Age Group')
 plt.xticks(x, age_groups, rotation=45)
-plt.legend()
+plt.ylim(0, 1.8)
+plt.legend(ncol=2, loc='upper left')
 plt.grid(True, alpha=0.3, axis='y')
+
 
 # Add value labels on bars for better readability
 
@@ -321,7 +342,7 @@ plt.grid(True, alpha=0.3, axis='y')
 def add_value_labels(bars, values):
     for bar, value in zip(bars, values):
         plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
-                 f'{value:.2f}', ha='center', va='bottom', fontsize=8, rotation=90)
+                 f'{value:.2f}', ha='center', va='bottom', fontsize=12, rotation=90)
 
 
 add_value_labels(bars1, p_sym_ages)

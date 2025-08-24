@@ -11,7 +11,9 @@ struct MultiRunConfig {
     SimType simulation_type;
     int num_runs;
     int simulation_days;
+    double infection_parameter_k = -1.0; // Default value indicating not set
     std::string output_base_dir;
+    uint32_t custom_seed = 0; // Default value indicating use predefined seeds
 };
 
 struct SimulationResults {
