@@ -501,8 +501,7 @@ protected:
  * If shape is an unsigned integer, the Gamma distribution simplifies to an Erlang distribution.
  * Does not support automatic differentiation.
  */
-template <typename FP>
-struct GammaSurvivalFunction : public StateAgeFunction<FP> {
+struct GammaSurvivalFunction : public StateAgeFunction<ScalarType> {
 
     /**
      * @brief Constructs a new GammaSurvivalFunction object.
@@ -515,8 +514,8 @@ struct GammaSurvivalFunction : public StateAgeFunction<FP> {
      * @param[in] init_scale Parameter shape of the GammaSurvivalFunction.
      *  Corresponds to the inverse of the rate parameter of a Gamma distribution.
      */
-    GammaSurvivalFunction(FP init_shape = 1, FP init_location = 0, FP init_scale = 1)
-        : StateAgeFunction<FP>(init_shape, init_location, init_scale)
+    GammaSurvivalFunction(ScalarType init_shape = 1, ScalarType init_location = 0, ScalarType init_scale = 1)
+        : StateAgeFunction<ScalarType>(init_shape, init_location, init_scale)
     {
     }
 
@@ -526,14 +525,14 @@ struct GammaSurvivalFunction : public StateAgeFunction<FP> {
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age.
      */
-    FP eval(FP state_age) override
+    ScalarType eval(ScalarType state_age) override
     {
         if (state_age <= this->m_location) {
             return 1;
         }
         boost::math::gamma_distribution<ScalarType, boost::math::policies::policy<>> gamma(
-            ad::value(this->m_distribution_parameter), ad::value(this->m_scale));
-        return boost::math::cdf(boost::math::complement(gamma, ad::value(state_age - this->m_location)));
+            this->m_distribution_parameter, this->m_scale);
+        return boost::math::cdf(boost::math::complement(gamma, state_age - this->m_location));
     }
 
     /**
@@ -547,7 +546,7 @@ struct GammaSurvivalFunction : public StateAgeFunction<FP> {
      *  (unused for GammaSurvivalFunction).
      * @return ScalarType mean value.
      */
-    FP get_mean(FP dt = 1.0, FP tol = 1e-10) override
+    ScalarType get_mean(ScalarType dt = 1.0, ScalarType tol = 1e-10) override
     {
         unused(dt);
         unused(tol);
@@ -560,9 +559,9 @@ protected:
      *
      * @return Pointer to StateAgeFunction.
      */
-    StateAgeFunction<FP>* clone_impl() const override
+    StateAgeFunction<ScalarType>* clone_impl() const override
     {
-        return new GammaSurvivalFunction<FP>(*this);
+        return new GammaSurvivalFunction(*this);
     }
 };
 
@@ -571,8 +570,7 @@ protected:
  * A survival function is defined as 1 - cumulative density function.
  * Does not support automatic differentiation.
  */
-template <typename FP>
-struct LognormSurvivalFunction : public StateAgeFunction<FP> {
+struct LognormSurvivalFunction : public StateAgeFunction<ScalarType> {
 
     /**
      * @brief Constructs a new LognormSurvivalFunction object.
@@ -585,8 +583,9 @@ struct LognormSurvivalFunction : public StateAgeFunction<FP> {
      *       StateAgeFunction.
      * @param[in] init_scale Scale parameter of LognormSurvivalFunction.
      */
-    LognormSurvivalFunction(FP init_distribution_parameter, FP init_location = 0, FP init_scale = 1)
-        : StateAgeFunction<FP>(init_distribution_parameter, init_location, init_scale)
+    LognormSurvivalFunction(ScalarType init_distribution_parameter, ScalarType init_location = 0,
+                            ScalarType init_scale = 1)
+        : StateAgeFunction<ScalarType>(init_distribution_parameter, init_location, init_scale)
     {
     }
 
@@ -596,15 +595,14 @@ struct LognormSurvivalFunction : public StateAgeFunction<FP> {
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age.
      */
-    FP eval(FP state_age) override
+    ScalarType eval(ScalarType state_age) override
     {
         if (state_age < this->m_location) {
             return 1;
         }
         boost::math::lognormal_distribution<ScalarType, boost::math::policies::policy<>> logn(
-            0.0, ad::value(this->m_distribution_parameter));
-        return boost::math::cdf(
-            boost::math::complement(logn, ad::value((state_age - this->m_location) / this->m_scale)));
+            0.0, this->m_distribution_parameter);
+        return boost::math::cdf(boost::math::complement(logn, (state_age - this->m_location) / this->m_scale));
     }
 
     // Closed form for the mean value is kind of complex, use default implementation.
@@ -616,9 +614,9 @@ protected:
      *
      * @return Pointer to StateAgeFunction.
      */
-    StateAgeFunction<FP>* clone_impl() const override
+    StateAgeFunction<ScalarType>* clone_impl() const override
     {
-        return new LognormSurvivalFunction<FP>(*this);
+        return new LognormSurvivalFunction(*this);
     }
 };
 
@@ -715,8 +713,7 @@ protected:
  * Attention: The density is not a survival function and does not have the characteristics of a TransitionDistribution!!
  * The function is of the StateAgeFunction-Type b).
  */
-template <typename FP>
-struct ErlangDensity : public StateAgeFunction<FP> {
+struct ErlangDensity : public StateAgeFunction<ScalarType> {
 
     /**
      * @brief Constructs a new ErlangDensity object.
@@ -724,8 +721,8 @@ struct ErlangDensity : public StateAgeFunction<FP> {
      * @param[in] init_shape Parameter shape of the ErlangDensity. For the Erlang distribution, shape has to be a positive integer.
       * @param[in] init_scale Parameter scale of the ErlangDensity. Corresponds to the inverse rate parameter.
      */
-    ErlangDensity(unsigned int init_shape, FP init_scale)
-        : StateAgeFunction<FP>(init_shape, 0.0, init_scale)
+    ErlangDensity(unsigned int init_shape, ScalarType init_scale)
+        : StateAgeFunction<ScalarType>(init_shape, 0.0, init_scale)
     {
     }
 
@@ -737,17 +734,16 @@ struct ErlangDensity : public StateAgeFunction<FP> {
      * @param[in] state_age Time at which the function is evaluated.
      * @return Evaluation of the function at state_age.
      */
-    FP eval(FP state_age) override
+    ScalarType eval(ScalarType state_age) override
     {
         using std::exp;
         using std::pow;
         if (state_age < 0) {
             return 0;
         }
-        int shape = static_cast<int>(ad::value(this->m_distribution_parameter));
+        int shape = static_cast<int>(this->m_distribution_parameter);
         return pow(state_age / this->m_scale, shape - 1) /
-               (this->m_scale * boost::math::factorial<ScalarType>(ad::value(shape - 1))) *
-               exp(-state_age / this->m_scale);
+               (this->m_scale * boost::math::factorial<ScalarType>(shape - 1)) * exp(-state_age / this->m_scale);
     }
 
     /**
@@ -759,16 +755,16 @@ struct ErlangDensity : public StateAgeFunction<FP> {
      * @param[in] tol Tolerance used for cutting the support if the function value falls below.
      * @return ScalarType support_max
      */
-    FP get_support_max(FP dt, FP tol = 1e-10) override
+    ScalarType get_support_max(ScalarType dt, ScalarType tol = 1e-10) override
     {
         // We are looking for the smallest time value t where function(tau)=0 for all tau>t. Thus support max is bigger
         // than the mean.
         // We use, that the density is monotonically decreasing for tau>mean here.
-        FP mean        = this->m_distribution_parameter * this->m_scale;
-        FP support_max = dt * static_cast<int>(ad::value(mean / dt));
+        ScalarType mean        = this->m_distribution_parameter * this->m_scale;
+        ScalarType support_max = dt * static_cast<int>(mean / dt);
 
-        if (!floating_point_equal<FP>(this->m_support_tol, tol, 1e-14) ||
-            floating_point_equal<FP>(this->m_support_max, -1.0, 1e-14)) {
+        if (!floating_point_equal<ScalarType>(this->m_support_tol, tol, 1e-14) ||
+            floating_point_equal<ScalarType>(this->m_support_max, -1.0, 1e-14)) {
             while (eval(support_max) >= tol) {
                 support_max += dt;
             }
@@ -789,7 +785,7 @@ struct ErlangDensity : public StateAgeFunction<FP> {
      * @param[in] tol The maximum support used for numerical integration is calculated using this tolerance (unused for ErlangDensity).
      * @return ScalarType mean value.
      */
-    FP get_mean(FP dt = 1.0, FP tol = 1e-10) override
+    ScalarType get_mean(ScalarType dt = 1.0, ScalarType tol = 1e-10) override
     {
         unused(dt);
         unused(tol);
@@ -804,9 +800,9 @@ protected:
      *
      * @return Pointer to StateAgeFunction.
      */
-    StateAgeFunction<FP>* clone_impl() const override
+    StateAgeFunction<ScalarType>* clone_impl() const override
     {
-        return new ErlangDensity<FP>(*this);
+        return new ErlangDensity(*this);
     }
 };
 

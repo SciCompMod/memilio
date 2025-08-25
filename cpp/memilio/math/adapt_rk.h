@@ -268,7 +268,7 @@ public:
             // calculate mixed tolerance
             m_eps = m_abs_tol + ytp1.array().abs() * m_rel_tol;
 
-            converged = (m_error_estimate.array() <= m_eps.array()).all(); // convergence criterion
+            converged = (m_error_estimate <= m_eps).all(); // convergence criterion
 
             if (converged || dt_is_invalid) {
                 // if sufficiently exact, return ytp1, which currently contains the lower order approximation

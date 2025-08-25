@@ -264,7 +264,7 @@ private:
 
         // Initialize relevant density for the InfectionState.
         // For the first subcompartment a shape parameter of one is needed.
-        ErlangDensity<FP> erlang(1, 1. / (num_subcompartments * transition_rate));
+        ErlangDensity erlang(1, 1. / (num_subcompartments * transition_rate));
 
         // Initialize other relevant parameters.
         FP calc_time{0};
