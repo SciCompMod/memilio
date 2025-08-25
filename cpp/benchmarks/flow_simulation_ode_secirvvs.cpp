@@ -68,9 +68,11 @@ void flow_sim_comp_only(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // create simulation
+        state.PauseTiming();
         std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
             std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
                 cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
         mio::osecirvvs::Simulation<ScalarType, mio::Simulation<ScalarType, Model>> sim(model, cfg.t0, cfg.dt);
         sim.set_integrator_core(std::move(I));
@@ -93,9 +95,11 @@ void flow_sim(::benchmark::State& state)
     // run benchmark
     for (auto _ : state) {
         // create simulation
+        state.PauseTiming();
         std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
             std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
                 cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
         mio::osecirvvs::Simulation<ScalarType, mio::FlowSimulation<ScalarType, Model>> sim(model, cfg.t0, cfg.dt);
         sim.set_integrator_core(std::move(I));
