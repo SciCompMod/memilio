@@ -46,29 +46,45 @@ def write_zip(path_to_saved_zips, zipped_name, percentiles=['p50'], case_data=Fa
     return zipfile
 
 
-def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, username, password):
+def put_scenario(scenario_id, zip_file, url, delay, service_realm, client_id, username, password, max_tries=3, delay_check=5):
     # https://stackoverflow.com/questions/18208109/python-requests-post-a-zip-file-with-multipart-form-data
-    fileobj = open(zip_file, 'rb')
     headers = define_headers(service_realm, client_id, username, password)
-    put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
-                                files={"file": (zip_file, fileobj)})
-    print(
-        f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
 
-    if put_response.status_code != 200:
-        print(put_response.text)
+    try_iteration = 0
+    upload_successful = False
+    while (try_iteration < max_tries) and (not upload_successful):
+        print(f'Waiting for {1+delay*try_iteration} seconds before putting scenario')
+        time.sleep(1+try_iteration*delay)
+        try_iteration += 1
 
-    print(f'Waiting for {delay} seconds before uploading next scenario')
-    time.sleep(delay)
 
-    get_scenario_response = requests.get(
-        url + "scenarios/" + scenario_id, headers=headers).json()
-    if get_scenario_response["timestampSimulated"] != None:
+        with open(zip_file, 'rb') as fileobj:
+            put_response = requests.put(url + "scenarios/" + scenario_id, headers=headers,
+                                        files={"file": (zip_file, fileobj)})
         print(
-            f'Upload of scenario {get_scenario_response["id"]} was successful, timestampSimulated is not None.')
-    else:
-        print(
-            f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
+            f'Put HTTP response code for scenario {scenario_id} was {put_response.status_code}, reason was {put_response.reason}.')
+
+        if put_response.status_code != 200:
+            print(put_response.text)
+
+        time.sleep(delay_check)
+        get_scenario_response = requests.get(
+            url + "scenarios/" + scenario_id, headers=headers)
+        if get_scenario_response.status_code != 200:
+            print(get_scenario_response)
+            continue
+        else:
+            get_scenario_response = get_scenario_response.json()
+        if get_scenario_response["timestampSimulated"] is not None:
+            print(
+                f'Upload of scenario {get_scenario_response["id"]} was successful, timestampSimulated is not None.')
+            upload_successful = True
+        else:
+            print(
+                f'Upload of scenario {get_scenario_response["id"]} was not successful, timestampSimulated is None.')
+            if try_iteration < max_tries:
+                print(f'Retrying Upload of scenario {get_scenario_response["id"]}.')
+
 
 
 def put_scenarios(path_to_scenario_results, url, delay, service_realm, client_id, username, password):

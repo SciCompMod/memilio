@@ -6,6 +6,7 @@ import json
 from itertools import combinations
 import numpy as np
 import memilio.epidata.geoModificationGermany as gMG
+import time
 
 # header = {'Authorization': "Bearer anythingAsPasswordIsFineCurrently"}
 
@@ -152,7 +153,7 @@ def get_mcmc_model_params(url, t, data_dir, headers):
     return modelparameters_entry
 
 
-def post_mcmc_parameters(url, t, data_dir, service_realm="", client_id="", username="", password=""):
+def post_mcmc_parameters(url, t, data_dir, service_realm="", client_id="", username="", password="", delay=30, max_tries=3):
 
     # Request access token from idp.
     req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
@@ -233,17 +234,29 @@ def post_mcmc_parameters(url, t, data_dir, service_realm="", client_id="", usern
 
     # post scenarios with updated parameters
     for scenario in new_scenarios:
-        response = requests.post(
-            url + "scenarios/",
-            headers=headers,
-            json=scenario
-        )
+        try_iteration = 0
+        upload_successful = False
+        while (try_iteration < max_tries) and (not upload_successful):
+            print(f'Waiting for {1+delay*try_iteration} seconds before updating parameters')
+            time.sleep(1+try_iteration*delay)
+            try_iteration += 1
+            response = requests.post(
+                url + "scenarios/",
+                headers=headers,
+                json=scenario
+            )
 
-        if response.status_code == 200:
+            if response.status_code == 200:
+                upload_successful = True  
+            else:
+                print(
+                    f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
+                if try_iteration < max_tries:
+                    print(f"Retrying... to update scenario {scenario['id']}")
+        if upload_successful:
             print(f"Scenario {scenario['id']} updated successfully.")
         else:
-            print(
-                f"Failed to update scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
+            print(f"Error: Giving up on updating scenario {scenario['id']}. Status code: {response.status_code}, Response: {response.text}")
 
 
 def main():
