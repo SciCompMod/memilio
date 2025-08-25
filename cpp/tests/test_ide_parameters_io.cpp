@@ -267,14 +267,14 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 06, 07);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                               scale_confirmed_cases);
+                                                                           scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 05, 24);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                               scale_confirmed_cases);
+                                                                           scale_confirmed_cases);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -293,7 +293,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Valid case.
     start_date = mio::Date(2020, 06, 02);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                               scale_confirmed_cases);
+                                                                           scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 }
@@ -341,14 +341,14 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 12, 31);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                              scale_confirmed_cases);
+                                                                          scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 10, 1);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                              scale_confirmed_cases);
+                                                                          scale_confirmed_cases);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -369,7 +369,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Valid case.
     start_date = mio::Date(2020, 11, 01);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                              scale_confirmed_cases);
+                                                                          scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 }

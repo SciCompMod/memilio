@@ -55,9 +55,9 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     // InfectedNoSymptoms.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedNoSymptoms = Eigen::VectorX<ScalarType>::Zero(
         (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
-    StartingProbabilitiesInfectedNoSymptoms[0]                                                       = 1 - 0.09;
-    StartingProbabilitiesInfectedNoSymptoms[(
-        Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
+    StartingProbabilitiesInfectedNoSymptoms[0]                                         = 1 - 0.09;
+    StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
+        LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms<ScalarType>>() =
         StartingProbabilitiesInfectedNoSymptoms;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms<ScalarType>>() =
@@ -69,9 +69,9 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     // InfectedSymptoms.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedSymptoms = Eigen::VectorX<ScalarType>::Zero(
         (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
-    StartingProbabilitiesInfectedSymptoms[0]                                                       = 0.2;
-    StartingProbabilitiesInfectedSymptoms[(
-        Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
+    StartingProbabilitiesInfectedSymptoms[0]                                         = 0.2;
+    StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
+        LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms<ScalarType>>() =
         StartingProbabilitiesInfectedSymptoms;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere<ScalarType>>() =
@@ -83,9 +83,9 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     // InfectedSevere.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedSevere = Eigen::VectorX<ScalarType>::Zero(
         (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
-    StartingProbabilitiesInfectedSevere[0]                                                       = 0.25;
-    StartingProbabilitiesInfectedSevere[(
-        Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
+    StartingProbabilitiesInfectedSevere[0]                                         = 0.25;
+    StartingProbabilitiesInfectedSevere[(Eigen::Index)(
+        LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere<ScalarType>>() =
         StartingProbabilitiesInfectedSevere;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>>() =
@@ -97,9 +97,9 @@ TEST(TestGLCTSecir, testEvalRightHandSide)
     // InfectedCritical.
     Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedCritical = Eigen::VectorX<ScalarType>::Zero(
         (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
-    StartingProbabilitiesInfectedCritical[0]                                                       = 0.3;
-    StartingProbabilitiesInfectedCritical[(
-        Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
+    StartingProbabilitiesInfectedCritical[0]                                         = 0.3;
+    StartingProbabilitiesInfectedCritical[(Eigen::Index)(
+        LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
     model.parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical<ScalarType>>() =
         StartingProbabilitiesInfectedCritical;
     model.parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead<ScalarType>>() =
@@ -181,9 +181,9 @@ protected:
         // InfectedNoSymptoms.
         Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedNoSymptoms = Eigen::VectorX<ScalarType>::Zero(
             (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>());
-        StartingProbabilitiesInfectedNoSymptoms[0]                                                       = 1 - 0.09;
-        StartingProbabilitiesInfectedNoSymptoms[(
-            Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
+        StartingProbabilitiesInfectedNoSymptoms[0]                                         = 1 - 0.09;
+        StartingProbabilitiesInfectedNoSymptoms[(Eigen::Index)(
+            LctState::get_num_subcompartments<InfectionState::InfectedNoSymptoms>() / 2.)] = 0.09;
         model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedNoSymptoms<ScalarType>>() =
             StartingProbabilitiesInfectedNoSymptoms;
         model->parameters.get<mio::glsecir::TransitionMatrixInfectedNoSymptomsToInfectedSymptoms<ScalarType>>() =
@@ -195,9 +195,9 @@ protected:
         // InfectedSymptoms.
         Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedSymptoms = Eigen::VectorX<ScalarType>::Zero(
             (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>());
-        StartingProbabilitiesInfectedSymptoms[0]                                                       = 0.2;
-        StartingProbabilitiesInfectedSymptoms[(
-            Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
+        StartingProbabilitiesInfectedSymptoms[0]                                         = 0.2;
+        StartingProbabilitiesInfectedSymptoms[(Eigen::Index)(
+            LctState::get_num_subcompartments<InfectionState::InfectedSymptoms>() / 2.)] = 1 - 0.2;
         model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSymptoms<ScalarType>>() =
             StartingProbabilitiesInfectedSymptoms;
         model->parameters.get<mio::glsecir::TransitionMatrixInfectedSymptomsToInfectedSevere<ScalarType>>() =
@@ -209,9 +209,9 @@ protected:
         // InfectedSevere.
         Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedSevere = Eigen::VectorX<ScalarType>::Zero(
             (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedSevere>());
-        StartingProbabilitiesInfectedSevere[0]                                                       = 0.25;
-        StartingProbabilitiesInfectedSevere[(
-            Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
+        StartingProbabilitiesInfectedSevere[0]                                         = 0.25;
+        StartingProbabilitiesInfectedSevere[(Eigen::Index)(
+            LctState::get_num_subcompartments<InfectionState::InfectedSevere>() / 2.)] = 1 - 0.25;
         model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedSevere<ScalarType>>() =
             StartingProbabilitiesInfectedSevere;
         model->parameters.get<mio::glsecir::TransitionMatrixInfectedSevereToInfectedCritical<ScalarType>>() =
@@ -223,9 +223,9 @@ protected:
         // InfectedCritical.
         Eigen::VectorX<ScalarType> StartingProbabilitiesInfectedCritical = Eigen::VectorX<ScalarType>::Zero(
             (Eigen::Index)LctState::get_num_subcompartments<InfectionState::InfectedCritical>());
-        StartingProbabilitiesInfectedCritical[0]                                                       = 0.3;
-        StartingProbabilitiesInfectedCritical[(
-            Eigen::Index)(LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
+        StartingProbabilitiesInfectedCritical[0]                                         = 0.3;
+        StartingProbabilitiesInfectedCritical[(Eigen::Index)(
+            LctState::get_num_subcompartments<InfectionState::InfectedCritical>() / 2.)] = 1 - 0.3;
         model->parameters.get<mio::glsecir::StartingProbabilitiesInfectedCritical<ScalarType>>() =
             StartingProbabilitiesInfectedCritical;
         model->parameters.get<mio::glsecir::TransitionMatrixInfectedCriticalToDead<ScalarType>>() =

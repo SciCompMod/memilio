@@ -310,9 +310,8 @@ public:
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
                     if (t < t_end_dyn_npis) {
-                        auto inf_rel =
-                            get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
-                            dyn_npis.get_base_value();
+                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                       dyn_npis.get_base_value();
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                             (exceeded_threshold->first > m_dynamic_npi.first ||
@@ -688,8 +687,8 @@ auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen
     auto test_and_trace_capacity          = FP(params.template get<TestAndTraceCapacity<FP>>());
     auto test_and_trace_capacity_max_risk = FP(params.template get<TestAndTraceCapacityMaxRisk<FP>>());
     auto riskFromInfectedSymptomatic      = smoother_cosine<FP>(test_and_trace_required, test_and_trace_capacity,
-                                                                test_and_trace_capacity * test_and_trace_capacity_max_risk,
-                                                                p_inf.matrix(), p_inf_max.matrix());
+                                                           test_and_trace_capacity * test_and_trace_capacity_max_risk,
+                                                           p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();

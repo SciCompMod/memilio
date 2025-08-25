@@ -40,8 +40,8 @@ class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::Infection
 {
     using InfectionState = osecirvvs::InfectionState;
     using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
-                                              mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
-                                              osecirvvs::Parameters<ScalarType>>;
+                                    mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                    osecirvvs::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)

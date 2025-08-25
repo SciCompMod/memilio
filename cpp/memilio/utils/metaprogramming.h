@@ -120,7 +120,7 @@ template <class B1>
 struct disjunction<B1> : B1 {
     //disjunction of one element is identity
 };
-template<class B1, class... Bn>
+template <class B1, class... Bn>
 struct disjunction<B1, Bn...> : std::conditional_t<bool(B1::value), B1, disjunction<Bn...>> {
     //disjunction of mutliple elements is equal to the first element if the first element is true.
     //otherwise its equal to the disjunction of the remaining elements.

@@ -37,8 +37,9 @@ namespace mio
  * @brief This is an adaptive IntegratorCore. It creates and manages an instance of a
  * boost::numeric::odeint::controlled_runge_kutta integrator, wrapped as mio::IntegratorCore.
  */
-template <typename FP, template <class State, class Value, class Deriv, class Time, class Algebra, class Operations,
-                                 class Resizer> class ControlledStepper>
+template <typename FP,
+          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
+          class ControlledStepper>
 class ControlledStepperWrapper : public mio::OdeIntegratorCore<FP>
 {
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
@@ -176,8 +177,9 @@ private:
  * @brief This is a non-adaptive IntegratorCore. It creates and manages an instance of an explicit stepper from
  * boost::numeric::odeint, wrapped as mio::IntegratorCore.
  */
-template <typename FP, template <class State, class Value, class Deriv, class Time, class Algebra, class Operations,
-                                 class Resizer> class ExplicitStepper>
+template <typename FP,
+          template <class State, class Value, class Deriv, class Time, class Algebra, class Operations, class Resizer>
+          class ExplicitStepper>
 class ExplicitStepperWrapper : public mio::OdeIntegratorCore<FP>
 {
 public:
