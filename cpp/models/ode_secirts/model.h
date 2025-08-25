@@ -615,8 +615,7 @@ public:
 
         // if daily_vaccinations is not available for the current time point, we return zero vaccinations.
         if (max_time <= floor(t)) {
-            mio::log_warning("Vaccination data not available for time point ", ad::value(t),
-                             ". Returning zero vaccinations.");
+            mio::log_warning("Vaccination data not available for time point ", t, ". Returning zero vaccinations.");
             return smoothed_vaccinations;
         }
         if (t >= lb) {

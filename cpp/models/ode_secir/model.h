@@ -588,25 +588,21 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 
     V = V.inverse();
 
-    Eigen::MatrixX<FP> NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
+    Eigen::MatrixXd NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
     NextGenMatrix.noalias() = F * V;
 
-    // Computing eigenvalues with Eigen3 is non differentiable.
-    Eigen::MatrixXd NextGenMatrix_dbl = NextGenMatrix.unaryExpr([](const FP& x) {
-        return ad::value(x);
-    });
-
+    // Compute the largest eigenvalue in absolute value
     Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
-    ces.compute(NextGenMatrix_dbl);
 
+    ces.compute(NextGenMatrix);
     const Eigen::VectorXcd eigvals_complex = ces.eigenvalues();
+
     Eigen::VectorXd eigvals_abs(eigvals_complex.size());
     for (int i = 0; i < eigvals_complex.size(); ++i) {
         eigvals_abs[i] = std::abs(eigvals_complex[i]);
     }
 
-    FP rho = static_cast<FP>(eigvals_abs.maxCoeff());
-    return mio::success(rho);
+    return mio::success(eigvals_abs.maxCoeff());
 }
 
 /**
@@ -621,7 +617,7 @@ Eigen::VectorX<FP> get_reproduction_numbers(const Simulation<FP, Base>& sim)
 {
     Eigen::VectorX<FP> temp(sim.get_result().get_num_time_points());
     for (int i = 0; i < sim.get_result().get_num_time_points(); i++) {
-        temp[i] = get_reproduction_number((size_t)i, sim).value();
+        temp[i] = get_reproduction_number<ScalarType>((size_t)i, sim).value();
     }
     return temp;
 }
@@ -687,8 +683,8 @@ auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen
     auto test_and_trace_capacity          = FP(params.template get<TestAndTraceCapacity<FP>>());
     auto test_and_trace_capacity_max_risk = FP(params.template get<TestAndTraceCapacityMaxRisk<FP>>());
     auto riskFromInfectedSymptomatic      = smoother_cosine<FP>(test_and_trace_required, test_and_trace_capacity,
-                                                           test_and_trace_capacity * test_and_trace_capacity_max_risk,
-                                                           p_inf.matrix(), p_inf_max.matrix());
+                                                                test_and_trace_capacity * test_and_trace_capacity_max_risk,
+                                                                p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();

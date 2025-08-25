@@ -145,25 +145,21 @@ public:
 
         V = V.inverse();
 
-        Eigen::MatrixX<FP> NextGenMatrix(total_infected_compartments, total_infected_compartments);
+        Eigen::MatrixXd NextGenMatrix(total_infected_compartments, total_infected_compartments);
         NextGenMatrix.noalias() = F * V;
 
-        // Computing eigenvalues with Eigen3 is non differentiable.
-        Eigen::MatrixXd NextGenMatrix_dbl = NextGenMatrix.unaryExpr([](const FP& x) {
-            return ad::value(x);
-        });
-
+        // Compute the largest eigenvalue in absolute value
         Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
-        ces.compute(NextGenMatrix_dbl);
 
+        ces.compute(NextGenMatrix);
         const Eigen::VectorXcd eigvals_complex = ces.eigenvalues();
+
         Eigen::VectorXd eigvals_abs(eigvals_complex.size());
         for (int i = 0; i < eigvals_complex.size(); ++i) {
             eigvals_abs[i] = std::abs(eigvals_complex[i]);
         }
 
-        FP rho = static_cast<FP>(eigvals_abs.maxCoeff());
-        return mio::success(rho);
+        return mio::success(eigvals_abs.maxCoeff());
     }
 
     /**
