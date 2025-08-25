@@ -142,8 +142,6 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
     gd.write_dataframe(df_pop_export, directory, filename, file_format)
     gd.write_dataframe(aggregate_to_state_level(df_pop_export), directory, filename + '_states', file_format)
     gd.write_dataframe(aggregate_to_country_level(df_pop_export), directory, filename + '_germany', file_format)
-    # df_pop_germany = pd.DataFrame({"ID": [0], "Population": [df_pop_export["Population"].sum()]})
-    # gd.write_dataframe(df_pop_germany, directory, filename + '_germany', file_format)
 
     return df_pop_export
 
