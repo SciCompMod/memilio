@@ -1,4 +1,3 @@
-#include "ide_endemic_secir/model.h"
 #include "ide_endemic_secir/normalized_model.h"
 #include "ide_endemic_secir/computed_parameters.h"
 #include "ide_endemic_secir/parameters.h"
@@ -21,8 +20,7 @@ namespace endisecir
 {
 
 NormModel::NormModel(CompParameters const& compparams)
-    : parameters{Parameters()}
-    , compparameters{std::make_shared<CompParameters>(compparams)}
+    : compparameters{std::make_shared<CompParameters>(compparams)}
     , transitions{TimeSeries<ScalarType>(Eigen::Index(InfectionTransition::Count))}
     , populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count) - 1)}
 {
@@ -40,7 +38,7 @@ NormModel::NormModel(CompParameters const& compparams)
     transitions.add_time_point(
         0, TimeSeries<ScalarType>::Vector::Constant(static_cast<size_t>(InfectionTransition::Count), 0.));
 
-    m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0));
+    m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_NormFoI_0[0]));
 }
 
 bool NormModel::check_constraints() const
@@ -57,7 +55,12 @@ bool NormModel::check_constraints() const
             return true;
         }
     }
-    return parameters.check_constraints();
+    return compparameters->check_constraints();
+}
+// ----Functionality for Initialization. ----
+void NormModel::initialization_compute_forceofinfection()
+{
+    m_forceofinfection[0][0] = compparameters->m_NormFoI_0[0];
 }
 
 // ----Functionality for the iterations of a simulation. ----
@@ -66,8 +69,8 @@ void NormModel::compute_susceptibles(ScalarType dt)
     Eigen::Index num_time_points = populations.get_num_time_points();
     populations.get_last_value()[static_cast<int>(InfectionState::Susceptible)] =
         (populations[num_time_points - 2][static_cast<int>(InfectionState::Susceptible)] +
-         dt * parameters.get<NaturalBirthRate>()) /
-        (1 + dt * (m_forceofinfection[num_time_points - 2][0] + parameters.get<NaturalBirthRate>()) -
+         dt * compparameters->parameters.get<NaturalBirthRate>()) /
+        (1 + dt * (m_forceofinfection[num_time_points - 2][0] + compparameters->parameters.get<NaturalBirthRate>()) -
          transitions[num_time_points - 2][(Eigen::Index)InfectionTransition::InfectedCriticalToDead]);
 }
 
@@ -85,24 +88,24 @@ void NormModel::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index
         ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
 
         sum += (transitions[i + 1][idx_IncomingFlow] +
-                (parameters.get<NaturalDeathRate>() +
+                (compparameters->parameters.get<NaturalDeathRate>() +
                  transitions[i][(Eigen::Index)InfectionTransition::InfectedCriticalToDead] -
-                 parameters.get<NaturalBirthRate>()) *
+                 compparameters->parameters.get<NaturalBirthRate>()) *
                     populations[i][idx_CurrentCompartment]) *
-               std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
+               std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
                compparameters->m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index - i];
     }
     if (current_time_index <= calc_time_index) {
         transitions.get_value(current_time_index)[idx_InfectionTransitions] =
-            (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum -
-            std::exp((-parameters.get<NaturalDeathRate>()) * (current_time_age)) *
+            (-dt) * compparameters->parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum -
+            std::exp((-compparameters->parameters.get<NaturalDeathRate>()) * (current_time_age)) *
                 populations[0][idx_CurrentCompartment] *
-                parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
+                compparameters->parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
                 compparameters->m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index];
     }
     else {
         transitions.get_value(current_time_index)[idx_InfectionTransitions] =
-            (-dt) * parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
+            (-dt) * compparameters->parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] * sum;
     }
 }
 
@@ -182,18 +185,18 @@ void NormModel::update_compartment_with_sum(InfectionState infectionState,
         }
         if (Transitionispossible) {
             sum += compparameters->m_transitiondistributions[(int)infectionState][current_time_index - i] *
-                   (sum_inflows + (parameters.get<NaturalDeathRate>() +
+                   (sum_inflows + (compparameters->parameters.get<NaturalDeathRate>() +
                                    transitions[i][(Eigen::Index)InfectionTransition::InfectedCriticalToDead] -
-                                   parameters.get<NaturalBirthRate>()) *
+                                   compparameters->parameters.get<NaturalBirthRate>()) *
                                       populations[i][(int)infectionState]) *
-                   std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i));
+                   std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i));
         }
         else {
-            sum += (sum_inflows + (parameters.get<NaturalDeathRate>() +
+            sum += (sum_inflows + (compparameters->parameters.get<NaturalDeathRate>() +
                                    transitions[i][(Eigen::Index)InfectionTransition::InfectedCriticalToDead] -
-                                   parameters.get<NaturalBirthRate>()) *
+                                   compparameters->parameters.get<NaturalBirthRate>()) *
                                       populations[i][(int)infectionState]) *
-                   std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i));
+                   std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i));
         }
     }
     if (Transitionispossible) {
@@ -201,7 +204,7 @@ void NormModel::update_compartment_with_sum(InfectionState infectionState,
             populations.get_last_value()[(int)infectionState] =
                 dt * sum + compparameters->m_transitiondistributions[(int)infectionState][current_time_index] *
                                populations[0][(int)infectionState] *
-                               std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age));
+                               std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age));
         }
         else {
             populations.get_last_value()[(int)infectionState] = dt * sum;
@@ -209,8 +212,8 @@ void NormModel::update_compartment_with_sum(InfectionState infectionState,
     }
     else {
         populations.get_last_value()[(int)infectionState] =
-            dt * sum +
-            populations[0][(int)infectionState] * std::exp(-parameters.get<NaturalDeathRate>() * (current_time_age));
+            dt * sum + populations[0][(int)infectionState] *
+                           std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age));
     }
 }
 
@@ -259,9 +262,9 @@ void NormModel::compute_forceofinfection(ScalarType dt)
     for (Eigen::Index i = starting_point1; i < num_time_points - 1; i++) {
         sum1 += compparameters->m_infectivity[num_time_points - 1 - i] *
                 (populations[i + 1][(int)InfectionState::Susceptible] * m_forceofinfection[i][0] +
-                 (parameters.get<NaturalDeathRate>() +
+                 (compparameters->parameters.get<NaturalDeathRate>() +
                   transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
-                  parameters.get<NaturalBirthRate>()) *
+                  compparameters->parameters.get<NaturalBirthRate>()) *
                      populations[i + 1][(int)InfectionState::Exposed]);
     }
 
@@ -272,11 +275,12 @@ void NormModel::compute_forceofinfection(ScalarType dt)
     // Compute the second sum in the force of infection term.
     for (Eigen::Index i = starting_point2; i < num_time_points - 1; i++) {
         ScalarType state_age = static_cast<ScalarType>(i) * dt;
-        sum2 +=
-            (parameters.get<NaturalDeathRate>() + transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
-             parameters.get<NaturalBirthRate>()) *
-            std::exp(-parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
-            populations[i + 1][(int)InfectionState::InfectedNoSymptoms] * compparameters->m_B[num_time_points - 1 - i];
+        sum2 -= (compparameters->parameters.get<NaturalDeathRate>() +
+                 transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+                 compparameters->parameters.get<NaturalBirthRate>()) *
+                std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
+                populations[i + 1][(int)InfectionState::InfectedNoSymptoms] *
+                compparameters->m_B[num_time_points - 1 - i];
     }
 
     // Determine the starting point of the for loop.
@@ -289,11 +293,12 @@ void NormModel::compute_forceofinfection(ScalarType dt)
     for (Eigen::Index i = starting_point3; i < num_time_points - 1; i++) {
         ScalarType state_age = static_cast<ScalarType>(i) * dt;
         sum3 +=
-            (parameters.get<NaturalDeathRate>() + transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
-             parameters.get<NaturalBirthRate>()) *
-            std::exp(-parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
+            (compparameters->parameters.get<NaturalDeathRate>() +
+             transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+             compparameters->parameters.get<NaturalBirthRate>()) *
+            std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
             populations[i + 1][(int)InfectionState::InfectedNoSymptoms] *
-            parameters.get<RelativeTransmissionNoSymptoms>().eval(current_time - state_age) *
+            compparameters->parameters.get<RelativeTransmissionNoSymptoms>().eval(current_time - state_age) *
             compparameters->m_transitiondistributions[(int)InfectionState::InfectedNoSymptoms][num_time_points - 1 - i];
     }
 
@@ -307,18 +312,20 @@ void NormModel::compute_forceofinfection(ScalarType dt)
     for (Eigen::Index i = starting_point4; i < num_time_points - 1; i++) {
         ScalarType state_age = static_cast<ScalarType>(i) * dt;
         sum4 +=
-            (parameters.get<NaturalDeathRate>() + transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
-             parameters.get<NaturalBirthRate>()) *
-            std::exp(-parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
+            (compparameters->parameters.get<NaturalDeathRate>() +
+             transitions[i + 1][(int)InfectionTransition::InfectedCriticalToDead] -
+             compparameters->parameters.get<NaturalBirthRate>()) *
+            std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time - state_age)) *
             populations[i + 1][(int)InfectionState::InfectedSymptoms] *
-            parameters.get<RiskOfInfectionFromSymptomatic>().eval(current_time - state_age) *
+            compparameters->parameters.get<RiskOfInfectionFromSymptomatic>().eval(current_time - state_age) *
             compparameters->m_transitiondistributions[(int)InfectionState::InfectedSymptoms][num_time_points - 1 - i];
     }
     ScalarType sum = sum1 + sum2 + sum3 + sum4;
 
     m_forceofinfection.get_last_value()[0] =
-        (dt * sum) * (parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
-                      parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0));
+        dt * sum *
+        (compparameters->parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
+         compparameters->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0));
 
     // Add inital functions for the force of infection in case they still have an influence.
     if (num_time_points <= (int)compparameters->m_NormFoI_0.size()) {
@@ -327,8 +334,8 @@ void NormModel::compute_forceofinfection(ScalarType dt)
     if (num_time_points <= (int)compparameters->m_NormInitFoI.size()) {
         m_forceofinfection.get_last_value()[0] +=
             compparameters->m_NormInitFoI[num_time_points - 1] *
-            parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
-            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0);
+            compparameters->parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
+            compparameters->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0);
     }
 }
 

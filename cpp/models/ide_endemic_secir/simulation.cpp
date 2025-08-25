@@ -22,22 +22,24 @@ void Simulation::advance(ScalarType tmax)
     m_model->compparameters->set_transitiondistributions_derivative(m_dt);
     m_model->compparameters->set_B(m_dt);
     m_model->compparameters->set_infectivity(m_dt);
-    m_model->compparameters->set_FoI_0();
+    m_model->compparameters->set_FoI_0(m_dt);
     m_model->compparameters->set_InitFoI(m_dt);
     m_model->compparameters->set_reproductionnumber_c(m_dt);
     m_model->compparameters->set_T(m_dt);
     m_model->compparameters->set_W(m_dt);
+    m_model->initialization_compute_forceofinfection();
 
     m_normmodel->compparameters->set_transitiondistributions_support_max(m_dt);
     m_normmodel->compparameters->set_transitiondistributions(m_dt);
     m_normmodel->compparameters->set_transitiondistributions_derivative(m_dt);
     m_normmodel->compparameters->set_B(m_dt);
     m_normmodel->compparameters->set_infectivity(m_dt);
-    m_normmodel->compparameters->set_FoI_0();
+    m_normmodel->compparameters->set_FoI_0(m_dt);
     m_normmodel->compparameters->set_InitFoI(m_dt);
     m_normmodel->compparameters->set_reproductionnumber_c(m_dt);
     m_normmodel->compparameters->set_T(m_dt);
     m_normmodel->compparameters->set_W(m_dt);
+    m_normmodel->initialization_compute_forceofinfection();
 
     // For every time step:
     while (m_model->transitions.get_last_time() < tmax - m_dt / 2) {

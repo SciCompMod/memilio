@@ -10,6 +10,7 @@
 #include <Eigen/src/Core/util/Meta.h>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 namespace mio
@@ -218,7 +219,10 @@ private:
                     m_transitiondistributions_derivative[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
                                                         [time_point_index - i];
             }
-            m_B[time_point_index] = dt * sum;
+            m_B[time_point_index] =
+                parameters
+                    .get<TransitionProbabilities>()[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+                dt * sum;
         }
     }
 
@@ -258,29 +262,25 @@ private:
                     (int)m_transitiondistributions_support_max[(int)InfectionTransition::ExposedToInfectedNoSymptoms]);
 
             //compute a_1:
-            if (time_point_index <= calc_time_index_1) {
 
-                for (int i = starting_point; i < time_point_index; i++) {
+            for (int i = starting_point; i < std::min(calc_time_index_1, time_point_index); i++) {
 
-                    ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
-                    a_1 += parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age_i) *
-                           m_transitiondistributions[static_cast<int>(InfectionState::InfectedNoSymptoms)][i] *
-                           m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                                                               [time_point_index - i];
-                }
+                ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
+                a_1 += parameters.get<RelativeTransmissionNoSymptoms>().eval(state_age_i) *
+                       m_transitiondistributions[static_cast<int>(InfectionState::InfectedNoSymptoms)][i] *
+                       m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+                                                           [time_point_index - i];
             }
             //compute a_2:
-            if (time_point_index <= calc_time_index_2) {
 
-                for (int i = starting_point; i < time_point_index; i++) {
+            for (int i = starting_point; i < std::min(calc_time_index_1, time_point_index); i++) {
 
-                    a_2 += m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
-                                                               [time_point_index - i] *
-                           m_B[i];
-                }
+                a_2 += m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
+                                                           [time_point_index - i] *
+                       m_B[i];
             }
             m_infectivity[time_point_index] =
-                dt * std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * (a_2 - a_1);
+                dt * std::exp(-parameters.get<NaturalDeathRate>() * time_point_age) * (a_2 - a_1);
         }
     }
 
@@ -288,21 +288,36 @@ private:
      *@brief Setter for the vectors m_FoI_0 and m_NormFoI_0 that contain the approximated values of the function FoI_0,
      * that is a part of the force of infection term for all necessary time points.
      */
-    void set_FoI_0()
+    void set_FoI_0(ScalarType dt)
     {
         Eigen::Index calc_time_index = m_infectivity.size();
         m_FoI_0                      = std::vector<ScalarType>(calc_time_index, 0.);
         m_NormFoI_0                  = std::vector<ScalarType>(calc_time_index, 0.);
-        // m_InitFoI.resize(calc_time_index, 0.);
-        // m_NormInitFoI.resize(calc_time_index, 0.);
         for (Eigen::Index time_point_index = 0; time_point_index < calc_time_index; time_point_index++) {
+            ScalarType time_point_age = (ScalarType)time_point_index * dt;
             m_FoI_0[time_point_index] =
-                m_infectivity[time_point_index] * (m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] +
-                                                   m_statesinit[0][(int)InfectionState::InfectedNoSymptoms]);
+                (parameters.get<TransmissionProbabilityOnContact>().eval(time_point_age) *
+                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(time_point_age)(0, 0)) *
+                (m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
+                     m_transitiondistributions[(int)InfectionState::InfectedNoSymptoms][time_point_index] *
+                     std::exp(-parameters.get<NaturalDeathRate>() * time_point_age) *
+                     parameters.get<RelativeTransmissionNoSymptoms>().eval(time_point_age) +
+                 m_statesinit[0][(int)InfectionState::InfectedSymptoms] *
+                     m_transitiondistributions[(int)InfectionState::InfectedSymptoms][time_point_index] *
+                     std::exp(-parameters.get<NaturalDeathRate>() * time_point_age) *
+                     parameters.get<RiskOfInfectionFromSymptomatic>().eval(time_point_age));
             m_NormFoI_0[time_point_index] =
-                m_infectivity[time_point_index] * ((m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] +
-                                                    m_statesinit[0][(int)InfectionState::InfectedNoSymptoms]) /
-                                                   m_totalpopulationinit);
+                (parameters.get<TransmissionProbabilityOnContact>().eval(time_point_age) *
+                 parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(time_point_age)(0, 0)) *
+                ((m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
+                      m_transitiondistributions[(int)InfectionState::InfectedNoSymptoms][time_point_index] *
+                      std::exp(-parameters.get<NaturalDeathRate>() * time_point_age) *
+                      parameters.get<RelativeTransmissionNoSymptoms>().eval(time_point_age) +
+                  m_statesinit[0][(int)InfectionState::InfectedSymptoms] *
+                      m_transitiondistributions[(int)InfectionState::InfectedSymptoms][time_point_index] *
+                      std::exp(-parameters.get<NaturalDeathRate>() * time_point_age) *
+                      parameters.get<RiskOfInfectionFromSymptomatic>().eval(time_point_age)) /
+                 m_totalpopulationinit);
         }
     }
 
@@ -319,21 +334,26 @@ private:
         m_InitFoI.resize(calc_time_index, 0.);
         m_NormInitFoI.resize(calc_time_index, 0.);
         for (Eigen::Index time_point_index = 0; time_point_index < calc_time_index; time_point_index++) {
+            ScalarType sum            = 0;
+            ScalarType sum_norm       = 0;
             ScalarType time_point_age = (ScalarType)time_point_index * dt;
             if (time_point_index <= (int)m_B.size()) {
-                m_InitFoI[time_point_index] -= m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
-                                               std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) *
-                                               m_B[time_point_index];
-                m_NormInitFoI[time_point_index] -=
-                    m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] / m_totalpopulationinit *
-                    std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
+                sum -= m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
+                       std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
+                sum_norm -= m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] / m_totalpopulationinit *
+                            std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
             }
             if (time_point_index <= (int)m_infectivity.size()) {
-                m_InitFoI[time_point_index] +=
-                    m_statesinit[0][(int)InfectionState::Exposed] * m_infectivity[time_point_index];
-                m_NormInitFoI[time_point_index] += m_statesinit[0][(int)InfectionState::Exposed] /
-                                                   m_totalpopulationinit * m_infectivity[time_point_index];
+                sum += m_statesinit[0][(int)InfectionState::Exposed] * m_infectivity[time_point_index];
+                sum_norm += m_statesinit[0][(int)InfectionState::Exposed] / m_totalpopulationinit *
+                            m_infectivity[time_point_index];
             }
+            m_InitFoI[time_point_index] =
+                parameters.get<TransmissionProbabilityOnContact>().eval(time_point_age) *
+                parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(time_point_age)(0, 0) * sum;
+            m_NormInitFoI[time_point_index] =
+                parameters.get<TransmissionProbabilityOnContact>().eval(time_point_age) *
+                parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(time_point_age)(0, 0) * sum_norm;
         }
     }
 

@@ -41,7 +41,6 @@ public:
     bool check_constraints() const;
 
     // ---- Public parameters. ----
-    ParameterSet parameters; ///< ParameterSet of Model Parameters.
     std::shared_ptr<CompParameters> compparameters;
     TimeSeries<ScalarType>
         transitions; ///< TimesSeries containing points of time and the corresponding number of individuals transitioning
@@ -50,6 +49,13 @@ public:
     // in defined #InfectionState%s.
 
 private:
+    // ----Functionality for Initialization. ----
+
+    /**
+    *@brief Comoutes the value of the force of infection term at startim time.
+    *
+    * */
+    void initialization_compute_forceofinfection();
     // ---- Functionality for the iterations of a simulation.
 
     /**

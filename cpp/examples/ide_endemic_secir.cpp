@@ -19,7 +19,7 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 10;
+    ScalarType tmax = 20;
     ScalarType dt   = 1.0;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
@@ -97,14 +97,14 @@ int main()
     computed_parameters.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
 
     std::vector<ScalarType> vec_prob((int)mio::endisecir::InfectionTransition::Count, 1.);
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 0.5;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToRecovered)]        = 1 - 0.5;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 0.8;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToRecovered)]        = 1 - 0.8;
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]     = 0.1;
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSymptomsToRecovered)]          = 1 - 0.1;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToInfectedCritical)]     = 0.3;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToRecovered)]            = 1 - 0.3;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]               = 0.2;
-    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToRecovered)]          = 1 - 0.2;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToInfectedCritical)]     = 0.2;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToRecovered)]            = 1 - 0.2;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]               = 0.4;
+    vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToRecovered)]          = 1 - 0.4;
 
     computed_parameters.parameters.set<mio::endisecir::TransitionProbabilities>(vec_prob);
 
@@ -123,8 +123,8 @@ int main()
     computed_parameters.parameters.get<mio::endisecir::RelativeTransmissionNoSymptoms>() = exponential_prob;
     computed_parameters.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    computed_parameters.parameters.set<mio::endisecir::NaturalBirthRate>(4e-3);
-    computed_parameters.parameters.set<mio::endisecir::NaturalDeathRate>(3e-3);
+    computed_parameters.parameters.set<mio::endisecir::NaturalBirthRate>(4e-5);
+    computed_parameters.parameters.set<mio::endisecir::NaturalDeathRate>(2e-5);
 
     //computed_parameters.set_tol_for_support_max(1e-6);
 
@@ -148,11 +148,11 @@ int main()
     interpolated_normresults.print_table({"s", "e", "c", "i", "h", "u", "r"}, 16, 8);
 
     // Uncomment to print the normalized compartments of model.
-    sim.get_normalizedcompartments().print_table({"S/N", "E/N", "C/N", "I/N", "H/N", "U/N", "R/N"}, 16, 8);
+    // sim.get_normalizedcompartments().print_table({"S/N", "E/N", "C/N", "I/N", "H/N", "U/N", "R/N"}, 16, 8);
 
     // Uncomment to print the transitions of model.
-    // sim.get_transitions().print_table(
-    //     {"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"}, 16, 8);
+    sim.get_transitions().print_table({"S->E", "E->C", "C->I", "C->R", "I->H", "I->R", "H->U", "H->R", "U->D", "U->R"},
+                                      16, 8);
     // sim.get_transitions_update().print_table(
     //     {"US->UE", "UE->UC", "UC->UI", "UC->UR", "UI->UH", "UI->UR", "UH->UU", "UH->UR", "UU->UD", "UU->UR"},
     //     16, 8);
