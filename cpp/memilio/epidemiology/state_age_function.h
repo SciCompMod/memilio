@@ -807,8 +807,8 @@ protected:
 };
 
 /*********************************
-    * Define StateAgeFunctionWrapper *
-    *********************************/
+* Define StateAgeFunctionWrapper *
+*********************************/
 
 /**
  * @brief Wrapper around StateAgeFunction so that one can work with an arbitrary StateAgeFunction.
