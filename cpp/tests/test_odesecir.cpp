@@ -87,13 +87,13 @@ TEST(TestOdeSecir, compareWithPreviousRun)
 
     model.apply_constraints();
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore<double>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-3);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd =
-        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, integrator);
+        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, std::move(integrator));
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -612,8 +612,6 @@ TEST(TestOdeSecir, testDamping)
 
     double nb_total_t0 = 1000, nb_inf_t0 = 10;
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
-
     // default model run to be compared against
     mio::osecir::Model<double> model_a(1);
     model_a.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
@@ -625,7 +623,8 @@ TEST(TestOdeSecir, testDamping)
     // set probability of transmission and risk of infection to 1.
     model_a.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>() = 1.0;
     model_a.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()   = 1.0;
-    auto result_a = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_a, integrator);
+    auto result_a = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_a,
+                                                    std::make_unique<mio::EulerIntegratorCore<ScalarType>>());
 
     // reduced transmission
     mio::osecir::Model<double> model_b{model_a};
@@ -637,7 +636,8 @@ TEST(TestOdeSecir, testDamping)
         model_b.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_b[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix_b[0].add_damping(0.5, mio::SimulationTime<double>(0.));
-    auto result_b = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_b, integrator);
+    auto result_b = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_b,
+                                                    std::make_unique<mio::EulerIntegratorCore<ScalarType>>());
     EXPECT_EQ(2 * result_b[1].get_last_value()[0], result_a[1].get_last_value()[0]);
 
     // no transmission
@@ -650,7 +650,8 @@ TEST(TestOdeSecir, testDamping)
         model_c.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_c[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix_c[0].add_damping(1., mio::SimulationTime<double>(0.));
-    auto result_c = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_c, integrator);
+    auto result_c = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_c,
+                                                    std::make_unique<mio::EulerIntegratorCore<ScalarType>>());
     EXPECT_EQ(result_c[1].get_last_value()[0], 0.0);
 
     // increased transmission to a factor of two (by +1)
@@ -663,7 +664,8 @@ TEST(TestOdeSecir, testDamping)
         model_d.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_d[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix_d[0].add_damping(-1., mio::SimulationTime<double>(0.));
-    auto result_d = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_d, integrator);
+    auto result_d = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_d,
+                                                    std::make_unique<mio::EulerIntegratorCore<ScalarType>>());
     EXPECT_EQ(2 * result_a[1].get_last_value()[0], result_d[1].get_last_value()[0]);
 }
 

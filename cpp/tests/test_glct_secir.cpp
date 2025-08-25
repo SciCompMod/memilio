@@ -291,7 +291,7 @@ TEST_F(ModelTestGLCTSecir, compareWithPreviousRun)
     ScalarType tmax                    = 3;
     mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, ModelTestGLCTSecir::Model>(
         0, tmax, 0.5, *model,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Compare InfectionState compartments.
     mio::TimeSeries<ScalarType> population = model->calculate_compartments(result);

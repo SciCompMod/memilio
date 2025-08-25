@@ -170,6 +170,11 @@ public:
     {
     }
 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    {
+        return std::make_unique<RKIntegratorCore>(*this);
+    }
+
     /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation
     void set_abs_tolerance(FP tol)
     {

@@ -46,7 +46,7 @@ public:
      * @param[in] dt Initial step size of integration.
      */
     FlowSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
-        : Base(model, std::make_shared<DefaultIntegratorCore<FP>>(), t0, dt)
+        : Base(model, std::make_unique<DefaultIntegratorCore<FP>>(), t0, dt)
         , m_pop(model.get_initial_values().size())
     {
     }
@@ -99,7 +99,7 @@ private:
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of a FlowModel.
- * @param[in] integrator Optionally override the IntegratorCore used by the FlowSimulation.
+ * @param[in] integrator_core Optionally override the IntegratorCore used by the FlowSimulation.
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  * @tparam FP a floating point type, e.g., double
@@ -108,12 +108,12 @@ private:
  */
 template <typename FP, class Model, class Sim = FlowSimulation<FP, Model>>
 std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& model,
-                                           std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
+                                           std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(integrator);
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
     }
     sim.advance(tmax);
     return {sim.get_result(), sim.get_flows()};

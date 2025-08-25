@@ -268,19 +268,24 @@ public:
                 (const mio::DerivFunction<double>& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
+    
+    std::unique_ptr<mio::OdeIntegratorCore<double>> clone() const override 
+    {
+        throw std::runtime_error("MockIntegratorCore clone() called unexpectedly");
+    }
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
 {
     using testing::_;
-    auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
+    auto mock_core = std::make_unique<testing::StrictMock<MockIntegratorCore>>();
     EXPECT_CALL(*mock_core, step).Times(100);
 
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator<double>(mock_core);
+    auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt = 1e-2;
-    integrator.advance({f}, 1, dt, result);
+    integrator.advance(f, 1, dt, result);
     EXPECT_EQ(result.get_num_time_points(), 101);
 }
 
@@ -289,8 +294,8 @@ TEST(TestOdeIntegrator, integratorStopsAtTMax)
     auto f = [](auto&&, auto&&, auto&&) {};
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 0.137;
-    auto integrator = mio::OdeIntegrator<double>(std::make_shared<testing::NiceMock<MockIntegratorCore>>());
-    integrator.advance({f}, 2.34, dt, result);
+    auto integrator = mio::OdeIntegrator<double>(std::make_unique<testing::NiceMock<MockIntegratorCore>>());
+    integrator.advance(f, 2.34, dt, result);
     EXPECT_DOUBLE_EQ(result.get_last_time(), 2.34);
 }
 
@@ -311,7 +316,7 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     using testing::_;
     using testing::Eq;
 
-    auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
+    auto mock_core = std::make_unique<testing::StrictMock<MockIntegratorCore>>();
 
     {
         testing::InSequence seq;
@@ -333,9 +338,9 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     auto f = [](auto&&, auto&&, auto&&) {};
     mio::TimeSeries<double> result(0, Eigen::VectorXd::Constant(1, 0.0));
     double dt       = 1.0;
-    auto integrator = mio::OdeIntegrator<double>(mock_core);
-    integrator.advance({f}, 10.0, dt, result);
-    integrator.advance({f}, 23.0, dt, result);
+    auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
+    integrator.advance(f, 10.0, dt, result);
+    integrator.advance(f, 23.0, dt, result);
 }
 
 auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
@@ -353,10 +358,7 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     double dt       = dt0;
     auto dy         = Eigen::VectorXd::Constant(1, 1);
     auto y0         = Eigen::VectorXd::Constant(1, 0);
-    auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
-    auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = mio::OdeIntegrator<double>(mock_core);
-    mio::TimeSeries<double> result(0, y0);
+    auto mock_core  = std::make_unique<testing::StrictMock<MockIntegratorCore>>();
 
     {
         testing::InSequence seq;
@@ -367,8 +369,11 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
         EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
     }
 
-    integrator.advance({f}, 4 * dt0, dt, result);
-    integrator.advance({f}, 5 * dt0, dt, result);
+    auto f          = [](auto&&, auto&&, auto&&) {};
+    auto integrator = mio::OdeIntegrator<double>(std::move(mock_core));
+    mio::TimeSeries<double> result(0, y0);
+    integrator.advance(f, 4 * dt0, dt, result);
+    integrator.advance(f, 5 * dt0, dt, result);
 }
 
 TEST(TestOdeIntegrator, integratorForcesLastStepSize)
@@ -379,22 +384,22 @@ TEST(TestOdeIntegrator, integratorForcesLastStepSize)
     const double dt_min  = 0.7;
     double dt            = 0.5; // this is on purpose < dt_min
     const double t_max   = 3.0; // must not be an integer multiple of dt_min
-    const auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>(dt_min, t_max);
-    auto integrator      = mio::OdeIntegrator<double>(mock_core);
+    auto mock_core       = std::make_unique<testing::StrictMock<MockIntegratorCore>>(dt_min, t_max);
     auto f               = [](auto&&, auto&&, auto&&) {};
-    auto step_fct        = [&mock_core](auto&&, auto&&, auto& t_, auto& dt_, auto&&) {
-        dt_ = std::max(dt_, mock_core->get_dt_min());
+    auto step_fct        = [&mock = *mock_core](auto&&, auto&&, auto& t_, auto& dt_, auto&&) {
+        dt_ = std::max(dt_, mock.get_dt_min());
         t_ += dt_;
         return true;
     };
+
 
     const auto num_calls = Eigen::Index(t_max / dt_min) + 1;
     EXPECT_CALL(*mock_core, step).Times(num_calls).WillRepeatedly(testing::Invoke(step_fct));
 
     // run a mock integration to examine whether only the last step is forced
     mio::TimeSeries<double> mock_result(0, Eigen::VectorXd::Constant(1, 0));
-    integrator.advance({f}, t_max, dt, mock_result);
-
+    auto integrator      = mio::OdeIntegrator<double>(std::move(mock_core));
+    integrator.advance(f, t_max, dt, mock_result);
     EXPECT_EQ(mock_result.get_num_time_points(), num_calls + 1);
     for (Eigen::Index i = 0; i < mock_result.get_num_time_points(); i++) {
         EXPECT_DOUBLE_EQ(mock_result.get_time(i), std::min(i * dt_min, t_max));

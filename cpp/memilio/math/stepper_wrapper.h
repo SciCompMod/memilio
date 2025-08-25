@@ -68,6 +68,11 @@ public:
     {
     }
 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    {
+        return std::make_unique<ControlledStepperWrapper>(*this);
+    }
+
     /**
      * @brief Make a single integration step on a system of ODEs and adapt the step size dt.
      *
@@ -194,6 +199,11 @@ public:
     ExplicitStepperWrapper()
         : mio::OdeIntegratorCore<FP>(FP{}, FP{})
     {
+    }
+
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    {
+        return std::make_unique<ExplicitStepperWrapper>(*this);
     }
 
     /**
