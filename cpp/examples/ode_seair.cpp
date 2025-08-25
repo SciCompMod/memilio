@@ -68,10 +68,10 @@ int main()
 
     // Accurate automatic differentiation (AD) and Finite Differences (FP) require higher-precision numerical integrators than typically used.
     auto AD_integrator =
-        std::make_shared<mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>(
+        std::make_unique<mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>(
             1e-12, 1e-8, std::numeric_limits<double>::min(), dt);
     auto double_integrator =
-        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>(
+        std::make_unique<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>(
             1e-12, 1e-8, std::numeric_limits<double>::min(), ad::value(dt));
 
     // Compute derivative of the final states of the model with respect to the initial value of the suscetible population
@@ -81,7 +81,7 @@ int main()
     ad::derivative(value)                                                                                   = 1.0;
     model1.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] = value;
     model1.check_constraints();
-    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1, AD_integrator);
+    auto seair1 = mio::simulate<FP, mio::oseair::Model<FP>>(t0, tmax, dt, model1, std::move(AD_integrator));
 
     // We want to compare the derivatives computed ba algorithmic differention with difference quotient.
     // To this end we perturbe the corresponding initial value of the by an increment h and simulate again.
@@ -91,7 +91,7 @@ int main()
     model2.populations[{mio::Index<mio::oseair::InfectionState>(mio::oseair::InfectionState::Susceptible)}] += h;
     model2.check_constraints();
     mio::TimeSeries<double> seair2 = mio::simulate<double, mio::oseair::Model<double>>(
-        ad::value(t0), ad::value(tmax), ad::value(dt), model2, double_integrator);
+        ad::value(t0), ad::value(tmax), ad::value(dt), model2, std::move(double_integrator));
 
     const std::string file_name = "seair-compare.csv";
     std::ofstream file(file_name);
