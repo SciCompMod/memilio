@@ -60,23 +60,6 @@ public:
     {
     }
 
-    FlowSimulationBase(const FlowSimulationBase& other)
-        : Base(other)
-        , m_flow_result(other.m_flow_result)
-    {
-    }
-
-    FlowSimulationBase& operator=(const FlowSimulationBase& other) 
-    {
-        if(this != &other)
-        {
-            Base::operator=(other);
-            m_flow_result = other.m_flow_result;
-        }
-        return *this; 
-    }
-
-
     /**
      * @brief Returns the simulation result describing the transitions between compartments for each time step.
      *
