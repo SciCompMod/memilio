@@ -26,15 +26,15 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0.;
-    double tmax = 5.;
-    double dt   = 0.001;
+    ScalarType t0   = 0.;
+    ScalarType tmax = 5.;
+    ScalarType dt   = 0.001;
 
-    double total_population = 10000;
+    ScalarType total_population = 10000;
 
     mio::log_info("Simulating SIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::ssirs::Model<double> model;
+    mio::ssirs::Model<ScalarType> model;
 
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}]  = 100;
     model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}] = 1000;
@@ -42,11 +42,12 @@ int main()
         total_population -
         model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Infected)}] -
         model.populations[{mio::Index<mio::ssirs::InfectionState>(mio::ssirs::InfectionState::Recovered)}];
-    model.parameters.set<mio::ssirs::TimeInfected<double>>(10);
-    model.parameters.set<mio::ssirs::TimeImmune<double>>(100);
-    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(1);
-    model.parameters.get<mio::ssirs::ContactPatterns<double>>().get_baseline()(0, 0) = 20.7;
-    model.parameters.get<mio::ssirs::ContactPatterns<double>>().add_damping(0.6, mio::SimulationTime<double>(12.5));
+    model.parameters.set<mio::ssirs::TimeInfected<ScalarType>>(10);
+    model.parameters.set<mio::ssirs::TimeImmune<ScalarType>>(100);
+    model.parameters.set<mio::ssirs::TransmissionProbabilityOnContact<ScalarType>>(1);
+    model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().get_baseline()(0, 0) = 20.7;
+    model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().add_damping(0.6,
+                                                                                mio::SimulationTime<ScalarType>(12.5));
 
     model.check_constraints();
 

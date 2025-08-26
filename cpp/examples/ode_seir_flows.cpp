@@ -30,32 +30,32 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0;
-    double tmax = 1;
-    double dt   = 0.001;
+    ScalarType t0   = 0;
+    ScalarType tmax = 1;
+    ScalarType dt   = 0.001;
 
     mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::oseir::Model<double> model(1);
+    mio::oseir::Model<ScalarType> model(1);
 
-    constexpr double total_population                                            = 10000;
+    constexpr ScalarType total_population                                        = 10000;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
     model.populations.set_difference_from_group_total<mio::AgeGroup>(
         {mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}, total_population);
 
-    model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected<double>>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<double>>(0.04);
+    model.parameters.set<mio::oseir::TimeExposed<ScalarType>>(5.2);
+    model.parameters.set<mio::oseir::TimeInfected<ScalarType>>(6);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.04);
 
-    mio::ContactMatrixGroup<double>& contact_matrix =
-        model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(10);
 
     model.check_constraints();
 
-    auto seir = mio::simulate_flows<double>(t0, tmax, dt, model);
+    auto seir = mio::simulate_flows<ScalarType>(t0, tmax, dt, model);
 
     printf("Compartments: \n");
     seir[0].print_table({"S", "E", "I", "R"});

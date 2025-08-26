@@ -32,16 +32,16 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::warn);
 
-    double t0   = 0;
-    double dt   = 0.1;
-    double tmax = 1;
+    ScalarType t0   = 0;
+    ScalarType dt   = 0.1;
+    ScalarType tmax = 1;
 
-    double cont_freq = 10;
+    ScalarType cont_freq = 10;
 
-    double nb_total_t0 = 1000, nb_inf_t0 = 10;
+    ScalarType nb_total_t0 = 1000, nb_inf_t0 = 10;
 
     // default model run to be compared against
-    mio::osecir::Model<double> model_a(1);
+    mio::osecir::Model<ScalarType> model_a(1);
     const auto indx_flow_SE =
         model_a.get_flat_flow_index<mio::osecir::InfectionState::Susceptible, mio::osecir::InfectionState::Exposed>(
             {mio::AgeGroup(0)});
@@ -49,8 +49,9 @@ int main()
     model_a.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_a.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                   nb_total_t0);
-    mio::ContactMatrixGroup<double>& contact_matrix_a = model_a.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix_a[0] = mio::ContactMatrix<double>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_a =
+        model_a.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix_a[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
     // set probability of transmission and risk of infection to 1.
     model_a.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>() = 1.0;
     model_a.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()   = 1.0;
@@ -65,7 +66,7 @@ int main()
               << result_a[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // The contacts are halfed: reduced transmission through damping with value 0.5
-    mio::osecir::Model<double> model_b{model_a};
+    mio::osecir::Model<ScalarType> model_b{model_a};
     model_b.populations.set_total(nb_total_t0);
     model_b.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_b.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
@@ -85,7 +86,7 @@ int main()
               << result_b[1].get_value(1)[indx_flow_SE] << ".\n";
 
     // No contacts at all: no transmission through damping with value 1.
-    mio::osecir::Model<double> model_c{model_a};
+    mio::osecir::Model<ScalarType> model_c{model_a};
     model_c.populations.set_total(nb_total_t0);
     model_c.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] = nb_inf_t0;
     model_c.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
