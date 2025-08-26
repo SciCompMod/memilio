@@ -627,6 +627,7 @@ def visualize_contact_network(household_data, infection_count_data, contact_data
     plt.tight_layout()
 
     if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Contact network visualization saved to {save_path}")
 

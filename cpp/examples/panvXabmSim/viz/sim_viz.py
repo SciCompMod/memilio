@@ -187,6 +187,7 @@ def plot_infections_loc_types_average(
 
     # Save the plot to parent folder
     output_dir = os.path.dirname(path_to_loc_types)
+    os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, "infection_location_types.png")
     plt.savefig(output_file)
     print(f"Plot saved to {output_file}")
@@ -252,6 +253,7 @@ def plot_infection_states(
 
     # Save the plot to parent folder
     output_dir = os.path.dirname(path_to_infection_states)
+    os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, "infection_states.png")
     plt.savefig(output_file)
     print(f"Plot saved to {output_file}")
@@ -334,6 +336,10 @@ def plot_infection_states_comparison(
 
     # Save the plot
     output_file = os.path.join(output_path, "infection_states_comparison.png")
+
+    # Ensure the directory exists before saving
+    os.makedirs(output_path, exist_ok=True)
+
     plt.savefig(output_file, bbox_inches='tight')
     print(f"Comparison plot saved to {output_file}")
     plt.close()
@@ -455,6 +461,7 @@ def plot_infection_states_by_age_group(
 
     # Save the plot to parent folder
     output_dir = os.path.dirname(path_to_infection_states)
+    os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, "infection_states_by_age_group.png")
     plt.savefig(output_file)
     print(f"Plot saved to {output_file}")

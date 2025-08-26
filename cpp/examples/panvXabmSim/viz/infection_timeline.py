@@ -471,6 +471,11 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
     plt.tight_layout()
 
     if save_path:
+        # Ensure the directory exists before saving
+        save_dir = os.path.dirname(save_path)
+        if save_dir and not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Infection timeline saved to {save_path}")
 

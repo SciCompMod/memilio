@@ -1,21 +1,18 @@
 # Helper function to find result path by key
 find_result_path() {
     local search_key=$1
-    >&2 echo "    DEBUG: Searching for key '$search_key' in array of ${#RESULTS_KEYS[@]} elements"
+    >&2 echo "    DEBUG: Searching for key '$search_key' in results file"
     
-    for (( i=0; i<${#RESULTS_KEYS[@]}; i++ )); do
-        local current_key="${RESULTS_KEYS[i]}"
-        >&2 echo "    DEBUG: Checking [$i] '$current_key'"
-        
-        if [[ "$current_key" == "$search_key" ]]; then
-            local found_path="${RESULTS_PATHS[i]}"
-            >&2 echo "    DEBUG: FOUND at index $i: '$found_path'"
-            echo "$found_path"  # This goes to stdout (return value)
+    while IFS='|' read -r key path; do
+        >&2 echo "    DEBUG: Checking '$key'"
+        if [[ "$key" == "$search_key" ]]; then
+            >&2 echo "    DEBUG: FOUND: '$path'"
+            echo "$path"  # This goes to stdout (return value)
             return 0
         fi
-    done
+    done < "$RESULTS_STORAGE_FILE"
     
-    >&2 echo "    DEBUG: NOT FOUND - '$search_key' not in array"
+    >&2 echo "    DEBUG: NOT FOUND - '$search_key' not in results"
     echo ""  # Empty result to stdout
     return 1
 }
@@ -71,21 +68,24 @@ INFECTION_K=22.6
 ENABLE_INDIVIDUAL_VIZ=true          # Individual visualization for each simulation
 ENABLE_PAIRWISE_VIZ=true            # Pairwise comparisons (memilio vs panvadere)
 ENABLE_COMPREHENSIVE_VIZ=true       # Comprehensive multi-panel comparison
-ENABLE_CONTACT_NETWORK_VIZ=false     # Contact network analysis
+ENABLE_CONTACT_NETWORK_VIZ=true     # Contact network analysis
 ENABLE_INFECTION_TIMELINE_VIZ=true  # Infection timeline analysis  
-ENABLE_STATISTICAL_ANALYSIS=false    # Statistical tables and reports
+ENABLE_STATISTICAL_ANALYSIS=true    # Statistical tables and reports
 
-# Results storage - using simple arrays with consistent indexing
-# Initialize as truly empty arrays (no pre-filled elements)
-declare -a RESULTS_KEYS=()
-declare -a RESULTS_PATHS=()
+# Results storage - using simple file-based storage instead of arrays
+# This avoids bash array scoping issues entirely
+RESULTS_STORAGE_FILE="/tmp/run_all_results_$$"
 
-# Validate arrays are clean at startup
-if [ ${#RESULTS_KEYS[@]} -ne 0 ] || [ ${#RESULTS_PATHS[@]} -ne 0 ]; then
-    echo "WARNING: Arrays not empty at startup. Cleaning..."
-    declare -a RESULTS_KEYS=()
-    declare -a RESULTS_PATHS=()
-fi
+# Clean up any existing results file
+rm -f "$RESULTS_STORAGE_FILE"
+touch "$RESULTS_STORAGE_FILE"
+
+# Helper functions for result storage
+store_result() {
+    local key=$1
+    local path=$2
+    echo "$key|$path" >> "$RESULTS_STORAGE_FILE"
+}
 
 # Functions
 create_results_dir() {
@@ -316,43 +316,21 @@ main() {
             fi
             
             # Debug: Show what we're about to add
-            echo "    -> About to add to arrays:"
+            echo "    -> About to store result:"
             echo "       key: '$key'"
             echo "       path: '$results_dir'"
-            echo "       current array length: ${#RESULTS_KEYS[@]}"
             
-            # Add to arrays - use explicit indexing to ensure proper assignment
-            RESULTS_KEYS[${#RESULTS_KEYS[@]}]="$key"
-            RESULTS_PATHS[${#RESULTS_PATHS[@]}]="$results_dir"
+            # Store the result using file-based storage
+            echo "    -> Debug: Storing result in file"
+            store_result "$key" "$results_dir"
             
-            # Verify what was actually added
-            local new_length=${#RESULTS_KEYS[@]}
-            local last_index=$((new_length - 1))
-            echo "    -> After adding:"
-            echo "       new array length: $new_length"
-            echo "       last key: '${RESULTS_KEYS[$last_index]}'"
-            echo "       last path: '${RESULTS_PATHS[$last_index]}'"
-            
-            # Verify the key was stored correctly
-            if [[ "${RESULTS_KEYS[$last_index]}" != "$key" ]]; then
-                echo "    ERROR: Key mismatch! Expected '$key', got '${RESULTS_KEYS[$last_index]}'"
-            fi
-            
-            if [[ "${RESULTS_PATHS[$last_index]}" != "$results_dir" ]]; then
-                echo "    ERROR: Path mismatch! Expected '$results_dir', got '${RESULTS_PATHS[$last_index]}'"
-            fi
-            
-            # Show all current array contents
-            echo "    -> Current complete arrays:"
-            for (( j=0; j<${#RESULTS_KEYS[@]}; j++ )); do
-                echo "       [$j] '${RESULTS_KEYS[j]}' -> '${RESULTS_PATHS[j]}'"
+            # Verify storage
+            local result_count=$(wc -l < "$RESULTS_STORAGE_FILE")
+            echo "    -> Debug: Total results stored: $result_count"
+            echo "    -> Debug: Last 3 lines of results file:"
+            tail -n 3 "$RESULTS_STORAGE_FILE" | while IFS='|' read -r stored_key stored_path; do
+                echo "       '$stored_key' -> '$stored_path'"
             done
-            
-            # Verify the arrays are synchronized
-            if [ ${#RESULTS_KEYS[@]} -ne ${#RESULTS_PATHS[@]} ]; then
-                echo "    ERROR: Array mismatch! Keys: ${#RESULTS_KEYS[@]}, Paths: ${#RESULTS_PATHS[@]}"
-                exit 1
-            fi
             
             # Run individual visualization
             if ! run_individual_visualization "$results_dir" "$sim_type" "$event_type"; then
@@ -363,38 +341,18 @@ main() {
     
     echo ""
     echo "=== SIMULATION RESULTS SUMMARY ==="
-    echo "Raw array lengths: keys=${#RESULTS_KEYS[@]}, paths=${#RESULTS_PATHS[@]}"
-    
-    # Clean up any empty elements before proceeding
-    echo "Cleaning arrays..."
-    local clean_keys=()
-    local clean_paths=()
-    
-    for (( i=0; i<${#RESULTS_KEYS[@]}; i++ )); do
-        local key="${RESULTS_KEYS[i]}"
-        local path="${RESULTS_PATHS[i]}"
-        
-        echo "  Raw [$i]: key='$key', path='$path'"
-        
-        # Only keep non-empty entries
-        if [[ -n "$key" && -n "$path" ]]; then
-            clean_keys+=("$key")
-            clean_paths+=("$path")
-            echo "    ✓ Kept"
-        else
-            echo "    ✗ Removed (empty)"
-        fi
-    done
-    
-    # Replace with cleaned arrays
-    RESULTS_KEYS=("${clean_keys[@]}")
-    RESULTS_PATHS=("${clean_paths[@]}")
+    local result_count=$(wc -l < "$RESULTS_STORAGE_FILE")
+    echo "Total results stored: $result_count"
     
     echo ""
-    echo "After cleaning - Successfully completed simulations:"
-    for (( i=0; i<${#RESULTS_KEYS[@]}; i++ )); do
-        echo "  [$i] ${RESULTS_KEYS[i]}: ${RESULTS_PATHS[i]}"
-    done
+    echo "Successfully completed simulations:"
+    local counter=0
+    while IFS='|' read -r key path; do
+        if [[ -n "$key" && -n "$path" ]]; then
+            echo "  [$counter] $key: $path"
+            ((counter++))
+        fi
+    done < "$RESULTS_STORAGE_FILE"
     echo ""
     
     # Create pairwise comparisons for each event type
@@ -441,14 +399,12 @@ main() {
         local all_paths=()
         local all_labels=()
         
-        for (( i=0; i<${#RESULTS_KEYS[@]}; i++ )); do
-            local key="${RESULTS_KEYS[i]}"
-            local path="${RESULTS_PATHS[i]}"
+        while IFS='|' read -r key path; do
             if [[ -n "$path" && -d "$path" ]]; then
                 all_paths+=("$path")
                 all_labels+=("$key")
             fi
-        done
+        done < "$RESULTS_STORAGE_FILE"
         
         if [ ${#all_paths[@]} -gt 0 ]; then
             echo "Running comprehensive comparison with ${#all_paths[@]} scenarios..."
@@ -469,10 +425,7 @@ main() {
     echo ""
     echo "=== STEP 4: Copying Results to Last Result Folders ==="
     
-    for (( i=0; i<${#RESULTS_KEYS[@]}; i++ )); do
-        local key="${RESULTS_KEYS[i]}"
-        local results_path="${RESULTS_PATHS[i]}"
-        
+    while IFS='|' read -r key results_path; do
         # Extract sim_type and event_type from key
         local sim_type="${key%%_*}"  # Everything before first underscore
         local event_type="${key#*_}" # Everything after first underscore
@@ -482,14 +435,19 @@ main() {
         else
             echo "  -> No infection state results found for $key"
         fi
-    done
+    done < "$RESULTS_STORAGE_FILE"
     
     echo ""
     echo "=== COMPREHENSIVE SIMULATION ANALYSIS COMPLETED SUCCESSFULLY ==="
     echo "Results summary:"
-    for (( i=0; i<${#RESULTS_KEYS[@]}; i++ )); do
-        echo "  ${RESULTS_KEYS[i]}: ${RESULTS_PATHS[i]}"
-    done
+    local counter=0
+    while IFS='|' read -r key path; do
+        echo "  ${key}: ${path}"
+        ((counter++))
+    done < "$RESULTS_STORAGE_FILE"
+    
+    # Clean up temporary file
+    rm -f "$RESULTS_STORAGE_FILE"
     echo ""
     echo "Comprehensive visualizations: $viz_output_dir"
     echo "Individual pairwise comparisons available in subfolders of: $viz_output_dir"

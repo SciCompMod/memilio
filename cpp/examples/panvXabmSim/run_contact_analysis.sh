@@ -8,7 +8,7 @@ MAIN_PATH="/Users/saschakorf/Nosynch/Arbeit/memilio/cpp"
 MAIN_EXECUTABLE="$MAIN_PATH/build/bin/panvXabm"
 PYTHON3_PATH="$MAIN_PATH/v_m/bin/python3"
 RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
-ANALYSIS_SCRIPT="$MAIN_PATH/examples/panvXabmSim/analyze_contacts.py"
+ANALYSIS_SCRIPT="$MAIN_PATH/examples/panvXabmSim/viz/analyze_contacts.py"
 
 # Simulation parameters
 EVENT_TYPE="work_meeting_baseline"
