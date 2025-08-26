@@ -35,6 +35,94 @@ excluded_ids = [11001, 11002, 11003, 11004, 11005, 11006, 11007, 11008, 11009, 1
 no_icu_ids = [7338, 9374, 9473, 9573]
 region_ids = [region_id for region_id in dd.County.keys() if region_id not in excluded_ids]
 
+inference_params = ['damping_values', 't_E', 't_ISy', 't_ISev', 'transmission_prob']
+
+def plot_region_median_mad(
+    data: np.ndarray,
+    region: int,
+    true_data = None,
+    ax = None,
+    label = None,
+    color = "red"
+):
+    if data.ndim != 3:
+        raise ValueError("Array not of shape (samples, time_points, regions)")
+    if true_data is not None:
+        if true_data.shape != data.shape[1:]:
+            raise ValueError("True data shape does not match data shape")
+    n_samples, n_time, n_regions = data.shape
+    if not (0 <= region < n_regions):
+        raise IndexError
+
+    x = np.arange(n_time)
+    vals = data[:, :, region]  # (samples, time_points)
+    med = np.median(vals, axis=0)
+    mad = np.median(np.abs(vals - med), axis=0)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    line, = ax.plot(x, med, lw=2, label=label or f"Region {region}", color=color)
+    band = ax.fill_between(x, med - mad, med + mad, alpha=0.25, color=color)
+    if true_data is not None:
+        true_vals = true_data[:, region]  # (time_points,)
+        ax.plot(x, true_vals, lw=2, color="black", label="True data")
+
+    ax.set_xlabel("Time")
+    ax.set_ylabel("ICU")
+    ax.set_title(f"Region {region}")
+    if label is not None:
+        ax.legend()
+    return line, band
+
+
+def plot_aggregated_over_regions(
+    data: np.ndarray,
+    region_agg = np.sum,
+    true_data = None,
+    ax = None,
+    label = None,
+    color = 'red'
+):
+    if data.ndim != 3:
+        raise ValueError("Array not of shape (samples, time_points, regions)")
+    if true_data is not None:
+        if true_data.shape != data.shape[1:]:
+            raise ValueError("True data shape does not match data shape")
+
+    # Aggregate over regions
+    agg_over_regions = region_agg(data, axis=-1)  # (samples, time_points)
+
+    # Aggregate over samples
+    agg_median = np.median(agg_over_regions, axis=0)        # (time_points, )
+    agg_mad = np.median(
+        np.abs(agg_over_regions - agg_median[None]),
+        axis=0
+    )
+
+    x = np.arange(agg_median.shape[0])
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    line, = ax.plot(x, agg_median, lw=2, label=label or "Aggregated over regions", color=color)
+    band = ax.fill_between(
+        x,
+        agg_median - agg_mad,
+        agg_median + agg_mad,
+        alpha=0.25,
+        color=color
+    )
+    if true_data is not None:
+        true_vals = region_agg(true_data, axis=-1)  # (time_points,)
+        ax.plot(x, true_vals, lw=2, color="black", label="True data")
+
+    ax.set_xlabel("Time")
+    ax.set_ylabel("ICU")
+    if label is not None:
+        ax.legend()
+
+    return line, band
+
 class Simulation:
     """ """
 
@@ -46,20 +134,20 @@ class Simulation:
         if not os.path.exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def set_covid_parameters(self, model):
+    def set_covid_parameters(self, model, t_E, t_ISy, t_ISev, t_Cr, transmission_prob):
         """
 
         :param model: 
 
         """
-        model.parameters.TimeExposed[mio.AgeGroup(0)] = 3.335
-        model.parameters.TimeInfectedNoSymptoms[mio.AgeGroup(0)] = 2.58916
-        model.parameters.TimeInfectedSymptoms[mio.AgeGroup(0)] = 6.94547
-        model.parameters.TimeInfectedSevere[mio.AgeGroup(0)] = 7.28196
-        model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = 13.066
+        model.parameters.TimeExposed[mio.AgeGroup(0)] = t_E
+        model.parameters.TimeInfectedNoSymptoms[mio.AgeGroup(0)] = 5.2 - t_E
+        model.parameters.TimeInfectedSymptoms[mio.AgeGroup(0)] = t_ISy
+        model.parameters.TimeInfectedSevere[mio.AgeGroup(0)] = t_ISev
+        model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = t_Cr
 
         # probabilities
-        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(0)] = 0.07333
+        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(0)] = transmission_prob
         model.parameters.RelativeTransmissionNoSymptoms[mio.AgeGroup(0)] = 1
 
         model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(0)] = 0.2069
@@ -81,7 +169,7 @@ class Simulation:
         contact_matrices = mio.ContactMatrixGroup(1, self.num_groups)
 
         baseline = np.ones((self.num_groups, self.num_groups)) * 7.95
-        minimum = np.ones((self.num_groups, self.num_groups)) * 0
+        minimum = np.zeros((self.num_groups, self.num_groups))
         contact_matrices[0] = mio.ContactMatrix(baseline, minimum)
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
         
@@ -94,13 +182,13 @@ class Simulation:
         """
 
         start_damping = datetime.date(
-            year=2020, month=7, day=8)
+            year=2020, month=10, day=8)
 
         if start_damping < end_date:
             start_date = (start_damping - self.start_date).days
             params.ContactPatterns.cont_freq_mat[0].add_damping(mio.Damping(np.r_[damping_value], t=start_date))
 
-    def get_graph(self, end_date):
+    def get_graph(self, end_date, t_E, t_ISy, t_ISev, t_Cr, transmission_prob):
         """
 
         :param end_date: 
@@ -108,13 +196,13 @@ class Simulation:
         """
         print("Initializing model...")
         model = Model(self.num_groups)
-        self.set_covid_parameters(model)
+        self.set_covid_parameters(model, t_E, t_ISy, t_ISev, t_Cr, transmission_prob)
         self.set_contact_matrices(model)
         print("Model initialized.")
 
         graph = osecir.ModelGraph()
 
-        scaling_factor_infected = [1]
+        scaling_factor_infected = [2.5]
         scaling_factor_icu = 1.0
         tnt_capacity_factor = 7.5 / 100000.
 
@@ -144,7 +232,7 @@ class Simulation:
 
         return graph
 
-    def run(self, num_days_sim, damping_values, save_graph=True):
+    def run(self, num_days_sim, damping_values, t_E, t_ISy, t_ISev, t_Cr, transmission_prob, save_graph=True):
         """
 
         :param num_days_sim: 
@@ -156,7 +244,7 @@ class Simulation:
         mio.set_log_level(mio.LogLevel.Warning)
         end_date = self.start_date + datetime.timedelta(days=num_days_sim)
 
-        graph = self.get_graph(end_date)
+        graph = self.get_graph(end_date, t_E, t_ISy, t_ISev, t_Cr, transmission_prob)
 
         if save_graph:
             path_graph = os.path.join(self.results_dir, "graph")
@@ -181,41 +269,52 @@ class Simulation:
         for node_idx in range(mobility_sim.graph.num_nodes):
             node = mobility_sim.graph.get_node(node_idx)
             if node.id in no_icu_ids:
-                results[f'no_icu_region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result).as_ndarray()
+                results[f'no_icu_region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result)
             else:
-                results[f'region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result).as_ndarray()
+                results[f'region{node_idx}'] = osecir.interpolate_simulation_result(node.property.result)
          
         return results
 
-def run_germany_nuts3_simulation(damping_values):
+def run_germany_nuts3_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, transmission_prob):
     mio.set_log_level(mio.LogLevel.Warning)
     file_path = os.path.dirname(os.path.abspath(__file__))
 
     sim = Simulation(
         data_dir=os.path.join(file_path, "../../../data"),
-        start_date=datetime.date(year=2020, month=7, day=1),
+        start_date=datetime.date(year=2020, month=10, day=1),
         results_dir=os.path.join(file_path, "../../../results_osecir"))
-    num_days_sim = 50
+    num_days_sim = 60
     
-    results = sim.run(num_days_sim, damping_values)
+    results = sim.run(num_days_sim, damping_values, t_E, t_ISy, t_ISev, t_Cr, transmission_prob)
 
     return results
 
 def prior():
     damping_values = np.random.uniform(0.0, 1.0, 16)
-    return {'damping_values': damping_values}
+    t_E = np.random.uniform(1., 5.2)
+    t_ISy = np.random.uniform(4., 10.)
+    t_ISev = np.random.uniform(5., 10.)
+    t_Cr = np.random.uniform(9., 17.)
+    transmission_prob = np.random.uniform(0., 0.2)
+    return {'damping_values': damping_values, 
+        't_E': t_E,
+        't_ISy': t_ISy,
+        't_ISev': t_ISev,
+        't_Cr': t_Cr,
+        'transmission_prob': transmission_prob}
 
 def load_divi_data():
     file_path = os.path.dirname(os.path.abspath(__file__))
     divi_path = os.path.join(file_path, "../../../data/Germany/pydata")
 
-    data = pd.read_json(os.path.join(divi_path, "county_divi_ma7.json"))
-    data = data[data['Date']>= np.datetime64(datetime.date(2020, 7, 1))]
-    data = data[data['Date'] <= np.datetime64(datetime.date(2020, 7, 1) + datetime.timedelta(days=50))]
-    data = data.drop(columns=['County', 'ICU_ventilated', 'Date'])
-    divi_dict = {f"region{i}": data[data['ID_County'] == region_id]['ICU'].to_numpy()[None, :, None] for i, region_id in enumerate(region_ids) if region_id not in no_icu_ids}
+    data = pd.read_json(os.path.join(divi_path, "county_divi_all_dates.json"))
+    data = data[data['Date']>= np.datetime64(datetime.date(2020, 10, 1))]
+    data = data[data['Date'] <= np.datetime64(datetime.date(2020, 10, 1) + datetime.timedelta(days=50))]
+    data = data.sort_values(by=['ID_County', 'Date'])
+    divi_data = data.pivot(index='Date', columns='ID_County', values='ICU')
+    divi_dict = {f"region{i}": divi_data[region_id].to_numpy()[None, :, None] for i, region_id in enumerate(region_ids) if region_id not in no_icu_ids}
 
-    return divi_dict
+    return divi_data.to_numpy(), divi_dict
 
 
 if __name__ == "__main__":
@@ -227,39 +326,45 @@ if __name__ == "__main__":
     from tensorflow import keras
 
     simulator = bf.simulators.make_simulator([prior, run_germany_nuts3_simulation])
-    trainings_data = simulator.sample(1)
+    trainings_data = simulator.sample(1000)
 
-    # for key in trainings_data.keys():
-    #     if key != 'damping_values':
-    #         trainings_data[key] = trainings_data[key][:, :, 8][..., np.newaxis]
+    for key in trainings_data.keys():
+        if key not in inference_params:
+            trainings_data[key] = trainings_data[key][:, :, 7][..., np.newaxis]
 
-    # with open('validation_data_counties.pickle', 'wb') as f:
-    #     pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
+    with open('trainings_data10_counties_wcovidparams_oct.pickle', 'wb') as f:
+        pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
-    # with open('trainings_data1_counties.pickle', 'rb') as f:
+    # with open('trainings_data1_counties_wcovidparams_oct.pickle', 'rb') as f:
     #     trainings_data = pickle.load(f)
-    # for i in range(9):
-    #     with open(f'trainings_data{i+2}_counties.pickle', 'rb') as f:
+    # trainings_data = {k: np.round(v) if ('region' in k) else v for k, v in trainings_data.items()}
+    # for i in range(19):
+    #     with open(f'trainings_data{i+2}_counties_wcovidparams_oct.pickle', 'rb') as f:
     #         data = pickle.load(f)
-    #     trainings_data = {k: np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
+    #     trainings_data = {k: np.concatenate([trainings_data[k], np.round(data[k])]) if ('region' in k) else np.concatenate([trainings_data[k], data[k]]) for k in trainings_data.keys()}
 
-    # with open('validation_data_counties.pickle', 'rb') as f:
+    # with open('validation_data_counties_wcovidparams_oct.pickle', 'rb') as f:
     #     validation_data = pickle.load(f)
+    # divi_dict = {k: np.round(v) if ('region' in k) else v for k, v in validation_data.items()}
 
     # adapter = (
     #     bf.Adapter()
     #     .to_array()
     #     .convert_dtype("float64", "float32")
     #     .constrain("damping_values", lower=0.0, upper=1.0)
-    #     .rename("damping_values", "inference_variables")
+    #     .constrain("t_E", lower=1.0, upper=6.0)
+    #     .constrain("t_ISy", lower=5.0, upper=10.0)
+    #     .constrain("t_ISev", lower=2.0, upper=8.0)
+    #     .concatenate(["damping_values", "t_E", "t_ISy", "t_ISev"], into="inference_variables", axis=-1)
     #     .concatenate([f'region{i}' for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids], into="summary_variables", axis=-1)
     #     .log("summary_variables", p1=True)
     # )
 
-    # # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
+    # print("summary_variables shape:", adapter(trainings_data)["summary_variables"].shape)
+    # print("inference_variables shape:", adapter(trainings_data)["inference_variables"].shape)
 
-    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32, recurrent_dim=32)
-    # inference_network = bf.networks.CouplingFlow()
+    # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=38)
+    # inference_network = bf.networks.CouplingFlow(depth=7, transform='spline')
 
     # workflow = bf.BasicWorkflow(
     #     simulator=simulator, 
@@ -269,23 +374,45 @@ if __name__ == "__main__":
     #     standardize='all'  
     # )
 
-    # # history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
+    # history = workflow.fit_offline(data=trainings_data, epochs=100, batch_size=32, validation_data=validation_data)
 
-    # # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
+    # workflow.approximator.save(filepath=os.path.join(os.path.dirname(__file__), "model_countylvl_wcovidparams_oct.keras"))
 
-    # # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
-    # # plots['losses'].savefig('losses_countylvl.png')
-    # # plots['recovery'].savefig('recovery_countylvl.png')
-    # # plots['calibration_ecdf'].savefig('calibration_ecdf_countylvl.png')
-    # # plots['z_score_contraction'].savefig('z_score_contraction_countylvl.png')
+    # plots = workflow.plot_default_diagnostics(test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True})
+    # plots['losses'].savefig('losses_countylvl_wcovidparams2_oct.png')
+    # plots['recovery'].savefig('recovery_countylvl_wcovidparams2_oct.png')
+    # plots['calibration_ecdf'].savefig('calibration_ecdf_countylvl_wcovidparams2_oct.png')
+    # plots['z_score_contraction'].savefig('z_score_contraction_countylvl_wcovidparams2_oct.png')
 
-    # test = load_divi_data()
-    # workflow.approximator = keras.models.load_model(os.path.join(os.path.dirname(__file__), "model_countylvl.keras"))
+    # divi_data, divi_dict = load_divi_data()
+    # # divi_data = np.concatenate(
+    # #     [validation_data[f'region{i}'] for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids],
+    # #     axis=-1
+    # # )
+    # workflow.approximator = keras.models.load_model(os.path.join(os.path.dirname(__file__), "model_countylvl_wcovidparams_oct.keras"))
 
-    # samples = workflow.sample(conditions=test, num_samples=10)
-    # # samples = workflow.samples_to_data_frame(samples)
-    # # print(samples.head())
-    # samples['damping_values'] = np.squeeze(samples['damping_values'])
-    # for i in range(samples['damping_values'].shape[0]):
-    #     test = run_germany_nuts3_simulation(samples['damping_values'][i])
-    #     print(test)
+    # samples = workflow.sample(conditions=divi_dict, num_samples=1000)
+    # samples = np.concatenate([samples[key] for key in inference_params], axis=-1)
+    # samples = np.squeeze(samples)
+    # sims = []
+    # for i in range(samples.shape[0]):
+    #     result = run_germany_nuts3_simulation(samples[i][:16], *samples[i][16:])
+    #     for key in result.keys():
+    #         result[key] = np.array(result[key])[:, 7, None]
+    #     sims.append(np.concatenate([result[key] for key in result.keys() if key.startswith('region')], axis=-1))
+    # sims = np.array(sims)
+    # sims = np.floor(sims)
+
+    # np.random.seed(42)
+    # fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(12, 5), layout="constrained")
+    # ax = ax.flatten()
+    # rand_index = np.random.choice(sims.shape[-1], replace=False, size=len(ax))
+    # for i, a in enumerate(ax):
+    #     plot_region_median_mad(sims, region=rand_index[i], true_data=divi_data, label=r"Median $\pm$ Mad", ax=a)
+    # plt.savefig('random_regions_wcovidparams_oct.png')
+    # # plt.show()
+    # #%%
+    # plot_aggregated_over_regions(sims, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad")
+    # plt.savefig('region_aggregated_wcovidparams_oct.png')
+    # # plt.show()
+    # # %%
