@@ -342,6 +342,13 @@ public:
     }
 
 private:
+    /**
+     * @brief Internal constructor taking a value for each parameter, and initializing it.
+     * @tparam Dummy Do not specify template parameters. They are used to select a viable constructor. The second and
+     * third parameter are needed for an empty ParameterSet<>, to disable this constructor and avoid equivalence to
+     * other constructors, respectively.
+     */
+    template <class Dummy = void, class = std::enable_if_t<(sizeof...(Tags) > 0), Dummy>, class = Dummy>
     ParameterSet(const typename Tags::Type&... t)
         : m_tup(t...)
     {

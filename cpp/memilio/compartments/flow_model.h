@@ -18,10 +18,10 @@
 * limitations under the License.
 */
 
-#ifndef MIO_FLOW_MODEL_H_
-#define MIO_FLOW_MODEL_H_
+#ifndef MIO_COMPARTMENTS_FLOW_MODEL_H
+#define MIO_COMPARTMENTS_FLOW_MODEL_H
 
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/flow.h"
 #include "memilio/utils/type_list.h"
@@ -273,4 +273,4 @@ using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_deri
 
 } // namespace mio
 
-#endif // MIO_FLOW_MODEL_H_
+#endif // MIO_COMPARTMENTS_FLOW_MODEL_H

@@ -375,13 +375,13 @@ TEST(TestSeir, get_flows_two_agegroups)
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]   = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]  = 100;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}] = 100;
-    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible},
-                                                                     total_first_population);
+    model.populations.set_difference_from_group_total<mio::AgeGroup>(
+        {mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}, total_first_population);
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Exposed}]   = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Infected}]  = 10;
     model.populations[{mio::AgeGroup(1), mio::oseir::InfectionState::Recovered}] = 10;
-    model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible},
-                                                                     total_second_population);
+    model.populations.set_difference_from_group_total<mio::AgeGroup>(
+        {mio::AgeGroup(1), mio::oseir::InfectionState::Susceptible}, total_second_population);
 
     for (auto i = mio::AgeGroup(0); i <= mio::AgeGroup(1); i++) {
         model.parameters.get<mio::oseir::TimeExposed<double>>()[i]                      = 2;
@@ -431,10 +431,9 @@ TEST(TestSeir, Simulation)
     contact_matrix[0].get_baseline().setConstant(1);
 
     model.check_constraints();
-
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-
-    auto sim = simulate(t0, tmax, dt, model, integrator);
+ 
+    std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();
+    auto sim = simulate(t0, tmax, dt, model, std::move(integrator));
 
     EXPECT_EQ(sim.get_num_time_points(), 2);
 
@@ -471,9 +470,8 @@ TEST(TestSeir, FlowSimulation)
 
     model.check_constraints();
 
-    std::shared_ptr<mio::IntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-
-    auto sim = simulate_flows(t0, tmax, dt, model, integrator);
+    std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();
+    auto sim = simulate_flows(t0, tmax, dt, model, std::move(integrator));
 
     // results
     EXPECT_EQ(sim[0].get_num_time_points(), 2);

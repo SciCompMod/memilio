@@ -37,15 +37,18 @@ void flowless_sim(::benchmark::State& state)
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     // run benchmark
     for (auto _ : state) {
+        // create simulation
+        // exclude integrator creation from benchmark
+        state.PauseTiming();
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+                cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
         mio::benchmark::Simulation<mio::Simulation<ScalarType, Model>> sim(model, cfg.t0, cfg.dt);
-        sim.set_integrator(I);
+        sim.set_integrator_core(std::move(I));
         // run sim
         sim.advance(cfg.t_max);
     }
@@ -62,15 +65,17 @@ void flow_sim_comp_only(::benchmark::State& state)
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     // run benchmark
     for (auto _ : state) {
+        // create simulation
+        state.PauseTiming();
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+                cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
         mio::osecirvvs::Simulation<ScalarType, mio::Simulation<ScalarType, Model>> sim(model, cfg.t0, cfg.dt);
-        sim.set_integrator(I);
+        sim.set_integrator_core(std::move(I));
         // run sim
         sim.advance(cfg.t_max);
     }
@@ -87,15 +92,17 @@ void flow_sim(::benchmark::State& state)
     // create model
     Model model(cfg.num_agegroups);
     mio::benchmark::setup_model(model);
-    // create simulation
-    std::shared_ptr<mio::IntegratorCore<ScalarType>> I =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
-            cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
     // run benchmark
     for (auto _ : state) {
+        // create simulation
+        state.PauseTiming();
+        std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> I =
+            std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>(
+                cfg.abs_tol, cfg.rel_tol, cfg.dt_min, cfg.dt_max);
+        state.ResumeTiming();
         // This code gets timed
         mio::osecirvvs::Simulation<ScalarType, mio::FlowSimulation<ScalarType, Model>> sim(model, cfg.t0, cfg.dt);
-        sim.set_integrator(I);
+        sim.set_integrator_core(std::move(I));
         // run sim
         sim.advance(cfg.t_max);
     }

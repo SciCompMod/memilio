@@ -8,9 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED "20")
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." OFF)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
-option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." OFF)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 option(MEMILIO_BUILD_TOOLS_OPTIMALCONTROL "Build memilio optimal control extension." OFF)
+option(MEMILIO_BUILD_SBML_MODELS "Build the SBML importer and imported models." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -75,6 +75,8 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
+file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/.." MEMILIO_BASE_DIR)
+
 # code coverage analysis
 # Note: this only works under linux and with make
 # Ninja creates different directory names which do not work together with this scrupt
@@ -95,7 +97,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
             NAME coverage
             EXECUTABLE memilio-test
             LCOV_ARGS --ignore-errors gcov,mismatch
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*"
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*"
             "${CMAKE_SOURCE_DIR}/memilio/ad*" "${CMAKE_BINARY_DIR}/*" "/usr*" "${CMAKE_SOURCE_DIR}/*.F"
         )
     endif()
@@ -163,6 +165,8 @@ if(MEMILIO_ENABLE_WARNINGS_AS_ERRORS)
     endif()
 endif()
 
+
+
 # add parts of the project
 include(thirdparty/CMakeLists.txt)
 add_subdirectory(memilio/ad)
@@ -186,6 +190,7 @@ if(MEMILIO_BUILD_MODELS)
     # add_subdirectory(models/sde_seirvv)
     # add_subdirectory(models/graph_abm)
     # add_subdirectory(models/smm)
+    # add_subdirectory(models/hybrid)
 endif()
 
 if(MEMILIO_BUILD_EXAMPLES)
@@ -196,16 +201,16 @@ if(MEMILIO_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-if(MEMILIO_BUILD_SIMULATIONS)
-    add_subdirectory(simulations)
-endif()
-
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
 if(MEMILIO_BUILD_TOOLS_OPTIMALCONTROL)
     add_subdirectory(tools/optimal_control)
+endif()
+
+if(MEMILIO_BUILD_SBML_MODELS)
+    add_subdirectory(sbml_model_generation)
 endif()
 
 install(TARGETS memilio

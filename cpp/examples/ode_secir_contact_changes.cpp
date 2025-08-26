@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "ode_secir/model.h"
-#include "memilio/compartments/simulation.h"
+#include "memilio/compartments/flow_simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/math/euler.h"
 
@@ -40,8 +40,6 @@ int main()
 
     double nb_total_t0 = 1000, nb_inf_t0 = 10;
 
-    auto integrator = std::make_shared<mio::EulerIntegratorCore<ScalarType>>();
-
     // default model run to be compared against
     mio::osecir::Model model_a(1);
     const auto indx_flow_SE =
@@ -56,7 +54,9 @@ int main()
     // set probability of transmission and risk of infection to 1.
     model_a.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>() = 1.0;
     model_a.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()   = 1.0;
-    auto result_a = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_a, integrator);
+
+    mio::EulerIntegratorCore<ScalarType> integrator;
+    auto result_a = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_a, integrator.clone());
     result_a[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},
@@ -73,7 +73,8 @@ int main()
     mio::ContactMatrixGroup& contact_matrix_b = model_b.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_b[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix_b[0].add_damping(0.5, mio::SimulationTime(0.)); // contact reduction happens here!
-    auto result_b = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_b, integrator);
+
+    auto result_b = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_b, integrator.clone());
     result_b[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},
@@ -91,7 +92,8 @@ int main()
     mio::ContactMatrixGroup& contact_matrix_c = model_c.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_c[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix_c[0].add_damping(1., mio::SimulationTime(0.)); // contact reduction happens here!
-    auto result_c = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_c, integrator);
+
+    auto result_c = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_c, integrator.clone());
     result_c[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},
@@ -109,7 +111,8 @@ int main()
     mio::ContactMatrixGroup& contact_matrix_d = model_d.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
     contact_matrix_d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix_d[0].add_damping(-1., mio::SimulationTime(0.)); // contact increase happens here!
-    auto result_d = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_d, integrator);
+
+    auto result_d = mio::simulate_flows<ScalarType>(t0, tmax, dt, model_d, integrator.clone());
     result_d[1].print_table({"S->E", "E->I_NS", "I_NS->I_Sy", "I_NS->R", "I_NSC->I_SyC", "I_NSC->R", "I_Sy->I_Sev",
                              "I_Sy->R", "I_SyC->I_Sev", "I_SyC->R", "I_Sev->I_Crit", "I_Sev->R", "I_Sev->D",
                              "I_Crit->D", "I_Crit->R"},

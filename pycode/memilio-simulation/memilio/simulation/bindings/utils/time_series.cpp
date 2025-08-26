@@ -65,15 +65,23 @@ void bind_time_series(py::module_& m, std::string const& name)
             py::is_operator(), py::arg("index"), py::arg("v"))
         .def(
             "print_table",
-            [](const mio::TimeSeries<double>& self, const std::vector<std::string>& column_labels, size_t width,
-               size_t precision, char separator, const std::string& header_prefix) {
-                std::ostringstream oss;
-                self.print_table(oss, column_labels, width, precision, separator, header_prefix);
-                return oss.str();
+            [](const mio::TimeSeries<double>& self, bool return_string, const std::vector<std::string>& column_labels,
+               size_t width, size_t precision, char separator, const std::string& header_prefix) {
+                if (return_string) {
+                    std::ostringstream oss;
+                    self.print_table(oss, column_labels, width, precision, separator, header_prefix);
+                    return py::object(py::str(oss.str()));
+                }
+                else {
+                    self.print_table(column_labels, width, precision, separator, header_prefix);
+                    return py::object(py::none());
+                }
             },
-            py::arg("column_labels") = std::vector<std::string>{}, py::arg("width") = 16, py::arg("precision") = 5,
-            py::arg("separator") = ' ', py::arg("header_prefix") = "\n")
-
+            "Prints the TimeSeries as a formatted table. If return_string is true, the table is returned as a "
+            "string. Otherwise, it is printed to the console.",
+            py::arg("return_string") = false, py::arg("column_labels") = std::vector<std::string>{},
+            py::arg("width") = 16, py::arg("precision") = 5, py::arg("separator") = ' ',
+            py::arg("header_prefix") = "\n")
         .def(
             "export_csv",
             [](const mio::TimeSeries<double>& self, const std::string& filename,
@@ -101,7 +109,7 @@ void bind_time_series(py::module_& m, std::string const& name)
             auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
                                                                  self.get_num_time_points());
             return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
-        });
+        }, py::return_value_policy::reference_internal);
 }
 
 } // namespace pymio

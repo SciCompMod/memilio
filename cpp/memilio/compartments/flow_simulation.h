@@ -17,28 +17,27 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIO_COMPARTMENTS_SIMULATION_H_
-#define MIO_COMPARTMENTS_SIMULATION_H_
+#ifndef MIO_COMPARTMENTS_FLOW_SIMULATION_H
+#define MIO_COMPARTMENTS_FLOW_SIMULATION_H
 
-#include "memilio/compartments/flow_model.h"
+#include "memilio/compartments/flow_simulation_base.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/math/integrator.h"
 
 namespace mio
 {
 
 /**
- * @brief A class for the simulation of a flow model.
- * @tparam FP A floating point type, e.g., double.
- * @tparam M A FlowModel implementation.
+ * @brief A class for simulating a FlowModel.
+ * @tparam FP A floating point type, e.g. double.
+ * @tparam M An implementation of a FlowModel.
  */
 template <typename FP, class M>
-class FlowSimulation : public Simulation<FP, M>
+class FlowSimulation : public details::FlowSimulationBase<FP, M, OdeIntegrator<FP>>
 {
-    static_assert(is_flow_model<FP, M>::value, "Template parameter must be a flow model.");
-
 public:
+    using Base  = details::FlowSimulationBase<FP, M, OdeIntegrator<FP>>;
     using Model = M;
-    using Base  = Simulation<FP, M>;
 
     /**
      * @brief Set up the simulation with an ODE solver.
@@ -47,23 +46,24 @@ public:
      * @param[in] dt Initial step size of integration.
      */
     FlowSimulation(Model const& model, FP t0 = 0., FP dt = 0.1)
-        : Base(model, t0, dt)
+        : Base(model, std::make_unique<DefaultIntegratorCore<FP>>(), t0, dt)
         , m_pop(model.get_initial_values().size())
-        , m_flow_result(t0, model.get_initial_flows())
     {
     }
 
     /**
-     * @brief Advance the simulation to tmax.
-     * tmax must be greater than get_result().get_last_time_point().
-     * @param[in] tmax Next stopping time of the simulation.
+     * @brief Run the simulation up to a given time.
+     * The time tmax must be greater than `get_result().get_last_time_point()`, which is used as the starting point. The
+     * initial value is `get_result().get_last_value()`.
+     * @param[in] tmax Next stopping point of the simulation.
+     * @return The simulation result at tmax.
      */
     Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         // the derivfunktion (i.e. the lambda passed to m_integrator.advance below) requires that there are at least
         // as many entries in m_flow_result as in Base::m_result
-        assert(m_flow_result.get_num_time_points() == this->get_result().get_num_time_points());
-        auto result = this->get_ode_integrator().advance(
+        assert(Base::get_flows().get_num_time_points() == Base::get_result().get_num_time_points());
+        const auto result = Base::advance(
             [this](auto&& flows, auto&& t, auto&& dflows_dt) {
                 const auto& pop_result = this->get_result();
                 const auto& model      = this->get_model();
@@ -74,7 +74,7 @@ public:
                 //   To incorporate external changes to the last values of pop_result (e.g. by applying mobility), we only
                 //   calculate the change in population starting from the last available time point in m_result, instead
                 //   of starting at t0. To do that, the following difference of flows is used.
-                model.get_derivatives(flows - m_flow_result.get_value(pop_result.get_num_time_points() - 1),
+                model.get_derivatives(flows - Base::get_flows().get_value(pop_result.get_num_time_points() - 1),
                                       m_pop); // note: overwrites values in pop
                 //   add the "initial" value of the ODEs (using last available time point in pop_result)
                 //     If no changes were made to the last value in m_result outside of FlowSimulation, the following
@@ -84,58 +84,13 @@ public:
                 dflows_dt.setZero();
                 model.get_flows(m_pop, m_pop, t, dflows_dt); // this result is used by the integrator
             },
-            tmax, this->get_dt(), m_flow_result);
-        compute_population_results();
+            tmax, Base::get_flows());
+        Base::compute_population_results();
         return result;
     }
 
-    /**
-     * @brief Returns the simulation result describing the transitions between compartments for each time step.
-     *
-     * Which flows are used by the model is defined by the Flows template argument for the FlowModel.
-     * To get the correct index for the flow between two compartments use FlowModel::get_flat_flow_index.
-     *
-     * @return A TimeSeries to represent a numerical solution for the flows in the model. 
-     * For each simulated time step, the TimeSeries contains the value of each flow. 
-     * @{
-     */
-    TimeSeries<FP>& get_flows()
-    {
-        return m_flow_result;
-    }
-
-    const TimeSeries<FP>& get_flows() const
-    {
-        return m_flow_result;
-    }
-    /** @} */
-
-protected:
-    /**
-     * @brief Computes the distribution of the Population to the InfectionState%s based on the simulated flows.
-     * Uses the same method as the DerivFunction used in advance to compute the population given the flows and initial
-     * values. Adds time points to Base::m_result until it has the same number of time points as m_flow_result.
-     * Does not recalculate older values.
-     */
-    void compute_population_results()
-    {
-        const auto& flows = get_flows();
-        const auto& model = this->get_model();
-        auto& result      = this->get_result();
-        // take the last time point as base result (instead of the initial results), so that we use external changes
-        const size_t last_tp = result.get_num_time_points() - 1;
-        // calculate new time points
-        for (Eigen::Index i = result.get_num_time_points(); i < flows.get_num_time_points(); i++) {
-            result.add_time_point(flows.get_time(i));
-            model.get_derivatives(flows.get_value(i) - flows.get_value(last_tp), result.get_value(i));
-            result.get_value(i) += result.get_value(last_tp);
-        }
-    }
-
-    Eigen::VectorX<FP> m_pop; ///< pre-allocated temporary, used in right_hand_side()
-
 private:
-    mio::TimeSeries<FP> m_flow_result; ///< flow result of the simulation
+    Eigen::VectorX<FP> m_pop; ///< pre-allocated temporary, used during computation of flow derivatives
 };
 
 /**
@@ -144,7 +99,7 @@ private:
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of a FlowModel.
- * @param[in] integrator Optionally override the IntegratorCore used by the FlowSimulation.
+ * @param[in] integrator_core Optionally override the IntegratorCore used by the FlowSimulation.
  * @return The simulation result as two TimeSeries. The first describes the compartments at each time point,
  *         the second gives the corresponding flows that lead from t0 to each time point.
  * @tparam FP a floating point type, e.g., double
@@ -153,12 +108,12 @@ private:
  */
 template <typename FP, class Model, class Sim = FlowSimulation<FP, Model>>
 std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& model,
-                                           std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+                                           std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(integrator);
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
     }
     sim.advance(tmax);
     return {sim.get_result(), sim.get_flows()};
@@ -166,4 +121,4 @@ std::vector<TimeSeries<FP>> simulate_flows(FP t0, FP tmax, FP dt, Model const& m
 
 } // namespace mio
 
-#endif
+#endif // MIO_COMPARTMENTS_FLOW_SIMULATION_H

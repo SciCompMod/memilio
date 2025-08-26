@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/compartmental_model.h"
 #include "memilio/compartments/flow_simulation.h"
 #include "memilio/compartments/simulation.h"
 #include "ode_seir/infection_state.h"
@@ -119,8 +119,7 @@ TEST(TestFlows, FlowSimulation)
 
     mio::set_log_level(mio::LogLevel::off); // Suppress log output of check_constraints and the Simulation.
     model.check_constraints();
-    auto IC   = std::make_shared<mio::DefaultIntegratorCore<double>>();
-    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, IC);
+    auto seir = mio::simulate_flows<double, mio::oseir::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::DefaultIntegratorCore<double>>());
     mio::set_log_level(mio::LogLevel::warn);
 
     // verify results (computed using flows)

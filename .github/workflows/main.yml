@@ -17,6 +17,10 @@ on:
       - "**/memilio-epidata/**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -125,6 +129,14 @@ jobs:
           artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
  
+  test-cpp-gcc-sbml:
+      if: github.event.pull_request.draft == false
+      needs: build-cpp-gcc_clang
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: ./.github/actions/sbml-test
+
   merge-test-artifacts:
     needs: [test-cpp-gcc_clang, test-cpp-msvc, test-py-surrogatemodel]
     runs-on: ubuntu-latest

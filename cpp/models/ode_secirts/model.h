@@ -820,15 +820,15 @@ private:
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIRS-type model to simulate.
- * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * @param[in] integrator_core optional IntegratorCore, uses rk45 if nullptr.
  * 
  * @return Returns the result of the simulation.
  */
 template <typename FP = ScalarType>
 inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
-                     std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+                     std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
-    return mio::simulate<FP, Model<FP>, Simulation<FP>>(t0, tmax, dt, model, integrator);
+    return mio::simulate<FP, Model<FP>, Simulation<FP>>(t0, tmax, dt, model, std::move(integrator_core));
 }
 
 /**
@@ -838,16 +838,16 @@ inline auto simulate(FP t0, FP tmax, FP dt, const Model<FP>& model,
  * @param[in] tmax end time.
  * @param[in] dt time step.
  * @param[in] model SECIRS-type model to simulate.
- * @param[in] integrator optional integrator, uses rk45 if nullptr.
+ * @param[in] integrator_core optional IntegratorCore, uses rk45 if nullptr.
  * 
  * @return Returns the result of the Flowsimulation.
   */
 template <typename FP = ScalarType>
 inline auto simulate_flows(FP t0, FP tmax, FP dt, const Model<FP>& model,
-                           std::shared_ptr<IntegratorCore<FP>> integrator = nullptr)
+                           std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     return mio::simulate_flows<FP, Model<FP>, Simulation<FP, mio::FlowSimulation<FP, Model<FP>>>>(t0, tmax, dt, model,
-                                                                                                  integrator);
+                                                                                                  std::move(integrator_core));
 }
 
 //see declaration above.

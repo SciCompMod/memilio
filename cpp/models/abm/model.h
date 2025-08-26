@@ -342,22 +342,6 @@ public:
     }
 
     /**
-     * @brief Add a TestingScheme to the set of schemes that are checked for testing at all Locations that have
-     * the LocationType.
-     * @param[in] loc_type LocationId key for TestingScheme to be added.
-     * @param[in] scheme TestingScheme to be added.
-     */
-    void add_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
-
-    /**
-     * @brief Remove a TestingScheme from the set of schemes that are checked for testing at all Locations that have
-     * the LocationType.
-     * @param[in] loc_type LocationId key for TestingScheme to be added.
-     * @param[in] scheme TestingScheme to be added.
-     */
-    void remove_testing_scheme(const LocationType& loc_type, const TestingScheme& scheme);
-
-    /**
      * @brief Get a reference to a Person from this Model.
      * @param[in] person_id A Person's PersonId.
      * @return A reference to the Person.
