@@ -33,6 +33,7 @@
 
 #include <vector>
 #include <cmath>
+#include <numbers>
 
 void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {

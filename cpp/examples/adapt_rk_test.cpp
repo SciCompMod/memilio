@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <vector>
 #include <cmath>
+#include <numbers>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
 {
