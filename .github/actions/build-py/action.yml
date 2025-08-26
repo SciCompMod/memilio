@@ -9,7 +9,7 @@ runs:
   steps:    
     - name: Install dependencies
       shell: bash
-      run: yum install ninja-build cmake -qy
+      run: yum install ninja-build cmake git -qy
     - name: Make artifact dir
       shell: bash
       run: |
