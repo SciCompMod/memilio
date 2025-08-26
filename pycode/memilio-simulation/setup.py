@@ -21,7 +21,7 @@ setup(
     url='https://github.com/SciCompMod/memilio',
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
-    setup_requires=['cmake'],
+    # setup_requires=['cmake'],
     # need shared libs so there is one shared log level
     cmake_args=['-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON'],
     install_requires=[

@@ -25,7 +25,7 @@ setup(
     description='Part of MEmilio project, automatic generation of model specific python bindings.',
     packages=find_packages(
         where=os.path.dirname(os.path.abspath(__file__))),
-    setup_requires=['cmake'],
+    # setup_requires=['cmake'],
     install_requires=['libclang==18.1.1',
                       'dataclasses', 'dataclasses_json', 'graphviz', 'importlib-resources>=1.1.0; python_version < \'3.9\''],
     extras_require={'dev': []},
