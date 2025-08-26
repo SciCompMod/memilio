@@ -11,7 +11,7 @@ import seaborn as sns
 import argparse
 import os
 import sys
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 # Import functions from the existing scripts
 # Make sure contact_network.py and time_loc_type.py are in the same directory
@@ -462,6 +462,91 @@ def create_config_pie_chart(ax, pie_data, title):
     ax.set_title(title, fontsize=11, fontweight='bold', pad=5)
 
 
+def calculate_degree_distribution(contact_data):
+    """Calculate the degree distribution from contact data"""
+    print("  Calculating degree distribution...")
+
+    # Count contacts per person
+    degree_counts = Counter()
+
+    # Process each contact record
+    for _, row in contact_data.iterrows():
+        person1 = row['Person 1'] if 'Person 1' in contact_data.columns else row.iloc[0]
+        person2 = row['Person 2'] if 'Person 2' in contact_data.columns else row.iloc[1]
+
+        degree_counts[person1] += 1
+        degree_counts[person2] += 1
+
+    # Convert to list of degrees
+    degrees = list(degree_counts.values())
+
+    print(f"  Calculated degrees for {len(degree_counts)} people")
+    print(f"  Mean degree: {np.mean(degrees):.1f}")
+    print(f"  Max degree: {max(degrees) if degrees else 0}")
+
+    return degrees, degree_counts
+
+
+def create_degree_distribution_plot(ax, contact_data, title="Contact Degree Distribution"):
+    """Create degree distribution histogram"""
+    degrees, degree_counts = calculate_degree_distribution(contact_data)
+
+    if not degrees:
+        ax.text(0.5, 0.5, 'No contact data', ha='center', va='center',
+                transform=ax.transAxes, fontsize=12)
+        ax.set_title(title, fontsize=11, fontweight='bold', pad=8)
+        ax.axis('off')
+        return
+
+    # Create histogram
+    bins = min(30, max(10, len(set(degrees))))  # Adaptive binning
+    counts, bin_edges, patches = ax.hist(degrees, bins=bins, alpha=0.7, color='skyblue',
+                                         edgecolor='navy', linewidth=0.5)
+
+    # Color bars by frequency (darker = more frequent)
+    max_count = max(counts)
+    for i, (count, patch) in enumerate(zip(counts, patches)):
+        # Create gradient from light blue to dark blue
+        intensity = count / max_count
+        patch.set_facecolor(plt.cm.Blues(0.3 + 0.7 * intensity))
+
+    # Add statistics text box
+    mean_deg = np.mean(degrees)
+    std_deg = np.std(degrees)
+    max_deg = max(degrees)
+    median_deg = np.median(degrees)
+
+    # Identify potential super-connectors (top 5% of degrees)
+    threshold_95 = np.percentile(degrees, 95)
+    super_connectors = sum(1 for d in degrees if d >= threshold_95)
+
+    stats_text = f'Mean: {mean_deg:.1f}\nStd: {std_deg:.1f}\nMax: {max_deg}\nMedian: {median_deg:.1f}\nTop 5%: {super_connectors} people'
+    ax.text(0.98, 0.9, stats_text, transform=ax.transAxes,
+            verticalalignment='top', horizontalalignment='right',
+            bbox=dict(boxstyle='round,pad=0.4', facecolor='white',
+                      alpha=0.9, edgecolor='gray'),
+            fontsize=10)
+
+    # Formatting
+    ax.set_xlabel('Number of Potential Contacts', fontsize=10)
+    ax.set_ylabel('Number of People', fontsize=10)
+    ax.set_title(title, fontsize=11, fontweight='bold', pad=5)
+    ax.grid(True, alpha=0.3)
+
+    # Highlight super-connectors region if it exists
+    if threshold_95 < max_deg:
+        ax.axvline(threshold_95, color='red',
+                   linestyle='--', alpha=0.7, linewidth=2)
+        ax.text(threshold_95, ax.get_ylim()[1] * 0.8, f'95th percentile\n({threshold_95:.0f} contacts)',
+                ha='left' if threshold_95 < max_deg * 0.7 else 'right',
+                va='center', fontsize=10, color='black',
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=1.0))
+
+    print(
+        f"  Degree distribution plot created: {len(degrees)} people, mean degree {mean_deg:.1f}")
+    return degrees, degree_counts
+
+
 def create_combined_visualization(data_dir, location_file, city_config_file=None, output_path=None,
                                   total_runs=5, min_contact_hours=5, max_persons=100):
     """Create the improved combined 6-panel visualization"""
@@ -502,16 +587,17 @@ def create_combined_visualization(data_dir, location_file, city_config_file=None
     print_detailed_summary(person_totals, location_types,
                            num_days, workers, school_attendees)
 
-    # Create figure with compact layout
-    fig = plt.figure(figsize=(16, 10))  # Much more compact
+    # Create figure with compact layout - expanded for degree distribution
+    # Slightly wider to accommodate new panel
+    fig = plt.figure(figsize=(18, 12))
 
-    # Create grid layout with minimal spacing
-    gs = fig.add_gridspec(3, 3, width_ratios=[1.8, 1, 1],
-                          hspace=0.15, wspace=0.15,  # Minimal spacing
-                          left=0.02, right=0.98, top=0.85, bottom=0.05)
+    # Create grid layout with minimal spacing - now 4x3 for degree distribution
+    gs = fig.add_gridspec(4, 3, width_ratios=[1.8, 1, 1],
+                          hspace=0.18, wspace=0.15,  # Slightly more vertical space
+                          left=0.02, right=0.98, top=0.90, bottom=0.05)
 
-    # Left panel: Contact network (spans first column, all rows)
-    ax_network = fig.add_subplot(gs[:, 0])
+    # Left panel: Contact network (spans first column, first 3 rows)
+    ax_network = fig.add_subplot(gs[:4, 0])
     create_contact_network_subplot(ax_network, household_data, infection_count_data,
                                    contact_data, location_data, total_runs,
                                    min_contact_hours, max_persons)
@@ -523,6 +609,9 @@ def create_combined_visualization(data_dir, location_file, city_config_file=None
     ax_age = fig.add_subplot(gs[0, 2])
     ax_household = fig.add_subplot(gs[1, 2])
     ax_occupation = fig.add_subplot(gs[2, 2])
+
+    # New: Degree distribution panel (bottom row, spanning 2 columns)
+    ax_degree = fig.add_subplot(gs[3, 1:])  # Spans columns 1 and 2
 
     # Create time allocation pie charts
     all_people = list(person_totals.keys())
@@ -595,30 +684,36 @@ def create_combined_visualization(data_dir, location_file, city_config_file=None
             ax.set_title(title, fontsize=12, fontweight='bold', pad=20)
             ax.axis('off')
 
+    # Create degree distribution plot (Panel H)
+    print("Creating degree distribution visualization...")
+    create_degree_distribution_plot(ax_degree, contact_data)
+
     # Add overall title with compact spacing
-    fig.suptitle('Population Structure and Contact Patterns\nBaseline Simulation (No Infections)',
-                 fontsize=14, fontweight='bold', y=0.99)
+    fig.suptitle('Population Structure and Contact Network Analysis\n 7-day Baseline Simulation (No Infections)',
+                 fontsize=16, fontweight='bold', y=1.0)
 
     # Add panel labels with compact positioning
-    label_props = {'fontsize': 20,
+    label_props = {'fontsize': 26,
                    'fontweight': 'bold', 'va': 'top', 'ha': 'left'}
 
     ax_network.text(0.01, 0.99, 'A',
                     transform=ax_network.transAxes, **label_props)
-    ax_all.text(0.0, 0.98, 'B', transform=ax_all.transAxes,
+    ax_all.text(-0.35, 1.2, 'B', transform=ax_all.transAxes,
                 **label_props)
-    ax_workers.text(0.0, 0.98, 'C',
+    ax_workers.text(-0.35, 1.2, 'C',
                     transform=ax_workers.transAxes, **label_props)
     ax_students.text(
-        0.0, 0.98, 'D', transform=ax_students.transAxes, **label_props)
-    ax_age.text(0.0, 0.98, 'E', transform=ax_age.transAxes, **label_props)
+        -0.35, 1.2, 'D', transform=ax_students.transAxes, **label_props)
+    ax_age.text(-0.35, 1.2, 'E', transform=ax_age.transAxes, **label_props)
     ax_household.text(
-        0.0, 0.98, 'F', transform=ax_household.transAxes, **label_props)
+        -0.35, 1.2, 'F', transform=ax_household.transAxes, **label_props)
     ax_occupation.text(
-        0.0, 0.98, 'G', transform=ax_occupation.transAxes, **label_props)
+        -0.35, 1.2, 'G', transform=ax_occupation.transAxes, **label_props)
+    ax_degree.text(
+        -0.0, 1.2, 'H', transform=ax_degree.transAxes, **label_props)
 
     if output_path:
-        plt.savefig(output_path, dpi=600,
+        plt.savefig(output_path, dpi=400,
                     bbox_inches='tight', facecolor='white')
         print(f"Combined visualization saved to {output_path}")
 
@@ -641,8 +736,8 @@ def main():
     args = parser.parse_args()
 
     # Debug paths (comment out for production)
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-19154358"
-    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_improved.png"
+    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-26230131"
+    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
 
     location_file = args.data_dir + "/location_type_and_id.txt"
     city_config_file = args.data_dir + "/city_config.txt"
