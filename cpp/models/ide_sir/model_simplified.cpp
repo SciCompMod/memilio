@@ -477,13 +477,13 @@ void ModelMessinaExtended::compute_I_and_R(ScalarType dt)
     }
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Infected] =
-        m_transitiondistribution_vector[current_time_index - m_gregory_order] *
+        m_transitiondistribution_vector[current_time_index] *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_infected;
 
     populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] =
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
-        (1 - m_transitiondistribution_vector[current_time_index - m_gregory_order]) *
+        (1 - m_transitiondistribution_vector[current_time_index]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_recovered;
 }

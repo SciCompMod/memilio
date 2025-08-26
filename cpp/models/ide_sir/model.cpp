@@ -154,7 +154,7 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     size_t current_time_index = populations.get_num_time_points() - 1;
 
     // Compute first part of sum where already known initial values of Susceptibles are used.
-    ScalarType sum_first_integral = 0., sum_second_integral = 0., sum_third_integral = 0.;
+    ScalarType sum_first_integral = 0., sum_second_integral = 0.;
 
     for (size_t j = 0; j < std::min(current_time_index, m_gregory_order); j++) {
         ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
@@ -169,11 +169,12 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
 
         // For each index, the corresponding summand is computed here.
-        sum_second_integral += gregory_weight *
-                               parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0) *
-                               m_transmissionproboncontact_vector[current_time_index - j] *
-                               m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                               m_transitiondistribution_vector[current_time_index - j];
+        sum_second_integral +=
+            gregory_weight *
+            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((current_time_index - j) * dt)(0, 0) *
+            m_transmissionproboncontact_vector[current_time_index - j] *
+            m_riskofinffromsymptomatic_vector[current_time_index - j] *
+            m_transitiondistribution_vector[current_time_index - j];
     }
 
     // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
@@ -204,15 +205,16 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
 
         // For each index, the corresponding summand is computed here.
-        sum_second_integral += gregory_weight *
-                               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(j * dt)(0, 0)) *
-                               m_transmissionproboncontact_vector[current_time_index - j] *
-                               m_riskofinffromsymptomatic_vector[current_time_index - j] *
-                               m_transitiondistribution_vector[current_time_index - j];
+        sum_second_integral +=
+            gregory_weight *
+            (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((current_time_index - j) * dt)(0, 0)) *
+            m_transmissionproboncontact_vector[current_time_index - j] *
+            m_riskofinffromsymptomatic_vector[current_time_index - j] *
+            m_transitiondistribution_vector[current_time_index - j];
     }
 
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *
-           std::exp(dt * (sum_first_integral - sum_second_integral - sum_third_integral));
+           std::exp(dt * (sum_first_integral - sum_second_integral));
 }
 
 size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType dt, size_t t0_index, ScalarType tol,
@@ -352,13 +354,13 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
     }
 
     populations[time_point_index][(Eigen::Index)InfectionState::Infected] =
-        m_transitiondistribution_vector[current_time_index - m_gregory_order] *
+        m_transitiondistribution_vector[current_time_index] *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_infected;
 
     populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
-        (1 - m_transitiondistribution_vector[current_time_index - m_gregory_order]) *
+        (1 - m_transitiondistribution_vector[current_time_index]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_recovered;
 }
