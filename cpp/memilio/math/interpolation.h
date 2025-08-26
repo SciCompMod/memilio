@@ -21,6 +21,7 @@
 #define MIO_MATH_INTERPOLATION_H_
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/math_utils.h"
 
 #include <cassert>
 #include <vector>
@@ -40,10 +41,10 @@ namespace mio
  * @return Interpolation result.
  */
 template <typename X, typename V>
-V linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
+auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
 {
-    const X weight = (x_eval - x_1) / (x_2 - x_1);
-    return y1 + weight * (y2 - y1);
+    const auto weight = evaluate_intermediate<X>((x_eval - x_1) / (x_2 - x_1));
+    return evaluate_intermediate<V>(y1 + weight * (y2 - y1));
 }
 
 /**
