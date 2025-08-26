@@ -18,6 +18,7 @@ runs:
     - name: Build Python Wheels
       shell: bash
       run: |
+        git config --global --add safe.directory $(pwd) # fix to "fatal: detected dubious ownership in repository" 
         cd pycode/memilio-${{ inputs.package }}/
         /opt/python/cp38-cp38/bin/python -m pip install scikit-build
         /opt/python/cp38-cp38/bin/python -m build --no-isolation
