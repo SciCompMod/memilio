@@ -33,14 +33,16 @@ def fetch_icu_data():
     return df
 
 def preprocess_icu_data(df):
-    df_without_ventilator = df[df["Unidad"] == "U. Críticas SIN respirador"]
-    df_with_ventilator = df[df["Unidad"] == "U. Críticas CON respirador"]
+    df_icu = df[df["Unidad"] == "U. Críticas SIN respirador"]
+    df_icu_vent = df[df["Unidad"] == "U. Críticas CON respirador"]
 
-    df_icu = df_without_ventilator[['Fecha', 'ID_Provincia', 'Provincia', 'OCUPADAS_COVID19']].rename(columns={'OCUPADAS_COVID19': 'ICU'})
-    df_icu_vent = df_with_ventilator[['Fecha', 'ID_Provincia', 'Provincia', 'OCUPADAS_COVID19']].rename(columns={'OCUPADAS_COVID19': 'ICU_ventilated'})
+    df_icu = df_icu[['Fecha', 'ID_Provincia', 'OCUPADAS_COVID19']].rename(columns={'OCUPADAS_COVID19': 'ICU'})
+    df_icu_vent = df_icu_vent[['Fecha', 'ID_Provincia', 'OCUPADAS_COVID19']].rename(columns={'OCUPADAS_COVID19': 'ICU_ventilated'})
 
-    df_merged = pd.merge(df_icu, df_icu_vent, on=['Fecha', 'ID_Provincia', 'Provincia'], how='outer')
-    df_merged['Fecha'] = pd.to_datetime(df_merged['Fecha'], format='%d/%m/%Y')
+    df_merged = pd.merge(df_icu, df_icu_vent, on=['Fecha', 'ID_Provincia'], how='outer')
+    df_merged['Fecha'] = pd.to_datetime(df_merged['Fecha'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d')
+    df_merged.rename(columns={'Fecha': 'Date'}, inplace=True)
+    print(df_merged)
     return df_merged
 
 def get_icu_data():
