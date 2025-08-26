@@ -19,7 +19,7 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        /opt/python/cp38-cp311/bin/python -m pip install scikit-build
+        /opt/python/cp38-cp38/bin/python -m pip install scikit-build
         /opt/python/cp38-cp38/bin/python -m build --installer pip
         /opt/python/cp311-cp311/bin/python -m pip install scikit-build
         /opt/python/cp311-cp311/bin/python -m build --installer pip
