@@ -20,8 +20,10 @@
 #ifndef EPI_MATH_SMOOTHER_H
 #define EPI_MATH_SMOOTHER_H
 
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include <cmath>
+#include <numbers>
 
 namespace mio
 {
@@ -52,7 +54,7 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright)
         return yright;
     }
 
-    return 0.5 * (yleft - yright) * cos(3.14159265358979323846264338327950288 / (xright - xleft) * (x - xleft)) +
+    return 0.5 * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> / (xright - xleft) * (x - xleft)) +
            0.5 * (yleft + yright);
 }
 

@@ -29,6 +29,7 @@
 #include "vector"
 #include <algorithm>
 #include <cstddef>
+#include <numbers>
 
 namespace mio
 {
@@ -590,7 +591,7 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
         //We compute the Season Value.
         ScalarType season_val =
             1 + parameters.get<Seasonality>() *
-                    sin(3.14159265358979323846264338327950288 *
+                    sin(std::numbers::pi_v<ScalarType> *
                         (std::fmod((parameters.get<StartDay>() + current_time), 365.0) / 182.5 + 0.5));
         // To include contacts between all age groups we sum over all age groups.
         for (AgeGroup j = AgeGroup(0); j < AgeGroup(m_num_agegroups); ++j) {

@@ -20,6 +20,8 @@
 #include "memilio/compartments/simulation.h"
 #include "models/ode_secirvvs/model.h"
 
+#include <numbers>
+
 namespace mio
 {
 namespace benchmark
@@ -40,8 +42,8 @@ class FlowlessModel : public CompartmentalModel<ScalarType, osecirvvs::Infection
 {
     using InfectionState = osecirvvs::InfectionState;
     using Base           = CompartmentalModel<ScalarType, osecirvvs::InfectionState,
-                                    mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
-                                    osecirvvs::Parameters<ScalarType>>;
+                                              mio::Populations<ScalarType, AgeGroup, osecirvvs::InfectionState>,
+                                              osecirvvs::Parameters<ScalarType>>;
 
 public:
     FlowlessModel(const Populations& pop, const ParameterSet& params)
@@ -196,7 +198,7 @@ public:
                 // effective contact rate by contact rate between groups i and j and damping j
                 ScalarType season_val =
                     (1 + params.get<osecirvvs::Seasonality<ScalarType>>() *
-                             sin(3.14159265358979323846264338327950288 *
+                             sin(std::numbers::pi_v<ScalarType> *
                                  ((params.get<osecirvvs::StartDay<ScalarType>>() + t) / 182.5 + 0.5)));
                 ScalarType cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(SimulationTime<ScalarType>(t))(

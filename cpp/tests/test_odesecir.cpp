@@ -30,6 +30,8 @@
 #include "memilio/data/analyze_result.h"
 #include "memilio/math/adapt_rk.h"
 
+#include <numbers>
+
 #include <gtest/gtest.h>
 
 TEST(TestOdeSecir, compareWithPreviousRun)
@@ -961,9 +963,8 @@ TEST(TestOdeSecir, get_reproduction_number)
         model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0] /
         (model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0] * 5 *
          model.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)1] *
-         3.14159265358979323846264338327950288 / (model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
-         std::sin(3.14159265358979323846264338327950288 /
-                  (0.1 * model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
+         std::numbers::pi_v<ScalarType> / (model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
+         std::sin(std::numbers::pi_v<ScalarType> / (0.1 * model.parameters.get<mio::osecir::ICUCapacity<double>>()) *
                   (icu_occupancy - 0.9 * model.parameters.get<mio::osecir::ICUCapacity<double>>())));
 
     mio::TimeSeries<ScalarType> time_series2((int)mio::osecir::InfectionState::Count * num_groups);

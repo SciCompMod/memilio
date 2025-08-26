@@ -30,6 +30,8 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 
+#include <numbers>
+
 namespace mio
 {
 namespace osecirvvs
@@ -233,7 +235,7 @@ public:
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 FP season_val = (1 + params.template get<Seasonality<FP>>() *
-                                         sin(3.14159265358979323846264338327950288 *
+                                         sin(std::numbers::pi_v<ScalarType> *
                                              ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
                 FP cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(t))(

@@ -31,6 +31,8 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/interpolation.h"
 
+#include <numbers>
+
 namespace mio
 {
 namespace osecir
@@ -123,7 +125,7 @@ public:
 
                 // effective contact rate by contact rate between groups i and j and damping j
                 FP season_val = (1 + params.template get<Seasonality<FP>>() *
-                                         sin(3.14159265358979323846264338327950288 *
+                                         sin(std::numbers::pi_v<ScalarType> *
                                              ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
                 FP cont_freq_eff =
                     season_val * contact_matrix.get_matrix_at(SimulationTime<FP>(t))(
@@ -407,7 +409,6 @@ template <typename FP, class Base>
 IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& sim)
 {
     using std::abs;
-    using std::acos;
     using std::sin;
 
     if (!(t_idx < static_cast<size_t>(sim.get_result().get_num_time_points()))) {
@@ -419,7 +420,7 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
     //The infected compartments in the SECIR Model are: Exposed, Carrier, Infected, Hospitalized, ICU in respective agegroups
     const size_t num_infected_compartments   = 5;
     const size_t total_infected_compartments = num_infected_compartments * num_groups;
-    const FP pi                              = acos(-1);
+    const FP pi                              = std::numbers::pi_v<ScalarType>;
 
     //F encodes new Infections and V encodes transition times in the next-generation matrix calculation of R_t
     Eigen::MatrixX<FP> F(total_infected_compartments, total_infected_compartments);

@@ -59,7 +59,7 @@ int main()
     std::vector<Eigen::VectorXd> y;
     std::vector<Eigen::VectorXd> sol;
 
-    const double pi = std::acos(-1);
+    const double pi = std::numbers::pi_v<double>;
 
     size_t n    = 10;
     double t0   = 0;
