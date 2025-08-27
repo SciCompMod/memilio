@@ -478,11 +478,16 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
  * @param[in] export_time_series [Default: false] If true, reads data for each day of simulation and writes it in the same directory as the input files.
  */
 template <class Model>
-IOResult<void> read_input_data_provincias(std::vector<Model>& model, Date /*date*/, const std::vector<int>& provincias,
-                                          const std::vector<double>& /*scaling_factor_inf*/,
-                                          double /*scaling_factor_icu*/, const std::string& pydata_dir,
-                                          int /*num_days*/ = 0, bool /*export_time_series*/ = false)
+IOResult<void> read_input_data_provincias(std::vector<Model>& model, Date date, const std::vector<int>& provincias,
+                                          const std::vector<double>& /*scaling_factor_inf*/, double scaling_factor_icu,
+                                          const std::string& pydata_dir, int /*num_days*/ = 0,
+                                          bool /*export_time_series*/ = false)
 {
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, "provincia_icu.json"), provincias, date,
+                                             scaling_factor_icu));
+
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_pronvincias.json"),
+                                                        provincias, date, std::vector<double>(1, 1.0)));
     BOOST_OUTCOME_TRY(details::set_population_data_provincias(
         model, path_join(pydata_dir, "provincias_current_population.json"), provincias));
     return success();

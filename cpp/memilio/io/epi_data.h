@@ -148,29 +148,42 @@ public:
     {
         auto obj           = io.expect_object("ConfirmedCasesDataEntry");
         auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
-        auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
-        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
+        auto num_recovered = obj.expect_optional("Recovered", Tag<double>{});
+        auto num_deaths    = obj.expect_optional("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
+        auto age_group_str = obj.expect_optional("Age_RKI", Tag<std::string>{});
         auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
         auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid,
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str_opt, auto&& sid, auto&& cid,
                auto&& did) -> IOResult<ConfirmedCasesDataEntry> {
-                auto a  = AgeGroup(0);
-                auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
-                if (it != age_group_names.end()) {
-                    a = AgeGroup(size_t(it - age_group_names.begin()));
-                }
-                else if (a_str == "unknown") {
-                    a = AgeGroup(age_group_names.size());
+                auto a = AgeGroup(0); // default if Age_RKI missing
+
+                // if no age group is given, use "total" as name
+                if (!a_str_opt) {
+                    if (age_group_names.size() != 1) {
+                        age_group_names.clear();
+                        age_group_names.push_back("total");
+                    }
                 }
                 else {
-                    return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
+                    const auto& a_str = *a_str_opt;
+                    auto it           = std::find(age_group_names.begin(), age_group_names.end(), a_str);
+                    if (it != age_group_names.end()) {
+                        a = AgeGroup(size_t(it - age_group_names.begin()));
+                    }
+                    else if (a_str == "unknown") {
+                        a = AgeGroup(age_group_names.size());
+                    }
+                    else {
+                        return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
+                    }
                 }
-                return success(ConfirmedCasesDataEntry{nc, nr, nd, d, a, sid, cid, did});
+                double nrec  = nr ? *nr : 0.0;
+                double ndead = nd ? *nd : 0.0;
+                return success(ConfirmedCasesDataEntry{nc, nrec, ndead, d, a, sid, cid, did});
             },
             num_confirmed, num_recovered, num_deaths, date, age_group_str, state_id, county_id, district_id);
     }

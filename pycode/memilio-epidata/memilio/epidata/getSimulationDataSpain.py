@@ -82,10 +82,14 @@ def fetch_case_data():
 def preprocess_case_data(df):
     df['provincia_iso'] = df['provincia_iso'].map(dd.Provincia_ISO_to_ID)
     df = df.rename(
-        columns={'provincia_iso': 'ID_Provincia', 'fecha': 'Date',
+        columns={'provincia_iso': 'ID_County', 'fecha': 'Date',
                  'num_casos': 'Confirmed'})[
-        ['ID_Provincia', 'Date', 'Confirmed']]
-
+        ['ID_County', 'Date', 'Confirmed']]
+    # ensure correct types
+    df['ID_County'] = pd.to_numeric(
+        df['ID_County'], errors='coerce').astype('Int64')
+    df = df[df['ID_County'].notna()].copy()
+    df['ID_County'] = df['ID_County'].astype(int)
     return df
 
 
@@ -108,9 +112,23 @@ if __name__ == "__main__":
         pydata_dir, 'provincias_current_population.json'), orient='records')
 
     df = get_icu_data()
-    df.to_json(os.path.join(pydata_dir, 'provincia_icu.json'),
-               orient='records')
+    # rename to match expected column name in parameters_io.h
+    if 'ID_Provincia' in df.columns:
+        df.rename(columns={'ID_Provincia': 'ID_County'}, inplace=True)
+    # and should also be int
+    if 'ID_County' in df.columns:
+        df['ID_County'] = pd.to_numeric(df['ID_County'], errors='coerce')
+        df = df[df['ID_County'].notna()].copy()
+        df['ID_County'] = df['ID_County'].astype(int)
+    df.to_json(os.path.join(pydata_dir, 'provincia_icu.json'), orient='records')
 
     df = get_case_data()
+    # same for case data
+    if 'ID_Provincia' in df.columns:
+        df.rename(columns={'ID_Provincia': 'ID_County'}, inplace=True)
+    if 'ID_County' in df.columns:
+        df['ID_County'] = pd.to_numeric(df['ID_County'], errors='coerce')
+        df = df[df['ID_County'].notna()].copy()
+        df['ID_County'] = df['ID_County'].astype(int)
     df.to_json(os.path.join(
         pydata_dir, 'cases_all_pronvincias.json'), orient='records')
