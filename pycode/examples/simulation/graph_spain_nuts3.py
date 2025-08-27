@@ -55,10 +55,12 @@ class Simulation:
         model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = 13.066
 
         # probabilities
-        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(0)] = 0.07333
+        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(
+            0)] = 0.07333
         model.parameters.RelativeTransmissionNoSymptoms[mio.AgeGroup(0)] = 1
 
-        model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(0)] = 0.2069
+        model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(
+            0)] = 0.2069
         model.parameters.SeverePerInfectedSymptoms[mio.AgeGroup(0)] = 0.07864
         model.parameters.CriticalPerSevere[mio.AgeGroup(0)] = 0.17318
         model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.21718
@@ -80,7 +82,7 @@ class Simulation:
         minimum = np.ones((self.num_groups, self.num_groups)) * 0
         contact_matrices[0] = mio.ContactMatrix(baseline, minimum)
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
-        
+
     def set_npis(self, params, end_date, damping_value):
         """
 
@@ -94,7 +96,8 @@ class Simulation:
 
         if start_damping < end_date:
             start_date = (start_damping - self.start_date).days
-            params.ContactPatterns.cont_freq_mat[0].add_damping(mio.Damping(np.r_[damping_value], t=start_date))
+            params.ContactPatterns.cont_freq_mat[0].add_damping(
+                mio.Damping(np.r_[damping_value], t=start_date))
 
     def get_graph(self, end_date):
         """
@@ -119,8 +122,8 @@ class Simulation:
             data_dir_Spain, "mobility", "commuter_mobility_2022.txt")
         pydata_dir = os.path.join(data_dir_Spain, "pydata")
 
-        path_population_data = os.path.join(pydata_dir,
-                                            "provincias_current_population.json")
+        path_population_data = os.path.join(
+            pydata_dir, "provincias_current_population.json")
 
         print("Setting nodes...")
         mio.osecir.set_nodes_provincias(
@@ -135,7 +138,7 @@ class Simulation:
         print("Setting edges...")
         mio.osecir.set_edges(
             mobility_data_file, graph, 1)
-        
+
         print("Graph created.")
 
         return graph
@@ -163,7 +166,8 @@ class Simulation:
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
             node = graph.get_node(node_idx)
-            self.set_npis(node.property.parameters, end_date, damping_values[node_idx])
+            self.set_npis(node.property.parameters,
+                          end_date, damping_values[node_idx])
             mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
@@ -176,9 +180,10 @@ class Simulation:
         results = []
         for node_idx in range(graph.num_nodes):
             results.append(osecir.interpolate_simulation_result(
-            mobility_sim.graph.get_node(node_idx).property.result))
-         
+                mobility_sim.graph.get_node(node_idx).property.result))
+
         return results
+
 
 def run_spain_nuts3_simulation(damping_values):
     mio.set_log_level(mio.LogLevel.Warning)
@@ -189,10 +194,11 @@ def run_spain_nuts3_simulation(damping_values):
         start_date=datetime.date(year=2020, month=12, day=12),
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
-    
+
     results = sim.run(num_days_sim, damping_values)
 
     return {f'region{region}': results[region] for region in range(len(results))}
+
 
 def prior():
     damping_values = np.random.uniform(0.0, 1.0, 47)
@@ -202,7 +208,7 @@ def prior():
 if __name__ == "__main__":
     test = prior()
     run_spain_nuts3_simulation(test['damping_values'])
-    # import os 
+    # import os
     # os.environ["KERAS_BACKEND"] = "tensorflow"
 
     # import bayesflow as bf
@@ -242,11 +248,11 @@ if __name__ == "__main__":
     # inference_network = bf.networks.DiffusionModel(subnet_kwargs={'widths': {512, 512, 512, 512, 512}})
 
     # workflow = bf.BasicWorkflow(
-    #     simulator=simulator, 
+    #     simulator=simulator,
     #     adapter=adapter,
     #     summary_network=summary_network,
     #     inference_network=inference_network,
-    #     standardize='all'  
+    #     standardize='all'
     # )
 
     # history = workflow.fit_offline(data=trainings_data, epochs=1000, batch_size=32, validation_data=validation_data)

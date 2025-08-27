@@ -55,10 +55,12 @@ class Simulation:
         model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = 13.066
 
         # probabilities
-        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(0)] = 0.07333
+        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(
+            0)] = 0.07333
         model.parameters.RelativeTransmissionNoSymptoms[mio.AgeGroup(0)] = 1
 
-        model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(0)] = 0.2069
+        model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(
+            0)] = 0.2069
         model.parameters.SeverePerInfectedSymptoms[mio.AgeGroup(0)] = 0.07864
         model.parameters.CriticalPerSevere[mio.AgeGroup(0)] = 0.17318
         model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.21718
@@ -94,7 +96,8 @@ class Simulation:
 
         if start_damping < end_date:
             start_date = (start_damping - self.start_date).days
-            params.ContactPatterns.cont_freq_mat[0].add_damping(mio.Damping(np.r_[damping_value], t=start_date))
+            params.ContactPatterns.cont_freq_mat[0].add_damping(
+                mio.Damping(np.r_[damping_value], t=start_date))
 
     def get_graph(self, end_date):
         """
@@ -119,8 +122,8 @@ class Simulation:
             data_dir_Germany, "mobility", "commuter_mobility_2022_states.txt")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
-        path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population_states.json")
+        path_population_data = os.path.join(
+            pydata_dir, "county_current_population_states.json")
 
         print("Setting nodes...")
         mio.osecir.set_nodes_states(
@@ -135,7 +138,7 @@ class Simulation:
         print("Setting edges...")
         mio.osecir.set_edges(
             mobility_data_file, graph, 1)
-        
+
         print("Graph created.")
 
         return graph
@@ -164,7 +167,8 @@ class Simulation:
         for node_idx in range(graph.num_nodes):
             # if node_idx < 5:
             node = graph.get_node(node_idx)
-            self.set_npis(node.property.parameters, end_date, damping_values[node_idx])
+            self.set_npis(node.property.parameters,
+                          end_date, damping_values[node_idx])
             mobility_graph.add_node(node.id, node.property)
             # else:
             #     node = graph.get_node(node_idx)
@@ -181,9 +185,10 @@ class Simulation:
         results = []
         for node_idx in range(graph.num_nodes):
             results.append(osecir.interpolate_simulation_result(
-            mobility_sim.graph.get_node(node_idx).property.result))
-         
+                mobility_sim.graph.get_node(node_idx).property.result))
+
         return results
+
 
 def run_germany_nuts1_simulation(damping_values):
     mio.set_log_level(mio.LogLevel.Warning)
@@ -194,21 +199,23 @@ def run_germany_nuts1_simulation(damping_values):
         start_date=datetime.date(year=2020, month=12, day=12),
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
-    
+
     results = sim.run(num_days_sim, damping_values)
     results[0].export_csv('test.csv')
 
     return {f'region{region}': results[region] for region in range(len(results))}
 
+
 def prior():
     damping_values = np.random.uniform(0.0, 1.0, 16)
     return {'damping_values': damping_values}
+
 
 if __name__ == "__main__":
     test = prior()
     run_germany_nuts1_simulation(test['damping_values'])
 
-    # import os 
+    # import os
     # os.environ["KERAS_BACKEND"] = "tensorflow"
 
     # import bayesflow as bf
@@ -244,12 +251,12 @@ if __name__ == "__main__":
     #     .concatenate([f'region{i}' for i in range(16)], into="summary_variables", axis=-1)
     #     .log("summary_variables", p1=True)
     # )
-    
+
     # summary_network = bf.networks.TimeSeriesNetwork(summary_dim=32)
     # inference_network = bf.networks.CouplingFlow()
 
     # workflow = bf.BasicWorkflow(
-    #     simulator=simulator, 
+    #     simulator=simulator,
     #     adapter=adapter,
     #     summary_network=summary_network,
     #     inference_network=inference_network,
