@@ -22,240 +22,240 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # pre-commit:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.11
-  #     - uses: pre-commit/action@v3.0.1
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - uses: pre-commit/action@v3.0.1
 
-  # build-cpp-gcc_clang:
-  #   if: github.event.pull_request.draft == false
-  #   strategy:
-  #     matrix:
-  #       compiler: ["gcc", "clang"]
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "ubuntu-latest"
-  #         - version: "min"
-  #           os: "ubuntu-22.04"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-build
-  #       with:
-  #         compiler: ${{ matrix.compiler }}
-  #         config: ${{ matrix.config }}
-  #         version: ${{ matrix.version }}
-  #         coverage: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
-  #         sanitizers: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+  build-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-22.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-build
+        with:
+          compiler: ${{ matrix.compiler }}
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
+          coverage: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
+          sanitizers: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
-  # build-cpp-gcc-no-optional-deps:
-  #   if: github.event.pull_request.draft == false
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-build
-  #       with:
-  #         compiler: gcc
-  #         version: latest
-  #         config: Release
-  #         optional-dependencies: OFF
+  build-cpp-gcc-no-optional-deps:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-build
+        with:
+          compiler: gcc
+          version: latest
+          config: Release
+          optional-dependencies: OFF
 
-  # build-cpp-gcc-openmp:
-  #   if: github.event.pull_request.draft == false
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-build
-  #       with:
-  #         compiler: gcc
-  #         version: latest
-  #         config: Release
-  #         openmp: ON
+  build-cpp-gcc-openmp:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-build
+        with:
+          compiler: gcc
+          version: latest
+          config: Release
+          openmp: ON
 
-  # build-cpp-msvc:
-  #   if: github.event.pull_request.draft == false
-  #   strategy:
-  #     matrix:
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "windows-2025"
-  #         - version: "min"
-  #           os: "windows-2022"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/windows-build
-  #       with:
-  #         config: ${{ matrix.config }}
-  #         version: ${{ matrix.version }}
+  build-cpp-msvc:
+    if: github.event.pull_request.draft == false
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-2025"
+          - version: "min"
+            os: "windows-2022"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-build
+        with:
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
 
-  # build-cpp-msvc-no-optional-deps:
-  #   if: github.event.pull_request.draft == false
-  #   runs-on: windows-2025
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/windows-build
-  #       with:
-  #         config: Release
-  #         version: latest
-  #         optional-dependencies: OFF
+  build-cpp-msvc-no-optional-deps:
+    if: github.event.pull_request.draft == false
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-build
+        with:
+          config: Release
+          version: latest
+          optional-dependencies: OFF
 
-  # test-cpp-gcc_clang:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-gcc_clang
-  #   strategy:
-  #     matrix:
-  #       compiler: ["gcc", "clang"]
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "ubuntu-latest"
-  #         - version: "min"
-  #           os: "ubuntu-22.04"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-test
-  #       with:
-  #         artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
-  #         coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
+  test-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc_clang
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-22.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-test
+        with:
+          artifact-pattern: ${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
+          coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
  
-  # test-cpp-gcc-sbml:
-  #     if: github.event.pull_request.draft == false
-  #     needs: build-cpp-gcc_clang
-  #     runs-on: ubuntu-latest
-  #     steps:
-  #       - uses: actions/checkout@v4
-  #       - uses: ./.github/actions/sbml-test
+  test-cpp-gcc-sbml:
+      if: github.event.pull_request.draft == false
+      needs: build-cpp-gcc_clang
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: ./.github/actions/sbml-test
 
-  # merge-test-artifacts:
-  #   needs: [test-cpp-gcc_clang, test-cpp-msvc, test-py-surrogatemodel]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: merge-coverage-artifacts
-  #       uses: actions/upload-artifact/merge@v4
-  #       with:
-  #         name: test-cpp-coverage-reports
-  #         pattern: test-cpp-coverage-reports-*
-  #     - name: merge-linux-artifacts
-  #       uses: actions/upload-artifact/merge@v4
-  #       with:
-  #         name: test-cpp-linux-report
-  #         pattern: test-cpp-linux-report-*
-  #     - name: merge-windows-artifacts
-  #       uses: actions/upload-artifact/merge@v4
-  #       with:
-  #         name: test-cpp-win-report
-  #         pattern: test-cpp-win-report-*
-  #     - name: merge python reports
-  #       uses: actions/upload-artifact/merge@v4
-  #       with:
-  #         name: test-py-coverage-reports-surrogatemodel
-  #         pattern: test-py-coverage-reports-surrogatemodel-*
+  merge-test-artifacts:
+    needs: [test-cpp-gcc_clang, test-cpp-msvc, test-py-surrogatemodel]
+    runs-on: ubuntu-latest
+    steps:
+      - name: merge-coverage-artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-cpp-coverage-reports
+          pattern: test-cpp-coverage-reports-*
+      - name: merge-linux-artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-cpp-linux-report
+          pattern: test-cpp-linux-report-*
+      - name: merge-windows-artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-cpp-win-report
+          pattern: test-cpp-win-report-*
+      - name: merge python reports
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: test-py-coverage-reports-surrogatemodel
+          pattern: test-py-coverage-reports-surrogatemodel-*
 
-  # test-cpp-gcc-no-optional-deps:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-gcc-no-optional-deps
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-test
-  #       with:
-  #         artifact-pattern: gcc-latest-Release
-  #         optional-deps: OFF
+  test-cpp-gcc-no-optional-deps:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc-no-optional-deps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-test
+        with:
+          artifact-pattern: gcc-latest-Release
+          optional-deps: OFF
 
-  # test-cpp-gcc-openmp:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-gcc-openmp
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 30
-  #   env:
-  #     OMP_NUM_THREADS: 4
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-test
-  #       with:
-  #         artifact-pattern: gcc-latest-Release
-  #         num-repeat: 10
-  #         openmp: ON
+  test-cpp-gcc-openmp:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc-openmp
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-test
+        with:
+          artifact-pattern: gcc-latest-Release
+          num-repeat: 10
+          openmp: ON
 
-  # test-cpp-msvc:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-msvc
-  #   strategy:
-  #     matrix:
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "windows-2025"
-  #         - version: "min"
-  #           os: "windows-2022"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/windows-test
-  #       with:
-  #         artifact-pattern: msvc-${{ matrix.version }}-${{ matrix.config }}
+  test-cpp-msvc:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-msvc
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-2025"
+          - version: "min"
+            os: "windows-2022"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-test
+        with:
+          artifact-pattern: msvc-${{ matrix.version }}-${{ matrix.config }}
 
-  # test-cpp-msvc-no-optional-deps:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-msvc-no-optional-deps
-  #   runs-on: windows-2025
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/windows-test
-  #       with:
-  #         artifact-pattern: msvc-latest-Release
-  #         optional-deps: OFF
+  test-cpp-msvc-no-optional-deps:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-msvc-no-optional-deps
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-test
+        with:
+          artifact-pattern: msvc-latest-Release
+          optional-deps: OFF
 
-  # run_examples-cpp-gcc_clang:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-gcc_clang
-  #   strategy:
-  #     matrix:
-  #       compiler: ["gcc", "clang"]
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "ubuntu-latest"
-  #         - version: "min"
-  #           os: "ubuntu-22.04"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/linux-run_examples
-  #       with:
-  #         build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
+  run_examples-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-gcc_clang
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-22.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/linux-run_examples
+        with:
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
 
-  # run_examples-cpp-msvc:
-  #   if: github.event.pull_request.draft == false
-  #   needs: build-cpp-msvc
-  #   strategy:
-  #     matrix:
-  #       config: ["Debug", "Release"]
-  #       version: ["latest", "min"]
-  #       include:
-  #         - version: "latest"
-  #           os: "windows-2025"
-  #         - version: "min"
-  #           os: "windows-2022"
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: ./.github/actions/windows-run_examples
-  #       with:
-  #         build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
+  run_examples-cpp-msvc:
+    if: github.event.pull_request.draft == false
+    needs: build-cpp-msvc
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-2025"
+          - version: "min"
+            os: "windows-2022"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/windows-run_examples
+        with:
+          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
 
   build-py-generation:
     if: github.event.pull_request.draft == false
@@ -328,28 +328,28 @@ jobs:
           package: surrogatemodel
           coverage: ON
 
-  # codecov:
-  #   if: github.event.pull_request.draft == false
-  #   needs: merge-test-artifacts
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Install dependencies
-  #       run: |
-  #         sudo apt-get -qq update
-  #         sudo apt-get -qq -y install git curl
-  #     - name: Download python coverage report
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: test-py-coverage-reports-surrogatemodel
-  #     - name: Download cpp coverage report
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: test-cpp-coverage-reports
-  #     - name: Deploy to codecov.io
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         token: ${{ secrets.CODECOV_TOKEN }}
-  #         directory: ./coverage_python
-  #         files: ./coverage_python/**,./coverage.info
-  #         verbose: true
+  codecov:
+    if: github.event.pull_request.draft == false
+    needs: merge-test-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install git curl
+      - name: Download python coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: test-py-coverage-reports-surrogatemodel
+      - name: Download cpp coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: test-cpp-coverage-reports
+      - name: Deploy to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage_python
+          files: ./coverage_python/**,./coverage.info
+          verbose: true
