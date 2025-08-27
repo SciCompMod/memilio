@@ -121,31 +121,21 @@ private:
             {(int)InfectionTransition::InfectedCriticalToDead, (int)InfectionTransition::InfectedCriticalToRecovered}};
 
         for (int state = 2; state < (int)InfectionState::Count - 2; state++) {
-            Eigen::Index calc_time_index =
-                std::max(
-                    m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][0])],
-                    m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][1])]) /
-                dt;
+            Eigen::Index calc_time_index = std::ceil(
+                std::max(m_transitiondistributions_support_max[(Eigen::Index)vector_transitions[state - 2][0]],
+                         m_transitiondistributions_support_max[(Eigen::Index)vector_transitions[state - 2][1]]) /
+                dt);
 
-            // Create vec_derivative that stores the value of the approximated derivative for all necessary time points.
             std::vector<ScalarType> vec_contribution_to_foi_2(calc_time_index + 1, 0.);
             for (Eigen::Index i = 0; i <= calc_time_index; i++) {
                 ///Compute the state_age.
                 ScalarType state_age = (ScalarType)i * dt;
-                if (m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][0])] /
-                        dt <=
-                    calc_time_index) {
-                    vec_contribution_to_foi_2[i] +=
-                        parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][0]] *
-                        parameters.get<TransitionDistributions>()[vector_transitions[state - 2][0]].eval(state_age);
-                }
-                if (m_transitiondistributions_support_max[(Eigen::Index)std::ceil(vector_transitions[state - 2][1])] /
-                        dt <=
-                    calc_time_index) {
-                    vec_contribution_to_foi_2[i] +=
-                        parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][1]] *
+
+                vec_contribution_to_foi_2[i] +=
+                    parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][0]] *
+                        parameters.get<TransitionDistributions>()[vector_transitions[state - 2][0]].eval(state_age) +
+                    parameters.get<TransitionProbabilities>()[vector_transitions[state - 2][1]] *
                         parameters.get<TransitionDistributions>()[vector_transitions[state - 2][1]].eval(state_age);
-                }
             }
             m_transitiondistributions[state] = vec_contribution_to_foi_2;
         }
@@ -202,13 +192,16 @@ private:
 
         m_B = std::vector<ScalarType>(calc_time_index + 1, 0.);
 
-        for (Eigen::Index time_point_index = 1; time_point_index < calc_time_index; time_point_index++) {
+        // We start the for loop for time_point_index = 1, as the next for loop where we compute the sum, goes up to
+        // time_point_index-1. Therefore, for time_point_index = 0, the for loop would start at 0 and go up to -1, which
+        // is not possible. The value m_B(0) is just set 0 zero.
+        for (Eigen::Index time_point_index = 1; time_point_index <= calc_time_index; time_point_index++) {
 
-            ScalarType sum = 0;
-
-            Eigen::Index starting_point =
-                std::max(0, (int)time_point_index - (int)m_transitiondistributions_support_max[(
-                                                        int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]);
+            ScalarType sum                 = 0;
+            Eigen::Index max_support_index = std::ceil(
+                m_transitiondistributions_support_max[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] /
+                dt);
+            Eigen::Index starting_point = std::max(0, (int)time_point_index - (int)max_support_index);
 
             for (int i = starting_point; i <= time_point_index - 1; i++) {
                 ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
@@ -256,10 +249,9 @@ private:
 
             ScalarType time_point_age = (ScalarType)time_point_index * dt;
             //We compute a_1 and a_2 at time_point.
-            Eigen::Index starting_point = std::max(
-                0,
-                (int)time_point_index -
-                    (int)m_transitiondistributions_support_max[(int)InfectionTransition::ExposedToInfectedNoSymptoms]);
+            Eigen::Index max_support_index = std::ceil(
+                m_transitiondistributions_support_max[(int)InfectionTransition::ExposedToInfectedNoSymptoms] / dt);
+            Eigen::Index starting_point = std::max(0, (int)time_point_index - (int)max_support_index);
 
             //compute a_1:
 
@@ -290,7 +282,7 @@ private:
      */
     void set_FoI_0(ScalarType dt)
     {
-        Eigen::Index calc_time_index = m_infectivity.size();
+        Eigen::Index calc_time_index = m_transitiondistributions[(int)InfectionState::InfectedNoSymptoms].size();
         m_FoI_0                      = std::vector<ScalarType>(calc_time_index, 0.);
         m_NormFoI_0                  = std::vector<ScalarType>(calc_time_index, 0.);
         for (Eigen::Index time_point_index = 0; time_point_index < calc_time_index; time_point_index++) {
@@ -337,13 +329,13 @@ private:
             ScalarType sum            = 0;
             ScalarType sum_norm       = 0;
             ScalarType time_point_age = (ScalarType)time_point_index * dt;
-            if (time_point_index <= (int)m_B.size()) {
+            if (time_point_index < (int)m_B.size()) {
                 sum -= m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] *
                        std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
                 sum_norm -= m_statesinit[0][(int)InfectionState::InfectedNoSymptoms] / m_totalpopulationinit *
                             std::exp(-parameters.get<NaturalBirthRate>() * time_point_age) * m_B[time_point_index];
             }
-            if (time_point_index <= (int)m_infectivity.size()) {
+            if (time_point_index < (int)m_infectivity.size()) {
                 sum += m_statesinit[0][(int)InfectionState::Exposed] * m_infectivity[time_point_index];
                 sum_norm += m_statesinit[0][(int)InfectionState::Exposed] / m_totalpopulationinit *
                             m_infectivity[time_point_index];
@@ -414,7 +406,7 @@ private:
             Eigen::Index calc_time_index = m_transitiondistributions[state].size();
             ScalarType sum               = 0;
 
-            for (Eigen::Index i = 0; i <= calc_time_index; i++) {
+            for (Eigen::Index i = 0; i < calc_time_index; i++) {
                 // Compute state_age.
                 ScalarType state_age = (ScalarType)i * dt;
                 //Compute the apprximate derivative by a backwards difference scheme.
