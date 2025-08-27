@@ -3,6 +3,8 @@ import os
 import io
 import requests
 
+import defaultDict as dd
+
 def fetch_population_data():
     download_url = 'https://servicios.ine.es/wstempus/js/es/DATOS_TABLA/67988?tip=AM&'
     req = requests.get(download_url)
@@ -42,7 +44,7 @@ def preprocess_icu_data(df):
     df_merged = pd.merge(df_icu, df_icu_vent, on=['Fecha', 'ID_Provincia'], how='outer')
     df_merged['Fecha'] = pd.to_datetime(df_merged['Fecha'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d')
     df_merged.rename(columns={'Fecha': 'Date'}, inplace=True)
-    print(df_merged)
+
     return df_merged
 
 def get_icu_data():
@@ -50,6 +52,27 @@ def get_icu_data():
     df.rename(columns={'Cod_Provincia': 'ID_Provincia'}, inplace=True)
     df = remove_islands(df)
     df = preprocess_icu_data(df)
+
+    return df
+
+def fetch_case_data():
+    download_url = 'https://cnecovid.isciii.es/covid19/resources/casos_diagnostico_provincia.csv'
+    req = requests.get(download_url)
+
+    df = pd.read_csv(io.StringIO(req.text), sep=',')
+
+    return df
+
+def preprocess_case_data(df):
+    df['provincia_iso'] = df['provincia_iso'].map(dd.Provincia_ISO_to_ID)
+    df = df.rename(columns={'provincia_iso': 'ID_Provincia', 'fecha': 'Date', 'num_casos': 'Confirmed'})[['ID_Provincia', 'Date', 'Confirmed']]
+
+    return df
+
+
+def get_case_data():
+    df = fetch_case_data()
+    df = preprocess_case_data(df)
 
     return df
 
@@ -62,3 +85,6 @@ if __name__ == "__main__":
 
     df = get_icu_data()
     df.to_json(os.path.join(data_dir, 'pydata/provincia_icu.json'), orient='records')
+
+    df = get_case_data()
+    df.to_json(os.path.join(data_dir, 'pydata/cases_all_pronvincias.json'), orient='records')
