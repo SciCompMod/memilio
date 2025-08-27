@@ -246,12 +246,6 @@ class Simulation:
 
         graph = self.get_graph(end_date, t_E, t_ISy, t_ISev, t_Cr, transmission_prob)
 
-        if save_graph:
-            path_graph = os.path.join(self.results_dir, "graph")
-            if not os.path.exists(path_graph):
-                os.makedirs(path_graph)
-            osecir.write_graph(graph, path_graph)
-
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
             node = graph.get_node(node_idx)
