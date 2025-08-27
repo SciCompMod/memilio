@@ -13,6 +13,10 @@ def fetch_population_data():
 
     df = pd.read_json(io.StringIO(req.text))
     df = df[['MetaData', 'Data']]
+    df = df[df['MetaData'].apply(
+        lambda x: x[0]['T3_Variable'] == 'Provincias')]
+    df = df[df['MetaData'].apply(
+        lambda x: x[1]['Nombre'] == 'Total')]
     df['ID_Provincia'] = df['MetaData'].apply(lambda x: x[0]['Id'])
     df['Population'] = df['Data'].apply(lambda x: x[0]['Valor'])
     return df[['ID_Provincia', 'Population']]
@@ -77,8 +81,10 @@ def fetch_case_data():
 
 def preprocess_case_data(df):
     df['provincia_iso'] = df['provincia_iso'].map(dd.Provincia_ISO_to_ID)
-    df = df.rename(columns={'provincia_iso': 'ID_Provincia', 'fecha': 'Date',
-                   'num_casos': 'Confirmed'})[['ID_Provincia', 'Date', 'Confirmed']]
+    df = df.rename(
+        columns={'provincia_iso': 'ID_Provincia', 'fecha': 'Date',
+                 'num_casos': 'Confirmed'})[
+        ['ID_Provincia', 'Date', 'Confirmed']]
 
     return df
 
@@ -102,7 +108,8 @@ if __name__ == "__main__":
         pydata_dir, 'provincias_current_population.json'), orient='records')
 
     df = get_icu_data()
-    df.to_json(os.path.join(pydata_dir, 'provincia_icu.json'), orient='records')
+    df.to_json(os.path.join(pydata_dir, 'provincia_icu.json'),
+               orient='records')
 
     df = get_case_data()
     df.to_json(os.path.join(
