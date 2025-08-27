@@ -644,13 +644,13 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     auto read_result = mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    std::vector<double> sus   = {3443857.42, 7665093.95, 18792870.93, 29503629.76, 16307262.45, 6049150.54};
+    std::vector<double> sus   = {3444279.56, 7666866.07, 18801541.51, 29518513.27, 16321649.37, 6072737.25};
     std::vector<double> exp   = {433.015, 1771.61, 8856.33, 14757.62, 7222.86, 6626.07};
     std::vector<double> car   = {434.444, 1772.14, 8724.49, 14386.90, 6995.14, 6307.14};
     std::vector<double> inf   = {375.429, 1393.43, 6007.14, 8438.71, 3377.57, 2421.57};
     std::vector<double> hosp  = {39.9614, 303.191, 1934.84, 3621.2, 1793.39, 1557.03};
     std::vector<double> icu   = {47.6813, 190.725, 429.132, 762.901, 1192.03, 1716.53};
-    std::vector<double> rec   = {23557.7, 78946.3, 398585.142, 487273.71, 178660.14, 96021.9};
+    std::vector<double> rec   = {23135.58, 77174.17, 389914.56, 472390.20, 164273.23, 72435.15};
     std::vector<double> death = {2, 4, 48, 1137.86, 8174.14, 18528.9};
 
     for (size_t i = 0; i < 6; i++) {
@@ -694,13 +694,13 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
         mio::osecir::read_input_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    std::vector<double> sus   = {116692.2, 283912.8, 622795.86, 1042178.3, 606450.7, 212836.9};
+    std::vector<double> sus   = {116699.98, 283936.40, 622935.07, 1042390.64, 606622.90, 213104.13};
     std::vector<double> exp   = {8.57143, 30.5357, 149.388, 228.809, 87.1429, 99.2857};
     std::vector<double> car   = {7.77778, 26.0714, 143.061, 217.143, 84.8571, 92.1429};
     std::vector<double> inf   = {7.00000, 18.7143, 97.7143, 122.000, 40.8571, 36.1429};
     std::vector<double> hosp  = {0.707143, 3.92857, 30.6429, 50.5371, 20.35, 19.9886};
     std::vector<double> icu   = {0.274725, 1.0989, 2.47253, 4.3956, 6.86813, 9.89011};
-    std::vector<double> rec   = {393.143, 1216.14, 5467.86, 6543.57, 2281.29, 1045.71};
+    std::vector<double> rec   = {385.36, 1192.59, 5328.66, 6331.18, 2109.05, 778.53};
     std::vector<double> death = {0, 0, 0, 16.2857, 99.5714, 198.286};
 
     for (size_t i = 0; i < 6; i++) {
@@ -761,13 +761,13 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     ASSERT_THAT(print_wrap(read_result2), IsSuccess());
     ASSERT_THAT(print_wrap(read_result_district), IsSuccess());
 
-    std::vector<double> sus   = {10284.13, 19082.86, 73783.12, 82494.81, 43725.08, 15612.70};
+    std::vector<double> sus   = {10284.66, 19086.96, 73805.00, 82515.81, 43739.68, 15633.34};
     std::vector<double> exp   = {0.571429, 4.82143, 20.8163, 22.1429, 4.57143, 4.64286};
     std::vector<double> car   = {0.557143, 4.46429, 22.0408, 20.7143, 4.28571, 4.64286};
     std::vector<double> inf   = {0.42857, 3.285714, 15.2857, 13.0000, 2.42857, 2.00000};
     std::vector<double> hosp  = {0.0942857, 0.691429, 4.90286, 5.34286, 1.41429, 2.45143};
     std::vector<double> icu   = {0.0769231, 0.307692, 0.692308, 1.23077, 1.92308, 2.76923};
-    std::vector<double> rec   = {35, 108.571, 640.143, 573.429, 180.429, 75.5714};
+    std::vector<double> rec   = {34.47, 104.47, 618.26, 552.43, 165.83, 54.93};
     std::vector<double> death = {0, 0, 0, 0, 10, 14.4286};
 
     for (size_t i = 0; i < 6; i++) {
@@ -850,13 +850,13 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     auto& file_results = read_result.value();
     auto results       = file_results[0].get_groups();
 
-    std::vector<double> sus   = {10284.1, 19082.9, 73783.1, 82494.8, 43725.1, 15612.7};
+    std::vector<double> sus   = {10284.66, 19086.96, 73805.00, 82515.81, 43739.68, 15633.34};
     std::vector<double> exp   = {0.571429, 4.82143, 20.8163, 22.1429, 4.57143, 4.64286};
     std::vector<double> car   = {0.557143, 4.46429, 22.0408, 20.7143, 4.28571, 4.64286};
     std::vector<double> inf   = {0.428571, 3.28571, 15.2857, 13.0000, 2.42857, 2.00000};
     std::vector<double> hosp  = {0.0942857, 0.691429, 4.90286, 5.34286, 1.41429, 2.45143};
     std::vector<double> icu   = {0.0769231, 0.307692, 0.692308, 1.23077, 1.92308, 2.76923};
-    std::vector<double> rec   = {35, 108.571, 640.143, 573.429, 180.429, 75.5714};
+    std::vector<double> rec   = {34.47, 104.47, 618.26, 552.43, 165.83, 54.93};
     std::vector<double> death = {0, 0, 0, 0, 10, 14.4286};
 
     for (size_t i = 0; i < 6; i++) {
