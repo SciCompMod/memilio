@@ -62,36 +62,40 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
     return success(vnum_population);
 }
 
-// IOResult<std::vector<std::vector<double>>>
-// read_population_data_spain(const std::vector<PopulationDataEntrySpain>& population_data,
-//                            const std::vector<int>& vregion)
-// {
-//     std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(1, 0.0));
+IOResult<std::vector<std::vector<double>>>
+read_population_data_spain(const std::vector<PopulationDataEntrySpain>& population_data,
+                           const std::vector<int>& vregion)
+{
+    std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(1, 0.0));
 
-//     for (auto&& provincia_entry : population_data) {
-//         printf("Test");
-//         //find region that this county belongs to
-//         //all counties belong to the country (id = 0)
-//         auto it = std::find_if(vregion.begin(), vregion.end(), [&provincia_entry](auto r) {
-//             return r == 0 || (provincia_entry.provincia_id && regions::ProvinciaId(r) == provincia_entry.provincia_id);
-//         });
-//         if (it != vregion.end()) {
-//             auto region_idx      = size_t(it - vregion.begin());
-//             auto& num_population = vnum_population[region_idx];
-//             for (size_t age = 0; age < num_population.size(); age++) {
-//                 num_population[age] += provincia_entry.population[AgeGroup(age)];
-//             }
-//         }
-//     }
+    for (auto&& provincia_entry : population_data) {
+        auto it = std::find_if(vregion.begin(), vregion.end(), [&provincia_entry](auto r) {
+            return r == 0 || (provincia_entry.provincia_id && regions::ProvinciaId(r) == provincia_entry.provincia_id);
+        });
+        if (it != vregion.end()) {
+            auto region_idx      = size_t(it - vregion.begin());
+            auto& num_population = vnum_population[region_idx];
+            for (size_t age = 0; age < num_population.size(); age++) {
+                num_population[age] += provincia_entry.population[AgeGroup(age)];
+            }
+        }
+    }
 
-//     return success(vnum_population);
-// }
+    return success(vnum_population);
+}
 
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion)
 {
     BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
     return read_population_data(population_data, vregion);
+}
+
+IOResult<std::vector<std::vector<double>>> read_population_data_spain(const std::string& path,
+                                                                      const std::vector<int>& vregion)
+{
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data_spain(path));
+    return read_population_data_spain(population_data, vregion);
 }
 } // namespace mio
 #endif //MEMILIO_HAS_JSONCPP
