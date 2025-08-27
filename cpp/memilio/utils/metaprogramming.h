@@ -278,15 +278,10 @@ public:
 template <class... Types>
 constexpr bool has_duplicates_v = has_duplicates<Types...>::value;
 
-/**
- * @brief Utility for compile-time type traits and meta-programming.
- *
- * Provides mechanisms to detect if a type is an automatic differentiation (AD) type
- * and a helper to create a void type from a list of types, useful in SFINAE.
- *
- * - `is_ad_type<T>`: std::true_type if T is an AD type, otherwise std::false_type.
- * - `is_ad_type_v<T>`: shorthand for `is_ad_type<T>::value`.
- */
+/** 
+ * @brief Detects whether a type is an automatic differentiation (AD) type. 
+ * @{ 
+ */ 
 template <class T, class = void>
 struct is_ad_type : public std::false_type {
 };
@@ -297,6 +292,8 @@ struct is_ad_type<ad::internal::active_type<Value, Tape>> : public std::true_typ
 
 template <class T>
 constexpr bool is_ad_type_v = is_ad_type<T>::value;
+/**@}*/ 
+
 
 } // namespace mio
 
