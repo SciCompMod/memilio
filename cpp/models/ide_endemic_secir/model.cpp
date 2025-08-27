@@ -109,12 +109,10 @@ void Model::compute_flow(Eigen::Index idx_InfectionTransitions, Eigen::Index idx
         ScalarType state_age_i = static_cast<ScalarType>(i) * dt;
         sum1 += transitions[i + 1][idx_IncomingFlow] *
                 std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
-                compparameters->parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
                 compparameters->m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index - i];
         //For the update formula version of the model:
         sum2 += transitions_update[i + 1][idx_IncomingFlow] *
                 std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i)) *
-                compparameters->parameters.get<TransitionProbabilities>()[idx_InfectionTransitions] *
                 compparameters->m_transitiondistributions_derivative[idx_InfectionTransitions][current_time_index - i];
     }
     if (current_time_index <= calc_time_index) {
@@ -252,9 +250,7 @@ void Model::update_compartment_with_sum(InfectionState infectionState,
                            std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age));
     }
     else {
-        populations.get_last_value()[(int)infectionState] =
-            dt * sum + compparameters->m_transitiondistributions[(int)infectionState][current_time_index] *
-                           populations[0][(int)infectionState];
+        populations.get_last_value()[(int)infectionState] = dt * sum + populations[0][(int)infectionState];
     }
 }
 void Model::update_compartment_from_flow(InfectionState infectionState,
@@ -272,6 +268,7 @@ void Model::update_compartment_from_flow(InfectionState infectionState,
     for (const InfectionTransition& outflow : OutgoingFlows) {
         updated_compartment -= dt * transitions_update.get_last_value()[(int)outflow];
     }
+
     if (NaturalDeathispossible) {
         updated_compartment = updated_compartment / (1 + dt * compparameters->parameters.get<NaturalDeathRate>());
     }
