@@ -279,7 +279,7 @@ template <class... Types>
 constexpr bool has_duplicates_v = has_duplicates<Types...>::value;
 
 /** 
- * @brief Detects whether a type is an automatic differentiation (AD) type. 
+ * Detects whether a type is an automatic differentiation (AD) type. 
  * @{ 
  */ 
 template <class T, class = void>
