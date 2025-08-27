@@ -229,11 +229,28 @@ public:
         return m_dt;
     }
 
+    void compute_difference_normalizedcompartments()
+    {
+        for (int state = 0; state < (int)InfectionState::Count - 1; state++) {
+            m_difference_normalizedcompartments.get_last_value()[state] = std::abs(
+                m_normmodel->populations.get_last_value()[state] - m_model->populations.get_last_value()[state]);
+        }
+    }
+
+    TimeSeries<ScalarType> const& get_difference_normalizedcompartments()
+    {
+        return m_difference_normalizedcompartments;
+    }
+
 private:
     std::unique_ptr<CompParameters> m_compparams; ///< Unique pointer to the computed Parameters.
     std::unique_ptr<Model> m_model; ///< Unique pointer to the simulated Model.
     std::unique_ptr<NormModel> m_normmodel; ///< Unique pointer to the simulated normalized Model.
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
+    TimeSeries<ScalarType> m_difference_normalizedcompartments{TimeSeries<ScalarType>(
+        (int)InfectionState::Count - 1)}; ///< TimeSeries containing the difference of the compartments
+    // computed by NormModel and the normalized compartments comouted in Model.
+    // needed for the numerical scheme.
 };
 
 TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& model);

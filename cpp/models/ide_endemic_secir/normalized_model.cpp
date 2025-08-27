@@ -1,5 +1,6 @@
 #include "ide_endemic_secir/normalized_model.h"
 #include "ide_endemic_secir/computed_parameters.h"
+#include "ide_endemic_secir/model.h"
 #include "ide_endemic_secir/parameters.h"
 #include "ide_endemic_secir/infection_state.h"
 #include "memilio/config.h"
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <vector>
 
@@ -58,10 +60,6 @@ bool NormModel::check_constraints() const
     return compparameters->check_constraints();
 }
 // ----Functionality for Initialization. ----
-void NormModel::initialization_compute_forceofinfection()
-{
-    m_forceofinfection[0][0] = compparameters->m_NormFoI_0[0];
-}
 
 // ----Functionality for the iterations of a simulation. ----
 void NormModel::compute_susceptibles(ScalarType dt)
@@ -332,10 +330,7 @@ void NormModel::compute_forceofinfection(ScalarType dt)
         m_forceofinfection.get_last_value()[0] += compparameters->m_NormFoI_0[num_time_points - 1];
     }
     if (num_time_points <= (int)compparameters->m_NormInitFoI.size()) {
-        m_forceofinfection.get_last_value()[0] +=
-            compparameters->m_NormInitFoI[num_time_points - 1] *
-            compparameters->parameters.get<TransmissionProbabilityOnContact>().eval(current_time) *
-            compparameters->parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(current_time)(0, 0);
+        m_forceofinfection.get_last_value()[0] += compparameters->m_NormInitFoI[num_time_points - 1];
     }
 }
 

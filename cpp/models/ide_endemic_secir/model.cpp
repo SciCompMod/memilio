@@ -41,8 +41,9 @@ Model::Model(CompParameters const& compparams)
     m_totalpopulation.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize));
     m_totalpopulationupdate.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize));
 
-    m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0));
-    m_forceofinfectionupdate.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0));
+    m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_FoI_0[0]));
+    m_forceofinfectionupdate.add_time_point(
+        0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_NormFoI_0[0]));
 
     //Set normalized_populations at start time t0.
     TimeSeries<ScalarType>::Vector vec_normalizedpopulations =
@@ -69,12 +70,7 @@ bool Model::check_constraints() const
     }
     return compparameters->check_constraints();
 }
-// ----Functionality for Initialization. ----
-void Model::initialization_compute_forceofinfection()
-{
-    m_forceofinfection[0][0]       = compparameters->m_FoI_0[0] / m_totalpopulation[0][0];
-    m_forceofinfectionupdate[0][0] = compparameters->m_FoI_0[0] / m_totalpopulationupdate[0][0];
-}
+
 // ----Functionality for the iterations of a simulation. ----
 void Model::compute_susceptibles(ScalarType dt)
 {
@@ -229,6 +225,8 @@ void Model::update_compartment_with_sum(InfectionState infectionState,
             sum += sum_inflows *
                    std::exp(-compparameters->parameters.get<NaturalDeathRate>() * (current_time_age - state_age_i));
         }
+        // The case !NaturalDeathispossible && Transitionispossible is not possible, as if NaturalDeath is not possible
+        // this means you are in the Death compartment and then Transition is also not possible.
         else {
             sum += sum_inflows;
         }

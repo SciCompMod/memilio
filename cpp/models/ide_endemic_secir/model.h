@@ -61,14 +61,6 @@ public:
     // in defined #InfectionState%s. We compute them by an update formula.
 
 private:
-    // ----Functionality for Initialization. ----
-
-    /**
-    *@brief Comoutes the value of the force of infection term at startim time.
-    *
-    * */
-    void initialization_compute_forceofinfection();
-
     // ---- Functionality for the iterations of a simulation.
 
     /**

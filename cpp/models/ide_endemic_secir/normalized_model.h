@@ -4,6 +4,7 @@
 #include "ide_endemic_secir/infection_state.h"
 #include "ide_endemic_secir/parameters.h"
 #include "ide_endemic_secir/computed_parameters.h"
+#include "ide_endemic_secir/model.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
 
@@ -49,13 +50,6 @@ public:
     // in defined #InfectionState%s.
 
 private:
-    // ----Functionality for Initialization. ----
-
-    /**
-    *@brief Comoutes the value of the force of infection term at startim time.
-    *
-    * */
-    void initialization_compute_forceofinfection();
     // ---- Functionality for the iterations of a simulation.
 
     /**
@@ -148,7 +142,6 @@ private:
 
     TimeSeries<ScalarType> m_forceofinfection{
         TimeSeries<ScalarType>(1)}; ///< TimeSeries containing the Force of infection term for every time point,
-    // needed for the numerical scheme.
 
     // ---- Friend classes/functions. ----
     // In the Simulation class, the actual simulation is performed which is why it needs access to the here
