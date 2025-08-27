@@ -273,7 +273,7 @@ private:
             }
             //compute a_2:
 
-            for (int i = starting_point; i < std::min(calc_time_index_1, time_point_index); i++) {
+            for (int i = starting_point; i < std::min(calc_time_index_2, time_point_index); i++) {
 
                 a_2 += m_transitiondistributions_derivative[(int)InfectionTransition::ExposedToInfectedNoSymptoms]
                                                            [time_point_index - i] *
