@@ -55,10 +55,12 @@ class Simulation:
         model.parameters.TimeInfectedCritical[mio.AgeGroup(0)] = 13.066
 
         # probabilities
-        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(0)] = 0.07333
+        model.parameters.TransmissionProbabilityOnContact[mio.AgeGroup(
+            0)] = 0.07333
         model.parameters.RelativeTransmissionNoSymptoms[mio.AgeGroup(0)] = 1
 
-        model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(0)] = 0.2069
+        model.parameters.RecoveredPerInfectedNoSymptoms[mio.AgeGroup(
+            0)] = 0.2069
         model.parameters.SeverePerInfectedSymptoms[mio.AgeGroup(0)] = 0.07864
         model.parameters.CriticalPerSevere[mio.AgeGroup(0)] = 0.17318
         model.parameters.DeathsPerCritical[mio.AgeGroup(0)] = 0.21718
@@ -94,7 +96,8 @@ class Simulation:
 
         if start_damping < end_date:
             start_date = (start_damping - self.start_date).days
-            params.ContactPatterns.cont_freq_mat[0].add_damping(mio.Damping(np.r_[damping_value], t=start_date))
+            params.ContactPatterns.cont_freq_mat[0].add_damping(
+                mio.Damping(np.r_[damping_value], t=start_date))
 
     def get_graph(self, end_date, damping_value):
         """
@@ -117,8 +120,8 @@ class Simulation:
         data_dir_Germany = os.path.join(self.data_dir, "Germany")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
 
-        path_population_data = os.path.join(pydata_dir,
-                                            "county_current_population_germany.json")
+        path_population_data = os.path.join(
+            pydata_dir, "county_current_population_germany.json")
 
         print("Setting nodes...")
         mio.osecir.set_node_germany(
@@ -129,7 +132,7 @@ class Simulation:
                      end_date.month, end_date.day), pydata_dir,
             path_population_data, False, graph, scaling_factor_infected,
             scaling_factor_icu, 0.9, 0, False)
-        
+
         print("Graph created.")
 
         return graph
@@ -157,7 +160,8 @@ class Simulation:
 
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
-            mobility_graph.add_node(graph.get_node(node_idx).id, graph.get_node(node_idx).property)
+            mobility_graph.add_node(graph.get_node(
+                node_idx).id, graph.get_node(node_idx).property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
                 graph.get_edge(edge_idx).start_node_idx,
@@ -170,12 +174,14 @@ class Simulation:
         results = []
         for node_idx in range(graph.num_nodes):
             results.append(osecir.interpolate_simulation_result(
-            mobility_sim.graph.get_node(node_idx).property.result))
+                mobility_sim.graph.get_node(node_idx).property.result))
 
         osecir.interpolate_simulation_result(
-            mobility_sim.graph.get_node(0).property.result).export_csv('test.csv')
-         
+            mobility_sim.graph.get_node(0).property.result).export_csv(
+            'test.csv')
+
         return results
+
 
 def run_germany_nuts0_simulation(damping_value):
     mio.set_log_level(mio.LogLevel.Warning)
@@ -186,19 +192,21 @@ def run_germany_nuts0_simulation(damping_value):
         start_date=datetime.date(year=2020, month=12, day=12),
         results_dir=os.path.join(file_path, "../../../results_osecir"))
     num_days_sim = 50
-    
+
     results = sim.run(num_days_sim, damping_value)
 
     return {"region" + str(region): results[region] for region in range(len(results))}
+
 
 def prior():
     damping_value = np.random.uniform(0.0, 1.0)
     return {"damping_value": damping_value}
 
+
 if __name__ == "__main__":
 
     run_germany_nuts0_simulation(0.5)
-    # import os 
+    # import os
     # os.environ["KERAS_BACKEND"] = "jax"
 
     # import bayesflow as bf
@@ -214,7 +222,6 @@ if __name__ == "__main__":
 
     # # trainings_data = {k:v for k, v in trainings_data.items() if k in ('damping_value', 'region0', 'region1')}
     # print("Loaded training data:", trainings_data)
-
 
     # trainings_data = simulator.sample(2)
     # validation_data = simulator.sample(2)
@@ -233,7 +240,7 @@ if __name__ == "__main__":
     # inference_network = bf.networks.CouplingFlow()
 
     # workflow = bf.BasicWorkflow(
-    #     simulator=simulator, 
+    #     simulator=simulator,
     #     adapter=adapter,
     #     summary_network=summary_network,
     #     inference_network=inference_network
