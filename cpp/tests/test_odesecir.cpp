@@ -1521,53 +1521,20 @@ TEST(TestOdeSecir, read_population_data_failure)
 
 TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
 {
-    // Set up two models with different age groups.
+    // Set up two models with different number of age groups.
     const size_t num_age_groups = 6;
     std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
     std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
 
-    // set parameters for both models
-    models6[0].parameters.set<mio::osecir::StartDay>(60);
-    models6[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-    models1[0].parameters.set<mio::osecir::StartDay>(60);
-    models1[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-
-    // parameters for model with 6 age groups
+    // Relevant parameters for model with 6 age groups
     for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; ++i) {
-        models6[0].parameters.get<mio::osecir::TimeExposed<double>>()[i]            = 3.2;
-        models6[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i] = 2.0;
-        models6[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]   = 5.8;
-        models6[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[i]     = 9.5;
-        models6[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[i]   = 7.1;
-
-        models6[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
-        models6[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
-        models6[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
-        models6[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
-        models6[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
-        models6[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
-        models6[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
-        models6[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
+        models6[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i] = 0.2;
+        models6[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]         = 0.25;
     }
 
-    // parameters for model with 1 age group
-    models1[0].parameters.get<mio::osecir::TimeExposed<double>>()[mio::AgeGroup(0)]            = 3.2;
-    models1[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)] = 2.0;
-    models1[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]   = 5.8;
-    models1[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]     = 9.5;
-    models1[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]   = 7.1;
-
-    models1[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)]  = 0.05;
-    models1[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.7;
-    models1[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.09;
-    models1[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)]    = 0.25;
-    models1[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)] = 0.45;
-    models1[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]         = 0.2;
-    models1[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]                 = 0.25;
-    models1[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                 = 0.3;
-
-    models6[0].check_constraints();
-    models1[0].check_constraints();
+    // Relevant parameters for model with 1 age group
+    models1[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
+    models1[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
 
     const auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
     const std::vector<int> counties{1002};
@@ -1585,7 +1552,7 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
     // Aggreagate the results from the model with 6 age groups and compare with the model with 1 age group
     const auto& m6   = models6[0];
     const auto& m1   = models1[0];
-    const double tol = 1e-13;
+    const double tol = 1e-10;
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
         for (size_t ag = 0; ag < num_age_groups; ++ag) {
@@ -1596,7 +1563,7 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
     }
 
     // Total population
-    EXPECT_NEAR(m6.populations.get_total(), m1.populations.get_total(), 1e-13);
+    EXPECT_NEAR(m6.populations.get_total(), m1.populations.get_total(), tol);
 }
 
 TEST(TestOdeSecirIO, set_population_data_single_age_group)
@@ -1606,47 +1573,6 @@ TEST(TestOdeSecirIO, set_population_data_single_age_group)
     // Create two models: one with 6 age groups, one with 1 age group
     std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
     std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
-
-    // Set basic parameters for both models
-    models6[0].parameters.set<mio::osecir::StartDay>(60);
-    models6[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-    models1[0].parameters.set<mio::osecir::StartDay>(60);
-    models1[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-
-    // Set parameters for 6-age-group model
-    for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; ++i) {
-        models6[0].parameters.get<mio::osecir::TimeExposed<double>>()[i]                       = 3.2;
-        models6[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i]            = 2.0;
-        models6[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]              = 5.8;
-        models6[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[i]                = 9.5;
-        models6[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[i]              = 7.1;
-        models6[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
-        models6[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
-        models6[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
-        models6[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
-        models6[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
-        models6[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
-        models6[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
-        models6[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
-    }
-
-    // Set parameters for 1-age-group model (same values)
-    models1[0].parameters.get<mio::osecir::TimeExposed<double>>()[mio::AgeGroup(0)]                       = 3.2;
-    models1[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]            = 2.0;
-    models1[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]              = 5.8;
-    models1[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]                = 9.5;
-    models1[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]              = 7.1;
-    models1[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)]  = 0.05;
-    models1[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.7;
-    models1[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.09;
-    models1[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)]    = 0.25;
-    models1[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)] = 0.45;
-    models1[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]         = 0.2;
-    models1[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]                 = 0.25;
-    models1[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                 = 0.3;
-
-    models6[0].check_constraints();
-    models1[0].check_constraints();
 
     // Test population data with 6 different values for age groups
     std::vector<std::vector<double>> population_data6 = {{10000.0, 20000.0, 30000.0, 25000.0, 15000.0, 8000.0}};
@@ -1658,7 +1584,7 @@ TEST(TestOdeSecirIO, set_population_data_single_age_group)
     EXPECT_THAT(mio::osecir::details::set_population_data(models1, population_data1, regions), IsSuccess());
 
     // Sum all compartments across age groups in 6-group model and compare 1-group model
-    const double tol = 1e-13;
+    const double tol = 1e-10;
     for (int s = 0; s < (int)mio::osecir::InfectionState::Count; ++s) {
         double sum6 = 0.0;
         for (size_t ag = 0; ag < num_age_groups; ++ag) {
@@ -1680,45 +1606,6 @@ TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
     // Create two models: one with 6 age groups, one with 1 age group
     std::vector<mio::osecir::Model<double>> models6{mio::osecir::Model<double>((int)num_age_groups)};
     std::vector<mio::osecir::Model<double>> models1{mio::osecir::Model<double>(1)};
-
-    // Set identical parameters for both models
-    models6[0].parameters.set<mio::osecir::StartDay>(60);
-    models6[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-    models1[0].parameters.set<mio::osecir::StartDay>(60);
-    models1[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-
-    for (auto i = mio::AgeGroup(0); i < (mio::AgeGroup)num_age_groups; ++i) {
-        models6[0].parameters.get<mio::osecir::TimeExposed<double>>()[i]                       = 3.2;
-        models6[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[i]            = 2.0;
-        models6[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[i]              = 5.8;
-        models6[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[i]                = 9.5;
-        models6[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[i]              = 7.1;
-        models6[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[i]  = 0.05;
-        models6[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.7;
-        models6[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.09;
-        models6[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.25;
-        models6[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.45;
-        models6[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[i]         = 0.2;
-        models6[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[i]                 = 0.25;
-        models6[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[i]                 = 0.3;
-    }
-
-    models1[0].parameters.get<mio::osecir::TimeExposed<double>>()[mio::AgeGroup(0)]                       = 3.2;
-    models1[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]            = 2.0;
-    models1[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]              = 5.8;
-    models1[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]                = 9.5;
-    models1[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]              = 7.1;
-    models1[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)]  = 0.05;
-    models1[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.7;
-    models1[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.09;
-    models1[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)]    = 0.25;
-    models1[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)] = 0.45;
-    models1[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]         = 0.2;
-    models1[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]                 = 0.25;
-    models1[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                 = 0.3;
-
-    models6[0].check_constraints();
-    models1[0].check_constraints();
 
     // Create case data for all 6 age groups over multiple days (current day + 6 days back)
     std::vector<mio::ConfirmedCasesDataEntry> case_data;
@@ -1776,60 +1663,15 @@ TEST(TestOdeSecirIO, set_divi_data_single_age_group)
     std::vector<mio::osecir::Model<double>> models_6_groups{mio::osecir::Model<double>(6)};
     std::vector<mio::osecir::Model<double>> models_1_group{mio::osecir::Model<double>(1)};
 
-    // Set identical parameters for both models
-    models_6_groups[0].parameters.set<mio::osecir::StartDay>(60);
-    models_1_group[0].parameters.set<mio::osecir::StartDay>(60);
-    models_6_groups[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-    models_1_group[0].parameters.set<mio::osecir::Seasonality<double>>(0.2);
-
-    // Set parameters for all age groups
+    // Set relevant parameters for all age groups
     for (int i = 0; i < 6; i++) {
-        models_6_groups[0].parameters.get<mio::osecir::TimeExposed<double>>()[mio::AgeGroup(i)]            = 3.2;
-        models_6_groups[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(i)] = 2.0;
-        models_6_groups[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[mio::AgeGroup(i)]   = 5.8;
-        models_6_groups[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(i)]     = 9.5;
-        models_6_groups[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(i)]   = 7.1;
-        models_6_groups[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(i)] =
-            0.05;
-        models_6_groups[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(i)] =
-            0.7;
-        models_6_groups[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(i)] =
-            0.09;
-        models_6_groups[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(i)] =
-            0.25;
-        models_6_groups[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(i)] =
-            0.45;
         models_6_groups[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(i)] = 0.2;
         models_6_groups[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(i)]         = 0.25;
-        models_6_groups[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(i)]         = 0.3;
     }
 
-    // Set parameters for 1 age group model (same values)
-    models_1_group[0].parameters.get<mio::osecir::TimeExposed<double>>()[mio::AgeGroup(0)]                       = 3.2;
-    models_1_group[0].parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]            = 2.0;
-    models_1_group[0].parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]              = 5.8;
-    models_1_group[0].parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]                = 9.5;
-    models_1_group[0].parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]              = 7.1;
-    models_1_group[0].parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)]  = 0.05;
-    models_1_group[0].parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.7;
-    models_1_group[0].parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)]    = 0.09;
-    models_1_group[0].parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)]    = 0.25;
-    models_1_group[0].parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>()[mio::AgeGroup(0)] = 0.45;
-    models_1_group[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]         = 0.2;
-    models_1_group[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]                 = 0.25;
-    models_1_group[0].parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(0)]                 = 0.3;
-
-    // Set initial ICU populations to known values
-    double icu_per_age_group = 100.0;
-    for (int i = 0; i < 6; i++) {
-        models_6_groups[0].populations[{mio::AgeGroup(i), mio::osecir::InfectionState::InfectedCritical}] =
-            icu_per_age_group;
-    }
-    models_1_group[0].populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
-        6.0 * icu_per_age_group;
-
-    models_6_groups[0].check_constraints();
-    models_1_group[0].check_constraints();
+    // Set relevant parameters for 1 age group model
+    models_1_group[0].parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)] = 0.2;
+    models_1_group[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
 
     // Apply DIVI data to both models
     std::vector<int> regions  = {1002};

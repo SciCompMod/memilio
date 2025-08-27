@@ -78,8 +78,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
     // allow single scalar scaling that is broadcast to all age groups
     assert(scaling_factor_inf.size() == 1 || scaling_factor_inf.size() == num_age_groups);
 
-    // Broadcast scaling factors to match RKI age groups (6)
-    std::vector<double> scaling_factor_inf_full(num_age_groups, 1.0);
+    // Set scaling factors to match num age groups
+    std::vector<double> scaling_factor_inf_full;
     if (scaling_factor_inf.size() == 1) {
         scaling_factor_inf_full.assign(num_age_groups, scaling_factor_inf[0]);
     }
@@ -160,7 +160,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                     model[node].populations[{AgeGroup(i), InfectionState::Recovered}] = num_rec[node][i];
                 }
             }
-            else if (num_groups == 1) {
+            else {
                 const auto sum_vec = [](const std::vector<double>& v) {
                     return std::accumulate(v.begin(), v.end(), 0.0);
                 };
