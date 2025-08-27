@@ -868,7 +868,7 @@ IOResult<void> export_input_data_county_timeseries(
     std::vector<Model> models, const std::string& results_dir, const std::vector<int>& counties, Date date,
     const std::vector<double>& scaling_factor_inf, const double scaling_factor_icu, const int num_days,
     const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
-    const std::string& vaccination_data_path = "")
+    const std::string& vaccination_data_path = "", bool save_non_aggregated_results = false)
 {
     const auto num_groups = (size_t)models[0].parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_groups);
@@ -912,15 +912,97 @@ IOResult<void> export_input_data_county_timeseries(
             }
         }
     }
-    BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, static_cast<int>(num_groups),
-                                  path_join(results_dir, "Results_rki.h5")));
+    // Aggregate extrapolated_data into compartments MildInfections, Hospitalized, ICU and Dead
+    std::vector<TimeSeries<double>> extrapolated_data_aggregated(
+        models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)4 * num_groups));
 
-    auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
-    BOOST_OUTCOME_TRY(save_result({extrapolated_rki_data_sum[0][0]}, {0}, static_cast<int>(num_groups),
-                                  path_join(results_dir, "Results_rki_sum.h5")));
+    for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
+        for (size_t county = 0; county < counties.size(); county++) {
+            for (size_t age = 0; age < num_groups; age++) {
+
+                auto age_group_offset            = age * (size_t)InfectionState::Count;
+                auto age_group_offset_aggregated = age * 4;
+
+                // Compute number of individuals with mild infections, i.e. individuals in Exposed,
+                // InfectedNoSymptoms and InfectedSymptoms with any type of immunity, both confirmed and not confirmed
+                extrapolated_data_aggregated[county][day]((size_t)0 + age_group_offset_aggregated) =
+                    extrapolated_data[county][day]((size_t)InfectionState::ExposedNaive + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::ExposedPartialImmunity + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::ExposedImprovedImmunity + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedNoSymptomsNaive + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunity +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunity +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedNoSymptomsNaiveConfirmed +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSymptomsNaive + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunity +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunity +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSymptomsNaiveConfirmed +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
+                                                   age_group_offset);
+
+                // Compute number of all individuals in InfectionState InfectedSevere with any type of immunity
+                extrapolated_data_aggregated[county][day]((size_t)1 + age_group_offset_aggregated) =
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSevereNaive + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSeverePartialImmunity +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedSevereImprovedImmunity +
+                                                   age_group_offset);
+
+                // Compute number of all individuals in InfectedState InfectedCritical with any type of immunity
+                extrapolated_data_aggregated[county][day]((size_t)2 + age_group_offset_aggregated) =
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedCriticalNaive + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedCriticalPartialImmunity +
+                                                   age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::InfectedCriticalImprovedImmunity +
+                                                   age_group_offset);
+
+                // Compute number of all individuals in InfectedState Dead with any type of immunity
+                extrapolated_data_aggregated[county][day]((size_t)3 + age_group_offset_aggregated) =
+                    extrapolated_data[county][day]((size_t)InfectionState::DeadNaive + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::DeadPartialImmunity + age_group_offset) +
+                    extrapolated_data[county][day]((size_t)InfectionState::DeadImprovedImmunity + age_group_offset);
+            }
+        }
+    }
+
+    BOOST_OUTCOME_TRY(save_result(extrapolated_data_aggregated, counties, static_cast<int>(num_groups),
+                                  path_join(results_dir, "Results.h5")));
+
+    auto extrapolated_data_sum_aggregated =
+        sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data_aggregated});
+    BOOST_OUTCOME_TRY(save_result({extrapolated_data_sum_aggregated[0][0]}, {0}, static_cast<int>(num_groups),
+                                  path_join(results_dir, "Results_sum.h5")));
+
+    if (save_non_aggregated_results) {
+        // Create directory where non-aggregated results will be saved.
+        auto results_dir_non_agg = path_join(results_dir, "non_aggregated_results");
+        BOOST_OUTCOME_TRY(create_directory(results_dir_non_agg));
+
+        // Save non-aggregated extrapolated_data.
+        BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, static_cast<int>(num_groups),
+                                      path_join(results_dir_non_agg, "Results.h5")));
+
+        // Take sum over all nodes for extrapolated_data and save this.
+        auto extrapolated_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
+        BOOST_OUTCOME_TRY(save_result({extrapolated_data_sum[0][0]}, {0}, static_cast<int>(num_groups),
+                                      path_join(results_dir_non_agg, "Results_sum.h5")));
+    }
 
     return success();
 }
+
 #else
 template <class Model>
 IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std::string&, const std::vector<int>&,

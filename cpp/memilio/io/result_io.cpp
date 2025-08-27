@@ -221,6 +221,79 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
     return success(results);
 }
 
+std::vector<TimeSeries<double>> aggregate_result(std::vector<TimeSeries<double>> results,
+                                                 const std::vector<int>& county_ids, size_t num_days, int num_groups)
+{
+    // Aggregate results into compartments MildInfections, Hospitalized,ICU and Dead
+    std::vector<TimeSeries<double>> results_aggregated(county_ids.size(),
+                                                       TimeSeries<double>::zero(num_days + 1, (size_t)4 * num_groups));
+
+    for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
+        for (size_t county = 0; county < county_ids.size(); county++) {
+            for (size_t age = 0; age < (size_t)num_groups; age++) {
+
+                auto age_group_offset            = age * (size_t)osecirvvs::InfectionState::Count;
+                auto age_group_offset_aggregated = age * 4;
+
+                // Compute number of individuals with mild infections, i.e. individuals in Exposed,
+                // InfectedNoSymptoms and InfectedSymptoms with any type of immunity, both confirmed and not confirmed
+                results_aggregated[county][day]((size_t)0 + age_group_offset_aggregated) =
+                    results[county][day]((size_t)osecirvvs::InfectionState::ExposedNaive + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::ExposedPartialImmunity + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::ExposedImprovedImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedNoSymptomsNaive +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedNoSymptomsNaiveConfirmed +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunityConfirmed +
+                                         age_group_offset) +
+                    results[county][day](
+                        (size_t)osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed +
+                        age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSymptomsNaive + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSymptomsPartialImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSymptomsNaiveConfirmed +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSymptomsPartialImmunityConfirmed +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSymptomsImprovedImmunityConfirmed +
+                                         age_group_offset);
+
+                // Compute number of all individuals in InfectionState InfectedSevere with any type of immunity
+                results_aggregated[county][day]((size_t)1 + age_group_offset_aggregated) =
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSevereNaive + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSeverePartialImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedSevereImprovedImmunity +
+                                         age_group_offset);
+
+                // Compute number of all individuals in InfectedState InfectedCritical with any type of immunity
+                results_aggregated[county][day]((size_t)2 + age_group_offset_aggregated) =
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedCriticalNaive + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedCriticalPartialImmunity +
+                                         age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::InfectedCriticalImprovedImmunity +
+                                         age_group_offset);
+
+                // Compute number of all individuals in InfectedState Dead with any type of immunity
+                results_aggregated[county][day]((size_t)3 + age_group_offset_aggregated) =
+                    results[county][day]((size_t)osecirvvs::InfectionState::DeadNaive + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::DeadPartialImmunity + age_group_offset) +
+                    results[county][day]((size_t)osecirvvs::InfectionState::DeadImprovedImmunity + age_group_offset);
+            }
+        }
+    }
+    return results_aggregated;
+}
+
 } // namespace mio
 
 #endif //MEMILIO_HAS_HDF5

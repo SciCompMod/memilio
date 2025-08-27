@@ -9,6 +9,7 @@ option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
+option(MEMILIO_BUILD_DATA_TRANSFER "Build memilio files for data transfer." ON)
 option(MEMILIO_BUILD_SBML_MODELS "Build the SBML importer and imported models." ON)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
@@ -202,6 +203,10 @@ endif()
 
 if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
+endif()
+
+if(MEMILIO_BUILD_DATA_TRANSFER)
+    add_subdirectory(data_transfer)
 endif()
 
 if(MEMILIO_BUILD_SBML_MODELS)
