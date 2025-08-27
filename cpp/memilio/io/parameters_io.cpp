@@ -69,14 +69,17 @@ read_population_data_spain(const std::vector<PopulationDataEntrySpain>& populati
     std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(1, 0.0));
 
     for (auto&& provincia_entry : population_data) {
-        auto it = std::find_if(vregion.begin(), vregion.end(), [&provincia_entry](auto r) {
-            return r == 0 || (provincia_entry.provincia_id && regions::ProvinciaId(r) == provincia_entry.provincia_id);
-        });
-        if (it != vregion.end()) {
-            auto region_idx      = size_t(it - vregion.begin());
-            auto& num_population = vnum_population[region_idx];
-            for (size_t age = 0; age < num_population.size(); age++) {
-                num_population[age] += provincia_entry.population[AgeGroup(age)];
+        if (provincia_entry.provincia_id) {
+            for (size_t idx = 0; idx < vregion.size(); ++idx) {
+                if (vregion[idx] == provincia_entry.provincia_id->get()) {
+                    vnum_population[idx][0] += provincia_entry.population[AgeGroup(0)];
+                }
+            }
+        }
+        // id 0 means the whole country
+        for (size_t idx = 0; idx < vregion.size(); ++idx) {
+            if (vregion[idx] == 0) {
+                vnum_population[idx][0] += provincia_entry.population[AgeGroup(0)];
             }
         }
     }
