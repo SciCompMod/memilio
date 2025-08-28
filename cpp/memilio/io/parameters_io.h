@@ -136,6 +136,24 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
 IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                 const std::vector<int>& vregion);
 
+/**
+ * @brief Reads (Spain) population data from a vector of Spain population data entries.
+ * Uses provincias IDs and a single aggregated age group.
+ * @param[in] population_data Vector of Spain population data entries.
+ * @param[in] vregion Vector of keys representing the provincias (or country = 0) of interest.
+ */
+IOResult<std::vector<std::vector<double>>>
+read_population_data_spain(const std::vector<PopulationDataEntrySpain>& population_data,
+                           const std::vector<int>& vregion);
+
+/**
+ * @brief Reads (Spain) population data from census data file with provincias.
+ * @param[in] path Path to the provincias population data file.
+ * @param[in] vregion Vector of keys representing the provincias (or country = 0) of interest.
+ */
+IOResult<std::vector<std::vector<double>>> read_population_data_spain(const std::string& path,
+                                                                      const std::vector<int>& vregion);
+
 } // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP

@@ -55,8 +55,9 @@ def read_population_data(ref_year):
             req = requests.get(download_url)
             df_pop_raw = pd.read_csv(io.StringIO(req.text), sep=';', header=5)
         except pd.errors.ParserError:
-            gd.default_print('Warning', 'Data for year '+str(ref_year) +
-                             ' is not available; downloading newest data instead.')
+            gd.default_print(
+                'Warning', 'Data for year ' + str(ref_year) +
+                ' is not available; downloading newest data instead.')
             ref_year = None
     if ref_year is None:
         download_url = 'https://www.regionalstatistik.de/genesis/online?operation=download&code=12411-02-03-4&option=csv'
@@ -66,7 +67,9 @@ def read_population_data(ref_year):
     return df_pop_raw, ref_year
 
 
-def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_format: str, merge_eisenach: bool, ref_year):
+def export_population_dataframe(
+        df_pop: pd.DataFrame, directory: str, file_format: str,
+        merge_eisenach: bool, ref_year):
     """ Writes population dataframe into directory with new column names and age groups
 
     :param df_pop: Population data DataFrame to be exported pd.DataFrame
@@ -140,6 +143,10 @@ def export_population_dataframe(df_pop: pd.DataFrame, directory: str, file_forma
         columns=dd.EngEng["idCounty"])
 
     gd.write_dataframe(df_pop_export, directory, filename, file_format)
+    gd.write_dataframe(aggregate_to_state_level(df_pop_export),
+                       directory, filename + '_states', file_format)
+    gd.write_dataframe(aggregate_to_country_level(df_pop_export),
+                       directory, filename + '_germany', file_format)
 
     return df_pop_export
 
@@ -190,8 +197,8 @@ def assign_population_data(df_pop_raw, counties, age_cols, idCounty_idx):
             # direct assignment of population data found
             df_pop.loc[df_pop[dd.EngEng['idCounty']] == df_pop_raw.loc
                        [start_idx, dd.EngEng['idCounty']],
-                       age_cols] = df_pop_raw.loc[start_idx: start_idx + num_age_groups - 1, dd.EngEng
-                                                  ['number']].values.astype(int)
+                       age_cols] = df_pop_raw.loc[start_idx: start_idx +
+                                                  num_age_groups - 1, dd.EngEng['number']].values.astype(int)
         # Berlin and Hamburg
         elif county_id + '000' in counties[:, 1]:
             # direct assignment of population data found
@@ -262,7 +269,8 @@ def fetch_population_data(read_data: bool = dd.defaultDict['read_data'],
 
     if read_data == True:
         gd.default_print(
-            'Warning', 'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
+            'Warning',
+            'Read_data is not supportet for getPopulationData.py. Setting read_data = False')
         read_data = False
 
     directory = os.path.join(out_folder, 'Germany', 'pydata')
@@ -442,6 +450,28 @@ def get_population_data(read_data: bool = dd.defaultDict['read_data'],
         ref_year=ref_year
     )
     return df_pop_export
+
+
+def aggregate_to_state_level(df_pop: pd.DataFrame):
+
+    countyIDtostateID = geoger.get_countyid_to_stateid_map()
+
+    df_pop['ID_State'] = df_pop[dd.EngEng['idCounty']].map(countyIDtostateID)
+    df_pop = df_pop.drop(
+        columns='ID_County').groupby(
+        'ID_State', as_index=True).sum()
+    df_pop['ID_State'] = df_pop.index
+    return df_pop
+
+
+def aggregate_to_country_level(df_pop: pd.DataFrame):
+
+    df_pop['ID_Country'] = 0
+    df_pop = df_pop.drop(
+        columns=['ID_County', 'ID_State']).groupby(
+        'ID_Country', as_index=True).sum()
+    df_pop['ID_Country'] = df_pop.index
+    return df_pop
 
 
 def main():

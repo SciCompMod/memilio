@@ -77,6 +77,9 @@ public:
     double num_recovered;
     double num_deaths;
     Date date;
+    boost::optional<regions::StateId> state_id;
+    boost::optional<regions::CountyId> county_id;
+    boost::optional<regions::DistrictId> district_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
@@ -86,12 +89,15 @@ public:
         auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
         auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
+        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
+        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
+        auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d) {
-                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d};
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& sid, auto&& cid, auto&& did) {
+                return ConfirmedCasesNoAgeEntry{nc, nr, nd, d, sid, cid, did};
             },
-            num_confirmed, num_recovered, num_deaths, date);
+            num_confirmed, num_recovered, num_deaths, date, state_id, county_id, district_id);
     }
 };
 
@@ -142,29 +148,42 @@ public:
     {
         auto obj           = io.expect_object("ConfirmedCasesDataEntry");
         auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
-        auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
-        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
+        auto num_recovered = obj.expect_optional("Recovered", Tag<double>{});
+        auto num_deaths    = obj.expect_optional("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
+        auto age_group_str = obj.expect_optional("Age_RKI", Tag<std::string>{});
         auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
         auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid,
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str_opt, auto&& sid, auto&& cid,
                auto&& did) -> IOResult<ConfirmedCasesDataEntry> {
-                auto a  = AgeGroup(0);
-                auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
-                if (it != age_group_names.end()) {
-                    a = AgeGroup(size_t(it - age_group_names.begin()));
-                }
-                else if (a_str == "unknown") {
-                    a = AgeGroup(age_group_names.size());
+                auto a = AgeGroup(0); // default if Age_RKI missing
+
+                // if no age group is given, use "total" as name
+                if (!a_str_opt) {
+                    if (age_group_names.size() != 1) {
+                        age_group_names.clear();
+                        age_group_names.push_back("total");
+                    }
                 }
                 else {
-                    return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
+                    const auto& a_str = *a_str_opt;
+                    auto it           = std::find(age_group_names.begin(), age_group_names.end(), a_str);
+                    if (it != age_group_names.end()) {
+                        a = AgeGroup(size_t(it - age_group_names.begin()));
+                    }
+                    else if (a_str == "unknown") {
+                        a = AgeGroup(age_group_names.size());
+                    }
+                    else {
+                        return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
+                    }
                 }
-                return success(ConfirmedCasesDataEntry{nc, nr, nd, d, a, sid, cid, did});
+                double nrec  = nr ? *nr : 0.0;
+                double ndead = nd ? *nd : 0.0;
+                return success(ConfirmedCasesDataEntry{nc, nrec, ndead, d, a, sid, cid, did});
             },
             num_confirmed, num_recovered, num_deaths, date, age_group_str, state_id, county_id, district_id);
     }
@@ -331,6 +350,35 @@ public:
     }
 };
 
+class PopulationDataEntrySpain
+{
+public:
+    static std::vector<const char*> age_group_names;
+
+    CustomIndexArray<double, AgeGroup> population;
+    boost::optional<regions::ProvinciaId> provincia_id;
+
+    template <class IoContext>
+    static IOResult<PopulationDataEntrySpain> deserialize(IoContext& io)
+    {
+        auto obj       = io.expect_object("PopulationDataEntrySpain");
+        auto provincia = obj.expect_optional("ID_Provincia", Tag<regions::ProvinciaId>{});
+        std::vector<IOResult<double>> age_groups;
+        age_groups.reserve(age_group_names.size());
+        std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
+                       [&obj](auto&& age_name) {
+                           return obj.expect_element(age_name, Tag<double>{});
+                       });
+        return apply(
+            io,
+            [](auto&& ag, auto&& pid) {
+                return PopulationDataEntrySpain{
+                    CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), pid};
+            },
+            details::unpack_all(age_groups), provincia);
+    }
+};
+
 namespace details
 {
 inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
@@ -436,6 +484,19 @@ inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(co
 }
 
 /**
+ * Deserialize population data from a JSON value.
+ * Age groups are interpolated to RKI age groups.
+ * @param jsvalue JSON value that contains the population data.
+ * @param rki_age_groups Specifies whether population data should be interpolated to rki age groups.
+ * @return list of population data.
+ */
+inline IOResult<std::vector<PopulationDataEntrySpain>> deserialize_population_data_spain(const Json::Value& jsvalue)
+{
+    BOOST_OUTCOME_TRY(auto&& population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntrySpain>>{}));
+    return success(population_data);
+}
+
+/**
  * Deserialize population data from a JSON file.
  * Age groups are interpolated to RKI age groups.
  * @param filename JSON file that contains the population data.
@@ -446,6 +507,18 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 {
     BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
     return deserialize_population_data(jsvalue, rki_age_group);
+}
+
+/**
+ * Deserialize population data from a JSON file.
+ * Age groups are interpolated to RKI age groups.
+ * @param filename JSON file that contains the population data.
+ * @return list of population data.
+ */
+inline IOResult<std::vector<PopulationDataEntrySpain>> read_population_data_spain(const std::string& filename)
+{
+    BOOST_OUTCOME_TRY(auto&& jsvalue, read_json(filename));
+    return deserialize_population_data_spain(jsvalue);
 }
 
 /**
@@ -474,6 +547,8 @@ IOResult<void> set_vaccination_data_age_group_names(std::vector<const char*> nam
  * @return list of node ids.
  */
 IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups = true);
+IOResult<std::vector<int>> get_country_id(const std::string& /*path*/, bool /*is_node_for_county*/,
+                                          bool /*rki_age_groups*/ = true);
 
 /**
  * Represents an entry in a vaccination data file.
