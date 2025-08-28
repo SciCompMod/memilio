@@ -279,9 +279,20 @@ template <class... Types>
 constexpr bool has_duplicates_v = has_duplicates<Types...>::value;
 
 /** 
- * Detects whether a type is an automatic differentiation (AD) type. 
+ * @brief Detects whether a type is an automatic differentiation (AD) type. 
+ * Intermediate result types from AD operations are not considered to be an AD type, as they use their own classes.
  * @{ 
- */ 
+ */
+namespace ad
+{
+namespace internal
+{
+// Forward declaration of the AD type template
+template <class Value, class Tape>
+class active_type;
+} // namespace internal
+} // namespace ad
+
 template <class T, class = void>
 struct is_ad_type : public std::false_type {
 };
@@ -292,8 +303,7 @@ struct is_ad_type<ad::internal::active_type<Value, Tape>> : public std::true_typ
 
 template <class T>
 constexpr bool is_ad_type_v = is_ad_type<T>::value;
-/**@}*/ 
-
+/**@}*/
 
 } // namespace mio
 
