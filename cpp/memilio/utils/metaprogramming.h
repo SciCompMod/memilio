@@ -23,15 +23,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace ad
-{
-namespace internal
-{
-// Forward declaration of the AD type template
-template <class Value, class Tape>
-class active_type;
-} // namespace internal
-} // namespace ad
+#include "ad/ad.hpp"
 
 namespace mio
 {
