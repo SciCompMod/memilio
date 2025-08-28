@@ -36,8 +36,7 @@ namespace mio
  * @return Returns an error if the sum was negative. 
  */
 template <typename FP>
-IOResult<void> map_to_nonnegative(Eigen::Ref<Eigen::VectorX<FP>> x,
-                                  const FP tolerance = Limits<ScalarType>::zero_tolerance())
+IOResult<void> map_to_nonnegative(Eigen::Ref<Eigen::VectorX<FP>> x, const FP tolerance = Limits<FP>::zero_tolerance())
 {
     assert(tolerance > 0);
     FP positive{0.0}, negative{0.0};

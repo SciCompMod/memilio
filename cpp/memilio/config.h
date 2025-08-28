@@ -83,7 +83,7 @@ struct Limits<ad::internal::active_type<FP, DataHandler>> {
     /// @brief Returns the limit under which an AD value may be rounded down to zero.
     static constexpr FP zero_tolerance()
     {
-        return Limits<ScalarType>::zero_tolerance();
+        return Limits<FP>::zero_tolerance();
     }
 };
 /** @} */
