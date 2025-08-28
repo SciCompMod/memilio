@@ -4,11 +4,14 @@ build:
   os: "ubuntu-lts-latest"
   apt_packages: 
     - libmagic1
+    - cmake
+    - ninja-build
   tools:
     python: "3.10"
 
 python:
   install:
+    - requirements: docs/requirements-build.txt
     - requirements: docs/requirements.txt
 
 sphinx:
