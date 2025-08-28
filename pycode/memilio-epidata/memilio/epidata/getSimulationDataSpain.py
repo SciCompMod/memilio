@@ -3,7 +3,10 @@ import os
 import io
 import requests
 
+from pyspainmobility import Mobility, Zones
 import defaultDict as dd
+
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 def fetch_population_data():
@@ -22,8 +25,9 @@ def fetch_population_data():
     return df[['ID_Provincia', 'Population']]
 
 
-def remove_islands(df):
-    df = df[~df['ID_Provincia'].isin([51, 52, 8, 35, 38])]
+def remove_islands(df, column_labels=['ID_Provincia']):
+    for label in column_labels:
+        df = df[~df[label].isin([51, 52, 8, 35, 38])]
     return df
 
 
@@ -100,12 +104,67 @@ def get_case_data():
     return df
 
 
+def download_mobility_data(data_dir, start_date, end_date, level):
+    mobility_data = Mobility(version=2, zones=level,
+                             start_date=start_date, end_date=end_date, output_directory=data_dir)
+    mobility_data.get_od_data()
+
+
+def preprocess_mobility_data(df, data_dir):
+    df.drop(columns=['hour', 'trips_total_length_km'], inplace=True)
+    if not os.path.exists(os.path.join(data_dir, 'poblacion.csv')):
+        download_url = 'https://movilidad-opendata.mitma.es/zonificacion/poblacion.csv'
+        req = requests.get(download_url)
+        with open(os.path.join(data_dir, 'poblacion.csv'), 'wb') as f:
+            f.write(req.content)
+
+    zonification_df = pd.read_csv(os.path.join(data_dir, 'poblacion.csv'), sep='|')[
+        ['municipio', 'provincia', 'poblacion']]
+    poblacion = zonification_df.groupby('provincia')[
+        'poblacion'].sum()
+    zonification_df.drop_duplicates(
+        subset=['municipio', 'provincia'], inplace=True)
+    municipio_to_provincia = dict(
+        zip(zonification_df['municipio'], zonification_df['provincia']))
+    df['id_origin'] = df['id_origin'].map(municipio_to_provincia)
+    df['id_destination'] = df['id_destination'].map(municipio_to_provincia)
+
+    df.query('id_origin != id_destination', inplace=True)
+    df = df.groupby(['date', 'id_origin', 'id_destination'],
+                    as_index=False)['n_trips'].sum()
+
+    df['n_trips'] = df.apply(
+        lambda row: row['n_trips'] / poblacion[row['id_origin']], axis=1)
+
+    df = df.groupby(['id_origin', 'id_destination'],
+                    as_index=False)['n_trips'].mean()
+
+    df = remove_islands(df, ['id_origin', 'id_destination'])
+
+    return df
+
+
+def get_mobility_data(data_dir, start_date='2022-08-01', end_date='2022-08-31', level='municipios'):
+    filename = f'Viajes_{level}_{start_date}_{end_date}_v2.parquet'
+    if not os.path.exists(os.path.join(data_dir, filename)):
+        print(
+            f"File {os.path.exists(os.path.join(data_dir, filename))} does not exist. Downloading mobility data...")
+        download_mobility_data(data_dir, start_date, end_date, level)
+
+    df = pd.read_parquet(os.path.join(data_dir, filename))
+    df = preprocess_mobility_data(df, data_dir)
+
+    return df
+
+
 if __name__ == "__main__":
 
     data_dir = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "../../../../data/Spain")
     pydata_dir = os.path.join(data_dir, 'pydata')
     os.makedirs(pydata_dir, exist_ok=True)
+    mobility_dir = os.path.join(data_dir, 'mobility')
+    os.makedirs(mobility_dir, exist_ok=True)
 
     df = get_population_data()
     df.to_json(os.path.join(
@@ -132,3 +191,10 @@ if __name__ == "__main__":
         df['ID_County'] = df['ID_County'].astype(int)
     df.to_json(os.path.join(
         pydata_dir, 'cases_all_pronvincias.json'), orient='records')
+
+    df = get_mobility_data(mobility_dir)
+    matrix = df.pivot(index='id_origin',
+                      columns='id_destination', values='n_trips').fillna(0)
+
+    gd.write_dataframe(matrix, data_dir, 'commuter_mobility', 'txt', {
+                       'sep': ' ', 'index': False, 'header': False})
