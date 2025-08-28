@@ -1,4 +1,4 @@
-How to: Common patterns and guidlines
+How to: Common patterns and guidelines
 ==========================================
 
 We want to look at some common patterns developers will encounter when extending the ``memilio.simulation`` package and explain how to handle them. 

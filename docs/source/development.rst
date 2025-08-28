@@ -230,7 +230,7 @@ If using autopep8, e.g., of the Python plugin for Visual Studio Code or VSCodium
 
 .. code::
 
-    "python.formatting.autopep8Args": ["--max-line-length", "79", "--experimental"]
+    "autopep8.args": ["--max-line-length", "79", "--experimental"]
 
 to your corresponding ``settings.json``.
 
