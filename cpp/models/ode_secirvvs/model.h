@@ -245,7 +245,7 @@ public:
                         pop[ISyNCj] + pop[SPIj] + pop[EPIj] + pop[INSPIj] + pop[ISyPIj] + pop[ISevPIj] + pop[ICrPIj] +
                         pop[INSPICj] + pop[ISyPICj] + pop[SIIj] + pop[EIIj] + pop[INSIIj] + pop[ISyIIj] + pop[ISevIIj] +
                         pop[ICrIIj] + pop[INSIICj] + pop[ISyIICj];
-                const FP divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
 
                 FP ext_inf_force_dummy = cont_freq_eff * divNj *
                                          params.template get<TransmissionProbabilityOnContact<FP>>()[(AgeGroup)i] *
