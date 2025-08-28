@@ -98,9 +98,11 @@ def preprocess_case_data(df):
 
 
 def get_case_data():
-    df = fetch_case_data()
-    df = preprocess_case_data(df)
-
+    df_raw = fetch_case_data()
+    df = preprocess_case_data(df_raw)
+    df = df.groupby(['ID_County', 'Date'], as_index=False)['Confirmed'].sum()
+    df = df.sort_values(['ID_County', 'Date'])
+    df['Confirmed'] = df.groupby('ID_County')['Confirmed'].cumsum()
     return df
 
 
