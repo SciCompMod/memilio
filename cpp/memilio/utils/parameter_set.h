@@ -24,6 +24,7 @@
 
 #include <tuple>
 #include <utility>
+#include <type_traits>
 
 namespace mio
 {
