@@ -149,17 +149,11 @@ public:
         NextGenMatrix.noalias() = F * V;
 
         // Compute the largest eigenvalue in absolute value
-        Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
-
+        Eigen::ComplexEigenSolver<Eigen::MatrixX<ScalarType>> ces;
         ces.compute(NextGenMatrix);
-        const Eigen::VectorXcd eigvals_complex = ces.eigenvalues();
+        FP rho = ces.eigenvalues().cwiseAbs().maxCoeff();
 
-        Eigen::VectorXd eigvals_abs(eigvals_complex.size());
-        for (int i = 0; i < eigvals_complex.size(); ++i) {
-            eigvals_abs[i] = std::abs(eigvals_complex[i]);
-        }
-
-        return mio::success(eigvals_abs.maxCoeff());
+        return mio::success(rho);
     }
 
     /**

@@ -32,6 +32,7 @@
 #include "memilio/math/interpolation.h"
 
 #include <numbers>
+#include <complex>
 
 namespace mio
 {
@@ -589,21 +590,15 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
 
     V = V.inverse();
 
-    Eigen::MatrixXd NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
+    Eigen::MatrixX<ScalarType> NextGenMatrix(num_infected_compartments * num_groups, 5 * num_groups);
     NextGenMatrix.noalias() = F * V;
 
     // Compute the largest eigenvalue in absolute value
-    Eigen::ComplexEigenSolver<Eigen::MatrixXd> ces;
-
+    Eigen::ComplexEigenSolver<Eigen::MatrixX<ScalarType>> ces;
     ces.compute(NextGenMatrix);
-    const Eigen::VectorXcd eigvals_complex = ces.eigenvalues();
+    FP rho = ces.eigenvalues().cwiseAbs().maxCoeff();
 
-    Eigen::VectorXd eigvals_abs(eigvals_complex.size());
-    for (int i = 0; i < eigvals_complex.size(); ++i) {
-        eigvals_abs[i] = std::abs(eigvals_complex[i]);
-    }
-
-    return mio::success(eigvals_abs.maxCoeff());
+    return mio::success(rho);
 }
 
 /**
