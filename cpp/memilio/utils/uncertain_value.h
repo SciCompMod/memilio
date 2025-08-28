@@ -266,7 +266,7 @@ const FP& format_as(const UncertainValue<FP>& uv)
 
 // gtest printer
 // TODO: should be extended when UncertainValue gets operator== that compares distributions as well
-template <typename FP = double>
+template <typename FP>
 inline void PrintTo(const UncertainValue<FP>& uv, std::ostream* os)
 {
     (*os) << uv.value();
