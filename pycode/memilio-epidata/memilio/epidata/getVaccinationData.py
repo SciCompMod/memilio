@@ -1200,7 +1200,7 @@ def write_vaccination_data(dict_data: dict,
         filename = gd.append_filename(filename, impute_dates, moving_average)
         gd.write_dataframe(df_data_ageinf_ger_cs,
                            directory, filename, file_format)
-        
+
         return None
     else:
         return (df_data_agevacc_county_cs, df_data_agevacc_state_cs, df_data_agevacc_ger_cs,
