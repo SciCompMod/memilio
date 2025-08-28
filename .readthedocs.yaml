@@ -11,6 +11,7 @@ build:
 
 python:
   install:
+    # Split requirements to control the installation order. This ensures that build dependencies are installed first.
     - requirements: docs/requirements-build.txt
     - requirements: docs/requirements.txt
 
