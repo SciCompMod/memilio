@@ -203,9 +203,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
         .def("apply_constraints", &mio::osecir::Parameters<double>::apply_constraints)
         .def_property(
             "end_commuter_detection",
-            [](const mio::osecir::Parameters<double>& self) -> auto {
-                return self.get_end_commuter_detection();
-            },
+            [](const mio::osecir::Parameters<double>& self) -> auto { return self.get_end_commuter_detection(); },
             [](mio::osecir::Parameters<double>& self, double p) {
                 self.get_end_commuter_detection() = p;
             });
@@ -345,6 +343,16 @@ PYBIND11_MODULE(_simulation_osecir, m)
            int num_days = 0, bool export_time_series = false) {
             auto result = mio::osecir::read_input_data_county<mio::osecir::Model<double>>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
+            return pymio::check_and_throw(result);
+        },
+        py::return_value_policy::move);
+    m.def(
+        "read_input_data_provincias",
+        [](std::vector<mio::osecir::Model<double>>& model, mio::Date date, const std::vector<int>& provincias,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
+           int num_days = 0, bool export_time_series = false) {
+            auto result = mio::osecir::read_input_data_provincias<mio::osecir::Model<double>>(
+                model, date, provincias, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
