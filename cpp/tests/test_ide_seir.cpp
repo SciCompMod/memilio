@@ -38,7 +38,7 @@ TEST(ModelTestIdeSeirMin, simulateDefault)
         init.add_time_point(init.get_last_time() + dt, Vec::Constant(1, 10.));
     }
 
-    mio::iseir::Model<double> model(std::move(init), dt, 10);
+    mio::iseir::Model model(std::move(init), dt, 10);
     model.simulate(tmax);
     auto result = model.calculate_EIR();
 
@@ -63,16 +63,15 @@ protected:
                                   Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
         }
 
-        model = new mio::iseir::Model<double>(std::move(result), dt, N);
+        model = new mio::iseir::Model(std::move(result), dt, N);
 
-        model->parameters.set<mio::iseir::LatencyTime<double>>(3.3);
-        model->parameters.set<mio::iseir::InfectiousTime<double>>(8.2);
-        model->parameters.set<mio::iseir::TransmissionRisk<double>>(0.015);
+        model->parameters.set<mio::iseir::LatencyTime>(3.3);
+        model->parameters.set<mio::iseir::InfectiousTime>(8.2);
+        model->parameters.set<mio::iseir::TransmissionRisk>(0.015);
         mio::ContactMatrixGroup<double> contact_matrix = mio::ContactMatrixGroup<double>(1, 1);
         contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixX<double>::Constant(1, 1, 10.));
         contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(10.));
-        model->parameters.get<mio::iseir::ContactFrequency<double>>() =
-            mio::UncertainContactMatrix<double>(contact_matrix);
+        model->parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix<double>(contact_matrix);
     }
 
     virtual void TearDown()
@@ -81,7 +80,7 @@ protected:
     }
 
 public:
-    mio::iseir::Model<double>* model = nullptr;
+    mio::iseir::Model* model = nullptr;
 };
 
 TEST_F(ModelTestIdeSeir, compareWithPreviousRun)

@@ -49,18 +49,17 @@ int main()
     }
 
     // Initialize model.
-    mio::iseir::Model<ScalarType> model(std::move(init), dt, N);
+    mio::iseir::Model model(std::move(init), dt, N);
 
     // Set working parameters.
-    model.parameters.set<mio::iseir::LatencyTime<ScalarType>>(3.3);
-    model.parameters.set<mio::iseir::InfectiousTime<ScalarType>>(8.2);
-    model.parameters.set<mio::iseir::TransmissionRisk<ScalarType>>(0.015);
+    model.parameters.set<mio::iseir::LatencyTime>(3.3);
+    model.parameters.set<mio::iseir::InfectiousTime>(8.2);
+    model.parameters.set<mio::iseir::TransmissionRisk>(0.015);
     mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, 1);
     contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10.));
     // Add damping.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(10.));
-    model.parameters.get<mio::iseir::ContactFrequency<ScalarType>>() =
-        mio::UncertainContactMatrix<ScalarType>(contact_matrix);
+    model.parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 
     // Carry out simulation.
     model.simulate(tmax);

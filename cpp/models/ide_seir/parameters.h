@@ -39,9 +39,8 @@ namespace iseir
  * Latency time is the average time from infection to the onset of infectivity used in the model.
  * Latency time is measured in days.
  */
-template <typename FP>
 struct LatencyTime {
-    using Type = FP;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
         return Type(3.3);
@@ -54,9 +53,8 @@ struct LatencyTime {
  * Infectious time is the average time from onset of infectivity to recovery used in the model.
  * Infectious time is measured in days.
  */
-template <typename FP>
 struct InfectiousTime {
-    using Type = FP;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
         return Type(8.2);
@@ -69,9 +67,8 @@ struct InfectiousTime {
  * The transmission risk is the average risk to get infected in the event of a contact,
  * given that the contact takes place between a susceptible and an infected person.
  */
-template <typename FP>
 struct TransmissionRisk {
-    using Type = FP;
+    using Type = ScalarType;
     static constexpr Type get_default()
     {
         return Type(0.1);
@@ -85,20 +82,18 @@ struct TransmissionRisk {
  * We use the type UncertainContactMatrix, because of the Randomness in this variable.
  * Via this parameter, dampings can be included to simulate non-pharmaceutical interventions.
  */
-template <typename FP>
 struct ContactFrequency {
-    using Type = UncertainContactMatrix<FP>;
+    using Type = UncertainContactMatrix<ScalarType>;
     static Type get_default()
     {
-        ContactMatrixGroup<FP> contact_matrix = ContactMatrixGroup<FP>(1, 1);
-        contact_matrix[0]                     = mio::ContactMatrix<FP>(Eigen::MatrixX<FP>::Constant(1, 1, 10.));
+        ContactMatrixGroup<ScalarType> contact_matrix = ContactMatrixGroup<ScalarType>(1, 1);
+        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10.));
         return Type(contact_matrix);
     }
 };
 
 // Define Parameterset for IDE SEIR model.
-template <typename FP>
-using ParametersBase = ParameterSet<TransmissionRisk<FP>, LatencyTime<FP>, InfectiousTime<FP>, ContactFrequency<FP>>;
+using ParametersBase = ParameterSet<TransmissionRisk, LatencyTime, InfectiousTime, ContactFrequency>;
 
 } // namespace iseir
 } // namespace mio

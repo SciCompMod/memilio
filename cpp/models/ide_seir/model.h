@@ -35,13 +35,10 @@ namespace mio
 {
 namespace iseir
 {
-template <typename FP>
 class Model
 {
-    using Pa  = ParametersBase<FP>;
-    using Vec = Eigen::VectorX<FP>;
-
-    // using Vec = TimeSeries<FP>::VectorX<FP>;
+    using Pa  = ParametersBase;
+    using Vec = Eigen::VectorX<ScalarType>;
 
 public:
     /**
@@ -57,10 +54,10 @@ public:
         * @param[in] dt_init The size of the time step used for numerical simulation.
         * @param[in] N_init The population of the considered region.
         */
-    Model(TimeSeries<FP>&& init, FP dt_init, int N_init, const Pa& Parameterset_init = Pa())
+    Model(TimeSeries<ScalarType>&& init, ScalarType dt_init, int N_init, const Pa& Parameterset_init = Pa())
         : parameters{Parameterset_init}
         , m_result{std::move(init)}
-        , m_result_SEIR{TimeSeries<FP>(4)}
+        , m_result_SEIR{TimeSeries<ScalarType>(4)}
         , m_dt{dt_init}
         , m_N{N_init}
     {
@@ -77,14 +74,11 @@ public:
         * @return The result of the simulation, stored in a TimeSeries with simulation time and
         *       associated number of susceptibles.
         */
-    TimeSeries<FP> const& simulate(int t_max)
+    TimeSeries<ScalarType> const& simulate(int t_max)
     {
-        using std::ceil;
-        using std::floor;
-
-        m_l = (int)floor(parameters.template get<LatencyTime<FP>>() / m_dt);
-        m_k = (int)ceil((parameters.template get<InfectiousTime<FP>>() + parameters.template get<LatencyTime<FP>>()) /
-                        m_dt);
+        m_l = (int)std::floor(parameters.template get<LatencyTime>() / m_dt);
+        m_k =
+            (int)std::ceil((parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>()) / m_dt);
         if (m_result.get_time(0) > -(m_k - 1) * m_dt) {
             log_warning("Constraint check: Initial data starts later than necessary. The simulation may be distorted. "
                         "Start the data at time {:.4f} at the latest.",
@@ -96,12 +90,12 @@ public:
             Eigen::Index idx = m_result.get_num_time_points();
 
             // R0t is the effective reproduction number at time t
-            auto R0t1 = parameters.template get<ContactFrequency<FP>>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<FP>(m_result.get_time(idx - 2)))(0, 0) *
-                        parameters.template get<TransmissionRisk<FP>>() * parameters.template get<InfectiousTime<FP>>();
-            auto R0t2 = parameters.template get<ContactFrequency<FP>>().get_cont_freq_mat().get_matrix_at(
-                            SimulationTime<FP>(m_result.get_last_time()))(0, 0) *
-                        parameters.template get<TransmissionRisk<FP>>() * parameters.template get<InfectiousTime<FP>>();
+            auto R0t1 = parameters.template get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(m_result.get_time(idx - 2)))(0, 0) *
+                        parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
+            auto R0t2 = parameters.template get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(
+                            SimulationTime<ScalarType>(m_result.get_last_time()))(0, 0) *
+                        parameters.template get<TransmissionRisk>() * parameters.template get<InfectiousTime>();
 
             m_result.get_last_value() =
                 Vec::Constant(1, m_result[idx - 2][0] * exp(m_dt * (0.5 * 1 / m_N) *
@@ -120,10 +114,10 @@ public:
         * @return The result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an
         *   associated Vector with values for S, E, I, and R.
         */
-    TimeSeries<FP> const& calculate_EIR()
+    TimeSeries<ScalarType> const& calculate_EIR()
     {
         Eigen::Index num_points = m_result.get_num_time_points();
-        FP S, E, I, R;
+        ScalarType S, E, I, R;
         for (Eigen::Index i = m_k; i < num_points; ++i) {
             S = m_result[i][Eigen::Index(InfectionState::S)];
             E = m_result[i - m_l][Eigen::Index(InfectionState::S)] - S;
@@ -146,16 +140,14 @@ private:
         * @param[in] q parameter q of the generalized Beta distribution.
         * @result Evaluation of the generalized beta distribution at the given evaluation point.
         */
-    FP generalized_beta_distribution(FP tau, FP p = 3.0, FP q = 10.0) const
+    ScalarType generalized_beta_distribution(ScalarType tau, ScalarType p = 3.0, ScalarType q = 10.0) const
     {
-        using std::pow;
-
-        if ((parameters.template get<LatencyTime<FP>>() < tau) &&
-            (parameters.template get<InfectiousTime<FP>>() + parameters.template get<LatencyTime<FP>>() > tau)) {
-            return std::tgamma(p + q) * pow(tau - parameters.template get<LatencyTime<FP>>(), p - 1) *
-                   pow(parameters.template get<InfectiousTime<FP>>() + parameters.template get<LatencyTime<FP>>() - tau,
+        if ((parameters.template get<LatencyTime>() < tau) &&
+            (parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() > tau)) {
+            return std::tgamma(p + q) * pow(tau - parameters.template get<LatencyTime>(), p - 1) *
+                   pow(parameters.template get<InfectiousTime>() + parameters.template get<LatencyTime>() - tau,
                        q - 1) /
-                   (std::tgamma(p) * std::tgamma(q) * pow(parameters.template get<InfectiousTime<FP>>(), p + q - 1));
+                   (std::tgamma(p) * std::tgamma(q) * std::pow(parameters.template get<InfectiousTime>(), p + q - 1));
         }
         return 0.0;
     }
@@ -169,7 +161,8 @@ private:
         * @param[in] compartment Compartment for which the numerical differentiation is to be performed.
         * @return Numerically approximated derivative of the function belonging to the compartment at the point t[idx].
         */
-    FP central_difference_quotient(TimeSeries<FP> const& ts_ide, InfectionState compartment, Eigen::Index idx) const
+    ScalarType central_difference_quotient(TimeSeries<ScalarType> const& ts_ide, InfectionState compartment,
+                                           Eigen::Index idx) const
     {
         return (ts_ide[idx + 1][Eigen::Index(compartment)] - ts_ide[idx - 1][Eigen::Index(compartment)]) / (2 * m_dt);
     }
@@ -181,12 +174,12 @@ private:
         * @param[in] idx Index of the point of time used in the inner integral.
         * @return Result of the numerical integration.
         */
-    FP num_integration_inner_integral(Eigen::Index idx) const
+    ScalarType num_integration_inner_integral(Eigen::Index idx) const
     {
-        FP res         = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
-                            central_difference_quotient(m_result, InfectionState::S, m_k) +
-                        generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_l)) *
-                            central_difference_quotient(m_result, InfectionState::S, idx - m_l));
+        ScalarType res = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
+                                    central_difference_quotient(m_result, InfectionState::S, m_k) +
+                                generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_l)) *
+                                    central_difference_quotient(m_result, InfectionState::S, idx - m_l));
         Eigen::Index i = idx - m_k + 1;
         while (i <= idx - m_l - 2) {
             res += (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(i)) *
@@ -197,13 +190,13 @@ private:
     }
 
     // TimeSeries containing points of time and the corresponding number of susceptibles.
-    TimeSeries<FP> m_result;
+    TimeSeries<ScalarType> m_result;
     // TimeSeries containing points of time and the corresponding number of susceptibles, exposed,
     // infected and recovered.
-    TimeSeries<FP> m_result_SEIR;
+    TimeSeries<ScalarType> m_result_SEIR;
 
     // Timestep used for simulation.
-    FP m_dt{0};
+    ScalarType m_dt{0};
     // Population of the considered region.
     int m_N{0};
 
