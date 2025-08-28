@@ -133,7 +133,7 @@ public:
                                      static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j));
                 FP Nj =
                     pop[Sj] + pop[Ej] + pop[INSj] + pop[ISyj] + pop[ISevj] + pop[ICrj] + pop[Rj]; // without died people
-                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+                const FP divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
                 FP dummy_S     = y[Si] * cont_freq_eff * divNj *
                              params.template get<TransmissionProbabilityOnContact<FP>>()[i] *
                              (params.template get<RelativeTransmissionNoSymptoms<FP>>()[j] * pop[INSj] +

@@ -60,7 +60,7 @@ public:
     {
     }
 
-    virtual ~IntegratorCore(){};
+    virtual ~IntegratorCore() {};
 
     virtual std::unique_ptr<IntegratorCore<FP, Integrands...>> clone() const = 0;
 
@@ -163,14 +163,13 @@ public:
     {
     }
 
-    SystemIntegrator& operator=(const SystemIntegrator& other) 
+    SystemIntegrator& operator=(const SystemIntegrator& other)
     {
-        if(this != &other)
-        {
-            m_core = other.m_core->clone();
+        if (this != &other) {
+            m_core        = other.m_core->clone();
             m_is_adaptive = other.m_is_adaptive;
         }
-        return *this; 
+        return *this;
     }
 
     /**
@@ -226,7 +225,7 @@ public:
             results.get_last_time() = t;
 
             // if dt has been changed by step, register the current m_core as adaptive.
-            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<FP>::zero_tolerance());
+            m_is_adaptive |= !floating_point_equal<FP>(dt, dt_copy, Limits<ScalarType>::zero_tolerance());
         }
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,

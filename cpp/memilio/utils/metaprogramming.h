@@ -23,6 +23,16 @@
 #include <type_traits>
 #include <utility>
 
+namespace ad
+{
+namespace internal
+{
+// Forward declaration of the AD type template
+template <class Value, class Tape>
+class active_type;
+} // namespace internal
+} // namespace ad
+
 namespace mio
 {
 
@@ -283,16 +293,6 @@ constexpr bool has_duplicates_v = has_duplicates<Types...>::value;
  * Intermediate result types from AD operations are not considered to be an AD type, as they use their own classes.
  * @{ 
  */
-namespace ad
-{
-namespace internal
-{
-// Forward declaration of the AD type template
-template <class Value, class Tape>
-class active_type;
-} // namespace internal
-} // namespace ad
-
 template <class T, class = void>
 struct is_ad_type : public std::false_type {
 };

@@ -78,7 +78,7 @@ public:
                 size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
 
                 const FP Nj    = pop[Sj] + pop[Ij] + pop[Rj];
-                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+                const FP divNj = (Nj < Limits<ScalarType>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
 
                 FP coeffStoI = contact_matrix.get_matrix_at(SimulationTime<FP>(t))(
                                    static_cast<Eigen::Index>((size_t)i), static_cast<Eigen::Index>((size_t)j)) *
