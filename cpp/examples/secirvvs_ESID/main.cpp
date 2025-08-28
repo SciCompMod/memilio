@@ -13,7 +13,7 @@
 #include "memilio/utils/logging.h"
 
 
-#include "optimization_model/optimization_model.h"
+#include "optimization_model.h"
 
 
 // Example: ./../build/bin/secirvvs_ESID /home/jli/Memilio-Branches/memilio/data/Germany
@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
     
     auto result = read_json_files(data_directory);
     OptimizationModel model(data_directory, t0, tmax, 6);
-    mio::osecirvvs::Model<double> compmodel = model.create_model<double>();
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> compmodel = model.create_model<double>();
 
-    std::cout << compmodel.parameters.template get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)] << "\n";
+    // std::cout << compmodel.parameters.template get<mio::osecirvvs::ReducTimeInfectedMild<double>>()[mio::AgeGroup(0)] << "\n";
     return 0;
 }

@@ -15,6 +15,7 @@
 #include "memilio/utils/date.h"
 #include "memilio/io/mobility_io.h"
 #include "models/ode_secirvvs/model.h"
+#include "models/ode_secirvvs/parameters_io.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
@@ -72,7 +73,7 @@ public:
     double num_age_groups() const;
 
     template <typename FP>
-    mio::osecirvvs::Model<FP> create_model();
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> create_model();
 
     // template <typename FP>
     // mio::osecirvvs::Model<FP> create_synthetic_model() const;
@@ -85,10 +86,10 @@ private:
     mio::IOResult<void> set_contact_matrices(mio::osecirvvs::Parameters<FP>& params);
 
     template <typename FP>
-    mio::IOResult<void> set_population_data(mio::osecirvvs::Model<FP>& model);
+    mio::IOResult<void> set_population_data(mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph, mio::osecirvvs::Parameters<FP>& params);
 
     template <typename FP>
-    mio::IOResult<void> set_initial_values(mio::osecirvvs::Model<FP>& model);
+    mio::IOResult<void> set_initial_values(mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph);
 
     fs::path m_data_directory;
     double m_t0;
@@ -169,31 +170,63 @@ mio::IOResult<void> OptimizationModel::set_contact_matrices(mio::osecirvvs::Para
 }
 
 template <typename FP>
-mio::IOResult<void> OptimizationModel::set_population_data(mio::osecirvvs::Model<FP>& model)
+mio::IOResult<void> OptimizationModel::set_population_data(mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph, mio::osecirvvs::Parameters<FP>& params)
 {  
 
-    const fs::path filename = (m_data_directory / "data"  / "compartment_initialization_2025-05-26" / "initialization_sum.txt");
-    std::fstream file;
-    file.open(filename, std::ios::in);
-    if (!file.is_open()) {
-        return mio::failure(mio::StatusCode::FileNotFound, (filename).string());
-    }
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
+    auto scaling_factor_icu      = 1.0;
+    auto tnt_capacity_factor     = 7.5 / 100000.;
+    // auto mobile_compartments     = {mio::osecirvvs::InfectionState::Susceptible, mio::osecirvvs::InfectionState::Exposed,
+    //                                 mio::osecirvvs::InfectionState::InfectedNoSymptoms,
+    //                                 mio::osecirvvs::InfectionState::InfectedSymptoms, mio::osecirvvs::InfectionState::Recovered};
 
-    try {
-        std::string tp;
-        size_t linenumber = 0;
-        while (getline(file, tp)) {
-            auto line = mio::split(tp, '\t');
+    // graph of counties with populations and local parameters
+    // and mobility between counties
+    const auto& read_function_nodes = mio::osecirvvs::read_input_data_germany<mio::osecirvvs::Model<double>>;
+    // const auto& read_function_edges = mio::read_mobility_plain;
+    // const auto& node_id_function    = mio::get_node_ids;
+    const auto& node_id_function    = [](auto&, auto, auto) -> mio::IOResult<std::vector<int>> {
+        std::vector<int> id = {0};
+        return mio::success(id);
+    };
 
-            for (size_t j = 0; j < size_t(line.size()); j++) {
-                model.populations[{(mio::AgeGroup)linenumber, (mio::osecirvvs::InfectionState)j}] = std::stod(line[j]);
-            }
-            linenumber++;
-        }
-    }
-    catch (std::runtime_error& ex) {
-        return mio::failure(mio::StatusCode::InvalidFileFormat, (filename).string() + ": " + ex.what());
-    }
+    const auto& set_node_function =
+        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+                       mio::osecirvvs::Model<double>, mio::MobilityParameters<double>, mio::osecirvvs::Parameters<double>,
+                       decltype(read_function_nodes), decltype(node_id_function)>;
+    // const auto& set_edge_function =
+    //     mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
+    //                    mio::MobilityCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+    BOOST_OUTCOME_TRY(
+        set_node_function(params, mio::Date(2022, 12, 1), mio::Date(2020, 12, 12), m_data_directory,
+                          mio::path_join((m_data_directory / "pydata" / "Germany").string(), "county_current_population.json"),
+                          true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
+                          scaling_factor_icu, tnt_capacity_factor, 0, false, true));
+    // BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
+    //                                     read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
+
+    // const fs::path filename = (m_data_directory / "data"  / "compartment_initialization_2025-05-26" / "initialization_sum.txt");
+    // std::fstream file;
+    // file.open(filename, std::ios::in);
+    // if (!file.is_open()) {
+    //     return mio::failure(mio::StatusCode::FileNotFound, (filename).string());
+    // }
+
+    // try {
+    //     std::string tp;
+    //     size_t linenumber = 0;
+    //     while (getline(file, tp)) {
+    //         auto line = mio::split(tp, '\t');
+
+    //         for (size_t j = 0; j < size_t(line.size()); j++) {
+    //             model.populations[{(mio::AgeGroup)linenumber, (mio::osecirvvs::InfectionState)j}] = std::stod(line[j]);
+    //         }
+    //         linenumber++;
+    //     }
+    // }
+    // catch (std::runtime_error& ex) {
+    //     return mio::failure(mio::StatusCode::InvalidFileFormat, (filename).string() + ": " + ex.what());
+    // }
     // mio::osecirvvs::draw_sample_demographics(model);
 
     // std::cout << ad::value(model.populations[{mio::AgeGroup(5), mio::osecirvvs::InfectionState::SusceptibleNaive}].value()) << "\n";
@@ -206,38 +239,38 @@ mio::IOResult<void> OptimizationModel::set_population_data(mio::osecirvvs::Model
  * @param model an instance of the pandemic model
  */
 template <typename FP>
-mio::IOResult<void> OptimizationModel::set_initial_values(mio::osecirvvs::Model<FP>& model)
+mio::IOResult<void> OptimizationModel::set_initial_values(mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph)
 {
 
     mio::osecirvvs::Parameters<FP> params(m_num_age_groups);
 
     BOOST_OUTCOME_TRY(set_covid_parameters<FP>(params));
     BOOST_OUTCOME_TRY(set_contact_matrices<FP>(params));
-    model.parameters = params;
 
     // BOOST_OUTCOME_TRY(set_synthetic_population_data(model));
-    BOOST_OUTCOME_TRY(set_population_data<FP>(model));
-    model.apply_constraints();
+    BOOST_OUTCOME_TRY(set_population_data<FP>(params_graph, params));
+    // model.apply_constraints();
 
     return mio::success();
 }
 
 template <typename FP>
-mio::osecirvvs::Model<FP> OptimizationModel::create_model()
+mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> OptimizationModel::create_model()
 {
-    mio::osecirvvs::Model<FP> model(m_num_age_groups);
-    auto out = set_initial_values<FP>(model);
+    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> graph;
+    // mio::osecirvvs::Model<FP> model(m_num_age_groups);
+    auto out = set_initial_values<FP>(graph);
 
-    mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<FP>>, mio::MobilityEdge<FP>> graph;
-    graph.add_node(1, model, m_t0);
+    // mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<FP>>, mio::MobilityEdge<FP>> graph;
+    // graph.add_node(1, model, m_t0);
 
-    std::cout << "Node: " << bool(std::is_copy_constructible<mio::SimulationNode<mio::Simulation<FP, mio::osecirvvs::Model<FP>>>>::value) << "\n";
-    std::cout << "Edge: " << bool(std::is_copy_constructible<mio::MobilityEdge<FP>>::value) << "\n";
+    // std::cout << "Node: " << bool(std::is_copy_constructible<mio::SimulationNode<mio::Simulation<FP, mio::osecirvvs::Model<FP>>>>::value) << "\n";
+    // std::cout << "Edge: " << bool(std::is_copy_constructible<mio::MobilityEdge<FP>>::value) << "\n";
 
     auto graph2 = graph;
     
     mio::unused(graph2);
-    return model;
+    return graph;
 }
 
 // -------------------------- //
