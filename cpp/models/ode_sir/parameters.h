@@ -153,7 +153,7 @@ public:
      */
     bool check_constraints() const
     {
-        double tol_times = 1e-1;
+        FP tol_times = 1e-1;
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); i++) {
 
