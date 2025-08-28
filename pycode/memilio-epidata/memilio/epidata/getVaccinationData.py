@@ -972,6 +972,11 @@ def write_vaccination_data(dict_data: dict,
          dd.EngEng['ageRKI']]).agg(
         {column: "sum" for column in vacc_column_names}).reset_index()
 
+    df_data_agevacc_ger_cs = df_data_agevacc_county_cs.groupby(
+        [dd.EngEng['date'],
+         dd.EngEng['ageRKI']]).agg(
+        {column: "sum" for column in vacc_column_names}).reset_index()
+
     # make plot of absolute numbers original age resolution
     if conf_obj.plot:
         # extract (dummy) date column to plt
@@ -1020,6 +1025,10 @@ def write_vaccination_data(dict_data: dict,
          dd.EngEng['idState']]).agg(
         {column: "sum" for column in vacc_column_names}).reset_index()
 
+    df_data_ger_cs = df_data_county_cs.groupby(
+        [dd.EngEng['date']]).agg(
+        {column: "sum" for column in vacc_column_names}).reset_index()
+
     ####### age resolved with extrapolation to other age groups #######
     # write data frame resolved per county and age (with age classes as
     # provided in RKI infection tables: 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
@@ -1037,6 +1046,11 @@ def write_vaccination_data(dict_data: dict,
     df_data_ageinf_state_cs = df_data_ageinf_county_cs.groupby(
         [dd.EngEng['date'],
          dd.EngEng['idState'],
+         dd.EngEng['ageRKI']]).agg(
+        {column: "sum" for column in vacc_column_names}).reset_index()
+
+    df_data_ageinf_ger_cs = df_data_ageinf_county_cs.groupby(
+        [dd.EngEng['date'],
          dd.EngEng['ageRKI']]).agg(
         {column: "sum" for column in vacc_column_names}).reset_index()
 
@@ -1141,6 +1155,12 @@ def write_vaccination_data(dict_data: dict,
         gd.write_dataframe(df_data_agevacc_state_cs,
                            directory, filename, file_format)
 
+        # store data for germany
+        filename = 'vacc_germany_agevacc'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_agevacc_ger_cs,
+                           directory, filename, file_format)
+
         # store data for all counties
         filename = 'vacc_county'
         filename = gd.append_filename(filename, impute_dates, moving_average)
@@ -1151,6 +1171,12 @@ def write_vaccination_data(dict_data: dict,
         filename = 'vacc_states'
         filename = gd.append_filename(filename, impute_dates, moving_average)
         gd.write_dataframe(df_data_state_cs, directory, filename, file_format)
+
+        # store data for germany
+        filename = 'vacc_germany'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_ger_cs,
+                           directory, filename, file_format)
 
         ####### age resolved with extrapolation to other age groups #######
         # write data frame resolved per county and age (with age classes as
@@ -1168,11 +1194,18 @@ def write_vaccination_data(dict_data: dict,
         filename = gd.append_filename(filename, impute_dates, moving_average)
         gd.write_dataframe(df_data_ageinf_state_cs,
                            directory, filename, file_format)
+
+        # store data for germany
+        filename = 'vacc_germany_ageinf'
+        filename = gd.append_filename(filename, impute_dates, moving_average)
+        gd.write_dataframe(df_data_ageinf_ger_cs,
+                           directory, filename, file_format)
+
         return None
     else:
-        return (df_data_agevacc_county_cs, df_data_agevacc_state_cs,
-                df_data_county_cs, df_data_state_cs,
-                df_data_ageinf_county_cs, df_data_ageinf_state_cs)
+        return (df_data_agevacc_county_cs, df_data_agevacc_state_cs, df_data_agevacc_ger_cs,
+                df_data_county_cs, df_data_state_cs, df_data_ger_cs,
+                df_data_ageinf_county_cs, df_data_ageinf_state_cs, df_data_ageinf_ger_cs)
 
 
 def get_vaccination_data(
