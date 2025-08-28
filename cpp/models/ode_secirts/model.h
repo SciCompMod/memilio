@@ -792,9 +792,8 @@ public:
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal<FP>(t, m_t_last_npi_check + dt)) {
                     if (t < t_end_dyn_npis) {
-                        auto inf_rel =
-                            get_infections_relative<FP, BaseT>(*this, t, this->get_result().get_last_value()) *
-                            dyn_npis.get_base_value();
+                        auto inf_rel = get_infections_relative<FP>(*this, t, this->get_result().get_last_value()) *
+                                       dyn_npis.get_base_value();
                         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                             (exceeded_threshold->first > m_dynamic_npi.first ||
