@@ -640,7 +640,7 @@ void Model::compute_forceofinfection(ScalarType dt, bool initialization)
                             transitions[l + 1][INStISyj] *
                             parameters.get<RiskOfInfectionFromSymptomatic>()[j].eval(state_age));
             }
-            const double divNj =
+            const ScalarType divNj =
                 (m_N[j] - deaths_j < Limits<ScalarType>::zero_tolerance()) ? 0.0 : 1.0 / (m_N[j] - deaths_j);
             m_forceofinfection[i] += divNj * sum;
         }
