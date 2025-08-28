@@ -23,26 +23,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace ad
-{
-namespace internal
-{
-// Forward declaration of the AD type template
-template <class Value, class Tape>
-class active_type;
-} // namespace internal
-} // namespace ad
-
-namespace mio
-{
-
-namespace details
-{
-template <typename... Ts>
-struct make_void {
-    typedef void type;
-};
-} // namespace details
+#include "ad/ad.hpp"
 
 /**
  * utility for meta programming that produces void for any valid type.
