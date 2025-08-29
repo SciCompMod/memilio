@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert
@@ -102,11 +102,11 @@ struct NoDefaultMemberFunctionParam {
 };
 
 struct MoveOnly {
-    MoveOnly()                      = default;
-    MoveOnly(const MoveOnly& other) = delete;
+    MoveOnly()                                 = default;
+    MoveOnly(const MoveOnly& other)            = delete;
     MoveOnly& operator=(const MoveOnly& other) = delete;
     MoveOnly(MoveOnly&& other)                 = default;
-    MoveOnly& operator=(MoveOnly&& other) = default;
+    MoveOnly& operator=(MoveOnly&& other)      = default;
 };
 
 struct MoveOnlyParam {

@@ -38,7 +38,7 @@ namespace
 AgeGroup pick_age_group_from_age_distribution(RandomNumberGenerator& rng,
                                               const CustomIndexArray<int, AgeGroup>& age_groups)
 {
-    auto age_group_weights = age_groups.array().cast<double>().eval();
+    auto age_group_weights = age_groups.array().cast<ScalarType>().eval();
     size_t age_group       = DiscreteDistribution<size_t>::get_instance()(rng, age_group_weights);
     return (AgeGroup)age_group;
 }

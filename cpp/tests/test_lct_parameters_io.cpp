@@ -60,8 +60,8 @@ std::vector<mio::ConfirmedCasesDataEntry> get_synthetic_rki_data_age()
     const int num_agegroups = 6;
     Json::Value js(Json::arrayValue);
     std::vector<Json::Value> dates           = {"2020-05-26", "2020-05-27", "2020-05-28", "2020-05-29",
-                                      "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
-                                      "2020-06-03", "2020-06-04", "2020-06-05", "2020-06-06"};
+                                                "2020-05-30", "2020-05-31", "2020-06-01", "2020-06-02",
+                                                "2020-06-03", "2020-06-04", "2020-06-05", "2020-06-06"};
     std::vector<Json::Value> age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"};
     for (int day = 0; day < 12; day++) {
         for (int age = 0; age < num_agegroups; age++) {
@@ -98,21 +98,21 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKI)
     auto start_date = mio::Date(2020, 6, 1);
 
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 1, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 1, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
     Model model;
 
     // Define parameters used for simulation and initialization.
-    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 2.3;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 1.3;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 2.4;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 1.8;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 1.0;
+    model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 2.3;
+    model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 1.3;
+    model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 2.4;
+    model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 1.8;
+    model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 1.0;
 
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.2;
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.1;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.3;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.2;
+    model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.2;
+    model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.1;
+    model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.3;
+    model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.2;
 
     // Calculate initial value vector for subcompartments with RKI data.
     auto read_result =
@@ -142,23 +142,23 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
     auto start_date = mio::Date(2020, 6, 1);
 
     using InfState  = mio::lsecir::InfectionState;
-    using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model     = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    using LctState1 = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using LctState2 = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<ScalarType, LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
     Model model;
 
     // Define parameters used for simulation and initialization.
     for (size_t i = 0; i < num_agegroups; i++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[i]            = 2.3;
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[i] = 1.3;
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[i]   = 2.4;
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[i]     = 1.8;
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[i]   = 1.0;
+        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[i]            = 2.3;
+        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 1.3;
+        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 2.4;
+        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[i]     = 1.8;
+        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[i]   = 1.0;
 
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[i] = 0.2;
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[i]      = 0.1;
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[i]              = 0.3;
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[i]              = 0.2;
+        model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] = 0.2;
+        model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[i]      = 0.1;
+        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[i]              = 0.3;
+        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[i]              = 0.2;
     }
 
     // Calculate initial value vector for subcompartments with RKI data.
@@ -175,20 +175,20 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIAgeres)
     Eigen::VectorX<ScalarType> compare(num_populations);
     for (size_t age = 0; age < num_agegroups; age++) {
         compare[(size_t)InfState::Count * age + (size_t)InfState::Exposed] =
-            1. / (1. - model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[age]) *
-            model.parameters.get<mio::lsecir::TimeExposed>()[age] * (ScalarType)age;
+            1. / (1. - model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[age]) *
+            model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[age] * (ScalarType)age;
         compare[(size_t)InfState::Count * age + (size_t)InfState::InfectedNoSymptoms] =
-            1. / (1. - model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[age]) *
-            model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[age] * (ScalarType)age;
+            1. / (1. - model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[age]) *
+            model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[age] * (ScalarType)age;
         compare[(size_t)InfState::Count * age + (size_t)InfState::InfectedSymptoms] =
-            model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[age] * (ScalarType)age;
+            model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[age] * (ScalarType)age;
         compare[(size_t)InfState::Count * age + (size_t)InfState::InfectedSevere] =
-            model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[age] *
-            model.parameters.get<mio::lsecir::TimeInfectedSevere>()[age] * (ScalarType)age;
+            model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[age] *
+            model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[age] * (ScalarType)age;
         compare[(size_t)InfState::Count * age + (size_t)InfState::InfectedCritical] =
-            model.parameters.get<mio::lsecir::CriticalPerSevere>()[age] *
-            model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[age] *
-            model.parameters.get<mio::lsecir::TimeInfectedCritical>()[age] * (ScalarType)age;
+            model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[age] *
+            model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[age] *
+            model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[age] * (ScalarType)age;
         compare[(size_t)InfState::Count * age + (size_t)InfState::Dead] = (ScalarType)age;
         compare[(size_t)InfState::Count * age + (size_t)InfState::Recovered] =
             100. + (ScalarType)age * 5. -
@@ -219,23 +219,23 @@ TEST(TestLCTParametersIo, CheckScalingDIVI)
     auto start_date = mio::Date(2020, 6, 1);
 
     using InfState  = mio::lsecir::InfectionState;
-    using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model     = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    using LctState1 = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using LctState2 = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<ScalarType, LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
     Model model;
 
     // Define parameters used for simulation and initialization.
     for (size_t i = 0; i < num_agegroups; i++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[i]            = 2.3;
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[i] = 1.3;
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[i]   = 2.4;
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[i]     = 1.8;
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[i]   = 1.0;
+        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[i]            = 2.3;
+        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 1.3;
+        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 2.4;
+        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[i]     = 1.8;
+        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[i]   = 1.0;
 
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[i] = 0.2;
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[i]      = 0.1;
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[i]              = 0.3;
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[i]              = 0.2;
+        model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] = 0.2;
+        model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[i]      = 0.1;
+        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[i]              = 0.3;
+        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[i]              = 0.2;
     }
 
     // Check that the function get_icu_from_divi_data to get the DIVI data works as expected.
@@ -292,10 +292,10 @@ TEST(TestLCTParametersIo, CheckRescaleToDIVIDataFunctionCases)
 {
     const size_t num_agegroups = 6;
     using InfState             = mio::lsecir::InfectionState;
-    using LctState1            = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 5, 1, 1>;
-    using LctState2            = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model                = mio::lsecir::Model<LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
-    using Populations          = Model::Populations;
+    using LctState1            = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 5, 1, 1>;
+    using LctState2            = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model = mio::lsecir::Model<ScalarType, LctState1, LctState2, LctState1, LctState2, LctState1, LctState2>;
+    using Populations = Model::Populations;
 
     // Initialize a population with zero values.
     Populations pop;
@@ -355,21 +355,21 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailure)
 {
     std::vector<ScalarType> total_population(1, 1000.);
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 1, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 1, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
     Model model;
 
     // Define parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 2.3;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 1.3;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 2.4;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 1.8;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 1.0;
+    model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 2.3;
+    model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 1.3;
+    model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 2.4;
+    model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 1.8;
+    model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 1.0;
 
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.2;
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.1;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.3;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.2;
+    model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.2;
+    model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.1;
+    model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.3;
+    model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.2;
 
     // Deactivate temporarily log output for next tests.
     mio::set_log_level(mio::LogLevel::off);
@@ -420,22 +420,22 @@ TEST(TestLCTParametersIo, ReadPopulationDataRKIFailureAgeres)
     std::vector<ScalarType> total_population(num_agegroups, 1e6);
 
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState, LctState, LctState, LctState, LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState, LctState, LctState, LctState, LctState, LctState>;
     Model model;
 
     // Define parameters.
     for (size_t i = 0; i < num_agegroups; i++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[i]            = 2.3;
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[i] = 1.3;
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[i]   = 2.4;
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[i]     = 1.8;
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[i]   = 1.0;
+        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[i]            = 2.3;
+        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[i] = 1.3;
+        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[i]   = 2.4;
+        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[i]     = 1.8;
+        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[i]   = 1.0;
 
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[i] = 0.2;
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[i]      = 0.1;
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[i]              = 0.3;
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[i]              = 0.2;
+        model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i] = 0.2;
+        model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[i]      = 0.1;
+        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[i]              = 0.3;
+        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[i]              = 0.2;
     }
 
     // Deactivate temporarily log output for next tests.

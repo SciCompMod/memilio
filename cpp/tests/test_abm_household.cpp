@@ -21,7 +21,6 @@
 #include "abm_helpers.h"
 #include <gtest/gtest.h>
 
-
 /**
  * @brief Test adding a household to a model.
  * Verifies correct number of persons, age groups, and location assignments.
@@ -75,7 +74,7 @@ TEST(TestHouseholds, test_add_household_group_to_model)
     // Create the first household and add members
     auto household1 = mio::abm::Household();
     household1.add_members(member1, 10); // Add ten members of age group 35-59
-    household1.add_members(member2, 2);  // Add two members of age group 5-14
+    household1.add_members(member2, 2); // Add two members of age group 5-14
 
     // Create the second household and add members
     auto household2 = mio::abm::Household();

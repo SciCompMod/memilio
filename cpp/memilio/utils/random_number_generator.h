@@ -540,18 +540,18 @@ public:
 
         param_type() = default;
 
-        param_type(Span<double> weights)
+        param_type(Span<ScalarType> weights)
             : m_weights(weights)
         {
         }
 
-        Span<double> weights() const
+        Span<ScalarType> weights() const
         {
             return m_weights;
         }
 
     private:
-        Span<double> m_weights;
+        Span<ScalarType> m_weights;
     };
 
     /**
@@ -563,7 +563,7 @@ public:
     /**
      * distribution with specified weights.
      */
-    DiscreteDistributionInPlace(Span<double> weights)
+    DiscreteDistributionInPlace(Span<ScalarType> weights)
         : m_params(weights)
     {
     }
@@ -603,7 +603,7 @@ public:
     /**
      * get the weights.
      */
-    Span<double> weights()
+    Span<ScalarType> weights()
     {
         return m_params.weights();
     }
@@ -631,8 +631,8 @@ public:
             return 0;
         }
         auto sum = std::accumulate(weights.begin(), weights.end(), 0.0);
-        auto u =
-            std::uniform_real_distribution<double>()(rng, std::uniform_real_distribution<double>::param_type{0.0, sum});
+        auto u   = std::uniform_real_distribution<ScalarType>()(
+            rng, std::uniform_real_distribution<ScalarType>::param_type{0.0, sum});
         auto intermediate_sum = 0.0;
         for (size_t i = 0; i < weights.size(); ++i) {
             intermediate_sum += weights.get_ptr()[i];

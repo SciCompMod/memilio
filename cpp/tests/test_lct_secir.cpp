@@ -40,8 +40,8 @@
 TEST(TestLCTSecir, simulateDefault)
 {
     using InfState  = mio::lsecir::InfectionState;
-    using LctState  = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model     = mio::lsecir::Model<LctState>;
+    using LctState  = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<ScalarType, LctState>;
     ScalarType t0   = 0;
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
@@ -70,8 +70,8 @@ TEST(TestLCTSecir, simulateDefault)
 TEST(TestLCTSecir, compareWithOdeSecir)
 {
     using InfState  = mio::lsecir::InfectionState;
-    using LctState  = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model     = mio::lsecir::Model<LctState>;
+    using LctState  = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<ScalarType, LctState>;
     ScalarType t0   = 0;
     ScalarType tmax = 5;
     ScalarType dt   = 0.1;
@@ -90,26 +90,27 @@ TEST(TestLCTSecir, compareWithOdeSecir)
     }
 
     // Set Parameters.
-    model_lct.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model_lct.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model_lct.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2;
+    model_lct.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model_lct.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model_lct.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model_lct.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct =
+        model_lct.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix_lct[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
+    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model_lct.parameters.get<mio::lsecir::StartDay>()                          = 50;
-    model_lct.parameters.get<mio::lsecir::Seasonality>()                       = 0.1;
-    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-    model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-    model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+    model_lct.parameters.template get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model_lct.parameters.template get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model_lct.parameters.template get<mio::lsecir::StartDay<ScalarType>>()                          = 50;
+    model_lct.parameters.template get<mio::lsecir::Seasonality<ScalarType>>()                       = 0.1;
+    model_lct.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model_lct.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+    model_lct.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model_lct.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     // Simulate.
     mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model>(
@@ -117,7 +118,7 @@ TEST(TestLCTSecir, compareWithOdeSecir)
         std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Initialize ODE model with one age group.
-    mio::osecir::Model model_ode(1);
+    mio::osecir::Model<ScalarType> model_ode(1);
     // Set initial distribution of the population.
     model_ode.populations[{(mio::AgeGroup)0, mio::osecir::InfectionState::Exposed}] =
         init[(Eigen::Index)InfState::Exposed];
@@ -139,33 +140,39 @@ TEST(TestLCTSecir, compareWithOdeSecir)
 
     // Set parameters according to the parameters of the LCT model.
     // No restrictions by additional parameters.
-    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity<double>>() = std::numeric_limits<double>::max();
-    model_ode.parameters.get<mio::osecir::ICUCapacity<double>>()          = std::numeric_limits<double>::max();
+    model_ode.parameters.template get<mio::osecir::TestAndTraceCapacity<ScalarType>>() =
+        std::numeric_limits<ScalarType>::max();
+    model_ode.parameters.template get<mio::osecir::ICUCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
 
-    model_ode.parameters.set<mio::osecir::StartDay>(50);
-    model_ode.parameters.set<mio::osecir::Seasonality<double>>(0.1);
-    model_ode.parameters.get<mio::osecir::TimeExposed<double>>()[(mio::AgeGroup)0]            = 3.2;
-    model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[(mio::AgeGroup)0] = 2.0;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[(mio::AgeGroup)0]   = 5.8;
-    model_ode.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[(mio::AgeGroup)0]     = 9.5;
-    model_ode.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[(mio::AgeGroup)0]   = 7.1;
+    model_ode.parameters.set<mio::osecir::StartDay<ScalarType>>(50);
+    model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.1);
+    model_ode.parameters.template get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)0]            = 3.2;
+    model_ode.parameters.template get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 2.0;
+    model_ode.parameters.template get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0]   = 5.8;
+    model_ode.parameters.template get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)0]     = 9.5;
+    model_ode.parameters.template get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)0]   = 7.1;
 
-    mio::ContactMatrixGroup& contact_matrix_ode = model_ode.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix_ode[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-    contact_matrix_ode[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_ode =
+        model_ode.parameters.template get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix_ode[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
+    contact_matrix_ode[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[(mio::AgeGroup)0] = 0.05;
-    model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()[(mio::AgeGroup)0]   = 0.7;
-    model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[(mio::AgeGroup)0]   = 0.09;
-    model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()[(mio::AgeGroup)0]   = 0.25;
-    model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[(mio::AgeGroup)0]        = 0.2;
-    model_ode.parameters.get<mio::osecir::CriticalPerSevere<double>>()[(mio::AgeGroup)0]                = 0.25;
-    model_ode.parameters.get<mio::osecir::DeathsPerCritical<double>>()[(mio::AgeGroup)0]                = 0.3;
+    model_ode.parameters.template get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)0] =
+        0.05;
+    model_ode.parameters.template get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        0.7;
+    model_ode.parameters.template get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)0] =
+        0.09;
+    model_ode.parameters.template get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)0] =
+        0.25;
+    model_ode.parameters.template get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)0] = 0.2;
+    model_ode.parameters.template get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)0]         = 0.25;
+    model_ode.parameters.template get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)0]         = 0.3;
 
     // Simulate.
-    mio::TimeSeries<double> result_ode = mio::osecir::simulate<double>(
+    mio::TimeSeries<ScalarType> result_ode = mio::osecir::simulate<ScalarType>(
         t0, tmax, dt, model_ode,
-        std::make_unique<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+        std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
 
     // Simulation results should be equal.
     ASSERT_EQ(result_lct.get_num_time_points(), result_ode.get_num_time_points());
@@ -199,8 +206,8 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     // Define model.
     // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
     Model model;
 
     // Define initial population distribution in infection states, one entry per subcompartment.
@@ -217,30 +224,31 @@ TEST(TestLCTSecir, testEvalRightHandSide)
     }
 
     // Set parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2;
+    model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
 
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model.parameters.set<mio::lsecir::Seasonality>(0.);
-    model.parameters.set<mio::lsecir::StartDay>(0);
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0] = 0.2;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]         = 0.25;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]         = 0.3;
+    model.parameters.template get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model.parameters.template get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model.parameters.set<mio::lsecir::Seasonality<ScalarType>>(0.);
+    model.parameters.set<mio::lsecir::StartDay<ScalarType>>(0);
+    model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0] = 0.2;
+    model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]         = 0.25;
+    model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]         = 0.3;
 
     // Compare the result of get_derivatives() with a hand calculated result.
     size_t num_subcompartments = LctState::Count;
     Eigen::VectorX<ScalarType> dydt(num_subcompartments);
-    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
+    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0.0, dydt);
 
     Eigen::VectorX<ScalarType> compare(num_subcompartments);
     compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
@@ -257,9 +265,9 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     // Define model.
     // Choose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
     using InfState  = mio::lsecir::InfectionState;
-    using LctState1 = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using LctState2 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model     = mio::lsecir::Model<LctState1, LctState2>;
+    using LctState1 = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using LctState2 = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir::Model<ScalarType, LctState1, LctState2>;
     Model model;
     size_t num_groups          = Model::num_groups;
     size_t num_subcompartments = model.populations.get_num_compartments();
@@ -282,42 +290,44 @@ TEST(TestLCTSecir, testEvalRightHandSideGroups)
     }
 
     // Set parameters.
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_groups, num_groups, 10));
     // Group 1.
-    model.parameters.get<mio::lsecir::TimeExposed>()[0]                      = 5.;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = 5.;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = 5.;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]               = 5.;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]             = 5.;
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.1;
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0]   = 1.;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0]   = 1.;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0]   = 0.1;
-    model.parameters.set<mio::lsecir::Seasonality>(0.);
-    model.parameters.set<mio::lsecir::StartDay>(0);
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0] = 0.1;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]         = 0.1;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]         = 0.1;
+    model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[0]                      = 5.;
+    model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0]           = 5.;
+    model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]             = 5.;
+    model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]               = 5.;
+    model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]             = 5.;
+    model.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.1;
+    model.parameters.template get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0]   = 1.;
+    model.parameters.template get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0]   = 1.;
+    model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0]   = 0.1;
+    model.parameters.set<mio::lsecir::Seasonality<ScalarType>>(0.);
+    model.parameters.set<mio::lsecir::StartDay<ScalarType>>(0);
+    model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0] = 0.1;
+    model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]         = 0.1;
+    model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]         = 0.1;
     // Group 2.
-    model.parameters.get<mio::lsecir::TimeExposed>()[1]                      = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[1]           = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[1]             = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[1]               = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[1]             = 2.;
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[1] = 0.1;
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[1]   = 0.5;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[1]   = 0.5;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[1]   = 0.5;
-    model.parameters.set<mio::lsecir::Seasonality>(0.);
-    model.parameters.set<mio::lsecir::StartDay>(0);
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[1] = 0.5;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()[1]         = 0.5;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()[1]         = 0.5;
+    model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[1]                      = 2.;
+    model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[1]           = 2.;
+    model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[1]             = 2.;
+    model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[1]               = 2.;
+    model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[1]             = 2.;
+    model.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[1] = 0.1;
+    model.parameters.template get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[1]   = 0.5;
+    model.parameters.template get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[1]   = 0.5;
+    model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[1]   = 0.5;
+    model.parameters.set<mio::lsecir::Seasonality<ScalarType>>(0.);
+    model.parameters.set<mio::lsecir::StartDay<ScalarType>>(0);
+    model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[1] = 0.5;
+    model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[1]         = 0.5;
+    model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[1]         = 0.5;
 
     // Compare the result of get_derivatives() with a hand calculated result.
     Eigen::VectorX<ScalarType> dydt(num_subcompartments);
-    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
+    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0.0, dydt);
 
     Eigen::VectorX<ScalarType> compare(num_subcompartments);
     compare << -90.6818, 78.6818, 4, -4, 6, 0, -6.6, 4, -15.2, 12, -3.6, -4, 18.6, 0.8, -90.6818, 85.6818, -20, 12,
@@ -359,8 +369,8 @@ TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
     // Define model.
     // Chose more than one subcompartment for all compartments except S, R, D so that the function is correct for all selections.
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState, LctState, LctState>;
     Model model;
     size_t num_groups          = Model::num_groups;
     size_t num_subcompartments = LctState::Count;
@@ -381,31 +391,32 @@ TEST(TestLCTSecir, testEvalRightHandSideThreeGroupsEqual)
     }
     // Set parameters.
     for (size_t group = 0; group < num_groups; group++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[group]                      = 3.2;
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group]           = 2;
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]             = 5.8;
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]               = 9.5;
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]             = 7.1;
-        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] = 0.05;
+        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[group]                      = 3.2;
+        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[group]           = 2;
+        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[group]             = 5.8;
+        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[group]               = 9.5;
+        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[group]             = 7.1;
+        model.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[group] = 0.05;
 
-        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 0.7;
-        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 0.25;
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.09;
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group]      = 0.2;
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]              = 0.25;
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.3;
+        model.parameters.template get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[group] = 0.7;
+        model.parameters.template get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[group] = 0.25;
+        model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[group] = 0.09;
+        model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[group]      = 0.2;
+        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[group]              = 0.25;
+        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[group]              = 0.3;
     }
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10. / (ScalarType)num_groups));
-    model.parameters.set<mio::lsecir::Seasonality>(0.);
-    model.parameters.set<mio::lsecir::StartDay>(0);
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant(num_groups, num_groups, 10. / (ScalarType)num_groups));
+    model.parameters.set<mio::lsecir::Seasonality<ScalarType>>(0.);
+    model.parameters.set<mio::lsecir::StartDay<ScalarType>>(0);
 
     // Compare the result of get_derivatives() with a hand calculated result.
 
     Eigen::VectorX<ScalarType> dydt(num_groups * num_subcompartments);
 
-    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0, dydt);
+    model.get_derivatives(model.get_initial_values(), model.get_initial_values(), 0.0, dydt);
 
     Eigen::VectorX<ScalarType> compare(num_subcompartments);
     compare << -15.3409, -3.4091, 6.25, -17.5, 15, 0, 3.3052, 3.4483, -7.0417, 6.3158, -2.2906, -2.8169, 12.3899,
@@ -425,8 +436,8 @@ class ModelTestLCTSecir : public testing::Test
 {
 public:
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 1, 1, 5, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 1, 1, 5, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
 
 protected:
     virtual void SetUp()
@@ -445,23 +456,24 @@ protected:
         }
 
         // Set parameters.
-        model->parameters.get<mio::lsecir::TimeExposed>()[0]                      = 3.2;
-        model->parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = 2;
-        model->parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = 5.8;
-        model->parameters.get<mio::lsecir::TimeInfectedSevere>()[0]               = 9.5;
-        model->parameters.get<mio::lsecir::TimeInfectedCritical>()[0]             = 7.1;
-        model->parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+        model->parameters.get<mio::lsecir::TimeExposed<ScalarType>>()[0]                      = 3.2;
+        model->parameters.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0]           = 2;
+        model->parameters.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]             = 5.8;
+        model->parameters.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]               = 9.5;
+        model->parameters.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]             = 7.1;
+        model->parameters.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-        mio::ContactMatrixGroup& contact_matrix = model->parameters.get<mio::lsecir::ContactPatterns>();
-        contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-        contact_matrix[0].add_damping(0.7, mio::SimulationTime(2.));
+        mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+            model->parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
+        contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-        model->parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-        model->parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-        model->parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-        model->parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-        model->parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-        model->parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+        model->parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+        model->parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+        model->parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+        model->parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+        model->parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+        model->parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
     }
 
     virtual void TearDown()
@@ -515,8 +527,8 @@ TEST_F(ModelTestLCTSecir, compareWithPreviousRun)
 TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)
 {
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 2, 3, 1, 1, 5, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState, LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 1, 1, 5, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState, LctState, LctState>;
 
     // Initialize a model.
     Model model;
@@ -538,31 +550,32 @@ TEST(TestLCTSecir, compareWithPreviousRunThreeGroups)
     }
     // Set parameters.
     for (size_t group = 0; group < num_groups; group++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[group]                      = 3.2;
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group]           = 2;
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]             = 5.8;
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]               = 9.5;
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]             = 7.1;
-        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] = 0.05;
+        model.parameters.template get<mio::lsecir::TimeExposed<ScalarType>>()[group]                      = 3.2;
+        model.parameters.template get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[group]           = 2;
+        model.parameters.template get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[group]             = 5.8;
+        model.parameters.template get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[group]               = 9.5;
+        model.parameters.template get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[group]             = 7.1;
+        model.parameters.template get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[group] = 0.05;
 
-        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = 0.7;
-        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = 0.25;
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] = 0.09;
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group]      = 0.2;
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]              = 0.25;
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]              = 0.3;
+        model.parameters.template get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[group] = 0.7;
+        model.parameters.template get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[group] = 0.25;
+        model.parameters.template get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[group] = 0.09;
+        model.parameters.template get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[group]      = 0.2;
+        model.parameters.template get<mio::lsecir::CriticalPerSevere<ScalarType>>()[group]              = 0.25;
+        model.parameters.template get<mio::lsecir::DeathsPerCritical<ScalarType>>()[group]              = 0.3;
     }
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, 10. / (ScalarType)num_groups));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.template get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant(num_groups, num_groups, 10. / (ScalarType)num_groups));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
     // Compare just one step as the adaptive methods does not necessarily produce the same step sizes.
     auto compare    = load_test_data_csv<ScalarType>("lct-secir-subcompartments-compare.csv");
     ScalarType dt   = compare[1][0] - compare[0][0];
     ScalarType tmax = 2 * dt;
 
-    auto integrator = 
+    auto integrator =
         std::make_unique<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     // Choose dt_min = dt_max so that we have a fixed time step and can compare to the result with one group.
     integrator->set_dt_min(dt);
@@ -623,99 +636,100 @@ TEST(TestLCTSecir, testConstraintsParameters)
     mio::set_log_level(mio::LogLevel::off);
 
     // Check for exceptions of parameters.
-    mio::lsecir::Parameters parameters_lct(1);
-    parameters_lct.get<mio::lsecir::TimeExposed>()[0]                      = 0;
-    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()[0]           = 3.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>()[0]             = 6.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedSevere>()[0]               = 11.1;
-    parameters_lct.get<mio::lsecir::TimeInfectedCritical>()[0]             = 17.1;
-    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.01;
-    mio::ContactMatrixGroup& contact_matrix = parameters_lct.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::lsecir::Parameters<ScalarType> parameters_lct(1);
+    parameters_lct.get<mio::lsecir::TimeExposed<ScalarType>>()[0]                      = 0;
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0]           = 3.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]             = 6.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]               = 11.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]             = 17.1;
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.01;
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        parameters_lct.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
 
-    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 1;
-    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 1;
-    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.1;
-    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.1;
-    parameters_lct.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.1;
-    parameters_lct.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.1;
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 1;
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 1;
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.1;
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.1;
+    parameters_lct.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.1;
+    parameters_lct.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.1;
 
     // Check improper TimeExposed.
     bool constraint_check = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::TimeExposed>()[0] = 3.1;
+    parameters_lct.get<mio::lsecir::TimeExposed<ScalarType>>()[0] = 3.1;
 
     // Check TimeInfectedNoSymptoms.
-    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 0.1;
-    constraint_check                                             = parameters_lct.check_constraints();
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 0.1;
+    constraint_check                                                         = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 3.1;
+    parameters_lct.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 3.1;
 
     // Check TimeInfectedSymptoms.
-    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>()[0] = -0.1;
-    constraint_check                                           = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms>()[0] = 6.1;
-
-    // Check TimeInfectedSevere.
-    parameters_lct.get<mio::lsecir::TimeInfectedSevere>()[0] = 0.5;
-    constraint_check                                         = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::TimeInfectedSevere>()[0] = 11.1;
-
-    // Check TimeInfectedCritical.
-    parameters_lct.get<mio::lsecir::TimeInfectedCritical>()[0] = 0.;
-    constraint_check                                           = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::TimeInfectedCritical>()[0] = 17.1;
-
-    // Check TransmissionProbabilityOnContact.
-    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = -1;
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0] = -0.1;
     constraint_check                                                       = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.01;
+    parameters_lct.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0] = 6.1;
 
-    // Check RelativeTransmissionNoSymptoms.
-    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 1.5;
+    // Check TimeInfectedSevere.
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0] = 0.5;
     constraint_check                                                     = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 1;
+    parameters_lct.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0] = 11.1;
 
-    // Check RiskOfInfectionFromSymptomatic.
-    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 1.5;
-    constraint_check                                                     = parameters_lct.check_constraints();
+    // Check TimeInfectedCritical.
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0] = 0.;
+    constraint_check                                                       = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 1;
+    parameters_lct.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0] = 17.1;
 
-    // Check RecoveredPerInfectedNoSymptoms.
-    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 1.5;
-    constraint_check                                                     = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.1;
-
-    // Check SeverePerInfectedSymptoms.
-    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()[0] = -1;
-    constraint_check                                                = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms>()[0] = 0.1;
-
-    // Check CriticalPerSevere.
-    parameters_lct.get<mio::lsecir::CriticalPerSevere>()[0] = -1;
-    constraint_check                                        = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::CriticalPerSevere>()[0] = 0.1;
-
-    // Check DeathsPerCritical.
-    parameters_lct.get<mio::lsecir::DeathsPerCritical>()[0] = -1;
-    constraint_check                                        = parameters_lct.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct.get<mio::lsecir::DeathsPerCritical>()[0] = 0.1;
-
-    // Check Seasonality.
-    parameters_lct.set<mio::lsecir::Seasonality>(1);
+    // Check TransmissionProbabilityOnContact.
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = -1;
     constraint_check = parameters_lct.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct.set<mio::lsecir::Seasonality>(0.1);
+    parameters_lct.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.01;
+
+    // Check RelativeTransmissionNoSymptoms.
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 1;
+
+    // Check RiskOfInfectionFromSymptomatic.
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 1;
+
+    // Check RecoveredPerInfectedNoSymptoms.
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.1;
+
+    // Check SeverePerInfectedSymptoms.
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0] = -1;
+    constraint_check                                                            = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0] = 0.1;
+
+    // Check CriticalPerSevere.
+    parameters_lct.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0] = -1;
+    constraint_check                                                    = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0] = 0.1;
+
+    // Check DeathsPerCritical.
+    parameters_lct.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0] = -1;
+    constraint_check                                                    = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0] = 0.1;
+
+    // Check Seasonality.
+    parameters_lct.set<mio::lsecir::Seasonality<ScalarType>>(1);
+    constraint_check = parameters_lct.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct.set<mio::lsecir::Seasonality<ScalarType>>(0.1);
 
     // Check with correct parameters.
     constraint_check = parameters_lct.check_constraints();
@@ -732,32 +746,32 @@ TEST(TestLCTSecir, testConstraintsModel)
     mio::set_log_level(mio::LogLevel::off);
 
     using InfState  = mio::lsecir::InfectionState;
-    using LctState1 = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using LctState1 = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
 
     // Check for improper number of subcompartments for Susceptible.
-    using LctStatewrongSusceptibles = mio::LctInfectionState<InfState, 3, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongSusceptibles    = mio::lsecir::Model<LctState1, LctStatewrongSusceptibles>;
+    using LctStatewrongSusceptibles = mio::LctInfectionState<ScalarType, InfState, 3, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongSusceptibles    = mio::lsecir::Model<ScalarType, LctState1, LctStatewrongSusceptibles>;
     ModelwrongSusceptibles modelwrongSusceptibles;
     bool constraint_check = modelwrongSusceptibles.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check for improper number of subcompartments for Recovered.
-    using LctStatewrongRecovered = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 10, 1>;
-    using ModelwrongRecovered    = mio::lsecir::Model<LctState1, LctStatewrongRecovered>;
+    using LctStatewrongRecovered = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 10, 1>;
+    using ModelwrongRecovered    = mio::lsecir::Model<ScalarType, LctState1, LctStatewrongRecovered>;
     ModelwrongRecovered modelwrongRecovered;
     constraint_check = modelwrongRecovered.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check for improper number of subcompartments for Dead.
-    using LctStatewrongDead = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 2>;
-    using ModelwrongDead    = mio::lsecir::Model<LctState1, LctStatewrongDead>;
+    using LctStatewrongDead = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 2>;
+    using ModelwrongDead    = mio::lsecir::Model<ScalarType, LctState1, LctStatewrongDead>;
     ModelwrongDead modelwrongDead;
     constraint_check = modelwrongDead.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with a negative number in the initial population distribution.
-    using LctStatevalid = mio::LctInfectionState<InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
-    using Model         = mio::lsecir::Model<LctState1, LctStatevalid>;
+    using LctStatevalid = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 2, 2, 2, 1, 1>;
+    using Model         = mio::lsecir::Model<ScalarType, LctState1, LctStatevalid>;
     Model model;
     model.populations[0] = -1000;
     constraint_check     = model.check_constraints();

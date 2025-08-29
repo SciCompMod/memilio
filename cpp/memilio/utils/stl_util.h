@@ -303,7 +303,7 @@ bool contains(Iter b, Iter e, Pred p)
  * @tparam T An enum class that is a valid index.
  * @return Array of all members of the enum class not including T::Count.
  */
-template<class T>
+template <class T>
 constexpr std::array<T, size_t(T::Count)> enum_members()
 {
     auto enum_members = std::array<T, size_t(T::Count)>{};

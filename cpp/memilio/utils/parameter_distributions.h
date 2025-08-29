@@ -81,7 +81,7 @@ public:
 
     virtual ~ParameterDistribution() = default;
 
-    void add_predefined_sample(double sample)
+    void add_predefined_sample(ScalarType sample)
     {
         m_predefined_samples.push_back(sample);
     }
@@ -91,7 +91,7 @@ public:
         m_predefined_samples.resize(0);
     }
 
-    const std::vector<double>& get_predefined_samples() const
+    const std::vector<ScalarType>& get_predefined_samples() const
     {
         return m_predefined_samples;
     }
@@ -103,10 +103,10 @@ public:
      * random sample is taken
      */
     template <class RNG>
-    double get_sample(RNG& rng)
+    ScalarType get_sample(RNG& rng)
     {
         if (m_predefined_samples.size() > 0) {
-            double rnumb = m_predefined_samples[0];
+            ScalarType rnumb = m_predefined_samples[0];
             m_predefined_samples.erase(m_predefined_samples.begin());
             return rnumb;
         }
@@ -132,10 +132,10 @@ public:
     /**
      * @brief Returns the distribution parameters as vector.
      */
-    virtual std::vector<double> params() const = 0;
+    virtual std::vector<ScalarType> params() const = 0;
 
-    virtual double get_rand_sample(RandomNumberGenerator& rng)          = 0;
-    virtual double get_rand_sample(abm::PersonalRandomNumberGenerator&) = 0;
+    virtual ScalarType get_rand_sample(RandomNumberGenerator& rng)          = 0;
+    virtual ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator&) = 0;
 
     virtual ParameterDistribution* clone() const = 0;
 
@@ -149,7 +149,7 @@ public:
     virtual void accept(ConstParameterDistributionVisitor& visitor) const = 0;
 
 protected:
-    std::vector<double>
+    std::vector<ScalarType>
         m_predefined_samples; // if these values are set; no real sample will occur but these values will be taken
 };
 
@@ -168,7 +168,7 @@ public:
     {
     }
 
-    ParameterDistributionNormal(double mean, double standard_dev)
+    ParameterDistributionNormal(ScalarType mean, ScalarType standard_dev)
         : VisitableParameterDistribution<ParameterDistributionNormal>()
         , m_mean(mean)
         , m_standard_dev(standard_dev)
@@ -178,7 +178,7 @@ public:
         m_standard_dev = standard_dev;
     }
 
-    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double quantile)
+    ParameterDistributionNormal(ScalarType lower_bound, ScalarType upper_bound, ScalarType mean, ScalarType quantile)
         : VisitableParameterDistribution<ParameterDistributionNormal>()
         , m_mean(mean)
         , m_upper_bound(upper_bound)
@@ -188,11 +188,11 @@ public:
         // if upper and lower bound are given, the standard deviation is calculated such that [lower_bound, upper_bound] represent the 0.995 quartile]
         m_standard_dev = upper_bound; // set as to high and adapt then
         adapt_standard_dev(m_standard_dev, upper_bound, lower_bound);
-        m_distribution = mio::NormalDistribution<double>::ParamType(m_mean, m_standard_dev);
+        m_distribution = mio::NormalDistribution<ScalarType>::ParamType(m_mean, m_standard_dev);
     }
 
-    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev,
-                                double quantile)
+    ParameterDistributionNormal(ScalarType lower_bound, ScalarType upper_bound, ScalarType mean,
+                                ScalarType standard_dev, ScalarType quantile)
         : VisitableParameterDistribution<ParameterDistributionNormal>()
         , m_mean(mean)
         , m_standard_dev(standard_dev)
@@ -201,10 +201,10 @@ public:
         , m_quantile(quantile)
     {
         check_quantiles(m_mean, m_standard_dev);
-        m_distribution = mio::NormalDistribution<double>::ParamType(m_mean, m_standard_dev);
+        m_distribution = mio::NormalDistribution<ScalarType>::ParamType(m_mean, m_standard_dev);
     }
 
-    void set_mean(double mean)
+    void set_mean(ScalarType mean)
     {
         m_mean = mean;
     }
@@ -218,7 +218,7 @@ public:
      * @brief verification that at least 99% of the density
      * function lie in the interval defined by the boundaries
      */
-    bool check_quantiles(double& mean, double& standard_dev)
+    bool check_quantiles(ScalarType& mean, ScalarType& standard_dev)
     {
         bool changed = false;
         if (adapt_mean(mean)) {
@@ -234,7 +234,7 @@ public:
         return changed;
     }
 
-    bool adapt_mean(double& mean)
+    bool adapt_mean(ScalarType& mean)
     {
         bool changed = false;
         if (mean < m_lower_bound || mean > m_upper_bound) {
@@ -245,7 +245,7 @@ public:
     }
 
     // ensure that 0.99 % of the distribution are within lower bound and upper bound
-    bool adapt_standard_dev(double& standard_dev, double upper_bound, double lower_bound)
+    bool adapt_standard_dev(ScalarType& standard_dev, ScalarType upper_bound, ScalarType lower_bound)
     {
         bool changed = false;
         if (m_mean + standard_dev * m_quantile > upper_bound) {
@@ -260,17 +260,17 @@ public:
         return changed;
     }
 
-    void set_standard_dev(double standard_dev)
+    void set_standard_dev(ScalarType standard_dev)
     {
         m_standard_dev = standard_dev;
     }
 
-    double get_mean() const
+    ScalarType get_mean() const
     {
         return m_mean;
     }
 
-    double get_standard_dev() const
+    ScalarType get_standard_dev() const
     {
         return m_standard_dev;
     }
@@ -280,22 +280,22 @@ public:
         m_log_stddev_change = log_stddev_change;
     }
 
-    void set_lower_bound(double lower_bound)
+    void set_lower_bound(ScalarType lower_bound)
     {
         m_lower_bound = lower_bound;
     }
 
-    void set_upper_bound(double upper_bound)
+    void set_upper_bound(ScalarType upper_bound)
     {
         m_upper_bound = upper_bound;
     }
 
-    double get_lower_bound() const
+    ScalarType get_lower_bound() const
     {
         return m_lower_bound;
     }
 
-    double get_upper_bound() const
+    ScalarType get_upper_bound() const
     {
         return m_upper_bound;
     }
@@ -311,7 +311,7 @@ public:
         }
     }
 
-    std::vector<double> params() const override
+    std::vector<ScalarType> params() const override
     {
         return {m_mean, m_standard_dev};
     }
@@ -323,7 +323,7 @@ public:
      * otherwise the normal distribution is adapted
      */
     template <class RNG>
-    double sample(RNG& rng)
+    ScalarType sample(RNG& rng)
     {
         //If ub = lb, sampling can only be succesful if mean = lb and dev = 0.
         //But this degenerate normal distribution is not allowed by the c++ standard.
@@ -333,12 +333,12 @@ public:
 
         if (check_quantiles(m_mean, m_standard_dev) || m_distribution.params.mean() != m_mean ||
             m_distribution.params.stddev() != m_standard_dev) {
-            m_distribution = NormalDistribution<double>::ParamType{m_mean, m_standard_dev};
+            m_distribution = NormalDistribution<ScalarType>::ParamType{m_mean, m_standard_dev};
         }
 
-        int i        = 0;
-        int retries  = 10;
-        double rnumb = m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
+        int i            = 0;
+        int retries      = 10;
+        ScalarType rnumb = m_distribution.get_distribution_instance()(thread_local_rng(), m_distribution.params);
         while ((rnumb > m_upper_bound || rnumb < m_lower_bound) && i < retries) {
             rnumb = m_distribution.get_distribution_instance()(rng, m_distribution.params);
             i++;
@@ -355,12 +355,12 @@ public:
         return rnumb;
     }
 
-    double get_rand_sample(RandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(RandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
 
-    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
@@ -386,12 +386,12 @@ public:
     template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionNormal> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto m      = obj.expect_element("Mean", Tag<double>{});
-        auto s      = obj.expect_element("StandardDev", Tag<double>{});
-        auto lb     = obj.expect_element("LowerBound", Tag<double>{});
-        auto ub     = obj.expect_element("UpperBound", Tag<double>{});
-        auto qu     = obj.expect_element("Quantile", Tag<double>{});
-        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto m      = obj.expect_element("Mean", Tag<ScalarType>{});
+        auto s      = obj.expect_element("StandardDev", Tag<ScalarType>{});
+        auto lb     = obj.expect_element("LowerBound", Tag<ScalarType>{});
+        auto ub     = obj.expect_element("UpperBound", Tag<ScalarType>{});
+        auto qu     = obj.expect_element("Quantile", Tag<ScalarType>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<ScalarType>{});
         auto p      = apply(
             io,
             [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& qu_, auto&& predef_) {
@@ -423,13 +423,13 @@ public:
     }
 
 private:
-    double m_mean; // the mean value of the normal distribution
-    double m_standard_dev; // the standard deviation of the normal distribution
-    double m_upper_bound = std::numeric_limits<
-        double>::max(); // upper bound and lower bound can be given to the constructor instead of stddev
-    double m_lower_bound = std::numeric_limits<double>::min();
-    double m_quantile    = 2.5758; // default is 0.995 quartile
-    NormalDistribution<double>::ParamType m_distribution;
+    ScalarType m_mean; // the mean value of the normal distribution
+    ScalarType m_standard_dev; // the standard deviation of the normal distribution
+    ScalarType m_upper_bound = std::numeric_limits<
+        ScalarType>::max(); // upper bound and lower bound can be given to the constructor instead of stddev
+    ScalarType m_lower_bound = std::numeric_limits<ScalarType>::min();
+    ScalarType m_quantile    = 2.5758; // default is 0.995 quartile
+    NormalDistribution<ScalarType>::ParamType m_distribution;
     bool m_log_stddev_change = true;
 };
 
@@ -446,7 +446,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionNorm
 class ParameterDistributionUniform : public VisitableParameterDistribution<ParameterDistributionUniform>
 {
 public:
-    ParameterDistributionUniform(double lower_bound, double upper_bound)
+    ParameterDistributionUniform(ScalarType lower_bound, ScalarType upper_bound)
         : VisitableParameterDistribution<ParameterDistributionUniform>()
         , m_upper_bound(upper_bound)
         , m_lower_bound(lower_bound)
@@ -465,17 +465,17 @@ public:
         }
     }
 
-    std::vector<double> params() const override
+    std::vector<ScalarType> params() const override
     {
         return {m_lower_bound, m_upper_bound};
     }
 
-    double get_lower_bound() const
+    ScalarType get_lower_bound() const
     {
         return m_lower_bound;
     }
 
-    double get_upper_bound() const
+    ScalarType get_upper_bound() const
     {
         return m_upper_bound;
     }
@@ -484,21 +484,21 @@ public:
      * @brief gets a sample of a uniformly distributed variable
      */
     template <class RNG>
-    double sample(RNG& rng)
+    ScalarType sample(RNG& rng)
     {
         if (m_distribution.params.b() != m_upper_bound || m_distribution.params.a() != m_lower_bound) {
-            m_distribution = UniformDistribution<double>::ParamType{m_lower_bound, m_upper_bound};
+            m_distribution = UniformDistribution<ScalarType>::ParamType{m_lower_bound, m_upper_bound};
         }
 
         return m_distribution.get_distribution_instance()(rng, m_distribution.params);
     }
 
-    double get_rand_sample(RandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(RandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
 
-    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
@@ -526,9 +526,9 @@ public:
     template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionUniform> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto lb     = obj.expect_element("LowerBound", Tag<double>{});
-        auto ub     = obj.expect_element("UpperBound", Tag<double>{});
-        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto lb     = obj.expect_element("LowerBound", Tag<ScalarType>{});
+        auto ub     = obj.expect_element("UpperBound", Tag<ScalarType>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<ScalarType>{});
         auto p      = apply(
             io,
             [](auto&& lb_, auto&& ub_, auto&& predef_) {
@@ -555,9 +555,9 @@ public:
     }
 
 private:
-    double m_upper_bound;
-    double m_lower_bound;
-    UniformDistribution<double>::ParamType m_distribution;
+    ScalarType m_upper_bound;
+    ScalarType m_lower_bound;
+    UniformDistribution<ScalarType>::ParamType m_distribution;
 };
 
 template <class IOObj>
@@ -573,7 +573,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUnif
 class ParameterDistributionLogNormal : public VisitableParameterDistribution<ParameterDistributionLogNormal>
 {
 public:
-    ParameterDistributionLogNormal(double log_mean, double log_stddev)
+    ParameterDistributionLogNormal(ScalarType log_mean, ScalarType log_stddev)
         : VisitableParameterDistribution<ParameterDistributionLogNormal>()
         , m_log_mean(log_mean)
         , m_log_stddev(log_stddev)
@@ -592,17 +592,17 @@ public:
         }
     }
 
-    std::vector<double> params() const override
+    std::vector<ScalarType> params() const override
     {
         return {m_log_mean, m_log_stddev};
     }
 
-    double get_log_mean() const
+    ScalarType get_log_mean() const
     {
         return m_log_mean;
     }
 
-    double get_log_stddev() const
+    ScalarType get_log_stddev() const
     {
         return m_log_stddev;
     }
@@ -611,21 +611,21 @@ public:
      * @brief gets a sample of a lognormally distributed variable
      */
     template <class RNG>
-    double sample(RNG& rng)
+    ScalarType sample(RNG& rng)
     {
         if (m_distribution.params.m() != m_log_mean || m_distribution.params.s() != m_log_stddev) {
-            m_distribution = LogNormalDistribution<double>::ParamType{m_log_mean, m_log_stddev};
+            m_distribution = LogNormalDistribution<ScalarType>::ParamType{m_log_mean, m_log_stddev};
         }
 
         return m_distribution.get_distribution_instance()(rng, m_distribution.params);
     }
 
-    double get_rand_sample(RandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(RandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
 
-    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
@@ -653,9 +653,9 @@ public:
     template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionLogNormal> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto lm     = obj.expect_element("LogMean", Tag<double>{});
-        auto ls     = obj.expect_element("LogStddev", Tag<double>{});
-        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto lm     = obj.expect_element("LogMean", Tag<ScalarType>{});
+        auto ls     = obj.expect_element("LogStddev", Tag<ScalarType>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<ScalarType>{});
         auto p      = apply(
             io,
             [](auto&& lm_, auto&& ls_, auto&& predef_) {
@@ -682,9 +682,9 @@ public:
     }
 
 private:
-    double m_log_mean;
-    double m_log_stddev;
-    LogNormalDistribution<double>::ParamType m_distribution;
+    ScalarType m_log_mean;
+    ScalarType m_log_stddev;
+    LogNormalDistribution<ScalarType>::ParamType m_distribution;
 };
 
 template <class IOObj>
@@ -700,7 +700,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionLogN
 class ParameterDistributionExponential : public VisitableParameterDistribution<ParameterDistributionExponential>
 {
 public:
-    ParameterDistributionExponential(double rate)
+    ParameterDistributionExponential(ScalarType rate)
         : VisitableParameterDistribution<ParameterDistributionExponential>()
         , m_rate(rate)
         , m_distribution(rate)
@@ -719,12 +719,12 @@ public:
         }
     }
 
-    std::vector<double> params() const override
+    std::vector<ScalarType> params() const override
     {
         return {m_rate};
     }
 
-    double get_rate() const
+    ScalarType get_rate() const
     {
         return m_rate;
     }
@@ -733,21 +733,21 @@ public:
      * @brief gets a sample of a exponentially distributed variable
      */
     template <class RNG>
-    double sample(RNG& rng)
+    ScalarType sample(RNG& rng)
     {
         if (m_distribution.params.lambda() != m_rate) {
-            m_distribution = ExponentialDistribution<double>::ParamType{m_rate};
+            m_distribution = ExponentialDistribution<ScalarType>::ParamType{m_rate};
         }
 
         return m_distribution.get_distribution_instance()(rng, m_distribution.params);
     }
 
-    double get_rand_sample(RandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(RandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
 
-    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
@@ -774,8 +774,8 @@ public:
     template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionExponential> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto r      = obj.expect_element("Rate", Tag<double>{});
-        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto r      = obj.expect_element("Rate", Tag<ScalarType>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<ScalarType>{});
         auto p      = apply(
             io,
             [](auto&& r_, auto&& predef_) {
@@ -802,8 +802,8 @@ public:
     }
 
 private:
-    double m_rate;
-    ExponentialDistribution<double>::ParamType m_distribution;
+    ScalarType m_rate;
+    ExponentialDistribution<ScalarType>::ParamType m_distribution;
 };
 
 template <class IOObj>
@@ -819,7 +819,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionExpo
 class ParameterDistributionConstant : public VisitableParameterDistribution<ParameterDistributionConstant>
 {
 public:
-    ParameterDistributionConstant(double constant)
+    ParameterDistributionConstant(ScalarType constant)
         : VisitableParameterDistribution<ParameterDistributionConstant>()
         , m_constant(constant)
     {
@@ -836,12 +836,12 @@ public:
         }
     }
 
-    std::vector<double> params() const override
+    std::vector<ScalarType> params() const override
     {
         return {m_constant};
     }
 
-    double get_constant() const
+    ScalarType get_constant() const
     {
         return m_constant;
     }
@@ -850,17 +850,17 @@ public:
      * @brief gets a constant
      */
     template <class RNG>
-    double sample(RNG& /*rng*/)
+    ScalarType sample(RNG& /*rng*/)
     {
         return m_constant;
     }
 
-    double get_rand_sample(RandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(RandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
 
-    double get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
+    ScalarType get_rand_sample(abm::PersonalRandomNumberGenerator& rng) override
     {
         return sample(rng);
     }
@@ -887,8 +887,8 @@ public:
     template <class IOContext, class IOObject>
     static IOResult<ParameterDistributionConstant> deserialize_elements(IOContext& io, IOObject& obj)
     {
-        auto c      = obj.expect_element("Constant", Tag<double>{});
-        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto c      = obj.expect_element("Constant", Tag<ScalarType>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<ScalarType>{});
         auto p      = apply(
             io,
             [](auto&& c_, auto&& predef_) {
@@ -915,7 +915,7 @@ public:
     }
 
 private:
-    double m_constant;
+    ScalarType m_constant;
 };
 
 template <class IOObj>

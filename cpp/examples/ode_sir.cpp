@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Jan Kleinert, Martin J. Kuehn
@@ -50,18 +50,18 @@ int main()
     model.parameters.set<mio::osir::TimeInfected<ScalarType>>(2);
     model.parameters.set<mio::osir::TransmissionProbabilityOnContact<ScalarType>>(0.5);
 
-    mio::ContactMatrixGroup& contact_matrix =
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
         model.parameters.get<mio::osir::ContactPatterns<ScalarType>>().get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(2.7);
-    contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+    contact_matrix[0].add_damping(0.6, mio::SimulationTime<ScalarType>(12.5));
     model.check_constraints();
 
     std::unique_ptr<mio::OdeIntegratorCore<ScalarType>> integrator =
         std::make_unique<mio::EulerIntegratorCore<ScalarType>>();
-    auto sir = simulate(t0, tmax, dt, model, std::move(integrator));
+    auto sir = mio::simulate<ScalarType>(t0, tmax, dt, model, std::move(integrator));
 
     // interpolate results
-    auto interpolated_results = mio::interpolate_simulation_result(sir);
+    auto interpolated_results = mio::interpolate_simulation_result<ScalarType>(sir);
 
     interpolated_results.print_table({"S", "I", "R"});
     std::cout << "\nPopulation total: " << sir.get_last_value().sum() << "\n";

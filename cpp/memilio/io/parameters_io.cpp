@@ -30,11 +30,11 @@
 
 namespace mio
 {
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion)
+IOResult<std::vector<std::vector<ScalarType>>>
+read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion)
 {
-    std::vector<std::vector<double>> vnum_population(
-        vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<ScalarType>> vnum_population(
+        vregion.size(), std::vector<ScalarType>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
 
     for (auto&& county_entry : population_data) {
         //accumulate population of states or country from population of counties
@@ -62,8 +62,8 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
     return success(vnum_population);
 }
 
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion)
+IOResult<std::vector<std::vector<ScalarType>>> read_population_data(const std::string& path,
+                                                                    const std::vector<int>& vregion)
 {
     BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
     return read_population_data(population_data, vregion);

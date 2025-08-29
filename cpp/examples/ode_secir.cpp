@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -25,31 +25,32 @@ int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
 
-    double t0   = 0;
-    double tmax = 50;
-    double dt   = 0.1;
+    ScalarType t0   = 0;
+    ScalarType tmax = 50;
+    ScalarType dt   = 0.1;
 
     mio::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    double cont_freq = 10; // see Polymod study
+    ScalarType cont_freq = 10; // see Polymod study
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 10, nb_dead_t0 = 0;
+    ScalarType nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+               nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    mio::osecir::Model<double> model(1);
+    mio::osecir::Model<ScalarType> model(1);
 
-    model.parameters.template set<mio::osecir::StartDay>(60);
-    model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
+    model.parameters.template set<mio::osecir::StartDay<ScalarType>>(60);
+    model.parameters.set<mio::osecir::Seasonality<ScalarType>>(0.2);
 
-    model.parameters.get<mio::osecir::TimeExposed<double>>()            = 3.2;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>() = 2.0;
-    model.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()   = 5.8;
-    model.parameters.get<mio::osecir::TimeInfectedSevere<double>>()     = 9.5;
-    model.parameters.get<mio::osecir::TimeInfectedCritical<double>>()   = 7.1;
+    model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()            = 3.2;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>() = 2.0;
+    model.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()   = 5.8;
+    model.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()     = 9.5;
+    model.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()   = 7.1;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(30.));
 
     model.populations.set_total(nb_total_t0);
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = nb_exp_t0;
@@ -64,20 +65,20 @@ int main()
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 nb_total_t0);
 
-    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()  = 0.05;
-    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<double>>()    = 0.7;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()    = 0.09;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>()    = 0.25;
-    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>() = 0.45;
-    model.parameters.get<mio::osecir::TestAndTraceCapacity<double>>()              = 35;
-    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()         = 0.2;
-    model.parameters.get<mio::osecir::CriticalPerSevere<double>>()                 = 0.25;
-    model.parameters.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.3;
+    model.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()  = 0.05;
+    model.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()    = 0.7;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()    = 0.09;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()    = 0.25;
+    model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<ScalarType>>() = 0.45;
+    model.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>()              = 35;
+    model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()         = 0.2;
+    model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()                 = 0.25;
+    model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()                 = 0.3;
 
     model.apply_constraints();
 
     // Using default Integrator
-    mio::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> secir = mio::osecir::simulate<ScalarType>(t0, tmax, dt, model);
 
     /*
     Example of using a different integrator
@@ -88,7 +89,7 @@ int main()
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secir = simulate<double>(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<ScalarType> secir = simulate<ScalarType>(t0, tmax, dt, model, std::move(integrator));
     */
 
     bool print_to_terminal = true;
@@ -103,13 +104,13 @@ int main()
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", secir.get_time(i));
-            Eigen::VectorXd res_j = secir.get_value(i);
+            Eigen::VectorX<ScalarType> res_j = secir.get_value(i);
             for (size_t j = 0; j < (size_t)mio::osecir::InfectionState::Count; j++) {
                 printf(" %.14f", res_j[j]);
             }
         }
 
-        Eigen::VectorXd res_j = secir.get_last_value();
+        Eigen::VectorX<ScalarType> res_j = secir.get_last_value();
         printf("number total: %f",
                res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6] + res_j[7]);
     }

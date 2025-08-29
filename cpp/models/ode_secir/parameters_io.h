@@ -69,7 +69,7 @@ IOResult<void> read_confirmed_cases_data(
  * @param[in] date Date at which the data is read.
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vector<ConfirmedCasesDataEntry>& case_data,
                                         const std::vector<int>& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
@@ -199,7 +199,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
  * @param[in] date Date at which the data is read.
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
@@ -218,7 +218,7 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, const std
      * @param[in] date Date for which the arrays are initialized.
      * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data.
      */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
@@ -261,7 +261,7 @@ IOResult<void> set_divi_data(std::vector<Model<FP>>& model, const std::string& p
 * @param[in] num_population Vector of population data. The size should be the same as vregion and model.
 * @param[in] vregion Vector of keys of the regions of interest.
 */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model,
                                    const std::vector<std::vector<double>>& num_population,
                                    const std::vector<int>& vregion)
@@ -295,7 +295,7 @@ IOResult<void> set_population_data(std::vector<Model<FP>>& model,
 * @param[in] path Path to RKI file containing population data.
 * @param[in] vregion Vector of keys of the regions of interest.
 */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> set_population_data(std::vector<Model<FP>>& model, const std::string& path,
                                    const std::vector<int>& vregion)
 {

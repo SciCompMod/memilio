@@ -37,19 +37,19 @@ namespace abm
     * @return p percentile of the parameters over all runs
     */
 template <class Model>
-std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Model>>& ensemble_params, double p)
+std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Model>>& ensemble_params, ScalarType p)
 {
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
 
     auto num_runs  = ensemble_params.size();
     auto num_nodes = ensemble_params[0].size();
-    std::vector<double> single_element_ensemble(num_runs);
+    std::vector<ScalarType> single_element_ensemble(num_runs);
     auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 
     // Lambda function that calculates the percentile of a single parameter
     std::vector<Model> percentile(num_nodes, Model((int)num_groups));
     auto param_percentile = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
-        std::vector<double> single_element(num_runs);
+        std::vector<ScalarType> single_element(num_runs);
         for (size_t run = 0; run < num_runs; run++) {
             auto const& params  = ensemble_params[run][n];
             single_element[run] = get_param(params);

@@ -64,29 +64,31 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRun)
     // Set the model parameters so that if the default values are changed, the test is still valid.
     mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                               delaydistribution);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
+                                                                           delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
         .set_distribution_parameter(1.7);
 
-    model.parameters.get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+    model.parameters.template get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
 
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
 
-    model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
+    model.parameters.template get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
 
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 10.));
+    model.parameters.template get<mio::isecir::ContactPatterns>() =
+        mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 
-    mio::ConstantFunction constfunc(1.0);
-    mio::StateAgeFunctionWrapper prob(constfunc);
+    mio::ConstantFunction<ScalarType> constfunc(1.0);
+    mio::StateAgeFunctionWrapper<ScalarType> prob(constfunc);
 
-    model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
-    model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
-    model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
+    model.parameters.template get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
+    model.parameters.template get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
+    model.parameters.template get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
 
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 1.);
@@ -144,33 +146,35 @@ TEST(TestIDEParametersIo, RKIcompareWithPreviousRunAgeRes)
         num_agegroups);
 
     // Set the model parameters so that if the default values are changed, the test is still valid.
-    mio::SmootherCosine smoothcos(2.0);
-    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
-                                                               delaydistribution);
+    mio::SmootherCosine<ScalarType> smoothcos(2.0);
+    mio::StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper<ScalarType>> vec_delaydistrib((int)mio::isecir::InfectionTransition::Count,
+                                                                           delaydistribution);
     vec_delaydistrib[(int)mio::isecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
         .set_distribution_parameter(1.7);
     for (mio::AgeGroup group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        model.parameters.get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+        model.parameters.template get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
     }
     std::vector<ScalarType> vec_prob((int)mio::isecir::InfectionTransition::Count, 0.5);
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::SusceptibleToExposed)]        = 1;
     vec_prob[Eigen::Index(mio::isecir::InfectionTransition::ExposedToInfectedNoSymptoms)] = 1;
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        model.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
+        model.parameters.template get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
     }
-    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, num_agegroups);
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_agegroups, num_agegroups, 10.));
-    model.parameters.get<mio::isecir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
+    mio::ContactMatrixGroup<ScalarType> contact_matrix = mio::ContactMatrixGroup<ScalarType>(1, num_agegroups);
+    contact_matrix[0] =
+        mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(num_agegroups, num_agegroups, 10.));
+    model.parameters.template get<mio::isecir::ContactPatterns>() =
+        mio::UncertainContactMatrix<ScalarType>(contact_matrix);
 
-    mio::ConstantFunction constfunc(1.0);
-    mio::StateAgeFunctionWrapper prob(constfunc);
+    mio::ConstantFunction<ScalarType> constfunc(1.0);
+    mio::StateAgeFunctionWrapper<ScalarType> prob(constfunc);
 
     for (auto group = mio::AgeGroup(0); group < mio::AgeGroup(num_agegroups); ++group) {
-        model.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
-        model.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
-        model.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
+        model.parameters.template get<mio::isecir::TransmissionProbabilityOnContact>()[group] = prob;
+        model.parameters.template get<mio::isecir::RelativeTransmissionNoSymptoms>()[group]   = prob;
+        model.parameters.template get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group]   = prob;
     }
 
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases =
@@ -263,14 +267,14 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 06, 07);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                               scale_confirmed_cases);
+                                                                           scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 05, 24);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                               scale_confirmed_cases);
+                                                                           scale_confirmed_cases);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -289,7 +293,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailure)
     // --- Valid case.
     start_date = mio::Date(2020, 06, 02);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesNoAgeEntry>(model, dt, test_data, start_date,
-                                                                               scale_confirmed_cases);
+                                                                           scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 }
@@ -337,14 +341,14 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Case where not all needed dates from the future are provided.
     start_date = mio::Date(2020, 12, 31);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                              scale_confirmed_cases);
+                                                                          scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsFailure(mio::StatusCode::OutOfRange));
 
     // --- Case where not all needed dates from the past are provided.
     start_date = mio::Date(2020, 10, 1);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                              scale_confirmed_cases);
+                                                                          scale_confirmed_cases);
     // Check that status is Success as just a warning is logged.
     ASSERT_THAT(print_wrap(status), IsSuccess());
     // Check that the flow InfectedNoSymptomsToInfectedSymptoms has actually been set to 0.
@@ -365,7 +369,7 @@ TEST(TestIDEParametersIo, ParametersIoRKIFailureAgeRes)
     // --- Valid case.
     start_date = mio::Date(2020, 11, 01);
     status     = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(model, dt, test_data, start_date,
-                                                                              scale_confirmed_cases);
+                                                                          scale_confirmed_cases);
 
     ASSERT_THAT(print_wrap(status), IsSuccess());
 }
