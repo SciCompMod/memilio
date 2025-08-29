@@ -26,8 +26,8 @@ void Simulation::advance(ScalarType tmax)
     m_model->compparameters->set_InitFoI(m_dt);
     m_model->compparameters->set_reproductionnumber_c(m_dt);
     m_model->compparameters->set_T(m_dt);
+    m_model->compparameters->set_V();
     m_model->compparameters->set_W(m_dt);
-    m_model->initialization_compute_forceofinfection();
 
     m_normmodel->compparameters->set_transitiondistributions_support_max(m_dt);
     m_normmodel->compparameters->set_transitiondistributions(m_dt);
@@ -38,16 +38,18 @@ void Simulation::advance(ScalarType tmax)
     m_normmodel->compparameters->set_InitFoI(m_dt);
     m_normmodel->compparameters->set_reproductionnumber_c(m_dt);
     m_normmodel->compparameters->set_T(m_dt);
+    m_normmodel->compparameters->set_V();
     m_normmodel->compparameters->set_W(m_dt);
-    m_normmodel->initialization_compute_forceofinfection();
 
     m_difference_normalizedcompartments.add_time_point(0);
-    compute_difference_normalizedcompartments();
+    m_difference_normalizedFoI.add_time_point(0);
+    compute_difference_normalizations();
 
     // For every time step:
     while (m_model->transitions.get_last_time() < tmax - m_dt / 2) {
 
         m_difference_normalizedcompartments.add_time_point(m_difference_normalizedcompartments.get_last_time() + m_dt);
+        m_difference_normalizedFoI.add_time_point(m_difference_normalizedFoI.get_last_time() + m_dt);
         //standard model:
         m_model->transitions.add_time_point(m_model->transitions.get_last_time() + m_dt);
         m_model->transitions_update.add_time_point(m_model->transitions_update.get_last_time() + m_dt);
@@ -57,6 +59,8 @@ void Simulation::advance(ScalarType tmax)
         m_model->m_forceofinfectionupdate.add_time_point(m_model->m_forceofinfectionupdate.get_last_time() + m_dt);
         m_model->m_totalpopulation.add_time_point(m_model->m_totalpopulation.get_last_time() + m_dt);
         m_model->m_totalpopulationupdate.add_time_point(m_model->m_totalpopulationupdate.get_last_time() + m_dt);
+        m_model->m_totalpopulation_derivative.add_time_point(m_model->m_totalpopulation_derivative.get_last_time() +
+                                                             m_dt);
         m_model->m_normalizedpopulations.add_time_point(m_model->m_normalizedpopulations.get_last_time() + m_dt);
 
         // Compute susceptibles:
@@ -95,7 +99,7 @@ void Simulation::advance(ScalarType tmax)
         m_normmodel->compute_forceofinfection(m_dt);
 
         //Compute the difference of the two normalized compartments.
-        compute_difference_normalizedcompartments();
+        compute_difference_normalizations();
     }
 }
 

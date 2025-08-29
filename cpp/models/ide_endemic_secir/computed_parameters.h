@@ -393,6 +393,38 @@ private:
     }
 
     /**
+     * @brief Setter for m_V.
+     *
+    * @param[in] dt step size.
+     */
+    void set_V()
+    {
+        // The value V^z is not defined for the compartments Susceptibles and Exposed
+        // InfectedNoSymptoms:
+        m_V[(int)InfectionState::InfectedNoSymptoms] = m_T[(int)InfectionTransition::ExposedToInfectedNoSymptoms];
+        // InfectedSymptoms:
+        m_V[(int)InfectionState::InfectedSymptoms] =
+            m_T[(int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+            m_V[(int)InfectionState::InfectedNoSymptoms];
+        // InfectedSevere:
+        m_V[(int)InfectionState::InfectedSevere] = m_T[(int)InfectionTransition::InfectedSymptomsToInfectedSevere] *
+                                                   m_V[(int)InfectionState::InfectedSymptoms];
+        // InfectedCritical:
+        m_V[(int)InfectionState::InfectedCritical] =
+            m_T[(int)InfectionTransition::InfectedSevereToInfectedCritical] * m_V[(int)InfectionState::InfectedSevere];
+        // Dead:
+        m_V[(int)InfectionState::Dead] =
+            m_T[(int)InfectionTransition::InfectedCriticalToDead] * m_V[(int)InfectionState::InfectedCritical];
+        // Recovered:
+        m_V[(int)InfectionState::Recovered] =
+            m_T[(int)InfectionTransition::InfectedNoSymptomsToRecovered] *
+                m_V[(int)InfectionState::InfectedNoSymptoms] +
+            m_T[(int)InfectionTransition::InfectedSymptomsToRecovered] * m_V[(int)InfectionState::InfectedSymptoms] +
+            m_T[(int)InfectionTransition::InfectedSevereToRecovered] * m_V[(int)InfectionState::InfectedSevere] +
+            m_T[(int)InfectionTransition::InfectedCriticalToRecovered] * m_V[(int)InfectionState::InfectedCritical];
+    }
+
+    /**
      * @brief Setter for m_W.
      *
      * m_W contains the values W_z for compartments z. As W_z is only defined for the compartments Exposed, InfectedNoSymptoms,
@@ -444,13 +476,15 @@ private:
     // value of the function FoI_0 used for the computation of the force of infection in the normalized model
     std::vector<ScalarType> m_T{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< A vector
     // containing the approximated value for T_z1^z2 for every Flow z1 to z2.
+    std::vector<ScalarType> m_V{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< A vector
+    // containing the approximated value for V^z for every compartment z.
     std::vector<ScalarType> m_W{std::vector<ScalarType>((int)InfectionState::Count, 0.)}; ///< A vector containing+
     // the approximated value for W_z for every compartment z.
     // ---- Friend classes/functions. ----
     friend class Model;
     friend class NormModel;
     friend class Simulation;
-};
+}; // namespace endisecir
 
 } // namespace endisecir
 

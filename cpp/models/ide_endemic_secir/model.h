@@ -192,7 +192,9 @@ private:
     TimeSeries<ScalarType> m_totalpopulationupdate{TimeSeries<ScalarType>(
         1)}; ///< TimeSeries containing the total population size of the considered region for each time point.
     //In this case we use the compartments from populations_update.
-
+    TimeSeries<ScalarType> m_totalpopulation_derivative{TimeSeries<ScalarType>(
+        1)}; ///< TimeSeries containing the derivative of the total population size of the considered
+    // region for each time point.
     TimeSeries<ScalarType> m_normalizedpopulations{
         TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count) -
                                1)}; ///< TimeSeries containing points of time and the corresponding portion

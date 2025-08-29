@@ -40,7 +40,9 @@ Model::Model(CompParameters const& compparams)
         std::accumulate(populations[0].begin(), populations[0].end(), 0) - populations[0][(int)InfectionState::Dead];
     m_totalpopulation.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize));
     m_totalpopulationupdate.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, init_populationsize));
+    m_totalpopulation_derivative.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 0.));
 
+    // Set the force of infection term at time t0.
     m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_FoI_0[0]));
     m_forceofinfectionupdate.add_time_point(
         0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_NormFoI_0[0]));
@@ -344,6 +346,12 @@ void Model::compute_populationsize()
     }
     m_totalpopulation.get_last_value()[0]       = sum1;
     m_totalpopulationupdate.get_last_value()[0] = sum2;
+    // Here we comoute the derivative of the total population that is given by
+    // BirthRate * N(t) - DeathRate * N(t) - Transition[InfectedCritical>ToDeath](t).
+    m_totalpopulation_derivative.get_last_value()[0] =
+        (compparameters->parameters.get<NaturalBirthRate>() - compparameters->parameters.get<NaturalDeathRate>()) *
+            m_totalpopulation.get_last_value()[0] -
+        transitions.get_last_value()[(int)InfectionTransition::InfectedCriticalToDead];
 }
 
 void Model::compute_normalizedcompartments()

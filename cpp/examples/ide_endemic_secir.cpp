@@ -19,7 +19,7 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 500;
+    ScalarType tmax = 1;
     ScalarType dt   = 1.0;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
@@ -49,7 +49,7 @@ int main()
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    // mio::SmootherCosine smoothcos(8.0);
+    // mio::SmootherCosine smoothcos(6.0);
     // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
@@ -165,26 +165,27 @@ int main()
     // sim.get_forceofinfections_update().print_table({"FoIUpdate"}, 16, 8);
 
     // Uncomment to print the force of infection of normmodel.
-    sim.get_normmodel_forceofinfections().print_table({"norm FoI"}, 16, 8);
+    // sim.get_normmodel_forceofinfections().print_table({"norm FoI"}, 16, 8);
 
-    // Uncomment to print the reproduction number
-    // std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
+    //Uncomment to print the reproduction number
+    std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
 
     // Uncomment to print the the values T_z1^z2
-    // for (int i = 0; i < (int)sim.get_T().size(); i++) {
-    //     std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
-    // }
+    for (int i = 0; i < (int)sim.get_T().size(); i++) {
+        std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
+    }
+
+    // Uncomment to print the the values V^z
+    for (int i = 0; i < (int)sim.get_V().size(); i++) {
+        std::cout << "V_" << i << " = " << sim.get_V()[i] << "\n";
+    }
 
     // Uncomment to print the values W_z
-    // for (int i = 0; i < (int)sim.get_W().size(); i++) {
-    //     std::cout << "W_" << i << " = " << sim.get_W()[i] << "\n";
-    // }
+    for (int i = 0; i < (int)sim.get_W().size(); i++) {
+        std::cout << "W_" << i << " = " << sim.get_W()[i] << "\n";
+    }
 
     // Uncomment to print the total population size.
     // sim.get_totalpopulations().print_table({"N"}, 16, 9);
     // sim.get_totalpopulations_update().print_table({"UN"}, 16, 9);
-
-    // Uncomment to print the force of infection.
-    // sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
-    // sim.get_forceofinfections_update().print_table({"FoIUpdate"}, 16, 8);
 }

@@ -48,50 +48,50 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    // mio::SmootherCosine smoothcos(8.0);
-    // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    // Uncomment for Lognorm.
-    mio::ConstantFunction initialfunc(0);
-    mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistributioninit);
-    // ExposedToInfectedNoSymptoms
-    mio::LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(0.3, 0, 4.2);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
-        survivalExposedToInfectedNoSymptoms);
-    // InfectedNoSymptomsToInfectedSymptoms
-    mio::LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(0.7, 0, 0.8);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
-        .set_state_age_function(survivalInfectedNoSymptomsToInfectedSymptoms);
-    // InfectedNoSymptomsToRecovered
-    mio::LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(0.2, 0, 7.7);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedNoSymptomsToRecovered]
-        .set_state_age_function(survivalInfectedNoSymptomsToRecovered);
-    // InfectedSymptomsToInfectedSevere
-    mio::LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(0.7, 0, 5.3);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
-        .set_state_age_function(survivalInfectedSymptomsToInfectedSevere);
-    // InfectedSymptomsToRecovered
-    mio::LognormSurvivalFunction survivalInfectedSymptomsToRecovered(0.2, 0, 7.8);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
-        survivalInfectedSymptomsToRecovered);
-    // InfectedSevereToInfectedCritical
-    mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(1.0, 0, 0.9);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSevereToInfectedCritical]
-        .set_state_age_function(survivalInfectedSevereToInfectedCritical);
-    // InfectedSevereToRecovered
-    mio::LognormSurvivalFunction survivalInfectedSevereToRecovered(0.3, 0, 17.1);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
-        survivalInfectedSevereToRecovered);
-    // InfectedCriticalToDead
-    mio::LognormSurvivalFunction survivalInfectedCriticalToDead(0.4, 0, 9.8);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
-        survivalInfectedCriticalToDead);
-    // InfectedCriticalToRecovered
-    mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(0.3, 0, 17.1);
-    vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
-        survivalInfectedCriticalToRecovered);
+    //Uncomment for Lognorm.
+    // mio::ConstantFunction initialfunc(0);
+    // mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
+    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistributioninit);
+    // // ExposedToInfectedNoSymptoms
+    // mio::LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(0.3, 0, 4.2);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
+    //     survivalExposedToInfectedNoSymptoms);
+    // // InfectedNoSymptomsToInfectedSymptoms
+    // mio::LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(0.7, 0, 0.8);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms]
+    //     .set_state_age_function(survivalInfectedNoSymptomsToInfectedSymptoms);
+    // // InfectedNoSymptomsToRecovered
+    // mio::LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(0.2, 0, 7.7);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedNoSymptomsToRecovered]
+    //     .set_state_age_function(survivalInfectedNoSymptomsToRecovered);
+    // // InfectedSymptomsToInfectedSevere
+    // mio::LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(0.7, 0, 5.3);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSymptomsToInfectedSevere]
+    //     .set_state_age_function(survivalInfectedSymptomsToInfectedSevere);
+    // // InfectedSymptomsToRecovered
+    // mio::LognormSurvivalFunction survivalInfectedSymptomsToRecovered(0.2, 0, 7.8);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSymptomsToRecovered].set_state_age_function(
+    //     survivalInfectedSymptomsToRecovered);
+    // // InfectedSevereToInfectedCritical
+    // mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(1.0, 0, 0.9);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSevereToInfectedCritical]
+    //     .set_state_age_function(survivalInfectedSevereToInfectedCritical);
+    // // InfectedSevereToRecovered
+    // mio::LognormSurvivalFunction survivalInfectedSevereToRecovered(0.3, 0, 17.1);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedSevereToRecovered].set_state_age_function(
+    //     survivalInfectedSevereToRecovered);
+    // // InfectedCriticalToDead
+    // mio::LognormSurvivalFunction survivalInfectedCriticalToDead(0.4, 0, 9.8);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedCriticalToDead].set_state_age_function(
+    //     survivalInfectedCriticalToDead);
+    // // InfectedCriticalToRecovered
+    // mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(0.3, 0, 17.1);
+    // vec_delaydistribution[(int)mio::endisecir::InfectionTransition::InfectedCriticalToRecovered].set_state_age_function(
+    //     survivalInfectedCriticalToRecovered);
 
     computed_parameters.parameters.get<mio::endisecir::TransitionDistributions>() = vec_delaydistribution;
 
@@ -104,6 +104,17 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToRecovered)]            = 1 - 0.2;
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]               = 0.4;
     vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToRecovered)]          = 1 - 0.4;
+
+    //Different values:
+    // std::vector<ScalarType> vec_prob((int)mio::endisecir::InfectionTransition::Count, 1.);
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToInfectedSymptoms)] = 0.5;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedNoSymptomsToRecovered)]        = 1 - 0.5;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSymptomsToInfectedSevere)]     = 0.5;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSymptomsToRecovered)]          = 1 - 0.5;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToInfectedCritical)]     = 0.5;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedSevereToRecovered)]            = 1 - 0.5;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToDead)]               = 0.8;
+    // vec_prob[Eigen::Index(mio::endisecir::InfectionTransition::InfectedCriticalToRecovered)]          = 1 - 0.8;
 
     computed_parameters.parameters.set<mio::endisecir::TransitionProbabilities>(vec_prob);
 
@@ -147,9 +158,13 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
         std::string filename_ide_totalpopulation1 = filename_ide + "_totalpopulation1.h5";
         mio::IOResult<void> save_result_status_tp1 =
             mio::save_result({sim.get_totalpopulations()}, {0}, 1, filename_ide_totalpopulation1);
+        //Save derivative of total population.
+        std::string filename_ide_dertotalpopulation1 = filename_ide + "_dertotalpopulation1.h5";
+        mio::IOResult<void> save_result_status_dtp1 =
+            mio::save_result({sim.get_totalpopulations_derivative()}, {0}, 1, filename_ide_dertotalpopulation1);
 
         //Save compartments.
-        std::string filename_ide_compartments1 = filename_ide + "_compartments1.h5";
+        std::string filename_ide_compartments1 = filename_ide + "_compartments.h5";
         mio::IOResult<void> save_result_status_c1 =
             mio::save_result({sim.get_compartments()}, {0}, 1, filename_ide_compartments1);
 
@@ -165,25 +180,34 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
 
         //Save files of NormModel.
         //Save compartments.
-        std::string filename_ide_normmod_compartments = filename_ide + "_normmod_compartments1.h5";
+        std::string filename_ide_normmod_compartments = filename_ide + "_normmod_compartments.h5";
         mio::IOResult<void> save_result_status_nmc1 =
             mio::save_result({sim.get_normmodel_compartments()}, {0}, 1, filename_ide_normmod_compartments);
 
         //Save the force of infection.
-        std::string filename_ide_normmod_forceofinfection = filename_ide + "_normmod_forceofinfection1.h5";
+        std::string filename_ide_normmod_forceofinfection = filename_ide + "_normmod_forceofinfection.h5";
         mio::IOResult<void> save_result_status_nmfoi =
             mio::save_result({sim.get_normmodel_forceofinfections()}, {0}, 1, filename_ide_normmod_forceofinfection);
 
+        //Safe difference between normalized compartments.
+        std::string filename_ide_difference_normcomp = filename_ide + "_difference_normcomp.h5";
+        mio::IOResult<void> save_result_status_dnm =
+            mio::save_result({sim.get_difference_normalizationcomp()}, {0}, 1, filename_ide_difference_normcomp);
+
+        //Safe difference between Force of Infections.
+        std::string filename_ide_difference_normFoI = filename_ide + "_difference_normfoi.h5";
+        mio::IOResult<void> save_result_status_dnf =
+            mio::save_result({sim.get_difference_normalizationFoi()}, {0}, 1, filename_ide_difference_normFoI);
+
         if (!save_result_status_tp1 || !save_result_status_c1 || !save_result_status_nc || !save_result_status_foi ||
-            !save_result_status_nmc1 || !save_result_status_nmfoi) {
+            !save_result_status_nmc1 || !save_result_status_nmfoi || !save_result_status_dnm ||
+            !save_result_status_dnf || !save_result_status_dtp1) {
             return mio::failure(mio::StatusCode::UnknownError, "Error while saving results.");
         }
     }
     // Print the reproduction number.
     std::cout << "The reproduction number Rc for Birth rate > Death rate is  " << sim.get_reproductionnumber_c()
               << "\n";
-
-    sim.get_forceofinfections().print_table({"FoI"}, 16, 8);
 
     return mio::success();
 }
@@ -193,7 +217,7 @@ int main()
     std::string result_dir = "/localdata1/trit_ha/code/memilio-1/PythonPlotsEndIDE/simulation_results/";
 
     // Define tmax.
-    ScalarType tmax = 500;
+    ScalarType tmax = 100;
 
     auto result_ide = simulate_endidemodel(tmax, result_dir);
     if (!result_ide) {

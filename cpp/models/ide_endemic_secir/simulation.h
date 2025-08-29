@@ -166,6 +166,14 @@ public:
     }
 
     /**
+     * @brief Get the derivative of the total population of m_model.
+     */
+    TimeSeries<ScalarType> const& get_totalpopulations_derivative()
+    {
+        return m_model->m_totalpopulation_derivative;
+    }
+
+    /**
      * @brief Get the reproduction numer.
      */
     ScalarType const& get_reproductionnumber_c()
@@ -179,6 +187,14 @@ public:
     std::vector<ScalarType> const& get_T()
     {
         return m_model->compparameters->m_T;
+    }
+
+    /**
+     * @brief Get V.
+     */
+    std::vector<ScalarType> const& get_V()
+    {
+        return m_model->compparameters->m_V;
     }
 
     /**
@@ -229,17 +245,25 @@ public:
         return m_dt;
     }
 
-    void compute_difference_normalizedcompartments()
+    void compute_difference_normalizations()
     {
         for (int state = 0; state < (int)InfectionState::Count - 1; state++) {
-            m_difference_normalizedcompartments.get_last_value()[state] = std::abs(
-                m_normmodel->populations.get_last_value()[state] - m_model->populations.get_last_value()[state]);
+            m_difference_normalizedcompartments.get_last_value()[state] =
+                std::abs(m_normmodel->populations.get_last_value()[state] -
+                         m_model->m_normalizedpopulations.get_last_value()[state]);
         }
+        m_difference_normalizedFoI.get_last_value()[0] = std::abs(m_normmodel->m_forceofinfection.get_last_value()[0] -
+                                                                  m_model->m_forceofinfection.get_last_value()[0]);
     }
 
-    TimeSeries<ScalarType> const& get_difference_normalizedcompartments()
+    TimeSeries<ScalarType> const& get_difference_normalizationcomp()
     {
         return m_difference_normalizedcompartments;
+    }
+
+    TimeSeries<ScalarType> const& get_difference_normalizationFoi()
+    {
+        return m_difference_normalizedFoI;
     }
 
 private:
@@ -249,8 +273,10 @@ private:
     ScalarType m_dt; ///< Time step used for numerical computations in simulation.
     TimeSeries<ScalarType> m_difference_normalizedcompartments{TimeSeries<ScalarType>(
         (int)InfectionState::Count - 1)}; ///< TimeSeries containing the difference of the compartments
-    // computed by NormModel and the normalized compartments comouted in Model.
-    // needed for the numerical scheme.
+    // computed by NormModel and the normalized compartments computed in Model.
+    TimeSeries<ScalarType> m_difference_normalizedFoI{
+        TimeSeries<ScalarType>(1)}; ///< TimeSeries containing the difference of the force of infection terms
+    // computed by NormModel and Model.
 };
 
 TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& model);
