@@ -133,8 +133,9 @@ def create_contact_based_household_layout(household_data, contact_data,
     households, contact_matrix = calculate_household_contact_matrix(
         household_data, contact_data)
 
-    print(f"Creating contact-based grid layout for {len(households)} households...")
-    
+    print(
+        f"Creating contact-based grid layout for {len(households)} households...")
+
     # Use contact matrix to determine household ordering for grid placement
     # Calculate total contact strength for each household
     household_contact_strength = {}
@@ -142,43 +143,47 @@ def create_contact_based_household_layout(household_data, contact_data,
         # Sum of all contacts for this household
         total_contacts = np.sum(contact_matrix[i, :])
         household_contact_strength[hh] = total_contacts
-    
+
     # Sort households by contact strength (most connected first)
-    sorted_households = sorted(households, key=lambda hh: household_contact_strength[hh], reverse=True)
-    
+    sorted_households = sorted(
+        households, key=lambda hh: household_contact_strength[hh], reverse=True)
+
     # Create a structured grid layout with household rectangles
     household_positions = {}
     person_pos = {}
     household_dimensions = {}  # Store width and height for each household
-    
+
     rows = int(np.ceil(len(sorted_households) / max_households_per_row))
-    
+
     for idx, household_id in enumerate(sorted_households):
         # Calculate grid position
         row = idx // max_households_per_row
         col = idx % max_households_per_row
-        
+
         # Convert to actual coordinates (center of household rectangle)
         hx = col * household_spacing
         hy = row * household_spacing
-        
+
         household_positions[household_id] = (hx, hy)
-        
+
         # Get household members
-        household_members = household_data[household_data['household_id'] == household_id]['person_id'].tolist()
+        household_members = household_data[household_data['household_id']
+                                           == household_id]['person_id'].tolist()
         n_members = len(household_members)
-        
+
         # Calculate household dimensions based on number of members
         if n_members == 1:
             household_width = 30  # Increased from 20
             household_height = 30  # Increased from 20
         else:
             # Horizontal layout: width grows with members, height stays constant
-            household_width = max(50, n_members * person_spacing + 20)  # Increased padding
+            # Increased padding
+            household_width = max(50, n_members * person_spacing + 20)
             household_height = 35  # Increased from 25
-        
-        household_dimensions[household_id] = (household_width, household_height)
-        
+
+        household_dimensions[household_id] = (
+            household_width, household_height)
+
         # Arrange people in horizontal line within the household rectangle
         if n_members == 1:
             person_pos[household_members[0]] = (hx, hy)
@@ -187,16 +192,19 @@ def create_contact_based_household_layout(household_data, contact_data,
             start_x = hx - (n_members - 1) * person_spacing / 2
             for i, person_id in enumerate(household_members):
                 px = start_x + i * person_spacing
-                py = hy  # Keep all members at the same y-coordinate (horizontal line)
+                # Keep all members at the same y-coordinate (horizontal line)
+                py = hy
                 person_pos[person_id] = (px, py)
-    
+
     # Calculate some statistics
-    high_contact_households = sum(1 for strength in household_contact_strength.values() if strength > np.median(list(household_contact_strength.values())))
-    
-    print(f"Contact-based grid layout created: {high_contact_households}/{len(households)} households with above-median contact levels")
+    high_contact_households = sum(1 for strength in household_contact_strength.values(
+    ) if strength > np.median(list(household_contact_strength.values())))
+
+    print(
+        f"Contact-based grid layout created: {high_contact_households}/{len(households)} households with above-median contact levels")
     print(f"Grid dimensions: {rows} rows x {max_households_per_row} columns")
     print(f"Household spacing: {household_spacing} units")
-    
+
     return person_pos, households, household_positions, household_dimensions
 
 
@@ -267,7 +275,8 @@ def create_time_specific_heatmap(ax, household_data, household_positions, househ
             continue
 
         hx, hy = position
-        household_width, household_height = household_dimensions.get(household_id, (40, 40))
+        household_width, household_height = household_dimensions.get(
+            household_id, (40, 40))
         household_members = household_data[household_data['household_id']
                                            == household_id]['person_id'].tolist()
 
@@ -290,10 +299,11 @@ def create_time_specific_heatmap(ax, household_data, household_positions, househ
                 linewidth = 3  # Thicker border
 
             # Draw household boundary as a rectangle centered on household position
-            rect = plt.Rectangle((hx - household_width/2, hy - household_height/2), 
-                               household_width, household_height,
-                               facecolor=boundary_color, alpha=alpha, zorder=0,
-                               edgecolor='black', linewidth=linewidth)  # Changed to black for better visibility
+            rect = plt.Rectangle((hx - household_width/2, hy - household_height/2),
+                                 household_width, household_height,
+                                 facecolor=boundary_color, alpha=alpha, zorder=0,
+                                 # Changed to black for better visibility
+                                 edgecolor='black', linewidth=linewidth)
             ax.add_patch(rect)
 
     # Draw person nodes
@@ -544,8 +554,8 @@ def main():
     parser.add_argument('--method2-name', default='Uniform',
                         help='Name for second method')
     parser.add_argument('--output-path', help='Output path for visualization')
-    parser.add_argument('--time-points', nargs='+', type=int, default=[0, 72, 240],
-                        help='Time points in hours (default: 0, 72, 240 for initialization, day 3, day 10)')
+    parser.add_argument('--time-points', nargs='+', type=int, default=[0, 24*5, 240],
+                        help='Time points in hours (default: 0, 24, 240 for initialization, day 1, day 10)')
 
     args = parser.parse_args()
 
