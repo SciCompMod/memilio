@@ -54,6 +54,9 @@ def find_scenario_directories(results_base_dir, scenario_key):
     transmission_dir = max(transmission_dirs) if transmission_dirs else None
     uniform_dir = max(uniform_dirs) if uniform_dirs else None
 
+    print(f"  Found directories for {scenario_key}:")
+    print(f"    Transmission: {transmission_dir}")
+    print(f"    Uniform: {uniform_dir}")
     return transmission_dir, uniform_dir
 
 
@@ -250,7 +253,7 @@ def create_multi_panel_comparison(results_base_dir, output_path=None, show90=Fal
 
     scenarios = {
         'R1_restaurant_strong_clustering': 'R1: Restaurant Strong Clustering',
-        'R2_restaurant_weak_clustering': 'R2: Restaurant Weaker Clustering',
+        'R2_restaurant_weaker_clustering': 'R2: Restaurant Weaker Clustering',
         'W1_workplace_few_meetings': 'W1: Workplace Few Meetings',
         'W2_workplace_many_meetings': 'W2: Workplace Many Meetings'
     }
