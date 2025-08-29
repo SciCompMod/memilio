@@ -493,6 +493,12 @@ FP& operator/=(FP& lhs, const UncertainValue<FP>& rhs)
 }
 //@}
 
+template <typename FP>
+inline std::ostream& operator<<(std::ostream& os, const UncertainValue<FP>& uv)
+{
+    return os << uv.value();
+}
+
 } // namespace mio
 
 #endif // UNCERTAINVALUE_H
