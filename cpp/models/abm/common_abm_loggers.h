@@ -153,7 +153,7 @@ struct LogDataForMobility : mio::LogAlways {
     static Type log(const mio::abm::Simulation<>& sim)
     {
         Type mobility_data{};
-        for (Person p : sim.get_model().get_persons()) {
+        for (const Person& p : sim.get_model().get_persons()) {
             mobility_data.push_back(
                 std::make_tuple(p.get_id(), p.get_location(), sim.get_time(), p.get_last_transport_mode(),
                                 guess_activity_type(p.get_location_type()), p.get_infection_state(sim.get_time())));

@@ -1,0 +1,67 @@
+import covasim as cv
+import time
+import sys
+
+
+def covasim_benchmark(pop_size, n_days=120):
+    """
+    Benchmark covasim simulation with specified population size.
+
+    Args:
+        pop_size: Number of agents in the simulation
+        n_days: Number of days to simulate (default 120 to match ABM 5 days * 24)
+
+    Returns:
+        Runtime in seconds
+    """
+    # Calculate initial infections as 5% of population (matching ABM benchmark)
+    pop_infected = max(1, int(pop_size * 0.05))
+
+    pars = dict(
+        pop_size=pop_size,
+        pop_infected=pop_infected,
+        start_day='2025-01-01',
+        n_days=n_days,
+        pop_type='hybrid',
+        location='Germany',
+        rescale=False
+    )
+
+    sim = cv.Sim(pars)
+    cv.options.set(numba_parallel="none")
+    sim.initialize()
+
+    t_start = time.process_time()
+    sim.run(verbose=0)
+    t_end = time.process_time()
+
+    runtime = t_end - t_start
+    print(f"Population size: {pop_size:,}, Runtime: {runtime:.3f}s")
+    return runtime
+
+
+if __name__ == "__main__":
+    # Population sizes matching the ABM benchmark
+    pop_sizes = [25000, 50000, 100000, 200000,
+                 400000, 800000, 1600000, 3200000]
+
+    # If command line argument provided, use that specific size
+    if len(sys.argv) > 1:
+        try:
+            pop_size = int(sys.argv[1])
+            covasim_benchmark(pop_size)
+        except ValueError:
+            print("Usage: python covasim_benchmark.py [population_size]")
+            sys.exit(1)
+    else:
+        # Run all benchmark sizes
+        print("Running Covasim benchmarks with population sizes matching ABM benchmark:")
+        print("=" * 60)
+
+        total_time = 0
+        for pop_size in pop_sizes:
+            runtime = covasim_benchmark(pop_size)
+            total_time += runtime
+
+        print("=" * 60)
+        print(f"Total runtime for all benchmarks: {total_time:.3f}s")
