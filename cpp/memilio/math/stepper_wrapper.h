@@ -119,9 +119,6 @@ public:
         // set initial values for exit conditions
         auto step_result = fail;
         bool is_dt_valid = true;
-        // copy vectors from the references, since the stepper cannot (trivially) handle Eigen::Ref
-        m_ytp1 = ytp1; // y(t')
-        m_yt   = yt; // y(t)
         // make a integration step, adapting dt to a possibly larger value on success,
         // or a strictly smaller value on fail.
         // stop only on a successful step or a failed step size adaption (w.r.t. the minimal step size dt_min)
@@ -139,11 +136,9 @@ public:
                     [&](const Eigen::VectorX<FP>& x, Eigen::VectorX<FP>& dxds, FP s) {
                         f(x, s, dxds);
                     },
-                    m_yt, t, m_ytp1, dt);
+                    yt, t, ytp1, dt);
             }
         }
-        // output the new value by copying it back to the reference
-        ytp1 = m_ytp1;
         // bound dt from below
         // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
 
@@ -195,7 +190,6 @@ private:
     }
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
-    mutable Eigen::VectorX<FP> m_ytp1, m_yt; ///< Temporary storage to avoid allocations in step function.
     mutable StepAdjuster m_step_adjuster; ///< Defines step sizing. Holds a copy of dt_max that has to be updated.
     mutable Stepper m_stepper; ///< A stepper instance used for integration.
 };
