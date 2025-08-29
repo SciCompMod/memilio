@@ -33,6 +33,7 @@ int main()
     // Simple example to demonstrate how to run a simulation using an LCT-SECIR-2-DISEASE model.
     // One single AgeGroup/Category member is used here.
     // Parameters, initial values and the number of subcompartments are not meant to represent a realistic scenario.
+    // The number of subcompartments can be chosen for most of the compartments:
     constexpr size_t NumExposed_1a = 2, NumInfectedNoSymptoms_1a = 3, NumInfectedSymptoms_1a = 3,
                      NumInfectedSevere_1a = 3, NumInfectedCritical_1a = 2, NumExposed_2a = 1,
                      NumInfectedNoSymptoms_2a = 2, NumInfectedSymptoms_2a = 2, NumInfectedSevere_2a = 2,
@@ -40,13 +41,18 @@ int main()
                      NumInfectedSymptoms_1b = 3, NumInfectedSevere_1b = 3, NumInfectedCritical_1b = 2,
                      NumExposed_2b = 1, NumInfectedNoSymptoms_2b = 2, NumInfectedSymptoms_2b = 2,
                      NumInfectedSevere_2b = 2, NumInfectedCritical_2b = 1;
-    using InfState = mio::lsecir2d::InfectionState;
-    using LctState = mio::LctInfectionState<
-        InfState, 1, NumExposed_1a, NumInfectedNoSymptoms_1a, NumInfectedSymptoms_1a, NumInfectedSevere_1a,
-        NumInfectedCritical_1a, 1, 1, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
-        NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b, NumInfectedSymptoms_1b,
-        NumInfectedSevere_1b, NumInfectedCritical_1b, 1, 1, NumExposed_2b, NumInfectedNoSymptoms_2b,
-        NumInfectedSymptoms_2b, NumInfectedSevere_2b, NumInfectedCritical_2b, 1>;
+    // The compartment for Susceptible people and all compartments for Dead and Recovered people must have exactly one subcompartment:
+    constexpr size_t NumSusceptible = 1, NumDead_a = 1, NumDead_b = 1, NumRecovered_a = 1, NumRecovered_b = 1,
+                     NumRecovered_ab = 1;
+    using InfState                   = mio::lsecir2d::InfectionState;
+    using LctState =
+        mio::LctInfectionState<InfState, NumSusceptible, NumExposed_1a, NumInfectedNoSymptoms_1a,
+                               NumInfectedSymptoms_1a, NumInfectedSevere_1a, NumInfectedCritical_1a, NumRecovered_a,
+                               NumDead_a, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
+                               NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b,
+                               NumInfectedSymptoms_1b, NumInfectedSevere_1b, NumInfectedCritical_1b, NumRecovered_b,
+                               NumDead_b, NumExposed_2b, NumInfectedNoSymptoms_2b, NumInfectedSymptoms_2b,
+                               NumInfectedSevere_2b, NumInfectedCritical_2b, NumRecovered_ab>;
     using Model = mio::lsecir2d::Model<LctState>;
     Model model;
 
