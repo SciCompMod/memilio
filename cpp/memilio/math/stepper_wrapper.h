@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef STEPPER_WRAPPER_H_
-#define STEPPER_WRAPPER_H_
+#ifndef MIO_MATH_STEPPER_WRAPPER_H
+#define MIO_MATH_STEPPER_WRAPPER_H
 
 #include "memilio/math/integrator.h"
 #include "memilio/utils/logging.h"
@@ -33,6 +33,21 @@
 namespace mio
 {
 
+namespace details
+{
+
+/// @brief Extends the default_step_adjuster with a setter for dt_max.
+template <class Value, class Time>
+struct step_adjuster : public boost::numeric::odeint::default_step_adjuster<Value, Time> {
+    using boost::numeric::odeint::default_step_adjuster<Value, Time>::default_step_adjuster;
+    void set_dt_max(const Time& dt_max)
+    {
+        this->m_max_dt = dt_max;
+    }
+};
+
+} // namespace details
+
 /**
  * @brief This is an adaptive IntegratorCore. It creates and manages an instance of a
  * boost::numeric::odeint::controlled_runge_kutta integrator, wrapped as mio::IntegratorCore.
@@ -42,10 +57,15 @@ template <typename FP,
           class ControlledStepper>
 class ControlledStepperWrapper : public mio::OdeIntegratorCore<FP>
 {
+    using Algebra      = boost::numeric::odeint::vector_space_algebra;
+    using Operations   = typename boost::numeric::odeint::operations_dispatcher<Eigen::VectorX<FP>>::operations_type;
+    using Resizer      = boost::numeric::odeint::initially_resizer;
+    using ErrorChecker = boost::numeric::odeint::default_error_checker<FP, Algebra, Operations>;
+    using StepAdjuster = details::step_adjuster<FP, FP>;
+    // Note: use a reference_wrapper so we can both update dt_max, and replace the stepper to change tolerances
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
-        ControlledStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, boost::numeric::odeint::vector_space_algebra,
-                          typename boost::numeric::odeint::operations_dispatcher<Eigen::VectorX<FP>>::operations_type,
-                          boost::numeric::odeint::initially_resizer>>;
+        ControlledStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, Algebra, Operations, Resizer>, ErrorChecker,
+        std::reference_wrapper<StepAdjuster>>;
     static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
                                                            boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
     static_assert(!is_fsal_stepper,
@@ -53,23 +73,23 @@ class ControlledStepperWrapper : public mio::OdeIntegratorCore<FP>
 
 public:
     /**
-     * @brief Set up the integrator
-     * @param abs_tol absolute tolerance
-     * @param rel_tol relative tolerance 
-     * @param dt_min lower bound for time step dt
-     * @param dt_max upper bound for time step dt
+     * @brief Set up the integrator.
+     * @param[in] abs_tol Absolute tolerance for convergence.
+     * @param[in] rel_tol Relative tolerance for convergence.
+     * @param[in] dt_min Lower bound for time step dt.
+     * @param[in] dt_max Upper bound for time step dt.
      */
-    ControlledStepperWrapper(double abs_tol = 1e-10, double rel_tol = 1e-5,
-                             double dt_min = std::numeric_limits<double>::min(),
-                             double dt_max = std::numeric_limits<double>::max())
+    ControlledStepperWrapper(FP abs_tol = 1e-10, FP rel_tol = 1e-5, FP dt_min = std::numeric_limits<double>::min(),
+                             FP dt_max = std::numeric_limits<double>::max())
         : OdeIntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
+        , m_step_adjuster(StepAdjuster{this->get_dt_max()})
         , m_stepper(create_stepper())
     {
     }
 
-    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override
     {
         return std::make_unique<ControlledStepperWrapper>(*this);
     }
@@ -82,14 +102,16 @@ public:
      * @param[in,out] dt Current time step size h=dt. Overwritten by an estimated optimal step size for the next step.
      * @param[out] ytp1 The approximated value of y(t').
      */
-    bool step(const DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         using boost::numeric::odeint::fail;
         using std::max;
         assert(0 <= this->get_dt_min());
         assert(this->get_dt_min() <= this->get_dt_max());
-
+        // synchronise dt_max of the base class with the stepper
+        m_step_adjuster.set_dt_max(this->get_dt_max());
+        // warn about (upcoming) restrictions to dt
         if (dt < this->get_dt_min() || dt > this->get_dt_max()) {
             mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, this->get_dt_min(),
                              this->get_dt_max());
@@ -162,7 +184,6 @@ public:
     void set_dt_max(FP dt_max)
     {
         this->get_dt_max() = dt_max;
-        m_stepper          = create_stepper();
     }
 
 private:
@@ -170,12 +191,12 @@ private:
     Stepper create_stepper()
     {
         // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
-        return Stepper(typename Stepper::error_checker_type(m_abs_tol, m_rel_tol),
-                       typename Stepper::step_adjuster_type(this->get_dt_max()));
+        return Stepper(ErrorChecker(m_abs_tol, m_rel_tol), m_step_adjuster);
     }
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
     mutable Eigen::VectorX<FP> m_ytp1, m_yt; ///< Temporary storage to avoid allocations in step function.
+    mutable StepAdjuster m_step_adjuster; ///< Defines step sizing. Holds a copy of dt_max that has to be updated.
     mutable Stepper m_stepper; ///< A stepper instance used for integration.
 };
 
@@ -202,7 +223,7 @@ public:
     {
     }
 
-    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override
     {
         return std::make_unique<ExplicitStepperWrapper>(*this);
     }
@@ -215,7 +236,7 @@ public:
      * @param[in] dt Current time step size h=dt.
      * @param[out] ytp1 The approximated value of y(t+dt).
      */
-    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<Eigen::VectorX<FP> const> yt, FP& t, FP& dt,
+    bool step(const mio::DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
         // copy the values from y(t) to ytp1, since we use the scheme do_step(sys, inout, t, dt) with
@@ -238,4 +259,4 @@ private:
 
 } // namespace mio
 
-#endif
+#endif // MIO_MATH_STEPPER_WRAPPER_H
