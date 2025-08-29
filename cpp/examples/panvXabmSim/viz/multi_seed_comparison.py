@@ -81,52 +81,54 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     """Create comprehensive multi-seed comparison visualization."""
 
     plt.style.use('default')
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-    fig.suptitle(f'Multi-Seed Simulation Comparison - {event_type}\n{num_seeds} Different Seeds',
-                 fontsize=16, fontweight='bold')
+    # Set larger font sizes globally
+    plt.rcParams.update({'font.size': 18, 'axes.titlesize': 24, 'axes.labelsize': 20,
+                         'xtick.labelsize': 16, 'ytick.labelsize': 16, 'legend.fontsize': 16})
 
-    # Color schemes
+    fig, axes = plt.subplots(2, 2, figsize=(20, 16))
+    fig.suptitle(f'{event_type}', fontsize=32, fontweight='bold', y=0.98)
+
+    # Color schemes - more muted for better visibility
     memilio_colors = plt.cm.Blues(np.linspace(
-        0.3, 0.9, len(grouped_results['memilio'])))
+        0.3, 0.8, len(grouped_results['memilio'])))
     panvadere_colors = plt.cm.Reds(np.linspace(
-        0.3, 0.9, len(grouped_results['panvadere'])))
+        0.3, 0.8, len(grouped_results['panvadere'])))
 
-    # Plot 1: All Memilio runs
+    # Plot 1: All Memilio runs (NO LEGEND for seeds)
     ax1 = axes[0, 0]
-    ax1.set_title('Memilio - All Seeds', fontsize=14, fontweight='bold')
+    ax1.set_title('Uniform - All Seeds', fontsize=24, fontweight='bold')
 
     memilio_finals = []
     for i, result in enumerate(grouped_results['memilio']):
         ax1.plot(result['time'], result['cumulative'],
-                 color=memilio_colors[i], alpha=0.7, linewidth=1.5,
-                 label=f"Seed {result['seed']}")
+                 color=memilio_colors[i], alpha=0.6, linewidth=2)  # No label
         memilio_finals.append(result['cumulative'][-1])
 
-    ax1.set_xlabel('Days')
-    ax1.set_ylabel('Cumulative Infections')
+    ax1.set_xlabel('Days', fontsize=20)
+    ax1.set_ylabel('Cumulative Infections', fontsize=20)
     ax1.grid(True, alpha=0.3)
-    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    ax1.tick_params(labelsize=16)
 
-    # Plot 2: All Panvadere runs
+    # Plot 2: All Panvadere runs (NO LEGEND for seeds)
     ax2 = axes[0, 1]
-    ax2.set_title('Panvadere - All Seeds', fontsize=14, fontweight='bold')
+    ax2.set_title('Transmission-Informed - All Seeds',
+                  fontsize=24, fontweight='bold')
 
     panvadere_finals = []
     for i, result in enumerate(grouped_results['panvadere']):
         ax2.plot(result['time'], result['cumulative'],
-                 color=panvadere_colors[i], alpha=0.7, linewidth=1.5,
-                 label=f"Seed {result['seed']}")
+                 color=panvadere_colors[i], alpha=0.6, linewidth=2)  # No label
         panvadere_finals.append(result['cumulative'][-1])
 
-    ax2.set_xlabel('Days')
-    ax2.set_ylabel('Cumulative Infections')
+    ax2.set_xlabel('Days', fontsize=20)
+    ax2.set_ylabel('Cumulative Infections', fontsize=20)
     ax2.grid(True, alpha=0.3)
-    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    ax2.tick_params(labelsize=16)
 
-    # Plot 3: Median comparison with variance bands
+    # Plot 3: Median comparison with confidence intervals
     ax3 = axes[1, 0]
-    ax3.set_title('Median Comparison with Variance Bands',
-                  fontsize=14, fontweight='bold')
+    ax3.set_title('Median Comparison with Confidence Intervals',
+                  fontsize=24, fontweight='bold')
 
     if memilio_finals and panvadere_finals:
         # Calculate statistics for Memilio
@@ -149,55 +151,63 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
 
         # Plot Memilio
         ax3.plot(time_axis, memilio_median, color='blue',
-                 linewidth=3, label='Memilio (median)')
+                 linewidth=4, label='Uniform (median)')
         ax3.fill_between(time_axis, memilio_q25, memilio_q75,
-                         color='blue', alpha=0.3, label='Memilio (25-75%)')
+                         color='blue', alpha=0.3, label='Uniform (25-75%)')
 
         # Plot Panvadere
         ax3.plot(time_axis, panvadere_median, color='red',
-                 linewidth=3, label='Panvadere (median)')
+                 linewidth=4, label='Transmission-Informed (median)')
         ax3.fill_between(time_axis, panvadere_q25, panvadere_q75,
-                         color='red', alpha=0.3, label='Panvadere (25-75%)')
+                         color='red', alpha=0.3, label='Transmission-Informed (25-75%)')
 
-    ax3.set_xlabel('Days')
-    ax3.set_ylabel('Cumulative Infections')
+    ax3.set_xlabel('Days', fontsize=20)
+    ax3.set_ylabel('Cumulative Infections', fontsize=20)
     ax3.grid(True, alpha=0.3)
-    ax3.legend()
+    ax3.legend(fontsize=16)
+    ax3.tick_params(labelsize=16)
 
-    # Plot 4: Final infection counts distribution
+    # Plot 4: Final infection counts distribution with THICK BLACK median line
     ax4 = axes[1, 1]
     ax4.set_title('Final Infection Counts Distribution',
-                  fontsize=14, fontweight='bold')
+                  fontsize=24, fontweight='bold')
 
     if memilio_finals and panvadere_finals:
         # Create box plot
         box_data = [memilio_finals, panvadere_finals]
         box_labels = ['Memilio', 'Panvadere']
 
-        bp = ax4.boxplot(box_data, labels=box_labels, patch_artist=True)
+        bp = ax4.boxplot(box_data, tick_labels=box_labels, patch_artist=True)
         bp['boxes'][0].set_facecolor('lightblue')
         bp['boxes'][1].set_facecolor('lightcoral')
+
+        # Make median lines thick and black
+        for median in bp['medians']:
+            median.set_color('black')
+            median.set_linewidth(4)
 
         # Add individual points
         for i, (data, label) in enumerate(zip(box_data, box_labels)):
             y = data
             x = np.random.normal(i+1, 0.04, size=len(y))
-            ax4.scatter(x, y, alpha=0.6, s=30,
+            ax4.scatter(x, y, alpha=0.6, s=50,
                         color='darkblue' if i == 0 else 'darkred')
 
-        # Add statistics text
-        stats_text = f"Memilio: μ={np.mean(memilio_finals):.0f}, σ={np.std(memilio_finals):.0f}\n"
-        stats_text += f"Panvadere: μ={np.mean(panvadere_finals):.0f}, σ={np.std(panvadere_finals):.0f}"
-        ax4.text(0.02, 0.98, stats_text, transform=ax4.transAxes, fontsize=10,
+        # Add statistics text with larger font
+        stats_text = f"Uniform: μ={np.mean(memilio_finals):.0f}, σ={np.std(memilio_finals):.0f}\n"
+        stats_text += f"Transmission-Informed: μ={np.mean(panvadere_finals):.0f}, σ={np.std(panvadere_finals):.0f}"
+        ax4.text(0.02, 0.1, stats_text, transform=ax4.transAxes, fontsize=16,
                  verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
-    ax4.set_ylabel('Final Cumulative Infections')
+    ax4.set_ylabel('Final Cumulative Infections', fontsize=20)
     ax4.grid(True, alpha=0.3)
+    ax4.tick_params(labelsize=16)
 
     plt.tight_layout()
 
-    # Save the plot
-    output_file = os.path.join(output_dir, "multi_seed_comparison.png")
+    # Save the plot, name is multi_seed_comparison_{event_type}
+    output_file = os.path.join(
+        output_dir, f"multi_seed_comparison_{event_type}.png")
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Multi-seed comparison plot saved to {output_file}")
 
@@ -207,8 +217,12 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
 def create_seed_variation_analysis(grouped_results, output_dir):
     """Create analysis of variation across seeds."""
 
-    fig, axes = plt.subplots(2, 1, figsize=(12, 10))
-    fig.suptitle('Seed Variation Analysis', fontsize=16, fontweight='bold')
+    # Set larger font sizes
+    plt.rcParams.update({'font.size': 18, 'axes.titlesize': 24, 'axes.labelsize': 20,
+                         'xtick.labelsize': 16, 'ytick.labelsize': 16, 'legend.fontsize': 16})
+
+    fig, axes = plt.subplots(2, 1, figsize=(14, 12))
+    fig.suptitle('Seed Variation Analysis', fontsize=28, fontweight='bold')
 
     # Extract final infection counts
     memilio_finals = [result['cumulative'][-1]
@@ -223,24 +237,25 @@ def create_seed_variation_analysis(grouped_results, output_dir):
     # Plot 1: Final infection counts by seed
     ax1 = axes[0]
     ax1.set_title('Final Infection Counts by Seed',
-                  fontsize=14, fontweight='bold')
+                  fontsize=24, fontweight='bold')
 
     if memilio_finals:
         ax1.scatter(range(len(memilio_seeds)), memilio_finals,
-                    color='blue', s=60, alpha=0.7, label='Memilio')
+                    color='blue', s=80, alpha=0.7, label='Memilio')
     if panvadere_finals:
         ax1.scatter(range(len(panvadere_seeds)), panvadere_finals,
-                    color='red', s=60, alpha=0.7, label='Panvadere')
+                    color='red', s=80, alpha=0.7, label='Panvadere')
 
-    ax1.set_xlabel('Seed Index')
-    ax1.set_ylabel('Final Cumulative Infections')
-    ax1.legend()
+    ax1.set_xlabel('Seed Index', fontsize=20)
+    ax1.set_ylabel('Final Cumulative Infections', fontsize=20)
+    ax1.legend(fontsize=16)
     ax1.grid(True, alpha=0.3)
+    ax1.tick_params(labelsize=16)
 
     # Plot 2: Coefficient of variation over time
     ax2 = axes[1]
     ax2.set_title('Coefficient of Variation Over Time',
-                  fontsize=14, fontweight='bold')
+                  fontsize=24, fontweight='bold')
 
     if grouped_results['memilio']:
         # Calculate CV for Memilio
@@ -253,7 +268,7 @@ def create_seed_variation_analysis(grouped_results, output_dir):
 
         time_axis = grouped_results['memilio'][0]['time']
         ax2.plot(time_axis, memilio_cv, color='blue',
-                 linewidth=2, label='Memilio CV')
+                 linewidth=3, label='Memilio CV')
 
     if grouped_results['panvadere']:
         # Calculate CV for Panvadere
@@ -266,12 +281,13 @@ def create_seed_variation_analysis(grouped_results, output_dir):
 
         time_axis = grouped_results['panvadere'][0]['time']
         ax2.plot(time_axis, panvadere_cv, color='red',
-                 linewidth=2, label='Panvadere CV')
+                 linewidth=3, label='Panvadere CV')
 
-    ax2.set_xlabel('Days')
-    ax2.set_ylabel('Coefficient of Variation')
-    ax2.legend()
+    ax2.set_xlabel('Days', fontsize=20)
+    ax2.set_ylabel('Coefficient of Variation', fontsize=20)
+    ax2.legend(fontsize=16)
     ax2.grid(True, alpha=0.3)
+    ax2.tick_params(labelsize=16)
 
     plt.tight_layout()
 
