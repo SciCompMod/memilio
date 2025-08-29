@@ -166,13 +166,9 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
     // Simulate
-    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(
-        t0, tmax, dt, model_lct2d,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
 
-    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model_lct>(
-        t0, tmax, dt, model_lct,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model_lct>(t0, tmax, dt, model_lct);
 
     // Simulation results should be equal.
     // Compare LCT with infection 1a in LCT2D
@@ -297,13 +293,9 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
     model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
     // Simulate
-    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(
-        t0, tmax, dt, model_lct2d,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
 
-    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model>(
-        t0, tmax, dt, model_lct,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model>(t0, tmax, dt, model_lct);
 
     // Simulation results should be equal.
     // Compare LCT with Infection 1b in LCT2D
@@ -429,13 +421,9 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
     model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
     // Simulate
-    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(
-        t0, tmax, dt, model_lct2d,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
 
-    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model_lct>(
-        t0, tmax, dt, model_lct,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model_lct>(t0, tmax, dt, model_lct);
 
     // Simulation results should be equal.
     // Compare LCT with Infection 2a in LCT2D
@@ -560,13 +548,9 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
 
     // Simulate
-    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(
-        t0, tmax, dt, model_lct2d,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
 
-    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model>(
-        t0, tmax, dt, model_lct,
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>());
+    mio::TimeSeries<ScalarType> result_lct = mio::simulate<ScalarType, Model>(t0, tmax, dt, model_lct);
 
     // Simulation results should be equal.
     // Compare LCT with Infection 2b in LCT2D
