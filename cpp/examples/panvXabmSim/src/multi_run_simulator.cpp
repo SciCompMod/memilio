@@ -563,6 +563,17 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         }
         household_file.close();
     }
+    // Save work id
+    auto work_id_file = base_dir + "/work_id.csv";
+    std::ofstream work_file(work_id_file);
+    if (work_file.is_open()) {
+        work_file << "Person_ID,Work_ID\n";
+        for (const auto& person_info : results.all_runs[0].history_work_id) {
+            work_file << std::get<0>(person_info) << "," << std::get<1>(person_info) << "\n";
+        }
+        work_file.close();
+    }
+
     //Location id and person id
     std::string location_type_and_id_file = base_dir + "/location_type_and_id.txt";
     std::ofstream location_file(location_type_and_id_file);
@@ -677,7 +688,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     // FIGURES
     mio::History<mio::abm::TimeSeriesWriter, LogAmountOfInfections> historyAmountInfected{
         Eigen::Index(1)}; // 1st figure
-    mio::History<mio::abm::DataWriterToMemory, LogHouseholdId, LogLocationIdAndPersonId, LogWhoInfected>
+    mio::History<mio::abm::DataWriterToMemory, LogHouseholdId, LogLocationIdAndPersonId, LogWhoInfected, LogWorkId>
         historyContactNetwork; // 2nd figure
     mio::History<mio::abm::DataWriterToMemory, LogInfectionDetailed> historyInfectionDetailed; // 3rd figure
     mio::History<mio::abm::DataWriterToMemory, LogLocationIdAndType> historyLocationIdAndType; // 4th figure
@@ -699,6 +710,8 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyAmountInfected.get_log())};
     results.history_household_id =
         std::vector<std::tuple<uint32_t, uint32_t>>{std::get<0>(historyContactNetwork.get_log())[0]};
+    results.history_work_id =
+        std::vector<std::tuple<uint32_t, uint32_t>>{std::get<3>(historyContactNetwork.get_log())[0]};
     results.history_person_and_location_id =
         std::vector<std::vector<std::tuple<uint32_t, uint32_t>>>{std::get<1>(historyContactNetwork.get_log())};
     results.history_detailed_infection =

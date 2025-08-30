@@ -26,6 +26,7 @@ struct SimulationResults {
 
     std::vector<mio::TimeSeries<ScalarType>> history_infected_amount; // Figure 1
     std::vector<std::tuple<uint32_t, uint32_t>> history_household_id; // Figure 2
+    std::vector<std::tuple<uint32_t, uint32_t>> history_work_id; // Figure 2
     std::vector<std::tuple<uint32_t, mio::abm::LocationType>> loc_id_and_type;
     std::vector<std::vector<std::tuple<uint32_t, uint32_t>>> history_person_and_location_id; // Figure 2 / 3
     std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>

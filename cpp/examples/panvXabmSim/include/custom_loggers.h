@@ -45,6 +45,20 @@ struct LogHouseholdId : mio::LogOnce {
     }
 };
 
+struct LogWorkId : mio::LogOnce {
+    using Type = std::vector<std::tuple<uint32_t, uint32_t>>;
+    static Type log(const mio::abm::Simulation& sim)
+    {
+        Type household_information{};
+        household_information.reserve(sim.get_world().get_persons().size());
+        for (auto&& person : sim.get_world().get_persons()) {
+            household_information.push_back(std::make_tuple(
+                person.get_person_id(), person.get_assigned_location_index(mio::abm::LocationType::Work)));
+        }
+        return household_information;
+    }
+};
+
 struct LogInfectionDetailed : mio::LogAlways {
     using Type = std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>;
     static Type log(const mio::abm::Simulation& sim);
