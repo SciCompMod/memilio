@@ -914,12 +914,12 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         title_suffix = f"(Average across {run_count} runs)"
     else:
         title_suffix = "(Best run)"
-    
+
     # Create title with scenario information
     base_title = f'Comparative Temporal Infection Progression {title_suffix}'
     if scenario_name:
         base_title = f'Scenario {scenario_name}: {base_title}'
-    
+
     fig.suptitle(f'{base_title}\nTransmission-Informed vs Uniform Initialization',
                  fontsize=16, fontweight='bold', y=0.96)
 
@@ -982,10 +982,11 @@ def main():
                         choices=['rectangles', 'circles', 'squares',
                                  'hexagons', 'diamonds', 'rounded_rects'],
                         help='Visualization style for households (default: rectangles)')
-    parser.add_argument('--scenario-name', help='Scenario name to include in title (e.g., R1, R2, W1, W2)')
+    parser.add_argument(
+        '--scenario-name', help='Scenario name to include in title (e.g., R1, R2, W1, W2)')
 
     args = parser.parse_args()
-    
+
     # Only set default output path if none was provided
     if not args.output_path:
         mode_suffix = "_average" if args.use_average else "_best_run"
@@ -1004,7 +1005,7 @@ def main():
     if not args.use_average:
         print("Skipping visualization: only average plots are generated")
         sys.exit(0)
-    
+
     # Create visualization
     fig = create_comparative_temporal_heatmap(
         data_dir_method1=args.data_dir_method1,
