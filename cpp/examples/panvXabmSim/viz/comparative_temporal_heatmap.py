@@ -130,6 +130,10 @@ def calculate_average_infections_by_time(infection_files, household_data, time_p
     # household_run_infections[timestep][household_id] = [count_run1, count_run2, ...]
     household_run_infections = defaultdict(lambda: defaultdict(list))
 
+    # Dictionary to store infected household counts per run per timestep
+    # infected_household_counts[timestep] = [count_run1, count_run2, ...]
+    infected_household_counts = defaultdict(list)
+
     successful_runs = 0
 
     for i, infection_file in enumerate(infection_files):
@@ -166,6 +170,12 @@ def calculate_average_infections_by_time(infection_files, household_data, time_p
                 infected_count = stats['infected_members']
                 household_run_infections[timestep][household_id].append(
                     infected_count)
+
+            # Count households with at least 1 infected member for this run
+            infected_households_count = count_infected_households(
+                household_data, infected_at_time)
+            infected_household_counts[timestep].append(
+                infected_households_count)
 
         successful_runs += 1
 
@@ -215,7 +225,16 @@ def calculate_average_infections_by_time(infection_files, household_data, time_p
         else:
             average_household_infections_by_time[timestep] = {}
 
-    return average_infections_by_time, average_household_infections_by_time, successful_runs
+    # Calculate average infected household counts
+    average_infected_household_counts = {}
+    for timestep in time_points:
+        if timestep in infected_household_counts and infected_household_counts[timestep]:
+            avg_count = np.mean(infected_household_counts[timestep])
+            average_infected_household_counts[timestep] = avg_count
+        else:
+            average_infected_household_counts[timestep] = 0.0
+
+    return average_infections_by_time, average_household_infections_by_time, successful_runs, average_infected_household_counts
 
 
 def get_infection_status_color(person_id, infected_at_time):
@@ -482,14 +501,14 @@ def create_time_specific_heatmap(ax, household_data, household_positions, househ
         # Calculate average infected individuals from household averages
         if household_average_infections:
             avg_total_infected = sum(household_average_infections.values())
-            title_suffix = f"{avg_total_infected:.1f} avg infected across {num_runs} runs"
+            title_suffix = f"{avg_total_infected:.1f} avg. infected"
         else:
-            title_suffix = f"avg. across {num_runs} runs"
+            title_suffix = f"avg. infected"
     else:
         title_suffix = f"{infected_count}/{total_people} infected ({infected_count/total_people*100:.1f}%)"
 
     ax.set_title(f"{method_name}\n{day_title}: {title_suffix}",
-                 fontsize=11, fontweight='bold', pad=10)
+                 fontsize=14, fontweight='bold', pad=12)
     ax.axis('equal')
     ax.axis('off')
 
@@ -519,34 +538,32 @@ def create_household_comparison_plot(ax, time_points, household_counts_method1, 
 
     # Add value labels on bars
     for i, (v1, v2) in enumerate(zip(household_counts_method1, household_counts_method2)):
-        # For average mode, also show average infected count below the household count
-        if use_average and avg_infected_method1 and avg_infected_method2:
-            label1 = f"{v1}\n({avg_infected_method1[i]:.0f})"
-            label2 = f"{v2}\n({avg_infected_method2[i]:.0f})"
+        # Format labels appropriately (show decimals for averages if needed)
+        if use_average:
+            label1 = f"{v1:.1f}" if v1 != int(v1) else str(int(v1))
+            label2 = f"{v2:.1f}" if v2 != int(v2) else str(int(v2))
         else:
-            label1 = str(v1)
-            label2 = str(v2)
+            label1 = str(int(v1))
+            label2 = str(int(v2))
 
-        ax.text(i - width/2, v1 + max(household_counts_method1 + household_counts_method2) * 0.02,
-                label1, ha='center', va='bottom', fontsize=8, fontweight='bold')
-        ax.text(i + width/2, v2 + max(household_counts_method1 + household_counts_method2) * 0.02,
-                label2, ha='center', va='bottom', fontsize=8, fontweight='bold')
+        ax.text(i - width/2, v1 + max(household_counts_method1 + household_counts_method2) * 0.05,
+                label1, ha='center', va='bottom', fontsize=10, fontweight='bold')
+        ax.text(i + width/2, v2 + max(household_counts_method1 + household_counts_method2) * 0.05,
+                label2, ha='center', va='bottom', fontsize=10, fontweight='bold')
 
-    ax.set_xlabel('Time Points', fontsize=9)
-
-    # Update ylabel based on mode
+    # Update ylabel and title based on mode
     if use_average:
-        ax.set_ylabel('Infected Households\n(Avg Infected)', fontsize=9)
-        ax.set_title('Households with ≥1 Infected Member\n(Average infected individuals in parentheses)',
-                     fontsize=10, fontweight='bold')
+        ax.set_ylabel('Avg. Infected\nHouseholds', fontsize=11)
+        ax.set_title('Average Households with ≥1 Infected Member',
+                     fontsize=12, fontweight='bold')
     else:
-        ax.set_ylabel('Infected\nHouseholds', fontsize=9)
+        ax.set_ylabel('Infected\nHouseholds', fontsize=11)
         ax.set_title('Households with ≥1 Infected Member',
-                     fontsize=10, fontweight='bold')
+                     fontsize=12, fontweight='bold')
 
     ax.set_xticks(x_pos)
-    ax.set_xticklabels(day_labels, fontsize=8)
-    ax.legend(loc='upper left', fontsize=9)
+    ax.set_xticklabels(day_labels, fontsize=10)
+    ax.legend(loc='upper left', fontsize=11)
     ax.grid(axis='y', alpha=0.3)
 
 
@@ -576,7 +593,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                 print(
                     f"Error: No infection files found for Method 1 in {data_dir_method1}")
                 return
-            infections_by_time_m1, household_infections_by_time_m1, num_runs_m1 = calculate_average_infections_by_time(
+            infections_by_time_m1, household_infections_by_time_m1, num_runs_m1, avg_infected_household_counts_m1 = calculate_average_infections_by_time(
                 infection_files_m1, household_data, time_points)
         else:
             # Load best run only
@@ -584,6 +601,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                 os.path.join(data_dir_method1, 'best_run_detailed_infection.csv'))
             household_infections_by_time_m1 = None
             num_runs_m1 = 1
+            avg_infected_household_counts_m1 = {}
 
     except FileNotFoundError as e:
         print(f"Error loading Method 1 data: {e}")
@@ -598,7 +616,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                 infection_files_m2 = find_infection_files(
                     data_dir_method2, use_average=True)
                 if infection_files_m2:
-                    infections_by_time_m2, household_infections_by_time_m2, num_runs_m2 = calculate_average_infections_by_time(
+                    infections_by_time_m2, household_infections_by_time_m2, num_runs_m2, avg_infected_household_counts_m2 = calculate_average_infections_by_time(
                         infection_files_m2, household_data, time_points)
                     has_method2_data = True
                 else:
@@ -611,6 +629,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                     os.path.join(data_dir_method2, 'best_run_detailed_infection.csv'))
                 household_infections_by_time_m2 = None
                 num_runs_m2 = 1
+                avg_infected_household_counts_m2 = {}
                 has_method2_data = True
         except FileNotFoundError as e:
             print(f"Warning: Method 2 data not found: {e}")
@@ -657,13 +676,22 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
     avg_infected_counts_m1 = []
     avg_infected_counts_m2 = []
 
-    # Create subplots grid: 3 rows x len(time_points) columns - adjusted spacing
-    gs = fig.add_gridspec(3, len(time_points), height_ratios=[
-                          2.5, 0.8, 2.5], hspace=0.35, wspace=0.1)
+    # Create subplots grid with custom spacing
+    # Row 1: Top heatmaps (higher up, more space from title)
+    gs_top = fig.add_gridspec(1, len(time_points), top=0.83, bottom=0.58,
+                              left=0.05, right=0.95, wspace=0.1)
+
+    # Row 2: Middle comparison (closer to top row, further from bottom row)
+    gs_mid = fig.add_gridspec(1, 1, top=0.55, bottom=0.45,
+                              left=0.05, right=0.95)
+
+    # Row 3: Bottom heatmaps (same height as top row)
+    gs_bot = fig.add_gridspec(1, len(time_points), top=0.35, bottom=0.10,
+                              left=0.05, right=0.95, wspace=0.1)
 
     # Row 1: Method 1 (Transmission-informed)
     for i, timestep in enumerate(time_points):
-        ax = fig.add_subplot(gs[0, i])
+        ax = fig.add_subplot(gs_top[0, i])
 
         infected_at_time = infections_by_time_m1.get(timestep, set())
         day_label = timestep // 24
@@ -684,8 +712,14 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         )
 
         infection_counts_m1.append(infected_count)
-        household_counts_m1.append(count_infected_households(
-            household_data, infected_at_time))
+
+        # Use proper average household counts in average mode
+        if use_average:
+            household_counts_m1.append(
+                avg_infected_household_counts_m1.get(timestep, 0))
+        else:
+            household_counts_m1.append(count_infected_households(
+                household_data, infected_at_time))
 
         # For average mode: collect average infected count from household averages
         if use_average and household_avg_infections:
@@ -695,8 +729,8 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
             avg_infected_counts_m1.append(infected_count)
 
     # Row 2: Household comparison (slim panel spanning all columns)
-    ax_comparison = fig.add_subplot(gs[1, :])
-    ax_comparison.margins(y=0.1)
+    ax_comparison = fig.add_subplot(gs_mid[0, 0])
+    ax_comparison.margins(y=0.35)
 
     # For now, use placeholder data for method 2 if not available
     if not has_method2_data:
@@ -712,8 +746,14 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         for i, timestep in enumerate(time_points):
             infected_at_time = infections_by_time_m2.get(timestep, set())
             infection_counts_m2.append(len(infected_at_time))
-            household_counts_m2.append(count_infected_households(
-                household_data, infected_at_time))
+
+            # Use proper average household counts in average mode
+            if use_average:
+                household_counts_m2.append(
+                    avg_infected_household_counts_m2.get(timestep, 0))
+            else:
+                household_counts_m2.append(count_infected_households(
+                    household_data, infected_at_time))
 
             # For average mode: collect average infected count from household averages
             if use_average and household_infections_by_time_m2:
@@ -734,7 +774,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
 
     # Row 3: Method 2 (Uniform) - placeholder or real data
     for i, timestep in enumerate(time_points):
-        ax = fig.add_subplot(gs[2, i])
+        ax = fig.add_subplot(gs_bot[0, i])
         if has_method2_data:
             infected_at_time = infections_by_time_m2.get(timestep, set())
             day_label = timestep // 24
@@ -813,17 +853,21 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         legend_title = 'Infected Members per Household'
 
     legend = fig.legend(handles=legend_elements, loc='center',
-                        bbox_to_anchor=(0.5, 0.06), ncol=legend_ncol, fontsize=9,
-                        title=legend_title, title_fontsize=10)
+                        bbox_to_anchor=(0.5, 0.05), ncol=10, fontsize=11,
+                        title=legend_title, title_fontsize=12)
     legend.get_title().set_fontweight('bold')
 
     # Add overall title
-    title_suffix = f"({mode_description})" if use_average else ""
+    if use_average:
+        # Get the run count from either method (they should be the same)
+        run_count = num_runs_m1 if use_average else 1
+        title_suffix = f"(Average across {run_count} runs)"
+    else:
+        title_suffix = "(Best run)"
     fig.suptitle(f'Comparative Temporal Infection Progression {title_suffix}\nTransmission-Informed vs Uniform Initialization',
-                 fontsize=14, fontweight='bold', y=0.98)
+                 fontsize=16, fontweight='bold', y=0.96)
 
-    # Adjust layout with more bottom space for the legend
-    plt.subplots_adjust(bottom=0.15, top=0.88, left=0.05, right=0.95)
+    # Custom spacing is handled by the individual gridspec positioning above
 
     if output_path:
         plt.savefig(output_path, dpi=300,
