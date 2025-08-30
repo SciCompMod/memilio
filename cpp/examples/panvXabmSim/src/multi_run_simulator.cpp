@@ -227,6 +227,57 @@ mio::IOResult<void> save_amount_infected_per_id(
     return mio::success();
 }
 
+mio::IOResult<void> save_detailed_infection_for_all_runs(
+    const std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>>&
+        detailed_infection,
+    const std::string& base_dir)
+{
+    // Create directory for all runs
+    std::string all_runs_dir = base_dir + "/all_runs_detailed_infections";
+    std::filesystem::create_directories(all_runs_dir);
+
+    std::cout << "Saving detailed infection data for all " << detailed_infection.size() << " runs..." << std::endl;
+
+    // Save detailed infection data for all runs
+    for (size_t run_idx = 0; run_idx < detailed_infection.size(); ++run_idx) {
+        std::vector<uint32_t> persons_at_event;
+        bool patient_zero = true;
+
+        std::string run_file = all_runs_dir + "/run_" + std::to_string(run_idx) + "_detailed_infection.csv";
+        std::ofstream run_output(run_file);
+
+        if (run_output.is_open()) {
+            run_output << "Timestep,Person_ID,Location_ID,Location_Type\n";
+
+            for (int timestep = 0; timestep < (int)detailed_infection[run_idx].size(); ++timestep) {
+                for (const auto& infection_entry : detailed_infection[run_idx][timestep]) {
+                    auto use_timestep = timestep;
+                    if (std::get<2>(infection_entry) == mio::abm::LocationType::EventPanvadere) {
+                        persons_at_event.push_back(std::get<0>(infection_entry));
+                        use_timestep = timestep - 48;
+                        if (patient_zero) {
+                            use_timestep = timestep - 96;
+                            patient_zero = false;
+                        }
+                    }
+                    run_output << use_timestep << "," << std::get<0>(infection_entry) << ","
+                               << std::get<1>(infection_entry) << ","
+                               << location_type_to_string(std::get<2>(infection_entry)) << "\n";
+                }
+            }
+            run_output.close();
+        }
+
+        if ((run_idx + 1) % 10 == 0 || run_idx == detailed_infection.size() - 1) {
+            std::cout << "Saved detailed infection data for run " << run_idx + 1 << "/" << detailed_infection.size()
+                      << std::endl;
+        }
+    }
+
+    std::cout << "All detailed infection files saved to: " << all_runs_dir << std::endl;
+    return mio::success();
+}
+
 mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
     const std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>>&
         detailed_infection,
@@ -574,6 +625,8 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
     BOOST_OUTCOME_TRY(save_contact_intenseness(ensemble_contact_hours, base_dir));
 
     BOOST_OUTCOME_TRY(save_amount_infected_per_id(ensemble_detailed_infection, base_dir));
+
+    BOOST_OUTCOME_TRY(save_detailed_infection_for_all_runs(ensemble_detailed_infection, base_dir));
 
     BOOST_OUTCOME_TRY(save_detailed_infection_and_contact_for_best_run(
         ensemble_detailed_infection, base_dir + "/amount_of_infections/p50", ensemble_amount_of_infections,
