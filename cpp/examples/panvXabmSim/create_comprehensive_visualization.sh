@@ -126,7 +126,7 @@ create_scenario_heatmaps() {
         --method1-name "Transmission-Informed" \
         --method2-name "Uniform" \
         --time-points 0 24 72 240 \
-        --output-path "$scenario_dir/comparative_temporal_heatmap_averaged_${view_type}" \
+        --output-path "$scenario_dir/comparative_temporal_heatmap_averaged_${view_type}_${scenario_code}.png" \
         --scenario-name "$scenario_code" \
         --use-average \
         --viz-style "$viz_style" \
