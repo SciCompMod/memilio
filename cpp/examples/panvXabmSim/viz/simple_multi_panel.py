@@ -337,7 +337,6 @@ def create_multi_panel_comparison(results_base_dir, output_path=None, show90=Fal
                     dpi=300, facecolor='white')
         print(f"Saved to fallback location: {fallback_path}")
 
-    plt.show()
     return output_path
 
 

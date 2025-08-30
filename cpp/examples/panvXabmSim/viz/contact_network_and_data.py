@@ -735,9 +735,9 @@ def main():
 
     args = parser.parse_args()
 
-    # Debug paths (comment out for production)
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-26230131"
-    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
+    # # Debug paths (comment out for production)
+    # args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-26230131"
+    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
 
     location_file = args.data_dir + "/location_type_and_id.txt"
     city_config_file = args.data_dir + "/city_config.txt"

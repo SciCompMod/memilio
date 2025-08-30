@@ -359,7 +359,7 @@ def count_infected_households(household_data, infected_at_time):
 
 def create_time_specific_heatmap(ax, household_data, household_positions, household_dimensions, person_pos,
                                  infected_at_time, timestep, title, method_name,
-                                 use_average=False, household_average_infections=None, num_runs=None):
+                                 use_average=False, household_average_infections=None, num_runs=None, viz_style='rectangles'):
     """Create heatmap for specific time point - showing households colored by infection count"""
 
     if use_average and household_average_infections is not None:
@@ -481,12 +481,60 @@ def create_time_specific_heatmap(ax, household_data, household_positions, househ
                 household_color = 'black'
                 edge_color = 'darkgray'
 
-        # Draw household as a uniform rectangle
-        rect = plt.Rectangle((hx - household_width/2, hy - household_height/2),
-                             household_width, household_height,
-                             facecolor=household_color, alpha=0.9,
-                             edgecolor=edge_color, linewidth=1.5)
-        ax.add_patch(rect)
+        # Draw households with different visualization styles
+        if viz_style == 'rectangles':
+            # Style 1: Original rectangular households
+            rect = plt.Rectangle((hx - household_width/2, hy - household_height/2),
+                                 household_width, household_height,
+                                 facecolor=household_color, alpha=0.9,
+                                 edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(rect)
+
+        elif viz_style == 'circles':
+            # Style 2: Circular households
+            radius = min(household_width, household_height) * 0.4
+            circle = plt.Circle((hx, hy), radius,
+                                facecolor=household_color, alpha=0.9,
+                                edgecolor=edge_color, linewidth=2)
+            ax.add_patch(circle)
+
+        elif viz_style == 'squares':
+            # Style 3: Square households
+            size = min(household_width, household_height) * 0.8
+            square = plt.Rectangle((hx - size/2, hy - size/2),
+                                   size, size,
+                                   facecolor=household_color, alpha=0.9,
+                                   edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(square)
+
+        elif viz_style == 'hexagons':
+            # Style 4: Hexagonal households
+            from matplotlib.patches import RegularPolygon
+            radius = min(household_width, household_height) * 0.35
+            hexagon = RegularPolygon((hx, hy), 6, radius=radius,
+                                     facecolor=household_color, alpha=0.9,
+                                     edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(hexagon)
+
+        elif viz_style == 'diamonds':
+            # Style 5: Diamond-shaped households
+            size = min(household_width, household_height) * 0.7
+            # Create diamond by rotating a square 45 degrees
+            from matplotlib.patches import RegularPolygon
+            diamond = RegularPolygon((hx, hy), 4, radius=size*0.6, orientation=np.pi/4,
+                                     facecolor=household_color, alpha=0.9,
+                                     edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(diamond)
+
+        elif viz_style == 'rounded_rects':
+            # Style 6: Rounded rectangles
+            from matplotlib.patches import FancyBboxPatch
+            rounded_rect = FancyBboxPatch((hx - household_width/2, hy - household_height/2),
+                                          household_width, household_height,
+                                          boxstyle="round,pad=0.02",
+                                          facecolor=household_color, alpha=0.9,
+                                          edgecolor=edge_color, linewidth=1.5)
+            ax.add_patch(rounded_rect)
 
     # Set title and formatting
     infected_count = len(infected_at_time)
@@ -569,7 +617,7 @@ def create_household_comparison_plot(ax, time_points, household_counts_method1, 
 
 def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                                         method1_name="Transmission-Informed", method2_name="Uniform",
-                                        output_path=None, time_points=[0, 24, 72, 240], use_average=False):
+                                        output_path=None, time_points=[0, 24, 72, 240], use_average=False, viz_style='rectangles', scenario_name=None):
     """Create comparative temporal infection heatmap with option for best run or average across runs"""
 
     mode_description = "Average across runs" if use_average else "Best run"
@@ -708,7 +756,8 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
             f"Time Point {i+1}", method1_name,
             use_average=use_average,
             household_average_infections=household_avg_infections,
-            num_runs=num_runs_m1 if use_average else None
+            num_runs=num_runs_m1 if use_average else None,
+            viz_style=viz_style
         )
 
         infection_counts_m1.append(infected_count)
@@ -791,7 +840,8 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                 f"Time Point {i+1}", method2_name,
                 use_average=use_average,
                 household_average_infections=household_avg_infections,
-                num_runs=num_runs_m2 if use_average else None
+                num_runs=num_runs_m2 if use_average else None,
+                viz_style=viz_style
             )
         else:
             # Create placeholder visualization
@@ -864,7 +914,13 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         title_suffix = f"(Average across {run_count} runs)"
     else:
         title_suffix = "(Best run)"
-    fig.suptitle(f'Comparative Temporal Infection Progression {title_suffix}\nTransmission-Informed vs Uniform Initialization',
+    
+    # Create title with scenario information
+    base_title = f'Comparative Temporal Infection Progression {title_suffix}'
+    if scenario_name:
+        base_title = f'Scenario {scenario_name}: {base_title}'
+    
+    fig.suptitle(f'{base_title}\nTransmission-Informed vs Uniform Initialization',
                  fontsize=16, fontweight='bold', y=0.96)
 
     # Custom spacing is handled by the individual gridspec positioning above
@@ -922,19 +978,18 @@ def main():
                         help='Time points in hours (default: 0, 24, 72, 240 for initialization, day 1, day 3, day 10)')
     parser.add_argument('--use-average', action='store_true', default=True,
                         help='Use average across all runs instead of best run only')
+    parser.add_argument('--viz-style', default='rectangles',
+                        choices=['rectangles', 'circles', 'squares',
+                                 'hexagons', 'diamonds', 'rounded_rects'],
+                        help='Visualization style for households (default: rectangles)')
+    parser.add_argument('--scenario-name', help='Scenario name to include in title (e.g., R1, R2, W1, W2)')
 
     args = parser.parse_args()
-
-    # Debug paths (comment out for production)
-    args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250830_215731_R1_restaurant_strong_clustering_transmission_informed"
-    # This one doesn't have multi-run data
-    args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250830_215737_R1_restaurant_strong_clustering_uniform_initialized"
-    args.method1_name = "Transmission-Informed"
-    args.method2_name = "Uniform"
-
-    # Modify output path to indicate mode
-    mode_suffix = "_average" if args.use_average else "_best_run"
-    args.output_path = f"/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/comparative_temporal_infection_heatmap{mode_suffix}.png"
+    
+    # Only set default output path if none was provided
+    if not args.output_path:
+        mode_suffix = "_average" if args.use_average else "_best_run"
+        args.output_path = f"/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/comparative_temporal_infection_heatmap{mode_suffix}.png"
 
     if not os.path.exists(args.data_dir_method1):
         print(f"Error: Directory {args.data_dir_method1} does not exist")
@@ -945,6 +1000,11 @@ def main():
         args.output_path = os.path.join(
             args.data_dir_method1, f'comparative_temporal_infection_heatmap{mode_suffix}.png')
 
+    # Only create visualization if using average mode
+    if not args.use_average:
+        print("Skipping visualization: only average plots are generated")
+        sys.exit(0)
+    
     # Create visualization
     fig = create_comparative_temporal_heatmap(
         data_dir_method1=args.data_dir_method1,
@@ -953,10 +1013,10 @@ def main():
         method2_name=args.method2_name,
         output_path=args.output_path,
         time_points=args.time_points,
-        use_average=args.use_average
+        use_average=args.use_average,
+        viz_style=args.viz_style,
+        scenario_name=args.scenario_name
     )
-
-    plt.show()
 
 
 if __name__ == "__main__":
