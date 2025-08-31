@@ -128,10 +128,7 @@ LogIsInfected::Type LogIsInfected::log(const mio::abm::Simulation& sim)
     Type infected_information{};
     infected_information.reserve(sim.get_world().get_persons().size());
     for (auto&& person : sim.get_world().get_persons()) {
-        if (person.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Susceptible &&
-            person.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Recovered &&
-            person.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Exposed &&
-            person.get_infection_state(sim.get_time()) != mio::abm::InfectionState::Dead) {
+        if (person.is_infected(sim.get_time()) && person.get_infection().get_viral_shed(sim.get_time()) > 0) {
             infected_information.push_back(std::make_tuple(person.get_person_id(), true));
         }
     }
