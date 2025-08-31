@@ -40,10 +40,10 @@ def transform_infection_data(infection_df):
     return sorted(infection_events, key=lambda x: x['time'])
 
 
-def create_contact_data_for_analysis(contact_df, infection_df, time_window=5):
+def create_contact_data_for_analysis(contact_df, infection_df, time_window=1):
     """
-    Create contact data focusing on relevant timeframes around infections
-    Since the contact data is huge, we'll focus on times around infections
+    Filter contact data to relevant timeframes around infections
+    No need to create pairwise records - just filter for relevant times
     """
     print("Processing contact data for infection analysis...")
 
@@ -57,111 +57,150 @@ def create_contact_data_for_analysis(contact_df, infection_df, time_window=5):
 
     print(f"Filtering to {len(relevant_times)} relevant timesteps...")
 
-    # Filter contact data to relevant timesteps
+    # Filter contact data to relevant timesteps - keep original format
     relevant_contact_df = contact_df[contact_df['Timestep'].isin(
         relevant_times)].copy()
     print(
         f"Reduced contact data from {len(contact_df)} to {len(relevant_contact_df)} records")
 
-    # Transform to expected format
-    contact_records = []
-
-    # Group by timestep and location to find people at same place/time
-    for (timestep, location), group in relevant_contact_df.groupby(['Timestep', 'Location_ID']):
-        people = group['Person_ID'].tolist()
-
-        # Create pairwise contacts for people at same location/time
-        for i, person1 in enumerate(people):
-            for person2 in people[i+1:]:
-                contact_records.append({
-                    'person_1': int(person1),
-                    'person_2': int(person2),
-                    'time': float(timestep),
-                    'location_type': 'Unknown',  # We'll infer this
-                    'location_id': str(location)
-                })
-
-    print(f"Generated {len(contact_records)} pairwise contact records")
-    return pd.DataFrame(contact_records)
+    # Return the filtered contact data in original format (no pairwise generation needed)
+    return relevant_contact_df
 
 
 def has_contact_at_location(person1, person2, location, time, contact_data, time_tolerance=2):
-    """Check if two people had contact at specific location around specific time"""
-    relevant_contacts = contact_data[
-        (((contact_data['person_1'] == person1) & (contact_data['person_2'] == person2)) |
-         ((contact_data['person_1'] == person2) & (contact_data['person_2'] == person1))) &
-        (contact_data['location_id'] == location) &
-        (abs(contact_data['time'] - time) <= time_tolerance)
+    """Check if two people had contact at specific location around specific time
+
+    Now works with original contact data format:
+    - Check if person1 is at location at time
+    - Check if person2 is at location at time 
+    - If both are present, they have contact
+    """
+
+    # Check if person1 was at the location at the specified time
+    person1_at_location = contact_data[
+        (contact_data['Person_ID'] == person1) &
+        (contact_data['Location_ID'] == int(location)) &
+        (abs(contact_data['Timestep'] - time) <= time_tolerance)
     ]
-    return len(relevant_contacts) > 0
+
+    # Check if person2 was at the location at the specified time
+    person2_at_location = contact_data[
+        (contact_data['Person_ID'] == person2) &
+        (contact_data['Location_ID'] == int(location)) &
+        (abs(contact_data['Timestep'] - time) <= time_tolerance)
+    ]
+
+    # Both people have contact if they were both at the same location at the same time
+    return len(person1_at_location) > 0 and len(person2_at_location) > 0
 
 
 def get_contact_strength_between(person1, person2, location, contact_data):
-    """Get contact strength between two specific people at location"""
-    contacts = contact_data[
-        (((contact_data['person_1'] == person1) & (contact_data['person_2'] == person2)) |
-         ((contact_data['person_1'] == person2) & (contact_data['person_2'] == person1))) &
-        (contact_data['location_id'] == location)
-    ]
-    return len(contacts)
+    """Get contact strength between two specific people at location
+
+    Count how many times both people were at the same location simultaneously
+    """
+    # Get all times person1 was at this location
+    person1_times = set(contact_data[
+        (contact_data['Person_ID'] == person1) &
+        (contact_data['Location_ID'] == location)
+    ]['Timestep'].tolist())
+
+    # Get all times person2 was at this location
+    person2_times = set(contact_data[
+        (contact_data['Person_ID'] == person2) &
+        (contact_data['Location_ID'] == location)
+    ]['Timestep'].tolist())
+
+    # Count overlapping times (when both were there)
+    return len(person1_times.intersection(person2_times))
 
 
 def find_potential_infectors(infected_person, infection_time, location,
-                             infection_events, contact_data=None, time_window=24, infectiousness_delay=4.5):
-    """Find who could have infected this person based on location and timing
-    
+                             infection_events, contact_data, infected_status_data=None):
+    """Find who could have infected this person based on three-step filtering process
+
+    For each infection event, search for possible other infectious agents by:
+    1. First filter by agents which had a prior infection
+    2. Then see which ones of those is currently infectious  
+    3. Then see which ones of those is currently at the same location
+
+    Special cases:
+    - For patient zero: no need to do anything (external source)
+    - For infections before timepoint 0: assume it was patient zero
+
     Args:
         infected_person: ID of person who got infected
-        infection_time: Time when infection occurred
-        location: Location where infection occurred
+        infection_time: Time when infection occurred (timestep)
+        location: Location where infection occurred (location_id)
         infection_events: List of all infection events
-        contact_data: Not used anymore - presence at same location implies contact
-        time_window: Maximum time window for potential transmission (hours)
-        infectiousness_delay: Days after infection when person becomes infectious
+        contact_data: DataFrame with contact information (who met whom where and when)
+        infected_status_data: DataFrame with actual infectiousness by timestep (Timestep, Person_ID, Infected)
     """
 
-    # Find people who were infectious at the same location within time window
-    potential_infectors = []
+    # Handle infections before timepoint 0 - assume patient zero infected them
+    if infection_time < 0:
+        patient_zero = min(infection_events, key=lambda x: x['time'])
+        return [(patient_zero['person_id'], 1.0)]
 
+    # Step 1: Filter by agents which had a prior infection
+    prior_infected_agents = []
     for event in infection_events:
         if (event['person_id'] != infected_person and
-            event['time'] < infection_time):
+                event['time'] < infection_time):
+            prior_infected_agents.append(event['person_id'])
 
-            # Check if they became infectious before the infection occurred
-            # Person becomes infectious after infectiousness_delay days (converted to hours)
-            infectious_time = event['time'] + (infectiousness_delay * 24)  # Convert days to hours
-            
-            # They must be infectious and the infection must occur within the time window
-            if (infectious_time <= infection_time and 
-                infection_time <= infectious_time + time_window):
+    if not prior_infected_agents:
+        print(
+            f"Warning: No prior infected agents found for person {infected_person} at time {infection_time}")
+        return []
 
-                # Check if they were at same location type (same location implies contact)
-                if event['location_type'] == location.get('type', location) if isinstance(location, dict) else event['location_type'] == location:
+    # Step 2: Filter by agents that are currently infectious (at infection_time)
+    currently_infectious_agents = []
 
-                    # Calculate probability based on how long they were infectious
-                    # Longer infectious period = higher probability
-                    days_infectious = (infection_time - infectious_time) / 24
-                    probability = min(1.0, days_infectious / 7.0)  # Max probability after 7 days infectious
+    if infected_status_data is not None:
+        # Get all people who are infectious at infection_time
+        infectious_at_time = infected_status_data[
+            (infected_status_data['Timestep'] == int(infection_time)) &
+            (infected_status_data['Infected'] == 1)
+        ]['Person_ID'].tolist()
 
-                    if probability > 0:
-                        potential_infectors.append(
-                            (event['person_id'], probability))
+        # Filter to only those who were also previously infected (intersection)
+        currently_infectious_agents = [agent_id for agent_id in prior_infected_agents
+                                       if agent_id in infectious_at_time]
+    else:
+        # If no infected status data, assume all prior infected agents are infectious
+        currently_infectious_agents = prior_infected_agents
 
-    # Normalize probabilities
-    total_prob = sum(prob for _, prob in potential_infectors)
-    if total_prob > 0:
-        potential_infectors = [(pid, prob/total_prob)
-                               for pid, prob in potential_infectors]
+    if not currently_infectious_agents:
+        print(
+            f"Warning: No currently infectious agents found for person {infected_person} at time {infection_time}")
+        return []
 
-    return potential_infectors
+    # Step 3: Filter by agents that are currently at the same location
+    potential_infectors = []
+
+    for agent_id in currently_infectious_agents:
+        # Check if agent is at the same location at infection_time (exact timestep match)
+        if has_contact_at_location(agent_id, infected_person, location, infection_time, contact_data, time_tolerance=1):
+            potential_infectors.append(agent_id)
+
+    if not potential_infectors:
+        print(
+            f"Warning: No agents at same location found for person {infected_person} at time {infection_time} location {location}")
+        return []
+
+    # Return with equal probabilities
+    equal_prob = 1.0 / len(potential_infectors)
+    return [(agent_id, equal_prob) for agent_id in potential_infectors]
 
 
-def build_transmission_tree(infection_events, contact_data=None, show_all_potential_infectors=False):
+def build_transmission_tree(infection_events, contact_data, infected_status_data=None, show_all_potential_infectors=False):
     """Build a transmission tree to organize the layout hierarchically
-    
+
     Args:
-        infection_events: List of infection events with time, location_type, person_id
-        contact_data: Not used anymore - same location implies contact
+        infection_events: List of infection events with time, location, person_id
+        contact_data: DataFrame with contact information showing who met whom where and when
+        infected_status_data: DataFrame with Timestep, Person_ID, Infected columns showing actual infectiousness
         show_all_potential_infectors: Whether to show all potential transmission paths
     """
     print("Building transmission tree...")
@@ -179,11 +218,11 @@ def build_transmission_tree(infection_events, contact_data=None, show_all_potent
     # For each subsequent infection, find most likely infector
     for i, event in enumerate(infection_events[1:], 1):
         infected_person = event['person_id']
-        # Pass location_type instead of full location object
-        location = event['location_type']
+        # Use the location from the event
+        location = event['location']
         potential_infectors = find_potential_infectors(
             infected_person, event['time'], location,
-            infection_events[:i], contact_data)
+            infection_events[:i], contact_data, infected_status_data)
 
         if potential_infectors:
             # Store all potential infectors for optional visualization
@@ -204,8 +243,59 @@ def build_transmission_tree(infection_events, contact_data=None, show_all_potent
             else:
                 infection_generations[infected_person] = 1
         else:
-            # Orphan infection - assign to generation 1
-            infection_generations[infected_person] = 1
+            # No potential infectors found - try fallback approaches
+            print(
+                f"Warning: No potential infectors found for person {infected_person} at time {event['time']} location {location}")
+
+            # Fallback 1: Find any previous infection regardless of location/contact
+            fallback_infectors = []
+            for prev_event in infection_events[:i]:
+                if prev_event['person_id'] != infected_person:
+                    # If we have infected status data, still check infectiousness
+                    if infected_status_data is not None:
+                        is_patient_zero = (prev_event['time'] == min(
+                            e['time'] for e in infection_events))
+
+                        if is_patient_zero:
+                            fallback_infectors.append(prev_event['person_id'])
+                        else:
+                            # Check if they were infectious at any point before this infection
+                            for check_time in range(max(0, int(event['time']) - 14), int(event['time'])):
+                                infectious_check = infected_status_data[
+                                    (infected_status_data['Person_ID'] == prev_event['person_id']) &
+                                    (infected_status_data['Timestep'] == check_time) &
+                                    (infected_status_data['Infected'] == 1)
+                                ]
+                                if len(infectious_check) > 0:
+                                    fallback_infectors.append(
+                                        prev_event['person_id'])
+                                    break
+                    else:
+                        fallback_infectors.append(prev_event['person_id'])
+
+            if fallback_infectors:
+                # Choose the most recent previous infection as infector
+                # Last in list = most recent
+                most_recent_infector = fallback_infectors[-1]
+                print(
+                    f"  -> Using fallback infector: person {most_recent_infector}")
+
+                # Add to transmission tree
+                if most_recent_infector not in transmission_tree:
+                    transmission_tree[most_recent_infector] = []
+                transmission_tree[most_recent_infector].append(infected_person)
+
+                # Set generation (one more than infector)
+                if most_recent_infector in infection_generations:
+                    infection_generations[infected_person] = infection_generations[most_recent_infector] + 1
+                else:
+                    infection_generations[infected_person] = 1
+            else:
+                # Ultimate fallback: connect to patient zero
+                print(f"  -> Using ultimate fallback: connecting to patient zero")
+                transmission_tree[patient_zero['person_id']].append(
+                    infected_person)
+                infection_generations[infected_person] = 1
 
     return transmission_tree, infection_generations, all_potential_transmissions
 
@@ -260,9 +350,9 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
         print(
             f"Limiting visualization to first {max_infections} infections for clarity")
 
-    # Build transmission tree for better layout (no longer using contact data)
+    # Build transmission tree for better layout using contact data
     transmission_tree, infection_generations, all_potential_transmissions = build_transmission_tree(
-        infection_events, None, show_all_potential_infectors)
+        infection_events, contact_data, None, show_all_potential_infectors)
     person_positions = calculate_tree_positions(
         infection_events, infection_generations)
 
@@ -456,7 +546,7 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
                                   facecolor='white', alpha=0.9, edgecolor='gray'),
                         zorder=6)
 
-    ax.set_xlabel('Time (Simulation Timesteps)', fontsize=12)
+    ax.set_xlabel('Timestep', fontsize=12)
     ax.set_ylabel('Transmission Order', fontsize=12)
     ax.set_title('Infection Transmission Tree\n' +
                  f'First {len(infection_events)} infections (Timesteps {min(times):.0f}-{max(times):.0f})',
