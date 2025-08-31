@@ -144,11 +144,11 @@ def create_pie_chart(location_stats, output_path, scenario_name="", title_suffix
 
     # Define colors for different location types
     color_map = {
-        'Home': '#FF9999',           # Light red
-        'Work': '#66B2FF',           # Light blue
-        'School': '#99FF99',         # Light green
-        'BasicsShop': '#FFCC99',     # Light orange
-        'SocialEvent': '#FF99CC',    # Light pink
+        'Work': '#4169E1',
+        'Home': '#2E8B57',
+        'School': '#FF6347',
+        'SocialEvent': '#9370DB',
+        'BasicsShop': '#FF8C00',
         'Restaurant': '#FFD700',     # Gold
         'Hospital': '#FF6666',       # Red
         'ICU': '#CC0000',           # Dark red

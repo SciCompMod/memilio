@@ -17,11 +17,11 @@ RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
 VIZ_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/viz"
 
 # Visualization Control Flags (set to true/false to enable/disable)
-ENABLE_EPIDEMIC_CURVES=false
-ENABLE_COMPARATIVE_HEATMAPS=false   
-ENABLE_INDIVIDUAL_HEATMAPS=false
+ENABLE_EPIDEMIC_CURVES=true
+ENABLE_COMPARATIVE_HEATMAPS=true   
+ENABLE_INDIVIDUAL_HEATMAPS=true
 ENABLE_INFECTION_TREES=true
-ENABLE_LOCATION_PIE_CHARTS=false
+ENABLE_LOCATION_PIE_CHARTS=true
 
 # Visualization scripts
 SIMPLE_VIZ_SCRIPT="$VIZ_BASE_DIR/simple_multi_panel.py"
@@ -186,8 +186,10 @@ create_scenario_heatmaps() {
             --data-dir-method2 "$uniform_dir" \
             --method1-name "Transmission-Informed" \
             --method2-name "Uniform" \
-            --output-path "$scenario_dir/comparative_infection_trees_${scenario_code}.png"
-        
+            --output-path "$scenario_dir/comparative_infection_trees_${scenario_code}.png" \
+            --connection-style "current" \
+            --layout-method "depth-first"
+
         if [ $? -eq 0 ]; then
             echo "✅ Infection trees created for $scenario_code"
         else
