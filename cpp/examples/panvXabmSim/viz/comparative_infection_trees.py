@@ -128,11 +128,17 @@ def create_comparative_infection_trees(data_dir_method1, data_dir_method2,
     contact_analysis_df_2 = create_contact_data_for_analysis(
         contact_df_2, infection_df_2)
 
-    # Limit infections for visualization clarity
-    if len(infection_events_1) > max_infections:
-        infection_events_1 = infection_events_1[:max_infections]
-    if len(infection_events_2) > max_infections:
-        infection_events_2 = infection_events_2[:max_infections]
+    # Limit infections to first 5 days (120 timesteps) for visualization clarity
+    # Since 1 timestep = 1 hour, 5 days = 120 timesteps
+    max_timesteps = 120
+
+    # Filter infections to only include those within the first 5 days
+    inf_events_for_opp_1 = infection_events_1
+    inf_events_for_opp_2 = infection_events_2
+    infection_events_1 = [
+        event for event in infection_events_1 if event['time'] <= max_timesteps]
+    infection_events_2 = [
+        event for event in infection_events_2 if event['time'] <= max_timesteps]
 
     # Update infection events to rename EventPanvadere based on scenario
     def update_event_location_names(events, scenario_name):
@@ -206,7 +212,7 @@ def create_comparative_infection_trees(data_dir_method1, data_dir_method2,
     # Create transmission opportunities over time analysis (bottom panel spanning both columns)
     ax3 = fig.add_subplot(gs[2, :])
     plot_transmission_opportunities_over_time(
-        ax3, infection_events_1, infection_events_2, method1_name, method2_name,
+        ax3, inf_events_for_opp_1, inf_events_for_opp_2, method1_name, method2_name,
         contact_analysis_df_1, contact_analysis_df_2, infected_status_df_1, infected_status_df_2)
 
     # Add overall title
@@ -470,12 +476,12 @@ def plot_infection_tree(ax, infection_events, transmission_tree, positions, loca
 
     # Add timeline markers for key events - all labels at same height
     outbreak_time = min(times)  # Patient zero time
-    label_y_pos = -0.5  # Fixed position slightly below y=0
+    label_y_pos = -y_range * 0.01  # Fixed position slightly below y=0
 
     # Add simulation start line (timestep 0)
     ax.axvline(x=0, color='blue', linestyle='-',
                alpha=0.8, linewidth=3, zorder=1)
-    ax.text(0, label_y_pos, 'Simulation Start',
+    ax.text(0, -y_range * 0.12, 'Simulation Start',
             ha='center', va='top', fontsize=14, fontweight='bold',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='blue', alpha=0.7, edgecolor='darkblue'))
 
@@ -488,7 +494,7 @@ def plot_infection_tree(ax, infection_events, transmission_tree, positions, loca
         # Add vertical line for patient zero
         ax.axvline(x=outbreak_time, color='red', linestyle='--',
                    alpha=0.7, linewidth=3, zorder=1)
-        ax.text(outbreak_time, label_y_pos, 'Patient Zero',
+        ax.text(outbreak_time, -y_range * 0.02, 'Patient Zero',
                 ha='center', va='top', fontsize=14, fontweight='bold',
                 bbox=dict(boxstyle='round,pad=0.3', facecolor='red', alpha=0.7, edgecolor='darkred'))
 
@@ -503,7 +509,7 @@ def plot_infection_tree(ax, infection_events, transmission_tree, positions, loca
 
         ax.axvline(x=outbreak_event_time, color=outbreak_color,
                    linestyle='--', alpha=0.7, linewidth=3, zorder=1)
-        ax.text(outbreak_event_time, label_y_pos, 'Outbreak Event',
+        ax.text(outbreak_event_time, -y_range * 0.07, 'Outbreak Event',
                 ha='center', va='top', fontsize=14, fontweight='bold',
                 bbox=dict(boxstyle='round,pad=0.3', facecolor=outbreak_color, alpha=0.7, edgecolor=outbreak_color))
 
@@ -518,7 +524,7 @@ def plot_infection_tree(ax, infection_events, transmission_tree, positions, loca
     ax.tick_params(axis='both', which='minor', labelsize=14)
 
     # Set limits with padding
-    ax.set_ylim(min(y_values) - y_range * 0.05, max(y_values) + y_range * 0.1)
+    ax.set_ylim(min(y_values) - y_range * 0.15, max(y_values) + y_range * 0.1)
 
     # Statistics box removed per user request
 
@@ -724,7 +730,7 @@ def main():
     parser.add_argument('--output-path', help='Output path for visualization')
     parser.add_argument('--scenario-name',
                         help='Scenario name for titles (e.g., R1, W2)')
-    parser.add_argument('--max-infections', type=int, default=20,
+    parser.add_argument('--max-infections', type=int, default=150,
                         help='Maximum infections to display for clarity')
 
     args = parser.parse_args()

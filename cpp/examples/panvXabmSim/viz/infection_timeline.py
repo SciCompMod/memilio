@@ -76,7 +76,7 @@ def has_contact_at_location(person1, person2, location, time, contact_data, time
     - If both are present, they have contact
     """
 
-    # Check if person1 was at the location at the specified time
+    # Check if person1 was at the location at the spefied time
     person1_at_location = contact_data[
         (contact_data['Person_ID'] == person1) &
         (contact_data['Location_ID'] == int(location)) &
