@@ -16,10 +16,19 @@ PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
 VIZ_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/viz"
 
+# Visualization Control Flags (set to true/false to enable/disable)
+ENABLE_EPIDEMIC_CURVES=false
+ENABLE_COMPARATIVE_HEATMAPS=false
+ENABLE_INDIVIDUAL_HEATMAPS=false
+ENABLE_INFECTION_TREES=true
+ENABLE_LOCATION_PIE_CHARTS=false
+
 # Visualization scripts
 SIMPLE_VIZ_SCRIPT="$VIZ_BASE_DIR/simple_multi_panel.py"
 COMPARATIVE_HEATMAP_SCRIPT="$VIZ_BASE_DIR/comparative_temporal_heatmap.py"
 TEMPORAL_HEATMAP_SCRIPT="$VIZ_BASE_DIR/temporal_infection_heatmap.py"
+COMPARATIVE_TREES_SCRIPT="$VIZ_BASE_DIR/comparative_infection_trees.py"
+LOCATION_PIE_SCRIPT="$VIZ_BASE_DIR/location_infection_pie_chart.py"
 
 # Create comprehensive output directory
 create_output_dir() {
@@ -49,6 +58,11 @@ find_scenario_results() {
 # Create epidemic curves visualization
 create_epidemic_curves() {
     local output_dir=$1
+    
+    if [ "$ENABLE_EPIDEMIC_CURVES" != "true" ]; then
+        echo "⏭️  Skipping epidemic curves (disabled)"
+        return 0
+    fi
     
     echo "=== Creating Multi-Panel Epidemic Curves ==="
     
@@ -118,28 +132,32 @@ create_scenario_heatmaps() {
     fi
     
     # Create comparative temporal heatmap (average across runs only)
-    echo "Creating comparative temporal heatmap (averaged across runs) - $view_type view..."
-    cd "$scenario_dir"
-    $PYTHON3_DIR "$COMPARATIVE_HEATMAP_SCRIPT" \
-        --data-dir-method1 "$transmission_dir" \
-        --data-dir-method2 "$uniform_dir" \
-        --method1-name "Transmission-Informed" \
-        --method2-name "Uniform" \
-        --time-points 0 24 72 240 \
-        --output-path "$scenario_dir/comparative_temporal_heatmap_averaged_${view_type}_${scenario_code}.png" \
-        --scenario-name "$scenario_code" \
-        --use-average \
-        --viz-style "$viz_style" \
-        $use_workplaces
-    
-    if [ $? -eq 0 ]; then
-        echo "✅ Averaged heatmap ($view_type view) created"
+    if [ "$ENABLE_COMPARATIVE_HEATMAPS" = "true" ]; then
+        echo "Creating comparative temporal heatmap (averaged across runs) - $view_type view..."
+        cd "$scenario_dir"
+        $PYTHON3_DIR "$COMPARATIVE_HEATMAP_SCRIPT" \
+            --data-dir-method1 "$transmission_dir" \
+            --data-dir-method2 "$uniform_dir" \
+            --method1-name "Transmission-Informed" \
+            --method2-name "Uniform" \
+            --time-points 0 24 72 240 \
+            --output-path "$scenario_dir/comparative_temporal_heatmap_averaged_${view_type}_${scenario_code}.png" \
+            --scenario-name "$scenario_code" \
+            --use-average \
+            --viz-style "$viz_style" \
+            $use_workplaces
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Averaged heatmap ($view_type view) created"
+        else
+            echo "❌ Failed to create averaged heatmap ($view_type view)"
+        fi
     else
-        echo "❌ Failed to create averaged heatmap ($view_type view)"
+        echo "⏭️  Skipping comparative heatmaps (disabled)"
     fi
     
     # Create individual temporal heatmaps if script exists
-    if [ -f "$TEMPORAL_HEATMAP_SCRIPT" ]; then
+    if [ "$ENABLE_INDIVIDUAL_HEATMAPS" = "true" ] && [ -f "$TEMPORAL_HEATMAP_SCRIPT" ]; then
         echo "Creating individual temporal heatmaps..."
         
         # Transmission-informed heatmap
@@ -155,9 +173,63 @@ create_scenario_heatmaps() {
             --time-points 0 24 72 240 2>/dev/null
         
         echo "✅ Individual temporal heatmaps created"
+    elif [ "$ENABLE_INDIVIDUAL_HEATMAPS" != "true" ]; then
+        echo "⏭️  Skipping individual heatmaps (disabled)"
     fi
     
-    echo "✅ Heatmaps completed for $scenario_label"
+    # Create comparative infection trees if script exists
+    if [ "$ENABLE_INFECTION_TREES" = "true" ] && [ -f "$COMPARATIVE_TREES_SCRIPT" ]; then
+        echo "Creating comparative infection trees..."
+        cd "$scenario_dir"
+        $PYTHON3_DIR "$COMPARATIVE_TREES_SCRIPT" \
+            --data-dir-method1 "$transmission_dir" \
+            --data-dir-method2 "$uniform_dir" \
+            --method1-name "Transmission-Informed" \
+            --method2-name "Uniform" \
+            --output-path "$scenario_dir/comparative_infection_trees_${scenario_code}.png"
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Infection trees created for $scenario_code"
+        else
+            echo "❌ Failed to create infection trees for $scenario_code"
+        fi
+    elif [ "$ENABLE_INFECTION_TREES" != "true" ]; then
+        echo "⏭️  Skipping infection trees (disabled)"
+    fi
+    
+    # Create location infection pie chart if script exists
+    if [ "$ENABLE_LOCATION_PIE_CHARTS" = "true" ] && [ -f "$LOCATION_PIE_SCRIPT" ]; then
+        echo "Creating location infection pie chart..."
+        cd "$scenario_dir"
+        $PYTHON3_DIR "$LOCATION_PIE_SCRIPT" \
+            --data-dir "$transmission_dir" \
+            --scenario-name "Transmission-Informed ($scenario_code)" \
+            --output "$scenario_dir/location_infection_pie_transmission_${scenario_code}.png"
+        
+        $PYTHON3_DIR "$LOCATION_PIE_SCRIPT" \
+            --data-dir "$uniform_dir" \
+            --scenario-name "Uniform ($scenario_code)" \
+            --output "$scenario_dir/location_infection_pie_uniform_${scenario_code}.png"
+        
+        # Create comparative pie chart
+        $PYTHON3_DIR "$LOCATION_PIE_SCRIPT" \
+            --comparative \
+            --data-dir "$transmission_dir" \
+            --data-dir-2 "$uniform_dir" \
+            --scenario-name "Transmission-Informed" \
+            --scenario-name-2 "Uniform" \
+            --output "$scenario_dir/comparative_location_pie_${scenario_code}.png"
+        
+        if [ $? -eq 0 ]; then
+            echo "✅ Location infection pie charts created for $scenario_code"
+        else
+            echo "❌ Failed to create location pie charts for $scenario_code"
+        fi
+    elif [ "$ENABLE_LOCATION_PIE_CHARTS" != "true" ]; then
+        echo "⏭️  Skipping location pie charts (disabled)"
+    fi
+    
+    echo "✅ All visualizations completed for $scenario_label"
     echo "   Output: $scenario_dir"
     
     return 0
@@ -288,6 +360,15 @@ main() {
     echo "Timestamp: $timestamp"
     echo "This script generates epidemic curves and heatmap visualizations"
     echo "from the results of run_epidemic_curves.sh"
+    echo ""
+    
+    # Show visualization settings
+    echo "=== Visualization Settings ==="
+    echo "📊 Epidemic Curves:       $([ "$ENABLE_EPIDEMIC_CURVES" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
+    echo "🗺️  Comparative Heatmaps:  $([ "$ENABLE_COMPARATIVE_HEATMAPS" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
+    echo "📋 Individual Heatmaps:   $([ "$ENABLE_INDIVIDUAL_HEATMAPS" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
+    echo "🌳 Infection Trees:       $([ "$ENABLE_INFECTION_TREES" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
+    echo "🥧 Location Pie Charts:   $([ "$ENABLE_LOCATION_PIE_CHARTS" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
     echo ""
     
     # Validate prerequisites
