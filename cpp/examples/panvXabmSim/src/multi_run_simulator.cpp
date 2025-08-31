@@ -283,7 +283,8 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
         detailed_infection,
     const std::string& dir_h5_50_percentile_run,
     std::vector<std::vector<mio::TimeSeries<ScalarType>>>& history_infected_amount,
-    std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t>>>>& history_contact_hours, EventType event_type)
+    std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t>>>>& history_contact_hours, EventType event_type,
+    std::vector<std::vector<std::vector<std::tuple<uint32_t, bool>>>>& history_infected_status)
 {
     // First we need to find the run, which has the lowest discrete L2 norm in relation to the median value of all runs, saved in dir_h5_50_percentile_run(saved as h5)
     // First we calculate a vector of all runs and the amount of infected at each timestep from history_infected_amount
@@ -533,6 +534,26 @@ mio::IOResult<void> save_detailed_infection_and_contact_for_best_run(
         contact_hours_output.close();
     }
 
+    // Save infected status
+    auto infected_status_file = dir_h5_50_percentile_run + "/../../best_run_infected_status.csv";
+    std::ofstream infected_status_output(infected_status_file);
+    if (infected_status_output.is_open()) {
+        infected_status_output << "Timestep,Person_ID,Infected\n";
+
+        for (int hours = 0; hours < event_time; ++hours) {
+            contact_hours_output << -48 + hours << "," << persons_at_event[0] << "," << "true"
+                                 << "\n"; // Assuming infected
+        }
+
+        for (size_t timestep = 0; timestep < history_infected_status.size(); ++timestep) {
+            for (const auto& infected_entry : history_infected_status[best_run_index][timestep]) {
+                infected_status_output << timestep << "," << std::get<0>(infected_entry) << ","
+                                       << std::get<1>(infected_entry) << "\n";
+            }
+        }
+        infected_status_output.close();
+    }
+
     return mio::success();
 }
 
@@ -611,6 +632,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
 
     auto ensemble_detailed_infection =
         std::vector<std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>>{};
+    auto ensemble_infection_history = std::vector<std::vector<std::vector<std::tuple<uint32_t, bool>>>>{};
 
     auto ensemble_params              = std::vector<std::vector<mio::abm::World>>{};
     auto ensemble_params_no_agegroups = std::vector<std::vector<mio::abm::World>>{};
@@ -623,6 +645,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
         ensemble_params_no_agegroups.push_back(run.ensemble_params_no_agegroups);
         ensemble_contact_hours.push_back(run.history_person_and_location_id);
         ensemble_detailed_infection.push_back(run.history_detailed_infection);
+        ensemble_infection_history.push_back(run.history_infected_status);
     }
 
     BOOST_OUTCOME_TRY(save_results(ensembl_inf_per_loc_type, ensemble_params, {0},
@@ -641,7 +664,7 @@ mio::IOResult<void> MultiRunSimulator::save_multi_run_results(const MultiRunResu
 
     BOOST_OUTCOME_TRY(save_detailed_infection_and_contact_for_best_run(
         ensemble_detailed_infection, base_dir + "/amount_of_infections/p50", ensemble_amount_of_infections,
-        ensemble_contact_hours, results.event_type));
+        ensemble_contact_hours, results.event_type, ensemble_infection_history));
 
     return mio::success();
 }
@@ -692,9 +715,11 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
         historyContactNetwork; // 2nd figure
     mio::History<mio::abm::DataWriterToMemory, LogInfectionDetailed> historyInfectionDetailed; // 3rd figure
     mio::History<mio::abm::DataWriterToMemory, LogLocationIdAndType> historyLocationIdAndType; // 4th figure
+    mio::History<mio::abm::DataWriterToMemory, LogIsInfected> historyIsInfected; // 5th figure
 
     sim.advance(tmax, historyInfectionPerLocationType, historyInfectionStatePerAgeGroup, historyAmountInfected,
-                historyContactNetwork, historyInfectionDetailed, historyLocationIdAndType, historyLocationTypeAndId);
+                historyContactNetwork, historyInfectionDetailed, historyLocationIdAndType, historyLocationTypeAndId,
+                historyIsInfected);
 
     // DEBUG
     results.infection_per_loc_type =
@@ -702,7 +727,7 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
     results.infection_state_per_age_group =
         std::vector<mio::TimeSeries<ScalarType>>{std::get<0>(historyInfectionStatePerAgeGroup.get_log())};
     results.ensemble_params                    = std::vector<mio::abm::World>{sim.get_world()};
-    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(1)};
+    results.ensemble_params_no_agegroups       = std::vector<mio::abm::World>{mio::abm::World(6)};
     results.infection_per_location_type_and_id = std::get<0>(historyLocationTypeAndId.get_log());
 
     // FIGURES
@@ -719,6 +744,8 @@ MultiRunSimulator::run_single_simulation_with_infections(mio::abm::World& base_w
             std::get<0>(historyInfectionDetailed.get_log())};
     results.loc_id_and_type =
         std::vector<std::tuple<uint32_t, mio::abm::LocationType>>{std::get<0>(historyLocationIdAndType.get_log())[0]};
+    results.history_infected_status =
+        std::vector<std::vector<std::tuple<uint32_t, bool>>>{std::get<0>(historyIsInfected.get_log())};
 
     // Placeholder implementation
     return mio::success(results);

@@ -107,27 +107,45 @@ def get_contact_strength_between(person1, person2, location, contact_data):
 
 
 def find_potential_infectors(infected_person, infection_time, location,
-                             infection_events, contact_data, time_window=24):
-    """Find who could have infected this person and calculate probabilities"""
+                             infection_events, contact_data=None, time_window=24, infectiousness_delay=4.5):
+    """Find who could have infected this person based on location and timing
+    
+    Args:
+        infected_person: ID of person who got infected
+        infection_time: Time when infection occurred
+        location: Location where infection occurred
+        infection_events: List of all infection events
+        contact_data: Not used anymore - presence at same location implies contact
+        time_window: Maximum time window for potential transmission (hours)
+        infectiousness_delay: Days after infection when person becomes infectious
+    """
 
     # Find people who were infectious at the same location within time window
     potential_infectors = []
 
     for event in infection_events:
         if (event['person_id'] != infected_person and
-            event['time'] < infection_time and
-                event['time'] + time_window < infection_time):
+            event['time'] < infection_time):
 
-            # Check if they were at same location
-            if has_contact_at_location(event['person_id'], infected_person,
-                                       location, infection_time, contact_data):
+            # Check if they became infectious before the infection occurred
+            # Person becomes infectious after infectiousness_delay days (converted to hours)
+            infectious_time = event['time'] + (infectiousness_delay * 24)  # Convert days to hours
+            
+            # They must be infectious and the infection must occur within the time window
+            if (infectious_time <= infection_time and 
+                infection_time <= infectious_time + time_window):
 
-                # Calculate probability (simplified for now)
-                probability = 1
+                # Check if they were at same location type (same location implies contact)
+                if event['location_type'] == location.get('type', location) if isinstance(location, dict) else event['location_type'] == location:
 
-                if probability > 0:
-                    potential_infectors.append(
-                        (event['person_id'], probability))
+                    # Calculate probability based on how long they were infectious
+                    # Longer infectious period = higher probability
+                    days_infectious = (infection_time - infectious_time) / 24
+                    probability = min(1.0, days_infectious / 7.0)  # Max probability after 7 days infectious
+
+                    if probability > 0:
+                        potential_infectors.append(
+                            (event['person_id'], probability))
 
     # Normalize probabilities
     total_prob = sum(prob for _, prob in potential_infectors)
@@ -138,8 +156,14 @@ def find_potential_infectors(infected_person, infection_time, location,
     return potential_infectors
 
 
-def build_transmission_tree(infection_events, contact_data, show_all_potential_infectors=False):
-    """Build a transmission tree to organize the layout hierarchically"""
+def build_transmission_tree(infection_events, contact_data=None, show_all_potential_infectors=False):
+    """Build a transmission tree to organize the layout hierarchically
+    
+    Args:
+        infection_events: List of infection events with time, location_type, person_id
+        contact_data: Not used anymore - same location implies contact
+        show_all_potential_infectors: Whether to show all potential transmission paths
+    """
     print("Building transmission tree...")
 
     # Build transmission relationships
@@ -155,8 +179,10 @@ def build_transmission_tree(infection_events, contact_data, show_all_potential_i
     # For each subsequent infection, find most likely infector
     for i, event in enumerate(infection_events[1:], 1):
         infected_person = event['person_id']
+        # Pass location_type instead of full location object
+        location = event['location_type']
         potential_infectors = find_potential_infectors(
-            infected_person, event['time'], event['location'],
+            infected_person, event['time'], location,
             infection_events[:i], contact_data)
 
         if potential_infectors:
@@ -234,9 +260,9 @@ def create_timeline_with_probability_bars(infection_events, contact_data,
         print(
             f"Limiting visualization to first {max_infections} infections for clarity")
 
-    # Build transmission tree for better layout
+    # Build transmission tree for better layout (no longer using contact data)
     transmission_tree, infection_generations, all_potential_transmissions = build_transmission_tree(
-        infection_events, contact_data, show_all_potential_infectors)
+        infection_events, None, show_all_potential_infectors)
     person_positions = calculate_tree_positions(
         infection_events, infection_generations)
 

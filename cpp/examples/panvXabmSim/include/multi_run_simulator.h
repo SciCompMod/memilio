@@ -31,6 +31,7 @@ struct SimulationResults {
     std::vector<std::vector<std::tuple<uint32_t, uint32_t>>> history_person_and_location_id; // Figure 2 / 3
     std::vector<std::vector<std::tuple<uint32_t, uint32_t, mio::abm::LocationType>>>
         history_detailed_infection; // Figure 2/3
+    std::vector<std::vector<std::tuple<uint32_t, bool>>> history_infected_status;
 };
 
 struct MultiRunResults {

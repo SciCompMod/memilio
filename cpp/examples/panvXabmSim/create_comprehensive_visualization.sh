@@ -18,7 +18,7 @@ VIZ_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/viz"
 
 # Visualization Control Flags (set to true/false to enable/disable)
 ENABLE_EPIDEMIC_CURVES=false
-ENABLE_COMPARATIVE_HEATMAPS=false
+ENABLE_COMPARATIVE_HEATMAPS=false   
 ENABLE_INDIVIDUAL_HEATMAPS=false
 ENABLE_INFECTION_TREES=true
 ENABLE_LOCATION_PIE_CHARTS=false

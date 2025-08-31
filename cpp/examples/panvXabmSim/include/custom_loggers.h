@@ -73,3 +73,8 @@ struct LogLocationIdAndType : mio::LogOnce {
     using Type = std::vector<std::tuple<uint32_t, mio::abm::LocationType>>;
     static Type log(const mio::abm::Simulation& sim);
 };
+
+struct LogIsInfected : mio::LogAlways {
+    using Type = std::vector<std::tuple<uint32_t, bool>>;
+    static Type log(const mio::abm::Simulation& sim);
+};
