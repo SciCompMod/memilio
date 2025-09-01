@@ -28,6 +28,7 @@
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include <boost/core/ref.hpp>
 // #include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp" // TODO: reenable once boost bug is fixed
 
 namespace mio
@@ -65,7 +66,7 @@ class ControlledStepperWrapper : public mio::OdeIntegratorCore<FP>
     // Note: use a reference_wrapper so we can both update dt_max, and replace the stepper to change tolerances
     using Stepper = boost::numeric::odeint::controlled_runge_kutta<
         ControlledStepper<Eigen::VectorX<FP>, FP, Eigen::VectorX<FP>, FP, Algebra, Operations, Resizer>, ErrorChecker,
-        std::reference_wrapper<StepAdjuster>>;
+        boost::reference_wrapper<StepAdjuster>>;
     static constexpr bool is_fsal_stepper = std::is_same_v<typename Stepper::stepper_type::stepper_category,
                                                            boost::numeric::odeint::explicit_error_stepper_fsal_tag>;
     static_assert(!is_fsal_stepper,
@@ -89,9 +90,15 @@ public:
     {
     }
 
+    // if needed, make sure to create a new m_stepper
+    ControlledStepperWrapper(ControlledStepperWrapper&& other)                 = delete;
+    ControlledStepperWrapper(const ControlledStepperWrapper& other)            = delete;
+    ControlledStepperWrapper& operator=(ControlledStepperWrapper&& other)      = delete;
+    ControlledStepperWrapper& operator=(const ControlledStepperWrapper& other) = delete;
+
     std::unique_ptr<OdeIntegratorCore<FP>> clone() const override
     {
-        return std::make_unique<ControlledStepperWrapper>(*this);
+        return std::make_unique<ControlledStepperWrapper>(m_abs_tol, m_rel_tol, this->get_dt_min(), this->get_dt_max());
     }
 
     /**
@@ -186,7 +193,7 @@ private:
     Stepper create_stepper()
     {
         // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
-        return Stepper(ErrorChecker(m_abs_tol, m_rel_tol), m_step_adjuster);
+        return Stepper(ErrorChecker(m_abs_tol, m_rel_tol), boost::ref(m_step_adjuster));
     }
 
     FP m_abs_tol, m_rel_tol; ///< Absolute and relative tolerances for integration.
