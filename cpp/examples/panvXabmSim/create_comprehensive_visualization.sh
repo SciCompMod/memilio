@@ -19,9 +19,8 @@ VIZ_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/viz"
 # Visualization Control Flags (set to true/false to enable/disable)
 ENABLE_EPIDEMIC_CURVES=true
 ENABLE_COMPARATIVE_HEATMAPS=true   
-ENABLE_INDIVIDUAL_HEATMAPS=true
-ENABLE_INFECTION_TREES=true
-ENABLE_LOCATION_PIE_CHARTS=true
+ENABLE_INFECTION_TREES=false
+ENABLE_LOCATION_PIE_CHARTS=false
 
 # Visualization scripts
 SIMPLE_VIZ_SCRIPT="$VIZ_BASE_DIR/simple_multi_panel.py"
@@ -143,8 +142,8 @@ create_scenario_heatmaps() {
             --time-points 0 24 72 240 \
             --output-path "$scenario_dir/comparative_temporal_heatmap_averaged_${view_type}_${scenario_code}.png" \
             --scenario-name "$scenario_code" \
-            --use-average \
             --viz-style "$viz_style" \
+            --use-median \
             $use_workplaces
         
         if [ $? -eq 0 ]; then
@@ -154,27 +153,6 @@ create_scenario_heatmaps() {
         fi
     else
         echo "⏭️  Skipping comparative heatmaps (disabled)"
-    fi
-    
-    # Create individual temporal heatmaps if script exists
-    if [ "$ENABLE_INDIVIDUAL_HEATMAPS" = "true" ] && [ -f "$TEMPORAL_HEATMAP_SCRIPT" ]; then
-        echo "Creating individual temporal heatmaps..."
-        
-        # Transmission-informed heatmap
-        $PYTHON3_DIR "$TEMPORAL_HEATMAP_SCRIPT" \
-            --data-dir "$transmission_dir" \
-            --output-name "transmission_informed_temporal" \
-            --time-points 0 24 72 240 2>/dev/null
-        
-        # Uniform heatmap  
-        $PYTHON3_DIR "$TEMPORAL_HEATMAP_SCRIPT" \
-            --data-dir "$uniform_dir" \
-            --output-name "uniform_temporal" \
-            --time-points 0 24 72 240 2>/dev/null
-        
-        echo "✅ Individual temporal heatmaps created"
-    elif [ "$ENABLE_INDIVIDUAL_HEATMAPS" != "true" ]; then
-        echo "⏭️  Skipping individual heatmaps (disabled)"
     fi
     
     # Create comparative infection trees if script exists
@@ -368,7 +346,6 @@ main() {
     echo "=== Visualization Settings ==="
     echo "📊 Epidemic Curves:       $([ "$ENABLE_EPIDEMIC_CURVES" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
     echo "🗺️  Comparative Heatmaps:  $([ "$ENABLE_COMPARATIVE_HEATMAPS" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
-    echo "📋 Individual Heatmaps:   $([ "$ENABLE_INDIVIDUAL_HEATMAPS" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
     echo "🌳 Infection Trees:       $([ "$ENABLE_INFECTION_TREES" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
     echo "🥧 Location Pie Charts:   $([ "$ENABLE_LOCATION_PIE_CHARTS" = "true" ] && echo "✅ ENABLED" || echo "❌ DISABLED")"
     echo ""

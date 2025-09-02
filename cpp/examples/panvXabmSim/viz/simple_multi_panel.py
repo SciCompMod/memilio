@@ -87,6 +87,7 @@ def plot_scenario_comparison(ax, path_transmission, path_uniform, scenario_title
 
         time_memilio = memilio_p50['Time']
         memilio_cum_50 = calculate_cumulative_infections(memilio_p50['Total'])
+        print(memilio_cum_50)
         memilio_cum_25 = calculate_cumulative_infections(memilio_p25['Total'])
         memilio_cum_75 = calculate_cumulative_infections(memilio_p75['Total'])
 
