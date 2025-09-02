@@ -493,6 +493,9 @@ FP& operator/=(FP& lhs, const UncertainValue<FP>& rhs)
 }
 //@}
 
+/**
+ * @brief Print statement for UncertainValue<FP> (required for AD types)
+ */
 template <typename FP>
 inline std::ostream& operator<<(std::ostream& os, const UncertainValue<FP>& uv)
 {
