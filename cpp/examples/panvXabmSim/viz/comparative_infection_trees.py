@@ -6,7 +6,7 @@ with multiple layout and connection style options
 
 Usage:
     python enhanced_comparative_infection_trees.py --data-dir-method1 <transmission_informed_dir> --data-dir-method2 <uniform_dir>
-                                                   --layout-method <current|hierarchical|location|temporal> 
+                                                   --layout-method <current|hierarchical|location|temporal>
                                                    --connection-style <current|L-shaped|curved|straight>
 """
 
@@ -633,6 +633,11 @@ def plot_infection_tree_enhanced(ax, infection_events, transmission_tree, positi
     # Set limits with padding
     ax.set_ylim(min(y_values) - y_range * 0.15, max(y_values) + y_range * 0.1)
 
+    # Hide negative x-axis tick labels but keep the axis range
+    x_ticks = ax.get_xticks()
+    tick_labels = [str(int(tick)) if tick >= 0 else '' for tick in x_ticks]
+    ax.set_xticklabels(tick_labels)
+
     # Add location distribution pie chart in lower right corner
     add_location_pie_inset(ax, infection_events, location_colors)
 
@@ -722,7 +727,9 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
     """Create side-by-side infection tree comparison with enhanced layout options"""
 
     print(
-        f"Creating enhanced comparative infection trees for {scenario_name or 'scenario'}")
+        f"Creating enhanced comparative infection trees for {scenario_name or 'scenario'}...")
+    print(f"Layout method: {layout_method}")
+    print(f"Connection style: {connection_style}")
 
     # Load data for both methods (same as original)
     # Load data for both methods (same as original)
@@ -875,7 +882,8 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
     if scenario_name:
         title = f"Scenario {scenario_name}: {title}"
 
-    fig.suptitle(f"{title}\n{method1_name} vs {method2_name} Initialization\n")
+    fig.suptitle(f"{title}\n{method1_name} vs {method2_name} Initialization\n",
+                 fontsize=16, fontweight='bold', y=0.95)
 
     # Create legend
     legend_elements = []
@@ -892,7 +900,7 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
                    label='Uncertain transmission', alpha=0.9)
     ])
 
-    ax1.legend(handles=legend_elements, loc='upper left', title='Legend',
+    ax1.legend(handles=legend_elements, loc='upper left',
                title_fontsize=10, bbox_to_anchor=(0, 1), fontsize=14)
 
     plt.tight_layout()
@@ -1044,7 +1052,7 @@ def plot_transmission_opportunities_over_time(ax, infection_events_1, infection_
 
             if opportunities_1 and opportunities_2:
                 diff_text = f"Day {day_num}: {diff:+.0f}"
-                ax.text(boundary - 10, y_positions[i], diff_text, rotation=0, fontsize=12,
+                ax.text(boundary - 16, y_positions[i], diff_text, rotation=0, fontsize=16,
                         bbox=dict(boxstyle='round,pad=0.3',
                                   facecolor=color, alpha=0.4),
                         ha='left', va='center', fontweight='bold')
@@ -1053,11 +1061,11 @@ def plot_transmission_opportunities_over_time(ax, infection_events_1, infection_
     ax.set_xlabel('Timestep', fontsize=18)
     ax.set_ylabel('Susceptible People at Risk', fontsize=18)
     ax.set_title(
-        (f'Transmission Opportunities Over Time\n'
-         f'Day X: Cumulative Difference in At-Risk Population\n'
-         f'Final Cumulative Difference: {cum_opp_rel[-1]:.0f} ({cum_opp_perc[-1]:.1f}%)'),
+        f'Transmission Opportunities Over Time\n'
+        f'Day X: Cumulative Difference in At-Risk Population\n'
+        f'Final Cumulative Difference: {cum_opp_rel[-1]:.0f} ({cum_opp_perc[-1]:.1f}%) ({cum_opp_1[-1]:.0f} vs {cum_opp_2[-1]:.0f})',
         fontsize=16, fontweight='bold')
-    ax.grid(True, alpha=0.3)
+    ax.grid(True, alpha=0.7)
     ax.legend(loc='upper right', fontsize=18)
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.tick_params(axis='both', which='minor', labelsize=14)

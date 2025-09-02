@@ -235,11 +235,11 @@ def create_comparative_pie_charts(data_dirs, scenario_names, output_path):
         all_locations.update(stats.keys())
 
     color_map = {
-        'Home': '#FF9999',           # Light red
-        'Work': '#66B2FF',           # Light blue
-        'School': '#99FF99',         # Light green
-        'BasicsShop': '#FFCC99',     # Light orange
-        'SocialEvent': '#FF99CC',    # Light pink
+        'Work': '#4169E1',
+        'Home': '#2E8B57',
+        'School': '#FF6347',
+        'SocialEvent': '#9370DB',
+        'BasicsShop': '#FF8C00',
         'Restaurant': '#FFD700',     # Gold
         'Hospital': '#FF6666',       # Red
         'ICU': '#CC0000',           # Dark red
@@ -260,10 +260,24 @@ def create_comparative_pie_charts(data_dirs, scenario_names, output_path):
         colors = [color_map.get(label, plt.cm.Set3(j/len(all_locations)))
                   for j, label in enumerate(labels)]
 
-        # Create pie chart
-        wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors,
-                                          autopct='%1.1f%%', startangle=90,
-                                          textprops={'fontsize': 20})
+        wedges, texts, autotexts = ax.pie(
+            sizes,
+            labels=labels,
+            colors=colors,
+            autopct='%1.1f%%',
+            startangle=90,
+            textprops={'fontsize': 20},
+            pctdistance=0.65  # Default distance for all percentages
+        )
+
+        # Find and reposition the 'School' percentage text specifically
+        for i, (autotext, label) in enumerate(zip(autotexts, labels)):
+            if label == 'School':
+                # Get current position and move it further out
+                x, y = autotext.get_position()
+                # Move to desired distance (e.g., 1.1 instead of 0.65)
+                factor = 0.85 / 0.65
+                autotext.set_position((x * factor, y * factor))
 
         plt.setp(autotexts, size=18, weight="bold")
         ax.set_title(f"{scenario_name}\nAvg Total: {sum(sizes):.1f} infections",

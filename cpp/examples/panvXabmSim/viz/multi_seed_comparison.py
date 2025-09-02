@@ -125,6 +125,19 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     ax2.grid(True, alpha=0.3)
     ax2.tick_params(labelsize=16)
 
+    # Make y-axis limits the same for both plots
+    if memilio_finals and panvadere_finals:
+        # Get all cumulative values from both plots
+        all_memilio_values = np.concatenate(
+            [result['cumulative'] for result in grouped_results['memilio']])
+        all_panvadere_values = np.concatenate(
+            [result['cumulative'] for result in grouped_results['panvadere']])
+        y_max = max(np.max(all_memilio_values), np.max(all_panvadere_values))
+        y_min = 0  # Start from 0 for infections
+
+        ax1.set_ylim(y_min, y_max * 1.05)  # Add 5% padding
+        ax2.set_ylim(y_min, y_max * 1.05)
+
     # Plot 3: Median comparison with confidence intervals
     ax3 = axes[1, 0]
     ax3.set_title('Median Comparison with Confidence Intervals',
@@ -186,12 +199,13 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
             median.set_color('black')
             median.set_linewidth(4)
 
-        # Add individual points
+        # Add individual points ON TOP of boxplot (no jitter)
         for i, (data, label) in enumerate(zip(box_data, box_labels)):
             y = data
-            x = np.random.normal(i+1, 0.04, size=len(y))
-            ax4.scatter(x, y, alpha=0.6, s=50,
-                        color='darkblue' if i == 0 else 'darkred')
+            # No jitter - all points at the same x position
+            x = np.full(len(y), i+1)
+            ax4.scatter(x, y, alpha=0.7, s=50,
+                        color='darkblue' if i == 0 else 'darkred', zorder=10)  # High zorder to be on top
 
         # Add statistics text with larger font
         stats_text = f"Uniform: μ={np.mean(memilio_finals):.0f}, σ={np.std(memilio_finals):.0f}\n"
