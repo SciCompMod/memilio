@@ -89,20 +89,20 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     fig.suptitle(f'Scenario {event_type} - Multi-Seed Simulation',
                  fontsize=32, fontweight='bold', y=0.98)
 
-    # Color schemes - more muted for better visibility
+    # Color schemes
     memilio_colors = plt.cm.Blues(np.linspace(
         0.3, 0.8, len(grouped_results['memilio'])))
     panvadere_colors = plt.cm.Reds(np.linspace(
         0.3, 0.8, len(grouped_results['panvadere'])))
 
-    # Plot 1: All Memilio runs (NO LEGEND for seeds)
+    # Plot 1: All Memilio runs
     ax1 = axes[0, 0]
     ax1.set_title('Uniform - All Seeds', fontsize=24, fontweight='bold')
 
     memilio_finals = []
     for i, result in enumerate(grouped_results['memilio']):
         ax1.plot(result['time'], result['cumulative'],
-                 color=memilio_colors[i], alpha=0.6, linewidth=2)  # No label
+                 color=memilio_colors[i], alpha=0.6, linewidth=2)
         memilio_finals.append(result['cumulative'][-1])
 
     ax1.set_xlabel('Days', fontsize=20)
@@ -110,7 +110,7 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     ax1.grid(True, alpha=0.3)
     ax1.tick_params(labelsize=16)
 
-    # Plot 2: All Panvadere runs (NO LEGEND for seeds)
+    # Plot 2: All Panvadere runs
     ax2 = axes[0, 1]
     ax2.set_title('Transmission-Informed - All Seeds',
                   fontsize=24, fontweight='bold')
@@ -118,7 +118,7 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     panvadere_finals = []
     for i, result in enumerate(grouped_results['panvadere']):
         ax2.plot(result['time'], result['cumulative'],
-                 color=panvadere_colors[i], alpha=0.6, linewidth=2)  # No label
+                 color=panvadere_colors[i], alpha=0.6, linewidth=2)
         panvadere_finals.append(result['cumulative'][-1])
 
     ax2.set_xlabel('Days', fontsize=20)
@@ -181,7 +181,6 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
     ax3.legend(fontsize=16)
     ax3.tick_params(labelsize=16)
 
-    # Plot 4: Final infection counts distribution with THICK BLACK median line
     ax4 = axes[1, 1]
     ax4.set_title('Final Infection Counts Distribution',
                   fontsize=24, fontweight='bold')
@@ -200,10 +199,8 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
             median.set_color('black')
             median.set_linewidth(4)
 
-        # Add individual points ON TOP of boxplot (no jitter)
         for i, (data, label) in enumerate(zip(box_data, box_labels)):
             y = data
-            # No jitter - all points at the same x position
             x = np.full(len(y), i+1)
             ax4.scatter(x, y, alpha=0.7, s=50,
                         color='darkblue' if i == 0 else 'darkred', zorder=10)  # High zorder to be on top

@@ -56,47 +56,47 @@ def get_mu_and_sigma(mean, stddev):
 
 
 # Time from Exposed to nonsymptomatic
-t_E_mean, t_E_std = 5.1, 1.5  # Example values - replace with actual from literature
+t_E_mean, t_E_std = 4.5, 1.5
 t_E_mu, t_E_sigma = get_mu_and_sigma(t_E_mean, t_E_std)
 t_E_params = {'mean_log': t_E_mu, 'std_log': t_E_sigma}
 
 # Time to develop symptoms after infection (symptomatic)
-t_I_sym_mean, t_I_sym_std = 3.0, 0.9  # Example values
+t_I_sym_mean, t_I_sym_std = 1.1, 0.9
 t_I_sym_mu, t_I_sym_sigma = get_mu_and_sigma(t_I_sym_mean, t_I_sym_std)
 t_I_sym_params = {'mean_log': t_I_sym_mu, 'std_log': t_I_sym_sigma}
 
 # Time to recover (asymptomatic)
-t_I_R_mean, t_I_R_std = 10.0, 2.0  # Example values
+t_I_R_mean, t_I_R_std = 8.0, 2.0
 t_I_R_mu, t_I_R_sigma = get_mu_and_sigma(t_I_R_mean, t_I_R_std)
 t_I_R_params = {'mean_log': t_I_R_mu, 'std_log': t_I_R_sigma}
 
 # Time to develop severe symptoms (severe infection)
-t_I_sev_mean, t_I_sev_std = 7.0, 4.9  # Example values
+t_I_sev_mean, t_I_sev_std = 6.6, 4.9
 t_I_sev_mu, t_I_sev_sigma = get_mu_and_sigma(t_I_sev_mean, t_I_sev_std)
 t_I_sev_params = {'mean_log': t_I_sev_mu, 'std_log': t_I_sev_sigma}
 
 # Time to recover (symptomatic)
-t_R_sym_mean, t_R_sym_std = 14.0, 2.0  # Example values
+t_R_sym_mean, t_R_sym_std = 8.0, 2.0
 t_R_sym_mu, t_R_sym_sigma = get_mu_and_sigma(t_R_sym_mean, t_R_sym_std)
 t_R_sym_params = {'mean_log': t_R_sym_mu, 'std_log': t_R_sym_sigma}
 
 # Time to develop critical symptoms (critical infection)
-t_sev_mean, t_sev_std = 4.5, 2.0  # Example values
+t_sev_mean, t_sev_std = 1.5, 2.0
 t_sev_mu, t_sev_sigma = get_mu_and_sigma(t_sev_mean, t_sev_std)
 t_sev_params = {'mean_log': t_sev_mu, 'std_log': t_sev_sigma}
 
 # Time to recover (severe infection)
-t_R_sev_mean, t_R_sev_std = 21.0, 6.3  # Example values
+t_R_sev_mean, t_R_sev_std = 18.1, 6.3
 t_R_sev_mu, t_R_sev_sigma = get_mu_and_sigma(t_R_sev_mean, t_R_sev_std)
 t_R_sev_params = {'mean_log': t_R_sev_mu, 'std_log': t_R_sev_sigma}
 
 # Time to die
-t_D_mean, t_D_std = 15.0, 4.8  # Example values
+t_D_mean, t_D_std = 10.7, 4.8
 t_D_mu, t_D_sigma = get_mu_and_sigma(t_D_mean, t_D_std)
 t_D_params = {'mean_log': t_D_mu, 'std_log': t_D_sigma}
 
 # Time to recover (critical infection)
-t_R_c_mean, t_R_c_std = 25.0, 6.3  # Example values
+t_R_c_mean, t_R_c_std = 18.1, 6.3
 t_R_c_mu, t_R_c_sigma = get_mu_and_sigma(t_R_c_mean, t_R_c_std)
 t_R_c_params = {'mean_log': t_R_c_mu, 'std_log': t_R_c_sigma}
 
