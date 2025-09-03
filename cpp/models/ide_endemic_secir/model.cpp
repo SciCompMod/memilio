@@ -44,8 +44,7 @@ Model::Model(CompParameters const& compparams)
 
     // Set the force of infection term at time t0.
     m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_FoI_0[0]));
-    m_forceofinfectionupdate.add_time_point(
-        0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_NormFoI_0[0]));
+    m_forceofinfectionupdate.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_FoI_0[0]));
 
     //Set normalized_populations at start time t0.
     TimeSeries<ScalarType>::Vector vec_normalizedpopulations =
