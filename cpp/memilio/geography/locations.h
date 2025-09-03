@@ -17,20 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef LOCATIONS_H
-#define LOCATIONS_H
+#ifndef MIO_GEOGRAPHY_LOCATIONS_H
+#define MIO_GEOGRAPHY_LOCATIONS_H
 
 #include "memilio/io/default_serialize.h"
 #include <boost/geometry/algorithms/distance.hpp>
 #include <cmath>
+#include <numbers>
 namespace mio
 {
 namespace geo
 {
-
-const double pi           = 3.141592653589793238462643383279502884;
-const double earth_radius = 6371;
-const double radians      = pi / 180.0;
 
 class GeographicalLocation
 {
@@ -111,10 +108,12 @@ public:
 private:
     double latitude;
     double longitude;
+    constexpr static double earth_radius = 6371;
+    constexpr static double radians      = std::numbers::pi / 180.0;
 };
 
 } // namespace geo
 
 } // namespace mio
 
-#endif // LOCATIONS_H
+#endif // MIO_GEOGRAPHY_LOCATIONS_H
