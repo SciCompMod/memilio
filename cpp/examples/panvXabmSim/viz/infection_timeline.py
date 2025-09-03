@@ -247,56 +247,6 @@ def build_transmission_tree(infection_events, contact_data, infected_status_data
             print(
                 f"Warning: No potential infectors found for person {infected_person} at time {event['time']} location {location}")
 
-            # Fallback 1: Find any previous infection regardless of location/contact
-            fallback_infectors = []
-            for prev_event in infection_events[:i]:
-                if prev_event['person_id'] != infected_person:
-                    # If we have infected status data, still check infectiousness
-                    if infected_status_data is not None:
-                        is_patient_zero = (prev_event['time'] == min(
-                            e['time'] for e in infection_events))
-
-                        if is_patient_zero:
-                            fallback_infectors.append(prev_event['person_id'])
-                        else:
-                            # Check if they were infectious at any point before this infection
-                            for check_time in range(max(0, int(event['time']) - 14), int(event['time'])):
-                                infectious_check = infected_status_data[
-                                    (infected_status_data['Person_ID'] == prev_event['person_id']) &
-                                    (infected_status_data['Timestep'] == check_time) &
-                                    (infected_status_data['Infected'] == 1)
-                                ]
-                                if len(infectious_check) > 0:
-                                    fallback_infectors.append(
-                                        prev_event['person_id'])
-                                    break
-                    else:
-                        fallback_infectors.append(prev_event['person_id'])
-
-            if fallback_infectors:
-                # Choose the most recent previous infection as infector
-                # Last in list = most recent
-                most_recent_infector = fallback_infectors[-1]
-                print(
-                    f"  -> Using fallback infector: person {most_recent_infector}")
-
-                # Add to transmission tree
-                if most_recent_infector not in transmission_tree:
-                    transmission_tree[most_recent_infector] = []
-                transmission_tree[most_recent_infector].append(infected_person)
-
-                # Set generation (one more than infector)
-                if most_recent_infector in infection_generations:
-                    infection_generations[infected_person] = infection_generations[most_recent_infector] + 1
-                else:
-                    infection_generations[infected_person] = 1
-            else:
-                # Ultimate fallback: connect to patient zero
-                print(f"  -> Using ultimate fallback: connecting to patient zero")
-                transmission_tree[patient_zero['person_id']].append(
-                    infected_person)
-                infection_generations[infected_person] = 1
-
     return transmission_tree, infection_generations, all_potential_transmissions
 
 

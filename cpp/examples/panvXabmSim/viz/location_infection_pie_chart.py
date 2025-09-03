@@ -128,15 +128,28 @@ def create_pie_chart(location_stats, output_path, scenario_name="", title_suffix
         scenario_name (str): Name of the scenario for labeling
         title_suffix (str): Additional text for title
     """
-    # Extract mean values and sort by size
+    # Extract mean values and use consistent order
     location_means = {loc: stats['mean']
                       for loc, stats in location_stats.items()}
-    sorted_locations = sorted(location_means.items(),
-                              key=lambda x: x[1], reverse=True)
 
-    # Prepare data for pie chart
-    labels = [loc for loc, _ in sorted_locations]
-    sizes = [count for _, count in sorted_locations]
+    # Define consistent order: Home, Work, School, SocialEvent, BasicsShop
+    location_order = ['Home', 'Work', 'School', 'SocialEvent', 'BasicsShop']
+
+    # Prepare data for pie chart with consistent order
+    labels = []
+    sizes = []
+
+    # Add locations in consistent order (only if they have data)
+    for loc_type in location_order:
+        if loc_type in location_means:
+            labels.append(loc_type)
+            sizes.append(location_means[loc_type])
+
+    # Add any remaining locations not in the predefined order
+    remaining_locations = set(location_means.keys()) - set(location_order)
+    for loc_type in sorted(remaining_locations):
+        labels.append(loc_type)
+        sizes.append(location_means[loc_type])
     total_infections = sum(sizes)
 
     # Calculate percentages
@@ -208,7 +221,7 @@ def create_pie_chart(location_stats, output_path, scenario_name="", title_suffix
     return fig
 
 
-def create_comparative_pie_charts(data_dirs, scenario_names, output_path):
+def create_comparative_pie_charts(data_dirs, scenario_names, output_path, suffix):
     """
     Create side-by-side pie charts for comparing scenarios.
 
@@ -250,13 +263,28 @@ def create_comparative_pie_charts(data_dirs, scenario_names, output_path):
     axes = [ax1, ax2]
 
     for i, (stats, scenario_name, ax) in enumerate(zip(stats_list, scenario_names, axes)):
-        # Prepare data
+        # Prepare data with consistent order
         location_means = {loc: stat['mean'] for loc, stat in stats.items()}
-        sorted_locations = sorted(
-            location_means.items(), key=lambda x: x[1], reverse=True)
 
-        labels = [loc for loc, _ in sorted_locations]
-        sizes = [count for _, count in sorted_locations]
+        # Define consistent order: Home, Work, School, SocialEvent, BasicsShop
+        location_order = ['Home', 'Work',
+                          'School', 'SocialEvent', 'BasicsShop']
+
+        labels = []
+        sizes = []
+
+        # Add locations in consistent order (only if they have data)
+        for loc_type in location_order:
+            if loc_type in location_means:
+                labels.append(loc_type)
+                sizes.append(location_means[loc_type])
+
+        # Add any remaining locations not in the predefined order
+        remaining_locations = set(location_means.keys()) - set(location_order)
+        for loc_type in sorted(remaining_locations):
+            labels.append(loc_type)
+            sizes.append(location_means[loc_type])
+
         colors = [color_map.get(label, plt.cm.Set3(j/len(all_locations)))
                   for j, label in enumerate(labels)]
 
@@ -280,10 +308,16 @@ def create_comparative_pie_charts(data_dirs, scenario_names, output_path):
                 autotext.set_position((x * factor, y * factor))
 
         plt.setp(autotexts, size=18, weight="bold")
-        ax.set_title(f"{scenario_name}\nAvg Total: {sum(sizes):.1f} infections",
+        ax.set_title(f"{scenario_name}\nAvg. Total: {sum(sizes):.1f} infections",
                      fontsize=22, fontweight='bold')
 
-    plt.suptitle("Infection Distribution by Location Type - Comparison",
+    scenarios = {
+        'R1_restaurant_strong_clustering': 'R1',
+        'R2_restaurant_weaker_clustering': 'R2',
+        'W1_workplace_few_meetings': 'W1',
+        'W2_workplace_many_meetings': 'W2'
+    }
+    plt.suptitle(f"Scenario {suffix}: Infection Distribution by Location Type",
                  fontsize=28, fontweight='bold')
 
     plt.tight_layout()
@@ -296,7 +330,7 @@ def create_comparative_pie_charts(data_dirs, scenario_names, output_path):
 def main():
     parser = argparse.ArgumentParser(
         description="Generate pie charts for infection distribution by location type")
-    parser.add_argument("--data-dir", required=True,
+    parser.add_argument("--data-dir",
                         help="Directory containing all_runs_detailed_infections folder")
     parser.add_argument("--output",
                         help="Output file path (default: location_infection_distribution.png)")
@@ -335,7 +369,8 @@ def main():
                 [args.data_dir, args.data_dir_2],
                 [args.scenario_name or "Scenario 1",
                     args.scenario_name_2 or "Scenario 2"],
-                args.output
+                args.output,
+                args.title_suffix
             )
         else:
             # Analyze single scenario

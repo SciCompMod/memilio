@@ -86,7 +86,8 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
                          'xtick.labelsize': 16, 'ytick.labelsize': 16, 'legend.fontsize': 16})
 
     fig, axes = plt.subplots(2, 2, figsize=(20, 16))
-    fig.suptitle(f'{event_type}', fontsize=32, fontweight='bold', y=0.98)
+    fig.suptitle(f'Scenario {event_type} - Multi-Seed Simulation',
+                 fontsize=32, fontweight='bold', y=0.98)
 
     # Color schemes - more muted for better visibility
     memilio_colors = plt.cm.Blues(np.linspace(
@@ -174,8 +175,8 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
         ax3.fill_between(time_axis, panvadere_q25, panvadere_q75,
                          color='red', alpha=0.3, label='Transmission-Informed (25-75%)')
 
-    ax3.set_xlabel('Days', fontsize=20)
-    ax3.set_ylabel('Cumulative Infections', fontsize=20)
+    ax3.set_xlabel('Days', fontsize=22)
+    ax3.set_ylabel('Cumulative Infections', fontsize=22)
     ax3.grid(True, alpha=0.3)
     ax3.legend(fontsize=16)
     ax3.tick_params(labelsize=16)
@@ -210,10 +211,10 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
         # Add statistics text with larger font
         stats_text = f"Uniform: μ={np.mean(memilio_finals):.0f}, σ={np.std(memilio_finals):.0f}\n"
         stats_text += f"Transmission-Informed: μ={np.mean(panvadere_finals):.0f}, σ={np.std(panvadere_finals):.0f}"
-        ax4.text(0.02, 0.1, stats_text, transform=ax4.transAxes, fontsize=16,
+        ax4.text(0.02, 0.1, stats_text, transform=ax4.transAxes, fontsize=18,
                  verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
-    ax4.set_ylabel('Final Cumulative Infections', fontsize=20)
+    ax4.set_ylabel('Final Cumulative Infections', fontsize=22)
     ax4.grid(True, alpha=0.3)
     ax4.tick_params(labelsize=16)
 

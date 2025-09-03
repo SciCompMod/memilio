@@ -332,7 +332,17 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
 def create_single_pie_chart(ax, person_totals, group_people, location_types,
                             num_days, title, group_name):
     """Create a single pie chart with improved formatting"""
-    colors = ['#2E8B57', '#4169E1', '#FF8C00', '#FF6347', '#9370DB']
+    # Define consistent color order matching location order: Home, Work, School, SocialEvent, BasicsShop
+    color_map = {
+        'Home': '#2E8B57',        # Green
+        'Work': '#4169E1',        # Blue
+        'School': '#FF6347',      # Red
+        'SocialEvent': '#9370DB',  # Purple
+        'BasicsShop': '#FF8C00'   # Orange
+    }
+
+    # Define consistent order: Home, Work, School, SocialEvent, BasicsShop
+    desired_order = ['Home', 'Work', 'School', 'SocialEvent', 'BasicsShop']
 
     if not group_people:
         ax.text(0.5, 0.5, f'No {group_name}', ha='center', va='center',
@@ -344,23 +354,40 @@ def create_single_pie_chart(ax, person_totals, group_people, location_types,
     # Calculate averages
     averages = calculate_group_averages(person_totals, group_people, num_days)
 
-    # Filter out categories with 0 hours
+    # Create location to average mapping
+    location_to_avg = dict(zip(location_types, averages))
+
+    # Filter out categories with 0 hours and organize in desired order
     non_zero_data = []
     non_zero_labels = []
     non_zero_colors = []
 
-    for i, (avg, label) in enumerate(zip(averages, location_types)):
-        if avg > 0:
+    # Add data in desired order (only if > 0)
+    for loc_type in desired_order:
+        if loc_type in location_to_avg and location_to_avg[loc_type] > 0:
+            avg = location_to_avg[loc_type]
             non_zero_data.append(avg)
+
             # Shorter labels for better fit
-            if label == 'SocialEvent':
+            if loc_type == 'SocialEvent':
                 short_label = 'Social'
-            elif label == 'BasicShop':
+            elif loc_type == 'BasicsShop':
                 short_label = 'Shop'
             else:
-                short_label = label
+                short_label = loc_type
             non_zero_labels.append(f"{short_label}\n{avg:.1f}h")
-            non_zero_colors.append(colors[i])
+            non_zero_colors.append(color_map.get(loc_type, '#999999'))
+
+    # Add any remaining location types not in desired order
+    remaining_locations = set(location_types) - set(desired_order)
+    for i, loc_type in enumerate(location_types):
+        if loc_type in remaining_locations and location_to_avg[loc_type] > 0:
+            avg = location_to_avg[loc_type]
+            non_zero_data.append(avg)
+            short_label = loc_type
+            non_zero_labels.append(f"{short_label}\n{avg:.1f}h")
+            # Gray for unknown location types
+            non_zero_colors.append('#999999')
 
     if non_zero_data:
         # Calculate percentages for positioning logic
@@ -487,7 +514,7 @@ def calculate_degree_distribution(contact_data):
     return degrees, degree_counts
 
 
-def create_degree_distribution_plot(ax, contact_data, title="Contact Degree Distribution"):
+def create_degree_distribution_plot(ax, contact_data, title="Potential Contact Distribution"):
     """Create degree distribution histogram"""
     degrees, degree_counts = calculate_degree_distribution(contact_data)
 
@@ -525,12 +552,12 @@ def create_degree_distribution_plot(ax, contact_data, title="Contact Degree Dist
             verticalalignment='top', horizontalalignment='right',
             bbox=dict(boxstyle='round,pad=0.4', facecolor='white',
                       alpha=0.9, edgecolor='gray'),
-            fontsize=10)
+            fontsize=12)
 
     # Formatting
-    ax.set_xlabel('Number of Potential Contacts', fontsize=10)
-    ax.set_ylabel('Number of People', fontsize=10)
-    ax.set_title(title, fontsize=11, fontweight='bold', pad=5)
+    ax.set_xlabel('Number of Potential Contacts', fontsize=12)
+    ax.set_ylabel('Number of People', fontsize=12)
+    ax.set_title(title, fontsize=12, fontweight='bold', pad=5)
     ax.grid(True, alpha=0.3)
 
     # Highlight super-connectors region if it exists
@@ -736,8 +763,8 @@ def main():
     args = parser.parse_args()
 
     # # Debug paths (comment out for production)
-    # args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-08-26230131"
-    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
+    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-09-03121738"
+    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
 
     location_file = args.data_dir + "/location_type_and_id.txt"
     city_config_file = args.data_dir + "/city_config.txt"

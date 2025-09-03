@@ -132,8 +132,8 @@ def plot_scenario_comparison(ax, path_transmission, path_uniform, scenario_title
 
         # Publication-ready formatting with much larger fonts
         _format_x_axis_days(ax, time_memilio, xtick_step=48)
-        ax.set_xlabel('Days', fontsize=22, fontweight='bold')
-        ax.set_ylabel('Cumulative infections', fontsize=22, fontweight='bold')
+        ax.set_xlabel('Days', fontsize=22)
+        ax.set_ylabel('Cumulative infections', fontsize=22)
         ax.tick_params(axis='both', which='major',
                        labelsize=18, width=2, length=8)
         ax.grid(True, alpha=0.3, linewidth=1.2)
@@ -253,10 +253,10 @@ def create_multi_panel_comparison(results_base_dir, output_path=None, show90=Fal
     """Create 2x2 multi-panel comparison with elegant publication styling."""
 
     scenarios = {
-        'R1_restaurant_strong_clustering': 'R1: Restaurant Strong Clustering',
-        'R2_restaurant_weaker_clustering': 'R2: Restaurant Weaker Clustering',
-        'W1_workplace_few_meetings': 'W1: Workplace Few Meetings',
-        'W2_workplace_many_meetings': 'W2: Workplace Many Meetings'
+        'R1_restaurant_strong_clustering': 'R1: Limited Inter-Household Mixing',
+        'R2_restaurant_weaker_clustering': 'R2: More Inter-Household Mixing',
+        'W1_workplace_few_meetings': 'W1: Few Meetings, Limited Office and Department Mixing',
+        'W2_workplace_many_meetings': 'W2: More Meetings, More Office and Department Mixing'
     }
 
     print(f"Creating elegant multi-panel comparison from: {results_base_dir}")
@@ -295,8 +295,8 @@ def create_multi_panel_comparison(results_base_dir, output_path=None, show90=Fal
                     color='red', fontsize=18, fontweight='bold')
             ax.set_title(scenario_title, fontsize=24, fontweight='bold')
 
-    # Adjust layout with more space - no bottom explanation needed
-    plt.tight_layout(rect=[0, 0.02, 1, 0.92])
+    # Adjust layout with more space and padding between rows
+    plt.tight_layout(rect=[0, 0.02, 1, 0.92], h_pad=4.0)
 
     # Print summary table
     print("\\n" + "="*80)

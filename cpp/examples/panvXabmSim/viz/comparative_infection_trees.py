@@ -469,10 +469,22 @@ def add_location_pie_inset(ax, infection_events, location_colors):
     colors = []
     labels = []
 
-    # Sort by count (largest first)
-    sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+    # Define consistent order: Home, Work, School, SocialEvent, BasicsShop
+    location_order = ['Home', 'Work', 'School', 'SocialEvent', 'BasicsShop']
 
-    for loc_type, count in sorted_items:
+    # Add locations in consistent order (only if they have counts)
+    for loc_type in location_order:
+        if loc_type in counts:
+            count = counts[loc_type]
+            percentage = (count / total) * 100
+            sizes.append(percentage)
+            colors.append(location_colors.get(loc_type, '#999999'))
+            labels.append(f'{percentage:.1f}%')
+
+    # Add any remaining locations not in the predefined order
+    remaining_locations = set(counts.keys()) - set(location_order)
+    for loc_type in sorted(remaining_locations):
+        count = counts[loc_type]
         percentage = (count / total) * 100
         sizes.append(percentage)
         colors.append(location_colors.get(loc_type, '#999999'))
@@ -878,7 +890,14 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
                                               infected_status_df_1, infected_status_df_2)
 
     # Add overall title
+
     title = f"Comparative Infection Transmission Trees"
+    scenarios = {
+        'R1_restaurant_strong_clustering': 'R1',
+        'R2_restaurant_weaker_clustering': 'R2',
+        'W1_workplace_few_meetings': 'W1',
+        'W2_workplace_many_meetings': 'W2'
+    }
     if scenario_name:
         title = f"Scenario {scenario_name}: {title}"
 

@@ -19,8 +19,8 @@ VIZ_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/viz"
 # Visualization Control Flags (set to true/false to enable/disable)
 ENABLE_EPIDEMIC_CURVES=true
 ENABLE_COMPARATIVE_HEATMAPS=true   
-ENABLE_INFECTION_TREES=false
-ENABLE_LOCATION_PIE_CHARTS=false
+ENABLE_INFECTION_TREES=true
+ENABLE_LOCATION_PIE_CHARTS=true
 
 # Visualization scripts
 SIMPLE_VIZ_SCRIPT="$VIZ_BASE_DIR/simple_multi_panel.py"
@@ -144,6 +144,7 @@ create_scenario_heatmaps() {
             --scenario-name "$scenario_code" \
             --viz-style "$viz_style" \
             --use-median \
+            --use-size-based-colors \
             $use_workplaces
         
         if [ $? -eq 0 ]; then
@@ -165,6 +166,7 @@ create_scenario_heatmaps() {
             --method1-name "Transmission-Informed" \
             --method2-name "Uniform" \
             --output-path "$scenario_dir/comparative_infection_trees_${scenario_code}.png" \
+            --scenario-name "$scenario_code" \
             --connection-style "current" \
             --layout-method "depth-first"
 
@@ -181,15 +183,6 @@ create_scenario_heatmaps() {
     if [ "$ENABLE_LOCATION_PIE_CHARTS" = "true" ] && [ -f "$LOCATION_PIE_SCRIPT" ]; then
         echo "Creating location infection pie chart..."
         cd "$scenario_dir"
-        $PYTHON3_DIR "$LOCATION_PIE_SCRIPT" \
-            --data-dir "$transmission_dir" \
-            --scenario-name "Transmission-Informed ($scenario_code)" \
-            --output "$scenario_dir/location_infection_pie_transmission_${scenario_code}.png"
-        
-        $PYTHON3_DIR "$LOCATION_PIE_SCRIPT" \
-            --data-dir "$uniform_dir" \
-            --scenario-name "Uniform ($scenario_code)" \
-            --output "$scenario_dir/location_infection_pie_uniform_${scenario_code}.png"
         
         # Create comparative pie chart
         $PYTHON3_DIR "$LOCATION_PIE_SCRIPT" \
@@ -198,8 +191,9 @@ create_scenario_heatmaps() {
             --data-dir-2 "$uniform_dir" \
             --scenario-name "Transmission-Informed" \
             --scenario-name-2 "Uniform" \
-            --output "$scenario_dir/comparative_location_pie_${scenario_code}.png"
-        
+            --output "$scenario_dir/comparative_location_pie_${scenario_code}.png" \
+            --title-suffix "$scenario_code"
+
         if [ $? -eq 0 ]; then
             echo "✅ Location infection pie charts created for $scenario_code"
         else

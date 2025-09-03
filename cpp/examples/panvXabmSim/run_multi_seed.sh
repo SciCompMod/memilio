@@ -26,10 +26,10 @@ get_event_label() {
             echo "R2"
             ;;
         "work_meeting_many")
-            echo "W1"
+            echo "W2"
             ;;
         "work_meeting_baseline")
-            echo "W2"
+            echo "W1"
             ;;
         *)
             echo "UNKNOWN"
