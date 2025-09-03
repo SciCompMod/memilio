@@ -12,7 +12,9 @@ from tensorflow.keras.models import Model
 import tensorflow.keras.initializers as initializers
 
 from tensorflow.keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
-import spektral.layers
+import spektral.layers as spektral_layers
+import spektral.utils.convolution as spektral_convolution
+
 
 from sklearn.model_selection import KFold
 
@@ -40,8 +42,9 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
         x, a = inputs
 
         # Apply transformation on adjacency matrix if provided
-        if transform is not None:
-            a = transform(a)
+        if not tf.is_symbolic_tensor(a):
+            if transform is not None:
+                a = transform(a)
 
         # Pass through the layers
         for layer in self.layer_seq:
@@ -61,6 +64,51 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
     return type(name, (tf.keras.Model,), class_dict)
 
 
+def get_model(layer_type, num_layers, num_channels, activation, num_output=1):
+    if layer_type == "ARMAConv":
+        layer_name = spektral_layers.ARMAConv
+
+        def transform(a):
+            a = np.array(a)
+            a = spektral_convolution.rescale_laplacian(
+                spektral_convolution.normalized_laplacian(a))
+            return tf.convert_to_tensor(a, dtype=tf.float32)
+    elif layer_type == "GCSConv":
+        layer_name = spektral_layers.GCSConv
+
+        def transform(a):
+            a = a.numpy()
+            a = spektral_convolution.normalized_adjacency(a)
+            return tf.convert_to_tensor(a, dtype=tf.float32)
+    elif layer_type == "GATConv":
+        layer_name = spektral_layers.GATConv
+
+        def transform(a):
+            a = a.numpy()
+            a = spektral_convolution.normalized_adjacency(a)
+            return tf.convert_to_tensor(a, dtype=tf.float32)
+    elif layer_type == "GCNConv":
+        layer_name = spektral_layers.GCNConv
+
+        def transform(a):
+            a = a.numpy()
+            a = spektral_convolution.gcn_filter(a)
+            return tf.convert_to_tensor(a, dtype=tf.float32)
+    elif layer_type == "APPNPConv":
+        layer_name = spektral_layers.APPNPConv
+
+        def transform(a):
+            a = a.numpy()
+            a = spektral_convolution.gcn_filter(a)
+            return tf.convert_to_tensor(a, dtype=tf.float32)
+
+    layer_types = [lambda: layer_name(num_channels, activation=activation)]
+    num_repeat = [num_layers]
+    model_class = generate_model_class(
+        "CustomModel", layer_types, num_repeat, num_output, transform=transform)
+    return model_class()
+
+
 if __name__ == "__main__":
     layer_types = [
         # Dense layer (only uses x)
@@ -71,9 +119,9 @@ if __name__ == "__main__":
     ]
     num_repeat = [2, 3, 1]
 
-    Karlheinz = generate_model_class(
-        "Rosmarie", layer_types, num_repeat, num_output=2)
-    model = Karlheinz()
+    testclass = generate_model_class(
+        "testclass", layer_types, num_repeat, num_output=2)
+    model = testclass()
 
     # Example inputs
     x = tf.random.normal([10, 20])  # Node features
@@ -83,5 +131,7 @@ if __name__ == "__main__":
     model.compile(optimizer="adam", loss="mse")
     model.fit([x, a], labels, epochs=5)
 
-    # Print trainable variables
-    print(model.trainable_variables)
+    model2 = get_model("ARMAConv", 3, 16, "relu", num_output=2)
+
+    model2.compile(optimizer="adam", loss="mse")
+    model2.fit([x, a], labels, epochs=5)

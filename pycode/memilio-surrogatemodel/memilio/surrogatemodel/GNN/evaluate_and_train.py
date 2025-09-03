@@ -19,7 +19,8 @@ from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
 
 from spektral.transforms.normalize_adj import NormalizeAdj
 from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
-from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv
+from spektral.layers import (GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv,
+                             APPNPConv, CrystalConv, GATConv, GINConv, XENetConv, GCNConv, GCSConv)
 from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 
 
@@ -111,7 +112,7 @@ def evaluate(loader, model, loss_fn, retransform=False):
             return np.average(output[:, :-1], 0, weights=output[:, -1])
 
 
-def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_patience, save_name):
+def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_patience, save_results=False, save_name=""):
     n = len(data)
     n_train, n_valid, n_test = calc_split_index(
         n, split_train=0.7, split_valid=0.2, split_test=0.1)
@@ -215,44 +216,56 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     print(f"Time for training: {elapsed:.4f} seconds")
     print(f"Time for training: {elapsed/60:.4f} minutes")
 
+    if save_results:
+        # save df
+        df.loc[len(df.index)] = [  # layer_name, number_of_layer, channels,
+            np.mean(train_losses),
+            np.mean(val_losses),
+            np.mean(test_scores),
+            np.mean(test_scores_r),
+            (elapsed / 60),
+            [losses_history_all],
+            [val_losses_history_all]]
+        print(df)
 
-# save df
-    df.loc[len(df.index)] = [  # layer_name, number_of_layer, channels,
-        np.mean(train_losses),
-        np.mean(val_losses),
-        np.mean(test_scores),
-        np.mean(test_scores_r),
-        (elapsed / 60),
-        [losses_history_all],
-        [val_losses_history_all]]
-    print(df)
+        # Ensure that save_name has the .pickle extension
+        if not save_name.endswith('.pickle'):
+            save_name += '.pickle'
 
-    # Ensure that save_name has the .pickle extension
-    if not save_name.endswith('.pickle'):
-        save_name += '.pickle'
+        # Save best weights as pickle
+        path = os.path.dirname(os.path.realpath(__file__))
+        file_path_w = os.path.join(path, 'saved_weights')
+        # Ensure the directory exists
+        if not os.path.isdir(file_path_w):
+            os.mkdir(file_path_w)
 
-    # Save best weights as pickle
-    path = os.path.dirname(os.path.realpath(__file__))
-    file_path_w = os.path.join(path, 'saved_weights')
-    # Ensure the directory exists
-    if not os.path.isdir(file_path_w):
-        os.mkdir(file_path_w)
+        # Construct the full file path by joining the directory with save_name
+        file_path_w = os.path.join(file_path_w, save_name)
 
-    # Construct the full file path by joining the directory with save_name
-    file_path_w = os.path.join(file_path_w, save_name)
+        # Save the weights to the file
+        with open(file_path_w, 'wb') as f:
+            pickle.dump(best_weights, f)
 
-    # Save the weights to the file
-    with open(file_path_w, 'wb') as f:
-        pickle.dump(best_weights, f)
+        file_path_df = os.path.join(
+            os.path.dirname(
+                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
+            'model_evaluations_paper')
+        if not os.path.isdir(file_path_df):
+            os.mkdir(file_path_df)
+        file_path_df = file_path_df+save_name.replace('.pickle', '.csv')
+        df.to_csv(file_path_df)
 
-    file_path_df = os.path.join(
-        os.path.dirname(
-            os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-        'model_evaluations_paper')
-    if not os.path.isdir(file_path_df):
-        os.mkdir(file_path_df)
-    file_path_df = file_path_df+save_name.replace('.pickle', '.csv')
-    df.to_csv(file_path_df)
+    else:
+        return {
+            "model": save_name,
+            "mean_train_loss": np.mean(train_losses),
+            "mean_val_loss": np.mean(val_losses),
+            "mean_test_loss": np.mean(test_scores),
+            "mean_test_loss_orig": np.mean(test_scores_r),
+            "training_time": elapsed/60,
+            "train_losses": [losses_history_all],
+            "val_losses": [val_losses_history_all]
+        }
 
 
 if __name__ == "__main__":
