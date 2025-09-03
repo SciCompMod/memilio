@@ -133,8 +133,8 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     computed_parameters.parameters.get<mio::endisecir::RelativeTransmissionNoSymptoms>() = exponential_prob;
     computed_parameters.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    computed_parameters.parameters.set<mio::endisecir::NaturalBirthRate>(4e-4);
-    computed_parameters.parameters.set<mio::endisecir::NaturalDeathRate>(3e-4);
+    computed_parameters.parameters.set<mio::endisecir::NaturalBirthRate>(4e-3);
+    computed_parameters.parameters.set<mio::endisecir::NaturalDeathRate>(3e-3);
 
     //computed_parameters.set_tol_for_support_max(1e-6);
 
@@ -164,7 +164,7 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
             mio::save_result({sim.get_totalpopulations_derivative()}, {0}, 1, filename_ide_dertotalpopulation1);
 
         //Save compartments.
-        std::string filename_ide_compartments1 = filename_ide + "_compartments2.h5";
+        std::string filename_ide_compartments1 = filename_ide + "_compartments1.h5";
         mio::IOResult<void> save_result_status_c1 =
             mio::save_result({sim.get_compartments()}, {0}, 1, filename_ide_compartments1);
 
@@ -174,18 +174,18 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
             mio::save_result({sim.get_normalizedcompartments()}, {0}, 1, filename_ide_normcompartments);
 
         //Save the force of infection.
-        std::string filename_ide_forceofinfection = filename_ide + "_forceofinfection2.h5";
+        std::string filename_ide_forceofinfection = filename_ide + "_forceofinfection.h5";
         mio::IOResult<void> save_result_status_foi =
             mio::save_result({sim.get_forceofinfections()}, {0}, 1, filename_ide_forceofinfection);
 
         //Save files of NormModel.
         //Save compartments.
-        std::string filename_ide_normmod_compartments = filename_ide + "_normmod_compartments2.h5";
+        std::string filename_ide_normmod_compartments = filename_ide + "_normmod_compartments.h5";
         mio::IOResult<void> save_result_status_nmc1 =
             mio::save_result({sim.get_normmodel_compartments()}, {0}, 1, filename_ide_normmod_compartments);
 
         //Save the force of infection.
-        std::string filename_ide_normmod_forceofinfection = filename_ide + "_normmod_forceofinfection2.h5";
+        std::string filename_ide_normmod_forceofinfection = filename_ide + "_normmod_forceofinfection.h5";
         mio::IOResult<void> save_result_status_nmfoi =
             mio::save_result({sim.get_normmodel_forceofinfections()}, {0}, 1, filename_ide_normmod_forceofinfection);
 
@@ -214,7 +214,7 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
 
 int main()
 {
-    std::string result_dir = "/localdata1/trit_ha/code/memilio-1/PythonPlotsEndIDE/simulation_results/";
+    std::string result_dir = "/localdata1/trit_ha/code/memilio-1/PythonPlotsEndIDESECIR/simulation_results/";
 
     // Define tmax.
     ScalarType tmax = 2000;

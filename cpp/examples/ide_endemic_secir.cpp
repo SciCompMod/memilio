@@ -19,8 +19,8 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 1;
-    ScalarType dt   = 0.00001;
+    ScalarType tmax = 1000;
+    ScalarType dt   = 1.0;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -45,13 +45,13 @@ int main()
 
     //Set working parameters
 
-    mio::ExponentialSurvivalFunction exp(3.0);
-    mio::StateAgeFunctionWrapper delaydistribution(exp);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
-
-    // mio::SmootherCosine smoothcos(2.0);
-    // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    // mio::ExponentialSurvivalFunction exp(3.0);
+    // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
+
+    mio::SmootherCosine smoothcos(6.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
     // Uncomment for Lognorm.
     // mio::ConstantFunction initialfunc(0);
@@ -123,8 +123,8 @@ int main()
     computed_parameters.parameters.get<mio::endisecir::RelativeTransmissionNoSymptoms>() = exponential_prob;
     computed_parameters.parameters.get<mio::endisecir::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    computed_parameters.parameters.set<mio::endisecir::NaturalBirthRate>(4e-3);
-    computed_parameters.parameters.set<mio::endisecir::NaturalDeathRate>(3e-3);
+    computed_parameters.parameters.set<mio::endisecir::NaturalBirthRate>(4e-1);
+    computed_parameters.parameters.set<mio::endisecir::NaturalDeathRate>(3e-1);
 
     computed_parameters.set_tol_for_support_max(1e-6);
 
@@ -137,8 +137,8 @@ int main()
     sim.advance(tmax);
 
     //Get the compartments of model and print them.
-     auto interpolated_results = mio::interpolate_simulation_result(sim.get_compartments(), dt / 2.);
-     interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
+    auto interpolated_results = mio::interpolate_simulation_result(sim.get_compartments(), dt / 2.);
+    interpolated_results.print_table({"S", "E", "C", "I", "H", "U", "R", "D "}, 16, 8);
     // Uncomment to print the compartments computed with the update scheme.
     // auto interpolated_results_update = mio::interpolate_simulation_result(sim.get_compartments_update(), dt / 2.);
     // interpolated_results_update.print_table({"US", "UE", "UC", "UI", "UH", "UU", "UR", "UD"}, 16, 8);

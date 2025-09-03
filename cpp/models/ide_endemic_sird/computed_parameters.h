@@ -161,7 +161,7 @@ private:
     void set_infectivity(ScalarType dt)
     {
         // Compute the calc_time_indedx corresponding to a_1:
-        ScalarType calc_time_index = m_transitiondistributions.size() - 1;
+        ScalarType calc_time_index = m_transitiondistributions.size();
 
         m_infectivity = std::vector<ScalarType>(calc_time_index, 0.);
 

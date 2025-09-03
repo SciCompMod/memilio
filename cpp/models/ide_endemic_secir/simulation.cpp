@@ -29,27 +29,27 @@ void Simulation::advance(ScalarType tmax)
     m_model->compparameters->set_V();
     m_model->compparameters->set_W(m_dt);
 
-    //m_normmodel->compparameters->set_transitiondistributions_support_max(m_dt);
-    //m_normmodel->compparameters->set_transitiondistributions(m_dt);
-    //m_normmodel->compparameters->set_transitiondistributions_derivative(m_dt);
-    //m_normmodel->compparameters->set_B(m_dt);
-    //m_normmodel->compparameters->set_infectivity(m_dt);
-    //m_normmodel->compparameters->set_FoI_0(m_dt);
-    //m_normmodel->compparameters->set_InitFoI(m_dt);
-    //m_normmodel->compparameters->set_reproductionnumber_c(m_dt);
-    //m_normmodel->compparameters->set_T(m_dt);
-    //m_normmodel->compparameters->set_V();
-    //m_normmodel->compparameters->set_W(m_dt);
+    m_normmodel->compparameters->set_transitiondistributions_support_max(m_dt);
+    m_normmodel->compparameters->set_transitiondistributions(m_dt);
+    m_normmodel->compparameters->set_transitiondistributions_derivative(m_dt);
+    m_normmodel->compparameters->set_B(m_dt);
+    m_normmodel->compparameters->set_infectivity(m_dt);
+    m_normmodel->compparameters->set_FoI_0(m_dt);
+    m_normmodel->compparameters->set_InitFoI(m_dt);
+    m_normmodel->compparameters->set_reproductionnumber_c(m_dt);
+    m_normmodel->compparameters->set_T(m_dt);
+    m_normmodel->compparameters->set_V();
+    m_normmodel->compparameters->set_W(m_dt);
 
-    //m_difference_normalizedcompartments.add_time_point(0);
-    //m_difference_normalizedFoI.add_time_point(0);
-    //compute_difference_normalizations();
+    m_difference_normalizedcompartments.add_time_point(0);
+    m_difference_normalizedFoI.add_time_point(0);
+    compute_difference_normalizations();
 
     // For every time step:
     while (m_model->transitions.get_last_time() < tmax - m_dt / 2) {
 
-        //m_difference_normalizedcompartments.add_time_point(m_difference_normalizedcompartments.get_last_time() + m_dt);
-        //m_difference_normalizedFoI.add_time_point(m_difference_normalizedFoI.get_last_time() + m_dt);
+        m_difference_normalizedcompartments.add_time_point(m_difference_normalizedcompartments.get_last_time() + m_dt);
+        m_difference_normalizedFoI.add_time_point(m_difference_normalizedFoI.get_last_time() + m_dt);
         //standard model:
         m_model->transitions.add_time_point(m_model->transitions.get_last_time() + m_dt);
         m_model->transitions_update.add_time_point(m_model->transitions_update.get_last_time() + m_dt);
@@ -81,25 +81,25 @@ void Simulation::advance(ScalarType tmax)
         // Compute m_forceofinfection;
         m_model->compute_forceofinfection(m_dt);
 
-        // // normalized model:
-        // m_normmodel->transitions.add_time_point(m_normmodel->transitions.get_last_time() + m_dt);
-        // m_normmodel->populations.add_time_point(m_normmodel->populations.get_last_time() + m_dt);
-        // m_normmodel->m_forceofinfection.add_time_point(m_normmodel->m_forceofinfection.get_last_time() + m_dt);
+        // normalized model:
+        m_normmodel->transitions.add_time_point(m_normmodel->transitions.get_last_time() + m_dt);
+        m_normmodel->populations.add_time_point(m_normmodel->populations.get_last_time() + m_dt);
+        m_normmodel->m_forceofinfection.add_time_point(m_normmodel->m_forceofinfection.get_last_time() + m_dt);
 
-        // // Compute susceptibles:
-        // m_normmodel->compute_susceptibles(m_dt);
+        // Compute susceptibles:
+        m_normmodel->compute_susceptibles(m_dt);
 
-        // // Compute flows:
-        // m_normmodel->flows_currents_timestep(m_dt);
+        // Compute flows:
+        m_normmodel->flows_currents_timestep(m_dt);
 
-        // // Compute remaining compartments:
-        // m_normmodel->update_compartments(m_dt);
+        // Compute remaining compartments:
+        m_normmodel->update_compartments(m_dt);
 
-        // // Compute m_forceofinfection;
-        // m_normmodel->compute_forceofinfection(m_dt);
+        // Compute m_forceofinfection;
+        m_normmodel->compute_forceofinfection(m_dt);
 
-        // //Compute the difference of the two normalized compartments.
-        // compute_difference_normalizations();
+        //Compute the difference of the two normalized compartments.
+        compute_difference_normalizations();
     }
 }
 
