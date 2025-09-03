@@ -133,7 +133,7 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
     if len(contact_data_with_types) > 5000:
         print(
             f"Large contact dataset ({len(contact_data_with_types)} contacts). Increasing filter threshold...")
-        min_contact_hours = max(min_contact_hours, 15)  # Reduced from 20
+        min_contact_hours = max(min_contact_hours, 15)
 
     # Filter contacts by minimum hours
     contact_data_with_types = contact_data_with_types[
@@ -159,7 +159,7 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
         f"Filtered to {len(household_data)} persons with {len(contact_data_with_types)} significant contacts")
 
     # Performance optimization: skip edge drawing for very large datasets
-    draw_edges = len(contact_data_with_types) < 20000  # Increased from 2000
+    draw_edges = len(contact_data_with_types) < 20000
     if not draw_edges:
         print("Skipping edge drawing for performance (too many contacts)")
     else:
@@ -172,12 +172,10 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
     else:
         contact_strength, contact_locations = {}, {}
 
-    # Create layouts with much cleaner parameters
-    # More aggressive spacing reduction
     spacing_factor = 0.22
-    # Even more space between households
+
     household_spacing = 500.0 * spacing_factor
-    person_spacing = 80.0 * spacing_factor  # Even more space between people
+    person_spacing = 80.0 * spacing_factor
 
     # Use the original create_household_layout but with much cleaner parameters
     person_pos, households, household_positions = create_household_layout(
@@ -187,9 +185,6 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
         # Much fewer households per row for clarity
         max_households_per_row=16
     )
-
-    # Simplify household layout - no complex multi-row arrangements
-    # Keep original layout for simplicity and clarity
 
     location_pos, location_nodes, location_areas = create_location_layout(
         # Adjusted for better spacing
@@ -637,7 +632,6 @@ def create_combined_visualization(data_dir, location_file, city_config_file=None
     ax_household = fig.add_subplot(gs[1, 2])
     ax_occupation = fig.add_subplot(gs[2, 2])
 
-    # New: Degree distribution panel (bottom row, spanning 2 columns)
     ax_degree = fig.add_subplot(gs[3, 1:])  # Spans columns 1 and 2
 
     # Create time allocation pie charts
