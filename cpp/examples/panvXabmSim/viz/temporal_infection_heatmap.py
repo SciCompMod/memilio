@@ -305,8 +305,8 @@ def main():
     args = parser.parse_args()
 
     # Debug paths (comment out for production)
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250825_231431_work_meeting_many_panvadere"
-    args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/temporal_infection_heatmap.png"
+    # args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_20250825_231431_work_meeting_many_panvadere"
+    # args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/temporal_infection_heatmap.png"
 
     if not os.path.exists(args.data_dir):
         print(f"Error: Directory {args.data_dir} does not exist")
