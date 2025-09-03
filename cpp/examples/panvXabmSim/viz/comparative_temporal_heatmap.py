@@ -265,18 +265,18 @@ def calculate_average_infections_by_time(infection_files, group_data, time_point
 def get_household_size_color(household_size):
     """Get base color for household based on size - using visually appealing, distinct colors"""
     if household_size == 1:
-        return '#FFD700'  # Gold - warm, distinct for single person
+        return '#FFD700'  # Gold
     elif household_size == 2:
-        return '#FF6B6B'  # Coral Red - softer red, pleasant
+        return '#FF6B6B'  # Coral Red
     elif household_size == 3:
-        return '#4ECDC4'  # Teal - distinctive, professional
+        return '#4ECDC4'  # Teal
     elif household_size == 4:
-        return '#45B7D1'  # Sky Blue - calming, clear
+        return '#45B7D1'  # Sky Blue
     elif household_size == 5:
-        return '#9B59B6'  # Purple - rich, elegant
+        return '#9B59B6'  # Purple
     else:
         # For households with 6+ people, use a deeper purple
-        return '#6A1B9A'  # Deep Purple - darker for larger households
+        return '#6A1B9A'  # Purple
 
 
 def apply_saturation_to_color(base_color_hex, saturation_percent):
