@@ -1,17 +1,3 @@
-#!/usr/bin/env python3
-"""
-Contact Analysis for Memilio vs Panvadere
-==========================================
-
-This script analyzes potential contacts that infectious persons have per timestep
-and creates comparison visualizations between Memilio and Panvadere simulations.
-
-Usage:
-    python analyze_contacts.py --memilio-dir results/memilio --panvadere-dir results/panvadere
-
-Author: Generated for Memilio/Panvadere contact comparison
-"""
-
 import os
 import sys
 import argparse
