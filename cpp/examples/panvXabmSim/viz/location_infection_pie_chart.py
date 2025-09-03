@@ -7,9 +7,6 @@ the average distribution of infections by location type.
 
 Usage:
     python location_infection_pie_chart.py --data-dir <path> [options]
-
-Author: Generated for epidemic simulation visualization
-Date: August 2025
 """
 
 import pandas as pd
