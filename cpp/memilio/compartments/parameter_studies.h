@@ -43,7 +43,7 @@ namespace mio
  * Can simulate mobility graphs with one simulation in each node or single simulations.
  * @tparam S type of simulation that runs in one node of the graph.
  */
-template <class S>
+template <class S, class EdgeT = mio::MobilityEdge<double>>
 class ParameterStudy
 {
 public:
@@ -60,7 +60,7 @@ public:
     * The Graph type that stores simulations and their results of each run.
     * This is the output of ParameterStudies for each run.
     */
-    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MobilityEdge<double>>;
+    using SimulationGraph = mio::Graph<mio::SimulationNode<Simulation>, EdgeT>;
 
     /**
      * create study for graph of compartment models.

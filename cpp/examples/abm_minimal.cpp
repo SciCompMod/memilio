@@ -17,12 +17,72 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/simulation.h"
+#include "abm/common_abm_loggers.h"
+#include <algorithm>
+
+// shim class to make the abm simulation look like an ode simulation
+class ResultSim : public mio::abm::Simulation<mio::abm::Model>
+{
+public:
+    using Model = mio::abm::Model;
+
+    ResultSim(const Model& m, double t, double)
+        : mio::abm::Simulation<mio::abm::Model>(mio::abm::TimePoint{mio::abm::days(t).seconds()}, Model(m))
+    {
+        history.log(*this); // set initial results
+    }
+
+    void advance(double tmax)
+    {
+        mio::abm::Simulation<mio::abm::Model>::advance(mio::abm::TimePoint{mio::abm::days(tmax).seconds()}, history);
+    }
+
+    const mio::TimeSeries<double>& get_result() const
+    {
+        return get<0>(history.get_log());
+    }
+
+    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> history{
+        Eigen::Index(mio::abm::InfectionState::Count)};
+};
+
+// graph ode specific function, overload with noop to avoid compiler errors
+template <class, class>
+void calculate_mobility_returns(Eigen::Ref<typename mio::TimeSeries<double>::Vector>, const ResultSim&,
+                                Eigen::Ref<const typename mio::TimeSeries<double>::Vector>, double, double)
+{
+}
+#include "memilio/mobility/metapopulation_mobility_instant.h"
+
+namespace mio
+{
+
+// overload for ResultSim without mobility
+auto make_mobility_sim(double t0, double dt, Graph<SimulationNode<ResultSim>, MobilityEdge<double>>&& graph)
+{
+    using GraphT = GraphSimulation<Graph<SimulationNode<ResultSim>, MobilityEdge<double>>, double, double,
+                                   void (*)(double, double, mio::MobilityEdge<double>&, mio::SimulationNode<ResultSim>&,
+                                            mio::SimulationNode<ResultSim>&),
+                                   void (*)(double, double, mio::SimulationNode<ResultSim>&)>;
+    return GraphT(t0, dt, std::move(graph),
+                  static_cast<void (*)(double, double, SimulationNode<ResultSim>&)>(&advance_model<ResultSim>),
+                  [](double, double, MobilityEdge<double>&, SimulationNode<ResultSim>&, SimulationNode<ResultSim>&) {});
+}
+
+} // namespace mio
+
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
-#include "abm/common_abm_loggers.h"
+#include "abm/time.h"
+#include "memilio/compartments/parameter_studies.h"
+#include "memilio/data/analyze_result.h"
+#include "memilio/io/result_io.h"
 #include "memilio/utils/abstract_parameter_distribution.h"
+#include "memilio/utils/time_series.h"
 
+#include <boost/filesystem/path.hpp>
 #include <fstream>
 
 int main()
@@ -154,14 +214,65 @@ int main()
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(10);
-    auto sim  = mio::abm::Simulation(t0, std::move(model));
+    // auto sim  = mio::abm::Simulation(t0, std::move(model));
+    const size_t num_runs = 10;
 
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
 
+    mio::ParameterStudy<ResultSim> study(model, t0.days(), tmax.days(), num_runs);
+
+    auto ensemble = study.run(
+        [](auto&& graph) {
+            // TODO: some actual sampling so that the percentiles show anything
+            return graph;
+        },
+        [&](auto results_graph, auto&& /* run_idx */) {
+            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+
+            auto params = std::vector<mio::abm::Model>{};
+            params.reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+                           [](auto&& node) {
+                               return node.property.get_simulation().get_model();
+                           });
+            return std::make_pair(std::move(interpolated_result), std::move(params));
+        });
+    if (ensemble.size() > 0) {
+        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+        ensemble_results.reserve(ensemble.size());
+        auto ensemble_params = std::vector<std::vector<mio::abm::Model>>{};
+        ensemble_params.reserve(ensemble.size());
+        for (auto&& run : ensemble) {
+            ensemble_results.emplace_back(std::move(run.first));
+            ensemble_params.emplace_back(std::move(run.second));
+        }
+
+        auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
+        auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
+        auto ensemble_results_p50 = ensemble_percentile(ensemble_results, 0.50);
+        auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
+        auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
+
+        const boost::filesystem::path save_dir = "/home/schm_r6/Code/memilio/memilio/results/";
+
+        if (!save_dir.empty()) {
+
+            mio::unused(save_result(ensemble_results_p05, {0}, num_age_groups,
+                                    (save_dir / ("Results_" + std::string("p05") + ".h5")).string()));
+            mio::unused(save_result(ensemble_results_p25, {0}, num_age_groups,
+                                    (save_dir / ("Results_" + std::string("p25") + ".h5")).string()));
+            mio::unused(save_result(ensemble_results_p50, {0}, num_age_groups,
+                                    (save_dir / ("Results_" + std::string("p50") + ".h5")).string()));
+            mio::unused(save_result(ensemble_results_p75, {0}, num_age_groups,
+                                    (save_dir / ("Results_" + std::string("p75") + ".h5")).string()));
+            mio::unused(save_result(ensemble_results_p95, {0}, num_age_groups,
+                                    (save_dir / ("Results_" + std::string("p95") + ".h5")).string()));
+        }
+    }
     // Run the simulation until tmax with the history object.
-    sim.advance(tmax, historyTimeSeries);
+    // sim.advance(tmax, historyTimeSeries);
 
     // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
     // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
