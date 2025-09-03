@@ -50,4 +50,4 @@ The following list explains the nonstandard data types that are used throughout 
    * - :code:`DampingMatrixExpressionGroup`
      - Represents a collection of ``DampingMatrixExpression``\s that are summed up. Used for representing multiple sources of contacts or mobility.
    * - :code:`GeographicLocation`
-     - Stores coordinates in (Latitude, Longitude) format. Allows for comparisons and realtistic distance calculations.
+     - Stores coordinates in (Latitude, Longitude) format. Allows for comparisons and realistic distance calculations.

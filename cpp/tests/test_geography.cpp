@@ -32,7 +32,7 @@ TEST_F(TestGeography, compareGeographicalLocation)
     // Set a geographical location for the location.
     mio::geo::GeographicalLocation geographical_location  = {10.5100470359749, 52.2672785559812};
     mio::geo::GeographicalLocation geographical_location2 = {10.5100470359749, 52.2672785559812};
-    // Verify that the set geographical location matches the expected values.
+    // Verify that the set geographical locations are equal.
     EXPECT_TRUE(geographical_location == geographical_location2);
 }
 

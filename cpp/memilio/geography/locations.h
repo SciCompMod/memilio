@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Kilian Volmer
+* Authors: Kilian Volmer, Sascha Korf, Carlotta Gerstein, Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -69,8 +69,8 @@ public:
     }
 
     /*
-    * @brief Calculate the distance between two geographical locations
-    * @param other The other geographical location.
+    * @brief Calculate the distance between two GeographicalLocation%s.
+    * @param other The other GeographicalLocation.
     * @return The distance between the two locations in kilometers.
     * 
     * Uses the haversine formula (https://en.wikipedia.org/wiki/Haversine_formula) to calculate the distance between 
@@ -88,7 +88,7 @@ public:
         return distance;
     }
 
-    auto get_latitude() const -> double
+    double get_latitude() const
     {
         return latitude;
     }

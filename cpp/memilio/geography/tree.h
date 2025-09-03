@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef TREE_H
+#ifndef MIO_GEOGRAPHY_RTREE_H
 #define TREE_H
 
 #include <boost/geometry/geometries/multi_polygon.hpp>
@@ -38,7 +38,7 @@ namespace mio
 {
 namespace geo
 {
-using Point = bg::model::point<double, 2, boost::geometry::cs::geographic<boost::geometry::degree>>;
+using Point = bg::model::point<double, 2, bg::cs::geographic<bg::degree>>;
 typedef std::pair<Point, size_t> Node;
 
 template <class Location>
@@ -99,6 +99,7 @@ public:
             ++index;
         }
     }
+    
     /**
      * @brief Return the number of data points stored in the RTree
      * 
@@ -110,7 +111,7 @@ public:
     }
 
     /**
-     * @brief Return the indices of the k nearest neighbours of a given location
+     * @brief Return the indices of the k nearest neighbors of a given location
      * 
      * @param location Midpoint for the query, provides get_latitude() and get_longitude()
      * @param number The number of nearest neighbours to find
