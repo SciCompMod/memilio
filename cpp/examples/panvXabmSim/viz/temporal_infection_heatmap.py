@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""
-Time-Progressive Household Infection Heatmap Visualization
-Shows how infections spread through households over time at different time points
-"""
+
 
 import matplotlib.pyplot as plt
 import pandas as pd

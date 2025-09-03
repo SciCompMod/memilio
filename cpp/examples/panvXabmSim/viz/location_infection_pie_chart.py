@@ -1,14 +1,3 @@
-#!/usr/bin/env python3
-"""
-Location Infection Distribution Pie Chart Generator
-
-This script analyzes infection data across all runs to create pie charts showing
-the average distribution of infections by location type.
-
-Usage:
-    python location_infection_pie_chart.py --data-dir <path> [options]
-"""
-
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np

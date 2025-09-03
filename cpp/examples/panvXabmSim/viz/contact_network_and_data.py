@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Improved Combined Population Structure and Contact Network Visualization
-Fixed spacing and formatting issues for cleaner presentation
-"""
 
 import matplotlib.pyplot as plt
 import pandas as pd

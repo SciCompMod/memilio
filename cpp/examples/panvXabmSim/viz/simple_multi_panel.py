@@ -1,11 +1,4 @@
-#!/usr/bin/env python3
-"""
-Simple Multi-Panel Epidemic Curves - Clean Version
-===================================================
 
-Creates a 2x2 grid of epidemic curve comparisons with elegant, publication-ready styling.
-Each panel shows transmission-informed vs uniform initialization for one scenario.
-"""
 
 import sys
 import argparse

@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-Multi-Seed Simulation Comparison Visualization
-
-This script creates comprehensive visualizations comparing simulation results
-across multiple seeds for both Memilio and Panvadere simulations.
-"""
 
 import sys
 import argparse
