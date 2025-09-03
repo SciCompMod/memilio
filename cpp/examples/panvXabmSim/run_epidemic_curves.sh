@@ -19,11 +19,7 @@ RESULTS_BASE_DIR="$MAIN_PATH/examples/panvXabmSim/results"
 VIZ_OUTPUT_DIR="$MAIN_PATH/examples/panvXabmSim/results/epidemic_curves_analysis"
 PYTHON3_DIR="$MAIN_PATH/v_m/bin/python3"
 
-# Event types mapping to paper scenarios
-# R1 = restaurant_table_equals_household (strong household clustering)
-# R2 = restaurant_table_equals_half_household (weaker household clustering) 
-# W1 = work_meeting_baseline (few meetings - sequential clustering)
-# W2 = work_meeting_many (many meetings - high mixing)
+
 EVENT_TYPES=(
     "restaurant_table_equals_household"
     "restaurant_table_equals_half_household" 
@@ -259,49 +255,6 @@ main() {
     
     echo ""
     echo "=== STEP 2: Creating Summary Overview ==="
-    
-    # Create a summary report
-    local summary_file="$viz_output_dir/analysis_summary.txt"
-    cat > "$summary_file" << EOF
-Epidemic Curve Dynamics Analysis Summary
-========================================
-Timestamp: $timestamp
-Analysis Type: Transmission-Informed vs. Uniform Initialization
-Total Scenarios: $total_scenarios
-Runs per Scenario: $RUNS
-Simulation Days: $NUM_DAYS
-Population: $NUM_PERSONS
-
-Scenarios Analyzed:
-EOF
-    
-    for ((i=1; i<=${#SCENARIO_LABELS[@]}; i++)); do
-        echo "  ${i}. ${SCENARIO_LABELS[$i]} (${EVENT_TYPES[$i]})" >> "$summary_file"
-    done
-    
-    cat >> "$summary_file" << EOF
-
-Results Location: $viz_output_dir
-
-Individual scenario comparisons are available in:
-EOF
-    
-    for scenario_label in "${SCENARIO_LABELS[@]}"; do
-        echo "  - $viz_output_dir/$scenario_label/" >> "$summary_file"
-    done
-    
-    echo ""
-    echo "=== EPIDEMIC CURVE ANALYSIS COMPLETED ==="
-    echo "Total simulations run: $total_simulations"
-    echo "Results directory: $viz_output_dir"
-    echo "Summary report: $summary_file"
-    echo ""
-    echo "Next steps:"
-    echo "1. Review individual scenario comparisons in subdirectories"
-    echo "2. Analyze differences in epidemic curves between initialization types"
-    echo "3. Quantify impact on final epidemic size and peak timing"
-    echo "=================================="
 }
-
 # Run main function
 main "$@"

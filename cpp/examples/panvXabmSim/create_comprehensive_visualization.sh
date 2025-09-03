@@ -209,80 +209,6 @@ create_scenario_heatmaps() {
     return 0
 }
 
-# Create summary report
-create_summary_report() {
-    local output_dir=$1
-    local timestamp=$2
-    
-    local summary_file="$output_dir/visualization_summary.txt"
-    
-    cat > "$summary_file" << EOF
-Comprehensive Epidemic Visualization Summary
-===========================================
-Generated: $timestamp
-Analysis Type: Transmission-Informed vs. Uniform Initialization
-
-Directory Structure:
-$output_dir/
-├── epidemic_curves/           # Multi-panel epidemic curve comparisons
-│   ├── epidemic_curves_comparison.png
-│   ├── epidemic_curves_comparison.pdf
-│   └── [other epidemic curve outputs]
-├── heatmaps/                  # Spatial-temporal heatmap visualizations
-│   ├── R1_restaurant_strong/
-│   │   ├── comparative_temporal_heatmap_best.png
-│   │   ├── comparative_temporal_heatmap_averaged.png
-│   │   └── [individual temporal heatmaps]
-│   ├── R2_restaurant_weak/
-│   ├── W1_workplace_few/
-│   └── W2_workplace_many/
-└── visualization_summary.txt  # This file
-
-Visualization Types Generated:
-==============================
-1. Multi-Panel Epidemic Curves
-   - 2x2 grid comparing all 4 scenarios
-   - Red: Transmission-informed initialization  
-   - Blue: Uniform initialization
-   - Statistical summaries included
-
-2. Comparative Temporal Heatmaps
-   - Best run visualization (single best-performing run)
-   - Averaged visualization (mean across all runs)
-   - Restaurant scenarios (R1, R2): Household-level infection patterns (rectangles)
-   - Workplace scenarios (W1, W2): Workplace-level infection patterns (hexagons)
-   - Multiple time points (Day 0, 1, 3, 10)
-
-3. Individual Temporal Heatmaps (if available)
-   - Separate heatmaps for each initialization type
-   - Detailed spatial infection progression
-
-Scenarios Analyzed:
-==================
-R1: Restaurant Strong Clustering (restaurant_table_equals_household)
-R2: Restaurant Weak Clustering (restaurant_table_equals_half_household)  
-W1: Workplace Few Meetings (work_meeting_baseline)
-W2: Workplace Many Meetings (work_meeting_many)
-
-Key Findings:
-=============
-The visualizations demonstrate the impact of initialization strategy on:
-- Final epidemic size (epidemic curves)
-- Spatial clustering patterns (heatmaps)
-  * Restaurant scenarios: Household-based transmission patterns
-  * Workplace scenarios: Workplace-based transmission patterns
-- Temporal progression dynamics (both visualizations)
-
-The dual visualization approach allows for:
-- Restaurant analysis: Understanding household clustering effects
-- Workplace analysis: Understanding workplace transmission dynamics
-
-For detailed analysis, examine the individual visualization files.
-EOF
-
-    echo "✅ Summary report created: $summary_file"
-}
-
 # Validate prerequisites
 validate_prerequisites() {
     echo "=== Validating Prerequisites ==="
@@ -380,32 +306,6 @@ main() {
             successful_scenarios=$((successful_scenarios + 1))
         fi
     done
-    
-    # Create summary report
-    create_summary_report "$output_dir" "$timestamp"
-    
-    # Final summary
-    echo ""
-    echo "=== COMPREHENSIVE VISUALIZATION COMPLETED ==="
-    echo "✅ Successfully processed $successful_scenarios/$total_scenarios scenarios"
-    echo "✅ Output directory: $output_dir"
-    echo ""
-    echo "Generated visualizations:"
-    echo "  📊 Multi-panel epidemic curves (2x2 grid)"
-    echo "  🗺️  Comparative temporal heatmaps (best run & averaged)"
-    echo "  📋 Comprehensive summary report"
-    echo ""
-    echo "Directory structure:"
-    echo "  $output_dir/"
-    echo "  ├── epidemic_curves/     # Epidemic curve comparisons"
-    echo "  ├── heatmaps/            # Spatial-temporal visualizations"
-    echo "  │   ├── R1_restaurant_strong/"
-    echo "  │   ├── R2_restaurant_weak/"
-    echo "  │   ├── W1_workplace_few/"
-    echo "  │   └── W2_workplace_many/"
-    echo "  └── visualization_summary.txt"
-    echo ""
-    echo "🎉 All visualizations ready for analysis and publication!"
 }
 
 # Run main function

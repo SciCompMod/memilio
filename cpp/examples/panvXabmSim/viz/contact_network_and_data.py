@@ -698,7 +698,7 @@ def create_combined_visualization(data_dir, location_file, city_config_file=None
             create_config_pie_chart(ax_occupation, occupation_sim_pie,
                                     'Occupation Distribution\n(From simulation)')
 
-        # Show placeholder for other charts
+        # Show empty charts for missing data
         for ax, title in [(ax_household, 'Household Sizes\n(No config data)')]:
             ax.text(0.5, 0.5, 'Config data\nnot available', ha='center', va='center',
                     transform=ax.transAxes, fontsize=12)

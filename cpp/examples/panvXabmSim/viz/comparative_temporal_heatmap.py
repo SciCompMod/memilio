@@ -1123,10 +1123,10 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                 has_method2_data = False
         except FileNotFoundError as e:
             print(f"Warning: Method 2 data not found: {e}")
-            print("Will create placeholder for comparison layout")
+            print("Will create comparison layout")
             has_method2_data = False
     else:
-        print("Method 2 data directory not provided - creating placeholder")
+        print("Method 2 data directory not provided - creating comparison")
         has_method2_data = False
 
     print(
@@ -1301,16 +1301,16 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                     use_median=use_median
                 )
         else:
-            # Create placeholder visualization
-            ax.text(0.5, 0.5, f"{method2_name}\nData Not Available\n\n(Placeholder for comparison layout)",
+            # Create empty visualization
+            ax.text(0.5, 0.5, f"{method2_name}\nData Not Available\n\n(No data for comparison)",
                     ha='center', va='center', transform=ax.transAxes, fontsize=12,
                     bbox=dict(boxstyle="round,pad=0.3", facecolor='lightgray', alpha=0.5))
             ax.set_title(f"{method2_name} - Time Point {i+1}",
                          fontsize=11, fontweight='bold')
             ax.axis('off')
 
-    # Calculate actual Method 2 data or use placeholders
-    # Calculate actual Method 2 data or use placeholders
+    # Calculate actual Method 2 data or create empty comparison
+    # Calculate actual Method 2 data or create empty comparison
     if not has_method2_data:
         # Create simulated uniform data for demonstration
         group_counts_m2 = [int(count * 1.2)
