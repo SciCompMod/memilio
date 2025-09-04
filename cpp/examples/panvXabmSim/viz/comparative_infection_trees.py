@@ -635,7 +635,7 @@ def plot_infection_tree_enhanced(ax, infection_events, transmission_tree, positi
 
     # Formatting
     ax.set_xlabel('Timestep', fontsize=18)
-    ax.set_ylabel('Transmission Order', fontsize=18)
+    ax.set_ylabel('Agent', fontsize=18)
     ax.set_title(title, fontsize=16, fontweight='bold')
     ax.grid(True, alpha=0.3)
 

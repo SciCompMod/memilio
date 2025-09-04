@@ -271,7 +271,7 @@ def get_household_size_color(household_size):
     elif household_size == 3:
         return '#4ECDC4'  # Teal
     elif household_size == 4:
-        return '#45B7D1'  # Sky Blue
+        return "#006907"  # green
     elif household_size == 5:
         return '#9B59B6'  # Purple
     else:
@@ -729,24 +729,24 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
 
         # Get group size and infected count
         group_size = stats['total_members']
+
         infected_count = stats['infected_members']
 
         if use_workplaces:
-            # Workplaces: All black with saturation based on infection rate
-            base_color = "#A200B8"  # Black
+            # Workplaces: All purple with saturation based on infection rate
+            base_color = "#A200B8"  # purple
             # Calculate infection rate (0-1) - cap at 100%
             infection_rate = min(1.0, infected_count / max(1, group_size))
-
             # Use bins for saturation
-            if infection_rate < 0.1:  # 0-20%
-                saturation_percent = 0  # White
+            if infection_rate < 0.05:  # 0-20%
+                saturation_percent = 0  # Use white instead of base color
                 base_color = '#FFFFFF'
-            elif infection_rate < 0.3:  # 20-40%
-                saturation_percent = 20
-            elif infection_rate < 0.6:  # 40-60%
-                saturation_percent = 40
-            elif infection_rate < 0.9:  # 60-80%
-                saturation_percent = 60
+            elif infection_rate < 0.2:  # 20-40%
+                saturation_percent = 30
+            elif infection_rate < 0.5:  # 40-60%
+                saturation_percent = 50
+            elif infection_rate < 0.95:  # 60-80%
+                saturation_percent = 80
             else:  # 80-100%
                 saturation_percent = 100
         else:
@@ -756,15 +756,15 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
             infection_rate = min(1.0, infected_count / max(1, group_size))
 
             # Use bins for saturation
-            if infection_rate < 0.1:  # 0-20%
+            if infection_rate < 0.05:  # 0-20%
                 saturation_percent = 0  # Use white instead of base color
                 base_color = '#FFFFFF'
-            elif infection_rate < 0.3:  # 20-40%
-                saturation_percent = 20
+            elif infection_rate < 0.2:  # 20-40%
+                saturation_percent = 10
             elif infection_rate < 0.6:  # 40-60%
-                saturation_percent = 40
-            elif infection_rate < 0.9:  # 60-80%
-                saturation_percent = 60
+                saturation_percent = 20
+            elif infection_rate < 0.95:  # 60-80%
+                saturation_percent = 30
             else:  # 80-100%
                 saturation_percent = 100
 
@@ -772,12 +772,11 @@ def create_size_based_heatmap(ax, group_data, group_positions, group_dimensions,
         base_saturation = saturation_percent
 
         # Edge color is slightly darker version
-        edge_saturation = min(100, base_saturation + 5)
         edge_color = base_color
         if base_color == '#FFFFFF':
             base_color = "#CFCFCFFF"
             edge_color = "#CFCFCFFF"  # Slightly darker than white
-            base_saturation = 100.0
+            base_saturation = 30.0
 
         # Draw groups with different visualization styles
         if viz_style == 'rectangles':
@@ -1039,7 +1038,7 @@ def create_household_comparison_plot(ax, time_points, group_counts_method1, grou
                 label2, ha='center', va='bottom', fontsize=10, fontweight='bold')
 
     # Update ylabel and title based on group type
-    group_type = "Workplaces" if use_workplaces else "Households"
+    group_type = "Departments" if use_workplaces else "Households"
     stat_type = "Median" if use_median else "Avg."
     ax.set_ylabel(f' Infected\n{group_type}', fontsize=11)
     ax.set_title(f' {group_type} with ≥1 Infected Member',
@@ -1266,6 +1265,12 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
         else:
             avg_infected_counts_m1.append(infected_count)
 
+        # Add vertical text label for the first heatmap in the row
+        if i == 0:
+            ax.text(-0.15, 0.5, method1_name, transform=ax.transAxes,
+                    rotation=90, fontsize=14, fontweight='bold',
+                    verticalalignment='center', horizontalalignment='center')
+
     # Row 2: Method 2 (Uniform)
     for i, timestep in enumerate(time_points):
         ax = fig.add_subplot(gs_method2[0, i])
@@ -1308,6 +1313,12 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
             ax.set_title(f"{method2_name} - Time Point {i+1}",
                          fontsize=11, fontweight='bold')
             ax.axis('off')
+
+        # Add vertical text label for the first heatmap in the row
+        if i == 0:
+            ax.text(-0.15, 0.5, method2_name, transform=ax.transAxes,
+                    rotation=90, fontsize=14, fontweight='bold',
+                    verticalalignment='center', horizontalalignment='center')
 
     # Calculate actual Method 2 data or create empty comparison
     # Calculate actual Method 2 data or create empty comparison
@@ -1400,9 +1411,9 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
             # For workplaces: only saturation legend (black with different saturations)
             size_based_legend_elements = [
                 plt.Rectangle((0, 0), 1, 1, facecolor="#A200B8",
-                              edgecolor='black', label='workplace')
+                              edgecolor='black', label='department')
             ]
-            size_legend_title = f'Workplace Color (saturation = infection rate)'
+            size_legend_title = f'Department Color (saturation = infection rate)'
         else:
             # For households: size-based colors legend with improved colors
             size_based_legend_elements = [
@@ -1412,8 +1423,8 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
                               edgecolor='#CC5555', label='2-person household (coral)'),
                 plt.Rectangle((0, 0), 1, 1, facecolor='#4ECDC4',
                               edgecolor='#3EA39D', label='3-person household (teal)'),
-                plt.Rectangle((0, 0), 1, 1, facecolor='#45B7D1',
-                              edgecolor='#3692A7', label='4-person household (sky blue)'),
+                plt.Rectangle((0, 0), 1, 1, facecolor='#006907',
+                              edgecolor='#006907', label='4-person household (green)'),
                 plt.Rectangle((0, 0), 1, 1, facecolor='#9B59B6',
                               edgecolor='#7C4791', label='5-person household (purple)')
             ]
@@ -1526,7 +1537,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
     title_suffix = f"({stat_type} across {num_runs_m1} runs)"
 
     # Create title with scenario information and group type
-    group_view = "Workplace View" if use_workplaces else "Household View"
+    group_view = "Department View" if use_workplaces else "Household View"
     base_title = f'Comparative Temporal Infection Progression {title_suffix} - {group_view}'
     if scenario_name:
         base_title = f'Scenario {scenario_name}: {base_title}'
@@ -1595,9 +1606,10 @@ def main():
     args = parser.parse_args()
 
     # debug this for now
-    # args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250902_191434_R1_restaurant_strong_clustering_transmission_informed"
-    # args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250902_191441_R1_restaurant_strong_clustering_uniform_initialized"
-
+    # args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250903_180348_W1_workplace_few_meetings_transmission_informed"
+    # args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250903_180355_W1_workplace_few_meetings_uniform_initialized"
+    # args.use_workplaces = True
+    # args.use_size_based_colors = True
     # Only set default output path if none was provided
     if not args.output_path:
         mode_suffix = "_median" if args.use_median else "_average"
