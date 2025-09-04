@@ -1038,7 +1038,7 @@ def create_household_comparison_plot(ax, time_points, group_counts_method1, grou
                 label2, ha='center', va='bottom', fontsize=10, fontweight='bold')
 
     # Update ylabel and title based on group type
-    group_type = "Departments" if use_workplaces else "Households"
+    group_type = "Workplaces" if use_workplaces else "Households"
     stat_type = "Median" if use_median else "Avg."
     ax.set_ylabel(f' Infected\n{group_type}', fontsize=11)
     ax.set_title(f' {group_type} with ≥1 Infected Member',
@@ -1411,9 +1411,9 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
             # For workplaces: only saturation legend (black with different saturations)
             size_based_legend_elements = [
                 plt.Rectangle((0, 0), 1, 1, facecolor="#A200B8",
-                              edgecolor='black', label='department')
+                              edgecolor='black', label='workplaces')
             ]
-            size_legend_title = f'Department Color (saturation = infection rate)'
+            size_legend_title = f'Workplace Color (saturation = infection rate)'
         else:
             # For households: size-based colors legend with improved colors
             size_based_legend_elements = [
@@ -1537,7 +1537,7 @@ def create_comparative_temporal_heatmap(data_dir_method1, data_dir_method2=None,
     title_suffix = f"({stat_type} across {num_runs_m1} runs)"
 
     # Create title with scenario information and group type
-    group_view = "Department View" if use_workplaces else "Household View"
+    group_view = "Workplace View" if use_workplaces else "Household View"
     base_title = f'Comparative Temporal Infection Progression {title_suffix} - {group_view}'
     if scenario_name:
         base_title = f'Scenario {scenario_name}: {base_title}'

@@ -99,7 +99,6 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
     print(
         f"Processing contact network: {num_persons} persons, {num_contacts} contacts...")
 
-    # Apply much more aggressive filtering to reduce visual clutter
     if num_persons > 1000:
         print(
             f"Large dataset detected ({num_persons} persons). Applying heavy filtering for clarity...")
@@ -288,18 +287,16 @@ def create_contact_network_subplot(ax, household_data, infection_count_data, con
                         0.3, min(1.2, (total_hours / max_contact_hours) * 3.0))
                     color = edge_colors.get(location_type, 'gray')
 
-                    # Draw subtle but visible edges
                     nx.draw_networkx_edges(G, all_pos,
                                            edgelist=[
                                                (person1, location_node), (person2, location_node)],
                                            width=edge_width,
                                            edge_color=color,
-                                           alpha=0.25,  # Increased from 0.15 for better visibility
+                                           alpha=0.25,
                                            ax=ax)
                     edges_per_location_type[location_type] += 2
 
-    # Draw location labels (show more labels)
-    if len(location_nodes) < 100:  # Increased threshold
+    if len(location_nodes) < 100:
         location_labels = {loc: loc.split('_')[-1] for loc in location_nodes}
         nx.draw_networkx_labels(G, all_pos,
                                 labels=location_labels,

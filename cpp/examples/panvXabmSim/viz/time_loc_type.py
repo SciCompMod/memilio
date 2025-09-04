@@ -12,7 +12,7 @@ def read_and_analyze_data(filename):
                          location in enumerate(location_types)}
 
     # maximum number of hours:
-    max_hours = 24 * 6  # 7 days of data, 24 hours each
+    max_hours = 24 * 7  # 7 days of data, 24 hours each
 
     try:
         with open(filename, 'r') as f:
