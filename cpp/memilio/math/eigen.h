@@ -36,27 +36,9 @@
 
 namespace Eigen
 {
-template <>
-struct NumTraits<ad::gt1s<double>::type> : GenericNumTraits<ad::gt1s<double>::type> {
-    using Scalar     = ad::gt1s<double>::type;
-    using Real       = Scalar;
-    using NonInteger = Scalar;
-    using Nested     = Scalar;
-    enum
-    {
-        IsComplex             = 0,
-        IsInteger             = 0,
-        IsSigned              = 1,
-        RequireInitialization = 1,
-        ReadCost              = 1,
-        AddCost               = 3,
-        MulCost               = 3
-    };
-};
-
-template <>
-struct NumTraits<ad::ga1s<double>::type> : GenericNumTraits<ad::ga1s<double>::type> {
-    using Scalar     = ad::ga1s<double>::type;
+template <class FP, class DataHandler>
+struct NumTraits<ad::internal::active_type<FP, DataHandler>> : GenericNumTraits<ad::internal::active_type<FP, DataHandler>> {
+    using Scalar     = ad::internal::active_type<FP, DataHandler>;
     using Real       = Scalar;
     using NonInteger = Scalar;
     using Nested     = Scalar;
