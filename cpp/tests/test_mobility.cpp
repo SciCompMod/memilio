@@ -57,10 +57,10 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
     g_mobility.add_node(0, model1, t0);
     g_mobility.add_node(1, model2, t0);
 
-    g_mobility.nodes()[0].property.get_simulation().set_integrator(
-        std::make_shared<mio::EulerIntegratorCore<double>>());
-    g_mobility.nodes()[1].property.get_simulation().set_integrator(
-        std::make_shared<mio::EulerIntegratorCore<double>>());
+    g_mobility.nodes()[0].property.get_simulation().set_integrator_core(
+        std::make_unique<mio::EulerIntegratorCore<double>>());
+    g_mobility.nodes()[1].property.get_simulation().set_integrator_core(
+        std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // Allow no mobility along the edges.
     g_mobility.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0));
@@ -77,10 +77,10 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
     g_no_mobility.add_node(0, model1, t0);
     g_no_mobility.add_node(1, model2, t0);
 
-    g_no_mobility.nodes()[0].property.get_simulation().set_integrator(
-        std::make_shared<mio::EulerIntegratorCore<double>>());
-    g_no_mobility.nodes()[1].property.get_simulation().set_integrator(
-        std::make_shared<mio::EulerIntegratorCore<double>>());
+    g_no_mobility.nodes()[0].property.get_simulation().set_integrator_core(
+        std::make_unique<mio::EulerIntegratorCore<double>>());
+    g_no_mobility.nodes()[1].property.get_simulation().set_integrator_core(
+        std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // Define some mobility along the edges.
     g_no_mobility.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.1));
@@ -89,8 +89,8 @@ TEST(TestMobility, compareNoMobilityWithSingleIntegration)
     // Define single simulations.
     auto single_sim1 = mio::Simulation<double, mio::oseir::Model<double>>(model1, t0);
     auto single_sim2 = mio::Simulation<double, mio::oseir::Model<double>>(model2, t0);
-    single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
-    single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore<double>>());
+    single_sim1.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
+    single_sim2.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // Simulate.
     graph_sim_mobility.advance(tmax);

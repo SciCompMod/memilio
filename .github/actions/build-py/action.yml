@@ -9,7 +9,7 @@ runs:
   steps:    
     - name: Install dependencies
       shell: bash
-      run: yum install ninja-build -qy
+      run: yum install ninja-build cmake git -qy
     - name: Make artifact dir
       shell: bash
       run: |
@@ -19,8 +19,10 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
-        /opt/python/cp311-cp311/bin/python setup.py bdist_wheel
+        /opt/python/cp38-cp38/bin/python -m pip install scikit-build
+        /opt/python/cp38-cp38/bin/python -m build --no-isolation --wheel
+        /opt/python/cp311-cp311/bin/python -m pip install scikit-build
+        /opt/python/cp311-cp311/bin/python -m build --no-isolation --wheel
         # Exclude memilio-generation, because its a pure python package, cmake is only used in the build process to retrieve data from cpp
         if [[ -f "CMakeLists.txt" ]] && [ "${{ inputs.package }}" != "generation" ]; then 
           # includes native dependencies in the wheel
@@ -35,4 +37,3 @@ runs:
       with:
         name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-
