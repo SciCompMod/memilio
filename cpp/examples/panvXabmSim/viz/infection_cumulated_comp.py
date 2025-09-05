@@ -41,7 +41,7 @@ def calculate_cumulative_infections(data):
 
 def load_best_run_infections(base_path):
     """ Load best run infection data from CSV file.
-    
+
     @param[in] base_path Path to results directory containing best_run_detailed_infection.csv.
                         If base_path contains 'amount_of_infections', will look in parent directory.
     @return Tuple of (time_hours, cumulative_infections) where time_hours are the 
@@ -53,41 +53,45 @@ def load_best_run_infections(base_path):
         csv_base_path = os.path.dirname(base_path)
     else:
         csv_base_path = base_path
-        
+
     csv_path = os.path.join(csv_base_path, "best_run_detailed_infection.csv")
-    
+
     if not os.path.exists(csv_path):
         print(f"Warning: Best run CSV file not found at {csv_path}")
         return None, None
-    
+
     try:
         # Read the CSV file
         df = pd.read_csv(csv_path)
-        
+
         # Count infections at each timestep
-        infection_counts = df.groupby('Timestep').size().reset_index(name='new_infections')
-        
+        infection_counts = df.groupby(
+            'Timestep').size().reset_index(name='new_infections')
+
         # Get all timesteps from min to max to ensure we have a complete time series
         min_timestep = infection_counts['Timestep'].min()
         max_timestep = infection_counts['Timestep'].max()
         all_timesteps = np.arange(min_timestep, max_timestep + 1)
-        
+
         # Create a complete time series with zeros for missing timesteps
         complete_series = pd.DataFrame({'Timestep': all_timesteps})
-        complete_series = complete_series.merge(infection_counts, on='Timestep', how='left')
-        complete_series['new_infections'] = complete_series['new_infections'].fillna(0)
-        
+        complete_series = complete_series.merge(
+            infection_counts, on='Timestep', how='left')
+        complete_series['new_infections'] = complete_series['new_infections'].fillna(
+            0)
+
         # Calculate cumulative infections
         complete_series['cumulative_infections'] = complete_series['new_infections'].cumsum()
-        
+
         # Convert timesteps to hours (timesteps are already in hours)
         time_hours = complete_series['Timestep'].values
         cumulative_infections = complete_series['cumulative_infections'].values
-        
-        print(f"Loaded best run data: {len(time_hours)} time points, {cumulative_infections[-1]:.0f} total infections")
-        
+
+        print(
+            f"Loaded best run data: {len(time_hours)} time points, {cumulative_infections[-1]:.0f} total infections")
+
         return time_hours, cumulative_infections
-        
+
     except Exception as e:
         print(f"Error loading best run data from {csv_path}: {e}")
         return None, None
@@ -200,27 +204,29 @@ def plot_both_simulations_in_one_figure(path_memilio, path_panvXabmSim, output_p
     # Load and plot best run data
     memilio_best_time = memilio_best_infections = None
     panv_best_time = panv_best_infections = None
-    
+
     if show_best_runs:
         print("Loading best run data...")
-        
+
         # Load best run for Memilio
-        memilio_best_time, memilio_best_infections = load_best_run_infections(path_memilio)
+        memilio_best_time, memilio_best_infections = load_best_run_infections(
+            path_memilio)
         if memilio_best_time is not None and memilio_best_infections is not None:
             # Convert timesteps (hours) to days to match H5 time scale
             memilio_best_time_days = memilio_best_time / 24.0
-            plt.plot(memilio_best_time_days, memilio_best_infections, 
-                    color=color_memilio, linewidth=2, linestyle='--', 
-                    label='Memilio (best run)', alpha=0.8)
-        
+            plt.plot(memilio_best_time_days, memilio_best_infections,
+                     color=color_memilio, linewidth=2, linestyle='--',
+                     label='Memilio (best run)', alpha=0.8)
+
         # Load best run for panvXabmSim
-        panv_best_time, panv_best_infections = load_best_run_infections(path_panvXabmSim)
+        panv_best_time, panv_best_infections = load_best_run_infections(
+            path_panvXabmSim)
         if panv_best_time is not None and panv_best_infections is not None:
             # Convert timesteps (hours) to days to match H5 time scale
             panv_best_time_days = panv_best_time / 24.0
-            plt.plot(panv_best_time_days, panv_best_infections, 
-                    color=color_panv, linewidth=2, linestyle='--', 
-                    label='panvXabmSim (best run)', alpha=0.8)
+            plt.plot(panv_best_time_days, panv_best_infections,
+                     color=color_panv, linewidth=2, linestyle='--',
+                     label='panvXabmSim (best run)', alpha=0.8)
 
     # Format axes and labels
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -309,14 +315,16 @@ def plot_both_simulations_in_one_figure(path_memilio, path_panvXabmSim, output_p
     print(
         f"Memilio - Final cumulative infections (25-75%): {memilio_cum_25[-1]:.0f} - {memilio_cum_75[-1]:.0f}")
     if memilio_best_infections is not None:
-        print(f"Memilio - Final cumulative infections (best run): {memilio_best_infections[-1]:.0f}")
-    
+        print(
+            f"Memilio - Final cumulative infections (best run): {memilio_best_infections[-1]:.0f}")
+
     print(
         f"panvXabmSim - Final cumulative infections (median): {panv_cum_50[-1]:.0f}")
     print(
         f"panvXabmSim - Final cumulative infections (25-75%): {panv_cum_25[-1]:.0f} - {panv_cum_75[-1]:.0f}")
     if panv_best_infections is not None:
-        print(f"panvXabmSim - Final cumulative infections (best run): {panv_best_infections[-1]:.0f}")
+        print(
+            f"panvXabmSim - Final cumulative infections (best run): {panv_best_infections[-1]:.0f}")
 
     if show90:
         print(
