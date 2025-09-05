@@ -52,7 +52,7 @@ def create_contact_data_for_analysis(contact_df, infection_df, time_window=1):
     relevant_times = set()
 
     for inf_time in infection_times:
-        for t in range(inf_time - time_window, inf_time + time_window + 1):
+        for t in range(inf_time - time_window - 1, inf_time + time_window + 1):
             relevant_times.add(t)
 
     print(f"Filtering to {len(relevant_times)} relevant timesteps...")
@@ -181,7 +181,7 @@ def find_potential_infectors(infected_person, infection_time, location,
 
     for agent_id in currently_infectious_agents:
         # Check if agent is at the same location at infection_time (exact timestep match)
-        if has_contact_at_location(agent_id, infected_person, location, infection_time, contact_data, time_tolerance=1):
+        if has_contact_at_location(agent_id, infected_person, location, infection_time - 1, contact_data, time_tolerance=0):
             potential_infectors.append(agent_id)
 
     if not potential_infectors:

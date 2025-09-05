@@ -504,8 +504,14 @@ def add_location_pie_inset(ax, infection_events, location_colors):
 
 def plot_infection_tree_enhanced(ax, infection_events, transmission_tree, positions, location_colors,
                                  title, generations, infected_status_df, contact_analysis_df,
-                                 layout_method='current', connection_style='current'):
-    """Enhanced plot_infection_tree function with layout and connection options"""
+                                 layout_method='current', connection_style='current', potential_transmissions=None):
+    """Enhanced plot_infection_tree function with layout and connection options
+
+    Args:
+        potential_transmissions: Dictionary mapping infected person IDs to list of (infector_id, score) tuples
+                               representing all potential infectors. Used to identify uncertain transmissions
+                               where multiple infectors from different locations are possible.
+    """
 
     times = [event['time'] for event in infection_events]
     y_values = list(positions.values())
@@ -525,56 +531,25 @@ def plot_infection_tree_enhanced(ax, infection_events, transmission_tree, positi
         if not infected_list:
             continue
 
-        # Find infector event and position
-        infector_event = next(
-            e for e in infection_events if e['person_id'] == infector_id)
-        infector_y = positions[infector_id]
-        infector_time = infector_event['time']
-
         for infected_id in infected_list:
-            infected_event = next(
-                e for e in infection_events if e['person_id'] == infected_id)
-            infected_y = positions[infected_id]
-            infected_time = infected_event['time']
 
-            # Use thicker lines for same-location transmissions
-            same_location = (
-                infector_event['location_type'] == infected_event['location_type'])
+            is_uncertain_transmission = False
 
-            # Check if transmission could be from multiple sources (uncertain)
-            potential_infectors = 0
-            if infected_status_df is not None and contact_analysis_df is not None:
-                patient_zero_time = min(e['time'] for e in infection_events)
+            if potential_transmissions is not None and infected_id in potential_transmissions:
+                # Use the pre-calculated potential transmissions data
+                potential_infectors_list = potential_transmissions[infected_id]
 
-                for e in infection_events:
-                    if e['time'] < infected_event['time']:
-                        if has_contact_at_location(e['person_id'], infected_event['person_id'],
-                                                   infected_event['location'], infected_event['time'], contact_analysis_df):
-                            is_patient_zero = (e['time'] == patient_zero_time)
+                is_uncertain_transmission = len(
+                    potential_infectors_list) > 1
 
-                            if is_patient_zero:
-                                potential_infectors += 1
-                            else:
-                                if infected_event['time'] < 0:
-                                    continue
-
-                                infectious_check = infected_status_df[
-                                    (infected_status_df['Person_ID'] == e['person_id']) &
-                                    (infected_status_df['Timestep'] == int(infected_event['time'])) &
-                                    (infected_status_df['Infected'] == 1)
-                                ]
-
-                                if len(infectious_check) > 0:
-                                    potential_infectors += 1
-            else:
-                potential_infectors = sum(1 for e in infection_events
-                                          if e['time'] < infected_event['time']
-                                          and e['location_type'] == infected_event['location_type'])
+                if (is_uncertain_transmission):
+                    print(
+                        f"Uncertain transmission for infected {infected_id} with potential infectors: {potential_infectors_list}")
 
             line_width = 2
-            line_alpha = 0.9 if same_location else 0.6
+            line_alpha = 0.9
             line_color = 'black'
-            line_style = '--' if potential_infectors > 1 else '-'
+            line_style = '--' if is_uncertain_transmission else '-'
 
             # Draw connections using selected method
             mini_tree = {infector_id: [infected_id]}
@@ -874,19 +849,19 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
     plot_infection_tree_enhanced(ax1, infection_events_1, tree_1, positions_1, location_colors,
                                  f"{method1_name}\n{len(infection_events_1)} infections",
                                  generations_1, infected_status_df_1, contact_analysis_df_1,
-                                 layout_method, connection_style)
+                                 layout_method, connection_style, potential_1)
 
     ax2 = fig.add_subplot(gs[0:2, 1])
     plot_infection_tree_enhanced(ax2, infection_events_2, tree_2, positions_2, location_colors,
                                  f"{method2_name}\n{len(infection_events_2)} infections",
                                  generations_2, infected_status_df_2, contact_analysis_df_2,
-                                 layout_method, connection_style)
+                                 layout_method, connection_style, potential_2)
 
     # Bottom panel - transmission opportunities analysis
     ax3 = fig.add_subplot(gs[2, :])
     plot_transmission_opportunities_over_time(ax3, inf_events_for_opp_1, inf_events_for_opp_2,
                                               method1_name, method2_name,
-                                              contact_analysis_df_1, contact_analysis_df_2,
+                                              contact_df_1, contact_df_2,
                                               infected_status_df_1, infected_status_df_2)
 
     # Add overall title
@@ -916,7 +891,7 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
         plt.Line2D([0], [0], color='black', lw=2, linestyle='-',
                    label='Certain transmission', alpha=0.9),
         plt.Line2D([0], [0], color='black', lw=2, linestyle='--',
-                   label='Uncertain transmission', alpha=0.9)
+                   label='Uncertain transmission (multiple potential infectors)', alpha=0.9)
     ])
 
     ax1.legend(handles=legend_elements, loc='upper left',
@@ -1017,6 +992,9 @@ def plot_transmission_opportunities_over_time(ax, infection_events_1, infection_
             ]
 
             transmission_opportunities += len(susceptible_at_location)
+            if len(susceptible_at_location) > 30:
+                print(
+                    f"High transmission opportunities ({susceptible_at_location}) at time {time_point} in location {location_id}")
 
         return transmission_opportunities
 
@@ -1033,13 +1011,18 @@ def plot_transmission_opportunities_over_time(ax, infection_events_1, infection_
         opportunities_2.append(opp_2)
 
     # Plot the curves
-    ax.plot(time_range, opportunities_1, 'o-', color='#d62728', linewidth=3,
+    # Calculate three day moving average for smoothing, use 3 point average
+    def moving_average(data, window_size=3):
+        return np.convolve(data, np.ones(window_size) /
+                           window_size, mode='same')
+
+    ax.plot(time_range, moving_average(opportunities_1), 'o-', color='#d62728', linewidth=3,
             markersize=4, alpha=0.8, label=f'{method1_name}')
-    ax.plot(time_range, opportunities_2, 's-', color='#1f77b4', linewidth=3,
+    ax.plot(time_range, moving_average(opportunities_2), 's-', color='#1f77b4', linewidth=3,
             markersize=4, alpha=0.8, label=f'{method2_name}')
 
     # Fill area between curves
-    ax.fill_between(time_range, opportunities_1, opportunities_2,
+    ax.fill_between(time_range, moving_average(opportunities_1), moving_average(opportunities_2),
                     alpha=0.3, color='lightgray', label='Difference')
 
     # Calculate cumulative differences
@@ -1115,9 +1098,9 @@ def main():
 
     args = parser.parse_args()
 
-    args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015850_R1_restaurant_strong_clustering_transmission_informed"
-    args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015856_R1_restaurant_strong_clustering_uniform_initialized"
-    args.layout_method = "depth-first"
+    # args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250905_224434_R1_restaurant_strong_clustering_transmission_informed"
+    # args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250905_224441_R1_restaurant_strong_clustering_uniform_initialized"
+    # args.layout_method = "depth-first"
 
     # Check if directories exist
     for dir_path, name in [(args.data_dir_method1, "Method 1"),

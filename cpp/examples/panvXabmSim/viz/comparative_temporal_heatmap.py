@@ -1606,10 +1606,10 @@ def main():
     args = parser.parse_args()
 
     # debug this for now
-    args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015850_R1_restaurant_strong_clustering_transmission_informed"
-    args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015856_R1_restaurant_strong_clustering_uniform_initialized"
+    # args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015850_R1_restaurant_strong_clustering_transmission_informed"
+    # args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015856_R1_restaurant_strong_clustering_uniform_initialized"
     # args.use_workplaces = True
-    args.use_size_based_colors = True
+    # args.use_size_based_colors = True
     # Only set default output path if none was provided
     if not args.output_path:
         mode_suffix = "_median" if args.use_median else "_average"
