@@ -114,7 +114,6 @@ add_library(memilio
     utils/mioomp.cpp
     utils/string_literal.h
     utils/type_list.h
-    ad/include/ad/ad_spdlog_formatter.h
     utils/base_dir.h
 )
 
