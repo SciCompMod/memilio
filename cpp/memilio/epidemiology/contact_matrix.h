@@ -22,6 +22,7 @@
 
 #include "memilio/epidemiology/damping.h"
 #include "memilio/math/matrix_shape.h"
+#include "memilio/math/math_utils.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/logging.h"
 
@@ -393,7 +394,7 @@ public:
         return Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>::NullaryExpr(
             get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
                 return std::accumulate(m_matrices.begin(), m_matrices.end(), FP(0.0), [t, i, j](FP s, auto& m) {
-                    return static_cast<FP>(s + m.get_matrix_at(t)(i, j));
+                    return evaluate_intermediate<FP>(s + m.get_matrix_at(t)(i, j));
                 });
             });
     }

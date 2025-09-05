@@ -27,6 +27,7 @@
 #include "ode_secirts/model.h"
 #include "ode_secirts/analyze_result.h"
 #include "memilio/math/eigen_util.h"
+#include "memilio/math/math_utils.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/io/epi_data.h"
@@ -396,7 +397,10 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                     immunity_population[0][i] * denom_I_Sev_Cr[i] * num_icu[county][i];
             }
         }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) == 0) {
             log_warning(
                 "No infections for unvaccinated reported on date {} for region {}. Population data has not been set.",
                 date, region[county]);
@@ -453,7 +457,11 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 model[county].parameters.template get<ReducExposedPartialImmunity<FP>>()[(AgeGroup)i] * denom_E[i] *
                 num_timm1[county][i];
         }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) == 0) {
+
             log_warning("No infections for partially vaccinated reported on date {} for region {}. "
                         "Population data has not been set.",
                         date, region[county]);
@@ -511,7 +519,10 @@ set_confirmed_cases_data(std::vector<Model>& model, const std::vector<ConfirmedC
                 model[county].parameters.template get<ReducExposedImprovedImmunity<FP>>()[(AgeGroup)i] * denom_E[i] *
                 num_timm2[county][i];
         }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) == 0) {
             log_warning("No infections for vaccinated reported on date {} for region {}. "
                         "Population data has not been set.",
                         date, region[county]);
@@ -625,7 +636,10 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
                                    const std::vector<std::vector<FP>> immunity_population)
 {
     for (size_t region = 0; region < vregion.size(); region++) {
-        if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
+        if (std::accumulate(num_population[region].begin(), num_population[region].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) > 0.0) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
 

@@ -24,6 +24,7 @@
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "memilio/math/math_utils.h"
 #include "ode_secirts/model.h"
 
 #include <assert.h>
@@ -78,14 +79,14 @@ void draw_sample_demographics(Model<FP>& model)
 
     // helper function to calculate the total population of a layer for a given age group
     auto calculate_layer_total = [&model](const std::vector<InfectionState>& states, AgeGroup ageGroup) {
-        return std::accumulate(states.begin(), states.end(), 0.0,
-                               [&model, &ageGroup](double sum, const InfectionState& state) {
-                                   return sum + model.populations[{ageGroup, state}];
+        return std::accumulate(states.begin(), states.end(), FP(0.0),
+                               [&model, &ageGroup](FP sum, const InfectionState& state) {
+                                   return evaluate_intermediate<FP>(sum + model.populations[{ageGroup, state}]);
                                });
     };
 
     // helper function to adjust the susceptible population of a layer for a given age group
-    auto adjust_susceptible_population = [&model](AgeGroup i, double diff, InfectionState susceptibleState) {
+    auto adjust_susceptible_population = [&model](AgeGroup i, FP diff, InfectionState susceptibleState) {
         model.populations[{i, susceptibleState}] += diff;
         if (model.populations[{i, susceptibleState}] < 0) {
             mio::log_warning("Negative population in State " + std::to_string(static_cast<size_t>(susceptibleState)) +
@@ -96,9 +97,9 @@ void draw_sample_demographics(Model<FP>& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
 
-        const double group_naive_total    = calculate_layer_total(naive_immunity_states, i);
-        const double group_partial_total  = calculate_layer_total(partial_immunity_states, i);
-        const double group_improved_total = calculate_layer_total(improved_immunity_states, i);
+        const FP group_naive_total    = calculate_layer_total(naive_immunity_states, i);
+        const FP group_partial_total  = calculate_layer_total(partial_immunity_states, i);
+        const FP group_improved_total = calculate_layer_total(improved_immunity_states, i);
 
         //sample initial compartments (with exceptions)
         for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
@@ -108,9 +109,9 @@ void draw_sample_demographics(Model<FP>& model)
                 model.populations[{i, inf_state}].draw_sample();
             }
         }
-        const double diff_naive    = group_naive_total - calculate_layer_total(naive_immunity_states, i);
-        const double diff_partial  = group_partial_total - calculate_layer_total(partial_immunity_states, i);
-        const double diff_improved = group_improved_total - calculate_layer_total(improved_immunity_states, i);
+        const FP diff_naive    = group_naive_total - calculate_layer_total(naive_immunity_states, i);
+        const FP diff_partial  = group_partial_total - calculate_layer_total(partial_immunity_states, i);
+        const FP diff_improved = group_improved_total - calculate_layer_total(improved_immunity_states, i);
 
         adjust_susceptible_population(i, diff_naive, InfectionState::SusceptibleNaive);
         adjust_susceptible_population(i, diff_partial, InfectionState::SusceptiblePartialImmunity);

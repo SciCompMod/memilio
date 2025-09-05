@@ -24,6 +24,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
+#include "memilio/math/math_utils.h"
 
 #include <numeric>
 
@@ -115,10 +116,9 @@ public:
     FP get_group_total(mio::Index<T> group_idx) const
     {
         auto const s = this->template slice<T>({(size_t)group_idx, 1});
-        auto op      = [](const FP& a, const UncertainValue<FP>& b) {
-            return a + b.value();
-        };
-        return std::accumulate(s.begin(), s.end(), FP(0.0), op);
+        return std::accumulate(s.begin(), s.end(), FP(0.0), [](const FP& a, const UncertainValue<FP>& b) {
+            return evaluate_intermediate<FP>(a + b);
+        });
     }
 
     /**
