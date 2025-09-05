@@ -217,6 +217,10 @@ public:
     bool step(const DerivFunction<FP>& f, Eigen::Ref<const Eigen::VectorX<FP>> yt, FP& t, FP& dt,
               Eigen::Ref<Eigen::VectorX<FP>> ytp1) const override
     {
+        using std::max;
+        using std::min;
+        using std::pow;
+
         assert(0 <= this->get_dt_min());
         assert(this->get_dt_min() <= this->get_dt_max());
 
@@ -224,11 +228,6 @@ public:
             mio::log_warning("IntegratorCore: Restricting given step size dt = {} to [{}, {}].", dt, this->get_dt_min(),
                              this->get_dt_max());
         }
-
-        using std::max;
-        using std::min;
-        using std::pow;
-
         dt = min<FP>(dt, this->get_dt_max());
 
         FP t_eval; // shifted time for evaluating yt
