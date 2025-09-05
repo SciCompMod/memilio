@@ -854,17 +854,17 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
     base_location_colors = {
         'Work': '#4169E1',
         'Home': '#2E8B57',
-        'School': '#FF6347',
+        'School': '#FF5805',
         'SocialEvent': '#9370DB',
-        'BasicsShop': '#FF8C00',
-        'Patient Zero': "#FF0000",
+        'BasicsShop': '#FFCB2E',
+        'Patient Zero': "#AB0000",
         'EventPanvadere': '#FF1493'
     }
 
     location_colors = base_location_colors.copy()
     if scenario_name and ('W' in scenario_name or 'work' in scenario_name.lower()):
-        location_colors['EventPanvadere'] = '#8A2BE2'
-        location_colors['Workplace Event'] = '#8A2BE2'
+        location_colors['EventPanvadere'] = '#FF1493'
+        location_colors['Workplace Event'] = '#FF1493'
     else:
         location_colors['EventPanvadere'] = '#FF1493'
         location_colors['Restaurant Event'] = '#FF1493'
@@ -1095,9 +1095,9 @@ def main():
     """Main function for command line usage"""
     parser = argparse.ArgumentParser(
         description='Create enhanced comparative infection tree visualization')
-    parser.add_argument('--data-dir-method1', required=True,
+    parser.add_argument('--data-dir-method1',
                         help='Directory containing transmission-informed data files')
-    parser.add_argument('--data-dir-method2', required=True,
+    parser.add_argument('--data-dir-method2',
                         help='Directory containing uniform initialization data files')
     parser.add_argument('--method1-name', default='Transmission-Informed',
                         help='Name for first method')
@@ -1114,6 +1114,10 @@ def main():
                         help='Maximum infections to display for clarity')
 
     args = parser.parse_args()
+
+    args.data_dir_method1 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015850_R1_restaurant_strong_clustering_transmission_informed"
+    args.data_dir_method2 = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/epidemic_curves_20250901_015856_R1_restaurant_strong_clustering_uniform_initialized"
+    args.layout_method = "depth-first"
 
     # Check if directories exist
     for dir_path, name in [(args.data_dir_method1, "Method 1"),

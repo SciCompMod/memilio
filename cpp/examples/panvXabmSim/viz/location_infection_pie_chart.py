@@ -145,9 +145,9 @@ def create_pie_chart(location_stats, output_path, scenario_name="", title_suffix
     color_map = {
         'Work': '#4169E1',
         'Home': '#2E8B57',
-        'School': '#FF6347',
+        'School': '#FF5805',
         'SocialEvent': '#9370DB',
-        'BasicsShop': '#FF8C00',
+        'BasicsShop': '#FFCB2E',
         'Restaurant': '#FFD700',     # Gold
         'Hospital': '#FF6666',       # Red
         'ICU': '#CC0000',           # Dark red
@@ -236,9 +236,9 @@ def create_comparative_pie_charts(data_dirs, scenario_names, output_path, suffix
     color_map = {
         'Work': '#4169E1',
         'Home': '#2E8B57',
-        'School': '#FF6347',
+        'School': '#FF5805',
         'SocialEvent': '#9370DB',
-        'BasicsShop': '#FF8C00',
+        'BasicsShop': '#FFCB2E',
         'Restaurant': '#FFD700',     # Gold
         'Hospital': '#FF6666',       # Red
         'ICU': '#CC0000',           # Dark red

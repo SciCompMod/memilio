@@ -83,7 +83,7 @@ def create_occupation_distribution_pie():
     return {
         'categories': ['Workers\n(431)', 'Pupils\n(105)', 'Others\n(464)'],
         'counts': [431, 105, 464],
-        'colors': ['#4169E1', '#FF6347', '#BA55D3']
+        'colors': ['#4169E1', '#FF5805', '#BA55D3']
     }
 
 
@@ -323,9 +323,9 @@ def create_single_pie_chart(ax, person_totals, group_people, location_types,
     color_map = {
         'Home': '#2E8B57',        # Green
         'Work': '#4169E1',        # Blue
-        'School': '#FF6347',      # Red
+        'School': "#FF5805",      # Red
         'SocialEvent': '#9370DB',  # Purple
-        'BasicsShop': '#FF8C00'   # Orange
+        'BasicsShop': "#FFCB2E"   # Orange
     }
 
     # Define consistent order: Home, Work, School, SocialEvent, BasicsShop
@@ -665,7 +665,7 @@ def create_combined_visualization(data_dir, location_file, city_config_file=None
         # Create fallback occupation pie with matching colors
         sim_categories = []
         sim_counts = []
-        sim_colors = ['#4169E1', '#FF6347', '#9370DB', '#2E8B57']
+        sim_colors = ['#4169E1', '#FF5805', '#9370DB', '#2E8B57']
 
         if len(workers_only) > 0:
             sim_categories.append(f'Workers\n({len(workers_only)})')
@@ -749,7 +749,7 @@ def main():
     args = parser.parse_args()
 
     # # Debug paths (comment out for production)
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-09-03121738"
+    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-09-04145556"
     args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
 
     location_file = args.data_dir + "/location_type_and_id.txt"

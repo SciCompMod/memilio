@@ -270,9 +270,9 @@ def get_location_edge_colors():
     return {
         'Home': '#2E8B57',
         'Work': '#4169E1',
-        'School': '#FF6347',
+        'School': "#FF5805",
         'SocialEvent': '#9370DB',
-        'BasicsShop': '#FF8C00',
+        'BasicsShop': '#FFCB2E',
         'Unknown': '#808080'
     }
 
