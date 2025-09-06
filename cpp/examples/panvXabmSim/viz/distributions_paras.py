@@ -219,8 +219,8 @@ plt.grid(True, alpha=0.3)
 # 4. Time to develop symptoms (symptomatic)
 ax4 = plt.subplot(4, 3, 4)
 y4 = lognormal_pdf(
-    t_short, t_I_sym_params['mean_log'], t_I_sym_params['std_log'])
-plt.plot(t_short, y4, 'orange', linewidth=2,
+    t_very_short, t_I_sym_params['mean_log'], t_I_sym_params['std_log'])
+plt.plot(t_very_short, y4, 'orange', linewidth=2,
          label=f'LogNormal(μ={t_I_sym_params["mean_log"]:.2f}, σ={t_I_sym_params["std_log"]:.2f})')
 plt.title(
     f'Time: Nonsymptomatic → Symptomatic\n(Mean={t_I_sym_mean:.1f}, Std={t_I_sym_std:.1f})', fontweight='bold')
@@ -231,8 +231,9 @@ plt.grid(True, alpha=0.3)
 
 # 5. Time to recover (asymptomatic)
 ax5 = plt.subplot(4, 3, 5)
-y5 = lognormal_pdf(t_long, t_I_R_params['mean_log'], t_I_R_params['std_log'])
-plt.plot(t_long, y5, 'purple', linewidth=2,
+y5 = lognormal_pdf(
+    t_short, t_I_R_params['mean_log'], t_I_R_params['std_log'])
+plt.plot(t_short, y5, 'purple', linewidth=2,
          label=f'LogNormal(μ={t_I_R_params["mean_log"]:.2f}, σ={t_I_R_params["std_log"]:.2f})')
 plt.title(
     f'Time: Asymptomatic → Recover\n(Mean={t_I_R_mean:.1f}, Std={t_I_R_std:.1f})', fontweight='bold')
@@ -244,8 +245,8 @@ plt.grid(True, alpha=0.3)
 # 6. Time to develop severe symptoms
 ax6 = plt.subplot(4, 3, 6)
 y6 = lognormal_pdf(
-    t_long, t_I_sev_params['mean_log'], t_I_sev_params['std_log'])
-plt.plot(t_long, y6, 'brown', linewidth=2,
+    t_short, t_I_sev_params['mean_log'], t_I_sev_params['std_log'])
+plt.plot(t_short, y6, 'brown', linewidth=2,
          label=f'LogNormal(μ={t_I_sev_params["mean_log"]:.2f}, σ={t_I_sev_params["std_log"]:.2f})')
 plt.title(
     f'Time: Symptomatic → Severe\n(Mean={t_I_sev_mean:.1f}, Std={t_I_sev_std:.1f})', fontweight='bold')
@@ -257,8 +258,8 @@ plt.grid(True, alpha=0.3)
 # 7. Time to recover (symptomatic)
 ax7 = plt.subplot(4, 3, 7)
 y7 = lognormal_pdf(
-    t_long, t_R_sym_params['mean_log'], t_R_sym_params['std_log'])
-plt.plot(t_long, y7, 'pink', linewidth=2,
+    t_short, t_R_sym_params['mean_log'], t_R_sym_params['std_log'])
+plt.plot(t_short, y7, 'pink', linewidth=2,
          label=f'LogNormal(μ={t_R_sym_params["mean_log"]:.2f}, σ={t_R_sym_params["std_log"]:.2f})')
 plt.title(
     f'Time: Symptomatic → Recover\n(Mean={t_R_sym_mean:.1f}, Std={t_R_sym_std:.1f})', fontweight='bold')
@@ -269,8 +270,9 @@ plt.grid(True, alpha=0.3)
 
 # 8. Time to develop critical symptoms
 ax8 = plt.subplot(4, 3, 8)
-y8 = lognormal_pdf(t_short, t_sev_params['mean_log'], t_sev_params['std_log'])
-plt.plot(t_short, y8, 'cyan', linewidth=2,
+y8 = lognormal_pdf(
+    t_very_short, t_sev_params['mean_log'], t_sev_params['std_log'])
+plt.plot(t_very_short, y8, 'cyan', linewidth=2,
          label=f'LogNormal(μ={t_sev_params["mean_log"]:.2f}, σ={t_sev_params["std_log"]:.2f})')
 plt.title(
     f'Time: Severe → Critical\n(Mean={t_sev_mean:.1f}, Std={t_sev_std:.1f})', fontweight='bold')
