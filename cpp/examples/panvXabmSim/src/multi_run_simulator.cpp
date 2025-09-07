@@ -694,6 +694,31 @@ void assign_infection_state(mio::abm::World& world, const std::vector<uint32_t>&
             mio::abm::Infection(rng, mio::abm::VirusVariant::Alpha, world.get_person(person_id).get_age(),
                                 world.parameters, t, mio::abm::InfectionState::InfectedNoSymptoms));
     }
+
+    // std::cout << "Household map created with " << household_map.size() << " entries." << std::endl;
+    // for (const auto& [person_id_pre, person_id_sim] : household_map) {
+    //     std::cout << "Person ID Pre: " << person_id_pre << " Person ID Sim: " << person_id_sim << " HouseholdID: "
+    //               << city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home)
+    //               << "House has "
+    //               << city
+    //                      .get_individualized_location(mio::abm::LocationId{
+    //                          city.get_person(person_id_sim).get_assigned_location_index(mio::abm::LocationType::Home),
+    //                          mio::abm::LocationType::Home})
+    //                      .get_persons()
+    //                      .size()
+    //               << " persons." << std::endl;
+    // }
+
+    // print initial infections / also print household and workplace id
+    std::cout << "Initial infections assigned to persons: \n";
+    for (const auto& person_id : initial_infections) {
+        std::cout << person_id << " ";
+        auto& person = world.get_person(person_id);
+        std::cout << "(Household ID: " << person.get_assigned_location_index(mio::abm::LocationType::Home)
+                  << ", Work ID: " << person.get_assigned_location_index(mio::abm::LocationType::Work) << ") ";
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 mio::IOResult<SimulationResults>

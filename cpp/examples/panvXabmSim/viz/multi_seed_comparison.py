@@ -199,9 +199,10 @@ def create_multi_seed_comparison_plot(grouped_results, output_dir, event_type, n
                         color='darkblue' if i == 0 else 'darkred', zorder=10)  # High zorder to be on top
 
         # Add statistics text with larger font
-        stats_text = f"Uniform: μ={np.mean(memilio_finals):.0f}, σ={np.std(memilio_finals):.0f}\n"
-        stats_text += f"Transmission-Informed: μ={np.mean(panvadere_finals):.0f}, σ={np.std(panvadere_finals):.0f}"
-        ax4.text(0.02, 0.1, stats_text, transform=ax4.transAxes, fontsize=18,
+        stats_text = f"Uniform: μ={np.mean(memilio_finals):.1f}, σ={np.std(memilio_finals):.1f}\n"
+        stats_text += f"Transmission-Informed: μ={np.mean(panvadere_finals):.1f}, σ={np.std(panvadere_finals):.1f}\n"
+        stats_text += f"Difference in means: {abs(np.mean(memilio_finals) - np.mean(panvadere_finals)):.1f} (+{abs(np.mean(memilio_finals) - np.mean(panvadere_finals))/min(np.mean(memilio_finals), np.mean(panvadere_finals))*100:.1f}%)"
+        ax4.text(0.02, 0.15, stats_text, transform=ax4.transAxes, fontsize=18,
                  verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
 
     ax4.set_ylabel('Final Cumulative Infections', fontsize=22)

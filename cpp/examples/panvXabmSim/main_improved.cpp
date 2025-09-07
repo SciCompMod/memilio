@@ -229,7 +229,11 @@ mio::IOResult<void> main_flow(int argc, char* argv[])
     }
     else {
         // Use default seeds for reproducibility
-        std::initializer_list<uint32_t> seeds = {1402121u, 35897932u, 27182818u, 18284590u, 45235360u, 28747135u};
+        // std::initializer_list<uint32_t> seeds = {1402621u, 35817932u, 27182828u, 11284190u, 45231360u, 28717135u};
+        int seed                              = 12345678;
+        std::initializer_list<uint32_t> seeds = {static_cast<uint32_t>(seed),     static_cast<uint32_t>(seed + 1),
+                                                 static_cast<uint32_t>(seed + 2), static_cast<uint32_t>(seed + 3),
+                                                 static_cast<uint32_t>(seed + 4), static_cast<uint32_t>(seed + 5)};
         rng.seed(seeds);
     }
     rng.synchronize();
