@@ -21,7 +21,7 @@
 * is extracted from the Ipopt documentation
 */
 
-#include "ad/ad_wrapper.hpp"
+#include "memilio/ad/ad.h"
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "ode_seair/model.h"

@@ -22,7 +22,7 @@
 #define MIO_AD_H
 
 #include "ad/ad.hpp"
-#include "math/eigen.h"
+#include "memilio/math/eigen.h"
 
 #include <cmath>
 #include <limits>

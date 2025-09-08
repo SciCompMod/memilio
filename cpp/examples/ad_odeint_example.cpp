@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "ad/ad_wrapper.hpp"
+#include "memilio/ad/ad.h"
 #include "boost/numeric/odeint.hpp"
 #include <array>
 
