@@ -47,13 +47,13 @@ public:
 
     /**
      * @brief Calculate the current adoption rate of an agent from its status to the given one.
-     * Expected signature: `double adoption_rate(const Agent&, const Status&)`
+     * Expected signature: `ScalarType adoption_rate(const Agent&, const Status&)`
      */
     using Implementation::adoption_rate;
 
     /**
      * @brief Change the Position of an Agent, depending on its state, the current time and step size.
-     * Expected signature: `void move(const double, const double, Agent&)`
+     * Expected signature: `void move(const ScalarType, const ScalarType, Agent&)`
      * The first argument is time, the second step size.
      */
     using Implementation::move;

@@ -183,14 +183,14 @@ private:
             m_current_rates[i] = m_model->evaluate(rate, m_result.get_last_value());
             m_waiting_times[i] = (m_current_rates[i] > 0)
                                      ? (m_tp_next_event[i] - m_internal_time[i]) / m_current_rates[i]
-                                     : std::numeric_limits<ScalarType>::max();
+                                     : std::numeric_limits<FP>::max();
             i++;
         }
         for (const auto& rate : transition_rates()) {
             m_current_rates[i] = m_model->evaluate(rate, m_result.get_last_value());
             m_waiting_times[i] = (m_current_rates[i] > 0)
                                      ? (m_tp_next_event[i] - m_internal_time[i]) / m_current_rates[i]
-                                     : std::numeric_limits<ScalarType>::max();
+                                     : std::numeric_limits<FP>::max();
             i++;
         }
     }

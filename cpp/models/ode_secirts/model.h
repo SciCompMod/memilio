@@ -901,9 +901,9 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
-    auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms<FP>>().array().template cast<double>();
-    auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic<FP>>().array().template cast<double>();
-    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>().array().template cast<double>();
+    auto& p_asymp   = params.template get<RecoveredPerInfectedNoSymptoms<FP>>().array().template cast<FP>();
+    auto& p_inf     = params.template get<RiskOfInfectionFromSymptomatic<FP>>().array().template cast<FP>();
+    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSymptomatic<FP>>().array().template cast<FP>();
     //slice of InfectedNoSymptoms
     auto y_INS = slice(y, {Eigen::Index(InfectionState::InfectedNoSymptomsNaive),
                            Eigen::Index(size_t(params.get_num_groups())), Eigen::Index(InfectionState::Count)}) +
@@ -914,12 +914,11 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 
     //compute isolation, same as infection risk from main model
     auto test_and_trace_required =
-        ((1 - p_asymp) / params.template get<TimeInfectedNoSymptoms<FP>>().array().template cast<double>() *
-         y_INS.array())
+        ((1 - p_asymp) / params.template get<TimeInfectedNoSymptoms<FP>>().array().template cast<FP>() * y_INS.array())
             .sum();
     auto riskFromInfectedSymptomatic =
-        smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity<FP>>()),
-                        params.template get<TestAndTraceCapacity<FP>>() * 5, p_inf.matrix(), p_inf_max.matrix());
+        smoother_cosine<FP>(test_and_trace_required, FP(params.template get<TestAndTraceCapacity<FP>>()),
+                            params.template get<TestAndTraceCapacity<FP>>() * 5, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorX<FP>::Ones(y.rows()).eval();
@@ -947,11 +946,11 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
 template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
 auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> migrated, FP time)
 {
-    auto& model       = sim.get_model();
-    auto nondetection = 1.0;
+    auto& model     = sim.get_model();
+    FP nondetection = 1.0;
     if (time >= model.parameters.get_start_commuter_detection() &&
         time < model.parameters.get_end_commuter_detection()) {
-        nondetection = (double)model.parameters.get_commuter_nondetection();
+        nondetection = (FP)model.parameters.get_commuter_nondetection();
     }
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); ++i) {
         auto ISyNi  = model.populations.get_flat_index({i, InfectionState::InfectedSymptomsNaive});

@@ -137,7 +137,7 @@ public:
      */
     bool apply_constraints()
     {
-        const double tol_times = 1e-1;
+        const FP tol_times = 1e-1;
 
         int corrected = false;
 
@@ -179,7 +179,7 @@ public:
      */
     bool check_constraints() const
     {
-        const double tol_times = 1e-1;
+        const FP tol_times = 1e-1;
 
         for (auto i = AgeGroup(0); i < m_num_groups; i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {

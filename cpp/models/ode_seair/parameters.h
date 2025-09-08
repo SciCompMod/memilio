@@ -195,7 +195,7 @@ public:
             return true;
         }
 
-        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
         if (this->template get<TimeExposed<FP>>() < tol_times) {
             log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
                       "note that unreasonably small compartment stays lead to massively increased run time. "

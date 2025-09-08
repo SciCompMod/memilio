@@ -474,7 +474,7 @@ public:
      */
     bool apply_constraints()
     {
-        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
 
         int corrected = false;
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
@@ -649,7 +649,7 @@ public:
             return true;
         }
 
-        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
@@ -763,13 +763,13 @@ private:
     FP m_commuter_nondetection    = 0.0;
     FP m_start_commuter_detection = 0.0;
     FP m_end_commuter_detection   = 0.0;
-    FP m_end_dynamic_npis         = std::numeric_limits<ScalarType>::max();
+    FP m_end_dynamic_npis         = std::numeric_limits<FP>::max();
 };
 
 /**
  * @brief WIP !! TO DO: returns the actual, approximated reproduction rate
  */
-//double get_reprod_rate(Parameters const& params, double t, std::vector<double> const& yt);
+//FP get_reprod_rate(Parameters const& params, FP t, std::vector<FP> const& yt);
 
 } // namespace osecir
 } // namespace mio
