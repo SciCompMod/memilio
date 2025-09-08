@@ -55,7 +55,7 @@ def run_sde_sir_simulation():
     model.parameters.ContactPatterns.minimum = np.zeros(
         (1, 1))
     model.parameters.ContactPatterns.add_damping(
-        Damping(coeffs=np.r_[1], t=1.0, level=0, type=0))
+        Damping(coeffs=np.r_[0.6], t=12.5, level=0, type=0))
 
     # Check logical constraints to parameters
     model.check_constraints()
