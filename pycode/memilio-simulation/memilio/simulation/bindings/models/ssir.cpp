@@ -81,14 +81,10 @@ PYBIND11_MODULE(_simulation_ssir, m)
     pymio::bind_Population(m, "Populations", mio::Tag<mio::ssir::Model::Populations>{});
     pymio::bind_CompartmentalModel<mio::ssir::InfectionState, Populations, mio::ssir::Parameters,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
-    // pymio::bind_StochasticModel<double, mio::ssir::InfectionState, Populations, mio::ssir::Parameters,
-    //                                pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<mio::ssir::Model, pymio::EnablePickling::Never,
                       mio::CompartmentalModel<double, mio::ssir::InfectionState, Populations, mio::ssir::Parameters>>(
         m, "Model")
         .def(py::init<>());
-
-    // pymio::bind_Simulation<mio::Simulation<double, mio::ssir::Model>>(m, "Simulation");
 
     m.def(
         "simulate_stochastic",

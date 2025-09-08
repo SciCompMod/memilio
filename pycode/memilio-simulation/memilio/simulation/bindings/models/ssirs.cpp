@@ -81,18 +81,10 @@ PYBIND11_MODULE(_simulation_ssirs, m)
     pymio::bind_Population(m, "Populations", mio::Tag<mio::ssirs::Model::Populations>{});
     pymio::bind_CompartmentalModel<mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
-    // pymio::bind_StochasticModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters,
-    //                                pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<mio::ssirs::Model, pymio::EnablePickling::Never,
                       mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters>>(
         m, "Model")
         .def(py::init<>());
-
-    // pymio::bind_Simulation<mio::Simulation<double, mio::ssirs::Model>>(m, "Simulation");
-
-    // m.def(
-    //     "simulate_stochastic", &mio::simulate_stochastic<double, mio::ssirs::Model>, "Simulates an SDE SIR model from t0 to tmax.",
-    //     py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.def(
         "simulate_stochastic",
