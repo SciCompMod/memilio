@@ -196,11 +196,17 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     num_plots = 3
     num_plotted_results = len(gregory_orders_simulation)
 
-    fig, axs = plt.subplots(num_plots, 1, sharex=True, figsize=(6, 8))
+    fig, axs = plt.subplots(1, num_plots, sharex=True, figsize=(9, 3))
     secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
     labels = [
         f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
+    labels.insert(0, "")
     labels.append(r"$\mathcal{O}(\Delta t)$")
+    labels.append(r"$\mathcal{O}(\Delta t^2)$")
+    labels.append(r"$\mathcal{O}(\Delta t^3)$")
+    labels.append(r"$\mathcal{O}(\Delta t^4)$")
+
+    handles = [plt.Line2D([], [], color='none')]
 
     # Define colors.
     colors = [plt.cm.viridis(x)
@@ -209,13 +215,60 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     for i in range(num_plots):
         for j in range(len(gregory_orders_simulation)):
             # Plot results.
-            axs[i].plot(timesteps_ide,
-                        errors_all_gregory_orders[j][:, i], '-o', color=colors[j])
+            if i == 0:
+                line = axs[i].plot(timesteps_ide,
+                                   errors_all_gregory_orders[j][:, i], '-o', color=colors[j], label=labels[j])
+                handles.append(line[0])
+            else:
+                line = axs[i].plot(timesteps_ide,
+                                   errors_all_gregory_orders[j][:, i], '-o', color=colors[j])
+                # handles.append(line)
 
-        # Plot comparison line for linear convergence.
-        comparison = [dt for dt in timesteps_ide]
-        axs[i].plot(timesteps_ide, comparison,
-                    '--', color='gray', linewidth=1.2)
+        # Plot comparison line for linear convergence as well as secodn, third and fourth order.
+        if i == 0:
+            num_timesteps_ide = len(timesteps_ide)
+
+            plotted_timesteps = timesteps_ide[:4]
+            comparison = [0.1*dt**2 for dt in plotted_timesteps]
+            second = axs[i].plot(plotted_timesteps, comparison,
+                                 '--', color=colors[0], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^2)$")
+            handles.append(second[0])
+
+            plotted_timesteps = timesteps_ide[:3]
+            comparison = [0.04*dt**3 for dt in plotted_timesteps]
+            third = axs[i].plot(plotted_timesteps, comparison,
+                                '--', color=colors[1], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^3)$")
+            handles.append(third[0])
+
+            plotted_timesteps = timesteps_ide[:2]
+            comparison = [0.007*dt**4 for dt in plotted_timesteps]
+            fourth = axs[i].plot(plotted_timesteps, comparison,
+                                 '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
+            handles.append(fourth[0])
+
+        if i == 1:
+            num_timesteps_ide = len(timesteps_ide)
+
+            plotted_timesteps = timesteps_ide[:4]
+            comparison = [0.1*dt**2 for dt in plotted_timesteps]
+            axs[i].plot(plotted_timesteps, comparison,
+                        '--', color=colors[0], linewidth=1.2, alpha=0.5)
+
+            plotted_timesteps = timesteps_ide[:3]
+            comparison = [0.03*dt**3 for dt in plotted_timesteps]
+            axs[i].plot(plotted_timesteps, comparison,
+                        '--', color=colors[1], linewidth=1.2, alpha=0.5)
+
+            plotted_timesteps = timesteps_ide[:2]
+            comparison = [0.005*dt**4 for dt in plotted_timesteps]
+            axs[i].plot(plotted_timesteps, comparison,
+                        '--', color=colors[2], linewidth=1.2, alpha=0.5)
+
+        if i == 2:
+            comparison = [2*dt for dt in timesteps_ide]
+            linear = axs[i].plot(timesteps_ide, comparison,
+                                 '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
+            handles.insert(4, linear[0])
 
         # Adapt plots.
         axs[i].set_xscale("log", base=10)
@@ -224,6 +277,9 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         axs[i].set_title(secir_dict[i], fontsize=10)
         axs[i].grid(True, linestyle='--', alpha=0.6)
 
+        if i != 2:
+            axs[i].set_ylim(1e-8, 5*1e-1)
+
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
     fig.supylabel(
         r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_{2}$", fontsize=12)
@@ -231,9 +287,12 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
     axs[0].invert_xaxis()
 
-    legend = fig.legend(labels, ncol=2,  loc='outside lower center',
-                        fontsize=14, bbox_to_anchor=(0.5, -0.06), bbox_transform=fig.transFigure)
-    plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.1)
+    # print(handles)
+
+    legend = fig.legend(handles=handles, labels=labels, ncol=2,  loc='lower right',
+                        fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(1., -0.1))  # bbox_to_anchor=(0.5, -0.06),
+    plt.tight_layout()
+    # plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.1)
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
@@ -264,12 +323,16 @@ def main():
     groundtruth_exponent = 6
     gregory_order_groundtruth = 3
 
+    finite_difference_order = 4
+
     abstol_exponent = 10
     reltol_exponent = 5
 
     # dir_name = f"exponential_experiments_23072025/exponential_paper_example_dt_ode=1e-{groundtruth_exponent}_abstol=1e-{abstol_exponent}_reltol={reltol_exponent}"
-    # dir_name = f"detailed_init_exponential_dt_ode=1e-{groundtruth_exponent}"
-    dir_name = f"exponential_paper_example_dt_ode=1e-{groundtruth_exponent}"
+    # dir_name = f"detailed_init_exponential_rkf78_dt_ode=1e-{groundtruth_exponent}"
+    # dir_name = f"detailed_init_exponential_rkf78_dt_ode=1e-{groundtruth_exponent}_finite_diff={finite_difference_order}"
+    # dir_name = "detailed_init_exponential_dt_ode=1e-6_finite_diff=4_central_fd"
+    dir_name = "detailed_init_exponential_test_better_convergence"
     print(dir_name)
 
     groundtruth_ode = True
@@ -313,8 +376,8 @@ def main():
 
         print()
         print(f"Gregory order {gregory_order_simulation}")
-        print("Errors: ")
-        print(errors[:, :])
+        # print("Errors: ")
+        # print(errors[:, :])
 
         # Determine order of convergence
         order = compute_order_of_convergence(
@@ -322,7 +385,10 @@ def main():
 
         print(
             f"Orders of convergence: ")
-        print(order)
+        print(order.T)
+
+        print(
+            f"Total population at end for time step {timesteps_ide[-1]}: {results['ide'][-1][-1].sum()}")
 
     # Plot convergence of all compartments separately.
     plot_convergence(errors_all_gregory_orders, timesteps_ide,
