@@ -18,58 +18,19 @@
 * limitations under the License.
 */
 
-#ifndef MIO_AD_WRAPPER_H
-#define MIO_AD_WRAPPER_H
-
-#pragma once
+#ifndef MIO_AD_H
+#define MIO_AD_H
 
 #include "ad/ad.hpp"
+#include "math/eigen.h"
 
-#include <Eigen/Core>
 #include <cmath>
 #include <limits>
 
-// Extend automatic differentiation (AD) library to support std::round.
-namespace ad
-{
-namespace internal
-{
-using std::round;
-template <class AD_TAPE_REAL, class DATA_HANDLER_1>
-static inline double round(const ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1>& x)
-{
-    return round(x._value());
-}
-template <class AD_TAPE_REAL, class A1_T1, class A1_T2, class A1_OP>
-static inline double round(const ad::internal::binary_intermediate_aa<AD_TAPE_REAL, A1_T1, A1_T2, A1_OP>& x)
-{
-    return round(x._value());
-}
-template <class AD_TAPE_REAL, class A1_T1, class A1_OP>
-static inline double round(const ad::internal::binary_intermediate_ap<AD_TAPE_REAL, A1_T1, A1_OP>& x)
-{
-    return round(x._value());
-}
-template <class AD_TAPE_REAL, class A1_T2, class A1_OP>
-static inline double round(const ad::internal::binary_intermediate_pa<AD_TAPE_REAL, A1_T2, A1_OP>& x)
-{
-    return round(x._value());
-}
-template <class AD_TAPE_REAL, class A1_T, class A1_OP>
-static inline double round(const ad::internal::unary_intermediate<AD_TAPE_REAL, A1_T, A1_OP>& x)
-{
-    return round(x._value());
-}
-} // namespace internal
-} // namespace ad
-
 // Allow std::numeric_limits to work with AD types.
-namespace std
-{
 template <class FP, class DataHandler>
-struct numeric_limits<ad::internal::active_type<FP, DataHandler>> : public numeric_limits<FP> {
+struct std::numeric_limits<ad::internal::active_type<FP, DataHandler>> : public numeric_limits<FP> {
 };
-} // namespace std
 
 // Ensures that Eigen recognizes your AD types as valid scalars.
 namespace Eigen
@@ -94,4 +55,4 @@ struct NumTraits<ad::internal::active_type<FP, DataHandler>>
 };
 } // namespace Eigen
 
-#endif // MIO_AD_WRAPPER_H
+#endif // MIO_AD_H
