@@ -49,24 +49,21 @@ void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_re
     using std::max;
     using std::min;
     auto set_distribution = [dev_rel](UncertainValue<FP>& v, FP min_val = 0.001) {
-        auto lower_bound =
-            min<FP>(max<FP>(min_val, (1 - dev_rel * 2.6) * v), 0.1 * std::numeric_limits<ScalarType>::max());
-        auto upper_bound =
-            min<FP>(max<FP>(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<ScalarType>::max());
+        auto lower_bound = min<FP>(max<FP>(min_val, (1 - dev_rel * 2.6) * v), 0.1 * std::numeric_limits<FP>::max());
+        auto upper_bound = min<FP>(max<FP>(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<FP>::max());
 
         if (mio::floating_point_equal<FP>(lower_bound, upper_bound, mio::Limits<FP>::zero_tolerance())) {
             //MSVC has problems if standard deviation for normal distribution is zero
             mio::log_debug("Bounded ParameterDistribution has standard deviation close to zero. Therefore constant "
                            "distribution is used.");
             v.set_distribution(ParameterDistributionConstant(
-                min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<ScalarType>::max())));
+                min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<FP>::max())));
         }
         else {
             v.set_distribution(ParameterDistributionNormal(
                 //add add limits for nonsense big values. Also mscv has a problem with a few doubles so this fixes it
-                lower_bound, upper_bound,
-                min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<ScalarType>::max()),
-                min<FP>(max<FP>(min_val, dev_rel * v), std::numeric_limits<ScalarType>::max())));
+                lower_bound, upper_bound, min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<FP>::max()),
+                min<FP>(max<FP>(min_val, dev_rel * v), std::numeric_limits<FP>::max())));
         }
     };
 

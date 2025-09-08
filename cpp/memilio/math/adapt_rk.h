@@ -150,7 +150,7 @@ public:
      * @brief Setting up the integrator
      */
     RKIntegratorCore()
-        : OdeIntegratorCore<FP>(std::numeric_limits<ScalarType>::min(), std::numeric_limits<ScalarType>::max())
+        : OdeIntegratorCore<FP>(std::numeric_limits<FP>::min(), std::numeric_limits<FP>::max())
         , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
     {
@@ -170,7 +170,7 @@ public:
     {
     }
 
-    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override 
+    std::unique_ptr<OdeIntegratorCore<FP>> clone() const override
     {
         return std::make_unique<RKIntegratorCore>(*this);
     }

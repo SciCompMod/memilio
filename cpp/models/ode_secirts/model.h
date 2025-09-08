@@ -826,7 +826,7 @@ public:
 
 private:
     FP m_t_last_npi_check;
-    std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {-std::numeric_limits<ScalarType>::max(), SimulationTime<FP>(0)};
+    std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime<FP>(0)};
 };
 
 /**

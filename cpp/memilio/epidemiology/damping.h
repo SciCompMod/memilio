@@ -550,7 +550,7 @@ void Dampings<FP, D>::update_cache()
 
     if (m_accumulated_dampings_cached.empty()) {
         m_accumulated_dampings_cached.emplace_back(Matrix::Zero(m_shape.rows(), m_shape.cols()),
-                                                   SimulationTime<FP>(std::numeric_limits<ScalarType>::lowest()));
+                                                   SimulationTime<FP>(std::numeric_limits<FP>::lowest()));
 
         std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>> active_by_type;
         std::vector<std::tuple<Matrix, DampingLevel>> sum_by_level;
@@ -571,7 +571,7 @@ void Dampings<FP, D>::update_cache()
         }
 
         m_accumulated_dampings_cached.emplace_back(get<Matrix>(m_accumulated_dampings_cached.back()),
-                                                   SimulationTime<FP>(std::numeric_limits<ScalarType>::max()));
+                                                   SimulationTime<FP>(std::numeric_limits<FP>::max()));
     }
 }
 

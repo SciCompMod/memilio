@@ -81,7 +81,7 @@ struct ICUCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
-        return Type(std::numeric_limits<ScalarType>::max());
+        return Type(std::numeric_limits<FP>::max());
     }
     static std::string name()
     {
@@ -357,7 +357,7 @@ struct TestAndTraceCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
-        return Type(std::numeric_limits<ScalarType>::max());
+        return Type(std::numeric_limits<FP>::max());
     }
     static std::string name()
     {

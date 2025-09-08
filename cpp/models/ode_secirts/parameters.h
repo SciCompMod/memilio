@@ -67,7 +67,7 @@ struct StartDayNewVariant {
     using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return std::numeric_limits<ScalarType>::max();
+        return std::numeric_limits<FP>::max();
     }
     static std::string name()
     {
@@ -103,7 +103,7 @@ struct ICUCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
-        return Type(std::numeric_limits<ScalarType>::max());
+        return Type(std::numeric_limits<FP>::max());
     }
     static std::string name()
     {
@@ -120,7 +120,7 @@ struct TestAndTraceCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
-        return Type(std::numeric_limits<ScalarType>::max());
+        return Type(std::numeric_limits<FP>::max());
     }
     static std::string name()
     {
@@ -1350,7 +1350,7 @@ private:
     FP m_commuter_nondetection    = 0.0;
     FP m_start_commuter_detection = 0.0;
     FP m_end_commuter_detection   = 0.0;
-    FP m_end_dynamic_npis         = std::numeric_limits<ScalarType>::max();
+    FP m_end_dynamic_npis         = std::numeric_limits<FP>::max();
 };
 
 } // namespace osecirts

@@ -54,7 +54,7 @@ FP abs_max(FP v1, FP v2)
  * @return true if v1 is within the specified relative OR absolute tolerance of v2  
  */
 template <typename FP>
-bool floating_point_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<ScalarType>::min())
+bool floating_point_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     using std::abs;
     auto diff = abs(v1 - v2);
@@ -75,7 +75,7 @@ bool floating_point_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeri
  * @return true if v1 is less than v2 and not within relative or absolute tolerance of v2.
  */
 template <typename FP>
-bool floating_point_less(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<ScalarType>::min())
+bool floating_point_less(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     auto diff = v1 - v2;
     return diff < -(abs_tol + rel_tol * abs_max<FP>(v1, v2));
@@ -95,7 +95,7 @@ bool floating_point_less(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric
  * @return true if v1 is greater than v2 and not within absolute or relative tolerance of v2.
  */
 template <typename FP>
-bool floating_point_greater(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<ScalarType>::min())
+bool floating_point_greater(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     return floating_point_less<FP>(v2, v1, abs_tol, rel_tol);
 }
@@ -114,7 +114,7 @@ bool floating_point_greater(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::nume
  * @return true if v1 is less than v2 or within relative or absolute tolerances of v2.
  */
 template <typename FP>
-bool floating_point_less_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<ScalarType>::min())
+bool floating_point_less_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     return !floating_point_greater<FP>(v1, v2, abs_tol, rel_tol);
 }
@@ -133,7 +133,7 @@ bool floating_point_less_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::n
  * @return true if v1 is greater than v2 or within absolute or relative tolerance of v2.
  */
 template <typename FP>
-bool floating_point_greater_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<ScalarType>::min())
+bool floating_point_greater_equal(FP v1, FP v2, FP abs_tol = 0, FP rel_tol = std::numeric_limits<FP>::min())
 {
     return !floating_point_less<FP>(v1, v2, abs_tol, rel_tol);
 }
