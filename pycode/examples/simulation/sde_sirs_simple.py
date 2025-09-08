@@ -23,7 +23,8 @@ import numpy as np
 
 from memilio.simulation import AgeGroup, Damping
 from memilio.simulation.ssirs import InfectionState as State
-from memilio.simulation.ssirs import (Model, simulate_stochastic)
+from memilio.simulation.ssirs import (
+    Model, simulate_stochastic, interpolate_simulation_result)
 
 
 def run_sde_sirs_simulation():
@@ -33,16 +34,17 @@ def run_sde_sirs_simulation():
     population = 10000
 
     days = 5.  # number of days to simulate
-    dt = 0.1
+    dt = 0.001
 
     # Initialize Parameters
     model = Model()
 
     # Compartment transition duration
     model.parameters.TimeInfected.value = 10.
+    model.parameters.TimeImmune.value = 100.
 
     # # Compartment transition propabilities
-    model.parameters.TransmissionProbabilityOnContact.value = 2.
+    model.parameters.TransmissionProbabilityOnContact.value = 1.
 
     # Initial number of people in each compartment
     model.populations[State.Infected] = 100
@@ -51,11 +53,11 @@ def run_sde_sirs_simulation():
         (State.Susceptible), population)
 
     model.parameters.ContactPatterns.baseline = np.ones(
-        (1, 1)) * 2.7
+        (1, 1)) * 20.7
     model.parameters.ContactPatterns.minimum = np.zeros(
         (1, 1))
     model.parameters.ContactPatterns.add_damping(
-        Damping(coeffs=np.r_[1], t=1.0, level=0, type=0))
+        Damping(coeffs=np.r_[0.6], t=12.5, level=0, type=0))
 
     # Check logical constraints to parameters
     model.check_constraints()
@@ -63,7 +65,11 @@ def run_sde_sirs_simulation():
     # Run Simulation
     result = simulate_stochastic(0., days, dt, model)
 
-    result.print_table(False, ["S", "I", "R"], 16, 5)
+    # Interpolate results
+    result = interpolate_simulation_result(result)
+
+    # Print results
+    result.print_table(False, ["Susceptible", "Infected", "Recovered"], 16, 5)
 
 
 if __name__ == "__main__":
