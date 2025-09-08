@@ -52,17 +52,17 @@ inline std::string pretty_name<mio::ssirs::InfectionState>()
 
 PYBIND11_MODULE(_simulation_ssirs, m)
 {
-    // m.def("interpolate_simulation_result",
-    //       static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-    //           &mio::interpolate_simulation_result),
-    //       py::arg("ts"), py::arg("abs_tol") = 1e-14);
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
 
-    // m.def("interpolate_simulation_result",
-    //       static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-    //           &mio::interpolate_simulation_result),
-    //       py::arg("ts"), py::arg("interpolation_times"));
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
 
-    // m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
     pymio::iterable_enum<mio::ssirs::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::ssirs::InfectionState::Susceptible)
@@ -71,8 +71,8 @@ PYBIND11_MODULE(_simulation_ssirs, m)
 
     pymio::bind_ParameterSet<mio::ssirs::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
 
-    pymio::bind_class<mio::ssirs::Parameters, pymio::EnablePickling::Required,
-                      mio::ssirs::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::ssirs::Parameters, pymio::EnablePickling::Required, mio::ssirs::ParametersBase>(m,
+                                                                                                           "Parameters")
         .def(py::init<>())
         .def("check_constraints", &mio::ssirs::Parameters::check_constraints)
         .def("apply_constraints", &mio::ssirs::Parameters::apply_constraints);
@@ -83,16 +83,15 @@ PYBIND11_MODULE(_simulation_ssirs, m)
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     // pymio::bind_StochasticModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters,
     //                                pymio::EnablePickling::Never>(m, "ModelBase");
-    pymio::bind_class<
-        mio::ssirs::Model, pymio::EnablePickling::Never,
-        mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters>>(
+    pymio::bind_class<mio::ssirs::Model, pymio::EnablePickling::Never,
+                      mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters>>(
         m, "Model")
         .def(py::init<>());
 
     // pymio::bind_Simulation<mio::Simulation<double, mio::ssirs::Model>>(m, "Simulation");
-    
+
     // m.def(
-    //     "simulate_stochastic", &mio::simulate_stochastic<double, mio::ssirs::Model>, "Simulates an SDE SIR model from t0 to tmax.", 
+    //     "simulate_stochastic", &mio::simulate_stochastic<double, mio::ssirs::Model>, "Simulates an SDE SIR model from t0 to tmax.",
     //     py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"), py::arg("integrator") = py::none());
 
     m.def(
@@ -100,8 +99,7 @@ PYBIND11_MODULE(_simulation_ssirs, m)
         [](double t0, double tmax, double dt, mio::ssirs::Model const& model) {
             return mio::simulate_stochastic<double, mio::ssirs::Model>(t0, tmax, dt, model);
         },
-        "Simulates an SDE SIR model from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an SDE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.attr("__version__") = "dev";
 }

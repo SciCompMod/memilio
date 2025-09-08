@@ -52,17 +52,17 @@ inline std::string pretty_name<mio::ssir::InfectionState>()
 
 PYBIND11_MODULE(_simulation_ssir, m)
 {
-    // m.def("interpolate_simulation_result",
-    //       static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
-    //           &mio::interpolate_simulation_result),
-    //       py::arg("ts"), py::arg("abs_tol") = 1e-14);
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const double)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("abs_tol") = 1e-14);
 
-    // m.def("interpolate_simulation_result",
-    //       static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
-    //           &mio::interpolate_simulation_result),
-    //       py::arg("ts"), py::arg("interpolation_times"));
+    m.def("interpolate_simulation_result",
+          static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&, const std::vector<double>&)>(
+              &mio::interpolate_simulation_result),
+          py::arg("ts"), py::arg("interpolation_times"));
 
-    // m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
     pymio::iterable_enum<mio::ssir::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::ssir::InfectionState::Susceptible)
@@ -71,8 +71,8 @@ PYBIND11_MODULE(_simulation_ssir, m)
 
     pymio::bind_ParameterSet<mio::ssir::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
 
-    pymio::bind_class<mio::ssir::Parameters, pymio::EnablePickling::Required,
-                      mio::ssir::ParametersBase>(m, "Parameters")
+    pymio::bind_class<mio::ssir::Parameters, pymio::EnablePickling::Required, mio::ssir::ParametersBase>(m,
+                                                                                                         "Parameters")
         .def(py::init<>())
         .def("check_constraints", &mio::ssir::Parameters::check_constraints)
         .def("apply_constraints", &mio::ssir::Parameters::apply_constraints);
@@ -83,21 +83,19 @@ PYBIND11_MODULE(_simulation_ssir, m)
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     // pymio::bind_StochasticModel<double, mio::ssir::InfectionState, Populations, mio::ssir::Parameters,
     //                                pymio::EnablePickling::Never>(m, "ModelBase");
-    pymio::bind_class<
-        mio::ssir::Model, pymio::EnablePickling::Never,
-        mio::CompartmentalModel<double, mio::ssir::InfectionState, Populations, mio::ssir::Parameters>>(
+    pymio::bind_class<mio::ssir::Model, pymio::EnablePickling::Never,
+                      mio::CompartmentalModel<double, mio::ssir::InfectionState, Populations, mio::ssir::Parameters>>(
         m, "Model")
         .def(py::init<>());
 
     // pymio::bind_Simulation<mio::Simulation<double, mio::ssir::Model>>(m, "Simulation");
-    
+
     m.def(
         "simulate_stochastic",
         [](double t0, double tmax, double dt, mio::ssir::Model const& model) {
             return mio::simulate_stochastic<double, mio::ssir::Model>(t0, tmax, dt, model);
         },
-        "Simulates an SDE SIR model from t0 to tmax.", 
-        py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an SDE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.attr("__version__") = "dev";
 }
