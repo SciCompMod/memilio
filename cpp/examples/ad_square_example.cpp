@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "ad/ad.hpp"
+#include "ad/ad_wrapper.hpp"
 #include <iostream>
 
 /*  This example computes the derivative of f(x) = x^2 in two different ways:

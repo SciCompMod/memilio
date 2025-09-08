@@ -22,7 +22,7 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/parameter_distributions.h"
 #include <distributions_helpers.h>
-#include "ad/ad.hpp"
+#include "ad/ad_wrapper.hpp"
 #include "models/ode_secirvvs/model.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

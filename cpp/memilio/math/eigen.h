@@ -25,35 +25,4 @@
 
 #include <Eigen/Core>
 
-#include "ad/ad.hpp"
-
-// The following Eigen::NumTraits specializations are required so that Eigen
-// recognizes ad::gt1s<double>::type and ad::ga1s<double>::type as valid scalar types.
-// Without these, Eigen's internal mechanisms (such as .abs(), .cwiseAbs(), etc.)
-// will not work correctly with AD types, because Eigen queries NumTraits to determine
-// type properties and which mathematical functions are available.
-// This enables Eigen to use your AD types in arrays, matrices, and all vectorized math.
-
-namespace Eigen
-{
-template <class FP, class DataHandler>
-struct NumTraits<ad::internal::active_type<FP, DataHandler>> : GenericNumTraits<ad::internal::active_type<FP, DataHandler>> {
-    using Scalar     = ad::internal::active_type<FP, DataHandler>;
-    using Real       = Scalar;
-    using NonInteger = Scalar;
-    using Nested     = Scalar;
-    enum
-    {
-        IsComplex             = 0,
-        IsInteger             = 0,
-        IsSigned              = 1,
-        RequireInitialization = 1,
-        ReadCost              = 1,
-        AddCost               = 3,
-        MulCost               = 3
-    };
-};
-
-} // namespace Eigen
-
 #endif // MIO_UTILS_EIGEN_H

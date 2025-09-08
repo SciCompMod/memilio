@@ -24,7 +24,7 @@
 
 #include "memilio/utils/logging.h"
 
-#include "ad/ad.hpp"
+#include "ad/ad_wrapper.hpp"
 #include "boost/numeric/odeint.hpp"
 #include <gtest/gtest.h>
 
