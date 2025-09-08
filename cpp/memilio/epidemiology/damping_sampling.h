@@ -260,7 +260,7 @@ void apply_dampings(DampingExpression& damping_expression, const DampingSampling
     damping_expression.set_automatic_cache_update(false);
     for (auto& d : dampings) {
         for (auto& i : d.get_matrix_indices()) {
-            auto m = make_matrix(FP(d.get_value()) * d.get_group_weights());
+            auto m = make_matrix(d.get_value().value() * d.get_group_weights());
             damping_expression[i].add_damping(m, d.get_level(), d.get_type(), d.get_time());
         }
     }
