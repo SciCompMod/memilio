@@ -1,55 +1,76 @@
+#############################################################################
+# Copyright (C) 2020-2025 MEmilio
+#
+# Authors: Agatha Schmidt, Henrik Zunker, Manuel Heger
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
+
 import os
 import pickle
 import spektral
 import time
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import FunctionTransformer
 
 
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import MeanAbsolutePercentageError
-from tensorflow.keras.models import Model
 import tensorflow.keras.initializers as initializers
 
-import copy
 import tensorflow as tf
 import memilio.surrogatemodel.GNN.network_architectures as network_architectures
 from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
 
-from spektral.transforms.normalize_adj import NormalizeAdj
-from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
+from spektral.data import MixedLoader
 from spektral.layers import (GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv,
                              APPNPConv, CrystalConv, GATConv, GINConv, XENetConv, GCNConv, GCSConv)
 from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 
 
-def create_dataset(path_cases, path_mobility):
+def create_dataset(path_cases, path_mobility, number_of_nodes=400):
     """
     Create a dataset from the given file path.
+    :param path_cases: Path to the pickle file containing case data.
+    :param path_mobility: Path to the directory containing mobility data.
+    .param number_of_nodes: Number of nodes in the graph.
+    :return: A Spektral Dataset object containing the processed data.
     """
+
+    # Load data from pickle file
     file = open(
         path_cases, 'rb')
     data = pickle.load(file)
-
-    number_of_nodes = 400
-
+    # Extract inputs and labels from the loaded data
     inputs = data['inputs']
     labels = data['labels']
 
     len_dataset = len(inputs)
-
+    # Calculate the flattened shape of inputs and labels
     shape_input_flat = np.asarray(
         inputs).shape[1]*np.asarray(inputs).shape[2]
     shape_labels_flat = np.asarray(
         labels).shape[1]*np.asarray(labels).shape[2]
-
+    # Reshape inputs and labels to the required format
     new_inputs = np.asarray(
         inputs.transpose(0, 3, 1, 2)).reshape(
         len_dataset, number_of_nodes, shape_input_flat)
     new_labels = np.asarray(labels.transpose(0, 3, 1, 2)).reshape(
         len_dataset, number_of_nodes, shape_labels_flat)
 
+    # Load mobility data and create adjacency matrix
     commuter_file = open(os.path.join(
         path_mobility, 'commuter_mobility_2022.txt'), 'rb')
     commuter_data = pd.read_csv(commuter_file, sep=" ", header=None)
@@ -58,32 +79,38 @@ def create_dataset(path_cases, path_mobility):
     adjacency_matrix = np.asarray(sub_matrix)
 
     adjacency_matrix[adjacency_matrix > 0] = 1  # make the adjacency binary
+
     node_features = new_inputs
 
     node_labels = new_labels
 
+    #  Define a custom Dataset class
     class MyDataset(spektral.data.dataset.Dataset):
         def read(self):
             self.a = adjacency_matrix
-
-            # self.a = normalized_adjacency(adjacency_matrix)
-            # self.a = rescale_laplacian(normalized_laplacian(adjacency_matrix))
-
             return [spektral.data.Graph(x=x, y=y) for x, y in zip(node_features, node_labels)]
 
             super().__init__(**kwargs)
-
-        # data = MyDataset()
+    # Instantiate the custom dataset
     data = MyDataset()
 
     return data
 
 
 def train_step(inputs, target, loss_fn, model, optimizer):
+    '''Perform a single training step.
+    :param inputs: Tuple (x, a) where x is the node features and a is the adjacency matrix.
+    :param target: Ground truth labels.
+    :param loss_fn: Loss function to use.
+    :param model: The GNN model to train.
+    :param optimizer: Optimizer to use for training.
+    :return: Loss and accuracy for the training step.'''
+    # Record operations for automatic differentiation
     with tf.GradientTape() as tape:
         predictions = model(inputs, training=True)
         loss = loss_fn(target, predictions) + \
             sum(model.losses)  # Add regularization losses
+    # Compute gradients and update model weights
     gradients = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     acc = tf.reduce_mean(loss_fn(target, predictions))
@@ -91,6 +118,12 @@ def train_step(inputs, target, loss_fn, model, optimizer):
 
 
 def evaluate(loader, model, loss_fn, retransform=False):
+    '''Evaluate the model on a validation or test set.
+    :param loader: Data loader for the evaluation set.
+    :param model: The GNN model to evaluate.
+    :param loss_fn: Loss function to use.
+    :param retransform: Whether to apply inverse transformation to the outputs.
+    :return: Losses and mean_loss for the evaluation set.'''
     output = []
     step = 0
     while step < loader.steps_per_epoch:
@@ -107,13 +140,26 @@ def evaluate(loader, model, loss_fn, retransform=False):
             len(target),  # Keep track of batch size
         )
         output.append(outs)
+        # Aggregate results at the end of the epoch
         if step == loader.steps_per_epoch:
             output = np.array(output)
             return np.average(output[:, :-1], 0, weights=output[:, -1])
 
 
-def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_patience, save_results=False, save_name=""):
+def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_patience, save_results=False, save_name="model"):
+    '''Train and evaluate the GNN model.
+    :param data: The dataset to use for training and evaluation.
+    :param batch_size: Batch size for training.
+    :param epochs: Maximum number of epochs to train.
+    :param model: The GNN model to train and evaluate.
+    :param loss_fn: Loss function to use.
+    :param optimizer: Optimizer to use for training.
+    :param es_patience: Patience for early stopping.
+    :param save_results: Whether to save the results to a file.
+    :param save_name: Name to use when saving the results.
+    :return: A dictionary containing training and evaluation results if save_results is False.'''
     n = len(data)
+    # Determine split indices for training, validation, and test sets
     n_train, n_valid, n_test = calc_split_index(
         n, split_train=0.7, split_valid=0.2, split_test=0.1)
 
@@ -134,6 +180,7 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
         "test_loss_orig", "training_time",
         "loss_history", "val_loss_history"])
 
+    # Initialize variables to track best scores and histories
     test_scores = []
     test_scores_r = []
     train_losses = []
@@ -149,6 +196,9 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     losses_history = []
     val_losses_history = []
 
+    ################################################################################
+    # Train model
+    ################################################################################
     start = time.perf_counter()
     step = 0
     epoch = 0
@@ -157,7 +207,7 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
         loss, acc = train_step(*batch, loss_fn, model, optimizer)
         results.append((loss, acc))
 
-    # Compute validation loss and accuracy
+        # Compute validation loss and accuracy  at the end of each epoch
         if step == loader_tr.steps_per_epoch:
             step = 0
             epoch += 1
@@ -186,7 +236,8 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     ################################################################################
     # Evaluate model
     ################################################################################
-    model.set_weights(best_weights)  # Load best model
+    # Load best model weights before evaluation on test set
+    model.set_weights(best_weights)
     test_loss, test_acc = evaluate(loader_test, model, loss_fn)
     test_loss_r, test_acc_r = evaluate(
         loader_test, model, loss_fn, retransform=True)
@@ -216,6 +267,9 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     print(f"Time for training: {elapsed:.4f} seconds")
     print(f"Time for training: {elapsed/60:.4f} minutes")
 
+    ################################################################################
+    # Save results
+    ################################################################################
     if save_results:
         # save df
         df.loc[len(df.index)] = [  # layer_name, number_of_layer, channels,

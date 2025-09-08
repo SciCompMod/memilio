@@ -1,32 +1,41 @@
-import os
-import pickle
-
-import pandas as pd
+#############################################################################
+# Copyright (C) 2020-2025 MEmilio
+#
+# Authors: Agatha Schmidt, Henrik Zunker, Manuel Heger
+#
+# Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#############################################################################
 import numpy as np
-from sklearn.preprocessing import FunctionTransformer
 import tensorflow as tf
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.losses import MeanAbsolutePercentageError
-from tensorflow.keras.metrics import mean_absolute_percentage_error
-from tensorflow.keras.models import Model
-import tensorflow.keras.initializers as initializers
 
-from tensorflow.keras.optimizers import Adam, Nadam, RMSprop, SGD, Adagrad
 import spektral.layers as spektral_layers
 import spektral.utils.convolution as spektral_convolution
-
-
-from sklearn.model_selection import KFold
-
-# from spektral.data import Dataset, DisjointLoader, Graph, Loader, BatchLoader, MixedLoader
-# from spektral.layers import GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv, APPNPConv, CrystalConv, GATConv, GINConv, XENetConv, GCNConv, GCSConv
-# from spektral.transforms.normalize_adj import NormalizeAdj
-# from spektral.utils.convolution import gcn_filter, normalized_laplacian, rescale_laplacian, normalized_adjacency
 
 
 # Function to generate a model class dynamically
 
 def generate_model_class(name, layer_types, num_repeat, num_output, transform=None):
+    '''Generates a custom Keras model class with specified layers.
+
+    :param name: Name of the generated class.
+    :param layer_types: List of layer types (classes or callables) to include in the model.
+    :param num_repeat: List of integers specifying how many times to repeat each layer type.
+    :param num_output: Number of output units in the final layer.
+    :param transform: Optional function to transform the adjacency matrix before passing it to layers.
+    :return: A dynamically created Keras model class.'''
+
     def __init__(self):
         super(type(self), self).__init__()
         self.layer_seq = []
@@ -34,6 +43,7 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
             for _ in range(num_repeat[i]):
                 layer = layer_type() if callable(layer_type) else layer_type
                 self.layer_seq.append(layer)
+        # Final output layer
         self.output_layer = tf.keras.layers.Dense(
             num_output, activation="relu")
 
@@ -65,6 +75,29 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
 
 
 def get_model(layer_type, num_layers, num_channels, activation, num_output=1):
+    """Generates a GNN model based on the specified parameters. 
+    :param layer_type: Name of GNN layer to use (possible  'ARMAConv', 'GCSConv', 'GATConv', 
+            'GCNConv', 'APPNPConv'), provided as a string.
+    :param num_layers: Number of hidden layers in the model.
+    :param num_channels: Number of channels (units) in each hidden layer.
+    :param activation: Activation function to use in the hidden layers (e.g., 'relu', 'elu', 'tanh', 'sigmoid').
+    :param num_output: Number of output units in the final layer.
+    :return: A Keras model instance with the specified architecture.
+    """
+    if layer_type not in ["ARMAConv", "GCSConv", "GATConv", "GCNConv", "APPNPConv"]:
+        raise ValueError(
+            f"Unsupported layer_type: {layer_type}. Supported types are 'ARMAConv', 'GCSConv', 'GATConv', 'GCNConv', 'APPNPConv'.")
+    if num_layers < 1:
+        raise ValueError("num_layers must be at least 1.")
+    if num_channels < 1:
+        raise ValueError("num_channels must be at least 1.")
+    if not isinstance(activation, str):
+        raise ValueError(
+            "activation must be a string representing the activation function.")
+    if num_output < 1:
+        raise ValueError("num_output must be at least 1.")
+
+    # Define the layer based on the specified type
     if layer_type == "ARMAConv":
         layer_name = spektral_layers.ARMAConv
 
@@ -101,8 +134,9 @@ def get_model(layer_type, num_layers, num_channels, activation, num_output=1):
             a = a.numpy()
             a = spektral_convolution.gcn_filter(a)
             return tf.convert_to_tensor(a, dtype=tf.float32)
-
-    layer_types = [lambda: layer_name(num_channels, activation=activation)]
+    # Generate the input for generate_model_class
+    layer_types = [lambda: layer_name(
+        num_channels, activation=activation, kernel_initializer=tf.keras.initializers.GlorotUniform())]
     num_repeat = [num_layers]
     model_class = generate_model_class(
         "CustomModel", layer_types, num_repeat, num_output, transform=transform)
