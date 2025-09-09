@@ -22,9 +22,12 @@
 #define MIO_SMM_SIMULATION_H
 
 #include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/logging.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
 #include "memilio/compartments/simulation.h"
+#include <utility>
 
 namespace mio
 {
@@ -37,7 +40,7 @@ namespace smm
  * @tparam regions The number of regions.
  * @tparam Status An infection state enum.
  */
-template <size_t regions, class Status, class... Groups>
+template <size_t regions, class Status, size_t... Groups>
 class Simulation
 {
 public:
@@ -79,56 +82,118 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
-        update_current_rates_and_waiting_times();
-        size_t next_event       = determine_next_event(); // index of the next event
-        ScalarType current_time = m_result.get_last_time();
-        // set in the past to add a new time point immediately
-        ScalarType last_result_time = current_time - m_dt;
-        // iterate over time
-        while (current_time + m_waiting_times[next_event] < tmax) {
-            // update time
-            current_time += m_waiting_times[next_event];
-            // regularily save current state in m_results
-            if (current_time > last_result_time + m_dt) {
-                last_result_time = current_time;
-                m_result.add_time_point(current_time);
-                // copy from the previous last value
+        if constexpr (sizeof...(Groups) == 0) {
+            update_current_rates_and_waiting_times();
+            size_t next_event       = determine_next_event(); // index of the next event
+            ScalarType current_time = m_result.get_last_time();
+            // set in the past to add a new time point immediately
+            ScalarType last_result_time = current_time - m_dt;
+            // iterate over time
+            while (current_time + m_waiting_times[next_event] < tmax) {
+                // update time
+                current_time += m_waiting_times[next_event];
+                // regularily save current state in m_results
+                if (current_time > last_result_time + m_dt) {
+                    last_result_time = current_time;
+                    m_result.add_time_point(current_time);
+                    // copy from the previous last value
+                    m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+                }
+                // decide event type by index and perform it
+                if (next_event < adoption_rates().size()) {
+                    // perform adoption event
+                    const auto& rate = adoption_rates()[next_event];
+                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
+                    m_model->populations[{rate.region, rate.from}] -= 1;
+                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
+                    m_model->populations[{rate.region, rate.to}] += 1;
+                }
+                else {
+                    // perform transition event
+                    const auto& rate = transition_rates()[next_event - adoption_rates().size()];
+                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
+                    m_model->populations[{rate.from, rate.status}] -= 1;
+                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
+                    m_model->populations[{rate.to, rate.status}] += 1;
+                }
+                // update internal times
+                for (size_t i = 0; i < m_internal_time.size(); i++) {
+                    m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
+                }
+                // draw new "next event" time for the occured event
+                m_tp_next_event[next_event] +=
+                    mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
+                // precalculate next event
+                update_current_rates_and_waiting_times();
+                next_event = determine_next_event();
+            }
+            // copy last result, if no event occurs between last_result_time and tmax
+            if (last_result_time < tmax) {
+                m_result.add_time_point(tmax);
                 m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
             }
-            // decide event type by index and perform it
-            if (next_event < adoption_rates().size()) {
-                // perform adoption event
-                const auto& rate = adoption_rates()[next_event];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
-                m_model->populations[{rate.region, rate.from}] -= 1;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
-                m_model->populations[{rate.region, rate.to}] += 1;
-            }
-            else {
-                // perform transition event
-                const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
-                m_model->populations[{rate.from, rate.status}] -= 1;
-                m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
-                m_model->populations[{rate.to, rate.status}] += 1;
-            }
-            // update internal times
-            for (size_t i = 0; i < m_internal_time.size(); i++) {
-                m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
-            }
-            // draw new "next event" time for the occured event
-            m_tp_next_event[next_event] +=
-                mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
-            // precalculate next event
+            return m_result.get_last_value();
+        }
+        else {
             update_current_rates_and_waiting_times();
-            next_event = determine_next_event();
+            size_t next_event       = determine_next_event(); // index of the next event
+            ScalarType current_time = m_result.get_last_time();
+            // set in the past to add a new time point immediately
+            ScalarType last_result_time = current_time - m_dt;
+            // iterate over time
+            while (current_time + m_waiting_times[next_event] < tmax) {
+                // update time
+                current_time += m_waiting_times[next_event];
+                // regularily save current state in m_results
+                if (current_time > last_result_time + m_dt) {
+                    last_result_time = current_time;
+                    m_result.add_time_point(current_time);
+                    // copy from the previous last value
+                    m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+                }
+                // decide event type by index and perform it
+                if (next_event < adoption_rates().size()) {
+                    // perform adoption event
+                    const auto& rate = adoption_rates()[next_event];
+                    m_result.get_last_value()[m_model->populations.get_flat_index(
+                        {rate.region, rate.from, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] -= 1;
+                    m_model->populations[{rate.region, rate.from,
+                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] -= 1;
+                    m_result.get_last_value()[m_model->populations.get_flat_index(
+                        {rate.region, rate.to, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] += 1;
+                    m_model->populations[{rate.region, rate.to,
+                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] += 1;
+                }
+                else {
+                    // perform transition event
+                    const auto& rate = transition_rates()[next_event - adoption_rates().size()];
+                    m_result.get_last_value()[m_model->populations.get_flat_index(
+                        {rate.from, rate.status, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] -= 1;
+                    m_model->populations[{rate.from, rate.status,
+                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] -= 1;
+                    m_result.get_last_value()[m_model->populations.get_flat_index(
+                        {rate.to, rate.status, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] += 1;
+                    m_model->populations[{rate.to, rate.status,
+                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] += 1;
+                }
+                // update internal times
+                for (size_t i = 0; i < m_internal_time.size(); i++) {
+                    m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
+                }
+                // draw new "next event" time for the occured event
+                m_tp_next_event[next_event] +=
+                    mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
+                // precalculate next event
+                update_current_rates_and_waiting_times();
+                next_event = determine_next_event();
+            }
+            // copy last result, if no event occurs between last_result_time and tmax
+            if (last_result_time < tmax) {
+                m_result.add_time_point(tmax);
+                m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+            }
+            return m_result.get_last_value();
         }
-        // copy last result, if no event occurs between last_result_time and tmax
-        if (last_result_time < tmax) {
-            m_result.add_time_point(tmax);
-            m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
-        }
-        return m_result.get_last_value();
     }
 
     /**
@@ -160,21 +225,24 @@ private:
     /**
      * @brief Returns the model's transition rates.
      */
-    inline constexpr const typename smm::TransitionRates<Status, Groups...>::Type& transition_rates()
+    inline constexpr const typename smm::TransitionRates<Status, age_group<mio::AgeGroup, Groups>...>::Type&
+    transition_rates()
     {
-        return m_model->parameters.template get<smm::TransitionRates<Status, Groups...>>();
+        return m_model->parameters.template get<smm::TransitionRates<Status, age_group<mio::AgeGroup, Groups>...>>();
     }
 
     /**
      * @brief Returns the model's adoption rates.
      */
-    inline constexpr const typename smm::AdoptionRates<Status, Groups...>::Type& adoption_rates()
+    inline constexpr const typename smm::AdoptionRates<Status, age_group<mio::AgeGroup, Groups>...>::Type&
+    adoption_rates()
     {
-        return m_model->parameters.template get<smm::AdoptionRates<Status, Groups...>>();
+        return m_model->parameters.template get<smm::AdoptionRates<Status, age_group<mio::AgeGroup, Groups>...>>();
     }
 
     /**
-     * @brief Calculate current values for m_current_rates and m_waiting_times.
+     * @brief 
+     * 
      */
     inline void update_current_rates_and_waiting_times()
     {

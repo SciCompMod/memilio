@@ -36,6 +36,7 @@ template <class Status, class... Groups>
 struct Influence {
     Status status;
     ScalarType factor;
+    std::tuple<Groups...> group_indices{};
 };
 
 /**
@@ -52,6 +53,7 @@ struct AdoptionRate {
     mio::regions::Region region; // k
     ScalarType factor; // gammahat_{ij}^k
     std::vector<Influence<Status, Groups...>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
+    std::tuple<Groups...> group_indices{};
 };
 
 } // namespace mio

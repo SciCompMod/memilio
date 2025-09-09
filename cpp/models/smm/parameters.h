@@ -25,6 +25,7 @@
 #include "memilio/geography/regions.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/adoption_rate.h"
+#include <tuple>
 
 namespace mio
 {
@@ -54,6 +55,7 @@ struct TransitionRate {
     mio::regions::Region from; // k
     mio::regions::Region to; // l
     ScalarType factor; // lambda_i^{kl}
+    std::tuple<Groups...> group_indices{};
 };
 template <class Status, class... Groups>
 struct TransitionRates {
@@ -65,7 +67,7 @@ struct TransitionRates {
 };
 
 template <class Status, class... Groups>
-using ParametersBase = mio::ParameterSet<AdoptionRates<Status>, TransitionRates<Status, Groups...>>;
+using ParametersBase = mio::ParameterSet<AdoptionRates<Status, Groups...>, TransitionRates<Status, Groups...>>;
 
 } // namespace smm
 

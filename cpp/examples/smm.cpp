@@ -37,53 +37,49 @@ enum class InfectionState
 
 };
 
-enum class AgeGroup
-{
-    All,
-    Count
-};
-
 int main()
 {
 
     //Example how to run the stochastic metapopulation models with four regions
-    const size_t num_regions = 4;
-    using Model              = mio::smm::Model<num_regions, InfectionState, AgeGroup>;
+    const size_t num_regions    = 4;
+    const size_t num_age_groups = 1;
+    using Model                 = mio::smm::Model<num_regions, InfectionState, num_age_groups>;
 
     double numE = 12, numC = 4, numI = 12, numR = 0, numD = 0;
 
     Model model;
     //Population are distributed uniformly to the four regions
     for (size_t r = 0; r < num_regions; ++r) {
-        model.populations[{mio::regions::Region(r), InfectionState::S, AgeGroup::All}] =
+        model.populations[{mio::regions::Region(r), InfectionState::S, mio::AgeGroup(1)}] =
             (1000 - numE - numC - numI - numR - numD) / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::E, AgeGroup::All}] = numE / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::C, AgeGroup::All}] = numC / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::I, AgeGroup::All}] = numI / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::R, AgeGroup::All}] = numR / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::D, AgeGroup::All}] = numD / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::E, mio::AgeGroup(1)}] = numE / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::C, mio::AgeGroup(1)}] = numC / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::I, mio::AgeGroup(1)}] = numI / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::R, mio::AgeGroup(1)}] = numR / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::D, mio::AgeGroup(1)}] = numD / num_regions;
     }
 
     //Set infection state adoption and spatial transition rates
-    std::vector<mio::AdoptionRate<InfectionState, AgeGroup>> adoption_rates;
-    std::vector<mio::smm::TransitionRate<InfectionState, AgeGroup>> transition_rates;
+    std::vector<mio::AdoptionRate<InfectionState, mio::AgeGroup>> adoption_rates;
+    std::vector<mio::smm::TransitionRate<InfectionState, mio::AgeGroup>> transition_rates;
     for (size_t r = 0; r < num_regions; ++r) {
-        adoption_rates.push_back({InfectionState::S,
-                                  InfectionState::E,
-                                  AgeGroup::All,
-                                  mio::regions::Region(r),
-                                  0.1,
-                                  {{InfectionState::C, AgeGroup::All, 1}, {InfectionState::I, AgeGroup::All, 0.5}}});
         adoption_rates.push_back(
-            {InfectionState::E, InfectionState::C, AgeGroup::All, mio::regions::Region(r), 1.0 / 5., {}});
+            {InfectionState::S,
+             InfectionState::E,
+             mio::regions::Region(r),
+             0.1,
+             {{InfectionState::C, 1, mio::AgeGroup(1)}, {InfectionState::I, 0.5, mio::AgeGroup(1)}},
+             mio::AgeGroup(1)});
         adoption_rates.push_back(
-            {InfectionState::C, InfectionState::R, AgeGroup::All, mio::regions::Region(r), 0.2 / 3., {}});
+            {InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}, mio::AgeGroup(1)});
         adoption_rates.push_back(
-            {InfectionState::C, InfectionState::I, AgeGroup::All, mio::regions::Region(r), 0.8 / 3., {}});
+            {InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}, mio::AgeGroup(1)});
         adoption_rates.push_back(
-            {InfectionState::I, InfectionState::R, AgeGroup::All, mio::regions::Region(r), 0.99 / 5., {}});
+            {InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}, mio::AgeGroup(1)});
         adoption_rates.push_back(
-            {InfectionState::I, InfectionState::D, AgeGroup::All, mio::regions::Region(r), 0.01 / 5., {}});
+            {InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}, mio::AgeGroup(1)});
+        adoption_rates.push_back(
+            {InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}, mio::AgeGroup(1)});
     }
 
     //Agents in infection state D do not transition
@@ -91,16 +87,26 @@ int main()
         for (size_t i = 0; i < num_regions; ++i) {
             for (size_t j = 0; j < num_regions; ++j)
                 if (i != j) {
-                    transition_rates.push_back(
-                        {InfectionState(s), AgeGroup::All, mio::regions::Region(i), mio::regions::Region(j), 0.01});
-                    transition_rates.push_back(
-                        {InfectionState(s), AgeGroup::All, mio::regions::Region(j), mio::regions::Region(i), 0.01});
+                    transition_rates.push_back({
+                        InfectionState(s),
+                        mio::regions::Region(i),
+                        mio::regions::Region(j),
+                        0.01,
+                        mio::AgeGroup(1),
+                    });
+                    transition_rates.push_back({
+                        InfectionState(s),
+                        mio::regions::Region(j),
+                        mio::regions::Region(i),
+                        0.01,
+                        mio::AgeGroup(1),
+                    });
                 }
         }
     }
 
-    model.parameters.get<mio::smm::AdoptionRates<InfectionState, AgeGroup>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<InfectionState, AgeGroup>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<InfectionState, mio::AgeGroup>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<InfectionState, mio::AgeGroup>>() = transition_rates;
 
     double dt   = 0.1;
     double tmax = 30.;

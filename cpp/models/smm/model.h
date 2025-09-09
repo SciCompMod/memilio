@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
-* Authors: René Schmieding, Julia Bicker
+* Authors: René Schmieding, Julia Bicker, Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -22,6 +22,7 @@
 #define MIO_SMM_MODEL_H
 
 #include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
 #include "smm/parameters.h"
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/populations.h"
@@ -32,23 +33,29 @@ namespace mio
 namespace smm
 {
 
+template <class T, std::size_t>
+using age_group = T;
+
 /**
  * @brief Stochastic Metapopulation Model.
  * @tparam regions Number of regions.
  * @tparam Status An infection state enum.
  */
-template <size_t regions, class Status, class... Groups>
-class Model : public mio::CompartmentalModel<ScalarType, Status,
-                                             mio::Populations<ScalarType, mio::regions::Region, Status, Groups...>,
-                                             ParametersBase<Status, Groups...>>
+template <size_t regions, class Status, size_t... Groups>
+class Model : public mio::CompartmentalModel<
+                  ScalarType, Status,
+                  mio::Populations<ScalarType, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
+                  ParametersBase<Status, age_group<mio::AgeGroup, Groups>...>>
 {
-    using Base = mio::CompartmentalModel<ScalarType, Status,
-                                         mio::Populations<ScalarType, mio::regions::Region, Status, Groups...>,
-                                         ParametersBase<Status, Groups...>>;
+    using Base = mio::CompartmentalModel<
+        ScalarType, Status,
+        mio::Populations<ScalarType, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
+        ParametersBase<Status, age_group<mio::AgeGroup, Groups>...>>;
 
 public:
     Model()
-        : Base(typename Base::Populations({static_cast<mio::regions::Region>(regions), Status::Count}),
+        : Base(typename Base::Populations(
+                   {static_cast<mio::regions::Region>(regions), Status::Count, static_cast<mio::AgeGroup>(Groups)...}),
                typename Base::ParameterSet())
     {
     }
@@ -59,26 +66,55 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
-    ScalarType evaluate(const AdoptionRate<Status, Groups...>& rate, const Eigen::VectorXd& x) const
+    ScalarType evaluate(const AdoptionRate<Status, age_group<mio::AgeGroup, Groups>...>& rate,
+                        const Eigen::VectorXd& x) const
     {
-        const auto& pop   = this->populations;
-        const auto source = pop.get_flat_index({rate.region, rate.from}); // Why is here rate.from used? KV
-        // determine order and calculate rate
-        if (rate.influences.size() == 0) { // first order adoption
-            return rate.factor * x[source];
+        if constexpr (sizeof...(Groups) == 0) {
+            const auto& pop   = this->populations;
+            const auto source = pop.get_flat_index({rate.region, rate.from}); // Why is here rate.from used? KV
+            // determine order and calculate rate
+            if (rate.influences.size() == 0) { // first order adoption
+                return rate.factor * x[source];
+            }
+            else { // second order adoption
+                ScalarType N = 0;
+                for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
+                    N += x[pop.get_flat_index({rate.region, Status(s)})];
+                }
+                // accumulate influences
+                ScalarType influences = 0.0;
+                for (size_t i = 0; i < rate.influences.size(); i++) {
+                    influences +=
+                        rate.influences[i].factor * x[pop.get_flat_index({rate.region, rate.influences[i].status})];
+                }
+                return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
+            }
         }
-        else { // second order adoption
-            ScalarType N = 0;
-            for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
-                N += x[pop.get_flat_index({rate.region, Status(s)})];
+        else {
+            const auto& pop   = this->populations;
+            const auto source = pop.get_flat_index({rate.region, rate.from,
+                                                    std::make_from_tuple<mio::Index<mio::AgeGroup>>(
+                                                        rate.group_indices)}); // Why is here rate.from used? KV
+            // determine order and calculate rate
+            if (rate.influences.size() == 0) { // first order adoption
+                return rate.factor * x[source];
             }
-            // accumulate influences
-            ScalarType influences = 0.0;
-            for (size_t i = 0; i < rate.influences.size(); i++) {
-                influences +=
-                    rate.influences[i].factor * x[pop.get_flat_index({rate.region, rate.influences[i].status})];
+            else { // second order adoption
+                ScalarType N = 0;
+                for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
+                    N += x[pop.get_flat_index(
+                        {rate.region, Status(s), std::make_from_tuple<mio::Index<mio::AgeGroup>>(rate.group_indices)})];
+                }
+                // accumulate influences
+                ScalarType influences = 0.0;
+                for (size_t i = 0; i < rate.influences.size(); i++) {
+                    influences +=
+                        rate.influences[i].factor *
+                        x[pop.get_flat_index({rate.region, rate.influences[i].status,
+                                              std::make_from_tuple<mio::Index<mio::AgeGroup>>(rate.group_indices)})];
+                }
+                return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
             }
-            return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
         }
     }
 
@@ -88,10 +124,18 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
      */
-    ScalarType evaluate(const TransitionRate<Status, Groups...>& rate, const Eigen::VectorXd& x) const
+    ScalarType evaluate(const TransitionRate<Status, age_group<mio::AgeGroup, Groups>...>& rate,
+                        const Eigen::VectorXd& x) const
     {
-        const auto source = this->populations.get_flat_index({rate.from, rate.status});
-        return rate.factor * x[source];
+        if constexpr (sizeof...(Groups) == 0) {
+            const auto source = this->populations.get_flat_index({rate.from, rate.status});
+            return rate.factor * x[source];
+        }
+        else {
+            const auto source = this->populations.get_flat_index(
+                {rate.from, rate.status, std::make_from_tuple<mio::Index<mio::AgeGroup>>(rate.group_indices)});
+            return rate.factor * x[source];
+        }
     }
 
     /**
