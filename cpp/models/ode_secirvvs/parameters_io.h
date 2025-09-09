@@ -228,6 +228,9 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
                                                        std::vector<int> const& vregion, Date date,
                                                        std::vector<std::vector<FP>>& vnum_rec, FP delay = 14.)
 {
+    using std::floor;
+    using std::trunc;
+
     auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
@@ -255,7 +258,7 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
         });
         if (it != vregion.end()) {
             auto region_idx = size_t(it - vregion.begin());
-            if (rki_entry.date == offset_date_by_days(date, int(-delay))) {
+            if (rki_entry.date == offset_date_by_days(date, static_cast<int>(floor(trunc(FP(-delay)))))) {
                 vnum_rec[region_idx][size_t(rki_entry.age_group)] = rki_entry.num_confirmed;
             }
         }
@@ -352,15 +355,15 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         for (size_t group = 0; group < num_age_groups; group++) {
 
             t_Exposed[county].push_back(
-                static_cast<int>(round(model[county].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
+                static_cast<int>(round(FP(model[county].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group]))));
             t_InfectedNoSymptoms[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group]))));
             t_InfectedSymptoms[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group]))));
             t_InfectedSevere[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group]))));
             t_InfectedCritical[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group]))));
 
             mu_C_R[county].push_back(
                 model[county].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)group]);
@@ -376,7 +379,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
-        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
+        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+        //                     [](const FP& a, const FP& b) {
+        //                         return evaluate_intermediate<FP>(a + b);
+        //                     }) > 0.0) {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedNaive}] = num_Exposed[county][i];
@@ -406,7 +412,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         }
 
         // }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) == 0.0) {
             log_warning(
                 "No infections for unvaccinated reported on date {} for region {}. Population data has not been set.",
                 date, region[county]);
@@ -435,15 +444,15 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         for (size_t group = 0; group < num_age_groups; group++) {
             FP reduc_t = model[0].parameters.template get<ReducTimeInfectedMild<FP>>()[(AgeGroup)group];
             t_Exposed[county].push_back(
-                static_cast<int>(round(model[county].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
-            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group] * reduc_t)));
-            t_InfectedSymptoms[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group] * reduc_t)));
+                static_cast<int>(round(FP(model[county].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group]))));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(round(
+                FP(model[county].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group] * reduc_t))));
+            t_InfectedSymptoms[county].push_back(static_cast<int>(round(
+                FP(model[county].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group] * reduc_t))));
             t_InfectedSevere[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group]))));
             t_InfectedCritical[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group]))));
 
             FP exp_fac_part_immune =
                 model[county].parameters.template get<ReducExposedPartialImmunity<FP>>()[(AgeGroup)group];
@@ -475,7 +484,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                                                 t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
 
     for (size_t county = 0; county < model.size(); county++) {
-        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) > 0) {
+        // if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+        //                     [](const FP& a, const FP& b) {
+        //                         return evaluate_intermediate<FP>(a + b);
+        //                     }) > 0.0) {
         size_t num_groups = (size_t)model[county].parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             model[county].populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}] = num_Exposed[county][i];
@@ -494,7 +506,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
             }
         }
         // }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) == 0.0) {
             log_warning("No infections for partially vaccinated reported on date {} for region {}. "
                         "Population data has not been set.",
                         date, region[county]);
@@ -523,15 +538,15 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
         for (size_t group = 0; group < num_age_groups; group++) {
             FP reduc_t = model[0].parameters.template get<ReducTimeInfectedMild<FP>>()[(AgeGroup)group];
             t_Exposed[county].push_back(
-                static_cast<int>(round(model[county].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
-            t_InfectedNoSymptoms[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group] * reduc_t)));
-            t_InfectedSymptoms[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group] * reduc_t)));
+                static_cast<int>(round(FP(model[county].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group]))));
+            t_InfectedNoSymptoms[county].push_back(static_cast<int>(round(
+                FP(model[county].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group] * reduc_t))));
+            t_InfectedSymptoms[county].push_back(static_cast<int>(round(
+                FP(model[county].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group] * reduc_t))));
             t_InfectedSevere[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group]))));
             t_InfectedCritical[county].push_back(static_cast<int>(
-                round(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
+                round(FP(model[county].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group]))));
 
             FP reduc_immune_exp =
                 model[county].parameters.template get<ReducExposedImprovedImmunity<FP>>()[(AgeGroup)group];
@@ -580,7 +595,10 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model,
                     num_icu[county][i];
             }
         }
-        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), 0.0) == 0) {
+        if (std::accumulate(num_InfectedSymptoms[county].begin(), num_InfectedSymptoms[county].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) == 0.0) {
             log_warning("No infections for vaccinated reported on date {} for region {}. "
                         "Population data has not been set.",
                         date, region[county]);
@@ -673,10 +691,13 @@ IOResult<void> set_population_data(std::vector<Model>& model, const std::vector<
     auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
     std::vector<std::vector<FP>> vnum_rec(model.size(), std::vector<FP>(num_age_groups, 0.0));
 
-    BOOST_OUTCOME_TRY(read_confirmed_cases_data_fix_recovered(case_data, vregion, date, vnum_rec, 14.));
+    BOOST_OUTCOME_TRY(read_confirmed_cases_data_fix_recovered<FP>(case_data, vregion, date, vnum_rec, 14.));
 
     for (size_t region = 0; region < vregion.size(); region++) {
-        if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
+        if (std::accumulate(num_population[region].begin(), num_population[region].end(), FP(0.0),
+                            [](const FP& a, const FP& b) {
+                                return evaluate_intermediate<FP>(a + b);
+                            }) > 0.0) {
             auto num_groups = model[region].parameters.get_num_groups();
             for (auto i = AgeGroup(0); i < num_groups; i++) {
 
