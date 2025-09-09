@@ -70,61 +70,38 @@ public:
     ScalarType evaluate(const AdoptionRate<Status, age_group<mio::AgeGroup, Groups>...>& rate,
                         const Eigen::VectorXd& x) const
     {
-        if constexpr (sizeof...(Groups) == 0) {
-            const auto& pop   = this->populations;
-            const auto source = pop.get_flat_index({rate.region, rate.from}); // Why is here rate.from used? KV
-            // determine order and calculate rate
-            if (rate.influences.size() == 0) { // first order adoption
-                return rate.factor * x[source];
-            }
-            else { // second order adoption
-                ScalarType N = 0;
-                for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
-                    N += x[pop.get_flat_index({rate.region, Status(s)})];
-                }
-                // accumulate influences
-                ScalarType influences = 0.0;
-                for (size_t i = 0; i < rate.influences.size(); i++) {
-                    influences +=
-                        rate.influences[i].factor * x[pop.get_flat_index({rate.region, rate.influences[i].status})];
-                }
-                return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
-            }
+        const auto& pop       = this->populations;
+        const auto index_from = std::apply(
+            [&](auto&&... args) {
+                return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
+            },
+            rate.group_indices);
+        const auto source = pop.get_flat_index(index_from); // Why is here rate.from used? KV
+        // determine order and calculate rate
+        if (rate.influences.size() == 0) { // first order adoption
+            return rate.factor * x[source];
         }
-        else {
-            const auto& pop       = this->populations;
-            const auto index_from = std::apply(
-                [&](auto&&... args) {
-                    return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
-                },
-                rate.group_indices);
-            const auto source = pop.get_flat_index(index_from); // Why is here rate.from used? KV
-            // determine order and calculate rate
-            if (rate.influences.size() == 0) { // first order adoption
-                return rate.factor * x[source];
+        else { // second order adoption
+            ScalarType N = 0;
+            for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
+                const auto index = std::apply(
+                    [&](auto&&... args) {
+                        return Index{rate.region, Status(s), std::forward<decltype(args)>(args)...};
+                    },
+                    rate.group_indices);
+                N += x[pop.get_flat_index(index)];
             }
-            else { // second order adoption
-                ScalarType N = 0;
-                for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
-                    const auto index = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.region, Status(s), std::forward<decltype(args)>(args)...};
-                        },
-                        rate.group_indices);
-                    N += x[pop.get_flat_index(index)];
-                }
-                // accumulate influences
-                ScalarType influences = 0.0;
-                for (size_t i = 0; i < rate.influences.size(); i++) {
-                    const auto index = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.region, rate.influences[i].status, std::forward<decltype(args)>(args)...};
-                        },
-                        rate.group_indices);
-                    influences += rate.influences[i].factor * x[pop.get_flat_index(index)];
-                }
-                return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
+            // accumulate influences
+            ScalarType influences = 0.0;
+            for (size_t i = 0; i < rate.influences.size(); i++) {
+                const auto index = std::apply(
+                    [&](auto&&... args) {
+                        return Index{rate.region, rate.influences[i].status, std::forward<decltype(args)>(args)...};
+                    },
+                    rate.group_indices);
+                influences += rate.influences[i].factor * x[pop.get_flat_index(index)];
             }
+            return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
         }
     }
 
@@ -137,19 +114,13 @@ public:
     ScalarType evaluate(const TransitionRate<Status, age_group<mio::AgeGroup, Groups>...>& rate,
                         const Eigen::VectorXd& x) const
     {
-        if constexpr (sizeof...(Groups) == 0) {
-            const auto source = this->populations.get_flat_index({rate.from, rate.status});
-            return rate.factor * x[source];
-        }
-        else {
-            auto index = std::apply(
-                [&](auto&&... args) {
-                    return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
-                },
-                rate.group_indices);
-            const auto source = this->populations.get_flat_index(index);
-            return rate.factor * x[source];
-        }
+        auto index = std::apply(
+            [&](auto&&... args) {
+                return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
+            },
+            rate.group_indices);
+        const auto source = this->populations.get_flat_index(index);
+        return rate.factor * x[source];
     }
 
     /**

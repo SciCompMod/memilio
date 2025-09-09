@@ -84,130 +84,77 @@ public:
      */
     Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
     {
-        if constexpr (sizeof...(Groups) == 0) {
-            update_current_rates_and_waiting_times();
-            size_t next_event       = determine_next_event(); // index of the next event
-            ScalarType current_time = m_result.get_last_time();
-            // set in the past to add a new time point immediately
-            ScalarType last_result_time = current_time - m_dt;
-            // iterate over time
-            while (current_time + m_waiting_times[next_event] < tmax) {
-                // update time
-                current_time += m_waiting_times[next_event];
-                // regularily save current state in m_results
-                if (current_time > last_result_time + m_dt) {
-                    last_result_time = current_time;
-                    m_result.add_time_point(current_time);
-                    // copy from the previous last value
-                    m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
-                }
-                // decide event type by index and perform it
-                if (next_event < adoption_rates().size()) {
-                    // perform adoption event
-                    const auto& rate = adoption_rates()[next_event];
-                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
-                    m_model->populations[{rate.region, rate.from}] -= 1;
-                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
-                    m_model->populations[{rate.region, rate.to}] += 1;
-                }
-                else {
-                    // perform transition event
-                    const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
-                    m_model->populations[{rate.from, rate.status}] -= 1;
-                    m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
-                    m_model->populations[{rate.to, rate.status}] += 1;
-                }
-                // update internal times
-                for (size_t i = 0; i < m_internal_time.size(); i++) {
-                    m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
-                }
-                // draw new "next event" time for the occured event
-                m_tp_next_event[next_event] +=
-                    mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
-                // precalculate next event
-                update_current_rates_and_waiting_times();
-                next_event = determine_next_event();
-            }
-            // copy last result, if no event occurs between last_result_time and tmax
-            if (last_result_time < tmax) {
-                m_result.add_time_point(tmax);
+        update_current_rates_and_waiting_times();
+        size_t next_event       = determine_next_event(); // index of the next event
+        ScalarType current_time = m_result.get_last_time();
+        // set in the past to add a new time point immediately
+        ScalarType last_result_time = current_time - m_dt;
+        // iterate over time
+        while (current_time + m_waiting_times[next_event] < tmax) {
+            // update time
+            current_time += m_waiting_times[next_event];
+            // regularily save current state in m_results
+            if (current_time > last_result_time + m_dt) {
+                last_result_time = current_time;
+                m_result.add_time_point(current_time);
+                // copy from the previous last value
                 m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
             }
-            return m_result.get_last_value();
-        }
-        else {
+            // decide event type by index and perform it
+            if (next_event < adoption_rates().size()) {
+                // perform adoption event
+                const auto& rate = adoption_rates()[next_event];
+                auto index_from  = std::apply(
+                    [&](auto&&... args) {
+                        return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
+                    },
+                    rate.group_indices);
+                m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
+                m_model->populations[index_from] -= 1;
+                auto index_to = std::apply(
+                    [&](auto&&... args) {
+                        return Index{rate.region, rate.to, std::forward<decltype(args)>(args)...};
+                    },
+                    rate.group_indices);
+                m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
+                m_model->populations[index_to] += 1;
+            }
+            else {
+                // perform transition event
+                const auto& rate = transition_rates()[next_event - adoption_rates().size()];
+                auto index_from  = std::apply(
+                    [&](auto&&... args) {
+                        return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
+                    },
+                    rate.group_indices);
+                m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
+                m_model->populations[index_from] -= 1;
+                auto index_to = std::apply(
+                    [&](auto&&... args) {
+                        return Index{rate.to, rate.status, std::forward<decltype(args)>(args)...};
+                    },
+                    rate.group_indices);
+                m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
+                m_model->populations[index_to] += 1;
+            }
+            // update internal times
+            for (size_t i = 0; i < m_internal_time.size(); i++) {
+                m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
+            }
+            // draw new "next event" time for the occured event
+            m_tp_next_event[next_event] +=
+                mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
+            // precalculate next event
             update_current_rates_and_waiting_times();
-            size_t next_event       = determine_next_event(); // index of the next event
-            ScalarType current_time = m_result.get_last_time();
-            // set in the past to add a new time point immediately
-            ScalarType last_result_time = current_time - m_dt;
-            // iterate over time
-            while (current_time + m_waiting_times[next_event] < tmax) {
-                // update time
-                current_time += m_waiting_times[next_event];
-                // regularily save current state in m_results
-                if (current_time > last_result_time + m_dt) {
-                    last_result_time = current_time;
-                    m_result.add_time_point(current_time);
-                    // copy from the previous last value
-                    m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
-                }
-                // decide event type by index and perform it
-                if (next_event < adoption_rates().size()) {
-                    // perform adoption event
-                    const auto& rate = adoption_rates()[next_event];
-                    auto index_from  = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
-                        },
-                        rate.group_indices);
-                    m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
-                    m_model->populations[index_from] -= 1;
-                    auto index_to = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.region, rate.to, std::forward<decltype(args)>(args)...};
-                        },
-                        rate.group_indices);
-                    m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
-                    m_model->populations[index_to] += 1;
-                }
-                else {
-                    // perform transition event
-                    const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                    auto index_from  = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
-                        },
-                        rate.group_indices);
-                    m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
-                    m_model->populations[index_from] -= 1;
-                    auto index_to = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.to, rate.status, std::forward<decltype(args)>(args)...};
-                        },
-                        rate.group_indices);
-                    m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
-                    m_model->populations[index_to] += 1;
-                }
-                // update internal times
-                for (size_t i = 0; i < m_internal_time.size(); i++) {
-                    m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
-                }
-                // draw new "next event" time for the occured event
-                m_tp_next_event[next_event] +=
-                    mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
-                // precalculate next event
-                update_current_rates_and_waiting_times();
-                next_event = determine_next_event();
-            }
-            // copy last result, if no event occurs between last_result_time and tmax
-            if (last_result_time < tmax) {
-                m_result.add_time_point(tmax);
-                m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
-            }
-            return m_result.get_last_value();
+            next_event = determine_next_event();
         }
+        // copy last result, if no event occurs between last_result_time and tmax
+        if (last_result_time < tmax) {
+            m_result.add_time_point(tmax);
+            m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+        }
+        return m_result.get_last_value();
+        // }
     }
 
     /**
