@@ -393,22 +393,47 @@ def create_single_pie_chart(ax, person_totals, group_people, location_types,
                                           radius=0.9)          # Larger pie radius
 
         # Adjust positioning for small slices (< 5%)
-        for i, (text, autotext, percentage) in enumerate(zip(texts, autotexts, percentages)):
-            if percentage < 10:
-                # Check if next slice is also small
-                next_percentage = percentages[(
-                    i + 1) % len(percentages)] if len(percentages) > 1 else 100
-                if next_percentage < 10:
-                    # Move this text further away and slightly down
-                    pos = text.get_position()
-                    new_x = pos[0] * 1.1  # Less movement for compact layout
-                    new_y = pos[1] * 1.1 - 0.25  # Smaller adjustment
-                    text.set_position((new_x, new_y))
+        small_slice_threshold = 5.0  # Slices smaller than 10%
+        very_small_threshold = 0.0   # Slices smaller than 5%
 
-                    # Also adjust the percentage text
-                    autotext_pos = autotext.get_position()
-                    autotext.set_position(
-                        (autotext_pos[0] * 0.8, autotext_pos[1] * 0.8))
+        # Count small slices for progressive positioning
+        small_slice_count = 0
+        very_small_slice_count = 0
+
+        for i, (text, autotext, percentage) in enumerate(zip(texts, autotexts, percentages)):
+            if percentage < small_slice_threshold:
+                # Adjust percentage text position progressively for small slices
+                if percentage < very_small_threshold:
+                    # Very small slices: move percentage text further from center
+                    base_distance = 0.75
+                    distance_increment = 0.15 * very_small_slice_count
+                    pct_distance = base_distance + distance_increment
+                    very_small_slice_count += 1
+                else:
+                    # Small slices: move percentage text moderately from center
+                    base_distance = 0.75
+                    distance_increment = 0.15 * small_slice_count
+                    pct_distance = base_distance + distance_increment
+                    # small_slice_count += 1
+
+                # Get the wedge center angle for positioning
+                wedge = wedges[i]
+                theta = np.deg2rad((wedge.theta1 + wedge.theta2) / 2)
+
+                # Calculate new position for percentage text
+                new_x = pct_distance * np.cos(theta)
+                new_y = pct_distance * np.sin(theta)
+                autotext.set_position((new_x, new_y))
+
+                # Also handle outer label positioning for very small slices
+                if percentage < 8:
+                    next_percentage = percentages[(
+                        i + 1) % len(percentages)] if len(percentages) > 1 else 100
+                    if next_percentage < 8:
+                        pos = text.get_position()
+                        new_x = pos[0] * 1.1
+                        new_y = pos[1] * 1.1 - 0.25
+                        text.set_position((new_x, new_y))
 
         # Improved text formatting
         for autotext in autotexts:
@@ -438,30 +463,57 @@ def create_config_pie_chart(ax, pie_data, title):
                                           startangle=90,
                                           textprops={'fontsize': 11},
                                           labeldistance=1.2,  # Closer to pie
-                                          pctdistance=0.7,
+                                          pctdistance=0.55,
                                           radius=0.9)          # Larger pie radius
 
         # Adjust positioning for small slices (< 5%) - compact version
+        small_slice_threshold = 5.0  # Slices smaller than 10%
+        very_small_threshold = 0.0   # Slices smaller than 5%
+
+        # Count small slices for progressive positioning
+        small_slice_count = 0
+        very_small_slice_count = 0
+
         for i, (text, autotext, percentage) in enumerate(zip(texts, autotexts, percentages)):
+            if percentage < small_slice_threshold:
+                # Adjust percentage text position progressively for small slices
+                if percentage < very_small_threshold:
+                    # Very small slices: move percentage text further from center
+                    base_distance = 0.7
+                    distance_increment = 0.15 * very_small_slice_count
+                    pct_distance = base_distance + distance_increment
+                    # very_small_slice_count += 1
+                else:
+                    # Small slices: move percentage text moderately from center
+                    base_distance = 0.65
+                    distance_increment = 0.05 * small_slice_count
+                    pct_distance = base_distance + distance_increment
+                    # small_slice_count += 1
+
+                # Get the wedge center angle for positioning
+                wedge = wedges[i]
+                theta = np.deg2rad((wedge.theta1 + wedge.theta2) / 2)
+
+                # Calculate new position for percentage text
+                new_x = pct_distance * np.cos(theta)
+                new_y = pct_distance * np.sin(theta)
+                autotext.set_position((new_x, new_y))
+
+            # Special handling for the specific percentage range you mentioned
             if (percentage > 4.3 and percentage < 4.5):
                 autotext_pos = autotext.get_position()
                 autotext.set_position(
                     (autotext_pos[0] * 1.0, autotext_pos[1] * 1.05))
-            if percentage < 10:
+            elif percentage < 8:
                 # Check if next slice is also small
                 next_percentage = percentages[(
                     i + 1) % len(percentages)] if len(percentages) > 1 else 100
                 if next_percentage < 5:
-                    # Move this text further away and slightly down
+                    # Move outer text further away
                     pos = text.get_position()
-                    new_x = pos[0] * 1.0  # Less movement for compact layout
-                    new_y = pos[1] * 1.0   # Smaller adjustment
+                    new_x = pos[0] * 1.0
+                    new_y = pos[1] * 1.0
                     text.set_position((new_x, new_y))
-
-                    # Also adjust the percentage text
-                    autotext_pos = autotext.get_position()
-                    autotext.set_position(
-                        (autotext_pos[0] * 0.66, autotext_pos[1] * 0.66))
 
         # Improved text formatting
         for autotext in autotexts:
@@ -749,7 +801,7 @@ def main():
     args = parser.parse_args()
 
     # # Debug paths (comment out for production)
-    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-09-04145556"
+    args.data_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/run_default_2025-09-09121414"
     args.output_path = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/panvXabmSim/results/population_structure_with_degree_distribution.png"
 
     location_file = args.data_dir + "/location_type_and_id.txt"

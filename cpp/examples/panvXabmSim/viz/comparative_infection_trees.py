@@ -450,7 +450,7 @@ def draw_straight_connections(ax, transmission_tree, positions, infection_events
 
 
 def add_location_pie_inset(ax, infection_events, location_colors):
-    """Add a small pie chart in the lower right corner of the tree plot"""
+    """Add a small pie chart in the lower right corner of the tree plot with location legend"""
 
     # Count infections by location type (excluding Patient Zero)
     counts = {}
@@ -500,6 +500,25 @@ def add_location_pie_inset(ax, infection_events, location_colors):
 
     # Remove axes and make it clean
     pie_ax.set_aspect('equal')
+
+    # Add location legend next to the pie chart
+    location_legend_elements = []
+    for loc_type, color in location_colors.items():
+        if loc_type not in ['EventPanvadere', 'Workplace Event', 'Restaurant Event', 'Patient Zero']:
+            location_legend_elements.append(plt.Line2D([0], [0], marker='o', color='w',
+                                                       markerfacecolor=color, markersize=8,
+                                                       label=loc_type))
+
+    # Add location legend to the left of the pie chart
+    if location_legend_elements:
+        location_legend = ax.legend(handles=location_legend_elements,
+                                    loc='lower right',
+                                    bbox_to_anchor=(-0.27, 0.88),
+                                    fontsize=12,
+                                    title='Location Types',
+                                    title_fontsize=12,
+                                    frameon=True,
+                                    ncol=2)
 
 
 def plot_infection_tree_enhanced(ax, infection_events, transmission_tree, positions, location_colors,
@@ -617,8 +636,13 @@ def plot_infection_tree_enhanced(ax, infection_events, transmission_tree, positi
     ax.tick_params(axis='both', which='major', labelsize=16)
     ax.tick_params(axis='both', which='minor', labelsize=14)
 
-    # Set limits with padding
-    ax.set_ylim(min(y_values) - y_range * 0.15, max(y_values) + y_range * 0.1)
+    # Set limits with padding (increased upper padding for legend space)
+    if "Transmission-Informed" in title:
+        ax.set_ylim(min(y_values) - y_range * 0.15,
+                    max(y_values) + y_range * 0.17)
+    else:
+        ax.set_ylim(min(y_values) - y_range * 0.15,
+                    max(y_values) + y_range * 0.05)
 
     # Hide negative x-axis tick labels but keep the axis range
     x_ticks = ax.get_xticks()
@@ -879,23 +903,22 @@ def create_comparative_infection_trees_enhanced(data_dir_method1, data_dir_metho
     fig.suptitle(f"{title}\n{method1_name} vs {method2_name} Initialization\n",
                  fontsize=16, fontweight='bold', y=0.95)
 
-    # Create legend
-    legend_elements = []
-    for loc_type, color in location_colors.items():
-        if loc_type not in ['EventPanvadere', 'Workplace Event', 'Restaurant Event', 'Patient Zero']:
-            legend_elements.append(plt.Line2D([0], [0], marker='o', color='w',
-                                              markerfacecolor=color, markersize=10,
-                                              label=loc_type))
-
-    legend_elements.extend([
+    # Create transmission legend (only transmission lines)
+    transmission_legend_elements = [
         plt.Line2D([0], [0], color='black', lw=2, linestyle='-',
                    label='Certain transmission', alpha=0.9),
         plt.Line2D([0], [0], color='black', lw=2, linestyle='--',
-                   label='Uncertain transmission (multiple potential infectors)', alpha=0.9)
-    ])
+                   label='Uncertain transmission', alpha=0.9)
+    ]
 
-    ax1.legend(handles=legend_elements, loc='upper left',
-               title_fontsize=10, bbox_to_anchor=(0, 1), fontsize=14)
+    # Add transmission legend to top left of first plot
+    ax1.legend(handles=transmission_legend_elements,
+               loc='upper left',
+               bbox_to_anchor=(0.05, 1.0),
+               fontsize=14,
+               title='Transmission Types',
+               title_fontsize=14,
+               frameon=True)
 
     plt.tight_layout()
 
