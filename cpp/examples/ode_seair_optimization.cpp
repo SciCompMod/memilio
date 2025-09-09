@@ -21,7 +21,7 @@
 * is extracted from the Ipopt documentation
 */
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "ode_seair/model.h"
@@ -47,13 +47,13 @@
 class Seair_NLP : public Ipopt::TNLP
 {
 public:
-    static constexpr double N   = 327167434; // total US population
-    Seair_NLP()                 = default;
-    Seair_NLP(const Seair_NLP&) = delete;
-    Seair_NLP(Seair_NLP&&)      = delete;
+    static constexpr double N              = 327167434; // total US population
+    Seair_NLP()                            = default;
+    Seair_NLP(const Seair_NLP&)            = delete;
+    Seair_NLP(Seair_NLP&&)                 = delete;
     Seair_NLP& operator=(const Seair_NLP&) = delete;
-    Seair_NLP& operator=(Seair_NLP&&) = delete;
-    ~Seair_NLP()                      = default;
+    Seair_NLP& operator=(Seair_NLP&&)      = delete;
+    ~Seair_NLP()                           = default;
 
     /** Method to request the initial information about the problem.
     *

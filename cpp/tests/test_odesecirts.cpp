@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -108,11 +108,11 @@ const mio::osecirts::Model<double>& osecirts_testing_model()
         }
     }
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
-    const double cont_freq                  = 1;
-    const double fact                       = 1.0 / (double)(size_t)nb_groups;
+    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
+    const double cont_freq                          = 1;
+    const double fact                               = 1.0 / (double)(size_t)nb_groups;
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     return model;
 }
 
@@ -141,7 +141,7 @@ TEST(TestOdeSECIRTS, get_flows)
 
 TEST(TestOdeSECIRTS, Simulation)
 {
-    auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
+    auto sim = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
     sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
@@ -258,7 +258,8 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     }
 
     // simulate one step with explicit Euler
-    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
+    auto result = mio::simulate_flows<double, mio::osecirts::Model<double>>(
+        t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =
@@ -289,7 +290,7 @@ TEST(TestOdeSECIRTS, smooth_vaccination_rate)
     const ScalarType tmax = 2.;
 
     // init simple model
-    mio::osecirts::Model model(1);
+    mio::osecirts::Model<double> model(1);
     auto& daily_vaccinations = model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>();
     daily_vaccinations.resize(mio::SimulationDay(static_cast<size_t>(tmax + 1)));
 
@@ -350,7 +351,7 @@ void assign_uniform_distribution(mio::UncertainValue<double>& p, double min, dou
     auto invalid_initial = max == 0 ? 1.0 : max * 1.001;
     auto valid_initial   = (max + min) * 0.5;
     auto initial         = set_invalid_initial_value ? invalid_initial : valid_initial;
-    p                    = mio::UncertainValue(initial);
+    p                    = mio::UncertainValue<double>(initial);
     p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
@@ -453,17 +454,17 @@ void set_contact_parameters(mio::osecirts::Model<double>::ParameterSet& paramete
     auto& contact_matrix = contacts.get_cont_freq_mat();
     contact_matrix[0].get_baseline().setConstant(0.5);
     contact_matrix[0].get_baseline().diagonal().setConstant(5.0);
-    contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
+    contact_matrix[0].add_damping(0.3, mio::SimulationTime<double>(5.0));
 
     auto& npis      = parameters.get<mio::osecirts::DynamicNPIsInfectedSymptoms<double>>();
     auto npi_groups = Eigen::VectorXd::Ones(contact_matrix[0].get_num_groups());
-    auto npi_value  = mio::UncertainValue(0.5);
+    auto npi_value  = mio::UncertainValue<double>(0.5);
     assign_uniform_distribution(npi_value, 0.25, 0.75, set_invalid_initial_value);
     npis.set_threshold(10.0, {mio::DampingSampling<double>(npi_value, mio::DampingLevel(0), mio::DampingType(0),
-                                                           mio::SimulationTime(0), {0}, npi_groups)});
+                                                           mio::SimulationTime<double>(0), {0}, npi_groups)});
     npis.set_base_value(100'000);
-    npis.set_interval(mio::SimulationTime(3.0));
-    npis.set_duration(mio::SimulationTime(14.0));
+    npis.set_interval(mio::SimulationTime<double>(3.0));
+    npis.set_duration(mio::SimulationTime<double>(14.0));
     parameters.get_end_dynamic_npis() = 10.0; //required for dynamic NPIs to have effect in this model
 }
 
@@ -590,7 +591,7 @@ namespace
 mio::osecirts::Model<double> make_model(int num_age_groups, bool set_invalid_initial_value = false)
 {
     assert(num_age_groups <= 6 && "Provide more values in functions above to test more age groups.");
-    mio::osecirts::Model model(num_age_groups);
+    mio::osecirts::Model<double> model(num_age_groups);
     set_covid_parameters(model.parameters, set_invalid_initial_value);
     set_synthetic_population_data(model.populations, set_invalid_initial_value);
     set_demographic_parameters(model.parameters, set_invalid_initial_value);
@@ -731,14 +732,14 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
     num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
 
-    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
+    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data<double>(
                     path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
                     num_InfectedSevere, num_icu, num_death, num_timm, model,
                     std::vector<double>(size_t(num_age_groups), 1.0), 0),
                 IsSuccess());
 
     // read again with invalid date
-    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
+    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data<double>(
                     path, region, {3020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
                     num_InfectedSevere, num_icu, num_death, num_timm, model,
                     std::vector<double>(size_t(num_age_groups), 1.0), 0),
@@ -746,7 +747,7 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
 
     // call the compute function with empty case data
     const std::vector<mio::ConfirmedCasesDataEntry> empty_case_data;
-    ASSERT_THAT(mio::osecirts::details::compute_confirmed_cases_data(
+    ASSERT_THAT(mio::osecirts::details::compute_confirmed_cases_data<double>(
                     empty_case_data, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
                     num_icu, num_death, num_timm, region, {2020, 12, 01}, model,
                     std::vector<double>(size_t(num_age_groups), 1.0), 0),
@@ -761,7 +762,8 @@ TEST(TestOdeSECIRTS, set_divi_data_invalid_dates)
     auto model_vector = std::vector<mio::osecirts::Model<double>>{model};
 
     // Test with date before DIVI dataset was available.
-    EXPECT_THAT(mio::osecirts::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(mio::osecirts::details::set_divi_data<double>(model_vector, "", {1001}, {2019, 12, 01}, 1.0),
+                IsSuccess());
     // Assure that populations is the same as before.
     EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
@@ -808,8 +810,8 @@ TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
     auto model_vector       = std::vector<mio::osecirts::Model<double>>{model};
     auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
 
-    EXPECT_THAT(mio::osecirts::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day,
-                                                                 scaling_factor_inf, immunity_population),
+    EXPECT_THAT(mio::osecirts::details::set_confirmed_cases_data<double>(model_vector, case_data, {1002}, mid_day,
+                                                                         scaling_factor_inf, immunity_population),
                 IsSuccess());
 
     // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
@@ -1019,13 +1021,14 @@ TEST(TestOdeSECIRTS, export_time_series_init)
                     mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
-    auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
+    auto data_extrapolated = mio::read_result<double>(mio::path_join(tmp_results_dir, "Results_rki.h5"));
     ASSERT_THAT(data_extrapolated, IsSuccess());
 
     // Values were generated by the tested function export_input_data_county_timeseries;
     // can only check stability of the implementation, not correctness
     auto expected_results =
-        mio::read_result(mio::path_join(TEST_DATA_DIR, "export_time_series_initialization_osecirts.h5")).value();
+        mio::read_result<double>(mio::path_join(TEST_DATA_DIR, "export_time_series_initialization_osecirts.h5"))
+            .value();
 
     ASSERT_THAT(print_wrap(data_extrapolated.value()[0].get_groups().matrix()),
                 MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
@@ -1100,8 +1103,8 @@ TEST(TestOdeSECIRTS, set_vaccination_data_not_avail)
     std::vector<int> region = {1001};
     std::string any_path    = "dummy_vacc_path.json";
 
-    auto result =
-        mio::osecirts::details::set_vaccination_data(model_vector, any_path, unavailable_date, region, num_days);
+    auto result = mio::osecirts::details::set_vaccination_data<double>(model_vector, any_path, unavailable_date, region,
+                                                                       num_days);
 
     ASSERT_THAT(result, IsSuccess());
 
@@ -1137,7 +1140,8 @@ TEST(TestOdeSECIRTS, set_vaccination_data_min_date_not_avail)
     mio::Date earlier_date(2021, 1, 1);
     std::vector<int> region = {0};
 
-    auto result = mio::osecirts::details::set_vaccination_data(model_vector, vacc_data, earlier_date, region, num_days);
+    auto result =
+        mio::osecirts::details::set_vaccination_data<double>(model_vector, vacc_data, earlier_date, region, num_days);
     ASSERT_THAT(result, IsSuccess());
 
     // check that vaccinations are set to zero for all days and age groups
@@ -1242,7 +1246,7 @@ TEST(TestOdeSECIRTS, test_commuters)
     model.parameters.get_start_commuter_detection() = 0.0;
     model.parameters.get_end_commuter_detection()   = 20.0;
     model.parameters.get_commuter_nondetection()    = non_detection_factor;
-    auto sim                                        = mio::osecirts::Simulation<>(model);
+    auto sim                                        = mio::osecirts::Simulation<double>(model);
     auto before_testing                             = sim.get_result().get_last_value().eval();
     auto migrated                                   = (sim.get_result().get_last_value() * migration_factor).eval();
     auto migrated_tested                            = migrated.eval();
@@ -1454,7 +1458,7 @@ TEST(TestOdeSECIRTS, check_constraints_parameters)
 TEST(TestOdeSECIRTS, apply_constraints_parameters)
 {
     const double tol_times = 1e-1;
-    auto model             = mio::osecirts::Model(1);
+    auto model             = mio::osecirts::Model<double>(1);
     auto indx_agegroup     = mio::AgeGroup(0);
     EXPECT_EQ(model.parameters.apply_constraints(), 0);
 
@@ -1601,8 +1605,8 @@ TEST(TestOdeSECIRTS, apply_variant_function)
     auto model = mio::osecirts::Model<double>(1);
     model.parameters.set<mio::osecirts::TransmissionProbabilityOnContact<double>>(0.2);
 
-    model.parameters.set<mio::osecirts::StartDay>(0);
-    model.parameters.set<mio::osecirts::StartDayNewVariant>(10);
+    model.parameters.set<mio::osecirts::StartDay<double>>(0);
+    model.parameters.set<mio::osecirts::StartDayNewVariant<double>>(10);
     model.parameters.set<mio::osecirts::InfectiousnessNewVariant<double>>(2.0);
 
     // set vaccinations

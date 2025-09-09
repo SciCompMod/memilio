@@ -63,7 +63,7 @@ int get_region_id(const EpiDataEntry& data_entry)
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
                                  std::vector<FP>& vnum_icu)
 {
@@ -106,12 +106,12 @@ IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const 
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = double>
+template <typename FP>
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<FP>& vnum_icu)
 {
     BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
-    return compute_divi_data(divi_data, vregion, date, vnum_icu);
+    return compute_divi_data<FP>(divi_data, vregion, date, vnum_icu);
 }
 
 /**
@@ -122,8 +122,38 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
-                                                                const std::vector<int>& vregion);
+template <typename FP>
+IOResult<std::vector<std::vector<FP>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
+                                                            const std::vector<int>& vregion)
+{
+    std::vector<std::vector<FP>> vnum_population(vregion.size(),
+                                                 std::vector<FP>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+
+    for (auto&& county_entry : population_data) {
+        //accumulate population of states or country from population of counties
+        if (!county_entry.county_id && !county_entry.district_id) {
+            return failure(StatusCode::InvalidFileFormat, "File with county population expected.");
+        }
+        //find region that this county belongs to
+        //all counties belong to the country (id = 0)
+        auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
+            return r == 0 ||
+                   (county_entry.county_id &&
+                    regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
+                   (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
+                   (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
+        });
+        if (it != vregion.end()) {
+            auto region_idx      = size_t(it - vregion.begin());
+            auto& num_population = vnum_population[region_idx];
+            for (size_t age = 0; age < num_population.size(); age++) {
+                num_population[age] += county_entry.population[AgeGroup(age)];
+            }
+        }
+    }
+
+    return success(vnum_population);
+}
 
 /**
  * @brief Reads population data from census data.
@@ -133,8 +163,12 @@ IOResult<std::vector<std::vector<double>>> read_population_data(const std::vecto
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
-                                                                const std::vector<int>& vregion);
+template <typename FP>
+IOResult<std::vector<std::vector<FP>>> read_population_data(const std::string& path, const std::vector<int>& vregion)
+{
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
+    return read_population_data<FP>(population_data, vregion);
+}
 
 } // namespace mio
 
