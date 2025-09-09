@@ -71,7 +71,7 @@ const ScalarType timeInfectedSymptoms[]   = {7.9895, 7.9895, 7.9734, 7.9139, 7.9
 const ScalarType timeInfectedSevere[]     = {16.855, 16.855, 16.855, 15.61, 13.12, 11.46};
 const ScalarType timeInfectedCritical[]   = {17.73, 17.73, 17.064, 17.064, 15.14, 13.66};
 
-// Define number of subcompartments per compartment per age group.
+// Define number of subcompartments for each compartment per age group.
 // These are used as a template argument and have to be constexpr.
 constexpr size_t n_subcomps_E[]    = {9, 9, 9, 9, 9, 9};
 constexpr size_t n_subcomps_INS[]  = {5, 5, 4, 4, 4, 4};
@@ -378,44 +378,50 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
     // Use compartments_init as a basis to define appropriate initial values.
     // Compartment values are distributed uniformly to the subcompartments.
     for (size_t group = 0; group < num_age_groups; group++) {
-        size_t lct_states_count = 0;
+        size_t total_num_subcomps_this_group      = 0;
+        size_t total_num_subcomps_previous_groups = 0;
         std::vector<size_t> num_subcompartments;
 
         switch (group) {
         case 0:
-            lct_states_count    = LctState0_4::Count;
-            num_subcompartments = {LctState0_4::get_num_subcompartments<InfState::Exposed>(),
-                                   LctState0_4::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                   LctState0_4::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                   LctState0_4::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState0_4::get_num_subcompartments<InfState::InfectedCritical>()};
+            total_num_subcomps_this_group = LctState0_4::Count;
+            num_subcompartments           = {LctState0_4::get_num_subcompartments<InfState::Exposed>(),
+                                             LctState0_4::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                             LctState0_4::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                             LctState0_4::get_num_subcompartments<InfState::InfectedSevere>(),
+                                             LctState0_4::get_num_subcompartments<InfState::InfectedCritical>()};
             break;
         case 1:
-            lct_states_count    = LctState5_14::Count;
-            num_subcompartments = {LctState5_14::get_num_subcompartments<InfState::Exposed>(),
-                                   LctState5_14::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                   LctState5_14::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                   LctState5_14::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState5_14::get_num_subcompartments<InfState::InfectedCritical>()};
+            total_num_subcomps_this_group      = LctState5_14::Count;
+            total_num_subcomps_previous_groups = LctState0_4::Count;
+            num_subcompartments                = {LctState5_14::get_num_subcompartments<InfState::Exposed>(),
+                                                  LctState5_14::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                  LctState5_14::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                  LctState5_14::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                  LctState5_14::get_num_subcompartments<InfState::InfectedCritical>()};
             break;
         case 2:
-            lct_states_count    = LctState15_34::Count;
-            num_subcompartments = {LctState15_34::get_num_subcompartments<InfState::Exposed>(),
-                                   LctState15_34::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                   LctState15_34::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                   LctState15_34::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState15_34::get_num_subcompartments<InfState::InfectedCritical>()};
+            total_num_subcomps_this_group      = LctState15_34::Count;
+            total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count;
+            num_subcompartments                = {LctState15_34::get_num_subcompartments<InfState::Exposed>(),
+                                                  LctState15_34::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                  LctState15_34::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                  LctState15_34::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                  LctState15_34::get_num_subcompartments<InfState::InfectedCritical>()};
             break;
         case 3:
-            lct_states_count    = LctState35_59::Count;
-            num_subcompartments = {LctState35_59::get_num_subcompartments<InfState::Exposed>(),
-                                   LctState35_59::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                   LctState35_59::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                   LctState35_59::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState35_59::get_num_subcompartments<InfState::InfectedCritical>()};
+            total_num_subcomps_this_group      = LctState35_59::Count;
+            total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count;
+            num_subcompartments                = {LctState35_59::get_num_subcompartments<InfState::Exposed>(),
+                                                  LctState35_59::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                  LctState35_59::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                  LctState35_59::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                  LctState35_59::get_num_subcompartments<InfState::InfectedCritical>()};
             break;
         case 4:
-            lct_states_count    = LctState60_79::Count;
+            total_num_subcomps_this_group = LctState60_79::Count;
+            total_num_subcomps_previous_groups =
+                LctState0_4::Count + LctState5_14::Count + LctState15_34::Count + LctState35_59::Count;
             num_subcompartments = {LctState60_79::get_num_subcompartments<InfState::Exposed>(),
                                    LctState60_79::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                    LctState60_79::get_num_subcompartments<InfState::InfectedSymptoms>(),
@@ -423,7 +429,9 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
                                    LctState60_79::get_num_subcompartments<InfState::InfectedCritical>()};
             break;
         case 5:
-            lct_states_count    = LctState80::Count;
+            total_num_subcomps_this_group      = LctState80::Count;
+            total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count +
+                                                 LctState35_59::Count + LctState60_79::Count;
             num_subcompartments = {LctState80::get_num_subcompartments<InfState::Exposed>(),
                                    LctState80::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                    LctState80::get_num_subcompartments<InfState::InfectedSymptoms>(),
@@ -432,15 +440,15 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
             break;
         }
 
-        model.populations[group * lct_states_count + 0] =
+        model.populations[total_num_subcomps_previous_groups + 0] =
             compartments_init[group * (size_t)mio::isecir::InfectionState::Count + 0]; // Susceptible
-        model.populations[group * lct_states_count + lct_states_count - 2] =
+        model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 2] =
             compartments_init[group * (size_t)mio::isecir::InfectionState::Count + 6]; // Recovered
-        model.populations[group * lct_states_count + lct_states_count - 1] =
+        model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 1] =
             compartments_init[group * (size_t)mio::isecir::InfectionState::Count + 7]; // Dead
         for (size_t i = (size_t)InfState::Exposed; i < (size_t)InfState::Count - 2; i++) {
             for (size_t subcomp = 0; subcomp < num_subcompartments[i]; subcomp++) {
-                model.populations[group * lct_states_count + (i - 1) * num_subcompartments[i] + 1 + subcomp] =
+                model.populations[total_num_subcomps_previous_groups + (i - 1) * num_subcompartments[i] + 1 + subcomp] =
                     compartments_init[group * (size_t)mio::isecir::InfectionState::Count + i] /
                     (ScalarType)num_subcompartments[i];
             }
@@ -560,6 +568,8 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
     return mio::success();
 }
 
+std::vector<ScalarType> get_num_persons_per_infectionage();
+
 mio::IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std::string save_dir = "")
 {
     mio::unused(init_compartments);
@@ -569,13 +579,8 @@ mio::IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std:
     return mio::success();
 }
 
-/** 
-* Usage: ide_changepoints <result_dir>
-* The command line argument is optional. Default values are provided if not specified.
-*/
 int main(int argc, char** argv)
 {
-    // Default path is valid if script is executed in e.g. memilio-simulations/2024_Wendler_et_al_Nonstandard_numerical_scheme_IDE.
     std::string result_dir = "../../simulation_results/";
 
     // Set result_dir via command line.
@@ -591,7 +596,7 @@ int main(int argc, char** argv)
 
     // Set path to contact data.
     std::string contact_data_dir  = "../../data/contacts/";
-    std::string reported_data_dir = "../../data/pydata/Germany/";
+    std::string reported_data_dir = "../../data/Germany/pydata/";
 
     // Changepoint scenario with halving of contacts after two days.
 
