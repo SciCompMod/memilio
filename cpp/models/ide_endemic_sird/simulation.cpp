@@ -34,6 +34,7 @@ void Simulation::advance(ScalarType tmax)
     m_normmodel->compparameters->set_reproductionnumber_c(m_dt);
     m_normmodel->compparameters->set_T(m_dt);
     m_normmodel->compparameters->set_W(m_dt);
+    m_normmodel->compparameters->set_equilibria();
 
     m_difference_normalizedcompartments.add_time_point(0);
     m_difference_normalizedFoI.add_time_point(0);

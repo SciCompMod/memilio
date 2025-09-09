@@ -155,6 +155,21 @@ public:
         return m_model->compparameters->m_W;
     }
 
+    std::vector<std::vector<ScalarType>> const& get_Equilibirum_compartments()
+    {
+        return m_normmodel->compparameters->m_compartments_equilibrium;
+    }
+
+    std::vector<std::vector<ScalarType>> const& get_Equilibirum_transitions()
+    {
+        return m_normmodel->compparameters->m_transitions_equilibrium;
+    }
+
+    std::vector<ScalarType> const& get_Equilibirum_FoI()
+    {
+        return m_normmodel->compparameters->m_FoI_equilibrium;
+    }
+
     /**
      * @brief returns the simulation model used in simulation.
      */

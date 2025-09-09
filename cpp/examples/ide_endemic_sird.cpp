@@ -19,7 +19,7 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 50;
+    ScalarType tmax = 10;
     ScalarType dt   = 1.0;
 
     int num_states      = static_cast<int>(mio::endisird::InfectionState::Count);
@@ -45,21 +45,21 @@ int main()
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    // mio::SmootherCosine smoothcos(2.0);
-    // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
+    mio::SmootherCosine smoothcos(2.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    mio::ConstantFunction initialfunc(0);
-    mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistributioninit);
-    // InfectedToDead
-    mio::SmootherCosine survivalExposedToInfectedNoSymptoms(6.0);
-    vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToDead].set_state_age_function(
-        survivalExposedToInfectedNoSymptoms);
-    // InfectedToRecovered
-    mio::SmootherCosine survivalInfectedNoSymptomsToInfectedSymptoms(8.0);
-    vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToRecovered].set_state_age_function(
-        survivalInfectedNoSymptomsToInfectedSymptoms);
+    // mio::ConstantFunction initialfunc(0);
+    // mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
+    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistributioninit);
+    // // InfectedToDead
+    // mio::SmootherCosine survivalExposedToInfectedNoSymptoms(6.0);
+    // vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToDead].set_state_age_function(
+    //     survivalExposedToInfectedNoSymptoms);
+    // // InfectedToRecovered
+    // mio::SmootherCosine survivalInfectedNoSymptomsToInfectedSymptoms(8.0);
+    // vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToRecovered].set_state_age_function(
+    //     survivalInfectedNoSymptomsToInfectedSymptoms);
 
     // mio::ConstantFunction initialfunc(0);
     // mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
@@ -128,8 +128,8 @@ int main()
     //     {"s->i", "i->d", "i->r }, 16, 8);
 
     // Uncomment to print the force of infection of model.
-    auto interpolated_FoI = mio::interpolate_simulation_result(sim.get_forceofinfections(), dt / 2.);
-    interpolated_FoI.print_table({"FoI"}, 16, 8);
+    // auto interpolated_FoI = mio::interpolate_simulation_result(sim.get_forceofinfections(), dt / 2.);
+    // interpolated_FoI.print_table({"FoI"}, 16, 8);
 
     // Uncomment to print the force of infection of normmodel.
     // sim.get_normmodel_forceofinfections().print_table({"norm FoI"}, 16, 8);
@@ -138,14 +138,39 @@ int main()
     std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
 
     // Uncomment to print the the values T_z1^z2
-    //for (int i = 0; i < (int)sim.get_T().size(); i++) {
-    //    std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
-    //}
+    for (int i = 0; i < (int)sim.get_T().size(); i++) {
+        std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
+    }
 
-    // Uncomment to print the values W_z
-    //for (int i = 0; i < (int)sim.get_W().size(); i++) {
-    //    std::cout << "W_" << i << " = " << sim.get_W()[i] << "\n";
-    //}
+    // Uncomment to print W_i
+
+    std::cout << "W_i = " << sim.get_W() << "\n";
+
+    // Uncomment to print the equilibria
+    std::cout << "l_1 = " << sim.get_Equilibirum_FoI()[0] << "\n";
+    std::cout << "l_2 = " << sim.get_Equilibirum_FoI()[1] << "\n";
+    std::cout << "s_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Susceptible]
+              << "\n";
+    std::cout << "s_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Susceptible]
+              << "\n";
+    std::cout << "i_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Infected]
+              << "\n";
+    std::cout << "i_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Infected]
+              << "\n";
+    std::cout << "r_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Recovered]
+              << "\n";
+    std::cout << "r_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Recovered]
+              << "\n";
+    std::cout << "sigmaid_1 = "
+              << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
+    std::cout << "sigmaid_2 = "
+              << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
+    std::cout << "sigmair_1 = "
+              << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
+              << "\n";
+    std::cout << "sigmair_2 = "
+              << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
+              << "\n";
 
     // Uncomment to print the total population size.
     // sim.get_totalpopulations().print_table({"N"}, 16, 9);

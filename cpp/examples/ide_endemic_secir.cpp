@@ -19,8 +19,8 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 1000;
-    ScalarType dt   = 1.0;
+    ScalarType tmax = 1;
+    ScalarType dt   = 0.00001;
 
     int num_states      = static_cast<int>(mio::endisecir::InfectionState::Count);
     int num_transitions = static_cast<int>(mio::endisecir::InfectionTransition::Count);
@@ -49,7 +49,7 @@ int main()
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    mio::SmootherCosine smoothcos(6.0);
+    mio::SmootherCosine smoothcos(2.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 

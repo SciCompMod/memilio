@@ -30,7 +30,7 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     Vec vec_init(num_states);
 
     vec_init[static_cast<int>(mio::endisird::InfectionState::Susceptible)] = 100000.;
-    vec_init[static_cast<int>(mio::endisird::InfectionState::Infected)]    = 40.;
+    vec_init[static_cast<int>(mio::endisird::InfectionState::Infected)]    = 30.;
     vec_init[static_cast<int>(mio::endisird::InfectionState::Recovered)]   = 0.;
     vec_init[static_cast<int>(mio::endisird::InfectionState::Dead)]        = 0.;
 
@@ -44,31 +44,19 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    // mio::SmootherCosine smoothcos(2.0);
-    // mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
-    // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
-
-    mio::ConstantFunction initialfunc(0);
-    mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistributioninit);
-    // InfectedToDead
-    mio::SmootherCosine survivalExposedToInfectedNoSymptoms(6.0);
-    vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToDead].set_state_age_function(
-        survivalExposedToInfectedNoSymptoms);
-    // InfectedToRecovered
-    mio::SmootherCosine survivalInfectedNoSymptomsToInfectedSymptoms(8.0);
-    vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToRecovered].set_state_age_function(
-        survivalInfectedNoSymptomsToInfectedSymptoms);
+    mio::SmootherCosine smoothcos(12.0);
+    mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
+    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
     // mio::ConstantFunction initialfunc(0);
     // mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistributioninit);
     // // InfectedToDead
-    // mio::LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(0.8, 0, 4.2);
+    // mio::SmootherCosine survivalExposedToInfectedNoSymptoms(14.0);
     // vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToDead].set_state_age_function(
     //     survivalExposedToInfectedNoSymptoms);
     // // InfectedToRecovered
-    // mio::LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(0.2, 0, 0.8);
+    // mio::SmootherCosine survivalInfectedNoSymptomsToInfectedSymptoms(8.0);
     // vec_delaydistribution[(int)mio::endisird::InfectionTransition::InfectedToRecovered].set_state_age_function(
     //     survivalInfectedNoSymptomsToInfectedSymptoms);
 
@@ -94,8 +82,8 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
 
     computed_parameters.parameters.get<mio::endisird::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    computed_parameters.parameters.set<mio::endisird::NaturalBirthRate>(4e-3);
-    computed_parameters.parameters.set<mio::endisird::NaturalDeathRate>(3e-3);
+    computed_parameters.parameters.set<mio::endisird::NaturalBirthRate>(1e-1);
+    computed_parameters.parameters.set<mio::endisird::NaturalDeathRate>(2e-2);
 
     //computed_parameters.set_tol_for_support_max(1e-6);
 
@@ -111,21 +99,21 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
         std::string tmax_string = std::to_string(tmax);
         std::string dt_string   = std::to_string(dt);
 
-        std::string filename_ide = save_dir + "analysis_endide_SIRD" + tmax_string.substr(0, tmax_string.find(".")) +
+        std::string filename_ide = save_dir + "analysis_endide_SIRD_" + tmax_string.substr(0, tmax_string.find(".")) +
                                    "_" + dt_string.substr(0, dt_string.find(".") + 5);
 
         //Save files of Model.
         //Save total population.
-        std::string filename_ide_totalpopulation1 = filename_ide + "_totalpopulation1.h5";
+        std::string filename_ide_totalpopulation1 = filename_ide + "_totalpopulation.h5";
         mio::IOResult<void> save_result_status_tp1 =
             mio::save_result({sim.get_totalpopulations()}, {0}, 1, filename_ide_totalpopulation1);
         //Save derivative of total population.
-        std::string filename_ide_dertotalpopulation1 = filename_ide + "_dertotalpopulation1.h5";
+        std::string filename_ide_dertotalpopulation1 = filename_ide + "_dertotalpopulation.h5";
         mio::IOResult<void> save_result_status_dtp1 =
             mio::save_result({sim.get_totalpopulations_derivative()}, {0}, 1, filename_ide_dertotalpopulation1);
 
         //Save compartments.
-        std::string filename_ide_compartments1 = filename_ide + "_compartments2.h5";
+        std::string filename_ide_compartments1 = filename_ide + "_compartments.h5";
         mio::IOResult<void> save_result_status_c1 =
             mio::save_result({sim.get_compartments()}, {0}, 1, filename_ide_compartments1);
 
@@ -141,12 +129,12 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
 
         //Save files of NormModel.
         //Save compartments.
-        std::string filename_ide_normmod_compartments = filename_ide + "_normmod_compartments2.h5";
+        std::string filename_ide_normmod_compartments = filename_ide + "_normmod_compartments.h5";
         mio::IOResult<void> save_result_status_nmc1 =
             mio::save_result({sim.get_normmodel_compartments()}, {0}, 1, filename_ide_normmod_compartments);
 
         //Save the force of infection.
-        std::string filename_ide_normmod_forceofinfection = filename_ide + "_normmod_forceofinfection2.h5";
+        std::string filename_ide_normmod_forceofinfection = filename_ide + "_normmod_forceofinfection.h5";
         mio::IOResult<void> save_result_status_nmfoi =
             mio::save_result({sim.get_normmodel_forceofinfections()}, {0}, 1, filename_ide_normmod_forceofinfection);
 
@@ -167,7 +155,42 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
         }
     }
     // Print the reproduction number.
-    std::cout << "The reproduction number Rc for Birth rate > Death rate is  " << sim.get_reproductionnumber_c()
+    //Uncomment to print the reproduction number
+    std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
+
+    // Uncomment to print the the values T_z1^z2
+    for (int i = 0; i < (int)sim.get_T().size(); i++) {
+        std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
+    }
+
+    // Uncomment to print W_i
+
+    std::cout << "W_i = " << sim.get_W() << "\n";
+
+    // Uncomment to print the equilibria
+    std::cout << "l_1 = " << sim.get_Equilibirum_FoI()[0] << "\n";
+    std::cout << "l_2 = " << sim.get_Equilibirum_FoI()[1] << "\n";
+    std::cout << "s_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Susceptible]
+              << "\n";
+    std::cout << "s_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Susceptible]
+              << "\n";
+    std::cout << "i_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Infected]
+              << "\n";
+    std::cout << "i_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Infected]
+              << "\n";
+    std::cout << "r_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Recovered]
+              << "\n";
+    std::cout << "r_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Recovered]
+              << "\n";
+    std::cout << "sigmaid_1 = "
+              << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
+    std::cout << "sigmaid_2 = "
+              << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
+    std::cout << "sigmair_1 = "
+              << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
+              << "\n";
+    std::cout << "sigmair_2 = "
+              << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
               << "\n";
 
     return mio::success();
@@ -178,7 +201,7 @@ int main()
     std::string result_dir = "/localdata1/trit_ha/code/memilio-1/PythonPlotsEndIDESIRD/simulation_results/";
 
     // Define tmax.
-    ScalarType tmax = 2000;
+    ScalarType tmax = 100;
 
     auto result_ide = simulate_endidemodel(tmax, result_dir);
     if (!result_ide) {

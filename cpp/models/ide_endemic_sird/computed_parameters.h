@@ -261,6 +261,71 @@ private:
         m_W = sum;
     }
 
+    void set_equilibria()
+    {
+        // We start by setting the equilibrium for the infected compartments.
+        ScalarType p = (m_W / m_T[(int)InfectionTransition::InfectedToDead]) *
+                           (parameters.get<NaturalDeathRate>() - 1 / m_W - parameters.get<NaturalBirthRate>()) -
+                       parameters.get<NaturalBirthRate>() /
+                           (m_reproductionnumber_c - m_T[(int)InfectionTransition::InfectedToDead]);
+        ScalarType q = parameters.get<NaturalBirthRate>() * m_W /
+                       ((m_reproductionnumber_c - m_T[(int)InfectionTransition::InfectedToDead]) *
+                        m_T[(int)InfectionTransition::InfectedToDead]) *
+                       ((1 / m_W) - parameters.get<NaturalDeathRate>() + parameters.get<NaturalBirthRate>() -
+                        m_reproductionnumber_c);
+        m_compartments_equilibrium[0][(int)InfectionState::Infected] = -p / 2 + std::sqrt((p / 2) * (p / 2) - q);
+        m_compartments_equilibrium[1][(int)InfectionState::Infected] = -p / 2 - std::sqrt((p / 2) * (p / 2) - q);
+
+        // From this we set the other equilibria points.
+        // Susceptibles:
+        m_compartments_equilibrium[0][(int)InfectionState::Susceptible] =
+            parameters.get<NaturalBirthRate>() /
+            (m_compartments_equilibrium[0][(int)InfectionState::Infected] *
+                 (m_reproductionnumber_c / m_W - m_T[(int)InfectionTransition::InfectedToDead] / m_W) +
+             parameters.get<NaturalBirthRate>());
+        m_compartments_equilibrium[1][(int)InfectionState::Susceptible] =
+            parameters.get<NaturalBirthRate>() /
+            (m_compartments_equilibrium[1][(int)InfectionState::Infected] *
+                 (m_reproductionnumber_c / m_W - m_T[(int)InfectionTransition::InfectedToDead] / m_W) +
+             parameters.get<NaturalBirthRate>());
+        // Force of Infection:
+        m_FoI_equilibrium[0] =
+            m_compartments_equilibrium[0][(int)InfectionState::Infected] * (m_reproductionnumber_c / m_W);
+        m_FoI_equilibrium[1] =
+            m_compartments_equilibrium[1][(int)InfectionState::Infected] * (m_reproductionnumber_c / m_W);
+        // InfectedToDead:
+        m_transitions_equilibrium[0][(int)InfectionTransition::InfectedToDead] =
+            m_compartments_equilibrium[0][(int)InfectionState::Infected] *
+            (m_T[(int)InfectionTransition::InfectedToDead] / m_W);
+        m_transitions_equilibrium[1][(int)InfectionTransition::InfectedToDead] =
+            m_compartments_equilibrium[1][(int)InfectionState::Infected] *
+            (m_T[(int)InfectionTransition::InfectedToDead] / m_W);
+        // InfectedToRecovered:
+        m_transitions_equilibrium[0][(int)InfectionTransition::InfectedToRecovered] =
+            (m_compartments_equilibrium[0][(int)InfectionState::Susceptible] * m_FoI_equilibrium[0] +
+             (parameters.get<NaturalDeathRate>() +
+              m_transitions_equilibrium[0][(int)InfectionTransition::InfectedToDead] -
+              parameters.get<NaturalBirthRate>()) *
+                 m_compartments_equilibrium[0][(int)InfectionState::Infected]) *
+            m_T[(int)InfectionTransition::InfectedToDead];
+        m_transitions_equilibrium[1][(int)InfectionTransition::InfectedToRecovered] =
+            (m_compartments_equilibrium[1][(int)InfectionState::Susceptible] * m_FoI_equilibrium[0] +
+             (parameters.get<NaturalDeathRate>() +
+              m_transitions_equilibrium[1][(int)InfectionTransition::InfectedToDead] -
+              parameters.get<NaturalBirthRate>()) *
+                 m_compartments_equilibrium[1][(int)InfectionState::Infected]) *
+            m_T[(int)InfectionTransition::InfectedToDead];
+        // Recovered:
+        m_compartments_equilibrium[0][(int)InfectionState::Recovered] =
+            m_transitions_equilibrium[0][(int)InfectionTransition::InfectedToRecovered] /
+            (parameters.get<NaturalBirthRate>() -
+             m_transitions_equilibrium[0][(int)InfectionTransition::InfectedToDead]);
+        m_compartments_equilibrium[1][(int)InfectionState::Recovered] =
+            m_transitions_equilibrium[1][(int)InfectionTransition::InfectedToRecovered] /
+            (parameters.get<NaturalBirthRate>() -
+             m_transitions_equilibrium[1][(int)InfectionTransition::InfectedToDead]);
+    }
+
     // ---- Private parameters. ----
     TimeSeries<ScalarType> m_statesinit; ///< TimeSeries containing the initial values for the compartments.
     ScalarType m_totalpopulationinit;
@@ -284,6 +349,14 @@ private:
     std::vector<ScalarType> m_T{std::vector<ScalarType>((int)InfectionTransition::Count, 0.)}; ///< A vector
     // containing the approximated value for T_z1^z2 for every Flow z1 to z2.
     ScalarType m_W{0}; ///< ScalarType of the value W_i.
+    std::vector<std::vector<ScalarType>> m_compartments_equilibrium{std::vector<std::vector<ScalarType>>(
+        2, std::vector<ScalarType>((int)InfectionState::Count - 1, 0.))}; ///< Vector containing the
+    // two computed equilibria points for the compartments of NormModel.
+    std::vector<std::vector<ScalarType>> m_transitions_equilibrium{std::vector<std::vector<ScalarType>>(
+        2, std::vector<ScalarType>((int)InfectionState::Count - 1, 0.))}; ///< Vector containing the
+    // two computed equilibria points for the transitions of NormModel.
+    std::vector<ScalarType> m_FoI_equilibrium{std::vector<ScalarType>(2, 0.)}; ///< A Vector containing the two
+    // computed equilibria points for the force of infection of NormModel.
     // ---- Friend classes/functions. ----
     friend class Model;
     friend class NormModel;
