@@ -23,6 +23,7 @@
 
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/index.h"
 #include "memilio/utils/logging.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
@@ -45,6 +46,7 @@ class Simulation
 {
 public:
     using Model = smm::Model<regions, Status, Groups...>;
+    using Index = mio::Index<mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>;
 
     /**
      * @brief Set up the simulation for a Stochastic Metapopulation Model.
@@ -155,26 +157,38 @@ public:
                 if (next_event < adoption_rates().size()) {
                     // perform adoption event
                     const auto& rate = adoption_rates()[next_event];
-                    m_result.get_last_value()[m_model->populations.get_flat_index(
-                        {rate.region, rate.from, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] -= 1;
-                    m_model->populations[{rate.region, rate.from,
-                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] -= 1;
-                    m_result.get_last_value()[m_model->populations.get_flat_index(
-                        {rate.region, rate.to, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] += 1;
-                    m_model->populations[{rate.region, rate.to,
-                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] += 1;
+                    auto index_from  = std::apply(
+                        [&](auto&&... args) {
+                            return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
+                        },
+                        rate.group_indices);
+                    m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
+                    m_model->populations[index_from] -= 1;
+                    auto index_to = std::apply(
+                        [&](auto&&... args) {
+                            return Index{rate.region, rate.to, std::forward<decltype(args)>(args)...};
+                        },
+                        rate.group_indices);
+                    m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
+                    m_model->populations[index_to] += 1;
                 }
                 else {
                     // perform transition event
                     const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                    m_result.get_last_value()[m_model->populations.get_flat_index(
-                        {rate.from, rate.status, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] -= 1;
-                    m_model->populations[{rate.from, rate.status,
-                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] -= 1;
-                    m_result.get_last_value()[m_model->populations.get_flat_index(
-                        {rate.to, rate.status, std::make_from_tuple<mio::AgeGroup>(rate.group_indices)})] += 1;
-                    m_model->populations[{rate.to, rate.status,
-                                          std::make_from_tuple<mio::AgeGroup>(rate.group_indices)}] += 1;
+                    auto index_from  = std::apply(
+                        [&](auto&&... args) {
+                            return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
+                        },
+                        rate.group_indices);
+                    m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
+                    m_model->populations[index_from] -= 1;
+                    auto index_to = std::apply(
+                        [&](auto&&... args) {
+                            return Index{rate.to, rate.status, std::forward<decltype(args)>(args)...};
+                        },
+                        rate.group_indices);
+                    m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
+                    m_model->populations[index_to] += 1;
                 }
                 // update internal times
                 for (size_t i = 0; i < m_internal_time.size(); i++) {
