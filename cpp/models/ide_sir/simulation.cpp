@@ -67,20 +67,25 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         num_additional_time_points = floor((ScalarType)m_model->get_finite_difference_order() / 2.);
     }
 
+    // for (size_t i = 0; i < m_model->get_gregory_order(); i++) {
+    //     m_model->populations.remove_time_point(i);
+    //     m_model->flows.remove_time_point(i);
+    // }
+
     while (m_model->populations.get_last_time() < tmax + num_additional_time_points * m_dt - 1e-10) {
 
         // std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
         //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
         //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
 
+        // Print time.
+        if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
+            std::cout << "Time pop: " << m_model->populations.get_last_time() << std::endl;
+        }
+
         // Add new time point to populations.
         m_model->populations.add_time_point(m_model->populations.get_last_time() + m_dt,
                                             Vec::Constant((size_t)InfectionState::Count, 0.));
-
-        // Print time.
-        if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {
-            std::cout << "Time: " << m_model->populations.get_last_time() << std::endl;
-        }
 
         // Compute Susceptibles.
         size_t num_time_points = m_model->populations.get_num_time_points();
@@ -95,6 +100,10 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
 
     // Compute S' as well as I and R.
     while (m_model->flows.get_last_time() < tmax - 1e-10) {
+
+        if (floating_point_equal(std::remainder(10 * m_model->flows.get_last_time(), tmax), 0., 1e-7)) {
+            std::cout << "Time flows: " << m_model->flows.get_last_time() << std::endl;
+        }
 
         m_model->flows.add_time_point(m_model->flows.get_last_time() + m_dt,
                                       Vec::Constant((size_t)InfectionTransition::Count, 0.));

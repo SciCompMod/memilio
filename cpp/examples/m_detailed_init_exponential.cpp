@@ -36,8 +36,8 @@ namespace params
 size_t num_agegroups = 1;
 
 ScalarType t0_ode = 0.;
-ScalarType t0_ide = 1.;
-ScalarType tmax   = 2.;
+ScalarType t0_ide = 50.;
+ScalarType tmax   = 51.;
 
 ScalarType TimeInfected = 2.;
 // This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
@@ -84,8 +84,6 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
         std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_fehlberg78>>();
 
     auto sir = simulate<ScalarType, mio::osir::Model<ScalarType>>(t0_ode, tmax, dt_ode, model, integrator);
-
-    sir.print_table();
 
     if (!save_dir.empty()) {
         // Save compartments.
@@ -199,33 +197,55 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 int main()
 {
     // Compute groundtruth with ODE model.
-    ScalarType ode_exponent = 1;
+    ScalarType ode_exponent = 6;
 
-    size_t finite_difference_order = 4;
-    bool backwarts_fd              = true;
+    // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
+    std::vector<bool> fd_schemes = {true};
 
-    /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
+    for (bool backwards_fd : fd_schemes) {
+
+        std::vector<size_t> finite_difference_orders;
+        if (backwards_fd) {
+            finite_difference_orders = {4};
+        }
+        else {
+            finite_difference_orders = {2, 4};
+        }
+
+        for (size_t finite_difference_order : finite_difference_orders) {
+
+            /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-    std::string save_dir =
-        fmt::format("../../simulation_results/detailed_init_exponential_rkf78_dt_ode=1e-{:.0f}_finite_diff={}/",
-                    ode_exponent, finite_difference_order);
-    // Make folder if not existent yet.
-    boost::filesystem::path dir(save_dir);
-    boost::filesystem::create_directories(dir);
+            std::string save_dir;
+            if (backwards_fd) {
+                save_dir = fmt::format("../../simulation_results/"
+                                       "detailed_init_exponential_late_t0/",
+                                       ode_exponent, finite_difference_order);
+            }
+            else {
+                save_dir = fmt::format("../../simulation_results/"
+                                       "detailed_init_exponential_dt_ode=1e-{:.0f}_finite_diff={}_central_fd/",
+                                       ode_exponent, finite_difference_order);
+            }
+            // Make folder if not existent yet.
+            boost::filesystem::path dir(save_dir);
+            boost::filesystem::create_directories(dir);
 
-    auto result_ode = simulate_ode(ode_exponent, save_dir).value();
+            auto result_ode = simulate_ode(ode_exponent, save_dir).value();
 
-    // Do IDE simulations.
-    // std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-    // std::vector<size_t> gregory_orders    = {1, 2, 3};
+            // Do IDE simulations.
+            std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+            std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-    std::vector<ScalarType> ide_exponents = {1};
-    std::vector<size_t> gregory_orders    = {1};
+            // std::vector<ScalarType> ide_exponents = {1};
+            // std::vector<size_t> gregory_orders    = {1};
 
-    for (size_t gregory_order : gregory_orders) {
-        std::cout << std::endl;
-        std::cout << "Gregory order: " << gregory_order << std::endl;
-        mio::IOResult<void> result_ide =
-            simulate_ide(ide_exponents, gregory_order, finite_difference_order, save_dir, result_ode, backwarts_fd);
+            for (size_t gregory_order : gregory_orders) {
+                std::cout << std::endl;
+                std::cout << "Gregory order: " << gregory_order << std::endl;
+                mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, finite_difference_order,
+                                                              save_dir, result_ode, backwards_fd);
+            }
+        }
     }
 }

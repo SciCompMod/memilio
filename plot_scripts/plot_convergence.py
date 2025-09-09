@@ -224,7 +224,8 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
                                    errors_all_gregory_orders[j][:, i], '-o', color=colors[j])
                 # handles.append(line)
 
-        # Plot comparison line for linear convergence as well as secodn, third and fourth order.
+        # Plot comparison line for linear convergence as well as second, third and fourth order.
+        # Susceptibles
         if i == 0:
             num_timesteps_ide = len(timesteps_ide)
 
@@ -246,6 +247,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
                                  '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
             handles.append(fourth[0])
 
+        # Infected
         if i == 1:
             num_timesteps_ide = len(timesteps_ide)
 
@@ -264,6 +266,7 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
             axs[i].plot(plotted_timesteps, comparison,
                         '--', color=colors[2], linewidth=1.2, alpha=0.5)
 
+        # Recovered
         if i == 2:
             comparison = [2*dt for dt in timesteps_ide]
             linear = axs[i].plot(timesteps_ide, comparison,
@@ -296,9 +299,9 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
-        else:
-            plt.savefig(f'{save_dir}/convergence_all_compartments.png', format='png', bbox_extra_artists=(legend,), bbox_inches='tight',
-                        dpi=500)
+
+        plt.savefig(f'{save_dir}/convergence_all_compartments.png', format='png', bbox_extra_artists=(legend,), bbox_inches='tight',
+                    dpi=500)
 
 
 def compute_order_of_convergence(errors, timesteps_ide):
@@ -332,7 +335,7 @@ def main():
     # dir_name = f"detailed_init_exponential_rkf78_dt_ode=1e-{groundtruth_exponent}"
     # dir_name = f"detailed_init_exponential_rkf78_dt_ode=1e-{groundtruth_exponent}_finite_diff={finite_difference_order}"
     # dir_name = "detailed_init_exponential_dt_ode=1e-6_finite_diff=4_central_fd"
-    dir_name = "detailed_init_exponential_test_better_convergence"
+    dir_name = "detailed_init_exponential_late_t0"
     print(dir_name)
 
     groundtruth_ode = True
