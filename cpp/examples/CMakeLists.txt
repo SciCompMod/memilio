@@ -148,9 +148,9 @@ add_executable(dabm_example d_abm.cpp)
 target_link_libraries(dabm_example PRIVATE memilio d_abm)
 target_compile_options(dabm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(smm_example smm.cpp)
-target_link_libraries(smm_example PRIVATE memilio smm)
-target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+# add_executable(smm_example smm.cpp)
+# target_link_libraries(smm_example PRIVATE memilio smm)
+# target_compile_options(smm_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 add_executable(temporal_hybrid_example temporal_hybrid_dabm_osecir.cpp)
 target_link_libraries(temporal_hybrid_example PRIVATE memilio hybrid ode_secir d_abm)

@@ -32,10 +32,9 @@ namespace mio
  * The population having "status" is multiplied with "factor."
  * @tparam Status An infection state enum.
  */
-template <class Status, class AgeGroup>
+template <class Status, class... Groups>
 struct Influence {
     Status status;
-    AgeGroup age_group;
     ScalarType factor;
 };
 
@@ -46,14 +45,13 @@ struct Influence {
  * the sum over all "influences", which scale their "status" with the respective "factor".
  * @tparam Status An infection state enum.
  */
-template <class Status, class AgeGroup>
+template <class Status, class... Groups>
 struct AdoptionRate {
     Status from; // i
     Status to; // j
-    AgeGroup age_group;
     mio::regions::Region region; // k
     ScalarType factor; // gammahat_{ij}^k
-    std::vector<Influence<Status, AgeGroup>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
+    std::vector<Influence<Status, Groups...>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
 };
 
 } // namespace mio
