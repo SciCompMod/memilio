@@ -21,6 +21,7 @@
 #include "memilio/geography/rtree.h"
 #include "memilio/geography/locations.h"
 #include "random_number_test.h"
+#include <gtest/gtest.h>
 
 TEST(TestGeography, compareGeographicalLocation)
 {
@@ -56,31 +57,33 @@ TEST(TestGeography, rtreeConstructionVector)
 {
     // Generate a vector of GeographicalLocations
     std::vector<mio::geo::GeographicalLocation> locations;
-    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
-    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
-    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    locations.push_back(mio::geo::GeographicalLocation(50.7, 6.0));
+    locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
+    locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
     // Generate a RTree object using the vector
-    EXPECT_NO_THROW(mio::geo::RTree tree(locations));
+    mio::geo::RTree tree(locations);
+    EXPECT_EQ(tree.size(), locations.size());
 }
 
 TEST(TestGeography, rtreeConstructionRange)
 {
     // Generate a vector of GeographicalLocations
     std::vector<mio::geo::GeographicalLocation> locations;
-    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
-    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
-    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    locations.push_back(mio::geo::GeographicalLocation(50.7, 6.0));
+    locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
+    locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
     // Generate a RTree object using begin and end iterators
-    EXPECT_NO_THROW(mio::geo::RTree(locations.begin(), locations.end()));
+    auto tree = mio::geo::RTree(locations.begin(), locations.end());
+    EXPECT_EQ(tree.size(), locations.size());
 }
 
 TEST(TestGeography, rtreesize)
 {
     // Generate a vector of GeographicalLocations
     std::vector<mio::geo::GeographicalLocation> locations;
-    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
-    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
-    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    locations.push_back(mio::geo::GeographicalLocation(50.7, 6.0));
+    locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
+    locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
     // Generate a RTree object
     auto rtree = mio::geo::RTree(locations.begin(), locations.end());
     // Verify that the size of the rtree is 3
