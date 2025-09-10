@@ -61,54 +61,52 @@ def get_invervention_list(url, headers):
     get_interventions = requests.get(
         url + "interventions/templates/", headers=headers)
 
-    school_closure_id = [intervention["id"] for intervention in get_interventions.json(
-    ) if intervention["name"] == "School closure"]
-    facemasks_school_id = [intervention["id"] for intervention in get_interventions.json(
-    ) if intervention["name"] == "Face masks & social distancing School"]
-    facemasks_work_id = [intervention["id"] for intervention in get_interventions.json(
-    ) if intervention["name"] == "Face masks & social distancing Work"]
-    facemasks_other_id = [intervention["id"] for intervention in get_interventions.json(
-    ) if intervention["name"] == "Face masks & social distancing Other"]
-    remote_work_id = [intervention["id"] for intervention in get_interventions.json(
-    ) if intervention["name"] == "Remote work"]
+    school_closure_id = [intervention["id"]
+                         for intervention in get_interventions.json()
+                         if intervention["name"] == "School closure"]
+    facemasks_school_id = [intervention["id"]
+                           for intervention in get_interventions.json()
+                           if intervention["name"]
+                           == "Face masks & social distancing School"]
+    facemasks_work_id = [intervention["id"]
+                         for intervention in get_interventions.json()
+                         if intervention["name"]
+                         == "Face masks & social distancing Work"]
+    facemasks_other_id = [intervention["id"]
+                          for intervention in get_interventions.json()
+                          if intervention["name"]
+                          == "Face masks & social distancing Other"]
+    remote_work_id = [intervention["id"]
+                      for intervention in get_interventions.json()
+                      if intervention["name"] == "Remote work"]
 
     intervention_data_extended = [
-        {
-            "id": school_closure_id[0],
-            "name": "School closure",
-            "description": "School closure intervention",
-            "tags": [],
-            "coefficient": 0.
-        },
-        {
-            "id": facemasks_school_id[0],
-            "name": "Face masks & social distancing School",
-            "description": "Face mask usage and social distancing measures applied at 1-25% in schools",
-            "tags": [],
-            "coefficient": 0.25
-        },
-        {
-            "id": facemasks_work_id[0],
-            "name": "Face masks & social distancing Work",
-            "description": "Face mask usage and social distancing measures applied at 1-25% in workplaces",
-            "tags": [],
-            "coefficient": 0.25
-        },
-        {
-            "id": facemasks_other_id[0],
-            "name": "Face masks & social distancing Other",
-            "description": "Face mask usage and social distancing measures applied at 1-25% in other settings",
-            "tags": [],
-            "coefficient": 0.25
-        },
-        {
-            "id": remote_work_id[0],
-            "name": "Remote work",
-            "description": "Implementation of remote work policies",
-            "tags": [],
-            "coefficient": 0.35
-        }
-    ]
+        {"id": school_closure_id[0],
+         "name": "School closure",
+         "description": "School closure intervention", "tags": [],
+         "coefficient": 0.},
+        {"id": facemasks_school_id[0],
+         "name": "Face masks & social distancing School",
+         "description":
+         "Face mask usage and social distancing measures applied at 1-25% in schools",
+         "tags": [],
+         "coefficient": 0.25},
+        {"id": facemasks_work_id[0],
+         "name": "Face masks & social distancing Work",
+         "description":
+         "Face mask usage and social distancing measures applied at 1-25% in workplaces",
+         "tags": [],
+         "coefficient": 0.25},
+        {"id": facemasks_other_id[0],
+         "name": "Face masks & social distancing Other",
+         "description":
+         "Face mask usage and social distancing measures applied at 1-25% in other settings",
+         "tags": [],
+         "coefficient": 0.25},
+        {"id": remote_work_id[0],
+         "name": "Remote work",
+         "description": "Implementation of remote work policies", "tags": [],
+         "coefficient": 0.35}]
 
     # Get all possible combinations of interventions
     all_combinations = []
@@ -135,9 +133,11 @@ class Simulation:
         path_vacc_data = os.path.join(
             self.data_dir, "pydata", "Germany", "vacc_county_ageinf_ma7.json")
         path_case_data = os.path.join(
-            self.data_dir, "pydata", "Germany", "cases_all_county_age_ma7.json")
+            self.data_dir, "pydata", "Germany",
+            "cases_all_county_age_ma7.json")
         path_population_data = os.path.join(
-            self.data_dir, "pydata", "Germany", "county_current_population.json")
+            self.data_dir, "pydata", "Germany",
+            "county_current_population.json")
         self.vacc_data = osecirvvs.read_vaccination_data(path_vacc_data)
         self.case_data = osecirvvs.read_confirmed_cases_data(path_case_data)
         self.population_data = osecirvvs.read_population_data(
@@ -148,7 +148,10 @@ class Simulation:
         print("Processing scenario: ", scenario['name'])
         try:
             num_days_sim = (datetime.datetime.strptime(
-                scenario['endDate'], "%Y-%m-%d") - datetime.datetime.strptime(scenario['startDate'], "%Y-%m-%d")).days
+                scenario['endDate'],
+                "%Y-%m-%d") - datetime.datetime.strptime(
+                scenario['startDate'],
+                "%Y-%m-%d")).days
 
             extrapolate = False
             if scenario['name'] == 'casedata':
@@ -161,7 +164,8 @@ class Simulation:
             for attempt in range(max_retries):
                 try:
                     scenario_data_run = requests.get(
-                        self.run_data_url + "scenarios/" + scenario['id'], headers=self.headers).json()
+                        self.run_data_url + "scenarios/" + scenario['id'],
+                        headers=self.headers).json()
                     break
                 except requests.exceptions.RequestException as e:
                     if attempt < max_retries - 1:
@@ -227,7 +231,8 @@ class Simulation:
 
     def get_parameter_values(self, parameters, parameter_name):
         parameter = next(
-            (entry for entry in parameters if entry['name'] == parameter_name), None)
+            (entry for entry in parameters if entry['name'] == parameter_name),
+            None)
         if parameter:
             min_value = parameter['values'][0]['valueMin']
             max_value = parameter['values'][0]['valueMax']
@@ -320,18 +325,12 @@ class Simulation:
         variantFactor = 1.4
         transmissionProbabilityOnContactMin = parameter_values.get(
             "TransmissionProbabilityOnContactMin",
-            [
-                0.02 * variantFactor, 0.05 * variantFactor, 0.05 * variantFactor,
-                0.05 * variantFactor, 0.08 * variantFactor, 0.1 * variantFactor
-            ]
-        )
+            [0.02 * variantFactor, 0.05 * variantFactor, 0.05 * variantFactor,
+             0.05 * variantFactor, 0.08 * variantFactor, 0.1 * variantFactor])
         transmissionProbabilityOnContactMax = parameter_values.get(
             "TransmissionProbabilityOnContactMax",
-            [
-                0.04 * variantFactor, 0.07 * variantFactor, 0.07 * variantFactor,
-                0.07 * variantFactor, 0.10 * variantFactor, 0.15 * variantFactor
-            ]
-        )
+            [0.04 * variantFactor, 0.07 * variantFactor, 0.07 * variantFactor,
+             0.07 * variantFactor, 0.10 * variantFactor, 0.15 * variantFactor])
         relativeTransmissionNoSymptomsMin = parameter_values.get(
             "RelativeTransmissionNoSymptomsMin", 0.5
         )
@@ -406,17 +405,13 @@ class Simulation:
             "ReducedInfectedSymptomsImprovedImmunityMax", 0.293
         )
         reducInfectedSevereCriticalDeadPartialImmunityMin = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadPartialImmunityMin", 0.05
-        )
+            "ReducedInfectedSevereCriticalDeadPartialImmunityMin", 0.05)
         reducInfectedSevereCriticalDeadPartialImmunityMax = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadPartialImmunityMax", 0.15
-        )
+            "ReducedInfectedSevereCriticalDeadPartialImmunityMax", 0.15)
         reducInfectedSevereCriticalDeadImprovedImmunityMin = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadImprovedImmunityMin", 0.041
-        )
+            "ReducedInfectedSevereCriticalDeadImprovedImmunityMin", 0.041)
         reducInfectedSevereCriticalDeadImprovedImmunityMax = parameter_values.get(
-            "ReducedInfectedSevereCriticalDeadImprovedImmunityMax", 0.141
-        )
+            "ReducedInfectedSevereCriticalDeadImprovedImmunityMax", 0.141)
         reducTimeInfectedMild = parameter_values.get(
             "ReducedTimeInfectedMild", 1.0)
 
@@ -602,7 +597,9 @@ class Simulation:
         for intervention in interventions_scenario:
             # search intervention in self.intervention_list
             intervention_data = next(
-                (entry for entry in self.intervention_list if entry['id'] == intervention['interventionId']), None)
+                (entry for entry in self.intervention_list
+                 if entry['id'] == intervention['interventionId']),
+                None)
 
             if not intervention_data:
                 print(
@@ -612,20 +609,35 @@ class Simulation:
             start_date_day = 0
 
             if intervention_data['name'] == 'School closure':
-                dampings.append(school_closure(
-                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+                dampings.append(
+                    school_closure(
+                        start_date_day,
+                        intervention['coefficient'],
+                        intervention['coefficient']))
             elif intervention_data['name'] == 'Remote work':
-                dampings.append(home_office(
-                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+                dampings.append(
+                    home_office(
+                        start_date_day,
+                        intervention['coefficient'],
+                        intervention['coefficient']))
             elif intervention_data['name'] == "Face masks & social distancing School":
-                dampings.append(physical_distancing_school(
-                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+                dampings.append(
+                    physical_distancing_school(
+                        start_date_day,
+                        intervention['coefficient'],
+                        intervention['coefficient']))
             elif intervention_data['name'] == "Face masks & social distancing Work":
-                dampings.append(physical_distancing_work(
-                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+                dampings.append(
+                    physical_distancing_work(
+                        start_date_day,
+                        intervention['coefficient'],
+                        intervention['coefficient']))
             elif intervention_data['name'] == "Face masks & social distancing Other":
-                dampings.append(physical_distancing_other(
-                    start_date_day, intervention['coefficient'], intervention['coefficient']))
+                dampings.append(
+                    physical_distancing_other(
+                        start_date_day,
+                        intervention['coefficient'],
+                        intervention['coefficient']))
             else:
                 print(
                     f"Intervention {intervention_data['name']} not implemented yet!")
@@ -657,8 +669,11 @@ class Simulation:
 
         for age_group in range(self.num_groups):
             for infection_state in infection_states_mild:
-                indicies_mild.append(pop_object.get_flat_index(osecirvvs.MultiIndex_PopulationsArray(
-                    mio.AgeGroup(age_group), infection_state)))
+                indicies_mild.append(
+                    pop_object.get_flat_index(
+                        osecirvvs.MultiIndex_PopulationsArray(
+                            mio.AgeGroup(age_group),
+                            infection_state)))
 
         edge_indices.append(indicies_mild)
 
@@ -777,8 +792,9 @@ class Simulation:
             f"Processing {len(scenarios)} scenarios with {max_workers} workers.")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(self._process_scenario, scenario, num_runs)
-                       for scenario in scenarios]
+            futures = [
+                executor.submit(self._process_scenario, scenario, num_runs)
+                for scenario in scenarios]
 
             for future in concurrent.futures.as_completed(futures):
                 try:
@@ -801,8 +817,11 @@ if __name__ == "__main__":
     password = ""
 
     # Request access token from idp.
-    req_auth = requests.post(f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token', data={
-        'client_id': client_id, 'grant_type': 'password', 'username': username, 'password': password, 'scope': 'loki-back-audience'})
+    req_auth = requests.post(
+        f'https://lokiam.de/realms/{service_realm}/protocol/openid-connect/token',
+        data={'client_id': client_id, 'grant_type': 'password',
+              'username': username, 'password': password,
+              'scope': 'loki-back-audience'})
 
     # Raise error if response not ok.
     req_auth.raise_for_status()
@@ -814,7 +833,6 @@ if __name__ == "__main__":
     # Set up headers with token.
     headers = {'Authorization': f'Bearer {token}', 'X-Realm': service_realm}
 
-    sim = Simulation(
-        data_dir=os.path.join(cwd, "data"),
-        results_dir=os.path.join(cwd, "results_osecirvvs"), run_data_url=run_data_url, headers=headers)
+    sim = Simulation(data_dir=os.path.join(cwd, "data"), results_dir=os.path.join(
+        cwd, "results_osecirvvs"), run_data_url=run_data_url, headers=headers)
     sim.run(num_runs=3, max_workers=1)
