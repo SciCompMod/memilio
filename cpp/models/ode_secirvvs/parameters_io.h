@@ -1065,6 +1065,59 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     return success();
 }
 
+template <class Model>
+IOResult<void> read_input_data_county_cached(std::vector<Model>& model, Date date, const std::vector<int>& county,
+                                             const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                             const std::string& dir, int num_days, bool export_time_series = false,
+                                             const std::vector<ConfirmedCasesDataEntry>& case_data   = {},
+                                             const std::vector<std::vector<double>>& population_data = {},
+                                             const std::vector<VaccinationDataEntry>& vacc_data      = {},
+                                             const std::vector<DiviEntry>& divi_data                 = {})
+{
+    if (!vacc_data.empty()) {
+        BOOST_OUTCOME_TRY(details::set_vaccination_data(model, vacc_data, date, county, num_days));
+    }
+    else {
+        BOOST_OUTCOME_TRY(details::set_vaccination_data(
+            model, path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json"), date, county, num_days));
+    }
+
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "pydata/Germany", "county_divi_ma7.json"), county,
+                                             date, scaling_factor_icu));
+
+    if (!case_data.empty()) {
+        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, case_data, county, date, scaling_factor_inf, true));
+    }
+    else {
+        BOOST_OUTCOME_TRY(
+            details::set_confirmed_cases_data(model, path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
+                                              county, date, scaling_factor_inf, true));
+    }
+
+    if (!population_data.empty() && !case_data.empty()) {
+        BOOST_OUTCOME_TRY(details::set_population_data(model, population_data, case_data, county, date));
+    }
+    else {
+        BOOST_OUTCOME_TRY(details::set_population_data(
+            model, path_join(dir, "pydata/Germany", "county_current_population.json"),
+            path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"), county, date));
+    }
+
+    if (export_time_series) {
+        log_warning("Exporting time series of extrapolated real data. This may take some minutes. "
+                    "For simulation runs over the same time period, deactivate it.");
+
+        BOOST_OUTCOME_TRY(
+            export_input_data_county_timeseries(model, dir, county, date, scaling_factor_inf, scaling_factor_icu,
+                                                num_days, path_join(dir, "pydata/Germany", "county_divi_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "cases_all_county_age_ma7.json"),
+                                                path_join(dir, "pydata/Germany", "county_current_population.json"),
+                                                path_join(dir, "pydata/Germany", "vacc_county_ageinf_ma7.json")));
+    }
+
+    return success();
+}
+
 /**
     * Reads compartments for German counties at a specified date from data files.
     * Estimates all compartments from available data using the model parameters, so the 
