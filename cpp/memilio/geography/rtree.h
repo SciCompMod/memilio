@@ -51,26 +51,26 @@ template <class Iter>
 concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLocation<decltype(*std::declval<Iter>())>;
 
 /**
- * @brief R-tree for spatial queries of geographical locations on the sphere
+ * @brief R-tree for spatial queries of geographical locations on the sphere.
  * 
  * Data structure to store spatial indices and allow for efficient in-range and nearest neighbour queries. 
  * Wraps the Boost::geometry::index::rtree. Can be initialized with a vector of geographical location data or a range.
  * The provided location data needs to provide get_latitude() and get_longitude().
  */
 /**
- * @brief Test the default r-Tree Constructor
+ * @brief Test the default r-Tree Constructor.
  */
 class RTree
 {
 public:
     /**
-     * @brief Construct a new RTree object without data
+     * @brief Construct a new RTree object without data.
      * 
      */
     RTree() = default;
 
     /**
-     * @brief Construct a new RTree object with data given in a vector
+     * @brief Construct a new RTree object with data given in a vector.
      * 
      * @param locations A vector of geographical locations, they need to provide get_latitude() and get_longitude().
      */
@@ -85,10 +85,10 @@ public:
     }
 
     /**
-     * @brief Construct a new RTree object with data given in a range
+     * @brief Construct a new RTree object with data given in a range.
      * 
-     * @param first The beginning of the range
-     * @param last The end of the range
+     * @param first The beginning of the range.
+     * @param last The end of the range.
      * The provided location data needs to provide get_latitude() and get_longitude().
      */
     template <IsSphericalLocationIterator Iter>
@@ -105,9 +105,9 @@ public:
     }
 
     /**
-     * @brief Return the number of data points stored in the RTree
+     * @brief Return the number of data points stored in the RTree.
      * 
-     * @return size of the tree 
+     * @return size of the tree.
      */
     auto size() const
     {
@@ -115,11 +115,11 @@ public:
     }
 
     /**
-     * @brief Return the indices of the k nearest neighbors (i.e. nodes with the least distance) of a given location
+     * @brief Return the indices of the k nearest neighbors (i.e. nodes with the least distance) of a given location.
      * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
-     * @param number The number of nearest neighbours to find
-     * @return Vector with indices of the nearest neighbours
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     * @param number The number of nearest neighbours to find.
+     * @return Vector with indices of the nearest neighbours.
      */
     std::vector<size_t> nearest_neighbor_indices(const IsSphericalLocation auto& location, size_t number) const
     {
@@ -131,11 +131,11 @@ public:
     }
 
     /**
-     * @brief Return the indices of the points within a given radius where the circle is approximated by a polygon
+     * @brief Return the indices of the points within a given radius where the circle is approximated by a polygon.
      * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
-     * @param radius The radius of the query
-     * @return Vector with indices of the points found
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     * @param radius The radius of the query.
+     * @return Vector with indices of the points found.
      */
     std::vector<size_t> inrange_indices_approximate(const IsSphericalLocation auto& location, double radius) const
     {
@@ -148,11 +148,11 @@ public:
     }
 
     /**
-     * @brief Return the indices of the points within a given radius for multiple radii at the same time
-     * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
-     * @param radii Vector containing the radii of the query
-     * @return Vector of vectors with indices of the points found
+     * @brief Return the indices of the points within a given radius for multiple radii at the same time.
+     *
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     * @param radii Vector containing the radii of the query.
+     * @return Vector of vectors with indices of the points found.
      */
     std::vector<std::vector<size_t>> inrange_indices_query(const IsSphericalLocation auto& location,
                                                            std::vector<double> radii) const
@@ -179,11 +179,11 @@ public:
     }
 
     /**
-     * @brief Return the indices of the points within a given radius
+     * @brief Return the indices of the points within a given radius.
      * 
-     * @param location Midpoint for the query, provides get_latitude() and get_longitude()
-     * @param radius The radius of the query
-     * @return Vector with indices of the points found
+     * @param location Midpoint for the query, provides get_latitude() and get_longitude().
+     * @param radius The radius of the query.
+     * @return Vector with indices of the points found.
      *
      * Basically the same as \ref inrange_indices_approximate, but filters the result to make sure the points are within the radius.
      */
@@ -207,11 +207,11 @@ public:
 
 private:
     /**
-     * @brief Create a circle approximation object
+     * @brief Create a circle approximation object.
      *
-     * @param location Midpoint, needs to provide get_latitude() and get_longitude()
-     * @param radius in meters
-     * @return multi_polygon 
+     * @param location Midpoint, needs to provide get_latitude() and get_longitude().
+     * @param radius in meters.
+     * @return multi_polygon.
      */
     bg::model::multi_polygon<bg::model::polygon<Point>>
     create_circle_approximation(const IsSphericalLocation auto& location, double radius) const

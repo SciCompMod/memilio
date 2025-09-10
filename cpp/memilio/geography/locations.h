@@ -34,13 +34,13 @@ class GeographicalLocation
 
 public:
     GeographicalLocation(double lat, double lon)
-        : latitude(lat)
-        , longitude(lon)
+        : m_latitude(lat)
+        , m_longitude(lon)
     {
     }
     GeographicalLocation(std::pair<double, double> coordinates)
-        : latitude(coordinates.first)
-        , longitude(coordinates.second)
+        : m_latitude(coordinates.first)
+        , m_longitude(coordinates.second)
     {
     }
 
@@ -51,18 +51,18 @@ public:
      */
     bool operator==(const GeographicalLocation& other) const
     {
-        return (latitude == other.latitude && longitude == other.longitude);
+        return (m_latitude == other.m_latitude && m_longitude == other.m_longitude);
     }
 
     bool operator!=(const GeographicalLocation& other) const
     {
-        return !(latitude == other.latitude && longitude == other.longitude);
+        return !(m_latitude == other.m_latitude && m_longitude == other.m_longitude);
     }
 
     /// This method is used by the default serialization feature.
     auto default_serialize()
     {
-        return Members("GeographicalLocation").add("latitude", latitude).add("longitude", longitude);
+        return Members("GeographicalLocation").add("latitude", m_latitude).add("longitude", m_longitude);
     }
 
     /*
@@ -76,10 +76,10 @@ public:
     */
     double distance(const GeographicalLocation& other) const
     {
-        double delta_latitude  = (latitude - other.latitude) * radians;
-        double delta_longitude = (longitude - other.longitude) * radians;
+        double delta_latitude  = (m_latitude - other.m_latitude) * radians;
+        double delta_longitude = (m_longitude - other.m_longitude) * radians;
         double first_part      = sin(delta_latitude * 0.5) * sin(delta_latitude * 0.5);
-        double second_part     = cos(latitude * radians) * cos(other.latitude * radians) * sin(delta_longitude * 0.5) *
+        double second_part = cos(m_latitude * radians) * cos(other.m_latitude * radians) * sin(delta_longitude * 0.5) *
                              sin(delta_longitude * 0.5);
         double distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
         return distance;
@@ -87,27 +87,27 @@ public:
 
     double get_latitude() const
     {
-        return latitude;
+        return m_latitude;
     }
 
     auto get_longitude() const -> double
     {
-        return longitude;
+        return m_longitude;
     }
 
     auto set_latitude(double lat) -> void
     {
-        latitude = lat;
+        m_latitude = lat;
     }
 
     auto set_longitude(double lon) -> void
     {
-        longitude = lon;
+        m_longitude = lon;
     }
 
 private:
-    double latitude;
-    double longitude;
+    double m_latitude;
+    double m_longitude;
     constexpr static double earth_radius = 6371;
     constexpr static double radians      = std::numbers::pi / 180.0;
 };
