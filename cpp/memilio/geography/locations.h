@@ -28,38 +28,64 @@ namespace mio
 {
 namespace geo
 {
-
+/**
+ * @brief Class representing a geographical location on the Earth's surface.
+ *
+ * Provides latitude and longitude in degrees and a method to calculate the distance to another location.
+ */
 class GeographicalLocation
 {
 
 public:
+    /**
+     * @brief Construct a new Geographical Location object.
+     * 
+     * @param lat Latitude in degrees.
+     * @param lon Longitude in degrees.
+     */
     GeographicalLocation(double lat, double lon)
         : m_latitude(lat)
         , m_longitude(lon)
     {
     }
+    /**
+     * @brief Construct a new Geographical Location object.
+     * 
+     * @param coordinates Pair of latitude and longitude in degrees as doubles.
+     */
     GeographicalLocation(std::pair<double, double> coordinates)
         : m_latitude(coordinates.first)
         , m_longitude(coordinates.second)
     {
     }
 
+    /**
+     * @brief Construct a new Geographical Location object using the default constructor to keep compatibility with ABM code.
+     * 
+     */
     GeographicalLocation() = default;
 
     /**
-     * @brief Compare two GeographicalLocation%s.
+     * @brief Compare two GeographicalLocation%s for equality
      */
     bool operator==(const GeographicalLocation& other) const
     {
         return (m_latitude == other.m_latitude && m_longitude == other.m_longitude);
     }
 
+    /**
+     * @brief Compare two GeographicalLocation%s for inequality
+     */
     bool operator!=(const GeographicalLocation& other) const
     {
         return !(m_latitude == other.m_latitude && m_longitude == other.m_longitude);
     }
 
-    /// This method is used by the default serialization feature.
+    /**
+     * @brief Default serialize the GeographicalLocation object.
+     * 
+     * This method is used by the default serialization feature.
+     */
     auto default_serialize()
     {
         return Members("GeographicalLocation").add("latitude", m_latitude).add("longitude", m_longitude);
@@ -85,22 +111,42 @@ public:
         return distance;
     }
 
+    /**
+     * @brief Get the latitude object
+     * 
+     * @return double latitude in degrees
+     */
     double get_latitude() const
     {
         return m_latitude;
     }
 
-    auto get_longitude() const -> double
+    /**
+     * @brief Get the longitude object
+     * 
+     * @return double longitude in degrees
+     */
+    double get_longitude() const
     {
         return m_longitude;
     }
 
-    auto set_latitude(double lat) -> void
+    /**
+     * @brief Set the latitude object
+     * 
+     * @param lat Latitude in degrees.
+     */
+    void set_latitude(double lat)
     {
         m_latitude = lat;
     }
 
-    auto set_longitude(double lon) -> void
+    /**
+     * @brief Set the longitude object
+     * 
+     * @param lon Longitude in degrees.
+     */
+    void set_longitude(double lon)
     {
         m_longitude = lon;
     }
