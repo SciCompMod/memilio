@@ -58,6 +58,10 @@ def create_dataset(path_cases, path_mobility, number_of_nodes=400):
     labels = data['labels']
 
     len_dataset = len(inputs)
+
+    if len_dataset == 0:  # check if dataset is empty
+        raise ValueError(
+            "Dataset is empty. Please provide a valid dataset with at least one sample.")
     # Calculate the flattened shape of inputs and labels
     shape_input_flat = np.asarray(
         inputs).shape[1]*np.asarray(inputs).shape[2]

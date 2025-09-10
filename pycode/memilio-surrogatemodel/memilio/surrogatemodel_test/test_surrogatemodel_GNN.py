@@ -38,6 +38,49 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     path = "/home/"
 
+    def create_dummy_data(self, num_samples, num_nodes, num_node_features, output_dim):
+        """
+        Create dummy data for testing.
+
+        :param num_samples: Number of samples in the dataset.
+        :param num_nodes: Number of nodes in each graph.
+        :param num_node_features: Number of features per node.
+        :param output_dim: Number of output dimensions per node.
+        :return: A dictionary containing inputs, adjacency matrix, and labels.
+        """
+        X = np.random.rand(num_samples, 1, num_node_features,
+                           num_nodes).astype(np.float32)
+        A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
+        y = np.random.rand(num_samples, 1, output_dim,
+                           num_nodes).astype(np.float32)
+        return {"inputs": X, "adjacency": A, "labels": y}
+
+    def setup_fake_filesystem(self, fs, path, data):
+        """
+        Save dummy data to the fake file system.
+
+        :param fs: The fake file system object.
+        :param path: The base path in the fake file system.
+        :param data: The dummy data dictionary containing inputs, adjacency, and labels.
+        :return: Paths to the cases and mobility files.
+        """
+        path_cases_dir = os.path.join(path, "cases")
+        fs.create_dir(path_cases_dir)
+        path_cases = os.path.join(path_cases_dir, "cases.pickle")
+        with open(path_cases, 'wb') as f:
+            pickle.dump({"inputs": data["inputs"],
+                        "labels": data["labels"]}, f)
+
+        path_mobility = os.path.join(path, "mobility")
+        mobility_file = os.path.join(
+            path_mobility, "commuter_mobility_2022.txt")
+        fs.create_dir(path_mobility)
+        fs.create_file(mobility_file)
+        with open(mobility_file, 'w') as f:
+            np.savetxt(f, data["adjacency"], delimiter=" ")
+
+        return path_cases, path_mobility
+
     def setUp(self):
         self.setUpPyfakefs()
 
@@ -67,6 +110,43 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(model.layers[-1].units, num_output)
         self.assertEqual(
             model.layers[-1].activation.__name__, "relu")
+
+        # Test with invalid parameters
+        layer_types = [
+            lambda: tf.keras.layers.Dense(10, activation="relu"),
+        ]
+        num_layers = [0]
+        num_output = 2
+        with self.assertRaises(ValueError) as error:
+            ModelClass = generate_model_class(
+                "TestModel", layer_types, num_layers, num_output)
+            model = ModelClass()
+
+        self.assertEqual(str(
+            error.exception), "All values in num_repeat must be at least 1.")
+        num_layers = [3, 2]
+        with self.assertRaises(ValueError) as error:
+            ModelClass = generate_model_class(
+                "TestModel", layer_types, num_layers, num_output)
+            model = ModelClass()
+        self.assertEqual(str(
+            error.exception), "layer_types and num_repeat must have the same length.")
+
+        # Test with multiple layer types
+        layer_types = [
+            lambda: tf.keras.layers.Dense(10, activation="relu"),
+            lambda: tf.keras.layers.Dense(20, activation="relu"),
+        ]
+        num_repeat = [2, 3]
+        num_output = 4
+
+        ModelClass = generate_model_class(
+            "TestModel", layer_types, num_repeat, num_output)
+        model = ModelClass()
+
+        # Check the number of layers
+        self.assertEqual(len(model.layer_seq), sum(num_repeat))
+        self.assertEqual(model.output_layer.units, num_output)
 
     def test_get_model(self):
         from memilio.surrogatemodel.GNN.network_architectures import get_model
@@ -141,18 +221,12 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
         y = np.random.rand(num_samples, 1,
                            output_dim,  num_nodes).astype(np.float32)
-        data = {"inputs": X, "labels": y}
-        path_cases_dir = os.path.join(self.path, "cases")
-        self.fs.create_dir(path_cases_dir)
-        path_cases = os.path.join(path_cases_dir, "cases.pickle")
-        with open(path_cases, 'wb') as f:
-            pickle.dump(data, f)
-        path_mobility = os.path.join(self.path, "mobility")
-        mobility_file = os.path.join(
-            path_mobility, "commuter_mobility_2022.txt")
-        self.fs.create_file(mobility_file)
-        with open(mobility_file, 'w') as f:
-            np.savetxt(f, A, delimiter=" ")
+        data = self.create_dummy_data(
+            num_samples, num_nodes, num_node_features, output_dim)
+        # Save dummy data to the fake file system
+        path_cases, path_mobility = self.setup_fake_filesystem(
+            self.fs, self.path, data)
+
         # Create dataset
         dataset = create_dataset(
             path_cases, path_mobility, number_of_nodes=num_nodes)
@@ -216,23 +290,11 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_nodes = 5
         num_node_features = 3
         output_dim = 4
-        X = np.random.rand(num_samples, 1,
-                           num_node_features, num_nodes).astype(np.float32)
-        A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
-        y = np.random.rand(num_samples, 1,
-                           output_dim,  num_nodes).astype(np.float32)
-        data = {"inputs": X, "labels": y}
-        path_cases_dir = os.path.join(self.path, "cases")
-        self.fs.create_dir(path_cases_dir)
-        path_cases = os.path.join(path_cases_dir, "cases.pickle")
-        with open(path_cases, 'wb') as f:
-            pickle.dump(data, f)
-        path_mobility = os.path.join(self.path, "mobility")
-        mobility_file = os.path.join(
-            path_mobility, "commuter_mobility_2022.txt")
-        self.fs.create_file(mobility_file)
-        with open(mobility_file, 'w') as f:
-            np.savetxt(f, A, delimiter=" ")
+        data = self.create_dummy_data(
+            num_samples, num_nodes, num_node_features, output_dim)
+        # Save dummy data to the fake file system
+        path_cases, path_mobility = self.setup_fake_filesystem(
+            self.fs, self.path, data)
         # Create dataset
         dataset = create_dataset(
             path_cases, path_mobility, number_of_nodes=num_nodes)
@@ -272,23 +334,11 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_nodes = 5
         num_node_features = 3
         output_dim = 4
-        X = np.random.rand(num_samples, 1,
-                           num_node_features, num_nodes).astype(np.float32)
-        A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
-        y = np.random.rand(num_samples, 1,
-                           output_dim,  num_nodes).astype(np.float32)
-        data = {"inputs": X, "labels": y}
-        path_cases_dir = os.path.join(self.path, "cases")
-        self.fs.create_dir(path_cases_dir)
-        path_cases = os.path.join(path_cases_dir, "cases.pickle")
-        with open(path_cases, 'wb') as f:
-            pickle.dump(data, f)
-        path_mobility = os.path.join(self.path, "mobility")
-        mobility_file = os.path.join(
-            path_mobility, "commuter_mobility_2022.txt")
-        self.fs.create_file(mobility_file)
-        with open(mobility_file, 'w') as f:
-            np.savetxt(f, A, delimiter=" ")
+        data = self.create_dummy_data(
+            num_samples, num_nodes, num_node_features, output_dim)
+        # Save dummy data to the fake file system
+        path_cases, path_mobility = self.setup_fake_filesystem(
+            self.fs, self.path, data)
         # Create dataset
         dataset = create_dataset(
             path_cases, path_mobility, number_of_nodes=num_nodes)
@@ -309,7 +359,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         from memilio.surrogatemodel.GNN.evaluate_and_train import (
             create_dataset)
         from memilio.surrogatemodel.GNN.grid_search import perform_grid_search
-        from memilio.surrogatemodel.GNN.network_architectures import get_model
         from tensorflow.keras.losses import MeanAbsolutePercentageError
 
         # Create dummy data in the fake filesystem for testing
@@ -317,23 +366,11 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_nodes = 5
         num_node_features = 3
         output_dim = 4
-        X = np.random.rand(num_samples, 1,
-                           num_node_features, num_nodes).astype(np.float32)
-        A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
-        y = np.random.rand(num_samples, 1,
-                           output_dim,  num_nodes).astype(np.float32)
-        data = {"inputs": X, "labels": y}
-        path_cases_dir = os.path.join(self.path, "cases")
-        self.fs.create_dir(path_cases_dir)
-        path_cases = os.path.join(path_cases_dir, "cases.pickle")
-        with open(path_cases, 'wb') as f:
-            pickle.dump(data, f)
-        path_mobility = os.path.join(self.path, "mobility")
-        mobility_file = os.path.join(
-            path_mobility, "commuter_mobility_2022.txt")
-        self.fs.create_file(mobility_file)
-        with open(mobility_file, 'w') as f:
-            np.savetxt(f, A, delimiter=" ")
+        data = self.create_dummy_data(
+            num_samples, num_nodes, num_node_features, output_dim)
+        # Save dummy data to the fake file system
+        path_cases, path_mobility = self.setup_fake_filesystem(
+            self.fs, self.path, data)
         # Create dataset
         dataset = create_dataset(
             path_cases, path_mobility, number_of_nodes=num_nodes)
@@ -366,6 +403,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         print(df_results.columns)
         self.assertEqual(len(df_results), len(model_parameters))
         self.assertEqual(len(df_results.columns), 10)
+
         # Clean up
         self.fs.remove_object(path_cases)
         self.fs.remove_object(os.path.join(

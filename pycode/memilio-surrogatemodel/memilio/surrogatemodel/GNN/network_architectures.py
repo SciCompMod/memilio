@@ -37,6 +37,12 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
     :return: A dynamically created Keras model class.'''
 
     def __init__(self):
+        if len(layer_types) != len(num_repeat):
+            raise ValueError(
+                "layer_types and num_repeat must have the same length.")
+        if any(n < 1 for n in num_repeat):
+            raise ValueError("All values in num_repeat must be at least 1.")
+
         super(type(self), self).__init__()
         self.layer_seq = []
         for i, layer_type in enumerate(layer_types):
