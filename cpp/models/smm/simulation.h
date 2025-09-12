@@ -126,14 +126,14 @@ public:
                     [&](auto&&... args) {
                         return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
                     },
-                    rate.group_indices);
+                    rate.group_indices_from);
                 m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
                 m_model->populations[index_from] -= 1;
                 auto index_to = std::apply(
                     [&](auto&&... args) {
                         return Index{rate.to, rate.status, std::forward<decltype(args)>(args)...};
                     },
-                    rate.group_indices);
+                    rate.group_indices_to);
                 m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
                 m_model->populations[index_to] += 1;
             }

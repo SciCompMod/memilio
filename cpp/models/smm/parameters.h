@@ -55,7 +55,8 @@ struct TransitionRate {
     mio::regions::Region from; // k
     mio::regions::Region to; // l
     ScalarType factor; // lambda_i^{kl}
-    std::tuple<Groups...> group_indices{};
+    std::tuple<Groups...> group_indices_from{};
+    std::tuple<Groups...> group_indices_to{};
 };
 template <class Status, class... Groups>
 struct TransitionRates {

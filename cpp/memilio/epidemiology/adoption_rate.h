@@ -31,11 +31,13 @@ namespace mio
  * @brief Struct defining an influence for a second-order adoption.
  * The population having "status" is multiplied with "factor."
  * @tparam Status An infection state enum.
+ * @tparam Groups Additional grouping indices.
  */
 template <class Status, class... Groups>
 struct Influence {
     Status status;
     ScalarType factor;
+    mio::regions::Region region;
     std::tuple<Groups...> group_indices{};
 };
 
@@ -45,6 +47,7 @@ struct Influence {
  * In the d_abm and smm simulations, "from" is implicitly an influence, scaled by "factor". This is multiplied by
  * the sum over all "influences", which scale their "status" with the respective "factor".
  * @tparam Status An infection state enum.
+ * @tparam Groups Additional grouping indices.
  */
 template <class Status, class... Groups>
 struct AdoptionRate {
@@ -54,6 +57,50 @@ struct AdoptionRate {
     ScalarType factor; // gammahat_{ij}^k
     std::vector<Influence<Status, Groups...>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
     std::tuple<Groups...> group_indices{};
+
+    template <class... T>
+    AdoptionRate(Status initializer_from, Status initializer_to, mio::regions::Region initializer_region,
+                 ScalarType initializer_factor, std::vector<std::tuple<Status, ScalarType>> second_order_influences,
+                 T... Ts)
+        : from(initializer_from)
+        , to(initializer_to)
+        , region(initializer_region)
+        , factor(initializer_factor)
+        , group_indices{}
+    {
+        for (const auto& [status, scalar] : second_order_influences) {
+            influences.emplace_back(Influence<Status, Groups...>{status, scalar, initializer_region});
+        }
+        mio::unused(Ts...);
+    }
+    template <class... T>
+    AdoptionRate(Status initializer_from, Status initializer_to, mio::regions::Region initializer_region,
+                 ScalarType initializer_factor,
+                 std::vector<std::tuple<Status, ScalarType, mio::regions::Region, std::tuple<Groups...>>>
+                     second_order_influences,
+                 T... Ts)
+        : from(initializer_from)
+        , to(initializer_to)
+        , region(initializer_region)
+        , factor(initializer_factor)
+        , group_indices{}
+    {
+        for (const auto& [status, scalar, influence_region, groups] : second_order_influences) {
+            influences.emplace_back(Influence<Status, Groups...>{status, scalar, influence_region, groups});
+        }
+        mio::unused(Ts...);
+    }
+    AdoptionRate(Status initializer_from, Status initializer_to, mio::regions::Region initializer_region,
+                 ScalarType initializer_factor, std::tuple<> second_order_influences)
+        : from(initializer_from)
+        , to(initializer_to)
+        , region(initializer_region)
+        , factor(initializer_factor)
+        , influences{}
+        , group_indices{}
+    {
+        mio::unused(second_order_influences);
+    }
 };
 
 } // namespace mio

@@ -118,7 +118,7 @@ public:
             [&](auto&&... args) {
                 return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
             },
-            rate.group_indices);
+            rate.group_indices_from);
         const auto source = this->populations.get_flat_index(index);
         return rate.factor * x[source];
     }
