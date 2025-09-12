@@ -32,7 +32,7 @@ template <class FP, class DataHandler>
 struct std::numeric_limits<ad::internal::active_type<FP, DataHandler>> : public numeric_limits<FP> {
 };
 
-// Ensures that Eigen recognizes your AD types as valid scalars.
+// Ensures that Eigen recognizes our AD types as valid scalars.
 namespace Eigen
 {
 template <class FP, class DataHandler>
