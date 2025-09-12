@@ -263,6 +263,43 @@ IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<Confirm
     return success();
 }
 
+void split_line(std::string string, std::vector<std::string>* row)
+{
+    std::vector<std::string> strings;
+
+    std::string x = ";;", y = ";NULL;";
+    size_t pos;
+    while ((pos = string.find(x)) != std::string::npos) {
+        string.replace(pos, 2, y);
+    } // Temporary fix to handle empty cells.
+    // boost::split(strings, string, boost::is_any_of(";"));
+    boost::split(strings, string, boost::is_any_of(";"));
+    std::transform(strings.begin(), strings.end(), std::back_inserter(*row), [&](std::string s) {
+        return s;
+    });
+}
+
+size_t get_index_of_age_group(int age)
+{
+    if (age <= 4) {
+        return 0;
+    }
+    if (age <= 14) {
+        return 1;
+    }
+    if (age <= 34) {
+        return 2;
+    }
+    if (age <= 59) {
+        return 3;
+    }
+    if (age <= 79) {
+        return 4;
+    }
+    else {
+        return 5;
+    }
+}
 } // namespace details
 } // namespace osecirvvs
 } // namespace mio

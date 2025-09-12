@@ -32,6 +32,9 @@
 #include "memilio/utils/date.h"
 #include "memilio/utils/logging.h"
 
+#include "boost/algorithm/string/split.hpp"
+#include "boost/algorithm/string/classification.hpp"
+
 namespace mio
 {
 namespace osecirvvs
@@ -842,6 +845,407 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
     return success();
 }
 
+/**
+ * @brief Splits line by separator ";" and insert it into row. 
+ * 
+ * @param[in] string Given line from LHA data set.
+ * @param[in, out] row Vector of strings where wplit strings will be stored.
+ */
+void split_line(std::string string, std::vector<std::string>* row);
+
+/**
+ * @brief Gets the index of the corresponding age group for a given age. 
+ * 
+ * @param[in] age Age of considered individual. 
+ */
+size_t get_index_of_age_group(int age);
+
+/**
+ * @brief Reads LHA data from a file and sets compartments accordingly for specified LHA.
+ * 
+ * @tparam FP Floating point type used in the Model objects.
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in] current_date Day of reporting of LHA data.
+ * @param[in,out] model Model object in which the LHA data is set.
+ * @param[in] lha_id ID of considered LHA.
+ */
+template <typename FP>
+IOResult<void> read_lha_data(const std::string data_dir, Date current_date, Model<FP>& model, int lha_id)
+{
+    // TODO: Filename needs to be adapted if we have data for more than one county.
+    // Open file.
+    const fs::path lha_data_path = path_join(data_dir, "Germany/pydata", "lha_data.csv");
+
+    if (!fs::exists(lha_data_path)) {
+        mio::log_error("Cannot read in data. File does not exist.");
+    }
+    // File pointer.
+    std::fstream fin;
+
+    // Open an existing file.
+    fin.open(lha_data_path, std::ios::in);
+    std::vector<std::string> row;
+    std::vector<std::string> row_string;
+    std::string line;
+
+    // Read the titles from the data file.
+    std::getline(fin, line);
+    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+    std::vector<std::string> titles;
+    boost::split(titles, line, boost::is_any_of(";"));
+    size_t count_of_titles              = 0;
+    std::map<std::string, size_t> index = {};
+    for (auto const& title : titles) {
+        index.insert({title, count_of_titles});
+        row_string.push_back(title);
+        count_of_titles++;
+    }
+
+    std::vector<std::string> unique_ids = {};
+
+    // Define vectors that will contain numberts of individuals in respective compartments.
+    size_t num_age_groups      = 6;
+    size_t num_immunity_levels = 3;
+
+    // Each vector contains six entries for the age groups where for each age group we again have a vector for the three immunity levels.
+    std::vector<std::vector<size_t>> num_Susceptibles(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_Exposed(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_InfectedNoSymptoms(num_age_groups,
+                                                            std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_InfectedSymptoms(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_InfectedSevere(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_InfectedCritical(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_Deaths(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+    std::vector<std::vector<size_t>> num_Recovered(num_age_groups, std::vector<size_t>(num_immunity_levels, 0));
+
+    // size_t row_counter = 0;
+
+    // Define counters to determine number individuals that are partially or fully vaccinated.
+    std::vector<double> counter_partial_immunity = std::vector<double>(num_age_groups, 0.);
+    std::vector<double> counter_full_immunity    = std::vector<double>(num_age_groups, 0.);
+
+    while (std::getline(fin, line)) {
+        row.clear();
+
+        // Read columns in this row.
+        split_line(line, &row);
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+        // Only consider first row of for each id and ignore the remaining rows with same id.
+        std::string person_id = row[index["0"]];
+
+        // Check if id has already been used in some row before.
+        bool contains_id =
+            std::any_of(unique_ids.begin(), unique_ids.end(), [person_id](std::string unique_ids_element) {
+                return unique_ids_element == person_id;
+            });
+
+        // If id has not been used before, add id to list of unique ids.
+        if (!contains_id) {
+            unique_ids.push_back(person_id);
+        }
+        // Otherwise, skip this line.
+        else {
+            continue;
+        }
+
+        // Delete dates that are in the future with respect to current date as we consider the given
+        // dataset as live dataset.
+        std::vector<std::string> date_columns = {"11", "15", "20", "33", "34", "37", "38", "40", "41",
+                                                 "44", "47", "53", "54", "60", "63", "64", "66", "94"};
+
+        for (size_t column_index = 0; column_index < date_columns.size(); column_index++) {
+
+            std::string date_str = row[index[date_columns[column_index]]];
+            if (date_str != "NULL" && date_str != "NULL\r") {
+
+                // Correct some obvious typos in year.
+                if (date_str.substr(0, 4) == "2002") {
+                    date_str.replace(0, 4, "2020");
+                }
+                if (date_str.substr(0, 4) == "2012") {
+                    date_str.replace(0, 4, "2021");
+                }
+
+                mio::Date date = parse_date(date_str).value();
+
+                // If date larger than current_date (which is the end date of the given data set), set date to NULL.
+                if (date > current_date) {
+                    row[index[date_columns[column_index]]] = "NULL";
+                }
+            }
+        }
+
+        // Determine age group.
+        size_t age_group = details::get_index_of_age_group(std::stoi(row[index["16"]]));
+
+        // Determine immunity level.
+        size_t immunity_level = 0;
+
+        Parameters params = model.parameters;
+
+        if (row[index["44"]] != "NULL") {
+
+            size_t time_since_last_vaccination = get_offset_in_days(current_date, parse_date(row[index["44"]]).value());
+
+            auto days_until_effective_partial_immunity = static_cast<size_t>(
+                static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)]));
+            auto days_until_effective_improved_immunity = static_cast<size_t>(
+                static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)]));
+
+            // Assume that VaccinationDate gives us the date of the last vaccination and that we don't know if it was
+            // the first, second or ... vaccination.
+            if (std::stoi(row[index["43"]]) == 1) {
+                if (time_since_last_vaccination > days_until_effective_partial_immunity) {
+                    immunity_level = 1;
+                    counter_partial_immunity[age_group] += 1;
+                }
+            }
+            if (std::stoi(row[index["43"]]) >= 2) {
+                if (time_since_last_vaccination > days_until_effective_improved_immunity) {
+                    immunity_level = 2;
+                    counter_full_immunity[age_group] += 1;
+                }
+                else {
+                    immunity_level = 1;
+                    counter_partial_immunity[age_group] += 1;
+                }
+            }
+        }
+
+        // Determine current infection state of individual.
+
+        // Get number of dead individuals.
+
+        // Check if there is a death date reported. Use DeceasedDate (instead of PersDeceasedDate) as more deaths have
+        // been reorted there and seem to include the ones reported in PersDeceasedDate.
+        if (row[index["20"]] != "NULL") {
+
+            num_Deaths[age_group][immunity_level] += 1;
+
+            continue;
+        }
+
+        // Consider ICU patients.
+        if (row[index["40"]] != "NULL") {
+
+            // If we have an end date for the ICU stay and there is no death date, we assume that the person has recovered.
+            if (row[index["41"]] != "NULL") {
+                num_Recovered[age_group][immunity_level] += 1;
+            }
+
+            // If there is no end date available, we check if the time spent in ICU is more or less than expected according to model parameters.
+            else {
+                size_t time_ICU = get_offset_in_days(current_date, parse_date(row[index["40"]]).value());
+
+                // If time on ICU is less than expected at current_date, we assume that individuals are still on the ICU.
+                if (time_ICU < params.template get<TimeInfectedCritical<double>>()[(AgeGroup)age_group]) {
+                    num_InfectedCritical[age_group][immunity_level] += 1;
+                }
+                // If time on ICU is larger than expected, we assume that the individual has recovered.
+                else {
+                    num_Recovered[age_group][immunity_level] += 1;
+                }
+            }
+            continue;
+        }
+
+        // Consider hospitalized patients that have not been on ICU.
+        if (row[index["33"]] != "NULL") {
+
+            // If we have an end date for the hospital stay, we assume that the person has recovered.
+            if (row[index["34"]] != "NULL") {
+                num_Recovered[age_group][immunity_level] += 1;
+            }
+
+            // If there is no end date available, we check if the time spent in the hospital is more or less than expected according to model parameters.
+            else {
+                size_t time_hospital = get_offset_in_days(current_date, parse_date(row[index["33"]]).value());
+
+                // If time in hospital is less than expected at current_date, we assume that individuals are still in the hospital.
+                if (time_hospital < params.template get<TimeInfectedSevere<double>>()[(AgeGroup)age_group]) {
+                    num_InfectedSevere[age_group][immunity_level] += 1;
+                }
+                // If time in hospital is larger than expected, we assume that the idividual has recovered.
+                else {
+                    num_Recovered[age_group][immunity_level] += 1;
+                }
+            }
+            continue;
+        }
+
+        // Get number of infected individuals with mild symptoms.
+        std::vector<std::string> symptom_columns = {"71", "72", "73", "74", "75", "76'", "77",
+                                                    "78", "79", "80", "81", "82", "83",  "84"};
+
+        bool any_symptoms = false;
+        size_t i          = 0;
+        while (!any_symptoms && i < symptom_columns.size()) {
+            if (std::stoi(row[index[symptom_columns[i]]]) == 1) {
+                any_symptoms = true;
+            }
+            i++;
+        }
+
+        // If any symptoms have been reported, we assume that the individual has been in infection state
+        // InfectedSymptoms at some point. Depending on the time  since reporting, we assume that the individual is
+        // either in InfectedSymptoms or in Recovered at the current date.
+
+        size_t time_since_reporting = get_offset_in_days(current_date, parse_date(row[index["11"]]).value());
+
+        if (any_symptoms) {
+            if (time_since_reporting < params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
+                                           params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group] +
+                                           params.template get<TimeInfectedSymptoms<double>>()[(AgeGroup)age_group]) {
+                num_InfectedSymptoms[age_group][immunity_level] += 1;
+            }
+
+            else {
+                num_Recovered[age_group][immunity_level] += 1;
+            }
+            continue;
+        }
+
+        // If no symptoms have been reported, we assume that the individual has been in infection InfectedNoSymptoms at
+        // some point. Depending on the time  since reporting, we assume that the individual is
+        // either in InfectedSymptoms or in Recovered at the current date.
+        else {
+            if (time_since_reporting < params.template get<TimeExposed<double>>()[(AgeGroup)age_group] +
+                                           params.template get<TimeInfectedNoSymptoms<double>>()[(AgeGroup)age_group]) {
+                num_InfectedNoSymptoms[age_group][immunity_level] += 1;
+            }
+
+            else {
+                num_Recovered[age_group][immunity_level] += 1;
+            }
+            continue;
+        }
+    }
+
+    // Write data into model.
+    // Get population data.
+    BOOST_OUTCOME_TRY(auto&& num_population,
+                      read_population_data(path_join(data_dir, "Germany/pydata", "county_current_population.json"),
+                                           std::vector<int>(1, lha_id)));
+
+    // Use RKI case data to set Recovered to intialize S.
+    std::vector<std::vector<double>> vnum_rec(1, std::vector<double>(num_age_groups, 0.0));
+    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(
+                                            path_join(data_dir, "Germany/pydata", "cases_all_county_age_ma7.json")));
+    BOOST_OUTCOME_TRY(
+        read_confirmed_cases_data_fix_recovered(case_data, std::vector<int>(1, lha_id), current_date, vnum_rec, 14.));
+
+    // Set populations per age group.
+    for (auto i = AgeGroup(0); i < (AgeGroup)num_age_groups; i++) {
+
+        double S_v = std::min(counter_full_immunity[(size_t)i] + vnum_rec[0][size_t(i)], num_population[0][size_t(i)]);
+
+        double S_pv = std::max(counter_partial_immunity[(size_t)i] - counter_full_immunity[(size_t)i],
+                               0.0); // use std::max with 0
+
+        // Exposed
+        // double S;
+        // if (num_population[0][size_t(i)] - S_pv - S_v < 0.0) {
+        //     log_warning("Number of vaccinated persons greater than population in county {}, age group {}.", lha_id,
+        //                 size_t(i));
+        //     S   = 0.0;
+        //     S_v = num_population[0][size_t(i)] - S_pv;
+        // }
+        // else {
+        //     S = num_population[0][size_t(i)] - S_pv - S_v;
+        // }
+        // // Initialize Exposed as in other initialization for SECIRVVS model based on RKI data.
+        // double denom_E = 1 / (S + S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] +
+        //                       S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i]);
+        // model.populations[{i, InfectionState::ExposedNaive}] =
+        //     S * model.populations[{i, InfectionState::ExposedNaive}] * denom_E;
+        // model.populations[{i, InfectionState::ExposedPartialImmunity}] =
+        //     S_pv * model.parameters.template get<ReducExposedPartialImmunity<double>>()[i] *
+        //     model.populations[{i, InfectionState::ExposedPartialImmunity}] * denom_E;
+        // model.populations[{i, InfectionState::ExposedImprovedImmunity}] =
+        //     S_v * model.parameters.template get<ReducExposedImprovedImmunity<double>>()[i] *
+        //     model.populations[{i, InfectionState::ExposedImprovedImmunity}] * denom_E;
+
+        // InfectedNoSymptoms
+        model.populations[{i, InfectionState::InfectedNoSymptomsNaive}] = num_InfectedNoSymptoms[(size_t)i][0];
+        model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] =
+            num_InfectedNoSymptoms[(size_t)i][1];
+        model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] =
+            num_InfectedNoSymptoms[(size_t)i][2];
+
+        // InfectedSymptoms
+        model.populations[{i, InfectionState::InfectedSymptomsNaive}]            = num_InfectedSymptoms[(size_t)i][0];
+        model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}]  = num_InfectedSymptoms[(size_t)i][1];
+        model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] = num_InfectedSymptoms[(size_t)i][2];
+
+        // InfectedSevere
+        model.populations[{i, InfectionState::InfectedSevereNaive}]            = num_InfectedSevere[(size_t)i][0];
+        model.populations[{i, InfectionState::InfectedSeverePartialImmunity}]  = num_InfectedSevere[(size_t)i][1];
+        model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] = num_InfectedSevere[(size_t)i][2];
+
+        // InfectedCritical
+        model.populations[{i, InfectionState::InfectedCriticalNaive}]            = num_InfectedCritical[(size_t)i][0];
+        model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}]  = num_InfectedCritical[(size_t)i][1];
+        model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] = num_InfectedCritical[(size_t)i][2];
+
+        // Dead
+        model.populations[{i, InfectionState::DeadNaive}]            = num_Deaths[(size_t)i][0];
+        model.populations[{i, InfectionState::DeadPartialImmunity}]  = num_Deaths[(size_t)i][1];
+        model.populations[{i, InfectionState::DeadImprovedImmunity}] = num_Deaths[(size_t)i][2];
+
+        // Recovered are written into Susceptible ImprovedImmunity
+        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][0];
+        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][1];
+        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] += num_Recovered[(size_t)i][2];
+
+        // Susceptibles
+        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+            counter_full_immunity[(size_t)i] + model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -
+            (model.populations[{i, InfectionState::InfectedSymptomsNaive}] +
+             model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] +
+             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] +
+             model.populations[{i, InfectionState::InfectedSymptomsNaiveConfirmed}] +
+             model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] +
+             model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] +
+             model.populations[{i, InfectionState::InfectedSevereNaive}] +
+             model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] +
+             model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] +
+             model.populations[{i, InfectionState::InfectedCriticalNaive}] +
+             model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] +
+             model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] +
+             model.populations[{i, InfectionState::DeadNaive}] +
+             model.populations[{i, InfectionState::DeadPartialImmunity}] +
+             model.populations[{i, InfectionState::DeadImprovedImmunity}]);
+
+        model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] =
+            std::min(S_v - model.populations[{i, InfectionState::ExposedImprovedImmunity}] -
+                         model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunity}] -
+                         model.populations[{i, InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed}] -
+                         model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunity}] -
+                         model.populations[{i, InfectionState::InfectedSymptomsImprovedImmunityConfirmed}] -
+                         model.populations[{i, InfectionState::InfectedSevereImprovedImmunity}] -
+                         model.populations[{i, InfectionState::InfectedCriticalImprovedImmunity}] -
+                         model.populations[{i, InfectionState::DeadImprovedImmunity}],
+                     std::max(0.0, double(model.populations[{i, InfectionState::SusceptibleImprovedImmunity}])));
+
+        model.populations[{i, InfectionState::SusceptiblePartialImmunity}] =
+            std::max(0.0, S_pv - model.populations[{i, InfectionState::ExposedPartialImmunity}] -
+                              model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunity}] -
+                              model.populations[{i, InfectionState::InfectedNoSymptomsPartialImmunityConfirmed}] -
+                              model.populations[{i, InfectionState::InfectedSymptomsPartialImmunity}] -
+                              model.populations[{i, InfectionState::InfectedSymptomsPartialImmunityConfirmed}] -
+                              model.populations[{i, InfectionState::InfectedSeverePartialImmunity}] -
+                              model.populations[{i, InfectionState::InfectedCriticalPartialImmunity}] -
+                              model.populations[{i, InfectionState::DeadPartialImmunity}]);
+
+        // Evaluate num_population at index 0 because we only get population data for one county in this function.
+        model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
+                                                                             num_population[0][size_t(i)]);
+    }
+
+    return mio::success();
+}
+
 } // namespace details
 
 #ifdef MEMILIO_HAS_HDF5
@@ -1111,6 +1515,101 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     }
 
     return success();
+}
+
+/**
+ * @brief Sets initial values of model based on LHA data, if available, for specified counties, and based on RKI data 
+ * for remaining counties.
+ * 
+ * We assume that the given LHA data set is a live data set. Hence, we are not considering any dates in the data set later
+ * than the current date. 
+ * 
+ * @tparam FP Floating point type used in the Model objects.
+ * @param[in] params Parameter object 
+ * @param[in, out] graph_model Graph model for which the initial data is set. 
+ * @param[in] data_dir Directory that contains the data files.
+ * @param[in] current_date Day of reporting of LHA data.
+ * @param[in] lha_ids IDs of counties for which LHA data is available. 
+ */
+template <typename FP>
+IOResult<void> set_lha_data(const Parameters<FP>& params, mio::Graph<Model<FP>, MobilityParameters<FP>> graph_model,
+                            const std::string data_dir, const Date current_date, std::vector<int> lha_ids)
+{
+    using Model       = Model<FP>;
+    using Populations = mio::Populations<FP, AgeGroup, InfectionState>;
+
+    // Get nodes.
+    const fs::path path(data_dir);
+    std::string population_data_path =
+        mio::path_join((path / "Germany" / "pydata").string(), "county_current_population.json");
+    // std::string population_data_path = mio::path_join(
+    //     "/localdata1/wend_aa/memilio-repos/esid-scenarios/data/Germany/pydata/", "county_current_population.json");
+    // std::vector<int> node_ids = BOOST_OUTCOME_TRY(get_node_ids(population_data_path, true).value();
+    BOOST_OUTCOME_TRY(std::vector<int> && node_ids, get_node_ids(population_data_path, true));
+
+    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
+
+    for (auto& node : nodes) {
+        // Set parameters for all nodes.
+        node.parameters = params;
+        // Initialize populations of model.
+        node.populations = Populations({AgeGroup(params.get_num_groups()), InfectionState::Count});
+    }
+
+    // Iterate over all LHAs with given data set.
+    for (size_t lha_counter = 0; lha_counter < lha_ids.size(); lha_counter++) {
+
+        // Get index of lha_id.
+        auto it = std::find(node_ids.begin(), node_ids.end(), lha_ids[lha_counter]);
+        if (it == node_ids.end()) {
+            mio::log_warning(
+                "Given lha_id {} is not in vector node_ids. All counties are initialized based on RKI data.",
+                lha_ids[lha_counter]);
+        }
+        else {
+            // Get index of lha_id in node_ids.
+            size_t lha_idx = std::distance(node_ids.begin(), it);
+
+            // Set populations based on LHA data for corrsponding node.
+            auto lha_result = details::read_lha_data<FP>(data_dir, current_date, nodes[lha_idx], lha_ids[lha_counter]);
+
+            // Add node corresponding to considered LHA to graph_model.
+            graph_model.add_node(node_ids[lha_idx], nodes[lha_idx]);
+
+            // std::cout << "Test lha county: "
+            //           << graph_model.nodes()[0]
+            //                  .property.populations[{(AgeGroup)2, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]
+            //           << std::endl;
+
+            // Remove element with lha_idx from node_ids and nodes if lha_id is contained in node_ids.
+            node_ids.erase(node_ids.begin() + lha_idx);
+            nodes.erase(nodes.begin() + lha_idx);
+        }
+    }
+
+    // Set populations based on RKI data for remaining counties/nodes.
+
+    // Set scaling_factor_inf and scaling_factor_icu to 1 here (for all age groups).
+    const std::vector<double>& scaling_factor_inf = std::vector(6, 1.);
+    double scaling_factor_icu                     = 1.;
+    int num_days                                  = 0;
+
+    std::string pydata_dir = mio::path_join((path / "Germany" / "pydata").string());
+
+    auto result = read_input_data_county<Model>(nodes, current_date, node_ids, scaling_factor_inf, scaling_factor_icu,
+                                                pydata_dir, num_days, false);
+
+    // Add nodes to graph_model.
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+        graph_model.add_node(node_ids[node_idx], nodes[node_idx]);
+    }
+
+    // std::cout << "Test other county: "
+    //           << graph_model.nodes()[9]
+    //                  .property.populations[{(AgeGroup)2, mio::osecirvvs::InfectionState::InfectedSymptomsNaive}]
+    //           << std::endl;
+
+    return mio::success();
 }
 
 } // namespace osecirvvs
