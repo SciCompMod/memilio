@@ -469,8 +469,8 @@ IOResult<FP> get_reproduction_number(size_t t_idx, const Simulation<FP, Base>& s
                       t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::InfectedCritical})] +
                   sim.get_result().get_value(
                       t_idx)[sim.get_model().populations.get_flat_index({k, InfectionState::Recovered})];
-        if (temp == 0) {
-            temp = 1;
+        if (temp < Limits<FP>::zero_tolerance()) {
+            temp = 1.0;
         }
         divN[(size_t)k] = 1 / temp;
 
