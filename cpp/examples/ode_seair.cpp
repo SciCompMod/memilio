@@ -69,7 +69,7 @@ int main()
     // Accurate automatic differentiation (AD) and Finite Differences (FP) require higher-precision numerical integrators than typically used.
     auto AD_integrator =
         std::make_unique<mio::ControlledStepperWrapper<FP, boost::numeric::odeint::runge_kutta_fehlberg78>>(
-            1e-12, 1e-8, std::numeric_limits<double>::min(), dt);
+            1e-12, 1e-8, std::numeric_limits<FP>::min(), dt);
     auto double_integrator =
         std::make_unique<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_fehlberg78>>(
             1e-12, 1e-8, std::numeric_limits<double>::min(), ad::value(dt));
