@@ -61,7 +61,7 @@ TEST(TestReadMobility, readFormatted)
         file.close();
     }
 
-    auto matrix_read = mio::read_mobility_formatted("test_mobility.txt");
+    auto matrix_read = mio::read_mobility_formatted<ScalarType>("test_mobility.txt");
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
     ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());
@@ -109,7 +109,7 @@ TEST(TestReadMobility, readPlain)
     test_matrix(5, 4) = 0.3497;
     test_matrix(5, 5) = 0.1544;
 
-    auto matrix_read = mio::read_mobility_plain(get_test_data_file_path("contacts.txt"));
+    auto matrix_read = mio::read_mobility_plain<ScalarType>(get_test_data_file_path("contacts.txt"));
 
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());

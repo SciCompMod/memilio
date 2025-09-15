@@ -63,7 +63,7 @@ int get_region_id(const EpiDataEntry& data_entry)
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = ScalarType>
+template <typename FP>
 IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
                                  std::vector<FP>& vnum_icu)
 {
@@ -106,12 +106,12 @@ IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const 
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = ScalarType>
+template <typename FP>
 IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                               std::vector<FP>& vnum_icu)
 {
     BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
-    return compute_divi_data(divi_data, vregion, date, vnum_icu);
+    return compute_divi_data<FP>(divi_data, vregion, date, vnum_icu);
 }
 
 /**
@@ -122,12 +122,12 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-template <typename FP = ScalarType>
-IOResult<std::vector<std::vector<ScalarType>>>
-read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion)
+template <typename FP>
+IOResult<std::vector<std::vector<FP>>> read_population_data(const std::vector<PopulationDataEntry>& population_data,
+                                                            const std::vector<int>& vregion)
 {
-    std::vector<std::vector<ScalarType>> vnum_population(
-        vregion.size(), std::vector<ScalarType>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+    std::vector<std::vector<FP>> vnum_population(vregion.size(),
+                                                 std::vector<FP>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
 
     for (auto&& county_entry : population_data) {
         //accumulate population of states or country from population of counties
@@ -163,12 +163,11 @@ read_population_data(const std::vector<PopulationDataEntry>& population_data, co
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
-template <typename FP = ScalarType>
-IOResult<std::vector<std::vector<ScalarType>>> read_population_data(const std::string& path,
-                                                                    const std::vector<int>& vregion)
+template <typename FP>
+IOResult<std::vector<std::vector<FP>>> read_population_data(const std::string& path, const std::vector<int>& vregion)
 {
     BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
-    return read_population_data(population_data, vregion);
+    return read_population_data<FP>(population_data, vregion);
 }
 
 } // namespace mio

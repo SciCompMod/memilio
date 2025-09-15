@@ -81,11 +81,12 @@ TEST(TestSaveResult, save_result)
     std::vector<int> ids                                  = {1, 2};
 
     TempFileRegister file_register;
-    auto results_file_path  = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
-    auto save_result_status = mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, results_file_path);
+    auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto save_result_status =
+        mio::save_result<ScalarType>(results_from_sim, ids, (int)(size_t)nb_groups, results_file_path);
     ASSERT_TRUE(save_result_status);
 
-    auto results_from_file = mio::read_result(results_file_path);
+    auto results_from_file = mio::read_result<ScalarType>(results_file_path);
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
 
@@ -196,13 +197,13 @@ TEST(TestSaveResult, save_result_with_params)
                                return node.property.get_simulation().get_model();
                            });
 
-            save_result_status = save_result_with_params(ensemble_results.back(), ensemble_params.back(), {0, 1},
-                                                         tmp_results_dir, run_idx);
+            save_result_status = save_result_with_params<ScalarType>(ensemble_results.back(), ensemble_params.back(),
+                                                                     {0, 1}, tmp_results_dir, run_idx);
 
             return 0; //function needs to return something
         });
     ASSERT_TRUE(save_result_status);
-    auto results_from_file = mio::read_result(tmp_results_dir + "/run0/Result.h5");
+    auto results_from_file = mio::read_result<ScalarType>(tmp_results_dir + "/run0/Result.h5");
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
     EXPECT_EQ(ensemble_results.back().back().get_num_elements(), result_from_file.get_groups().get_num_elements());
@@ -340,19 +341,19 @@ TEST(TestSaveResult, save_percentiles_and_sums)
             return 0; //function needs to return something
         });
 
-    auto save_results_status = save_results(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);
+    auto save_results_status = save_results<ScalarType>(ensemble_results, ensemble_params, {0, 1}, tmp_results_dir);
     ASSERT_TRUE(save_results_status);
 
     // test percentiles
-    auto results_from_file_p05 = mio::read_result(tmp_results_dir + "/p05/Results.h5");
+    auto results_from_file_p05 = mio::read_result<ScalarType>(tmp_results_dir + "/p05/Results.h5");
     ASSERT_TRUE(results_from_file_p05);
-    auto results_from_file_p25 = mio::read_result(tmp_results_dir + "/p25/Results.h5");
+    auto results_from_file_p25 = mio::read_result<ScalarType>(tmp_results_dir + "/p25/Results.h5");
     ASSERT_TRUE(results_from_file_p25);
-    auto results_from_file_p50 = mio::read_result(tmp_results_dir + "/p50/Results.h5");
+    auto results_from_file_p50 = mio::read_result<ScalarType>(tmp_results_dir + "/p50/Results.h5");
     ASSERT_TRUE(results_from_file_p50);
-    auto results_from_file_p75 = mio::read_result(tmp_results_dir + "/p75/Results.h5");
+    auto results_from_file_p75 = mio::read_result<ScalarType>(tmp_results_dir + "/p75/Results.h5");
     ASSERT_TRUE(results_from_file_p75);
-    auto results_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Results.h5");
+    auto results_from_file_p95 = mio::read_result<ScalarType>(tmp_results_dir + "/p95/Results.h5");
     ASSERT_TRUE(results_from_file_p95);
 
     auto result_from_file = results_from_file_p25.value()[0];
@@ -361,35 +362,35 @@ TEST(TestSaveResult, save_percentiles_and_sums)
               result_from_file.get_groups().get_num_time_points());
 
     // results_run
-    auto results_run0 = mio::read_result(tmp_results_dir + "/results_run0.h5");
+    auto results_run0 = mio::read_result<ScalarType>(tmp_results_dir + "/results_run0.h5");
     ASSERT_TRUE(results_run0);
-    auto results_run0_sum = mio::read_result(tmp_results_dir + "/results_run0_sum.h5");
+    auto results_run0_sum = mio::read_result<ScalarType>(tmp_results_dir + "/results_run0_sum.h5");
     ASSERT_TRUE(results_run0_sum);
-    auto results_run1 = mio::read_result(tmp_results_dir + "/results_run1.h5");
+    auto results_run1 = mio::read_result<ScalarType>(tmp_results_dir + "/results_run1.h5");
     ASSERT_TRUE(results_run1);
-    auto results_run1_sum = mio::read_result(tmp_results_dir + "/results_run1_sum.h5");
+    auto results_run1_sum = mio::read_result<ScalarType>(tmp_results_dir + "/results_run1_sum.h5");
     ASSERT_TRUE(results_run1_sum);
-    auto results_run2 = mio::read_result(tmp_results_dir + "/results_run2.h5");
+    auto results_run2 = mio::read_result<ScalarType>(tmp_results_dir + "/results_run2.h5");
     ASSERT_TRUE(results_run2);
-    auto results_run2_sum = mio::read_result(tmp_results_dir + "/results_run2_sum.h5");
+    auto results_run2_sum = mio::read_result<ScalarType>(tmp_results_dir + "/results_run2_sum.h5");
     ASSERT_TRUE(results_run2_sum);
 
     // test save edges (percentiles and results from single runs)
     std::vector<std::pair<int, int>> pairs_edges = {{0, 1}};
 
-    auto save_edges_status = save_edges(ensemble_edges, pairs_edges, tmp_results_dir, true, true);
+    auto save_edges_status = save_edges<ScalarType>(ensemble_edges, pairs_edges, tmp_results_dir, true, true);
     ASSERT_TRUE(save_edges_status);
 
     // percentiles
-    auto results_edges_from_file_p05 = mio::read_result(tmp_results_dir + "/p05/Edges.h5");
+    auto results_edges_from_file_p05 = mio::read_result<ScalarType>(tmp_results_dir + "/p05/Edges.h5");
     ASSERT_TRUE(results_edges_from_file_p05);
-    auto results_edges_from_file_p25 = mio::read_result(tmp_results_dir + "/p25/Edges.h5");
+    auto results_edges_from_file_p25 = mio::read_result<ScalarType>(tmp_results_dir + "/p25/Edges.h5");
     ASSERT_TRUE(results_edges_from_file_p25);
-    auto results_edges_from_file_p50 = mio::read_result(tmp_results_dir + "/p50/Edges.h5");
+    auto results_edges_from_file_p50 = mio::read_result<ScalarType>(tmp_results_dir + "/p50/Edges.h5");
     ASSERT_TRUE(results_edges_from_file_p50);
-    auto results_edges_from_file_p75 = mio::read_result(tmp_results_dir + "/p75/Edges.h5");
+    auto results_edges_from_file_p75 = mio::read_result<ScalarType>(tmp_results_dir + "/p75/Edges.h5");
     ASSERT_TRUE(results_edges_from_file_p75);
-    auto results_edges_from_file_p95 = mio::read_result(tmp_results_dir + "/p95/Edges.h5");
+    auto results_edges_from_file_p95 = mio::read_result<ScalarType>(tmp_results_dir + "/p95/Edges.h5");
     ASSERT_TRUE(results_edges_from_file_p95);
 
     auto result_edges_from_file = results_edges_from_file_p25.value()[0];
@@ -398,11 +399,11 @@ TEST(TestSaveResult, save_percentiles_and_sums)
               result_edges_from_file.get_groups().get_num_time_points());
 
     // single runs
-    auto results_edges_run0 = mio::read_result(tmp_results_dir + "/Edges_run0.h5");
+    auto results_edges_run0 = mio::read_result<ScalarType>(tmp_results_dir + "/Edges_run0.h5");
     ASSERT_TRUE(results_edges_run0);
-    auto results_edges_run1 = mio::read_result(tmp_results_dir + "/Edges_run1.h5");
+    auto results_edges_run1 = mio::read_result<ScalarType>(tmp_results_dir + "/Edges_run1.h5");
     ASSERT_TRUE(results_edges_run1);
-    auto results_edges_run2 = mio::read_result(tmp_results_dir + "/Edges_run2.h5");
+    auto results_edges_run2 = mio::read_result<ScalarType>(tmp_results_dir + "/Edges_run2.h5");
     ASSERT_TRUE(results_edges_run2);
 }
 
@@ -428,11 +429,11 @@ TEST(TestSaveResult, save_edges)
     // save the results to a file
     TempFileRegister file_register;
     auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
-    auto save_edges_status = mio::save_edges(results_edges, pairs_edges, results_file_path);
+    auto save_edges_status = mio::save_edges<ScalarType>(results_edges, pairs_edges, results_file_path);
     ASSERT_TRUE(save_edges_status);
 
     // read the results back in and check that they are correct.
-    auto results_from_file = mio::read_result(results_file_path);
+    auto results_from_file = mio::read_result<ScalarType>(results_file_path);
     ASSERT_TRUE(results_from_file);
 
     // group 0
@@ -495,5 +496,6 @@ TEST(TestSaveEdges, save_edges_empty_ts)
     auto results_file_path = file_register.get_unique_path("TestEdges-%%%%-%%%%.h5");
 
     // Call the save_edges function and check if it returns a failure
-    ASSERT_THAT(save_edges(results, pairs_edges, results_file_path), IsFailure(mio::StatusCode::InvalidValue));
+    ASSERT_THAT(save_edges<ScalarType>(results, pairs_edges, results_file_path),
+                IsFailure(mio::StatusCode::InvalidValue));
 }

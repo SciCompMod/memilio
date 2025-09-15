@@ -256,7 +256,7 @@ TEST(TestSaveParameters, read_graph_without_edges)
     std::vector<int> ids                           = {0, 1};
     auto graph_no_edges =
         mio::create_graph_without_edges<mio::osecir::Model<double>, mio::MobilityParameters<double>>(models, ids);
-    auto write_status = mio::write_graph(graph_no_edges, tmp_results_dir);
+    auto write_status = mio::write_graph<ScalarType>(graph_no_edges, tmp_results_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
     auto read_graph =
@@ -433,7 +433,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
     TempFileRegister file_register;
     auto graph_dir    = file_register.get_unique_path("graph_parameters-%%%%-%%%%");
-    auto write_status = mio::write_graph(graph, graph_dir);
+    auto write_status = mio::write_graph<ScalarType>(graph, graph_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
     auto read_result = mio::read_graph<double, mio::osecir::Model<double>>(graph_dir);
@@ -642,7 +642,8 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         model[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[group]         = 0.12 * ((size_t)group + 1);
     }
 
-    auto read_result = mio::osecir::read_input_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
+    auto read_result =
+        mio::osecir::read_input_data_germany<ScalarType>(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     std::vector<double> sus   = {3444279.56, 7666866.07, 18801541.51, 29518513.27, 16321649.37, 6072737.25};
@@ -752,11 +753,11 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model3[0].parameters.get<mio::osecir::CriticalPerSevere<double>>()[group]         = 0.12 * ((size_t)group + 1);
     }
 
-    auto read_result1 = mio::osecir::read_input_data_county(model1, date, county, scaling_factor_inf,
-                                                            scaling_factor_icu, TEST_GERMANY_PYDATA_DIR);
-    auto read_result2 = mio::osecir::read_input_data(model2, date, county, scaling_factor_inf, scaling_factor_icu,
-                                                     TEST_GERMANY_PYDATA_DIR);
-    auto read_result_district = mio::osecir::read_input_data(
+    auto read_result1 = mio::osecir::read_input_data_county<ScalarType>(model1, date, county, scaling_factor_inf,
+                                                                        scaling_factor_icu, TEST_GERMANY_PYDATA_DIR);
+    auto read_result2 = mio::osecir::read_input_data<ScalarType>(model2, date, county, scaling_factor_inf,
+                                                                 scaling_factor_icu, TEST_GERMANY_PYDATA_DIR);
+    auto read_result_district = mio::osecir::read_input_data<ScalarType>(
         model3, date, county, scaling_factor_inf, scaling_factor_icu, mio::path_join(TEST_DATA_DIR, "District/pydata"));
     ASSERT_THAT(print_wrap(read_result1), IsSuccess());
     ASSERT_THAT(print_wrap(read_result2), IsSuccess());
@@ -839,14 +840,14 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     TempFileRegister file_register;
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
     boost::filesystem::create_directory(results_dir);
-    auto extrapolate_result = mio::osecir::export_input_data_county_timeseries(
+    auto extrapolate_result = mio::osecir::export_input_data_county_timeseries<ScalarType>(
         model, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1,
         mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
         mio::path_join(TEST_DATA_DIR, "cases_all_county_age_ma7.json"),
         mio::path_join(TEST_DATA_DIR, "county_current_population.json"));
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
-    auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"));
+    auto read_result = mio::read_result<ScalarType>(mio::path_join(results_dir, "Results_rki.h5"));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     auto& file_results = read_result.value();
     auto results       = file_results[0].get_groups();

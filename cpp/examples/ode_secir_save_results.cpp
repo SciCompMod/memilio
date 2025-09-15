@@ -83,5 +83,6 @@ int main()
     std::vector<mio::TimeSeries<ScalarType>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                      = {1, 2};
 
-    auto save_result_status = mio::save_result(results_from_sim, ids, (int)(size_t)nb_groups, "test_result.h5");
+    auto save_result_status =
+        mio::save_result<ScalarType>(results_from_sim, ids, (int)(size_t)nb_groups, "test_result.h5");
 }
