@@ -29,9 +29,9 @@
 
 TEST(TestMobility, compareNoMobilityWithSingleIntegration)
 {
-    auto t0   = 0.0;
-    auto tmax = 5.0;
-    auto dt   = 0.5;
+    ScalarType t0   = 0.0;
+    ScalarType tmax = 5.0;
+    ScalarType dt   = 0.5;
 
     mio::oseir::Model<double> model1(1);
     model1.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = 0.9;

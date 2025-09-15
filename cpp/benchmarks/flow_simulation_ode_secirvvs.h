@@ -66,8 +66,8 @@ public:
 
         ContactMatrixGroup<ScalarType> const& contact_matrix = params.get<osecirvvs::ContactPatterns<ScalarType>>();
 
-        auto icu_occupancy           = 0.0;
-        auto test_and_trace_required = 0.0;
+        ScalarType icu_occupancy           = 0.0;
+        ScalarType test_and_trace_required = 0.0;
         for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
             test_and_trace_required +=
                 (1 - params.get<osecirvvs::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]) /
