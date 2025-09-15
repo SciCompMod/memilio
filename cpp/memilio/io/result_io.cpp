@@ -31,65 +31,6 @@
 
 namespace mio
 {
-IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& results, const std::vector<int>& ids,
-                           int num_groups, const std::string& filename)
-{
-    int region_idx = 0;
-    H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
-    MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, filename);
-    for (auto& result : results) {
-        auto h5group_name = "/" + std::to_string(ids[region_idx]);
-        H5Group region_h5group{H5Gcreate(file.id, h5group_name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
-        MEMILIO_H5_CHECK(region_h5group.id, StatusCode::UnknownError,
-                         "Group could not be created (" + h5group_name + ")");
-
-        const int num_timepoints      = static_cast<int>(result.get_num_time_points());
-        const int num_infectionstates = (int)result.get_num_elements() / num_groups;
-
-        hsize_t dims_t[] = {static_cast<hsize_t>(num_timepoints)};
-        H5DataSpace dspace_t{H5Screate_simple(1, dims_t, NULL)};
-        MEMILIO_H5_CHECK(dspace_t.id, StatusCode::UnknownError, "Time DataSpace could not be created.");
-        H5DataSet dset_t{H5Dcreate(region_h5group.id, "Time", H5T_NATIVE_DOUBLE, dspace_t.id, H5P_DEFAULT, H5P_DEFAULT,
-                                   H5P_DEFAULT)};
-        MEMILIO_H5_CHECK(dset_t.id, StatusCode::UnknownError, "Time DataSet could not be created (Time).");
-        auto values_t = std::vector<ScalarType>(result.get_times().begin(), result.get_times().end());
-        MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
-                         StatusCode::UnknownError, "Time data could not be written.");
-
-        auto total = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                         num_timepoints, num_infectionstates)
-                         .eval();
-
-        for (int group_idx = 0; group_idx <= num_groups; ++group_idx) {
-            auto group = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                             num_timepoints, num_infectionstates)
-                             .eval();
-            if (group_idx < num_groups) {
-                for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
-                    auto v           = result[t_idx].transpose().eval();
-                    auto group_slice = mio::slice(v, {group_idx * num_infectionstates, num_infectionstates});
-                    mio::slice(group, {t_idx, 1}, {0, num_infectionstates}) = group_slice;
-                    mio::slice(total, {t_idx, 1}, {0, num_infectionstates}) += group_slice;
-                }
-            }
-
-            hsize_t dims_values[] = {static_cast<hsize_t>(num_timepoints), static_cast<hsize_t>(num_infectionstates)};
-            H5DataSpace dspace_values{H5Screate_simple(2, dims_values, NULL)};
-            MEMILIO_H5_CHECK(dspace_values.id, StatusCode::UnknownError, "Values DataSpace could not be created.");
-            auto dset_name = group_idx == num_groups ? std::string("Total") : "Group" + std::to_string(group_idx + 1);
-            H5DataSet dset_values{H5Dcreate(region_h5group.id, dset_name.c_str(), H5T_NATIVE_DOUBLE, dspace_values.id,
-                                            H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT)};
-            MEMILIO_H5_CHECK(dset_values.id, StatusCode::UnknownError, "Values DataSet could not be created.");
-
-            MEMILIO_H5_CHECK(H5Dwrite(dset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                                      group_idx == num_groups ? total.data() : group.data()),
-                             StatusCode::UnknownError, "Values data could not be written.");
-        }
-        region_idx++;
-    }
-    return success();
-}
-
 herr_t store_group_name(hid_t /*id*/, const char* name, const H5L_info_t* /*linfo*/, void* opdata)
 {
     auto h5group_names = reinterpret_cast<std::vector<std::string>*>(opdata);
