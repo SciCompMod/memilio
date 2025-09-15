@@ -135,7 +135,7 @@ public:
     template <class T>
     void set_group_total(mio::Index<T> group_idx, FP value)
     {
-        using std::abs;
+        using std::fabs;
         FP current_population = get_group_total(group_idx);
         auto s                = this->template slice<T>({(size_t)group_idx, 1});
 
