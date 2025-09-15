@@ -80,8 +80,8 @@ public:
      * @param[in] dt_min Lower bound for time step dt.
      * @param[in] dt_max Upper bound for time step dt.
      */
-    ControlledStepperWrapper(FP abs_tol = 1e-10, FP rel_tol = 1e-5, FP dt_min = std::numeric_limits<double>::min(),
-                             FP dt_max = std::numeric_limits<double>::max())
+    ControlledStepperWrapper(FP abs_tol = 1e-10, FP rel_tol = 1e-5, FP dt_min = std::numeric_limits<FP>::min(),
+                             FP dt_max = std::numeric_limits<FP>::max())
         : OdeIntegratorCore<FP>(dt_min, dt_max)
         , m_abs_tol(abs_tol)
         , m_rel_tol(rel_tol)
@@ -149,7 +149,7 @@ public:
         // bound dt from below
         // the last adaptive step (successful or not) may have calculated a new step size smaller than m_dt_min
 
-        dt = max(dt, this->get_dt_min());
+        dt = max<FP>(dt, this->get_dt_min());
         // check whether the last step failed (which means that m_dt_min was still too large to suffice tolerances)
         if (step_result == fail) {
             // adaptive stepping failed, but we still return the result of the last attempt

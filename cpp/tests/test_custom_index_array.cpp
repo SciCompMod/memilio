@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Khoa Nguyen
@@ -382,16 +382,14 @@ TEST(CustomIndexArray, resize_one_dimension)
 }
 
 // Additional test for checking the set_multiple functionality
-TEST(CustomIndexArray, setMultiple_validIndices) {
+TEST(CustomIndexArray, setMultiple_validIndices)
+{
     using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
     // Initialize with zeros
     ArrayType array({mio::Index<Dim1>(3), Dim2::Count}, 0);
 
     // Define indices to set
-    std::vector<ArrayType::Index> indices = {
-        {mio::Index<Dim1>(0), Dim2::Male},
-        {mio::Index<Dim1>(2), Dim2::Female}
-    };
+    std::vector<ArrayType::Index> indices = {{mio::Index<Dim1>(0), Dim2::Male}, {mio::Index<Dim1>(2), Dim2::Female}};
 
     // Set these indices to 42
     array.set_multiple(indices, 42);
@@ -407,7 +405,8 @@ TEST(CustomIndexArray, setMultiple_validIndices) {
     EXPECT_EQ((array[{mio::Index<Dim1>(2), Dim2::Male}]), 0);
 }
 
-TEST(CustomIndexArray, setMultiple_emptyIndices) {
+TEST(CustomIndexArray, setMultiple_emptyIndices)
+{
     using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
     // Initialize with fives
     ArrayType array({mio::Index<Dim1>(2), Dim2::Count}, 5);

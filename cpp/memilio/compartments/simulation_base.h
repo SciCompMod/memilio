@@ -69,18 +69,16 @@ public:
     {
     }
 
-    SimulationBase& operator=(const SimulationBase& other) 
+    SimulationBase& operator=(const SimulationBase& other)
     {
-        if(this != &other)
-        {
-            m_model = std::make_unique<Model>(*other.m_model);
+        if (this != &other) {
+            m_model      = std::make_unique<Model>(*other.m_model);
             m_integrator = other.m_integrator;
-            m_result = other.m_result;
-            m_dt = other.m_dt;
+            m_result     = other.m_result;
+            m_dt         = other.m_dt;
         }
-        return *this; 
+        return *this;
     }
-
 
     /**
      * @brief Set the IntegratorCore used in the simulation.

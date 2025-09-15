@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Nils Wassmuth, Rene Schmieding, Martin J. Kuehn
@@ -24,14 +24,14 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-const mio::ssir::Model& ssir_testing_model()
+const mio::ssir::Model<double>& ssir_testing_model()
 {
-    static mio::ssir::Model model;
+    static mio::ssir::Model<double> model;
     model.populations.array().setConstant(1);
     {
-        model.parameters.set<mio::ssir::TimeInfected>(0.5);
-        model.parameters.set<mio::ssir::TransmissionProbabilityOnContact>(1);
-        model.parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 3;
+        model.parameters.set<mio::ssir::TimeInfected<double>>(0.5);
+        model.parameters.set<mio::ssir::TransmissionProbabilityOnContact<double>>(1);
+        model.parameters.get<mio::ssir::ContactPatterns<double>>().get_baseline()(0, 0) = 3;
     }
     return model;
 }
@@ -84,10 +84,10 @@ TEST(TestSdeSir, Simulation)
 TEST(TestSdeSir, check_constraints_parameters)
 {
     // check parameters.check_constraints
-    mio::ssir::Model::ParameterSet parameters;
-    parameters.set<mio::ssir::TimeInfected>(6);
-    parameters.set<mio::ssir::TransmissionProbabilityOnContact>(0.04);
-    parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    mio::ssir::Model<double>::ParameterSet parameters;
+    parameters.set<mio::ssir::TimeInfected<double>>(6);
+    parameters.set<mio::ssir::TransmissionProbabilityOnContact<double>>(0.04);
+    parameters.get<mio::ssir::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
 
     // model.check_constraints() combines the functions from population and parameters.
     // We only want to test the functions for the parameters defined in parameters.h
@@ -95,11 +95,11 @@ TEST(TestSdeSir, check_constraints_parameters)
 
     mio::set_log_level(mio::LogLevel::off);
 
-    parameters.set<mio::ssir::TimeInfected>(0);
+    parameters.set<mio::ssir::TimeInfected<double>>(0);
     EXPECT_EQ(parameters.check_constraints(), 1);
 
-    parameters.set<mio::ssir::TimeInfected>(6);
-    parameters.set<mio::ssir::TransmissionProbabilityOnContact>(10.);
+    parameters.set<mio::ssir::TimeInfected<double>>(6);
+    parameters.set<mio::ssir::TransmissionProbabilityOnContact<double>>(10.);
     EXPECT_EQ(parameters.check_constraints(), 1);
     mio::set_log_level(mio::LogLevel::warn);
 }
@@ -108,21 +108,21 @@ TEST(TestSdeSir, apply_constraints_parameters)
 {
     // check parameters.apply_constraints
     const double tol_times = 1e-1;
-    mio::ssir::Model::ParameterSet parameters;
-    parameters.set<mio::ssir::TimeInfected>(6);
-    parameters.set<mio::ssir::TransmissionProbabilityOnContact>(0.04);
-    parameters.get<mio::ssir::ContactPatterns>().get_baseline()(0, 0) = 10;
+    mio::ssir::Model<double>::ParameterSet parameters;
+    parameters.set<mio::ssir::TimeInfected<double>>(6);
+    parameters.set<mio::ssir::TransmissionProbabilityOnContact<double>>(0.04);
+    parameters.get<mio::ssir::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
 
     EXPECT_EQ(parameters.apply_constraints(), 0);
 
     mio::set_log_level(mio::LogLevel::off);
 
-    parameters.set<mio::ssir::TimeInfected>(-2.5);
+    parameters.set<mio::ssir::TimeInfected<double>>(-2.5);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_EQ(parameters.get<mio::ssir::TimeInfected>(), tol_times);
+    EXPECT_EQ(parameters.get<mio::ssir::TimeInfected<double>>(), tol_times);
 
-    parameters.set<mio::ssir::TransmissionProbabilityOnContact>(10.);
+    parameters.set<mio::ssir::TransmissionProbabilityOnContact<double>>(10.);
     EXPECT_EQ(parameters.apply_constraints(), 1);
-    EXPECT_NEAR(parameters.get<mio::ssir::TransmissionProbabilityOnContact>(), 0.0, 1e-14);
+    EXPECT_NEAR(parameters.get<mio::ssir::TransmissionProbabilityOnContact<double>>(), 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
 }

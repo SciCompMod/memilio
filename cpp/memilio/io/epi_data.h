@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -73,18 +73,18 @@ public:
 class ConfirmedCasesNoAgeEntry
 {
 public:
-    double num_confirmed;
-    double num_recovered;
-    double num_deaths;
+    ScalarType num_confirmed;
+    ScalarType num_recovered;
+    ScalarType num_deaths;
     Date date;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesNoAgeEntry> deserialize(IOContext& io)
     {
         auto obj           = io.expect_object("ConfirmedCasesNoAgeEntry");
-        auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
-        auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
-        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
+        auto num_confirmed = obj.expect_element("Confirmed", Tag<ScalarType>{});
+        auto num_recovered = obj.expect_element("Recovered", Tag<ScalarType>{});
+        auto num_deaths    = obj.expect_element("Deaths", Tag<ScalarType>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
         return apply(
             io,
@@ -128,9 +128,9 @@ class ConfirmedCasesDataEntry
 public:
     static std::vector<const char*> age_group_names;
 
-    double num_confirmed;
-    double num_recovered;
-    double num_deaths;
+    ScalarType num_confirmed;
+    ScalarType num_recovered;
+    ScalarType num_deaths;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::StateId> state_id;
@@ -141,9 +141,9 @@ public:
     static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
     {
         auto obj           = io.expect_object("ConfirmedCasesDataEntry");
-        auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
-        auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
-        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
+        auto num_confirmed = obj.expect_element("Confirmed", Tag<ScalarType>{});
+        auto num_recovered = obj.expect_element("Recovered", Tag<ScalarType>{});
+        auto num_deaths    = obj.expect_element("Deaths", Tag<ScalarType>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
         auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
@@ -206,7 +206,7 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(
 class DiviEntry
 {
 public:
-    double num_icu;
+    ScalarType num_icu;
     Date date;
     boost::optional<regions::StateId> state_id;
     boost::optional<regions::CountyId> county_id;
@@ -216,7 +216,7 @@ public:
     static IOResult<DiviEntry> deserialize(IoContext& io)
     {
         auto obj         = io.expect_object("DiviEntry");
-        auto num_icu     = obj.expect_element("ICU", Tag<double>{});
+        auto num_icu     = obj.expect_element("ICU", Tag<ScalarType>{});
         auto date        = obj.expect_element("Date", Tag<StringDate>{});
         auto state_id    = obj.expect_optional("ID_State", Tag<regions::StateId>{});
         auto county_id   = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
@@ -303,7 +303,7 @@ class PopulationDataEntry
 public:
     static std::vector<const char*> age_group_names;
 
-    CustomIndexArray<double, AgeGroup> population;
+    CustomIndexArray<ScalarType, AgeGroup> population;
     boost::optional<regions::StateId> state_id;
     boost::optional<regions::CountyId> county_id;
     boost::optional<regions::DistrictId> district_id;
@@ -315,17 +315,17 @@ public:
         auto state_id    = obj.expect_optional("ID_State", Tag<regions::StateId>{});
         auto county_id   = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
         auto district_id = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
-        std::vector<IOResult<double>> age_groups;
+        std::vector<IOResult<ScalarType>> age_groups;
         age_groups.reserve(age_group_names.size());
         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
                        [&obj](auto&& age_name) {
-                           return obj.expect_element(age_name, Tag<double>{});
+                           return obj.expect_element(age_name, Tag<ScalarType>{});
                        });
         return apply(
             io,
             [](auto&& ag, auto&& sid, auto&& cid, auto&& did) {
                 return PopulationDataEntry{
-                    CustomIndexArray<double, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), sid, cid, did};
+                    CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(ag.size()), ag.begin(), ag.end()), sid, cid, did};
             },
             details::unpack_all(age_groups), state_id, county_id, district_id);
     }
@@ -333,11 +333,11 @@ public:
 
 namespace details
 {
-inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
-                                                   std::vector<std::vector<double>>& interpolation,
+inline void get_rki_age_interpolation_coefficients(const std::vector<ScalarType>& age_ranges,
+                                                   std::vector<std::vector<ScalarType>>& interpolation,
                                                    std::vector<bool>& carry_over)
 {
-    std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
+    std::array<ScalarType, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
     assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size() &&
            "Number of RKI age groups does not match number of age ranges.");
 
@@ -345,7 +345,7 @@ inline void get_rki_age_interpolation_coefficients(const std::vector<double>& ag
     size_t counter = 0;
 
     //residual of param age groups
-    double res = 0.0;
+    ScalarType res = 0.0;
     for (size_t i = 0; i < age_ranges.size(); i++) {
 
         // if current param age group didn't fit into previous rki age group, transfer residual to current age group
@@ -390,15 +390,15 @@ inline void get_rki_age_interpolation_coefficients(const std::vector<double>& ag
 inline std::vector<PopulationDataEntry>
 interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population_data)
 {
-    std::vector<double> age_ranges = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
-    std::vector<std::vector<double>> coefficients{age_ranges.size()};
+    std::vector<ScalarType> age_ranges = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
+    std::vector<std::vector<ScalarType>> coefficients{age_ranges.size()};
     std::vector<bool> carry_over{};
     get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over);
 
     std::vector<PopulationDataEntry> interpolated{population_data};
     for (auto region_entry_idx = size_t(0); region_entry_idx < population_data.size(); ++region_entry_idx) {
         interpolated[region_entry_idx].population =
-            CustomIndexArray<double, AgeGroup>(AgeGroup(ConfirmedCasesDataEntry::age_group_names.size()), 0.0);
+            CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(ConfirmedCasesDataEntry::age_group_names.size()), 0.0);
 
         size_t interpolated_age_idx = 0;
         for (size_t age_idx = 0; age_idx < coefficients.size(); age_idx++) {
@@ -483,7 +483,7 @@ class VaccinationDataEntry
 public:
     static std::vector<const char*> age_group_names;
 
-    double num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
+    ScalarType num_vaccinations_partial, num_vaccinations_completed, num_vaccinations_refreshed_first,
         num_vaccinations_refreshed_additional;
     Date date;
     AgeGroup age_group;
@@ -495,10 +495,10 @@ public:
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
     {
         auto obj                                   = io.expect_object("VaccinationDataEntry");
-        auto num_vaccinations_partial              = obj.expect_element("Vacc_partially", Tag<double>{});
-        auto num_vaccinations_completed            = obj.expect_element("Vacc_completed", Tag<double>{});
-        auto num_vaccinations_refreshed_first      = obj.expect_optional("Vacc_refreshed", Tag<double>{});
-        auto num_vaccinations_refreshed_additional = obj.expect_optional("Vacc_refreshed_2", Tag<double>{});
+        auto num_vaccinations_partial              = obj.expect_element("Vacc_partially", Tag<ScalarType>{});
+        auto num_vaccinations_completed            = obj.expect_element("Vacc_completed", Tag<ScalarType>{});
+        auto num_vaccinations_refreshed_first      = obj.expect_optional("Vacc_refreshed", Tag<ScalarType>{});
+        auto num_vaccinations_refreshed_additional = obj.expect_optional("Vacc_refreshed_2", Tag<ScalarType>{});
         auto date                                  = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str                         = obj.expect_element("Age_RKI", Tag<std::string>{});
         auto state_id                              = obj.expect_optional("ID_County", Tag<regions::StateId>{});
