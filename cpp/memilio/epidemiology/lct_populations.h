@@ -183,10 +183,7 @@ public:
      */
     bool check_constraints() const
     {
-        if (m_y.unaryExpr([](const Type& v) {
-                   return v.value() < 0.0;
-               })
-                .any()) {
+        if ((m_y.array() < 0.0).any()) {
             log_error("Constraint check: At least one compartment size is smaller {}.", 0);
             return true;
         }
