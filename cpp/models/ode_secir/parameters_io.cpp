@@ -43,7 +43,7 @@ namespace osecir
 
 namespace details
 {
-//overload for integers, so the comparison of data entry to integers is symmetric (required by e.g. equal_range)
+// Overload for integers, so the comparison of data entry to integers is symmetric (required by e.g. equal_range)
 int get_region_id(int id)
 {
     return id;
