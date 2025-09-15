@@ -408,8 +408,8 @@ private:
     TimeSeries<FP> m_mobile_population;
     TimeSeries<FP> m_return_times;
     bool m_return_mobile_population;
-    FP m_t_last_dynamic_npi_check                   = FP(-std::numeric_limits<FP>::infinity());
-    std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {FP(-std::numeric_limits<FP>::max()), SimulationTime<FP>(0)};
+    FP m_t_last_dynamic_npi_check                   = -std::numeric_limits<FP>::infinity();
+    std::pair<FP, SimulationTime<FP>> m_dynamic_npi = {-std::numeric_limits<FP>::max(), SimulationTime<FP>(0)};
     std::vector<std::vector<size_t>> m_saved_compartment_indices; // groups of indices from compartments to save
     TimeSeries<FP> m_mobility_results; // save results from edges + entry for the total number of commuters
 
@@ -431,18 +431,21 @@ void MobilityEdge<FP>::add_mobility_result_time_point(const FP t)
     if (save_indices_size > 0) {
         const auto& last_value = m_mobile_population.get_last_value();
 
-        // Explicitly initialize ALL values to zero
         Eigen::VectorX<FP> condensed_values = Eigen::VectorX<FP>::Zero(save_indices_size + 1);
 
+        // sum up the values of m_saved_compartment_indices for each group (e.g. Age groups)
         for (size_t i = 0; i < save_indices_size; ++i) {
-            FP sum = FP(0.0); // Explicit per-group initialization
+            FP sum = 0.0;
             for (auto index : this->m_saved_compartment_indices[i]) {
                 sum += last_value[index];
             }
             condensed_values[i] = sum;
         }
 
+        // the last value is the sum of commuters
         condensed_values[save_indices_size] = m_mobile_population.get_last_value().sum();
+
+        // Move the condensed values to the m_mobility_results time series
         m_mobility_results.add_time_point(t, std::move(condensed_values));
     }
 }
