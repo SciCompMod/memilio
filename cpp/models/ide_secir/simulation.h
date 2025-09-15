@@ -127,7 +127,7 @@ private:
  * @param[in] model An instance of an IDE-SECIR model.
  * @return A TimeSeries to represent the final simulation result.
  */
-TimeSeries<ScalarType> simulate(double tmax, double dt, Model const& model);
+TimeSeries<ScalarType> simulate(ScalarType tmax, ScalarType dt, Model const& model);
 
 } // namespace isecir
 } // namespace mio

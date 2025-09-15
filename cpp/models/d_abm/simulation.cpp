@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2024 MEmilio
 *
 * Authors: René Schmieding, Julia Bicker

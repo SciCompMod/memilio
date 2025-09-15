@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -139,12 +139,12 @@ public:
     /**
      * @brief Checks whether the model satisfies all constraints. If not, it changes values to suffice their constraints.
      *
-     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.
      *
-     * @return Returns true if one or more constraints were corrected, false otherwise. 
+     * @return Returns true if one or more constraints were corrected, false otherwise.
      */
     bool apply_constraints()
     {
@@ -201,8 +201,8 @@ using get_initial_values_expr_t =
     decltype(std::declval<Eigen::VectorX<FP>&>() = std::declval<const M&>().get_initial_values());
 
 /**
- * Template meta function to check if a type is a valid compartment model. 
- * Defines a static constant of name `value`. 
+ * Template meta function to check if a type is a valid compartment model.
+ * Defines a static constant of name `value`.
  * The constant `value` will be equal to true if M is a valid compartment model type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP, floating point type, e.g., double.
