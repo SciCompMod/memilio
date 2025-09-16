@@ -50,11 +50,12 @@ public:
     /**
      * @brief Create a FlowSimulationBase.
      * @param[in] model An instance of a flow model.
+     * @param[in] integrator_core A unique pointer to an object derived from IntegratorCore.
      * @param[in] t0 Start time.
      * @param[in] dt Initial step size of integration.
      */
-    FlowSimulationBase(Model const& model, std::shared_ptr<Core> integrator, FP t0, FP dt)
-        : Base(model, integrator, t0, dt)
+    FlowSimulationBase(Model const& model, std::unique_ptr<Core>&& integrator_core, FP t0, FP dt)
+        : Base(model, std::move(integrator_core), t0, dt)
         , m_flow_result(t0, model.get_initial_flows())
     {
     }

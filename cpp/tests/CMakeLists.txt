@@ -88,6 +88,7 @@ set(TESTSOURCES
     test_abstract_parameter_dist.cpp
     test_temporal_hybrid_model.cpp
     test_odemseirs4.cpp
+    test_uncertain_ad_compatibility.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
