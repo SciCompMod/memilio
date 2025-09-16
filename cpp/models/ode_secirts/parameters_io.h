@@ -743,12 +743,13 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::ve
 
     auto num_groups = model[0].parameters.get_num_groups();
 
-    auto days_until_effective_n =
-        (int)(floor(model[0].parameters.template get<DaysUntilEffectivePartialVaccination<FP>>()[AgeGroup(0)]));
-    auto days_until_effective_pi =
-        (int)(floor(model[0].parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[AgeGroup(0)]));
-    auto days_until_effective_ii =
-        (int)(floor(model[0].parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[AgeGroup(0)]));
+    int days_until_effective_n  = static_cast<int>(floor(
+        static_cast<FP>(model[0].parameters.template get<DaysUntilEffectivePartialVaccination<FP>>()[AgeGroup(0)])));
+    int days_until_effective_pi = static_cast<int>(floor(
+        static_cast<FP>(model[0].parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[AgeGroup(0)])));
+    int days_until_effective_ii = static_cast<int>(
+        floor(static_cast<FP>(model[0].parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[AgeGroup(0)])));
+
     // iterate over regions (e.g., counties)
     for (size_t i = 0; i < model.size(); ++i) {
         // iterate over age groups in region
