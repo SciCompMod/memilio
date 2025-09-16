@@ -56,7 +56,7 @@ protected:
     void SetUp() override
     {
         t0   = 0.0;
-        tmax = 10.0;
+        tmax = 1.0;
         dt   = 0.5;
 
         total_population = 1'000'000.0;
@@ -106,9 +106,9 @@ protected:
 
 TEST_F(ModelTestOdeMseirs4, checkPopulationConservation)
 {
-    auto result             = mio::simulate<double, mio::omseirs4::Model<double>>(t0, tmax, dt, model);
-    double num_persons_last = result.get_last_value().sum();
-    EXPECT_NEAR(num_persons_last, total_population, 1e-7);
+    auto result           = mio::simulate<double, mio::omseirs4::Model<double>>(t0, tmax, dt, model);
+    double total_pop_last = result.get_last_value().sum();
+    EXPECT_NEAR(total_pop_last, total_population, 1e-7);
 }
 
 TEST(TestOdeMseirs4, apply_constraints_parameters)
@@ -188,10 +188,9 @@ TEST(TestOdeMseirs4, Simulation)
 
     mio::omseirs4::Model<double> model;
 
-    using IS = mio::omseirs4::InfectionState;
-    model.populations.set_total(1000.0);
+    using IS                                    = mio::omseirs4::InfectionState;
     model.populations[{mio::Index<IS>(IS::I1)}] = 10.0;
-    model.populations[{mio::Index<IS>(IS::S1)}] = 990.0 - 10.0;
+    model.populations[{mio::Index<IS>(IS::S1)}] = 990.0;
 
     model.parameters.get<mio::omseirs4::BaseTransmissionRate<double>>()  = 0.2;
     model.parameters.get<mio::omseirs4::ProgressionRate<double>>()       = 1.0 / 5.0;

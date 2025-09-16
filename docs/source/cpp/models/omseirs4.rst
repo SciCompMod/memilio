@@ -33,6 +33,7 @@ Meaning of indices 1–4
 - S3: susceptible after second infection (R2 → S3; β3(t)=f3·β1(t)).
 - S4: susceptible after ≥3 infections (R3 → S4 and R4 → S4; lowest susceptibility; β4(t)=f4·β1(t)).
 
+The multipliers :math:`f_2, f_3, f_4` are dimensionless susceptibility reductions for S2–S4.
 All infectious classes (I1..I4) contribute equally to transmission in the basic formulation.
 
 Infection State Transitions
@@ -58,7 +59,6 @@ Time unit is days. Seasonality follows a yearly cosine:
    \beta_1(t) = b_0\,\big(1 + b_1\,\cos(2\pi\,t/365 + \varphi)\big),\quad \beta_k(t) = f_k\,\beta_1(t)\ (k=2,3,4).
 
 Here, :math:`b_0` is the base transmission rate (per day), :math:`b_1\in[0,1]` the seasonal amplitude, and :math:`\varphi` a phase (radians).
-The multipliers :math:`f_2, f_3, f_4` are dimensionless susceptibility reductions for S2–S4.
 
 Parameters
 ----------

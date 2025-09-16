@@ -29,7 +29,7 @@ namespace mio
 {
 namespace omseirs4
 {
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct BaseTransmissionRate { // b0
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -42,7 +42,7 @@ struct BaseTransmissionRate { // b0
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct SeasonalAmplitude { // b1 in [0,1]
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -55,7 +55,7 @@ struct SeasonalAmplitude { // b1 in [0,1]
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct SeasonalPhase { // phi in radians
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -68,7 +68,7 @@ struct SeasonalPhase { // phi in radians
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct NaturalBirthDeathRate { // mu
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -81,7 +81,7 @@ struct NaturalBirthDeathRate { // mu
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct LossMaternalImmunityRate { // xi
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -94,7 +94,7 @@ struct LossMaternalImmunityRate { // xi
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct ProgressionRate { // sigma, E->I
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -107,7 +107,7 @@ struct ProgressionRate { // sigma, E->I
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct RecoveryRate { // nu, I->R
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -120,7 +120,7 @@ struct RecoveryRate { // nu, I->R
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct ImmunityWaningRate { // gamma, R -> S stages
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -133,7 +133,7 @@ struct ImmunityWaningRate { // gamma, R -> S stages
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct Beta2Factor { // f2 multiplier for beta1
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -146,7 +146,7 @@ struct Beta2Factor { // f2 multiplier for beta1
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct Beta3Factor { // f3 multiplier for beta1
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -159,7 +159,7 @@ struct Beta3Factor { // f3 multiplier for beta1
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 struct Beta4Factor { // f4 multiplier for beta1
     using Type = UncertainValue<FP>;
     static Type get_default()
@@ -172,13 +172,13 @@ struct Beta4Factor { // f4 multiplier for beta1
     }
 };
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 using ParametersBase =
     ParameterSet<BaseTransmissionRate<FP>, SeasonalAmplitude<FP>, SeasonalPhase<FP>, NaturalBirthDeathRate<FP>,
                  LossMaternalImmunityRate<FP>, ProgressionRate<FP>, RecoveryRate<FP>, ImmunityWaningRate<FP>,
                  Beta2Factor<FP>, Beta3Factor<FP>, Beta4Factor<FP>>;
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 class Parameters : public ParametersBase<FP>
 {
 public:

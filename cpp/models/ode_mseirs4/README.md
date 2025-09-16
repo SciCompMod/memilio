@@ -14,3 +14,5 @@ This model is designed for Respiratory Syncytial Virus (RSV) and is based on:
 - S4: susceptible after ≥3 infections (R3 → S4 and R4 → S4; lowest susceptibility).
 
 Correspondingly, E_k/I_k/R_k represent exposed/infectious/recovered states of the k-th infection episode. All infectious classes (I1..I4) contribute to transmission equally in the basic formulation of the paper.
+
+The model includes seasonality by adjusting the transmission rate with a cosine function.
