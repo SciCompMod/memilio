@@ -60,7 +60,7 @@ public:
         const FP f3    = params.template get<Beta3Factor<FP>>();
         const FP f4    = params.template get<Beta4Factor<FP>>();
 
-        const FP two_pi = FP(2) * std::numbers::pi_v<FP>;
+        const FP two_pi = FP(2) * std::numbers::pi_v<ScalarType>;
         const FP beta1  = b0 * (FP(1) + b1 * std::cos(two_pi * (t / FP(365.0)) + phi));
         const FP beta2  = f2 * beta1;
         const FP beta3  = f3 * beta1;
