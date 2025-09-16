@@ -200,8 +200,8 @@ TEST(TestOdeMseirs4, Simulation)
 
     model.check_constraints();
 
-    std::shared_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_shared<mio::EulerIntegratorCore<double>>();
-    auto sim                                                   = simulate(t0, tmax, dt, model, integrator);
+    std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();
+    auto sim = mio::simulate(t0, tmax, dt, model, std::move(integrator));
 
     EXPECT_EQ(sim.get_num_time_points(), 2);
 }
