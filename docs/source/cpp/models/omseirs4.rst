@@ -111,7 +111,7 @@ Initial conditions
 
 Initial conditions are absolute counts in each InfectionState; totals may be set directly. 
 
-Example (see ``examples/ode_mseirs4.cpp``) shows a complete initialization and simulation.
+Example (see `examples/ode_mseirs4.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_mseirs4.cpp>`_) shows a complete initialization and simulation.
 
 Simulation
 ----------

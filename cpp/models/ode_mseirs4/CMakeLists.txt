@@ -3,7 +3,6 @@ add_library(ode_mseirs4
     parameters.h
     model.h
     model.cpp
-    README.md
 )
 target_link_libraries(ode_mseirs4 PUBLIC memilio)
 target_include_directories(ode_mseirs4 PUBLIC

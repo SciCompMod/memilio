@@ -95,10 +95,10 @@ protected:
         model.populations[{mio::Index<IS>(IS::R2)}]             = R2;
         model.populations[{mio::Index<IS>(IS::R3)}]             = R3;
         model.populations[{mio::Index<IS>(IS::R4)}]             = R4;
+        model.populations[{mio::Index<IS>(IS::S1)}]             = S1;
         model.populations[{mio::Index<IS>(IS::S2)}]             = S2;
         model.populations[{mio::Index<IS>(IS::S3)}]             = S3;
         model.populations[{mio::Index<IS>(IS::S4)}]             = S4;
-        model.populations[{mio::Index<IS>(IS::S1)}]             = S1;
 
         model.check_constraints();
     }

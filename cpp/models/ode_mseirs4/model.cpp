@@ -23,5 +23,6 @@ namespace mio
 {
 namespace omseirs4
 {
-}
+
+} // namespace omseirs4
 } // namespace mio

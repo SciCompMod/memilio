@@ -30,7 +30,7 @@ namespace mio
 namespace omseirs4
 {
 
-template <class FP = ScalarType>
+template <typename FP = ScalarType>
 class Model : public mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>
 {
     using Base = mio::CompartmentalModel<FP, InfectionState, mio::Populations<FP, InfectionState>, Parameters<FP>>;
