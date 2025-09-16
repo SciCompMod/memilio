@@ -120,18 +120,18 @@ IOResult<void> compute_confirmed_cases_data(
 
             auto age = (size_t)entry.age_group;
             // (rounded) transition times
-            const int t_exposed =
-                static_cast<int>(round(params_region.template get<TimeExposed<FP>>()[entry.age_group]));
-            int t_InfectedNoSymptoms =
-                static_cast<int>(round(params_region.template get<TimeInfectedNoSymptoms<FP>>()[entry.age_group]));
-            int t_InfectedSymptoms =
-                static_cast<int>(round(params_region.template get<TimeInfectedSymptoms<FP>>()[entry.age_group]));
-            const int t_InfectedSevere =
-                static_cast<int>(round(params_region.template get<TimeInfectedSevere<FP>>()[entry.age_group]));
-            const int t_InfectedCritical =
-                static_cast<int>(round(params_region.template get<TimeInfectedCritical<FP>>()[entry.age_group]));
-            const int t_imm_interval_i =
-                static_cast<int>(round(params_region.template get<TimeTemporaryImmunityPI<FP>>()[entry.age_group]));
+            const int t_exposed = static_cast<int>(
+                round(static_cast<FP>(params_region.template get<TimeExposed<FP>>()[entry.age_group])));
+            int t_InfectedNoSymptoms = static_cast<int>(
+                round(static_cast<FP>(params_region.template get<TimeInfectedNoSymptoms<FP>>()[entry.age_group])));
+            int t_InfectedSymptoms = static_cast<int>(
+                round(static_cast<FP>(params_region.template get<TimeInfectedSymptoms<FP>>()[entry.age_group])));
+            const int t_InfectedSevere = static_cast<int>(
+                round(static_cast<FP>(params_region.template get<TimeInfectedSevere<FP>>()[entry.age_group])));
+            const int t_InfectedCritical = static_cast<int>(
+                round(static_cast<FP>(params_region.template get<TimeInfectedCritical<FP>>()[entry.age_group])));
+            const int t_imm_interval_i = static_cast<int>(
+                round(static_cast<FP>(params_region.template get<TimeTemporaryImmunityPI<FP>>()[entry.age_group])));
 
             // transition probabilities
             FP recoveredPerInfectedNoSymptoms =
@@ -141,10 +141,10 @@ IOResult<void> compute_confirmed_cases_data(
 
             // if we select a layer with better immunity (layer > 0), we need to adjust the times and transition rates
             if (layer > 0) {
-                t_InfectedNoSymptoms = static_cast<int>(round(
-                    t_InfectedNoSymptoms * params_region.template get<ReducTimeInfectedMild<FP>>()[entry.age_group]));
-                t_InfectedSymptoms   = static_cast<int>(round(
-                    t_InfectedSymptoms * params_region.template get<ReducTimeInfectedMild<FP>>()[entry.age_group]));
+                t_InfectedNoSymptoms = static_cast<int>(round(static_cast<FP>(
+                    t_InfectedNoSymptoms * params_region.template get<ReducTimeInfectedMild<FP>>()[entry.age_group])));
+                t_InfectedSymptoms   = static_cast<int>(round(static_cast<FP>(
+                    t_InfectedSymptoms * params_region.template get<ReducTimeInfectedMild<FP>>()[entry.age_group])));
 
                 const FP red_fact_exp =
                     layer == 1 ? params_region.template get<ReducExposedPartialImmunity<FP>>()[entry.age_group]

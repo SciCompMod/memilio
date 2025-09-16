@@ -219,6 +219,8 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
                                         const std::vector<int>& region, Date date,
                                         const std::vector<FP>& scaling_factor_inf)
 {
+    using std::round;
+
     const size_t num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
     // allow single scalar scaling that is broadcast to all age groups
     assert(scaling_factor_inf.size() == 1 || scaling_factor_inf.size() == num_age_groups);
@@ -251,16 +253,16 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model<FP>>& model, std::vect
             // reuse group 0 parameters for all RKI age groups
             const size_t group = (model_groups == num_age_groups) ? ag : 0;
 
-            t_Exposed[node].push_back(
-                static_cast<int>(std::round(model[node].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group])));
-            t_InfectedNoSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group])));
-            t_InfectedSymptoms[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group])));
-            t_InfectedSevere[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group])));
-            t_InfectedCritical[node].push_back(static_cast<int>(
-                std::round(model[node].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group])));
+            t_Exposed[node].push_back(static_cast<int>(
+                round(static_cast<FP>(model[node].parameters.template get<TimeExposed<FP>>()[(AgeGroup)group]))));
+            t_InfectedNoSymptoms[node].push_back(static_cast<int>(round(
+                static_cast<FP>(model[node].parameters.template get<TimeInfectedNoSymptoms<FP>>()[(AgeGroup)group]))));
+            t_InfectedSymptoms[node].push_back(static_cast<int>(round(
+                static_cast<FP>(model[node].parameters.template get<TimeInfectedSymptoms<FP>>()[(AgeGroup)group]))));
+            t_InfectedSevere[node].push_back(static_cast<int>(round(
+                static_cast<FP>(model[node].parameters.template get<TimeInfectedSevere<FP>>()[(AgeGroup)group]))));
+            t_InfectedCritical[node].push_back(static_cast<int>(round(
+                static_cast<FP>(model[node].parameters.template get<TimeInfectedCritical<FP>>()[(AgeGroup)group]))));
 
             mu_C_R[node].push_back(
                 model[node].parameters.template get<RecoveredPerInfectedNoSymptoms<FP>>()[(AgeGroup)group]);
