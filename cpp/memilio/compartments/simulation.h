@@ -57,32 +57,6 @@ public:
     {
     }
 
-    Simulation(const Simulation& other)
-        : m_integratorCore(std::make_shared<DefaultIntegratorCore<FP>>())
-        , m_model(std::make_unique<Model>(*other.m_model))
-        , m_integrator(m_integratorCore)
-        , m_result(other.m_result)
-        , m_dt(other.m_dt)
-    {
-    }
-
-    Simulation& operator=(const Simulation& other) 
-    {
-        if(this != &other)
-        {
-            m_integratorCore = std::make_shared<DefaultIntegratorCore<FP>>();
-            m_model = std::make_unique<Model>(*other.m_model);
-            m_integrator = m_integratorCore;
-            m_result = other.m_result;
-            m_dt = other.m_dt;
-        }
-        return *this; 
-    }
-
-    ~Simulation() = default;
-    Simulation(Simulation && other) = default;
-    Simulation& operator=(Simulation && other) = default;
-
     /**
      * @brief Run the simulation up to a given time.
      * The time tmax must be greater than `get_result().get_last_time_point()`, which is used as the starting point. The
