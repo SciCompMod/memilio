@@ -223,7 +223,7 @@ mio::IOResult<void> OptimizationModel::set_initial_values(mio::osecirvvs::Model<
 }
 
 template <typename FP>
-mio::osecirvvs::Model<FP> OptimizationModel::create_model()
+mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>  OptimizationModel::create_model()
 {
     mio::osecirvvs::Model<FP> model(m_num_age_groups);
     auto out = set_initial_values<FP>(model);

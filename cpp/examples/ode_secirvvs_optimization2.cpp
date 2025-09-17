@@ -901,8 +901,6 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
     //open files for parameter output
     std::string outFileControlVariableName = "ControlVariables.csv";
     std::string outFileResultsName = "OptResult.csv";
-    // std::ofstream outFileControlVariable(outFileControlVariableName);
-    // std::ofstream outFileResults(outFileResultsName);
     
     mio::TimeSeries<FP> resultControlVariables = mio::TimeSeries<FP>(numControls_);
     Eigen::VectorX<FP> currentControlVariables(numControls_); 
@@ -931,10 +929,6 @@ void Secirvvs_NLP::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n,
 
     std::vector<std::string> names_controls = {"SchoolClosure", "HomeOffice", "PhysicalDistancingSchool", "PhysicalDistancingWork", "PhysicalDistancingOther"};
     out = resultControlVariables.export_csv(outFileControlVariableName, names_controls, ',', 10);
-
-    //close files
-    // outFileControlVariable.close();
-    // outFileResults.close();
 
     return;
 }
