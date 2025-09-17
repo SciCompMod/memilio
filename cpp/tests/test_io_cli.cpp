@@ -291,7 +291,8 @@ TEST_F(TestCLI, test_get_param)
               "Key not found: Could not get parameter: No such option \"NoName\".");
     EXPECT_EQ(get_noname_result.error().code(), mio::StatusCode::KeyNotFound);
     // case: error in serialize, expect error being forwarded
-    EXPECT_THAT(print_wrap(test_param<ErrorSerializable>("", "").get()), IsFailure(mio::StatusCode::UnknownError));
+
+    EXPECT_THAT(print_wrap(test_param("", "", new ErrorSerializable).get()), IsFailure(mio::StatusCode::UnknownError));
 }
 
 TEST_F(TestCLI, test_set_param)

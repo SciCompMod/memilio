@@ -280,7 +280,21 @@ public:
         , m_serialize([](const std::shared_ptr<void>& param) -> IOResult<Json::Value> {
             return mio::serialize_json(*static_cast<Type*>(param.get()));
         })
-        , m_set(*AbstractParameter::set_impl<Type>)
+        , m_set([](std::shared_ptr<void>& param, const std::string& name, const Json::Value& json) -> IOResult<void> {
+            mio::unused(param); // prevent a "set, but unused" compiler warning
+            // deserialize the json value to the parameter's type, then assign it
+            auto param_result = mio::deserialize_json(json, mio::Tag<Type>());
+            if (param_result) {
+                // assign the json to the parameter
+                *(static_cast<Type*>(param.get())) = std::move(param_result.value());
+                return mio::success();
+            }
+            else { // deserialize failed
+                // insert more information to the error message
+                std::string msg = "While setting \"" + name + "\": " + param_result.error().message();
+                return mio::failure(param_result.error().code(), msg);
+            }
+        })
     {
     }
 
@@ -363,25 +377,6 @@ public:
     }
 
 private:
-    /// @brief Implementation for the set method, consisting of deserializing and assigning the Json value.
-    template <class Type>
-    static IOResult<void> set_impl(std::shared_ptr<void>& param, const std::string& name, const Json::Value& value)
-    {
-        mio::unused(param); // prevent a "set, but unused" compiler warning
-        // deserialize the json value to the parameter's type, then assign it
-        auto param_result = mio::deserialize_json(value, mio::Tag<Type>());
-        if (param_result) {
-            // assign the json to the parameter
-            *(static_cast<Type*>(param.get())) = std::move(param_result.value());
-            return mio::success();
-        }
-        else { // deserialize failed
-            // insert more information to the error message
-            std::string msg = "While setting \"" + name + "\": " + param_result.error().message();
-            return mio::failure(param_result.error().code(), msg);
-        }
-    }
-
     std::shared_ptr<void> m_data; ///< An owning or non-owning pointer to the parameter value.
     IOResult<Json::Value> (*m_serialize)(
         const std::shared_ptr<void>&); ///< Function pointer with type info needed for get implementation.

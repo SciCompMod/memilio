@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     // the mio::cli::ParameterSet uses StringLiteral%s.
     auto parameters = mio::cli::ParameterSetBuilder()
                           .add<"Name", std::vector<std::string>>({"FirstName", "LastName"},
-                                                                 {"n", "Enter your name as list of strings.", true})
+                                                                 {"n", "Enter your name as list of strings.", false})
                           .add<"Age">(0, {"a", "Enter your age."})
                           .add<"Greeting">(std::string("Hello World!"),
                                            {.description = "Enter a custom greeting.", .is_required = false})
