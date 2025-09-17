@@ -461,6 +461,31 @@ TEST_F(TestCLI, test_required_options)
                 IsFailure(mio::StatusCode::InvalidValue));
 }
 
+TEST_F(TestCLI, test_parameter_set_and_builder)
+{
+    // test that the builder and resulting set behave correctly
+    // create a set using the builder
+    auto parameters = mio::cli::ParameterSetBuilder().add<"A">(7).add<"B", double>(12, {"b", "desc", true}).build();
+    // check that the DatalessParameter members are set correctly
+    auto a = parameters.get<mio::TypeList<mio::cli::details::NamedType<"A">, int>>();
+    EXPECT_EQ(a.name(), "A");
+    EXPECT_EQ(a.alias(), "");
+    EXPECT_EQ(a.description(), "");
+    EXPECT_EQ(a.is_required(), false);
+    auto b = parameters.get<mio::TypeList<mio::cli::details::NamedType<"B">, double>>();
+    EXPECT_EQ(b.name(), "B");
+    EXPECT_EQ(b.alias(), "b");
+    EXPECT_EQ(b.description(), "desc");
+    EXPECT_EQ(b.is_required(), true);
+    // get and set values to test the parameter set
+    EXPECT_EQ(parameters.get<"A">(), 7);
+    parameters.get<"A">() = 2;
+    EXPECT_EQ(parameters.get<"A">(), 2);
+    EXPECT_EQ(parameters.get<"B">(), 12);
+    parameters.get<"B">() = 0.125;
+    EXPECT_EQ(parameters.get<"B">(), 0.125);
+}
+
 TEST_F(TestCLI, test_command_line_interface)
 {
     // generate argv
