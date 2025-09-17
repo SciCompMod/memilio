@@ -25,6 +25,8 @@
 #include "ode_mseirs4/infection_state.h"
 #include "ode_mseirs4/parameters.h"
 
+#include <numbers>
+
 namespace mio
 {
 namespace omseirs4
