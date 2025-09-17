@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
 *
 * Authors: Julia Bicker
@@ -53,12 +53,12 @@ TEST(TestSMM, evaluateAdoptionRate)
     // with N(from, region) the population in Region "region" having infection state "from"
     //Second-order adoption rates are given by:
     // rate.factor * N(rate.from, rate.region)/total_pop * sum (over all rate.influences) influence.factor * N(influence.status, rate.region)
-    using Model = mio::smm::Model<1, InfectionState>;
+    using Model = mio::smm::Model<double, 1, InfectionState>;
 
     Model model;
 
     //Set adoption rates
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<double, InfectionState>> adoption_rates;
     //Second-order adoption
     adoption_rates.push_back({InfectionState::S,
                               InfectionState::E,
@@ -84,7 +84,7 @@ TEST(TestSMM, evaluateTransitionRate)
 {
     //Same test as 'evaluateAdoptionRate' only for spatial transition rates.
     //Transition rates are given by: rate.factor * N(rate.status, rate.from)
-    using Model = mio::smm::Model<2, InfectionState>;
+    using Model = mio::smm::Model<double, 2, InfectionState>;
 
     Model model;
     //Initialize model populations
@@ -102,7 +102,7 @@ TEST(TestSMM, evaluateTransitionRate)
     model.populations[{mio::regions::Region(1), InfectionState::R}] = 0;
     model.populations[{mio::regions::Region(1), InfectionState::D}] = 0;
     //Set transition rates
-    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+    std::vector<mio::smm::TransitionRate<double, InfectionState>> transition_rates;
     transition_rates.push_back({InfectionState::S, mio::regions::Region(0), mio::regions::Region(1), 0.01});
     transition_rates.push_back({InfectionState::E, mio::regions::Region(1), mio::regions::Region(0), 0.1});
 
@@ -114,7 +114,7 @@ TEST(TestSMMSimulation, advance)
 {
     //Test whether Gillespie algorithm calculates events in the correct order
     using testing::Return;
-    using Model = mio::smm::Model<2, InfectionState>;
+    using Model = mio::smm::Model<double, 2, InfectionState>;
 
     Model model;
     //Initialize model populations
@@ -132,8 +132,8 @@ TEST(TestSMMSimulation, advance)
     model.populations[{mio::regions::Region(1), InfectionState::R}] = 1;
     model.populations[{mio::regions::Region(1), InfectionState::D}] = 0;
     //Set adoption and transition rates
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
-    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+    std::vector<mio::AdoptionRate<double, InfectionState>> adoption_rates;
+    std::vector<mio::smm::TransitionRate<double, InfectionState>> transition_rates;
 
     //Second-order adoption
     adoption_rates.push_back({InfectionState::S,
@@ -151,8 +151,8 @@ TEST(TestSMMSimulation, advance)
     //Spatial transition
     transition_rates.push_back({InfectionState::R, mio::regions::Region(1), mio::regions::Region(0), 0.01});
 
-    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<double, InfectionState>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<double, InfectionState>>() = transition_rates;
 
     //Mock exponential distribution to control the normalized waiting times that are drawn
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
@@ -195,13 +195,13 @@ TEST(TestSMMSimulation, stopsAtTmax)
 {
     //Test whether simulation stops at tmax and whether system state at tmax is saved if there are no adoptions/transitions
     using testing::Return;
-    using Model = mio::smm::Model<2, InfectionState>;
+    using Model = mio::smm::Model<double, 2, InfectionState>;
 
     Model model;
 
     //Set adoption and spatial transition rates
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
-    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+    std::vector<mio::AdoptionRate<double, InfectionState>> adoption_rates;
+    std::vector<mio::smm::TransitionRate<double, InfectionState>> transition_rates;
 
     adoption_rates.push_back({InfectionState::S,
                               InfectionState::E,
@@ -211,8 +211,8 @@ TEST(TestSMMSimulation, stopsAtTmax)
 
     transition_rates.push_back({InfectionState::R, mio::regions::Region(1), mio::regions::Region(0), 0.01});
 
-    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<double, InfectionState>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<double, InfectionState>>() = transition_rates;
 
     //As populations are not set they have value 0 i.e. no events will happen
     //Simulate for 30 days
@@ -228,14 +228,14 @@ TEST(TestSMMSimulation, convergence)
     //Test whether the mean number of transitions in one unit-time step corresponds to the expected number of transitions
     // given by rate * pop up to some tolerance
     using testing::Return;
-    using Model = mio::smm::Model<2, InfectionState>;
+    using Model = mio::smm::Model<double, 2, InfectionState>;
 
     double pop      = 1000;
     size_t num_runs = 100;
     double rate     = 0.2;
 
     //Only set one spatial transition rate
-    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates(
+    std::vector<mio::smm::TransitionRate<double, InfectionState>> transition_rates(
         1, {InfectionState::S, mio::regions::Region(0), mio::regions::Region(1), rate});
 
     double expected_num_trans = rate * pop;
@@ -252,13 +252,13 @@ TEST(TestSMMSimulation, convergence)
         model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
         model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
 
-        model.populations[{mio::regions::Region(1), InfectionState::S}]   = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::E}]   = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::C}]   = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::I}]   = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::R}]   = 0;
-        model.populations[{mio::regions::Region(1), InfectionState::D}]   = 0;
-        model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+        model.populations[{mio::regions::Region(1), InfectionState::S}]           = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::E}]           = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::C}]           = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::I}]           = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::R}]           = 0;
+        model.populations[{mio::regions::Region(1), InfectionState::D}]           = 0;
+        model.parameters.get<mio::smm::TransitionRates<double, InfectionState>>() = transition_rates;
 
         auto sim = mio::smm::Simulation(model, 0.0, 1.0);
         sim.advance(1.);

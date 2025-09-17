@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
@@ -36,14 +36,16 @@ namespace osecirvvs
      * @tparam FP floating point type, e.g., double
      * @param[inout] model Model including contact patterns for alle age groups
      */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_demographics(Model<FP>& model)
 {
+    using std::abs;
+
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
     model.parameters.template get<TestAndTraceCapacity<FP>>().draw_sample();
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
-        double group_total = model.populations.get_group_total(i);
+        FP group_total = model.populations.get_group_total(i);
 
         //sample initial compartments (with exceptions)
         for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
@@ -59,13 +61,13 @@ void draw_sample_demographics(Model<FP>& model)
         //if the new total without susceptibles is already bigger than the previous total
         //subtract the overflow from SusceptibleImprovedImmunity, susceptibles will then be approximately zero.
         model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
-        double diff                                              = model.populations.get_group_total(i) - group_total;
+        FP diff                                                  = model.populations.get_group_total(i) - group_total;
         if (diff > 0) {
             model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] -= diff;
             if (model.populations[{i, InfectionState::SusceptibleImprovedImmunity}] < 0.0) {
                 log_error("Negative Compartment after sampling.");
             }
-            assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
+            assert(abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
         }
         model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
                                                                              group_total);
@@ -77,7 +79,7 @@ void draw_sample_demographics(Model<FP>& model)
      * @tparam FP floating point type, e.g., double
      * @param[inout] model Model including contact patterns for alle age groups
      */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_infection(Model<FP>& model)
 {
     model.parameters.template get<Seasonality<FP>>().draw_sample();
@@ -143,7 +145,7 @@ void draw_sample_infection(Model<FP>& model)
     * @tparam FP floating point type, e.g., double
     * @param[inout] model Model including contact patterns for alle age groups
     */
-template <typename FP = double>
+template <typename FP>
 void draw_sample(Model<FP>& model)
 {
     draw_sample_infection(model);
@@ -160,7 +162,7 @@ void draw_sample(Model<FP>& model)
     * @param variant_high If true, use high value for infectiousness of variant.
     * @return Graph with nodes and edges from the input graph sampled.
     */
-template <typename FP = double>
+template <typename FP>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph, bool variant_high)
 {
     Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
@@ -175,7 +177,7 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
     auto& shared_dynamic_npis_delay = shared_params_model.parameters.template get<DynamicNPIsImplementationDelay<FP>>();
     shared_dynamic_npis_delay.draw_sample();
 
-    double delta_fac;
+    FP delta_fac;
     if (variant_high) {
         delta_fac = 1.6;
     }
