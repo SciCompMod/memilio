@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Wadim Koslow, Daniel Abele, David Kerkmann, Sascha Korf
@@ -41,12 +41,147 @@ namespace mio
  * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
  * @return interpolated time series
  */
+template <typename FP>
+TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol = 1e-14);
+
+/**
+ * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
+ * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
+ * @param simulation_result time series to interpolate
+ * @param interpolations_times std::vector of time points at which simulation results are interpolated.
+ * @return interpolated time series at given interpolation points
+ */
+
 template <typename FP = double>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
-                                                 const FP abs_tol = 1e-14)
+                                                 const std::vector<FP>& interpolation_times)
 {
-    using std::floor;
+    assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
+
+    assert(std::is_sorted(interpolation_times.begin(), interpolation_times.end()) &&
+           "Time points for interpolation have to be sorted in non-descending order.");
+
+    if (interpolation_times.size() >= 2) {
+        assert((interpolation_times[1] > simulation_result.get_time(0) &&
+                interpolation_times.rbegin()[1] <= simulation_result.get_last_time()) &&
+               "All but the first and the last time point of interpolation have lie between simulation times (strictly "
+               "for lower boundary).");
+    }
+
+    TimeSeries<FP> interpolated(simulation_result.get_num_elements());
+
+    if (interpolation_times.size() == 0) {
+        return interpolated;
+    }
+    interpolated.reserve(ensemble_results.size());
+    std::transform(ensemble_results.begin(), ensemble_results.end(), std::back_inserter(interpolated), [](auto& run) {
+        return interpolate_simulation_result(run);
+    });
+}
+
+template <typename FP>
+std::vector<std::vector<TimeSeries<FP>>> sum_nodes(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_result);
+
+/**
+ * @brief computes mean of each compartment, node, and time point over all runs
+ * input must be uniform as returned by interpolated_ensemble_result:
+ * same number of nodes, same time points and elements.
+ * @see interpolated_ensemble_result
+ * @param ensemble_results uniform results of multiple simulation runs
+ * @return mean of the results over all runs
+ */
+template <typename FP>
+std::vector<TimeSeries<FP>> ensemble_mean(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_results);
+
+/**
+ * @brief computes the p percentile of the result for each compartment, node, and time point.
+ * Produces for each compartment the value that that is bigger than approximately
+ * a p-th share of the values of this compartment over all runs.
+ * input must be uniform as returned by interpolated_ensemble_result:
+ * same number of nodes, same time points and elements.
+ * @see interpolated_ensemble_result
+ * @param ensemble_result uniform results of multiple simulation runs
+ * @param p percentile value in open interval (0, 1)
+ * @return p percentile of the results over all runs
+ */
+template <typename FP>
+std::vector<TimeSeries<FP>> ensemble_percentile(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_result, FP p);
+/**
+ * interpolate time series with evenly spaced, integer time points for each node.
+ * @see interpolate_simulation_result
+ * @param graph_result graph of simulations whose results will be interpolated
+ * @return one interpolated time series per node
+ */
+template <typename FP, class Simulation>
+std::vector<TimeSeries<FP>>
+interpolate_simulation_result(const Graph<SimulationNode<FP, Simulation>, MobilityEdge<FP>>& graph_result)
+{
+    std::vector<TimeSeries<FP>> interpolated;
+    interpolated.reserve(graph_result.nodes().size());
+    std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
+                   [](auto& n) {
+                       return interpolate_simulation_result(n.property.get_result());
+                   });
+    return interpolated;
+}
+
+/**
+ * Compute the distance between two SECIR simulation results.
+ * The distance is the 2-norm of the element-wise difference of the two results.
+ * The two results (e.g. output of interpolate_simulation_result) must have the same dimensions and number of time points.
+ * @param result1 first result.
+ * @param result2 second result.
+ * @return Computed distance between result1 and result2.
+ */
+template <typename FP>
+FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
+                         const std::vector<mio::TimeSeries<FP>>& result2);
+
+/**
+ * Compute the distance between two compartment model simulation results in one compartment.
+ * The distance is the 2-norm of the element-wise difference of the two results in the specified compartment.
+ * The two results (e.g. output of interpolate_simulation_result) must have the same dimensions and number of time points.
+ * @tparam InfectionState enum type that defines the compartments of the model that produced the results.
+ * @param result1 first result.
+ * @param result2 second result.
+ * @param compartment the compartment to compare.
+ * @return Computed distance between result1 and result2.
+ */
+template <typename FP, class InfectionState>
+FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
+                         const std::vector<mio::TimeSeries<FP>>& result2, InfectionState compartment)
+{
+    using std::sqrt;
+
+    assert(result1.size() == result2.size());
+    assert(result1.size() > 0);
+    assert(result1[0].get_num_time_points() > 0);
+    assert(result1[0].get_num_elements() > 0);
+
+    auto num_compartments = Eigen::Index(InfectionState::Count);
+    auto num_age_groups   = result1[0].get_num_elements() / num_compartments;
+
+    auto norm_sqr = 0.0;
+    for (auto iter_node1 = result1.begin(), iter_node2 = result2.begin(); iter_node1 < result1.end();
+         ++iter_node1, ++iter_node2) {
+        for (Eigen::Index time_idx = 0; time_idx < iter_node1->get_num_time_points(); ++time_idx) {
+            auto v1 = (*iter_node1)[time_idx];
+            auto v2 = (*iter_node2)[time_idx];
+            for (Eigen::Index age_idx = 0; age_idx < num_age_groups; ++age_idx) {
+                auto d1 = v1[age_idx * num_compartments + Eigen::Index(compartment)];
+                auto d2 = v2[age_idx * num_compartments + Eigen::Index(compartment)];
+                norm_sqr += (d1 - d2) * (d1 - d2);
+            }
+        }
+    }
+    return sqrt(norm_sqr);
+}
+
+template <typename FP>
+TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result, const FP abs_tol)
+{
     using std::ceil;
+    using std::floor;
     const auto t0    = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
     // add another day if the first time point is equal to day_0 up to absolute tolerance tol
@@ -61,16 +196,9 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
     return interpolate_simulation_result<FP>(simulation_result, tps);
 }
 
-/**
- * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
- * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
- * @param simulation_result time series to interpolate
- * @param interpolations_times std::vector of time points at which simulation results are interpolated.
- * @return interpolated time series at given interpolation points
- */
-template <typename FP = double>
+template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
-                                                 const std::vector<FP>& interpolation_times)
+                                             const std::vector<FP>& interpolation_times)
 {
     assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
 
@@ -107,14 +235,11 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
         //in case there is more than one interpolation point between the two time points
         if (simulation_result.get_time(sim_idx) < interpolation_times[interp_idx] &&
             simulation_result.get_time(sim_idx + 1) >= interpolation_times[interp_idx]) {
-            
-            std::cout << "debug 1\n";
             interpolated.add_time_point(
                 interpolation_times[interp_idx],
-                linear_interpolation(interpolation_times[interp_idx], simulation_result.get_time(sim_idx),
-                                     simulation_result.get_time(sim_idx + 1), simulation_result[sim_idx],
-                                     simulation_result[sim_idx + 1]));
-            std::cout << "debug 1\n";
+                linear_interpolation<FP>(interpolation_times[interp_idx], simulation_result.get_time(sim_idx),
+                                         simulation_result.get_time(sim_idx + 1), simulation_result[sim_idx],
+                                         simulation_result[sim_idx + 1]));
             ++interp_idx;
         }
         else {
@@ -132,106 +257,93 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
     return interpolated;
 }
 
-/**
- * helper template, type returned by overload interpolate_simulation_result(T t)
- */
-template <class T>
-using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;
-
-/**
- * @brief Interpolates results of all runs with evenly spaced, integer time points that represent whole days.
- * @see interpolate_simulation_result
- * @param ensemble_result result of multiple simulations (single TimeSeries or Graph)
- * @return interpolated time series, one (or as many as nodes in the graph) per result in the ensemble
- */
-template <class T>
-std::vector<InterpolateResultT<T>> interpolate_ensemble_results(const std::vector<T>& ensemble_results)
+template <typename FP>
+std::vector<std::vector<TimeSeries<FP>>> sum_nodes(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_result)
 {
-    std::vector<InterpolateResultT<T>> interpolated;
-    interpolated.reserve(ensemble_results.size());
-    std::transform(ensemble_results.begin(), ensemble_results.end(), std::back_inserter(interpolated), [](auto& run) {
-        return interpolate_simulation_result(run);
-    });
-    return interpolated;
+    auto num_runs        = ensemble_result.size();
+    auto num_nodes       = ensemble_result[0].size();
+    auto num_time_points = ensemble_result[0][0].get_num_time_points();
+    auto num_elements    = ensemble_result[0][0].get_num_elements();
+
+    std::vector<std::vector<TimeSeries<FP>>> sum_result(
+        num_runs, std::vector<TimeSeries<FP>>(1, TimeSeries<FP>::zero(num_time_points, num_elements)));
+
+    for (size_t run = 0; run < num_runs; run++) {
+        for (Eigen::Index time = 0; time < num_time_points; time++) {
+            sum_result[run][0].get_time(time) = ensemble_result[run][0].get_time(time);
+            for (size_t node = 0; node < num_nodes; node++) {
+                sum_result[run][0][time] += ensemble_result[run][node][time];
+            }
+        }
+    }
+    return sum_result;
 }
 
-std::vector<std::vector<TimeSeries<double>>>
-sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result);
-
-/**
- * @brief computes mean of each compartment, node, and time point over all runs
- * input must be uniform as returned by interpolated_ensemble_result:
- * same number of nodes, same time points and elements.
- * @see interpolated_ensemble_result
- * @param ensemble_results uniform results of multiple simulation runs
- * @return mean of the results over all runs
- */
-std::vector<TimeSeries<double>> ensemble_mean(const std::vector<std::vector<TimeSeries<double>>>& ensemble_results);
-
-/**
- * @brief computes the p percentile of the result for each compartment, node, and time point.
- * Produces for each compartment the value that that is bigger than approximately
- * a p-th share of the values of this compartment over all runs.
- * input must be uniform as returned by interpolated_ensemble_result:
- * same number of nodes, same time points and elements.
- * @see interpolated_ensemble_result
- * @param ensemble_result uniform results of multiple simulation runs
- * @param p percentile value in open interval (0, 1)
- * @return p percentile of the results over all runs
- */
-std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result,
-                                                    double p);
-/**
- * interpolate time series with evenly spaced, integer time points for each node.
- * @see interpolate_simulation_result
- * @param graph_result graph of simulations whose results will be interpolated
- * @return one interpolated time series per node
- */
-template <class Simulation, typename FP = double>
-std::vector<TimeSeries<FP>>
-interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MobilityEdge<FP>>& graph_result)
+template <typename FP>
+std::vector<TimeSeries<FP>> ensemble_mean(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_result)
 {
-    std::vector<TimeSeries<FP>> interpolated;
-    interpolated.reserve(graph_result.nodes().size());
-    std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
-                   [](auto& n) {
-                       return interpolate_simulation_result(n.property.get_result());
-                   });
-    return interpolated;
+    auto num_runs        = ensemble_result.size();
+    auto num_nodes       = ensemble_result[0].size();
+    auto num_time_points = ensemble_result[0][0].get_num_time_points();
+    auto num_elements    = ensemble_result[0][0].get_num_elements();
+
+    std::vector<TimeSeries<FP>> mean(num_nodes, TimeSeries<FP>::zero(num_time_points, num_elements));
+
+    for (size_t run = 0; run < num_runs; run++) {
+        assert(ensemble_result[run].size() == num_nodes && "ensemble results not uniform.");
+        for (size_t node = 0; node < num_nodes; node++) {
+            assert(ensemble_result[run][node].get_num_time_points() == num_time_points &&
+                   "ensemble results not uniform.");
+            for (Eigen::Index time = 0; time < num_time_points; time++) {
+                assert(ensemble_result[run][node].get_num_elements() == num_elements &&
+                       "ensemble results not uniform.");
+                mean[node].get_time(time) = ensemble_result[run][node].get_time(time);
+                mean[node][time] += ensemble_result[run][node][time] / num_runs;
+            }
+        }
+    }
+
+    return mean;
 }
 
-/**
- * Compute the distance between two SECIR simulation results.
- * The distance is the 2-norm of the element-wise difference of the two results.
- * The two results (e.g. output of interpolate_simulation_result) must have the same dimensions and number of time points.
- * @param result1 first result.
- * @param result2 second result.
- * @return Computed distance between result1 and result2.
- */
-double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1,
-                             const std::vector<mio::TimeSeries<double>>& result2);
-
-/**
- * Compute the distance between two compartment model simulation results in one compartment.
- * The distance is the 2-norm of the element-wise difference of the two results in the specified compartment.
- * The two results (e.g. output of interpolate_simulation_result) must have the same dimensions and number of time points.
- * @tparam InfectionState enum type that defines the compartments of the model that produced the results.
- * @param result1 first result.
- * @param result2 second result.
- * @param compartment the compartment to compare.
- * @return Computed distance between result1 and result2.
- */
-template <class InfectionState>
-double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1,
-                             const std::vector<mio::TimeSeries<double>>& result2, InfectionState compartment)
+template <typename FP>
+std::vector<TimeSeries<FP>> ensemble_percentile(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_result, FP p)
 {
+    assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
+
+    auto num_runs        = ensemble_result.size();
+    auto num_nodes       = ensemble_result[0].size();
+    auto num_time_points = ensemble_result[0][0].get_num_time_points();
+    auto num_elements    = ensemble_result[0][0].get_num_elements();
+
+    std::vector<TimeSeries<FP>> percentile(num_nodes, TimeSeries<FP>::zero(num_time_points, num_elements));
+
+    std::vector<FP> single_element_ensemble(num_runs); //reused for each element
+    for (size_t node = 0; node < num_nodes; node++) {
+        for (Eigen::Index time = 0; time < num_time_points; time++) {
+            percentile[node].get_time(time) = ensemble_result[0][node].get_time(time);
+            for (Eigen::Index elem = 0; elem < num_elements; elem++) {
+                std::transform(ensemble_result.begin(), ensemble_result.end(), single_element_ensemble.begin(),
+                               [=](auto& run) {
+                                   return run[node][time][elem];
+                               });
+                std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
+                percentile[node][time][elem] = single_element_ensemble[static_cast<size_t>(num_runs * p)];
+            }
+        }
+    }
+    return percentile;
+}
+
+template <typename FP>
+FP result_distance_2norm(const std::vector<mio::TimeSeries<FP>>& result1,
+                         const std::vector<mio::TimeSeries<FP>>& result2)
+{
+    using std::sqrt;
     assert(result1.size() == result2.size());
     assert(result1.size() > 0);
     assert(result1[0].get_num_time_points() > 0);
     assert(result1[0].get_num_elements() > 0);
-
-    auto num_compartments = Eigen::Index(InfectionState::Count);
-    auto num_age_groups   = result1[0].get_num_elements() / num_compartments;
 
     auto norm_sqr = 0.0;
     for (auto iter_node1 = result1.begin(), iter_node2 = result2.begin(); iter_node1 < result1.end();
@@ -239,14 +351,10 @@ double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1
         for (Eigen::Index time_idx = 0; time_idx < iter_node1->get_num_time_points(); ++time_idx) {
             auto v1 = (*iter_node1)[time_idx];
             auto v2 = (*iter_node2)[time_idx];
-            for (Eigen::Index age_idx = 0; age_idx < num_age_groups; ++age_idx) {
-                auto d1 = v1[age_idx * num_compartments + Eigen::Index(compartment)];
-                auto d2 = v2[age_idx * num_compartments + Eigen::Index(compartment)];
-                norm_sqr += (d1 - d2) * (d1 - d2);
-            }
+            norm_sqr += ((v1 - v2).array() * (v1 - v2).array()).sum();
         }
     }
-    return std::sqrt(norm_sqr);
+    return sqrt(norm_sqr);
 }
 
 /**

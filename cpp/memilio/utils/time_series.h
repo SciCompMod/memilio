@@ -178,7 +178,7 @@ public:
     }
 
     /** move ctor and assignment */
-    TimeSeries(TimeSeries&& other) = default;
+    TimeSeries(TimeSeries&& other)            = default;
     TimeSeries& operator=(TimeSeries&& other) = default;
 
     /// Check if the time is strictly monotonic increasing.
@@ -660,8 +660,9 @@ struct TimeSeriesIterTraits {
     }
     using Matrix      = typename TimeSeries<FP>::Matrix;
     using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
-    using VectorValue = typename decltype(
-        std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()))::PlainObject;
+    using VectorValue = typename decltype(std::declval<MatrixPtr>()
+                                              ->col(std::declval<Eigen::Index>())
+                                              .tail(std::declval<Eigen::Index>()))::PlainObject;
     using VectorReference =
         decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
     using TimeValue     = FP;
@@ -901,11 +902,11 @@ public:
  * @param rel_tol relative floating point tolerance for equality of time values
  * @return TimeSeries::reverse_iterator that points to ts[t_search] or ts.rend()
  */
-template <class TS, class FP>
+template <class FP, class TS>
 decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP abs_tol = 0, FP rel_tol = 0)
 {
     auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
-        return floating_point_equal(t, t_search, abs_tol, rel_tol);
+        return floating_point_equal<FP>(t, t_search, abs_tol, rel_tol);
     });
     if (iter_t != ts.get_reverse_times().end()) {
         return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());

@@ -21,6 +21,7 @@
 #define MIO_MATH_INTERPOLATION_H_
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
+#include "memilio/math/math_utils.h"
 
 #include <cassert>
 #include <vector>
@@ -31,7 +32,7 @@ namespace mio
 
 /**
  * @brief Linear interpolation between two data values.
- * 
+ *
  * @param[in] x_eval Location to evaluate interpolation.
  * @param[in] x_1 Left node of interpolation.
  * @param[in] x_2 Right node of interpolation.
@@ -42,10 +43,8 @@ namespace mio
 template <typename X, typename V>
 auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
 {
-    std::cout << "debug\n";
-    const auto weight = (x_eval - x_1) / (x_2 - x_1);
-    std::cout << "debug\n";
-    return y1 + weight * (y2 - y1);
+    const auto weight = evaluate_intermediate<X>((x_eval - x_1) / (x_2 - x_1));
+    return evaluate_intermediate<V>(y1 + weight * (y2 - y1));
 }
 
 /**
@@ -98,7 +97,7 @@ Y linear_interpolation_of_data_set(std::vector<std::pair<X, Y>> vector, const X&
 
     // Find the corresponding upper position of the node in the data set
     size_t upper_pos = std::upper_bound(vector.begin(), vector.end(), x_eval,
-                                        [](double value, const std::pair<X, Y>& node) {
+                                        [](X value, const std::pair<X, Y>& node) {
                                             return value <= node.first;
                                         }) -
                        vector.begin();

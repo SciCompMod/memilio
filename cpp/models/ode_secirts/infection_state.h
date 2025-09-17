@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker, Wadim Koslow, Daniel Abele, Martin J. Kühn

@@ -39,20 +39,21 @@ namespace mio
  * that are sampled to modify the contacts at some points in time.
  * @see UncertainValue
  */
-template <typename FP = double>
+template <typename FP>
 class UncertainContactMatrix
 {
 public:
     UncertainContactMatrix(size_t num_matrices = 1, Eigen::Index num_groups = 1)
-        : UncertainContactMatrix(ContactMatrixGroup<FP>(num_matrices, num_groups))
+        : UncertainContactMatrix<FP>(ContactMatrixGroup<FP>(num_matrices, num_groups))
     {
     }
 
     UncertainContactMatrix(const ContactMatrixGroup<FP>& cont_freq)
         : m_cont_freq(cont_freq)
         , m_dampings()
-        , m_school_holiday_damping(FP(0.0), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime<FP>(0), {},
-                                   Eigen::Matrix<FP, Eigen::Dynamic, 1>::Zero(cont_freq.get_num_groups()))
+        , m_school_holiday_damping(mio::UncertainValue<FP>(0.0), mio::DampingLevel(0), mio::DampingType(0),
+                                   mio::SimulationTime<FP>(0.0), {},
+                                   Eigen::VectorX<FP>::Zero(cont_freq.get_num_groups()))
         , m_school_holidays()
     {
     }
@@ -61,7 +62,7 @@ public:
      * @brief Conversion to const ContactMatrix reference by returning the 
      *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactMatrixGroup<FP> const &() const
+    operator ContactMatrixGroup<FP> const&() const
     {
         return m_cont_freq;
     }
@@ -79,7 +80,7 @@ public:
      * @brief Set an UncertainContactMatrix from a ContactMatrix, 
      *        all distributions remain unchanged.
      */
-    UncertainContactMatrix& operator=(const ContactMatrixGroup<FP>& cont_freq)
+    UncertainContactMatrix<FP>& operator=(const ContactMatrixGroup<FP>& cont_freq)
     {
         m_cont_freq = cont_freq;
         return *this;
@@ -222,7 +223,7 @@ public:
      * @see mio::deserialize
      */
     template <class IOContext>
-    static IOResult<UncertainContactMatrix> deserialize(IOContext& io)
+    static IOResult<UncertainContactMatrix<FP>> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("UncertainContactMatrix");
         if (!(io.flags() & IOF_OmitDistributions)) {
@@ -233,7 +234,7 @@ public:
             return apply(
                 io,
                 [](auto&& c_, auto&& d_, auto&& e_, auto&& f_) {
-                    auto m                         = UncertainContactMatrix{c_};
+                    auto m                         = UncertainContactMatrix<FP>{c_};
                     m.get_dampings()               = d_;
                     m.get_school_holiday_damping() = e_;
                     m.get_school_holidays()        = f_;
@@ -246,7 +247,7 @@ public:
             return apply(
                 io,
                 [](auto&& c_) {
-                    return UncertainContactMatrix{c_};
+                    return UncertainContactMatrix<FP>{c_};
                 },
                 c);
         }

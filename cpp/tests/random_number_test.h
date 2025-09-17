@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding
@@ -30,7 +30,7 @@ public:
      * @brief Draws a uniformly distributed random number.
      * @tparam FP A floating point type, defaults to double.
      * @param[in] min, max Lower and upper bound to the uniform distribution.
-     * @return A random value between min and max. 
+     * @return A random value between min and max.
      */
     template <class FP = double>
     FP random_number(FP min = FP{-1e+3}, FP max = FP{1e+3})
@@ -42,7 +42,7 @@ public:
      * @brief Draws a uniformly distributed integer.
      * @tparam IntType A integer type, defaults to int.
      * @param[in] min, max Lower and upper bound to the uniform distribution.
-     * @return A random value between min and max. 
+     * @return A random value between min and max.
      */
     template <class IntType = int>
     IntType random_integer(IntType min = IntType{-1e+3}, IntType max = IntType{1e+3})

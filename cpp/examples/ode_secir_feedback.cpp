@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -23,7 +23,7 @@
 
 void initialize_model(mio::osecir::Model<double>& model, int total_population, double cont_freq)
 {
-    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::StartDay<double>>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
     // time-related parameters
@@ -45,8 +45,8 @@ void initialize_model(mio::osecir::Model<double>& model, int total_population, d
     model.parameters.get<mio::osecir::DeathsPerCritical<double>>()                 = 0.3;
 
     // contact matrix
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    mio::ContactMatrixGroup<double>& contact_matrix = model.parameters.get<mio::osecir::ContactPatterns<double>>();
+    contact_matrix[0] = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
     // initial population
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = 40;
@@ -96,7 +96,7 @@ int main()
     const double cont_freq     = 10;
 
     // create and initialize ODE model for a single age group
-    mio::osecir::Model model(1);
+    mio::osecir::Model<double> model(1);
     initialize_model(model, total_population, cont_freq);
 
     // determine the index for the ICU state (InfectedCritical) for feedback mechanism

@@ -115,6 +115,7 @@ add_library(memilio
     utils/string_literal.h
     utils/type_list.h
     utils/base_dir.h
+    ad/ad.h
 )
 
 target_include_directories(memilio PUBLIC

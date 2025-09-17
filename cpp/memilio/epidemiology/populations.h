@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -24,6 +24,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/math/eigen.h"
+#include "memilio/math/math_utils.h"
 
 #include <numeric>
 
@@ -77,7 +78,7 @@ public:
     /**
      * @brief get_compartments returns an Eigen copy of the vector of populations. This can be used
      * as initial conditions for the ODE solver
-     * @return Eigen::VectorXd  of populations
+     * @return Eigen::VectorX<FP>  of populations
      */
     inline Eigen::VectorX<FP> get_compartments() const
     {
@@ -115,10 +116,9 @@ public:
     FP get_group_total(mio::Index<T> group_idx) const
     {
         auto const s = this->template slice<T>({(size_t)group_idx, 1});
-        auto op      = [](const FP& a, const UncertainValue<FP>& b) {
-            return a + b.value();
-        };
-        return std::accumulate(s.begin(), s.end(), FP(0.), op);
+        return std::accumulate(s.begin(), s.end(), FP(0.0), [](const FP& a, const UncertainValue<FP>& b) {
+            return evaluate_intermediate<FP>(a + b);
+        });
     }
 
     /**
@@ -135,8 +135,9 @@ public:
     template <class T>
     void set_group_total(mio::Index<T> group_idx, FP value)
     {
+        using std::fabs;
         FP current_population = get_group_total(group_idx);
-        auto s                        = this->template slice<T>({(size_t)group_idx, 1});
+        auto s                = this->template slice<T>({(size_t)group_idx, 1});
 
         if (fabs(current_population) < 1e-12) {
             for (auto& v : s) {
@@ -162,7 +163,7 @@ public:
     /**
      * @brief set_difference_from_group_total sets the total population for a given group from a difference
      *
-     * This function sets the population size 
+     * This function sets the population size
      *
      * @param total_population the new value for the total population
      * @param indices The indices of the compartment
@@ -173,10 +174,10 @@ public:
     void set_difference_from_group_total(Index const& midx, FP total_group_population)
 
     {
-        auto group_idx                = mio::get<T>(midx);
+        auto group_idx        = mio::get<T>(midx);
         FP current_population = get_group_total(group_idx);
-        size_t idx                    = this->get_flat_index(midx);
-        current_population -= this->array()[idx].value();
+        size_t idx            = this->get_flat_index(midx);
+        current_population -= this->array()[idx];
 
         assert(current_population <= total_group_population + FP(1e-10));
 
@@ -188,15 +189,16 @@ public:
      *
      * This function rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
-     * compartments. 
+     * compartments.
      *
      * @param value the new value for the total population
      */
     void set_total(FP value)
     {
-        double current_population = get_total();
+        using std::fabs;
+        FP current_population = get_total();
         if (fabs(current_population) < 1e-12) {
-            double ysize = double(this->array().size());
+            FP ysize = static_cast<FP>(this->array().size());
             for (size_t i = 0; i < this->get_num_compartments(); i++) {
                 this->array()[(Eigen::Index)i] = value / ysize;
             }
@@ -215,11 +217,11 @@ public:
      * @param indices the index of the compartment
      * @param total_population the new value for the total population
      */
-    void set_difference_from_total(Index midx, double total_population)
+    void set_difference_from_total(Index midx, FP total_population)
     {
-        double current_population = get_total();
-        size_t idx                = this->get_flat_index(midx);
-        current_population -= this->array()[idx].value();
+        FP current_population = get_total();
+        size_t idx            = this->get_flat_index(midx);
+        current_population -= this->array()[idx];
 
         assert(current_population <= total_population);
 
@@ -227,11 +229,11 @@ public:
     }
 
     /**
-     * @brief Checks whether all compartments have non-negative values. 
+     * @brief Checks whether all compartments have non-negative values.
      * This function can be used to prevent slighly negative function values in compartment sizes that came out
      * due to roundoff errors if, e.g., population sizes were computed in a complex way.
      *
-     * Attention: This function should be used with care. It can not and will not set model parameters and 
+     * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
      *            and correct values manually before proceeding with the simulation.
      *            The main usage for apply_constraints is in automated tests using random values for initialization.
@@ -242,10 +244,10 @@ public:
     {
         bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
-            if (this->array()[i].value() < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i].value(),
+            if (this->array()[i] < 0.0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
                             0);
-                this->array()[i] = 0;
+                this->array()[i] = 0.0;
                 corrected        = true;
             }
         }
@@ -259,9 +261,9 @@ public:
     bool check_constraints() const
     {
         for (int i = 0; i < this->array().size(); i++) {
-            FP value = this->array()[i].value();
-            if (value < 0.) {
-                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, ad::value(value), 0);
+            FP value = this->array()[i];
+            if (value < 0.0) {
+                log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
                 return true;
             }
         }

@@ -20,8 +20,10 @@
 #ifndef EPI_MATH_SMOOTHER_H
 #define EPI_MATH_SMOOTHER_H
 
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include <cmath>
+#include <numbers>
 
 namespace mio
 {
@@ -38,12 +40,13 @@ namespace mio
  * @param xright right boundary of independent variable
  * @param yleft function value at left boundary
  * @param yright function value at right boundary
- * @return double cosine-smoothed evaluation of discrete step function
+ * @return Floating point cosine-smoothed evaluation of discrete step function
  */
-template <typename FP = double>
+template <typename FP>
 inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright)
 {
     using std::cos;
+
     if (x <= xleft) {
         return yleft;
     }
@@ -51,7 +54,7 @@ inline FP smoother_cosine(FP x, FP xleft, FP xright, FP yleft, FP yright)
         return yright;
     }
 
-    return 0.5 * (yleft - yright) * cos(3.14159265358979323846 / (xright - xleft) * (x - xleft)) +
+    return 0.5 * (yleft - yright) * cos(std::numbers::pi_v<ScalarType> / (xright - xleft) * (x - xleft)) +
            0.5 * (yleft + yright);
 }
 
@@ -69,7 +72,7 @@ auto smoother_cosine(FP x, FP xleft, FP xright, const Eigen::MatrixBase<LeftExpr
                      const Eigen::MatrixBase<RightExpr>& yright_expr)
 {
     return yleft_expr.binaryExpr(yright_expr, [=](auto yleft, auto yright) {
-        return smoother_cosine(x, xleft, xright, yleft, yright);
+        return smoother_cosine<FP>(x, xleft, xright, yleft, yright);
     });
 }
 
