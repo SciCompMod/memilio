@@ -280,7 +280,7 @@ public:
         , m_serialize([](const std::shared_ptr<void>& param) -> IOResult<Json::Value> {
             return mio::serialize_json(*static_cast<Type*>(param.get()));
         })
-        , m_set(*set_impl<Type>)
+        , m_set(*AbstractParameter::set_impl<Type>)
     {
     }
 
@@ -291,8 +291,8 @@ public:
     template <class Param>
     AbstractParameter(mio::Tag<Param>, typename Param::Type& value)
         : AbstractParameter(mio::Tag<typename Param::Type>{},
-                            DatalessParameter(Name::get(Param{}), Alias::get(Param{}), Description::get(Param{}),
-                                              IsRequired::get(Param{})),
+                            DatalessParameter{Name::get(Param{}), Alias::get(Param{}), Description::get(Param{}),
+                                              IsRequired::get(Param{})},
                             std::shared_ptr<void>(static_cast<void*>(&value), [](void*) {}))
     {
     }

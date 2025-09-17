@@ -19,7 +19,12 @@
 */
 #include "memilio/io/cli.h"
 
+#ifdef MEMILIO_HAS_JSONCPP
+
+#include <ostream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 /// @brief Part of write_help implementation. Writes the header with usage information and default options.
 void write_help_preamble(const std::string& executable_name, const std::vector<std::string>& default_options,
@@ -223,3 +228,5 @@ mio::IOResult<void> mio::cli::details::command_line_interface(const std::string&
     }
     return mio::success();
 }
+
+#endif // MEMILIO_HAS_JSONCPP
