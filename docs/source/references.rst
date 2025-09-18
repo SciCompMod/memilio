@@ -6,14 +6,18 @@ The following gives an overview on (peer-reviewed) publications extending or usi
 Recently submitted publications
 --------------------------------------
 
+- Kerkouche R, Zunker H, Fritz M, Kühn MJ. (2025) *Differentially private federated learning for localized control of infectious disease dynamics*. arXiv. `arXiv:2509.14024v1  <https://doi.org/10.48550/arXiv.2509.14024>`_
+
 - Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. arXiv. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
-- Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
+
 
 
 Peer-reviewed publications
 --------------------------
 
 **2026**
+
+- Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Mathematics and Computers in Simulation 239, pp. 823-844 (2026). `DOI:10.1016/j.matcom.2025.07.045 <https://doi.org/10.1016/j.matcom.2025.07.045>`_
 
 - Wendler A, Plötzke L, Tritzschak H, Kühn MJ. (2026). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. *Applied Mathematics and Computation* 509: 129636. `DOI:10.1016/j.amc.2025.129636 <https://doi.org/10.1016/j.amc.2025.129636>`_
 
