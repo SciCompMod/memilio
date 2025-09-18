@@ -170,5 +170,9 @@ BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_400k, 400000, {28841971u, 6939937
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_800k, 800000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_1600k, 1600000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k, 3200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_6400k, 6400000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_12800k, 12800000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_25600k, 25600000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
+BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_51200k, 51200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
