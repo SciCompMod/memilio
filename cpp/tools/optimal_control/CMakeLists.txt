@@ -15,11 +15,10 @@ add_library(optimal_control
     ipopt_solver/constraint_function.h
     ipopt_solver/objective_function.h
     ipopt_solver/save_solution.h
-    ipopt_solver/secirvvs_ipopt.h
+    ipopt_solver/mio_ipopt.h
     optimization_model/optimization_model.cpp
     optimization_model/optimization_model.h
-    optimization_settings/secirvvs_optimization.cpp
-    optimization_settings/secirvvs_optimization.h
+    optimization_settings/optimization_settings.h
 )
 target_link_libraries(optimal_control PUBLIC memilio ode_secirvvs Boost::boost Boost::filesystem AD::AD Ipopt::Ipopt)
 target_include_directories(optimal_control PUBLIC

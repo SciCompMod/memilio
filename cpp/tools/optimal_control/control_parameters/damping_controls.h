@@ -10,7 +10,6 @@
 #include "models/ode_secirvvs/model.h"
 
 #include "tools/optimal_control/control_parameters/control_parameters.h"
-#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 #include "tools/optimal_control/helpers/make_time_grid.h"
 
 enum class Intervention
@@ -103,8 +102,8 @@ mio::DampingSampling<FP> make_physical_distancing_other_damping(mio::SimulationT
     return mio::DampingSampling<FP>(damping_value, level, type, time, locations, group_weights);
 }
 
-template <typename FP>
-void set_control_dampings(const SecirvvsOptimization& settings, mio::osecirvvs::Model<FP>& model,
+template <typename FP, class OptimizationSettings>
+void set_control_dampings(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model,
                           const std::vector<FP>& control_parameters)
 {
     assert(control_parameters.size() == settings.num_control_parameters() * settings.num_control_intervals());

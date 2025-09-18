@@ -2,19 +2,17 @@
 
 #include <vector>
 
-#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 #include "models/ode_secirvvs/model.h"
 
 #include "tools/optimal_control/control_parameters/damping_controls.h"
-#include "tools/optimal_control/constraints/update_constraints.h"
 
 #include "tools/optimal_control/helpers/integrator_selector.h"
 #include "tools/optimal_control/helpers/make_time_grid.h"
 
 #include "tools/optimal_control/constraints/infection_state_utils.h"
 
-template <typename FP>
-FP objective_function(const mio::osecirvvs::Model<FP>& model, const SecirvvsOptimization& settings, const FP* ptr_parameters,
+template <typename FP, class OptimizationSettings>
+FP objective_function(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model, const FP* ptr_parameters,
                       size_t n)
 {
     // ------------------------------------------------------------------ //
@@ -39,7 +37,7 @@ FP objective_function(const mio::osecirvvs::Model<FP>& model, const SecirvvsOpti
     mio::osecirvvs::Simulation<FP> sim(model, settings.t0(), settings.dt());
     sim.set_integrator(integrator);
     
-    set_control_dampings<FP>(settings, sim.get_model(), parameters);
+    set_control_dampings<FP, OptimizationSettings>(settings, sim.get_model(), parameters);
 
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 

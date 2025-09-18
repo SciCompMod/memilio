@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include "tools/optimal_control/optimization_settings/secirvvs_optimization.h"
 #include "models/ode_secirvvs/model.h"
 
 #include "tools/optimal_control/control_parameters/damping_controls.h"
@@ -13,8 +12,8 @@
 
 #include "tools/optimal_control/constraints/infection_state_utils.h"
 
-template <typename FP>
-void constraint_function(const mio::osecirvvs::Model<FP>& model, const SecirvvsOptimization& settings,
+template <typename FP, class OptimizationSettings>
+void constraint_function(const OptimizationSettings& settings, const const typename OptimizationSettings::template ModelTemplate<FP><FP>& model,
                          const FP* ptr_parameters, size_t n, FP* ptr_constraints, size_t m)
 {
     // ----------------------------------------------------------------- //
@@ -41,19 +40,19 @@ void constraint_function(const mio::osecirvvs::Model<FP>& model, const SecirvvsO
     mio::osecirvvs::Simulation<FP> sim(model, settings.t0(), settings.dt());
     sim.set_integrator(integrator);
     
-    set_control_dampings<FP>(settings, sim.get_model(), parameters);
+    set_control_dampings<FP, OptimizationSettings>(settings, sim.get_model(), parameters);
 
     // const auto& final_state = sim.get_result().get_last_value();
-    // update_path_constraint<FP>(settings, sim.get_model(), final_state, path_constraint_values);
+    // update_path_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, path_constraint_values);
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
         sim.get_dt() = settings.dt();
         sim.advance(time_steps[gridindex + 1]);
         const auto& final_state = sim.get_result().get_last_value();
 
-        update_path_constraint<FP>(settings, sim.get_model(), final_state, path_constraint_values);
+        update_path_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, path_constraint_values);
     }
-    update_terminal_constraint<FP>(settings, sim.get_model(), final_state, terminal_constraint_values);
+    update_terminal_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, terminal_constraint_values);
 
     size_t idx = 0;
     for (size_t path_constraint_index = 0; path_constraint_index < settings.num_path_constraints();

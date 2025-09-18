@@ -7,112 +7,15 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "models/ode_secirvvs/model.h"
-
+template <class InfectionState>
 inline size_t num_infection_states()
 {
-    return static_cast<size_t>(mio::osecirvvs::InfectionState::Count);
+    return static_cast<size_t>(InfectionState::Count);
 }
 
-inline std::string infection_state_to_string(mio::osecirvvs::InfectionState state)
+template <class InfectionState>
+inline std::vector<InfectionState> query_infection_states(const std::string& state_query, std::vector<std::pair<std::string, InfectionState>>& all_states)
 {
-    using InfectionState = mio::osecirvvs::InfectionState;
-
-    switch (state) {
-    case InfectionState::SusceptibleNaive:
-        return "SusceptibleNaive";
-    case InfectionState::SusceptiblePartialImmunity:
-        return "SusceptiblePartialImmunity";
-    case InfectionState::SusceptibleImprovedImmunity:
-        return "SusceptibleImprovedImmunity";
-    case InfectionState::ExposedNaive:
-        return "ExposedNaive";
-    case InfectionState::ExposedPartialImmunity:
-        return "ExposedPartialImmunity";
-    case InfectionState::ExposedImprovedImmunity:
-        return "ExposedImprovedImmunity";
-    case InfectionState::InfectedNoSymptomsNaive:
-        return "InfectedNoSymptomsNaive";
-    case InfectionState::InfectedNoSymptomsPartialImmunity:
-        return "InfectedNoSymptomsPartialImmunity";
-    case InfectionState::InfectedNoSymptomsImprovedImmunity:
-        return "InfectedNoSymptomsImprovedImmunity";
-    case InfectionState::InfectedNoSymptomsNaiveConfirmed:
-        return "InfectedNoSymptomsNaiveConfirmed";
-    case InfectionState::InfectedNoSymptomsPartialImmunityConfirmed:
-        return "InfectedNoSymptomsPartialImmunityConfirmed";
-    case InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed:
-        return "InfectedNoSymptomsImprovedImmunityConfirmed";
-    case InfectionState::InfectedSymptomsNaive:
-        return "InfectedSymptomsNaive";
-    case InfectionState::InfectedSymptomsPartialImmunity:
-        return "InfectedSymptomsPartialImmunity";
-    case InfectionState::InfectedSymptomsImprovedImmunity:
-        return "InfectedSymptomsImprovedImmunity";
-    case InfectionState::InfectedSymptomsNaiveConfirmed:
-        return "InfectedSymptomsNaiveConfirmed";
-    case InfectionState::InfectedSymptomsPartialImmunityConfirmed:
-        return "InfectedSymptomsPartialImmunityConfirmed";
-    case InfectionState::InfectedSymptomsImprovedImmunityConfirmed:
-        return "InfectedSymptomsImprovedImmunityConfirmed";
-    case InfectionState::InfectedSevereNaive:
-        return "InfectedSevereNaive";
-    case InfectionState::InfectedSeverePartialImmunity:
-        return "InfectedSeverePartialImmunity";
-    case InfectionState::InfectedSevereImprovedImmunity:
-        return "InfectedSevereImprovedImmunity";
-    case InfectionState::InfectedCriticalNaive:
-        return "InfectedCriticalNaive";
-    case InfectionState::InfectedCriticalPartialImmunity:
-        return "InfectedCriticalPartialImmunity";
-    case InfectionState::InfectedCriticalImprovedImmunity:
-        return "InfectedCriticalImprovedImmunity";
-    case InfectionState::DeadNaive:
-        return "DeadNaive";
-    case InfectionState::DeadPartialImmunity:
-        return "DeadPartialImmunity";
-    case InfectionState::DeadImprovedImmunity:
-        return "DeadImprovedImmunity";
-    case InfectionState::Count:
-        return "Count";
-    default:
-        return "InfectionState Unknown";
-    }
-}
-
-inline std::vector<mio::osecirvvs::InfectionState> query_infection_states(const std::string& state_query)
-{
-    using InfectionState = mio::osecirvvs::InfectionState;
-
-    static const std::vector<std::pair<std::string, InfectionState>> all_states = {
-        {"SusceptibleNaive", InfectionState::SusceptibleNaive},
-        {"SusceptiblePartialImmunity", InfectionState::SusceptiblePartialImmunity},
-        {"SusceptibleImprovedImmunity", InfectionState::SusceptibleImprovedImmunity},
-        {"ExposedNaive", InfectionState::ExposedNaive},
-        {"ExposedPartialImmunity", InfectionState::ExposedPartialImmunity},
-        {"ExposedImprovedImmunity", InfectionState::ExposedImprovedImmunity},
-        {"InfectedNoSymptomsNaive", InfectionState::InfectedNoSymptomsNaive},
-        {"InfectedNoSymptomsPartialImmunity", InfectionState::InfectedNoSymptomsPartialImmunity},
-        {"InfectedNoSymptomsImprovedImmunity", InfectionState::InfectedNoSymptomsImprovedImmunity},
-        {"InfectedNoSymptomsNaiveConfirmed", InfectionState::InfectedNoSymptomsNaiveConfirmed},
-        {"InfectedNoSymptomsPartialImmunityConfirmed", InfectionState::InfectedNoSymptomsPartialImmunityConfirmed},
-        {"InfectedNoSymptomsImprovedImmunityConfirmed", InfectionState::InfectedNoSymptomsImprovedImmunityConfirmed},
-        {"InfectedSymptomsNaive", InfectionState::InfectedSymptomsNaive},
-        {"InfectedSymptomsPartialImmunity", InfectionState::InfectedSymptomsPartialImmunity},
-        {"InfectedSymptomsImprovedImmunity", InfectionState::InfectedSymptomsImprovedImmunity},
-        {"InfectedSymptomsNaiveConfirmed", InfectionState::InfectedSymptomsNaiveConfirmed},
-        {"InfectedSymptomsPartialImmunityConfirmed", InfectionState::InfectedSymptomsPartialImmunityConfirmed},
-        {"InfectedSymptomsImprovedImmunityConfirmed", InfectionState::InfectedSymptomsImprovedImmunityConfirmed},
-        {"InfectedSevereNaive", InfectionState::InfectedSevereNaive},
-        {"InfectedSeverePartialImmunity", InfectionState::InfectedSeverePartialImmunity},
-        {"InfectedSevereImprovedImmunity", InfectionState::InfectedSevereImprovedImmunity},
-        {"InfectedCriticalNaive", InfectionState::InfectedCriticalNaive},
-        {"InfectedCriticalPartialImmunity", InfectionState::InfectedCriticalPartialImmunity},
-        {"InfectedCriticalImprovedImmunity", InfectionState::InfectedCriticalImprovedImmunity},
-        {"DeadNaive", InfectionState::DeadNaive},
-        {"DeadPartialImmunity", InfectionState::DeadPartialImmunity},
-        {"DeadImprovedImmunity", InfectionState::DeadImprovedImmunity}};
-
     // Split query into separate subqueries
     std::vector<std::string> and_group_tokens;
     std::vector<std::string> or_group_tokens;
