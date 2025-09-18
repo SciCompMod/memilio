@@ -399,8 +399,11 @@ void flow_based_mobility_returns(Eigen::Ref<Eigen::VectorXd> mobile_population, 
         mio::log_warning("Flow time step is non-positive.");
         return;
     }
-    size_t current_idx = static_cast<size_t>(std::round(t / dt_flows));
-    size_t next_idx    = static_cast<size_t>(std::round((t + dt) / dt_flows));
+    auto to_idx = [&](double tau) {
+        return static_cast<size_t>(std::floor((tau + 1e-12) / dt_flows));
+    };
+    size_t current_idx = to_idx(t);
+    size_t next_idx    = to_idx(t + dt);
 
     if (current_idx >= static_cast<size_t>(num_time_points) || next_idx >= static_cast<size_t>(num_time_points)) {
         mio::log_warning("Calculated flow indices out of bounds.");
