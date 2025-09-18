@@ -2,8 +2,6 @@
 
 #include <vector>
 
-#include "models/ode_secirvvs/model.h"
-
 #include "tools/optimal_control/control_parameters/damping_controls.h"
 
 #include "tools/optimal_control/helpers/integrator_selector.h"
@@ -34,7 +32,7 @@ FP objective_function(const OptimizationSettings& settings, const typename Optim
 
     std::vector<FP> time_steps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.num_intervals());
 
-    mio::osecirvvs::Simulation<FP> sim(model, settings.t0(), settings.dt());
+    OptimizationSettings::template SimulationTemplate<FP> sim(model, settings.t0(), settings.dt());
     sim.set_integrator(integrator);
     
     set_control_dampings<FP, OptimizationSettings>(settings, sim.get_model(), parameters);

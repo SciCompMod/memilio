@@ -4,8 +4,6 @@
 #include <vector>
 #include <iostream>
 
-#include "models/ode_secirvvs/model.h"
-
 #include "tools/optimal_control/control_parameters/damping_controls.h"
 
 #include "tools/optimal_control/helpers/integrator_selector.h"

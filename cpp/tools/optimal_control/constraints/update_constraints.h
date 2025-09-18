@@ -32,7 +32,7 @@ void update_path_constraint(const OptimizationSettings& settings, const typename
             auto age_group_offset = (int)agegroup * (int)num_infection_states<OptimizationSettings::InfectionState>();
 
             for (const auto& state : states) {
-                value += final[(int)state + age_group_offset];
+                value += final_state[(int)state + age_group_offset];
             }
         }
 
@@ -60,7 +60,7 @@ void update_terminal_constraint(const OptimizationSettings& settings, const type
             auto age_group_offset = (int)agegroup * (int)num_infection_states<OptimizationSettings::InfectionState>();
 
             for (const auto& state : states) {
-                value += final[(int)state + age_group_offset];
+                value += final_state[(int)state + age_group_offset];
             }
         }
         terminal_constraints[constraint_index] = value;

@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <functional>
 
-#include "models/ode_secirvvs/model.h"
+#include "models/ode_secirvvs/parameters.h"
 
 #include "tools/optimal_control/control_parameters/control_parameters.h"
 #include "tools/optimal_control/helpers/make_time_grid.h"
