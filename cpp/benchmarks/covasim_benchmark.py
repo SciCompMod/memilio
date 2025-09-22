@@ -42,7 +42,7 @@ def covasim_benchmark(pop_size, n_days=120):
 
 if __name__ == "__main__":
     # Population sizes matching the ABM benchmark
-    pop_sizes = [320000, 640000, 1280000, 2560000, 5120000]
+    pop_sizes = [3200000, 6400000, 12800000]
 
     # If command line argument provided, use that specific size
     if len(sys.argv) > 1:
