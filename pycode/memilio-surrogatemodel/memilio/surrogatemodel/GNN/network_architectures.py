@@ -19,7 +19,7 @@
 #############################################################################
 import numpy as np
 import tensorflow as tf
-
+import spektral
 import spektral.layers as spektral_layers
 import spektral.utils.convolution as spektral_convolution
 
