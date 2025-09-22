@@ -1,3 +1,5 @@
 # first support of python 3.11
 pyfakefs>=4.6
 coverage>=7.0.1
+spektral>=1.0
+tensorflow>=2.0
