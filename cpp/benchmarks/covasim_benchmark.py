@@ -28,7 +28,7 @@ def covasim_benchmark(pop_size, n_days=120):
     )
 
     sim = cv.Sim(pars)
-    cv.options.set(numba_parallel=True)
+    cv.options.set(numba_parallel=False)
     sim.initialize()
 
     t_start = time.process_time()
