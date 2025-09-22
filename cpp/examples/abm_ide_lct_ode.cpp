@@ -19,6 +19,7 @@
 */
 
 #include "memilio/config.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/lct_infection_state.h"
 #include "memilio/epidemiology/state_age_function.h"
 #include "memilio/io/result_io.h"
@@ -193,17 +194,23 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(mio::Date start_da
     using InfTransition = mio::isecir::InfectionTransition;
 
     // Initialize model.
-    // TODO: Do this stratified by age grop.
+    // Set total_population_init according to age_group_sizes.
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population_init =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), total_population);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), 0.);
+    for (size_t group = 0; group < num_age_groups; group++) {
+        total_population_init[(mio::AgeGroup)group] = age_group_sizes[group];
+    }
+
+    // Set these values to zero since they are set according to RKI data below.
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths_init =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), deaths);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), 0.);
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases_init =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), total_confirmed_cases);
+        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), 0.);
 
     // Initialize with empty series for flows as we will initialize based on RKI data later on.
-    mio::isecir::Model model_ide(mio::TimeSeries<ScalarType>((Eigen::Index)mio::isecir::InfectionTransition::Count),
-                                 total_population_init, deaths_init, num_age_groups, total_confirmed_cases_init);
+    mio::isecir::Model model_ide(
+        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isecir::InfectionTransition::Count * num_age_groups),
+        total_population_init, deaths_init, num_age_groups, total_confirmed_cases_init);
 
     // Set working parameters.
     // Set TransitionDistributions.
@@ -288,20 +295,18 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(mio::Date start_da
     model_ide.parameters.get<mio::isecir::ContactPatterns>() = contact_matrix;
 
     model_ide.set_tol_for_support_max(1e-6);
-    model_ide.check_constraints(dt);
 
-    std::string path_rki                               = reported_data_dir + "cases_all_age_all_dates.json";
-    std::vector<mio::ConfirmedCasesDataEntry> rki_data = mio::read_confirmed_cases_data(path_rki).value();
+    std::string path_rki = reported_data_dir + "cases_all_age_all_dates.json";
+    BOOST_OUTCOME_TRY(std::vector<mio::ConfirmedCasesDataEntry> && rki_data, mio::read_confirmed_cases_data(path_rki));
 
     // Define vector for scale_confirmed_cases.
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases_vec =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), scale_confirmed_cases);
 
-    // mio::IOResult<void> init_flows = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
-    //     model_ide, dt, rki_data, start_date, scale_confirmed_cases_vec);
-
     mio::IOResult<void> init_flows = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
         model_ide, dt, rki_data, start_date, scale_confirmed_cases_vec);
+
+    model_ide.check_constraints(dt);
 
     // Simulate.
     mio::isecir::Simulation sim(model_ide, dt);
@@ -385,58 +390,76 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
         switch (group) {
         case 0:
             total_num_subcomps_this_group = LctState0_4::Count;
-            num_subcompartments           = {LctState0_4::get_num_subcompartments<InfState::Exposed>(),
+            num_subcompartments           = {1,
+                                             LctState0_4::get_num_subcompartments<InfState::Exposed>(),
                                              LctState0_4::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                              LctState0_4::get_num_subcompartments<InfState::InfectedSymptoms>(),
                                              LctState0_4::get_num_subcompartments<InfState::InfectedSevere>(),
-                                             LctState0_4::get_num_subcompartments<InfState::InfectedCritical>()};
+                                             LctState0_4::get_num_subcompartments<InfState::InfectedCritical>(),
+                                             1,
+                                             1};
             break;
         case 1:
             total_num_subcomps_this_group      = LctState5_14::Count;
             total_num_subcomps_previous_groups = LctState0_4::Count;
-            num_subcompartments                = {LctState5_14::get_num_subcompartments<InfState::Exposed>(),
+            num_subcompartments                = {1,
+                                                  LctState5_14::get_num_subcompartments<InfState::Exposed>(),
                                                   LctState5_14::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                                   LctState5_14::get_num_subcompartments<InfState::InfectedSymptoms>(),
                                                   LctState5_14::get_num_subcompartments<InfState::InfectedSevere>(),
-                                                  LctState5_14::get_num_subcompartments<InfState::InfectedCritical>()};
+                                                  LctState5_14::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                  1,
+                                                  1};
             break;
         case 2:
             total_num_subcomps_this_group      = LctState15_34::Count;
             total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count;
-            num_subcompartments                = {LctState15_34::get_num_subcompartments<InfState::Exposed>(),
+            num_subcompartments                = {1,
+                                                  LctState15_34::get_num_subcompartments<InfState::Exposed>(),
                                                   LctState15_34::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                                   LctState15_34::get_num_subcompartments<InfState::InfectedSymptoms>(),
                                                   LctState15_34::get_num_subcompartments<InfState::InfectedSevere>(),
-                                                  LctState15_34::get_num_subcompartments<InfState::InfectedCritical>()};
+                                                  LctState15_34::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                  1,
+                                                  1};
             break;
         case 3:
             total_num_subcomps_this_group      = LctState35_59::Count;
             total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count;
-            num_subcompartments                = {LctState35_59::get_num_subcompartments<InfState::Exposed>(),
+            num_subcompartments                = {1,
+                                                  LctState35_59::get_num_subcompartments<InfState::Exposed>(),
                                                   LctState35_59::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                                   LctState35_59::get_num_subcompartments<InfState::InfectedSymptoms>(),
                                                   LctState35_59::get_num_subcompartments<InfState::InfectedSevere>(),
-                                                  LctState35_59::get_num_subcompartments<InfState::InfectedCritical>()};
+                                                  LctState35_59::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                  1,
+                                                  1};
             break;
         case 4:
             total_num_subcomps_this_group = LctState60_79::Count;
             total_num_subcomps_previous_groups =
                 LctState0_4::Count + LctState5_14::Count + LctState15_34::Count + LctState35_59::Count;
-            num_subcompartments = {LctState60_79::get_num_subcompartments<InfState::Exposed>(),
+            num_subcompartments = {1,
+                                   LctState60_79::get_num_subcompartments<InfState::Exposed>(),
                                    LctState60_79::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                    LctState60_79::get_num_subcompartments<InfState::InfectedSymptoms>(),
                                    LctState60_79::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState60_79::get_num_subcompartments<InfState::InfectedCritical>()};
+                                   LctState60_79::get_num_subcompartments<InfState::InfectedCritical>(),
+                                   1,
+                                   1};
             break;
         case 5:
             total_num_subcomps_this_group      = LctState80::Count;
             total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count +
                                                  LctState35_59::Count + LctState60_79::Count;
-            num_subcompartments = {LctState80::get_num_subcompartments<InfState::Exposed>(),
+            num_subcompartments = {1,
+                                   LctState80::get_num_subcompartments<InfState::Exposed>(),
                                    LctState80::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
                                    LctState80::get_num_subcompartments<InfState::InfectedSymptoms>(),
                                    LctState80::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState80::get_num_subcompartments<InfState::InfectedCritical>()};
+                                   LctState80::get_num_subcompartments<InfState::InfectedCritical>(),
+                                   1,
+                                   1};
             break;
         }
 
@@ -473,8 +496,8 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
     return mio::success();
 }
 
-mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compartments,
-                                       mio::ContactMatrixGroup contact_matrices, std::string save_dir = "")
+mio::IOResult<void> simulate_ode_model(Vector compartments_init, std::string contact_data_dir,
+                                       std::string save_dir = "")
 {
     using namespace params;
     // Use ODE FlowModel.
@@ -518,28 +541,28 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
     model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(seasonality);
 
-    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() =
-        mio::UncertainContactMatrix<ScalarType>(contact_matrices);
+    BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir, true));
+    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = contact_matrix;
 
     // Use mio::isecir::InfectionState when accessing init_compartments since this is computed using the IDE model.
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] =
-        init_compartments[int(mio::isecir::InfectionState::Susceptible)];
+        compartments_init[int(mio::isecir::InfectionState::Susceptible)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
-        init_compartments[int(mio::isecir::InfectionState::Exposed)];
+        compartments_init[int(mio::isecir::InfectionState::Exposed)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
-        init_compartments[int(mio::isecir::InfectionState::InfectedNoSymptoms)];
+        compartments_init[int(mio::isecir::InfectionState::InfectedNoSymptoms)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
-        init_compartments[int(mio::isecir::InfectionState::InfectedSymptoms)];
+        compartments_init[int(mio::isecir::InfectionState::InfectedSymptoms)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
-        init_compartments[int(mio::isecir::InfectionState::InfectedSevere)];
+        compartments_init[int(mio::isecir::InfectionState::InfectedSevere)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
-        init_compartments[int(mio::isecir::InfectionState::InfectedCritical)];
+        compartments_init[int(mio::isecir::InfectionState::InfectedCritical)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] =
-        init_compartments[int(mio::isecir::InfectionState::Recovered)];
+        compartments_init[int(mio::isecir::InfectionState::Recovered)];
     model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}] =
-        init_compartments[int(mio::isecir::InfectionState::Dead)];
+        compartments_init[int(mio::isecir::InfectionState::Dead)];
 
     model_ode.check_constraints();
 
@@ -555,9 +578,7 @@ mio::IOResult<void> simulate_ode_model(mio::Date start_date, Vector init_compart
     if (!save_dir.empty()) {
         std::string tmax_string  = std::to_string(tmax);
         std::string dt_string    = std::to_string(dt);
-        std::string filename_ode = save_dir + "ode_" + std::to_string(start_date.year) + "-" +
-                                   std::to_string(start_date.month) + "-" + std::to_string(start_date.day) + "_" +
-                                   tmax_string.substr(0, tmax_string.find(".")) + "_" +
+        std::string filename_ode = save_dir + "ode_" + tmax_string.substr(0, tmax_string.find(".")) + "_" +
                                    dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ode_compartments = filename_ode + ".h5";
@@ -581,26 +602,26 @@ mio::IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std:
 
 int main(int argc, char** argv)
 {
-    std::string result_dir = "../../simulation_results/";
+    std::string save_dir = "../../simulation_results/";
 
     // Set result_dir via command line.
     if (argc == 2) {
-        result_dir = argv[1];
+        save_dir = argv[1];
     }
 
     // Make folder if not existent yet.
-    boost::filesystem::path dir(result_dir);
+    boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
     mio::Date start_date(2020, 10, 01);
 
     // Set path to contact data.
-    std::string contact_data_dir  = "../../data/contacts/";
+    std::string contact_data_dir  = "../../data/Germany/contacts/";
     std::string reported_data_dir = "../../data/Germany/pydata/";
 
     // Changepoint scenario with halving of contacts after two days.
 
-    auto result_ide = simulate_ide_model(start_date, contact_data_dir, result_dir);
+    auto result_ide = simulate_ide_model(start_date, contact_data_dir, reported_data_dir, save_dir);
     if (!result_ide) {
         printf("%s\n", result_ide.error().formatted_message().c_str());
         return -1;
@@ -609,11 +630,9 @@ int main(int argc, char** argv)
     // // Use compartments at time 0 from IDE simulation as initial values for ODE and LCT model to make results comparable.
     Vector compartments_init = result_ide.value().get_value(0);
 
-    // auto result_ode = simulate_ode_model(compartments, contact_scaling, tmax, result_dir);
-    // if (!result_ode) {
-    //     printf("%s\n", result_ode.error().formatted_message().c_str());
-    //     return -1;
-    // }
+    auto result_lct = simulate_lct(compartments_init, contact_data_dir, save_dir);
+
+    auto result_ode = simulate_ode_model(compartments_init, contact_data_dir, save_dir);
 
     return 0;
 }

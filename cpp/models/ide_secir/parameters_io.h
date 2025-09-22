@@ -203,7 +203,7 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
         int offset = get_offset_in_days(entry.date, date);
 
         // Get the index regarding the age group.
-        // If we don't have age resolution and use EntryType=ConfirmedCasesNoAge, the index is set to 1.
+        // If we don't have age resolution and use EntryType=ConfirmedCasesNoAge, the index is set to 0.
         // If we consider multiple age groups and use EntryType=ConfirmedCasesDataEntry, it is determined accordingly.
         AgeGroup group = AgeGroup(0);
         if constexpr (std::is_same_v<EntryType, ConfirmedCasesDataEntry>) {
