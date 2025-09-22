@@ -59,5 +59,5 @@ keywords:
   - agent-based modeling
   - metapopulation models
   - mobility
-url: "https://doi.org/10.5281/zenodo.16684608"
+url: "https://elib.dlr.de/213614/"
 abstract: "MEmilio implements various models for infectious disease dynamics, from simple compartmental (ODE) models through Integro-Differential equation-based (IDE) models (sometimes also denoted 'age of infection models') to agent- or individual-based models (ABMs). Its modular design allows the combination of different models with different mobility patterns. Through efficient implementation and parallelization, MEmilio brings cutting edge and compute intensive epidemiological models to a large scale, enabling a precise and high-resolution spatiotemporal infectious disease dynamics."
