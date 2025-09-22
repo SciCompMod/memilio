@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import logging
-
+import spektral
 # suppress all autograph warnings from tensorflow
 
 logging.getLogger("tensorflow").setLevel(logging.ERROR)
