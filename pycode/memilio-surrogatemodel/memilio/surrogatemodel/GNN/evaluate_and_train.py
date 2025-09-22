@@ -310,7 +310,7 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
             'model_evaluations_paper')
         if not os.path.isdir(file_path_df):
             os.mkdir(file_path_df)
-        file_path_df = file_path_df+save_name.replace('.pickle', '.csv')
+        file_path_df = file_path_df+"/"+save_name.replace('.pickle', '.csv')
         df.to_csv(file_path_df)
 
     else:
@@ -321,8 +321,8 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
             "mean_test_loss": np.mean(test_scores),
             "mean_test_loss_orig": np.mean(test_scores_r),
             "training_time": elapsed/60,
-            "train_losses": [losses_history_all],
-            "val_losses": [val_losses_history_all]
+            "train_losses": losses_history_all,
+            "val_losses": val_losses_history_all
         }
 
 

@@ -404,6 +404,7 @@ def generate_data(
     :param input_width: number of time steps used for model input.
     :param label_width: number of time steps (days) used as model output/label.
     :param save_data: Option to deactivate the save of the dataset. Per default True.
+    :param transform: Option to deactivate the transformation of the data. Per default True.
     :param damping_method: String specifying the damping method, that should be used. Possible values "classic", "active", "random".
     :param max_number_damping: Maximal number of possible dampings. 
     :returns: Dictionary containing inputs, labels, contact_matrix, damping_days and damping_factors
@@ -473,8 +474,8 @@ def generate_data(
         f"For Days = {days}, AVG runtime: {np.mean(times)}s, Median runtime: {np.median(times)}s")
 
     if save_data:
-        if transform:
-            inputs, labels = scale_data(data)
+
+        inputs, labels = scale_data(data, transform)
 
         all_data = {"inputs": inputs,
                     "labels": labels,
@@ -510,7 +511,7 @@ if __name__ == "__main__":
     data_dir = "/localdata1/hege_mn/memilio/data"
     input_width = 5
     number_of_dampings = 0
-    num_runs = 100
+    num_runs = 1
     label_width_list = [30]
 
     random.seed(10)

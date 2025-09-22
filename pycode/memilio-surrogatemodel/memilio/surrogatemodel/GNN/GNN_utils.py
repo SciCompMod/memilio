@@ -133,21 +133,29 @@ def get_population():
     return population
 
 
-def scale_data(data):
+def scale_data(data, transform=True, num_compartments=8):
     """ Apply a logarithmic transformation on the data. 
 
     :param data: dictionary, containing entries "inputs" and "labels"
+    :param transform: Boolean, if True apply the transformation, else return the data reshaped.
+    :param num_compartments: Number of compartments in the epidemiological model.
     :returns scaled_inputs: Transformed input data 
     :returns scaled_labels: Transformed output data 
     """
-
-    num_groups = int(np.asarray(data['inputs']).shape[2] / 8)
+    if not np.issubdtype(np.asarray(data['inputs']).dtype, np.number):
+        raise ValueError("Input data must be numeric.")
+    if not np.issubdtype(np.asarray(data['labels']).dtype, np.number):
+        raise ValueError("Label data must be numeric.")
+    num_groups = int(np.asarray(data['inputs']).shape[2] / num_compartments)
     transformer = FunctionTransformer(np.log1p, validate=True)
 
     # Scale inputs
     inputs = np.asarray(
         data['inputs']).transpose(2, 0, 1, 3).reshape(num_groups * 8, -1)
-    scaled_inputs = transformer.transform(inputs)
+    if transform:
+        scaled_inputs = transformer.transform(inputs)
+    else:
+        scaled_inputs = inputs
     original_shape_input = np.asarray(data['inputs']).shape
 
     # Reverse the reshape
@@ -163,7 +171,10 @@ def scale_data(data):
     # Scale labels
     labels = np.asarray(
         data['labels']).transpose(2, 0, 1, 3).reshape(num_groups * 8, -1)
-    scaled_labels = transformer.transform(labels)
+    if transform:
+        scaled_labels = transformer.transform(labels)
+    else:
+        scaled_labels = labels
     original_shape_labels = np.asarray(data['labels']).shape
 
     # Reverse the reshape

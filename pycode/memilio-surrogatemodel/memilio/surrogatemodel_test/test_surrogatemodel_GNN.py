@@ -20,6 +20,7 @@
 
 from pyfakefs import fake_filesystem_unittest
 import memilio.surrogatemodel.GNN.network_architectures as gnn_arch
+import memilio.surrogatemodel.GNN.GNN_utils as utils
 
 from unittest.mock import patch
 import os
@@ -121,9 +122,9 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             ModelClass = generate_model_class(
                 "TestModel", layer_types, num_layers, num_output)
             model = ModelClass()
-
         self.assertEqual(str(
             error.exception), "All values in num_repeat must be at least 1.")
+
         num_layers = [3, 2]
         with self.assertRaises(ValueError) as error:
             ModelClass = generate_model_class(
@@ -169,6 +170,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         expected_num_layers = num_layers + 1  # +1 for the output layer
         self.assertEqual(len(model.layers), expected_num_layers)
 
+        # Check handling of invalid parameters
+        # Test with invalid layer type
         layer_type = "MonvConv"
         with self.assertRaises(ValueError) as error:
             model = get_model(layer_type, num_layers,
@@ -176,6 +179,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(
             error.exception), "Unsupported layer_type: MonvConv. "
             "Supported types are 'ARMAConv', 'GCSConv', 'GATConv', 'GCNConv', 'APPNPConv'.")
+        # Test with invalud num_layers
         layer_type = "GATConv"
         num_layers = 0
         with self.assertRaises(ValueError) as error:
@@ -183,7 +187,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
                               num_channels, activation, num_output)
         self.assertEqual(str(
             error.exception), "num_layers must be at least 1.")
-
+        # Test with invalid num_output
         num_layers = 2
         num_output = 0
         with self.assertRaises(ValueError) as error:
@@ -191,7 +195,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
                               num_channels, activation, num_output)
         self.assertEqual(str(
             error.exception), "num_output must be at least 1.")
-
+        # Test with invalid num_channels
         num_output = 2
         num_channels = 0
         with self.assertRaises(ValueError) as error:
@@ -199,7 +203,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
                               num_channels, activation, num_output)
         self.assertEqual(str(
             error.exception), "num_channels must be at least 1.")
-
+        # Test with invalid activation
         num_channels = 16
         activation = 5
         with self.assertRaises(ValueError) as error:
@@ -300,7 +304,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             path_cases, path_mobility, number_of_nodes=num_nodes)
         loader = MixedLoader(dataset, batch_size=2, epochs=1)
         res = evaluate(loader, model, loss_fn)
-
+        # Check if the result is a tuple of (loss, accuracy)
         self.assertEqual(len(res), 2)
         self.assertGreaterEqual(res[0], 0)
         self.assertGreaterEqual(res[1], 0)
@@ -318,7 +322,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             path_mobility, "commuter_mobility_2022.txt"))
         self.fs.remove_object(path_mobility)
 
-    def test_train_and_evaluate(self):
+    @patch("os.path.realpath", return_value="/home/")
+    def test_train_and_evaluate(self, mock_realpath):
         from memilio.surrogatemodel.GNN.evaluate_and_train import (
             train_and_evaluate, create_dataset, MixedLoader)
         from memilio.surrogatemodel.GNN.network_architectures import get_model
@@ -352,7 +357,47 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             optimizer=tf.keras.optimizers.Adam(),
             es_patience=100)
 
-        self.assertEqual(len(res["train_losses"][0][0]), number_of_epochs)
+        self.assertEqual(len(res["train_losses"][0]), number_of_epochs)
+        self.assertEqual(len(res["val_losses"][0]), number_of_epochs)
+        self.assertGreater(res["mean_test_loss"], 0)
+
+        # Testing with saving the results
+        res = train_and_evaluate(
+            dataset,
+            batch_size=2,
+            epochs=number_of_epochs,
+            model=model,
+            loss_fn=MeanAbsolutePercentageError(),
+            optimizer=tf.keras.optimizers.Adam(),
+            es_patience=100,
+            save_results=True)
+        save_results_path = os.path.join(self.path, "model_evaluations_paper")
+        save_model_path = os.path.join(self.path, "saved_weights")
+        self.assertTrue(os.path.exists(save_results_path))
+        self.assertTrue(os.path.exists(save_model_path))
+
+        file_path_df = save_results_path+"/model.csv"
+        df = pd.read_csv(file_path_df)
+        self.assertEqual(len(df), 1)
+        for item in [
+            "train_loss", "val_loss", "test_loss",
+            "test_loss_orig", "training_time",
+                "loss_history", "val_loss_history"]:
+            self.assertIn(item, df.columns)
+
+        file_path_model = save_model_path+"/model.pickle"
+        with open(file_path_model, 'rb') as f:
+            weights_loaded = pickle.load(f)
+        weights = model.get_weights()
+        for w1, w2 in zip(weights_loaded, weights):
+            np.testing.assert_array_equal(w1, w2)
+        # Clean up
+        self.fs.remove_object(path_cases)
+        self.fs.remove_object(os.path.join(
+            path_mobility, "commuter_mobility_2022.txt"))
+        self.fs.remove_object(path_mobility)
+        self.fs.remove_object(save_results_path)
+        self.fs.remove_object(save_model_path)
 
     @patch("os.path.realpath", return_value="/home/")
     def test_perform_grid_search(self, mock_realpath):
@@ -410,6 +455,38 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             path_mobility, "commuter_mobility_2022.txt"))
         self.fs.remove_object(path_mobility)
         self.fs.remove_object(os.path.join(self.path, "saves"))
+
+    def test_scale_data_valid_data(self):
+        """Test utils.scale_data with valid input and label data."""
+        data = {
+            # 10 samples, 1 day, 5 nodes, 8 groups
+            "inputs": np.random.rand(10, 1, 8, 5),
+            "labels": np.random.rand(10, 1, 8, 5)
+        }
+
+        scaled_inputs, scaled_labels = utils.scale_data(data, True)
+
+        # Check that the scaled data is not equal to the original data
+        assert not np.allclose(
+            data["inputs"].transpose(0, 3, 1, 2), scaled_inputs)
+        assert not np.allclose(
+            data["labels"].transpose(0, 3, 1, 2), scaled_labels)
+
+        # Check that the scaled data is log-transformed
+        assert np.allclose(scaled_inputs, np.log1p(
+            data["inputs"]).transpose(0, 3, 1, 2))
+        assert np.allclose(scaled_labels, np.log1p(
+            data["labels"]).transpose(0, 3, 1, 2))
+
+    def test_scale_data_invalid_data(self):
+        """Test utils.scale_data with invalid (non-numeric) data."""
+        data = {
+            "inputs": np.array([["a", "b"], ["c", "d"]]),  # Non-numeric data
+            "labels": np.array([["e", "f"], ["g", "h"]])
+        }
+
+        with self.assertRaises(ValueError):
+            utils.scale_data(data)
 
 
 if __name__ == '__main__':
