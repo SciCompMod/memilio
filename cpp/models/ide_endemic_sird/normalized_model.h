@@ -129,6 +129,8 @@ private:
      */
     void update_compartments(ScalarType dt);
 
+    void compute_size();
+
     /**
      * @brief Computes the force of infection for the current last time in transitions.
      *
@@ -142,6 +144,7 @@ private:
 
     TimeSeries<ScalarType> m_forceofinfection{
         TimeSeries<ScalarType>(1)}; ///< TimeSeries containing the Force of infection term for every time point,
+    TimeSeries<ScalarType> m_size{TimeSeries<ScalarType>(1)};
 
     // ---- Friend classes/functions. ----
     // In the Simulation class, the actual simulation is performed which is why it needs access to the here

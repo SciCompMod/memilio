@@ -76,6 +76,7 @@ void Simulation::advance(ScalarType tmax)
         m_normmodel->transitions.add_time_point(m_normmodel->transitions.get_last_time() + m_dt);
         m_normmodel->populations.add_time_point(m_normmodel->populations.get_last_time() + m_dt);
         m_normmodel->m_forceofinfection.add_time_point(m_normmodel->m_forceofinfection.get_last_time() + m_dt);
+        m_normmodel->m_size.add_time_point(m_normmodel->m_size.get_last_time() + m_dt);
 
         // Compute susceptibles:
         m_normmodel->compute_susceptibles(m_dt);
@@ -85,6 +86,8 @@ void Simulation::advance(ScalarType tmax)
 
         // Compute remaining compartments:
         m_normmodel->update_compartments(m_dt);
+
+        m_normmodel->compute_size();
 
         // Compute m_forceofinfection;
         m_normmodel->compute_forceofinfection(m_dt);

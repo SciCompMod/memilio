@@ -1,6 +1,5 @@
 #include "ide_endemic_sird/normalized_model.h"
 #include "ide_endemic_sird/computed_parameters.h"
-#include "ide_endemic_sird/model.h"
 #include "ide_endemic_sird/parameters.h"
 #include "ide_endemic_sird/infection_state.h"
 #include "memilio/config.h"
@@ -41,6 +40,7 @@ NormModel::NormModel(CompParameters const& compparams)
         0, TimeSeries<ScalarType>::Vector::Constant(static_cast<size_t>(InfectionTransition::Count), 0.));
 
     m_forceofinfection.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, compparameters->m_NormFoI_0[0]));
+    m_size.add_time_point(0, TimeSeries<ScalarType>::Vector::Constant(1, 1.0));
 }
 
 bool NormModel::check_constraints() const
@@ -123,7 +123,6 @@ void NormModel::flows_currents_timestep(ScalarType dt)
         populations.get_last_value()[static_cast<int>(InfectionState::Susceptible)];
 
     // Calculate the other Transitions with compute_flow.
-    // Calculate the other Transitions with compute_flow.
     // Infected To Dead:
     compute_flow(Eigen::Index(InfectionTransition::InfectedToDead),
                  Eigen::Index(InfectionTransition::SusceptibleToInfected), Eigen::Index(InfectionState::Infected), dt);
@@ -196,7 +195,15 @@ void NormModel::update_compartments(ScalarType dt)
                                 {
                                     InfectionTransition::InfectedToRecovered,
                                 },
-                                true, dt);
+                                false, dt);
+}
+void NormModel::compute_size()
+{
+    ScalarType sum = 0;
+    for (int state = 0; state < Eigen::Index(InfectionState::Count) - 1; state++) {
+        sum += populations.get_last_value()[state];
+    }
+    m_size.get_last_value()[0] = sum;
 }
 
 void NormModel::compute_forceofinfection(ScalarType dt)

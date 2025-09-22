@@ -19,7 +19,7 @@ int main()
 {
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
-    ScalarType tmax = 10;
+    ScalarType tmax = 100;
     ScalarType dt   = 1.0;
 
     int num_states      = static_cast<int>(mio::endisird::InfectionState::Count);
@@ -45,7 +45,7 @@ int main()
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    mio::SmootherCosine smoothcos(2.0);
+    mio::SmootherCosine smoothcos(8.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
@@ -109,12 +109,12 @@ int main()
     sim.advance(tmax);
 
     //Get the compartments of model and print them.
-    auto interpolated_results = mio::interpolate_simulation_result(sim.get_compartments(), dt / 2.);
-    interpolated_results.print_table({"S", "I", "R", "D "}, 16, 8);
+    // auto interpolated_results = mio::interpolate_simulation_result(sim.get_compartments(), dt / 2.);
+    // interpolated_results.print_table({"S", "I", "R", "D "}, 16, 8);
 
     //Get the commpartments of normmodel and print them.
-    // auto interpolated_normresults = mio::interpolate_simulation_result(sim.get_normmodel_compartments(), dt / 2.);
-    // interpolated_normresults.print_table({"s", "i",  "r"}, 16, 8);
+    auto interpolated_normresults = mio::interpolate_simulation_result(sim.get_normmodel_compartments(), dt / 2.);
+    interpolated_normresults.print_table({"s", "i", "r"}, 16, 8);
 
     // Uncomment to print the normalized compartments of model.
     // sim.get_normalizedcompartments().print_table({"S/N", "I/N",  "R/N"}, 16, 8);
@@ -134,43 +134,44 @@ int main()
     // Uncomment to print the force of infection of normmodel.
     // sim.get_normmodel_forceofinfections().print_table({"norm FoI"}, 16, 8);
 
+    sim.get_size().print_table({"sum"}, 16, 8);
     //Uncomment to print the reproduction number
-    std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
+    // std::cout << "The reproduction number Rc = " << sim.get_reproductionnumber_c() << "\n";
 
     // Uncomment to print the the values T_z1^z2
-    for (int i = 0; i < (int)sim.get_T().size(); i++) {
-        std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
-    }
+    // for (int i = 0; i < (int)sim.get_T().size(); i++) {
+    //     std::cout << "T_" << i << " = " << sim.get_T()[i] << "\n";
+    // }
 
     // Uncomment to print W_i
 
-    std::cout << "W_i = " << sim.get_W() << "\n";
+    // std::cout << "W_i = " << sim.get_W() << "\n";
 
     // Uncomment to print the equilibria
-    std::cout << "l_1 = " << sim.get_Equilibirum_FoI()[0] << "\n";
-    std::cout << "l_2 = " << sim.get_Equilibirum_FoI()[1] << "\n";
-    std::cout << "s_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Susceptible]
-              << "\n";
-    std::cout << "s_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Susceptible]
-              << "\n";
-    std::cout << "i_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Infected]
-              << "\n";
-    std::cout << "i_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Infected]
-              << "\n";
-    std::cout << "r_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Recovered]
-              << "\n";
-    std::cout << "r_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Recovered]
-              << "\n";
-    std::cout << "sigmaid_1 = "
-              << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
-    std::cout << "sigmaid_2 = "
-              << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
-    std::cout << "sigmair_1 = "
-              << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
-              << "\n";
-    std::cout << "sigmair_2 = "
-              << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
-              << "\n";
+    // std::cout << "l_1 = " << sim.get_Equilibirum_FoI()[0] << "\n";
+    // std::cout << "l_2 = " << sim.get_Equilibirum_FoI()[1] << "\n";
+    // std::cout << "s_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Susceptible]
+    //           << "\n";
+    // std::cout << "s_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Susceptible]
+    //           << "\n";
+    // std::cout << "i_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Infected]
+    //           << "\n";
+    // std::cout << "i_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Infected]
+    //           << "\n";
+    // std::cout << "r_1 = " << sim.get_Equilibirum_compartments()[0][(int)mio::endisird::InfectionState::Recovered]
+    //           << "\n";
+    // std::cout << "r_2 = " << sim.get_Equilibirum_compartments()[1][(int)mio::endisird::InfectionState::Recovered]
+    //           << "\n";
+    // std::cout << "sigmaid_1 = "
+    //           << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
+    // std::cout << "sigmaid_2 = "
+    //           << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToDead] << "\n";
+    // std::cout << "sigmair_1 = "
+    //           << sim.get_Equilibirum_transitions()[0][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
+    //           << "\n";
+    // std::cout << "sigmair_2 = "
+    //           << sim.get_Equilibirum_transitions()[1][(int)mio::endisird::InfectionTransition::InfectedToRecovered]
+    //           << "\n";
 
     // Uncomment to print the total population size.
     // sim.get_totalpopulations().print_table({"N"}, 16, 9);

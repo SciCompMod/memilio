@@ -123,6 +123,11 @@ public:
         return m_model->m_totalpopulation;
     }
 
+    TimeSeries<ScalarType> const& get_size()
+    {
+        return m_normmodel->m_size;
+    }
+
     /**
      * @brief Get the derivative of the total population of m_model.
      */

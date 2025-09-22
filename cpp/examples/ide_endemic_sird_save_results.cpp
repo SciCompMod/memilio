@@ -29,9 +29,9 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
 
     Vec vec_init(num_states);
 
-    vec_init[static_cast<int>(mio::endisird::InfectionState::Susceptible)] = 100000.;
-    vec_init[static_cast<int>(mio::endisird::InfectionState::Infected)]    = 30.;
-    vec_init[static_cast<int>(mio::endisird::InfectionState::Recovered)]   = 0.;
+    vec_init[static_cast<int>(mio::endisird::InfectionState::Susceptible)] = 87500.;
+    vec_init[static_cast<int>(mio::endisird::InfectionState::Infected)]    = 190.;
+    vec_init[static_cast<int>(mio::endisird::InfectionState::Recovered)]   = 12310.;
     vec_init[static_cast<int>(mio::endisird::InfectionState::Dead)]        = 0.;
 
     init.add_time_point(0, vec_init);
@@ -44,7 +44,7 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
     // mio::StateAgeFunctionWrapper delaydistribution(exp);
     // std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
-    mio::SmootherCosine smoothcos(12.0);
+    mio::SmootherCosine smoothcos(8.0);
     mio::StateAgeFunctionWrapper delaydistribution(smoothcos);
     std::vector<mio::StateAgeFunctionWrapper> vec_delaydistribution(num_transitions, delaydistribution);
 
@@ -82,8 +82,8 @@ mio::IOResult<void> simulate_endidemodel(ScalarType tmax, std::string save_dir =
 
     computed_parameters.parameters.get<mio::endisird::RiskOfInfectionFromSymptomatic>() = exponential_prob;
 
-    computed_parameters.parameters.set<mio::endisird::NaturalBirthRate>(1e-1);
-    computed_parameters.parameters.set<mio::endisird::NaturalDeathRate>(2e-2);
+    computed_parameters.parameters.set<mio::endisird::NaturalBirthRate>(4e-3);
+    computed_parameters.parameters.set<mio::endisird::NaturalDeathRate>(3e-3);
 
     //computed_parameters.set_tol_for_support_max(1e-6);
 
@@ -201,7 +201,7 @@ int main()
     std::string result_dir = "/localdata1/trit_ha/code/memilio-1/PythonPlotsEndIDESIRD/simulation_results/";
 
     // Define tmax.
-    ScalarType tmax = 100;
+    ScalarType tmax = 4000;
 
     auto result_ide = simulate_endidemodel(tmax, result_dir);
     if (!result_ide) {
