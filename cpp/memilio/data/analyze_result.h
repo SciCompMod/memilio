@@ -51,32 +51,32 @@ TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_re
  * @param interpolations_times std::vector of time points at which simulation results are interpolated.
  * @return interpolated time series at given interpolation points
  */
-
-template <typename FP = double>
+template <typename FP>
 TimeSeries<FP> interpolate_simulation_result(const TimeSeries<FP>& simulation_result,
-                                                 const std::vector<FP>& interpolation_times)
+
+                                             const std::vector<FP>& interpolation_times);
+
+/**
+ * helper template, type returned by overload interpolate_simulation_result(T t)
+ */
+template <class T>
+using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;
+
+/**
+ * @brief Interpolates results of all runs with evenly spaced, integer time points that represent whole days.
+ * @see interpolate_simulation_result
+ * @param ensemble_result result of multiple simulations (single TimeSeries or Graph)
+ * @return interpolated time series, one (or as many as nodes in the graph) per result in the ensemble
+ */
+template <class T>
+std::vector<InterpolateResultT<T>> interpolate_ensemble_results(const std::vector<T>& ensemble_results)
 {
-    assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
-
-    assert(std::is_sorted(interpolation_times.begin(), interpolation_times.end()) &&
-           "Time points for interpolation have to be sorted in non-descending order.");
-
-    if (interpolation_times.size() >= 2) {
-        assert((interpolation_times[1] > simulation_result.get_time(0) &&
-                interpolation_times.rbegin()[1] <= simulation_result.get_last_time()) &&
-               "All but the first and the last time point of interpolation have lie between simulation times (strictly "
-               "for lower boundary).");
-    }
-
-    TimeSeries<FP> interpolated(simulation_result.get_num_elements());
-
-    if (interpolation_times.size() == 0) {
-        return interpolated;
-    }
+    std::vector<InterpolateResultT<T>> interpolated;
     interpolated.reserve(ensemble_results.size());
     std::transform(ensemble_results.begin(), ensemble_results.end(), std::back_inserter(interpolated), [](auto& run) {
         return interpolate_simulation_result(run);
     });
+    return interpolated;
 }
 
 template <typename FP>

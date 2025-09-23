@@ -8,28 +8,24 @@
 #include "tools/optimal_control/helpers/integrator_selector.h"
 #include "tools/optimal_control/helpers/make_time_grid.h"
 
-#include "tools/optimal_control/constraints/infection_state_utils.h"
 
 template <class OptimizationSettings>
-void check_constraint_feasability(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<double>& model)
+void check_constraint_feasibility(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<double>& model)
 {
     std::vector<double> path_constraint_values(settings.num_path_constraints(), 0.0);
     std::vector<double> terminal_constraint_values(settings.num_terminal_constraints(), 0.0);
 
-    auto set_most_restrictive_control = [&](std::vector<double>& parameters, const std::string& name) {
-        size_t control_index = static_cast<size_t>(string_to_control(name));
-        for (size_t control_interval = 0; control_interval < settings.num_control_intervals(); control_interval++) {
-            parameters[control_index + control_interval * settings.num_control_parameters()] =
-                settings.control_parameters()[control_index].max();
-        }
-    };
-
     std::vector<double> parameters(settings.num_control_parameters() * settings.num_control_intervals());
-    set_most_restrictive_control(parameters, "SchoolClosure");
-    set_most_restrictive_control(parameters, "HomeOffice");
-    set_most_restrictive_control(parameters, "PhysicalDistancingSchool");
-    set_most_restrictive_control(parameters, "PhysicalDistancingWork");
-    set_most_restrictive_control(parameters, "PhysicalDistancingOther");
+    for (size_t control_interval = 0; control_interval < settings.num_control_intervals(); control_interval++) {
+
+        mio::SimulationTime<FP> time(time_steps[control_interval * settings.pc_resolution()]);
+        
+        for(size_t idx_control_parameter = 0; idx_control_parameter < settings.num_control_parameters(); idx_control_parameter++)
+        {
+            parameters[idx_control_parameter + control_interval * settings.num_control_parameters()] =
+                settings.control_parameters()[idx_control_parameter].max();
+        }
+    }
 
     auto integrator = make_integrator<double>(settings.integrator_type(), settings.dt());
 
@@ -45,7 +41,7 @@ void check_constraint_feasability(const OptimizationSettings& settings, const ty
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
         sim.get_dt() = settings.dt();
-        sim.advance(time_steps[gridindex + 1]);
+        sim.advance(time_steps[interval + 1]);
         const auto& final_state = sim.get_result().get_last_value();
 
         update_path_constraint<double, OptimizationSettings>(settings, sim.get_model(), final_state, path_constraint_values);

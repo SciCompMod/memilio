@@ -8,7 +8,6 @@
 #include "tools/optimal_control/helpers/integrator_selector.h"
 #include "tools/optimal_control/helpers/make_time_grid.h"
 
-#include "tools/optimal_control/constraints/infection_state_utils.h"
 
 template <typename FP, class OptimizationSettings>
 void constraint_function(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model,
@@ -45,11 +44,12 @@ void constraint_function(const OptimizationSettings& settings, const typename Op
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
         sim.get_dt() = settings.dt();
-        sim.advance(time_steps[gridindex + 1]);
+        sim.advance(time_steps[interval + 1]);
         const auto& final_state = sim.get_result().get_last_value();
 
         update_path_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, path_constraint_values);
     }
+    const auto& final_state = sim.get_result().get_last_value();
     update_terminal_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, terminal_constraint_values);
 
     size_t idx = 0;

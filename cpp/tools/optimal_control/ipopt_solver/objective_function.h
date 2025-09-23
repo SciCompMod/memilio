@@ -7,7 +7,6 @@
 #include "tools/optimal_control/helpers/integrator_selector.h"
 #include "tools/optimal_control/helpers/make_time_grid.h"
 
-#include "tools/optimal_control/constraints/infection_state_utils.h"
 
 template <typename FP, class OptimizationSettings>
 FP objective_function(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model, const FP* ptr_parameters,
@@ -41,27 +40,16 @@ FP objective_function(const OptimizationSettings& settings, const typename Optim
 
         size_t control_interval = interval / settings.pc_resolution();
 
-        auto param_at = [&](const std::string& name) {
-            size_t control_index = static_cast<size_t>(string_to_control(name));
-            return parameters[control_index + control_interval * settings.num_control_parameters()];
-        };
-
-        auto cost = [&](const std::string& name) {
-            size_t control_index = static_cast<size_t>(string_to_control(name));
-            return settings.control_parameters()[control_index].cost();
-        };
-
         sim.get_dt() = settings.dt();
-        sim.advance(time_steps[gridindex + 1]);
+        sim.advance(time_steps[interval + 1]);
         const auto& final_state = sim.get_result().get_last_value();
 
+        // Add costs of all control parameters for current interval
         FP interval_cost = 0.0;
-        interval_cost += cost("SchoolClosure") * param_at("SchoolClosure");
-        interval_cost += cost("HomeOffice") * param_at("HomeOffice");
-        interval_cost += cost("PhysicalDistancingSchool") * param_at("PhysicalDistancingSchool");
-        interval_cost += cost("PhysicalDistancingWork") * param_at("PhysicalDistancingWork");
-        interval_cost += cost("PhysicalDistancingOther") * param_at("PhysicalDistancingOther");
-
+        for(size_t idx_control_parameter = 0; idx_control_parameter < settings.num_control_parameters(); idx_control_parameter++)
+        {
+            interval_cost += settings.control_parameters()[idx_control_parameter].cost() * parameters[idx_control_parameter + control_interval * settings.num_control_parameters()]
+        }
         objective += interval_cost / settings.num_intervals();
     }
 

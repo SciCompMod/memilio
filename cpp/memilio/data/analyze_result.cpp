@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/data/analyze_result.h"
+#include "memilio/math/interpolation.h"
 
 #include <algorithm>
 #include <cassert>

@@ -21,7 +21,7 @@
 
 #include "tools/optimal_control/ipopt_solver/objective_function.h"
 #include "tools/optimal_control/ipopt_solver/constraint_function.h"
-#include "tools/optimal_control/ipopt_solver/constraint_feasability.h"
+#include "tools/optimal_control/ipopt_solver/constraint_feasibility.h"
 #include "tools/optimal_control/ipopt_solver/save_solution.h"
 
 #include "memilio/utils/mioomp.h"
@@ -156,7 +156,7 @@ MIO_NLP<OptimizationSettings>::MIO_NLP(const OptimizationSettings& settings)
         m_tape = ad::ga1s<double>::global_tape;
     }
 
-    check_constraint_feasability(m_settings, *m_model_double);
+    check_constraint_feasibility(m_settings, *m_model_double);
 }
 
 template <class OptimizationSettings>

@@ -7,9 +7,7 @@
 #include "tools/optimal_control/control_parameters/damping_controls.h"
 
 #include "tools/optimal_control/helpers/integrator_selector.h"
-#include "tools/optimal_control/helpers/make_time_grid.h"
 
-#include "tools/optimal_control/constraints/infection_state_utils.h"
 
 template <typename FP, class OptimizationSettings>
 void save_solution(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model, size_t n,

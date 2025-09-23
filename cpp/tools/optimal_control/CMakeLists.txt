@@ -3,7 +3,6 @@ option(MEMILIO_ENABLE_IPOPT "Enable numerical optimization with Ipopt, requires 
 add_library(optimal_control
     constraints/constraints.cpp
     constraints/constraints.h
-    constraints/infection_state_utils.h
     constraints/update_constraints.h
     control_parameters/control_activation.h
     control_parameters/control_parameters.cpp
@@ -12,12 +11,13 @@ add_library(optimal_control
     helpers/ad_type.h
     helpers/integrator_selector.h
     helpers/make_time_grid.h
+    ipopt_solver/constraint_feasibility.h
     ipopt_solver/constraint_function.h
     ipopt_solver/objective_function.h
     ipopt_solver/save_solution.h
     ipopt_solver/mio_ipopt.h
-    optimization_model/optimization_model.cpp
     optimization_model/optimization_model.h
+    optimization_model/osecirvvs_utils.h
     optimization_settings/optimization_settings.h
 )
 target_link_libraries(optimal_control PUBLIC memilio ode_secirvvs Boost::boost Boost::filesystem AD::AD Ipopt::Ipopt)
