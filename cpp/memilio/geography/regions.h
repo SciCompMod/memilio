@@ -38,7 +38,7 @@ namespace mio
 namespace regions
 {
 
-/// @biref Index for enumerating subregions (cities, counties, etc.) of the modelled area.
+/// @brief Index for enumerating subregions (cities, counties, etc.) of the modelled area.
 struct Region : public mio::Index<Region> {
     Region(const size_t num_regions)
         : mio::Index<Region>(num_regions)
