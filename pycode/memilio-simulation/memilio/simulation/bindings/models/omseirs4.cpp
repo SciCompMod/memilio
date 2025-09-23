@@ -84,10 +84,10 @@ PYBIND11_MODULE(_simulation_omseirs4, m)
         .value("R4", mio::omseirs4::InfectionState::R4);
 
     // Parameters
-    // Disable pickling for now to avoid missing serialize/deserialize implementations.
-    pymio::bind_ParameterSet<mio::omseirs4::ParametersBase<double>, pymio::EnablePickling::Never>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::omseirs4::ParametersBase<double>, pymio::EnablePickling::Required>(m,
+                                                                                                     "ParametersBase");
 
-    pymio::bind_class<mio::omseirs4::Parameters<double>, pymio::EnablePickling::Never,
+    pymio::bind_class<mio::omseirs4::Parameters<double>, pymio::EnablePickling::Required,
                       mio::omseirs4::ParametersBase<double>>(m, "Parameters")
         .def(py::init<>())
         .def("check_constraints", &mio::omseirs4::Parameters<double>::check_constraints)
@@ -99,7 +99,7 @@ PYBIND11_MODULE(_simulation_omseirs4, m)
     pymio::bind_CompartmentalModel<mio::omseirs4::InfectionState, Populations, mio::omseirs4::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
     pymio::bind_class<
-        mio::omseirs4::Model<double>, pymio::EnablePickling::Never,
+        mio::omseirs4::Model<double>, pymio::EnablePickling::Required,
         mio::CompartmentalModel<double, mio::omseirs4::InfectionState, Populations, mio::omseirs4::Parameters<double>>>(
         m, "Model")
         .def(py::init<>());

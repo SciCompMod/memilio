@@ -41,6 +41,11 @@ public:
     using typename Base::ParameterSet;
     using typename Base::Populations;
 
+    Model(const Populations& pop, const ParameterSet& params)
+        : Base(pop, params)
+    {
+    }
+
     Model()
         : Base(Populations({InfectionState::Count}, 0.), ParameterSet())
     {
@@ -114,6 +119,36 @@ public:
                                         beta3 * I_total * y[idx(InfectionState::S3)];
         dydt[idx(InfectionState::S4)] = gamma * (y[idx(InfectionState::R3)] + y[idx(InfectionState::R4)]) -
                                         mu * y[idx(InfectionState::S4)] - beta4 * I_total * y[idx(InfectionState::S4)];
+    }
+
+    /**
+     * serialize this.
+     * @see mio::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Model");
+        obj.add_element("Parameters", this->parameters);
+        obj.add_element("Populations", this->populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Model> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Model");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(
+            io,
+            [](auto&& par_, auto&& pop_) {
+                return Model{pop_, par_};
+            },
+            par, pop);
     }
 };
 
