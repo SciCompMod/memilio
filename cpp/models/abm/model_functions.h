@@ -70,6 +70,17 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
                                const TimePoint t, const TimeSpan dt);
 
 /**
+ * @brief Normalize contact exposure rate by number of people in age groups
+ * @param[in, out] local_contact_exposure Exposure by rates contacts for the local population.
+ * @param[in] local_population_per_age Local population per AgeGroup.
+ * @param[in] num_agegroup The number of AgeGroups in the model.
+ */
+void normalize_exposure_contribution(
+    ContactExposureRates& local_contact_exposure,
+    const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age,
+    size_t num_agegroups);
+
+/**
  * @brief Let a Person interact with the population at its current Location, possibly getting infected.
  * @param[in, out] rng PersonalRandomNumberGenerator for this Person.
  * @param[in, out] person The person to interact with the local population.
