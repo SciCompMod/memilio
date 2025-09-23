@@ -50,6 +50,7 @@ add_library(memilio
     io/result_io.cpp
     io/epi_data.h
     io/epi_data.cpp
+    io/cli.cpp
     io/cli.h
     math/euler.cpp
     math/euler.h
