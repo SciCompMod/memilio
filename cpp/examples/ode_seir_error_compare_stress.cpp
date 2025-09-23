@@ -46,9 +46,9 @@ int main()
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]    = inf;
     model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}]   = rec;
 
-    model.parameters.set<mio::oseir::TimeExposed<ScalarType>>(1.2);
-    model.parameters.set<mio::oseir::TimeInfected<ScalarType>>(1.6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.8);
+    model.parameters.set<mio::oseir::TimeExposed<ScalarType>>(1.);
+    model.parameters.set<mio::oseir::TimeInfected<ScalarType>>(1.);
+    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
 
     mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);

@@ -23,189 +23,207 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/compartments/simulation.h"
 #include "memilio/compartments/flow_simulation.h"
-#include "memilio/math/euler.h"
+#include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/type_list.h"
 #include "state_estimators.h"
-#include <cmath> // Required for std::ceil
+#include <iomanip>
+#include <vector>
+#include <cmath>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 
 using namespace mio::examples;
-using SimType = mio::FlowSimulation<ScalarType, mio::oseir::Model<ScalarType>>;
+using FlowSim = mio::FlowSimulation<ScalarType, mio::oseir::Model<ScalarType>>;
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::debug);
+    mio::set_log_level(mio::LogLevel::warn);
 
-    ScalarType t0   = 0;
-    ScalarType tmax = 1.;
+    std::vector<ScalarType> dts = {1.0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5};
+    std::vector<ScalarType> pcs = {0.95, 0.96, 0.97, 0.98, 0.99, 1.00};
 
-    mio::oseir::Model<ScalarType> model(1);
+    const std::string save_dir         = "/localdata1/code/memilio/saves";
+    const std::string metrics_csv_path = save_dir + "/commuter_metrics.csv";
+    std::ofstream metrics_csv(metrics_csv_path, std::ios::out);
+    metrics_csv << std::setprecision(15);
 
-    const auto sus = 9700, exp = 100, inf = 100, rec = 100;
-    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = sus;
-    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = exp;
-    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]    = inf;
-    model.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}]   = rec;
+    // Aggregierte Metriken je (p_c, dt)
+    metrics_csv << "p_c,dt,n_steps,"
+                << "viol_frac,neg_frac,over_S_frac,over_E_frac,over_I_frac,over_R_frac,"
+                << "Linf_E,Linf_I,Linf_R,Linf_all,"
+                << "rmax_dt_max,rmax_dt_mean\n";
 
-    model.parameters.set<mio::oseir::TimeExposed<ScalarType>>(5.2);
-    model.parameters.set<mio::oseir::TimeInfected<ScalarType>>(6);
-    model.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
+    for (auto p_c : pcs) {
+        std::cout << "Starting p_c = " << p_c << " ..." << std::endl;
+        for (auto curr_dt : dts) {
 
-    // mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
-    // contact_matrix[0].get_baseline().setConstant(2.7);
-    // contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
+            // --- Zeithorizont & Modelle ---
+            ScalarType t0   = 0.;
+            ScalarType dt   = curr_dt; // Euler-Schrittweite und Ausgabeabstand
+            ScalarType tmax = 150.;
 
-    model.check_constraints();
+            // Flow/Total SEIR (1 Altersgruppe)
+            mio::oseir::Model<ScalarType> model_flow(1);
+            const double sus = 7700, exp = 1500, inf = 1500, rec = 300;
+            model_flow.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] = sus;
+            model_flow.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}]     = exp;
+            model_flow.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Infected}]    = inf;
+            model_flow.populations[{mio::AgeGroup(0), mio::oseir::InfectionState::Recovered}]   = rec;
 
-    // Total solution
-    auto integrator = std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-    const double step_size_ref = 1e-8;
-    auto sim                   = mio::FlowSimulation<double, mio::oseir::Model<double>>(model, t0, step_size_ref);
-    sim.set_integrator(integrator);
-    sim.advance(tmax);
-    const auto& seir_res = sim.get_result();
+            model_flow.parameters.set<mio::oseir::TimeExposed<ScalarType>>(1.0);
+            model_flow.parameters.set<mio::oseir::TimeInfected<ScalarType>>(1.0);
+            model_flow.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(0.1);
 
-    // commuter state estimations
-    const auto p_c   = 0.3;
-    const double S_c = sus * p_c;
-    const double E_c = exp * p_c;
-    const double I_c = inf * p_c;
-    const double R_c = rec * p_c;
-    Eigen::VectorXd initial_mobile_pop(4);
-    initial_mobile_pop << S_c, E_c, I_c, R_c;
+            mio::ContactMatrixGroup& contact_matrix =
+                model_flow.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
+            contact_matrix[0].get_baseline().setConstant(2.7);
+            model_flow.check_constraints();
 
-    // calculate high-precision reference solution for mobile population using ExplicitModel
-    mio::log_info("Calculating high-precision reference sol using ExplicitModel...");
-    ExplicitModel model_explicit_ref(1, 1); // 1 age group, 1 commuter group (CommuterBase)
-    const ScalarType p_nc = 1.0 - p_c;
+            // Integrator & Simulation (Totals)
+            auto integrator_flow =
+                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
+            FlowSim sim_flow(model_flow, t0, dt); // Ausgabeabstand = dt
+            sim_flow.set_integrator(integrator_flow);
+            sim_flow.advance(tmax);
+            const auto& seir_res = sim_flow.get_result();
 
-    // Initialize populations for the explicit reference model
-    // NonCommuter
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::S}] = sus * p_nc;
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::E}] = exp * p_nc;
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::I}] = inf * p_nc;
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::R}] = rec * p_nc;
+            // Parameter (für rmax_dt Monitoring)
+            const double rho =
+                model_flow.parameters.get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(0)];
+            const auto phi_ct = 2.7;
+            const double TE   = model_flow.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(0)];
+            const double TI   = model_flow.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(0)];
 
-    // Commuter (using CommuterBase for the single commuter group)
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::S}] = S_c;
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::E}] = E_c;
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::I}] = I_c;
-    model_explicit_ref.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
-        mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::R}] = R_c;
+            // Initiale Pendler-Population (hier ohne Multiplikatoren < 1, sauberer für Heatmap)
+            const double S_c = sus * p_c;
+            const double E_c = exp * p_c;
+            const double I_c = inf * p_c;
+            const double R_c = rec * p_c;
+            Eigen::VectorXd initial_mobile_pop(4);
+            initial_mobile_pop << S_c, E_c, I_c, R_c;
 
-    // Copy parameters from the aggregate flow model to the explicit reference model
-    model_explicit_ref.parameters.set<mio::oseir::TimeExposed<ScalarType>>(
-        model.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(0)]);
-    model_explicit_ref.parameters.set<mio::oseir::TimeInfected<ScalarType>>(
-        model.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(0)]);
-    model_explicit_ref.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(
-        model.parameters.get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(0)]);
-    model_explicit_ref.parameters.get<mio::oseir::ContactPatterns<ScalarType>>() =
-        model.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
+            // --- Explizites Kommuter-Modell (Referenz) ---
+            ExplicitModel model_explicit(1, 1);
 
-    model_explicit_ref.check_constraints();
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::S}] = sus - S_c;
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::E}] = exp - E_c;
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::I}] = inf - I_c;
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::NonCommuter, InfectionStateExplicit::R}] = rec - R_c;
 
-    auto integrator_ref =
-        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
-    ExplicitSim sim_explicit_ref(model_explicit_ref, t0, step_size_ref);
-    sim_explicit_ref.set_integrator(integrator_ref);
-    sim_explicit_ref.advance(tmax);
-    const auto& explicit_ref_results_full = sim_explicit_ref.get_result();
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::S}] = S_c;
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::E}] = E_c;
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::I}] = I_c;
+            model_explicit.populations[mio::Index<mio::AgeGroup, CommuterType, InfectionStateExplicit>{
+                mio::AgeGroup(0), CommuterType::CommuterBase, InfectionStateExplicit::R}] = R_c;
 
-    // The commuter population is the last 4 states in the explicit model with 1 age group and 1 commuter type
-    auto y_ref_end = explicit_ref_results_full.get_last_value().tail(4);
+            // Parameter übernehmen
+            model_explicit.parameters.set<mio::oseir::TimeExposed<ScalarType>>(
+                model_flow.parameters.get<mio::oseir::TimeExposed<ScalarType>>()[mio::AgeGroup(0)]);
+            model_explicit.parameters.set<mio::oseir::TimeInfected<ScalarType>>(
+                model_flow.parameters.get<mio::oseir::TimeInfected<ScalarType>>()[mio::AgeGroup(0)]);
+            model_explicit.parameters.set<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>(
+                model_flow.parameters
+                    .get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(0)]);
+            model_explicit.parameters.get<mio::oseir::ContactPatterns<ScalarType>>() =
+                model_flow.parameters.get<mio::oseir::ContactPatterns<ScalarType>>();
+            model_explicit.check_constraints();
 
-    // Convergence test setup
-    const std::vector<ScalarType> dt_values = {1e-0, 0.5, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7};
-    struct ConvergenceResult {
-        ScalarType dt;
-        int time_steps; // Added to store the actual number of steps
-        ScalarType error_euler;
-        ScalarType error_high_order;
-        ScalarType error_flow;
-        ScalarType error_prob;
-    };
-    std::vector<ConvergenceResult> convergence_data;
+            auto integrator_explicit =
+                std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta4>>();
+            ExplicitSim sim_explicit(model_explicit, t0, dt);
+            sim_explicit.set_integrator(integrator_explicit);
+            sim_explicit.advance(tmax);
+            const auto& explicit_results_full = sim_explicit.get_result();
 
-    mio::log_info("Starting convergence test!");
+            // Pendler aus explizitem Modell extrahieren (letzte 4 Spalten)
+            mio::TimeSeries<ScalarType> explicit_commuter_results(4);
+            for (Eigen::Index i = 0; i < explicit_results_full.get_num_time_points(); ++i) {
+                explicit_commuter_results.add_time_point(explicit_results_full.get_time(i),
+                                                         explicit_results_full.get_value(i).tail(4));
+            }
 
-    for (ScalarType current_dt : dt_values) {
-        mio::log_info("dt = {}", current_dt);
-        Eigen::VectorXd mobile_pop_temp;
+            // --- Euler-Auxiliary-Step (Test-Methode) ---
+            const auto euler_commuter_results = calculate_mobile_population(
+                t0, tmax, dt, integrate_mobile_population_euler, sim_flow, seir_res, initial_mobile_pop);
 
-        // Use std::ceil to ensure t0 + num_steps * current_dt >= tmax.
-        const int num_steps = static_cast<int>(std::ceil((tmax - t0) / current_dt));
-        // const int num_steps = static_cast<int>((tmax - t0) / current_dt + 1e-9); // Alternative way to calculate num_steps
+            // --- Aggregation der Metriken über die Zeitpunkte ---
+            const auto n_points = static_cast<size_t>(std::min<ptrdiff_t>(
+                euler_commuter_results.get_num_time_points(), explicit_commuter_results.get_num_time_points()));
 
-        // Euler
-        mobile_pop_temp      = initial_mobile_pop;
-        ScalarType t_current = t0;
-        for (int step = 0; step < num_steps; ++step) {
-            const auto closest_idx_total = static_cast<size_t>(std::round(t_current / step_size_ref));
-            const auto& total_pop_at_t   = seir_res.get_value(closest_idx_total);
-            integrate_mobile_population_euler(mobile_pop_temp, sim, total_pop_at_t, t_current, current_dt);
-            t_current += current_dt;
+            size_t steps = 0, cnt_violation = 0, cnt_neg = 0, cnt_overS = 0, cnt_overE = 0, cnt_overI = 0,
+                   cnt_overR = 0;
+            double LinfE = 0.0, LinfI = 0.0, LinfR = 0.0;
+
+            double rmax_dt_max = 0.0, rmax_dt_sum = 0.0;
+
+            for (size_t i = 0; i < n_points; ++i) {
+                // const auto time   = euler_commuter_results.get_time(static_cast<Eigen::Index>(i));
+                const auto eul_v  = euler_commuter_results.get_value(static_cast<Eigen::Index>(i));
+                const auto expl_v = explicit_commuter_results.get_value(static_cast<Eigen::Index>(i));
+                const auto tot_v  = seir_res.get_value(static_cast<Eigen::Index>(i)); // [S,E,I,R] totals
+
+                // Totals + Rateparameter (für rmax_dt)
+                const double S_tot = tot_v[0], E_tot = tot_v[1], I_tot = tot_v[2], R_tot = tot_v[3];
+                const double N_tot  = S_tot + E_tot + I_tot + R_tot;
+                const double lambda = (N_tot > 0.) ? (rho * phi_ct * (I_tot / N_tot)) : 0.0;
+                const double rS = lambda, rE = 1.0 / TE, rI = 1.0 / TI;
+                const double rmax_dt = std::max({rS, rE, rI}) * static_cast<double>(dt);
+                rmax_dt_max          = std::max(rmax_dt_max, rmax_dt);
+                rmax_dt_sum += rmax_dt;
+
+                // Linf-Fehler (E, I, R)
+                LinfE = std::max(LinfE, std::abs(eul_v[1] - expl_v[1]));
+                LinfI = std::max(LinfI, std::abs(eul_v[2] - expl_v[2]));
+                LinfR = std::max(LinfR, std::abs(eul_v[3] - expl_v[3]));
+
+                // Feasibility-Checks
+                const bool neg_euler = (eul_v[0] < 0.) || (eul_v[1] < 0.) || (eul_v[2] < 0.) || (eul_v[3] < 0.);
+                const bool over_S    = (eul_v[0] > S_tot);
+                const bool over_E    = (eul_v[1] > E_tot);
+                const bool over_I    = (eul_v[2] > I_tot);
+                const bool over_R    = (eul_v[3] > R_tot);
+                const bool any_bad   = neg_euler || over_S || over_E || over_I || over_R;
+
+                if (neg_euler)
+                    ++cnt_neg;
+                if (over_S)
+                    ++cnt_overS;
+                if (over_E)
+                    ++cnt_overE;
+                if (over_I)
+                    ++cnt_overI;
+                if (over_R)
+                    ++cnt_overR;
+                if (any_bad)
+                    ++cnt_violation;
+                ++steps;
+            }
+
+            steps--;
+
+            const double viol_frac    = (steps > 0) ? static_cast<double>(cnt_violation) / steps : 0.0;
+            const double neg_frac     = (steps > 0) ? static_cast<double>(cnt_neg) / steps : 0.0;
+            const double overS_frac   = (steps > 0) ? static_cast<double>(cnt_overS) / steps : 0.0;
+            const double overE_frac   = (steps > 0) ? static_cast<double>(cnt_overE) / steps : 0.0;
+            const double overI_frac   = (steps > 0) ? static_cast<double>(cnt_overI) / steps : 0.0;
+            const double overR_frac   = (steps > 0) ? static_cast<double>(cnt_overR) / steps : 0.0;
+            const double Linf_all     = std::max({LinfE, LinfI, LinfR});
+            const double rmax_dt_mean = (steps > 0) ? (rmax_dt_sum / steps) : 0.0;
+
+            metrics_csv << p_c << "," << curr_dt << "," << steps << "," << viol_frac << "," << neg_frac << ","
+                        << overS_frac << "," << overE_frac << "," << overI_frac << "," << overR_frac << "," << LinfE
+                        << "," << LinfI << "," << LinfR << "," << Linf_all << "," << rmax_dt_max << "," << rmax_dt_mean
+                        << "\n";
         }
-        const auto y_euler_end       = mobile_pop_temp;
-        const ScalarType error_euler = (y_euler_end - y_ref_end).norm();
-
-        // high Order
-        mobile_pop_temp = initial_mobile_pop;
-        t_current       = t0;
-        for (int step = 0; step < num_steps; ++step) {
-            const auto closest_idx_total = static_cast<size_t>(std::round(t_current / step_size_ref));
-            const auto& total_pop_at_t   = seir_res.get_value(closest_idx_total);
-            integrate_mobile_population_high_order(mobile_pop_temp, sim, total_pop_at_t, t_current, current_dt);
-            t_current += current_dt;
-        }
-        const auto y_high_order_end       = mobile_pop_temp;
-        const ScalarType error_high_order = (y_high_order_end - y_ref_end).norm();
-
-        // Flow-based
-        mobile_pop_temp = initial_mobile_pop;
-        t_current       = t0;
-        for (int step = 0; step < num_steps; ++step) {
-            const auto closest_idx_total = static_cast<size_t>(std::round(t_current / step_size_ref));
-            const auto& total_pop_at_t   = seir_res.get_value(closest_idx_total);
-            flow_based_mobility_returns(mobile_pop_temp, sim, total_pop_at_t, t_current, current_dt);
-            t_current += current_dt;
-        }
-        const auto y_flow_end       = mobile_pop_temp;
-        const ScalarType error_flow = (y_flow_end - y_ref_end).norm();
-
-        // Probabilistic
-        mobile_pop_temp = initial_mobile_pop;
-        t_current       = t0;
-        for (int step = 0; step < num_steps; ++step) {
-            const auto closest_idx_total = static_cast<size_t>(std::round(t_current / step_size_ref));
-            const auto& total_pop_at_t   = seir_res.get_value(closest_idx_total);
-            probabilistic_mobility_returns(mobile_pop_temp, sim, total_pop_at_t, t_current, current_dt);
-            t_current += current_dt;
-        }
-        const auto y_prob_end       = mobile_pop_temp;
-        const ScalarType error_prob = (y_prob_end - y_ref_end).norm();
-
-        // Store results
-        convergence_data.push_back({current_dt, num_steps, error_euler, error_high_order, error_flow, error_prob});
     }
-    // Write to file
-    const std::string save_dir             = "/localdata1/code/memilio/saves";
-    const std::string convergence_filename = save_dir + "/convergence_results.csv";
-    std::ofstream convergence_file(convergence_filename);
-    convergence_file << "dt,TimeSteps,ErrorEuler,ErrorHighOrder,ErrorFlow,ErrorProb\n";
-    for (const auto& result : convergence_data) {
-        convergence_file << result.dt << "," << result.time_steps << "," << result.error_euler << ","
-                         << result.error_high_order << "," << result.error_flow << "," << result.error_prob << "\n";
-    }
-    convergence_file.close();
-
     return 0;
 }
