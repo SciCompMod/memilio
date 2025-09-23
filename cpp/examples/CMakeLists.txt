@@ -46,10 +46,6 @@ add_executable(ode_seir_analytical ode_seir_analytical.cpp)
 target_link_libraries(ode_seir_analytical PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_analytical PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(ode_seir_flow_explicit ode_seir_flow_explicit.cpp)
-target_link_libraries(ode_seir_flow_explicit PRIVATE memilio ode_seir)
-target_compile_options(ode_seir_flow_explicit PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
-
 add_executable(ode_seir_memory_benchmark ode_seir_memory_benchmark.cpp)
 target_link_libraries(ode_seir_memory_benchmark PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_memory_benchmark PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
