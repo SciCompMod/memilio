@@ -158,6 +158,59 @@ public:
         m_tol = new_tol;
     }
 
+    /**
+     * @brief Compute the number of persons that have a specific state age at t0 for a specified compartment and a 
+     * specified group.
+     * 
+     * For each element of the computed vector, the value yields the number of persons that have a certain state age. 
+     * The state age can be obtained by multiplying the index of the element with the time step size dt. E.g., if 
+     * the result is stored in vec and vec[2]=5.294; this means that there are 5.294 persons that have a state age
+     * of 2*dt for the respective compartment and group.        
+     * 
+     * The considered compartment is specified via the parameter idx_IncomingFlow. The parameters idx_TransitionDistribution1 and 
+     * idx_TransitionDistribution2 are assumed to be match the considered compartment. 
+     * 
+     * The provided functionality can be useful for initializing an ABM so that IDE model and ABM are comparable. 
+     *
+     * Note that this function is really similar to compute_compartment_from_flows(). There, we approximate the integral
+     * of the respective compartment by the nonstandard scheme and require the sum over all state ages. Here, we store 
+     * the summands individually so that we can distinguish the individuals in the compartments with respect to their
+     * state age.
+     *
+     * @param[in] dt Time discretization step size.
+     * @param[in] group The AgeGroup for which we want to compute.
+     * @param[in] idx_IncomingFlow Specifies the index of the incoming flow to #InfectionState in transitions. 
+     * @param[in] idx_TransitionDistribution1 Specifies the index of the first relevant TransitionDistribution, 
+     *              related to a flow from the considered #InfectionState to any other #InfectionState.
+     *              This index is also used for related probability.
+     * @param[in] idx_TransitionDistribution2 Specifies the index of the second relevant TransitionDistribution, 
+     *              related to a flow from the considered #InfectionState to any other #InfectionState (in most cases
+     *               to Recovered). 
+     *              Related probability is calculated via 1-probability[idx_TransitionDistribution1].
+     *              Sometimes the second index is not needed, e.g., if probability[idx_TransitionDistribution1]=1.
+     *
+     * @return Vector containing the number of persons per state age for the considered group.
+     */
+    std::vector<ScalarType> compute_num_persons_per_state_age_per_group(ScalarType dt, AgeGroup group,
+                                                                        Eigen::Index idx_IncomingFlow,
+                                                                        int idx_TransitionDistribution1,
+                                                                        int idx_TransitionDistribution2 = 0);
+
+    /**
+     * @brief Compute the number of persons per state age for the compartments Exposed, InfectedNoSymptoms, 
+     * InfectedSymptoms, InfectedSevere and InfectedCritical; startified by age group.
+     * 
+     * The returned vector has the following structure:
+     * - First dimension: Determines the compartment.
+     * - Second dimension: Determines the age group.
+     * - Third dimension: Determines the number of persons per state age.
+     *
+     * @param[in] dt Time discretization step size.
+     * 
+     * @return Vector per compartment per group containing the number of persons per state age.
+     */
+    std::vector<std::vector<std::vector<ScalarType>>> get_num_persons_per_state_age(ScalarType dt);
+
     // ---- Public parameters. ----
     ParameterSet parameters{AgeGroup(m_num_agegroups)}; ///< ParameterSet of Model Parameters.
     // Attention: populations and transitions do not necessarily have the same number of time points due to the

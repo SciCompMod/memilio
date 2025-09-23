@@ -29,6 +29,7 @@
 #include "vector"
 #include <algorithm>
 #include <cstddef>
+#include <vector>
 
 namespace mio
 {
@@ -178,6 +179,112 @@ ScalarType Model::get_global_support_max(ScalarType dt) const
         }
     }
     return global_support_max;
+}
+
+// ---- Functionality to get the number of persons per state age at the beginning of a simulation. ----
+std::vector<ScalarType> Model::compute_num_persons_per_state_age_per_group(ScalarType dt, AgeGroup group,
+                                                                           Eigen::Index idx_IncomingFlow,
+                                                                           int idx_TransitionDistribution1,
+                                                                           int idx_TransitionDistribution2)
+{
+    ScalarType calc_time = 0;
+    // Determine relevant calculation area and corresponding index.
+    if ((1 - parameters.get<TransitionProbabilities>()[group][idx_TransitionDistribution1]) > 0) {
+        calc_time = std::max(m_transitiondistributions_support_max[group][idx_TransitionDistribution1],
+                             m_transitiondistributions_support_max[group][idx_TransitionDistribution2]);
+    }
+    else {
+        calc_time = m_transitiondistributions_support_max[group][idx_TransitionDistribution1];
+    }
+
+    Eigen::Index calc_time_index = (Eigen::Index)std::ceil(calc_time / dt) - 1;
+
+    Eigen::Index num_time_points = transitions.get_num_time_points();
+
+    // Index referring to transitions.
+    int transition_index = get_transition_flat_index(idx_IncomingFlow, group);
+
+    std::vector<ScalarType> persons_per_state_age_per_group(num_time_points, 0.);
+
+    for (Eigen::Index i = num_time_points - 1 - calc_time_index; i < num_time_points - 1; i++) {
+
+        ScalarType state_age_index = num_time_points - 1 - i;
+        ScalarType state_age       = state_age_index * dt;
+
+        persons_per_state_age_per_group[state_age_index] =
+            (parameters.get<TransitionProbabilities>()[group][idx_TransitionDistribution1] *
+                 parameters.get<TransitionDistributions>()[group][idx_TransitionDistribution1].eval(state_age) +
+             (1 - parameters.get<TransitionProbabilities>()[group][idx_TransitionDistribution1]) *
+                 parameters.get<TransitionDistributions>()[group][idx_TransitionDistribution2].eval(state_age)) *
+            transitions[i + 1][transition_index];
+    }
+
+    return persons_per_state_age_per_group;
+}
+
+std::vector<std::vector<std::vector<ScalarType>>> Model::get_num_persons_per_state_age(ScalarType dt)
+{
+    // Get global support max.
+    ScalarType global_support_max         = get_global_support_max(dt);
+    Eigen::Index global_support_max_index = Eigen::Index(std::ceil(global_support_max / dt));
+
+    // Define vectors where the number of persons per state age is stored for the compartments Exposed, InfectedNoSymptoms,
+    // InfectedSymptoms, InfectedSevere and InfectedCritical.
+    std::vector<std::vector<ScalarType>> num_persons_per_state_age_E(
+        m_num_agegroups, std::vector<ScalarType>(global_support_max_index + 1, 0.));
+    std::vector<std::vector<ScalarType>> num_persons_per_state_age_INS(
+        m_num_agegroups, std::vector<ScalarType>(global_support_max_index + 1, 0.));
+    std::vector<std::vector<ScalarType>> num_persons_per_state_age_ISy(
+        m_num_agegroups, std::vector<ScalarType>(global_support_max_index + 1, 0.));
+    std::vector<std::vector<ScalarType>> num_persons_per_state_age_ISev(
+        m_num_agegroups, std::vector<ScalarType>(global_support_max_index + 1, 0.));
+    std::vector<std::vector<ScalarType>> num_persons_per_state_age_ICr(
+        m_num_agegroups, std::vector<ScalarType>(global_support_max_index + 1, 0.));
+
+    // For every age group, compute the number of persons per state age. The resulting vector constitutes an element of
+    // the above defined "global" vector. This is done for all considered compartments.
+    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+        // Exposed
+        std::vector<ScalarType> num_persons_per_state_age_per_group_E = compute_num_persons_per_state_age_per_group(
+            dt, group, Eigen::Index(InfectionTransition::SusceptibleToExposed),
+            (int)InfectionTransition::ExposedToInfectedNoSymptoms);
+        num_persons_per_state_age_E[(size_t)group] = num_persons_per_state_age_per_group_E;
+
+        // InfectedNoSymptoms
+        std::vector<ScalarType> num_persons_per_state_age_per_group_INS = compute_num_persons_per_state_age_per_group(
+            dt, group, Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms),
+            (int)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
+            (int)InfectionTransition::InfectedNoSymptomsToRecovered);
+        num_persons_per_state_age_INS[(size_t)group] = num_persons_per_state_age_per_group_INS;
+
+        // InfectedSymptoms
+        std::vector<ScalarType> num_persons_per_state_age_per_group_ISy = compute_num_persons_per_state_age_per_group(
+            dt, group, Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms),
+            (int)InfectionTransition::InfectedSymptomsToInfectedSevere,
+            (int)InfectionTransition::InfectedSymptomsToRecovered);
+        num_persons_per_state_age_ISy[(size_t)group] = num_persons_per_state_age_per_group_ISy;
+
+        // InfectedSevere
+        std::vector<ScalarType> num_persons_per_state_age_per_group_ISev = compute_num_persons_per_state_age_per_group(
+            dt, group, Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere),
+            (int)InfectionTransition::InfectedSevereToInfectedCritical,
+            (int)InfectionTransition::InfectedSevereToRecovered);
+        num_persons_per_state_age_ISev[(size_t)group] = num_persons_per_state_age_per_group_ISev;
+
+        // InfectedCritical
+        std::vector<ScalarType> num_persons_per_state_age_per_group_ICr = compute_num_persons_per_state_age_per_group(
+            dt, group, Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical),
+            (int)InfectionTransition::InfectedCriticalToDead, (int)InfectionTransition::InfectedCriticalToRecovered);
+        num_persons_per_state_age_ICr[(size_t)group] = num_persons_per_state_age_per_group_ICr;
+    }
+
+    // Define vector num_persons_per_state_age that contains the above created vectors containing the respective numbers
+    // of persons per state age index for the considered compartments (stratified by age groups).
+    std::vector<std::vector<std::vector<ScalarType>>> num_persons_per_state_age = {
+        num_persons_per_state_age_E, num_persons_per_state_age_INS, num_persons_per_state_age_ISy,
+        num_persons_per_state_age_ISev, num_persons_per_state_age_ICr};
+
+    return num_persons_per_state_age;
 }
 
 // ---- Functionality to calculate the sizes of the compartments for time t0. ----

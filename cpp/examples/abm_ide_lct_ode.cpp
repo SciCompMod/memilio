@@ -43,21 +43,25 @@
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "boost/filesystem.hpp"
+#include <Eigen/src/Core/Random.h>
 #include <cstddef>
 #include <string>
 #include <map>
 #include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
 
 // Define parameters for the simulation.
 namespace params
 {
-const size_t num_age_groups            = 6;
-const ScalarType age_group_sizes[]     = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population      = 83155031.;
-const ScalarType total_confirmed_cases = 341223.;
-const ScalarType deaths                = 0.;
+const size_t num_age_groups        = 6;
+const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
+const ScalarType total_population  = 83155031.;
+// const ScalarType total_confirmed_cases = 341223.;
+// const ScalarType deaths = 0.;
 
 // Define transition probabilities per age group.
 const ScalarType infectedSymptomsPerInfectedNoSymptoms[] = {0.75, 0.75, 0.8, 0.8, 0.8, 0.8};
@@ -106,6 +110,8 @@ ScalarType dt   = 0.01;
 
 } // namespace params
 
+using namespace mio;
+
 /** 
 * @brief Function to transform an age-resolved simulation result into a result without age resolution.
 *
@@ -117,11 +123,11 @@ ScalarType dt   = 0.01;
 * @param[in] ageresolved_result TimeSeries with an age-resolved simulation result.
 * @returns TimeSeries with the result where the values of the age groups are summed up.
 */
-mio::TimeSeries<ScalarType> sum_age_groups(const mio::TimeSeries<ScalarType> ageresolved_result)
+TimeSeries<ScalarType> sum_age_groups(const TimeSeries<ScalarType> ageresolved_result)
 {
     using namespace params;
     size_t infstatecount = size_t((ScalarType)ageresolved_result.get_num_elements() / (ScalarType)num_age_groups);
-    mio::TimeSeries<ScalarType> nonageresolved_result(infstatecount);
+    TimeSeries<ScalarType> nonageresolved_result(infstatecount);
 
     // For each time point, accumulate the age-resolved result and add the time point
     // to the non-age-resolved result.
@@ -145,8 +151,8 @@ mio::TimeSeries<ScalarType> sum_age_groups(const mio::TimeSeries<ScalarType> age
 *    is calculated from the age-resolved data. Default is false.
 * @returns The contact matrix or any IO errors that occur during reading the contact data files.
 */
-mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string contact_data_dir,
-                                                                          bool resolve_by_age = true)
+IOResult<UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string contact_data_dir,
+                                                                bool resolve_by_age = true)
 {
     using namespace params;
     const std::string contact_locations[] = {"home", "school_pf_eig", "work", "other"};
@@ -155,11 +161,11 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
     if (!resolve_by_age) {
         matrix_size = 1;
     }
-    auto contact_matrices = mio::ContactMatrixGroup(num_locations, matrix_size);
+    auto contact_matrices = ContactMatrixGroup(num_locations, matrix_size);
     // Load and set baseline contacts for each contact location.
     for (size_t location = 0; location < num_locations; location++) {
-        BOOST_OUTCOME_TRY(auto&& baseline, mio::read_mobility_plain(contact_data_dir + "baseline_" +
-                                                                    contact_locations[location] + ".txt"));
+        BOOST_OUTCOME_TRY(auto&& baseline,
+                          read_mobility_plain(contact_data_dir + "baseline_" + contact_locations[location] + ".txt"));
         if (!resolve_by_age) {
             ScalarType average = 0.;
             for (size_t i = 0; i < num_age_groups; i++) {
@@ -176,7 +182,7 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
             contact_matrices[location].get_minimum()  = Eigen::MatrixXd::Zero(matrix_size, matrix_size);
         }
     }
-    return mio::success(mio::UncertainContactMatrix<ScalarType>(contact_matrices));
+    return success(UncertainContactMatrix<ScalarType>(contact_matrices));
 }
 
 /**
@@ -187,81 +193,78 @@ mio::IOResult<mio::UncertainContactMatrix<ScalarType>> get_contact_matrix(std::s
 * results not being saved. 
 * @returns Any io errors that happen or the simulation results for the compartments.
 */
-mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(mio::Date start_date, std::string contact_data_dir,
-                                                              std::string reported_data_dir, std::string save_dir = "")
+IOResult<std::pair<Vector, std::vector<std::vector<std::vector<ScalarType>>>>>
+simulate_ide(Date start_date, std::string contact_data_dir, std::string reported_data_dir, std::string save_dir = "")
 {
     using namespace params;
-    using InfTransition = mio::isecir::InfectionTransition;
+    using InfTransition = isecir::InfectionTransition;
 
     // Initialize model.
     // Set total_population_init according to age_group_sizes.
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population_init =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> total_population_init =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
     for (size_t group = 0; group < num_age_groups; group++) {
-        total_population_init[(mio::AgeGroup)group] = age_group_sizes[group];
+        total_population_init[(AgeGroup)group] = age_group_sizes[group];
     }
 
     // Set these values to zero since they are set according to RKI data below.
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths_init =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), 0.);
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_confirmed_cases_init =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> deaths_init =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
 
     // Initialize with empty series for flows as we will initialize based on RKI data later on.
-    mio::isecir::Model model_ide(
-        mio::TimeSeries<ScalarType>((Eigen::Index)mio::isecir::InfectionTransition::Count * num_age_groups),
-        total_population_init, deaths_init, num_age_groups, total_confirmed_cases_init);
+    isecir::Model model_ide(TimeSeries<ScalarType>((Eigen::Index)isecir::InfectionTransition::Count * num_age_groups),
+                            total_population_init, deaths_init, num_age_groups, total_confirmed_cases_init);
 
     // Set working parameters.
     // Set TransitionDistributions.
-    mio::ConstantFunction initialfunc(0);
-    mio::StateAgeFunctionWrapper delaydistributioninit(initialfunc);
-    std::vector<mio::StateAgeFunctionWrapper> vec_delaydistrib((int)InfTransition::Count, delaydistributioninit);
+    ConstantFunction initialfunc(0);
+    StateAgeFunctionWrapper delaydistributioninit(initialfunc);
+    std::vector<StateAgeFunctionWrapper> vec_delaydistrib((int)InfTransition::Count, delaydistributioninit);
     // ExposedToInfectedNoSymptoms
-    mio::LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(lognorm_EtINS[0], 0, lognorm_EtINS[1]);
+    LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(lognorm_EtINS[0], 0, lognorm_EtINS[1]);
     vec_delaydistrib[(int)InfTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
         survivalExposedToInfectedNoSymptoms);
     // InfectedNoSymptomsToInfectedSymptoms
-    mio::LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(lognorm_INStISy[0], 0,
-                                                                              lognorm_INStISy[1]);
+    LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(lognorm_INStISy[0], 0, lognorm_INStISy[1]);
     vec_delaydistrib[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms].set_state_age_function(
         survivalInfectedNoSymptomsToInfectedSymptoms);
     // InfectedNoSymptomsToRecovered
-    mio::LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(lognorm_INStR[0], 0, lognorm_INStR[1]);
+    LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(lognorm_INStR[0], 0, lognorm_INStR[1]);
     vec_delaydistrib[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
         survivalInfectedNoSymptomsToRecovered);
     // InfectedSymptomsToInfectedSevere
-    mio::LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[0], 0, lognorm_ISytR[1]);
+    LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[0], 0, lognorm_ISytR[1]);
     vec_delaydistrib[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
         survivalInfectedSymptomsToInfectedSevere);
     // InfectedSymptomsToRecovered
-    mio::LognormSurvivalFunction survivalInfectedSymptomsToRecovered(lognorm_ISytR[0], 0, lognorm_ISytR[1]);
+    LognormSurvivalFunction survivalInfectedSymptomsToRecovered(lognorm_ISytR[0], 0, lognorm_ISytR[1]);
     vec_delaydistrib[(int)InfTransition::InfectedSymptomsToRecovered].set_state_age_function(
         survivalInfectedSymptomsToRecovered);
     // InfectedSevereToInfectedCritical
-    mio::LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(lognorm_ISevtICri[0], 0,
-                                                                          lognorm_ISevtICri[1]);
+    LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(lognorm_ISevtICri[0], 0, lognorm_ISevtICri[1]);
     vec_delaydistrib[(int)InfTransition::InfectedSevereToInfectedCritical].set_state_age_function(
         survivalInfectedSevereToInfectedCritical);
     // InfectedSevereToRecovered
-    mio::LognormSurvivalFunction survivalInfectedSevereToRecovered(lognorm_ISevtR[0], 0, lognorm_ISevtR[1]);
+    LognormSurvivalFunction survivalInfectedSevereToRecovered(lognorm_ISevtR[0], 0, lognorm_ISevtR[1]);
     vec_delaydistrib[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
         survivalInfectedSevereToRecovered);
     // InfectedCriticalToDead
-    mio::LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[0], 0, lognorm_ICritR[1]);
+    LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[0], 0, lognorm_ICritR[1]);
     vec_delaydistrib[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(survivalInfectedCriticalToDead);
     // InfectedCriticalToRecovered
-    mio::LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognorm_ICritR[0], 0, lognorm_ICritR[1]);
+    LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognorm_ICritR[0], 0, lognorm_ICritR[1]);
     vec_delaydistrib[(int)InfTransition::InfectedCriticalToRecovered].set_state_age_function(
         survivalInfectedCriticalToRecovered);
 
     // Set distributions for all age groups.
-    for (mio::AgeGroup group = 0; group < (mio::AgeGroup)num_age_groups; group++) {
-        model_ide.parameters.get<mio::isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+    for (AgeGroup group = 0; group < (AgeGroup)num_age_groups; group++) {
+        model_ide.parameters.get<isecir::TransitionDistributions>()[group] = vec_delaydistrib;
     }
 
     // Set other parameters.
-    for (mio::AgeGroup group = 0; group < (mio::AgeGroup)num_age_groups; group++) {
+    for (AgeGroup group = 0; group < (AgeGroup)num_age_groups; group++) {
         std::vector<ScalarType> vec_prob((int)InfTransition::Count, 1.);
         vec_prob[Eigen::Index(InfTransition::InfectedNoSymptomsToInfectedSymptoms)] =
             infectedSymptomsPerInfectedNoSymptoms[(size_t)group];
@@ -276,40 +279,42 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(mio::Date start_da
         vec_prob[Eigen::Index(InfTransition::InfectedCriticalToDead)]           = deathsPerCritical[(size_t)group];
         vec_prob[Eigen::Index(InfTransition::InfectedCriticalToRecovered)]      = 1 - deathsPerCritical[(size_t)group];
 
-        model_ide.parameters.get<mio::isecir::TransitionProbabilities>()[group] = vec_prob;
+        model_ide.parameters.get<isecir::TransitionProbabilities>()[group] = vec_prob;
     }
 
-    for (mio::AgeGroup group = 0; group < (mio::AgeGroup)num_age_groups; group++) {
-        mio::ConstantFunction constfunc(transmissionProbabilityOnContact[(size_t)group]);
-        mio::StateAgeFunctionWrapper StateAgeFunctionWrapperide(constfunc);
-        model_ide.parameters.get<mio::isecir::TransmissionProbabilityOnContact>()[group] = StateAgeFunctionWrapperide;
+    for (AgeGroup group = 0; group < (AgeGroup)num_age_groups; group++) {
+        ConstantFunction constfunc(transmissionProbabilityOnContact[(size_t)group]);
+        StateAgeFunctionWrapper StateAgeFunctionWrapperide(constfunc);
+        model_ide.parameters.get<isecir::TransmissionProbabilityOnContact>()[group] = StateAgeFunctionWrapperide;
 
         StateAgeFunctionWrapperide.set_distribution_parameter(relativeTransmissionNoSymptoms);
-        model_ide.parameters.get<mio::isecir::RelativeTransmissionNoSymptoms>() = StateAgeFunctionWrapperide;
+        model_ide.parameters.get<isecir::RelativeTransmissionNoSymptoms>() = StateAgeFunctionWrapperide;
 
         StateAgeFunctionWrapperide.set_distribution_parameter(riskOfInfectionFromSymptomatic);
-        model_ide.parameters.get<mio::isecir::RiskOfInfectionFromSymptomatic>()[group] = StateAgeFunctionWrapperide;
+        model_ide.parameters.get<isecir::RiskOfInfectionFromSymptomatic>()[group] = StateAgeFunctionWrapperide;
     }
 
     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir, true));
-    model_ide.parameters.get<mio::isecir::ContactPatterns>() = contact_matrix;
+    model_ide.parameters.get<isecir::ContactPatterns>() = contact_matrix;
 
     model_ide.set_tol_for_support_max(1e-6);
 
     std::string path_rki = reported_data_dir + "cases_all_age_all_dates.json";
-    BOOST_OUTCOME_TRY(std::vector<mio::ConfirmedCasesDataEntry> && rki_data, mio::read_confirmed_cases_data(path_rki));
+    BOOST_OUTCOME_TRY(std::vector<ConfirmedCasesDataEntry> && rki_data, read_confirmed_cases_data(path_rki));
 
     // Define vector for scale_confirmed_cases.
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> scale_confirmed_cases_vec =
-        mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_age_groups), scale_confirmed_cases);
+    CustomIndexArray<ScalarType, AgeGroup> scale_confirmed_cases_vec =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), scale_confirmed_cases);
 
-    mio::IOResult<void> init_flows = mio::isecir::set_initial_flows<mio::ConfirmedCasesDataEntry>(
-        model_ide, dt, rki_data, start_date, scale_confirmed_cases_vec);
+    BOOST_OUTCOME_TRY(isecir::set_initial_flows<ConfirmedCasesDataEntry>(model_ide, dt, rki_data, start_date,
+                                                                         scale_confirmed_cases_vec));
 
     model_ide.check_constraints(dt);
 
+    auto persons_per_state_age = model_ide.get_num_persons_per_state_age(dt);
+
     // Simulate.
-    mio::isecir::Simulation sim(model_ide, dt);
+    isecir::Simulation sim(model_ide, dt);
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
@@ -320,67 +325,73 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ide_model(mio::Date start_da
                                    "_" + dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ide_compartments = filename_ide + "_compartments.h5";
-        mio::IOResult<void> save_result_status_c =
-            mio::save_result({sim.get_result()}, {0}, num_age_groups, filename_ide_compartments);
+        IOResult<void> save_result_status_c =
+            save_result({sim.get_result()}, {0}, num_age_groups, filename_ide_compartments);
 
         if (!save_result_status_c) {
-            return mio::failure(mio::StatusCode::UnknownError, "Error while saving results.");
+            return failure(StatusCode::UnknownError, "Error while saving results.");
         }
     }
 
-    // Return results (i.e. compartments) of the simulation.
-    return mio::success(sim.get_result());
+    // Return init_compartments (i.e. populations at t0) and persons_per_state_age for initialization of other models.
+
+    Vector init_compartments = sim.get_result()[0];
+
+    std::pair<Vector, std::vector<std::vector<std::vector<ScalarType>>>> results =
+        std::make_pair(init_compartments, persons_per_state_age);
+
+    // std::vector<TimeSeries<ScalarType>> results = {sim.get_result()};
+    return success(results);
 }
 
-mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_data_dir, std::string save_dir = "")
+IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_dir, std::string save_dir = "")
 {
     using namespace params;
 
     // Initialize age-resolved model.
-    using InfState = mio::lsecir::InfectionState;
+    using InfState = lsecir::InfectionState;
 
-    using LctState0_4   = mio::LctInfectionState<InfState, 1, n_subcomps_E[0], n_subcomps_INS[0], n_subcomps_ISy[0],
-                                                 n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
-    using LctState5_14  = mio::LctInfectionState<InfState, 1, n_subcomps_E[1], n_subcomps_INS[1], n_subcomps_ISy[1],
-                                                 n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
-    using LctState15_34 = mio::LctInfectionState<InfState, 1, n_subcomps_E[2], n_subcomps_INS[2], n_subcomps_ISy[2],
-                                                 n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
-    using LctState35_59 = mio::LctInfectionState<InfState, 1, n_subcomps_E[3], n_subcomps_INS[3], n_subcomps_ISy[3],
-                                                 n_subcomps_ISev[3], n_subcomps_ICri[3], 1, 1>;
-    using LctState60_79 = mio::LctInfectionState<InfState, 1, n_subcomps_E[4], n_subcomps_INS[4], n_subcomps_ISy[4],
-                                                 n_subcomps_ISev[4], n_subcomps_ICri[4], 1, 1>;
-    using LctState80    = mio::LctInfectionState<InfState, 1, n_subcomps_E[5], n_subcomps_INS[5], n_subcomps_ISy[5],
-                                                 n_subcomps_ISev[5], n_subcomps_ICri[5], 1, 1>;
+    using LctState0_4   = LctInfectionState<InfState, 1, n_subcomps_E[0], n_subcomps_INS[0], n_subcomps_ISy[0],
+                                            n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
+    using LctState5_14  = LctInfectionState<InfState, 1, n_subcomps_E[1], n_subcomps_INS[1], n_subcomps_ISy[1],
+                                            n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
+    using LctState15_34 = LctInfectionState<InfState, 1, n_subcomps_E[2], n_subcomps_INS[2], n_subcomps_ISy[2],
+                                            n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
+    using LctState35_59 = LctInfectionState<InfState, 1, n_subcomps_E[3], n_subcomps_INS[3], n_subcomps_ISy[3],
+                                            n_subcomps_ISev[3], n_subcomps_ICri[3], 1, 1>;
+    using LctState60_79 = LctInfectionState<InfState, 1, n_subcomps_E[4], n_subcomps_INS[4], n_subcomps_ISy[4],
+                                            n_subcomps_ISev[4], n_subcomps_ICri[4], 1, 1>;
+    using LctState80    = LctInfectionState<InfState, 1, n_subcomps_E[5], n_subcomps_INS[5], n_subcomps_ISy[5],
+                                            n_subcomps_ISev[5], n_subcomps_ICri[5], 1, 1>;
 
-    using Model =
-        mio::lsecir::Model<LctState0_4, LctState5_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
+    using Model = lsecir::Model<LctState0_4, LctState5_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
 
     Model model;
 
     // Define parameters.
     for (size_t group = 0; group < num_age_groups; group++) {
-        model.parameters.get<mio::lsecir::TimeExposed>()[group]            = timeExposed[group];
-        model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[group] = timeInfectedNoSymptoms[group];
-        model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[group]   = timeInfectedSymptoms[group];
-        model.parameters.get<mio::lsecir::TimeInfectedSevere>()[group]     = timeInfectedSevere[group];
-        model.parameters.get<mio::lsecir::TimeInfectedCritical>()[group]   = timeInfectedCritical[group];
-        model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[group] =
+        model.parameters.get<lsecir::TimeExposed>()[group]            = timeExposed[group];
+        model.parameters.get<lsecir::TimeInfectedNoSymptoms>()[group] = timeInfectedNoSymptoms[group];
+        model.parameters.get<lsecir::TimeInfectedSymptoms>()[group]   = timeInfectedSymptoms[group];
+        model.parameters.get<lsecir::TimeInfectedSevere>()[group]     = timeInfectedSevere[group];
+        model.parameters.get<lsecir::TimeInfectedCritical>()[group]   = timeInfectedCritical[group];
+        model.parameters.get<lsecir::TransmissionProbabilityOnContact>()[group] =
             transmissionProbabilityOnContact[group];
 
-        model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[group] = relativeTransmissionNoSymptoms;
-        model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[group] = riskOfInfectionFromSymptomatic;
+        model.parameters.get<lsecir::RelativeTransmissionNoSymptoms>()[group] = relativeTransmissionNoSymptoms;
+        model.parameters.get<lsecir::RiskOfInfectionFromSymptomatic>()[group] = riskOfInfectionFromSymptomatic;
 
-        model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
+        model.parameters.get<lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
             1 - infectedSymptomsPerInfectedNoSymptoms[group];
-        model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[group] = severePerInfectedSymptoms[group];
-        model.parameters.get<mio::lsecir::CriticalPerSevere>()[group]         = criticalPerSevere[group];
-        model.parameters.get<mio::lsecir::DeathsPerCritical>()[group]         = deathsPerCritical[group];
+        model.parameters.get<lsecir::SeverePerInfectedSymptoms>()[group] = severePerInfectedSymptoms[group];
+        model.parameters.get<lsecir::CriticalPerSevere>()[group]         = criticalPerSevere[group];
+        model.parameters.get<lsecir::DeathsPerCritical>()[group]         = deathsPerCritical[group];
     }
     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir, true));
-    model.parameters.get<mio::lsecir::ContactPatterns>() = contact_matrix;
-    model.parameters.get<mio::lsecir::Seasonality>()     = seasonality;
+    model.parameters.get<lsecir::ContactPatterns>() = contact_matrix;
+    model.parameters.get<lsecir::Seasonality>()     = seasonality;
 
-    // Use compartments_init as a basis to define appropriate initial values.
+    // Use init_compartments as a basis to define appropriate initial values.
     // Compartment values are distributed uniformly to the subcompartments.
     for (size_t group = 0; group < num_age_groups; group++) {
         size_t total_num_subcomps_this_group      = 0;
@@ -464,15 +475,15 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
         }
 
         model.populations[total_num_subcomps_previous_groups + 0] =
-            compartments_init[group * (size_t)mio::isecir::InfectionState::Count + 0]; // Susceptible
+            init_compartments[group * (size_t)isecir::InfectionState::Count + 0]; // Susceptible
         model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 2] =
-            compartments_init[group * (size_t)mio::isecir::InfectionState::Count + 6]; // Recovered
+            init_compartments[group * (size_t)isecir::InfectionState::Count + 6]; // Recovered
         model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 1] =
-            compartments_init[group * (size_t)mio::isecir::InfectionState::Count + 7]; // Dead
+            init_compartments[group * (size_t)isecir::InfectionState::Count + 7]; // Dead
         for (size_t i = (size_t)InfState::Exposed; i < (size_t)InfState::Count - 2; i++) {
             for (size_t subcomp = 0; subcomp < num_subcompartments[i]; subcomp++) {
                 model.populations[total_num_subcomps_previous_groups + (i - 1) * num_subcompartments[i] + 1 + subcomp] =
-                    compartments_init[group * (size_t)mio::isecir::InfectionState::Count + i] /
+                    init_compartments[group * (size_t)isecir::InfectionState::Count + i] /
                     (ScalarType)num_subcompartments[i];
             }
         }
@@ -480,99 +491,95 @@ mio::IOResult<void> simulate_lct(Vector compartments_init, std::string contact_d
 
     // Set integrator of fifth order with fixed step size and perform simulation.
     auto integrator =
-        std::make_shared<mio::ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+        std::make_shared<ControlledStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     // Choose dt_min = dt_max to get a fixed step size.
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
+    TimeSeries<ScalarType> result = simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
     // Calculate result without division in subcompartments and without division in age groups.
-    mio::TimeSeries<ScalarType> populations = sum_age_groups(model.calculate_compartments(result));
+    TimeSeries<ScalarType> populations = sum_age_groups(model.calculate_compartments(result));
 
     if (!save_dir.empty()) {
-        std::string filename                   = save_dir + "lct_ageresolved_subcomp" + ".h5";
-        mio::IOResult<void> save_result_status = mio::save_result({populations}, {0}, num_age_groups, filename);
+        std::string filename              = save_dir + "lct_ageresolved_subcomp" + ".h5";
+        IOResult<void> save_result_status = save_result({populations}, {0}, num_age_groups, filename);
     }
 
-    return mio::success();
+    return success();
 }
 
-mio::IOResult<void> simulate_ode_model(Vector compartments_init, std::string contact_data_dir,
-                                       std::string save_dir = "")
+IOResult<void> simulate_ode(Vector init_compartments, std::string contact_data_dir, std::string save_dir = "")
 {
     using namespace params;
     // Use ODE FlowModel.
-    mio::osecir::Model model_ode(num_age_groups);
+    osecir::Model model_ode(num_age_groups);
 
     // Set working parameters.
     for (size_t group = 0; group < num_age_groups; group++) {
-        model_ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[(mio::AgeGroup)group] = timeExposed[group];
-        model_ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::TimeExposed<ScalarType>>()[(AgeGroup)group] = timeExposed[group];
+        model_ode.parameters.get<osecir::TimeInfectedNoSymptoms<ScalarType>>()[(AgeGroup)group] =
             timeInfectedNoSymptoms[group];
-        model_ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::TimeInfectedSymptoms<ScalarType>>()[(AgeGroup)group] =
             timeInfectedSymptoms[group];
-        model_ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[(mio::AgeGroup)group] =
-            timeInfectedSevere[group];
-        model_ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::TimeInfectedSevere<ScalarType>>()[(AgeGroup)group] = timeInfectedSevere[group];
+        model_ode.parameters.get<osecir::TimeInfectedCritical<ScalarType>>()[(AgeGroup)group] =
             timeInfectedCritical[group];
 
         // Set probabilities that determine proportion between compartments.
-        model_ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[(AgeGroup)group] =
             1 - infectedSymptomsPerInfectedNoSymptoms[group];
-        model_ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::SeverePerInfectedSymptoms<ScalarType>>()[(AgeGroup)group] =
             severePerInfectedSymptoms[group];
-        model_ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[(mio::AgeGroup)group] =
-            criticalPerSevere[group];
-        model_ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[(mio::AgeGroup)group] =
-            deathsPerCritical[group];
+        model_ode.parameters.get<osecir::CriticalPerSevere<ScalarType>>()[(AgeGroup)group] = criticalPerSevere[group];
+        model_ode.parameters.get<osecir::DeathsPerCritical<ScalarType>>()[(AgeGroup)group] = deathsPerCritical[group];
 
         // Further model parameters.
-        model_ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::TransmissionProbabilityOnContact<ScalarType>>()[(AgeGroup)group] =
             transmissionProbabilityOnContact[group];
-        model_ode.parameters.get<mio::osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::RelativeTransmissionNoSymptoms<ScalarType>>()[(AgeGroup)group] =
             relativeTransmissionNoSymptoms;
-        model_ode.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(mio::AgeGroup)group] =
+        model_ode.parameters.get<osecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[(AgeGroup)group] =
             riskOfInfectionFromSymptomatic;
     }
     // Choose TestAndTraceCapacity very large so that riskFromInfectedSymptomatic = RiskOfInfectionFromSymptomatic.
-    model_ode.parameters.get<mio::osecir::TestAndTraceCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
+    model_ode.parameters.get<osecir::TestAndTraceCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
     // Choose ICUCapacity very large so that CriticalPerSevereAdjusted = CriticalPerSevere and deathsPerSevereAdjusted = 0.
-    model_ode.parameters.get<mio::osecir::ICUCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
+    model_ode.parameters.get<osecir::ICUCapacity<ScalarType>>() = std::numeric_limits<ScalarType>::max();
 
     // Set Seasonality=0 so that cont_freq_eff is equal to contact_matrix.
-    model_ode.parameters.set<mio::osecir::Seasonality<ScalarType>>(seasonality);
+    model_ode.parameters.set<osecir::Seasonality<ScalarType>>(seasonality);
 
     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir, true));
-    model_ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>() = contact_matrix;
+    model_ode.parameters.get<osecir::ContactPatterns<ScalarType>>() = contact_matrix;
 
-    // Use mio::isecir::InfectionState when accessing init_compartments since this is computed using the IDE model.
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}] =
-        compartments_init[int(mio::isecir::InfectionState::Susceptible)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] =
-        compartments_init[int(mio::isecir::InfectionState::Exposed)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] =
-        compartments_init[int(mio::isecir::InfectionState::InfectedNoSymptoms)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}] =
-        compartments_init[int(mio::isecir::InfectionState::InfectedSymptoms)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSevere}] =
-        compartments_init[int(mio::isecir::InfectionState::InfectedSevere)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedCritical}] =
-        compartments_init[int(mio::isecir::InfectionState::InfectedCritical)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] =
-        compartments_init[int(mio::isecir::InfectionState::Recovered)];
-    model_ode.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}] =
-        compartments_init[int(mio::isecir::InfectionState::Dead)];
+    // Use  isecir::InfectionState when accessing init_compartments since this is computed using the IDE model.
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Susceptible}] =
+        init_compartments[int(isecir::InfectionState::Susceptible)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Exposed}] =
+        init_compartments[int(isecir::InfectionState::Exposed)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedNoSymptoms}] =
+        init_compartments[int(isecir::InfectionState::InfectedNoSymptoms)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedSymptoms}] =
+        init_compartments[int(isecir::InfectionState::InfectedSymptoms)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedSevere}] =
+        init_compartments[int(isecir::InfectionState::InfectedSevere)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedCritical}] =
+        init_compartments[int(isecir::InfectionState::InfectedCritical)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Recovered}] =
+        init_compartments[int(isecir::InfectionState::Recovered)];
+    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Dead}] =
+        init_compartments[int(isecir::InfectionState::Dead)];
 
     model_ode.check_constraints();
 
     // Set integrator and fix step size.
     auto integrator =
-        std::make_shared<mio::ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+        std::make_shared<ExplicitStepperWrapper<ScalarType, boost::numeric::odeint::runge_kutta_cash_karp54>>();
 
     // Simulate.
-    std::vector<mio::TimeSeries<ScalarType>> results_ode =
-        mio::osecir::simulate_flows<ScalarType>(t0, tmax, dt, model_ode, integrator);
+    std::vector<TimeSeries<ScalarType>> results_ode =
+        osecir::simulate_flows<ScalarType>(t0, tmax, dt, model_ode, integrator);
 
     // Save results.
     if (!save_dir.empty()) {
@@ -582,22 +589,20 @@ mio::IOResult<void> simulate_ode_model(Vector compartments_init, std::string con
                                    dt_string.substr(0, dt_string.find(".") + 5);
 
         std::string filename_ode_compartments = filename_ode + ".h5";
-        mio::IOResult<void> save_result_status_c =
-            mio::save_result({results_ode[0]}, {0}, num_age_groups, filename_ode_compartments);
+        IOResult<void> save_result_status_c =
+            save_result({results_ode[0]}, {0}, num_age_groups, filename_ode_compartments);
     }
 
-    return mio::success();
+    return success();
 }
 
-std::vector<ScalarType> get_num_persons_per_infectionage();
-
-mio::IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std::string save_dir = "")
+IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std::string save_dir = "")
 {
-    mio::unused(init_compartments);
-    mio::unused(tmax);
-    mio::unused(save_dir);
+    unused(init_compartments);
+    unused(tmax);
+    unused(save_dir);
 
-    return mio::success();
+    return success();
 }
 
 int main(int argc, char** argv)
@@ -613,7 +618,7 @@ int main(int argc, char** argv)
     boost::filesystem::path dir(save_dir);
     boost::filesystem::create_directories(dir);
 
-    mio::Date start_date(2020, 10, 01);
+    Date start_date(2020, 10, 01);
 
     // Set path to contact data.
     std::string contact_data_dir  = "../../data/Germany/contacts/";
@@ -621,18 +626,29 @@ int main(int argc, char** argv)
 
     // Changepoint scenario with halving of contacts after two days.
 
-    auto result_ide = simulate_ide_model(start_date, contact_data_dir, reported_data_dir, save_dir);
-    if (!result_ide) {
-        printf("%s\n", result_ide.error().formatted_message().c_str());
-        return -1;
-    }
+    auto result_ide = simulate_ide(start_date, contact_data_dir, reported_data_dir, save_dir);
 
-    // // Use compartments at time 0 from IDE simulation as initial values for ODE and LCT model to make results comparable.
-    Vector compartments_init = result_ide.value().get_value(0);
+    // Use compartments at time 0 from IDE simulation as initial values for ODE and LCT model to make results comparable.
+    auto init_compartments = std::get<0>(result_ide.value());
 
-    auto result_lct = simulate_lct(compartments_init, contact_data_dir, save_dir);
+    auto result_lct = simulate_lct(init_compartments, contact_data_dir, save_dir);
 
-    auto result_ode = simulate_ode_model(compartments_init, contact_data_dir, save_dir);
+    auto result_ode = simulate_ode(init_compartments, contact_data_dir, save_dir);
+
+    // For use in ABM simulation.
+    // The vector has the following structure:
+    // - First dimension:  Determines the compartment; we have values for the compartments Expsoed, InfectedNoSymptoms,
+    //                     InfectedSymptoms, InfectedSevere and InfectedCritical.
+    // - Second dimension: Determines the age group.
+    // - Third dimension:  Determines the number of persons per state age. For each element this vector, the
+    //                     value yields the number of persons that have a certain state age. The state age can be obtained
+    //                     by multiplying the index of the element with the time step size dt.
+    std::vector<std::vector<std::vector<ScalarType>>> persons_per_state_age = std::get<1>(result_ide.value());
+
+    // if (!result_ide || !result_lct || !result_ode) {
+    //     printf("%s\n", result_ide.error().formatted_message().c_str());
+    //     return -1;
+    // }
 
     return 0;
 }
