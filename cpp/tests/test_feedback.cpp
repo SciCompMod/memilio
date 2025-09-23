@@ -43,10 +43,10 @@ protected:
         model.parameters.set<mio::oseir::TimeExposed<double>>(5.2);
         model.parameters.set<mio::oseir::TimeInfected<double>>(2);
 
-        mio::ContactMatrixGroup& contact_matrix =
+        mio::ContactMatrixGroup<double>& contact_matrix =
             model.parameters.get<mio::oseir::ContactPatterns<double>>().get_cont_freq_mat();
         contact_matrix[0].get_baseline().setConstant(2.7);
-        contact_matrix[0].add_damping(0.6, mio::SimulationTime(12.5));
+        contact_matrix[0].add_damping(0.6, mio::SimulationTime<double>(12.5));
 
         // ICU compartment index
         icu_indices = {2};
