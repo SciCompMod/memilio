@@ -219,6 +219,23 @@ public:
             return true;
         return false;
     }
+private:
+    Parameters(ParametersBase<FP>&& base)
+        : ParametersBase<FP>(std::move(base))
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see mio::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Parameters> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
+        return success(Parameters(std::move(base)));
+    }
 };
 
 } // namespace omseirs4
