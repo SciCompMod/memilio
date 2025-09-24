@@ -456,7 +456,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.fs.remove_object(path_mobility)
         self.fs.remove_object(os.path.join(self.path, "saves"))
 
-    '''
     def test_scale_data_valid_data(self):
         """Test utils.scale_data with valid input and label data."""
         data = {
@@ -488,7 +487,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
         with self.assertRaises(ValueError):
             utils.scale_data(data)
-    '''
 
 
 if __name__ == '__main__':

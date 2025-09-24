@@ -22,10 +22,10 @@ import pandas as pd
 import os
 from sklearn.preprocessing import FunctionTransformer
 
-from memilio.epidata import transformMobilityData as tmd
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.simulation.osecir import (ModelGraph, set_edges)
-from memilio.epidata import modifyDataframeSeries as mdfs
+# memilio.epidata import transformMobilityData as tmd
+# from memilio.epidata import getDataIntoPandasDataFrame as gd
+# from memilio.simulation.osecir import (ModelGraph, set_edges)
+# from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 def remove_confirmed_compartments(dataset_entries, num_groups):
@@ -88,6 +88,7 @@ def make_graph(directory, num_regions, countykey_list, models):
     :models models: List of osecir Model with one model per county. 
     :returns: Graph-ODE model. 
    """
+    from memilio.simulation.osecir import (ModelGraph, set_edges)
     graph = ModelGraph()
     for i in range(num_regions):
         graph.add_node(int(countykey_list[i]), models[i])
@@ -102,6 +103,8 @@ def make_graph(directory, num_regions, countykey_list, models):
 def transform_mobility_directory():
     """ Transforms the mobility data by merging Eisenach and Wartburgkreis
     """
+    from memilio.epidata import transformMobilityData as tmd
+    from memilio.epidata import getDataIntoPandasDataFrame as gd
     # get mobility data directory
     arg_dict = gd.cli("commuter_official")
 
@@ -119,6 +122,7 @@ def get_population():
     """
         Loading the population data for the different counties and the different age groups. 
     """
+    from memilio.epidata import modifyDataframeSeries as mdfs
     df_population = pd.read_json(
         'data/Germany/pydata/county_population.json')
     age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80-130']
