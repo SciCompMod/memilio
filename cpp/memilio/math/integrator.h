@@ -60,7 +60,9 @@ public:
     {
     }
 
-    virtual ~IntegratorCore(){};
+    virtual ~IntegratorCore() {};
+
+    virtual std::unique_ptr<IntegratorCore<FP, Integrands...>> clone() const = 0;
 
     /**
      * @brief Make a single integration step.
@@ -149,10 +151,25 @@ public:
      * @brief Create an integrator for a specific IVP.
      * @param[in] core Implements the solver.
      */
-    SystemIntegrator(std::shared_ptr<Core> core)
-        : m_core(core)
+    SystemIntegrator(std::unique_ptr<Core>&& core)
+        : m_core(std::move(core))
         , m_is_adaptive(false)
     {
+    }
+
+    SystemIntegrator(const SystemIntegrator& other)
+        : m_core(other.m_core->clone())
+        , m_is_adaptive(other.m_is_adaptive)
+    {
+    }
+
+    SystemIntegrator& operator=(const SystemIntegrator& other)
+    {
+        if (this != &other) {
+            m_core        = other.m_core->clone();
+            m_is_adaptive = other.m_is_adaptive;
+        }
+        return *this;
     }
 
     /**
@@ -167,6 +184,7 @@ public:
     Eigen::Ref<Eigen::VectorX<FP>> advance(const Integrands&... fs, const FP tmax, FP& dt, TimeSeries<FP>& results)
     {
         // hint at std functions for ADL
+        using std::ceil;
         using std::fabs;
         using std::max;
         using std::min;
@@ -195,7 +213,7 @@ public:
                 dt_restore = dt;
                 dt         = tmax - t;
                 // if necessary, also reduce minimal step size such that we do not step past tmax
-                m_core->get_dt_min() = min(tmax - t, m_core->get_dt_min());
+                m_core->get_dt_min() = min<FP>(tmax - t, m_core->get_dt_min());
                 // if dt_min was reduced, the following step will be the last due to dt == dt_min (see step method)
                 // dt_min must be restored after this loop
             }
@@ -212,7 +230,7 @@ public:
         m_core->get_dt_min() = dt_min_restore; // restore dt_min
         // if dt was decreased to reach tmax in the last time iteration,
         // we restore it as it is now probably smaller than required for tolerances
-        dt = max(dt, dt_restore);
+        dt = max<FP>(dt, dt_restore);
 
         if (m_is_adaptive) {
             if (!step_okay) {
@@ -231,16 +249,30 @@ public:
 
     /**
      * @brief Change the IntegratorCore used for integration.
-     * @param core The new integrator.
+     * @param core The new IntegratorCore.
      */
-    void set_integrator(std::shared_ptr<Core> core)
+    void set_integrator_core(std::unique_ptr<Core>&& core)
     {
-        m_core        = core;
+        m_core.swap(core);
         m_is_adaptive = false;
     }
 
+    /**
+     * @brief Access the IntegratorCore used for integration.
+     * @return A reference to the IntegratorCore used for integration.
+     * @{
+     */
+    Core& get_integrator_core()
+    {
+        return *m_core;
+    }
+    const Core& get_integrator_core() const
+    {
+        return *m_core;
+    }
+
 private:
-    std::shared_ptr<Core> m_core;
+    std::unique_ptr<Core> m_core;
     bool m_is_adaptive;
 };
 
