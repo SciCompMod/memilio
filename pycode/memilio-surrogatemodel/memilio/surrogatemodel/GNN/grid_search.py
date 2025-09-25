@@ -22,8 +22,8 @@ import os
 
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.losses import MeanAbsolutePercentageError
-from tensorflow.keras.metrics import mean_absolute_percentage_error
+from tensorflow.keras.losses import MeanAbsolutePercentageError as MeanAbsolutePercentageError
+from tensorflow.keras.metrics import MeanAbsolutePercentageError as mean_absolute_percentage_error
 
 from tensorflow.keras.optimizers import Adam
 from spektral.data import MixedLoader
@@ -100,7 +100,7 @@ def perform_grid_search(model_parameters, training_parameters,  data):
         model.compile(
             optimizer=optimizer,
             loss=MeanAbsolutePercentageError(),
-            metrics=[mean_absolute_percentage_error]
+            metrics=[mean_absolute_percentage_error()]
         )
 
         results = train_and_evaluate(

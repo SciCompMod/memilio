@@ -280,7 +280,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
     def test_evaluate(self):
         from memilio.surrogatemodel.GNN.evaluate_and_train import (
-            evaluate, create_dataset, MixedLoader)
+            evaluate, create_dataset, MixedLoader, train_step)
         from memilio.surrogatemodel.GNN.network_architectures import get_model
         from tensorflow.keras.losses import MeanAbsolutePercentageError
 
@@ -302,6 +302,11 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         # Create dataset
         dataset = create_dataset(
             path_cases, path_mobility, number_of_nodes=num_nodes)
+        # Build the model by calling it on a batch of data
+        loader = MixedLoader(dataset, batch_size=2, epochs=1)
+        inputs, _ = loader.__next__()
+        model(inputs)
+        # Redefine the loader
         loader = MixedLoader(dataset, batch_size=2, epochs=1)
         res = evaluate(loader, model, loss_fn)
         # Check if the result is a tuple of (loss, accuracy)
@@ -445,7 +450,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
         # Check if the results file has the expected number of rows
         df_results = pd.read_csv(results_file)
-        print(df_results.columns)
         self.assertEqual(len(df_results), len(model_parameters))
         self.assertEqual(len(df_results.columns), 10)
 

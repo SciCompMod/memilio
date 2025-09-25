@@ -171,6 +171,11 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     train_data, valid_data, test_data = data[:n_train], data[n_train:n_train +
                                                              n_valid], data[n_train+n_valid:]
 
+    # Build the model by calling it on a batch of data
+    loader = MixedLoader(data)
+    inputs, _ = loader.__next__()
+    model(inputs)
+
     # Define Data Loaders
     loader_tr = MixedLoader(
         train_data, batch_size=batch_size, epochs=epochs, shuffle=False)
