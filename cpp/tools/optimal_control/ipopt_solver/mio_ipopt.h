@@ -30,7 +30,7 @@ template <class OptimizationSettings>
 class MIO_NLP : public Ipopt::TNLP
 {
 public:
-    MIO_NLP(const OptimizationSettings& settings);
+    MIO_NLP(OptimizationSettings& settings);
 
     MIO_NLP(const MIO_NLP&)            = delete;
     MIO_NLP(MIO_NLP&&)                 = delete;
@@ -73,14 +73,14 @@ public:
                            Ipopt::IpoptCalculatedQuantities* ip_cq) override;
 
 private:
-    const OptimizationSettings& m_settings;
+    OptimizationSettings& m_settings;
 
     // plain-double model for objective & constraints in native double precision
-    std::unique_ptr<OptimizationSettings::ModelTemplate<double>> m_model_double;
+    std::unique_ptr<typename OptimizationSettings::template Graph<double>> m_model_double;
     // forward-mode (tangent-linear) AD model for Jacobian via GT1S
-    std::unique_ptr<OptimizationSettings::ModelTemplate<ad::gt1s<double>::type>> m_model_tangent_linear;
+    std::unique_ptr<typename OptimizationSettings::template Graph<ad::gt1s<double>::type>> m_model_tangent_linear;
     // reverse-mode (adjoint) AD model for gradient via GA1S
-    std::unique_ptr<OptimizationSettings::ModelTemplate<ad::ga1s<double>::type>> m_model_adjoint;
+    std::unique_ptr<typename OptimizationSettings::template Graph<ad::ga1s<double>::type>> m_model_adjoint;
 
     Ipopt::Index m_n;
     Ipopt::Index m_m;
@@ -97,18 +97,18 @@ private:
 };
 
 template <class OptimizationSettings>
-MIO_NLP<OptimizationSettings>::MIO_NLP(const OptimizationSettings& settings)
+MIO_NLP<OptimizationSettings>::MIO_NLP(OptimizationSettings& settings)
     : m_settings(settings)
     // plain-double model for objective & constraints in native double precision
-    , m_model_double(std::make_unique<OptimizationSettings::ModelTemplate<double>>(settings.optimization_model().create_model<double>()))
+    , m_model_double(std::make_unique<typename OptimizationSettings::template Graph<double>>(settings.optimization_model().template create_model<double>()))
     // forward-mode (tangent-linear) AD model for Jacobian via GT1S
-    , m_model_tangent_linear(std::make_unique<OptimizationSettings::ModelTemplate<<ad::gt1s<double>>>(settings.optimization_model().create_model<ad::gt1s<double>::type>()))
+    , m_model_tangent_linear(std::make_unique<typename OptimizationSettings::template Graph<ad::gt1s<double>>>(settings.optimization_model().template create_model<ad::gt1s<double>::type>()))
     // reverse-mode (adjoint) AD model for gradient via GA1S
-    , m_model_adjoint(std::make_unique<OptimizationSettings::ModelTemplate<<ad::ga1s<double>>>(settings.optimization_model().create_model<ad::ga1s<double>::type>()))
+    , m_model_adjoint(std::make_unique<typename OptimizationSettings::template Graph<ad::ga1s<double>>>(settings.optimization_model().template create_model<ad::ga1s<double>::type>()))
 {
     size_t num_control_intervals    = m_settings.num_control_intervals();
-    size_t pc_resolution            = m_settings.pc_resolution();
-    size_t num_intervals            = m_settings.num_intervals();
+    // size_t pc_resolution            = m_settings.pc_resolution();
+    // size_t num_intervals            = m_settings.num_intervals();
     size_t num_control_parameters   = m_settings.num_control_parameters();
     size_t num_path_constraints     = m_settings.num_path_constraints();
     size_t num_terminal_constraints = m_settings.num_terminal_constraints();
@@ -199,8 +199,8 @@ bool MIO_NLP<OptimizationSettings>::get_bounds_info(Ipopt::Index n, Ipopt::Numbe
 }
 
 template <class OptimizationSettings>
-bool MIO_NLP<OptimizationSettings>::get_starting_point(Ipopt::Index n, bool init_x, Ipopt::Number* x, bool init_z,
-                                      Ipopt::Number* /*z_L*/, Ipopt::Number* /*z_U*/, Ipopt::Index m, bool init_lambda,
+bool MIO_NLP<OptimizationSettings>::get_starting_point(Ipopt::Index /*n*/, bool /*init_x*/, Ipopt::Number* x, bool /*init_z*/,
+                                      Ipopt::Number* /*z_L*/, Ipopt::Number* /*z_U*/, Ipopt::Index /*m*/, bool /*init_lambda*/,
                                       Ipopt::Number* /*lambda*/
 )
 {
@@ -285,9 +285,9 @@ bool MIO_NLP<OptimizationSettings>::eval_jac_g(Ipopt::Index n, const Ipopt::Numb
 }
 
 template <class OptimizationSettings>
-bool MIO_NLP<OptimizationSettings>::eval_h(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Number obj_factor,
-                          Ipopt::Index m, const Ipopt::Number* lambda, bool /*new_lambda*/, Ipopt::Index nele_hess,
-                          Ipopt::Index* iRow, Ipopt::Index* jCol, Ipopt::Number* values)
+bool MIO_NLP<OptimizationSettings>::eval_h(Ipopt::Index /*n*/, const Ipopt::Number* /*x*/, bool /*new_x*/, Ipopt::Number /*obj_factor*/,
+                          Ipopt::Index /*m*/, const Ipopt::Number* /*lambda*/, bool /*new_lambda*/, Ipopt::Index /*nele_hess*/,
+                          Ipopt::Index* /*iRow*/, Ipopt::Index* /*jCol*/, Ipopt::Number* /*values*/)
 {
     return false;
 }
@@ -350,7 +350,7 @@ bool MIO_NLP<OptimizationSettings>::eval_grad_f_reverse(Ipopt::Index n, const Ip
 
 template <class OptimizationSettings>
 bool MIO_NLP<OptimizationSettings>::eval_jac_g_forward(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m,
-                                      Ipopt::Index nele_jac, Ipopt::Index* iRow, Ipopt::Index* jCol,
+                                      Ipopt::Index /*nele_jac*/, Ipopt::Index* iRow, Ipopt::Index* jCol,
                                       Ipopt::Number* values)
 {
     assert(n == m_n && m == m_m && nele_jac == m_nnz_jac_g);
@@ -410,7 +410,7 @@ bool MIO_NLP<OptimizationSettings>::eval_jac_g_forward(Ipopt::Index n, const Ipo
 
 template <class OptimizationSettings>
 bool MIO_NLP<OptimizationSettings>::eval_jac_g_reverse(Ipopt::Index n, const Ipopt::Number* x, bool /*new_x*/, Ipopt::Index m,
-                                      Ipopt::Index nele_jac, Ipopt::Index* iRow, Ipopt::Index* jCol,
+                                      Ipopt::Index /*nele_jac*/, Ipopt::Index* iRow, Ipopt::Index* jCol,
                                       Ipopt::Number* values)
 {
     assert(n == m_n && m == m_m && nele_jac == m_nnz_jac_g);
@@ -471,10 +471,10 @@ bool MIO_NLP<OptimizationSettings>::eval_jac_g_reverse(Ipopt::Index n, const Ipo
 }
 
 template <class OptimizationSettings>
-void MIO_NLP<OptimizationSettings>::finalize_solution(Ipopt::SolverReturn status, Ipopt::Index n, const Ipopt::Number* x,
+void MIO_NLP<OptimizationSettings>::finalize_solution(Ipopt::SolverReturn /*status*/, Ipopt::Index n, const Ipopt::Number* x,
                                      const Ipopt::Number* z_L, const Ipopt::Number* z_U, Ipopt::Index m,
                                      const Ipopt::Number* g, const Ipopt::Number* lambda, Ipopt::Number obj_value,
-                                     const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* ip_cq)
+                                     const Ipopt::IpoptData* ip_data, Ipopt::IpoptCalculatedQuantities* /*ip_cq*/)
 {
     std::cout << "Final Objective Value: " << obj_value << "\n";
 

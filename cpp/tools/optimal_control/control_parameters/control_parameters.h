@@ -25,6 +25,7 @@ public:
     double max() const;
     double effectiveness() const;
     double cost() const;
+    mio::DampingSampling<double> damping() const;
 
     void set_name(const std::string& new_name);
     void set_range(const std::pair<double, double>& new_range);

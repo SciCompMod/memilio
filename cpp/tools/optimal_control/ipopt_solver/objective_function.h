@@ -9,7 +9,7 @@
 
 
 template <typename FP, class OptimizationSettings>
-FP objective_function(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model, const FP* ptr_parameters,
+FP objective_function(const OptimizationSettings& settings, const typename OptimizationSettings::template Graph<FP>& graph, const FP* ptr_parameters,
                       size_t n)
 {
     // ------------------------------------------------------------------ //
@@ -24,31 +24,34 @@ FP objective_function(const OptimizationSettings& settings, const typename Optim
 
     std::vector<FP> parameters(n);
     for (size_t i = 0; i < n; i++) {
-        parameters[i] = settings.activation_function()(ptr_parameters[i]);
+        parameters[i] = settings.activation_function(ptr_parameters[i]);
     }
 
-    auto integrator = make_integrator<FP>(settings.integrator_type(), settings.dt());
+    // auto integrator = make_integrator<FP>(settings.integrator_type(), settings.dt());
 
     std::vector<FP> time_steps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.num_intervals());
 
-    OptimizationSettings::template SimulationTemplate<FP> sim(model, settings.t0(), settings.dt());
-    sim.set_integrator(integrator);
+    auto graph_copy = graph;
+    auto sim = mio::make_mobility_sim<FP>(settings.t0(), settings.dt(), std::move(graph_copy));
+
+    // sim.set_integrator(std::move(integrator));
     
-    set_control_dampings<FP, OptimizationSettings>(settings, sim.get_model(), parameters);
+    for (auto& node : sim.get_graph().nodes()) {
+        set_control_dampings<FP, OptimizationSettings>(settings, node.property.get_simulation().get_model(), parameters);
+    }
 
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
         size_t control_interval = interval / settings.pc_resolution();
 
-        sim.get_dt() = settings.dt();
+        // sim.get_dt() = settings.dt();
         sim.advance(time_steps[interval + 1]);
-        const auto& final_state = sim.get_result().get_last_value();
 
         // Add costs of all control parameters for current interval
         FP interval_cost = 0.0;
         for(size_t idx_control_parameter = 0; idx_control_parameter < settings.num_control_parameters(); idx_control_parameter++)
         {
-            interval_cost += settings.control_parameters()[idx_control_parameter].cost() * parameters[idx_control_parameter + control_interval * settings.num_control_parameters()]
+            interval_cost += settings.control_parameters()[idx_control_parameter].cost() * parameters[idx_control_parameter + control_interval * settings.num_control_parameters()];
         }
         objective += interval_cost / settings.num_intervals();
     }

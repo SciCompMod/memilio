@@ -10,8 +10,8 @@
 
 
 template <typename FP, class OptimizationSettings>
-void constraint_function(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model,
-                         const FP* ptr_parameters, size_t n, FP* ptr_constraints, size_t m)
+void constraint_function(const OptimizationSettings& settings, const typename OptimizationSettings::template Graph<FP>& graph,
+                         const FP* ptr_parameters, size_t n, FP* ptr_constraints, size_t /*m*/)
 {
     // ----------------------------------------------------------------- //
     // Evaluate the constraints on the model.                            //
@@ -24,33 +24,43 @@ void constraint_function(const OptimizationSettings& settings, const typename Op
 
     std::vector<FP> parameters(n);
     for (size_t i = 0; i < n; i++) {
-        parameters[i] = settings.activation_function()(ptr_parameters[i]);
+        parameters[i] = settings.activation_function(ptr_parameters[i]);
     }
 
     std::vector<FP> path_constraint_values(settings.num_path_constraints(), 0.0);
     std::vector<FP> terminal_constraint_values(settings.num_terminal_constraints(), 42.0);
 
-    auto integrator = make_integrator<FP>(settings.integrator_type(), settings.dt());
+    // auto integrator = make_integrator<FP>(settings.integrator_type(), settings.dt());
 
     std::vector<FP> time_steps = make_time_grid<FP>(settings.t0(), settings.tmax(), settings.num_intervals());
 
-    OptimizationSettings::template SimulationTemplate<FP> sim(model, settings.t0(), settings.dt());
-    sim.set_integrator(integrator);
+    auto graph_copy = graph;
+    auto sim = mio::make_mobility_sim<FP>(settings.t0(), settings.dt(), std::move(graph_copy));
+
+    // sim.set_integrator(std::move(integrator));
     
-    set_control_dampings<FP, OptimizationSettings>(settings, sim.get_model(), parameters);
+    for (auto& node : sim.get_graph().nodes()) {
+        set_control_dampings<FP, OptimizationSettings>(settings, node.property.get_simulation().get_model(), parameters);
+    }
 
     // const auto& final_state = sim.get_result().get_last_value();
     // update_path_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, path_constraint_values);
     for (size_t interval = 0; interval < settings.num_intervals(); interval++) {
 
-        sim.get_dt() = settings.dt();
+        // sim.get_dt() = settings.dt();
         sim.advance(time_steps[interval + 1]);
-        const auto& final_state = sim.get_result().get_last_value();
 
-        update_path_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, path_constraint_values);
+        for (auto& node : sim.get_graph().nodes()) {
+            const auto& final_state = node.property.get_simulation().get_result().get_last_value();
+
+            update_path_constraint<FP, OptimizationSettings>(settings, final_state, path_constraint_values);
+        }
     }
-    const auto& final_state = sim.get_result().get_last_value();
-    update_terminal_constraint<FP, OptimizationSettings>(settings, sim.get_model(), final_state, terminal_constraint_values);
+    for (auto& node : sim.get_graph().nodes()) {
+        const auto& final_state = node.property.get_simulation().get_result().get_last_value();
+
+        update_terminal_constraint<FP, OptimizationSettings>(settings, final_state, terminal_constraint_values);
+    }
 
     size_t idx = 0;
     for (size_t path_constraint_index = 0; path_constraint_index < settings.num_path_constraints();

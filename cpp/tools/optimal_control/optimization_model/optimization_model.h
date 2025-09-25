@@ -20,21 +20,6 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 
-enum class ContactLocation
-{
-    Home = 0,
-    School,
-    Work,
-    Other,
-    Count,
-};
-
-static const std::map<ContactLocation, std::string> contact_locations = {{ContactLocation::Home, "home"},
-                                                                         {ContactLocation::School, "school_pf_eig"},
-                                                                         {ContactLocation::Work, "work"},
-                                                                         {ContactLocation::Other, "other"}
-                                                                        };
-
 template <typename FP, class Tag>
 void set_parameters(mio::osecirvvs::Parameters<FP>& params, const std::vector<FP>& parameter_values)
 {
@@ -51,11 +36,11 @@ class OptimizationModel
 {
 public:
     template <typename FP>    
-    using ContactPatterns = mio::osecirvvs::ContactPatterns<FP>
+    using ContactPatterns = mio::osecirvvs::ContactPatterns<FP>;
     template <typename FP>
-    using EMBModel = mio::osecirvvs::Model<FP>
+    using EMBModel = mio::osecirvvs::Model<FP>;
     template <typename FP>
-    using Graph = mio::Graph<mio::SimulationNode<mio::osecirvvs::Simulation<FP>>, mio::MobilityEdge<FP>>
+    using Graph = mio::Graph<mio::SimulationNode<FP, mio::osecirvvs::Simulation<FP>>, mio::MobilityEdge<FP>>;
 
 
     OptimizationModel(boost::filesystem::path data_directory, double t0, double tmax, bool use_county)
@@ -100,7 +85,7 @@ public:
 
     void add_contact_location(Eigen::MatrixXd baseline, std::string location_name)
     {
-        auto&& minimum = Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic>::Zero(baseline.rows(), baseline.cols());
+        auto&& minimum = Eigen::MatrixXd::Zero(baseline.rows(), baseline.cols());
         m_contact_matrices.emplace_back(std::make_tuple(location_name, baseline, minimum));
     }
 
@@ -165,7 +150,7 @@ private:
     template <typename FP>
     mio::IOResult<void> set_contact_matrices(mio::osecirvvs::Parameters<FP>& params)
     {
-        auto contact_matrices = mio::ContactMatrixGroup<FP>(contact_locations.size(), size_t(params.get_num_groups()));
+        auto contact_matrices = mio::ContactMatrixGroup<FP>(m_contact_matrices.size(), size_t(params.get_num_groups()));
 
         size_t idx = 0;
         for (auto&& contact_location : m_contact_matrices) {
@@ -179,7 +164,7 @@ private:
     }
 
     template <typename FP>
-    mio::IOResult<void> set_population_data_germany(Graph<FP>& params_graph, mio::osecirvvs::Parameters<FP>& params)
+    mio::IOResult<void> set_population_data_germany(Graph<FP>& graph, mio::osecirvvs::Parameters<FP>& params)
     {
         auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
         auto scaling_factor_icu      = 1.0;
@@ -197,7 +182,7 @@ private:
         std::string pydata_dir = mio::path_join(m_data_directory.string(), "Germany", "pydata");
         BOOST_OUTCOME_TRY(mio::osecirvvs::read_input_data_germany<mio::osecirvvs::Model<FP>>(nodes, start_date, scaling_factor_infected, scaling_factor_icu, pydata_dir));
 
-        params_graph.add_node(0, nodes[0]);
+        graph.add_node(0, nodes[0]);
 
         mio::unused(tnt_capacity_factor);
 
@@ -205,9 +190,9 @@ private:
     }
 
     template <typename FP>
-    mio::IOResult<void> set_population_data_county(Graph<FP>& params_graph, mio::osecirvvs::Parameters<FP>& params)
+    mio::IOResult<void> set_population_data_county(Graph<FP>& graph, mio::osecirvvs::Parameters<FP>& params)
     {
-        mio::Graph<EMBModel<FP>, mio::MobilityParameters<FP>> param_graph;
+        mio::Graph<EMBModel<FP>, mio::MobilityParameters<FP>> params_graph;
 
         auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
         auto scaling_factor_icu      = 1.0;
@@ -219,7 +204,7 @@ private:
         // graph of counties with populations and local parameters
         // and mobility between counties
         const auto& read_function_nodes = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<FP>>;
-        // const auto& read_function_edges = mio::read_mobility_plain;
+        const auto& read_function_edges = mio::read_mobility_plain;
         const auto& node_id_function    = mio::get_node_ids;
 
         const auto& set_node_function =
@@ -238,13 +223,13 @@ private:
                             mio::path_join(pydata_dir, "county_current_population.json"),
                             true, params_graph, read_function_nodes, node_id_function, scaling_factor_infected,
                             scaling_factor_icu, tnt_capacity_factor, 0, false, true));
-        BOOST_OUTCOME_TRY(set_edge_function(data_dir, params_graph, mobile_compartments, contact_locations.size(),
+        BOOST_OUTCOME_TRY(set_edge_function(pydata_dir, params_graph, mobile_compartments, m_contact_matrices.size(),
                                             read_function_edges, std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.}));
         
-        for (auto& node : param_graph.nodes()) {
+        for (auto& node : params_graph.nodes()) {
             graph.add_node(node.id, node.property);
         }
-        for (auto& edge : param_graph.edges()) {
+        for (auto& edge : params_graph.edges()) {
             graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
@@ -252,7 +237,7 @@ private:
     }
 
     template <typename FP>
-    mio::IOResult<void> set_initial_values(Graph<FP>& params_graph)
+    mio::IOResult<void> set_initial_values(Graph<FP>& graph)
     {
         mio::osecirvvs::Parameters<FP> params(m_num_age_groups);
 
@@ -261,10 +246,10 @@ private:
         //BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
         // BOOST_OUTCOME_TRY(set_synthetic_population_data(model));
         if (m_use_county){
-            BOOST_OUTCOME_TRY(set_population_data_germany<FP>(params_graph, params));
+            BOOST_OUTCOME_TRY(set_population_data_germany<FP>(graph, params));
         }
         else {
-            BOOST_OUTCOME_TRY(set_population_data_county<FP>(params_graph, params));
+            BOOST_OUTCOME_TRY(set_population_data_county<FP>(graph, params));
         }
         // model.apply_constraints();
 
@@ -276,7 +261,7 @@ private:
     double m_tmax;
     int m_num_age_groups = 6;
     bool m_use_county = true;
-    std::vector<std::tuple<std::string, Eigen:MatrixXd, Eigen:MatrixXd>> m_contact_matrices{};
+    std::vector<std::tuple<std::string, Eigen::MatrixXd, Eigen::MatrixXd>> m_contact_matrices{};
 };
 
 template <class ContactLocation>

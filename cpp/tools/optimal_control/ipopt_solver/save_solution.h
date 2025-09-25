@@ -10,13 +10,13 @@
 
 
 template <typename FP, class OptimizationSettings>
-void save_solution(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model, size_t n,
-                   const FP* ptr_parameters, const FP* z_L, const FP* z_U, size_t m, const FP* ptr_constraints,
-                   const FP* lambda, FP obj_value)
+void save_solution(const OptimizationSettings& settings, const typename OptimizationSettings::template Graph<FP>& /*graph*/, size_t n,
+                   const FP* ptr_parameters, const FP* /*z_L*/, const FP* /*z_U*/, size_t /*m*/, const FP* ptr_constraints,
+                   const FP* /*lambda*/, FP /*obj_value*/)
 {
     std::vector<FP> parameters(n);
     for (size_t i = 0; i < n; i++) {
-        parameters[i] = settings.activation_function()(ptr_parameters[i]);
+        parameters[i] = settings.activation_function(ptr_parameters[i]);
     }
 
     std::cout << "\nPath Constraints:\n";

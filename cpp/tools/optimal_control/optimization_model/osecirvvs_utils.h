@@ -7,7 +7,7 @@
 
 using InfectionState = mio::osecirvvs::InfectionState;
 
-static const std::vector<std::pair<std::string, InfectionState>> states_strings = {
+static const std::vector<std::pair<std::string, InfectionState>> osecirvvs_states_strings = {
     {"SusceptibleNaive", InfectionState::SusceptibleNaive},
     {"SusceptiblePartialImmunity", InfectionState::SusceptiblePartialImmunity},
     {"SusceptibleImprovedImmunity", InfectionState::SusceptibleImprovedImmunity},

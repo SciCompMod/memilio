@@ -51,6 +51,11 @@ double ControlParameter::cost() const
     return m_cost;
 }
 
+mio::DampingSampling<double> ControlParameter::damping() const
+{
+    return m_damping;
+}
+
 void ControlParameter::set_name(const std::string& new_name)
 {
     m_name = new_name;

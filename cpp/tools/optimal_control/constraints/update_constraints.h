@@ -21,7 +21,7 @@ inline size_t num_infection_states()
 }
 
 template <class InfectionState>
-inline std::vector<InfectionState> query_infection_states(const std::string& state_query, std::vector<std::pair<std::string, InfectionState>>& all_states)
+inline std::vector<InfectionState> query_infection_states(const std::string& state_query, const std::vector<std::pair<std::string, InfectionState>>& all_states)
 {
     // Split query into separate subqueries
     std::vector<std::string> and_group_tokens;
@@ -75,8 +75,7 @@ inline std::vector<InfectionState> query_infection_states(const std::string& sta
 }
 
 template <typename FP, class OptimizationSettings>
-void update_path_constraint(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model,
-                            const auto& final_state, std::vector<FP>& path_constraints)
+void update_path_constraint(const OptimizationSettings& settings, const auto& final_state, std::vector<FP>& path_constraints)
 {
     // ------------------------------------------------------------------- //
     // Consider the model to be at an intermediate simulation step.        //
@@ -88,12 +87,12 @@ void update_path_constraint(const OptimizationSettings& settings, const typename
 
     for (size_t constraint_index = 0; constraint_index < settings.num_path_constraints(); constraint_index++) {
         Constraint constraint = settings.path_constraints()[constraint_index];
-        auto states           = query_infection_states<OptimizationSettings::InfectionState>(constraint.name(), settings.states_strings);
+        auto states           = query_infection_states<typename OptimizationSettings::InfectionState>(constraint.name(), settings.states_strings());
 
         FP value = 0.0;
-        for (mio::AgeGroup agegroup = 0; agegroup < model.parameters.get_num_groups(); agegroup++)
+        for (int agegroup = 0; agegroup < settings.optimization_model().num_age_groups(); agegroup++)
         {
-            auto age_group_offset = (int)agegroup * (int)num_infection_states<OptimizationSettings::InfectionState>();
+            auto age_group_offset = agegroup * (int)num_infection_states<typename OptimizationSettings::InfectionState>();
 
             for (const auto& state : states) {
                 value += final_state[(int)state + age_group_offset];
@@ -105,8 +104,7 @@ void update_path_constraint(const OptimizationSettings& settings, const typename
 }
 
 template <typename FP, class OptimizationSettings>
-void update_terminal_constraint(const OptimizationSettings& settings, const typename OptimizationSettings::template ModelTemplate<FP>& model,
-                                const auto& final_state, std::vector<FP>& terminal_constraints)
+void update_terminal_constraint(const OptimizationSettings& settings, const auto& final_state, std::vector<FP>& terminal_constraints)
 {
     // ----------------------------------------------------------------------- //
     // Consider the model to be at the final simulation step.                  //
@@ -116,12 +114,12 @@ void update_terminal_constraint(const OptimizationSettings& settings, const type
 
     for (size_t constraint_index = 0; constraint_index < settings.num_terminal_constraints(); constraint_index++) {
         Constraint constraint = settings.terminal_constraints()[constraint_index];
-        auto states           = query_infection_states<OptimizationSettings::InfectionState>(constraint.name(), settings.states_strings);
+        auto states           = query_infection_states<typename OptimizationSettings::InfectionState>(constraint.name(), settings.states_strings());
 
         FP value = 0.0;
-        for (mio::AgeGroup agegroup = 0; agegroup < model.parameters.get_num_groups(); agegroup++)
+        for (int agegroup = 0; agegroup < settings.optimization_model().num_age_groups(); agegroup++)
         {
-            auto age_group_offset = (int)agegroup * (int)num_infection_states<OptimizationSettings::InfectionState>();
+            auto age_group_offset = agegroup * (int)num_infection_states<typename OptimizationSettings::InfectionState>();
 
             for (const auto& state : states) {
                 value += final_state[(int)state + age_group_offset];

@@ -59,13 +59,9 @@ if(MEMILIO_ENABLE_IPOPT)
     target_link_libraries(ode_secirvvs_optimization2 PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
     target_compile_options(ode_secirvvs_optimization2 PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-    add_executable(secirvvs_ESID 
-        secirvvs_ESID/main.cpp 
-        secirvvs_ESID/optimization_model.cpp
-        secirvvs_ESID/optimization_model.h
-    )
-    target_link_libraries(secirvvs_ESID PRIVATE memilio ode_secirvvs AD::AD Ipopt::Ipopt)
-    target_compile_options(secirvvs_ESID PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+    add_executable(test_optimal_control_tool test_optimal_control_tool.cpp)
+    target_link_libraries(test_optimal_control_tool PRIVATE memilio ode_secirvvs AD::AD optimal_control Ipopt::Ipopt)
+    target_compile_options(test_optimal_control_tool PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 endif()
 
