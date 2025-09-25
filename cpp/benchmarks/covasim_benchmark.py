@@ -1,3 +1,13 @@
+# import os
+# # Choose sensible values for your machine; start with physical core count
+# os.environ["NUMBA_NUM_THREADS"] = "8"       # Numba worker pool size
+# os.environ["NUMBA_THREADING_LAYER"] = "omp"  # or 'tbb'/'omp' if available
+
+# # BLAS/LAPACK backends (pick what your NumPy uses)
+# os.environ["OMP_NUM_THREADS"] = "8"         # OpenMP
+# os.environ["OPENBLAS_NUM_THREADS"] = "8"    # OpenBLAS
+# os.environ["MKL_NUM_THREADS"] = "8"         # Intel MKL
+
 import covasim as cv
 import time
 import sys
