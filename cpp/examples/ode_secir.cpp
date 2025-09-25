@@ -82,7 +82,7 @@ int main()
 
     /*
     Example of using a different integrator
-   All available integrators are listed in cpp/memilio/math/README.md
+    All available integrators are listed in cpp/memilio/math/README.md
 
     auto integrator = std::make_unique<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);

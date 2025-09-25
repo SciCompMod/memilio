@@ -358,7 +358,7 @@ mio::IOResult<void> run(const fs::path& data_dir)
     std::vector<std::string> vars = {"S_n", "S_p", "E_n", "E_p", "E_i", "C_n", "C_p", "C_i", "C_confirmed_n", "C_confirmed_p", "C_confirmed_i",  "I_n", "I_p", "I_i", "I_confirmed_n", "I_confirmed_p", "I_confirmed_i", "H_n", "H_p", "H_i", "U_n", "U_p", "U_i", "S_i", "D_n", "D_p", "D_i"};
     mio::TimeSeries<FP> result_interpolated = mio::interpolate_simulation_result(result);
     mio::TimeSeries<FP> result_aggregated = aggregate_result(result_interpolated, num_age_groups);
-    result_aggregated.print_table(vars, 21, 10, outFileResult);
+    result_aggregated.print_table(outFileResult, vars, 21, 10);
     outFileResult.close();
 
     FP constraint = 0;
