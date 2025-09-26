@@ -47,6 +47,7 @@
 #include <string>
 #include <vector>
 #include <omp.h>
+#include <filesystem>
 
 namespace params
 {
@@ -67,7 +68,7 @@ const ScalarType transmissionProbabilityOnContact = 0.5;
 
 // Simulation parameters
 ScalarType t0   = 0.;
-ScalarType tmax = 30;
+ScalarType tmax = 60;
 ScalarType dt   = 0.1;
 
 // Special dABM parameters
@@ -79,22 +80,22 @@ ScalarType dt_switch = 0.2;
 
 } // namespace params
 
-mio::dabm::Model<SingleWell<mio::osecir::InfectionState>> initialize_abm(int total_pop, double init_I)
+mio::dabm::Model<SingleWell<mio::osecir::InfectionState>> initialize_abm(int total_pop, double init_E)
 {
     using Model = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
 
     std::vector<Model::Agent> agents(total_pop);
     //Random variables for initialization of agents' position
     auto& pos_sampler    = mio::UniformDistribution<double>::get_instance();
-    auto& status_sampler = mio::DiscreteDistribution<double>::get_instance();
+    auto& status_sampler = mio::DiscreteDistribution<size_t>::get_instance();
     for (auto& a : agents) {
         //Agents' positions are equally distributed in [-2, 2] x [-2, 2]
         a.position = Eigen::Vector2d{pos_sampler(mio::thread_local_rng(), -2., 2.),
                                      pos_sampler(mio::thread_local_rng(), -2., 2.)};
         //Sample agents status
-        bool is_exposed =
-            status_sampler(mio::thread_local_rng(), {total_pop - init_I * total_pop, init_I * total_pop}) == 1;
-        a.status = is_exposed ? mio::osecir::InfectionState::Exposed : mio::osecir::InfectionState::Susceptible;
+        bool is_exposed = status_sampler(mio::thread_local_rng(),
+                                         std::vector<double>{total_pop - init_E * total_pop, init_E * total_pop}) == 1;
+        a.status        = is_exposed ? mio::osecir::InfectionState::Exposed : mio::osecir::InfectionState::Susceptible;
     }
 
     // Initialize adoption rates
@@ -185,7 +186,7 @@ mio::IOResult<void> save_results(std::vector<std::vector<mio::TimeSeries<double>
     return mio::success();
 }
 
-mio::IOResult<void> simulate_dabm(std::string result_dir, size_t num_runs, int total_pop, double init_I)
+mio::IOResult<void> simulate_dabm(std::string result_dir, size_t num_runs, int total_pop, double init_E)
 {
     // As we only have one region, ensemble outputs are a vector of timeseries with size 1 for every run
     std::vector<std::vector<mio::TimeSeries<double>>> ensemble_result(
@@ -200,7 +201,7 @@ mio::IOResult<void> simulate_dabm(std::string result_dir, size_t num_runs, int t
         // Initialization
         mio::timing::BasicTimer timer;
         timer.start();
-        auto model = initialize_abm(total_pop, init_I);
+        auto model = initialize_abm(total_pop, init_E);
         auto sim   = mio::dabm::Simulation(model, params::t0, params::dt);
         timer.stop();
         init_time[run] = timer.get_elapsed_time();
@@ -226,13 +227,13 @@ mio::IOResult<void> simulate_dabm(std::string result_dir, size_t num_runs, int t
     return mio::success();
 }
 
-mio::osecir::Model<double> initialize_osecir()
+mio::osecir::Model<double> initialize_osecir(int total_pop, double init_E)
 {
     mio::osecir::Model<double> model(1);
 
-    model.populations.set_total(params::total_population);
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]                     = 1;
-    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}]          = 0;
+    model.populations.set_total(total_pop);
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}]            = init_E * total_pop;
+    model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptoms}]            = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedSymptomsConfirmed}]   = 0;
@@ -241,7 +242,7 @@ mio::osecir::Model<double> initialize_osecir()
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}]                   = 0;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = 0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
-                                                params::total_population);
+                                                total_pop);
 
     model.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[mio::AgeGroup(0)] = params::timeExposed;
     model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(0)] =
@@ -267,7 +268,7 @@ mio::osecir::Model<double> initialize_osecir()
     return model;
 }
 
-mio::IOResult<void> simulate_ode_secir(std::string result_dir, size_t num_runs)
+mio::IOResult<void> simulate_ode_secir(std::string result_dir, size_t num_runs, int total_pop, double init_E)
 {
     // As we don't have any spatial resolution, ensemble outputs are a vector of timeseries with size 1 for every run
     std::vector<std::vector<mio::TimeSeries<double>>> ensemble_result(
@@ -282,7 +283,7 @@ mio::IOResult<void> simulate_ode_secir(std::string result_dir, size_t num_runs)
         mio::timing::BasicTimer timer;
         // Initialization
         timer.start();
-        auto model = initialize_osecir();
+        auto model = initialize_osecir(total_pop, init_E);
         auto sim   = mio::Simulation(model, params::t0, params::dt);
         timer.stop();
         init_time[run] = timer.get_elapsed_time();
@@ -308,7 +309,8 @@ mio::IOResult<void> simulate_ode_secir(std::string result_dir, size_t num_runs)
     return mio::success();
 }
 
-mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, const double switch_threshold)
+mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, const double switch_threshold,
+                                    int total_pop, double init_E)
 {
 
     std::vector<std::vector<mio::TimeSeries<double>>> ensemble_result(
@@ -325,8 +327,8 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
         mio::timing::BasicTimer timer;
         // Initialization
         timer.start();
-        auto abm     = initialize_abm();
-        auto pbm     = initialize_osecir();
+        auto abm     = initialize_abm(total_pop, init_E);
+        auto pbm     = initialize_osecir(total_pop, init_E);
         auto sim_abm = mio::dabm::Simulation(abm, params::t0, params::dt);
         auto sim_pbm = mio::Simulation(pbm, params::t0, params::dt);
 
@@ -345,8 +347,9 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
                                                                 mio::TimeSeries<double>, mio::TimeSeries<double>>;
 
         //Define switching condition
-        const auto condition = [&switch_threshold](const mio::TimeSeries<double>& result_abm,
-                                                   const mio::TimeSeries<double>& result_pbm, bool abm_used) {
+        const auto condition = [&switch_threshold, total_pop](const mio::TimeSeries<double>& result_abm,
+                                                              const mio::TimeSeries<double>& /*result_pbm*/,
+                                                              bool abm_used) {
             if (abm_used) {
                 auto& last_value    = result_abm.get_last_value().eval();
                 double num_infected = last_value[(int)mio::osecir::InfectionState::Exposed] +
@@ -356,20 +359,7 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
                                       last_value[(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed] +
                                       last_value[(int)mio::osecir::InfectionState::InfectedSevere] +
                                       last_value[(int)mio::osecir::InfectionState::InfectedCritical];
-                if ((num_infected > switch_threshold) || (num_infected < 1e-14)) {
-                    return true;
-                }
-            }
-            else {
-                auto& last_value    = result_pbm.get_last_value().eval();
-                double num_infected = last_value[(int)mio::osecir::InfectionState::Exposed] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedNoSymptoms] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedNoSymptomsConfirmed] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedSymptoms] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedSevere] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedCritical];
-                if ((1e-14 <= num_infected) && (num_infected <= switch_threshold)) {
+                if ((num_infected > switch_threshold * total_pop) || (num_infected < 1e-14)) {
                     return true;
                 }
             }
@@ -412,29 +402,37 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
 
 int main()
 {
-    std::string result_dir  = "/home/bick_ju//Documents/MEmilioPaper/HybridApplication/";
-    size_t num_runs         = 1000;
-    double switch_threshold = 3.0;
+    std::string base_dir                  = "/hpc_data/bick_ju/MemilioPaper/ScalingHybrid/";
+    size_t num_runs                       = 100;
+    std::vector<double> switch_thresholds = {0.02, 0.05, 0.1};
+    std::vector<int> populations          = {100, 1000, 5000, 10000, 20000, 50000, 100000};
+    double init_E                         = 0.01;
 
     mio::set_log_level(mio::LogLevel::err);
 
-    auto abm_result = simulate_dabm(result_dir, num_runs);
-    if (!abm_result) {
-        printf("%s", "Error in dABM simulation\n");
-        printf("%s\n", abm_result.error().formatted_message().c_str());
-        return -1;
-    }
-    auto pbm_result = simulate_ode_secir(result_dir, num_runs);
-    if (!pbm_result) {
-        printf("%s", "Error in OSECIR simulation\n");
-        printf("%s\n", pbm_result.error().formatted_message().c_str());
-        return -1;
-    }
-    auto hybrid_result = simulate_hybrid(result_dir, num_runs, switch_threshold);
-    if (!hybrid_result) {
-        printf("%s", "Error in hybrid simulation\n");
-        printf("%s\n", hybrid_result.error().formatted_message().c_str());
-        return -1;
+    for (auto pop : populations) {
+        const std::string run_dir = base_dir + "pop_" + std::to_string(pop) + "_";
+        auto abm_result           = simulate_dabm(run_dir, num_runs, pop, init_E);
+        if (!abm_result) {
+            printf("%s", "Error in dABM simulation\n");
+            printf("%s\n", abm_result.error().formatted_message().c_str());
+            return -1;
+        }
+        auto pbm_result = simulate_ode_secir(run_dir, num_runs, pop, init_E);
+        if (!pbm_result) {
+            printf("%s", "Error in OSECIR simulation\n");
+            printf("%s\n", pbm_result.error().formatted_message().c_str());
+            return -1;
+        }
+        for (auto threshold : switch_thresholds) {
+            const std::string hybrid_dir = run_dir + std::to_string(static_cast<int>(threshold * 100)) + "_";
+            auto hybrid_result           = simulate_hybrid(hybrid_dir, num_runs, threshold, pop, init_E);
+            if (!hybrid_result) {
+                printf("%s, %.02f", "Error in hybrid simulation with threshold\n", threshold);
+                printf("%s\n", hybrid_result.error().formatted_message().c_str());
+                return -1;
+            }
+        }
     }
     return 0;
 }

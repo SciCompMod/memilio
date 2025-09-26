@@ -164,6 +164,10 @@ add_executable(comparison_dabm_ode_hybrid paper/comparison_dabm_ode_hybrid.cpp)
 target_link_libraries(comparison_dabm_ode_hybrid PRIVATE memilio hybrid ode_secir d_abm)
 target_compile_options(comparison_dabm_ode_hybrid PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(scaling_dabm_ode_hybrid paper/scaling_dabm_ode_hybrid.cpp)
+target_link_libraries(scaling_dabm_ode_hybrid PRIVATE memilio hybrid ode_secir d_abm)
+target_compile_options(scaling_dabm_ode_hybrid PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 if(MEMILIO_HAS_JSONCPP)
     add_executable(ode_secir_read_graph_example ode_secir_read_graph.cpp)
     target_link_libraries(ode_secir_read_graph_example PRIVATE memilio ode_secir)
