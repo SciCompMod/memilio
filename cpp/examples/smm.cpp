@@ -74,15 +74,15 @@ int main()
                                    {InfectionState::I, 0.5, mio::regions::Region(1), {Age(1), Species(1)}}},
                                   {Age(1), Species(1)}});
         adoption_rates.push_back(
-            {{InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}, {Age(1), Species(1)}}});
+            {InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}, {Age(1), Species(1)}});
         adoption_rates.push_back(
-            {{InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}, {Age(1), Species(1)}}});
+            {InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}, {Age(1), Species(1)}});
         adoption_rates.push_back(
-            {{InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}, {Age(1), Species(1)}}});
+            {InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}, {Age(1), Species(1)}});
         adoption_rates.push_back(
-            {{InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}, {Age(1), Species(1)}}});
+            {InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}, {Age(1), Species(1)}});
         adoption_rates.push_back(
-            {{InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}, {Age(1), Species(1)}}});
+            {InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}, {Age(1), Species(1)}});
     }
 
     //Agents in infection state D do not transition
