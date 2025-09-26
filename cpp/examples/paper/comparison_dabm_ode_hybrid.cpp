@@ -71,7 +71,7 @@ const ScalarType num_E0 = 1.;
 
 // Simulation parameters
 ScalarType t0   = 0.;
-ScalarType tmax = 30;
+ScalarType tmax = 90;
 ScalarType dt   = 0.1;
 
 // Special dABM parameters
@@ -321,7 +321,12 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
     std::vector<double> init_time(num_runs);
     std::vector<double> sim_time(num_runs);
 
-    size_t switch_runs = 0;
+    size_t switch_runs     = 0;
+    size_t extinction_runs = 0;
+    size_t survival_runs   = 0;
+
+    std::vector<double> switch_survival_runs;
+    std::vector<double> switch_extinction_runs;
 
 #pragma omp parallel for
     for (size_t run = 0; run < num_runs; run++) {
@@ -349,7 +354,7 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
 
         //Define switching condition
         const auto condition = [&switch_threshold](const mio::TimeSeries<double>& result_abm,
-                                                   const mio::TimeSeries<double>& result_pbm, bool abm_used) {
+                                                   const mio::TimeSeries<double>& /*result_pbm*/, bool abm_used) {
             if (abm_used) {
                 auto& last_value    = result_abm.get_last_value().eval();
                 double num_infected = last_value[(int)mio::osecir::InfectionState::Exposed] +
@@ -359,20 +364,7 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
                                       last_value[(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed] +
                                       last_value[(int)mio::osecir::InfectionState::InfectedSevere] +
                                       last_value[(int)mio::osecir::InfectionState::InfectedCritical];
-                if ((num_infected > switch_threshold) || (num_infected < 1e-14)) {
-                    return true;
-                }
-            }
-            else {
-                auto& last_value    = result_pbm.get_last_value().eval();
-                double num_infected = last_value[(int)mio::osecir::InfectionState::Exposed] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedNoSymptoms] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedNoSymptomsConfirmed] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedSymptoms] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedSevere] +
-                                      last_value[(int)mio::osecir::InfectionState::InfectedCritical];
-                if ((1e-14 <= num_infected) && (num_infected <= switch_threshold)) {
+                if ((num_infected > switch_threshold) || (num_infected < 1.)) {
                     return true;
                 }
             }
@@ -396,6 +388,32 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
             if (sim.get_result_model2().get_num_time_points() > 1) {
                 switch_runs++;
             }
+            else {
+                auto res = merged_result.export_csv(result_dir + "hybrid_run_" + std::to_string(run) + ".csv",
+                                                    {"S", "E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri", "R", "D"});
+            }
+            if ((merged_result.get_last_value()[(int)mio::osecir::InfectionState::Exposed] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::InfectedNoSymptoms] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::InfectedNoSymptomsConfirmed] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::InfectedSymptoms] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::InfectedSymptomsConfirmed] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::InfectedSevere] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::InfectedCritical] <
+                 1.) &&
+                (merged_result.get_last_value()[(int)mio::osecir::InfectionState::Recovered] +
+                     merged_result.get_last_value()[(int)mio::osecir::InfectionState::Dead] <
+                 10.)) {
+                extinction_runs++;
+                if (sim.get_result_model2().get_num_time_points() > 1) {
+                    switch_extinction_runs.push_back(sim.get_result_model2().get_time(1));
+                }
+            }
+            else {
+                survival_runs++;
+                if (sim.get_result_model2().get_num_time_points() > 1) {
+                    switch_survival_runs.push_back(sim.get_result_model2().get_time(1));
+                }
+            }
         }
     }
 
@@ -403,13 +421,26 @@ mio::IOResult<void> simulate_hybrid(std::string result_dir, size_t num_runs, con
     BOOST_OUTCOME_TRY(save_results(ensemble_result, result_dir, "hybrid"));
     mio::TimeSeries<double> init_time_ts(1);
     mio::TimeSeries<double> sim_time_ts(1);
+    mio::TimeSeries<double> switch_survival_ts(1);
+    mio::TimeSeries<double> switch_extinction_ts(1);
+    for (auto t : switch_survival_runs) {
+        switch_survival_ts.add_time_point(0, Eigen::VectorXd::Constant(1, t));
+    }
+    for (auto t : switch_extinction_runs) {
+        switch_extinction_ts.add_time_point(0, Eigen::VectorXd::Constant(1, t));
+    }
     for (size_t i = 0; i < num_runs; i++) {
         init_time_ts.add_time_point(i, Eigen::VectorXd::Constant(1, init_time[i]));
         sim_time_ts.add_time_point(i, Eigen::VectorXd::Constant(1, sim_time[i]));
     }
+
     BOOST_OUTCOME_TRY(init_time_ts.export_csv(result_dir + "hybrid_init_time.csv"));
     BOOST_OUTCOME_TRY(sim_time_ts.export_csv(result_dir + "hybrid_sim_time.csv"));
-    std::cout << "Number of runs where switch occurred: " << switch_runs << " out of " << num_runs << std::endl;
+    BOOST_OUTCOME_TRY(switch_survival_ts.export_csv(result_dir + "hybrid_switch_survival.csv"));
+    BOOST_OUTCOME_TRY(switch_extinction_ts.export_csv(result_dir + "hybrid_switch_extinction.csv"));
+    std::cerr << "Number of runs where switch occurred: " << switch_runs << " out of " << num_runs << std::endl;
+    std::cerr << "Number of extinction runs: " << extinction_runs << " out of " << num_runs << std::endl;
+    std::cerr << "Number of survival runs: " << survival_runs << " out of " << num_runs << std::endl;
     return mio::success();
 }
 
@@ -421,12 +452,6 @@ int main()
 
     mio::set_log_level(mio::LogLevel::err);
 
-    auto abm_result = simulate_dabm(result_dir, num_runs);
-    if (!abm_result) {
-        printf("%s", "Error in dABM simulation\n");
-        printf("%s\n", abm_result.error().formatted_message().c_str());
-        return -1;
-    }
     auto pbm_result = simulate_ode_secir(result_dir, num_runs);
     if (!pbm_result) {
         printf("%s", "Error in OSECIR simulation\n");
@@ -437,6 +462,12 @@ int main()
     if (!hybrid_result) {
         printf("%s", "Error in hybrid simulation\n");
         printf("%s\n", hybrid_result.error().formatted_message().c_str());
+        return -1;
+    }
+    auto abm_result = simulate_dabm(result_dir, num_runs);
+    if (!abm_result) {
+        printf("%s", "Error in dABM simulation\n");
+        printf("%s\n", abm_result.error().formatted_message().c_str());
         return -1;
     }
     return 0;
