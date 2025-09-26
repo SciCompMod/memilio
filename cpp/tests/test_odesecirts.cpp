@@ -141,7 +141,7 @@ TEST(TestOdeSECIRTS, get_flows)
 
 TEST(TestOdeSECIRTS, Simulation)
 {
-    auto sim        = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
+    auto sim = mio::osecirts::Simulation<double>(osecirts_testing_model(), 0, 1);
     sim.set_integrator_core(std::make_unique<mio::EulerIntegratorCore<double>>());
     sim.advance(1);
 
@@ -258,7 +258,8 @@ TEST(TestOdeSECIRTS, overflow_vaccinations)
     }
 
     // simulate one step with explicit Euler
-    auto result     = mio::simulate_flows<double, mio::osecirts::Model<double>>(t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
+    auto result = mio::simulate_flows<double, mio::osecirts::Model<double>>(
+        t0, tmax, dt, model, std::make_unique<mio::EulerIntegratorCore<double>>());
 
     // get the flow indices for each type of vaccination and also the indices of the susceptible compartments
     auto flow_indx_partial_vaccination =
@@ -731,14 +732,14 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
     num_InfectedSevere[0]     = std::vector<double>(num_age_groups, 0.0);
     num_icu[0]                = std::vector<double>(num_age_groups, 0.0);
 
-    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
+    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data<ScalarType>(
                     path, region, {2020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
                     num_InfectedSevere, num_icu, num_death, num_timm, model,
                     std::vector<double>(size_t(num_age_groups), 1.0), 0),
                 IsSuccess());
 
     // read again with invalid date
-    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data(
+    ASSERT_THAT(mio::osecirts::details::read_confirmed_cases_data<ScalarType>(
                     path, region, {3020, 12, 01}, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms,
                     num_InfectedSevere, num_icu, num_death, num_timm, model,
                     std::vector<double>(size_t(num_age_groups), 1.0), 0),
@@ -746,7 +747,7 @@ TEST(TestOdeSECIRTS, read_confirmed_cases)
 
     // call the compute function with empty case data
     const std::vector<mio::ConfirmedCasesDataEntry> empty_case_data;
-    ASSERT_THAT(mio::osecirts::details::compute_confirmed_cases_data(
+    ASSERT_THAT(mio::osecirts::details::compute_confirmed_cases_data<ScalarType>(
                     empty_case_data, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere,
                     num_icu, num_death, num_timm, region, {2020, 12, 01}, model,
                     std::vector<double>(size_t(num_age_groups), 1.0), 0),
@@ -761,7 +762,8 @@ TEST(TestOdeSECIRTS, set_divi_data_invalid_dates)
     auto model_vector = std::vector<mio::osecirts::Model<double>>{model};
 
     // Test with date before DIVI dataset was available.
-    EXPECT_THAT(mio::osecirts::details::set_divi_data(model_vector, "", {1001}, {2019, 12, 01}, 1.0), IsSuccess());
+    EXPECT_THAT(mio::osecirts::details::set_divi_data<ScalarType>(model_vector, "", {1001}, {2019, 12, 01}, 1.0),
+                IsSuccess());
     // Assure that populations is the same as before.
     EXPECT_THAT(print_wrap(model_vector[0].populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
@@ -808,8 +810,8 @@ TEST(TestOdeSECIRTS, set_confirmed_cases_data_with_ICU)
     auto model_vector       = std::vector<mio::osecirts::Model<double>>{model};
     auto scaling_factor_inf = std::vector<double>(size_t(model.parameters.get_num_groups()), 1.0);
 
-    EXPECT_THAT(mio::osecirts::details::set_confirmed_cases_data(model_vector, case_data, {1002}, mid_day,
-                                                                 scaling_factor_inf, immunity_population),
+    EXPECT_THAT(mio::osecirts::details::set_confirmed_cases_data<ScalarType>(model_vector, case_data, {1002}, mid_day,
+                                                                             scaling_factor_inf, immunity_population),
                 IsSuccess());
 
     // Since, TimeInfectedCritical is 1, the number of ICU cases is the difference of confirmed cases between two days, which is 1.
@@ -848,17 +850,17 @@ TEST(TestOdeSECIRTS, read_data)
                                                                   {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
                                                                   {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
 
-    auto read_result1 = mio::osecirts::read_input_data_county(model1, {2020, 12, 01}, {1002},
-                                                              std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                              TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
+    auto read_result1 = mio::osecirts::read_input_data_county<ScalarType>(
+        model1, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_GERMANY_PYDATA_DIR,
+        10, immunity_population);
 
-    auto read_result2 =
-        mio::osecirts::read_input_data(model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, TEST_GERMANY_PYDATA_DIR, 10, immunity_population);
+    auto read_result2 = mio::osecirts::read_input_data<ScalarType>(
+        model2, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0, TEST_GERMANY_PYDATA_DIR,
+        10, immunity_population);
 
-    auto read_result_district =
-        mio::osecirts::read_input_data(model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0),
-                                       1.0, mio::path_join(TEST_DATA_DIR, "District/pydata"), 10, immunity_population);
+    auto read_result_district = mio::osecirts::read_input_data<ScalarType>(
+        model3, {2020, 12, 01}, {1002}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+        mio::path_join(TEST_DATA_DIR, "District/pydata"), 10, immunity_population);
 
     ASSERT_THAT(read_result1, IsSuccess());
     ASSERT_THAT(read_result2, IsSuccess());
@@ -1010,7 +1012,7 @@ TEST(TestOdeSECIRTS, export_time_series_init)
                                                                   {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
 
     // Test exporting time series
-    ASSERT_THAT(mio::osecirts::export_input_data_county_timeseries(
+    ASSERT_THAT(mio::osecirts::export_input_data_county_timeseries<ScalarType>(
                     std::vector<mio::osecirts::Model<double>>{model}, tmp_results_dir, {0}, {2020, 12, 01},
                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2,
                     mio::path_join(TEST_DATA_DIR, "county_divi_ma7.json"),
@@ -1019,13 +1021,14 @@ TEST(TestOdeSECIRTS, export_time_series_init)
                     mio::path_join(TEST_DATA_DIR, "vacc_county_ageinf_ma7.json")),
                 IsSuccess());
 
-    auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
+    auto data_extrapolated = mio::read_result<ScalarType>(mio::path_join(tmp_results_dir, "Results_rki.h5"));
     ASSERT_THAT(data_extrapolated, IsSuccess());
 
     // Values were generated by the tested function export_input_data_county_timeseries;
     // can only check stability of the implementation, not correctness
     auto expected_results =
-        mio::read_result(mio::path_join(TEST_DATA_DIR, "export_time_series_initialization_osecirts.h5")).value();
+        mio::read_result<ScalarType>(mio::path_join(TEST_DATA_DIR, "export_time_series_initialization_osecirts.h5"))
+            .value();
 
     ASSERT_THAT(print_wrap(data_extrapolated.value()[0].get_groups().matrix()),
                 MatrixNear(print_wrap(expected_results[0].get_groups().matrix()), 1e-5, 1e-5));
@@ -1043,9 +1046,9 @@ TEST(TestOdeSECIRTS, model_initialization)
                                                                   {0.61, 0.61, 0.62, 0.62, 0.58, 0.41},
                                                                   {0.35, 0.35, 0.305, 0.3, 0.385, 0.58}};
 
-    ASSERT_THAT(mio::osecirts::read_input_data_county(model_vector, {2020, 12, 01}, {0},
-                                                      std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                                      TEST_DATA_DIR, 2, immunity_population, false),
+    ASSERT_THAT(mio::osecirts::read_input_data_county<ScalarType>(model_vector, {2020, 12, 01}, {0},
+                                                                  std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                                  TEST_DATA_DIR, 2, immunity_population, false),
                 IsSuccess());
 
     // Values from data/export_time_series_init_osecirts.h5, for reading in comparison

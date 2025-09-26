@@ -71,8 +71,8 @@ write_single_run_result(const size_t run,
         return node.id;
     });
     auto num_groups = (int)(size_t)graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(mio::save_result(all_results, ids, num_groups,
-                                       mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
+    BOOST_OUTCOME_TRY(mio::save_result<ScalarType>(
+        all_results, ids, num_groups, mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();
 }

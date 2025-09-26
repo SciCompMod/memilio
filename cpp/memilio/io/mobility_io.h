@@ -60,13 +60,13 @@ IOResult<int> count_lines(const std::string& filename);
  *        where N is the number of regions
  * @param filename name of file to be read
  */
-template <typename FP = ScalarType>
-IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
+template <typename FP>
+IOResult<Eigen::MatrixX<FP>> read_mobility_formatted(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(auto&& num_lines, count_lines(filename));
 
     if (num_lines == 0) {
-        return success(Eigen::MatrixXd(0, 0));
+        return success(Eigen::MatrixX<FP>(0, 0));
     }
 
     std::fstream file;
@@ -75,7 +75,7 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
         return failure(StatusCode::FileNotFound, filename);
     }
 
-    Eigen::MatrixXd txt_matrix(num_lines - 1, 3);
+    Eigen::MatrixX<FP> txt_matrix(num_lines - 1, 3);
     std::vector<int> ids;
 
     try {
@@ -89,9 +89,9 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
                                    filename + ":" + std::to_string(linenumber) + ": Not enough entries in line.");
                 }
                 ids.push_back(std::stoi(line[2]));
-                txt_matrix(linenumber - 1, 0) = std::stoi(line[2]);
-                txt_matrix(linenumber - 1, 1) = std::stoi(line[3]);
-                txt_matrix(linenumber - 1, 2) = std::stod(line[4]);
+                txt_matrix(linenumber - 1, 0) = static_cast<FP>(std::stoi(line[2]));
+                txt_matrix(linenumber - 1, 1) = static_cast<FP>(std::stoi(line[3]));
+                txt_matrix(linenumber - 1, 2) = static_cast<FP>(std::stod(line[4]));
             }
             linenumber++;
         }
@@ -104,7 +104,7 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
     std::vector<int>::iterator iter = std::unique(ids.begin(), ids.end());
     ids.resize(std::distance(ids.begin(), iter));
 
-    Eigen::MatrixXd mobility = Eigen::MatrixXd::Zero(ids.size(), ids.size());
+    Eigen::MatrixX<FP> mobility = Eigen::MatrixX<FP>::Zero(ids.size(), ids.size());
 
     for (int k = 0; k < num_lines - 1; k++) {
         int row_ind = 0;
@@ -127,13 +127,13 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
  *        Matrix, where N is the number of regions
  * @param filename name of file to be read
  */
-template <typename FP = ScalarType>
-IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
+template <typename FP>
+IOResult<Eigen::MatrixX<FP>> read_mobility_plain(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(auto&& num_lines, count_lines(filename));
 
     if (num_lines == 0) {
-        return success(Eigen::MatrixXd(0, 0));
+        return success(Eigen::MatrixX<FP>(0, 0));
     }
 
     std::fstream file;
@@ -142,7 +142,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
         return failure(StatusCode::FileNotFound, filename);
     }
 
-    Eigen::MatrixXd mobility(num_lines, num_lines);
+    Eigen::MatrixX<FP> mobility(num_lines, num_lines);
 
     try {
         std::string tp;
@@ -154,7 +154,7 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
             }
             Eigen::Index i = static_cast<Eigen::Index>(linenumber);
             for (Eigen::Index j = 0; j < static_cast<Eigen::Index>(line.size()); j++) {
-                mobility(i, j) = std::stod(line[j]);
+                mobility(i, j) = static_cast<FP>(std::stod(line[j]));
             }
             linenumber++;
         }
@@ -302,9 +302,9 @@ IOResult<Graph<Model, MobilityParameters<FP>>> read_graph(const std::string& dir
  * @param[in] filename Name of the file where the results will be saved.
  * @return Any io errors that occur during writing of the files.
  */
-template <typename FP = ScalarType>
-IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
-                          const std::vector<std::pair<int, int>>& ids, const std::string& filename)
+template <typename FP>
+IOResult<void> save_edges(const std::vector<TimeSeries<FP>>& results, const std::vector<std::pair<int, int>>& ids,
+                          const std::string& filename)
 {
     const auto num_edges = results.size();
     size_t edge_indx     = 0;
@@ -337,18 +337,18 @@ IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
                              "Failed to create the 'Time' DataSet in group " + h5group_name +
                                  " in the file: " + filename);
 
-            auto values_t = std::vector<ScalarType>(result.get_times().begin(), result.get_times().end());
+            auto values_t = std::vector<FP>(result.get_times().begin(), result.get_times().end());
             MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
                              StatusCode::UnknownError,
                              "Failed to write 'Time' data in group " + h5group_name + " in the file: " + filename);
 
             int start_id = ids[edge_indx].first;
-            auto total   = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                             num_timepoints, num_elements)
-                             .eval();
+            auto total =
+                Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints, num_elements)
+                    .eval();
             while (edge_indx < num_edges && ids[edge_indx].first == start_id) {
                 const auto& result_edge = results[edge_indx];
-                auto edge_result = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
+                auto edge_result        = Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
                                        num_timepoints, num_elements)
                                        .eval();
                 for (Eigen::Index t_idx = 0; t_idx < result_edge.get_num_time_points(); ++t_idx) {
@@ -412,8 +412,8 @@ IOResult<void> save_edges(const std::vector<TimeSeries<ScalarType>>& results,
  * @param[in] save_percentiles [Default: true] Defines if percentiles are written.
  * @return Any io errors that occur during writing of the files.
  */
-template <typename FP = ScalarType>
-IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_edges,
+template <typename FP>
+IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_edges,
                           const std::vector<std::pair<int, int>>& pairs_edges, const fs::path& result_dir,
                           bool save_single_runs = true, bool save_percentiles = true)
 {
@@ -421,8 +421,8 @@ IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>
     auto ensemble_edges_sum = sum_nodes(ensemble_edges);
     if (save_single_runs) {
         for (size_t i = 0; i < ensemble_edges_sum.size(); ++i) {
-            BOOST_OUTCOME_TRY(save_edges(ensemble_edges[i], pairs_edges,
-                                         (result_dir / ("Edges_run" + std::to_string(i) + ".h5")).string()));
+            BOOST_OUTCOME_TRY(save_edges<FP>(ensemble_edges[i], pairs_edges,
+                                             (result_dir / ("Edges_run" + std::to_string(i) + ".h5")).string()));
         }
     }
 
@@ -441,17 +441,17 @@ IOResult<void> save_edges(const std::vector<std::vector<TimeSeries<ScalarType>>>
 
         // save percentiles of Edges
         {
-            auto ensemble_edges_p05 = ensemble_percentile(ensemble_edges, 0.05);
-            auto ensemble_edges_p25 = ensemble_percentile(ensemble_edges, 0.25);
-            auto ensemble_edges_p50 = ensemble_percentile(ensemble_edges, 0.50);
-            auto ensemble_edges_p75 = ensemble_percentile(ensemble_edges, 0.75);
-            auto ensemble_edges_p95 = ensemble_percentile(ensemble_edges, 0.95);
+            auto ensemble_edges_p05 = ensemble_percentile<FP>(ensemble_edges, 0.05);
+            auto ensemble_edges_p25 = ensemble_percentile<FP>(ensemble_edges, 0.25);
+            auto ensemble_edges_p50 = ensemble_percentile<FP>(ensemble_edges, 0.50);
+            auto ensemble_edges_p75 = ensemble_percentile<FP>(ensemble_edges, 0.75);
+            auto ensemble_edges_p95 = ensemble_percentile<FP>(ensemble_edges, 0.95);
 
-            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p05, pairs_edges, (result_dir_p05 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p25, pairs_edges, (result_dir_p25 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p50, pairs_edges, (result_dir_p50 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p75, pairs_edges, (result_dir_p75 / "Edges.h5").string()));
-            BOOST_OUTCOME_TRY(save_edges(ensemble_edges_p95, pairs_edges, (result_dir_p95 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges<FP>(ensemble_edges_p05, pairs_edges, (result_dir_p05 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges<FP>(ensemble_edges_p25, pairs_edges, (result_dir_p25 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges<FP>(ensemble_edges_p50, pairs_edges, (result_dir_p50 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges<FP>(ensemble_edges_p75, pairs_edges, (result_dir_p75 / "Edges.h5").string()));
+            BOOST_OUTCOME_TRY(save_edges<FP>(ensemble_edges_p95, pairs_edges, (result_dir_p95 / "Edges.h5").string()));
         }
     }
     return success();

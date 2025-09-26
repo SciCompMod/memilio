@@ -322,12 +322,13 @@ int main()
             mio::log_info("Directory '{:s}' was created.", results_dir.string());
         }
 
-        auto county_ids          = std::vector<int>{1001, 1002, 1003};
-        auto save_results_status = save_results(ensemble_results, ensemble_params, county_ids, results_dir, false);
-        auto pairs_edges         = std::vector<std::pair<int, int>>{};
+        auto county_ids = std::vector<int>{1001, 1002, 1003};
+        auto save_results_status =
+            save_results<ScalarType>(ensemble_results, ensemble_params, county_ids, results_dir, false);
+        auto pairs_edges = std::vector<std::pair<int, int>>{};
         for (auto& edge : params_graph.edges()) {
             pairs_edges.push_back({county_ids[edge.start_node_idx], county_ids[edge.end_node_idx]});
         }
-        auto save_edges_status = save_edges(ensemble_edges, pairs_edges, "test_results", false, true);
+        auto save_edges_status = save_edges<ScalarType>(ensemble_edges, pairs_edges, "test_results", false, true);
     }
 }

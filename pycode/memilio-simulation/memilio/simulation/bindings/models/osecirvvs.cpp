@@ -312,10 +312,10 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
                                mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                                mio::osecirvvs::Parameters<double>,
-                               decltype(mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<ScalarType>>),
+                               decltype(mio::osecirvvs::read_input_data_county<double, mio::osecirvvs::Model<double>>),
                                decltype(mio::get_node_ids)>(
                     params, start_date, end_date, data_dir, population_data_path, is_node_for_county, params_graph,
-                    mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>, mio::get_node_ids,
+                    mio::osecirvvs::read_input_data_county<double, mio::osecirvvs::Model<double>>, mio::get_node_ids,
                     scaling_factor_inf, scaling_factor_icu, tnt_capacity_factor, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },
@@ -360,7 +360,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
         [](std::vector<mio::osecirvvs::Model<double>>& model, mio::Date date, const std::vector<int>& county,
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& dir,
            int num_days = 0, bool export_time_series = false) {
-            auto result = mio::osecirvvs::read_input_data_county<mio::osecirvvs::Model<double>>(
+            auto result = mio::osecirvvs::read_input_data_county<double, mio::osecirvvs::Model<double>>(
                 model, date, county, scaling_factor_inf, scaling_factor_icu, dir, num_days, export_time_series);
             return pymio::check_and_throw(result);
         },

@@ -149,7 +149,7 @@ public:
     {
     }
 
-    void advance(FP t_max)
+    void advance(ScalarType t_max)
     {
         //draw normalized waiting time
         ScalarType normalized_waiting_time = ExponentialDistribution<ScalarType>::get_instance()(m_rng, 1.0);
@@ -296,6 +296,8 @@ public:
 
     void advance(FP t_max)
     {
+        using std::min;
+
         // Initialize global and regional ICU occupancy if not done yet
         if (!m_initialized) {
             calculate_global_icu_occupancy();
@@ -304,7 +306,7 @@ public:
         }
 
         while (m_t < t_max) {
-            FP dt_eff = std::min(m_dt, t_max - m_t);
+            FP dt_eff = min(m_dt, t_max - m_t);
 
             // assign the regional and global ICU occupancy to each node
             distribute_icu_data();
@@ -344,11 +346,11 @@ private:
         auto& first_node_sim   = m_graph.nodes()[0].property.get_simulation();
         auto& first_node_icu   = first_node_sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
         m_global_icu_occupancy = mio::TimeSeries<FP>(first_node_icu.get_num_elements());
-        m_global_icu_occupancy.add_time_point(0.0, Eigen::VectorXd::Zero(first_node_icu.get_num_elements()));
+        m_global_icu_occupancy.add_time_point(0.0, Eigen::VectorX<FP>::Zero(first_node_icu.get_num_elements()));
 
         FP total_population = 0;
         for (Eigen::Index i = 0; i < first_node_icu.get_num_time_points(); ++i) {
-            Eigen::VectorXd sum = Eigen::VectorXd::Zero(first_node_icu.get_num_elements());
+            Eigen::VectorX<FP> sum = Eigen::VectorX<FP>::Zero(first_node_icu.get_num_elements());
             for (auto& node : m_graph.nodes()) {
                 auto& sim         = node.property.get_simulation();
                 auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
@@ -378,10 +380,10 @@ private:
         Eigen::Index num_elements    = first_node_icu.get_num_elements();
 
         // For each region: vector of summed ICU values for all time points
-        std::unordered_map<int, std::vector<Eigen::VectorXd>> regional_sums;
+        std::unordered_map<int, std::vector<Eigen::VectorX<FP>>> regional_sums;
         for (auto const& [region_id, _] : regional_population) {
             regional_sums[region_id] =
-                std::vector<Eigen::VectorXd>(num_time_points, Eigen::VectorXd::Zero(num_elements));
+                std::vector<Eigen::VectorX<FP>>(num_time_points, Eigen::VectorX<FP>::Zero(num_elements));
         }
 
         // Sum up
@@ -412,8 +414,8 @@ private:
      */
     void update_global_icu_occupancy()
     {
-        FP total_population = 0;
-        Eigen::VectorXd sum = Eigen::VectorXd::Zero(m_global_icu_occupancy.get_num_elements());
+        FP total_population    = 0;
+        Eigen::VectorX<FP> sum = Eigen::VectorX<FP>::Zero(m_global_icu_occupancy.get_num_elements());
         for (auto& node : m_graph.nodes()) {
             auto& sim         = node.property.get_simulation();
             auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
@@ -432,7 +434,7 @@ private:
 
         std::unordered_map<int, FP> regional_population;
         for (auto& [region_id, regional_data] : m_regional_icu_occupancy) {
-            Eigen::VectorXd sum = Eigen::VectorXd::Zero(regional_data.get_num_elements());
+            Eigen::VectorX<FP> sum = Eigen::VectorX<FP>::Zero(regional_data.get_num_elements());
             for (auto& node : m_graph.nodes()) {
                 if (mio::regions::get_state_id(node.id).get() == region_id) {
                     auto& sim         = node.property.get_simulation();

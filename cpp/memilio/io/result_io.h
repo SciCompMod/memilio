@@ -43,9 +43,9 @@ namespace mio
  * @param filename Name of file
  * @return Any io errors that occur during writing of the files. 
  */
-template <typename FP = ScalarType>
-IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& results, const std::vector<int>& ids,
-                           int num_groups, const std::string& filename)
+template <typename FP>
+IOResult<void> save_result(const std::vector<TimeSeries<FP>>& results, const std::vector<int>& ids, int num_groups,
+                           const std::string& filename)
 {
     int region_idx = 0;
     H5File file{H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)};
@@ -65,17 +65,17 @@ IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& results, c
         H5DataSet dset_t{H5Dcreate(region_h5group.id, "Time", H5T_NATIVE_DOUBLE, dspace_t.id, H5P_DEFAULT, H5P_DEFAULT,
                                    H5P_DEFAULT)};
         MEMILIO_H5_CHECK(dset_t.id, StatusCode::UnknownError, "Time DataSet could not be created (Time).");
-        auto values_t = std::vector<ScalarType>(result.get_times().begin(), result.get_times().end());
+        auto values_t = std::vector<FP>(result.get_times().begin(), result.get_times().end());
         MEMILIO_H5_CHECK(H5Dwrite(dset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, values_t.data()),
                          StatusCode::UnknownError, "Time data could not be written.");
 
-        auto total = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                         num_timepoints, num_infectionstates)
+        auto total = Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
+                                                                                              num_infectionstates)
                          .eval();
 
         for (int group_idx = 0; group_idx <= num_groups; ++group_idx) {
-            auto group = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(
-                             num_timepoints, num_infectionstates)
+            auto group = Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(num_timepoints,
+                                                                                                  num_infectionstates)
                              .eval();
             if (group_idx < num_groups) {
                 for (Eigen::Index t_idx = 0; t_idx < result.get_num_time_points(); ++t_idx) {
@@ -103,6 +103,7 @@ IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& results, c
     return success();
 }
 
+template <typename FP>
 class SimulationResult
 {
 public:
@@ -122,7 +123,7 @@ public:
      * @param groups Simulation results of individual groups.
      * @param total Simulation results as the sum over all groups.
      */
-    SimulationResult(const TimeSeries<ScalarType>& groups, const TimeSeries<ScalarType>& totals)
+    SimulationResult(const TimeSeries<FP>& groups, const TimeSeries<FP>& totals)
         : m_groups(groups)
         , m_totals(totals)
     {
@@ -131,7 +132,7 @@ public:
     /**
      * @brief Simulation results of individual groups.
      */
-    const TimeSeries<ScalarType>& get_groups() const
+    const TimeSeries<FP>& get_groups() const
     {
         return m_groups;
     }
@@ -139,14 +140,14 @@ public:
     /**
      * @brief Simulation results of the sum over all groups.
      */
-    const TimeSeries<ScalarType>& get_totals() const
+    const TimeSeries<FP>& get_totals() const
     {
         return m_totals;
     }
 
 private:
-    TimeSeries<ScalarType> m_groups;
-    TimeSeries<ScalarType> m_totals;
+    TimeSeries<FP> m_groups;
+    TimeSeries<FP> m_totals;
 };
 
 // Forward declaration of store_group_name
@@ -155,10 +156,10 @@ herr_t store_group_name(hid_t /*id*/, const char* name, const H5L_info_t* /*linf
  * @brief Read simulation result from h5 file.
  * @param filename name of the file to be read.
  */
-template <typename FP = ScalarType>
-IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
+template <typename FP>
+IOResult<std::vector<SimulationResult<FP>>> read_result(const std::string& filename)
 {
-    std::vector<SimulationResult> results;
+    std::vector<SimulationResult<FP>> results;
 
     H5File file{H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)};
     MEMILIO_H5_CHECK(file.id, StatusCode::FileNotFound, filename);
@@ -199,7 +200,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         H5Sget_simple_extent_dims(dataspace_t.id, dims_t, NULL);
 
         auto num_timepoints = Eigen::Index(dims_t[0]);
-        auto time           = std::vector<ScalarType>(num_timepoints);
+        auto time           = std::vector<FP>(num_timepoints);
         MEMILIO_H5_CHECK(H5Dread(dataset_t.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, time.data()),
                          StatusCode::UnknownError, "Time data could not be read.");
 
@@ -218,19 +219,19 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
         }
         auto num_infectionstates = Eigen::Index(dims_total[1]);
 
-        auto total_values = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-            num_timepoints, num_infectionstates);
+        auto total_values =
+            Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(num_timepoints, num_infectionstates);
         MEMILIO_H5_CHECK(
             H5Dread(dataset_total.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, total_values.data()),
             StatusCode::UnknownError, "Totals data could not be read");
 
-        auto totals = TimeSeries<ScalarType>(num_infectionstates);
+        auto totals = TimeSeries<FP>(num_infectionstates);
         totals.reserve(num_timepoints);
         for (auto t_idx = 0; t_idx < num_timepoints; ++t_idx) {
             totals.add_time_point(time[t_idx], slice(total_values, {t_idx, 1}, {0, num_infectionstates}).transpose());
         }
 
-        auto groups = TimeSeries<ScalarType>(num_infectionstates * num_groups);
+        auto groups = TimeSeries<FP>(num_infectionstates * num_groups);
         groups.reserve(num_timepoints);
         for (Eigen::Index t_idx = 0; t_idx < num_timepoints; ++t_idx) {
             groups.add_time_point(time[t_idx]);
@@ -262,8 +263,8 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
                 return failure(StatusCode::InvalidFileFormat, "Number of infection states does not match.");
             }
 
-            auto group_values = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-                num_timepoints, num_infectionstates);
+            auto group_values =
+                Eigen::Matrix<FP, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(num_timepoints, num_infectionstates);
             MEMILIO_H5_CHECK(
                 H5Dread(dataset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, group_values.data()),
                 StatusCode::UnknownError, "Values data could not be read");
@@ -275,7 +276,7 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
             }
         }
 
-        results.push_back(SimulationResult(groups, totals));
+        results.push_back(SimulationResult<FP>(groups, totals));
     }
     return success(results);
 }
@@ -290,17 +291,16 @@ IOResult<std::vector<SimulationResult>> read_result(const std::string& filename)
  * @param run_idx Index of the run; used in directory name.
  * @return Any io errors that occur during writing of the files.
  */
-template <class Model>
-IOResult<void> save_result_with_params(const std::vector<TimeSeries<ScalarType>>& result,
-                                       const std::vector<Model>& params, const std::vector<int>& county_ids,
-                                       const fs::path& result_dir, size_t run_idx)
+template <typename FP, class Model>
+IOResult<void> save_result_with_params(const std::vector<TimeSeries<FP>>& result, const std::vector<Model>& params,
+                                       const std::vector<int>& county_ids, const fs::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
-                                  (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(write_graph(create_graph_without_edges<Model, MobilityParameters<ScalarType>>(params, county_ids),
-                                  result_dir_run.string(), IOF_OmitDistributions));
+    BOOST_OUTCOME_TRY(save_result<FP>(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
+                                      (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(write_graph<FP>(create_graph_without_edges<Model, MobilityParameters<FP>>(params, county_ids),
+                                      result_dir_run.string(), IOF_OmitDistributions));
     return success();
 }
 
@@ -315,8 +315,8 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<ScalarType>>
  * @param save_single_runs [Default: true] Defines if percentiles are written to the disk.
  * @return Any io errors that occur during writing of the files.
  */
-template <class Model>
-IOResult<void> save_results(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_results,
+template <typename FP, class Model>
+IOResult<void> save_results(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_results,
                             const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
                             const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true)
 {
@@ -325,10 +325,10 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<ScalarType>
     auto num_groups          = (int)(size_t)ensemble_params[0][0].parameters.get_num_groups();
     if (save_single_runs) {
         for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-            BOOST_OUTCOME_TRY(save_result(ensemble_result_sum[i], {0}, num_groups,
-                                          (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-            BOOST_OUTCOME_TRY(save_result(ensemble_results[i], county_ids, num_groups,
-                                          (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_result_sum[i], {0}, num_groups,
+                                              (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results[i], county_ids, num_groups,
+                                              (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
         }
     }
 
@@ -347,65 +347,65 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<ScalarType>
 
         // save percentiles of results, summed over nodes
         {
-            auto ensemble_results_sum_p05 = ensemble_percentile(ensemble_result_sum, 0.05);
-            auto ensemble_results_sum_p25 = ensemble_percentile(ensemble_result_sum, 0.25);
-            auto ensemble_results_sum_p50 = ensemble_percentile(ensemble_result_sum, 0.50);
-            auto ensemble_results_sum_p75 = ensemble_percentile(ensemble_result_sum, 0.75);
-            auto ensemble_results_sum_p95 = ensemble_percentile(ensemble_result_sum, 0.95);
+            auto ensemble_results_sum_p05 = ensemble_percentile<FP>(ensemble_result_sum, 0.05);
+            auto ensemble_results_sum_p25 = ensemble_percentile<FP>(ensemble_result_sum, 0.25);
+            auto ensemble_results_sum_p50 = ensemble_percentile<FP>(ensemble_result_sum, 0.50);
+            auto ensemble_results_sum_p75 = ensemble_percentile<FP>(ensemble_result_sum, 0.75);
+            auto ensemble_results_sum_p95 = ensemble_percentile<FP>(ensemble_result_sum, 0.95);
 
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p05, {0}, num_groups, (result_dir_p05 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p25, {0}, num_groups, (result_dir_p25 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p50, {0}, num_groups, (result_dir_p50 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p75, {0}, num_groups, (result_dir_p75 / "Results_sum.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_sum_p95, {0}, num_groups, (result_dir_p95 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_sum_p05, {0}, num_groups,
+                                              (result_dir_p05 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_sum_p25, {0}, num_groups,
+                                              (result_dir_p25 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_sum_p50, {0}, num_groups,
+                                              (result_dir_p50 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_sum_p75, {0}, num_groups,
+                                              (result_dir_p75 / "Results_sum.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_sum_p95, {0}, num_groups,
+                                              (result_dir_p95 / "Results_sum.h5").string()));
         }
 
         // save percentiles of results
         {
-            auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
-            auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
-            auto ensemble_results_p50 = ensemble_percentile(ensemble_results, 0.50);
-            auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
-            auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
+            auto ensemble_results_p05 = ensemble_percentile<FP>(ensemble_results, 0.05);
+            auto ensemble_results_p25 = ensemble_percentile<FP>(ensemble_results, 0.25);
+            auto ensemble_results_p50 = ensemble_percentile<FP>(ensemble_results, 0.50);
+            auto ensemble_results_p75 = ensemble_percentile<FP>(ensemble_results, 0.75);
+            auto ensemble_results_p95 = ensemble_percentile<FP>(ensemble_results, 0.95);
 
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p05, county_ids, num_groups, (result_dir_p05 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p25, county_ids, num_groups, (result_dir_p25 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p50, county_ids, num_groups, (result_dir_p50 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p75, county_ids, num_groups, (result_dir_p75 / "Results.h5").string()));
-            BOOST_OUTCOME_TRY(
-                save_result(ensemble_results_p95, county_ids, num_groups, (result_dir_p95 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_p05, county_ids, num_groups,
+                                              (result_dir_p05 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_p25, county_ids, num_groups,
+                                              (result_dir_p25 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_p50, county_ids, num_groups,
+                                              (result_dir_p50 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_p75, county_ids, num_groups,
+                                              (result_dir_p75 / "Results.h5").string()));
+            BOOST_OUTCOME_TRY(save_result<FP>(ensemble_results_p95, county_ids, num_groups,
+                                              (result_dir_p95 / "Results.h5").string()));
         }
 
         // save percentiles of parameters
         {
-            auto ensemble_params_p05 = ensemble_params_percentile(ensemble_params, 0.05);
-            auto ensemble_params_p25 = ensemble_params_percentile(ensemble_params, 0.25);
-            auto ensemble_params_p50 = ensemble_params_percentile(ensemble_params, 0.50);
-            auto ensemble_params_p75 = ensemble_params_percentile(ensemble_params, 0.75);
-            auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
+            auto ensemble_params_p05 = ensemble_params_percentile<FP>(ensemble_params, 0.05);
+            auto ensemble_params_p25 = ensemble_params_percentile<FP>(ensemble_params, 0.25);
+            auto ensemble_params_p50 = ensemble_params_percentile<FP>(ensemble_params, 0.50);
+            auto ensemble_params_p75 = ensemble_params_percentile<FP>(ensemble_params, 0.75);
+            auto ensemble_params_p95 = ensemble_params_percentile<FP>(ensemble_params, 0.95);
 
             auto make_graph = [&county_ids](auto&& params) {
-                return create_graph_without_edges<Model, MobilityParameters<ScalarType>>(params, county_ids);
+                return create_graph_without_edges<Model, MobilityParameters<FP>>(params, county_ids);
             };
             BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
+                write_graph<FP>(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
             BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), IOF_OmitDistributions));
+                write_graph<FP>(make_graph(ensemble_params_p25), result_dir_p25.string(), IOF_OmitDistributions));
             BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), IOF_OmitDistributions));
+                write_graph<FP>(make_graph(ensemble_params_p50), result_dir_p50.string(), IOF_OmitDistributions));
             BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), IOF_OmitDistributions));
+                write_graph<FP>(make_graph(ensemble_params_p75), result_dir_p75.string(), IOF_OmitDistributions));
             BOOST_OUTCOME_TRY(
-                write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), IOF_OmitDistributions));
+                write_graph<FP>(make_graph(ensemble_params_p95), result_dir_p95.string(), IOF_OmitDistributions));
         }
     }
     return success();

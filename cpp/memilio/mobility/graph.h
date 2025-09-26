@@ -281,12 +281,13 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
 
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
 
-        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
+        FP tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
 
         //local parameters
         auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
         tnt_value       = UncertainValue<FP>(0.5 * (1.2 * tnt_capacity + 0.8 * tnt_capacity));
-        tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+        tnt_value.set_distribution(
+            mio::ParameterDistributionUniform(0.8 * ad::value(tnt_capacity), 1.2 * ad::value(tnt_capacity)));
 
         auto id = 0;
         if (is_node_for_county) {
@@ -312,8 +313,8 @@ IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_dat
                 auto& compartment_value = nodes[node_idx].populations[{i, j}];
                 compartment_value =
                     UncertainValue<FP>(0.5 * (1.1 * compartment_value.value() + 0.9 * compartment_value.value()));
-                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
-                                                                                     1.1 * compartment_value.value()));
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(
+                    0.9 * ad::value(compartment_value.value()), 1.1 * ad::value(compartment_value.value())));
             }
         }
 
@@ -359,7 +360,7 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
             commuting_weights =
                 (commuting_weights.size() == 0 ? std::vector<FP>(num_age_groups, 1.0) : commuting_weights);
             //commuters
-            auto working_population = 0.0;
+            FP working_population = 0.0;
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
                 working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
             }

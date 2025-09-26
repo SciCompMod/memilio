@@ -309,6 +309,8 @@ std::vector<TimeSeries<FP>> ensemble_mean(const std::vector<std::vector<TimeSeri
 template <typename FP>
 std::vector<TimeSeries<FP>> ensemble_percentile(const std::vector<std::vector<TimeSeries<FP>>>& ensemble_result, FP p)
 {
+    using std::floor;
+
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
 
     auto num_runs        = ensemble_result.size();
@@ -328,7 +330,7 @@ std::vector<TimeSeries<FP>> ensemble_percentile(const std::vector<std::vector<Ti
                                    return run[node][time][elem];
                                });
                 std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-                percentile[node][time][elem] = single_element_ensemble[static_cast<size_t>(num_runs * p)];
+                percentile[node][time][elem] = single_element_ensemble[static_cast<size_t>(floor(num_runs * p))];
             }
         }
     }
