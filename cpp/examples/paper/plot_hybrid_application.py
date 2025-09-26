@@ -18,8 +18,8 @@ def plot_ts_output(axis, filename, percentiles, color, compartments):
             del percentiles[-1]
     return axis
 
-result_dir = "/home/bick_ju//Documents/MEmilioPaper/HybridApplication/"
-colors = {"dabm": "#20A398", "hybrid": "#BA421E", "osecir": "#8200AE", "init": "#E5945A", "sim": "#155489"}
+result_dir = "/Documents/MEmilioPaper/HybridApplication/"
+model_colors = {"dabm": colors["Teal"], "hybrid": colors["Red"], "osecir": colors["Purple"], "init": colors["Orange"], "sim": colors["Blue"]}
 set_fontsize()
 
 # Plot time series
@@ -27,22 +27,22 @@ panel = [0.18, 0.18, 0.8, 0.8]
 figsize = (5, 3.5)
 fig = plt.figure(figsize=figsize)
 ax = fig.add_axes(panel)
-ax = plot_ts_output(ax, result_dir + "dabm", ["05", "50", "95"], colors["dabm"], ["E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri"])
-ax = plot_ts_output(ax, result_dir + "osecir", ["05", "50", "95"], colors["osecir"], ["E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri"])
-ax = plot_ts_output(ax, result_dir + "hybrid", ["05", "50", "95"], colors["hybrid"], ["E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri"])
+ax = plot_ts_output(ax, result_dir + "dabm", ["05", "50", "95"], model_colors["dabm"], ["E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri"])
+ax = plot_ts_output(ax, result_dir + "osecir", ["05", "50", "95"], model_colors["osecir"], ["E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri"])
+ax = plot_ts_output(ax, result_dir + "hybrid", ["05", "50", "95"], model_colors["hybrid"], ["E", "Ins", "InsC", "Isy", "IsyC", "Isev", "Icri"])
 ax.set_ylabel("Infected [#]")
 ax.set_xlabel("Time [days]")
-fig.savefig(result_dir + "hybrid_application_sim_results.png", dpi=300)
+fig.savefig(result_dir + "hybrid_application_sim_results.png", dpi=dpi)
 
 fig = plt.figure(figsize=figsize)
-fig.legend(handles=[mpatches.Patch(color=colors["dabm"], label="ABM"), mpatches.Patch(color=colors["osecir"], label="PBM"), mpatches.Patch(color=colors["hybrid"], label="Hybrid")], loc='center', ncol=1)
-fig.savefig(result_dir + "hybrid_application_legend.png", dpi=300)
+fig.legend(handles=[mpatches.Patch(color=model_colors["dabm"], label="ABM"), mpatches.Patch(color=model_colors["osecir"], label="PBM"), mpatches.Patch(color=model_colors["hybrid"], label="Hybrid")], loc='center', ncol=1)
+fig.savefig(result_dir + "hybrid_application_legend.png", dpi=dpi)
 
 # Runtimes
 sim_time = []
 init_time = []
 
-for key in colors.keys():
+for key in model_colors.keys():
     if key in ["init", "sim"]:
         continue
     df_init = pd.read_csv(result_dir + key + "_init_time.csv")
@@ -56,15 +56,15 @@ labels = ["ABM", "Hybrid", "PBM"]
 x = np.arange(len(labels))
 width = 0.35
 
-ax.bar(x - width/2, init_time, width, label='Initialization', color = colors["init"])
-ax.bar(x + width/2, sim_time, width, label='Simulation', color = colors["sim"])
+ax.bar(x - width/2, init_time, width, label='Initialization', color = model_colors["init"])
+ax.bar(x + width/2, sim_time, width, label='Simulation', color = model_colors["sim"])
 
 ax.set_ylabel('Runtime [s]')
 ax.set_yscale('log')
 ax.set_xticks(x)
 ax.set_xticklabels(labels)
-fig.savefig(result_dir + "hybrid_application_runtimes.png", dpi=300)
+fig.savefig(result_dir + "hybrid_application_runtimes.png", dpi=dpi)
 
 fig = plt.figure(figsize=figsize)
-fig.legend(handles=[mpatches.Patch(color=colors["init"], label="Initialization"), mpatches.Patch(color=colors["sim"], label="Simulation")], loc='center', ncol=1)
-fig.savefig(result_dir + "hybrid_application_runtimes_legend.png", dpi=300)
+fig.legend(handles=[mpatches.Patch(color=model_colors["init"], label="Initialization"), mpatches.Patch(color=model_colors["sim"], label="Simulation")], loc='center', ncol=1)
+fig.savefig(result_dir + "hybrid_application_runtimes_legend.png", dpi=dpi)

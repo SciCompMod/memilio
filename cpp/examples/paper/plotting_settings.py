@@ -14,6 +14,8 @@ def set_fontsize(base_fontsize=17):
 })
              
 plt.style.use('default')
+
+dpi = 300
              
 colors = {"Light blue": "#48ADFF", "Blue": "#155489", "Red": "#BA421E", "Purple": "#8200AE", "Light green": "#8EBE4B", "Green": "#5D8A2B", "Teal": "#20A398", "Yellow": "#FFD45E", "Orange": "#E5945A", "Rose": "#CF688F", "Grey": "#C0BFBF", "Dark grey": "#616060", "Light grey": "#E2E2E2"}
 
