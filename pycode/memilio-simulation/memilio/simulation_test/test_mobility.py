@@ -18,6 +18,7 @@
 # limitations under the License.
 #############################################################################
 import unittest
+import tempfile
 
 import numpy as np
 
@@ -74,6 +75,36 @@ class Test_Mobility(unittest.TestCase):
         # integration does adaptive time steps so exact count is unknown
         self.assertGreaterEqual(sim.graph.get_node(
             0).property.result.get_num_time_points(), 3)
+
+    def test_write_read_graph_simple(self):
+        # build a simple model graph
+        model = osecir.Model(1)
+        model.parameters.TestAndTraceCapacity.value = 42
+        model.apply_constraints()
+
+        graph = osecir.ModelGraph()
+        graph.add_node(0, model)
+        graph.add_node(1, model)
+
+        num_compartments = 10
+        graph.add_edge(0, 1, 0.1 * np.ones(num_compartments))
+        graph.add_edge(1, 0,  0.1 * np.ones(num_compartments))
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # save graph
+            osecir.write_graph(graph, tmpdir)
+            # read graph back
+            g_read = osecir.read_graph(tmpdir)
+
+        # basic structure
+        self.assertEqual(graph.num_nodes, g_read.num_nodes)
+        self.assertEqual(graph.num_edges, g_read.num_edges)
+
+        # check one parameter
+        self.assertEqual(
+            g_read.get_node(0).property.parameters.TestAndTraceCapacity.value,
+            42,
+        )
 
 
 if __name__ == '__main__':
