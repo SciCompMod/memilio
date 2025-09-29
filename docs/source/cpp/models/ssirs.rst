@@ -13,7 +13,7 @@ Important note on the solution: The numerical integration method is an Euler-Mar
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/bdde5ca3-cd7d-4695-8704-03a712c92ff7
+.. image:: https://martinkuehn.eu/research/images/sirs.pdf
    :alt: SIR_model
 
 +-------------------------------+-----------------------------------------------+--------------------------------------------------------------------------------------------------+
