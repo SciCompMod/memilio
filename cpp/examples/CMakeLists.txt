@@ -156,7 +156,7 @@ add_executable(temporal_hybrid_example temporal_hybrid_dabm_osecir.cpp)
 target_link_libraries(temporal_hybrid_example PRIVATE memilio hybrid ode_secir d_abm)
 target_compile_options(temporal_hybrid_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
-add_executable(abm_ide_lct_ode abm_ide_lct_ode.cpp)
+add_executable(abm_ide_lct_ode paper/abm_ide_lct_ode.cpp)
 target_link_libraries(abm_ide_lct_ode PRIVATE memilio abm ide_secir lct_secir ode_secir)
 target_compile_options(abm_ide_lct_ode PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
