@@ -33,11 +33,14 @@ namespace pymio
 template <class Model>
 void bind_write_graph(pybind11::module_& m)
 {
-    m.def("write_graph",
-          [&](const mio::Graph<Model, mio::MobilityParameters<double>>& graph, const std::string& directory) {
-              int ioflags   = mio::IOF_None;
-              auto ioresult = mio::write_graph<double, Model>(graph, directory, ioflags);
-          });
+    m.def(
+        "write_graph",
+        [&](const mio::Graph<Model, mio::MobilityParameters<double>>& graph, const std::string& directory) {
+            int ioflags   = mio::IOF_None;
+            auto ioresult = mio::write_graph<double, Model>(graph, directory, ioflags);
+        },
+        "Write a graph (nodes and edges) as JSON files to the given directory.", pybind11::arg("graph"),
+        pybind11::arg("directory"));
 }
 
 template <class Model>
@@ -49,6 +52,7 @@ void bind_read_graph(pybind11::module_& m)
             auto result = mio::read_graph<double, Model>(directory, 0, true);
             return pymio::check_and_throw(result);
         },
+        "Read a graph from JSON files in the given directory (see write_graph).", pybind11::arg("directory"),
         pybind11::return_value_policy::move);
 }
 
