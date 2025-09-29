@@ -491,7 +491,7 @@ using get_infections_relative_expr_t = decltype(get_infections_relative<FP>(
  * @param t the current simulation time
  */
 template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
+          std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value, void*> = nullptr>
 FP get_infections_relative(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
                            const Eigen::Ref<const Eigen::VectorX<FP>>& /*y*/)
 {
@@ -499,10 +499,10 @@ FP get_infections_relative(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
     return 0;
 }
 template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
+          std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value, void*> = nullptr>
 FP get_infections_relative(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    return get_infections_relative<FP, Sim>(node.get_simulation(), t, y);
+    return get_infections_relative<FP>(node.get_simulation(), t, y);
 }
 
 /**
@@ -524,17 +524,17 @@ using get_mobility_factors_expr_t = decltype(get_mobility_factors<FP>(
  * @return a vector expression, same size as y, with the factor for each compartment.
  */
 template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<get_mobility_factors_expr_t, Sim>::value, void*> = nullptr>
+          std::enable_if_t<!is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value, void*> = nullptr>
 auto get_mobility_factors(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
                           const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     return Eigen::VectorX<FP>::Ones(y.rows());
 }
 template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<get_mobility_factors_expr_t, Sim>::value, void*> = nullptr>
+          std::enable_if_t<is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value, void*> = nullptr>
 auto get_mobility_factors(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    return get_mobility_factors<FP, Sim>(node.get_simulation(), t, y);
+    return get_mobility_factors<FP>(node.get_simulation(), t, y);
 }
 
 /**
@@ -555,16 +555,16 @@ using test_commuters_expr_t = decltype(test_commuters<FP>(
  * @param t the current simulation time.
  */
 template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
+          std::enable_if_t<!is_expression_valid<test_commuters_expr_t, FP, Sim>::value, void*> = nullptr>
 void test_commuters(SimulationNode<FP, Sim>& /*node*/, Eigen::Ref<Eigen::VectorX<FP>> /*mobile_population*/,
                     FP /*time*/)
 {
 }
 template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
+          std::enable_if_t<is_expression_valid<test_commuters_expr_t, FP, Sim>::value, void*> = nullptr>
 void test_commuters(SimulationNode<FP, Sim>& node, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
-    return test_commuters<FP, Sim>(node.get_simulation(), mobile_population, time);
+    return test_commuters<FP>(node.get_simulation(), mobile_population, time);
 }
 
 template <typename FP>
