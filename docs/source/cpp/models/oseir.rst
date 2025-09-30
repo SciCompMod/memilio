@@ -229,6 +229,7 @@ Additionally, you can export the results to a CSV file:
 The ODE-SEIR model also provides utility functions to extract specific measures, such as the reproduction number:
 
 .. code-block:: cpp
+  
     // Calculate R value at a specific time index
     auto r_at_index = mio::oseir::get_reproduction_number(time_idx, result_sim);
     

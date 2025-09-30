@@ -11,7 +11,7 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-The model contains a list of **InfectionState**s that define particular features of the subpopulations in the particular state.
+The model contains a list of **InfectionState**\s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -22,6 +22,7 @@ The model contains a list of **InfectionState**s that define particular features
 To make use of the GLCT, we additionally need to define the numbers of subcompartments for each **InfectionState**.
 
 .. code-block:: RST
+
     `Number of subcompartments of State1`
     `Number of subcompartments of State2`
     `...`
