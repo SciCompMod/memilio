@@ -1,3 +1,5 @@
+.. include:: ../../literature.rst
+
 ODE-based SECIRTS-type model including multi-layer waning immunity
 ==================================================================
 
@@ -6,7 +8,7 @@ Like the ODE-SECIRVVS model, the ODE-SECIRTS model has three layers of immunity:
 
 Additionally, waning immunity is defined by the parameters ``TimeWaningPartialImmunity``, ``TimeWaningImprovedImmunity``, ``TimeTemporaryImmunityPI``, and ``TimeTemporaryImmunityII``. The parameters ``TimeWaningPartialImmunity`` and ``TimeWaningImprovedImmunity`` represent the (mean) duration after which an individual transitions from one immunity layer to the next weaker one due to waning immunity, assuming no vaccination or recovery from infection has occurred during this period. Similarly, the parameters ``TimeTemporaryImmunityPI`` and ``TimeTemporaryImmunityII`` denote the (mean) duration of temporary immunity following exposure to the virus, either through vaccination or recovery. During this state of temporary immunity, individuals are protected from reinfection and are incapable of transmitting the virus to others. Should individuals previously reside in the naive or partial immunity layer, their stay in the temporary immunity state results in a transition to the next stronger immunity layer.
 
-For more details about the model, we refer to `1 <https://doi.org/10.1371/journal.pcbi.1012630>`_.
+For more details about the model, we refer to |Novel_travel_time_aware_metapopulation_models|.
 
 The complete system of equations can be found in the supplementary material: `doi:10.1371/journal.pcbi.1012630.s001 <https://doi.org/10.1371/journal.pcbi.1012630.s001>`_.
 

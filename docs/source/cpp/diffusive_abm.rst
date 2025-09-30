@@ -1,3 +1,5 @@
+.. include:: ../literature.rst
+
 Diffusive agent-based model
 ===========================
 
@@ -148,7 +150,7 @@ To simulate the model from `t0` to `tmax` with given step size `dt`, a **Simulat
 
 For a detailed description and application of the model, see:
 
-- Bicker J, Schmieding R, et al. (2025) Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing. Infectious Disease Modelling, Volume 10, Issue 2. https://doi.org/10.1016/j.idm.2024.12.015
+- |Hybrid_metapopulation_agent-based|
 
 Output
 ------
