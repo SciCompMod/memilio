@@ -239,7 +239,7 @@ equation-based models.
 
 
 David Kerkmann
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 .. image:: _static/team/max_mustermann.jpg
    :alt: David Kerkmann
@@ -309,7 +309,7 @@ Margrit Klitz holds a PhD in mathematics from the University of Bonn. She worked
 
 
 Agatha Schmidt
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 .. image:: https://martinkuehn.eu/research/images/agatha.png
    :alt: Agatha Schmidt
