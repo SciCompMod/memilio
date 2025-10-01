@@ -1,3 +1,5 @@
+.. include:: literature.rst
+
 Team
 ====
 
@@ -26,14 +28,14 @@ Martin Kühn studied at University of Cologne, Germany, and Université de Montr
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * Schmidt A, Zunker H, Heinlein A, **Kühn MJ**. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
-   * Wendler AC, Plötzke L, Tritzschak H, **Kühn MJ**. (2025). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. Accepted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
-   * Plötzke L, Wendler A, Schmieding R, **Kühn MJ**. (2025). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
-   * Zunker H, Dönges P, Lenz P, Contreras S, **Kühn MJ**. (2025). Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models. Chaos, Solitons & Fractals. `DOI:10.1371/journal.pcbi.1012630 <https://doi.org/10.1016/j.chaos.2025.116782>`_
-   * Schmid N, Bicker J , Hofmann AF, Wallrafen-Sam K, Kerkmann D, Wieser A, **Kühn MJ**, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
-   * Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, **Kühn MJ**, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
-   * Bicker J, Schmieding R, Meyer-Hermann M, **Kühn MJ**. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `DOI:10.1016/j.idm.2024.12.015 <https://doi.org/10.1016/j.idm.2024.12.015>`_
-   * Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, ..., **Kühn MJ** (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `DOI:10.1371/journal.pcbi.1012630 <https://doi.org/10.1371/journal.pcbi.1012630>`_
+   * |Graph_Neural_Network_Surrogates|
+   * |A_nonstandard_numerical_scheme|
+   * |Revisiting_the_Linear_Chain|
+   * |Risk-mediated_dynamic_regulation|
+   * |Integrative_Modeling_of_the|
+   * |Agent-based_modeling_for|
+   * |Hybrid_metapopulation_agent-based|
+   * |Novel_travel_time_aware_metapopulation_models|
 
 
 .. dropdown:: Links
@@ -61,9 +63,9 @@ Henrik Zunker is a PhD student at the Institute of Software Technology at the Ge
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * **Zunker H**, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models. Chaos, Solitons & Fractals. https://doi.org/10.1016/j.chaos.2025.116782
-   * Schmidt A, **Zunker H**, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
-   * **Zunker H**, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
+   * |Risk-mediated_dynamic_regulation|
+   * |Graph_Neural_Network_Surrogates|
+   * |Novel_travel_time_aware_metapopulation_models|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -91,8 +93,8 @@ His background is in numerical mathematics, where he studied at the University o
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * Kerkmann D, **Korf S**, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
-   * Diallo D, Schoenfeld J, Schmieding R, **Korf S**, Kühn MJ, Hecking T. (2025). *Integrating Human Mobility Models with Epidemic Modeling: A Framework for Generating Synthetic Temporal Contact Networks*. *Entropy (Basel)* 27(5):507. `DOI:10.3390/e27050507 <https://doi.org/10.3390/e27050507>`_
+   * |Agent-based_modeling_for|
+   * |Integrating_Human_Mobility_Models|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -117,8 +119,8 @@ Julia Bicker is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * **Bicker J**, Schmieding R, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `DOI:10.1016/j.idm.2024.12.015 <https://doi.org/10.1016/j.idm.2024.12.015>`_
-   * Schmid N, **Bicker J** , Hofmann AF, Wallrafen-Sam K, Kerkmann D, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
+   * |Hybrid_metapopulation_agent-based|
+   * |Integrative_Modeling_of_the|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -142,8 +144,8 @@ Anna Wendler is a PhD student at the Institute of Software Technology at the Ger
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * **Wendler A**, Plötzke L, Tritzschak H, Kühn MJ. (2025). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. Accepted for publication. `arXiv:2408.12228 <https://arxiv.org/abs/2408.12228>`_
-   * Plötzke L, **Wendler A**, Schmieding R, Kühn MJ. (2025). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
+   * |A_nonstandard_numerical_scheme|
+   * |Revisiting_the_Linear_Chain|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -169,7 +171,7 @@ Carlotta Gerstein completed her Bachelor's degree in Mathematics at the Universi
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, **Gerstein C**, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
+   * |Agent-based_modeling_for|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -227,10 +229,10 @@ equation-based models.
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * Zunker H, **Schmieding R**, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
-   * Bicker J, **Schmieding R**, Meyer-Hermann M, Kühn MJ. (2025). *Hybrid metapopulation agent-based epidemiological models for efficient insight on the individual scale: A contribution to green computing*. *Infectious Disease Modelling* 10(2): 571-590. `DOI:10.1016/j.idm.2024.12.015 <https://doi.org/10.1016/j.idm.2024.12.015>`_
-   * Diallo D, Schoenfeld J, **Schmieding R**, Korf S, Kühn MJ, Hecking T. (2025). *Integrating Human Mobility Models with Epidemic Modeling: A Framework for Generating Synthetic Temporal Contact Networks*. *Entropy (Basel)* 27(5):507. `DOI:10.3390/e27050507 <https://doi.org/10.3390/e27050507>`_
-   * Plötzke L, Wendler A, **Schmieding R**, Kühn MJ. (2025). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Accepted for publication. `DOI:10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_
+   * |Novel_travel_time_aware_metapopulation_models|
+   * |Hybrid_metapopulation_agent-based|
+   * |Integrating_Human_Mobility_Models|
+   * |Revisiting_the_Linear_Chain|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -255,9 +257,9 @@ He is interested in the development of agent-based models for infectious disease
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * **Kerkmann D**, Korf S, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193:110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
-   * Zunker H, Schmieding R, **Kerkmann D**, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. https://doi.org/10.1371/journal.pcbi.1012630
-   * Schmid N, Bicker J , Hofmann AF, Wallrafen-Sam K, **Kerkmann D**, Wieser A, Kühn MJ, Hasenauer J (2025). *Integrative Modeling of the Spread of Serious Infectious Diseases and Corresponding Wastewater Dynamics*. *Epidemics* 51:100836. `DOI:10.1016/j.epidem.2025.100836 <https://doi.org/10.1016/j.epidem.2025.100836>`_
+   * |Agent-based_modeling_for|
+   * |Novel_travel_time_aware_metapopulation_models|
+   * |Integrative_Modeling_of_the|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -280,7 +282,7 @@ Daniel Abele is a research software engineer at the Institute of Software Techno
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * Kühn MJ, **Abele D**, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences*. https://doi.org/10.1016/j.mbs.2021.108648
+   * |Assessment_of_effective_mitigation|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
@@ -324,7 +326,7 @@ Agatha Schmidt completed her Master's degree at the University of Cologne in col
 .. dropdown:: Selected Publications
    :animate: fade-in-slide-down
 
-   * **Schmidt A**, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
+   * |Graph_Neural_Network_Surrogates|
 
 .. dropdown:: Links
    :animate: fade-in-slide-down
