@@ -23,7 +23,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <gtest/gtest.h>
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/logging.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
 #include "smm/simulation.h"
@@ -43,6 +45,14 @@ enum class InfectionState
     D,
     Count
 
+};
+
+enum class Infections
+{
+    S,
+    I,
+    R,
+    Count
 };
 
 TEST(TestSMM, evaluateAdoptionRate)
@@ -80,31 +90,80 @@ TEST(TestSMM, evaluateAdoptionRate)
     EXPECT_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 2.);
 }
 
+TEST(TestSMM, evaluateinterregionalAdoptionRate)
+{
+    using Model = mio::smm::Model<2, Infections, 2>;
+    using Age   = mio::AgeGroup;
+
+    std::vector<mio::AdoptionRate<Infections, Age>> adoption_rates;
+    //Second-order adoption
+    adoption_rates.push_back({Infections::S,
+                              Infections::I,
+                              mio::regions::Region(0),
+                              0.1,
+                              {{Infections::I, 0.1, mio::regions::Region(0), {Age(1)}},
+                               {Infections::I, 0.2, mio::regions::Region(1), {Age(1)}}},
+                              Age(0)});
+    //First-order adoption
+    adoption_rates.push_back({Infections::I, Infections::R, mio::regions::Region(0), 0.2, {}, {Age(1)}});
+    Model model;
+
+    model.populations[{mio::regions::Region(0), Infections::S, Age(0)}] = 50;
+    model.populations[{mio::regions::Region(0), Infections::I, Age(0)}] = 10;
+    model.populations[{mio::regions::Region(0), Infections::R, Age(0)}] = 0;
+
+    model.populations[{mio::regions::Region(0), Infections::S, Age(1)}] = 100;
+    model.populations[{mio::regions::Region(0), Infections::I, Age(1)}] = 20;
+    model.populations[{mio::regions::Region(0), Infections::R, Age(1)}] = 0;
+
+    model.populations[{mio::regions::Region(1), Infections::S, Age(0)}] = 40;
+    model.populations[{mio::regions::Region(1), Infections::I, Age(0)}] = 80;
+    model.populations[{mio::regions::Region(1), Infections::R, Age(0)}] = 0;
+
+    model.populations[{mio::regions::Region(1), Infections::S, Age(1)}] = 80;
+    model.populations[{mio::regions::Region(1), Infections::I, Age(1)}] = 16;
+    model.populations[{mio::regions::Region(1), Infections::R, Age(1)}] = 0;
+
+    EXPECT_FLOAT_EQ(model.evaluate(adoption_rates[0], model.populations.get_compartments()),
+                    0.1 * 50. * (0.1 * 20. * 1. / 120. + 0.2 * 16 * 1. / 96.));
+    EXPECT_FLOAT_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 4.);
+}
+
 TEST(TestSMM, evaluateTransitionRate)
 {
     //Same test as 'evaluateAdoptionRate' only for spatial transition rates.
     //Transition rates are given by: rate.factor * N(rate.status, rate.from)
-    using Model = mio::smm::Model<2, InfectionState>;
+    using Model = mio::smm::Model<2, InfectionState, 2>;
 
     Model model;
     //Initialize model populations
-    model.populations[{mio::regions::Region(0), InfectionState::S}] = 50;
-    model.populations[{mio::regions::Region(0), InfectionState::E}] = 10;
-    model.populations[{mio::regions::Region(0), InfectionState::C}] = 5;
-    model.populations[{mio::regions::Region(0), InfectionState::I}] = 0;
-    model.populations[{mio::regions::Region(0), InfectionState::R}] = 0;
-    model.populations[{mio::regions::Region(0), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::S, mio::AgeGroup(0)}] = 50;
+    model.populations[{mio::regions::Region(0), InfectionState::E, mio::AgeGroup(0)}] = 10;
+    model.populations[{mio::regions::Region(0), InfectionState::C, mio::AgeGroup(0)}] = 5;
+    model.populations[{mio::regions::Region(0), InfectionState::I, mio::AgeGroup(0)}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::R, mio::AgeGroup(0)}] = 0;
+    model.populations[{mio::regions::Region(0), InfectionState::D, mio::AgeGroup(0)}] = 0;
 
-    model.populations[{mio::regions::Region(1), InfectionState::S}] = 55;
-    model.populations[{mio::regions::Region(1), InfectionState::E}] = 10;
-    model.populations[{mio::regions::Region(1), InfectionState::C}] = 0;
-    model.populations[{mio::regions::Region(1), InfectionState::I}] = 0;
-    model.populations[{mio::regions::Region(1), InfectionState::R}] = 0;
-    model.populations[{mio::regions::Region(1), InfectionState::D}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::S, mio::AgeGroup(0)}] = 55;
+    model.populations[{mio::regions::Region(1), InfectionState::E, mio::AgeGroup(0)}] = 10;
+    model.populations[{mio::regions::Region(1), InfectionState::C, mio::AgeGroup(0)}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::I, mio::AgeGroup(0)}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::R, mio::AgeGroup(0)}] = 0;
+    model.populations[{mio::regions::Region(1), InfectionState::D, mio::AgeGroup(0)}] = 0;
     //Set transition rates
-    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
-    transition_rates.push_back({InfectionState::S, mio::regions::Region(0), mio::regions::Region(1), 0.01});
-    transition_rates.push_back({InfectionState::E, mio::regions::Region(1), mio::regions::Region(0), 0.1});
+    std::vector<mio::smm::TransitionRate<InfectionState, mio::AgeGroup>> transition_rates;
+    transition_rates.push_back({InfectionState::S,
+                                mio::regions::Region(0),
+                                mio::regions::Region(1),
+                                0.01,
+                                {mio::AgeGroup(0)},
+                                {mio::AgeGroup(0)}});
+    transition_rates.push_back({InfectionState::E,
+                                mio::regions::Region(1),
+                                mio::regions::Region(0),
+                                0.1,
+                                {mio::AgeGroup(0)},
+                                {mio::AgeGroup(0)}});
 
     EXPECT_EQ(model.evaluate(transition_rates[0], model.populations.get_compartments()), 0.5);
     EXPECT_EQ(model.evaluate(transition_rates[1], model.populations.get_compartments()), 1.);

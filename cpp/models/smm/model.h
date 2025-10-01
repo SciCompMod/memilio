@@ -82,27 +82,31 @@ public:
             return rate.factor * x[source];
         }
         else { // second order adoption
-            ScalarType N = 0;
-            for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
-                const auto index = std::apply(
-                    [&](auto&&... args) {
-                        return Index{rate.region, Status(s), std::forward<decltype(args)>(args)...};
-                    },
-                    rate.group_indices);
-                N += x[pop.get_flat_index(index)];
-            }
             // accumulate influences
             ScalarType influences = 0.0;
             for (size_t i = 0; i < rate.influences.size(); i++) {
+                ScalarType N = 0; // Welches N brauchen wir hier??
+
+                for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
+                    const auto index = std::apply(
+                        [&](auto&&... args) {
+                            return Index{rate.influences[i].region.value_or(rate.region), Status(s),
+                                         std::forward<decltype(args)>(args)...};
+                        },
+                        rate.influences[i].group_indices);
+                    N += x[pop.get_flat_index(index)];
+                }
                 const auto index = std::apply(
                     [&](auto&&... args) {
                         return Index{rate.influences[i].region.value_or(rate.region), rate.influences[i].status,
                                      std::forward<decltype(args)>(args)...};
                     },
                     rate.influences[i].group_indices);
-                influences += rate.influences[i].factor * x[pop.get_flat_index(index)];
+                if (N > 0) {
+                    influences += rate.influences[i].factor * x[pop.get_flat_index(index)] / N;
+                }
             }
-            return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
+            return rate.factor * x[source] * influences;
         }
     }
 
