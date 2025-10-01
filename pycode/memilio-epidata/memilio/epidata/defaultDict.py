@@ -47,7 +47,7 @@ defaultDict = {
     'start_date': date(2020, 1, 1),
     'end_date':  date(2021, 1, 1),
     'split_berlin': False,
-    'impute_dates': True,
+    'impute_dates': False,
     'moving_average': 0,
     'file_format': 'json_timeasstring',
     'no_raw': False,
