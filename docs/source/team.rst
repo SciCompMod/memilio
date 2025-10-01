@@ -1,5 +1,6 @@
 .. include:: literature.rst
 
+
 Team
 ====
 
@@ -362,6 +363,7 @@ MEmilio has been developed by and in collaboration with various research institu
 * **Forschungszentrum Jülich (FZJ)** - Institute of Climate and Energy Systems (ICE-1) and Institute of Bio- und Geosciences: Biotechnology (IBG-1)
 
 
+
 .. _acknowledgments:
 
 Acknowledgments
@@ -375,6 +377,12 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
 * by German Federal Ministry of Education and Research under grant agreement 031L0297B (Project INSIDe),
 * by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant agreement 528702961,
 * by German Federal Ministry of Education and Research under grant agreement 031L0319A and 031L0319B (Project AIMS).
+
+
+.. raw:: html
+
+   <div class="page-white-images">
+
 
 .. |bmftr| image:: _static/funder/bmftr.jpg
    :width: 200px
@@ -401,3 +409,7 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
    :alt: mFUND
 
 |helmholtz| |bmdv| |mfund| |bmbf| |hdslee|
+
+.. raw:: html
+
+   </div>
