@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     std::cout << "Reading Mobility File..." << std::flush;
-    auto read_mobility_result = mio::read_mobility_plain(filename);
+    auto read_mobility_result = mio::read_mobility_plain<ScalarType>(filename);
     if (!read_mobility_result) {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
         std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file." << '\n';
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing Json Files..." << std::flush;
-    auto write_status = mio::write_graph(graph, "graph_parameters");
+    auto write_status = mio::write_graph<ScalarType>(graph, "graph_parameters");
     if (!write_status) {
         std::cout << "Error: " << write_status.error().formatted_message();
     }

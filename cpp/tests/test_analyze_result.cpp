@@ -351,10 +351,10 @@ TEST(TestEnsemblePercentile, basic)
     ensemble.back()[1].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
     ensemble.back()[1].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
 
-    auto q1 = mio::ensemble_percentile(ensemble, 0.2);
-    auto q2 = mio::ensemble_percentile(ensemble, 0.4);
-    auto q3 = mio::ensemble_percentile(ensemble, 0.7);
-    auto q4 = mio::ensemble_percentile(ensemble, 0.9);
+    auto q1 = mio::ensemble_percentile<ScalarType>(ensemble, 0.2);
+    auto q2 = mio::ensemble_percentile<ScalarType>(ensemble, 0.4);
+    auto q3 = mio::ensemble_percentile<ScalarType>(ensemble, 0.7);
+    auto q4 = mio::ensemble_percentile<ScalarType>(ensemble, 0.9);
 
     //checking only a few elements
     ASSERT_EQ(q1.size(), 2);

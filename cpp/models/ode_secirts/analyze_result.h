@@ -40,6 +40,8 @@ namespace osecirts
 template <typename FP, class Model>
 std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Model>>& ensemble_params, FP p)
 {
+    using std::floor;
+
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
 
     auto num_runs   = ensemble_params.size();
@@ -61,7 +63,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         }
         std::sort(single_element.begin(), single_element.end());
         auto& new_params = get_param(percentile[n]);
-        new_params       = single_element[static_cast<size_t>(num_runs * p)];
+        new_params       = single_element[static_cast<size_t>(floor(num_runs * p))];
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
@@ -184,7 +186,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
         percentile[node].parameters.template set<ICUCapacity<FP>>(
-            single_element_ensemble[static_cast<size_t>(num_runs * p)]);
+            single_element_ensemble[static_cast<size_t>(floor(num_runs * p))]);
     }
     return percentile;
 }
