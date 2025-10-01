@@ -27,7 +27,7 @@
 #include <cmath>
 #include <limits>
 
-// Extend automatic differentiation (AD) library to support std::round.
+// Extend automatic differentiation (AD) library to support std::round and std::trunc.
 namespace ad
 {
 namespace internal
@@ -58,14 +58,7 @@ static inline double round(const ad::internal::unary_intermediate<AD_TAPE_REAL, 
 {
     return round(x._value());
 }
-} // namespace internal
-} // namespace ad
 
-// Extend automatic differentiation (AD) library to support std::trunc.
-namespace ad
-{
-namespace internal
-{
 using std::trunc;
 template <class AD_TAPE_REAL, class DATA_HANDLER_1>
 static inline double trunc(const ad::internal::active_type<AD_TAPE_REAL, DATA_HANDLER_1>& x)
