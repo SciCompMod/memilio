@@ -53,13 +53,13 @@ int main()
     Model model;
     //Population are distributed uniformly to the four regions
     for (size_t r = 0; r < num_regions; ++r) {
-        model.populations[{mio::regions::Region(r), InfectionState::S, Age(1), Species(1)}] =
+        model.populations[{mio::regions::Region(r), InfectionState::S, Age(0), Species(0)}] =
             (1000 - numE - numC - numI - numR - numD) / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::E, Age(1), Species(1)}] = numE / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::C, Age(1), Species(1)}] = numC / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::I, Age(1), Species(1)}] = numI / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::R, Age(1), Species(1)}] = numR / num_regions;
-        model.populations[{mio::regions::Region(r), InfectionState::D, Age(1), Species(1)}] = numD / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::E, Age(0), Species(0)}] = numE / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::C, Age(0), Species(0)}] = numC / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::I, Age(0), Species(0)}] = numI / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::R, Age(0), Species(0)}] = numR / num_regions;
+        model.populations[{mio::regions::Region(r), InfectionState::D, Age(0), Species(0)}] = numD / num_regions;
     }
 
     //Set infection state adoption and spatial transition rates
@@ -70,19 +70,19 @@ int main()
                                   InfectionState::E,
                                   mio::regions::Region(r),
                                   0.1,
-                                  {{InfectionState::C, 1, mio::regions::Region(1), {Age(1), Species(1)}},
-                                   {InfectionState::I, 0.5, mio::regions::Region(1), {Age(1), Species(1)}}},
-                                  {Age(1), Species(1)}});
+                                  {{InfectionState::C, 1, mio::regions::Region(3), {Age(0), Species(0)}},
+                                   {InfectionState::I, 0.5, mio::regions::Region(1), {Age(0), Species(0)}}},
+                                  {Age(0), Species(0)}});
         adoption_rates.push_back(
-            {InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}, {Age(1), Species(1)}});
+            {InfectionState::C, InfectionState::R, mio::regions::Region(r), 0.2 / 3., {}, {Age(0), Species(0)}});
         adoption_rates.push_back(
-            {InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}, {Age(1), Species(1)}});
+            {InfectionState::E, InfectionState::C, mio::regions::Region(r), 1.0 / 5., {}, {Age(0), Species(0)}});
         adoption_rates.push_back(
-            {InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}, {Age(1), Species(1)}});
+            {InfectionState::C, InfectionState::I, mio::regions::Region(r), 0.8 / 3., {}, {Age(0), Species(0)}});
         adoption_rates.push_back(
-            {InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}, {Age(1), Species(1)}});
+            {InfectionState::I, InfectionState::R, mio::regions::Region(r), 0.99 / 5., {}, {Age(0), Species(0)}});
         adoption_rates.push_back(
-            {InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}, {Age(1), Species(1)}});
+            {InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}, {Age(0), Species(0)}});
     }
 
     //Agents in infection state D do not transition
@@ -94,14 +94,14 @@ int main()
                                                 mio::regions::Region(i),
                                                 mio::regions::Region(j),
                                                 0.01,
-                                                {Age(1), Species(1)},
-                                                {Age(1), Species(1)}});
+                                                {Age(0), Species(0)},
+                                                {Age(0), Species(0)}});
                     transition_rates.push_back({InfectionState(s),
                                                 mio::regions::Region(j),
                                                 mio::regions::Region(i),
                                                 0.01,
-                                                {Age(1), Species(1)},
-                                                {Age(1), Species(1)}});
+                                                {Age(0), Species(0)},
+                                                {Age(0), Species(0)}});
                 }
         }
     }

@@ -96,9 +96,10 @@ public:
             for (size_t i = 0; i < rate.influences.size(); i++) {
                 const auto index = std::apply(
                     [&](auto&&... args) {
-                        return Index{rate.region, rate.influences[i].status, std::forward<decltype(args)>(args)...};
+                        return Index{rate.influences[i].region.value_or(rate.region), rate.influences[i].status,
+                                     std::forward<decltype(args)>(args)...};
                     },
-                    rate.group_indices);
+                    rate.influences[i].group_indices);
                 influences += rate.influences[i].factor * x[pop.get_flat_index(index)];
             }
             return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
