@@ -408,7 +408,7 @@ MEmilio has been supported by various project grants. Since 2020, MEmilio has be
    :width: 150px
    :alt: mFUND
 
-|helmholtz| |bmdv| |mfund| |bmbf| |hdslee|
+|bmftr| |helmholtz| |bmdv| |mfund| |bmbf| |hdslee|
 
 .. raw:: html
 
