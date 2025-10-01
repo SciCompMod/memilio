@@ -1,10 +1,10 @@
-.. |MEmilio_citation| replace:: Bicker J, Kerkmann D, Korf S, Ploetzke L, Schmieding R, Wendler A, Zunker H et al. (2025). *MEmilio - a High Performance Modular Epidemics Simulation Software*. Available at |MEmilio_github|_ and |MEmilio_elib|_.
+.. |MEmilio_citation| replace:: Bicker J, Kerkmann D, Korf S, Ploetzke L, Schmieding R, Wendler AC, Zunker H, Nguyen K, Abele D, Gerstein C, Lenz P, Betz M, Schmidt A, Hannemann-Tamas R, Volmer K, Waßmuth N, Tritzschak H, Richter D, Heger M, Basermann A, Meyer-Hermann M, Hasenauer J, Kühn MJ. (2025). *MEmilio - a High Performance Modular Epidemics Simulation Software*. Available at |MEmilio_github|_ and |MEmilio_elib|_.
 .. |MEmilio_github| replace:: https://github.com/SciCompMod/memilio
 .. _MEmilio_github: https://github.com/SciCompMod/memilio
 .. |MEmilio_elib| replace:: https://elib.dlr.de/213614/
 .. _MEmilio_elib: https://elib.dlr.de/213614/
 
-.. |Novel_travel_time_aware_metapopulation_models| replace:: Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. |Novel_travel_time_aware_metapopulation_models_DOI|_
+.. |Novel_travel_time_aware_metapopulation_models| replace:: Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, Mikolajczyk R, Meyer-Hermann M, Kühn MJ. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. |Novel_travel_time_aware_metapopulation_models_DOI|_
 .. |Novel_travel_time_aware_metapopulation_models_DOI| replace:: DOI:10.1371/journal.pcbi.1012630 
 .. _Novel_travel_time_aware_metapopulation_models_DOI: https://doi.org/10.1371/journal.pcbi.1012630
 
@@ -12,7 +12,7 @@
 .. |A_nonstandard_numerical_scheme_DOI| replace:: DOI:10.1016/j.amc.2025.129636
 .. _A_nonstandard_numerical_scheme_DOI: https://doi.org/10.1016/j.amc.2025.129636
 
-.. |Agent-based_modeling_for| replace:: Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. |Agent-based_modeling_for_DOI|_
+.. |Agent-based_modeling_for| replace:: Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, Gerstein C, Göbbert JH, Basermann A, Kühn MJ, Meyer-Hermann M. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. |Agent-based_modeling_for_DOI|_
 .. |Agent-based_modeling_for_DOI| replace:: DOI:10.1016/j.compbiomed.2025.110269
 .. _Agent-based_modeling_for_DOI: https://doi.org/10.1016/j.compbiomed.2025.110269
 
