@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding
@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 #include "memilio/math/floating_point.h"
 
 #include <gtest/gtest.h>

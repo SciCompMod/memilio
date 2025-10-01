@@ -38,7 +38,7 @@ namespace mio
  * @tparam Status An infection state enum.
  * @tparam Groups Additional grouping indices.
  */
-template <class Status, class... Groups>
+template <typename FP, class Status, class... Groups>
 struct AdoptionRate {
 
     /**
@@ -51,7 +51,7 @@ struct AdoptionRate {
  */
     struct Influence {
         Status status;
-        ScalarType factor;
+        FP factor;
         std::optional<mio::regions::Region> region = std::nullopt;
         std::tuple<Groups...> group_indices{};
     };
@@ -59,7 +59,7 @@ struct AdoptionRate {
     Status from; // i
     Status to; // j
     mio::regions::Region region; // k
-    ScalarType factor; // gammahat_{ij}^k
+    FP factor; // gammahat_{ij}^k
     std::vector<Influence> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
     std::tuple<Groups...> group_indices{};
 };

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
@@ -36,9 +36,9 @@ namespace smm
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
  * @tparam Status An infection state enum.
  */
-template <class Status, class... Groups>
+template <typename FP, class Status, class... Groups>
 struct AdoptionRates {
-    using Type = std::vector<AdoptionRate<Status, Groups...>>;
+    using Type = std::vector<AdoptionRate<FP, Status, Groups...>>;
     const static std::string name()
     {
         return "AdoptionRates";
@@ -49,26 +49,26 @@ struct AdoptionRates {
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
  * @tparam Status An infection state enum.
  */
-template <class Status, class... Groups>
+template <typename FP, class Status, class... Groups>
 struct TransitionRate {
     Status status; // i
     mio::regions::Region from; // k
     mio::regions::Region to; // l
-    ScalarType factor; // lambda_i^{kl}
+    FP factor; // lambda_i^{kl}
     std::tuple<Groups...> group_indices_from{};
     std::tuple<Groups...> group_indices_to{};
 };
-template <class Status, class... Groups>
+template <typename FP, class Status, class... Groups>
 struct TransitionRates {
-    using Type = std::vector<TransitionRate<Status, Groups...>>;
+    using Type = std::vector<TransitionRate<FP, Status, Groups...>>;
     const static std::string name()
     {
         return "TransitionRates";
     }
 };
 
-template <class Status, class... Groups>
-using ParametersBase = mio::ParameterSet<AdoptionRates<Status, Groups...>, TransitionRates<Status, Groups...>>;
+template <typename FP, class Status, class... Groups>
+using ParametersBase = mio::ParameterSet<AdoptionRates<FP, Status, Groups...>, TransitionRates<FP, Status, Groups...>>;
 
 } // namespace smm
 

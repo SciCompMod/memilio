@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker, Kilian Volmer
@@ -41,16 +41,15 @@ using age_group = T;
  * @tparam regions Number of regions.
  * @tparam Status An infection state enum.
  */
-template <size_t regions, class Status, size_t... Groups>
+template <typename FP, size_t regions, class Status, size_t... Groups>
 class Model : public mio::CompartmentalModel<
-                  ScalarType, Status,
-                  mio::Populations<ScalarType, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
-                  ParametersBase<Status, age_group<mio::AgeGroup, Groups>...>>
+                  FP, Status, mio::Populations<FP, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
+                  ParametersBase<FP, Status, age_group<mio::AgeGroup, Groups>...>>
 {
-    using Base = mio::CompartmentalModel<
-        ScalarType, Status,
-        mio::Populations<ScalarType, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
-        ParametersBase<Status, age_group<mio::AgeGroup, Groups>...>>;
+    using Base =
+        mio::CompartmentalModel<FP, Status,
+                                mio::Populations<FP, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
+                                ParametersBase<FP, Status, age_group<mio::AgeGroup, Groups>...>>;
     using Index = mio::Index<mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>;
 
 public:
@@ -67,8 +66,8 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
-    ScalarType evaluate(const AdoptionRate<Status, age_group<mio::AgeGroup, Groups>...>& rate,
-                        const Eigen::VectorXd& x) const
+    FP evaluate(const AdoptionRate<FP, Status, age_group<mio::AgeGroup, Groups>...>& rate,
+                const Eigen::VectorXd& x) const
     {
         const auto& pop       = this->populations;
         const auto index_from = std::apply(
@@ -83,9 +82,9 @@ public:
         }
         else { // second order adoption
             // accumulate influences
-            ScalarType influences = 0.0;
+            FP influences = 0.0;
             for (size_t i = 0; i < rate.influences.size(); i++) {
-                ScalarType N = 0; // Welches N brauchen wir hier??
+                FP N = 0; // Welches N brauchen wir hier??
 
                 for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
                     const auto index = std::apply(
@@ -116,8 +115,8 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
      */
-    ScalarType evaluate(const TransitionRate<Status, age_group<mio::AgeGroup, Groups>...>& rate,
-                        const Eigen::VectorXd& x) const
+    FP evaluate(const TransitionRate<FP, Status, age_group<mio::AgeGroup, Groups>...>& rate,
+                const Eigen::VectorXd& x) const
     {
         auto index = std::apply(
             [&](auto&&... args) {

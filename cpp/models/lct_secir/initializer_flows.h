@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -37,11 +37,11 @@ namespace lsecir
 {
 
 /**
- * @brief Class that can be used to compute an initialization vector out of flows for an LCT Model 
+ * @brief Class that can be used to compute an initialization vector out of flows for an LCT Model
  *  with division in groups.
- * 
- *  The initialization method is based on the fact that the LCT model is a special case of an IDE model with special 
- *  choices of stay time distributions (so-called Erlang distributions). Accordingly, the method for calculating 
+ *
+ *  The initialization method is based on the fact that the LCT model is a special case of an IDE model with special
+ *  choices of stay time distributions (so-called Erlang distributions). Accordingly, the method for calculating
  *  initial values for the compartments from given flows/transitions is taken from the IDE-SECIR model.
  *  We cannot use the functionality of the IDE model directly, as we have to calculate a division into sub-compartments
  *  and not only the sizes of the compartments.
@@ -49,7 +49,7 @@ namespace lsecir
  *
  * @tparam Model is expected to be an LCT-SECIR model defined in models/lct_secir/model.h.
  */
-template <typename Model>
+template <typename FP, typename Model>
 class Initializer
 {
 public:
@@ -58,14 +58,14 @@ public:
     /**
      * @brief Constructs a new Initializer object.
      *
-     * @param[in] flows Initializing TimeSeries with flows fitting to these defined in InfectionTransition. 
+     * @param[in] flows Initializing TimeSeries with flows fitting to these defined in InfectionTransition.
      *      For each group of m_model, InfectionTransition::Count entries are required.
-     *      Timesteps should be equidistant and the values should be non-negative. 
-     *      The time history has to be long enough so that it is possible to calculate the initial vector. 
+     *      Timesteps should be equidistant and the values should be non-negative.
+     *      The time history has to be long enough so that it is possible to calculate the initial vector.
      *      The length of the required time history depends on the Erlang densities used to compute the initial vector.
      * @param[in, out] model The LCT-SECIR model for which the initialization should be performed.
      */
-    Initializer(TimeSeries<ScalarType>&& flows, Model& model)
+    Initializer(TimeSeries<FP>&& flows, Model& model)
         : m_flows(std::move(flows))
         , m_model(model)
     {
@@ -75,22 +75,21 @@ public:
     /**
      * @brief Core function of Initializer.
      *
-     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number 
+     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number
      * of persons for each subcompartment for each group.
      * The initial value vector is updated in the model.
      *
      * @param[in] total_population The total size of the considered population.
      * @param[in] deaths Number of deceased people from the disease at time 0.
      * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
-     * @return Returns true if one (or more) constraint(s) of the model, the initial flows 
-     *      or the computed initial value vector are not satisfied, otherwise false. 
+     * @return Returns true if one (or more) constraint(s) of the model, the initial flows
+     *      or the computed initial value vector are not satisfied, otherwise false.
      */
-    bool compute_initialization_vector(Eigen::VectorX<ScalarType> const& total_population,
-                                       Eigen::VectorX<ScalarType> const& deaths,
-                                       Eigen::VectorX<ScalarType> const& total_confirmed_cases)
+    bool compute_initialization_vector(Eigen::VectorX<FP> const& total_population, Eigen::VectorX<FP> const& deaths,
+                                       Eigen::VectorX<FP> const& total_confirmed_cases)
     {
 
-        Eigen::VectorX<ScalarType> init(m_model.populations.get_compartments());
+        Eigen::VectorX<FP> init(m_model.populations.get_compartments());
 
         bool error = compute_initialization_vector_impl(init, total_population, deaths, total_confirmed_cases);
         if (error) {
@@ -111,7 +110,7 @@ public:
      *
      * @param[in] new_tol New tolerance.
      */
-    void set_tol_for_support_max(ScalarType new_tol)
+    void set_tol_for_support_max(FP new_tol)
     {
         m_tol = new_tol;
     }
@@ -120,7 +119,7 @@ private:
     /**
      * @brief Implementation of the calculation of the initial value vector slice that corresponds to a specified group.
      *
-     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number 
+     * Computes a vector that can be used for the initialization of an LCT model stratified by groups with the number
      * of persons for each subcompartment. The groups are calculated recursively.
      *
      * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
@@ -129,13 +128,12 @@ private:
      * @param[in] deaths Number of deceased people from the disease at time 0.
      * @param[in] total_confirmed_cases Total number of confirmed cases at time 0.
      * @return Returns true if one (or more) constraint(s) of the computed initial value vector are not satisfied,
-     *       otherwise false. 
+     *       otherwise false.
      */
     template <size_t Group = 0>
-    bool compute_initialization_vector_impl(Eigen::VectorX<ScalarType>& init,
-                                            Eigen::VectorX<ScalarType> const& total_population,
-                                            Eigen::VectorX<ScalarType> const& deaths,
-                                            Eigen::VectorX<ScalarType> const& total_confirmed_cases)
+    bool compute_initialization_vector_impl(Eigen::VectorX<FP>& init, Eigen::VectorX<FP> const& total_population,
+                                            Eigen::VectorX<FP> const& deaths,
+                                            Eigen::VectorX<FP> const& total_confirmed_cases)
     {
         static_assert((Group < Model::num_groups) && (Group >= 0), "The template parameter Group should be valid.");
         using LctStateGroup            = type_at_index_t<Group, LctStatesGroups>;
@@ -146,23 +144,23 @@ private:
             // Exposed.
             (compute_compartment<InfectionState::Exposed, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::SusceptibleToExposed,
-                1 / m_model.parameters.template get<TimeExposed>()[Group])) ||
+                1 / m_model.parameters.template get<TimeExposed<FP>>()[Group])) ||
             // InfectedNoSymptoms.
             (compute_compartment<InfectionState::InfectedNoSymptoms, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::ExposedToInfectedNoSymptoms,
-                1 / m_model.parameters.template get<TimeInfectedNoSymptoms>()[Group])) ||
+                1 / m_model.parameters.template get<TimeInfectedNoSymptoms<FP>>()[Group])) ||
             // InfectedSymptoms.
             (compute_compartment<InfectionState::InfectedSymptoms, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms,
-                1 / m_model.parameters.template get<TimeInfectedSymptoms>()[Group])) ||
+                1 / m_model.parameters.template get<TimeInfectedSymptoms<FP>>()[Group])) ||
             // InfectedSevere.
             (compute_compartment<InfectionState::InfectedSevere, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere,
-                1 / m_model.parameters.template get<TimeInfectedSevere>()[Group])) ||
+                1 / m_model.parameters.template get<TimeInfectedSevere<FP>>()[Group])) ||
             // InfectedCritical.
             (compute_compartment<InfectionState::InfectedCritical, Group>(
                 init, first_index_flows + (Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical,
-                1 / m_model.parameters.template get<TimeInfectedCritical>()[Group]));
+                1 / m_model.parameters.template get<TimeInfectedCritical<FP>>()[Group]));
         if (error) {
             return true;
         }
@@ -193,7 +191,7 @@ private:
         for (size_t state_idx : {LctStateGroup::template get_first_index<InfectionState::Susceptible>(),
                                  LctStateGroup::template get_first_index<InfectionState::Recovered>(),
                                  LctStateGroup::template get_first_index<InfectionState::Dead>()}) {
-            if (floating_point_less(init[first_index + state_idx], 0.0, 1e-8)) {
+            if (floating_point_less<FP>(init[first_index + state_idx], 0.0, 1e-8)) {
                 log_error("Initialization failed. Values of total_confirmed_cases, deaths and total_population do not "
                           "match the specified values for the transitions, leading to at least one negative result.");
                 return true;
@@ -210,7 +208,7 @@ private:
 
     /**
      * @brief Checks constraints of the Initializer including checks for the model.
-     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false. 
+     * @return Returns true if one (or more) constraint(s) are not satisfied, otherwise false.
      */
     bool check_constraints() const
     {
@@ -219,13 +217,13 @@ private:
             return true;
         }
 
-        if (!(floating_point_equal(0., m_flows.get_last_time(), 1e-8, 1e-14))) {
+        if (!(floating_point_equal<FP>(0., m_flows.get_last_time(), 1e-8, 1e-14))) {
             log_error("Last time point in flows has to be 0.");
             return true;
         }
 
         for (int i = 1; i < m_flows.get_num_time_points(); i++) {
-            if (!(floating_point_equal(m_dt, m_flows.get_time(i) - m_flows.get_time(i - 1), 1e-8, 1e-14))) {
+            if (!(floating_point_equal<FP>(m_dt, m_flows.get_time(i) - m_flows.get_time(i - 1), 1e-8, 1e-14))) {
                 log_error("Time points in flows have to be equidistant.");
                 return true;
             }
@@ -241,24 +239,25 @@ private:
     }
 
     /**
-     * @brief Computes a slice of the initial value vector for each subcompartment of one InfectionState 
+     * @brief Computes a slice of the initial value vector for each subcompartment of one InfectionState
      *  for a specified group.
      *
      * @tparam Group The group for which the corresponding slice of the initial value vector is calculated.
      * @tparam State The InfectionState for which the corresponding slice of the initial value vector is calculated
      * @param[out] init The initial value vector under consideration.
-     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow 
+     * @param[in] idx_incoming_flow Index of the flow which is relevant for the calculation, so the flow
      *      to the InfectionState.
-     * @param[in] transition_rate Specifies the transition rate of the InfectionState. 
+     * @param[in] transition_rate Specifies the transition rate of the InfectionState.
      *      'This is equal to 1 / (expected time in the InfectionState).
-     
+
      * @return Returns true if one (or more) constraint(s) of the computed slice of the initial value vector
-     *      are not satisfied, otherwise false. 
+     *      are not satisfied, otherwise false.
      */
     template <InfectionState State, size_t Group>
-    bool compute_compartment(Eigen::VectorX<ScalarType>& init, Eigen::Index idx_incoming_flow,
-                             ScalarType transition_rate) const
+    bool compute_compartment(Eigen::VectorX<FP>& init, Eigen::Index idx_incoming_flow, FP transition_rate) const
     {
+        using std::ceil;
+
         size_t first_index = m_model.populations.template get_first_index_of_group<Group>() +
                              type_at_index_t<Group, LctStatesGroups>::template get_first_index<State>();
         size_t num_subcompartments = type_at_index_t<Group, LctStatesGroups>::template get_num_subcompartments<State>();
@@ -268,20 +267,20 @@ private:
         ErlangDensity erlang(1, 1. / (num_subcompartments * transition_rate));
 
         // Initialize other relevant parameters.
-        ScalarType calc_time{0};
+        FP calc_time{0};
         Eigen::Index calc_time_index{0};
-        ScalarType state_age{0};
-        ScalarType sum{0};
+        FP state_age{0};
+        FP sum{0};
         Eigen::Index num_time_points = m_flows.get_num_time_points();
 
         // Calculate number of people in each subcompartment.
         for (size_t j = 0; j < num_subcompartments; j++) {
             // For subcompartment number j+1, shape parameter j+1 is needed.
-            erlang.set_distribution_parameter((ScalarType)j + 1);
+            erlang.set_distribution_parameter((FP)j + 1);
 
             // Determine relevant calculation area and corresponding index.
             calc_time       = erlang.get_support_max(m_dt, m_tol);
-            calc_time_index = (Eigen::Index)std::ceil(calc_time / m_dt) - 1;
+            calc_time_index = (Eigen::Index)ceil(calc_time / m_dt) - 1;
 
             if (num_time_points < calc_time_index) {
                 log_error("Initialization failed. Not enough time points for the transitions are given. More than {} "
@@ -308,10 +307,10 @@ private:
         return false;
     }
 
-    TimeSeries<ScalarType> m_flows; ///< TimeSeries with the flows which are used to calculate the initial vector.
+    TimeSeries<FP> m_flows; ///< TimeSeries with the flows which are used to calculate the initial vector.
     Model& m_model; ///< The LCT-SECIR model for which the initialization should be performed.
-    ScalarType m_dt{}; ///< Step size of the times in m_flows and time step for the approximation of the integral.
-    ScalarType m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the ErlangDensity%s.
+    FP m_dt{}; ///< Step size of the times in m_flows and time step for the approximation of the integral.
+    FP m_tol{1e-10}; ///< Tolerance used to calculate the maximum support of the ErlangDensity%s.
 };
 
 } // namespace lsecir

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
 *
 * Authors: René Schmieding, Julia Bicker
@@ -41,11 +41,11 @@ namespace smm
  * @tparam regions The number of regions.
  * @tparam Status An infection state enum.
  */
-template <size_t regions, class Status, size_t... Groups>
+template <typename FP, size_t regions, class Status, size_t... Groups>
 class Simulation
 {
 public:
-    using Model = smm::Model<regions, Status, Groups...>;
+    using Model = smm::Model<FP, regions, Status, Groups...>;
     using Index = mio::Index<mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>;
 
     /**
@@ -54,7 +54,7 @@ public:
      * @param[in] t0 Start time.
      * @param[in] dt Initial Step size.
      */
-    Simulation(Model const& model, ScalarType t0 = 0., ScalarType dt = 1.)
+    Simulation(Model const& model, FP t0 = 0., FP dt = 1.)
         : m_dt(dt)
         , m_model(std::make_unique<Model>(model))
         , m_result(t0, m_model->get_initial_values())
@@ -73,7 +73,7 @@ public:
         }));
         // initialize (internal) next event times by random values
         for (size_t i = 0; i < m_tp_next_event.size(); i++) {
-            m_tp_next_event[i] += mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
+            m_tp_next_event[i] += mio::ExponentialDistribution<FP>::get_instance()(m_model->get_rng(), 1.0);
         }
     }
 
@@ -82,13 +82,13 @@ public:
      * This function performs a Gillespie algorithm.
      * @param tmax Next stopping point of simulation.
      */
-    Eigen::Ref<Eigen::VectorXd> advance(ScalarType tmax)
+    Eigen::Ref<Eigen::VectorX<FP>> advance(FP tmax)
     {
         update_current_rates_and_waiting_times();
-        size_t next_event       = determine_next_event(); // index of the next event
-        ScalarType current_time = m_result.get_last_time();
+        size_t next_event = determine_next_event(); // index of the next event
+        FP current_time   = m_result.get_last_time();
         // set in the past to add a new time point immediately
-        ScalarType last_result_time = current_time - m_dt;
+        FP last_result_time = current_time - m_dt;
         // iterate over time
         while (current_time + m_waiting_times[next_event] < tmax) {
             // update time
@@ -142,8 +142,7 @@ public:
                 m_internal_time[i] += m_current_rates[i] * m_waiting_times[next_event];
             }
             // draw new "next event" time for the occured event
-            m_tp_next_event[next_event] +=
-                mio::ExponentialDistribution<ScalarType>::get_instance()(m_model->get_rng(), 1.0);
+            m_tp_next_event[next_event] += mio::ExponentialDistribution<FP>::get_instance()(m_model->get_rng(), 1.0);
             // precalculate next event
             update_current_rates_and_waiting_times();
             next_event = determine_next_event();
@@ -161,11 +160,11 @@ public:
      * @brief Returns the final simulation result.
      * @return A TimeSeries to represent the final simulation result.
      */
-    TimeSeries<ScalarType>& get_result()
+    TimeSeries<FP>& get_result()
     {
         return m_result;
     }
-    const TimeSeries<ScalarType>& get_result() const
+    const TimeSeries<FP>& get_result() const
     {
         return m_result;
     }
@@ -186,19 +185,20 @@ private:
     /**
      * @brief Returns the model's transition rates.
      */
-    inline constexpr const typename smm::TransitionRates<Status, age_group<mio::AgeGroup, Groups>...>::Type&
+    inline constexpr const typename smm::TransitionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>::Type&
     transition_rates()
     {
-        return m_model->parameters.template get<smm::TransitionRates<Status, age_group<mio::AgeGroup, Groups>...>>();
+        return m_model->parameters
+            .template get<smm::TransitionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>>();
     }
 
     /**
      * @brief Returns the model's adoption rates.
      */
-    inline constexpr const typename smm::AdoptionRates<Status, age_group<mio::AgeGroup, Groups>...>::Type&
+    inline constexpr const typename smm::AdoptionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>::Type&
     adoption_rates()
     {
-        return m_model->parameters.template get<smm::AdoptionRates<Status, age_group<mio::AgeGroup, Groups>...>>();
+        return m_model->parameters.template get<smm::AdoptionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>>();
     }
 
     /**
@@ -212,14 +212,14 @@ private:
             m_current_rates[i] = m_model->evaluate(rate, m_result.get_last_value());
             m_waiting_times[i] = (m_current_rates[i] > 0)
                                      ? (m_tp_next_event[i] - m_internal_time[i]) / m_current_rates[i]
-                                     : std::numeric_limits<ScalarType>::max();
+                                     : std::numeric_limits<FP>::max();
             i++;
         }
         for (const auto& rate : transition_rates()) {
             m_current_rates[i] = m_model->evaluate(rate, m_result.get_last_value());
             m_waiting_times[i] = (m_current_rates[i] > 0)
                                      ? (m_tp_next_event[i] - m_internal_time[i]) / m_current_rates[i]
-                                     : std::numeric_limits<ScalarType>::max();
+                                     : std::numeric_limits<FP>::max();
             i++;
         }
     }
@@ -232,15 +232,14 @@ private:
         return std::distance(m_waiting_times.begin(), std::min_element(m_waiting_times.begin(), m_waiting_times.end()));
     }
 
-    ScalarType m_dt; ///< Initial step size
+    FP m_dt; ///< Initial step size
     std::unique_ptr<Model> m_model; ///< Pointer to the model used in the simulation.
-    mio::TimeSeries<ScalarType> m_result; ///< Result time series.
+    mio::TimeSeries<FP> m_result; ///< Result time series.
 
-    std::vector<ScalarType> m_internal_time; ///< Internal times of all poisson processes (aka T_k).
-    std::vector<ScalarType> m_tp_next_event; ///< Internal time points of next event i after m_internal[i] (aka P_k).
-    std::vector<ScalarType> m_waiting_times; ///< External times between m_internal_time and m_tp_next_event.
-    std::vector<ScalarType>
-        m_current_rates; ///< Current values of both types of rates i.e. adoption and transition rates.
+    std::vector<FP> m_internal_time; ///< Internal times of all poisson processes (aka T_k).
+    std::vector<FP> m_tp_next_event; ///< Internal time points of next event i after m_internal[i] (aka P_k).
+    std::vector<FP> m_waiting_times; ///< External times between m_internal_time and m_tp_next_event.
+    std::vector<FP> m_current_rates; ///< Current values of both types of rates i.e. adoption and transition rates.
 };
 
 } // namespace smm
