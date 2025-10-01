@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
 *
-* Authors: Julia Bicker
+* Authors: Julia Bicker, Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *

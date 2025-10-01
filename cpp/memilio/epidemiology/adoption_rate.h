@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: René Schmieding, Julia Bicker
+* Authors: René Schmieding, Julia Bicker, Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -26,6 +26,7 @@
 #include <limits>
 #include <tuple>
 #include <optional>
+
 namespace mio
 {
 
