@@ -59,3 +59,7 @@
 .. |Assessment_of_effective_mitigation| replace:: Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. |Assessment_of_effective_mitigation_DOI|_
 .. |Assessment_of_effective_mitigation_DOI| replace:: DOI:10.1016/j.mbs.2021.108648
 .. _Assessment_of_effective_mitigation_DOI: https://doi.org/10.1016/j.mbs.2021.108648
+
+.. |Coupled_Epidemiological_and_Wastewater| replace:: Bicker J, Tomza N, Wallrafen-Sam K, Schmid N, Hofmann A., et al. (2025). *Coupled Epidemiological and Wastwater Modeling at the Urban Scale: A Case Study for Munich*. medRxiv. |Coupled_Epidemiological_and_Wastewater_DOI|_
+.. |Coupled_Epidemiological_and_Wastewater_DOI| replace:: DOI:10.1101/2025.09.25.25336633
+.. _Coupled_Epidemiological_and_Wastewater_DOI: https://doi.org/10.1101/2025.09.25.25336633
