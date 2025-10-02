@@ -1,0 +1,135 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Kilian Volmer
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+#include "memilio/geography/rtree.h"
+#include "memilio/geography/locations.h"
+#include "random_number_test.h"
+#include <gtest/gtest.h>
+
+TEST(TestGeography, compareGeographicalLocation)
+{
+    // Generate GeographicalLocations
+    mio::geo::GeographicalLocation geographical_location  = {10.5, 52.2};
+    mio::geo::GeographicalLocation geographical_location2 = {10.5, 52.2};
+    mio::geo::GeographicalLocation geographical_location3 = {9.5, 52};
+    // Verify that the set GeographicalLocations are equal.
+    EXPECT_TRUE(geographical_location == geographical_location2);
+    // Verify that the set GeographicalLocations are not equal.
+    EXPECT_FALSE(geographical_location == geographical_location3);
+}
+
+TEST(TestGeography, Distance)
+{
+    // Generate GeographicalLocations
+    auto bonn   = mio::geo::GeographicalLocation(50.7333, 7.1000);
+    auto berlin = mio::geo::GeographicalLocation(52.5200, 13.4050);
+    // Test that the distance function is symmetric
+    EXPECT_DOUBLE_EQ(bonn.distance(berlin), berlin.distance(bonn));
+    auto distance = 478.2;
+    // Test that the distance is correct up to a small error
+    EXPECT_LT(abs(bonn.distance(berlin) - distance), 0.1);
+}
+
+TEST(TestGeography, rtreeConstructionNoData)
+{
+    // Generate a default RTree object
+    EXPECT_NO_THROW(mio::geo::RTree());
+}
+
+TEST(TestGeography, rtreeConstructionVector)
+{
+    // Generate a vector of GeographicalLocations
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.7, 6.0));
+    locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
+    locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
+    // Generate a RTree object using the vector
+    mio::geo::RTree tree(locations);
+    EXPECT_EQ(tree.size(), locations.size());
+}
+
+TEST(TestGeography, rtreeConstructionRange)
+{
+    // Generate a vector of GeographicalLocations
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.7, 6.0));
+    locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
+    locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
+    // Generate a RTree object using begin and end iterators
+    auto tree = mio::geo::RTree(locations.begin(), locations.end());
+    EXPECT_EQ(tree.size(), locations.size());
+}
+
+TEST(TestGeography, rtreesize)
+{
+    // Generate a vector of GeographicalLocations
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.7, 6.0));
+    locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
+    locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
+    // Generate a RTree object
+    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    // Verify that the size of the rtree is 3
+    EXPECT_EQ(rtree.size(), 3);
+}
+
+TEST(TestGeography, rtreeNN)
+{
+    // Generate a vector of GeographicalLocations
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
+    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
+    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    // Generate a RTree object
+    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    // Verify that the nearest neighbor is the first location
+    EXPECT_EQ(rtree.nearest_neighbor_indices(mio::geo::GeographicalLocation(50.781, 6.080), 1)[0], 0);
+}
+
+TEST(TestGeography, rtreeinrange_approx)
+{
+    // Generate a vector of GeographicalLocations
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
+    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
+    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    // Generate a RTree object
+    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    // Verify that the in-range queries returns the correct number of results
+    EXPECT_EQ(rtree.inrange_indices_approximate(mio::geo::GeographicalLocation(50.933501, 6.875124), 150).size(), 2);
+    EXPECT_EQ(rtree.inrange_indices(mio::geo::GeographicalLocation(50.933501, 6.875124), 150).size(), 2);
+}
+
+TEST(TestGeography, rtreeinrange_multiple_radii)
+{
+    // Generate a vector of GeographicalLocations
+    std::vector<mio::geo::GeographicalLocation> locations;
+    locations.push_back(mio::geo::GeographicalLocation(50.783, 6.083));
+    locations.push_back(mio::geo::GeographicalLocation(52.083, 7.017));
+    locations.push_back(mio::geo::GeographicalLocation(53.667, 10.233));
+    // Generate a RTree object
+    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    // Run inrange queries for three different ranges
+    auto result = rtree.inrange_indices_query(mio::geo::GeographicalLocation(51.492599, 7.451810), {130, 310, 80});
+    // Verify the number of results for each query is correct
+    EXPECT_EQ(result[0].size(), 2);
+    EXPECT_EQ(result[1].size(), 3);
+    EXPECT_EQ(result[2].size(), 1);
+}
