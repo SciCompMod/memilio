@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -25,6 +25,7 @@
 #include "memilio/geography/regions.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/adoption_rate.h"
+#include <tuple>
 
 namespace mio
 {
@@ -35,9 +36,9 @@ namespace smm
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
  * @tparam Status An infection state enum.
  */
-template <typename FP, class Status>
+template <typename FP, class Status, class... Groups>
 struct AdoptionRates {
-    using Type = std::vector<AdoptionRate<FP, Status>>;
+    using Type = std::vector<AdoptionRate<FP, Status, Groups...>>;
     const static std::string name()
     {
         return "AdoptionRates";
@@ -48,25 +49,26 @@ struct AdoptionRates {
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
  * @tparam Status An infection state enum.
  */
-template <typename FP, class Status>
+template <typename FP, class Status, class... Groups>
 struct TransitionRate {
     Status status; // i
     mio::regions::Region from; // k
     mio::regions::Region to; // l
     FP factor; // lambda_i^{kl}
+    std::tuple<Groups...> group_indices_from{};
+    std::tuple<Groups...> group_indices_to{};
 };
-
-template <typename FP, class Status>
+template <typename FP, class Status, class... Groups>
 struct TransitionRates {
-    using Type = std::vector<TransitionRate<FP, Status>>;
+    using Type = std::vector<TransitionRate<FP, Status, Groups...>>;
     const static std::string name()
     {
         return "TransitionRates";
     }
 };
 
-template <typename FP, class Status>
-using ParametersBase = mio::ParameterSet<AdoptionRates<FP, Status>, TransitionRates<FP, Status>>;
+template <typename FP, class Status, class... Groups>
+using ParametersBase = mio::ParameterSet<AdoptionRates<FP, Status, Groups...>, TransitionRates<FP, Status, Groups...>>;
 
 } // namespace smm
 
