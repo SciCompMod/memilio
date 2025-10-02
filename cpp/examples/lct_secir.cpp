@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Lena Ploetzke
@@ -40,9 +40,9 @@ int main()
     constexpr size_t NumExposed = 2, NumInfectedNoSymptoms = 3, NumInfectedSymptoms = 1, NumInfectedSevere = 1,
                      NumInfectedCritical = 5;
     using InfState                       = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, NumExposed, NumInfectedNoSymptoms, NumInfectedSymptoms,
-                                            NumInfectedSevere, NumInfectedCritical, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, NumExposed, NumInfectedNoSymptoms,
+                                            NumInfectedSymptoms, NumInfectedSevere, NumInfectedCritical, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState>;
     Model model;
 
     // Variable defines whether the class Initializer is used to define an initial vector from flows or whether a manually
@@ -52,25 +52,26 @@ int main()
     ScalarType tmax = 10;
 
     // Set Parameters.
-    model.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2.;
-    model.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model.parameters.get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model.parameters.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2.;
+    model.parameters.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model.parameters.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model.parameters.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model.parameters.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
     // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(5.));
 
-    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-    model.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-    model.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+    model.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model.parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+    model.parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model.parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     if (use_initializer_flows) {
         // Example how to use the class Initializer for the definition of an initial vector for the LCT model.
@@ -104,7 +105,7 @@ int main()
         }
 
         // Set initialization vector for the LCT model.
-        mio::lsecir::Initializer<Model> initializer(std::move(flows), model);
+        mio::lsecir::Initializer<ScalarType, Model> initializer(std::move(flows), model);
         initializer.set_tol_for_support_max(1e-6);
         auto status = initializer.compute_initialization_vector(total_population, deaths, total_confirmed_cases);
         if (status) {

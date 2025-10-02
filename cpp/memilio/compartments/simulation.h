@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Jan Kleinert, Daniel Abele
@@ -53,7 +53,7 @@ public:
      * @param[in] dt Initial step size of integration
      */
     Simulation(Model const& model, FP t0 = 0., FP dt = 0.1)
-        : Base(model, std::make_shared<DefaultIntegratorCore<FP>>(), t0, dt)
+        : Base(model, std::make_unique<DefaultIntegratorCore<FP>>(), t0, dt)
     {
     }
 
@@ -85,8 +85,8 @@ template <typename FP, class Sim>
 using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<FP>()));
 
 /**
- * Template meta function to check if a type is a compartment model simulation. 
- * Defines a static constant of name `value`. 
+ * Template meta function to check if a type is a compartment model simulation.
+ * Defines a static constant of name `value`.
  * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
  * Otherwise, `value` will be equal to false.
  * @tparam FP floating point type, e.g., double
@@ -103,7 +103,7 @@ using is_compartment_model_simulation =
  * @param[in] tmax End time.
  * @param[in] dt Initial step size of integration.
  * @param[in] model An instance of a CompartmentalModel.
- * @param[in] integrator Optionally override the IntegratorCore used by the Simulation.
+ * @param[in] integrator_core Optionally override the IntegratorCore used by the Simulation.
  * @return A TimeSeries to represent the final Simulation result
  * @tparam FP floating point type, e.g., double
  * @tparam Model The particular Model derived from CompartmentModel to simulate.
@@ -111,12 +111,12 @@ using is_compartment_model_simulation =
  */
 template <typename FP, class Model, class Sim = mio::Simulation<FP, Model>>
 TimeSeries<FP> simulate(FP t0, FP tmax, FP dt, Model const& model,
-                        std::shared_ptr<OdeIntegratorCore<FP>> integrator = nullptr)
+                        std::unique_ptr<OdeIntegratorCore<FP>>&& integrator_core = nullptr)
 {
     model.check_constraints();
     Sim sim(model, t0, dt);
-    if (integrator) {
-        sim.set_integrator(integrator);
+    if (integrator_core) {
+        sim.set_integrator_core(std::move(integrator_core));
     }
     sim.advance(tmax);
     return sim.get_result();
