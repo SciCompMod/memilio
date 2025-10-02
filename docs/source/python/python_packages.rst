@@ -112,6 +112,7 @@ Installation
 ------------
 
 Each package provides a `setup.py` script that installs the package and its dependencies. 
+The dependencies of the individual packages are denoted in their documentation.
 The installation can be run with the following command (from the directory containing the `setup.py`)
 
 .. code-block:: console 
@@ -127,7 +128,6 @@ For development of code use this command instead
     pip install -e .[dev]
 
 This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
-The dependencies are denoted in the documentation of each package.
 
 Testing
 -------

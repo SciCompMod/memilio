@@ -22,7 +22,7 @@ If you use MEmilio, please :doc:`cite our work<citation>`.
 
 .. note::
 
-   This framework is under active development, as is this documentation.
+   This framework is under active development, and, thus, obtains constantly new features or models. If you encounter a feature not yet documented, please :ref:`contact us directly <contact>`.
 
 
 

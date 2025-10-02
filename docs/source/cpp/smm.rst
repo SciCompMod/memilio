@@ -92,7 +92,13 @@ The model has the following parameters:
 
 The adoption rate :math:`\gamma^{(k)}_{i,j}` at time :math:`t` is given by
 
-:math:`\gamma^{(k)}_{i,j}(t) = c_{i,j}\frac{i^{(k)}}{N}\cdot\sum_{\tau \in \Psi}\tau_{factor} \cdot \tau_{state}(t)`
+.. math::  
+
+   \gamma^{(k)}_{i,j}(t) = 
+   \begin{cases}
+      c_{i,j}\frac{i^{(k)}}{N}\cdot\sum_{\tau \in \Psi}\tau_{factor} \cdot \tau_{state}(t) & \text{if } \Psi \neq \emptyset\\
+      c_{i,j}i^{(k)} & \text{if } \text{otherwise}
+   \end{cases}
 
 and the spatial transition rate at time :math:`t` by
 

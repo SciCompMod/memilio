@@ -8,6 +8,7 @@ and even further enable online training, i.e. generating training data on the sp
 
 Most of the important includes for BayesFlow:
 .. code-block:: python
+
     import numpy as np
 
     # ensure the backend is set
@@ -21,6 +22,7 @@ Most of the important includes for BayesFlow:
     import pandas as pd
 
 .. code-block:: python
+
     def prior():
         """Generates a random draw from the joint prior."""
 
@@ -34,6 +36,7 @@ Most of the important includes for BayesFlow:
 
 Define the simulator function with the MEmilio python model. We will use a simple ODE SIR model for this example.
 .. code-block:: python
+
     import memilio.simulation as mio
     import memilio.simulation.osir as osir
 
@@ -118,6 +121,7 @@ Define the simulator function with the MEmilio python model. We will use a simpl
     test
 
 .. code-block:: python
+
     simulator = bf.make_simulator([prior, stationary_SIR])
 
     adapter = (
@@ -132,10 +136,12 @@ Define the simulator function with the MEmilio python model. We will use a simpl
     )
 
 .. code-block:: python
+
     summary_network = bf.networks.TimeSeriesNetwork(summary_dim=4)
     inference_network = bf.networks.CouplingFlow()
 
 .. code-block:: python
+
     workflow = bf.BasicWorkflow(
         simulator=simulator,
         adapter=adapter,
@@ -144,11 +150,13 @@ Define the simulator function with the MEmilio python model. We will use a simpl
     )
 
 .. code-block:: python
+
     history = workflow.fit_online(epochs=100, batch_size=64)
 
 
 Load data, first need to download them using epidata
 .. code-block:: python
+    
     def load_observation_data(date_data_begin: datetime.date, T: int, data_path: str) -> np.ndarray:
         """Helper function to load cumulative cases and transform them to new cases."""
 

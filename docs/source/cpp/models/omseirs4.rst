@@ -1,4 +1,4 @@
-MSEIRS4 model (ODE)
+ODE-based MSEIRS4 model (ODE)
 ===================
 
 The ODE-MSEIRS4 module models a pathogen with partial and waning immunity across multiple infection episodes,

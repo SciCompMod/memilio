@@ -144,7 +144,7 @@ pythonic interface.
 Now you can use the usual data handling options and make use of the easy visualization tools that are part of Python.
 Some plotting functions specific to MEmilio and created as part of the project are combined in the :doc:`MEmilio Plot Package <m-plot>`.
 
-Additional ressources
+Additional resources
 ---------------------
 
 Further examples are provided at `examples/simulation <https://github.com/SciCompMod/memilio/blob/main/pycode/examples/simulation/>`_. 

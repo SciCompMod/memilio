@@ -13,7 +13,7 @@ Important note on the solution: The numerical integration method is an Euler-Mar
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/bdde5ca3-cd7d-4695-8704-03a712c92ff7
+.. image:: https://martinkuehn.eu/research/images/sirs.png
    :alt: SIR_model
 
 +-------------------------------+-----------------------------------------------+--------------------------------------------------------------------------------------------------+
@@ -31,7 +31,7 @@ Below is an overview of the model architecture and its compartments.
 +-------------------------------+-----------------------------------------------+--------------------------------------------------------------------------------------------------+
 
 An example can be found in the
-`examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/ode_sir.cpp>`_.
+`examples/ode_sir.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/sde_sirs.cpp>`_.
 
 
 Overview of the ``ssirs`` namespace:

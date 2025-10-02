@@ -4,13 +4,13 @@
     white-space: pre;
 }
 
-/* Newline after the last parameter (so the closing bracket is on a new line) 
+/* Newline after the last parameter (so the closing bracket is on a new line)
 dt em.sig-param:last-of-type::after {
     content: "\a";
     white-space: pre;
 }
 
-/* To have blue background of width of the block (instead of width of content) 
+/* To have blue background of width of the block (instead of width of content)
 dl.class > dt:first-of-type {
     display: block !important;
 } */
@@ -85,4 +85,11 @@ dl.class > dt:first-of-type {
 .section p {
   text-align: justify;
   line-height: 1.6;
+}
+
+.page-white-images {
+  background: #fff;
+  color: #111;
+  padding: 1rem;
+  border-radius: 6px;
 }

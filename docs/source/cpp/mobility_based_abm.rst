@@ -1,3 +1,5 @@
+.. include:: ../literature.rst
+
 Agent-based model
 =================
 
@@ -74,7 +76,8 @@ Stochastic Transitions:
 4. **Disease spread**: During interactions, agents can infect each other. The viral shed is used in combination with further personal information and contact details to feed into a stochastic process that determines if the virus is transmitted and a new agent becomes infected. The chosen time step of the model has no impact on the expected amount of transmissions per time.
 
 For details on the mathematical modeling of viral shed and disease spread, we refer to 
-- Kerkmann D, Korf S, Nguyen K, Abele D, Schengen A, et al. (2025). *Agent-based modeling for realistic reproduction of human mobility and contact behavior to evaluate test and isolation strategies in epidemic infectious disease spread*. *Computers in Biology and Medicine* 193: 110269. `DOI:10.1016/j.compbiomed.2025.110269 <https://doi.org/10.1016/j.compbiomed.2025.110269>`_
+
+- |Agent-based_modeling_for|
 
 Data extraction
 ~~~~~~~~~~~~~~~

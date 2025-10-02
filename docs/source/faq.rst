@@ -1,9 +1,11 @@
 FAQ
 ====
 
-.. _model-faq:
+.. _contact:
 
 If your question is not answered in this documentation, feel free to contact martin.kuehn@dlr.de. Alternatively, you can also ask your question in the GitHub repository under the `Discussions <https://github.com/SciCompMod/memilio/discussions>`_ section.
+
+.. _model-faq:
 
 What do you mean when talking about a *model* (implementation)?
 --------------------------------------------------------------------

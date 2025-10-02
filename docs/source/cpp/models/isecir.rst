@@ -1,3 +1,5 @@
+.. include:: ../../literature.rst
+
 IDE-based SECIR-type model
 ==========================
 
@@ -17,9 +19,7 @@ The simulation runs in discrete time steps using a non-standard numerical scheme
 Messina E, Pezzella M. (2022). *A non-standard numerical scheme for an age-of-infection epidemic model*. Journal of Computational Dynamics.
 `https://doi.org/10.3934/jcd.2021029 <https://doi.org/10.3934/jcd.2021029>`_
 
-A detailed investigation of the IDE-SECIR model and numerical experiments can be found in
-Wendler A, Plötzke L, Tritzschak H, Kühn MJ. (2026). *A nonstandard numerical scheme for a novel SECIR integro differential equation-based model with nonexponentially distributed stay times*. *Applied Mathematics and Computation* 509: 129636. `DOI:10.1016/j.amc.2025.129636 <https://doi.org/10.1016/j.amc.2025.129636>`_
-
+A detailed investigation of the IDE-SECIR model and numerical experiments can be found in |A_nonstandard_numerical_scheme|
 
 Infection States
 ----------------

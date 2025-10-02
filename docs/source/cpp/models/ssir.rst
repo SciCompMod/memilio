@@ -14,7 +14,7 @@ Important note on the solution: The numerical integration method is a Euler-Maru
 
 Below is an overview of the model architecture and its compartments.
 
-.. image:: https://github.com/SciCompMod/memilio/assets/69154294/8da7f468-4561-45ae-8034-4b54ebf8efa5
+.. image:: https://martinkuehn.eu/research/images/sir.png
     :alt: SIR_model
 
 =====================   ====================================      =====================================================================
