@@ -63,7 +63,7 @@ Before you can install MEmilio, you need to install some common development tool
 
 *   **Python:** Required for the Python packages.
 
-    *   MEmilio is tested daily with Python 3.8 and 3.11. While other versions might also work, we recommend installing the latest version tested daily from the official website `python.org <https://www.python.org/>`_.
+    *   MEmilio is tested daily with Python 3.8 and 3.11. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`_.
 
 *   **C++ Compiler and CMake:**
 
