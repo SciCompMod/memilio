@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
 #include "memilio/geography/locations.h"
 #include "memilio/geography/tree.h"
 #include "memilio/mobility/graph_simulation.h"
@@ -47,7 +48,7 @@ int main(int /*argc*/, char** /*argv*/)
     //total compartment sizes
     double num_total = 10000, num_exp = 200, num_ins = 50, num_rec = 0;
 
-    using Model = mio::smm::Model<1, InfectionState>;
+    using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
     Model model;
 
     auto home = mio::regions::Region(0);
@@ -57,11 +58,11 @@ int main(int /*argc*/, char** /*argv*/)
     model.populations[{home, InfectionState::R}] = num_rec;
     model.populations[{home, InfectionState::S}] = num_total - num_exp - num_ins - num_rec;
 
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
     adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.2, {}});
     adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 0.333, {}});
     adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.5}}});
-    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>() = adoption_rates;
+    model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
 
     auto model2                                   = model;
     model2.populations[{home, InfectionState::I}] = 9000;
@@ -69,16 +70,18 @@ int main(int /*argc*/, char** /*argv*/)
 
     auto rng = mio::RandomNumberGenerator();
 
-    mio::Graph<mio::LocationNode<mio::smm::Simulation<1, InfectionState>>, mio::MobilityEdgeDirected> graph;
-    graph.add_node(0, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
-                   mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model2, t0);
-    graph.add_node(1, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
-                   mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), model2, t0);
+    mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
+               mio::MobilityEdgeDirected<ScalarType>>
+        graph;
+    graph.add_node(0, mio::UniformDistribution<ScalarType>::get_instance()(rng, 6.0, 15.0),
+                   mio::UniformDistribution<ScalarType>::get_instance()(rng, 48.0, 54.0), model2, t0);
+    graph.add_node(1, mio::UniformDistribution<ScalarType>::get_instance()(rng, 6.0, 15.0),
+                   mio::UniformDistribution<ScalarType>::get_instance()(rng, 48.0, 54.0), model2, t0);
     size_t num_nodes = 2000;
     for (size_t i = 2; i < num_nodes; i++) {
         auto local_model = model;
-        graph.add_node(i, mio::UniformDistribution<double>::get_instance()(rng, 6.0, 15.0),
-                       mio::UniformDistribution<double>::get_instance()(rng, 48.0, 54.0), local_model, t0);
+        graph.add_node(i, mio::UniformDistribution<ScalarType>::get_instance()(rng, 6.0, 15.0),
+                       mio::UniformDistribution<ScalarType>::get_instance()(rng, 48.0, 54.0), local_model, t0);
     }
 
     std::vector<std::vector<size_t>> interesting_indices;
@@ -89,7 +92,7 @@ int main(int /*argc*/, char** /*argv*/)
 
     auto distribution = mio::DiscreteDistributionInPlace<size_t>();
 
-    std::vector<double> uniform_vector(num_nodes, 1.0);
+    std::vector<ScalarType> uniform_vector(num_nodes, 1.0);
     mio::log_info("Nodes generated");
     for (size_t i = 0; i < 3 * num_nodes; ++i) {
         auto to   = distribution(rng, {uniform_vector});

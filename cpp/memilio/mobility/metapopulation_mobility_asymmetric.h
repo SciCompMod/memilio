@@ -36,14 +36,14 @@
 namespace mio
 {
 
-template <class Sim>
-class LocationNode : public SimulationNode<Sim>
+template <typename FP, class Sim>
+class LocationNode : public SimulationNode<FP, Sim>
 {
-    using Base = SimulationNode<Sim>;
+    using Base = SimulationNode<FP, Sim>;
 
 public:
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
-    LocationNode(double latitude, double longitude, Args&&... args)
+    LocationNode(FP latitude, FP longitude, Args&&... args)
         : Base(std::forward<Args>(args)...)
         , m_location(latitude, longitude)
         , regional_neighbor_indices{}
@@ -55,17 +55,17 @@ public:
         return m_location;
     }
 
-    void set_location(double latitude, double longitude)
+    void set_location(FP latitude, FP longitude)
     {
         m_location = mio::geo::GeographicalLocation(latitude, longitude);
     }
 
-    double get_longitude() const
+    FP get_longitude() const
     {
         return m_location.get_longitude();
     }
 
-    double get_latitude() const
+    FP get_latitude() const
     {
         return m_location.get_latitude();
     }
@@ -84,8 +84,8 @@ private:
  * node functor for mobility-based simulation.
  * @see SimulationNode::advance
  */
-template <class Sim>
-void advance_model(double t, double dt, LocationNode<Sim>& node)
+template <typename FP, class Sim>
+void advance_model(FP t, FP dt, LocationNode<FP, Sim>& node)
 {
     node.advance(t, dt);
 }
@@ -93,6 +93,7 @@ void advance_model(double t, double dt, LocationNode<Sim>& node)
 /**
  * represents the mobility between two nodes.
  */
+template <typename FP>
 class MobilityEdgeDirected
 {
 public:
@@ -139,14 +140,15 @@ public:
          * @param node_to node that people changed to
          */
     template <class Sim>
-    void apply_mobility(double& t, double& num_moving, LocationNode<Sim>& node_from, LocationNode<Sim>& node_to);
+    void apply_mobility(const FP t, const FP num_moving, LocationNode<FP, Sim>& node_from,
+                        LocationNode<FP, Sim>& node_to);
 
 private:
     // MobilityParametersTimed m_parameters;
-    TimeSeries<double> m_mobility_results;
+    TimeSeries<FP> m_mobility_results;
     std::vector<std::vector<size_t>> m_saved_compartment_indices;
 
-    void add_mobility_result_time_point(const double t, std::vector<size_t>& travellers)
+    void add_mobility_result_time_point(const FP t, std::vector<size_t>& travellers)
     {
         const size_t save_indices_size = this->m_saved_compartment_indices.size();
         if (save_indices_size > 0) {
@@ -157,13 +159,13 @@ private:
             std::transform(this->m_saved_compartment_indices.begin(), this->m_saved_compartment_indices.end(),
                            condensed_values.data(), [&travellers](const auto& indices) {
                                return std::accumulate(indices.begin(), indices.end(), 0.0,
-                                                      [&travellers](double sum, auto i) {
+                                                      [&travellers](FP sum, auto i) {
                                                           return sum + travellers[i];
                                                       });
                            });
 
             // the last value is the sum of commuters
-            condensed_values[save_indices_size] = std::accumulate(travellers.begin(), travellers.end(), 0);
+            condensed_values[save_indices_size] = std::accumulate(travellers.begin(), travellers.end(), 0.0);
 
             // Move the condensed values to the m_mobility_results time series
             m_mobility_results.add_time_point(t, std::move(condensed_values));
@@ -171,9 +173,10 @@ private:
     }
 };
 
+template <typename FP>
 template <class Sim>
-void MobilityEdgeDirected::apply_mobility(double& t, double& num_moving, LocationNode<Sim>& node_from,
-                                          LocationNode<Sim>& node_to)
+void MobilityEdgeDirected<FP>::apply_mobility(const FP t, const FP num_moving, LocationNode<FP, Sim>& node_from,
+                                              LocationNode<FP, Sim>& node_to)
 {
     // auto next_event = m_parameters.process_next_event();
     // auto num_moving = next_event.number;
@@ -190,9 +193,9 @@ void MobilityEdgeDirected::apply_mobility(double& t, double& num_moving, Locatio
     add_mobility_result_time_point(t, travellers);
 }
 
-template <class Sim>
-void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edge, LocationNode<Sim>& node_from,
-                          LocationNode<Sim>& node_to)
+template <typename FP, class Sim>
+void apply_timed_mobility(const FP t, const FP num_moving, MobilityEdgeDirected<FP>& edge,
+                          LocationNode<FP, Sim>& node_from, LocationNode<FP, Sim>& node_to)
 {
     edge.apply_mobility(t, num_moving, node_from, node_to);
 }
@@ -208,25 +211,25 @@ void apply_timed_mobility(double t, double num_moving, MobilityEdgeDirected& edg
      * @{
      */
 template <typename FP, class Sim>
-AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>>
-make_mobility_sim(FP t0, FP dt, const Graph<LocationNode<Sim>, MobilityEdgeDirected>& graph)
+AsymmetricGraphSimulation<Graph<LocationNode<FP, Sim>, MobilityEdgeDirected<FP>>>
+make_mobility_sim(FP t0, FP dt, const Graph<LocationNode<FP, Sim>, MobilityEdgeDirected<FP>>& graph)
 {
-    using GraphSim = AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>, FP, FP,
-                                               void (*)(FP, FP, mio::MobilityEdgeDirected&, mio::LocationNode<Sim>&,
-                                                        mio::LocationNode<Sim>&),
-                                               void (*)(FP, FP, mio::LocationNode<Sim>&)>;
-    return GraphSim(t0, dt, graph, &advance_model<Sim>, &apply_timed_mobility<Sim>);
+    using GraphSim = AsymmetricGraphSimulation<Graph<LocationNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
+                                               void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&,
+                                                        mio::LocationNode<FP, Sim>&, mio::LocationNode<FP, Sim>&),
+                                               void (*)(FP, FP, mio::LocationNode<FP, Sim>&)>;
+    return GraphSim(t0, dt, graph, &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
 }
 
 template <typename FP, class Sim>
-AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>>
-make_mobility_sim(FP t0, FP dt, Graph<LocationNode<Sim>, MobilityEdgeDirected>&& graph)
+AsymmetricGraphSimulation<Graph<LocationNode<FP, Sim>, MobilityEdgeDirected<FP>>>
+make_mobility_sim(FP t0, FP dt, Graph<LocationNode<FP, Sim>, MobilityEdgeDirected<FP>>&& graph)
 {
-    using GraphSim = AsymmetricGraphSimulation<Graph<LocationNode<Sim>, MobilityEdgeDirected>, FP, FP,
-                                               void (*)(FP, FP, mio::MobilityEdgeDirected&, mio::LocationNode<Sim>&,
-                                                        mio::LocationNode<Sim>&),
-                                               void (*)(FP, FP, mio::LocationNode<Sim>&)>;
-    return GraphSim(t0, dt, std::move(graph), &advance_model<Sim>, &apply_timed_mobility<Sim>);
+    using GraphSim = AsymmetricGraphSimulation<Graph<LocationNode<FP, Sim>, MobilityEdgeDirected<FP>>, FP, FP,
+                                               void (*)(FP, FP, mio::MobilityEdgeDirected<FP>&,
+                                                        mio::LocationNode<FP, Sim>&, mio::LocationNode<FP, Sim>&),
+                                               void (*)(FP, FP, mio::LocationNode<FP, Sim>&)>;
+    return GraphSim(t0, dt, std::move(graph), &advance_model<FP, Sim>, &apply_timed_mobility<FP, Sim>);
 }
 
 /** @} */
