@@ -20,12 +20,14 @@ The model contains a list of **InfectionState**\s that define particular feature
     `...`
 
 To make use of the GLCT, we additionally need to define the numbers of subcompartments for each **InfectionState**.
+This is done by creating an **LctInfectionState** object for each group. These objects are then passed as template 
+parameter to the model. 
 
-.. code-block:: RST
+.. code-block:: cpp
 
-    `Number of subcompartments of State1`
-    `Number of subcompartments of State2`
-    `...`
+    using LctStateGroup1 = mio::LctInfectionState<ScalarType, `List of InfectionStates`, `Number of subcompartments of State1`, 
+                                                                                   `Number of subcompartments of State2`, 
+                                                                                   `...`>;
 
 The model is implemented as **CompartmentalModel**.
 
