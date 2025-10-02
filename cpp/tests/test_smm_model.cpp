@@ -124,9 +124,9 @@ TEST(TestSMM, evaluateinterregionalAdoptionRate)
     model.populations[{mio::regions::Region(1), Infections::I, Age(1)}] = 16;
     model.populations[{mio::regions::Region(1), Infections::R, Age(1)}] = 0;
 
-    EXPECT_FLOAT_EQ(model.evaluate(adoption_rates[0], model.populations.get_compartments()),
-                    0.1 * 50. * (0.1 * 20. * 1. / 120. + 0.2 * 16 * 1. / 96.));
-    EXPECT_FLOAT_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 4.);
+    EXPECT_DOUBLE_EQ(model.evaluate(adoption_rates[0], model.populations.get_compartments()),
+                     0.1 * 50. * (0.1 * 20. * 1. / 120. + 0.2 * 16 * 1. / 96.));
+    EXPECT_DOUBLE_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 4.);
 }
 
 TEST(TestSMM, evaluateTransitionRate)
