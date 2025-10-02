@@ -551,6 +551,9 @@ def combine_results(dict_list):
         combined = concat_dicts(combined, d) if combined else d
     return combined
 
+def skip_2weeks(d:dict) -> dict:
+    return {k: v[:, 14:, :] if is_region_key(k) else v for k, v in d.items()}
+
 def get_workflow():
 
     simulator = bf.make_simulator(
@@ -598,8 +601,8 @@ def get_workflow():
 
 
 def run_training(name, num_training_files=20):
-    train_template = "trainings_data{i}_"+name+".pickle"
-    val_path = f"validation_data_{name}.pickle"
+    train_template = "trainings_data{i}_counties.pickle"
+    val_path = f"validation_data_counties.pickle"
 
     aug = bf.augmentations.NNPE(
         spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
@@ -611,6 +614,7 @@ def run_training(name, num_training_files=20):
     for p in train_files:
         d = load_pickle(p)
         d = apply_aug(d, aug=aug)  # only on region keys
+        d = skip_2weeks(d) 
         if trainings_data is None:
             trainings_data = d
         else:
@@ -619,6 +623,7 @@ def run_training(name, num_training_files=20):
 
     # validation data
     validation_data = apply_aug(load_pickle(val_path), aug=aug)
+    validation_data = skip_2weeks(validation_data)
     aggregate_states(validation_data)
 
     # check data
@@ -644,7 +649,7 @@ def run_training(name, num_training_files=20):
 
 
 def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmentation=True):
-    val_path = f"validation_data_{name}.pickle"
+    val_path = f"validation_data_counties.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
     with_aug = "_with_aug" if apply_augmentation else ""
 
@@ -656,7 +661,8 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         # validation data
         validation_data = load_pickle(val_path)
         validation_data = apply_aug(validation_data, aug=aug)
-        aggregate_states(validation_data)
+        validation_data_skip2w = skip_2weeks(validation_data)
+        aggregate_states(validation_data_skip2w)
         divi_dict = validation_data
         divi_region_keys = region_keys_sorted(divi_dict)
 
@@ -665,7 +671,8 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         )[0]  # only one dataset
     else:
         divi_dict = load_divi_data()
-        aggregate_states(divi_dict)
+        validation_data_skip2w = skip_2weeks(divi_dict)
+        aggregate_states(validation_data_skip2w)
         divi_region_keys = region_keys_sorted(divi_dict)
         divi_data = np.concatenate(
             [divi_dict[key] for key in divi_region_keys], axis=-1
@@ -680,7 +687,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         simulations = load_pickle(f'sims_{name}{synthetic}{with_aug}.pickle')
         print("loaded simulations from file")
     else:
-        samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
+        samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
         results = []
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_germany_nuts3_simulation(
@@ -735,7 +742,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
 
 
 if __name__ == "__main__":
-    name = "counties"
+    name = "skip2w"
 
     # create_train_data(filename=f'trainings_data11_{name}.pickle', number_samples=1000)
     # run_training(name=name, num_training_files=20)
