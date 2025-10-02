@@ -354,7 +354,8 @@ The documentation uses `Sphinx <https://www.sphinx-doc.org/en/master/>`_ and is 
 slightly different syntax than Markdown. A documentation can be found `here <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_.
 This online documentation is generated using `ReadTheDocs <https://readthedocs.org/>`_ and is automatically updated when 
 a pull request is merged into the main branch. Thus, we require you to build the documentation locally to test changes.
-
+Literature is centrally collected in `literature.rst` and `substitutions <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#substitutions>`_ 
+are used to print it wherever needed.
 
 Please make sure to have a working python environment with a python version that is compatible with 
 our :doc:`memilio-python packages <python/python_packages>` as well as 
