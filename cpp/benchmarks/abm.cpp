@@ -54,7 +54,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
          {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
           mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
 
-        const auto num_locs = std::max(size_t(1), num_persons / 2'000);
+        const auto num_locs = std::max(size_t(1), num_persons / 100);
         std::vector<mio::abm::LocationId> locs(num_locs);
         std::generate(locs.begin(), locs.end(), [&] {
             return model.add_location(loc_type);
