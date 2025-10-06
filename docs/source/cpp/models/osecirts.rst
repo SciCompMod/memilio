@@ -66,7 +66,7 @@ The model extends the ODE-SECIRVVS model by adding temporary immunity states and
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRTS model is implemented as a **FlowModel**, which computes the flows between compartments explicitly. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
+The ODE-SECIRTS model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
 
 The model has the following state trnsitions:
 

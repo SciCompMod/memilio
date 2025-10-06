@@ -57,7 +57,7 @@ All compartments with the same base state (e.g., ExposedNaive, ExposedPartialImm
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRVVS model is implemented as a **FlowModel**, which computes the flows between compartments explicitly. The model follows the same flow pattern as the basic ODE-SECIR model but with three parallel sets of compartments representing different immunity levels.
+The ODE-SECIRVVS model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments. The model follows the same flow pattern as the basic ODE-SECIR model but with three parallel sets of compartments representing different immunity levels.
 
 The key characteristic of this model is that recovered individuals always end up in the improved immunity level, regardless of their starting immunity level. This represents the immunity gained after infection.
 

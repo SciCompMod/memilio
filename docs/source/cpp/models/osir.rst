@@ -27,8 +27,8 @@ The model contains the following list of **InfectionState**\s:
 Infection State transitions
 ---------------------------
 
-The ODE-SIR model is implemented as a **CompartmentalModel**. In each time step, the model computes the aggregated
-compartment values.
+The ODE-SIR model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+values in time.
 
 
 Sociodemographic Stratification

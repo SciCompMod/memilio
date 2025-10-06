@@ -39,7 +39,8 @@ All infectious classes (I1..I4) contribute equally to transmission in the basic 
 Infection State Transitions
 ---------------------------
 
-The model is implemented as a standard CompartmentalModel. The following transitions occur:
+The model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+values in time. The following transitions occur:
 
 - Births enter M and some enter S1
 - M → S1 (loss of maternal immunity)
