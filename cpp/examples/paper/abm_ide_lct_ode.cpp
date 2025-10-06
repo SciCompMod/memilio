@@ -69,21 +69,6 @@ const ScalarType severePerInfectedSymptoms[]             = {0.0075, 0.0075, 0.01
 const ScalarType criticalPerSevere[]                     = {0.075, 0.075, 0.075, 0.15, 0.3, 0.4};
 const ScalarType deathsPerCritical[]                     = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
 
-// Define mean stay times per age group.
-const ScalarType timeExposed[]            = {4.5, 4.5, 4.5, 4.5, 4.5, 4.5};
-const ScalarType timeInfectedNoSymptoms[] = {2.825, 2.825, 2.48, 2.48, 2.48, 2.48};
-const ScalarType timeInfectedSymptoms[]   = {7.9895, 7.9895, 7.9734, 7.9139, 7.9139, 7.685};
-const ScalarType timeInfectedSevere[]     = {16.855, 16.855, 16.855, 15.61, 13.12, 11.46};
-const ScalarType timeInfectedCritical[]   = {17.73, 17.73, 17.064, 17.064, 15.14, 13.66};
-
-// Define number of subcompartments for each compartment per age group.
-// These are used as a template argument and have to be constexpr.
-constexpr size_t n_subcomps_E[]    = {9, 9, 9, 9, 9, 9};
-constexpr size_t n_subcomps_INS[]  = {5, 5, 4, 4, 4, 4};
-constexpr size_t n_subcomps_ISy[]  = {16, 16, 16, 15, 15, 13};
-constexpr size_t n_subcomps_ISev[] = {8, 8, 8, 7, 6, 5};
-constexpr size_t n_subcomps_ICri[] = {8, 8, 8, 8, 7, 6};
-
 // Define lognormal parameters. For each transition, we need shape and scale.
 // These are given in this order below. The transition distributions are the same for all age groups.
 const ScalarType lognorm_EtINS[]     = {0.32459285, 4.26907484};
@@ -95,6 +80,23 @@ const ScalarType lognorm_ISevtICri[] = {1.01076765, 0.9};
 const ScalarType lognorm_ISevtR[]    = {0.33816427, 17.09411753};
 const ScalarType lognorm_ICritD[]    = {0.42819924, 9.76267505};
 const ScalarType lognorm_ICritR[]    = {0.33816427, 17.09411753};
+
+// Define mean stay times per age group. Note that these are different per age group as the transition probabilities
+// differ between age groups.
+const ScalarType timeExposed[]            = {4.5, 4.5, 4.5, 4.5, 4.5, 4.5};
+const ScalarType timeInfectedNoSymptoms[] = {2.825, 2.825, 2.48, 2.48, 2.48, 2.48};
+const ScalarType timeInfectedSymptoms[]   = {7.9895, 7.9895, 7.9734, 7.9139, 7.9139, 7.685};
+const ScalarType timeInfectedSevere[]     = {16.855, 16.855, 16.855, 15.61, 13.12, 11.46};
+const ScalarType timeInfectedCritical[]   = {17.73, 17.73, 17.064, 17.064, 15.14, 13.66};
+
+// Define number of subcompartments for each compartment per age group. Note that these are different per age group as
+// the transition probabilities differ between age groups.
+// These values are used as a template argument and thus have to be constexpr.
+constexpr size_t n_subcomps_E[]    = {9, 9, 9, 9, 9, 9};
+constexpr size_t n_subcomps_INS[]  = {5, 5, 4, 4, 4, 4};
+constexpr size_t n_subcomps_ISy[]  = {16, 16, 16, 15, 15, 13};
+constexpr size_t n_subcomps_ISev[] = {8, 8, 8, 7, 6, 5};
+constexpr size_t n_subcomps_ICri[] = {8, 8, 8, 8, 7, 6};
 
 // Define epidemiological parameters.
 const ScalarType transmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
@@ -194,7 +196,8 @@ IOResult<UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string cont
 * @returns Any io errors that happen or the simulation results for the compartments.
 */
 IOResult<std::pair<Vector, std::vector<std::vector<std::vector<ScalarType>>>>>
-simulate_ide(Date start_date, std::string contact_data_dir, std::string reported_data_dir, std::string save_dir = "")
+simulate_ide(Date start_date, std::string contact_data_dir, std::string reported_data_dir,
+             bool exponential_scenario = false, std::string save_dir = "")
 {
     using namespace params;
     using InfTransition = isecir::InfectionTransition;
@@ -218,49 +221,106 @@ simulate_ide(Date start_date, std::string contact_data_dir, std::string reported
                             total_population_init, deaths_init, num_age_groups, total_confirmed_cases_init);
 
     // Set working parameters.
-    // Set TransitionDistributions.
+    // If exponential_scenario is true, we set the transition distributions as exponentially distributed.
+    // Else, we use lognormal distributions.
+
+    // Define vector vec_transition_dist_group where transition distributions will be stored.
     ConstantFunction initialfunc(0);
     StateAgeFunctionWrapper delaydistributioninit(initialfunc);
-    std::vector<StateAgeFunctionWrapper> vec_delaydistrib((int)InfTransition::Count, delaydistributioninit);
-    // ExposedToInfectedNoSymptoms
-    LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(lognorm_EtINS[0], 0, lognorm_EtINS[1]);
-    vec_delaydistrib[(int)InfTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
-        survivalExposedToInfectedNoSymptoms);
-    // InfectedNoSymptomsToInfectedSymptoms
-    LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(lognorm_INStISy[0], 0, lognorm_INStISy[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms].set_state_age_function(
-        survivalInfectedNoSymptomsToInfectedSymptoms);
-    // InfectedNoSymptomsToRecovered
-    LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(lognorm_INStR[0], 0, lognorm_INStR[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
-        survivalInfectedNoSymptomsToRecovered);
-    // InfectedSymptomsToInfectedSevere
-    LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[0], 0, lognorm_ISytR[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
-        survivalInfectedSymptomsToInfectedSevere);
-    // InfectedSymptomsToRecovered
-    LognormSurvivalFunction survivalInfectedSymptomsToRecovered(lognorm_ISytR[0], 0, lognorm_ISytR[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedSymptomsToRecovered].set_state_age_function(
-        survivalInfectedSymptomsToRecovered);
-    // InfectedSevereToInfectedCritical
-    LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(lognorm_ISevtICri[0], 0, lognorm_ISevtICri[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedSevereToInfectedCritical].set_state_age_function(
-        survivalInfectedSevereToInfectedCritical);
-    // InfectedSevereToRecovered
-    LognormSurvivalFunction survivalInfectedSevereToRecovered(lognorm_ISevtR[0], 0, lognorm_ISevtR[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
-        survivalInfectedSevereToRecovered);
-    // InfectedCriticalToDead
-    LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[0], 0, lognorm_ICritR[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(survivalInfectedCriticalToDead);
-    // InfectedCriticalToRecovered
-    LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognorm_ICritR[0], 0, lognorm_ICritR[1]);
-    vec_delaydistrib[(int)InfTransition::InfectedCriticalToRecovered].set_state_age_function(
-        survivalInfectedCriticalToRecovered);
+    std::vector<StateAgeFunctionWrapper> vec_transition_dist_group((int)InfTransition::Count, delaydistributioninit);
 
-    // Set distributions for all age groups.
-    for (AgeGroup group = 0; group < (AgeGroup)num_age_groups; group++) {
-        model_ide.parameters.get<isecir::TransitionDistributions>()[group] = vec_delaydistrib;
+    if (exponential_scenario) {
+        std::cout << "in exp scenario \n";
+        // Set TransitionDistributions exponentially distributed.
+
+        for (size_t group = 0; group < num_age_groups; group++) {
+            // ExposedToInfectedNoSymptoms
+            ExponentialSurvivalFunction survivalExposedToInfectedNoSymptoms(1. / timeExposed[group]);
+            vec_transition_dist_group[(int)InfTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
+                survivalExposedToInfectedNoSymptoms);
+            // InfectedNoSymptomsToInfectedSymptoms
+            ExponentialSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(1. /
+                                                                                     timeInfectedNoSymptoms[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms].set_state_age_function(
+                survivalInfectedNoSymptomsToInfectedSymptoms);
+            // InfectedNoSymptomsToRecovered
+            ExponentialSurvivalFunction survivalInfectedNoSymptomsToRecovered(1. / timeInfectedNoSymptoms[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
+                survivalInfectedNoSymptomsToRecovered);
+            // InfectedSymptomsToInfectedSevere
+            ExponentialSurvivalFunction survivalInfectedSymptomsToInfectedSevere(1. / timeInfectedSymptoms[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
+                survivalInfectedSymptomsToInfectedSevere);
+            // InfectedSymptomsToRecovered
+            ExponentialSurvivalFunction survivalInfectedSymptomsToRecovered(1. / timeInfectedSymptoms[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToRecovered].set_state_age_function(
+                survivalInfectedSymptomsToRecovered);
+            // InfectedSevereToInfectedCritical
+            ExponentialSurvivalFunction survivalInfectedSevereToInfectedCritical(1. / timeInfectedSevere[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedSevereToInfectedCritical].set_state_age_function(
+                survivalInfectedSevereToInfectedCritical);
+            // InfectedSevereToRecovered
+            ExponentialSurvivalFunction survivalInfectedSevereToRecovered(1. / timeInfectedSevere[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
+                survivalInfectedSevereToRecovered);
+            // InfectedCriticalToDead
+            ExponentialSurvivalFunction survivalInfectedCriticalToDead(1. / timeInfectedCritical[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(
+                survivalInfectedCriticalToDead);
+            // InfectedCriticalToRecovered
+            ExponentialSurvivalFunction survivalInfectedCriticalToRecovered(1. / timeInfectedCritical[group]);
+            vec_transition_dist_group[(int)InfTransition::InfectedCriticalToRecovered].set_state_age_function(
+                survivalInfectedCriticalToRecovered);
+
+            // Set distributions per age group.
+            model_ide.parameters.get<isecir::TransitionDistributions>()[(AgeGroup)group] = vec_transition_dist_group;
+        }
+    }
+
+    else {
+        // Set TransitionDistributions lognormally distributed.
+
+        // ExposedToInfectedNoSymptoms
+        LognormSurvivalFunction survivalExposedToInfectedNoSymptoms(lognorm_EtINS[0], 0, lognorm_EtINS[1]);
+        vec_transition_dist_group[(int)InfTransition::ExposedToInfectedNoSymptoms].set_state_age_function(
+            survivalExposedToInfectedNoSymptoms);
+        // InfectedNoSymptomsToInfectedSymptoms
+        LognormSurvivalFunction survivalInfectedNoSymptomsToInfectedSymptoms(lognorm_INStISy[0], 0, lognorm_INStISy[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToInfectedSymptoms].set_state_age_function(
+            survivalInfectedNoSymptomsToInfectedSymptoms);
+        // InfectedNoSymptomsToRecovered
+        LognormSurvivalFunction survivalInfectedNoSymptomsToRecovered(lognorm_INStR[0], 0, lognorm_INStR[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedNoSymptomsToRecovered].set_state_age_function(
+            survivalInfectedNoSymptomsToRecovered);
+        // InfectedSymptomsToInfectedSevere
+        LognormSurvivalFunction survivalInfectedSymptomsToInfectedSevere(lognorm_ISytISev[0], 0, lognorm_ISytR[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToInfectedSevere].set_state_age_function(
+            survivalInfectedSymptomsToInfectedSevere);
+        // InfectedSymptomsToRecovered
+        LognormSurvivalFunction survivalInfectedSymptomsToRecovered(lognorm_ISytR[0], 0, lognorm_ISytR[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedSymptomsToRecovered].set_state_age_function(
+            survivalInfectedSymptomsToRecovered);
+        // InfectedSevereToInfectedCritical
+        LognormSurvivalFunction survivalInfectedSevereToInfectedCritical(lognorm_ISevtICri[0], 0, lognorm_ISevtICri[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedSevereToInfectedCritical].set_state_age_function(
+            survivalInfectedSevereToInfectedCritical);
+        // InfectedSevereToRecovered
+        LognormSurvivalFunction survivalInfectedSevereToRecovered(lognorm_ISevtR[0], 0, lognorm_ISevtR[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedSevereToRecovered].set_state_age_function(
+            survivalInfectedSevereToRecovered);
+        // InfectedCriticalToDead
+        LognormSurvivalFunction survivalInfectedCriticalToDead(lognorm_ICritD[0], 0, lognorm_ICritR[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedCriticalToDead].set_state_age_function(
+            survivalInfectedCriticalToDead);
+        // InfectedCriticalToRecovered
+        LognormSurvivalFunction survivalInfectedCriticalToRecovered(lognorm_ICritR[0], 0, lognorm_ICritR[1]);
+        vec_transition_dist_group[(int)InfTransition::InfectedCriticalToRecovered].set_state_age_function(
+            survivalInfectedCriticalToRecovered);
+
+        // Set distributions for all age groups since distributions are the same for all groups.
+        for (AgeGroup group = 0; group < (AgeGroup)num_age_groups; group++) {
+            model_ide.parameters.get<isecir::TransitionDistributions>()[group] = vec_transition_dist_group;
+        }
     }
 
     // Set other parameters.
@@ -318,19 +378,13 @@ simulate_ide(Date start_date, std::string contact_data_dir, std::string reported
     sim.advance(tmax);
 
     if (!save_dir.empty()) {
-        std::string tmax_string = std::to_string(tmax);
-        std::string dt_string   = std::to_string(dt);
+        std::string filename_ide = save_dir + "ide" + ".h5";
 
-        std::string filename_ide = save_dir + "changepoint_ide_" + "_" + tmax_string.substr(0, tmax_string.find(".")) +
-                                   "_" + dt_string.substr(0, dt_string.find(".") + 5);
+        // Aggregate age-resolved result to non-age-resolved result.
+        TimeSeries<ScalarType> nonageresolved_result = sum_age_groups(sim.get_result());
 
-        std::string filename_ide_compartments = filename_ide + "_compartments.h5";
-        IOResult<void> save_result_status_c =
-            save_result({sim.get_result()}, {0}, num_age_groups, filename_ide_compartments);
-
-        if (!save_result_status_c) {
-            return failure(StatusCode::UnknownError, "Error while saving results.");
-        }
+        // Save non-age-resolved result.
+        IOResult<void> save_result_status = save_result({nonageresolved_result}, {0}, 1, filename_ide);
     }
 
     // Return init_compartments (i.e. populations at t0) and persons_per_state_age for initialization of other models.
@@ -344,6 +398,7 @@ simulate_ide(Date start_date, std::string contact_data_dir, std::string reported
     return success(results);
 }
 
+template <bool exponential_scenario>
 IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_dir, std::string save_dir = "")
 {
     using namespace params;
@@ -364,32 +419,39 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
     using LctState80    = LctInfectionState<InfState, 1, n_subcomps_E[5], n_subcomps_INS[5], n_subcomps_ISy[5],
                                             n_subcomps_ISev[5], n_subcomps_ICri[5], 1, 1>;
 
-    using Model = lsecir::Model<LctState0_4, LctState5_14, LctState15_34, LctState35_59, LctState60_79, LctState80>;
+    // Define LctState with one subcompartment per compartment for the exponential scenario.
+    using LctStateExponential = LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+
+    using Model = std::conditional<
+        exponential_scenario,
+        lsecir::Model<LctStateExponential, LctStateExponential, LctStateExponential, LctStateExponential,
+                      LctStateExponential, LctStateExponential>,
+        lsecir::Model<LctState0_4, LctState5_14, LctState15_34, LctState35_59, LctState60_79, LctState80>>::type;
 
     Model model;
 
     // Define parameters.
     for (size_t group = 0; group < num_age_groups; group++) {
-        model.parameters.get<lsecir::TimeExposed>()[group]            = timeExposed[group];
-        model.parameters.get<lsecir::TimeInfectedNoSymptoms>()[group] = timeInfectedNoSymptoms[group];
-        model.parameters.get<lsecir::TimeInfectedSymptoms>()[group]   = timeInfectedSymptoms[group];
-        model.parameters.get<lsecir::TimeInfectedSevere>()[group]     = timeInfectedSevere[group];
-        model.parameters.get<lsecir::TimeInfectedCritical>()[group]   = timeInfectedCritical[group];
-        model.parameters.get<lsecir::TransmissionProbabilityOnContact>()[group] =
+        model.parameters.template get<lsecir::TimeExposed>()[group]            = timeExposed[group];
+        model.parameters.template get<lsecir::TimeInfectedNoSymptoms>()[group] = timeInfectedNoSymptoms[group];
+        model.parameters.template get<lsecir::TimeInfectedSymptoms>()[group]   = timeInfectedSymptoms[group];
+        model.parameters.template get<lsecir::TimeInfectedSevere>()[group]     = timeInfectedSevere[group];
+        model.parameters.template get<lsecir::TimeInfectedCritical>()[group]   = timeInfectedCritical[group];
+        model.parameters.template get<lsecir::TransmissionProbabilityOnContact>()[group] =
             transmissionProbabilityOnContact[group];
 
-        model.parameters.get<lsecir::RelativeTransmissionNoSymptoms>()[group] = relativeTransmissionNoSymptoms;
-        model.parameters.get<lsecir::RiskOfInfectionFromSymptomatic>()[group] = riskOfInfectionFromSymptomatic;
+        model.parameters.template get<lsecir::RelativeTransmissionNoSymptoms>()[group] = relativeTransmissionNoSymptoms;
+        model.parameters.template get<lsecir::RiskOfInfectionFromSymptomatic>()[group] = riskOfInfectionFromSymptomatic;
 
-        model.parameters.get<lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
+        model.parameters.template get<lsecir::RecoveredPerInfectedNoSymptoms>()[group] =
             1 - infectedSymptomsPerInfectedNoSymptoms[group];
-        model.parameters.get<lsecir::SeverePerInfectedSymptoms>()[group] = severePerInfectedSymptoms[group];
-        model.parameters.get<lsecir::CriticalPerSevere>()[group]         = criticalPerSevere[group];
-        model.parameters.get<lsecir::DeathsPerCritical>()[group]         = deathsPerCritical[group];
+        model.parameters.template get<lsecir::SeverePerInfectedSymptoms>()[group] = severePerInfectedSymptoms[group];
+        model.parameters.template get<lsecir::CriticalPerSevere>()[group]         = criticalPerSevere[group];
+        model.parameters.template get<lsecir::DeathsPerCritical>()[group]         = deathsPerCritical[group];
     }
     BOOST_OUTCOME_TRY(auto&& contact_matrix, get_contact_matrix(contact_data_dir, true));
-    model.parameters.get<lsecir::ContactPatterns>() = contact_matrix;
-    model.parameters.get<lsecir::Seasonality>()     = seasonality;
+    model.parameters.template get<lsecir::ContactPatterns>() = contact_matrix;
+    model.parameters.template get<lsecir::Seasonality>()     = seasonality;
 
     // Use init_compartments as a basis to define appropriate initial values.
     // Compartment values are distributed uniformly to the subcompartments.
@@ -398,80 +460,95 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
         size_t total_num_subcomps_previous_groups = 0;
         std::vector<size_t> num_subcompartments;
 
-        switch (group) {
-        case 0:
-            total_num_subcomps_this_group = LctState0_4::Count;
-            num_subcompartments           = {1,
-                                             LctState0_4::get_num_subcompartments<InfState::Exposed>(),
-                                             LctState0_4::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                             LctState0_4::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                             LctState0_4::get_num_subcompartments<InfState::InfectedSevere>(),
-                                             LctState0_4::get_num_subcompartments<InfState::InfectedCritical>(),
-                                             1,
-                                             1};
-            break;
-        case 1:
-            total_num_subcomps_this_group      = LctState5_14::Count;
-            total_num_subcomps_previous_groups = LctState0_4::Count;
+        if (exponential_scenario) {
+            total_num_subcomps_this_group      = LctStateExponential::Count;
+            total_num_subcomps_previous_groups = group * (size_t)LctStateExponential::Count;
             num_subcompartments                = {1,
-                                                  LctState5_14::get_num_subcompartments<InfState::Exposed>(),
-                                                  LctState5_14::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                                  LctState5_14::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                                  LctState5_14::get_num_subcompartments<InfState::InfectedSevere>(),
-                                                  LctState5_14::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::Exposed>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                  LctStateExponential::get_num_subcompartments<InfState::InfectedCritical>(),
                                                   1,
                                                   1};
-            break;
-        case 2:
-            total_num_subcomps_this_group      = LctState15_34::Count;
-            total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count;
-            num_subcompartments                = {1,
-                                                  LctState15_34::get_num_subcompartments<InfState::Exposed>(),
-                                                  LctState15_34::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                                  LctState15_34::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                                  LctState15_34::get_num_subcompartments<InfState::InfectedSevere>(),
-                                                  LctState15_34::get_num_subcompartments<InfState::InfectedCritical>(),
-                                                  1,
-                                                  1};
-            break;
-        case 3:
-            total_num_subcomps_this_group      = LctState35_59::Count;
-            total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count;
-            num_subcompartments                = {1,
-                                                  LctState35_59::get_num_subcompartments<InfState::Exposed>(),
-                                                  LctState35_59::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                                  LctState35_59::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                                  LctState35_59::get_num_subcompartments<InfState::InfectedSevere>(),
-                                                  LctState35_59::get_num_subcompartments<InfState::InfectedCritical>(),
-                                                  1,
-                                                  1};
-            break;
-        case 4:
-            total_num_subcomps_this_group = LctState60_79::Count;
-            total_num_subcomps_previous_groups =
-                LctState0_4::Count + LctState5_14::Count + LctState15_34::Count + LctState35_59::Count;
-            num_subcompartments = {1,
-                                   LctState60_79::get_num_subcompartments<InfState::Exposed>(),
-                                   LctState60_79::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                   LctState60_79::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                   LctState60_79::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState60_79::get_num_subcompartments<InfState::InfectedCritical>(),
-                                   1,
-                                   1};
-            break;
-        case 5:
-            total_num_subcomps_this_group      = LctState80::Count;
-            total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count +
-                                                 LctState35_59::Count + LctState60_79::Count;
-            num_subcompartments = {1,
-                                   LctState80::get_num_subcompartments<InfState::Exposed>(),
-                                   LctState80::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
-                                   LctState80::get_num_subcompartments<InfState::InfectedSymptoms>(),
-                                   LctState80::get_num_subcompartments<InfState::InfectedSevere>(),
-                                   LctState80::get_num_subcompartments<InfState::InfectedCritical>(),
-                                   1,
-                                   1};
-            break;
+        }
+
+        else {
+            switch (group) {
+            case 0:
+                total_num_subcomps_this_group = LctState0_4::Count;
+                num_subcompartments           = {1,
+                                                 LctState0_4::get_num_subcompartments<InfState::Exposed>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                 LctState0_4::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                 1,
+                                                 1};
+                break;
+            case 1:
+                total_num_subcomps_this_group      = LctState5_14::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count;
+                num_subcompartments                = {1,
+                                                      LctState5_14::get_num_subcompartments<InfState::Exposed>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                      LctState5_14::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                      1,
+                                                      1};
+                break;
+            case 2:
+                total_num_subcomps_this_group      = LctState15_34::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count;
+                num_subcompartments                = {1,
+                                                      LctState15_34::get_num_subcompartments<InfState::Exposed>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                      LctState15_34::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                      1,
+                                                      1};
+                break;
+            case 3:
+                total_num_subcomps_this_group      = LctState35_59::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count;
+                num_subcompartments                = {1,
+                                                      LctState35_59::get_num_subcompartments<InfState::Exposed>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedSevere>(),
+                                                      LctState35_59::get_num_subcompartments<InfState::InfectedCritical>(),
+                                                      1,
+                                                      1};
+                break;
+            case 4:
+                total_num_subcomps_this_group = LctState60_79::Count;
+                total_num_subcomps_previous_groups =
+                    LctState0_4::Count + LctState5_14::Count + LctState15_34::Count + LctState35_59::Count;
+                num_subcompartments = {1,
+                                       LctState60_79::get_num_subcompartments<InfState::Exposed>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedSevere>(),
+                                       LctState60_79::get_num_subcompartments<InfState::InfectedCritical>(),
+                                       1,
+                                       1};
+                break;
+            case 5:
+                total_num_subcomps_this_group      = LctState80::Count;
+                total_num_subcomps_previous_groups = LctState0_4::Count + LctState5_14::Count + LctState15_34::Count +
+                                                     LctState35_59::Count + LctState60_79::Count;
+                num_subcompartments = {1,
+                                       LctState80::get_num_subcompartments<InfState::Exposed>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedNoSymptoms>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedSymptoms>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedSevere>(),
+                                       LctState80::get_num_subcompartments<InfState::InfectedCritical>(),
+                                       1,
+                                       1};
+                break;
+            }
         }
 
         model.populations[total_num_subcomps_previous_groups + 0] =
@@ -481,8 +558,13 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
         model.populations[total_num_subcomps_previous_groups + total_num_subcomps_this_group - 1] =
             init_compartments[group * (size_t)isecir::InfectionState::Count + 7]; // Dead
         for (size_t i = (size_t)InfState::Exposed; i < (size_t)InfState::Count - 2; i++) {
+
+            // Get the total number of subcomps before the considered InfectionState in this group.
+            size_t num_subcomps_previous_infstates =
+                std::accumulate(num_subcompartments.begin(), num_subcompartments.begin() + i, 0);
+
             for (size_t subcomp = 0; subcomp < num_subcompartments[i]; subcomp++) {
-                model.populations[total_num_subcomps_previous_groups + (i - 1) * num_subcompartments[i] + 1 + subcomp] =
+                model.populations[total_num_subcomps_previous_groups + num_subcomps_previous_infstates + subcomp] =
                     init_compartments[group * (size_t)isecir::InfectionState::Count + i] /
                     (ScalarType)num_subcompartments[i];
             }
@@ -495,13 +577,17 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
     // Choose dt_min = dt_max to get a fixed step size.
     integrator->set_dt_min(dt);
     integrator->set_dt_max(dt);
+
     TimeSeries<ScalarType> result = simulate<ScalarType, Model>(0, tmax, dt, model, integrator);
-    // Calculate result without division in subcompartments and without division in age groups.
-    TimeSeries<ScalarType> populations = sum_age_groups(model.calculate_compartments(result));
 
     if (!save_dir.empty()) {
-        std::string filename              = save_dir + "lct_ageresolved_subcomp" + ".h5";
-        IOResult<void> save_result_status = save_result({populations}, {0}, num_age_groups, filename);
+        std::string filename_lct = save_dir + "lct" + ".h5";
+
+        // Calculate result without division in subcompartments and without division in age groups.
+        TimeSeries<ScalarType> nonageresolved_result = sum_age_groups(model.calculate_compartments(result));
+
+        // Save non-age-resolved result.
+        IOResult<void> save_result_status = save_result({nonageresolved_result}, {0}, 1, filename_lct);
     }
 
     return success();
@@ -552,24 +638,32 @@ IOResult<void> simulate_ode(Vector init_compartments, std::string contact_data_d
     model_ode.parameters.get<osecir::ContactPatterns<ScalarType>>() = contact_matrix;
 
     // Use  isecir::InfectionState when accessing init_compartments since this is computed using the IDE model.
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Susceptible}] =
-        init_compartments[int(isecir::InfectionState::Susceptible)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Exposed}] =
-        init_compartments[int(isecir::InfectionState::Exposed)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedNoSymptoms}] =
-        init_compartments[int(isecir::InfectionState::InfectedNoSymptoms)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedSymptoms}] =
-        init_compartments[int(isecir::InfectionState::InfectedSymptoms)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedSevere}] =
-        init_compartments[int(isecir::InfectionState::InfectedSevere)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::InfectedCritical}] =
-        init_compartments[int(isecir::InfectionState::InfectedCritical)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Recovered}] =
-        init_compartments[int(isecir::InfectionState::Recovered)];
-    model_ode.populations[{AgeGroup(0), osecir::InfectionState::Dead}] =
-        init_compartments[int(isecir::InfectionState::Dead)];
+    for (size_t group = 0; group < num_age_groups; group++) {
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::Susceptible}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count +
+                              (size_t)isecir::InfectionState::Susceptible];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::Exposed}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Exposed];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::InfectedNoSymptoms}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count +
+                              (size_t)isecir::InfectionState::InfectedNoSymptoms];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::InfectedNoSymptomsConfirmed}] = 0;
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::InfectedSymptoms}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count +
+                              (size_t)isecir::InfectionState::InfectedSymptoms];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::InfectedSymptomsConfirmed}] = 0;
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::InfectedSevere}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count +
+                              (size_t)isecir::InfectionState::InfectedSevere];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::InfectedCritical}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count +
+                              (size_t)isecir::InfectionState::InfectedCritical];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::Recovered}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count +
+                              (size_t)isecir::InfectionState::Recovered];
+        model_ode.populations[{AgeGroup(group), osecir::InfectionState::Dead}] =
+            init_compartments[group * (size_t)isecir::InfectionState::Count + (size_t)isecir::InfectionState::Dead];
+    }
 
     model_ode.check_constraints();
 
@@ -583,14 +677,13 @@ IOResult<void> simulate_ode(Vector init_compartments, std::string contact_data_d
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string tmax_string  = std::to_string(tmax);
-        std::string dt_string    = std::to_string(dt);
-        std::string filename_ode = save_dir + "ode_" + tmax_string.substr(0, tmax_string.find(".")) + "_" +
-                                   dt_string.substr(0, dt_string.find(".") + 5);
+        std::string filename_ode = save_dir + "ode" + ".h5";
 
-        std::string filename_ode_compartments = filename_ode + ".h5";
-        IOResult<void> save_result_status_c =
-            save_result({results_ode[0]}, {0}, num_age_groups, filename_ode_compartments);
+        // Aggregate age-resolved result to non-age-resolved result.
+        TimeSeries<ScalarType> nonageresolved_result = sum_age_groups(results_ode[0]);
+
+        // Save non-age-resolved result.
+        IOResult<void> save_result_status = save_result({nonageresolved_result}, {0}, 1, filename_ode);
     }
 
     return success();
@@ -605,13 +698,16 @@ IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std::stri
     return success();
 }
 
-int main(int argc, char** argv)
+int main()
 {
-    std::string save_dir = "../../simulation_results/";
+    constexpr bool exponential_scenario = true;
 
-    // Set result_dir via command line.
-    if (argc == 2) {
-        save_dir = argv[1];
+    std::string save_dir = "";
+    if (exponential_scenario) {
+        save_dir = "../../simulation_results/compare_abm_ide_lct_ode/exponential/";
+    }
+    else {
+        save_dir = "../../simulation_results/compare_abm_ide_lct_ode/different_dists/";
     }
 
     // Make folder if not existent yet.
@@ -624,15 +720,16 @@ int main(int argc, char** argv)
     std::string contact_data_dir  = "../../data/Germany/contacts/";
     std::string reported_data_dir = "../../data/Germany/pydata/";
 
-    // Changepoint scenario with halving of contacts after two days.
-
-    auto result_ide = simulate_ide(start_date, contact_data_dir, reported_data_dir, save_dir);
+    // Simulate IDE.
+    auto result_ide = simulate_ide(start_date, contact_data_dir, reported_data_dir, exponential_scenario, save_dir);
 
     // Use compartments at time 0 from IDE simulation as initial values for ODE and LCT model to make results comparable.
     auto init_compartments = std::get<0>(result_ide.value());
 
-    auto result_lct = simulate_lct(init_compartments, contact_data_dir, save_dir);
+    // Simulate LCT.
+    auto result_lct = simulate_lct<exponential_scenario>(init_compartments, contact_data_dir, save_dir);
 
+    // Simulate ODE.
     auto result_ode = simulate_ode(init_compartments, contact_data_dir, save_dir);
 
     // For use in ABM simulation.
