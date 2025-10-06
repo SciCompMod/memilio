@@ -30,7 +30,7 @@
  * The destinction into the 2 layers of susceptibility is done via the parameters.
  */
 template <class FP>
-void set_initial_population(mio::oseirv::Model<FP>& model, const size_t total_pop)
+void set_initial_population(mio::oseirv::Model<FP>& model, const FP total_pop)
 {
     auto& params            = model.parameters;
     auto& pop               = model.populations;

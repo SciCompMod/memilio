@@ -34,7 +34,7 @@ namespace oseirv
 /**
  * @brief Baseline transmissibility R_e (dimensionless).
  *
- * Multiplies the force of infection λ(t) after contact-matrix normalization. Main scalar for transmission
+ * Multiplies the force of infection after contact-matrix normalization. Main scalar for transmission
  * intensity. Default: 1.0.
  */
 template <class FP>
@@ -51,9 +51,9 @@ struct BaselineTransmissibility {
 };
 
 /**
- * @brief Transition/recovery rate γ in 1/week.
+ * @brief Transition/recovery rate in 1/week.
  *
- * Controls E→I and I→Rand is included in λ(t) to decouple from R_e.
+ * Controls E→I and I→Rand is included in the force of infection to decouple from R_e.
  * Use the model time unit (weeks). Default: 1/2.0
  */
 template <class FP>
@@ -70,9 +70,9 @@ struct Gamma {
 };
 
 /**
- * @brief Seasonality amplitude δ (dimensionless).
+ * @brief Seasonality amplitude (dimensionless).
  *
- * Amplitude of the seasonal modulation exp(δ·sin(2π(t/52 − t_z + t_s))) in λ(t).
+ * Amplitude of the seasonal modulation.
  * Set to 0.0 to disable seasonality. Default: 0.0.
  */
 template <class FP>
@@ -91,7 +91,7 @@ struct SeasonalityAmplitude {
 /**
  * @brief Subtype-specific seasonal shift t_z.
  *
- * Phase shift for the sinusoid in λ(t); may be adjusted by a seasonal-shift correction if implemented. Default: 0.0.
+ * Phase shift for the sinusoid in the force of incetion.; may be adjusted by a seasonal-shift correction if implemented. Default: 0.0.
  */
 template <class FP>
 struct ShiftTZ {
@@ -125,9 +125,10 @@ struct ShiftTS {
 };
 
 /**
- * @brief Outside force of infection λ₀ in 1/week.
+ * @brief Outside force of infection in 1/week.
  *
  * Additive external hazard that can seed infections when no infectives are present.
+ * Used for the beginning of the season (to import infections) or to model travel/imported cases.
  * Default: 0.0.
  */
 template <class FP>
@@ -146,8 +147,7 @@ struct OutsideFoI {
 /**
  * @brief Clustering/concavity parameter ρ (dimensionless).
  *
- * Exponent on the infectious fraction in λ(t). ρ=1 recovers mass-action; 0<ρ<1 yields concave,
- * clustered transmission. Must be > 0. Default: 1.0.
+ * Exponent on the infectious fraction in force of infection. Must be > 0. Default: 1.0.
  */
 template <class FP>
 struct ClusteringRho {
@@ -221,7 +221,7 @@ struct ContactPatternsSick {
 /**
  * @brief Age-specific baseline susceptibility σ_i.
  *
- * Represents pre-existing subtype/age-specific immunity, used with Φ at t0 to form φ·σ_i.
+ * Represents pre-existing subtype/age-specific immunity.
  * Default: 1.0 (fully susceptible).
  */
 template <class FP>
@@ -275,9 +275,7 @@ struct VaccineEffectiveness {
 };
 
 /**
- * @brief Φ (phi): fraction of the population that remains susceptible at t0 (dimensionless, typically in [0,1]).
- *
- * Scales the susceptible pool at season start: φ·σ_i). Default: 1.0.
+ * @brief phi: fraction of the population that remains susceptible at t0 (dimensionless, typically in [0,1]).
  */
 template <class FP>
 struct Phi {
