@@ -21,7 +21,7 @@
 #define MIO_GEOGRAPHY_LOCATIONS_H
 
 #include "memilio/io/default_serialize.h"
-#include <boost/geometry/algorithms/distance.hpp>
+#include <cassert>
 #include <cmath>
 #include <numbers>
 namespace mio
@@ -47,7 +47,14 @@ public:
         : m_latitude(lat)
         , m_longitude(lon)
     {
+        check_input();
     }
+    /**
+     * @brief Structure representing geographical coordinates for constructing a GeographicalLocation object.
+     * 
+     * @param latitude Latitude in degrees.
+     * @param longitude Longitude in degrees.
+     */
     /**
      * @brief Construct a new Geographical Location object.
      * 
@@ -57,6 +64,7 @@ public:
         : m_latitude(coordinates.first)
         , m_longitude(coordinates.second)
     {
+        check_input();
     }
 
     /**
@@ -91,23 +99,31 @@ public:
         return Members("GeographicalLocation").add("latitude", m_latitude).add("longitude", m_longitude);
     }
 
+    void check_input() const
+    {
+        assert(m_latitude <= 90. && m_latitude >= -90.);
+        assert(m_longitude <= 180. && m_longitude >= -180.);
+    }
+
     /*
     * @brief Calculate the distance between two GeographicalLocation%s.
     * @param other The other GeographicalLocation.
     * @return The distance between the two locations in kilometers.
     * 
     * Uses the haversine formula (https://en.wikipedia.org/wiki/Haversine_formula) to calculate the distance between 
-    * two geographical locations. Uses an earth radius of 6375 km (https://en.wikipedia.org/wiki/Earth_radius).
+    * two geographical locations. Uses an earth radius of 6371 km (https://en.wikipedia.org/wiki/Earth_radius).
     * The math functions use radians, whereas coordinates are given in degrees.
     */
     double distance(const GeographicalLocation& other) const
     {
-        double delta_latitude  = (m_latitude - other.m_latitude) * radians;
-        double delta_longitude = (m_longitude - other.m_longitude) * radians;
-        double first_part      = sin(delta_latitude * 0.5) * sin(delta_latitude * 0.5);
-        double second_part = cos(m_latitude * radians) * cos(other.m_latitude * radians) * sin(delta_longitude * 0.5) *
-                             sin(delta_longitude * 0.5);
-        double distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
+        const double delta_latitude           = (m_latitude - other.m_latitude) * radians;
+        const double delta_longitude          = (m_longitude - other.m_longitude) * radians;
+        const double sin_delta_latitude_half  = sin(delta_latitude * 0.5);
+        const double sin_delta_longitude_half = sin(delta_longitude * 0.5);
+        const double first_part               = sin_delta_latitude_half * sin_delta_latitude_half;
+        const double second_part              = cos(m_latitude * radians) * cos(other.m_latitude * radians) *
+                                   sin_delta_longitude_half * sin_delta_longitude_half;
+        const double distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
         return distance;
     }
 

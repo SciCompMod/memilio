@@ -43,7 +43,7 @@ struct back_inserter_second_element {
     {
         return *this;
     }
-    back_inserter_second_element operator=(const Pair& pair)
+    back_inserter_second_element& operator=(const Pair& pair)
     {
         container.push_back(pair.second);
         return *this;

@@ -25,7 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 
-#include "memilio/geography/locations.h"
+#include "memilio/geography/geolocation.h"
 #include "memilio/io/default_serialize.h"
 #include "boost/atomic/atomic.hpp"
 

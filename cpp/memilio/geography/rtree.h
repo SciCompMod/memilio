@@ -40,7 +40,7 @@ namespace mio
 namespace geo
 {
 using Point = bg::model::point<double, 2, bg::cs::geographic<bg::degree>>;
-typedef std::pair<Point, size_t> Node;
+using Node  = std::pair<Point, size_t>;
 
 template <class Location>
 concept IsSphericalLocation = requires(const Location& loc) {
@@ -48,7 +48,7 @@ concept IsSphericalLocation = requires(const Location& loc) {
 };
 
 template <class Iter>
-concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLocation<decltype(*std::declval<Iter>())>;
+concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLocation<std::iter_reference_t<Iter>>;
 
 /**
  * @brief R-tree for spatial queries of geographical locations on the sphere.
@@ -56,9 +56,6 @@ concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLo
  * Data structure to store spatial indices and allow for efficient in-range and nearest neighbour queries. 
  * Wraps the Boost::geometry::index::rtree. Can be initialized with a vector of geographical location data or a range.
  * The provided location data needs to provide get_latitude() and get_longitude().
- */
-/**
- * @brief Test the default r-Tree Constructor.
  */
 class RTree
 {
@@ -131,10 +128,10 @@ public:
     }
 
     /**
-     * @brief Return the indices of the points within a given radius where the circle is approximated by a polygon.
+     * @brief Return the indices of the points within a given radius (in kilometers) where the circle is approximated by a polygon.
      * 
      * @param location Midpoint for the query, provides get_latitude() and get_longitude().
-     * @param radius The radius of the query.
+     * @param radius The radius of the query in kilometers.
      * @return Vector with indices of the points found.
      */
     std::vector<size_t> inrange_indices_approximate(const IsSphericalLocation auto& location, double radius) const
@@ -155,7 +152,7 @@ public:
      * @return Vector of vectors with indices of the points found.
      */
     std::vector<std::vector<size_t>> inrange_indices_query(const IsSphericalLocation auto& location,
-                                                           std::vector<double> radii) const
+                                                           const std::vector<double>& radii) const
     {
         auto max_radius      = std::max_element(radii.begin(), radii.end());
         auto radius_in_meter = 1000 * (*max_radius);

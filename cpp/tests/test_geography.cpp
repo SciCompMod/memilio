@@ -19,7 +19,7 @@
 */
 
 #include "memilio/geography/rtree.h"
-#include "memilio/geography/locations.h"
+#include "memilio/geography/geolocation.h"
 #include "random_number_test.h"
 #include <gtest/gtest.h>
 
@@ -38,13 +38,16 @@ TEST(TestGeography, compareGeographicalLocation)
 TEST(TestGeography, Distance)
 {
     // Generate GeographicalLocations
-    auto bonn   = mio::geo::GeographicalLocation(50.7333, 7.1000);
-    auto berlin = mio::geo::GeographicalLocation(52.5200, 13.4050);
+    auto bonn     = mio::geo::GeographicalLocation(50.7333, 7.1000);
+    auto berlin   = mio::geo::GeographicalLocation(52.5200, 13.4050);
+    auto neumayer = mio::geo::GeographicalLocation(-70.675, -8.274);
     // Test that the distance function is symmetric
     EXPECT_DOUBLE_EQ(bonn.distance(berlin), berlin.distance(bonn));
     auto distance = 478.2;
     // Test that the distance is correct up to a small error
     EXPECT_LT(abs(bonn.distance(berlin) - distance), 0.1);
+    EXPECT_DOUBLE_EQ(bonn.distance(bonn), 0.);
+    EXPECT_LT(abs(neumayer.distance(bonn) - 13556), 1.);
 }
 
 TEST(TestGeography, rtreeConstructionNoData)
