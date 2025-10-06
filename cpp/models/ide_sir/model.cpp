@@ -169,12 +169,12 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             populations.get_value(j)[(Eigen::Index)InfectionState::Susceptible];
 
         // For each index, the corresponding summand is computed here.
-        sum_second_integral +=
-            gregory_weight *
-            parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((current_time_index - j) * dt)(0, 0) *
-            m_transmissionproboncontact_vector[current_time_index - j] *
-            m_riskofinffromsymptomatic_vector[current_time_index - j] *
-            m_transitiondistribution_vector[current_time_index - j];
+        sum_second_integral += gregory_weight *
+                               parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                                   (current_time_index - j + t0_index) * dt)(0, 0) *
+                               m_transmissionproboncontact_vector[current_time_index - j] *
+                               m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                               m_transitiondistribution_vector[current_time_index - j];
     }
 
     // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
@@ -205,12 +205,12 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
             m_transitiondistribution_vector[current_time_index - j] * relevant_susceptibles;
 
         // For each index, the corresponding summand is computed here.
-        sum_second_integral +=
-            gregory_weight *
-            (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at((current_time_index - j) * dt)(0, 0)) *
-            m_transmissionproboncontact_vector[current_time_index - j] *
-            m_riskofinffromsymptomatic_vector[current_time_index - j] *
-            m_transitiondistribution_vector[current_time_index - j];
+        sum_second_integral += gregory_weight *
+                               (parameters.get<ContactPatterns>().get_cont_freq_mat().get_matrix_at(
+                                   (current_time_index - j + t0_index) * dt)(0, 0)) *
+                               m_transmissionproboncontact_vector[current_time_index - j] *
+                               m_riskofinffromsymptomatic_vector[current_time_index - j] *
+                               m_transitiondistribution_vector[current_time_index - j];
     }
 
     return populations.get_value(0)[(Eigen::Index)InfectionState::Susceptible] *

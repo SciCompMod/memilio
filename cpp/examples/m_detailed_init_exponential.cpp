@@ -22,6 +22,7 @@
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "ide_sir/simulation.h"
+#include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/logging.h"
 #include "ode_sir/model.h"
 #include "memilio/config.h"
@@ -33,31 +34,51 @@
 
 namespace params
 {
+// ScalarType t0_ode = 0.;
+// ScalarType t0_ide = 30.;
+// ScalarType tmax   = t0_ide + 1.;
+
 size_t num_agegroups = 1;
 
-ScalarType t0_ode = 0.;
-ScalarType t0_ide = 50.;
-ScalarType tmax   = 51.;
-
 ScalarType TimeInfected = 2.;
-// This parameter is chosen differently than in the example from the paper, as this is not a valid choice for a probability.
-// Instead we scale the contact frequency with a factor of 1.5.
+
 ScalarType TransmissionProbabilityOnContact = 1.;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
 ScalarType Seasonality                      = 0.;
 
-ScalarType S0 = 95.;
-ScalarType I0 = 5.;
-ScalarType R0 = 0.;
+ScalarType cont_freq = 0.7;
 
+ScalarType S0               = 999000.;
+ScalarType I0               = 100.;
+ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
-// Note that the contacts are currently differently defined in ODE and IDE model, which is why they are set differently
-// according to the contact frequency.
-ScalarType cont_freq = 1.5 * 0.1;
-ScalarType beta      = cont_freq / total_population;
+
 } // namespace params
 
-mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, std::string save_dir = "")
+// mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType contact_scaling)
+// {
+//     using namespace params;
+
+//     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+//     if (contact_scaling <= 1.) {
+//         // Perform simulation with a decrease in contacts.
+//         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+//         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
+//         contact_matrix[0].add_damping(contact_scaling, mio::SimulationTime(2.1));
+//     }
+//     else {
+//         // Perform simulation with an increase in contacts.
+//         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_scaling * cont_freq));
+//         contact_matrix[0].add_damping(1 - 1. / contact_scaling, mio::SimulationTime(-1.));
+//         contact_matrix[0].add_damping(1 - 1. / contact_scaling, mio::SimulationTime(2.));
+//         contact_matrix[0].add_damping(0., mio::SimulationTime(2.1));
+//     }
+
+//     return mio::UncertainContactMatrix(contact_matrix);
+// }
+
+mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
+                                                        std::string save_dir = "")
 {
     using namespace params;
 
@@ -76,6 +97,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
     contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    // mio::UncertainContactMatrix<ScalarType> contact_matrix         = scale_contact_matrix(scaling_factor_contacts);
     model.parameters.get<mio::osir::ContactPatterns<ScalarType>>() = mio::UncertainContactMatrix(contact_matrix);
 
     model.check_constraints();
@@ -101,7 +123,8 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 }
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
-                                 size_t finite_difference_order, std::string save_dir = "",
+                                 size_t finite_difference_order, ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax,
+                                 std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  bool backwarts_fd = true)
@@ -170,6 +193,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
         contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+        // mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(scaling_factor_contacts);
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
         // Carry out simulation.
@@ -196,6 +220,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
 int main()
 {
+    using namespace params;
+    /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
+    distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
+
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
@@ -206,7 +234,7 @@ int main()
 
         std::vector<size_t> finite_difference_orders;
         if (backwards_fd) {
-            finite_difference_orders = {4};
+            finite_difference_orders = {2, 4};
         }
         else {
             finite_difference_orders = {2, 4};
@@ -214,37 +242,45 @@ int main()
 
         for (size_t finite_difference_order : finite_difference_orders) {
 
-            /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
-    distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
-            std::string save_dir;
-            if (backwards_fd) {
-                save_dir = fmt::format("../../simulation_results/"
-                                       "detailed_init_exponential_late_t0/",
-                                       ode_exponent, finite_difference_order);
-            }
-            else {
-                save_dir = fmt::format("../../simulation_results/"
-                                       "detailed_init_exponential_dt_ode=1e-{:.0f}_finite_diff={}_central_fd/",
-                                       ode_exponent, finite_difference_order);
-            }
-            // Make folder if not existent yet.
-            boost::filesystem::path dir(save_dir);
-            boost::filesystem::create_directories(dir);
+            ScalarType t0_ode = 0.;
+            ScalarType t0_ide = 20.;
 
-            auto result_ode = simulate_ode(ode_exponent, save_dir).value();
+            std::vector<size_t> num_days_vec = {20};
 
-            // Do IDE simulations.
-            std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-            std::vector<size_t> gregory_orders    = {1, 2, 3};
+            for (size_t num_days : num_days_vec) {
+                ScalarType tmax = t0_ide + num_days;
 
-            // std::vector<ScalarType> ide_exponents = {1};
-            // std::vector<size_t> gregory_orders    = {1};
+                std::string save_dir;
+                if (backwards_fd) {
+                    save_dir = fmt::format("../../simulation_results/"
+                                           "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                                           t0_ide, tmax, finite_difference_order);
+                }
+                else {
+                    save_dir = fmt::format("../../simulation_results/"
+                                           "detailed_init_exponential_dt_ode=1e-{:.0f}_finite_diff={}_central_fd/",
+                                           ode_exponent, finite_difference_order);
+                }
+                // Make folder if not existent yet.
+                boost::filesystem::path dir(save_dir);
+                boost::filesystem::create_directories(dir);
 
-            for (size_t gregory_order : gregory_orders) {
-                std::cout << std::endl;
-                std::cout << "Gregory order: " << gregory_order << std::endl;
-                mio::IOResult<void> result_ide = simulate_ide(ide_exponents, gregory_order, finite_difference_order,
-                                                              save_dir, result_ode, backwards_fd);
+                auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, save_dir).value();
+
+                // Do IDE simulations.
+                std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+                std::vector<size_t> gregory_orders    = {1, 2, 3};
+
+                // std::vector<ScalarType> ide_exponents = {2};
+                // std::vector<size_t> gregory_orders    = {3};
+
+                for (size_t gregory_order : gregory_orders) {
+                    std::cout << std::endl;
+                    std::cout << "Gregory order: " << gregory_order << std::endl;
+                    mio::IOResult<void> result_ide =
+                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
+                                     save_dir, result_ode, backwards_fd);
+                }
             }
         }
     }
