@@ -75,7 +75,7 @@ public:
     {
         const auto& P            = this->parameters;
         const Index<AgeGroup> AG = reduce_index<Index<AgeGroup>>(this->populations.size());
-        const size_t G           = (size_t)P.get_num_groups();
+        const size_t num_groups  = (size_t)P.get_num_groups();
 
         // Contact matrices (may be time-dependent via damping):
         const auto cm_h_expr =
@@ -90,8 +90,8 @@ public:
         Eigen::MatrixX<FP> B = H + m * S;
 
         // Normalization ν(m) (spectral radius of Σ*B), Σ = φ * diag(σ_i)
-        Eigen::VectorX<FP> sigma(G);
-        for (size_t i = 0; i < G; ++i)
+        Eigen::VectorX<FP> sigma(num_groups);
+        for (size_t i = 0; i < num_groups; ++i)
             sigma[(Eigen::Index)i] = P.template get<SigmaByAge<FP>>()[AgeGroup(i)] * P.template get<Phi<FP>>();
         Eigen::MatrixX<FP> Sigma = sigma.asDiagonal();
         Eigen::MatrixX<FP> NG    = Sigma * B;
@@ -156,38 +156,6 @@ public:
                 gamma * y[Ii];
             flows[Base::template get_flat_flow_index<InfectionState::InfectedVaccinated,
                                                      InfectionState::RecoveredVaccinated>(i)] = gamma * y[IVi];
-        }
-    }
-
-    // Convenience: initialize according to paper: doi.org/10.1186/s12879-017-2344-6
-    void set_initial_conditions_from_sigma_phi_vacc()
-    {
-        const auto& P  = this->parameters;
-        const size_t G = (size_t)P.get_num_groups();
-        for (size_t i = 0; i < G; ++i) {
-            using IndexT = typename PopulationsType::Index;
-
-            // Read total N_i from the currently stored group total:
-            FP Ni = this->populations.get_group_total(gi);
-
-            FP sigma = P.template get<SigmaByAge<FP>>()[gi];
-            FP phi   = P.template get<Phi<FP>>();
-            FP VC    = P.template get<VaccineCoverage<FP>>()[gi];
-            FP VE    = P.template get<VaccineEffectiveness<FP>>()[gi];
-
-            this->populations[IndexT{AgeGroup(i), InfectionState::Exposed}]            = 0;
-            this->populations[IndexT{AgeGroup(i), InfectionState::ExposedVaccinated}]  = 0;
-            this->populations[IndexT{AgeGroup(i), InfectionState::Infected}]           = 0;
-            this->populations[IndexT{AgeGroup(i), InfectionState::InfectedVaccinated}] = 0;
-
-            this->populations[IndexT{AgeGroup(i), InfectionState::Susceptible}] = phi * sigma * (FP(1) - VC) * Ni;
-            this->populations[IndexT{AgeGroup(i), InfectionState::SusceptibleVaccinated}] =
-                phi * sigma * (FP(1) - VE) * VC * Ni;
-
-            this->populations[IndexT{AgeGroup(i), InfectionState::Recovered}] =
-                (FP(1) - phi * sigma) * (FP(1) - VC) * Ni;
-            this->populations[IndexT{AgeGroup(i), InfectionState::RecoveredVaccinated}] =
-                (FP(1) - phi * sigma * (FP(1) - VE)) * VC * Ni;
         }
     }
 };
