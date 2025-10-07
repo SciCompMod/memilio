@@ -280,8 +280,8 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         axs[i].set_title(secir_dict[i], fontsize=10)
         axs[i].grid(True, linestyle='--', alpha=0.6)
 
-        if i != 2:
-            axs[i].set_ylim(1e-8, 5*1e-1)
+        # if i != 2:
+        #     axs[i].set_ylim(1e-8, 5*1e-1)
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
     fig.supylabel(
@@ -321,6 +321,53 @@ def compute_order_of_convergence(errors, timesteps_ide):
     return np.array(order)
 
 
+def get_total_pop_end(results):
+
+    total_pop_end = []
+    for timestep in range(len(results['ide'])):
+        total_pop_end.append(results['ide'][timestep][-1].sum())
+
+    return total_pop_end
+
+
+def plot_total_pop_diff(gregory_orders_simulation, timesteps_ide, total_pop_end_all_gregory_orders, total_pop_reference, save_dir=""):
+
+    # Plot relative difference per time step for all Gregory orders for a fixed finite_difference_order.
+
+    fig, axs = plt.subplots(1, 1, sharex=True, figsize=(9, 3))
+    labels = [
+        f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
+
+    # Define colors.
+    colors = [plt.cm.viridis(x)
+              for x in np.linspace(0, 1, len(gregory_orders_simulation))]
+
+    for j in range(len(gregory_orders_simulation)):
+        # Plot results.
+        line = axs.plot(timesteps_ide,
+                        1 - total_pop_end_all_gregory_orders[j][:]/total_pop_reference, '-o', color=colors[j], label=labels[j])
+        # handles.append(line[0])
+
+    axs.invert_xaxis()
+    axs.set_xscale("log", base=10)
+    axs.set_yscale("log", base=10)
+
+    fig.legend(bbox_to_anchor=(0.97, 0.9))
+
+    fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
+    fig.supylabel(
+        r"Relative deviation", fontsize=12)
+
+    plt.tight_layout()
+
+    if save_dir != "":
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+
+        plt.savefig(f'{save_dir}/mass_conservation_diff.png', format='png',  bbox_inches='tight',
+                    dpi=500)
+
+
 def main():
 
     groundtruth_exponent = 6
@@ -328,14 +375,7 @@ def main():
 
     finite_difference_order = 4
 
-    abstol_exponent = 10
-    reltol_exponent = 5
-
-    # dir_name = f"exponential_experiments_23072025/exponential_paper_example_dt_ode=1e-{groundtruth_exponent}_abstol=1e-{abstol_exponent}_reltol={reltol_exponent}"
-    # dir_name = f"detailed_init_exponential_rkf78_dt_ode=1e-{groundtruth_exponent}"
-    # dir_name = f"detailed_init_exponential_rkf78_dt_ode=1e-{groundtruth_exponent}_finite_diff={finite_difference_order}"
-    # dir_name = "detailed_init_exponential_dt_ode=1e-6_finite_diff=4_central_fd"
-    dir_name = "detailed_init_exponential_late_t0"
+    dir_name = "time_infected=2/detailed_init_exponential_t0ide=20_tmax=30_finite_diff=2"
     print(dir_name)
 
     groundtruth_ode = True
@@ -366,6 +406,9 @@ def main():
 
     errors_all_gregory_orders = []
 
+    total_pop_reference = 0
+    total_pop_end_all_gregory_orders = []
+
     for gregory_order_simulation in gregory_orders_simulation:
         # Read results from IDE simulations.
         results = read_data(result_dir, ide_exponents,
@@ -390,12 +433,20 @@ def main():
             f"Orders of convergence: ")
         print(order.T)
 
-        print(
-            f"Total population at end for time step {timesteps_ide[-1]}: {results['ide'][-1][-1].sum()}")
+        # print(
+        #     f"Total population at end for time step {timesteps_ide[-1]}: {results['ide'][-1][-1].sum()}")
+
+        total_pop_end = get_total_pop_end(results)
+        total_pop_end_all_gregory_orders.append(total_pop_end)
+
+        total_pop_reference = results['ide'][-1][0].sum()
 
     # Plot convergence of all compartments separately.
     plot_convergence(errors_all_gregory_orders, timesteps_ide,
                      gregory_orders_simulation, plot_dir)
+
+    plot_total_pop_diff(gregory_orders_simulation, timesteps_ide,
+                        total_pop_end_all_gregory_orders, total_pop_reference, plot_dir)
 
 
 if __name__ == '__main__':
