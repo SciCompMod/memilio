@@ -29,8 +29,8 @@ int main(int argc, char** argv)
     // Create a parameter set for the CLI using the builder. This defines the (parameter) options that the user can set
     // through the command line.
     //
-    // To add a parameter, you need to specify the name and type and pass an initial value. The type can sometimes be
-    // deduced from the initial value, so it can sometimes be omitted.
+    // To add() a parameter, you need to specify the name and type as template arguments, then pass an initial value.
+    // The type can sometimes be deduced from the initial value, so it can potentially be omitted.
     // After the initial value you can set some optional fields of the parameter:
     // - alias, which allows you to add a shorthand for setting values
     // - description, which contains details on, e.g., what the parameter does and what values are accepted.
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     // As a general rule, use simple types! The more complicated the type, the more complex is the Json representation
     // that the user has to input.
     //
-    // Instead of using the builder, you can also define and pass a mio::ParameterSet as paraneters.
+    // Instead of using the builder, you can also define and pass a mio::ParameterSet as parameters.
     // The main difference (for the CLI) is that the mio::ParameterSet uses struct names to "get" parameters, while
     // the mio::cli::ParameterSet uses StringLiteral%s.
     auto parameters = mio::cli::ParameterSetBuilder()
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     }
     // Now, do something with the parameters!
     // Note that the CLI only verifies that the user input is parsable, not plausible. If a parameter has certain value
-    // requirements, like "Age > 0", you must check this
+    // requirements, like "Age > 0", you must check this yourself.
     std::cout << parameters.get<"Greeting">() << "\n"
               << "Name: ";
     for (auto& name : parameters.get<"Name">()) {
@@ -72,4 +72,6 @@ int main(int argc, char** argv)
     if (parameters.get<"Age">() > 0) {
         std::cout << "Age: " << parameters.get<"Age">() << "\n";
     }
+
+    return 0;
 }

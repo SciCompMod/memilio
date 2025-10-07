@@ -31,6 +31,7 @@
 #include "memilio/utils/string_literal.h"
 #include "memilio/utils/type_list.h"
 
+#include <cassert>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -154,7 +155,7 @@ private:
 public:
     /**
      * @brief Create an Identifier from a command line argument.
-     * @param[in] str A string that is excpected to be an option.
+     * @param[in] str A string that is expected to be an option.
      * @return An Identifier if str is a valid option, an error if not.
      */
     static IOResult<Identifier> parse(const std::string& str)
@@ -392,7 +393,7 @@ public:
     /**
      * @brief Create a new AbstractSet from a given set of parameters.
      * Keep in mind that the AbstractSet usually uses the original set's storage, only acting as a type erased
-     * interface. Therefore the AbstractSet must not outlife the original set.
+     * interface. Therefore the AbstractSet must not outlive the original set.
      * This method verifies, that the set does not contain parameters with empty names, or duplicate names or aliases. 
      * @tparam Set Either a class similar to mio::ParameterSet, or a vector of AbstractParameters.
      * @param[in] parameter_set The original set of parameters. Mind its lifetime!
@@ -435,16 +436,18 @@ public:
         Json::CharReaderBuilder builder;
         const std::unique_ptr<Json::CharReader> parser(builder.newCharReader());
         parser->parse(args.c_str(), args.c_str() + args.size(), &js, &errors);
-        return set_param(id, js);
+        // do not directly raise errors, to avoid hiding e.g. a "parameter not found"
+        return set_param(id, js, errors);
     }
 
     /**
      * @brief Set a parameter's value.
      * @param[in] id An Identifier matching the parameter to be set.
      * @param[in] value The new value for the parameter in Json representation.
+     * @param[in] parse_errors Optional argument with errors from parsing the Json value.
      * @return Nothing if successful, an error otherwise.
      */
-    IOResult<void> set_param(const Identifier& id, const Json::Value& value)
+    IOResult<void> set_param(const Identifier& id, const Json::Value& value, const std::string& parse_errors = "")
     {
         auto param = find(id);
         if (!param) {
@@ -452,7 +455,14 @@ public:
         }
         else {
             param.value()->second.DatalessParameter::is_required = false; // mark as set
-            return param.value()->second.set(value);
+            // try to set the value. append parsing errors if not successful
+            IOResult<void> result = param.value()->second.set(value);
+            if (result || parse_errors.empty()) {
+                return result;
+            }
+            else {
+                return mio::failure(result.error().code(), result.error().message() + "\n" + parse_errors);
+            }
         }
     }
 
@@ -509,7 +519,7 @@ private:
         if (param_itr != m_map_by_name.end()) {
             return mio::success(param_itr);
         }
-        return failure(mio::StatusCode::KeyNotFound, "No such option \"" + id.string + "\".");
+        return mio::failure(mio::StatusCode::KeyNotFound, "No such option \"" + id.string + "\".");
     }
 
     /**
@@ -657,16 +667,17 @@ public:
     template <mio::StringLiteral Name, class Type>
     [[nodiscard]] inline auto add(Type&& initial_value, details::OptionalFields&& optionals = {}) &&
     {
+        using ValueType = std::decay_t<Type>; // get base type in case Type was deduced and is e.g. const or &
         // since we get *this as rvalue, we can move the parameters
         auto new_params = std::move(m_parameters);
         // create a new owning data pointer, stored as void*
-        std::shared_ptr<void> data(new Type(initial_value), std::default_delete<Type>{});
-        // create
-        new_params.emplace_back(Tag<Type>{},
+        std::shared_ptr<void> data(new ValueType(initial_value), std::default_delete<ValueType>{});
+        // create a new abstract parameter, then move all parameters to a new builder
+        new_params.emplace_back(Tag<ValueType>{},
                                 details::DatalessParameter{std::string(Name), optionals.alias, optionals.description,
                                                            optionals.is_required},
                                 std::move(data));
-        return ParameterSetBuilder<Params..., TypeList<details::NamedType<Name>, Type>>{std::move(new_params)};
+        return ParameterSetBuilder<Params..., TypeList<details::NamedType<Name>, ValueType>>{std::move(new_params)};
     }
 
     /// @brief Finalize the builder and create a parameter set.
@@ -743,7 +754,7 @@ IOResult<void> read_parameters_from_file(Set<Parameters...>& parameters, const s
  *
  * @param[in] executable_name Name of the executable. Usually argv[0] from the main is a good choice.
  * @param[in] argc Argument count, must be the length of argv. Can be directly passed from main.
- * @param[in] argv Argument list for the Programm. Can be directly passed from main.
+ * @param[in] argv Argument list for the programm. Can be directly passed from main.
  * @param[in,out] parameters An instance of the parameter set.
  * @param[in] default_options Parameter names that allow setting parameter values with leading non-option arguments.
  * @tparam Set A parameter set.
@@ -766,7 +777,7 @@ mio::IOResult<void> command_line_interface(const std::string& executable_name, c
  *
  * @param[in] executable_name Name of the executable. Usually argv[0] from the main is a good choice.
  * @param[in] argc Argument count, must be the length of argv. Can be directly passed from main.
- * @param[in] argv Argument list for the Programm. Can be directly passed from main.
+ * @param[in] argv Argument list for the programm. Can be directly passed from main.
  * @tparam Parameters A list of parameter tags. 
  * @tparam Set A parameter set template. Will be used as Set<Parameters...>. Default: mio::ParameterSet.
  * @return An instance of Set<Parameters...> if no errors occured, the error code and message otherwise.

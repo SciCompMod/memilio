@@ -67,7 +67,7 @@ void write_help_parameter(const mio::cli::details::DatalessParameter& parameter,
         }
     }
     // Write alias (if available) with "-" prefix and "  " indent
-    size_t space = std::max<size_t>(alias_space - parameter.alias.size(), 0);
+    size_t space = parameter.alias.size() < alias_space ? alias_space - parameter.alias.size() : 0;
     if (parameter.alias.size() > 0) {
         os << "  -" << parameter.alias;
     }

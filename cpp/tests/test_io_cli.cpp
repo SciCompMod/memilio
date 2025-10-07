@@ -120,9 +120,12 @@ struct C {
     }
     const static std::string alias()
     {
-        return "c";
+        return "c has a long alias";
     }
-    // const static std::string description()
+    const static std::string description()
+    {
+        return "C.";
+    }
 };
 
 struct D {
@@ -306,7 +309,9 @@ TEST_F(TestCLI, test_set_param)
     // cause errors
     auto result = set.set_param(id, std::string("definitely a double"));
     EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidType));
-    EXPECT_EQ(result.error().formatted_message(), "Invalid type: While setting \"A\": Json value is not a double.");
+    EXPECT_EQ(result.error().formatted_message(),
+              "Invalid type: While setting \"A\": Json value is not a double.\n"
+              "* Line 1, Column 1\n  Syntax error: value, object or array expected.\n");
     result = set.set_param(mio::cli::details::Identifier::make_raw("NotAnOption"), std::string());
     EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::KeyNotFound));
     EXPECT_EQ(result.error().formatted_message(),
@@ -332,7 +337,7 @@ TEST_F(TestCLI, test_write_help)
         "parameter options to the specified json file.\nParameter options:\n  --A                 -a     This is A.\n  "
         "--B                        This is B. It has a needlessly long description that will most probably not fit "
         "into a single line on your terminal window, unless maybe on an ultrawide display.\n  --C has a name that is "
-        "too long\n                      -c\n  --D\n";
+        "too long\n                      -c has a long alias  C.\n  --D\n";
     // call write help directly
     mio::cli::details::write_help("TestSuite", set, {}, ss);
     EXPECT_EQ(ss.str(), help_header + help_body);
