@@ -2,7 +2,7 @@ Getting started
 ===============
 
 Overview
--------------
+--------
 
 .. note:: This project is under active development.
 
@@ -28,8 +28,8 @@ The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download
 as infection or mobility data. More about this and our other Python packages can be found in the :doc:`Python Interface Section <python/python_packages>` 
 of this documentation.
 
-A few things are not represented in this documentation, but are part of the `github repository <https://github.com/SciCompMod/memilio>`_. 
-In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`_ folder you can find some regularly used data 
+A few things are not represented in this documentation, but are part of the `github repository <https://github.com/SciCompMod/memilio>`__. 
+In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
 Why to use the software
@@ -61,18 +61,18 @@ In addition, we provide several Python packages to download epidemiological data
 Below, we will give you a step-by-step guide for both methods. If you are new to MEmilio and more familiar with Python, Julia, or R than with C++, we recommend starting with the Python packages, as they provide an easy access to simulate infection dynamics models from and collect experiences with MEmilio.
 
 Required tools
-*****************
+**************
 
 Before you can install MEmilio, you need to install some common development tools. 
 
 *   **Git:** This is a version control system used to download the project's source code.
 
-    *   **Windows:** By default, Git is not installed. Download and install it from `git-scm.com <https://git-scm.com/downloads/win>`_.
+    *   **Windows:** By default, Git is not installed. Download and install it from `git-scm.com <https://git-scm.com/downloads/win>`__.
     *   **macOS & Linux:** Git is usually preinstalled. You can check by opening a terminal and typing ``git --version``.
 
 *   **Python:** Required for the Python packages.
 
-    *   MEmilio is tested daily with Python 3.8 and 3.11. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`_.
+    *   MEmilio is tested daily with Python 3.8 and 3.11. While other versions may also work, we recommend using the latest release of either of these. You can download it from the official website `python.org <https://www.python.org/>`__.
 
 *   **C++ Compiler and CMake:**
 
@@ -81,7 +81,7 @@ Before you can install MEmilio, you need to install some common development tool
     *   **Linux:** On Linux, essential build tools and CMake might be preinstalled. Otherwise, on Debian/Ubuntu, you could execute the installation by running ``sudo apt-get install cmake gcc g++`` in your terminal.
 
 Step 1: Download the MEmilio source code
-*****************************************
+****************************************
 
 Once the required tools are installed, open a terminal and download the MEmilio code with this command:
 
@@ -93,9 +93,12 @@ This command copies the entire MEmilio project into a new folder named ``memilio
 
 .. note:: A Quick Note on HTTPS vs. SSH
 
-   The ``git clone`` command above uses an **HTTPS** URL. This is the simplest method and works perfectly for downloading the code.
+   The ``git clone`` command above uses an **HTTPS** URL. This is the simplest method and works perfectly for
+   downloading the code.
 
-   However, if you plan to contribute code back to the project (i.e., "push" your changes), we recommend using **SSH**. To set this up, you can follow `GitHub's official guide on adding an SSH key <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>`_.
+   However, if you plan to contribute code back to the project (i.e., "push" your changes), we recommend using **SSH**.
+   To set this up, you can follow
+   `GitHub's official guide on adding an SSH key <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account>`__.
 
 
 Now, navigate into that folder:
@@ -107,7 +110,7 @@ Now, navigate into that folder:
 From here, choose one of the following options.
 
 Option A: Installing the Python packages (Recommended for nonexperienced users or for data download and visualizations)
-****************************************************
+***********************************************************************************************************************
 
 You can run simulations, download data, or create plots, by only installing our Python packages.
 
@@ -147,7 +150,7 @@ You can run simulations, download data, or create plots, by only installing our 
 To install other packages, see the items below *Python Interface* in the menu on the left hand side.
 
 Option B: Building the C++ core (Advanced)
-****************************************
+******************************************
 
 For experienced developers and C++ programmers, we offer the C++ backend to fully benefit from all functionality and parallel performance.
 
@@ -168,7 +171,7 @@ Please see the full :doc:`C++ Build instructions <cpp/installation>` for more de
 If you experience errors, feel free to contact martin.kuehn@dlr.de or open a `discussion on GitHub <https://github.com/SciCompMod/memilio/discussions>`_!
 
 Running simulations
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 You can run simulations either via the C++ interface where they are originally implemented or via the python bindings. 
 For the C++ Interface, you can find explanations of the models as well as guides on their usage in the :doc:`C++ model usage <cpp/model_usage>` section.
 In short, the executables for different model instantiations are built as described above and can be run via 
@@ -185,7 +188,7 @@ Additional explanations for our models are linked at the corresponding sites of 
 Simulations used in publications
 ********************************
 For simulations used in publications, we maintain a separate repository: 
-`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`_. 
+`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`__. 
 This repository contains simulations organized in separate folders, each with the specific version of MEmilio 
 used for the published results. This ensures that simulation results can be easily reproduced.
 
@@ -194,26 +197,27 @@ that were used in publications.
 
 
 Loading data
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download epidemiological relevant datasets. Some 
-datasets like contact matrices for Germany are also included in the ``data`` folder of the `github repository <https://github.com/SciCompMod/memilio/tree/main/data>`_ and 
-school holidays (for Germany) are directly included in the `C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`_.  
+datasets like contact matrices for Germany are also included in the ``data`` folder of the `github repository <https://github.com/SciCompMod/memilio/tree/main/data>`__and 
+school holidays (for Germany) are directly included in the `C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`__.  
 
 
 Creating new models
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 If you want to create new models, you can do so via the C++ interface. For this, we recommend to have a look at 
 the :doc:`C++ model creation <cpp/model_creation>` section of this documentation.
 
 
 Visualizations
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 For visualizations, we provide our :doc:`python package MEmilio-plot <python/m-plot>`. Apart from that, we have 
-collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`_. 
-For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`_.
+collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`__. 
+For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`__.
 
 Further questions
-~~~~~~~~~~~~~~~~~~~~~
-If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via `e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`_.
+~~~~~~~~~~~~~~~~~
+If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via
+`e-mail <mailto:Martin.Kuehn@DLR.de>`__or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`__.
