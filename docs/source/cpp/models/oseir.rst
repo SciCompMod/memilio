@@ -26,9 +26,9 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The ODE-SEIR model is implemented as **FlowModel**. With just minimal overhead, the **FlowModel** computes the new 
-transmissions, infections, and recoveries explicitly in every time step instead of only computing the aggregated 
-compartment values. The defined transitions `FromState, ToState` are:
+The ODE-SEIR model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+This allows for explicit computation of new transmissions, infections, and recoveries. Additionally, the aggregated
+compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
 
@@ -229,6 +229,7 @@ Additionally, you can export the results to a CSV file:
 The ODE-SEIR model also provides utility functions to extract specific measures, such as the reproduction number:
 
 .. code-block:: cpp
+  
     // Calculate R value at a specific time index
     auto r_at_index = mio::oseir::get_reproduction_number(time_idx, result_sim);
     
