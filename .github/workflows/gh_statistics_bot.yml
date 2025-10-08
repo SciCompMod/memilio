@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize]
   schedule:
-    - cron: '0 9 1 * *'
+    - cron: "0 9 1 * *"
   workflow_dispatch:
 
 jobs:
@@ -12,14 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
       actions: read
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Generate Enhanced Monthly Statistics
         uses: actions/github-script@v7
         env:
@@ -54,7 +52,7 @@ jobs:
                 }
               });
               
-              for (const commit of commits.slice(0, 30)) {
+              for (const commit of commits.slice(0, 50)) {
                 try {
                   const commitDetail = await github.rest.repos.getCommit({
                     owner: context.repo.owner,
@@ -418,7 +416,7 @@ jobs:
                     { title: '🐛 Issues Opened', value: latest.issueStats.opened.toString(), short: true },
                     { title: '✅ Issues Closed', value: latest.issueStats.closed.toString(), short: true },
                   ],
-                  text: `**🏆 Top Contributors:** ${latest.stats.contributorsList.slice(0, 5).join(', ') || 'None'}\n` +
+                  text: `**👥 Active Contributors:** ${latest.stats.contributorsList.slice(0, 15).join(', ') || 'None'}\n` +
                         `**💻 Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
                         `**📈 Charts:** [View detailed charts on branch ${branchResult.branchName}](${branchResult.branchUrl})\n` +
                         `**📂 Repository:** ${context.repo.owner}/${context.repo.repo}`,
