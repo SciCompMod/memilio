@@ -294,7 +294,7 @@ jobs:
               
               // Create new branch
               const now = new Date();
-              const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth()-1  ).toString().padStart(2, '0')}`;
+              const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth()).toString().padStart(2, '0')}`;
               
               try {
                 const mainRef = await github.rest.git.getRef({
