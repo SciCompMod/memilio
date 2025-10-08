@@ -601,8 +601,8 @@ def get_workflow():
 
 
 def run_training(name, num_training_files=20):
-    train_template = "trainings_data{i}_counties.pickle"
-    val_path = f"validation_data_counties.pickle"
+    train_template = name+"/trainings_data{i}_"+name+".pickle"
+    val_path = f"{name}/validation_data_{name}.pickle"
 
     aug = bf.augmentations.NNPE(
         spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
@@ -636,20 +636,20 @@ def run_training(name, num_training_files=20):
     )
 
     workflow.approximator.save(
-        filepath=os.path.join(os.path.dirname(__file__), f"model_{name}.keras")
+        filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
     plots = workflow.plot_default_diagnostics(
         test_data=validation_data, calibration_ecdf_kwargs={'difference': True, 'stacked': True}
     )
-    plots['losses'].savefig(f'losses_{name}.png')
-    plots['recovery'].savefig(f'recovery_{name}.png')
-    plots['calibration_ecdf'].savefig(f'calibration_ecdf_{name}.png')
-    #plots['z_score_contraction'].savefig(f'z_score_contraction_{name}.png')
+    plots['losses'].savefig(f'{name}/losses_{name}.png')
+    plots['recovery'].savefig(f'{name}/recovery_{name}.png')
+    plots['calibration_ecdf'].savefig(f'{name}/calibration_ecdf_{name}.png')
+    #plots['z_score_contraction'].savefig(f'{name}/z_score_contraction_{name}.png')
 
 
 def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmentation=True):
-    val_path = f"validation_data_counties.pickle"
+    val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
     with_aug = "_with_aug" if apply_augmentation else ""
 
@@ -680,11 +680,11 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
 
     workflow = get_workflow()
     workflow.approximator = keras.models.load_model(
-        filepath=os.path.join(os.path.dirname(__file__), f"model_{name}.keras")
+        filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    if False: #os.path.exists(f'sims_{name}{synthetic}{with_aug}.pickle'):
-        simulations = load_pickle(f'sims_{name}{synthetic}{with_aug}.pickle')
+    if False: #os.path.exists(f'{name}/sims_{name}{synthetic}{with_aug}.pickle'):
+        simulations = load_pickle(f'{name}/sims_{name}{synthetic}{with_aug}.pickle')
         print("loaded simulations from file")
     else:
         samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
@@ -712,7 +712,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
             simulations[i] = np.concatenate([results[key][i] for key in divi_region_keys], axis=-1)
 
         # save sims
-        with open(f'sims_{name}{synthetic}{with_aug}.pickle', 'wb') as f:
+        with open(f'{name}/sims_{name}{synthetic}{with_aug}.pickle', 'wb') as f:
             pickle.dump(simulations, f, pickle.HIGHEST_PROTOCOL)
 
     # plot simulations
@@ -723,18 +723,18 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         plot_region_median_mad(
             simulations, region=rand_index[i], true_data=divi_data, label=r"Median $\pm$ Mad", ax=a
         )
-    plt.savefig(f'random_regions_{name}{synthetic}{with_aug}.png')
+    plt.savefig(f'{name}/random_regions_{name}{synthetic}{with_aug}.png')
     plt.close()
 
     plot_aggregated_over_regions(simulations, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad")
-    plt.savefig(f'region_aggregated_{name}{synthetic}{with_aug}.png')
+    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}{with_aug}.png')
     plt.close()
 
 
     fig, axis = plt.subplots(1, 2, figsize=(10, 4), sharex=True, layout="constrained")
     ax = calibration_curves_per_region(simulations, divi_data, ax=axis[0])
     ax, stats = calibration_median_mad_over_regions(simulations, divi_data, ax=axis[1])
-    plt.savefig(f'calibration_per_region_{name}{synthetic}{with_aug}.png')
+    plt.savefig(f'{name}/calibration_per_region_{name}{synthetic}{with_aug}.png')
     plt.close()
 
     # plot = bf.diagnostics.pairs_posterior(simulations, priors=validation_data, dataset_id=0)
@@ -744,7 +744,9 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
 if __name__ == "__main__":
     name = "skip2w"
 
-    # create_train_data(filename=f'trainings_data11_{name}.pickle', number_samples=1000)
+    if not os.path.exists(name):
+        os.makedirs(name)
+    # create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=10)
     # run_training(name=name, num_training_files=20)
     run_inference(name=name, on_synthetic_data=True)
     run_inference(name=name, on_synthetic_data=True, apply_augmentation=False)
