@@ -95,7 +95,7 @@ jobs:
                 activeContributors: contributors.size,
                 linesAdded: totalLinesAdded,
                 linesDeleted: totalLinesDeleted,
-                netLinesChanged: totalLinesAdded - totalLinesDeleted,
+                totalLinesChanged: totalLinesAdded + totalLinesDeleted,
                 filesChanged: filesChanged,
                 contributorsList: Array.from(contributors)
               };
@@ -217,7 +217,7 @@ jobs:
               const chartHeight = height - 2 * padding - 20;
               
               const maxValue = Math.max(...data);
-              const minValue = Math.max(1, Math.min(...data) - Math.max(...data) * 0.1);
+              const minValue = Math.max(0, Math.min(...data) - Math.max(...data) * 0.1);
               const range = maxValue - minValue || 1;
               
               const points = data.map((value, index) => {
@@ -274,14 +274,14 @@ jobs:
               const linesAdded = monthlyData.map(d => d.stats.linesAdded);
               const activeContributors = monthlyData.map(d => d.stats.activeContributors);
               const issuesClosed = monthlyData.map(d => d.issueStats.closed);
-              const netLinesChanged = monthlyData.map(d => d.stats.netLinesChanged);
+              const totalLinesChanged = monthlyData.map(d => d.stats.totalLinesChanged);
               const monthLabels = monthlyData.map(d => d.month);
               
               const charts = [
                 { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
                 { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
                 { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Lines Added', '#22c55e', monthLabels) },
-                { path: 'docs/stats/net-lines-changed-chart.svg', content: createSVGChart(netLinesChanged, 'Net Lines Changed', '#f59e0b', monthLabels) },
+                { path: 'docs/stats/net-lines-changed-chart.svg', content: createSVGChart(totalLinesChanged, 'Total Lines Changed', '#f59e0b', monthLabels) },
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) },
                 { path: 'docs/stats/issues-closed-chart.svg', content: createSVGChart(issuesClosed, 'Issues Closed', '#ef4444', monthLabels) }
               ];
@@ -404,7 +404,7 @@ jobs:
                     { title: '👥 Active Contributors', value: latest.stats.activeContributors.toString(), short: true },
                     { title: '📈 Lines Added', value: latest.stats.linesAdded.toLocaleString(), short: true },
                     { title: '📉 Lines Deleted', value: latest.stats.linesDeleted.toLocaleString(), short: true },
-                    { title: '⚖️ Net Lines Changed', value: latest.stats.netLinesChanged.toLocaleString(), short: true },
+                    { title: '⚖️ Net Lines Changed', value: latest.stats.totalLinesChanged.toLocaleString(), short: true },
                     { title: '📁 Files Changed', value: latest.stats.filesChanged.toString(), short: true },
                     
                     // Pull Request Activity
