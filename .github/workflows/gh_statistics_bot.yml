@@ -281,7 +281,7 @@ jobs:
                 { path: 'docs/stats/total-commits-chart.svg', content: createSVGChart(totalCommits, 'Total Commits', '#3b82f6', monthLabels) },
                 { path: 'docs/stats/merged-prs-chart.svg', content: createSVGChart(mergedPRs, 'Merged Pull Requests', '#10b981', monthLabels) },
                 { path: 'docs/stats/lines-added-chart.svg', content: createSVGChart(linesAdded, 'Lines Added', '#22c55e', monthLabels) },
-                { path: 'docs/stats/net-lines-changed-chart.svg', content: createSVGChart(totalLinesChanged, 'Total Lines Changed', '#f59e0b', monthLabels) },
+                { path: 'docs/stats/total-lines-changed-chart.svg', content: createSVGChart(totalLinesChanged, 'Total Lines Changed', '#f59e0b', monthLabels) },
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) },
                 { path: 'docs/stats/issues-closed-chart.svg', content: createSVGChart(issuesClosed, 'Issues Closed', '#ef4444', monthLabels) }
               ];
@@ -294,7 +294,7 @@ jobs:
               
               // Create new branch
               const now = new Date();
-              const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth() ).toString().padStart(2, '0')}`;
+              const branchName = `update-stats-${now.getFullYear()}-${(now.getMonth()-1  ).toString().padStart(2, '0')}`;
               
               try {
                 const mainRef = await github.rest.git.getRef({
@@ -404,7 +404,7 @@ jobs:
                     { title: '👥 Active Contributors', value: latest.stats.activeContributors.toString(), short: true },
                     { title: '📈 Lines Added', value: latest.stats.linesAdded.toLocaleString(), short: true },
                     { title: '📉 Lines Deleted', value: latest.stats.linesDeleted.toLocaleString(), short: true },
-                    { title: '⚖️ Net Lines Changed', value: latest.stats.totalLinesChanged.toLocaleString(), short: true },
+                    { title: '⚖️ Total Lines Changed', value: latest.stats.totalLinesChanged.toLocaleString(), short: true },
                     { title: '📁 Files Changed', value: latest.stats.filesChanged.toString(), short: true },
                     
                     // Pull Request Activity
