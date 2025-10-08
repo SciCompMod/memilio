@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Martin J. Kuehn, Martin Siggel, Daniel Abele
@@ -31,13 +31,13 @@ namespace mio
 {
 
 /**
- * @brief The UncertainValue class consists of a 
+ * @brief The UncertainValue class consists of a
  *        scalar value and a Distribution object
- * 
+ *
  * The UncertainValue class represents a model parameter that
  * can take a scalar value but that is subjected to a uncertainty.
  * The uncertainty is represented by a distribution object of kind
- * ParameterDistribution and the current scalar value can be 
+ * ParameterDistribution and the current scalar value can be
  * replaced by drawing a new sample from the the distribution
  * @tparam FP underlying floating point type, e.g., double
  */
@@ -51,7 +51,7 @@ public:
     {
     }
 
-    UncertainValue(FP v = static_cast<FP>(0.))
+    UncertainValue(FP v = static_cast<FP>(0.0))
         : m_value(v)
     {
     }
@@ -59,7 +59,7 @@ public:
     UncertainValue(UncertainValue&& other) = default;
 
     /**
-    * @brief Create an UncertainValue by cloning scalar value 
+    * @brief Create an UncertainValue by cloning scalar value
     *        and distribution of another UncertainValue
     */
     UncertainValue(const UncertainValue& other)
@@ -79,6 +79,32 @@ public:
         UncertainValue tmp(other);
         m_value = tmp.m_value;
         std::swap(m_dist, tmp.m_dist);
+        return *this;
+    }
+
+    /**
+     * @brief Create an UncertainValue from a scalar of any type convertible to FP.
+     *
+     * This constructor allows initializing UncertainValue with scalars
+     * or AD (Automatic Differentiation) types that can be cast to FP.
+     * The distribution remains unset.
+     */
+    template <typename T, typename std::enable_if_t<std::is_convertible<T, FP>::value, int> = 0>
+    UncertainValue(T v)
+        : m_value(static_cast<FP>(v))
+    {
+    }
+
+    /**
+     * @brief Assign a scalar of any type convertible to FP to this UncertainValue.
+     *
+     * The contained scalar is updated, while the distribution remains unchanged.
+     * Supports scalars and AD (Automatic Differentiation) types that can be cast to FP.
+     */
+    template <typename T, typename std::enable_if_t<std::is_convertible<T, FP>::value, int> = 0>
+    UncertainValue<FP>& operator=(T v)
+    {
+        m_value = static_cast<FP>(v);
         return *this;
     }
 
@@ -158,7 +184,7 @@ public:
     }
 
     /**
-     * serialize this. 
+     * serialize this.
      * @see mio::serialize
      */
     template <class IOContext>
@@ -240,10 +266,240 @@ const FP& format_as(const UncertainValue<FP>& uv)
 
 // gtest printer
 // TODO: should be extended when UncertainValue gets operator== that compares distributions as well
-template <typename FP = double>
+template <typename FP>
 inline void PrintTo(const UncertainValue<FP>& uv, std::ostream* os)
 {
     (*os) << uv.value();
+}
+
+/**
+ * @defgroup UncertainValueOperators Free-standing operators for UncertainValue
+ * @{
+ *
+ * These operators enable seamless arithmetic between UncertainValue objects and 
+ * scalar or AD (Automatic Differentiation) types.
+ *
+ * Template parameter T:
+ *   - T is any type convertible to FP (the floating-point type of UncertainValue).
+ *   - This includes scalars and AD types, as long as they can be cast to FP.
+ *
+ * Why needed:
+ *   - UncertainValue is often used with both plain scalars (e.g., double, float, int)
+ *     and AD types (e.g., active_type, AD expression templates).
+ *   - Without these operators and templated constructors, assigning or operating on
+ *     UncertainValue with AD expressions or scalars would fail, as the compiler cannot
+ *     automatically convert complex AD expressions to UncertainValue.
+ */
+
+/** @name Comparison operators with scalar or AD type on right (UncertainValue <op> T) */
+//@{
+template <typename FP, typename T>
+inline bool operator>(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() > rhs;
+}
+template <typename FP, typename T>
+inline bool operator<(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() < rhs;
+}
+template <typename FP, typename T>
+inline bool operator>=(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() >= rhs;
+}
+template <typename FP, typename T>
+inline bool operator<=(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() <= rhs;
+}
+template <typename FP, typename T>
+inline bool operator==(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() == rhs;
+}
+template <typename FP, typename T>
+inline bool operator!=(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() != rhs;
+}
+//@}
+
+/** @name Comparison operators with scalar or AD type on left (T <op> UncertainValue) */
+//@{
+template <typename FP, typename T>
+inline bool operator>(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs > rhs.value();
+}
+template <typename FP, typename T>
+inline bool operator<(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs < rhs.value();
+}
+template <typename FP, typename T>
+inline bool operator>=(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs >= rhs.value();
+}
+template <typename FP, typename T>
+inline bool operator<=(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs <= rhs.value();
+}
+template <typename FP, typename T>
+inline bool operator==(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs == rhs.value();
+}
+template <typename FP, typename T>
+inline bool operator!=(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs != rhs.value();
+}
+//@}
+
+/** @name Comparison operators between two UncertainValue objects */
+//@{
+template <typename FP>
+inline bool operator>(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() > rhs.value();
+}
+template <typename FP>
+inline bool operator<(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() < rhs.value();
+}
+template <typename FP>
+inline bool operator>=(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() >= rhs.value();
+}
+template <typename FP>
+inline bool operator<=(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() <= rhs.value();
+}
+template <typename FP>
+inline bool operator==(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() == rhs.value();
+}
+template <typename FP>
+inline bool operator!=(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() != rhs.value();
+}
+//@}
+
+/** @name Arithmetic operators between two UncertainValue objects (returns FP) */
+//@{
+template <typename FP>
+inline FP operator*(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() * rhs.value();
+}
+template <typename FP>
+inline FP operator/(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() / rhs.value();
+}
+template <typename FP>
+inline FP operator+(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() + rhs.value();
+}
+template <typename FP>
+inline FP operator-(const UncertainValue<FP>& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs.value() - rhs.value();
+}
+//@}
+
+/** @name Arithmetic operators with scalar or AD type on right (UncertainValue <op> T) */
+//@{
+template <typename FP, typename T>
+inline FP operator*(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() * rhs;
+}
+template <typename FP, typename T>
+inline FP operator/(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() / rhs;
+}
+template <typename FP, typename T>
+inline FP operator+(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() + rhs;
+}
+template <typename FP, typename T>
+inline FP operator-(const UncertainValue<FP>& lhs, const T& rhs)
+{
+    return lhs.value() - rhs;
+}
+//@}
+
+/** @name Arithmetic operators with scalar or AD type on left (T <op> UncertainValue) */
+//@{
+template <typename FP, typename T>
+inline FP operator*(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs * rhs.value();
+}
+template <typename FP, typename T>
+inline FP operator/(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs / rhs.value();
+}
+template <typename FP, typename T>
+inline FP operator+(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs + rhs.value();
+}
+template <typename FP, typename T>
+inline FP operator-(const T& lhs, const UncertainValue<FP>& rhs)
+{
+    return lhs - rhs.value();
+}
+//@}
+
+/** @name Compound assignment operators for FP and UncertainValue<FP> */
+//@{
+template <typename FP>
+FP& operator+=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs += rhs.value();
+    return lhs;
+}
+template <typename FP>
+FP& operator-=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs -= rhs.value();
+    return lhs;
+}
+template <typename FP>
+FP& operator*=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs *= rhs.value();
+    return lhs;
+}
+template <typename FP>
+FP& operator/=(FP& lhs, const UncertainValue<FP>& rhs)
+{
+    lhs /= rhs.value();
+    return lhs;
+}
+//@}
+
+/**
+ * @brief Print statement for UncertainValue<FP> (required for AD types)
+ */
+template <typename FP>
+inline std::ostream& operator<<(std::ostream& os, const UncertainValue<FP>& uv)
+{
+    return os << uv.value();
 }
 
 } // namespace mio
