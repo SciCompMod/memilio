@@ -20,6 +20,19 @@
 #include "abm/simulation.h"
 #include "abm/common_abm_loggers.h"
 #include <algorithm>
+#include "abm/household.h"
+#include "abm/lockdown_rules.h"
+#include "abm/model.h"
+#include "abm/time.h"
+#include "memilio/compartments/parameter_studies.h"
+#include "memilio/data/analyze_result.h"
+#include "memilio/io/result_io.h"
+#include "memilio/utils/abstract_parameter_distribution.h"
+#include "memilio/utils/miompi.h"
+#include "memilio/utils/time_series.h"
+
+#include <boost/filesystem/path.hpp>
+#include <fstream>
 
 // shim class to make the abm simulation look like an ode simulation
 class ResultSim : public mio::abm::Simulation<mio::abm::Model>
@@ -33,9 +46,15 @@ public:
         history.log(*this); // set initial results
     }
 
-    void advance(double tmax)
+    ResultSim(const Model& m, mio::abm::TimePoint t)
+        : mio::abm::Simulation<mio::abm::Model>(t, Model(m))
     {
-        mio::abm::Simulation<mio::abm::Model>::advance(mio::abm::TimePoint{mio::abm::days(tmax).seconds()}, history);
+        history.log(*this); // set initial results
+    }
+
+    void advance(mio::abm::TimePoint tmax)
+    {
+        mio::abm::Simulation<mio::abm::Model>::advance(tmax, history);
     }
 
     const mio::TimeSeries<double>& get_result() const
@@ -47,46 +66,9 @@ public:
         Eigen::Index(mio::abm::InfectionState::Count)};
 };
 
-// graph ode specific function, overload with noop to avoid compiler errors
-template <class, class>
-void calculate_mobility_returns(Eigen::Ref<typename mio::TimeSeries<double>::Vector>, const ResultSim&,
-                                Eigen::Ref<const typename mio::TimeSeries<double>::Vector>, double, double)
-{
-}
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-
-namespace mio
-{
-
-// overload for ResultSim without mobility
-auto make_mobility_sim(double t0, double dt, Graph<SimulationNode<ResultSim>, MobilityEdge<double>>&& graph)
-{
-    using GraphT = GraphSimulation<Graph<SimulationNode<ResultSim>, MobilityEdge<double>>, double, double,
-                                   void (*)(double, double, mio::MobilityEdge<double>&, mio::SimulationNode<ResultSim>&,
-                                            mio::SimulationNode<ResultSim>&),
-                                   void (*)(double, double, mio::SimulationNode<ResultSim>&)>;
-    return GraphT(t0, dt, std::move(graph),
-                  static_cast<void (*)(double, double, SimulationNode<ResultSim>&)>(&advance_model<ResultSim>),
-                  [](double, double, MobilityEdge<double>&, SimulationNode<ResultSim>&, SimulationNode<ResultSim>&) {});
-}
-
-} // namespace mio
-
-#include "abm/household.h"
-#include "abm/lockdown_rules.h"
-#include "abm/model.h"
-#include "abm/time.h"
-#include "memilio/compartments/parameter_studies.h"
-#include "memilio/data/analyze_result.h"
-#include "memilio/io/result_io.h"
-#include "memilio/utils/abstract_parameter_distribution.h"
-#include "memilio/utils/time_series.h"
-
-#include <boost/filesystem/path.hpp>
-#include <fstream>
-
 int main()
 {
+    mio::mpi::init();
     // This is a minimal example with children and adults < 60 year old.
     // We divided them into 4 different age groups, which are defined as follows:
     mio::set_log_level(mio::LogLevel::warn);
@@ -95,7 +77,6 @@ int main()
     const auto age_group_5_to_14  = mio::AgeGroup(1);
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
-
     // Create the model with 4 age groups.
     auto model = mio::abm::Model(num_age_groups);
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
@@ -111,7 +92,7 @@ int main()
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 10;
+    int n_households = 100;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -213,40 +194,42 @@ int main()
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(10);
+    auto tmax = t0 + mio::abm::days(100);
     // auto sim  = mio::abm::Simulation(t0, std::move(model));
-    const size_t num_runs = 10;
+    const size_t num_runs = 100;
 
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
 
-    mio::ParameterStudy<ResultSim> study(model, t0.days(), tmax.days(), num_runs);
+    mio::ParameterStudy2<ResultSim, mio::abm::Model, mio::abm::TimePoint, mio::abm::TimeSpan> study(
+        model, t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
     auto ensemble = study.run(
-        [](auto&& graph) {
-            // TODO: some actual sampling so that the percentiles show anything
-            return graph;
+        [](auto&& model_, auto t0_, auto) {
+            // TODO: change the parameters around a bit?
+            auto sim = ResultSim(model_, t0_);
+            sim.get_model().get_rng().generate_seeds();
+            return sim;
         },
-        [&](auto results_graph, auto&& /* run_idx */) {
-            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+        [](auto&& sim, auto&& /* run_idx */) {
+            auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
 
             auto params = std::vector<mio::abm::Model>{};
-            params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                           [](auto&& node) {
-                               return node.property.get_simulation().get_model();
-                           });
-            return std::make_pair(std::move(interpolated_result), std::move(params));
+            return std::make_pair(std::move(interpolated_result), sim.get_model());
         });
+
     if (ensemble.size() > 0) {
         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::abm::Model>>{};
         ensemble_params.reserve(ensemble.size());
+        int j = 0;
+        std::cout << "## " << ensemble[0].first.get_value(0).transpose() << "\n";
         for (auto&& run : ensemble) {
-            ensemble_results.emplace_back(std::move(run.first));
-            ensemble_params.emplace_back(std::move(run.second));
+            std::cout << j++ << " " << run.first.get_last_value().transpose() << "\n";
+            ensemble_results.emplace_back(std::vector{std::move(run.first)});
+            ensemble_params.emplace_back(std::vector{std::move(run.second)});
         }
 
         auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
@@ -274,14 +257,16 @@ int main()
     // Run the simulation until tmax with the history object.
     // sim.advance(tmax, historyTimeSeries);
 
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    // // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
+    // // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
+    // // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
+    // // I_Crit = InfectedCritical, R = Recovered, D = Dead
+    // std::ofstream outfile("abm_minimal.txt");
+    // std::get<0>(historyTimeSeries.get_log())
+    //     .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+    // std::cout << "Results written to abm_minimal.txt" << std::endl;
+
+    mio::mpi::finalize();
 
     return 0;
 }
