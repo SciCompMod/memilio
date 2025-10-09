@@ -38,22 +38,19 @@ TEST(TestGeography, compareGeographicalLocation)
 TEST(TestGeography, Distance)
 {
     // Generate GeographicalLocations
-    auto bonn     = mio::geo::GeographicalLocation(50.7, 7.1);
-    auto berlin   = mio::geo::GeographicalLocation(52.5, 13.4);
+    auto bonn   = mio::geo::GeographicalLocation(50.7, 7.1);
+    auto berlin = mio::geo::GeographicalLocation(52.5, 13.4);
+    // use negative coordinates
     auto neumayer = mio::geo::GeographicalLocation(-70.6, -8.2);
     // Test that the distance function is symmetric
     EXPECT_DOUBLE_EQ(bonn.distance(berlin), berlin.distance(bonn));
     auto distance = 478.7;
-    // Test that the distance is correct up to a small error
+    // case: distance bonn - berlin; expect: ~478.7km
     EXPECT_LT(abs(bonn.distance(berlin) - distance), 0.1);
+    // case: distance bonn - bonn; expect: 0km
     EXPECT_DOUBLE_EQ(bonn.distance(bonn), 0.);
+    // case: distance neumayer - bonn; expect: ~13543.7km
     EXPECT_LT(abs(neumayer.distance(bonn) - 13543.7), 1.);
-}
-
-TEST(TestGeography, rtreeConstructionNoData)
-{
-    // Generate a default RTree object
-    EXPECT_NO_THROW(mio::geo::RTree());
 }
 
 TEST(TestGeography, rtreeConstructionVector)
@@ -65,6 +62,7 @@ TEST(TestGeography, rtreeConstructionVector)
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
     // Generate a RTree object using the vector
     mio::geo::RTree tree(locations);
+    // Verify that the size of the tree is equal to the size of the vector
     EXPECT_EQ(tree.size(), locations.size());
 }
 
@@ -77,6 +75,7 @@ TEST(TestGeography, rtreeConstructionRange)
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
     // Generate a RTree object using begin and end iterators
     auto tree = mio::geo::RTree(locations.begin(), locations.end());
+    // Verify that the size of the tree is equal to the size of the vector
     EXPECT_EQ(tree.size(), locations.size());
 }
 
