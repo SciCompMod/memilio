@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2020-2025 MEmilio
+* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
 *
 * Authors: Julia Bicker, Kilian Volmer
 *
