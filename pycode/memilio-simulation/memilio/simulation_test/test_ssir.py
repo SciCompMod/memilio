@@ -38,7 +38,7 @@ class Test_ssir_integration(unittest.TestCase):
     def setUp(self):
         # Initialize model similar to the example
         self.population = 10000
-        self.days = 5.0
+        self.tmax = 5.0
         self.dt = 0.1
 
         model = Model()

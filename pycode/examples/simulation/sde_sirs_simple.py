@@ -28,12 +28,12 @@ from memilio.simulation.ssirs import (
 
 
 def run_sde_sirs_simulation():
-    """Runs the c++ SDE SIRs model"""
+    """Runs SDE SIRS model"""
 
     # Define population of age groups
     population = 10000
 
-    days = 5.  # number of days to simulate
+   tmax = 5.  # simulation time frame
     dt = 0.001
 
     # Initialize Parameters

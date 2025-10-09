@@ -91,7 +91,7 @@ PYBIND11_MODULE(_simulation_ssirs, m)
         [](double t0, double tmax, double dt, mio::ssirs::Model const& model) {
             return mio::simulate_stochastic<double, mio::ssirs::Model>(t0, tmax, dt, model);
         },
-        "Simulates an SDE SIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an SDE SIRS model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
 
     m.attr("__version__") = "dev";
 }
