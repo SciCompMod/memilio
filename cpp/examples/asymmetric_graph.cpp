@@ -23,11 +23,13 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/random_number_generator.h"
 #include "smm/simulation.h"
 #include "smm/parameters.h"
+#include "thirdparty/csv.h"
 #include <ranges>
 
 enum class InfectionState
@@ -50,7 +52,6 @@ int main(int /*argc*/, char** /*argv*/)
 
     using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
     Model model;
-
     auto home = mio::regions::Region(0);
 
     model.populations[{home, InfectionState::E}] = num_exp;
@@ -64,39 +65,33 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.5}}});
     model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
 
-    auto model2                                   = model;
-    model2.populations[{home, InfectionState::I}] = 9000;
-    model2.populations[{home, InfectionState::S}] = 800;
-
-    auto rng = mio::RandomNumberGenerator();
-
     mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
                mio::MobilityEdgeDirected<ScalarType>>
         graph;
-    graph.add_node(0, mio::UniformDistribution<ScalarType>::get_instance()(rng, 6.0, 15.0),
-                   mio::UniformDistribution<ScalarType>::get_instance()(rng, 48.0, 54.0), model2, t0);
-    graph.add_node(1, mio::UniformDistribution<ScalarType>::get_instance()(rng, 6.0, 15.0),
-                   mio::UniformDistribution<ScalarType>::get_instance()(rng, 48.0, 54.0), model2, t0);
-    size_t num_nodes = 2000;
-    for (size_t i = 2; i < num_nodes; i++) {
-        auto local_model = model;
-        graph.add_node(i, mio::UniformDistribution<ScalarType>::get_instance()(rng, 6.0, 15.0),
-                       mio::UniformDistribution<ScalarType>::get_instance()(rng, 48.0, 54.0), local_model, t0);
+
+    io::CSVReader<4> farms("../../farms.csv");
+    farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
+    int farm_id, num_cows;
+    double latitude, longitude;
+    while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
+        Model curr_model;
+        curr_model.populations[{home, InfectionState::S}]                                = num_cows;
+        curr_model.populations[{home, InfectionState::E}]                                = 0;
+        curr_model.populations[{home, InfectionState::I}]                                = 0;
+        curr_model.populations[{home, InfectionState::R}]                                = 0;
+        curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
+        graph.add_node(farm_id, longitude, latitude, curr_model, t0);
     }
+
+    auto rng = mio::RandomNumberGenerator();
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({model.populations.get_flat_index({home, InfectionState::I})});
 
-    auto param = mio::MobilityParametersTimed(2.0, 10, 1);
-    graph.add_edge(0, 1, interesting_indices);
-
-    auto distribution = mio::DiscreteDistributionInPlace<size_t>();
-
-    std::vector<ScalarType> uniform_vector(num_nodes, 1.0);
-    mio::log_info("Nodes generated");
-    for (size_t i = 0; i < 3 * num_nodes; ++i) {
-        auto to   = distribution(rng, {uniform_vector});
-        auto from = distribution(rng, {uniform_vector});
+    io::CSVReader<2> edges("../../edges.csv");
+    edges.read_header(io::ignore_extra_column, "from", "to");
+    int from, to;
+    while (edges.read_row(from, to)) {
         graph.add_edge(from, to, interesting_indices);
     }
 
@@ -118,14 +113,12 @@ int main(int /*argc*/, char** /*argv*/)
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    for (size_t i = 0; i < 3 * num_nodes; i++) {
-        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
-    }
-    for (size_t i = 0; i < 3 * num_nodes; i++) {
-        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
-    }
-    for (size_t i = 0; i < 3 * num_nodes; i++) {
-        sim.add_exchange(distribution(rng, {std::vector<double>(100, 1)}) + 1, 10, i);
+    io::CSVReader<5> exchanges("../../trade.csv");
+    exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to", "edge");
+
+    int date, num_animals, edge;
+    while (exchanges.read_row(date, num_animals, from, to, edge)) {
+        sim.add_exchange(date, num_animals, edge);
     }
 
     mio::log_info("Number of exchanges: {}", sim.get_parameters().size());

@@ -75,6 +75,11 @@ public:
         regional_neighbor_indices = neighbors;
     }
 
+    auto get_regional_neighbors() const
+    {
+        return regional_neighbor_indices;
+    }
+
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
     std::vector<std::vector<size_t>> regional_neighbor_indices;
