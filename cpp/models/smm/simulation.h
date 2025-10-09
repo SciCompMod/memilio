@@ -77,6 +77,30 @@ public:
         }
     }
 
+    Simulation(const Simulation& other)
+        : m_dt(other.m_dt)
+        , m_model(std::make_unique<Model>(*other.m_model))
+        , m_result(other.m_result)
+        , m_internal_time(other.m_internal_time)
+        , m_tp_next_event(other.m_tp_next_event)
+        , m_waiting_times(other.m_waiting_times)
+        , m_current_rates(other.m_current_rates)
+    {
+    }
+
+    Simulation& operator=(const Simulation& other)
+    {
+        if (this != &other) {
+            m_model         = std::make_unique<Model>(*other.m_model);
+            m_result        = other.m_result;
+            m_internal_time = other.m_internal_time;
+            m_tp_next_event = other.m_tp_next_event;
+            m_waiting_times = other.m_waiting_times;
+            m_current_rates = other.m_current_rates;
+        }
+        return *this;
+    }
+
     /**
      * @brief Advance simulation to tmax.
      * This function performs a Gillespie algorithm.
