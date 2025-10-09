@@ -444,7 +444,7 @@ public:
     std::vector<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>
     run(CreateSimulationFunction&& create_simulation, ProcessSimulationResultFunction&& process_simulation_result)
     {
-        static_assert(std::is_invocable_r_v<Simulation, CreateSimulationFunction, Parameters, Time, Step>,
+        static_assert(std::is_invocable_r_v<Simulation, CreateSimulationFunction, Parameters, Time, Step, size_t>,
                       "Incorrect Type for create_simulation.");
         static_assert(std::is_invocable_v<ProcessSimulationResultFunction, Simulation, size_t>,
                       "Incorrect Type for process_simulation_result.");
@@ -482,7 +482,7 @@ public:
             thread_local_rng().set_counter(run_rng_counter);
 
             //sample
-            auto sim = create_simulation(m_parameters, m_t0, m_dt);
+            auto sim = create_simulation(m_parameters, m_t0, m_dt, run_idx);
             log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
                 (thread_local_rng().get_counter() - run_rng_counter).get());
 

@@ -32,6 +32,7 @@
 #include "memilio/utils/time_series.h"
 
 #include <boost/filesystem/path.hpp>
+#include <cstddef>
 #include <fstream>
 
 // shim class to make the abm simulation look like an ode simulation
@@ -206,10 +207,10 @@ int main()
         model, t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
     auto ensemble = study.run(
-        [](auto&& model_, auto t0_, auto) {
+        [](auto&& model_, auto t0_, auto, size_t run_idx) {
             // TODO: change the parameters around a bit?
             auto sim = ResultSim(model_, t0_);
-            sim.get_model().get_rng().generate_seeds();
+            sim.get_model().get_rng().set_counter(mio::Counter<uint64_t>(run_idx));
             return sim;
         },
         [](auto&& sim, auto&& /* run_idx */) {
