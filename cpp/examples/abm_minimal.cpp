@@ -35,6 +35,8 @@
 #include <cstddef>
 #include <fstream>
 
+constexpr size_t num_age_groups = 4;
+
 // shim class to make the abm simulation look like an ode simulation
 class ResultSim : public mio::abm::Simulation<mio::abm::Model>
 {
@@ -67,19 +69,23 @@ public:
         Eigen::Index(mio::abm::InfectionState::Count)};
 };
 
-int main()
+mio::abm::Model make_model(uint32_t run_idx)
 {
-    mio::mpi::init();
-    // This is a minimal example with children and adults < 60 year old.
-    // We divided them into 4 different age groups, which are defined as follows:
-    mio::set_log_level(mio::LogLevel::warn);
-    size_t num_age_groups         = 4;
+
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_14  = mio::AgeGroup(1);
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
     // Create the model with 4 age groups.
-    auto model = mio::abm::Model(num_age_groups);
+    auto model                            = mio::abm::Model(num_age_groups);
+    std::initializer_list<uint32_t> seeds = {14159265, 243141u + run_idx};
+    auto rng                              = mio::RandomNumberGenerator();
+    rng.seed(seeds);
+    auto run_rng_counter =
+        mio::rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), mio::Counter<uint32_t>(0));
+    rng.set_counter(run_rng_counter);
+    model.get_rng() = rng;
+
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
@@ -164,9 +170,9 @@ int main()
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto person_rng = mio::abm::PersonalRandomNumberGenerator(person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(person_rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
         }
     }
@@ -193,31 +199,45 @@ int main()
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
     mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
+    return model;
+}
+
+int main()
+{
+    mio::mpi::init();
+    // This is a minimal example with children and adults < 60 year old.
+    // We divided them into 4 different age groups, which are defined as follows:
+
+    mio::set_log_level(mio::LogLevel::warn);
+
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(100);
+    auto tmax = t0 + mio::abm::days(5);
     // auto sim  = mio::abm::Simulation(t0, std::move(model));
-    const size_t num_runs = 100;
+    const size_t num_runs = 10;
 
     // Create a history object to store the time series of the infection states.
     mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
         Eigen::Index(mio::abm::InfectionState::Count)};
 
-    mio::ParameterStudy2<ResultSim, mio::abm::Model, mio::abm::TimePoint, mio::abm::TimeSpan> study(
-        model, t0, tmax, mio::abm::TimeSpan(0), num_runs);
+    mio::ParameterStudy2<ResultSim, int, mio::abm::TimePoint, mio::abm::TimeSpan> study(
+        1, t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
     auto ensemble = study.run(
-        [](auto&& model_, auto t0_, auto, size_t run_idx) {
+        [](auto&&, auto t0_, auto, size_t run_idx) {
             // TODO: change the parameters around a bit?
-            auto sim = ResultSim(model_, t0_);
-            sim.get_model().get_rng().set_counter(mio::Counter<uint64_t>(run_idx));
+
+            auto sim = ResultSim(make_model(run_idx), t0_);
             return sim;
         },
-        [](auto&& sim, auto&& /* run_idx */) {
+        [](auto&& sim, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
-
+            std::string name_run     = "abm_minimal_run_" + std::to_string(run_idx) + ".txt";
+            std::ofstream outfile_run(name_run);
+            sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+            std::cout << "Results written to " << name_run << std::endl;
             auto params = std::vector<mio::abm::Model>{};
-            return std::make_pair(std::move(interpolated_result), sim.get_model());
+            return std::move(interpolated_result);
         });
 
     if (ensemble.size() > 0) {
@@ -225,35 +245,35 @@ int main()
         ensemble_results.reserve(ensemble.size());
         auto ensemble_params = std::vector<std::vector<mio::abm::Model>>{};
         ensemble_params.reserve(ensemble.size());
-        int j = 0;
-        std::cout << "## " << ensemble[0].first.get_value(0).transpose() << "\n";
-        for (auto&& run : ensemble) {
-            std::cout << j++ << " " << run.first.get_last_value().transpose() << "\n";
-            ensemble_results.emplace_back(std::vector{std::move(run.first)});
-            ensemble_params.emplace_back(std::vector{std::move(run.second)});
-        }
+        // int j = 0;
+        // std::cout << "## " << ensemble[0].first.get_value(0).transpose() << "\n";
+        // for (auto&& run : ensemble) {
+        //     std::cout << j++ << " " << run.first.get_last_value().transpose() << "\n";
+        //     ensemble_results.emplace_back(std::vector{std::move(run.first)});
+        //     ensemble_params.emplace_back(std::vector{std::move(run.second)});
+        // }
 
-        auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
-        auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
-        auto ensemble_results_p50 = ensemble_percentile(ensemble_results, 0.50);
-        auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
-        auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
+        //     auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
+        //     auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
+        //     auto ensemble_results_p50 = ensemble_percentile(ensemble_results, 0.50);
+        //     auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
+        //     auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
 
-        const boost::filesystem::path save_dir = "/home/schm_r6/Code/memilio/memilio/results/";
+        //     const boost::filesystem::path save_dir = "/Users/saschakorf/Nosynch/Arbeit/memilio/cpp/examples/results";
 
-        if (!save_dir.empty()) {
+        //     if (!save_dir.empty()) {
 
-            mio::unused(save_result(ensemble_results_p05, {0}, num_age_groups,
-                                    (save_dir / ("Results_" + std::string("p05") + ".h5")).string()));
-            mio::unused(save_result(ensemble_results_p25, {0}, num_age_groups,
-                                    (save_dir / ("Results_" + std::string("p25") + ".h5")).string()));
-            mio::unused(save_result(ensemble_results_p50, {0}, num_age_groups,
-                                    (save_dir / ("Results_" + std::string("p50") + ".h5")).string()));
-            mio::unused(save_result(ensemble_results_p75, {0}, num_age_groups,
-                                    (save_dir / ("Results_" + std::string("p75") + ".h5")).string()));
-            mio::unused(save_result(ensemble_results_p95, {0}, num_age_groups,
-                                    (save_dir / ("Results_" + std::string("p95") + ".h5")).string()));
-        }
+        //         mio::unused(save_result(ensemble_results_p05, {0}, num_age_groups,
+        //                                 (save_dir / ("Results_" + std::string("p05") + ".h5")).string()));
+        //         mio::unused(save_result(ensemble_results_p25, {0}, num_age_groups,
+        //                                 (save_dir / ("Results_" + std::string("p25") + ".h5")).string()));
+        //         mio::unused(save_result(ensemble_results_p50, {0}, num_age_groups,
+        //                                 (save_dir / ("Results_" + std::string("p50") + ".h5")).string()));
+        //         mio::unused(save_result(ensemble_results_p75, {0}, num_age_groups,
+        //                                 (save_dir / ("Results_" + std::string("p75") + ".h5")).string()));
+        //         mio::unused(save_result(ensemble_results_p95, {0}, num_age_groups,
+        //                                 (save_dir / ("Results_" + std::string("p95") + ".h5")).string()));
+        //     }
     }
     // Run the simulation until tmax with the history object.
     // sim.advance(tmax, historyTimeSeries);
