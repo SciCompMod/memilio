@@ -89,6 +89,11 @@ public:
         return !(m_latitude == other.m_latitude && m_longitude == other.m_longitude);
     }
 
+    bool is_close(const GeographicalLocation& other, double tol = 1e-10) const
+    {
+        return distance(other) < tol;
+    }
+
     /**
      * @brief Default serialize the GeographicalLocation object.
      * 
@@ -101,8 +106,8 @@ public:
 
     void check_input() const
     {
-        assert(m_latitude <= 90. && m_latitude >= -90.);
-        assert(m_longitude <= 180. && m_longitude >= -180.);
+        assert(m_latitude <= 90. && m_latitude >= -90. && "Latitude must be in [-90, 90]");
+        assert(m_longitude <= 180. && m_longitude >= -180. && "Longitude must be in [-180, 180]");
     }
 
     /*
@@ -155,6 +160,7 @@ public:
     void set_latitude(double lat)
     {
         m_latitude = lat;
+        check_input();
     }
 
     /**
@@ -165,6 +171,7 @@ public:
     void set_longitude(double lon)
     {
         m_longitude = lon;
+        check_input();
     }
 
 private:

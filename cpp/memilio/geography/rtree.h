@@ -39,6 +39,7 @@ namespace mio
 {
 namespace geo
 {
+// Point stores longitude and latitude in this order.
 using Point = bg::model::point<double, 2, bg::cs::geographic<bg::degree>>;
 using Node  = std::pair<Point, size_t>;
 

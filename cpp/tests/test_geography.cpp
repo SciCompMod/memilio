@@ -33,6 +33,16 @@ TEST(TestGeography, compareGeographicalLocation)
     EXPECT_TRUE(geographical_location == geographical_location2);
     // Verify that the set GeographicalLocations are not equal.
     EXPECT_FALSE(geographical_location == geographical_location3);
+    // Verify that the set GeographicalLocations are not equal.
+    EXPECT_TRUE(geographical_location != geographical_location3);
+    // Verify that the set GeographicalLocations are equal.
+    EXPECT_FALSE(geographical_location != geographical_location2);
+    // Verify that the set GeographicalLocations are close.
+    EXPECT_TRUE(geographical_location.is_close(geographical_location2));
+    // Verify that the set GeographicalLocations are not close.
+    EXPECT_FALSE(geographical_location.is_close(geographical_location3));
+    // Verify that the set GeographicalLocations are close with large tolerance.
+    EXPECT_TRUE(geographical_location.is_close(geographical_location3, 600));
 }
 
 TEST(TestGeography, Distance)
