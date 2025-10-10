@@ -34,6 +34,12 @@ There also exist other IO modules that are implemented for specific models.
 The command line interface
 --------------------------
 
+.. note::
+
+    The CLI requires the JsonCPP dependency to be enabled, which is the default when building MEmilio.
+    You can use the cmake variable ``MEMILIO_HAS_JSONCPP`` and the preprocessor macro of the same name to check if the
+    dependency (and the command line interface) is available.
+
 We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
 or read from a parameter set. It can take parameters from command line arguments (i.e. the content of ``argv`` in the
 main function), and assign them to or get them from a ``mio::ParameterSet``. If the parameter set is only used for the
