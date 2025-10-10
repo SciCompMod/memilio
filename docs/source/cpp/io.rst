@@ -79,7 +79,7 @@ parameter that can be set.
 
 To set the value of a parameter from the command line, first type the corresponding parameter option (see ``--help``),
 followed by the value that should be assigned (reference ``--print_option``). Values are given as a JSON value
-corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
+corresponding to the type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
 JSON string ``"some string"`` must be entered as ``\\"some string\\"`` or ``'"some string"'``.
 
 
@@ -97,10 +97,10 @@ Here we briefly list available features of the CLI:
 
   .. code:: cpp
 
-      auto result = mio::command_line_interface("example-programm", argc, argv, parameters, {"Path", "N"});
+      auto result = mio::command_line_interface("example-program", argc, argv, parameters, {"Path", "N"});
 
-  Now, calling ``example-programm /path/to/something 5`` is equivalent to
-  ``example-programm --Path /path/to/something --N 5``.
+  Now, calling ``example-program /path/to/something 5`` is equivalent to
+  ``example-program --Path /path/to/something --N 5``.
   Make sure to add quotes to values that contain spaces! 
 
 - Required parameters: The CLI checks that all required parameters are set, and returns an error if some were not set.
@@ -115,7 +115,7 @@ The ``mio::cli::ParameterSetBuilder`` can be used to create parameters specifica
 purpose parameters, check out ``mio::ParameterSet``.
 
 In the following example, we create a ``mio::cli::ParameterSet`` with two parameters. One minimal parameter called "A"
-of type ``int`` with default value 5, and a parameter called "B" of type ``double`` with value 2.5, that uses all
+of type ``int`` with initial value 5, and a parameter called "B" of type ``double`` with value 2.5, that uses all
 optional features (alias, description, and the required flag).
 
 .. code-block:: cpp
@@ -174,7 +174,7 @@ B as structs in the dropdown below.
 
 .. dropdown:: :fa:`gears` Expert's knowledge
 
-    Internally, the CLI uses type erasure via a ``AbstractParameter`` class to avoid dealing with the long template
+    Internally, the CLI uses type erasure via an ``AbstractParameter`` class to avoid dealing with the long template
     lists needed to use a ``mio::ParametSet`` directly. There are two classes for managing a set of
     ``AbstractParameter``\s, the ``AbstractSet``, used internally with runtime lookup for parameters by name or alias,
     and the ``mio::cli::ParameterSet``, which allows direct access of parameters via ``StringLiteral``\s while restoring
