@@ -69,29 +69,31 @@ PYBIND11_MODULE(_simulation_ssirs, m)
         .value("Infected", mio::ssirs::InfectionState::Infected)
         .value("Recovered", mio::ssirs::InfectionState::Recovered);
 
-    pymio::bind_ParameterSet<mio::ssirs::ParametersBase, pymio::EnablePickling::Never>(m, "ParametersBase");
+    pymio::bind_ParameterSet<mio::ssirs::ParametersBase<double>, pymio::EnablePickling::Never>(m, "ParametersBase");
 
-    pymio::bind_class<mio::ssirs::Parameters, pymio::EnablePickling::Required, mio::ssirs::ParametersBase>(m,
-                                                                                                           "Parameters")
+    pymio::bind_class<mio::ssirs::Parameters<double>, pymio::EnablePickling::Required,
+                      mio::ssirs::ParametersBase<double>>(m, "Parameters")
         .def(py::init<>())
-        .def("check_constraints", &mio::ssirs::Parameters::check_constraints)
-        .def("apply_constraints", &mio::ssirs::Parameters::apply_constraints);
+        .def("check_constraints", &mio::ssirs::Parameters<double>::check_constraints)
+        .def("apply_constraints", &mio::ssirs::Parameters<double>::apply_constraints);
 
     using Populations = mio::Populations<double, mio::ssirs::InfectionState>;
-    pymio::bind_Population(m, "Populations", mio::Tag<mio::ssirs::Model::Populations>{});
-    pymio::bind_CompartmentalModel<mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters,
+    pymio::bind_Population(m, "Populations", mio::Tag<mio::ssirs::Model<double>::Populations>{});
+    pymio::bind_CompartmentalModel<mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters<double>,
                                    pymio::EnablePickling::Never>(m, "ModelBase");
-    pymio::bind_class<mio::ssirs::Model, pymio::EnablePickling::Never,
-                      mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters>>(
+    pymio::bind_class<
+        mio::ssirs::Model<double>, pymio::EnablePickling::Never,
+        mio::CompartmentalModel<double, mio::ssirs::InfectionState, Populations, mio::ssirs::Parameters<double>>>(
         m, "Model")
         .def(py::init<>());
 
     m.def(
         "simulate_stochastic",
-        [](double t0, double tmax, double dt, mio::ssirs::Model const& model) {
-            return mio::simulate_stochastic<double, mio::ssirs::Model>(t0, tmax, dt, model);
+        [](double t0, double tmax, double dt, mio::ssirs::Model<double> const& model) {
+            return mio::simulate_stochastic<double, mio::ssirs::Model<double>>(t0, tmax, dt, model);
         },
-        "Simulates an SDE SIRS model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("model"));
+        "Simulates an SDE SIRS model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+        py::arg("model"));
 
     m.attr("__version__") = "dev";
 }
