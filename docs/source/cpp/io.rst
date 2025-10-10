@@ -36,7 +36,7 @@ The command line interface
 
 .. note::
 
-    The CLI requires the JsonCPP dependency to be enabled, which is the default when building MEmilio.
+    The command line interface (CLI) requires the JsonCPP dependency to be enabled, which is the default when building MEmilio.
     You can use the cmake variable ``MEMILIO_HAS_JSONCPP`` and the preprocessor macro of the same name to check if the
     dependency (and the command line interface) is available.
 
@@ -48,8 +48,8 @@ CLI, make use of the ``mio::cli::ParameterSetBuilder``. A small example can be s
 
 .. note::
 
-    The CLI communicates using the error message in its result. Hence, all dialogue, including the help text, is
-    passed through the return value. Use the following code snippet to correctly return error codes and messages:
+    The CLI function communicates using the error message in its result. Hence, all dialogue, including the help text,
+    is passed through its return value. Use the following code snippet to correctly return error codes and messages:
 
     .. code-block:: cpp
 
@@ -59,7 +59,7 @@ CLI, make use of the ``mio::cli::ParameterSetBuilder``. A small example can be s
             return result.error().code().value();
         }
 
-The command line interface (CLI) provides some built-in options, listed below.
+The CLI provides some built-in options, listed below.
 
 ====================== =====================================
 Name  (Alias)          Description
