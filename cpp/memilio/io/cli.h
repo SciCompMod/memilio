@@ -454,13 +454,19 @@ public:
             return IOResult<void>(param.error().code(), "Could not set parameter: " + param.error().message());
         }
         else {
-            param.value()->second.DatalessParameter::is_required = false; // mark as set
-            // try to set the value. append parsing errors if not successful
+            // try to set the value
             IOResult<void> result = param.value()->second.set(value);
-            if (result || parse_errors.empty()) {
+            if (result) {
+                // mark as set. we reuse the is_required flag for this, to make checks and repeated CLI calls easier
+                param.value()->second.DatalessParameter::is_required = false;
+                return result;
+            }
+            else if (parse_errors.empty()) {
+                // no need to modify result if there are no parsing errors
                 return result;
             }
             else {
+                // append parsing errors to original error
                 return mio::failure(result.error().code(), result.error().message() + "\n" + parse_errors);
             }
         }
@@ -564,7 +570,10 @@ private:
 void write_help(const std::string& executable_name, const AbstractSet& set,
                 const std::vector<std::string>& default_options, std::ostream& os);
 
-/// @brief Implementation of the CLI. See the main function below for details.
+/**
+ * @brief Implementation of the CLI. See the main function below for details.
+ * This function may overwrite parameter values and is_required flags.
+ */
 mio::IOResult<void> command_line_interface(const std::string& executable_name, const int argc, char** argv,
                                            cli::details::AbstractSet& parameters,
                                            const std::vector<std::string>& default_options);
