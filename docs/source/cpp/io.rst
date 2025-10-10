@@ -37,7 +37,7 @@ The command line interface
 .. note::
 
     The command line interface (CLI) requires the JsonCPP dependency to be enabled, which is the default when building MEmilio.
-    You can use the cmake variable ``MEMILIO_HAS_JSONCPP`` and the preprocessor macro of the same name to check if the
+    You can use the CMake variable ``MEMILIO_HAS_JSONCPP`` and the preprocessor macro of the same name to check if the
     dependency (and the command line interface) is available.
 
 We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
