@@ -246,10 +246,10 @@ private:
         //BOOST_OUTCOME_TRY(auto&& node_ids, node_func(population_data_path, is_node_for_county, rki_age_groups));
         // BOOST_OUTCOME_TRY(set_synthetic_population_data(model));
         if (m_use_county){
-            BOOST_OUTCOME_TRY(set_population_data_germany<FP>(graph, params));
+            BOOST_OUTCOME_TRY(set_population_data_county<FP>(graph, params));
         }
         else {
-            BOOST_OUTCOME_TRY(set_population_data_county<FP>(graph, params));
+            BOOST_OUTCOME_TRY(set_population_data_germany<FP>(graph, params));
         }
         // model.apply_constraints();
 
