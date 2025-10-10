@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2024 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Julia Bicker, René Schmieding
 *
@@ -41,9 +41,9 @@ int main()
 
     //Example how to run the stochastic metapopulation models with four regions
     const size_t num_regions = 4;
-    using Model              = mio::smm::Model<num_regions, InfectionState>;
+    using Model              = mio::smm::Model<ScalarType, num_regions, InfectionState>;
 
-    double numE = 12, numC = 4, numI = 12, numR = 0, numD = 0;
+    ScalarType numE = 12, numC = 4, numI = 12, numR = 0, numD = 0;
 
     Model model;
     //Population are distributed uniformly to the four regions
@@ -58,8 +58,8 @@ int main()
     }
 
     //Set infection state adoption and spatial transition rates
-    std::vector<mio::AdoptionRate<InfectionState>> adoption_rates;
-    std::vector<mio::smm::TransitionRate<InfectionState>> transition_rates;
+    std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
+    std::vector<mio::smm::TransitionRate<ScalarType, InfectionState>> transition_rates;
     for (size_t r = 0; r < num_regions; ++r) {
         adoption_rates.push_back({InfectionState::S,
                                   InfectionState::E,
@@ -86,11 +86,11 @@ int main()
         }
     }
 
-    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
-    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
+    model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>()   = adoption_rates;
+    model.parameters.get<mio::smm::TransitionRates<ScalarType, InfectionState>>() = transition_rates;
 
-    double dt   = 0.1;
-    double tmax = 30.;
+    ScalarType dt   = 0.1;
+    ScalarType tmax = 30.0;
 
     auto sim = mio::smm::Simulation(model, 0.0, dt);
     sim.advance(tmax);

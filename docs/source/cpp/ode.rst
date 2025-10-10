@@ -144,3 +144,4 @@ List of models
     models/osecir
     models/osecirvvs
     models/osecirts
+    models/omseirs4

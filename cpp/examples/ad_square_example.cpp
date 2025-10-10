@@ -18,16 +18,16 @@
 * limitations under the License.
 */
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 #include <iostream>
 
 /*  This example computes the derivative of f(x) = x^2 in two different ways:
  *  1. Using the forward mode of algorithmic differentiation (AD)
- *  2. Using the reverse mode of algorithmic differentiation 
- *  
+ *  2. Using the reverse mode of algorithmic differentiation
+ *
  *  Assume, a subroutine is given that computes y = f(x), where x is an n-dimenstional input vector
- *  and y is an m-dimensional output vector. 
- *  
+ *  and y is an m-dimensional output vector.
+ *
  *  Forward mode AD (also known as tangent-linear mode)
  *  computes Jacobian-vector products of f(x). I.e., if J(x) denotes the Jacobian of f(x) and
  *  v is an n-dimensional seed vector, the forward mode computes the matrix-vector product
@@ -36,7 +36,7 @@
  *  ad::value(x). The derivative information is accessed by ad::derivative(x) which is accordingly
  *  used to set the seed vector v, i.e., ad::derivative(x) = v.
  *  After the conmputation the Jacobian-vector product is accessed by the command ad::derivative(y).
- *  
+ *
  *  Reverse mode (also known as adjoint mode, or back progpagation) computes vector-Jacobian products of f(x).
  *  I.e, if J(x) denotes the Jacobian of f(x) and
  *  w is an m-dimensional seed vector (which is a row vector), the reverse mode computes the vector-matrix product
@@ -48,11 +48,11 @@
  *  memory location called tape. After
  *  the forward sweep, the seed of the computation is set by the command ad::derivative(y) = w.
  *  And a reverse sweep, where the actual derivative computation takes place, has to be performed. The derivative information of
- *  x has to be initalized to zero (ad::derivative(x) = 0), before the tape can be interpreted backwards. Then, 
+ *  x has to be initalized to zero (ad::derivative(x) = 0), before the tape can be interpreted backwards. Then,
  *  the tape can interpreted backwards
  *  and the vector-Jacobian product can be accessed the command ad::derivative(x).
- *  
- *  For a concise introduction to AD we recommend the article: 
+ *
+ *  For a concise introduction to AD we recommend the article:
  *  Verma, Arun. "An introduction to automatic differentiation." Current Science (2000): 804-807.
  */
 

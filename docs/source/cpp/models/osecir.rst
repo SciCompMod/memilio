@@ -34,9 +34,9 @@ current implementation and detection is only modeled implicitly through detectio
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIR model is implemented as **FlowModel**. With just minimal overhead, the **FlowModel** computes the new 
-transmissions, infections, and hospitalizations explicitly in every time step instead of only computing the aggregated 
-compartment values. The defined transitions `FromState, ToState` are:
+The ODE-SECIR model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+This allows for explicit computation of new transmissions, infections, and hospitalizations. Additionally, the aggregated
+compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
   

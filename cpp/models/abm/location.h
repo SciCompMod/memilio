@@ -34,8 +34,8 @@ namespace abm
 {
 
 struct GeographicalLocation {
-    double latitude;
-    double longitude;
+    ScalarType latitude;
+    ScalarType longitude;
 
     /**
      * @brief Compare two GeographicalLocation%s.
