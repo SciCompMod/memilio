@@ -30,36 +30,33 @@ from memilio.simulation.ssirs import (
 def run_sde_sirs_simulation():
     """Runs SDE SIRS model"""
 
-    # Define population of age groups
-    population = 10000
-
-   tmax = 5.  # simulation time frame
+    tmax = 5.  # simulation time frame
     dt = 0.001
 
-    # Initialize Parameters
+    # Initialize Model
     model = Model()
 
-    # Compartment transition duration
+    # Mean time in Infected compartment
     model.parameters.TimeInfected.value = 10.
     model.parameters.TimeImmune.value = 100.
 
-    # # Compartment transition propabilities
     model.parameters.TransmissionProbabilityOnContact.value = 1.
 
-    # Initial number of people in each compartment
+    # Initial number of people per compartment
+    total_population = 10000
     model.populations[State.Infected] = 100
     model.populations[State.Recovered] = 1000
     model.populations.set_difference_from_total(
-        (State.Susceptible), population)
+        (State.Susceptible), total_population)
 
     model.parameters.ContactPatterns.baseline = np.ones(
         (1, 1)) * 20.7
     model.parameters.ContactPatterns.minimum = np.zeros(
         (1, 1))
     model.parameters.ContactPatterns.add_damping(
-        Damping(coeffs=np.r_[0.6], t=12.5, level=0, type=0))
+        Damping(coeffs=np.r_[0.6], t=2, level=0, type=0))
 
-    # Check logical constraints to parameters
+    # Check parameter constraints
     model.check_constraints()
 
     # Run Simulation
@@ -68,7 +65,6 @@ def run_sde_sirs_simulation():
     # Interpolate results
     result = interpolate_simulation_result(result)
 
-    # Print results
     result.print_table(False, ["Susceptible", "Infected", "Recovered"], 16, 5)
 
 

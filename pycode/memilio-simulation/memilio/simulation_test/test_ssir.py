@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2025 MEmilio
 #
-# Authors:
+# Authors: Henrik Zunker
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -64,25 +64,29 @@ class Test_ssir_integration(unittest.TestCase):
         self.model = model
 
     def test_simulate_simple(self):
-        result = simulate_stochastic(0.0, self.days, self.dt, self.model)
+        result = simulate_stochastic(0.0, self.tmax, self.dt, self.model)
         self.assertAlmostEqual(result.get_time(0), 0.0)
         self.assertAlmostEqual(result.get_time(1), self.dt)
-        self.assertAlmostEqual(result.get_last_time(), self.days)
+        self.assertAlmostEqual(result.get_last_time(), self.tmax)
         self.assertEqual(len(result.get_last_value()), 3)
 
     def test_check_constraints_parameters(self):
         model = Model()
-        # valid
+
+        # Initialize model with valid parameters
         model.parameters.TimeInfected.value = 6.0
         model.parameters.TransmissionProbabilityOnContact.value = 1.0
         self.assertEqual(model.parameters.check_constraints(), 0)
+
         # invalid: time <= 0.1
         model.parameters.TimeInfected.value = 0.0
         self.assertEqual(model.parameters.check_constraints(), 1)
+
         # invalid: transmission < 0
         model.parameters.TimeInfected.value = 6.0
         model.parameters.TransmissionProbabilityOnContact.value = -1.0
         self.assertEqual(model.parameters.check_constraints(), 1)
+
         # invalid: transmission > 1
         model.parameters.TransmissionProbabilityOnContact.value = 2.0
         self.assertEqual(model.parameters.check_constraints(), 1)
@@ -102,10 +106,10 @@ class Test_ssir_integration(unittest.TestCase):
             places=6)
 
     def test_population_conservation(self):
-        result = simulate_stochastic(0.0, self.days, self.dt, self.model)
+        result = simulate_stochastic(0.0, self.tmax, self.dt, self.model)
         total0 = self.population
         atol = 1e-10 * total0
-        for i in range(int(self.days / self.dt) + 1):
+        for i in range(int(self.tmax / self.dt) + 1):
             vals = result[i]
             self.assertEqual(len(vals), 3)
             # Non-negativity
@@ -114,8 +118,8 @@ class Test_ssir_integration(unittest.TestCase):
             self.assertAlmostEqual(np.sum(vals), total0, delta=atol)
 
     def test_interpolate_times(self):
-        result = simulate_stochastic(0.0, self.days, self.dt, self.model)
-        times = [0.0, 1.0, 2.0, 3.0, self.days]
+        result = simulate_stochastic(0.0, self.tmax, self.dt, self.model)
+        times = [0.0, 1.0, 2.0, 3.0, self.tmax]
         interp = interpolate_simulation_result(result, times)
         self.assertEqual(interp.get_time(0), times[0])
         self.assertEqual(interp.get_last_time(), times[-1])

@@ -29,9 +29,6 @@ from memilio.simulation.ssir import (Model, simulate_stochastic)
 def run_sde_sir_simulation():
     """Runs SDE SIR model"""
 
-    # Define population of age groups
-    population = 10000
-
     tmax = 5.  # simulation time frame
     dt = 0.1
 
@@ -44,17 +41,18 @@ def run_sde_sir_simulation():
     model.parameters.TransmissionProbabilityOnContact.value = 1.
 
     # Initial number of people per compartment
+    total_population = 10000
     model.populations[State.Infected] = 100
     model.populations[State.Recovered] = 1000
     model.populations.set_difference_from_total(
-        (State.Susceptible), population)
+        (State.Susceptible), total_population)
 
     model.parameters.ContactPatterns.baseline = np.ones(
         (1, 1)) * 2.7
     model.parameters.ContactPatterns.minimum = np.zeros(
         (1, 1))
     model.parameters.ContactPatterns.add_damping(
-        Damping(coeffs=np.r_[0.6], t=12.5, level=0, type=0))
+        Damping(coeffs=np.r_[0.6], t=2., level=0, type=0))
 
     # Check parameter constraints
     model.check_constraints()
