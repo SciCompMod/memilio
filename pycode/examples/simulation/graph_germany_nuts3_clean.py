@@ -38,7 +38,6 @@ from memilio.simulation.osecir import Model, Simulation, interpolate_simulation_
 from memilio.epidata import defaultDict as dd
 
 
-
 excluded_ids = [11001, 11002, 11003, 11004, 11005, 11006,
                 11007, 11008, 11009, 11010, 11011, 11012, 16056]
 no_icu_ids = [7338, 9374, 9473, 9573]
@@ -491,6 +490,20 @@ def load_divi_data():
     return divi_dict
 
 
+def load_extrapolated_case_data():
+    file_path = os.path.dirname(os.path.abspath(__file__))
+    case_path = os.path.join(file_path, "../../../data/Germany/pydata")
+
+    file = h5py.File(os.path.join(case_path, "Results_rki.h5"))
+    divi_dict = {}
+    for i, region_id in enumerate(region_ids):
+        if region_id not in no_icu_ids:
+            divi_dict[f"region{i}"] = np.array(file[f"{region_id}"]['Total'][:, 4])[None, :, None]
+        else:
+            divi_dict[f"no_icu_region{i}"] = np.zeros((1, np.array(file[f"{region_id}"]['Total']).shape[0], 1))
+    return divi_dict
+
+
 def extract_observables(simulation_results, observable_index=7):
     for key in simulation_results.keys():
         if key not in inference_params:
@@ -504,7 +517,7 @@ def create_train_data(filename, number_samples=1000):
         [prior, run_germany_nuts3_simulation]
     )
     trainings_data = simulator.sample(number_samples)
-    trainings_data = extract_observables(trainings_data)
+    trainings_data = extract_observables(trainings_data, observable_index=4)
     with open(filename, 'wb') as f:
         pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
@@ -614,7 +627,6 @@ def run_training(name, num_training_files=20):
     for p in train_files:
         d = load_pickle(p)
         d = apply_aug(d, aug=aug)  # only on region keys
-        d = skip_2weeks(d) 
         if trainings_data is None:
             trainings_data = d
         else:
@@ -661,8 +673,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         # validation data
         validation_data = load_pickle(val_path)
         validation_data = apply_aug(validation_data, aug=aug)
-        validation_data_skip2w = skip_2weeks(validation_data)
-        aggregate_states(validation_data_skip2w)
+        aggregate_states(validation_data)
         divi_dict = validation_data
         divi_region_keys = region_keys_sorted(divi_dict)
 
@@ -671,7 +682,6 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         )[0]  # only one dataset
     else:
         divi_dict = load_divi_data()
-        validation_data_skip2w = skip_2weeks(divi_dict)
         aggregate_states(validation_data_skip2w)
         divi_region_keys = region_keys_sorted(divi_dict)
         divi_data = np.concatenate(
@@ -687,7 +697,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         simulations = load_pickle(f'{name}/sims_{name}{synthetic}{with_aug}.pickle')
         print("loaded simulations from file")
     else:
-        samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
+        samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
         results = []
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_germany_nuts3_simulation(
@@ -702,7 +712,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
                 result[key] = np.array(result[key])[None, ...]  # add sample axis
             results.append(result)
         results = combine_results(results)
-        results = extract_observables(results)
+        results = extract_observables(results, observable_index=4)
         if apply_augmentation:
             results = apply_aug(results, aug=aug)
 
@@ -742,11 +752,11 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
 
 
 if __name__ == "__main__":
-    name = "skip2w"
+    name = "infecteds"
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=10)
+    # create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=1000)
     # run_training(name=name, num_training_files=20)
     run_inference(name=name, on_synthetic_data=True)
     run_inference(name=name, on_synthetic_data=True, apply_augmentation=False)
