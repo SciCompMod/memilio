@@ -111,7 +111,7 @@ TEST_F(TestModel, addPerson)
 TEST_F(TestModel, getNumberPersons)
 {
     // replace spdlog::default_logger
-    mio::RedirectLogger logger;
+    mio::RedirectLogger logger(mio::LogLevel::debug); // Set log level to debug to capture log messages.
     logger.capture();
 
     auto model    = mio::abm::Model(num_age_groups);
@@ -139,6 +139,7 @@ TEST_F(TestModel, getNumberPersons)
     EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_80_plus), 0);
 
     EXPECT_TRUE(logger.read().empty());
+
     logger.release();
 }
 

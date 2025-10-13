@@ -37,11 +37,13 @@ namespace abm
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
  * @param[in] age_receiver AgeGroup of the receiving Person.
+ * @param[in] num_persons_in_age_receiverer_group Number of persons in the AgeGroup of the receiving Person.
  * @param[in] params The local infection parameters.
  * @return Average amount of Infection%s with the virus from the AgeGroup of the transmitter per day.
  */
 ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
+                                           size_t num_persons_in_age_receiverer_group,
                                            const LocalInfectionParameters& params);
 
 /**
@@ -85,6 +87,7 @@ void normalize_exposure_contribution(
  * @param[in, out] rng PersonalRandomNumberGenerator for this Person.
  * @param[in, out] person The person to interact with the local population.
  * @param[in] location The person's current location.
+ * @param[in] local_population_per_age Local population per AgeGroup at the location.
  * @param[in] local_air_exposure Precomputed exposure rates by aerosols for the local population.
  * @param[in] local_contact_exposure Precomputed exposure by rates contacts for the local population.
  * @param[in] t Current Simulation time.
@@ -92,6 +95,7 @@ void normalize_exposure_contribution(
  * @param[in] global_parameters Parameters of the Model.
  */
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
+              const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age,
               const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
               const TimePoint t, const TimeSpan dt, const Parameters& global_parameters);
 /**

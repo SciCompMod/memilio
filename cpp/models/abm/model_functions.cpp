@@ -34,13 +34,24 @@ namespace abm
 
 ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
+                                           size_t num_persons_in_age_receiverer_group,
                                            const LocalInfectionParameters& params)
 {
     assert(age_receiver < rates.size<AgeGroup>());
     ScalarType prob = 0;
     for (AgeGroup age_transmitter(0); age_transmitter < rates.size<AgeGroup>(); ++age_transmitter) {
-        prob +=
-            rates[{cell_index, virus, age_transmitter}] * params.get<ContactRates>()[{age_receiver, age_transmitter}];
+        if (age_receiver == age_transmitter &&
+            num_persons_in_age_receiverer_group > 1) // adjust for the person not meeting themself
+        {
+            prob += rates[{cell_index, virus, age_transmitter}] *
+                    params.get<ContactRates>()[{age_receiver, age_transmitter}] * num_persons_in_age_receiverer_group /
+                    (num_persons_in_age_receiverer_group - 1) *
+                    params.get<ContactRates>()[{age_receiver, age_transmitter}];
+        }
+        else {
+            prob += rates[{cell_index, virus, age_transmitter}] *
+                    params.get<ContactRates>()[{age_receiver, age_transmitter}];
+        }
     }
     return prob;
 }
@@ -52,6 +63,7 @@ ScalarType daily_transmissions_by_air(const AirExposureRates& rates, const CellI
 }
 
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
+              const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age,
               const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
               const TimePoint t, const TimeSpan dt, const Parameters& global_parameters)
 {
@@ -72,13 +84,14 @@ void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const
         auto age_receiver          = person.get_age();
         ScalarType mask_protection = person.get_mask_protective_factor(global_parameters);
         assert(person.get_cells().size() && "Person is in multiple cells. Interact logic is incorrect at the moment.");
-        for (auto cell_index : person.get_cells()) {
+        for (CellIndex cell_index : person.get_cells()) {
             std::pair<VirusVariant, ScalarType> local_indiv_trans_prob[static_cast<uint32_t>(VirusVariant::Count)];
             for (uint32_t v = 0; v != static_cast<uint32_t>(VirusVariant::Count); ++v) {
-                VirusVariant virus = static_cast<VirusVariant>(v);
+                VirusVariant virus                       = static_cast<VirusVariant>(v);
+                size_t local_population_per_age_receiver = local_population_per_age[{cell_index, age_receiver}];
                 ScalarType local_indiv_trans_prob_v =
                     (daily_transmissions_by_contacts(local_contact_exposure, cell_index, virus, age_receiver,
-                                                     local_parameters) +
+                                                     local_population_per_age_receiver, local_parameters) +
                      daily_transmissions_by_air(local_air_exposure, cell_index, virus, global_parameters)) *
                     (1 - mask_protection) * (1 - person.get_protection_factor(t, virus, global_parameters));
 

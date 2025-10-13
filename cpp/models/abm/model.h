@@ -397,6 +397,7 @@ public:
     {
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
+            m_is_local_population_cache_valid = true;
         }
         return m_local_population_cache[location.get()];
     }
@@ -412,6 +413,7 @@ public:
     {
         if (!m_is_local_population_cache_valid) {
             build_compute_local_population_cache();
+            m_is_local_population_cache_valid = true;
         }
         auto& m_local_population_per_age = m_local_population_per_age_cache[location.get()];
         return m_local_population_per_age[{cell_idx, age}];
@@ -617,9 +619,10 @@ protected:
             m_are_exposure_caches_valid = true;
         }
         auto personal_rng = PersonalRandomNumberGenerator(person);
-        mio::abm::interact(personal_rng, person, get_location(person.get_location()),
-                           m_air_exposure_rates_cache[person.get_location().get()],
-                           m_contact_exposure_rates_cache[person.get_location().get()], t, dt, parameters);
+        auto location     = person.get_location();
+        mio::abm::interact(personal_rng, person, get_location(location),
+                           m_local_population_per_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
+                           m_contact_exposure_rates_cache[location.get()], t, dt, parameters);
     }
 
     /**
@@ -656,9 +659,9 @@ protected:
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
     Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>
         m_contact_exposure_rates_cache; ///< Cache for local exposure through contacts in #transmissions/day.
-    bool m_is_local_population_cache_valid = false;
-    bool m_are_exposure_caches_valid       = false;
-    bool m_exposure_caches_need_rebuild    = true;
+    mutable bool m_is_local_population_cache_valid = false;
+    bool m_are_exposure_caches_valid               = false;
+    bool m_exposure_caches_need_rebuild            = true;
 
     int m_id; ///< Model id. Is only used for abm graph model or hybrid model.
     std::vector<Person> m_persons; ///< Vector of every Person.
