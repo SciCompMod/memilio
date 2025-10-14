@@ -78,6 +78,8 @@ class Test_ssirs_integration(unittest.TestCase):
         model.parameters.TimeInfected.value = 6.0
         model.parameters.TimeImmune.value = 100.0
         model.parameters.TransmissionProbabilityOnContact.value = 1.0
+        model.parameters.StartDay = 0.
+        model.parameters.Seasonality.value = 0.2
         self.assertEqual(model.parameters.check_constraints(), 0)
 
         # invalid: TimeInfected <= 0.1
@@ -96,6 +98,11 @@ class Test_ssirs_integration(unittest.TestCase):
 
         # invalid: transmission > 1
         model.parameters.TransmissionProbabilityOnContact.value = 2.0
+        self.assertEqual(model.parameters.check_constraints(), 1)
+
+        # invalid: seasonality < 0
+        model.parameters.TransmissionProbabilityOnContact.value = 1.0
+        model.parameters.Seasonality.value = -0.1
         self.assertEqual(model.parameters.check_constraints(), 1)
 
     def test_apply_constraints_parameters(self):
