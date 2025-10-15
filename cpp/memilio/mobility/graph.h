@@ -20,6 +20,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <algorithm>
 #include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
@@ -28,6 +29,7 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
+#include "memilio/utils/logging.h"
 #include <iostream>
 
 #include "boost/filesystem.hpp"
@@ -211,13 +213,25 @@ public:
     }
 
     /**
-     * @brief Range of edges going pout from a specific node
+     * @brief Range of edges going out from a specific node
      * 
      * @param node_idx ID of node
      */
     auto out_edges(size_t node_idx)
     {
         return out_edges(begin(m_edges), end(m_edges), node_idx);
+    }
+
+    auto get_edge(size_t node_a, size_t node_b) const
+    {
+        auto edges = out_edges(node_a);
+        for (auto edge = edges.begin(); edge != edges.end(); ++edge) {
+            if (edge->end_node_idx == node_b) {
+                return *edge;
+            }
+        }
+        mio::log_error("Edge from {} to {} not found.", node_a, node_b);
+        throw std::out_of_range("Edge not found");
     }
 
     /**
