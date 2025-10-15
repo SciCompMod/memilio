@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def set_fontsize(base_fontsize=17):

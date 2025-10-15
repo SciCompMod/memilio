@@ -18,13 +18,13 @@ def plot_three_pdfs(exp_params, erlang_params, lognorm_params, xmax, xlabel, yla
     xmax = 12.
 
     x = np.linspace(0, xmax, 1000)
-    plt.figure(figsize=(7, 4))
+    plt.figure(figsize=(4, 3.5))
 
     # Exponential PDF
     plt.plot(
         x,
         scipy.stats.expon.pdf(x, scale=exp_params[0]),
-        label='Exponential', color=model_colors["ODE"])
+        label='ODE', color=model_colors["ODE"])
 
     # print("Mean Exponential: ", scipy.stats.expon.stats(
     #     scale=exp_params[0], moments='mv'))
@@ -33,7 +33,7 @@ def plot_three_pdfs(exp_params, erlang_params, lognorm_params, xmax, xlabel, yla
     plt.plot(
         x,
         scipy.stats.gamma.pdf(x, a=erlang_params[0], scale=erlang_params[1]),
-        label='Erlang', color=model_colors["LCT"])
+        label='LCT', color=model_colors["LCT"])
 
     # print("Mean Erlang: ", scipy.stats.gamma.stats(
     #     a=erlang_params[0], scale=erlang_params[1], moments='mv'))
@@ -43,7 +43,7 @@ def plot_three_pdfs(exp_params, erlang_params, lognorm_params, xmax, xlabel, yla
         x,
         scipy.stats.lognorm.pdf(
             x, s=lognorm_params[0], scale=lognorm_params[1]),
-        label='Lognormal', color=model_colors["IDE"])
+        label='IDE/ABM', color=model_colors["IDE"])
 
     # print("Mean Lognormal: ", scipy.stats.lognorm.stats(
     #     s=lognorm_params[0], scale=lognorm_params[1],  moments='mv'))
@@ -53,7 +53,7 @@ def plot_three_pdfs(exp_params, erlang_params, lognorm_params, xmax, xlabel, yla
     plt.xlim(0, xmax)
     plt.ylim(0, None)
     plt.title("Scenario 2", pad=labelpad)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.tight_layout()
 
     if save_dir:
@@ -67,13 +67,13 @@ def plot_three_pdfs(exp_params, erlang_params, lognorm_params, xmax, xlabel, yla
 def plot_exponential_pdf(exp_params, xmax, xlabel, ylabel, save_dir=None):
 
     x = np.linspace(0, xmax, 1000)
-    plt.figure(figsize=(7, 4))
+    plt.figure(figsize=(4, 3.5))
 
     # Exponential PDF
     plt.plot(
         x,
         scipy.stats.expon.pdf(x, scale=exp_params[0]),
-        label='Exponential', color=model_colors["ODE"])
+        label='All models', color=model_colors["ODE"])
 
     # set_fontsize()
 
@@ -83,7 +83,7 @@ def plot_exponential_pdf(exp_params, xmax, xlabel, ylabel, save_dir=None):
     plt.xlim(0, xmax)
     plt.ylim(0, None)
     plt.title("Scenario 1", pad=labelpad)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.tight_layout()
 
     if save_dir:
@@ -96,6 +96,8 @@ def plot_exponential_pdf(exp_params, xmax, xlabel, ylabel, save_dir=None):
 
 
 if __name__ == "__main__":
+    
+    set_fontsize()
 
     # Path where plots will be stored.
     plot_dir = os.path.join(os.path.dirname(
@@ -109,7 +111,7 @@ if __name__ == "__main__":
     # Define some parameters for plot.
     xmax = 12.
     xlabel = "Time since transmission"
-    ylabel = "PDF"
+    ylabel = "Transition dist [PDF]"
 
     # PDFs for Scenario 1
     plot_exponential_pdf(exp_params, xmax, xlabel, ylabel, save_dir=plot_dir)
