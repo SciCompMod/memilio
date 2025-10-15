@@ -189,11 +189,17 @@ void MobilityEdgeDirected<FP>::apply_mobility(const FP t, const FP num_moving, L
     auto rng          = mio::RandomNumberGenerator();
     auto distribution = DiscreteDistributionInPlace<int>();
     std::vector<size_t> travellers(node_from.get_result().get_last_value().size(), 0);
-    for (int i = 0; i < num_moving; ++i) {
-        auto group = distribution(rng, {node_from.get_result().get_last_value()});
-        node_from.get_result().get_last_value()[group] -= 1;
-        travellers[group] += 1;
-        node_to.get_result().get_last_value()[group] += 1;
+    if (num_moving > std::accumulate(node_from.get_result().get_last_value().begin(),
+                                     node_from.get_result().get_last_value().end(), 0.0)) {
+        mio::log_warning("Trying to move more individuals than available ({}) at time {}.", num_moving, t);
+    }
+    else {
+        for (int i = 0; i < num_moving; ++i) {
+            auto group = distribution(rng, {node_from.get_result().get_last_value()});
+            node_from.get_result().get_last_value()[group] -= 1;
+            travellers[group] += 1;
+            node_to.get_result().get_last_value()[group] += 1;
+        }
     }
     add_mobility_result_time_point(t, travellers);
 }
