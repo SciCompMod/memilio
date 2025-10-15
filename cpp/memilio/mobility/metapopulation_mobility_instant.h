@@ -490,19 +490,18 @@ using get_infections_relative_expr_t = decltype(get_infections_relative<FP>(
  * @param y the current value of the simulation.
  * @param t the current simulation time
  */
-template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value, void*> = nullptr>
-FP get_infections_relative(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
-                           const Eigen::Ref<const Eigen::VectorX<FP>>& /*y*/)
-{
-    assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
-    return 0;
-}
-template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value, void*> = nullptr>
+template <typename FP, class Sim>
 FP get_infections_relative(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    return get_infections_relative<FP>(node.get_simulation(), t, y);
+    if constexpr (is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value) {
+        return get_infections_relative<FP>(node.get_simulation(), t, y);
+    }
+    else {
+        mio::unused(node, t, y);
+        mio::log_debug("get_infections_relative called without specialization for this simulation type. "
+                       "Implement an overload in your model if you intend to use dynamic NPIs.");
+        return FP{0};
+    }
 }
 
 /**
@@ -523,18 +522,18 @@ using get_mobility_factors_expr_t = decltype(get_mobility_factors<FP>(
  * @param t the current simulation time
  * @return a vector expression, same size as y, with the factor for each compartment.
  */
-template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value, void*> = nullptr>
-auto get_mobility_factors(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
-                          const Eigen::Ref<const Eigen::VectorX<FP>>& y)
-{
-    return Eigen::VectorX<FP>::Ones(y.rows());
-}
-template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value, void*> = nullptr>
+template <typename FP, class Sim>
 auto get_mobility_factors(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    return get_mobility_factors<FP>(node.get_simulation(), t, y);
+    if constexpr (is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value) {
+        return get_mobility_factors<FP>(node.get_simulation(), t, y);
+    }
+    else {
+        mio::unused(node, t);
+        mio::log_debug("get_mobility_factors called without specialization for this simulation type. "
+                       "Using default mobility factor (1.0) for all compartments.");
+        return Eigen::VectorX<FP>::Ones(y.rows());
+    }
 }
 
 /**
@@ -554,17 +553,17 @@ using test_commuters_expr_t = decltype(test_commuters<FP>(
  * @param mobile_population mutable reference to vector of persons per compartment that change nodes.
  * @param t the current simulation time.
  */
-template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<test_commuters_expr_t, FP, Sim>::value, void*> = nullptr>
-void test_commuters(SimulationNode<FP, Sim>& /*node*/, Eigen::Ref<Eigen::VectorX<FP>> /*mobile_population*/,
-                    FP /*time*/)
-{
-}
-template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<test_commuters_expr_t, FP, Sim>::value, void*> = nullptr>
+template <typename FP, class Sim>
 void test_commuters(SimulationNode<FP, Sim>& node, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
-    return test_commuters<FP>(node.get_simulation(), mobile_population, time);
+    if constexpr (is_expression_valid<test_commuters_expr_t, FP, Sim>::value) {
+        test_commuters<FP>(node.get_simulation(), mobile_population, time);
+    }
+    else {
+        mio::unused(node, mobile_population, time);
+        mio::log_debug("test_commuters called without specialization for this simulation type. "
+                       "Implement an overload in your model if you intend to use commuter testing.");
+    }
 }
 
 template <typename FP>
