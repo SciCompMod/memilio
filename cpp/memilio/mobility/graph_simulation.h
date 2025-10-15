@@ -22,6 +22,7 @@
 
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
@@ -45,15 +46,15 @@ public:
     {
         insert_input_data(input_data);
     };
-    MobilityParametersTimed(double time, double number, int edge)
+    MobilityParametersTimed(double time, double number, size_t from, size_t to)
         : _exchanges{}
     {
-        _exchanges.push(ExchangeData(time, number, edge));
+        _exchanges.push(ExchangeData(time, number, from, to));
     };
 
-    void add_exchange(double time, double number, int edge)
+    void add_exchange(double time, double number, size_t from, size_t to)
     {
-        _exchanges.push(ExchangeData{time, number, edge});
+        _exchanges.push(ExchangeData{time, number, from, to});
     }
 
     /**
@@ -85,6 +86,14 @@ public:
     auto next_event_edge_id()
     {
         return _exchanges.top().edge_id;
+    }
+    auto next_event_to_id()
+    {
+        return _exchanges.top().to;
+    }
+    auto next_event_from_id()
+    {
+        return _exchanges.top().from;
     }
     /**
      * @brief Return a const reference to the next event
@@ -137,7 +146,9 @@ private:
     struct ExchangeData {
         double time;
         double number;
-        int edge_id;
+        size_t from;
+        size_t to;
+        int edge_id{};
     };
 
     struct CompareExchangeData {
@@ -402,7 +413,7 @@ public:
 
             while (m_parameters.next_event_time() == Base::m_t) {
                 auto next_event = m_parameters.process_next_event();
-                auto& e         = Base::m_graph.edges()[next_event.edge_id];
+                auto e          = Base::m_graph.get_edge(next_event.from, next_event.to);
                 Base::m_edge_func(Base::m_t, next_event.number, e.property,
                                   Base::m_graph.nodes()[e.start_node_idx].property,
                                   Base::m_graph.nodes()[e.end_node_idx].property);
@@ -410,9 +421,9 @@ public:
         }
     }
 
-    void add_exchange(double time, double number, int edge)
+    void add_exchange(double time, double number, size_t from, size_t to)
     {
-        m_parameters.add_exchange(time, number, edge);
+        m_parameters.add_exchange(time, number, from, to);
     }
 
     /**
