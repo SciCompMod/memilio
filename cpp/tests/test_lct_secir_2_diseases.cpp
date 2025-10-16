@@ -61,7 +61,7 @@ TEST(TestLCTSecir2d, simulateDefault)
     EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
     ScalarType sum_pop = init.sum();
     for (Eigen::Index i = 0; i < result.get_num_time_points(); i++) {
-        EXPECT_NEAR(sum_pop, result[i].sum(), 1e-5); // check that total pop. is constant
+        EXPECT_NEAR(sum_pop, result[i].sum(), 1e-5); // check that total pop is constant
     }
 }
 
@@ -83,15 +83,16 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     ScalarType tmax = 5;
     ScalarType dt   = 0.1;
 
-    // Initialization vector for lct2d model.
+    // Initialization vector for LCT2D model.
+    // For the first infection the initialization vectors are the same for both models
     Eigen::VectorX<ScalarType> init_lct2d = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState2d::Count, 0);
-    init_lct2d[0]                         = 200; // lct and lct2d use different infection states
-    init_lct2d[3]                         = 50; // make sure initial pop. is in the same compartments for lct and lct2d
+    init_lct2d[0]                         = 200;
+    init_lct2d[3]                         = 50;
     init_lct2d[5]                         = 30;
 
     // Define LCT2D model.
     Model_2d model_lct2d;
-    //Set initial values
+    //Set initial values.
     for (size_t i = 0; i < LctState2d::Count; i++) {
         model_lct2d.populations[i] = init_lct2d[i];
     }

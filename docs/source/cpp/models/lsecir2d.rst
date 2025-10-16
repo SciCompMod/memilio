@@ -4,7 +4,7 @@
 | The LCT-SECIR-2-DISEASES model is an extension of the :doc:`model with one disease <lsecir>`.
 | The model is ODE-based and uses the Linear Chain Trick to allow for more general Erlang distributed stay times in each compartment instead of just exponentially distributed stay times induced by basic ODE-based models.
 | With the SECIR structure the model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. 
-| For the two diseases :math:`a` and :math:`b` the model assumes no co-infection, a certain independence in the sense that prior infection with one disease does not affect the infection with the other disease (e.g. probability to get infected, time spend in each state, chances of recovery etc.), and perfect immunity after recovery for both diseases.
+| For the two diseases or variants of one disease :math:`a` and :math:`b` the model assumes no co-infection, a certain independence in the sense that prior infection with one disease does not affect the infection with the other disease (e.g. probability to get infected, time spend in each state, chances of recovery etc.), and perfect immunity after recovery for both diseases.
 
 
 There are two possibilities for a susceptible individual (since we assume no co-infection): 
@@ -14,7 +14,7 @@ There are two possibilities for a susceptible individual (since we assume no co-
 Each infection is simulated using a LCT-SECIR model. The states are labeled according to infection (first or second) and disease (:math:`a` or :math:`b`),
 so the full model is given by the combination of infections :math:`1a`, :math:`2a`, :math:`1b`, and :math:`2b`.
 
-Below is a visualization of the infection states split into LCT-states and transitions without a stratification according to socisdemographic groups.
+Below is a visualization of the infection states split into LCT-states and transitions without a stratification according to sociodemographic groups.
 
 .. image:: ""
    :alt: tikz_lct-2d

@@ -36,8 +36,12 @@ namespace lsecir2d
 * Define Parameters of the LCT-SECIHURD-2-DISEASES model *
 **********************************************************/
 
+// Each paramater is a vector with length equal to the number of groups
+// The contact patterns are given by a matrix with dimension (number of groups)*(number of groups)
+// The default number of groups is 1
+
 /**
- * @brief Average time spent in the Exposed compartment for disease a in day unit.
+ * @brief Average time spent in the Exposed compartment for disease a in day unit for each group.
  */
 struct TimeExposed_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -53,7 +57,7 @@ struct TimeExposed_a {
 
 /**
  * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
- *  symptoms or recover for disease a in day unit.
+ *  symptoms or recovering for disease a in day unit for each group.
  */
 struct TimeInfectedNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -69,7 +73,7 @@ struct TimeInfectedNoSymptoms_a {
 
 /**
  * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
- *  or recover for disease a in day unit.
+ *  or recovering for disease a in day unit for each group.
  */
 struct TimeInfectedSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -84,7 +88,7 @@ struct TimeInfectedSymptoms_a {
 };
 
 /**
- * @brief Average time being in the Hospital before treated by ICU or recover for disease a in day unit.
+ * @brief Average time being in the Hospital before treated by ICU or recovering for disease a in day unit for each group.
  */
 struct TimeInfectedSevere_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -99,7 +103,7 @@ struct TimeInfectedSevere_a {
 };
 
 /**
- * @brief Average time treated by ICU before dead or recover for disease a in day unit.
+ * @brief Average time treated by ICU before dead or recovering for disease a in day unit for each group.
  */
 struct TimeInfectedCritical_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -114,7 +118,7 @@ struct TimeInfectedCritical_a {
 };
 
 /**
- * @brief Probability of getting infected from a contact for disease a.
+ * @brief Probability of getting infected from a contact for disease a for each group.
  */
 struct TransmissionProbabilityOnContact_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -129,7 +133,7 @@ struct TransmissionProbabilityOnContact_a {
 };
 
 /**
- * @brief Average time spent in the Exposed compartment for disease b in day unit.
+ * @brief Average time spent in the Exposed compartment for disease b in day unit for each group.
  */
 struct TimeExposed_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -145,7 +149,7 @@ struct TimeExposed_b {
 
 /**
  * @brief Average time spent in the TimeInfectedNoSymptoms before developing 
- *  symptoms or recover for disease b in day unit.
+ *  symptoms or recovering for disease b in day unit for each group.
  */
 struct TimeInfectedNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -161,7 +165,7 @@ struct TimeInfectedNoSymptoms_b {
 
 /**
  * @brief Average time spent in the TimeInfectedSymptoms before going to hospital 
- *  or recover for disease b in day unit.
+ *  or recovering for disease b in day unit for each group.
  */
 struct TimeInfectedSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -176,7 +180,7 @@ struct TimeInfectedSymptoms_b {
 };
 
 /**
- * @brief Average time being in the Hospital before treated by ICU or recover for disease b in day unit.
+ * @brief Average time being in the Hospital before treated by ICU or recovering for disease b in day unit for each group.
  */
 struct TimeInfectedSevere_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -191,7 +195,7 @@ struct TimeInfectedSevere_b {
 };
 
 /**
- * @brief Average time treated by ICU before dead or recover for disease b in day unit.
+ * @brief Average time treated by ICU before dead or recovering for disease b in day unit for each group.
  */
 struct TimeInfectedCritical_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -206,7 +210,7 @@ struct TimeInfectedCritical_b {
 };
 
 /**
- * @brief Probability of getting infected from a contact for disease b.
+ * @brief Probability of getting infected from a contact for disease b for each group.
  */
 struct TransmissionProbabilityOnContact_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -238,7 +242,7 @@ struct ContactPatterns {
 };
 
 /**
- * @brief The relative InfectedNoSymptoms infectability for disease a.
+ * @brief The relative InfectedNoSymptoms infectability for disease a for each group.
  */
 struct RelativeTransmissionNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -253,7 +257,7 @@ struct RelativeTransmissionNoSymptoms_a {
 };
 
 /**
- * @brief The risk of infection from symptomatic cases for disease a.
+ * @brief The risk of infection from symptomatic cases for disease a for each group.
  */
 struct RiskOfInfectionFromSymptomatic_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -268,7 +272,7 @@ struct RiskOfInfectionFromSymptomatic_a {
 };
 
 /**
- * @brief The relative InfectedNoSymptoms infectability for disease b.
+ * @brief The relative InfectedNoSymptoms infectability for disease b for each group.
  */
 struct RelativeTransmissionNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -283,7 +287,7 @@ struct RelativeTransmissionNoSymptoms_b {
 };
 
 /**
- * @brief The risk of infection from symptomatic cases for disease b.
+ * @brief The risk of infection from symptomatic cases for disease b for each group.
  */
 struct RiskOfInfectionFromSymptomatic_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -298,7 +302,7 @@ struct RiskOfInfectionFromSymptomatic_b {
 };
 
 /**
- * @brief The percentage of asymptomatic cases for disease a.
+ * @brief The percentage of asymptomatic cases for disease a for each group.
  */
 struct RecoveredPerInfectedNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -313,7 +317,7 @@ struct RecoveredPerInfectedNoSymptoms_a {
 };
 
 /**
- * @brief The percentage of hospitalized patients per infected patients for disease a.
+ * @brief The percentage of hospitalized patients per infected patients for disease a for each group.
  */
 struct SeverePerInfectedSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -328,7 +332,7 @@ struct SeverePerInfectedSymptoms_a {
 };
 
 /**
- * @brief The percentage of ICU patients per hospitalized patients for disease a.
+ * @brief The percentage of ICU patients per hospitalized patients for disease a for each group.
  */
 struct CriticalPerSevere_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -343,7 +347,7 @@ struct CriticalPerSevere_a {
 };
 
 /**
- * @brief The percentage of dead patients per ICU patients for disease a.
+ * @brief The percentage of dead patients per ICU patients for disease a for each group.
  */
 struct DeathsPerCritical_a {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -358,7 +362,7 @@ struct DeathsPerCritical_a {
 };
 
 /**
- * @brief The percentage of asymptomatic cases for disease b.
+ * @brief The percentage of asymptomatic cases for disease b for each group.
  */
 struct RecoveredPerInfectedNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -373,7 +377,7 @@ struct RecoveredPerInfectedNoSymptoms_b {
 };
 
 /**
- * @brief The percentage of hospitalized patients per infected patients for disease b.
+ * @brief The percentage of hospitalized patients per infected patients for disease b for each group.
  */
 struct SeverePerInfectedSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -388,7 +392,7 @@ struct SeverePerInfectedSymptoms_b {
 };
 
 /**
- * @brief The percentage of ICU patients per hospitalized patients for disease b.
+ * @brief The percentage of ICU patients per hospitalized patients for disease b for each group.
  */
 struct CriticalPerSevere_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -403,7 +407,7 @@ struct CriticalPerSevere_b {
 };
 
 /**
- * @brief The percentage of dead patients per ICU patients for disease b.
+ * @brief The percentage of dead patients per ICU patients for disease b for each group.
  */
 struct DeathsPerCritical_b {
     using Type = Eigen::VectorX<UncertainValue<ScalarType>>;
@@ -418,7 +422,7 @@ struct DeathsPerCritical_b {
 };
 
 /**
- * @brief The start day in the LCT-SECIR-2-DISEASES  model.
+ * @brief The start day in the LCT-SECIR-2-DISEASES model.
  * The start day defines in which season the simulation is started.
  * If the start day is 180 and simulation takes place from t0=0 to
  * tmax=100 the days 180 to 280 of the year are simulated.
