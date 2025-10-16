@@ -21,6 +21,7 @@
 #define MIO_GEOGRAPHY_LOCATIONS_H
 
 #include "memilio/io/default_serialize.h"
+#include "memilio/config.h"
 #include <cassert>
 #include <cmath>
 #include <numbers>
@@ -43,7 +44,7 @@ public:
      * @param lat Latitude in degrees.
      * @param lon Longitude in degrees.
      */
-    GeographicalLocation(double lat, double lon)
+    GeographicalLocation(ScalarType lat, ScalarType lon)
         : m_latitude(lat)
         , m_longitude(lon)
     {
@@ -58,9 +59,9 @@ public:
     /**
      * @brief Construct a new Geographical Location object.
      * 
-     * @param coordinates Pair of latitude and longitude in degrees as doubles.
+     * @param coordinates Pair of latitude and longitude in degrees as ScalarTypes.
      */
-    GeographicalLocation(std::pair<double, double> coordinates)
+    GeographicalLocation(std::pair<ScalarType, ScalarType> coordinates)
         : m_latitude(coordinates.first)
         , m_longitude(coordinates.second)
     {
@@ -119,25 +120,25 @@ public:
     * two geographical locations. Uses an earth radius of 6371 km (https://en.wikipedia.org/wiki/Earth_radius).
     * The math functions use radians, whereas coordinates are given in degrees.
     */
-    double distance(const GeographicalLocation& other) const
+    ScalarType distance(const GeographicalLocation& other) const
     {
-        const double delta_latitude           = (m_latitude - other.m_latitude) * radians;
-        const double delta_longitude          = (m_longitude - other.m_longitude) * radians;
-        const double sin_delta_latitude_half  = sin(delta_latitude * 0.5);
-        const double sin_delta_longitude_half = sin(delta_longitude * 0.5);
-        const double first_part               = sin_delta_latitude_half * sin_delta_latitude_half;
-        const double second_part              = cos(m_latitude * radians) * cos(other.m_latitude * radians) *
-                                   sin_delta_longitude_half * sin_delta_longitude_half;
-        const double distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
+        const ScalarType delta_latitude           = (m_latitude - other.m_latitude) * radians;
+        const ScalarType delta_longitude          = (m_longitude - other.m_longitude) * radians;
+        const ScalarType sin_delta_latitude_half  = sin(delta_latitude * 0.5);
+        const ScalarType sin_delta_longitude_half = sin(delta_longitude * 0.5);
+        const ScalarType first_part               = sin_delta_latitude_half * sin_delta_latitude_half;
+        const ScalarType second_part              = cos(m_latitude * radians) * cos(other.m_latitude * radians) *
+                                       sin_delta_longitude_half * sin_delta_longitude_half;
+        const ScalarType distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
         return distance;
     }
 
     /**
      * @brief Get the latitude object
      * 
-     * @return double latitude in degrees
+     * @return ScalarType latitude in degrees
      */
-    double get_latitude() const
+    ScalarType get_latitude() const
     {
         return m_latitude;
     }
@@ -145,9 +146,9 @@ public:
     /**
      * @brief Get the longitude object
      * 
-     * @return double longitude in degrees
+     * @return ScalarType longitude in degrees
      */
-    double get_longitude() const
+    ScalarType get_longitude() const
     {
         return m_longitude;
     }
@@ -157,7 +158,7 @@ public:
      * 
      * @param lat Latitude in degrees.
      */
-    void set_latitude(double lat)
+    void set_latitude(ScalarType lat)
     {
         m_latitude = lat;
         check_input();
@@ -168,17 +169,17 @@ public:
      * 
      * @param lon Longitude in degrees.
      */
-    void set_longitude(double lon)
+    void set_longitude(ScalarType lon)
     {
         m_longitude = lon;
         check_input();
     }
 
 private:
-    double m_latitude;
-    double m_longitude;
-    constexpr static double earth_radius = 6371;
-    constexpr static double radians      = std::numbers::pi / 180.0;
+    ScalarType m_latitude;
+    ScalarType m_longitude;
+    constexpr static ScalarType earth_radius = 6371.;
+    constexpr static ScalarType radians      = std::numbers::pi / 180.0;
 };
 
 } // namespace geo
