@@ -105,12 +105,6 @@ public:
         return Members("GeographicalLocation").add("latitude", m_latitude).add("longitude", m_longitude);
     }
 
-    void check_input() const
-    {
-        assert(m_latitude <= 90. && m_latitude >= -90. && "Latitude must be in [-90, 90]");
-        assert(m_longitude <= 180. && m_longitude >= -180. && "Longitude must be in [-180, 180]");
-    }
-
     /*
     * @brief Calculate the distance between two GeographicalLocation%s.
     * @param other The other GeographicalLocation.
@@ -176,6 +170,16 @@ public:
     }
 
 private:
+    /**
+     * @brief Assert that the latitude and longitude are within valid ranges.
+     * 
+     */
+    void check_input() const
+    {
+        assert(m_latitude <= 90. && m_latitude >= -90. && "Latitude must be in [-90, 90]");
+        assert(m_longitude <= 180. && m_longitude >= -180. && "Longitude must be in [-180, 180]");
+    }
+
     ScalarType m_latitude;
     ScalarType m_longitude;
     constexpr static ScalarType earth_radius = 6371.;

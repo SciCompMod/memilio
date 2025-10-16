@@ -31,25 +31,27 @@
 #include <type_traits>
 #include <vector>
 
-namespace bg   = boost::geometry;
-namespace bgi  = bg::index;
-namespace bgsb = bg::strategy::buffer;
-
 namespace mio
 {
 namespace geo
 {
-// Point stores longitude and latitude in this order.
-using Point = bg::model::point<double, 2, bg::cs::geographic<bg::degree>>;
-using Node  = std::pair<Point, size_t>;
-
+/**
+ * @brief Concept for spherical location types.
+ * 
+ * The location type needs to provide get_latitude() and get_longitude() methods returning floating point types.
+ */
 template <class Location>
-concept IsSphericalLocation = requires(const Location& loc) {
+concept SphericalLocationType = requires(const Location& loc) {
     std::is_floating_point_v<decltype(loc.get_latitude())> && std::is_floating_point_v<decltype(loc.get_longitude())>;
 };
 
+/**
+ * @brief Concept for spherical location iterator types.
+ * 
+ * The iterator type needs to be an input iterator and the value type needs to satisfy the SphericalLocationType concept.
+ */
 template <class Iter>
-concept IsSphericalLocationIterator = std::input_iterator<Iter> && IsSphericalLocation<std::iter_reference_t<Iter>>;
+concept SphericalLocationIteratorType = std::input_iterator<Iter> && SphericalLocationType<std::iter_reference_t<Iter>>;
 
 /**
  * @brief R-tree for spatial queries of geographical locations on the sphere.
@@ -72,7 +74,7 @@ public:
      * 
      * @param locations A vector of geographical locations, they need to provide get_latitude() and get_longitude().
      */
-    template <IsSphericalLocation Location>
+    template <SphericalLocationType Location>
     RTree(const std::vector<Location>& locations)
         : rtree{}
     {
@@ -89,7 +91,7 @@ public:
      * @param last The end of the range.
      * The provided location data needs to provide get_latitude() and get_longitude().
      */
-    template <IsSphericalLocationIterator Iter>
+    template <SphericalLocationIteratorType Iter>
     RTree(Iter first, Iter last)
         : rtree{}
     {
@@ -119,12 +121,14 @@ public:
      * @param number The number of nearest neighbours to find.
      * @return Vector with indices of the nearest neighbours.
      */
-    std::vector<size_t> nearest_neighbor_indices(const IsSphericalLocation auto& location, size_t number) const
+    std::vector<size_t> nearest_neighbor_indices(const SphericalLocationType auto& location, size_t number) const
     {
+        using boost::geometry::index::nearest;
+        using boost::geometry::index::query;
+
         Point point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
-        bgi::query(rtree, bgi::nearest(point, number),
-                   mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
+        query(rtree, nearest(point, number), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
         return indices;
     }
 
@@ -135,31 +139,37 @@ public:
      * @param radius The radius of the query in kilometers.
      * @return Vector with indices of the points found.
      */
-    std::vector<size_t> inrange_indices_approximate(const IsSphericalLocation auto& location, double radius) const
+    std::vector<size_t> inrange_indices_approximate(const SphericalLocationType auto& location, double radius) const
     {
+        using boost::geometry::index::covered_by;
+        using boost::geometry::index::query;
+
         auto radius_in_meter = 1000 * radius;
         auto circle          = create_circle_approximation(location, radius_in_meter);
         std::vector<size_t> indices;
-        bgi::query(rtree, bgi::covered_by(circle),
-                   mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
+        query(rtree, covered_by(circle), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
         return indices;
     }
 
     /**
-     * @brief Return the indices of the points within a given radius for multiple radii at the same time.
+     * @brief Return the indices of the points within each given radius for multiple radii at the same time.
      *
      * @param location Midpoint for the query, provides get_latitude() and get_longitude().
      * @param radii Vector containing the radii of the query.
      * @return Vector of vectors with indices of the points found.
      */
-    std::vector<std::vector<size_t>> inrange_indices_query(const IsSphericalLocation auto& location,
+    std::vector<std::vector<size_t>> inrange_indices_query(const SphericalLocationType auto& location,
                                                            const std::vector<double>& radii) const
     {
+        using boost::geometry::distance;
+        using boost::geometry::index::covered_by;
+        using boost::geometry::index::query;
+
         auto max_radius      = std::max_element(radii.begin(), radii.end());
         auto radius_in_meter = 1000 * (*max_radius);
         auto circle          = create_circle_approximation(location, radius_in_meter);
         std::vector<Node> nodes;
-        bgi::query(rtree, bgi::covered_by(circle), std::back_inserter(nodes));
+        query(rtree, covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<std::vector<size_t>> result;
         for (const auto& radius : radii) {
@@ -167,7 +177,7 @@ public:
             std::vector<size_t> indices;
             indices.reserve(nodes.size());
             for (auto& node : nodes) {
-                if (bg::distance(midpoint, node.first) < radius_in_meter) {
+                if (distance(midpoint, node.first) < radius_in_meter) {
                     indices.push_back(node.second);
                 }
             }
@@ -185,18 +195,22 @@ public:
      *
      * Basically the same as \ref inrange_indices_approximate, but filters the result to make sure the points are within the radius.
      */
-    std::vector<size_t> inrange_indices(const IsSphericalLocation auto& location, double radius) const
+    std::vector<size_t> inrange_indices(const SphericalLocationType auto& location, double radius) const
     {
+        using boost::geometry::distance;
+        using boost::geometry::index::covered_by;
+        using boost::geometry::index::query;
+
         auto radius_in_meter = 1000 * radius;
 
         auto circle = create_circle_approximation(location, radius_in_meter);
         std::vector<Node> nodes;
-        bgi::query(rtree, bgi::covered_by(circle), std::back_inserter(nodes));
+        query(rtree, covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         indices.reserve(nodes.size());
         for (auto& node : nodes) {
-            if (bg::distance(midpoint, node.first) < radius_in_meter) {
+            if (distance(midpoint, node.first) < radius_in_meter) {
                 indices.push_back(node.second);
             }
         }
@@ -205,29 +219,49 @@ public:
 
 private:
     /**
+     * @brief Point stores longitude and latitude in this order.
+     * 
+     */
+    using Point = boost::geometry::model::point<double, 2, boost::geometry::cs::geographic<boost::geometry::degree>>;
+    /**
+     * @brief Node stores a point and its associated index.
+     * 
+     */
+    using Node = std::pair<Point, size_t>;
+    /**
+     * @brief MultiPolygon type for circle approximation.
+     * 
+     */
+    using MultiPolygon = boost::geometry::model::multi_polygon<boost::geometry::model::polygon<Point>>;
+    /**
      * @brief Create a circle approximation object.
      *
      * @param location Midpoint, needs to provide get_latitude() and get_longitude().
      * @param radius in meters.
+     * @param approximation_points Number of points used to approximate the circle.
      * @return multi_polygon.
      */
-    bg::model::multi_polygon<bg::model::polygon<Point>>
-    create_circle_approximation(const IsSphericalLocation auto& location, double radius) const
+    MultiPolygon create_circle_approximation(const SphericalLocationType auto& location, double radius,
+                                             size_t approximation_points = 36) const
     {
-        bgsb::geographic_point_circle<> point_strategy(36);
-        bgsb::distance_symmetric<double> distance_strategy(radius);
-        bgsb::join_round join_strategy;
-        bgsb::end_round end_strategy;
-        bgsb::side_straight side_strategy;
+        using namespace boost::geometry::strategy::buffer;
+
+        geographic_point_circle<> point_strategy(approximation_points);
+        distance_symmetric<double> distance_strategy(radius);
+        join_round join_strategy;
+        end_round end_strategy;
+        side_straight side_strategy;
 
         Point midpoint(location.get_longitude(), location.get_latitude());
 
-        bg::model::multi_polygon<bg::model::polygon<Point>> circle;
-        bg::buffer(midpoint, circle, distance_strategy, side_strategy, join_strategy, end_strategy, point_strategy);
+        MultiPolygon circle;
+        boost::geometry::buffer(midpoint, circle, distance_strategy, side_strategy, join_strategy, end_strategy,
+                                point_strategy);
         return circle;
     }
 
-    bgi::rtree<Node, bgi::rstar<16>> rtree;
+    constexpr static size_t max_number_of_elements_per_tree_node = 16;
+    boost::geometry::index::rtree<Node, boost::geometry::index::rstar<max_number_of_elements_per_tree_node>> rtree;
 };
 
 } // namespace geo
