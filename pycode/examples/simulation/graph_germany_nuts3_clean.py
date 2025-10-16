@@ -91,7 +91,7 @@ def plot_region_median_mad(
         fig, ax = plt.subplots()
 
     line, = ax.plot(
-        x, med, lw=2, label=label or f"Region {region}", color=color)
+        x, med, lw=2, label=label or f"{dd.County[region_ids[region]]}", color=color)
     band = ax.fill_between(x, med - mad, med + mad, alpha=0.25, color=color)
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
@@ -99,7 +99,7 @@ def plot_region_median_mad(
 
     ax.set_xlabel("Time", fontsize=12)
     ax.set_ylabel("ICU", fontsize=12)
-    ax.set_title(f"Region {region}", fontsize=12)
+    ax.set_title(f"{dd.County[region_ids[region]]}", fontsize=12)
     if label is not None:
         ax.legend(fontsize=11, loc="upper right")
     return line, band
@@ -284,6 +284,65 @@ def calibration_median_mad_over_regions(
     return ax, {"levels": x, "median": med, "mad": mad}
 
 
+def plot_damping_values(name, num_samples=100):
+    divi_dict = load_divi_data()
+    aggregate_states(divi_dict)
+
+    workflow = get_workflow()
+    workflow.approximator = keras.models.load_model(
+        filepath=os.path.join(f"{name}/model_{name}.keras")
+    )
+
+    samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
+    print(samples['damping_values'])
+    print(samples['damping_values'].reshape((num_samples, 16, 3)))
+    samples['damping_values'] = samples['damping_values'].reshape((num_samples, 16, 3))
+
+    med = np.median(samples['damping_values'], axis=0)
+    mad = np.median(np.abs(samples['damping_values'] - med), axis=0)
+
+    # Extend for step plotting
+    med_extended = np.hstack([med, med[:, -1][:, None]])
+    mad_extended = np.hstack([mad, mad[:, -1][:, None]])
+
+    # Plot damping values per region
+    fig, axes = plt.subplots(4, 4, figsize=(15, 10), constrained_layout=True)
+    axes = axes.flatten()
+    x = np.arange(15, 61, 15)  # Time steps from 15 to 60
+
+    for i, ax in enumerate(axes):
+        if i < 16:
+            ax.stairs(med[i], edges=x, lw=2, color='red', baseline=None)
+            ax.fill_between(
+                x, med_extended[i] - mad_extended[i], med_extended[i] + mad_extended[i],
+                alpha=0.25, color='red', step='post'
+            )
+            ax.set_title(f"{dd.State[i+1]}", fontsize=10)
+            ax.set_xlabel("Time", fontsize=8)
+            ax.set_ylabel("Damping Value", fontsize=8)
+        else:
+            ax.axis('off')  # Hide unused subplots
+
+    plt.suptitle("Damping Values per Region", fontsize=14)
+    plt.savefig(f"{name}/damping_values.png", dpi=300)
+
+    # Combined plot for all regions
+    fig, ax = plt.subplots(figsize=(10, 6))
+    cmap = plt.cm.get_cmap("viridis", 16)  # Colormap with 16 distinct colors
+
+    for i in range(16):
+        ax.stairs(
+            med[i], edges=x, lw=2, label=f"{dd.State[i+1]}",
+            color=cmap(i), baseline=None
+        )
+
+    ax.set_title("Damping Values per Region (Combined)", fontsize=14)
+    ax.set_xlabel("Time", fontsize=12)
+    ax.set_ylabel("Damping Value", fontsize=12)
+    ax.legend(fontsize=10, loc="upper right", ncol=2)
+    plt.savefig(f"{name}/damping_values_combined.png", dpi=300)
+
+
 class Simulation:  # todo: correct class?
     """ """
 
@@ -336,20 +395,31 @@ class Simulation:  # todo: correct class?
         contact_matrices[0] = mio.ContactMatrix(baseline, minimum)
         model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
-    def set_npis(self, params, end_date, damping_value):
+    def set_npis(self, params, end_date, damping_values):
         """
 
         :param params: 
         :param end_date: 
 
         """
+        start_damping_1 = DATE_TIME + datetime.timedelta(days=15)
+        start_damping_2 = DATE_TIME + datetime.timedelta(days=30)
+        start_damping_3 = DATE_TIME + datetime.timedelta(days=45)
 
-        start_damping = DATE_TIME + datetime.timedelta(days=7)
-
-        if start_damping < end_date:
-            start_date = (start_damping - self.start_date).days
+        if start_damping_1 < end_date:
+            start_date = (start_damping_1 - self.start_date).days
             params.ContactPatterns.cont_freq_mat[0].add_damping(
-                mio.Damping(np.r_[damping_value], t=start_date))
+                mio.Damping(np.r_[damping_values[0]], t=start_date))
+
+        if start_damping_2 < end_date:
+            start_date = (start_damping_2 - self.start_date).days
+            params.ContactPatterns.cont_freq_mat[0].add_damping(
+                mio.Damping(np.r_[damping_values[1]], t=start_date))
+
+        if start_damping_3 < end_date:
+            start_date = (start_damping_3 - self.start_date).days
+            params.ContactPatterns.cont_freq_mat[0].add_damping(
+                mio.Damping(np.r_[damping_values[2]], t=start_date))
 
     def get_graph(self, end_date, t_E, t_ISy, t_ISev, t_Cr, mu_CR, mu_IH, mu_HU, mu_UD, transmission_prob):
         """
@@ -412,8 +482,12 @@ class Simulation:  # todo: correct class?
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
             node = graph.get_node(node_idx)
-            self.set_npis(node.property.parameters, end_date,
-                          damping_values[node.id // 1000 - 1]) 
+
+            self.set_npis(
+                node.property.parameters, 
+                end_date, 
+                damping_values[node.id // 1000 - 1]
+            )
             mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
@@ -452,14 +526,16 @@ def run_germany_nuts3_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR
     return results
 
 def prior():
-    mean = np.random.uniform(0, 1)
-    scale = 0.1
-    a, b = (0 - mean) / scale, (1 - mean) / scale
-    damping_values = truncnorm.rvs(
-        a=a, b=b, loc=mean, scale=scale, size=16
-    )
+    damping_values = np.zeros((3, 16))
+    for i in range(3):
+        mean = np.random.uniform(0, 1)
+        scale = 0.1
+        a, b = (0 - mean) / scale, (1 - mean) / scale
+        damping_values[i] = truncnorm.rvs(
+            a=a, b=b, loc=mean, scale=scale, size=16
+        )
     return {
-        'damping_values': damping_values,
+        'damping_values': np.transpose(damping_values),
         't_E': np.random.uniform(*bounds['t_E']),
         't_ISy': np.random.uniform(*bounds['t_ISy']),
         't_ISev': np.random.uniform(*bounds['t_ISev']),
@@ -517,7 +593,7 @@ def create_train_data(filename, number_samples=1000):
         [prior, run_germany_nuts3_simulation]
     )
     trainings_data = simulator.sample(number_samples)
-    trainings_data = extract_observables(trainings_data, observable_index=4)
+    trainings_data = extract_observables(trainings_data)
     with open(filename, 'wb') as f:
         pickle.dump(trainings_data, f, pickle.HIGHEST_PROTOCOL)
 
@@ -627,6 +703,8 @@ def run_training(name, num_training_files=20):
     for p in train_files:
         d = load_pickle(p)
         d = apply_aug(d, aug=aug)  # only on region keys
+        d = skip_2weeks(d)
+        d['damping_values'] = d['damping_values'].reshape((d['damping_values'].shape[0], -1))
         if trainings_data is None:
             trainings_data = d
         else:
@@ -637,6 +715,7 @@ def run_training(name, num_training_files=20):
     validation_data = apply_aug(load_pickle(val_path), aug=aug)
     validation_data = skip_2weeks(validation_data)
     aggregate_states(validation_data)
+    validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
 
     # check data
     workflow = get_workflow()
@@ -673,7 +752,9 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         # validation data
         validation_data = load_pickle(val_path)
         validation_data = apply_aug(validation_data, aug=aug)
-        aggregate_states(validation_data)
+        validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
+        validation_data_skip2w = skip_2weeks(validation_data)
+        aggregate_states(validation_data_skip2w)
         divi_dict = validation_data
         divi_region_keys = region_keys_sorted(divi_dict)
 
@@ -682,6 +763,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         )[0]  # only one dataset
     else:
         divi_dict = load_divi_data()
+        validation_data_skip2w = skip_2weeks(divi_dict)
         aggregate_states(validation_data_skip2w)
         divi_region_keys = region_keys_sorted(divi_dict)
         divi_data = np.concatenate(
@@ -697,7 +779,8 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         simulations = load_pickle(f'{name}/sims_{name}{synthetic}{with_aug}.pickle')
         print("loaded simulations from file")
     else:
-        samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
+        samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
+        samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], num_samples, 16, 3))
         results = []
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_germany_nuts3_simulation(
@@ -712,7 +795,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
                 result[key] = np.array(result[key])[None, ...]  # add sample axis
             results.append(result)
         results = combine_results(results)
-        results = extract_observables(results, observable_index=4)
+        results = extract_observables(results)
         if apply_augmentation:
             results = apply_aug(results, aug=aug)
 
@@ -752,7 +835,7 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
 
 
 if __name__ == "__main__":
-    name = "infecteds"
+    name = "3dampings"
 
     if not os.path.exists(name):
         os.makedirs(name)
@@ -762,3 +845,4 @@ if __name__ == "__main__":
     run_inference(name=name, on_synthetic_data=True, apply_augmentation=False)
     run_inference(name=name, on_synthetic_data=False)
     run_inference(name=name, on_synthetic_data=False, apply_augmentation=False)
+    plot_damping_values(name=name, num_samples=100)
