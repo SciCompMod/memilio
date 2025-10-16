@@ -17,6 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/compartments/simulation.h"
+#include "memilio/config.h"
+#include "ode_secir/model.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
@@ -30,10 +33,7 @@
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-mio::IOResult<void>
-write_single_run_result(const size_t run,
-                        const mio::Graph<mio::SimulationNode<ScalarType, mio::osecir::Simulation<ScalarType>>,
-                                         mio::MobilityEdge<ScalarType>>& graph)
+mio::IOResult<void> write_single_run_result(const size_t run, const mio::osecir::Simulation<ScalarType>& sim)
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(auto&& created, mio::create_directory("results", abs_path));
@@ -46,32 +46,14 @@ write_single_run_result(const size_t run,
     }
 
     //write sampled parameters for this run
-    //omit edges to save space as they are not sampled
-    int inode = 0;
-    for (auto&& node : graph.nodes()) {
-        BOOST_OUTCOME_TRY(auto&& js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
-        Json::Value js_node(Json::objectValue);
-        js_node["NodeId"]  = node.id;
-        js_node["Model"]   = js_node_model;
-        auto node_filename = mio::path_join(abs_path, "Parameters_run" + std::to_string(run) + "_node" +
-                                                          std::to_string(inode++) + ".json");
-        BOOST_OUTCOME_TRY(mio::write_json(node_filename, js_node));
-    }
+    auto node_filename = mio::path_join(abs_path, "Parameters_run" + std::to_string(run) + ".json");
+    BOOST_OUTCOME_TRY(mio::write_json(node_filename, sim.get_result()));
 
     //write results for this run
     std::vector<mio::TimeSeries<ScalarType>> all_results;
     std::vector<int> ids;
 
-    ids.reserve(graph.nodes().size());
-    all_results.reserve(graph.nodes().size());
-    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(all_results), [](auto& node) {
-        return node.property.get_result();
-    });
-    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
-        return node.id;
-    });
-    auto num_groups = (int)(size_t)graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
-    BOOST_OUTCOME_TRY(mio::save_result(all_results, ids, num_groups,
+    BOOST_OUTCOME_TRY(mio::save_result({sim.get_result()}, {0}, sim.get_model().parameters.get_num_groups().get(),
                                        mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();
@@ -83,6 +65,7 @@ int main()
 
     ScalarType t0   = 0;
     ScalarType tmax = 50;
+    ScalarType dt   = 0.1;
 
     ScalarType cont_freq = 10; // see Polymod study
 
@@ -141,14 +124,20 @@ int main()
 
     //create study
     auto num_runs = size_t(1);
-    mio::ParameterStudy<ScalarType, mio::osecir::Simulation<ScalarType>> parameter_study(model, t0, tmax, num_runs);
+    // mio::ParameterStudy2<mio::osecir::Simulation<ScalarType>, mio::osecir::Model<ScalarType>, ScalarType>
+    //     parameter_study(model, t0, tmax, dt, num_runs);
+
+    auto parameter_study =
+        mio::make_parameter_study<mio::osecir::Simulation<ScalarType>>(model, t0, tmax, dt, num_runs);
 
     //run study
-    auto sample_graph = [](auto&& graph) {
-        return mio::osecir::draw_sample(graph);
+    auto sample_graph = [](const auto& model_, ScalarType t0_, ScalarType dt_, size_t) {
+        mio::osecir::Model<ScalarType> copy = model_;
+        mio::osecir::draw_sample(copy);
+        return mio::osecir::Simulation<ScalarType>(std::move(copy), t0_, dt_);
     };
-    auto handle_result = [](auto&& graph, auto&& run) {
-        auto write_result_status = write_single_run_result(run, graph);
+    auto handle_result = [](auto&& sim, auto&& run) {
+        auto write_result_status = write_single_run_result(run, sim);
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
         }

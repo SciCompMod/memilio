@@ -46,6 +46,8 @@ template <typename FP, class Sim>
 class SimulationNode
 {
 public:
+    using Simulation = Sim;
+
     template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
     SimulationNode(Args&&... args)
         : m_simulation(std::forward<Args>(args)...)

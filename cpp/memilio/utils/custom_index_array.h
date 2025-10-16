@@ -23,6 +23,8 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/stl_util.h"
+#include <cassert>
+#include <cstddef>
 
 namespace
 {
@@ -88,6 +90,17 @@ std::enable_if_t<(I < (Index::size - 1)), std::pair<size_t, size_t>> flatten_ind
     std::tie(val, prod) = flatten_index<I + 1>(indices, dimensions);
 
     return {val + (size_t)mio::get<I>(indices) * prod, prod * (size_t)mio::get<I>(dimensions)};
+}
+
+template <size_t I = 0, class... Tags>
+void assign_from_vector(Index<Tags...>& index, const std::vector<size_t>& values)
+{
+    assert(values.size() == sizeof...(Tags));
+
+    if constexpr (I < sizeof...(Tags)) {
+        get<I>(index) = values[I];
+        assign_from_vector<I + 1, Tags...>(index, values);
+    }
 }
 
 template <typename T>

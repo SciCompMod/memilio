@@ -34,6 +34,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <iterator>
 #include <limits>
 #include <numeric>
@@ -412,7 +413,7 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy2(const ParameterType& global_parameters, Time t0, Time tmax, Step dt, size_t num_runs)
+    ParameterStudy2(const Parameters& global_parameters, Time t0, Time tmax, Step dt, size_t num_runs)
         : m_parameters(global_parameters)
         , m_num_runs(num_runs)
         , m_t0{t0}
@@ -482,7 +483,8 @@ public:
             thread_local_rng().set_counter(run_rng_counter);
 
             //sample
-            auto sim = create_simulation(m_parameters, m_t0, m_dt, run_idx);
+            Simulation sim =
+                create_simulation(std::as_const(m_parameters), std::as_const(m_t0), std::as_const(m_dt), run_idx);
             log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
                 (thread_local_rng().get_counter() - run_rng_counter).get());
 
@@ -611,23 +613,42 @@ private:
     RandomNumberGenerator m_rng;
 };
 
-// //sample parameters and create simulation
-// template <class SampleGraphFunction>
-// GraphSimulation<FP, SimulationGraph, FP, FP> create_sampled_simulation(auto&& params_graph,
-//                                                                        SampleGraphFunction sample_graph)
-// {
-//     SimulationGraph sim_graph;
+template <class Simulation, class Parameters, typename Time, typename Step = Time>
+ParameterStudy2<Simulation, Parameters, Time, Step> make_parameter_study(const Parameters& global_parameters, Time t0,
+                                                                         Time tmax, Step dt, size_t num_runs)
+{
+    return {global_parameters, t0, tmax, dt, num_runs};
+}
 
-//     auto sampled_graph = sample_graph(params_graph);
-//     for (auto&& node : sampled_graph.nodes()) {
-//         sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
-//     }
-//     for (auto&& edge : sampled_graph.edges()) {
-//         sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
-//     }
+template <class FP, class Sim>
+auto make_parameter_study_graph_ode(const Graph<typename Sim::Model, MobilityParameters<FP>>& global_parameters, FP t0,
+                                    FP tmax, FP dt, size_t num_runs)
+{
+    using SimGraph    = Graph<mio::SimulationNode<ScalarType, Sim>, mio::MobilityEdge<ScalarType>>;
+    using SimGraphSim = mio::GraphSimulation<ScalarType, SimGraph, ScalarType, ScalarType>;
+    using Params      = Graph<typename Sim::Model, MobilityParameters<FP>>;
 
-//     return make_mobility_sim<FP, Simulation>(m_t0, m_dt_graph_sim, std::move(sim_graph));
-// }
+    return ParameterStudy2<SimGraphSim, Params, ScalarType>{global_parameters, t0, tmax, dt, num_runs};
+}
+
+//sample parameters and create simulation
+template <typename FP, class GraphSim>
+GraphSim make_sampled_graph_simulation(
+    const Graph<typename GraphSim::Graph::NodeProperty::Simulation::Model, MobilityParameters<FP>>& sampled_graph,
+    FP t0, FP dt_node_sim, FP dt_graph_sim)
+{
+    typename GraphSim::Graph sim_graph;
+
+    for (auto&& node : sampled_graph.nodes()) {
+        sim_graph.add_node(node.id, node.property, t0, dt_node_sim);
+    }
+    for (auto&& edge : sampled_graph.edges()) {
+        sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+    }
+
+    return make_mobility_sim<FP, typename GraphSim::Graph::NodeProperty::Simulation>(t0, dt_graph_sim,
+                                                                                     std::move(sim_graph));
+}
 
 } // namespace mio
 
