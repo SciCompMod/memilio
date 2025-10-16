@@ -86,10 +86,10 @@ public:
      */
     bool operator!=(const GeographicalLocation& other) const
     {
-        return !(m_latitude == other.m_latitude && m_longitude == other.m_longitude);
+        return !(*this == other);
     }
 
-    bool is_close(const GeographicalLocation& other, double tol = 1e-10) const
+    bool is_close(const GeographicalLocation& other, ScalarType tol = 10 * Limits<ScalarType>::zero_tolerance()) const
     {
         return distance(other) < tol;
     }

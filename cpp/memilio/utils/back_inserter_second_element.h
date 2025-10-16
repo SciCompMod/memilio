@@ -26,7 +26,8 @@ namespace mio
 * @brief Back inserter that ignores the first element of pairs given to it.
 *
 * Has the same member functions and objects as a std::back_insert_iterator.
-* Template requires specialization for pair as it is not generally the same datatype as stored in Container.
+* @tparam Container Any container that supports push_back. Its stored type is usually the same as the second member of Pair.
+* @tparam A std::pair. Its first member is ignored by this inserter.
 */
 template <class Container, class Pair>
 struct back_inserter_second_element {
