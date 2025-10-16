@@ -222,6 +222,16 @@ public:
         return out_edges(begin(m_edges), end(m_edges), node_idx);
     }
 
+    /**
+     * @brief range of edges going out from a specific node
+     * 
+     * @param node_idx ID of node
+     */
+    auto out_edges(size_t node_idx) const
+    {
+        return out_edges(begin(m_edges), end(m_edges), node_idx);
+    }
+
     auto& get_edge(size_t node_a, size_t node_b)
     {
         auto edges = out_edges(node_a);
@@ -232,16 +242,6 @@ public:
         }
         mio::log_error("Edge from {} to {} not found.", node_a, node_b);
         throw std::out_of_range("Edge not found");
-    }
-
-    /**
-     * @brief range of edges going out from a specific node
-     * 
-     * @param node_idx ID of node
-     */
-    auto out_edges(size_t node_idx) const
-    {
-        return out_edges(begin(m_edges), end(m_edges), node_idx);
     }
 
 private:

@@ -401,6 +401,7 @@ public:
     {
         auto dt = m_parameters.next_event_time() - Base::m_t;
         while (Base::m_t < t_max) {
+            mio::log_debug("Time: {}", Base::m_t);
             if (Base::m_t + dt > t_max) {
                 dt = t_max - Base::m_t;
             }
@@ -414,10 +415,12 @@ public:
             while (m_parameters.next_event_time() == Base::m_t) {
                 auto next_event = m_parameters.process_next_event();
                 auto& e         = Base::m_graph.get_edge(next_event.from, next_event.to);
+                mio::log_debug("{}, {}", e.start_node_idx, e.end_node_idx);
                 Base::m_edge_func(Base::m_t, next_event.number, e.property,
                                   Base::m_graph.nodes()[e.start_node_idx].property,
                                   Base::m_graph.nodes()[e.end_node_idx].property);
             }
+            dt = m_parameters.next_event_time() - Base::m_t;
         }
     }
 
