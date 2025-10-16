@@ -11,7 +11,7 @@ An overview of nonstandard but often used data types can be found under :doc:`da
 Infection states
 ----------------
 
-The model contains a list of **InfectionState**s that define particular features of the subpopulations in the particular state.
+The model contains a list of **InfectionState**\s that define particular features of the subpopulations in the particular state.
 
 .. code-block:: RST
 
@@ -20,11 +20,14 @@ The model contains a list of **InfectionState**s that define particular features
     `...`
 
 To make use of the GLCT, we additionally need to define the numbers of subcompartments for each **InfectionState**.
+This is done by creating an **LctInfectionState** object for each group. These objects are then passed as template 
+parameter to the model. 
 
-.. code-block:: RST
-    `Number of subcompartments of State1`
-    `Number of subcompartments of State2`
-    `...`
+.. code-block:: cpp
+
+    using LctStateGroup1 = mio::LctInfectionState<ScalarType, `List of InfectionStates`, `Number of subcompartments of State1`, 
+                                                                                   `Number of subcompartments of State2`, 
+                                                                                   `...`>;
 
 The model is implemented as **CompartmentalModel**.
 
