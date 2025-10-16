@@ -222,7 +222,7 @@ public:
         return out_edges(begin(m_edges), end(m_edges), node_idx);
     }
 
-    auto get_edge(size_t node_a, size_t node_b) const
+    auto& get_edge(size_t node_a, size_t node_b)
     {
         auto edges = out_edges(node_a);
         for (auto edge = edges.begin(); edge != edges.end(); ++edge) {

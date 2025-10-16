@@ -413,7 +413,7 @@ public:
 
             while (m_parameters.next_event_time() == Base::m_t) {
                 auto next_event = m_parameters.process_next_event();
-                auto e          = Base::m_graph.get_edge(next_event.from, next_event.to);
+                auto& e         = Base::m_graph.get_edge(next_event.from, next_event.to);
                 Base::m_edge_func(Base::m_t, next_event.number, e.property,
                                   Base::m_graph.nodes()[e.start_node_idx].property,
                                   Base::m_graph.nodes()[e.end_node_idx].property);
