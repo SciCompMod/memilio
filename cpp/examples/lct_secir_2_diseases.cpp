@@ -46,50 +46,51 @@ int main()
                      NumRecovered_ab = 1;
     using InfState                   = mio::lsecir2d::InfectionState;
     using LctState =
-        mio::LctInfectionState<InfState, NumSusceptible, NumExposed_1a, NumInfectedNoSymptoms_1a,
+        mio::LctInfectionState<ScalarType, InfState, NumSusceptible, NumExposed_1a, NumInfectedNoSymptoms_1a,
                                NumInfectedSymptoms_1a, NumInfectedSevere_1a, NumInfectedCritical_1a, NumRecovered_a,
                                NumDead_a, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
                                NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b,
                                NumInfectedSymptoms_1b, NumInfectedSevere_1b, NumInfectedCritical_1b, NumRecovered_b,
                                NumDead_b, NumExposed_2b, NumInfectedNoSymptoms_2b, NumInfectedSymptoms_2b,
                                NumInfectedSevere_2b, NumInfectedCritical_2b, NumRecovered_ab>;
-    using Model = mio::lsecir2d::Model<LctState>;
+    using Model = mio::lsecir2d::Model<ScalarType, LctState>;
     Model model;
 
     ScalarType tmax = 10;
 
     // Set Parameters.
-    model.parameters.get<mio::lsecir2d::TimeExposed_a>()[0]            = 3.;
-    model.parameters.get<mio::lsecir2d::TimeExposed_b>()[0]            = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]   = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]   = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]     = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]     = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]   = 3.;
-    model.parameters.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]   = 3.;
+    model.parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]            = 3.;
+    model.parameters.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]            = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]   = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]   = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]     = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]     = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]   = 3.;
+    model.parameters.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]   = 3.;
 
-    model.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.1;
-    model.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.1;
+    model.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.1;
+    model.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.1;
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
     // From SimulationTime 5, the contact pattern is reduced to 30% of the initial value.
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(5.));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(5.));
 
-    model.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
-    model.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 0.7;
-    model.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 0.25;
-    model.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 0.25;
-    model.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.09;
-    model.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.09;
-    model.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.2;
-    model.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.2;
-    model.parameters.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.25;
-    model.parameters.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.25;
-    model.parameters.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.3;
-    model.parameters.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.3;
+    model.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 0.7;
+    model.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 0.7;
+    model.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 0.25;
+    model.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 0.25;
+    model.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.09;
+    model.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.09;
+    model.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.2;
+    model.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
+    model.parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
+    model.parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+    model.parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
+    model.parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
 
     // Simple example how to initialize model without flows.
     // Define the initial values with the distribution of the population into subcompartments.

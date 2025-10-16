@@ -36,10 +36,10 @@
 // Test confirms that default construction of an LCT2D model works.
 TEST(TestLCTSecir2d, simulateDefault)
 {
-    using InfState = mio::lsecir2d::InfectionState;
-    using LctState =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model     = mio::lsecir2d::Model<LctState>;
+    using InfState  = mio::lsecir2d::InfectionState;
+    using LctState  = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                             1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model     = mio::lsecir2d::Model<ScalarType, LctState>;
     ScalarType t0   = 0;
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
@@ -71,13 +71,13 @@ TEST(TestLCTSecir2d, simulateDefault)
 TEST(TestLCTSecir2d, compareWithLCTSecir1)
 {
     using InfState2d = mio::lsecir2d::InfectionState;
-    using LctState2d = mio::LctInfectionState<InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                              1, 1, 1, 1, 1>;
-    using Model_2d   = mio::lsecir2d::Model<LctState2d, LctState2d>;
+    using LctState2d = mio::LctInfectionState<ScalarType, InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                              1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model_2d   = mio::lsecir2d::Model<ScalarType, LctState2d, LctState2d>;
 
     using InfState_lct = mio::lsecir::InfectionState;
-    using LctState_lct = mio::LctInfectionState<InfState_lct, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model_lct    = mio::lsecir::Model<LctState_lct, LctState_lct>;
+    using LctState_lct = mio::LctInfectionState<ScalarType, InfState_lct, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model_lct    = mio::lsecir::Model<ScalarType, LctState_lct, LctState_lct>;
 
     ScalarType t0   = 0;
     ScalarType tmax = 5;
@@ -98,38 +98,39 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     }
 
     // Set Parameters.
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]   = 7.1;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]   = 7.1;
 
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.05;
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.05;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.;
 
-    mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct2d =
+        model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix_lct2d[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::StartDay>()                            = 50;
-    model_lct2d.parameters.get<mio::lsecir2d::Seasonality>()                         = 0.1;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::StartDay<ScalarType>>()                            = 50;
+    model_lct2d.parameters.get<mio::lsecir2d::Seasonality<ScalarType>>()                         = 0.1;
 
     // Initialization vector for LCT model.
     Eigen::VectorX<ScalarType> init_lct = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState_lct::Count, 0);
@@ -145,26 +146,27 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
     }
 
     // Set Parameters.
-    model_lct.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model_lct.parameters.get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct =
+        model_lct.parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix_lct[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model_lct.parameters.get<mio::lsecir::StartDay>()                          = 50;
-    model_lct.parameters.get<mio::lsecir::Seasonality>()                       = 0.1;
-    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-    model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-    model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model_lct.parameters.get<mio::lsecir::StartDay<ScalarType>>()                          = 50;
+    model_lct.parameters.get<mio::lsecir::Seasonality<ScalarType>>()                       = 0.1;
+    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+    model_lct.parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model_lct.parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     // Simulate
     mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
@@ -200,9 +202,9 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
 TEST(TestLCTSecir2d, compareWithLCTSecir2)
 {
     using InfState2d = mio::lsecir2d::InfectionState;
-    using LctState2d = mio::LctInfectionState<InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                              1, 1, 1, 1, 1>;
-    using Model_2d   = mio::lsecir2d::Model<LctState2d, LctState2d>;
+    using LctState2d = mio::LctInfectionState<ScalarType, InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                              1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model_2d   = mio::lsecir2d::Model<ScalarType, LctState2d, LctState2d>;
     ScalarType t0    = 0;
     ScalarType tmax  = 5;
     ScalarType dt    = 0.1;
@@ -221,42 +223,43 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
     }
 
     // Set Parameters.
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]   = 7.1;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]   = 7.1;
 
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.;
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.05;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct2d =
+        model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix_lct2d[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::StartDay>()                            = 50;
-    model_lct2d.parameters.get<mio::lsecir2d::Seasonality>()                         = 0.1;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::StartDay<ScalarType>>()                            = 50;
+    model_lct2d.parameters.get<mio::lsecir2d::Seasonality<ScalarType>>()                         = 0.1;
 
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState, LctState>;
 
     // Initialization vector for LCT model.
     Eigen::VectorX<ScalarType> init_lct = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState::Count, 0);
@@ -272,26 +275,27 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
     }
 
     // Set Parameters.
-    model_lct.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model_lct.parameters.get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct =
+        model_lct.parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix_lct[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model_lct.parameters.get<mio::lsecir::StartDay>()                          = 50;
-    model_lct.parameters.get<mio::lsecir::Seasonality>()                       = 0.1;
-    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-    model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-    model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model_lct.parameters.get<mio::lsecir::StartDay<ScalarType>>()                          = 50;
+    model_lct.parameters.get<mio::lsecir::Seasonality<ScalarType>>()                       = 0.1;
+    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+    model_lct.parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model_lct.parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     // Simulate
     mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
@@ -327,13 +331,13 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
 TEST(TestLCTSecir2d, compareWithLCTSecir3)
 {
     using InfState_2d = mio::lsecir2d::InfectionState;
-    using LctState_2d = mio::LctInfectionState<InfState_2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                               1, 1, 1, 1, 1, 1>;
-    using Model_2d    = mio::lsecir2d::Model<LctState_2d, LctState_2d>;
+    using LctState_2d = mio::LctInfectionState<ScalarType, InfState_2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                               1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model_2d    = mio::lsecir2d::Model<ScalarType, LctState_2d, LctState_2d>;
 
     using InfState_lct = mio::lsecir::InfectionState;
-    using LctState_lct = mio::LctInfectionState<InfState_lct, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model_lct    = mio::lsecir::Model<LctState_lct, LctState_lct>;
+    using LctState_lct = mio::LctInfectionState<ScalarType, InfState_lct, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model_lct    = mio::lsecir::Model<ScalarType, LctState_lct, LctState_lct>;
 
     ScalarType t0   = 0;
     ScalarType tmax = 5;
@@ -353,38 +357,39 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
     }
 
     // Set Parameters.
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]   = 7.1;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]   = 7.1;
 
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.05;
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.05;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.;
 
-    mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct2d =
+        model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix_lct2d[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::StartDay>()                            = 50;
-    model_lct2d.parameters.get<mio::lsecir2d::Seasonality>()                         = 0.1;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::StartDay<ScalarType>>()                            = 50;
+    model_lct2d.parameters.get<mio::lsecir2d::Seasonality<ScalarType>>()                         = 0.1;
 
     // Initialization vector for LCT model.
     Eigen::VectorX<ScalarType> init_lct = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState_lct::Count, 0);
@@ -400,26 +405,27 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
     }
 
     // Set Parameters.
-    model_lct.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model_lct.parameters.get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct =
+        model_lct.parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix_lct[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model_lct.parameters.get<mio::lsecir::StartDay>()                          = 50;
-    model_lct.parameters.get<mio::lsecir::Seasonality>()                       = 0.1;
-    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-    model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-    model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model_lct.parameters.get<mio::lsecir::StartDay<ScalarType>>()                          = 50;
+    model_lct.parameters.get<mio::lsecir::Seasonality<ScalarType>>()                       = 0.1;
+    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+    model_lct.parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model_lct.parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     // Simulate
     mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
@@ -455,9 +461,9 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
 TEST(TestLCTSecir2d, compareWithLCTSecir4)
 {
     using InfState2d = mio::lsecir2d::InfectionState;
-    using LctState2d = mio::LctInfectionState<InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                              1, 1, 1, 1, 1>;
-    using Model_2d   = mio::lsecir2d::Model<LctState2d, LctState2d>;
+    using LctState2d = mio::LctInfectionState<ScalarType, InfState2d, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                              1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model_2d   = mio::lsecir2d::Model<ScalarType, LctState2d, LctState2d>;
     ScalarType t0    = 0;
     ScalarType tmax  = 5;
     ScalarType dt    = 0.1;
@@ -476,42 +482,43 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     }
 
     // Set Parameters.
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]   = 7.1;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b>()[0]            = 3.2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 2;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]   = 5.8;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]     = 9.5;
-    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]   = 7.1;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]            = 3.2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 2;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]   = 5.8;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]     = 9.5;
+    model_lct2d.parameters.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]   = 7.1;
 
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.;
-    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.05;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.;
+    model_lct2d.parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct2d = model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix_lct2d[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct2d =
+        model_lct2d.parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix_lct2d[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct2d[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 0.7;
-    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.09;
-    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.2;
-    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.25;
-    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.3;
-    model_lct2d.parameters.get<mio::lsecir2d::StartDay>()                            = 50;
-    model_lct2d.parameters.get<mio::lsecir2d::Seasonality>()                         = 0.1;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 0.7;
+    model_lct2d.parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.09;
+    model_lct2d.parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
+    model_lct2d.parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+    model_lct2d.parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
+    model_lct2d.parameters.get<mio::lsecir2d::StartDay<ScalarType>>()                            = 50;
+    model_lct2d.parameters.get<mio::lsecir2d::Seasonality<ScalarType>>()                         = 0.1;
 
     using InfState = mio::lsecir::InfectionState;
-    using LctState = mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model    = mio::lsecir::Model<LctState, LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model    = mio::lsecir::Model<ScalarType, LctState, LctState>;
 
     // Initialization vector for LCT model.
     Eigen::VectorX<ScalarType> init_lct = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState::Count, 0);
@@ -527,26 +534,27 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     }
 
     // Set Parameters.
-    model_lct.parameters.get<mio::lsecir::TimeExposed>()[0]            = 3.2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms>()[0] = 2;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms>()[0]   = 5.8;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere>()[0]     = 9.5;
-    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical>()[0]   = 7.1;
+    model_lct.parameters.get<mio::lsecir::TimeExposed<ScalarType>>()[0]            = 3.2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedNoSymptoms<ScalarType>>()[0] = 2;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSymptoms<ScalarType>>()[0]   = 5.8;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedSevere<ScalarType>>()[0]     = 9.5;
+    model_lct.parameters.get<mio::lsecir::TimeInfectedCritical<ScalarType>>()[0]   = 7.1;
 
-    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact>()[0] = 0.05;
+    model_lct.parameters.get<mio::lsecir::TransmissionProbabilityOnContact<ScalarType>>()[0] = 0.05;
 
-    mio::ContactMatrixGroup& contact_matrix_lct = model_lct.parameters.get<mio::lsecir::ContactPatterns>();
-    contact_matrix_lct[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(2, 2, 10));
-    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime(2.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix_lct =
+        model_lct.parameters.get<mio::lsecir::ContactPatterns<ScalarType>>();
+    contact_matrix_lct[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(2, 2, 10));
+    contact_matrix_lct[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms>()[0] = 0.7;
-    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic>()[0] = 0.25;
-    model_lct.parameters.get<mio::lsecir::StartDay>()                          = 50;
-    model_lct.parameters.get<mio::lsecir::Seasonality>()                       = 0.1;
-    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms>()[0] = 0.09;
-    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms>()[0]      = 0.2;
-    model_lct.parameters.get<mio::lsecir::CriticalPerSevere>()[0]              = 0.25;
-    model_lct.parameters.get<mio::lsecir::DeathsPerCritical>()[0]              = 0.3;
+    model_lct.parameters.get<mio::lsecir::RelativeTransmissionNoSymptoms<ScalarType>>()[0] = 0.7;
+    model_lct.parameters.get<mio::lsecir::RiskOfInfectionFromSymptomatic<ScalarType>>()[0] = 0.25;
+    model_lct.parameters.get<mio::lsecir::StartDay<ScalarType>>()                          = 50;
+    model_lct.parameters.get<mio::lsecir::Seasonality<ScalarType>>()                       = 0.1;
+    model_lct.parameters.get<mio::lsecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[0] = 0.09;
+    model_lct.parameters.get<mio::lsecir::SeverePerInfectedSymptoms<ScalarType>>()[0]      = 0.2;
+    model_lct.parameters.get<mio::lsecir::CriticalPerSevere<ScalarType>>()[0]              = 0.25;
+    model_lct.parameters.get<mio::lsecir::DeathsPerCritical<ScalarType>>()[0]              = 0.3;
 
     // Simulate
     mio::TimeSeries<ScalarType> result_lct2d = mio::simulate<ScalarType, Model_2d>(t0, tmax, dt, model_lct2d);
@@ -582,10 +590,10 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
 // and calculate the TimeSeries with no subcompartments from the result
 TEST(TestLCTSecir2d, testSubcompartments)
 {
-    using InfState = mio::lsecir2d::InfectionState;
-    using LctState =
-        mio::LctInfectionState<InfState, 1, 2, 3, 3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 2, 3, 3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 1>;
-    using Model     = mio::lsecir2d::Model<LctState>;
+    using InfState  = mio::lsecir2d::InfectionState;
+    using LctState  = mio::LctInfectionState<ScalarType, InfState, 1, 2, 3, 3, 3, 3, 1, 1, 2, 3, 3, 3, 3, 2, 3, 3, 3, 3,
+                                             1, 1, 2, 3, 3, 3, 3, 1>;
+    using Model     = mio::lsecir2d::Model<ScalarType, LctState>;
     ScalarType t0   = 0;
     ScalarType tmax = 1;
     ScalarType dt   = 0.1;
@@ -595,6 +603,10 @@ TEST(TestLCTSecir2d, testSubcompartments)
         {200},        {0, 0},    {30, 10, 10}, {0, 0, 0}, {10, 10, 10}, {0, 0, 0}, {0},       {0},       {0, 0},
         {30, 10, 10}, {0, 0, 0}, {10, 10, 10}, {0, 0, 0}, {0, 0},       {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
         {0},          {0},       {0, 0},       {0, 0, 0}, {0, 0, 0},    {0, 0, 0}, {0, 0, 0}, {0}};
+
+    // Initial population without subcompartments
+    std::vector<ScalarType> init_no_subcompartments = {200, 0, 50, 0, 30, 0, 0, 0, 0, 50, 0, 30, 0,
+                                                       0,   0, 0,  0, 0,  0, 0, 0, 0, 0,  0, 0,  0};
 
     Model model;
 
@@ -611,7 +623,11 @@ TEST(TestLCTSecir2d, testSubcompartments)
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);
     auto interpolated_results = mio::interpolate_simulation_result(population_no_subcompartments);
 
-    EXPECT_NEAR(result.get_last_time(), tmax, 1e-10);
+    // Compare the values of compartments at time 0 after using calculate_compartments
+    // to the initial values without subcompartments
+    for (size_t i = 0; i < 26; i++) {
+        EXPECT_NEAR(population_no_subcompartments.get_value(0)[i], init_no_subcompartments[i], 1e-10);
+    }
 }
 
 // Model setup to compare result with a previous output.
@@ -619,9 +635,9 @@ class ModelTestLCTSecir2d : public testing::Test
 {
 public:
     using InfState = mio::lsecir2d::InfectionState;
-    using LctState =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model = mio::lsecir2d::Model<LctState>;
+    using LctState = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                            1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model    = mio::lsecir2d::Model<ScalarType, LctState>;
 
 protected:
     virtual void SetUp()
@@ -641,35 +657,36 @@ protected:
         }
 
         // Set parameters.
-        model->parameters.get<mio::lsecir2d::TimeExposed_a>()[0]                      = 3.2;
-        model->parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0]           = 2;
-        model->parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]             = 5.8;
-        model->parameters.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]               = 9.5;
-        model->parameters.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]             = 7.1;
-        model->parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.05;
-        model->parameters.get<mio::lsecir2d::TimeExposed_b>()[0]                      = 3.2;
-        model->parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0]           = 2;
-        model->parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]             = 5.8;
-        model->parameters.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]               = 9.5;
-        model->parameters.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]             = 7.1;
-        model->parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.05;
+        model->parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]                      = 3.2;
+        model->parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0]           = 2;
+        model->parameters.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]             = 5.8;
+        model->parameters.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]               = 9.5;
+        model->parameters.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]             = 7.1;
+        model->parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.05;
+        model->parameters.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]                      = 3.2;
+        model->parameters.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0]           = 2;
+        model->parameters.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]             = 5.8;
+        model->parameters.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]               = 9.5;
+        model->parameters.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]             = 7.1;
+        model->parameters.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.05;
 
-        mio::ContactMatrixGroup& contact_matrix = model->parameters.get<mio::lsecir2d::ContactPatterns>();
-        contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
-        contact_matrix[0].add_damping(0.7, mio::SimulationTime(2.));
+        mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+            model->parameters.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
+        contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(2.));
 
-        model->parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 0.7;
-        model->parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 0.25;
-        model->parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.09;
-        model->parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.2;
-        model->parameters.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.25;
-        model->parameters.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.3;
-        model->parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 0.7;
-        model->parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 0.25;
-        model->parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.09;
-        model->parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.2;
-        model->parameters.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.25;
-        model->parameters.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.3;
+        model->parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 0.7;
+        model->parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 0.25;
+        model->parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.09;
+        model->parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.2;
+        model->parameters.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.25;
+        model->parameters.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.3;
+        model->parameters.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 0.7;
+        model->parameters.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 0.25;
+        model->parameters.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.09;
+        model->parameters.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.2;
+        model->parameters.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.25;
+        model->parameters.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.3;
     }
 
     virtual void TearDown()
@@ -711,171 +728,172 @@ TEST(TestLCTSecir2d, testConstraintsParameters)
     mio::set_log_level(mio::LogLevel::off);
 
     // Check for exceptions of parameters.
-    mio::lsecir2d::Parameters parameters_lct2d(1);
-    parameters_lct2d.get<mio::lsecir2d::TimeExposed_a>()[0]                      = 0;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0]           = 3.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0]             = 6.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_a>()[0]               = 11.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_a>()[0]             = 17.1;
-    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.01;
-    parameters_lct2d.get<mio::lsecir2d::TimeExposed_b>()[0]                      = 3.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0]           = 3.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0]             = 6.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_b>()[0]               = 11.1;
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_b>()[0]             = 17.1;
-    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.01;
-    mio::ContactMatrixGroup& contact_matrix = parameters_lct2d.get<mio::lsecir2d::ContactPatterns>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10));
+    mio::lsecir2d::Parameters<ScalarType> parameters_lct2d(1);
+    parameters_lct2d.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]                      = 0;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0]           = 3.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0]             = 6.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0]               = 11.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0]             = 17.1;
+    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.01;
+    parameters_lct2d.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0]                      = 3.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0]           = 3.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0]             = 6.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0]               = 11.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0]             = 17.1;
+    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.01;
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        parameters_lct2d.get<mio::lsecir2d::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, 10));
 
-    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 1;
-    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 1;
-    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0]      = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_a>()[0]              = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_a>()[0]              = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 1;
-    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 1;
-    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0]      = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_b>()[0]              = 0.1;
-    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_b>()[0]              = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 1;
+    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 1;
+    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0]      = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0]              = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0]              = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 1;
+    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 1;
+    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0]      = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0]              = 0.1;
+    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0]              = 0.1;
 
     // Check improper TimeExposed.
     bool constraint_check = parameters_lct2d.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeExposed_a>()[0] = 3.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0] = 3.1;
 
-    parameters_lct2d.get<mio::lsecir2d::TimeExposed_b>()[0] = 0.1;
-    constraint_check                                        = parameters_lct2d.check_constraints();
+    parameters_lct2d.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0] = 0.1;
+    constraint_check                                                    = parameters_lct2d.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeExposed_b>()[0] = 3.1;
+    parameters_lct2d.get<mio::lsecir2d::TimeExposed_b<ScalarType>>()[0] = 3.1;
 
     // Check TimeInfectedNoSymptoms.
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 0.1;
-    constraint_check                                                   = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_a>()[0] = 3.1;
-
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 0.1;
-    constraint_check                                                   = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_b>()[0] = 3.1;
-
-    // Check TimeInfectedSymptoms.
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0] = -0.1;
-    constraint_check                                                 = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_a>()[0] = 6.1;
-
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0] = -0.1;
-    constraint_check                                                 = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_b>()[0] = 6.1;
-
-    // Check TimeInfectedSevere.
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_a>()[0] = 0.5;
-    constraint_check                                               = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_a>()[0] = 11.1;
-
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_b>()[0] = 0.5;
-    constraint_check                                               = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_b>()[0] = 11.1;
-
-    // Check TimeInfectedCritical.
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_a>()[0] = 0.;
-    constraint_check                                                 = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_a>()[0] = 17.1;
-
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_b>()[0] = 0.;
-    constraint_check                                                 = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_b>()[0] = 17.1;
-
-    // Check TransmissionProbabilityOnContact.
-    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = -1;
-    constraint_check                                                             = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_a>()[0] = 0.01;
-
-    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = -1;
-    constraint_check                                                             = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_b>()[0] = 0.01;
-
-    // Check RelativeTransmissionNoSymptoms.
-    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 1.5;
-    constraint_check                                                           = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a>()[0] = 1;
-
-    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 1.5;
-    constraint_check                                                           = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b>()[0] = 1;
-
-    // Check RiskOfInfectionFromSymptomatic.
-    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 1.5;
-    constraint_check                                                           = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a>()[0] = 1;
-
-    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 1.5;
-    constraint_check                                                           = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b>()[0] = 1;
-
-    // Check RecoveredPerInfectedNoSymptoms.
-    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 1.5;
-    constraint_check                                                           = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a>()[0] = 0.1;
-
-    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 1.5;
-    constraint_check                                                           = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b>()[0] = 0.1;
-
-    // Check SeverePerInfectedSymptoms.
-    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0] = -1;
-    constraint_check                                                      = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_a>()[0] = 0.1;
-
-    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0] = -1;
-    constraint_check                                                      = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_b>()[0] = 0.1;
-
-    // Check CriticalPerSevere.
-    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_a>()[0] = -1;
-    constraint_check                                              = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_a>()[0] = 0.1;
-
-    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_b>()[0] = -1;
-    constraint_check                                              = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_b>()[0] = 0.1;
-
-    // Check DeathsPerCritical.
-    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_a>()[0] = -1;
-    constraint_check                                              = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_a>()[0] = 0.1;
-
-    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_b>()[0] = -1;
-    constraint_check                                              = parameters_lct2d.check_constraints();
-    EXPECT_TRUE(constraint_check);
-    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_b>()[0] = 0.1;
-
-    // Check Seasonality.
-    parameters_lct2d.set<mio::lsecir2d::Seasonality>(1);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 0.1;
     constraint_check = parameters_lct2d.check_constraints();
     EXPECT_TRUE(constraint_check);
-    parameters_lct2d.set<mio::lsecir2d::Seasonality>(0.1);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_a<ScalarType>>()[0] = 3.1;
+
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 0.1;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedNoSymptoms_b<ScalarType>>()[0] = 3.1;
+
+    // Check TimeInfectedSymptoms.
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0] = -0.1;
+    constraint_check                                                             = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_a<ScalarType>>()[0] = 6.1;
+
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0] = -0.1;
+    constraint_check                                                             = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSymptoms_b<ScalarType>>()[0] = 6.1;
+
+    // Check TimeInfectedSevere.
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0] = 0.5;
+    constraint_check                                                           = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_a<ScalarType>>()[0] = 11.1;
+
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0] = 0.5;
+    constraint_check                                                           = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedSevere_b<ScalarType>>()[0] = 11.1;
+
+    // Check TimeInfectedCritical.
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0] = 0.;
+    constraint_check                                                             = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_a<ScalarType>>()[0] = 17.1;
+
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0] = 0.;
+    constraint_check                                                             = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TimeInfectedCritical_b<ScalarType>>()[0] = 17.1;
+
+    // Check TransmissionProbabilityOnContact.
+    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = -1;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_a<ScalarType>>()[0] = 0.01;
+
+    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = -1;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::TransmissionProbabilityOnContact_b<ScalarType>>()[0] = 0.01;
+
+    // Check RelativeTransmissionNoSymptoms.
+    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_a<ScalarType>>()[0] = 1;
+
+    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::RelativeTransmissionNoSymptoms_b<ScalarType>>()[0] = 1;
+
+    // Check RiskOfInfectionFromSymptomatic.
+    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_a<ScalarType>>()[0] = 1;
+
+    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::RiskOfInfectionFromSymptomatic_b<ScalarType>>()[0] = 1;
+
+    // Check RecoveredPerInfectedNoSymptoms.
+    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_a<ScalarType>>()[0] = 0.1;
+
+    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 1.5;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::RecoveredPerInfectedNoSymptoms_b<ScalarType>>()[0] = 0.1;
+
+    // Check SeverePerInfectedSymptoms.
+    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0] = -1;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_a<ScalarType>>()[0] = 0.1;
+
+    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0] = -1;
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::SeverePerInfectedSymptoms_b<ScalarType>>()[0] = 0.1;
+
+    // Check CriticalPerSevere.
+    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0] = -1;
+    constraint_check                                                          = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_a<ScalarType>>()[0] = 0.1;
+
+    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0] = -1;
+    constraint_check                                                          = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::CriticalPerSevere_b<ScalarType>>()[0] = 0.1;
+
+    // Check DeathsPerCritical.
+    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0] = -1;
+    constraint_check                                                          = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_a<ScalarType>>()[0] = 0.1;
+
+    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0] = -1;
+    constraint_check                                                          = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.get<mio::lsecir2d::DeathsPerCritical_b<ScalarType>>()[0] = 0.1;
+
+    // Check Seasonality.
+    parameters_lct2d.set<mio::lsecir2d::Seasonality<ScalarType>>(1);
+    constraint_check = parameters_lct2d.check_constraints();
+    EXPECT_TRUE(constraint_check);
+    parameters_lct2d.set<mio::lsecir2d::Seasonality<ScalarType>>(0.1);
 
     // Check with correct parameters.
     constraint_check = parameters_lct2d.check_constraints();
@@ -894,54 +912,54 @@ TEST(TestLCTSecir2d, testConstraintsModel)
     using InfState = mio::lsecir2d::InfectionState;
 
     // Check for improper number of subcompartments for Susceptible.
-    using LctStatewrongSusceptibles =
-        mio::LctInfectionState<InfState, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongSusceptibles = mio::lsecir2d::Model<LctStatewrongSusceptibles>;
+    using LctStatewrongSusceptibles = mio::LctInfectionState<ScalarType, InfState, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongSusceptibles    = mio::lsecir2d::Model<ScalarType, LctStatewrongSusceptibles>;
     ModelwrongSusceptibles modelwrongSusceptibles;
     bool constraint_check = modelwrongSusceptibles.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check for improper number of subcompartments for Recovered.
-    using LctStatewrongRecovered_a =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongRecovered_a = mio::lsecir2d::Model<LctStatewrongRecovered_a>;
+    using LctStatewrongRecovered_a = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1,
+                                                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongRecovered_a    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_a>;
     ModelwrongRecovered_a modelwrongRecovered_a;
     constraint_check = modelwrongRecovered_a.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    using LctStatewrongRecovered_b =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongRecovered_b = mio::lsecir2d::Model<LctStatewrongRecovered_b>;
+    using LctStatewrongRecovered_b = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                            1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongRecovered_b    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_b>;
     ModelwrongRecovered_b modelwrongRecovered_b;
     constraint_check = modelwrongRecovered_b.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    using LctStatewrongRecovered_ab =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3>;
-    using ModelwrongRecovered_ab = mio::lsecir2d::Model<LctStatewrongRecovered_ab>;
+    using LctStatewrongRecovered_ab = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3>;
+    using ModelwrongRecovered_ab    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_ab>;
     ModelwrongRecovered_ab modelwrongRecovered_ab;
     constraint_check = modelwrongRecovered_ab.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check for improper number of subcompartments for Dead.
-    using LctStatewrongDead_a =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongDead_a = mio::lsecir2d::Model<LctStatewrongDead_a>;
+    using LctStatewrongDead_a = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1,
+                                                       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongDead_a    = mio::lsecir2d::Model<ScalarType, LctStatewrongDead_a>;
     ModelwrongDead_a modelwrongDead_a;
     constraint_check = modelwrongDead_a.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    using LctStatewrongDead_b =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongDead_b = mio::lsecir2d::Model<LctStatewrongDead_b>;
+    using LctStatewrongDead_b = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                       1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongDead_b    = mio::lsecir2d::Model<ScalarType, LctStatewrongDead_b>;
     ModelwrongDead_b modelwrongDead_b;
     constraint_check = modelwrongDead_b.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check with a negative number in the initial population distribution.
-    using LctStatevalid =
-        mio::LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using Model = mio::lsecir2d::Model<LctStatevalid>;
+    using LctStatevalid = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using Model         = mio::lsecir2d::Model<ScalarType, LctStatevalid>;
     Model model;
     model.populations[0] = -1000;
     constraint_check     = model.check_constraints();
