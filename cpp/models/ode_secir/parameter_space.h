@@ -43,28 +43,27 @@ namespace osecir
  * @param[in] tmax end time
  * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
  */
-template <typename FP = double>
-void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, double dev_rel)
+template <typename FP>
+void set_params_distributions_normal(Model<FP>& model, FP t0, FP tmax, FP dev_rel)
 {
-    auto set_distribution = [dev_rel](UncertainValue<FP>& v, double min_val = 0.001) {
-        auto lower_bound =
-            std::min(std::max(min_val, (1 - dev_rel * 2.6) * v), 0.1 * std::numeric_limits<double>::max());
-        auto upper_bound =
-            std::min(std::max(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<double>::max());
+    using std::max;
+    using std::min;
+    auto set_distribution = [dev_rel](UncertainValue<FP>& v, FP min_val = 0.001) {
+        auto lower_bound = min<FP>(max<FP>(min_val, (1 - dev_rel * 2.6) * v), 0.1 * std::numeric_limits<FP>::max());
+        auto upper_bound = min<FP>(max<FP>(min_val, (1 + dev_rel * 2.6) * v), 0.5 * std::numeric_limits<FP>::max());
 
-        if (mio::floating_point_equal(lower_bound, upper_bound, mio::Limits<FP>::zero_tolerance())) {
+        if (mio::floating_point_equal<FP>(lower_bound, upper_bound, mio::Limits<FP>::zero_tolerance())) {
             //MSVC has problems if standard deviation for normal distribution is zero
             mio::log_debug("Bounded ParameterDistribution has standard deviation close to zero. Therefore constant "
                            "distribution is used.");
             v.set_distribution(ParameterDistributionConstant(
-                std::min(std::max(min_val, double(v)), 0.3 * std::numeric_limits<double>::max())));
+                min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<FP>::max())));
         }
         else {
             v.set_distribution(ParameterDistributionNormal(
                 //add add limits for nonsense big values. Also mscv has a problem with a few doubles so this fixes it
-                lower_bound, upper_bound,
-                std::min(std::max(min_val, double(v)), 0.3 * std::numeric_limits<double>::max()),
-                std::min(std::max(min_val, dev_rel * v), std::numeric_limits<double>::max())));
+                lower_bound, upper_bound, min<FP>(max<FP>(min_val, v.value()), 0.3 * std::numeric_limits<FP>::max()),
+                min<FP>(max<FP>(min_val, dev_rel * v), std::numeric_limits<FP>::max())));
         }
     };
 
@@ -112,10 +111,10 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
          ++i) {
         matrices.push_back(i);
     }
-    auto groups = Eigen::VectorXd::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
+    auto groups = Eigen::VectorX<FP>::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
     model.parameters.template get<ContactPatterns<FP>>().get_dampings().emplace_back(
-        mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(t0 + (tmax - t0) / 2),
-        matrices, groups);
+        mio::UncertainValue<FP>(0.5), mio::DampingLevel(0), mio::DampingType(0),
+        mio::SimulationTime<FP>(t0 + (tmax - t0) / 2), matrices, groups);
     set_distribution(model.parameters.template get<ContactPatterns<FP>>().get_dampings()[0].get_value(), 0.0);
 }
 
@@ -123,14 +122,14 @@ void set_params_distributions_normal(Model<FP>& model, double t0, double tmax, d
  * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
  * @param[inout] model Model including contact patterns for alle age groups
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_demographics(Model<FP>& model)
 {
     model.parameters.template get<ICUCapacity<FP>>().draw_sample();
     model.parameters.template get<TestAndTraceCapacity<FP>>().draw_sample();
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
-        double group_total = model.populations.get_group_total(i);
+        FP group_total = model.populations.get_group_total(i);
 
         model.populations[{i, InfectionState::Exposed}].draw_sample();
         model.populations[{i, InfectionState::InfectedNoSymptoms}].draw_sample();
@@ -153,7 +152,7 @@ void draw_sample_demographics(Model<FP>& model)
  * draws a sample from the specified distributions for all parameters related to the infection.
  * @param[inout] model Model including contact patterns for alle age groups
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample_infection(Model<FP>& model)
 {
     model.parameters.template get<Seasonality<FP>>().draw_sample();
@@ -196,7 +195,7 @@ void draw_sample_infection(Model<FP>& model)
  * as SecirParams parameter values (cf. UncertainValue and SecirParams classes).
  * @param[inout] model Model including contact patterns for alle age groups.
  */
-template <typename FP = double>
+template <typename FP>
 void draw_sample(Model<FP>& model)
 {
     draw_sample_infection(model);
@@ -205,7 +204,7 @@ void draw_sample(Model<FP>& model)
     model.apply_constraints();
 }
 
-template <typename FP = double>
+template <typename FP>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
     Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;

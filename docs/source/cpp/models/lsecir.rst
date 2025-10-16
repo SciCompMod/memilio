@@ -1,3 +1,5 @@
+.. include:: ../../literature.rst
+
 LCT-based SECIR-type model
 ==========================
 
@@ -13,7 +15,7 @@ Below is a visualization of the infection states and transitions without a strat
 
 For a detailed description and application of the model, see:
 
-- Plötzke L, Wendler A, Schmieding R, Kühn MJ. (2024). *Revisiting the Linear Chain Trick in epidemiological models: Implications of underlying assumptions for numerical solutions*. Under review. `https://doi.org/10.48550/arXiv.2412.09140 <https://doi.org/10.48550/arXiv.2412.09140>`_ 
+- |Revisiting_the_Linear_Chain|
 - Plötzke L. (2023). *Der Linear Chain Trick in der epidemiologischen Modellierung als Kompromiss zwischen gewöhnlichen und Integro-Differentialgleichungen*. Master's thesis, University of Cologne. `https://elib.dlr.de/200381/ <https://elib.dlr.de/200381/>`_
 - Hurtado PJ, Kirosingh AS. (2019). *Generalizations of the ‘Linear Chain Trick’: incorporating more flexible dwell time distributions into mean field ODE models*. Journal of Mathematical Biology. `https://doi.org/10.1007/s00285-019-01412-w <https://doi.org/10.1007/s00285-019-01412-w>`_
 
@@ -284,13 +286,13 @@ You can also specify a custom integrator:
 
 .. code-block:: cpp
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, integrator);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(t0, tmax, dt, model, std::move(integrator));
 
 
 Output

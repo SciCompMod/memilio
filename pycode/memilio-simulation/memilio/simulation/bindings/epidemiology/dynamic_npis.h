@@ -44,7 +44,7 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
                 return static_cast<double>(self.get_interval());
             },
             [](mio::DynamicNPIs<double>& self, double v) {
-                self.set_interval(mio::SimulationTime(v));
+                self.set_interval(mio::SimulationTime<double>(v));
             })
         .def_property(
             "duration",
@@ -52,7 +52,7 @@ void bind_dynamicNPI_members(pybind11::module_& m, std::string const& name)
                 return static_cast<double>(self.get_duration());
             },
             [](mio::DynamicNPIs<double>& self, double v) {
-                self.set_duration(mio::SimulationTime(v));
+                self.set_duration(mio::SimulationTime<double>(v));
             })
         .def_property(
             "base_value",

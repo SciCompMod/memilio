@@ -43,15 +43,15 @@ int main()
     // As condition to switch between models we use a threshold of 20 infected individuals (For <20 Infected the ABM is used and for >=20 Infected the ODE-Model is used).
 
     using ABM = mio::dabm::Model<SingleWell<mio::osecir::InfectionState>>;
-    using ODE = mio::osecir::Model<double>;
+    using ODE = mio::osecir::Model<ScalarType>;
 
     //Initialize ABM population
     std::vector<ABM::Agent> agents(1000);
     //Random variables used to initialize agents' position and infection state
-    auto& pos_sampler  = mio::UniformDistribution<double>::get_instance();
+    auto& pos_sampler  = mio::UniformDistribution<ScalarType>::get_instance();
     auto& stat_sampler = mio::DiscreteDistribution<size_t>::get_instance();
     //Infection state distribution
-    std::vector<double> infection_state_dist{0.99, 0.01, 0., 0., 0., 0., 0., 0.};
+    std::vector<ScalarType> infection_state_dist{0.99, 0.01, 0., 0., 0., 0., 0., 0.};
     //Sample agents' position and infection state
     for (auto& a : agents) {
         //Agents' positions are equally distributed in [-2, 2] x [-2, 2]
@@ -62,11 +62,11 @@ int main()
             static_cast<mio::osecir::InfectionState>(stat_sampler(mio::thread_local_rng(), infection_state_dist));
     }
     //Transmission parameters used for both models
-    const double contact_frequency = 10, trans_prob_on_contact = 0.06, time_E = 3., time_Ins = 2.5, time_Isy = 5.2,
-                 time_Isev = 9., time_Icri = 7.2, mu_Ins_R = 0.2, mu_Isy_Isev = 0.1, mu_Isev_Icri = 0.1,
-                 mu_Icri_D = 0.2;
+    const ScalarType contact_frequency = 10, trans_prob_on_contact = 0.06, time_E = 3., time_Ins = 2.5, time_Isy = 5.2,
+                     time_Isev = 9., time_Icri = 7.2, mu_Ins_R = 0.2, mu_Isy_Isev = 0.1, mu_Isev_Icri = 0.1,
+                     mu_Icri_D = 0.2;
     //Initialize ABM adoption rates
-    std::vector<mio::AdoptionRate<mio::osecir::InfectionState>> adoption_rates;
+    std::vector<mio::AdoptionRate<ScalarType, mio::osecir::InfectionState>> adoption_rates;
     //Second-order adoption rate (S->E)
     adoption_rates.push_back(
         {mio::osecir::InfectionState::Susceptible,
@@ -130,7 +130,7 @@ int main()
                               mu_Icri_D / time_Icri,
                               {}});
     //Interaction radius and noise
-    double interaction_radius = 0.4, noise = 0.5;
+    ScalarType interaction_radius = 0.4, noise = 0.5;
     ABM abm(agents, adoption_rates, interaction_radius, noise,
             {mio::osecir::InfectionState::InfectedSevere, mio::osecir::InfectionState::InfectedCritical,
              mio::osecir::InfectionState::Dead});
@@ -138,47 +138,48 @@ int main()
     //As we start modeling with the ABM, we don't need to initialize the population for the ODE-model
     //Initialize ODE model parameters
     ODE ode(1);
-    ode.parameters.get<mio::osecir::TimeExposed<double>>()[mio::AgeGroup(0)]            = time_E;
-    ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>()[mio::AgeGroup(0)] = time_Ins;
-    ode.parameters.get<mio::osecir::TimeInfectedSymptoms<double>>()[mio::AgeGroup(0)]   = time_Isy;
-    ode.parameters.get<mio::osecir::TimeInfectedSevere<double>>()[mio::AgeGroup(0)]     = time_Isev;
-    ode.parameters.get<mio::osecir::TimeInfectedCritical<double>>()[mio::AgeGroup(0)]   = time_Icri;
-    ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<double>>()[mio::AgeGroup(0)] =
+    ode.parameters.get<mio::osecir::TimeExposed<ScalarType>>()[mio::AgeGroup(0)]            = time_E;
+    ode.parameters.get<mio::osecir::TimeInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(0)] = time_Ins;
+    ode.parameters.get<mio::osecir::TimeInfectedSymptoms<ScalarType>>()[mio::AgeGroup(0)]   = time_Isy;
+    ode.parameters.get<mio::osecir::TimeInfectedSevere<ScalarType>>()[mio::AgeGroup(0)]     = time_Isev;
+    ode.parameters.get<mio::osecir::TimeInfectedCritical<ScalarType>>()[mio::AgeGroup(0)]   = time_Icri;
+    ode.parameters.get<mio::osecir::TransmissionProbabilityOnContact<ScalarType>>()[mio::AgeGroup(0)] =
         trans_prob_on_contact;
-    ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>()[mio::AgeGroup(0)] = mu_Ins_R;
-    ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<double>>()[mio::AgeGroup(0)]      = mu_Isy_Isev;
-    ode.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]              = mu_Isev_Icri;
-    ode.parameters.get<mio::osecir::DeathsPerCritical<double>>()[mio::AgeGroup(0)]              = mu_Icri_D;
+    ode.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<ScalarType>>()[mio::AgeGroup(0)] = mu_Ins_R;
+    ode.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()[mio::AgeGroup(0)]      = mu_Isy_Isev;
+    ode.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()[mio::AgeGroup(0)]              = mu_Isev_Icri;
+    ode.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()[mio::AgeGroup(0)]              = mu_Icri_D;
     ode.apply_constraints();
-    mio::ContactMatrixGroup& contact_matrix = ode.parameters.get<mio::osecir::ContactPatterns<double>>();
-    contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_frequency));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        ode.parameters.get<mio::osecir::ContactPatterns<ScalarType>>();
+    contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(1, 1, contact_frequency));
 
     //Set t0 and internal dt for each model
-    double t0 = 0;
-    double dt = 0.1;
+    ScalarType t0 = 0;
+    ScalarType dt = 0.1;
 
     //Create simulations
     auto sim_abm = mio::dabm::Simulation(abm, t0, dt);
     auto sim_ode = mio::Simulation(ode, t0, dt);
 
     const auto result_fct_abm = [](const mio::dabm::Simulation<SingleWell<mio::osecir::InfectionState>>& sim,
-                                   double /*t*/) {
+                                   ScalarType /*t*/) {
         return sim.get_result();
     };
 
-    const auto result_fct_ode = [](const mio::Simulation<double, ODE>& sim, double /*t*/) {
+    const auto result_fct_ode = [](const mio::Simulation<ScalarType, ODE>& sim, ScalarType /*t*/) {
         return sim.get_result();
     };
 
     //Create hybrid simulation
-    double dt_switch = 0.2;
-    mio::hybrid::TemporalHybridSimulation<decltype(sim_abm), decltype(sim_ode), mio::TimeSeries<double>,
-                                          mio::TimeSeries<double>>
+    ScalarType dt_switch = 0.2;
+    mio::hybrid::TemporalHybridSimulation<decltype(sim_abm), decltype(sim_ode), mio::TimeSeries<ScalarType>,
+                                          mio::TimeSeries<ScalarType>>
         hybrid_sim(std::move(sim_abm), std::move(sim_ode), result_fct_abm, result_fct_ode, true, t0, dt_switch);
 
     //Define switching condition
-    const auto condition = [](const mio::TimeSeries<double>& result_abm, const mio::TimeSeries<double>& result_ode,
-                              bool abm_used) {
+    const auto condition = [](const mio::TimeSeries<ScalarType>& result_abm,
+                              const mio::TimeSeries<ScalarType>& result_ode, bool abm_used) {
         if (abm_used) {
             auto& last_value = result_abm.get_last_value().eval();
             if ((last_value[(int)mio::osecir::InfectionState::Exposed] +

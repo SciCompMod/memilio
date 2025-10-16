@@ -1,3 +1,5 @@
+.. include:: ../literature.rst
+
 Graph-based metapopulation model
 ================================
 
@@ -31,8 +33,8 @@ Since all regions exchange commuters simultaneously, this scheme offers great pr
 
 For further details, please refer to:
 
-- Kühn MJ, Abele D, Mitra T, Koslow W, Abedi M, et al. (2021). *Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution*. *Mathematical Biosciences* 108648. `<https://doi.org/10.1016/j.mbs.2021.108648>`_
-- Kühn MJ, Abele D, Binder S, Rack K, Klitz M, et al. (2022). *Regional opening strategies with commuter testing and containment of new SARS-CoV-2 variants in Germany*. *BMC Infectious Diseases* 22(1): 333. `DOI:10.1186/s12879-022-07302-9 <https://doi.org/10.1186/s12879-022-07302-9>`_
+- |Assessment_of_effective_mitigation|
+- |Regional_opening_strategies_with|
 
 **Detailed mobility approach**
 
@@ -45,7 +47,7 @@ Commuters move along these paths and pass through various mobility models during
 
 For further details, please refer to:
 
-- Zunker H, Schmieding R, Kerkmann D, Schengen A, Diexer S, et al. (2024). *Novel travel time aware metapopulation models and multi-layer waning immunity for late-phase epidemic and endemic scenarios*. *PLOS Computational Biology* 20(12): e1012630. `<https://doi.org/10.1371/journal.pcbi.1012630>`_
+- |Novel_travel_time_aware_metapopulation_models|
 
 **Stochastic mobility approach**
 
@@ -60,7 +62,7 @@ This allows for modeling behavioral changes in response to the epidemiological s
 
 The extension and inclusion of regional and global information is based on the following paper:
 
-- Zunker H, Dönges P, Lenz P, Contreras S, Kühn MJ. (2025). *Risk-mediated dynamic regulation of effective contacts de-synchronizes outbreaks in metapopulation epidemic models*. Chaos, Solitons & Fractals. `https://doi.org/10.1016/j.chaos.2025.116782`
+- |Risk-mediated_dynamic_regulation|
 
 
 How to: Set up a graph and run a graph simulation

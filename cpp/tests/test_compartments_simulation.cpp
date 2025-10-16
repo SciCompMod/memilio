@@ -28,20 +28,21 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+struct MockModel {
+    Eigen::VectorXd get_initial_values() const
+    {
+        return Eigen::VectorXd::Zero(1);
+    }
+    void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&,
+                                double, Eigen::Ref<Eigen::VectorXd> dydt) const
+    {
+        dydt[0] = this->m_dydt;
+    }
+    double m_dydt = 1.0;
+};
+
 TEST(TestCompartmentSimulation, integrator_uses_model_reference)
 {
-    struct MockModel {
-        Eigen::VectorXd get_initial_values() const
-        {
-            return Eigen::VectorXd::Zero(1);
-        }
-        void eval_right_hand_side(const Eigen::Ref<const Eigen::VectorXd>&, const Eigen::Ref<const Eigen::VectorXd>&,
-                                  double, Eigen::Ref<Eigen::VectorXd> dydt) const
-        {
-            dydt[0] = this->m_dydt;
-        }
-        double m_dydt = 1.0;
-    };
 
     auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
     sim.advance(1.0);
@@ -53,6 +54,41 @@ TEST(TestCompartmentSimulation, integrator_uses_model_reference)
     sim.advance(2.0);
 
     ASSERT_NEAR(sim.get_result().get_last_value()[0], 3.0, 1e-5);
+}
+
+TEST(TestCompartmentSimulation, copy_simulation)
+{
+
+    auto sim = mio::Simulation<double, MockModel>(MockModel(), 0.0);
+
+    mio::Simulation<double, MockModel> sim_copy_cnstr(sim);
+    auto sim_copy_assign = sim;
+
+    EXPECT_EQ(sim.get_model().m_dydt, sim_copy_cnstr.get_model().m_dydt);
+    EXPECT_EQ(sim.get_model().m_dydt, sim_copy_assign.get_model().m_dydt);
+
+    // modifying original simulation should not effect copies
+    auto adapt_sim = [](auto& sim_) {
+        sim_.get_model().m_dydt = 2.0;
+        sim_.advance(1.0);
+        sim_.get_integrator_core().get_dt_max() = 2.0; 
+    };
+    adapt_sim(sim);
+
+    EXPECT_NE(sim_copy_cnstr.get_model().m_dydt, 2.0);
+    EXPECT_NE(sim_copy_assign.get_model().m_dydt, 2.0);
+    EXPECT_NE(sim_copy_cnstr.get_integrator_core().get_dt_max(), 2.0);
+    EXPECT_NE(sim_copy_assign.get_integrator_core().get_dt_max(), 2.0);
+    
+    // modifying copied simulation to same state
+    adapt_sim(sim_copy_cnstr);
+    adapt_sim(sim_copy_assign);
+
+    EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_cnstr.get_result().get_last_value()[0]);
+    EXPECT_EQ(sim.get_result().get_last_value()[0], sim_copy_assign.get_result().get_last_value()[0]);
+    EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_cnstr.get_integrator_core().get_dt_max());
+    EXPECT_EQ(sim.get_integrator_core().get_dt_max(), sim_copy_assign.get_integrator_core().get_dt_max());
+
 }
 
 struct MockSimulateSim { // looks just enough like a simulation for the simulate functions not to notice
@@ -80,6 +116,26 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
         mutable int val;
     };
 
+    template <class ...Integrands>
+    struct Core: public mio::IntegratorCore<double, Integrands...>
+    {
+        Core(int val_in)
+            : mio::IntegratorCore<double, Integrands...>(val_in, 0)
+        {
+        }
+
+        bool step(const Integrands&..., Eigen::Ref<const Eigen::VectorX<double>>, double&, double&,
+                      Eigen::Ref<Eigen::VectorX<double>>) const override
+        {
+            return true;
+        }
+
+        std::unique_ptr<mio::IntegratorCore<double, Integrands...>> clone() const override 
+        {
+            throw std::runtime_error("Core clone() called unexpectedly");
+        }
+    };
+
     MockSimulateSim(int model_in, double t0_in, double dt_in)
     {
         model = model_in;
@@ -88,9 +144,9 @@ struct MockSimulateSim { // looks just enough like a simulation for the simulate
     }
 
     template <class... Integrands>
-    void set_integrator(std::shared_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
+    void set_integrator_core(std::unique_ptr<mio::IntegratorCore<double, Integrands...>> integrator_in)
     {
-        integrator = (int)(size_t)integrator_in.get(); // no, do not use this elsewhere. do not even look at this
+        integrator = (int)integrator_in->get_dt_min();
     }
 
     auto get_result()
@@ -151,16 +207,10 @@ TEST(TestCompartmentSimulation, simulate_functions)
 
     // helpers to deal with different orders of cores. do not reuse this or something similar in actual code
     const auto evil_pointer_cast_1 = [](int i) {
-        return std::shared_ptr<mio::OdeIntegratorCore<double>>({
-            (mio::OdeIntegratorCore<double>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
-            [](auto&&) {} // this too
-        });
+        return std::make_unique<Sim::Core<mio::DerivFunction<double>>>(i);
     };
     const auto evil_pointer_cast_2 = [](int i) {
-        return std::shared_ptr<mio::SdeIntegratorCore<double>>({
-            (mio::SdeIntegratorCore<double>*)(size_t)i, // this is bad, unsafe, and must not be used outside of tests
-            [](auto&&) {} // this too
-        });
+        return std::make_unique<Sim::Core<mio::DerivFunction<double>, mio::DerivFunction<double>>>(i);
     };
 
     // helper function to compose a "simulate" function

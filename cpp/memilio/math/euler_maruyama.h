@@ -41,6 +41,11 @@ public:
     {
     }
 
+    std::unique_ptr<SdeIntegratorCore<FP>> clone() const override 
+    {
+        return std::make_unique<EulerMaruyamaIntegratorCore>(*this);
+    }
+
     /**
      * @brief Fixed step width integrator for stochastic models.
      * Expects population-based integrands, i.e. not flows. 
