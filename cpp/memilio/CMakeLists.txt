@@ -19,9 +19,11 @@ add_library(memilio
     epidemiology/lct_infection_state.h
     epidemiology/lct_populations.h
     epidemiology/adoption_rate.h
+    epidemiology/simulation_day.h
     geography/regions.h
     geography/regions.cpp
-    epidemiology/simulation_day.h
+    geography/geolocation.h
+    geography/rtree.h
     geography/holiday_data.ipp
     compartments/compartmental_model.h
     compartments/flow_model.h
