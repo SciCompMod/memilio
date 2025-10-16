@@ -563,60 +563,6 @@ IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::st
 }
 
 /**
- * @brief Sets ICU data from DIVI data into the a vector of models, distributed across age groups.
- *
- * This function reads DIVI data from a file, computes the number of individuals in critical condition (ICU)
- * for each region, and sets these values in the model. The ICU cases are distributed across age groups
- * using the transition probabilities from severe to critical.
- *
- * @tparam Model The type of the model used.
- * @tparam FP Floating point type (default: double).
- *
- * @param[in,out] model Vector of models, each representing a region, where the ICU population is updated.
- * @param[in] path Path to the file containing DIVI data.
- * @param[in] vregion Vector of region IDs for which the data is computed.
- * @param[in] date Date for which the ICU data is computed.
- * @param[in] scaling_factor_icu Scaling factor for reported ICU cases.
- *
- * @return An IOResult indicating success or failure.
- */
-template <typename FP, class Model>
-IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, FP scaling_factor_icu)
-{
-    // DIVI dataset will no longer be updated from CW29 2024 on.
-    if (!is_divi_data_available(date)) {
-        log_warning("No DIVI data available for date: {}. "
-                    "ICU compartment will be set based on Case data.",
-                    date);
-        return success();
-    }
-    std::vector<FP> sum_mu_I_U(vregion.size(), 0);
-    std::vector<std::vector<FP>> mu_I_U{model.size()};
-    for (size_t region = 0; region < vregion.size(); region++) {
-        auto num_groups = model[region].parameters.get_num_groups();
-        for (auto i = AgeGroup(0); i < num_groups; i++) {
-            sum_mu_I_U[region] += model[region].parameters.template get<CriticalPerSevere<FP>>()[i] *
-                                  model[region].parameters.template get<SeverePerInfectedSymptoms<FP>>()[i];
-            mu_I_U[region].push_back(model[region].parameters.template get<CriticalPerSevere<FP>>()[i] *
-                                     model[region].parameters.template get<SeverePerInfectedSymptoms<FP>>()[i]);
-        }
-    }
-    std::vector<FP> num_icu(model.size(), 0.0);
-    BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
-
-    for (size_t region = 0; region < vregion.size(); region++) {
-        auto num_groups = model[region].parameters.get_num_groups();
-        for (auto i = AgeGroup(0); i < num_groups; i++) {
-            model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
-                scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
-        }
-    }
-
-    return success();
-}
-
-/**
  * @brief Sets the population data for the given models based on the provided population distribution and immunity levels.
  *
  * @tparam Model The type of the model used.
@@ -900,74 +846,52 @@ IOResult<void> set_vaccination_data(std::vector<Model<FP>>& model, const std::st
  *
  * @param[in] models A vector of models for which the extrapolated data is set.
  * @param[in] results_dir Path to the directory where the extrapolated results will be saved in a h5 file.
- * @param[in] counties A vector of region identifiers for which the time series will be exported.
- * @param[in] date The starting date of the time series.
+ * @param[in] date Date for which the data should be read.
+ * @param[in] counties Vector of keys of the counties of interest.
  * @param[in] scaling_factor_inf A vector of scaling factors applied to confirmed cases.
  * @param[in] scaling_factor_icu A scaling factor applied to ICU cases.
  * @param[in] num_days The number of days for which will be extrapolated.
- * @param[in] divi_data_path Path to the DIVI ICU data file.
- * @param[in] confirmed_cases_path Path to the confirmed cases data file.
- * @param[in] population_data_path Path to the population data file.
+ * @param[in] pydata_dir Directory that contains the data files.
  * @param[in] immunity_population A vector of vectors specifying immunity for each age group and immunity layer.
- * @param[in] vaccination_data_path Path to the vaccination data file (optional).
  *
  * @return An IOResult indicating success or failure.
  */
 template <class Model>
 IOResult<void> export_input_data_county_timeseries(
-    std::vector<Model> models, const std::string& results_dir, const std::vector<int>& counties, Date date,
+    std::vector<Model> models, const std::string& results_dir, Date date, const std::vector<int>& counties,
     const std::vector<double>& scaling_factor_inf, const double scaling_factor_icu, const int num_days,
-    const std::string& divi_data_path, const std::string& confirmed_cases_path, const std::string& population_data_path,
-    const std::vector<std::vector<double>> immunity_population, const std::string& vaccination_data_path = "")
+    const std::string& pydata_dir, const std::vector<std::vector<double>> immunity_population)
 {
-    const auto num_groups = (size_t)models[0].parameters.get_num_groups();
-    assert(scaling_factor_inf.size() == num_groups);
-    assert(num_groups == ConfirmedCasesDataEntry::age_group_names.size());
+    const auto num_age_groups = (size_t)models[0].parameters.get_num_groups();
+    assert(scaling_factor_inf.size() == num_age_groups);
+    assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
     assert(models.size() == counties.size());
     std::vector<TimeSeries<double>> extrapolated_data(
-        models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_groups));
-
-    BOOST_OUTCOME_TRY(auto&& case_data, read_confirmed_cases_data(confirmed_cases_path));
-    BOOST_OUTCOME_TRY(auto&& population_data, read_population_data(population_data_path, counties));
-
-    // empty vector if set_vaccination_data is not set
-    std::vector<VaccinationDataEntry> vacc_data;
-    if (!vaccination_data_path.empty()) {
-        BOOST_OUTCOME_TRY(vacc_data, read_vaccination_data(vaccination_data_path));
-    }
+        models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
 
     for (int t = 0; t <= num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
-        if (!vaccination_data_path.empty()) {
-            BOOST_OUTCOME_TRY(details::set_vaccination_data(models, vacc_data, offset_day, counties, num_days));
-        }
-
-        // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
-        // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-        BOOST_OUTCOME_TRY(details::set_divi_data(models, divi_data_path, counties, offset_day, scaling_factor_icu));
-
-        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(models, case_data, counties, offset_day, scaling_factor_inf,
-                                                            immunity_population));
-
-        BOOST_OUTCOME_TRY(details::set_population_data(models, population_data, counties, immunity_population));
+        // TODO: empty vaccination data path guard
+        BOOST_OUTCOME_TRY(read_input_data_county(model, date, county, scaling_factor_inf, scaling_factor_icu,
+                                      pydata_dir, num_days, immunity_population));
 
         for (size_t r = 0; r < counties.size(); r++) {
             extrapolated_data[r][t] = models[r].get_initial_values();
             // in set_population_data the number of death individuals is subtracted from the SusceptibleImprovedImmunity compartment.
             // Since we should be independent whether we consider them or not, we add them back here before we save the data.
-            for (size_t age = 0; age < num_groups; age++) {
+            for (size_t age = 0; age < num_age_groups; age++) {
                 extrapolated_data[r][t][(size_t)InfectionState::SusceptibleImprovedImmunity +
                                         age * (size_t)InfectionState::Count] +=
                     extrapolated_data[r][t][(size_t)InfectionState::DeadNaive + age * (size_t)InfectionState::Count];
             }
         }
     }
-    BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, static_cast<int>(num_groups),
+    BOOST_OUTCOME_TRY(save_result(extrapolated_data, counties, static_cast<int>(num_age_groups),
                                   path_join(results_dir, "Results_rki.h5")));
 
     auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
-    BOOST_OUTCOME_TRY(save_result({extrapolated_rki_data_sum[0][0]}, {0}, static_cast<int>(num_groups),
+    BOOST_OUTCOME_TRY(save_result({extrapolated_rki_data_sum[0][0]}, {0}, static_cast<int>(num_age_groups),
                                   path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
@@ -975,16 +899,57 @@ IOResult<void> export_input_data_county_timeseries(
 
 #else
 template <class Model>
-IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std::string&, const std::vector<int>&,
-                                                   Date, const std::vector<double>&, const double, const int,
-                                                   const std::string&, const std::string&, const std::string&,
-                                                   const std::vector<std::vector<double>>, const std::string&)
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std::string&, Date, const std::vector<int>&,
+                                                   const std::vector<double>&, const double, const int,
+                                                   const std::string&, const std::vector<std::vector<double>>)
 {
     mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");
     return success();
 }
 
 #endif //MEMILIO_HAS_HDF5
+
+/**
+ * @brief Reads compartments for geographic units at a specified date from data files.
+ *
+ * This function estimates all compartments from available data using the provided model parameters.
+ *
+ * @tparam Model The type of tmodel used.
+ *
+ * @param[in,out] model Vector of models, one per county, to be initialized with data.
+ * @param[in] date Date for which the data should be read.
+ * @param[in] node_ids Vector of IDs of the units for which data is read.
+ * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
+ * @param[in] scaling_factor_icu Scaling factor for ICU cases.
+ * @param[in] pydata_dir Directory containing the input data files.
+ * @param[in] num_days Number of days to simulate.
+ * @param[in] immunity_population Matrix containing immunity proportions for each age group and immunity layer.
+ *
+ * @return An IOResult indicating success or failure.
+    */
+template <class Model>
+IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::vector<int>& node_ids,
+                               const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                               const std::string& pydata_dir, int num_days,
+                               const std::vector<std::vector<double>> immunity_population, 
+                               const std::string& vaccination_data_file_name, const std::string& divi_data_file_name,
+                               const std::string& confirmed_cases_data_file_name, const std::string& population_data_file_name)
+{
+
+    BOOST_OUTCOME_TRY(
+        details::set_vaccination_data(model, path_join(pydata_dir, vaccination_data_file_name), date, node_ids, num_days));
+
+    // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
+    // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, divi_data_file_name), node_ids, date,
+                                             scaling_factor_icu));
+
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, confirmed_cases_data_file_name), node_ids,
+                                                        date, scaling_factor_inf, immunity_population));
+    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, population_data_file_name), node_ids,
+                                                   immunity_population));
+    return success();
+}
 
 /**
  * @brief Reads input data for specified counties and initializes the model accordingly.
@@ -1003,7 +968,6 @@ IOResult<void> export_input_data_county_timeseries(std::vector<Model>, const std
  * @param[in] pydata_dir Path to the directory containing input data files.
  * @param[in] num_days The number of days for which the simulation runs.
  * @param[in] immunity_population Vector of vectors representing immunity proportions for each age group and immunity layer.
- * @param[in] export_time_series Boolean flag indicating whether to export time series of extrapolated data (default: false).
  *
  * @return An IOResult indicating success or failure.
  */
@@ -1011,91 +975,10 @@ template <class Model>
 IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                       const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                       const std::string& pydata_dir, int num_days,
-                                      const std::vector<std::vector<double>> immunity_population,
-                                      bool export_time_series = false)
+                                      const std::vector<std::vector<double>> immunity_population)
 {
-    BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(pydata_dir, "vacc_county_ageinf_ma7.json"), date,
-                                                    county, num_days));
-
-    // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
-    // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    BOOST_OUTCOME_TRY(
-        details::set_divi_data(model, path_join(pydata_dir, "county_divi_ma7.json"), county, date, scaling_factor_icu));
-
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "cases_all_county_age_ma7.json"),
-                                                        county, date, scaling_factor_inf, immunity_population));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, "county_current_population.json"),
-                                                   county, immunity_population));
-
-    if (export_time_series) {
-        // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
-        // Run time equals run time of the previous functions times the num_days !
-        // (This only represents the vectorization of the previous function over all simulation days...)
-        log_info("Exporting time series of extrapolated real data. This may take some minutes. "
-                 "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, pydata_dir, county, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(pydata_dir, "county_divi_ma7.json"), path_join(pydata_dir, "cases_all_county_age_ma7.json"),
-            path_join(pydata_dir, "county_current_population.json"), immunity_population,
-            path_join(pydata_dir, "vacc_county_ageinf_ma7.json")));
-    }
-
-    return success();
-}
-
-/**
- * @brief Reads compartments for geographic units at a specified date from data files.
- *
- * This function estimates all compartments from available data using the provided model parameters.
- *
- * @tparam Model The type of tmodel used.
- *
- * @param[in,out] model Vector of models, one per county, to be initialized with data.
- * @param[in] date Date for which the data should be read.
- * @param[in] node_ids Vector of IDs of the units for which data is read.
- * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
- * @param[in] scaling_factor_icu Scaling factor for ICU cases.
- * @param[in] pydata_dir Directory containing the input data files.
- * @param[in] num_days Number of days to simulate.
- * @param[in] immunity_population Matrix containing immunity proportions for each age group and immunity layer.
- * @param[in] export_time_series Boolean flag indicating whether to export time series of extrapolated data (default: false).
- *
- * @return An IOResult indicating success or failure.
-    */
-template <class Model>
-IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::vector<int>& node_ids,
-                               const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                               const std::string& pydata_dir, int num_days,
-                               const std::vector<std::vector<double>> immunity_population,
-                               bool export_time_series = false)
-{
-
-    BOOST_OUTCOME_TRY(
-        details::set_vaccination_data(model, path_join(pydata_dir, "vaccination_data.json"), date, node_ids, num_days));
-
-    // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
-    // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(pydata_dir, "critical_cases.json"), node_ids, date,
-                                             scaling_factor_icu));
-
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(pydata_dir, "confirmed_cases.json"), node_ids,
-                                                        date, scaling_factor_inf, immunity_population));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(pydata_dir, "population_data.json"), node_ids,
-                                                   immunity_population));
-
-    if (export_time_series) {
-        // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
-        // Run time equals run time of the previous functions times the num_days !
-        // (This only represents the vectorization of the previous function over all simulation days...)
-        log_info("Exporting time series of extrapolated real data. This may take some minutes. "
-                 "For simulation runs over the same time period, deactivate it.");
-        BOOST_OUTCOME_TRY(export_input_data_county_timeseries(
-            model, pydata_dir, node_ids, date, scaling_factor_inf, scaling_factor_icu, num_days,
-            path_join(pydata_dir, "critical_cases.json"), path_join(pydata_dir, "confirmed_cases.json"),
-            path_join(pydata_dir, "population_data.json"), immunity_population,
-            path_join(pydata_dir, "vaccination_data.json")));
-    }
-
+    BOOST_OUTCOME_TRY(read_input_data(model, date, county, scaling_factor_inf, scaling_factor_icu, pydata_dir, num_days, immunity_population,
+                                      "vacc_county_ageinf_ma7.json", "county_divi_ma7.json", "cases_all_county_age_ma7.json", "county_current_population.json"));
     return success();
 }
 

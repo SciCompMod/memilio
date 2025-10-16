@@ -52,42 +52,66 @@ int get_region_id(const EpiDataEntry& data_entry)
 
 /**
  * @brief Extracts the number of individuals in critical condition (ICU) for each region 
- * on a specified date from the provided DIVI data.
- *
- * @tparam FP Floating point type (default: double).
+ * on a specified date from the provided DIVI data-
  *
  * @param[in] divi_data Vector of DIVI data entries containing date, region, and ICU information.
  * @param[in] vregion Vector of region IDs for which the data is computed.
  * @param[in] date Date for which the ICU data is computed.
- * @param[in, out] vnum_icu Output vector containing the number of ICU cases for each region.
+ * @return An IOResult containing a vector with the number of ICU cases for each region, or an 
+ *         error if the function fails.
+ */
+IOResult<std::vector<ScalarType>> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date);
+
+/**
+ * @brief Reads DIVI data from a file and computes the ICU data for specified regions and date.
+ *
+ * @param[in] path Path to the file containing DIVI data.
+ * @param[in] vregion Vector of region IDs for which the data is computed.
+ * @param[in] date Date for which the ICU data is computed.
+ * @return An IOResult containing a vector with the number of ICU cases for each region, or an 
+ *         error if the function fails.
+ */
+IOResult<std::vector<ScalarType>> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date);
+
+/**
+ * @brief Sets ICU data from DIVI data into the a vector of models, distributed across age groups.
+ *
+ * This function reads DIVI data from a file, computes the number of individuals in critical condition (ICU)
+ * for each region, and sets these values in the model. The ICU cases are distributed across age groups
+ * using the transition probabilities from severe to critical.
+ *
+ * @tparam Model The type of the model used.
+ * @tparam FP Floating point type (default: double).
+ *
+ * @param[in,out] model Vector of models, each representing a region, where the ICU population is updated.
+ * @param[in] num_icu vector of icu data
+ * @param[in] vregion Vector of region IDs for which the data is computed.
+ * @param[in] date Date for which the ICU data is computed.
+ * @param[in] scaling_factor_icu Scaling factor for reported ICU cases.
  *
  * @return An IOResult indicating success or failure.
  */
-template <typename FP = ScalarType>
-IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date,
-                                 std::vector<FP>& vnum_icu)
+template <typename FP, class Model>
+IOResult<void> set_divi_data(std::vector<Model>& model, const std::vector<double>& num_icu, const std::vector<int>& vregion,
+                             Date date, FP scaling_factor_icu)
 {
-    auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
-        return a.date < b.date;
-    });
-    if (max_date_entry == divi_data.end()) {
-        log_error("DIVI data is empty.");
-        return failure(StatusCode::InvalidValue, "DIVI data is empty.");
-    }
-    auto max_date = max_date_entry->date;
-    if (max_date < date) {
-        log_error("DIVI data does not contain the specified date.");
-        return failure(StatusCode::OutOfRange, "DIVI data does not contain the specified date.");
+    std::vector<FP> sum_mu_I_U(vregion.size(), 0);
+    std::vector<std::vector<FP>> mu_I_U{model.size()};
+    for (size_t region = 0; region < vregion.size(); region++) {
+        auto num_groups = model[region].parameters.get_num_groups();
+        for (auto i = AgeGroup(0); i < num_groups; i++) {
+            sum_mu_I_U[region] += model[region].parameters.template get<CriticalPerSevere<FP>>()[i] *
+                                  model[region].parameters.template get<SeverePerInfectedSymptoms<FP>>()[i];
+            mu_I_U[region].push_back(model[region].parameters.template get<CriticalPerSevere<FP>>()[i] *
+                                     model[region].parameters.template get<SeverePerInfectedSymptoms<FP>>()[i]);
+        }
     }
 
-    for (auto&& entry : divi_data) {
-        auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 || r == get_region_id(entry);
-        });
-        auto date_df = entry.date;
-        if (it != vregion.end() && date_df == date) {
-            auto region_idx      = size_t(it - vregion.begin());
-            vnum_icu[region_idx] = entry.num_icu;
+    for (size_t region = 0; region < vregion.size(); region++) {
+        auto num_groups = model[region].parameters.get_num_groups();
+        for (auto i = AgeGroup(0); i < num_groups; i++) {
+            model[region].populations[{i, InfectionState::InfectedCriticalNaive}] =
+                scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
         }
     }
 
@@ -95,23 +119,27 @@ IOResult<void> compute_divi_data(const std::vector<DiviEntry>& divi_data, const 
 }
 
 /**
- * @brief Reads DIVI data from a file and computes the ICU data for specified regions and date.
- *
- * @tparam FP Floating point type (default: double).
- *
- * @param[in] path Path to the file containing DIVI data.
- * @param[in] vregion Vector of region IDs for which the data is computed.
- * @param[in] date Date for which the ICU data is computed.
- * @param[in, out] vnum_icu Output vector containing the number of ICU cases for each region.
- *
- * @return An IOResult indicating success or failure.
+ * @brief sets populations data from DIVI register into Model
+ * @param[in, out] model vector of objects in which the data is set
+ * @param[in] path Path to transformed DIVI file
+ * @param[in] vregion vector of keys of the regions of interest
+ * @param[in] date Date for which the arrays are initialized
+ * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data
  */
-template <typename FP = ScalarType>
-IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
-                              std::vector<FP>& vnum_icu)
+template <class Model>
+IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
+                             Date date, double scaling_factor_icu)
 {
-    BOOST_OUTCOME_TRY(auto&& divi_data, mio::read_divi_data(path));
-    return compute_divi_data(divi_data, vregion, date, vnum_icu);
+    // DIVI dataset will no longer be updated from CW29 2024 on.
+    if (!is_divi_data_available(date)) {
+        log_warning("No DIVI data available for date: {}. "
+                    "ICU compartment will be set based on Case data.",
+                    date);
+        return success();
+    }
+    BOOST_OUTCOME_TRY(auto&& num_icu, read_divi_data(path, vregion, date));
+    BOOST_OUTCOME_TRY(set_divi_data(model, num_icu, rki_data, vregion, date, scaling_factor_icu));
+    return success();
 }
 
 /**
