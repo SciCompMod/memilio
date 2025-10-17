@@ -180,7 +180,6 @@ public:
             }
         }
         return m_result.get_last_value();
-        // }
     }
 
     /**
