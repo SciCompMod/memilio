@@ -21,7 +21,6 @@
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
 #include "memilio/config.h"
-#include "memilio/epidemiology/adoption_rate.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
@@ -29,7 +28,6 @@
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
-#include "smm/parameters.h"
 
 namespace mio
 {
