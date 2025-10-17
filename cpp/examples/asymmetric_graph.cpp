@@ -48,26 +48,23 @@ int main(int /*argc*/, char** /*argv*/)
     const auto dt   = 1.; //initial time step
 
     //total compartment sizes
-    double num_total = 10000, num_exp = 200, num_ins = 50, num_rec = 0;
 
     using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
-    Model model;
-    auto home = mio::regions::Region(0);
-
-    model.populations[{home, InfectionState::E}] = num_exp;
-    model.populations[{home, InfectionState::I}] = num_ins;
-    model.populations[{home, InfectionState::R}] = num_rec;
-    model.populations[{home, InfectionState::S}] = num_total - num_exp - num_ins - num_rec;
+    auto home   = mio::regions::Region(0);
 
     std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
     adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.2, {}});
-    adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 0.333, {}});
-    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.5}}});
-    model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
+    adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 0.1, {}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.8}}});
+    adoption_rates.push_back({InfectionState::S, InfectionState::D, home, 0.0, {}});
+    adoption_rates.push_back({InfectionState::E, InfectionState::D, home, 0.0, {}});
+    adoption_rates.push_back({InfectionState::I, InfectionState::D, home, 0.0, {}});
+    adoption_rates.push_back({InfectionState::R, InfectionState::D, home, 0.0, {}});
 
     mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
                mio::MobilityEdgeDirected<ScalarType>>
         graph;
+    mio::log_info("Starting Graph generation");
 
     io::CSVReader<4> farms("../../farms.csv");
     farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
@@ -76,9 +73,10 @@ int main(int /*argc*/, char** /*argv*/)
     while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
         Model curr_model;
         curr_model.populations[{home, InfectionState::S}]                                = num_cows;
-        curr_model.populations[{home, InfectionState::E}]                                = 0;
+        curr_model.populations[{home, InfectionState::E}]                                = 2;
         curr_model.populations[{home, InfectionState::I}]                                = 0;
         curr_model.populations[{home, InfectionState::R}]                                = 0;
+        curr_model.populations[{home, InfectionState::D}]                                = 0;
         curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
         graph.add_node(farm_id, longitude, latitude, curr_model, t0);
     }
@@ -86,11 +84,11 @@ int main(int /*argc*/, char** /*argv*/)
     auto rng = mio::RandomNumberGenerator();
 
     std::vector<std::vector<size_t>> interesting_indices;
-    interesting_indices.push_back({model.populations.get_flat_index({home, InfectionState::I})});
+    interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
 
     io::CSVReader<2> edges("../../edges.csv");
     edges.read_header(io::ignore_extra_column, "from", "to");
-    int from, to;
+    size_t from, to;
     while (edges.read_row(from, to)) {
         graph.add_edge(from, to, interesting_indices);
     }
@@ -100,13 +98,11 @@ int main(int /*argc*/, char** /*argv*/)
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
                  });
-    // mio::log_info("Value: {}", nodes.begin()->get_latitude());
-    auto tree = mio::geo::RTree(nodes.begin(), nodes.end());
+    auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
     mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
-        node.property.set_regional_neighbors(
-            tree.inrange_indices_query(node.property.get_location(), {3.0, 5.0, 10.0}));
+        node.property.set_regional_neighbors(tree.inrange_indices_query(node.property.get_location(), {10.0}));
     }
 
     mio::log_info("Neighbors set");
@@ -118,24 +114,55 @@ int main(int /*argc*/, char** /*argv*/)
 
     int date, num_animals, edge;
     while (exchanges.read_row(date, num_animals, from, to, edge)) {
-        sim.add_exchange(date, num_animals, edge);
+        sim.add_exchange(date, num_animals, from, to);
     }
-
-    mio::log_info("Number of exchanges: {}", sim.get_parameters().size());
-
     mio::log_info("Exchanges added");
 
-    sim.advance(tmax);
+    // #ifdef MEMILIO_ENABLE_OPENMP
+    // #pragma omp parallel for
+    //     for (size_t i = 0; i < 100; ++i) {
+    // #endif
+
+    auto sim2(sim);
+    mio::log_info("new Simulation created");
+
+    sim2.advance(tmax);
     mio::log_info("Simulation finished");
 
-    // std::cout << "First table" << std::endl;
-    // sim.get_graph().nodes()[0].property.get_result().print_table({"S", "E", "I", "R"});
-    // std::cout << "Second Table" << std::endl;
-    // sim.get_graph().nodes()[1].property.get_result().print_table({"S", "E", "I", "R"});
+    // #ifdef MEMILIO_ENABLE_OPENMP
+    //     }
+    // #endif
 
-    auto& edge_1_0 = sim.get_graph().edges()[1];
-    auto& results  = edge_1_0.property.get_mobility_results();
-    results.print_table({"Commuter Sick", "Commuter Total"});
+    // sim2.get_graph().nodes()[28].property.get_result().print_table({"S", "E", "I", "R", "D"});
+    // std::cout << "Second Table" << std::endl;
+    // sim2.get_graph().nodes()[1].property.get_result().print_table({"S", "E", "I", "R", "D"});
+
+    // auto& edge_1_0 = sim2.get_graph().edges()[1];
+    // auto& results  = edge_1_0.property.get_mobility_results();
+    // results.print_table({"Commuter Sick", "Commuter Total"});
+
+    // auto exchange_results = sim2.sum_exchanges();
+    // mio::log_info("Sum of exchanged sick animals: {}", exchange_results[0]);
+    // mio::log_info("Sum of exchanged animals: {}", exchange_results[1]);
+
+    // sim2.exchanges_per_timestep().print_table({"Commuter Sick", "Commuter Total"});
+    // auto num_time_points = sim2.exchanges_per_timestep().get_num_time_points();
+
+    // for (auto node : sim2.get_graph().nodes()) {
+    //     if (node.property.get_result().get_num_time_points() < num_time_points) {
+    //         mio::log_error("Node with inconsistent number of time points in results.");
+    //     }
+    // }
+
+    // exchange_results = sim2.sum_nodes();
+    // mio::log_info("{}, {}, {}, {}", exchange_results[0], exchange_results[1], exchange_results[2], exchange_results[3]);
+
+    // auto sth = sim2.statistics_per_timestep().export_csv("Simulation_statistics.csv");
+    // // auto combined_results = sim2.combine_node_results();
+    // // combined_results.print_table({"S", "E", "I", "R", "D"});
+    // // auto ioresult = combined_results.export_csv("Simulation_results.csv");
+
+    // sim2.statistics_per_timestep({0, 1, 2, 3, 4}).print_table({"S", "E", "I", "R", "D"});
 
     return 0;
 }
