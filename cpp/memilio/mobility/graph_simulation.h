@@ -20,6 +20,8 @@
 #ifndef MIO_MOBILITY_GRAPH_SIMULATION_H
 #define MIO_MOBILITY_GRAPH_SIMULATION_H
 
+#include "memilio/config.h"
+#include "memilio/epidemiology/adoption_rate.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
@@ -27,6 +29,7 @@
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
+#include "smm/parameters.h"
 
 namespace mio
 {
@@ -410,11 +413,19 @@ public:
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
 
+            apply_interventions();
+
             Base::m_t += dt;
 
             while (m_parameters.next_event_time() == Base::m_t) {
                 auto next_event = m_parameters.process_next_event();
-                auto& e         = Base::m_graph.get_edge(next_event.from, next_event.to);
+                if (Base::m_graph.nodes()[next_event.from].property.is_quarantined() ||
+                    Base::m_graph.nodes()[next_event.to].property.is_quarantined()) {
+                    mio::log_info("Mobility from node {} to node {} at time {} skipped due to quarantine.",
+                                  next_event.from, next_event.to, Base::m_t);
+                    continue;
+                }
+                auto& e = Base::m_graph.get_edge(next_event.from, next_event.to);
                 mio::log_debug("{}, {}", e.start_node_idx, e.end_node_idx);
                 Base::m_edge_func(Base::m_t, next_event.number, e.property,
                                   Base::m_graph.nodes()[e.start_node_idx].property,
@@ -435,6 +446,156 @@ public:
     const MobilityParametersTimed& get_parameters() const
     {
         return m_parameters;
+    }
+
+    auto sum_exchanges()
+    {
+        const auto size = Base::m_graph.edges()[0].property.get_mobility_results().get_num_elements();
+        std::vector<double> results(size, 0.0);
+        for (auto& n : Base::m_graph.edges()) {
+            assert(n.property.get_mobility_results().get_num_elements() == size);
+            for (auto result = n.property.get_mobility_results().begin();
+                 result != n.property.get_mobility_results().end(); ++result) {
+                for (int i = 0; i < size; i++) {
+                    results[i] += (*result)[i];
+                }
+            }
+        }
+        return results;
+    }
+
+    auto exchanges_per_timestep()
+    {
+        const auto size = Base::m_graph.edges()[0].property.get_mobility_results().get_num_elements();
+        std::vector<double> timepoints;
+        // Collect all exchange timepoints
+
+        for (auto& n : Base::m_graph.edges()) {
+            auto local_timepoints = n.property.get_mobility_results().get_time_points();
+            for (auto t : local_timepoints) {
+                if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
+                    timepoints.push_back(t);
+                }
+            }
+        }
+        std::sort(timepoints.begin(), timepoints.end());
+        auto results = TimeSeries<ScalarType>::zero(timepoints.size(), size, timepoints);
+        for (auto& n : Base::m_graph.edges()) {
+            assert(n.property.get_mobility_results().get_num_elements() == size);
+            auto edge_result = n.property.get_mobility_results();
+            // Add exchange data to big TimeSeries
+            for (Eigen::Index time_index = 0; time_index < edge_result.get_num_time_points(); ++time_index) {
+                auto time  = edge_result.get_time(time_index);
+                auto index = results.get_index_of_time(time);
+                if (index == Eigen::Index(-1)) {
+                    continue;
+                }
+                for (int i = 0; i < size; i++) {
+                    results.get_value(index)[i] += edge_result.get_value(time_index)[i];
+                }
+            }
+        }
+        return results;
+    }
+
+    auto sum_nodes()
+    {
+        const auto size = Base::m_graph.nodes()[0].property.get_result().get_num_elements();
+        std::vector<double> results(size, 0.0);
+        for (auto& n : Base::m_graph.nodes()) {
+            assert(n.property.get_result().get_num_elements() == size);
+            for (int i = 0; i < size; i++) {
+                results[i] += n.property.get_result().get_last_value()[i];
+            }
+        }
+        return results;
+    }
+
+    auto statistics_per_timestep()
+    {
+        const auto size = Base::m_graph.nodes()[0].property.get_result().get_num_elements();
+        std::vector<double> timepoints;
+        // Collect all exchange timepoints => All simulations are stopped and write results at those
+
+        for (auto& n : Base::m_graph.edges()) {
+            auto local_timepoints = n.property.get_mobility_results().get_time_points();
+            for (auto t : local_timepoints) {
+                if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
+                    timepoints.push_back(t);
+                }
+            }
+        }
+        std::sort(timepoints.begin(), timepoints.end());
+        auto results = TimeSeries<ScalarType>::zero(timepoints.size(), size, timepoints);
+        for (auto& n : Base::m_graph.nodes()) {
+            assert(n.property.get_result().get_num_elements() == size);
+            auto node_timeseries = n.property.get_result();
+            for (Eigen::Index time_index = 0; time_index < node_timeseries.get_num_time_points(); ++time_index) {
+                auto time  = node_timeseries.get_time(time_index);
+                auto index = results.get_index_of_time(time);
+                if (index == Eigen::Index(-1)) {
+                    continue;
+                }
+                for (int i = 0; i < size; i++) {
+                    results.get_value(index)[i] += node_timeseries.get_value(time_index)[i];
+                }
+            }
+        }
+        return results;
+    }
+
+    auto statistics_per_timestep(std::vector<size_t> node_indices)
+    {
+        assert(node_indices.size() > 0);
+        const auto size = Base::m_graph.nodes()[node_indices[0]].property.get_result().get_num_elements();
+        std::vector<double> timepoints;
+        // Collect all exchange timepoints => All simulations are stopped and write results at those
+        for (auto& n : Base::m_graph.edges()) {
+            auto local_timepoints = n.property.get_mobility_results().get_time_points();
+            for (auto t : local_timepoints) {
+                if (std::find(timepoints.begin(), timepoints.end(), t) == timepoints.end()) {
+                    timepoints.push_back(t);
+                }
+            }
+        }
+        std::sort(timepoints.begin(), timepoints.end());
+        auto results = TimeSeries<ScalarType>::zero(timepoints.size(), size, timepoints);
+        for (size_t node_index : node_indices) {
+            auto node_timeseries = Base::m_graph.nodes()[node_index].property.get_result();
+            assert(node_timeseries.get_num_elements() == size);
+            for (Eigen::Index time_index = 0; time_index < node_timeseries.get_num_time_points(); ++time_index) {
+                auto time  = node_timeseries.get_time(time_index);
+                auto index = results.get_index_of_time(time);
+                if (index == Eigen::Index(-1)) {
+                    continue;
+                }
+                for (int i = 0; i < size; i++) {
+                    results.get_value(index)[i] += node_timeseries.get_value(time_index)[i];
+                }
+            }
+        }
+        return results;
+    }
+
+    void apply_interventions()
+    {
+        // Set quarantine
+        // for (auto& n : Base::m_graph.nodes()) {
+        //     if (n.property.get_result().get_last_value()[2] > 40) {
+        //         mio::log_debug("Node {} is quarantined at time {}.", n.id, Base::m_t);
+        //         n.property.set_quarantined(true);
+        //     }
+        //     else {
+        //         mio::log_debug("Node {} is not quarantined at time {}.", n.id, Base::m_t);
+        //         n.property.set_quarantined(false);
+        //     }
+        // }
+
+        // for (auto& n : Base::m_graph.nodes()) {
+        //     if (n.property.get_result().get_last_value()[2] > 40) {
+        //         n.property.get_model().get_parameters().get < mio::smm::AdoptionRates<ScalarType, >
+        //     }    // I don't know any smart way to access and modify the adoption rates here, I would need to know the template parameters.
+        // }
     }
 
 private:
