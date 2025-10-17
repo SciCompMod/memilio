@@ -158,6 +158,26 @@ public:
         return value_matrix;
     }
 
+    /**
+     * @brief constructs TimeSeries instance and initializes it with zeros
+     * @param num_time_points number of time steps
+     * @param num_elements number of compartiments * number of groups
+     * @param timepoints vector of time points
+     * @return
+     */
+    static TimeSeries zero(Eigen::Index num_time_points, Eigen::Index num_elements, std::vector<FP> timepoints)
+    {
+        assert(num_time_points == static_cast<Eigen::Index>(timepoints.size()));
+        TimeSeries value_matrix(num_elements);
+        value_matrix.m_data            = Matrix::Zero(num_elements + 1, num_time_points);
+        value_matrix.m_num_time_points = num_time_points;
+        for (Eigen::Index i = 0; i < num_time_points; ++i) {
+            value_matrix.m_data(0, i) = timepoints[i];
+        }
+
+        return value_matrix;
+    }
+
     /** copy assignment */
     TimeSeries& operator=(const TimeSeries& other)
     {
@@ -278,6 +298,21 @@ public:
     {
         assert(i >= 0 && i < m_num_time_points);
         return m_data(0, i);
+    }
+
+    auto get_time_points()
+    {
+        return m_data(0, Eigen::all);
+    }
+
+    auto get_index_of_time(FP time)
+    {
+        for (Eigen::Index i = 0; i < m_num_time_points; ++i) {
+            if (m_data(0, i) == time) {
+                return i;
+            }
+        }
+        return Eigen::Index(-1);
     }
 
     /**
