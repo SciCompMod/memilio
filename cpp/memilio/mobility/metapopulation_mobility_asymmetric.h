@@ -80,9 +80,20 @@ public:
         return regional_neighbor_indices;
     }
 
+    auto is_quarantined() const
+    {
+        return m_is_quarantined;
+    }
+
+    void set_quarantined(bool quarantine)
+    {
+        m_is_quarantined = quarantine;
+    }
+
 private:
     mio::geo::GeographicalLocation m_location; // location of the node
     std::vector<std::vector<size_t>> regional_neighbor_indices;
+    bool m_is_quarantined{false};
 };
 
 /**
