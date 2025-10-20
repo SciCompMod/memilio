@@ -601,7 +601,8 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse<FP>(node_to.get_result(), m_mobile_population.get_time(i), 1e-10, 1e-10);
-            assert(v0 != node_to.get_result().rend() && "unexpected error.");
+            if (v0 == node_to.get_result().rend())
+                continue;
             calculate_mobility_returns<FP, Sim>(m_mobile_population[i], node_to.get_simulation(), *v0,
                                                 m_mobile_population.get_time(i), dt);
 
