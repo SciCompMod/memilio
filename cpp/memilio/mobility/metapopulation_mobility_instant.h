@@ -634,8 +634,7 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
         }
     }
 
-    if (!m_return_mobile_population &&
-        (m_parameters.get_coefficients().get_matrix_at(SimulationTime<FP>(t)).array() > 0.0).any()) {
+    if (!m_return_mobile_population) {
         //normal daily mobility
         m_mobile_population.add_time_point(
             t, (node_from.get_last_state().array() *
