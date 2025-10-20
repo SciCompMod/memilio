@@ -32,6 +32,7 @@
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 #include <vector>
 
+using namespace mio;
 namespace params
 {
 // ScalarType t0_ode = 0.;
@@ -127,8 +128,12 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                  int TimeInfected, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool backwarts_fd = true)
+                                 bool backwards_fd = true)
 {
+    unused(tmax);
+    unused(save_dir);
+    unused(backwards_fd);
+
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -196,9 +201,13 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         // mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(scaling_factor_contacts);
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
+        model.set_tol_for_support_max(1e-7);
+
+        std::cout << "support max: " << model.compute_calctime(dt_ide) << std::endl;
+
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance(tmax, backwarts_fd);
+        sim.advance(tmax, backwards_fd);
 
         if (!save_dir.empty()) {
             // Save compartments.
@@ -227,10 +236,11 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
-    std::vector<int> time_infected_values = {1, 2, 5};
+    // std::vector<int> time_infected_values = {1, 2, 5};
+    std::vector<int> time_infected_values = {1, 2};
 
     // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    std::vector<bool> fd_schemes = {true, false};
+    std::vector<bool> fd_schemes = {true};
 
     for (bool backwards_fd : fd_schemes) {
 
@@ -238,12 +248,8 @@ int main()
 
             std::vector<size_t> finite_difference_orders;
             if (backwards_fd) {
-                if (time_infected == 2) {
-                    finite_difference_orders = {2, 4};
-                }
-                else {
-                    finite_difference_orders = {1, 2, 4};
-                }
+
+                finite_difference_orders = {1, 2, 4};
             }
             else {
                 finite_difference_orders = {2, 4};
@@ -252,7 +258,7 @@ int main()
             for (size_t finite_difference_order : finite_difference_orders) {
 
                 ScalarType t0_ode = 0.;
-                ScalarType t0_ide = 20.;
+                ScalarType t0_ide = 35.;
 
                 std::vector<size_t> num_days_vec = {1, 5, 10};
 
@@ -266,9 +272,9 @@ int main()
                                                time_infected, t0_ide, tmax, finite_difference_order);
                     }
                     else {
-                        save_dir = fmt::format("../../simulation_results/"
-                                               "detailed_init_exponential_dt_ode=1e-{:.0f}_finite_diff={}_central_fd/",
-                                               ode_exponent, finite_difference_order);
+                        save_dir = fmt::format("../../simulation_results/time_infected={}/"
+                                               "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_central_fd/",
+                                               time_infected, t0_ide, tmax, finite_difference_order);
                     }
                     // Make folder if not existent yet.
                     boost::filesystem::path dir(save_dir);

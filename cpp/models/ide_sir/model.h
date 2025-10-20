@@ -23,6 +23,7 @@
 #ifndef IDESIR_MODEL_H
 #define IDESIR_MODEL_H
 
+#include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "memilio/config.h"
 #include "memilio/utils/time_series.h"
@@ -51,6 +52,17 @@ public:
     size_t get_finite_difference_order() const
     {
         return m_finite_difference_order;
+    }
+
+    void set_tol_for_support_max(ScalarType new_tol)
+    {
+        m_tol = new_tol;
+    }
+
+    ScalarType compute_calctime(ScalarType dt) const
+    {
+        return parameters.get<TransitionDistributions>()[(size_t)InfectionTransition::InfectedToRecovered]
+            .get_support_max(dt, m_tol);
     }
 
     ScalarType sum_part1_weight(size_t n, size_t j);
@@ -87,6 +99,8 @@ private:
     std::vector<ScalarType> m_transitiondistribution_vector;
     std::vector<ScalarType> m_transmissionproboncontact_vector;
     std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
+    ScalarType m_calctime;
+    ScalarType m_tol;
 };
 
 } // namespace isir
