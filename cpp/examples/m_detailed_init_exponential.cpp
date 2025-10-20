@@ -40,7 +40,7 @@ namespace params
 
 size_t num_agegroups = 1;
 
-ScalarType TimeInfected = 2.;
+// ScalarType TimeInfected = 2.;
 
 ScalarType TransmissionProbabilityOnContact = 1.;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
@@ -78,7 +78,7 @@ ScalarType total_population = S0 + I0 + R0;
 // }
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
-                                                        std::string save_dir = "")
+                                                        int TimeInfected, std::string save_dir = "")
 {
     using namespace params;
 
@@ -124,7 +124,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
                                  size_t finite_difference_order, ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax,
-                                 std::string save_dir = "",
+                                 int TimeInfected, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  bool backwarts_fd = true)
@@ -178,7 +178,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
         // std::cout << "max support: " << exp.get_support_max(dt_ide) << std::endl;
-        ;
+
         mio::StateAgeFunctionWrapper dist(exp);
         std::vector<mio::StateAgeFunctionWrapper> vec_dist((size_t)mio::isir::InfectionTransition::Count, dist);
         model.parameters.get<mio::isir::TransitionDistributions>() = vec_dist;
@@ -227,59 +227,69 @@ int main()
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
+    std::vector<int> time_infected_values = {1, 2, 5};
+
     // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    std::vector<bool> fd_schemes = {true};
+    std::vector<bool> fd_schemes = {true, false};
 
     for (bool backwards_fd : fd_schemes) {
 
-        std::vector<size_t> finite_difference_orders;
-        if (backwards_fd) {
-            finite_difference_orders = {2, 4};
-        }
-        else {
-            finite_difference_orders = {2, 4};
-        }
+        for (int time_infected : time_infected_values) {
 
-        for (size_t finite_difference_order : finite_difference_orders) {
-
-            ScalarType t0_ode = 0.;
-            ScalarType t0_ide = 20.;
-
-            std::vector<size_t> num_days_vec = {20};
-
-            for (size_t num_days : num_days_vec) {
-                ScalarType tmax = t0_ide + num_days;
-
-                std::string save_dir;
-                if (backwards_fd) {
-                    save_dir = fmt::format("../../simulation_results/"
-                                           "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
-                                           t0_ide, tmax, finite_difference_order);
+            std::vector<size_t> finite_difference_orders;
+            if (backwards_fd) {
+                if (time_infected == 2) {
+                    finite_difference_orders = {2, 4};
                 }
                 else {
-                    save_dir = fmt::format("../../simulation_results/"
-                                           "detailed_init_exponential_dt_ode=1e-{:.0f}_finite_diff={}_central_fd/",
-                                           ode_exponent, finite_difference_order);
+                    finite_difference_orders = {1, 2, 4};
                 }
-                // Make folder if not existent yet.
-                boost::filesystem::path dir(save_dir);
-                boost::filesystem::create_directories(dir);
+            }
+            else {
+                finite_difference_orders = {2, 4};
+            }
 
-                auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, save_dir).value();
+            for (size_t finite_difference_order : finite_difference_orders) {
 
-                // Do IDE simulations.
-                std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
-                std::vector<size_t> gregory_orders    = {1, 2, 3};
+                ScalarType t0_ode = 0.;
+                ScalarType t0_ide = 20.;
 
-                // std::vector<ScalarType> ide_exponents = {2};
-                // std::vector<size_t> gregory_orders    = {3};
+                std::vector<size_t> num_days_vec = {1, 5, 10};
 
-                for (size_t gregory_order : gregory_orders) {
-                    std::cout << std::endl;
-                    std::cout << "Gregory order: " << gregory_order << std::endl;
-                    mio::IOResult<void> result_ide =
-                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
-                                     save_dir, result_ode, backwards_fd);
+                for (size_t num_days : num_days_vec) {
+                    ScalarType tmax = t0_ide + num_days;
+
+                    std::string save_dir;
+                    if (backwards_fd) {
+                        save_dir = fmt::format("../../simulation_results/time_infected={}/"
+                                               "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                                               time_infected, t0_ide, tmax, finite_difference_order);
+                    }
+                    else {
+                        save_dir = fmt::format("../../simulation_results/"
+                                               "detailed_init_exponential_dt_ode=1e-{:.0f}_finite_diff={}_central_fd/",
+                                               ode_exponent, finite_difference_order);
+                    }
+                    // Make folder if not existent yet.
+                    boost::filesystem::path dir(save_dir);
+                    boost::filesystem::create_directories(dir);
+
+                    auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
+
+                    // Do IDE simulations.
+                    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+                    std::vector<size_t> gregory_orders    = {1, 2, 3};
+
+                    // std::vector<ScalarType> ide_exponents = {2};
+                    // std::vector<size_t> gregory_orders    = {3};
+
+                    for (size_t gregory_order : gregory_orders) {
+                        std::cout << std::endl;
+                        std::cout << "Gregory order: " << gregory_order << std::endl;
+                        mio::IOResult<void> result_ide =
+                            simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
+                                         time_infected, save_dir, result_ode, backwards_fd);
+                    }
                 }
             }
         }

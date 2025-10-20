@@ -368,85 +368,103 @@ def plot_total_pop_diff(gregory_orders_simulation, timesteps_ide, total_pop_end_
                     dpi=500)
 
 
+def subfolders_scandir(path):
+    # path = os.path.dirname(path)
+    print(path)
+    with os.scandir(path) as it:
+        return [entry.name for entry in it if entry.is_dir()]
+
+
 def main():
 
     groundtruth_exponent = 6
     gregory_order_groundtruth = 3
 
-    finite_difference_order = 4
+    # print(all_subfolders_walk("../simulation_results/"))
+    root_dir = os.path.join(os.path.dirname(
+        __file__), "../simulation_results")
+    main_dir = "time_infected=2"
+    relevant_dir = os.path.join(root_dir, main_dir)
+    print(relevant_dir)
+    sub_dirs = subfolders_scandir(relevant_dir)
+    # sub_dirs = ['detailed_init_exponential_dt_ode=1e-6_finite_diff=2_central_fd',
+    #             'detailed_init_exponential_dt_ode=1e-6_finite_diff=4_central_fd']
 
-    dir_name = "time_infected=2/detailed_init_exponential_t0ide=20_tmax=30_finite_diff=2"
-    print(dir_name)
+    print(sub_dirs)
 
-    groundtruth_ode = True
+    # dir_name = "time_infected=2/detailed_init_exponential_t0ide=20_tmax=30_finite_diff=2"
+    for dir_name in sub_dirs:
+        print(dir_name)
 
-    gregory_orders_simulation = [1, 2, 3]
-    ide_exponents = [0, 1, 2, 3, 4]
+        groundtruth_ode = True
 
-    ###################################################################################################################
+        gregory_orders_simulation = [1, 2, 3]
+        ide_exponents = [0, 1, 2, 3, 4]
 
-    # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
-    result_dir = os.path.join(os.path.dirname(
-        __file__),  f"../simulation_results/{dir_name}/")
+        ###################################################################################################################
 
-    # Path where plots will be stored.
-    plot_dir = os.path.join(os.path.dirname(
-        __file__),  f"../plots/{dir_name}/")
+        # Path where simulation results (generated with ide_convergence_rate.cpp) are stored.
+        result_dir = os.path.join(os.path.dirname(
+            __file__),  f"{relevant_dir}/{dir_name}/")
 
-    # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
+        # Path where plots will be stored.
+        plot_dir = os.path.join(os.path.dirname(
+            __file__),  f"../plots/{main_dir}/{dir_name}/")
 
-    # Calculate time steps resulting from exponents_ide.
-    timesteps_ide = []
-    for exp in ide_exponents:
-        timesteps_ide.append(pow(10, -exp))
+        # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
 
-    # # Read groundtruth.
-    groundtruth = read_groundtruth(
-        result_dir, groundtruth_exponent, gregory_order_groundtruth, groundtruth_ode)
+        # Calculate time steps resulting from exponents_ide.
+        timesteps_ide = []
+        for exp in ide_exponents:
+            timesteps_ide.append(pow(10, -exp))
 
-    errors_all_gregory_orders = []
+        # # Read groundtruth.
+        groundtruth = read_groundtruth(
+            result_dir, groundtruth_exponent, gregory_order_groundtruth, groundtruth_ode)
 
-    total_pop_reference = 0
-    total_pop_end_all_gregory_orders = []
+        errors_all_gregory_orders = []
 
-    for gregory_order_simulation in gregory_orders_simulation:
-        # Read results from IDE simulations.
-        results = read_data(result_dir, ide_exponents,
-                            gregory_order_simulation)
+        total_pop_reference = 0
+        total_pop_end_all_gregory_orders = []
 
-        # Compute errors of IDE results compared to groundtruth.
-        errors = compute_errors(
-            groundtruth, results, groundtruth_exponent, timesteps_ide, gregory_order_simulation)
+        for gregory_order_simulation in gregory_orders_simulation:
+            # Read results from IDE simulations.
+            results = read_data(result_dir, ide_exponents,
+                                gregory_order_simulation)
 
-        errors_all_gregory_orders.append(errors)
+            # Compute errors of IDE results compared to groundtruth.
+            errors = compute_errors(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, gregory_order_simulation)
 
-        print()
-        print(f"Gregory order {gregory_order_simulation}")
-        # print("Errors: ")
-        # print(errors[:, :])
+            errors_all_gregory_orders.append(errors)
 
-        # Determine order of convergence
-        order = compute_order_of_convergence(
-            errors, timesteps_ide)
+            print()
+            print(f"Gregory order {gregory_order_simulation}")
+            # print("Errors: ")
+            # print(errors[:, :])
 
-        print(
-            f"Orders of convergence: ")
-        print(order.T)
+            # Determine order of convergence
+            order = compute_order_of_convergence(
+                errors, timesteps_ide)
 
-        # print(
-        #     f"Total population at end for time step {timesteps_ide[-1]}: {results['ide'][-1][-1].sum()}")
+            print(
+                f"Orders of convergence: ")
+            print(order.T)
 
-        total_pop_end = get_total_pop_end(results)
-        total_pop_end_all_gregory_orders.append(total_pop_end)
+            # print(
+            #     f"Total population at end for time step {timesteps_ide[-1]}: {results['ide'][-1][-1].sum()}")
 
-        total_pop_reference = results['ide'][-1][0].sum()
+            total_pop_end = get_total_pop_end(results)
+            total_pop_end_all_gregory_orders.append(total_pop_end)
 
-    # Plot convergence of all compartments separately.
-    plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                     gregory_orders_simulation, plot_dir)
+            total_pop_reference = results['ide'][-1][0].sum()
 
-    plot_total_pop_diff(gregory_orders_simulation, timesteps_ide,
-                        total_pop_end_all_gregory_orders, total_pop_reference, plot_dir)
+        # Plot convergence of all compartments separately.
+        plot_convergence(errors_all_gregory_orders, timesteps_ide,
+                         gregory_orders_simulation, plot_dir)
+
+        plot_total_pop_diff(gregory_orders_simulation, timesteps_ide,
+                            total_pop_end_all_gregory_orders, total_pop_reference, plot_dir)
 
 
 if __name__ == '__main__':
