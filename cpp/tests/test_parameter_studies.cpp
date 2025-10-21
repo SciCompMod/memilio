@@ -157,14 +157,17 @@ TEST(ParameterStudies, sample_graph)
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto study = mio::ParameterStudy<double, mio::osecir::Simulation<double>>(graph, 0.0, 0.0, 0.5, 1);
+    auto study = mio::make_parameter_study_graph_ode<double, mio::osecir::Simulation<double>>(graph, 0.0, 0.0, 0.5, 1);
     mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
-    auto results = study.run([](auto&& g) {
-        return draw_sample(g);
+    auto ensemble_results = study.run([](auto&& g, auto t0_, auto dt_, auto) {
+        auto copy = g;
+        return mio::make_sampled_graph_simulation<double, decltype(study)::Simulation>(draw_sample(copy), t0_, dt_,
+                                                                                       dt_);
     });
 
-    EXPECT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
-    for (auto& node : results[0].nodes()) {
+    auto& results = ensemble_results.at(0);
+    EXPECT_EQ(results.get_graph().edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
+    for (auto& node : results.get_graph().nodes()) {
         auto& result_model = node.property.get_simulation().get_model();
         EXPECT_EQ(result_model.parameters.get<mio::osecir::ContactPatterns<double>>()
                       .get_cont_freq_mat()[0]
@@ -370,26 +373,24 @@ TEST(ParameterStudies, check_ensemble_run_result)
         mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
-    mio::ParameterStudy<double, mio::osecir::Simulation<double>> parameter_study(model, t0, tmax, 1);
+    auto parameter_study = mio::make_parameter_study<mio::osecir::Simulation<double>>(model, t0, tmax, 0.1, 1);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
-    parameter_study.set_num_runs(1);
-    auto graph_results = parameter_study.run([](auto&& g) {
-        return draw_sample(g);
+    auto ensemble_results = parameter_study.run([](auto&& model_, auto t0_, auto dt_, auto) {
+        auto copy = model_;
+        draw_sample(copy);
+        return mio::osecir::Simulation<double>(copy, t0_, dt_);
     });
 
-    std::vector<mio::TimeSeries<double>> results;
-    for (size_t i = 0; i < graph_results.size(); i++) {
-        results.push_back(std::move(graph_results[i].nodes()[0].property.get_result()));
-    }
+    const mio::TimeSeries<double>& results = ensemble_results.at(0).get_result();
 
-    for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {
+    for (Eigen::Index i = 0; i < results.get_num_time_points(); i++) {
         std::vector<double> total_at_ti((size_t)mio::osecir::InfectionState::Count, 0);
 
-        for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
-            EXPECT_GE(results[0][i][j], 0.0) << " day " << results[0].get_time(i) << " group " << j;
-            total_at_ti[static_cast<size_t>(j) / (size_t)mio::osecir::InfectionState::Count] += results[0][i][j];
+        for (Eigen::Index j = 0; j < results[i].size(); j++) { // number of compartments per time step
+            EXPECT_GE(results[i][j], 0.0) << " day " << results.get_time(i) << " group " << j;
+            total_at_ti[static_cast<size_t>(j) / (size_t)mio::osecir::InfectionState::Count] += results[i][j];
         }
 
         for (auto j = mio::AgeGroup(0); j < params.get_num_groups(); j++) {

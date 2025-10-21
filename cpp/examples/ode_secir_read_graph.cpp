@@ -112,8 +112,8 @@ int main(int argc, char** argv)
     std::cout << "Reading Mobility File..." << std::flush;
     auto read_mobility_result = mio::read_mobility_plain(filename);
     if (!read_mobility_result) {
-        std::cout << read_mobility_result.error().formatted_message() << '\n';
-        std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file." << '\n';
+        std::cout << "\n" << read_mobility_result.error().formatted_message() << "\n";
+        std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file.\n";
         return 0;
     }
     auto& commuter_mobility = read_mobility_result.value();
@@ -137,7 +137,8 @@ int main(int argc, char** argv)
     std::cout << "Writing Json Files..." << std::flush;
     auto write_status = mio::write_graph(graph, "graph_parameters");
     if (!write_status) {
-        std::cout << "Error: " << write_status.error().formatted_message();
+        std::cout << "\n" << write_status.error().formatted_message();
+        return 0;
     }
     std::cout << "Done" << std::endl;
 
@@ -145,13 +146,20 @@ int main(int argc, char** argv)
     auto graph_read_result = mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>("graph_parameters");
 
     if (!graph_read_result) {
-        std::cout << "Error: " << graph_read_result.error().formatted_message();
+        std::cout << "\n" << graph_read_result.error().formatted_message();
+        return 0;
     }
     std::cout << "Done" << std::endl;
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = mio::ParameterStudy<ScalarType, mio::osecir::Simulation<ScalarType>>(graph_read, t0, tmax, 0.5, 2);
+    auto study = mio::make_parameter_study_graph_ode<ScalarType, mio::osecir::Simulation<ScalarType>>(graph_read, t0,
+                                                                                                      tmax, 0.5, 2);
+    study.run([](auto&& g, auto t0_, auto dt_, auto) {
+        auto copy = g;
+        return mio::make_sampled_graph_simulation<double, decltype(study)::Simulation>(draw_sample(copy), t0_, dt_,
+                                                                                       dt_);
+    });
     std::cout << "Done" << std::endl;
 
     return 0;

@@ -237,7 +237,7 @@ int main()
             sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
             std::cout << "Results written to " << name_run << std::endl;
             auto params = std::vector<mio::abm::Model>{};
-            return std::move(interpolated_result);
+            return interpolated_result;
         });
 
     if (ensemble.size() > 0) {
