@@ -92,7 +92,7 @@ IOResult<std::vector<ScalarType>> read_divi_data(const std::string& path, const 
  * @return An IOResult indicating success or failure.
  */
 template <typename FP, class Model>
-IOResult<void> set_divi_data(std::vector<Model>& model, const std::vector<double>& num_icu, const std::vector<int>& vregion,
+IOResult<void> set_divi_data(mio::VectorRange<Model>& model, const std::vector<double>& num_icu, const std::vector<int>& vregion,
                              Date date, FP scaling_factor_icu)
 {
     std::vector<FP> sum_mu_I_U(vregion.size(), 0);
@@ -127,7 +127,7 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::vector<double
  * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data
  */
 template <class Model>
-IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path, const std::vector<int>& vregion,
+IOResult<void> set_divi_data(mio::VectorRange<Model>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
@@ -138,7 +138,7 @@ IOResult<void> set_divi_data(std::vector<Model>& model, const std::string& path,
         return success();
     }
     BOOST_OUTCOME_TRY(auto&& num_icu, read_divi_data(path, vregion, date));
-    BOOST_OUTCOME_TRY(set_divi_data(model, num_icu, rki_data, vregion, date, scaling_factor_icu));
+    BOOST_OUTCOME_TRY(set_divi_data(model, num_icu, vregion, date, scaling_factor_icu));
     return success();
 }
 
