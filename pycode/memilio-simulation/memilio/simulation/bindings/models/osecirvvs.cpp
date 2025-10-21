@@ -340,9 +340,9 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                 mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP,
-                                              ContactLocation, mio::osecirvvs::Model<double>,
-                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
-                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
+                                         ContactLocation, mio::osecirvvs::Model<double>,
+                                         mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
+                                         mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
                 mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain,
                 weights);
             return pymio::check_and_throw(result);
@@ -355,6 +355,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
 
 #ifdef MEMILIO_HAS_JSONCPP
     pymio::bind_write_graph<mio::osecirvvs::Model<double>>(m);
+    pymio::bind_read_graph<mio::osecirvvs::Model<double>>(m);
     m.def(
         "read_input_data_county",
         [](std::vector<mio::osecirvvs::Model<double>>& model, mio::Date date, const std::vector<int>& county,
