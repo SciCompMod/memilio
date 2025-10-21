@@ -227,12 +227,20 @@ public:
     std::tuple<Index<CategoryTag>...> indices;
 };
 
-template <size_t Index, class... CategoryTags>
-struct type_at_index<Index, ::mio::Index<CategoryTags...>> : public type_at_index<Index, CategoryTags...> {
+/// Specialization of type_at_index for Index. @see type_at_index.
+template <size_t Tag, class... CategoryTags>
+struct type_at_index<Tag, ::mio::Index<CategoryTags...>> : public type_at_index<Tag, CategoryTags...> {
 };
 
-template <class CategoryTag, class... CategoryTags>
-struct index_of_type<CategoryTag, ::mio::Index<CategoryTags...>> : public index_of_type<CategoryTag, CategoryTags...> {
+/// Specialization of index_of_type for Index. @see index_of_type.
+template <class Tag, class... CategoryTags>
+struct index_of_type<Tag, ::mio::Index<CategoryTags...>> : public index_of_type<Tag, CategoryTags...> {
+};
+
+/// Specialization of index_of_type for Index. Resolves ambiguity when using Index%s as items. @see index_of_type.
+template <class... CategoryTags>
+struct index_of_type<Index<CategoryTags...>, Index<CategoryTags...>> {
+    static constexpr std::size_t value = 0;
 };
 
 // retrieves the Index at the Ith position for a Index with more than one Tag
