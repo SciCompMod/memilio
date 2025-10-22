@@ -33,6 +33,7 @@
 
 #include <boost/filesystem/path.hpp>
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
 
 constexpr size_t num_age_groups = 4;
@@ -227,7 +228,7 @@ int main()
         [](auto&&, auto t0_, auto, size_t run_idx) {
             // TODO: change the parameters around a bit?
 
-            auto sim = ResultSim(make_model(run_idx), t0_);
+            auto sim = ResultSim(make_model((uint32_t)run_idx), t0_);
             return sim;
         },
         [](auto&& sim, auto&& run_idx) {
