@@ -23,23 +23,14 @@
 #include "memilio/io/binary_serializer.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/logging.h"
-#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/compartments/simulation.h"
 
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
-#include <functional>
-#include <iterator>
-#include <limits>
-#include <numeric>
 #include <type_traits>
-#include <utility>
 
 namespace mio
 {
@@ -218,12 +209,21 @@ public:
     {
         return m_t0;
     }
+
+    Time get_dt() const
+    {
+        return m_dt;
+    }
     /**
      * Get the input graph that the parameter study is run for.
      * Use for graph simulations, use get_model for single node simulations.
      * @{
      */
     const Parameters& get_parameters() const
+    {
+        return m_parameters;
+    }
+    Parameters& get_parameters()
     {
         return m_parameters;
     }
@@ -255,7 +255,6 @@ private:
         return std::move(sim);
     }
 
-private:
     // Stores Graph with the names and ranges of all parameters
     ParameterType m_parameters;
 
@@ -271,7 +270,7 @@ private:
     RandomNumberGenerator m_rng;
 };
 
-template <class Simulation, class Parameters, typename Time, typename Step = Time>
+template <class Simulation, class Parameters, typename Time, typename Step>
 ParameterStudy2<Simulation, Parameters, Time, Step> make_parameter_study(const Parameters& global_parameters, Time t0,
                                                                          Time tmax, Step dt, size_t num_runs)
 {
@@ -282,11 +281,11 @@ template <class FP, class Sim>
 auto make_parameter_study_graph_ode(const Graph<typename Sim::Model, MobilityParameters<FP>>& global_parameters, FP t0,
                                     FP tmax, FP dt, size_t num_runs)
 {
-    using SimGraph    = Graph<mio::SimulationNode<ScalarType, Sim>, mio::MobilityEdge<ScalarType>>;
-    using SimGraphSim = mio::GraphSimulation<ScalarType, SimGraph, ScalarType, ScalarType>;
+    using SimGraph    = Graph<SimulationNode<FP, Sim>, MobilityEdge<FP>>;
+    using SimGraphSim = GraphSimulation<FP, SimGraph, FP, FP>;
     using Params      = Graph<typename Sim::Model, MobilityParameters<FP>>;
 
-    return ParameterStudy2<SimGraphSim, Params, ScalarType>{global_parameters, t0, tmax, dt, num_runs};
+    return ParameterStudy2<SimGraphSim, Params, FP>{global_parameters, t0, tmax, dt, num_runs};
 }
 
 //sample parameters and create simulation

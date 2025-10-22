@@ -48,6 +48,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
 #include "Eigen/Core"
+#include <algorithm>
 #include <vector>
 
 namespace py = pybind11;
@@ -58,88 +59,84 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template <class Sim>
 std::vector<Sim> filter_graph_results(
-    std::vector<mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>>&& graph_results)
+    std::vector<mio::GraphSimulation<double, mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>,
+                                     double, double>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
     for (auto i = size_t(0); i < graph_results.size(); ++i) {
-        results.emplace_back(std::move(graph_results[i].nodes()[0].property.get_simulation()));
+        results.emplace_back(std::move(graph_results[i].get_graph().nodes()[0].property.get_simulation()));
     }
     return std::move(results);
+}
+
+/// Moves out graphs from GraphSimulation%s. Helps make the new ParameterStudy backwards compatible with older bindings.
+template <class GraphT, class SimulationT>
+std::vector<GraphT> extract_graph_from_graph_simulation(std::vector<SimulationT>&& result_graph_sims)
+{
+    std::vector<GraphT> result_graphs;
+    result_graphs.reserve(result_graph_sims.size());
+    for (const SimulationT& sim : result_graph_sims) {
+        result_graphs.emplace_back(std::move(sim.get_graph()));
+    }
+    return result_graphs;
 }
 
 /*
  * @brief bind ParameterStudy for any model
  */
-template <class Simulation>
+template <class Sim>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<mio::ParameterStudy<double, Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
-        .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
-             py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>&, double, double,
-                      double, size_t>(),
-             py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
-        .def_property("num_runs", &mio::ParameterStudy<double, Simulation>::get_num_runs,
-                      &mio::ParameterStudy<double, Simulation>::set_num_runs)
-        .def_property("tmax", &mio::ParameterStudy<double, Simulation>::get_tmax,
-                      &mio::ParameterStudy<double, Simulation>::set_tmax)
-        .def_property("t0", &mio::ParameterStudy<double, Simulation>::get_t0,
-                      &mio::ParameterStudy<double, Simulation>::set_t0)
-        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model),
+    using GraphT      = mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>;
+    using SimulationT = mio::GraphSimulation<double, GraphT, double, double>;
+    using ParametersT = mio::Graph<typename Sim::Model, mio::MobilityParameters<double>>;
+    using StudyT      = mio::ParameterStudy2<SimulationT, ParametersT, double>;
+
+    const auto create_simulation = [](const ParametersT& g, double t0, double dt, size_t) {
+        auto copy = g;
+        return mio::make_sampled_graph_simulation<double, SimulationT>(draw_sample(copy), t0, dt, dt);
+    };
+
+    pymio::bind_class<StudyT, pymio::EnablePickling::Never>(m, name.c_str())
+        .def(py::init<const ParametersT&, double, double, double, size_t>(), py::arg("parameters"), py::arg("t0"),
+             py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
+        .def_property_readonly("num_runs", &StudyT::get_num_runs)
+        .def_property_readonly("tmax", &StudyT::get_tmax)
+        .def_property_readonly("t0", &StudyT::get_t0)
+        .def_property_readonly("dt", &StudyT::get_dt)
+        .def_property_readonly("model_graph", py::overload_cast<>(&StudyT::get_parameters),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model",
-                               py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model, py::const_),
+        .def_property_readonly("model_graph", py::overload_cast<>(&StudyT::get_parameters, py::const_),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model_graph),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly(
-            "model_graph", py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model_graph, py::const_),
-            py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<double, Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<double, Simulation>, mio::MobilityEdge<double>>,
-                                  size_t)>
-                   handle_result) {
-                self.run(
-                    [](auto&& g) {
-                        return draw_sample(g);
-                    },
-                    [&handle_result](auto&& g, auto&& run_idx) {
-                        //handle_result_function needs to return something
-                        //we don't want to run an unknown python object through parameterstudies, so
-                        //we just return 0 and ignore the list returned by run().
-                        //So python will behave slightly different than c++
-                        handle_result(std::move(g), run_idx);
-                        return 0;
-                    });
+            [&create_simulation](StudyT& self, std::function<void(GraphT, size_t)> handle_result) {
+                self.run(create_simulation, [&handle_result](auto&& g, auto&& run_idx) {
+                    //handle_result_function needs to return something
+                    //we don't want to run an unknown python object through parameterstudies, so
+                    //we just return 0 and ignore the list returned by run().
+                    //So python will behave slightly different than c++
+                    handle_result(std::move(g.get_graph()), run_idx);
+                    return 0;
+                });
             },
             py::arg("handle_result_func"))
         .def("run",
-             [](mio::ParameterStudy<double, Simulation>& self) { //default argument doesn't seem to work with functions
-                 return self.run([](auto&& g) {
-                     return draw_sample(g);
-                 });
+             [&create_simulation](StudyT& self) { //default argument doesn't seem to work with functions
+                 return extract_graph_from_graph_simulation<GraphT>(self.run(create_simulation));
              })
         .def(
             "run_single",
-            [](mio::ParameterStudy<double, Simulation>& self, std::function<void(Simulation, size_t)> handle_result) {
-                self.run(
-                    [](auto&& g) {
-                        return draw_sample(g);
-                    },
-                    [&handle_result](auto&& r, auto&& run_idx) {
-                        handle_result(std::move(r.nodes()[0].property.get_simulation()), run_idx);
-                        return 0;
-                    });
+            [&create_simulation](StudyT& self, std::function<void(Sim, size_t)> handle_result) {
+                self.run(create_simulation, [&handle_result](auto&& r, auto&& run_idx) {
+                    handle_result(std::move(r.get_graph().nodes()[0].property.get_simulation()), run_idx);
+                    return 0;
+                });
             },
             py::arg("handle_result_func"))
-        .def("run_single", [](mio::ParameterStudy<double, Simulation>& self) {
-            return filter_graph_results(self.run([](auto&& g) {
-                return draw_sample(g);
-            }));
+        .def("run_single", [&create_simulation](StudyT& self) {
+            return filter_graph_results(self.run(create_simulation));
         });
 }
 
@@ -287,11 +284,11 @@ PYBIND11_MODULE(_simulation_osecir, m)
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP
-                                         ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
-                                         mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState,
-                                         decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
-                                                                             mobile_comp, contact_locations_size,
-                                                                             mio::read_mobility_plain, weights);
+                                              ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
+                                              mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState,
+                                              decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
+                                                                                  mobile_comp, contact_locations_size,
+                                                                                  mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);
