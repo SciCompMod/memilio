@@ -180,6 +180,28 @@ public:
                                       });
     }
 
+    template <class... Args>
+    Edge<EdgePropertyT>& lazy_add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        for (auto& edge : m_edges) {
+            if (edge.start_node_idx == start_node_idx && edge.end_node_idx == end_node_idx) {
+                return m_edges.back();
+            }
+        }
+        m_edges.emplace_back(start_node_idx, end_node_idx, std::forward<Args>(args)...);
+        return m_edges.back();
+    }
+
+    Edge<EdgePropertyT>& sort_edges()
+    {
+        std::sort(m_edges.begin(), m_edges.end(), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                          : e1.start_node_idx < e2.start_node_idx;
+        });
+        return m_edges.back();
+    }
+
     /**
      * @brief range of nodes
      */
