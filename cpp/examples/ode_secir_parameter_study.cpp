@@ -53,7 +53,7 @@ mio::IOResult<void> write_single_run_result(const size_t run, const mio::osecir:
     std::vector<mio::TimeSeries<ScalarType>> all_results;
     std::vector<int> ids;
 
-    BOOST_OUTCOME_TRY(mio::save_result({sim.get_result()}, {0}, sim.get_model().parameters.get_num_groups().get(),
+    BOOST_OUTCOME_TRY(mio::save_result({sim.get_result()}, {0}, (int)sim.get_model().parameters.get_num_groups().get(),
                                        mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();
