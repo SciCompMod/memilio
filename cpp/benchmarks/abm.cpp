@@ -162,21 +162,33 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 //have to be adjusted to get the benchmark back to normal.
 //For small sizes (e.g. 10k) extreme cases are too likely, i.e. infections die out
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_25k, 25000, {1415921265u, 35897932u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_400k, 400000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_800k, 800000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_1600k, 1600000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_3200k, 3200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_6400k, 6400000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_12800k, 12800000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_25600k, 25600000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_51200k, 51200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_102400k, 102400000, {28841971u, 69399375u})
-    ->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_204800k, 204800000, {28841971u, 69399375u})
-    ->Unit(benchmark::kMillisecond);
 
-BENCHMARK_MAIN();
+int main(int argc, char** argv)
+{
+    // Default problem size
+    size_t num_persons = 25000;
+
+    // Parse custom arguments for problem size
+    // Look for "--num_persons=<value>" or extract from remaining args
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg.find("--num_persons=") == 0) {
+            num_persons = std::stoul(arg.substr(14));
+        }
+    }
+
+    // Register the benchmark with the specified problem size
+    std::string benchmark_name = "abm_benchmark_" + std::to_string(num_persons);
+    benchmark::RegisterBenchmark(benchmark_name.c_str(), [num_persons](benchmark::State& state) {
+        abm_benchmark(state, num_persons, {1415921265u, 35897932u});
+    })->Unit(benchmark::kMillisecond);
+
+    // Initialize and run benchmarks
+    benchmark::Initialize(&argc, argv);
+    if (benchmark::ReportUnrecognizedArguments(argc, argv)) {
+        return 1;
+    }
+    benchmark::RunSpecifiedBenchmarks();
+    benchmark::Shutdown();
+    return 0;
+}
