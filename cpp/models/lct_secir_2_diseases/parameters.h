@@ -47,7 +47,7 @@ namespace lsecir2d
 template <typename FP>
 struct TimeExposed_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -64,7 +64,7 @@ struct TimeExposed_a {
 template <typename FP>
 struct TimeInfectedNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -81,7 +81,7 @@ struct TimeInfectedNoSymptoms_a {
 template <typename FP>
 struct TimeInfectedSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -97,7 +97,7 @@ struct TimeInfectedSymptoms_a {
 template <typename FP>
 struct TimeInfectedSevere_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -113,7 +113,7 @@ struct TimeInfectedSevere_a {
 template <typename FP>
 struct TimeInfectedCritical_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -129,7 +129,7 @@ struct TimeInfectedCritical_a {
 template <typename FP>
 struct TransmissionProbabilityOnContact_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -145,7 +145,7 @@ struct TransmissionProbabilityOnContact_a {
 template <typename FP>
 struct TimeExposed_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -162,7 +162,7 @@ struct TimeExposed_b {
 template <typename FP>
 struct TimeInfectedNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -179,7 +179,7 @@ struct TimeInfectedNoSymptoms_b {
 template <typename FP>
 struct TimeInfectedSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -195,7 +195,7 @@ struct TimeInfectedSymptoms_b {
 template <typename FP>
 struct TimeInfectedSevere_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -211,7 +211,7 @@ struct TimeInfectedSevere_b {
 template <typename FP>
 struct TimeInfectedCritical_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -227,7 +227,7 @@ struct TimeInfectedCritical_b {
 template <typename FP>
 struct TransmissionProbabilityOnContact_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -263,7 +263,7 @@ struct ContactPatterns {
 template <typename FP>
 struct RelativeTransmissionNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -279,7 +279,7 @@ struct RelativeTransmissionNoSymptoms_a {
 template <typename FP>
 struct RiskOfInfectionFromSymptomatic_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -295,7 +295,7 @@ struct RiskOfInfectionFromSymptomatic_a {
 template <typename FP>
 struct RelativeTransmissionNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -311,7 +311,7 @@ struct RelativeTransmissionNoSymptoms_b {
 template <typename FP>
 struct RiskOfInfectionFromSymptomatic_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 1.);
     }
@@ -327,7 +327,7 @@ struct RiskOfInfectionFromSymptomatic_b {
 template <typename FP>
 struct RecoveredPerInfectedNoSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.5);
     }
@@ -343,7 +343,7 @@ struct RecoveredPerInfectedNoSymptoms_a {
 template <typename FP>
 struct SeverePerInfectedSymptoms_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.5);
     }
@@ -359,7 +359,7 @@ struct SeverePerInfectedSymptoms_a {
 template <typename FP>
 struct CriticalPerSevere_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.5);
     }
@@ -375,7 +375,7 @@ struct CriticalPerSevere_a {
 template <typename FP>
 struct DeathsPerCritical_a {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.1);
     }
@@ -391,7 +391,7 @@ struct DeathsPerCritical_a {
 template <typename FP>
 struct RecoveredPerInfectedNoSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.5);
     }
@@ -407,7 +407,7 @@ struct RecoveredPerInfectedNoSymptoms_b {
 template <typename FP>
 struct SeverePerInfectedSymptoms_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.5);
     }
@@ -423,7 +423,7 @@ struct SeverePerInfectedSymptoms_b {
 template <typename FP>
 struct CriticalPerSevere_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.5);
     }
@@ -439,7 +439,7 @@ struct CriticalPerSevere_b {
 template <typename FP>
 struct DeathsPerCritical_b {
     using Type = Eigen::VectorX<UncertainValue<FP>>;
-    static Type get_default(size_t size = 1)
+    static Type get_default(size_t size)
     {
         return Type::Constant(size, 1, 0.1);
     }
