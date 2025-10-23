@@ -20,8 +20,23 @@ plt.style.use('default')
 
 dpi = 300
 
-colors = {"Light blue": "#48ADFF", "Blue": "#155489", "Red": "#BA421E", "Purple": "#8200AE", "Light green": "#8EBE4B", "Green": "#5D8A2B",
-          "Teal": "#20A398", "Yellow": "#FFD45E", "Orange": "#E5945A", "Rose": "#CF688F", "Grey": "#C0BFBF", "Dark grey": "#616060", "Light grey": "#E2E2E2"}
+colors = {"Blue": "#155489",
+          "Medium blue": "#64A7DD",
+          "Light blue": "#B4DCF6",
+          "Lilac blue": "#AECCFF",
+          "Turquoise": "#76DCEC",
+          "Light green": "#B6E6B1",
+          "Medium green": "#54B48C",
+          "Green": "#5D8A2B",
+          "Teal": "#20A398",
+          "Yellow": "#FBD263",
+          "Orange": "#E89A63",
+          "Rose": "#CF7768",
+          "Red": "#A34427",
+          "Purple": "#741194",
+          "Grey": "#C0BFBF",
+          "Dark grey": "#616060",
+          "Light grey": "#F1F1F1"}
 
 if __name__ == '__main__':
     set_fontsize()
