@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     std::cout << "Running Simulations..." << std::flush;
     auto study = mio::make_parameter_study_graph_ode<ScalarType, mio::osecir::Simulation<ScalarType>>(graph_read, t0,
                                                                                                       tmax, 0.5, 2);
-    study.run([](auto&& g, auto t0_, auto dt_, auto) {
+    study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
         auto copy = g;
         return mio::make_sampled_graph_simulation<double, decltype(study)::Simulation>(draw_sample(copy), t0_, dt_,
                                                                                        dt_);

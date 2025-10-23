@@ -17,13 +17,14 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/compartments/simulation.h"
 #include "memilio/config.h"
+#include "memilio/utils/base_dir.h"
+#include "memilio/utils/miompi.h"
+#include "memilio/utils/stl_util.h"
 #include "ode_secir/model.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
-#include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/io/result_io.h"
 
 /**
@@ -35,8 +36,8 @@
  */
 mio::IOResult<void> write_single_run_result(const size_t run, const mio::osecir::Simulation<ScalarType>& sim)
 {
-    std::string abs_path;
-    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory("results", abs_path));
+    std::string abs_path = mio::path_join(mio::base_dir(), "example_results");
+    BOOST_OUTCOME_TRY(auto&& created, mio::create_directory(abs_path));
 
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
@@ -54,14 +55,15 @@ mio::IOResult<void> write_single_run_result(const size_t run, const mio::osecir:
     std::vector<int> ids;
 
     BOOST_OUTCOME_TRY(mio::save_result({sim.get_result()}, {0}, (int)sim.get_model().parameters.get_num_groups().get(),
-                                       mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
+                                       mio::path_join(abs_path, "Results_run" + std::to_string(run) + ".h5")));
 
     return mio::success();
 }
 
 int main()
 {
-    mio::set_log_level(mio::LogLevel::debug);
+    mio::mpi::init();
+    mio::set_log_level(mio::LogLevel::warn);
 
     ScalarType t0   = 0;
     ScalarType tmax = 50;
@@ -123,7 +125,7 @@ int main()
     }
 
     //create study
-    auto num_runs = size_t(1);
+    auto num_runs = size_t(3);
     // mio::ParameterStudy2<mio::osecir::Simulation<ScalarType>, mio::osecir::Model<ScalarType>, ScalarType>
     //     parameter_study(model, t0, tmax, dt, num_runs);
 
@@ -141,9 +143,15 @@ int main()
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
         }
-        return 0; //Result handler must return something, but only meaningful when using MPI.
+        return sim.get_result(); //Result handler must return something, but only meaningful when using MPI.
     };
-    parameter_study.run(sample_graph, handle_result);
+
+    // Optional: set seeds to get reproducable results
+    // parameter_study.get_rng().seed({1456, 157456, 521346, 35345, 6875, 6435});
+
+    auto result = parameter_study.run(sample_graph, handle_result);
+
+    mio::mpi::finalize();
 
     return 0;
 }

@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/utils/miompi.h"
+#include "memilio/utils/logging.h"
 
 #ifdef MEMILIO_ENABLE_MPI
 #include <mpi.h>
@@ -41,6 +42,8 @@ void init()
 {
 #ifdef MEMILIO_ENABLE_MPI
     MPI_Init(nullptr, nullptr);
+#else
+    mio::log_debug("Using mio::mpi::init without MPI being enabled.");
 #endif
 }
 

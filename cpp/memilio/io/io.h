@@ -857,6 +857,15 @@ void serialize(IOContext& io, const T& t)
     serialize_internal(io, t);
 }
 
+namespace details
+{
+template <class IOContext, class T>
+using is_serializable_expr_t = decltype(serialize(std::declval<IOContext&>(), std::declval<const T&>()));
+}
+
+template <class IOContext, class T>
+static constexpr bool is_serializable = is_expression_valid<details::is_serializable_expr_t, IOContext, T>::value;
+
 /**
  * Restores an object from the data stored in an IO context.
  * There must be provided for the type T either a free function `deserialize_internal(io, tag)`
@@ -880,6 +889,16 @@ IOResult<T> deserialize(IOContext& io, Tag<T> tag)
     using mio::deserialize_internal;
     return deserialize_internal(io, tag);
 }
+
+namespace details
+{
+template <class IOContext, class T>
+using is_deserializable_expr_t =
+    decltype(std::declval<IOResult<T>>() = deserialize(std::declval<IOContext&>(), std::declval<Tag<T>>()));
+}
+
+template <class IOContext, class T>
+static constexpr bool is_deserializable = is_expression_valid<details::is_deserializable_expr_t, IOContext, T>::value;
 
 /**
  * @brief Returns the current working directory name

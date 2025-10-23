@@ -62,7 +62,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 100;
+    int n_households = 10;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -175,7 +175,7 @@ int main()
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(5);
     // auto sim  = mio::abm::Simulation(t0, std::move(model));
-    const size_t num_runs = 10;
+    const size_t num_runs = 3;
 
     // Create a parameter study. We currently do not use Parameters or dt, so we set them to 0.
     mio::ParameterStudy2<mio::abm::ResultSimulation<mio::abm::Model>, int, mio::abm::TimePoint, mio::abm::TimeSpan>

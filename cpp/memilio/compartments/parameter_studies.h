@@ -21,8 +21,10 @@
 #define MIO_COMPARTMENTS_PARAMETER_STUDIES_H
 
 #include "memilio/io/binary_serializer.h"
+#include "memilio/io/io.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
@@ -82,41 +84,24 @@ public:
     //     // TODO how is this supposed to work wrt. model? is this just a special case where ParameterType=Model?
     // }
 
-    /**
-     * @brief  
-     * @param sample_simulation A function that accepts ParameterType and returns an instance of SimulationType.
-     * @param process_simulation_result A function that accepts S 
-     */
-    template <class CreateSimulationFunction, class ProcessSimulationResultFunction, class... Args>
+private:
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
     std::vector<std::decay_t<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>>
-    run(CreateSimulationFunction&& create_simulation, ProcessSimulationResultFunction&& process_simulation_result)
+    run_impl(size_t start_run_idx, size_t end_run_idx, CreateSimulationFunction&& create_simulation,
+             ProcessSimulationResultFunction&& process_simulation_result)
     {
+        assert(start_run_idx <= end_run_idx);
         static_assert(std::is_invocable_r_v<Simulation, CreateSimulationFunction, Parameters, Time, Step, size_t>,
                       "Incorrect Type for create_simulation.");
         static_assert(std::is_invocable_v<ProcessSimulationResultFunction, Simulation, size_t>,
                       "Incorrect Type for process_simulation_result.");
-        int num_procs, rank;
-#ifdef MEMILIO_ENABLE_MPI
-        MPI_Comm_size(mpi::get_world(), &num_procs);
-        MPI_Comm_rank(mpi::get_world(), &rank);
-#else
-        num_procs = 1;
-        rank      = 0;
-#endif
 
-        //The ParameterDistributions used for sampling parameters use thread_local_rng()
-        //So we set our own RNG to be used.
-        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
-        m_rng.synchronize();
+        using ProcessedResultT =
+            std::decay_t<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>;
+
         thread_local_rng() = m_rng;
 
-        auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx =
-            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
-        auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
-
-        std::vector<std::decay_t<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>>
-            ensemble_result;
+        std::vector<ProcessedResultT> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
@@ -144,6 +129,76 @@ public:
 
         //Set the counter of our RNG so that future calls of run() produce different parameters.
         m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
+
+        return ensemble_result;
+    }
+
+public:
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+    std::vector<std::decay_t<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>>
+    run_serial(CreateSimulationFunction&& create_simulation,
+               ProcessSimulationResultFunction&& process_simulation_result)
+    {
+        return run_impl(0, m_num_runs, std::forward<CreateSimulationFunction>(create_simulation),
+                        std::forward<ProcessSimulationResultFunction>(process_simulation_result));
+    }
+
+    template <class CreateSimulationFunction>
+    std::vector<Simulation> run_serial(CreateSimulationFunction&& create_simulation)
+    {
+        return run_serial(std::forward<CreateSimulationFunction>(create_simulation),
+                          [](Simulation&& sim, size_t) -> Simulation&& {
+                              return std::move(sim);
+                          });
+    }
+
+    /**
+     * @brief run the sim  
+     * @param sample_simulation A function that accepts ParameterType and returns an instance of SimulationType.
+     * @param process_simulation_result A function that accepts S
+     * side effect: sets seed and count of thread_local_rng 
+     */
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+    std::vector<std::decay_t<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>>
+    run(CreateSimulationFunction&& create_simulation, ProcessSimulationResultFunction&& process_simulation_result)
+    {
+        static_assert(std::is_invocable_r_v<Simulation, CreateSimulationFunction, Parameters, Time, Step, size_t>,
+                      "Incorrect Type for create_simulation.");
+        static_assert(std::is_invocable_v<ProcessSimulationResultFunction, Simulation, size_t>,
+                      "Incorrect Type for process_simulation_result.");
+
+        using ProcessedResultT =
+            std::decay_t<std::invoke_result_t<ProcessSimulationResultFunction, Simulation, size_t>>;
+        int num_procs, rank;
+
+#ifdef MEMILIO_ENABLE_MPI
+        MPI_Comm_size(mpi::get_world(), &num_procs);
+        MPI_Comm_rank(mpi::get_world(), &rank);
+
+        static_assert(is_serializable<BinarySerializerContext, ProcessedResultT> &&
+                          is_deserializable<BinarySerializerContext, ProcessedResultT>,
+                      "The result type of the processing function must be serializable for usage with MPI. "
+                      "Change the process_simulation_result argument of ParameterStudy::run, or use run_serial.");
+#else
+        num_procs = 1;
+        rank      = 0;
+#endif
+
+        //The ParameterDistributions used for sampling parameters use thread_local_rng()
+        //So we set our own RNG to be used.
+        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
+        m_rng.synchronize();
+        // Note that this overwrites seed and counter of thread_local_rng, but it does not replace it.
+        thread_local_rng() = m_rng;
+
+        auto run_distribution = distribute_runs(m_num_runs, num_procs);
+        auto start_run_idx =
+            std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
+        auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
+
+        std::vector<ProcessedResultT> ensemble_result =
+            run_impl(start_run_idx, end_run_idx, std::forward<CreateSimulationFunction>(create_simulation),
+                     std::forward<ProcessSimulationResultFunction>(process_simulation_result));
 
 #ifdef MEMILIO_ENABLE_MPI
         //gather results
@@ -183,11 +238,14 @@ public:
     template <class CreateSimulationFunction>
     std::vector<Simulation> run(CreateSimulationFunction&& create_simulation)
     {
-        return run(std::forward<CreateSimulationFunction>(create_simulation), &result_forwarding_function);
+        return run(std::forward<CreateSimulationFunction>(create_simulation),
+                   [](Simulation&& sim, size_t) -> Simulation&& {
+                       return std::move(sim);
+                   });
     }
 
     /**
-     * @brief returns the number of Monte Carlo runs
+     * @brief Return the number of total runs that the study will make.
      */
     size_t get_num_runs() const
     {
@@ -195,7 +253,7 @@ public:
     }
 
     /**
-     * @brief returns end point in simulation
+     * @brief Return the final time point for simulations.
      */
     Time get_tmax() const
     {
@@ -203,20 +261,23 @@ public:
     }
 
     /**
-     * @brief returns start point in simulation
+     * @brief Return the initial time point for simulations.
      */
     Time get_t0() const
     {
         return m_t0;
     }
 
+    /**
+     * @brief Return the initial step sized used by simulations.
+     */
     Time get_dt() const
     {
         return m_dt;
     }
+
     /**
-     * Get the input graph that the parameter study is run for.
-     * Use for graph simulations, use get_model for single node simulations.
+     * @brief Get the input parameters that each simulation in the study is created from.
      * @{
      */
     const Parameters& get_parameters() const
@@ -229,12 +290,18 @@ public:
     }
     /** @} */
 
+    /**
+     * @brief Access the study's random number generator.
+     */
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
     }
 
 private:
+    /**
+     * @brief Create a vector with the number of runs each process should make.
+     */
     std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
     {
         assert(num_procs > 0);
@@ -250,24 +317,11 @@ private:
         return run_distribution;
     }
 
-    inline static Simulation&& result_forwarding_function(Simulation&& sim, size_t)
-    {
-        return std::move(sim);
-    }
-
-    // Stores Graph with the names and ranges of all parameters
-    ParameterType m_parameters;
-
-    size_t m_num_runs;
-
-    // Start time (should be the same for all simulations)
-    Time m_t0;
-    // End time (should be the same for all simulations)
-    Time m_tmax;
-    // adaptive time step of the integrator (will be corrected if too large/small)
-    Step m_dt;
-    //
-    RandomNumberGenerator m_rng;
+    ParameterType m_parameters; ///< Stores parameters used to create a simulation for each run.
+    size_t m_num_runs; ///< Total number of runs (i.e. simulations) to do when calling "run".
+    Time m_t0, m_tmax; ///< Start and end time for the simulations.
+    Step m_dt; ///< Initial step size of the simulation. Some integrators may adapt their step size during simulation.
+    RandomNumberGenerator m_rng; ///< The random number generator used by the study.
 };
 
 template <class Simulation, class Parameters, typename Time, typename Step>
