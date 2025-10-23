@@ -37,6 +37,8 @@ import memilio.simulation.osecir as osecir
 from memilio.simulation.osecir import Model, Simulation, interpolate_simulation_result
 from memilio.epidata import defaultDict as dd
 
+import geopandas as gpd
+
 
 excluded_ids = [11001, 11002, 11003, 11004, 11005, 11006,
                 11007, 11008, 11009, 11010, 11011, 11012, 16056]
@@ -152,7 +154,79 @@ def plot_aggregated_over_regions(
         ax.legend(fontsize=11)
     return line, band
 
+def plot_icu_on_germany(simulations, name, synthetic, with_aug):
+    med = np.median(simulations, axis=0)
+
+    population = pd.read_json('data/Germany/pydata/county_current_population.json')
+    values = med / population['Population'].to_numpy()[None, :] * 100000
+
+
+    map_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_KRS.shp'))
+    fedstate_data = gpd.read_file(os.path.join(os.getcwd(), 'tools/vg2500_12-31.utm32s.shape/vg2500/VG2500_LAN.shp'))
+
+    plot_map(values[0], map_data, fedstate_data, "Median ICU", f"{name}/median_icu_germany_initial_{name}{synthetic}{with_aug}")
+    plot_map(values[-1], map_data, fedstate_data, "Median ICU", f"{name}/median_icu_germany_final_{name}{synthetic}{with_aug}")
+
+def plot_map(values, map_data, fedstate_data, label, filename):
+    map_data[label] = map_data['ARS'].map(dict(zip([f"{region_id:05d}" for region_id in region_ids], values)))
+
+    fig, ax = plt.subplots(figsize=(12, 14))
+    map_data.plot(
+        column=f"{label}",
+        cmap='Reds',
+        linewidth=0.5,
+        ax=ax,
+        edgecolor='0.6',
+        legend=True,
+        legend_kwds={'label': f"{label} per County", 'shrink': 0.6},
+    )
+    fedstate_data.boundary.plot(ax=ax, color='black', linewidth=1)
+    ax.set_title(f"{label} per County")
+    ax.axis('off')
+    plt.savefig(filename, bbox_inches='tight', dpi=300)
+
+
+def plot_aggregated_to_federal_states(data, true_data, name, synthetic, with_aug):
+    fig, ax = plt.subplots(nrows=4, ncols=4, figsize=(25, 25), layout="constrained")
+    ax = ax.flatten()
+    for state in range(16):
+        idxs = [i for i, region_id in enumerate(region_ids) if region_id // 1000 == state + 1]
+        state_data = np.sum(data[:, :, idxs], axis=-1)  # Aggregate over regions in the state
+        true_state_data = np.sum(true_data[:, idxs], axis=-1) if true_data is not None else None
+        plot_aggregated_over_regions(
+        state_data[:, :, None],  # Add a dummy region axis for compatibility
+        true_data=true_state_data[:, None] if true_state_data is not None else None,
+        ax=ax[state],
+        label=f"State {state + 1}",
+        color=f"C{state % 10}"  # Cycle through 10 colors
+        )
+    plt.savefig(f'{name}/federal_states_{name}{synthetic}{with_aug}.png')
+    plt.close()
+
+
 # %%
+
+# plot simulations for all regions in 10x4 blocks
+def plot_all_regions(simulations, divi_data, name, synthetic, with_aug):
+    n_regions = simulations.shape[-1]
+    n_cols = 4
+    n_rows = 10
+    n_blocks = (n_regions + n_cols * n_rows - 1) // (n_cols * n_rows)
+
+    for block in range(n_blocks):
+        start_idx = block * n_cols * n_rows
+        end_idx = min(start_idx + n_cols * n_rows, n_regions)
+        fig, ax = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(15, 25), layout="constrained")
+        ax = ax.flatten()
+        for i, region_idx in enumerate(range(start_idx, end_idx)):
+            plot_region_median_mad(
+                simulations, region=region_idx, true_data=divi_data, label=r"Median $\pm$ Mad", ax=ax[i]
+            )
+        # Hide unused subplots
+        for i in range(end_idx - start_idx, len(ax)):
+            ax[i].axis("off")
+        plt.savefig(f'{name}/regions_block_{block + 1}_{name}{synthetic}{with_aug}.png')
+        plt.close()
 
 
 def calibration_curves_per_region(
@@ -284,22 +358,10 @@ def calibration_median_mad_over_regions(
     return ax, {"levels": x, "median": med, "mad": mad}
 
 
-def plot_damping_values(name, num_samples=100):
-    divi_dict = load_divi_data()
-    aggregate_states(divi_dict)
+def plot_damping_values(damping_values, name, synthetic, with_aug):
 
-    workflow = get_workflow()
-    workflow.approximator = keras.models.load_model(
-        filepath=os.path.join(f"{name}/model_{name}.keras")
-    )
-
-    samples = workflow.sample(conditions=divi_dict, num_samples=num_samples)
-    print(samples['damping_values'])
-    print(samples['damping_values'].reshape((num_samples, 16, 3)))
-    samples['damping_values'] = samples['damping_values'].reshape((num_samples, 16, 3))
-
-    med = np.median(samples['damping_values'], axis=0)
-    mad = np.median(np.abs(samples['damping_values'] - med), axis=0)
+    med = np.median(damping_values, axis=0)
+    mad = np.median(np.abs(damping_values - med), axis=0)
 
     # Extend for step plotting
     med_extended = np.hstack([med, med[:, -1][:, None]])
@@ -324,7 +386,7 @@ def plot_damping_values(name, num_samples=100):
             ax.axis('off')  # Hide unused subplots
 
     plt.suptitle("Damping Values per Region", fontsize=14)
-    plt.savefig(f"{name}/damping_values.png", dpi=300)
+    plt.savefig(f"{name}/damping_values{name}{synthetic}{with_aug}.png", dpi=300)
 
     # Combined plot for all regions
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -340,7 +402,7 @@ def plot_damping_values(name, num_samples=100):
     ax.set_xlabel("Time", fontsize=12)
     ax.set_ylabel("Damping Value", fontsize=12)
     ax.legend(fontsize=10, loc="upper right", ncol=2)
-    plt.savefig(f"{name}/damping_values_combined.png", dpi=300)
+    plt.savefig(f"{name}/damping_values_combined{name}{synthetic}{with_aug}.png", dpi=300)
 
 
 class Simulation:  # todo: correct class?
@@ -808,16 +870,9 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
         with open(f'{name}/sims_{name}{synthetic}{with_aug}.pickle', 'wb') as f:
             pickle.dump(simulations, f, pickle.HIGHEST_PROTOCOL)
 
-    # plot simulations
-    fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(12, 5), layout="constrained")
-    ax = ax.flatten()
-    rand_index = np.random.choice(simulations.shape[-1], replace=False, size=len(ax))
-    for i, a in enumerate(ax):
-        plot_region_median_mad(
-            simulations, region=rand_index[i], true_data=divi_data, label=r"Median $\pm$ Mad", ax=a
-        )
-    plt.savefig(f'{name}/random_regions_{name}{synthetic}{with_aug}.png')
-    plt.close()
+    plot_all_regions(simulations, divi_data, name, synthetic, with_aug)
+
+    plot_aggregated_to_federal_states(simulations, divi_data, name, synthetic, with_aug)
 
     plot_aggregated_over_regions(simulations, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad")
     plt.savefig(f'{name}/region_aggregated_{name}{synthetic}{with_aug}.png')
@@ -829,6 +884,20 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
     ax, stats = calibration_median_mad_over_regions(simulations, divi_data, ax=axis[1])
     plt.savefig(f'{name}/calibration_per_region_{name}{synthetic}{with_aug}.png')
     plt.close()
+
+
+    print("Fitted parameters ", name, synthetic, with_aug, ":")
+    for param in inference_params:
+        if param == 'damping_values':
+            plot_damping_values(samples['damping_values'][0].reshape((num_samples, 16, 3)), name, synthetic, with_aug)
+        else: 
+            med = np.median(samples[param][0], axis=0)
+            mad = np.median(np.abs(samples[param][0] - med), axis=0)
+            print(param, ": med: ", med)
+            print(param, ": mad: ", mad)
+
+    plot_icu_on_germany(simulations, name, synthetic, with_aug)
+
 
     # plot = bf.diagnostics.pairs_posterior(simulations, priors=validation_data, dataset_id=0)
     # plot.savefig(f'pairs_posterior_wcovidparams_oct{synthetic}_ma7_noise.png')
@@ -845,4 +914,3 @@ if __name__ == "__main__":
     run_inference(name=name, on_synthetic_data=True, apply_augmentation=False)
     run_inference(name=name, on_synthetic_data=False)
     run_inference(name=name, on_synthetic_data=False, apply_augmentation=False)
-    plot_damping_values(name=name, num_samples=100)
