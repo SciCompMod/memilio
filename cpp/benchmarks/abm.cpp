@@ -168,14 +168,25 @@ int main(int argc, char** argv)
     // Default problem size
     size_t num_persons = 25000;
 
-    // Parse custom arguments for problem size
-    // Look for "--num_persons=<value>" or extract from remaining args
+    // Parse custom arguments for problem size BEFORE benchmark::Initialize
+    // Remove custom args from argv to prevent benchmark from seeing them
+    std::vector<char*> filtered_argv;
+    filtered_argv.push_back(argv[0]); // Keep program name
+
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg.find("--num_persons=") == 0) {
             num_persons = std::stoul(arg.substr(14));
+            // Don't add this to filtered_argv
+        }
+        else {
+            // Keep other arguments for benchmark
+            filtered_argv.push_back(argv[i]);
         }
     }
+
+    // Update argc to reflect filtered arguments
+    int filtered_argc = static_cast<int>(filtered_argv.size());
 
     // Register the benchmark with the specified problem size
     std::string benchmark_name = "abm_benchmark_" + std::to_string(num_persons);
@@ -183,9 +194,9 @@ int main(int argc, char** argv)
         abm_benchmark(state, num_persons, {1415921265u, 35897932u});
     })->Unit(benchmark::kMillisecond);
 
-    // Initialize and run benchmarks
-    benchmark::Initialize(&argc, argv);
-    if (benchmark::ReportUnrecognizedArguments(argc, argv)) {
+    // Initialize and run benchmarks with filtered arguments
+    benchmark::Initialize(&filtered_argc, filtered_argv.data());
+    if (benchmark::ReportUnrecognizedArguments(filtered_argc, filtered_argv.data())) {
         return 1;
     }
     benchmark::RunSpecifiedBenchmarks();
