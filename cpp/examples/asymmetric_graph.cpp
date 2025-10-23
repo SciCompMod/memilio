@@ -38,6 +38,8 @@ enum class InfectionState
     S,
     E,
     I,
+    INS,
+    ICS,
     R,
     D,
     Count
@@ -46,22 +48,30 @@ enum class InfectionState
 int main(int /*argc*/, char** /*argv*/)
 {
     const auto t0   = 0.;
-    const auto tmax = 1000.;
+    const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
 
     //total compartment sizes
 
     using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
     auto home   = mio::regions::Region(0);
+    auto S      = InfectionState::S;
+    auto E      = InfectionState::E;
+    auto I      = InfectionState::I;
+    auto INS    = InfectionState::INS;
+    auto ICS    = InfectionState::ICS;
+    auto R      = InfectionState::R;
+    auto D      = InfectionState::D;
 
     std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
-    adoption_rates.push_back({InfectionState::E, InfectionState::I, home, 0.2, {}});
-    adoption_rates.push_back({InfectionState::I, InfectionState::R, home, 0.1, {}});
-    adoption_rates.push_back({InfectionState::S, InfectionState::E, home, 0.2, {{InfectionState::I, 0.8}}});
-    adoption_rates.push_back({InfectionState::S, InfectionState::D, home, 0.0, {}});
-    adoption_rates.push_back({InfectionState::E, InfectionState::D, home, 0.0, {}});
-    adoption_rates.push_back({InfectionState::I, InfectionState::D, home, 0.0, {}});
-    adoption_rates.push_back({InfectionState::R, InfectionState::D, home, 0.0, {}});
+    // Adoption rates corresponding to our model, paramters are arbitrary
+    adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
+    adoption_rates.push_back({E, I, home, 0.2, {}});
+    adoption_rates.push_back({I, INS, home, 0.1, {}});
+    adoption_rates.push_back({I, ICS, home, 0.1, {}});
+    adoption_rates.push_back({ICS, D, home, 0.6, {}});
+    adoption_rates.push_back({ICS, R, home, 0.4, {}});
+    adoption_rates.push_back({INS, R, home, 0.5, {}});
 
     mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
                mio::MobilityEdgeDirected<ScalarType>>
@@ -75,8 +85,10 @@ int main(int /*argc*/, char** /*argv*/)
     while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
         Model curr_model;
         curr_model.populations[{home, InfectionState::S}]                                = num_cows;
-        curr_model.populations[{home, InfectionState::E}]                                = 2;
+        curr_model.populations[{home, InfectionState::E}]                                = 1;
         curr_model.populations[{home, InfectionState::I}]                                = 0;
+        curr_model.populations[{home, InfectionState::INS}]                              = 0;
+        curr_model.populations[{home, InfectionState::ICS}]                              = 0;
         curr_model.populations[{home, InfectionState::R}]                                = 0;
         curr_model.populations[{home, InfectionState::D}]                                = 0;
         curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
