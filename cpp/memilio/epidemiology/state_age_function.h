@@ -296,8 +296,8 @@ struct StateAgeFunction {
             FP mean         = 0.5 * dt * eval(FP(0 * dt));
             FP supp_max_idx = ceil(get_support_max(dt, tol) / dt);
             // We start with i=1 since the value for i=0 was already considered above when defining the variable mean.
-            // Note that we do not need to consider the index i=supp_max_idx since it holds eval(supp_max_idx)=0 by
-            // definition of the support_max.
+            // Note that we do not consider indices i>=supp_max_idx since it holds eval(i*dt)<tol for all i>=supp_max_idx
+            // by definition of the support_max.
             for (int i = 1; i < supp_max_idx; i++) {
                 mean += dt * eval(FP(i * dt));
             }
