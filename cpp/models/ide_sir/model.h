@@ -72,15 +72,15 @@ public:
     size_t compute_S(ScalarType s_init, ScalarType dt, size_t t0_index = 0, ScalarType tol = 1e-10,
                      size_t max_iterations = 100);
 
-    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index);
+    ScalarType fixed_point_function(ScalarType s, ScalarType dt, size_t t0_index, bool use_calctime = false);
 
     void compute_S_deriv(ScalarType dt, size_t time_point_index);
     void compute_S_deriv(ScalarType dt);
     void compute_S_deriv_central(ScalarType dt, size_t time_point_index);
     void compute_S_deriv_central(ScalarType dt);
 
-    void compute_I_and_R(ScalarType dt, size_t time_point_index);
-    void compute_I_and_R(ScalarType dt);
+    void compute_I_and_R(ScalarType dt, size_t time_point_index, bool use_calctime = false);
+    void compute_I_and_R(ScalarType dt, bool use_calctime = false);
 
     void set_transitiondistribution_vector(ScalarType dt, ScalarType tmax, size_t t0_index = 0);
     void set_parameter_vectors(ScalarType dt, ScalarType tmax, size_t t0_index = 0);

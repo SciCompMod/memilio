@@ -147,7 +147,7 @@ ScalarType ModelMessinaExtendedDetailedInit::sum_part2_weight(size_t n, size_t j
 }
 
 ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType susceptibles, ScalarType dt,
-                                                                  size_t t0_index)
+                                                                  size_t t0_index, bool use_calctime)
 {
     unused(t0_index);
 
@@ -165,7 +165,17 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     // TODO: Explain better what the difference between the two Gregory sums is.
     size_t switch_weights_index = std::min(current_time_index, m_gregory_order);
 
-    for (size_t j = std::min((size_t)0, switch_weights_index - calc_time_index); j < switch_weights_index; j++) {
+    size_t start_index, stop_index;
+    if (use_calctime) {
+        start_index = current_time_index - calc_time_index;
+        stop_index  = std::min(current_time_index - calc_time_index, switch_weights_index);
+    }
+    else {
+        start_index = 0;
+        stop_index  = switch_weights_index;
+    }
+
+    for (size_t j = start_index; j < stop_index; j++) {
         ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
@@ -189,8 +199,16 @@ ScalarType ModelMessinaExtendedDetailedInit::fixed_point_function(ScalarType sus
     // Compute second part of sum where simulated values of Susceptibles are used as well as the given value for the
     // current time step from the fixed point iteration.
 
+    if (use_calctime) {
+        start_index = std::min(current_time_index - calc_time_index, switch_weights_index);
+    }
+    else {
+        start_index = switch_weights_index;
+    }
+    stop_index = current_time_index;
+
     // In this loop, we compute all summands for j=n0,...,n.
-    for (size_t j = switch_weights_index - calc_time_index; j <= current_time_index; j++) {
+    for (size_t j = start_index; j <= stop_index; j++) {
 
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
@@ -329,7 +347,7 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt)
     compute_S_deriv_central(dt, time_point_index);
 }
 
-void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t time_point_index)
+void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t time_point_index, bool use_calctime)
 {
     // Determine relevant calculation area and corresponding index.
     ScalarType calc_time   = compute_calctime(dt);
@@ -344,8 +362,17 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
     ScalarType sum_infected = 0., sum_recovered = 0.;
 
     // Add first part of sum.
-    // TODO: Check start and end of index j.
-    for (size_t j = std::min((size_t)0, switch_weights_index - calc_time_index); j < switch_weights_index; j++) {
+    size_t start_index, stop_index;
+    if (use_calctime) {
+        start_index = current_time_index - calc_time_index;
+        stop_index  = std::min(current_time_index - calc_time_index, switch_weights_index);
+    }
+    else {
+        start_index = 0;
+        stop_index  = switch_weights_index;
+    }
+
+    for (size_t j = start_index; j < stop_index; j++) {
         ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
@@ -357,7 +384,15 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
     }
 
     // Add second part of sum.
-    for (size_t j = switch_weights_index - calc_time_index; j <= current_time_index; j++) {
+    if (use_calctime) {
+        start_index = std::min(current_time_index - calc_time_index, switch_weights_index);
+    }
+    else {
+        start_index = switch_weights_index;
+    }
+    stop_index = current_time_index;
+
+    for (size_t j = start_index; j <= stop_index; j++) {
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
@@ -381,12 +416,12 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         dt * sum_recovered;
 }
 
-void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt)
+void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, bool use_calctime)
 {
     // Use the number of time points to determine time_point_index, hence we are calculating I and R for last
     // time point of flows.
     size_t time_point_index = flows.get_num_time_points() - 1;
-    compute_I_and_R(dt, time_point_index);
+    compute_I_and_R(dt, time_point_index, use_calctime);
 }
 
 } // namespace isir
