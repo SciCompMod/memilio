@@ -713,7 +713,29 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
     for (size_t group = 0; group < num_age_groups; group++) {
         model.parameters
             .get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+            infectedSymptomsPerInfectedNoSymptoms[group];
+        model.parameters
+            .get<mio::abm::SeverePerInfectedSymptoms>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+            severePerInfectedSymptoms[group];
+        model.parameters
+            .get<mio::abm::CriticalPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+            criticalPerSevere[group];
+        model.parameters
+            .get<mio::abm::DeathsPerInfectedSevere>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] = 0.;
+        model.parameters
+            .get<mio::abm::DeathsPerInfectedCritical>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+            deathsPerCritical[group];
     }
+
+    // Only consider transmission by contacts, therefore aerosol transmission rates are set to 0
+    model.parameters.get<mio::abm::AerosolTransmissionRates>() = 0.0;
+    // Age group 1 is school-aged
+    model.parameters.get<mio::abm::AgeGroupGotoSchool>()[mio::AgeGroup(1)] = true;
+    // Age groups 2 and 3 are work-aged
+    model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(2)] = true;
+    model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(3)] = true;
+
+    //Todo set contact rates (ContactRates)
 
     // Add one hospital and one ICU
     auto hosp_id = model.add_location(mio::abm::LocationType::Hospital);
