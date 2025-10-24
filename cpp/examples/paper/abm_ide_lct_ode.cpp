@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Anna Wendler
+* Authors: Anna Wendler, Julia Bicker
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,6 +18,10 @@
 * limitations under the License.
 */
 
+#include "abm/location_id.h"
+#include "abm/location_type.h"
+#include "abm/model.h"
+#include "abm/virus_variant.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/lct_infection_state.h"
@@ -26,6 +30,9 @@
 #include "memilio/io/io.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/math/floating_point.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/parameter_distributions.h"
+#include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 
@@ -41,9 +48,12 @@
 #include "ode_secir/model.h"
 #include "ode_secir/infection_state.h"
 
+#include "config.h"
+
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "boost/filesystem.hpp"
 #include <Eigen/src/Core/Random.h>
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <map>
@@ -53,64 +63,6 @@
 #include <vector>
 
 using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
-
-// Define parameters for the simulation.
-namespace params
-{
-const size_t num_age_groups        = 6;
-const ScalarType age_group_sizes[] = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population  = 83155031.;
-// const ScalarType total_confirmed_cases = 341223.;
-// const ScalarType deaths = 0.;
-
-// Define transition probabilities per age group.
-const ScalarType infectedSymptomsPerInfectedNoSymptoms[] = {0.75, 0.75, 0.8, 0.8, 0.8, 0.8};
-const ScalarType severePerInfectedSymptoms[]             = {0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225};
-const ScalarType criticalPerSevere[]                     = {0.075, 0.075, 0.075, 0.15, 0.3, 0.4};
-const ScalarType deathsPerCritical[]                     = {0.05, 0.05, 0.14, 0.14, 0.4, 0.6};
-
-// Define lognormal parameters. For each transition, we need shape and scale.
-// These are given in this order below. The transition distributions are the same for all age groups.
-const ScalarType lognorm_EtINS[]     = {0.32459285, 4.26907484};
-const ScalarType lognorm_INStISy[]   = {0.7158751, 0.85135303};
-const ScalarType lognorm_INStR[]     = {0.24622068, 7.76114};
-const ScalarType lognorm_ISytISev[]  = {0.66258947, 5.29920733};
-const ScalarType lognorm_ISytR[]     = {0.24622068, 7.76114};
-const ScalarType lognorm_ISevtICri[] = {1.01076765, 0.9};
-const ScalarType lognorm_ISevtR[]    = {0.33816427, 17.09411753};
-const ScalarType lognorm_ICritD[]    = {0.42819924, 9.76267505};
-const ScalarType lognorm_ICritR[]    = {0.33816427, 17.09411753};
-
-// Define mean stay times per age group. Note that these are different per age group as the transition probabilities
-// differ between age groups.
-const ScalarType timeExposed[]            = {4.5, 4.5, 4.5, 4.5, 4.5, 4.5};
-const ScalarType timeInfectedNoSymptoms[] = {2.825, 2.825, 2.48, 2.48, 2.48, 2.48};
-const ScalarType timeInfectedSymptoms[]   = {7.9895, 7.9895, 7.9734, 7.9139, 7.9139, 7.685};
-const ScalarType timeInfectedSevere[]     = {16.855, 16.855, 16.855, 15.61, 13.12, 11.46};
-const ScalarType timeInfectedCritical[]   = {17.73, 17.73, 17.064, 17.064, 15.14, 13.66};
-
-// Define number of subcompartments for each compartment per age group. Note that these are different per age group as
-// the transition probabilities differ between age groups.
-// These values are used as a template argument and thus have to be constexpr.
-constexpr size_t n_subcomps_E[]    = {9, 9, 9, 9, 9, 9};
-constexpr size_t n_subcomps_INS[]  = {5, 5, 4, 4, 4, 4};
-constexpr size_t n_subcomps_ISy[]  = {16, 16, 16, 15, 15, 13};
-constexpr size_t n_subcomps_ISev[] = {8, 8, 8, 7, 6, 5};
-constexpr size_t n_subcomps_ICri[] = {8, 8, 8, 8, 7, 6};
-
-// Define epidemiological parameters.
-const ScalarType transmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
-const ScalarType relativeTransmissionNoSymptoms     = 1;
-const ScalarType riskOfInfectionFromSymptomatic     = 0.3;
-const ScalarType seasonality                        = 0.;
-const ScalarType scale_confirmed_cases              = 1.;
-
-// Define simulation parameters.
-ScalarType t0   = 0.;
-ScalarType tmax = 20;
-ScalarType dt   = 0.01;
-
-} // namespace params
 
 using namespace mio;
 
@@ -407,9 +359,9 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
     using InfState = lsecir::InfectionState;
 
     using LctState0_4   = LctInfectionState<InfState, 1, n_subcomps_E[0], n_subcomps_INS[0], n_subcomps_ISy[0],
-                                            n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
+                                          n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
     using LctState5_14  = LctInfectionState<InfState, 1, n_subcomps_E[1], n_subcomps_INS[1], n_subcomps_ISy[1],
-                                            n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
+                                           n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
     using LctState15_34 = LctInfectionState<InfState, 1, n_subcomps_E[2], n_subcomps_INS[2], n_subcomps_ISy[2],
                                             n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
     using LctState35_59 = LctInfectionState<InfState, 1, n_subcomps_E[3], n_subcomps_INS[3], n_subcomps_ISy[3],
@@ -417,7 +369,7 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
     using LctState60_79 = LctInfectionState<InfState, 1, n_subcomps_E[4], n_subcomps_INS[4], n_subcomps_ISy[4],
                                             n_subcomps_ISev[4], n_subcomps_ICri[4], 1, 1>;
     using LctState80    = LctInfectionState<InfState, 1, n_subcomps_E[5], n_subcomps_INS[5], n_subcomps_ISy[5],
-                                            n_subcomps_ISev[5], n_subcomps_ICri[5], 1, 1>;
+                                         n_subcomps_ISev[5], n_subcomps_ICri[5], 1, 1>;
 
     // Define LctState with one subcompartment per compartment for the exponential scenario.
     using LctStateExponential = LctInfectionState<InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
@@ -689,8 +641,229 @@ IOResult<void> simulate_ode(Vector init_compartments, std::string contact_data_d
     return success();
 }
 
-IOResult<void> simulate_abm(Vector init_compartments, ScalarType tmax, std::string save_dir = "")
+IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::string save_dir = "")
 {
+    using namespace params;
+
+    mio::abm::Model model(num_age_groups);
+
+    // Set parameters
+    if (exponential_scnario) {
+        for (size_t group = 0; group < num_age_groups; group++) {
+            model.parameters
+                .get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeExposed[group]);
+            model.parameters.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype,
+                                                                                mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedNoSymptoms[group]);
+            model.parameters.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                                 mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedNoSymptoms[group]);
+            model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype,
+                                                                            mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedSymptoms[group]);
+            model.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                               mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedSymptoms[group]);
+            model.parameters.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype,
+                                                                            mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedSevere[group]);
+            model.parameters.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                             mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedSevere[group]);
+            model.parameters
+                .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedCritical[group]);
+            model.parameters.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                               mio::AgeGroup(group)}] =
+                mio::ParameterDistributionExponential(1. / timeInfectedCritical[group]);
+        }
+    }
+    else {
+        for (size_t group = 0; group < num_age_groups; group++) {
+            model.parameters
+                .get<mio::abm::TimeExposedToNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_EtINS[0], lognorm_EtINS[1]);
+            model.parameters.get<mio::abm::TimeInfectedNoSymptomsToSymptoms>()[{mio::abm::VirusVariant::Wildtype,
+                                                                                mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_INStISy[0], lognorm_INStISy[1]);
+            model.parameters.get<mio::abm::TimeInfectedNoSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                                 mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_INStR[0], lognorm_INStR[1]);
+            model.parameters.get<mio::abm::TimeInfectedSymptomsToSevere>()[{mio::abm::VirusVariant::Wildtype,
+                                                                            mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_ISytISev[0], lognorm_ISytISev[1]);
+            model.parameters.get<mio::abm::TimeInfectedSymptomsToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                               mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_ISytR[0], lognorm_ISytR[1]);
+            model.parameters.get<mio::abm::TimeInfectedSevereToCritical>()[{mio::abm::VirusVariant::Wildtype,
+                                                                            mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_ISevtICri[0], lognorm_ISevtICri[1]);
+            model.parameters.get<mio::abm::TimeInfectedSevereToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                             mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_ISevtR[0], lognorm_ISevtR[1]);
+            model.parameters
+                .get<mio::abm::TimeInfectedCriticalToDead>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_ICritD[0], lognorm_ICritD[1]);
+            model.parameters.get<mio::abm::TimeInfectedCriticalToRecovered>()[{mio::abm::VirusVariant::Wildtype,
+                                                                               mio::AgeGroup(group)}] =
+                mio::ParameterDistributionLogNormal(lognorm_ICritR[0], lognorm_ICritR[1]);
+        }
+    }
+    for (size_t group = 0; group < num_age_groups; group++) {
+        model.parameters
+            .get<mio::abm::SymptomsPerInfectedNoSymptoms>()[{mio::abm::VirusVariant::Wildtype, mio::AgeGroup(group)}] =
+    }
+
+    // Add one hospital and one ICU
+    auto hosp_id = model.add_location(mio::abm::LocationType::Hospital);
+    auto icu_id  = model.add_location(mio::abm::LocationType::ICU);
+
+    // Map that maps household ids to person ids and number of adults in household
+    std::map<mio::abm::LocationId, std::pair<std::vector<mio::abm::PersonId>, size_t>> household_map;
+
+    size_t pop = int(total_population / 100.);
+
+    // Add persons
+    while (pop > 0) {
+        // First create a home location
+        auto home = model.add_location(mio::abm::LocationType::Home);
+        // Then sample size of home location
+        auto home_size =
+            mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), ABMparams::household_size_distribution);
+        // Check if size is bigger than remaining population
+        if (home_size > int(params::total_population / 100.)) {
+            // If yes create one household for the remaining population
+            home_size = int(params::total_population / 100.);
+        }
+        // Create persons for the sampled household
+        size_t num_adults = 0;
+        std::vector<mio::abm::PersonId> person_ids;
+        for (size_t i = 0; i < home_size; i++) {
+            // Sample person's age group
+            auto age = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), age_group_sizes);
+            // Add person to model
+            auto pid = model.add_person(home, (AgeGroup)age);
+            person_ids.push_back(pid);
+            // Assign home location to person
+            auto& person = model.get_person(pid);
+            person.set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
+            if (age >= 2) {
+                num_adults++;
+            }
+        }
+        // Add home to household map
+        household_map[home] = std::make_pair(person_ids, num_adults);
+        // Reduce total population by added persons
+        pop -= home_size;
+    }
+
+    // Check if all home location have assigned at least one adult. If there is a home location without adults, another with at least two is searched and one child and one adult are swapped
+    for (auto& [key, value] : household_map) {
+        if (value.second == 0) {
+            auto home_it = std::find_if(household_map.begin(), household_map.end(), [](const auto& pair) {
+                return pair.second.second >= 2;
+            });
+            if (home_it == household_map.end()) {
+                mio::log_error("No household with more than 1 adult found");
+                break;
+            }
+            // Get person ids to change for both households
+            auto child_id = value.first[0];
+            value.first.erase(value.first.begin());
+            auto& child   = model.get_person(child_id);
+            auto adult_id = mio::abm::PersonId::invalid_ID();
+            // Search adult in household with more than one adults
+            for (size_t p = 0; p < home_it->second.first.size(); ++p) {
+                auto pid             = home_it->second.first[p];
+                auto& current_person = model.get_person(pid);
+                if (!(current_person.get_age() == mio::AgeGroup(0) || current_person.get_age() == mio::AgeGroup(1))) {
+                    adult_id = pid;
+                    home_it->second.first.erase(home_it->second.first.begin() + p);
+                    break;
+                }
+            }
+            // Get adult from model
+            auto& adult = model.get_person(adult_id);
+            // Reassign home locations for child and adult
+            child.set_assigned_location(mio::abm::LocationType::Home, home_it->first, model.get_id());
+            adult.set_assigned_location(mio::abm::LocationType::Home, key, model.get_id());
+            // Add child and adult to new homes in the map and increase num_adults
+            household_map[key].first.push_back(adult_id);
+            household_map[key].second += 1;
+            household_map[home_it->first].first.push_back(child_id);
+            household_map[home_it->first].second -= 1;
+        }
+    }
+
+    // Define helper variables
+    size_t curr_work_size     = 0;
+    size_t target_work_size   = 0;
+    auto curr_work_id         = mio::abm::LocationId::invalid_id();
+    size_t curr_school_size   = 0;
+    size_t target_school_size = 0;
+    auto curr_school_id       = mio::abm::LocationId::invalid_id();
+    size_t curr_event_size    = 0;
+    size_t target_event_size  = 0;
+    auto curr_event_id        = mio::abm::LocationId::invalid_id();
+    size_t curr_shop_size     = 0;
+    size_t target_shop_size   = 0;
+    auto curr_shop_id         = mio::abm::LocationId::invalid_id();
+
+    for (auto& person : model.get_persons()) {
+        // All agents are assigned hospital and ICU
+        person.set_assigned_location(mio::abm::LocationType::Hospital, hosp_id, model.get_id());
+        person.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
+
+        // Check if person is work-aged
+        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+            // If the current location is full, a new work location has to be created
+            if (curr_work_size >= target_work_size) {
+                size_t size      = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                    model.get_rng(), ABMparams::workplace_size[0], ABMparams::workplace_size[1]));
+                target_work_size = std::min({size, ABMparams::min_workplace_size});
+                curr_work_id     = model.add_location(mio::abm::LocationType::Work);
+            }
+            // Assign work location to person and increase the current location's size by 1
+            person.set_assigned_location(mio::abm::LocationType::Work, curr_work_id, model.get_id());
+            curr_work_size += 1;
+        }
+        // Check if person is school-aged
+        if (person.get_age() == mio::AgeGroup(1)) {
+            // If the current school location is full, a new school has to be created
+            if (curr_school_size >= target_school_size) {
+                size_t size        = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                    model.get_rng(), ABMparams::school_size[0], ABMparams::school_size[1]));
+                target_school_size = std::min({size, ABMparams::min_school_size});
+                curr_school_id     = model.add_location(mio::abm::LocationType::School);
+            }
+            // Assign school location to person and increase current school's size by 1
+            person.set_assigned_location(mio::abm::LocationType::School, curr_school_id, model.get_id());
+            curr_school_size += 1;
+        }
+
+        // All persons are assigned a shop and an event
+        // Event
+        if (curr_event_size >= target_event_size) {
+            size_t size       = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                model.get_rng(), ABMparams::event_size[0], ABMparams::event_size[1]));
+            target_event_size = std::min({size, ABMparams::min_event_size});
+            curr_event_id     = model.add_location(mio::abm::LocationType::SocialEvent);
+        }
+        person.set_assigned_location(mio::abm::LocationType::SocialEvent, curr_event_id, model.get_id());
+        curr_event_size += 1;
+        // Shop
+        if (curr_shop_size >= target_shop_size) {
+            size_t size      = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                model.get_rng(), ABMparams::shop_size[0], ABMparams::shop_size[1]));
+            target_shop_size = std::min({size, ABMparams::min_shop_size});
+            curr_shop_id     = model.add_location(mio::abm::LocationType::BasicsShop);
+        }
+        person.set_assigned_location(mio::abm::LocationType::BasicsShop, curr_shop_id, model.get_id());
+        curr_shop_size += 1;
+    }
+
+    // Add locations
     unused(init_compartments);
     unused(tmax);
     unused(save_dir);
