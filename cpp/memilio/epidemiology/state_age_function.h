@@ -276,7 +276,8 @@ struct StateAgeFunction {
      * 
      * This is a basic version to determine the mean value of a survival function
      * through numerical integration of the integral that describes the expected value.
-     * This basic implementation is only valid if the StateAgeFunction is of type a). Otherwise it should be overridden.
+     * This basic implementation is only valid if the StateAgeFunction is of type a) since we assume that the considered
+     * function converges to zero. Otherwise it should be overridden.
      *
      * For some specific derivations of StateAgeFunction%s there are more efficient ways to determine the 
      * mean value which is why this member function is virtual and can be overridden (see, e.g., ExponentialSurvivalFunction).
@@ -290,9 +291,13 @@ struct StateAgeFunction {
     {
         using std::ceil;
         if (!floating_point_equal<FP>(m_mean_tol, tol, 1e-14) || floating_point_equal<FP>(m_mean, -1., 1e-14)) {
-            // Integration using Trapezoidal rule.
+            // Integration using trapezoidal rule.
+            // Compute value for i=0.
             FP mean         = 0.5 * dt * eval(FP(0 * dt));
             FP supp_max_idx = ceil(get_support_max(dt, tol) / dt);
+            // We start with i=1 since the value for i=0 was already considered above when defining the variable mean.
+            // Note that we do not need to consider the index i=supp_max_idx since it holds eval(supp_max_idx)=0 by
+            // definition of the support_max.
             for (int i = 1; i < supp_max_idx; i++) {
                 mean += dt * eval(FP(i * dt));
             }
