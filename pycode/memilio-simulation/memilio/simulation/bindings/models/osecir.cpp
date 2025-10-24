@@ -49,38 +49,13 @@
 #include "pybind11/stl_bind.h"
 #include "Eigen/Core"
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 namespace py = pybind11;
 
 namespace
 {
-
-//select only the first node of the graph of each run, used for parameterstudy with single nodes
-template <class Sim>
-std::vector<Sim> filter_graph_results(
-    std::vector<mio::GraphSimulation<double, mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>,
-                                     double, double>>&& graph_results)
-{
-    std::vector<Sim> results;
-    results.reserve(graph_results.size());
-    for (auto i = size_t(0); i < graph_results.size(); ++i) {
-        results.emplace_back(std::move(graph_results[i].get_graph().nodes()[0].property.get_simulation()));
-    }
-    return std::move(results);
-}
-
-/// Moves out graphs from GraphSimulation%s. Helps make the new ParameterStudy backwards compatible with older bindings.
-template <class GraphT, class SimulationT>
-std::vector<GraphT> extract_graph_from_graph_simulation(std::vector<SimulationT>&& result_graph_sims)
-{
-    std::vector<GraphT> result_graphs;
-    result_graphs.reserve(result_graph_sims.size());
-    for (const SimulationT& sim : result_graph_sims) {
-        result_graphs.emplace_back(std::move(sim.get_graph()));
-    }
-    return result_graphs;
-}
 
 /*
  * @brief bind ParameterStudy for any model
@@ -91,11 +66,11 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     using GraphT      = mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>;
     using SimulationT = mio::GraphSimulation<double, GraphT, double, double>;
     using ParametersT = mio::Graph<typename Sim::Model, mio::MobilityParameters<double>>;
-    using StudyT      = mio::ParameterStudy2<SimulationT, ParametersT, double>;
+    using StudyT      = mio::ParameterStudy2<ParametersT, double>;
 
     const auto create_simulation = [](const ParametersT& g, double t0, double dt, size_t) {
         auto copy = g;
-        return mio::make_sampled_graph_simulation<double, SimulationT>(draw_sample(copy), t0, dt, dt);
+        return mio::make_sampled_graph_simulation<double, Sim>(draw_sample(copy), t0, dt, dt);
     };
 
     pymio::bind_class<StudyT, pymio::EnablePickling::Never>(m, name.c_str())
@@ -112,7 +87,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
         .def(
             "run",
             [&create_simulation](StudyT& self, std::function<void(GraphT, size_t)> handle_result) {
-                self.run(create_simulation, [&handle_result](auto&& g, auto&& run_idx) {
+                self.run_serial(create_simulation, [&handle_result](auto&& g, auto&& run_idx) {
                     //handle_result_function needs to return something
                     //we don't want to run an unknown python object through parameterstudies, so
                     //we just return 0 and ignore the list returned by run().
@@ -124,19 +99,24 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
             py::arg("handle_result_func"))
         .def("run",
              [&create_simulation](StudyT& self) { //default argument doesn't seem to work with functions
-                 return extract_graph_from_graph_simulation<GraphT>(self.run(create_simulation));
+                 return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
+                     return std::move(result.get_graph());
+                 });
              })
         .def(
             "run_single",
             [&create_simulation](StudyT& self, std::function<void(Sim, size_t)> handle_result) {
-                self.run(create_simulation, [&handle_result](auto&& r, auto&& run_idx) {
+                self.run_serial(create_simulation, [&handle_result](auto&& r, auto&& run_idx) {
                     handle_result(std::move(r.get_graph().nodes()[0].property.get_simulation()), run_idx);
                     return 0;
                 });
             },
             py::arg("handle_result_func"))
         .def("run_single", [&create_simulation](StudyT& self) {
-            return filter_graph_results(self.run(create_simulation));
+            return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
+                //select only the first node of the graph of each run, used for parameterstudy with single nodes
+                return std::move(result.get_graph().nodes()[0].property.get_simulation());
+            });
         });
 }
 

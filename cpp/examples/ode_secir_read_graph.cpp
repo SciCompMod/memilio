@@ -18,12 +18,14 @@
 * limitations under the License.
 */
 #include "memilio/compartments/parameter_studies.h"
+#include "memilio/config.h"
 #include "memilio/io/cli.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/base_dir.h"
 
 #include "memilio/utils/stl_util.h"
+#include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
 
@@ -144,12 +146,11 @@ int main(int argc, char** argv)
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = mio::make_parameter_study_graph_ode<ScalarType, mio::osecir::Simulation<ScalarType>>(graph_read, t0,
-                                                                                                      tmax, 0.5, 2);
+    mio::ParameterStudy2 study(graph_read, t0, tmax, 0.5, 2);
     study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
         auto copy = g;
-        return mio::make_sampled_graph_simulation<double, decltype(study)::Simulation>(draw_sample(copy), t0_, dt_,
-                                                                                       dt_);
+        return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<ScalarType>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
     });
     std::cout << "Done" << std::endl;
 

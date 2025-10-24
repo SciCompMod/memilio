@@ -33,11 +33,10 @@ class ResultSimulation : public Simulation<M>
 public:
     using Model = M;
 
-    /// @brief Create a simulation, copying the model.
-    ResultSimulation(const Model& m, TimePoint t)
-        : Simulation<Model>(t, Model(m))
+    /// @brief Create a simulation, moving the model.
+    ResultSimulation(Model&& m, TimePoint t)
+        : Simulation<Model>(t, std::move(m))
     {
-        history.log(*this); // set initial results
     }
 
     /**

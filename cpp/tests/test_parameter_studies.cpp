@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/config.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
@@ -157,12 +158,12 @@ TEST(ParameterStudies, sample_graph)
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto study = mio::make_parameter_study_graph_ode<double, mio::osecir::Simulation<double>>(graph, 0.0, 0.0, 0.5, 1);
+    mio::ParameterStudy2 study(graph, 0.0, 0.0, 0.5, 1);
     mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
-    auto ensemble_results = study.run([](auto&& g, auto t0_, auto dt_, auto) {
+    auto ensemble_results = study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
         auto copy = g;
-        return mio::make_sampled_graph_simulation<double, decltype(study)::Simulation>(draw_sample(copy), t0_, dt_,
-                                                                                       dt_);
+        return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<ScalarType>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
     });
 
     auto& results = ensemble_results.at(0);
@@ -373,11 +374,11 @@ TEST(ParameterStudies, check_ensemble_run_result)
         mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
-    auto parameter_study = mio::make_parameter_study<mio::osecir::Simulation<double>>(model, t0, tmax, 0.1, 1);
+    mio::ParameterStudy2 parameter_study(model, t0, tmax, 0.1, 1);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
-    auto ensemble_results = parameter_study.run([](auto&& model_, auto t0_, auto dt_, auto) {
+    auto ensemble_results = parameter_study.run_serial([](auto&& model_, auto t0_, auto dt_, auto) {
         auto copy = model_;
         draw_sample(copy);
         return mio::osecir::Simulation<double>(copy, t0_, dt_);
@@ -399,3 +400,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         }
     }
 }
+
+// TEST(ParameterStudies, run_mocks) {
+//     mio::ParameterStudy2<class SimulationType, class ParameterType, typename TimeType>
+// }

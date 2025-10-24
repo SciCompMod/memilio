@@ -69,6 +69,7 @@ int main()
     ScalarType tmax = 50;
     ScalarType dt   = 0.1;
 
+    // set up model with parameters
     ScalarType cont_freq = 10; // see Polymod study
 
     ScalarType num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20,
@@ -124,15 +125,11 @@ int main()
         return -1;
     }
 
-    //create study
+    // create study
     auto num_runs = size_t(3);
-    // mio::ParameterStudy2<mio::osecir::Simulation<ScalarType>, mio::osecir::Model<ScalarType>, ScalarType>
-    //     parameter_study(model, t0, tmax, dt, num_runs);
+    mio::ParameterStudy2 parameter_study(model, t0, tmax, dt, num_runs);
 
-    auto parameter_study =
-        mio::make_parameter_study<mio::osecir::Simulation<ScalarType>>(model, t0, tmax, dt, num_runs);
-
-    //run study
+    // set up for run
     auto sample_graph = [](const auto& model_, ScalarType t0_, ScalarType dt_, size_t) {
         mio::osecir::Model<ScalarType> copy = model_;
         mio::osecir::draw_sample(copy);
@@ -143,12 +140,13 @@ int main()
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
         }
-        return sim.get_result(); //Result handler must return something, but only meaningful when using MPI.
+        return 0; // Result handler must return something.
     };
 
     // Optional: set seeds to get reproducable results
     // parameter_study.get_rng().seed({1456, 157456, 521346, 35345, 6875, 6435});
 
+    // run study
     auto result = parameter_study.run(sample_graph, handle_result);
 
     mio::mpi::finalize();

@@ -170,8 +170,7 @@ TEST(TestSaveResult, save_result_with_params)
                    mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs = 3;
-    auto parameter_study =
-        mio::make_parameter_study_graph_ode<double, mio::osecir::Simulation<double>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::ParameterStudy2 parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -186,8 +185,8 @@ TEST(TestSaveResult, save_result_with_params)
     parameter_study.run(
         [](auto&& g, auto t0_, auto dt_, auto) {
             auto copy = g;
-            return mio::make_sampled_graph_simulation<double, decltype(parameter_study)::Simulation>(draw_sample(copy),
-                                                                                                     t0_, dt_, dt_);
+            return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
         },
         [&](auto&& results, auto run_idx) {
             auto results_graph = results.get_graph();
@@ -307,8 +306,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                                                    indices_save_edges));
 
     auto num_runs = 3;
-    auto parameter_study =
-        mio::make_parameter_study_graph_ode<double, mio::osecir::Simulation<double>>(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::ParameterStudy2 parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -324,8 +322,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     parameter_study.run(
         [](auto&& g, auto t0_, auto dt_, auto) {
             auto copy = g;
-            return mio::make_sampled_graph_simulation<double, decltype(parameter_study)::Simulation>(draw_sample(copy),
-                                                                                                     t0_, dt_, dt_);
+            return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
         },
         [&](auto&& results, auto /*run_idx*/) {
             auto results_graph = results.get_graph();

@@ -20,11 +20,9 @@
 
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/config.h"
-#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
-#include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/miompi.h"
@@ -33,11 +31,8 @@
 #include "ode_secir/model.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
-#include "boost/filesystem.hpp"
-#include "memilio/utils/stl_util.h"
 #include <cstddef>
 #include <cstdio>
-#include <iomanip>
 
 /**
  * Set a value and distribution of an UncertainValue.
@@ -267,17 +262,7 @@ int main()
         2, 1, Eigen::VectorX<ScalarType>::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.2),
         indices_save_edges);
 
-    //run parameter study
-    // auto parameter_study = mio::ParameterStudy2<
-    //     mio::GraphSimulation<ScalarType,
-    //                          mio::Graph<mio::SimulationNode<ScalarType, mio::osecir::Simulation<ScalarType>>,
-    //                                     mio::MobilityEdge<ScalarType>>,
-    //                          ScalarType, ScalarType>,
-    //     mio::Graph<mio::osecir::Model<ScalarType>, mio::MobilityParameters<ScalarType>>, ScalarType>{
-    //     params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-
-    auto parameter_study = mio::make_parameter_study_graph_ode<ScalarType, mio::osecir::Simulation<ScalarType>>(
-        params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs));
+    mio::ParameterStudy2 parameter_study(params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs));
 
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
@@ -291,7 +276,7 @@ int main()
     auto ensemble               = parameter_study.run(
         [](auto&& graph, ScalarType t0, ScalarType dt, size_t) {
             auto copy = graph;
-            return mio::make_sampled_graph_simulation<ScalarType, decltype(parameter_study)::Simulation>(
+            return mio::make_sampled_graph_simulation<ScalarType, mio::osecir::Simulation<ScalarType>>(
                 mio::osecir::draw_sample(copy), t0, dt, dt);
         },
         [&](auto&& results_sim, auto&& run_id) {
