@@ -48,7 +48,8 @@ int main()
     model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().get_baseline()(0, 0) = 20.7;
     model.parameters.get<mio::ssirs::ContactPatterns<ScalarType>>().add_damping(0.6,
                                                                                 mio::SimulationTime<ScalarType>(12.5));
-
+    model.parameters.set<mio::ssirs::StartDay<ScalarType>>(60);
+    model.parameters.set<mio::ssirs::Seasonality<ScalarType>>(0.2);
     model.check_constraints();
 
     auto ssirs = mio::simulate_stochastic(t0, tmax, dt, model);

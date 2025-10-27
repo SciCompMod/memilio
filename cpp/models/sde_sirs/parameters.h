@@ -98,9 +98,46 @@ struct ContactPatterns {
     }
 };
 
+/**
+ * @brief The start day in the SIRS model
+ * The start day defines in which season the simulation can be started
+ * If the start day is 180 and simulation takes place from t0=0 to
+ * tmax=100 the days 180 to 280 of the year are simulated
+ */
+template <typename FP>
+struct StartDay {
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.0);
+    }
+    static std::string name()
+    {
+        return "StartDay";
+    }
+};
+
+/**
+ * @brief The seasonality in the SIRS model.
+ * The seasonality is given as (1+k*sin()) where the sine
+ * curve is below one in summer and above one in winter
+ */
+template <typename FP>
+struct Seasonality {
+    using Type = UncertainValue<FP>;
+    static Type get_default()
+    {
+        return Type(0.);
+    }
+    static std::string name()
+    {
+        return "Seasonality";
+    }
+};
+
 template <typename FP>
 using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>>;
+    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>, Seasonality<FP>, StartDay<FP>>;
 
 /**
  * @brief Parameters of SIR model.
@@ -132,6 +169,12 @@ public:
         FP tol_times = 1e-1;
 
         int corrected = false;
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+            log_warning("Constraint check: Parameter Seasonality changed from {:0.4f} to {:d}",
+                        this->template get<Seasonality<FP>>(), 0);
+            this->template set<Seasonality<FP>>(0);
+            corrected = true;
+        }
         if (this->template get<TimeInfected<FP>>() < tol_times) {
             log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
@@ -167,6 +210,10 @@ public:
     {
         FP tol_times = 1e-1;
 
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+            log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:d}", 0, 0.5);
+            return true;
+        }
         if (this->template get<TimeInfected<FP>>() < tol_times) {
             log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
