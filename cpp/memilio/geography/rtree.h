@@ -47,14 +47,6 @@ concept SphericalLocationType = requires(const Location& loc) {
 };
 
 /**
- * @brief Concept for spherical location iterator types.
- * 
- * The iterator type needs to be an input iterator and the value type needs to satisfy the SphericalLocationType concept.
- */
-template <class Iter>
-concept SphericalLocationIteratorType = std::input_iterator<Iter> && SphericalLocationType<std::iter_reference_t<Iter>>;
-
-/**
  * @brief R-tree for spatial queries of geographical locations on the sphere.
  * 
  * Data structure to store spatial indices and allow for efficient in-range and nearest neighbour queries. 
@@ -82,26 +74,6 @@ public:
         for (size_t index = 0; index < locations.size(); index++) {
             Point point(locations[index].get_longitude(), locations[index].get_latitude());
             rtree.insert(Node(point, index));
-        }
-    }
-
-    /**
-     * @brief Construct a new RTree object with data given in a range.
-     * 
-     * @param first The beginning of the range.
-     * @param last The end of the range.
-     * The provided location data needs to provide get_latitude() and get_longitude().
-     */
-    template <SphericalLocationIteratorType Iter>
-    RTree(Iter first, Iter last)
-        : rtree{}
-    {
-        size_t index = 0;
-        while (first != last) {
-            Point point(first->get_longitude(), first->get_latitude());
-            rtree.insert(Node(point, index));
-            ++first;
-            ++index;
         }
     }
 

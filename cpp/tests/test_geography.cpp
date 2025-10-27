@@ -84,7 +84,7 @@ TEST(TestGeography, rtreeConstructionRange)
     locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
     // Generate a RTree object using begin and end iterators
-    auto tree = mio::geo::RTree(locations.begin(), locations.end());
+    auto tree = mio::geo::RTree(locations);
     // Verify that the size of the tree is equal to the size of the vector
     EXPECT_EQ(tree.size(), locations.size());
 }
@@ -97,7 +97,7 @@ TEST(TestGeography, rtreesize)
     locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.3));
     // Generate a RTree object
-    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    auto rtree = mio::geo::RTree(locations);
     // Verify that the size of the rtree is 3
     EXPECT_EQ(rtree.size(), 3);
 }
@@ -110,7 +110,7 @@ TEST(TestGeography, rtreeNN)
     locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
     // Generate a RTree object
-    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    auto rtree = mio::geo::RTree(locations);
     // Verify that the nearest neighbor is the first location
     EXPECT_EQ(rtree.nearest_neighbor_indices(mio::geo::GeographicalLocation(50.7, 6.0), 1)[0], 0);
 }
@@ -123,7 +123,7 @@ TEST(TestGeography, rtreein_range_approx)
     locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
     // Generate a RTree object
-    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    auto rtree = mio::geo::RTree(locations);
     // Verify that the in-range queries returns the correct number of results
     EXPECT_EQ(
         rtree.in_range_indices_approximate(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(),
@@ -139,7 +139,7 @@ TEST(TestGeography, rtreein_range_multiple_radii)
     locations.push_back(mio::geo::GeographicalLocation(52.0, 7.0));
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
     // Generate a RTree object
-    auto rtree = mio::geo::RTree(locations.begin(), locations.end());
+    auto rtree = mio::geo::RTree(locations);
     // Run in_range queries for three different ranges
     auto result =
         rtree.in_range_indices_query(mio::geo::GeographicalLocation(51.4, 7.4),
