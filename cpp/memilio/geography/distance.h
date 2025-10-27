@@ -44,7 +44,7 @@ public:
      * @brief Creates a Distance from a specified number of seconds.
      * @param[in] seconds The number of seconds after the epoch.
      */
-    explicit Distance(ScalarType meters)
+    explicit constexpr Distance(ScalarType meters)
         : m_meters(meters)
     {
     }
@@ -126,14 +126,14 @@ public:
     }
 
 private:
-    int m_meters; ///< The distance in meters.
+    ScalarType m_meters; ///< The distance in meters.
 };
 
 /**
  * @brief Create a Distance of a specified number of meters.
  * @param[in] meters Number of meters in the Distance.
  */
-inline Distance meters(ScalarType meters)
+constexpr inline Distance meters(ScalarType meters)
 {
     return Distance(meters);
 }
@@ -142,7 +142,7 @@ inline Distance meters(ScalarType meters)
  * @brief Create a Distance of a specified number of kilometers.
  * @param[in] kilometers Number of kilometers in the Distance.
  */
-inline Distance kilometers(ScalarType kilometers)
+constexpr inline Distance kilometers(ScalarType kilometers)
 {
     return Distance(kilometers * 1000);
 }
