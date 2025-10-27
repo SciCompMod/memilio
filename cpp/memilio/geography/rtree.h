@@ -140,7 +140,7 @@ public:
      * @param radius The radius of the query.
      * @return Vector with indices of the points found.
      */
-    std::vector<size_t> inrange_indices_approximate(const SphericalLocationType auto& location, Distance radius) const
+    std::vector<size_t> in_range_indices_approximate(const SphericalLocationType auto& location, Distance radius) const
     {
         using boost::geometry::index::covered_by;
         using boost::geometry::index::query;
@@ -158,8 +158,8 @@ public:
      * @param radii Vector containing the radii of the query.
      * @return Vector of vectors with indices of the points found.
      */
-    std::vector<std::vector<size_t>> inrange_indices_query(const SphericalLocationType auto& location,
-                                                           const std::vector<Distance>& radii) const
+    std::vector<std::vector<size_t>> in_range_indices_query(const SphericalLocationType auto& location,
+                                                            const std::vector<Distance>& radii) const
     {
         using boost::geometry::distance;
         using boost::geometry::index::covered_by;
@@ -192,9 +192,9 @@ public:
      * @param radius The radius of the query.
      * @return Vector with indices of the points found.
      *
-     * Basically the same as \ref inrange_indices_approximate, but filters the result to make sure the points are within the radius.
+     * Basically the same as \ref in_range_indices_approximate, but filters the result to make sure the points are within the radius.
      */
-    std::vector<size_t> inrange_indices(const SphericalLocationType auto& location, Distance radius) const
+    std::vector<size_t> in_range_indices(const SphericalLocationType auto& location, Distance radius) const
     {
         using boost::geometry::distance;
         using boost::geometry::index::covered_by;

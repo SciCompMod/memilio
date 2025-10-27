@@ -115,7 +115,7 @@ TEST(TestGeography, rtreeNN)
     EXPECT_EQ(rtree.nearest_neighbor_indices(mio::geo::GeographicalLocation(50.7, 6.0), 1)[0], 0);
 }
 
-TEST(TestGeography, rtreeinrange_approx)
+TEST(TestGeography, rtreein_range_approx)
 {
     // Generate a vector of GeographicalLocations
     std::vector<mio::geo::GeographicalLocation> locations;
@@ -126,12 +126,12 @@ TEST(TestGeography, rtreeinrange_approx)
     auto rtree = mio::geo::RTree(locations.begin(), locations.end());
     // Verify that the in-range queries returns the correct number of results
     EXPECT_EQ(
-        rtree.inrange_indices_approximate(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(),
+        rtree.in_range_indices_approximate(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(),
         2);
-    EXPECT_EQ(rtree.inrange_indices(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(), 2);
+    EXPECT_EQ(rtree.in_range_indices(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(), 2);
 }
 
-TEST(TestGeography, rtreeinrange_multiple_radii)
+TEST(TestGeography, rtreein_range_multiple_radii)
 {
     // Generate a vector of GeographicalLocations
     std::vector<mio::geo::GeographicalLocation> locations;
@@ -140,10 +140,10 @@ TEST(TestGeography, rtreeinrange_multiple_radii)
     locations.push_back(mio::geo::GeographicalLocation(53.6, 10.2));
     // Generate a RTree object
     auto rtree = mio::geo::RTree(locations.begin(), locations.end());
-    // Run inrange queries for three different ranges
+    // Run in_range queries for three different ranges
     auto result =
-        rtree.inrange_indices_query(mio::geo::GeographicalLocation(51.4, 7.4),
-                                    {mio::geo::kilometers(130), mio::geo::kilometers(320), mio::geo::kilometers(80)});
+        rtree.in_range_indices_query(mio::geo::GeographicalLocation(51.4, 7.4),
+                                     {mio::geo::kilometers(130), mio::geo::kilometers(320), mio::geo::kilometers(80)});
     // Verify the number of results for each query is correct
     EXPECT_EQ(result[0].size(), 2);
     EXPECT_EQ(result[1].size(), 3);
