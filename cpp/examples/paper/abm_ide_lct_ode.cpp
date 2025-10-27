@@ -18,9 +18,11 @@
 * limitations under the License.
 */
 
+#include "abm/infection_state.h"
 #include "abm/location_id.h"
 #include "abm/location_type.h"
 #include "abm/model.h"
+#include "abm/simulation.h"
 #include "abm/virus_variant.h"
 #include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
@@ -52,6 +54,7 @@
 
 #include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
 #include "boost/filesystem.hpp"
+#include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/Core/Random.h>
 #include <algorithm>
 #include <cstddef>
@@ -641,7 +644,29 @@ IOResult<void> simulate_ode(Vector init_compartments, std::string contact_data_d
     return success();
 }
 
-IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::string save_dir = "")
+mio::TimeSeries<ScalarType>
+get_abm_compartment_results(mio::abm::Model& model,
+                            mio::History<mio::DataWriterToMemory, ABMLoggers::LogTimePoint>& history)
+{
+    mio::unused(model);
+    mio::unused(history);
+    mio::TimeSeries<ScalarType> result(static_cast<size_t>(mio::abm::InfectionState::Count) * params::num_age_groups);
+    auto& tps = std::get<0>(history.get_log());
+    for (auto& tp : tps) {
+        Eigen::VectorXd comps =
+            Eigen::VectorXd::Zero(static_cast<size_t>(mio::abm::InfectionState::Count) * params::num_age_groups);
+        for (auto& person : model.get_persons()) {
+            int age    = person.get_age().get();
+            auto state = person.get_infection_state(tp);
+            comps[age * static_cast<size_t>(mio::abm::InfectionState::Count) + static_cast<size_t>(state)] += 1;
+        }
+        result.add_time_point(tp.days(), comps);
+    }
+    return result;
+}
+
+IOResult<mio::TimeSeries<double>> simulate_abm(bool exponential_scnario, ScalarType tmax, std::string contact_data_dir,
+                                               std::vector<double> initial_infection_state_dist)
 {
     using namespace params;
 
@@ -735,7 +760,69 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
     model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(2)] = true;
     model.parameters.get<mio::abm::AgeGroupGotoWork>()[mio::AgeGroup(3)] = true;
 
-    //Todo set contact rates (ContactRates)
+    //Set contact rates
+    BOOST_OUTCOME_TRY(auto&& home_contacts, read_mobility_plain(contact_data_dir + "baseline_home.txt"));
+    BOOST_OUTCOME_TRY(auto&& school_contacts, read_mobility_plain(contact_data_dir + "baseline_school_pf_eig.txt"));
+    BOOST_OUTCOME_TRY(auto&& work_contacts, read_mobility_plain(contact_data_dir + "baseline_work.txt"));
+    BOOST_OUTCOME_TRY(auto&& other_contacts, read_mobility_plain(contact_data_dir + "baseline_other.txt"));
+
+    for (auto& loc : model.get_locations()) {
+        switch (loc.get_type()) {
+        case mio::abm::LocationType::Home:
+            for (size_t from = 0; from < num_age_groups; from++) {
+                for (size_t to = 0; to < num_age_groups; to++) {
+                    loc.get_infection_parameters()
+                        .get<mio::abm::ContactRates>()[{mio::AgeGroup(from), mio::AgeGroup(to)}] =
+                        home_contacts(from, to);
+                }
+            }
+            break;
+        case mio::abm::LocationType::School:
+            for (size_t from = 0; from < num_age_groups; from++) {
+                for (size_t to = 0; to < num_age_groups; to++) {
+                    loc.get_infection_parameters()
+                        .get<mio::abm::ContactRates>()[{mio::AgeGroup(from), mio::AgeGroup(to)}] =
+                        school_contacts(from, to);
+                }
+            }
+            break;
+        case mio::abm::LocationType::Work:
+            for (size_t from = 0; from < num_age_groups; from++) {
+                for (size_t to = 0; to < num_age_groups; to++) {
+                    loc.get_infection_parameters()
+                        .get<mio::abm::ContactRates>()[{mio::AgeGroup(from), mio::AgeGroup(to)}] =
+                        work_contacts(from, to);
+                }
+            }
+            break;
+        case mio::abm::LocationType::SocialEvent:
+            for (size_t from = 0; from < num_age_groups; from++) {
+                for (size_t to = 0; to < num_age_groups; to++) {
+                    loc.get_infection_parameters()
+                        .get<mio::abm::ContactRates>()[{mio::AgeGroup(from), mio::AgeGroup(to)}] =
+                        other_contacts(from, to);
+                }
+            }
+            break;
+        case mio::abm::LocationType::BasicsShop:
+            for (size_t from = 0; from < num_age_groups; from++) {
+                for (size_t to = 0; to < num_age_groups; to++) {
+                    loc.get_infection_parameters()
+                        .get<mio::abm::ContactRates>()[{mio::AgeGroup(from), mio::AgeGroup(to)}] =
+                        other_contacts(from, to);
+                }
+            }
+            break;
+        default:
+            for (size_t from = 0; from < num_age_groups; from++) {
+                for (size_t to = 0; to < num_age_groups; to++) {
+                    loc.get_infection_parameters()
+                        .get<mio::abm::ContactRates>()[{mio::AgeGroup(from), mio::AgeGroup(to)}] = 1.;
+                }
+            }
+            break;
+        }
+    }
 
     // Add one hospital and one ICU
     auto hosp_id = model.add_location(mio::abm::LocationType::Hospital);
@@ -744,26 +831,28 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
     // Map that maps household ids to person ids and number of adults in household
     std::map<mio::abm::LocationId, std::pair<std::vector<mio::abm::PersonId>, size_t>> household_map;
 
-    size_t pop = int(total_population / 100.);
+    size_t pop = total_population;
 
     // Add persons
     while (pop > 0) {
         // First create a home location
         auto home = model.add_location(mio::abm::LocationType::Home);
         // Then sample size of home location
-        auto home_size =
-            mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), ABMparams::household_size_distribution);
+        auto home_size = mio::DiscreteDistribution<size_t>::get_instance()(
+            model.get_rng(), std::vector<ScalarType>(std::begin(ABMparams::household_size_distribution),
+                                                     std::end(ABMparams::household_size_distribution)));
         // Check if size is bigger than remaining population
-        if (home_size > int(params::total_population / 100.)) {
+        if (home_size > pop) {
             // If yes create one household for the remaining population
-            home_size = int(params::total_population / 100.);
+            home_size = pop;
         }
         // Create persons for the sampled household
         size_t num_adults = 0;
         std::vector<mio::abm::PersonId> person_ids;
         for (size_t i = 0; i < home_size; i++) {
             // Sample person's age group
-            auto age = mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), age_group_sizes);
+            auto age = mio::DiscreteDistribution<size_t>::get_instance()(
+                model.get_rng(), std::vector<ScalarType>(std::begin(age_group_sizes), std::end(age_group_sizes)));
             // Add person to model
             auto pid = model.add_person(home, (AgeGroup)age);
             person_ids.push_back(pid);
@@ -842,7 +931,7 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
             // If the current location is full, a new work location has to be created
             if (curr_work_size >= target_work_size) {
                 size_t size      = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                    model.get_rng(), ABMparams::workplace_size[0], ABMparams::workplace_size[1]));
+                    model.get_rng(), double(ABMparams::workplace_size[0]), double(ABMparams::workplace_size[1])));
                 target_work_size = std::min({size, ABMparams::min_workplace_size});
                 curr_work_id     = model.add_location(mio::abm::LocationType::Work);
             }
@@ -855,7 +944,7 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
             // If the current school location is full, a new school has to be created
             if (curr_school_size >= target_school_size) {
                 size_t size        = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                    model.get_rng(), ABMparams::school_size[0], ABMparams::school_size[1]));
+                    model.get_rng(), double(ABMparams::school_size[0]), double(ABMparams::school_size[1])));
                 target_school_size = std::min({size, ABMparams::min_school_size});
                 curr_school_id     = model.add_location(mio::abm::LocationType::School);
             }
@@ -868,7 +957,7 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
         // Event
         if (curr_event_size >= target_event_size) {
             size_t size       = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                model.get_rng(), ABMparams::event_size[0], ABMparams::event_size[1]));
+                model.get_rng(), double(ABMparams::event_size[0]), double(ABMparams::event_size[1])));
             target_event_size = std::min({size, ABMparams::min_event_size});
             curr_event_id     = model.add_location(mio::abm::LocationType::SocialEvent);
         }
@@ -877,7 +966,7 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
         // Shop
         if (curr_shop_size >= target_shop_size) {
             size_t size      = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                model.get_rng(), ABMparams::shop_size[0], ABMparams::shop_size[1]));
+                model.get_rng(), double(ABMparams::shop_size[0]), double(ABMparams::shop_size[1])));
             target_shop_size = std::min({size, ABMparams::min_shop_size});
             curr_shop_id     = model.add_location(mio::abm::LocationType::BasicsShop);
         }
@@ -885,12 +974,25 @@ IOResult<void> simulate_abm(bool exponential_scnario, ScalarType tmax, std::stri
         curr_shop_size += 1;
     }
 
-    // Add locations
-    unused(init_compartments);
-    unused(tmax);
-    unused(save_dir);
+    //Todo initialize infection states
+    for (auto& person : model.get_persons()) {
+        mio::abm::InfectionState infection_state = mio::abm::InfectionState(
+            mio::DiscreteDistribution<size_t>::get_instance()(model.get_rng(), initial_infection_state_dist));
+        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        if (infection_state != mio::abm::InfectionState::Susceptible) {
+            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+                                                         model.parameters, mio::abm::TimePoint(int(t0)),
+                                                         infection_state));
+        }
+    }
 
-    return success();
+    mio::History<mio::DataWriterToMemory, ABMLoggers::LogTimePoint> history;
+
+    // Add locations
+    auto sim = mio::abm::Simulation(mio::abm::TimePoint(int(t0)), std::move(model));
+    sim.advance(mio::abm::TimePoint(int(t0)) + mio::abm::days(int(tmax)), history);
+
+    return success(get_abm_compartment_results(sim.get_model(), history));
 }
 
 int main()

@@ -19,12 +19,17 @@
 */
 
 // Define parameters for the simulation.
+#include "abm/model.h"
+#include "abm/simulation.h"
+#include "abm/time.h"
+#include "memilio/io/history.h"
 #include <vector>
 namespace params
 {
 const size_t num_age_groups               = 6;
+const size_t scaling_factor               = 1000;
 const std::vector<double> age_group_sizes = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population         = 83155031.;
+const ScalarType total_population         = 83155031. / scaling_factor;
 // const ScalarType total_confirmed_cases = 341223.;
 // const ScalarType deaths = 0.;
 
@@ -101,3 +106,14 @@ const size_t shop_size[] = {90, 1000};
 const size_t min_shop_size = 30;
 
 } // namespace ABMparams
+
+namespace ABMLoggers
+{
+struct LogTimePoint : mio::LogAlways {
+    using Type = mio::abm::TimePoint;
+    static Type log(const mio::abm::Simulation<mio::abm::Model>& sim)
+    {
+        return sim.get_time();
+    }
+};
+} // namespace ABMLoggers
