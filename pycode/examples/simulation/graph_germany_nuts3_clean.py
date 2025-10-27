@@ -86,15 +86,25 @@ def plot_region_median_mad(
 
     x = np.arange(n_time)
     vals = data[:, :, region]  # (samples, time_points)
+
+    qs_50 = np.quantile(vals, q=[0.25, 0.75], axis=0)
+    qs_90 = np.quantile(vals, q=[0.05, 0.95], axis=0)
+    qs_95 = np.quantile(vals, q=[0.025, 0.975], axis=0)
+
     med = np.median(vals, axis=0)
-    mad = np.median(np.abs(vals - med), axis=0)
 
     if ax is None:
         fig, ax = plt.subplots()
 
-    line, = ax.plot(
+    ax.plot(
         x, med, lw=2, label=label or f"{dd.County[region_ids[region]]}", color=color)
-    band = ax.fill_between(x, med - mad, med + mad, alpha=0.25, color=color)
+    ax.fill_between(x, qs_50[0], qs_50[1], alpha=0.5,
+                    color=color, label="50% CI")
+    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
+                    color=color, label="90% CI")
+    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
+                    color=color, label="95% CI")
+
     if true_data is not None:
         true_vals = true_data[:, region]  # (time_points,)
         ax.plot(x, true_vals, lw=2, color="black", label="True data")
@@ -104,7 +114,6 @@ def plot_region_median_mad(
     ax.set_title(f"{dd.County[region_ids[region]]}", fontsize=12)
     if label is not None:
         ax.legend(fontsize=11, loc="upper right")
-    return line, band
 
 
 def plot_aggregated_over_regions(
@@ -124,26 +133,25 @@ def plot_aggregated_over_regions(
     # Aggregate over regions
     agg_over_regions = region_agg(data, axis=-1)  # (samples, time_points)
 
+    qs_50 = np.quantile(agg_over_regions, q=[0.25, 0.75], axis=0)
+    qs_90 = np.quantile(agg_over_regions, q=[0.05, 0.95], axis=0)
+    qs_95 = np.quantile(agg_over_regions, q=[0.025, 0.975], axis=0)
+
     # Aggregate over samples
     agg_median = np.median(agg_over_regions, axis=0)        # (time_points, )
-    agg_mad = np.median(
-        np.abs(agg_over_regions - agg_median[None]),
-        axis=0
-    )
 
     x = np.arange(agg_median.shape[0])
     if ax is None:
         fig, ax = plt.subplots()
 
-    line, = ax.plot(x, agg_median, lw=2,
+    ax.plot(x, agg_median, lw=2,
                     label=label or "Aggregated over regions", color=color)
-    band = ax.fill_between(
-        x,
-        agg_median - agg_mad,
-        agg_median + agg_mad,
-        alpha=0.25,
-        color=color
-    )
+    ax.fill_between(x, qs_50[0], qs_50[1], alpha=0.5,
+                    color=color, label="50% CI")
+    ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
+                    color=color, label="90% CI")
+    ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
+                    color=color, label="95% CI")
     if true_data is not None:
         true_vals = region_agg(true_data, axis=-1)  # (time_points,)
         ax.plot(x, true_vals, lw=2, color="black", label="True data")
@@ -152,7 +160,6 @@ def plot_aggregated_over_regions(
     ax.set_ylabel("ICU", fontsize=12)
     if label is not None:
         ax.legend(fontsize=11)
-    return line, band
 
 def plot_icu_on_germany(simulations, name, synthetic, with_aug):
     med = np.median(simulations, axis=0)
@@ -220,7 +227,7 @@ def plot_all_regions(simulations, divi_data, name, synthetic, with_aug):
         ax = ax.flatten()
         for i, region_idx in enumerate(range(start_idx, end_idx)):
             plot_region_median_mad(
-                simulations, region=region_idx, true_data=divi_data, label=r"Median $\pm$ Mad", ax=ax[i]
+                simulations, region=region_idx, true_data=divi_data, label="Median", ax=ax[i], color="#132a70"
             )
         # Hide unused subplots
         for i in range(end_idx - start_idx, len(ax)):
@@ -801,7 +808,7 @@ def run_training(name, num_training_files=20):
     #plots['z_score_contraction'].savefig(f'{name}/z_score_contraction_{name}.png')
 
 
-def run_inference(name, num_samples=10, on_synthetic_data=False):
+def run_inference(name, num_samples=100, on_synthetic_data=False):
     val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
 
@@ -883,12 +890,12 @@ def run_inference(name, num_samples=10, on_synthetic_data=False):
     fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
     # Plot without augmentation
     plot_aggregated_over_regions(
-        simulations, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad (No Aug)", ax=axes[0], color="red"
+        simulations, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[0], color="#132a70"
     )
     axes[0].set_title("Without Augmentation")
     # Plot with augmentation
     plot_aggregated_over_regions(
-        simulations_aug, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad (With Aug)", ax=axes[1], color="red"
+        simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[1], color="#132a70"
     )
     axes[1].set_title("With Augmentation")
     plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png')
