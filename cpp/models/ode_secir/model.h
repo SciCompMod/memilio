@@ -659,7 +659,7 @@ IOResult<FP> get_reproduction_number(FP t_value, const Simulation<FP, Base>& sim
  * @tparam FP floating point type, e.g., double.
  * @tparam Base simulation type that uses a secir compartment model; see Simulation.
  */
-template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
 auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
@@ -689,7 +689,7 @@ auto get_mobility_factors(const Simulation<FP, Base>& sim, FP /*t*/, const Eigen
     return factors;
 }
 
-template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
 auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
     auto& model     = sim.get_model();

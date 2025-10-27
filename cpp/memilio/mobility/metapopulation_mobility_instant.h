@@ -480,7 +480,7 @@ void calculate_mobility_returns(Eigen::Ref<typename TimeSeries<FP>::Vector> mobi
  * detect a get_infections_relative function for the Model type.
  */
 template <typename FP, class Sim>
-using get_infections_relative_expr_t = decltype(get_infections_relative(
+using get_infections_relative_expr_t = decltype(get_infections_relative<FP>(
     std::declval<const Sim&>(), std::declval<FP>(), std::declval<const Eigen::Ref<const Eigen::VectorX<FP>>&>()));
 
 /**
@@ -492,26 +492,25 @@ using get_infections_relative_expr_t = decltype(get_infections_relative(
  * @param y the current value of the simulation.
  * @param t the current simulation time
  */
-template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
-FP get_infections_relative(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
-                           const Eigen::Ref<const Eigen::VectorX<FP>>& /*y*/)
-{
-    assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
-    return 0;
-}
-template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
+template <typename FP, class Sim>
 FP get_infections_relative(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    return get_infections_relative<FP, Sim>(node.get_simulation(), t, y);
+    if constexpr (is_expression_valid<get_infections_relative_expr_t, FP, Sim>::value) {
+        return get_infections_relative<FP>(node.get_simulation(), t, y);
+    }
+    else {
+        mio::unused(node, t, y);
+        mio::log_debug("get_infections_relative called without specialization for this simulation type. "
+                       "Implement an overload in your model if you intend to use dynamic NPIs.");
+        return FP{0};
+    }
 }
 
 /**
  * detect a get_mobility_factors function for the Model type.
  */
 template <typename FP, class Sim>
-using get_mobility_factors_expr_t = decltype(get_mobility_factors(
+using get_mobility_factors_expr_t = decltype(get_mobility_factors<FP>(
     std::declval<const Sim&>(), std::declval<FP>(), std::declval<const Eigen::Ref<const Eigen::VectorX<FP>>&>()));
 
 /**
@@ -525,26 +524,26 @@ using get_mobility_factors_expr_t = decltype(get_mobility_factors(
  * @param t the current simulation time
  * @return a vector expression, same size as y, with the factor for each compartment.
  */
-template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<get_mobility_factors_expr_t, Sim>::value, void*> = nullptr>
-auto get_mobility_factors(const SimulationNode<FP, Sim>& /*node*/, FP /*t*/,
-                          const Eigen::Ref<const Eigen::VectorX<FP>>& y)
-{
-    return Eigen::VectorX<FP>::Ones(y.rows());
-}
-template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<get_mobility_factors_expr_t, Sim>::value, void*> = nullptr>
+template <typename FP, class Sim>
 auto get_mobility_factors(const SimulationNode<FP, Sim>& node, FP t, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
-    return get_mobility_factors<FP, Sim>(node.get_simulation(), t, y);
+    if constexpr (is_expression_valid<get_mobility_factors_expr_t, FP, Sim>::value) {
+        return get_mobility_factors<FP>(node.get_simulation(), t, y);
+    }
+    else {
+        mio::unused(node, t);
+        mio::log_debug("get_mobility_factors called without specialization for this simulation type. "
+                       "Using default mobility factor (1.0) for all compartments.");
+        return Eigen::VectorX<FP>::Ones(y.rows());
+    }
 }
 
 /**
  * detect a get_mobility_factors function for the Model type.
  */
 template <typename FP, class Sim>
-using test_commuters_expr_t = decltype(test_commuters(
-    std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorX<FP>>&>(), std::declval<FP>()));
+using test_commuters_expr_t = decltype(test_commuters<FP>(
+    std::declval<Sim&>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>(), std::declval<FP>()));
 
 /**
  * Test persons when moving from their source node.
@@ -556,17 +555,17 @@ using test_commuters_expr_t = decltype(test_commuters(
  * @param mobile_population mutable reference to vector of persons per compartment that change nodes.
  * @param t the current simulation time.
  */
-template <typename FP, class Sim,
-          std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
-void test_commuters(SimulationNode<FP, Sim>& /*node*/, Eigen::Ref<Eigen::VectorX<FP>> /*mobile_population*/,
-                    FP /*time*/)
-{
-}
-template <typename FP, class Sim,
-          std::enable_if_t<is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
+template <typename FP, class Sim>
 void test_commuters(SimulationNode<FP, Sim>& node, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
-    return test_commuters<FP, Sim>(node.get_simulation(), mobile_population, time);
+    if constexpr (is_expression_valid<test_commuters_expr_t, FP, Sim>::value) {
+        test_commuters<FP>(node.get_simulation(), mobile_population, time);
+    }
+    else {
+        mio::unused(node, mobile_population, time);
+        mio::log_debug("test_commuters called without specialization for this simulation type. "
+                       "Implement an overload in your model if you intend to use commuter testing.");
+    }
 }
 
 template <typename FP>
@@ -583,7 +582,7 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
     if (dyn_npis.get_thresholds().size() > 0 &&
         floating_point_greater_equal<FP>(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
         auto inf_rel =
-            get_infections_relative<FP, Sim>(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
+            get_infections_relative<FP>(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
@@ -604,8 +603,8 @@ void mio::MobilityEdge<FP>::apply_mobility(FP t, FP dt, SimulationNode<FP, Sim>&
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse<FP>(node_to.get_result(), m_mobile_population.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_mobility_returns<FP, Sim>(m_mobile_population[i], node_to.get_simulation(), *v0,
-                                                m_mobile_population.get_time(i), dt);
+            calculate_mobility_returns<FP>(m_mobile_population[i], node_to.get_simulation(), *v0,
+                                           m_mobile_population.get_time(i), dt);
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
