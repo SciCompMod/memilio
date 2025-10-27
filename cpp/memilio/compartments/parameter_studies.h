@@ -199,49 +199,25 @@ public:
         return ensemble_result;
     }
 
-    /**
-     * @brief Carry out all simulations in the parameter study. @see run.
-     * Convenience function for a few number of runs, but can use more memory because it stores every single simulaiton.
-     * If this function causes errors, they may be caused by the simulation not being serializable. In that case, try
-     * using run_serial, provide a processing function, or make the simulation serializable.
-     * @return Vector of SimulationGraph for each run.
-     */
-    template <class CreateSimulationFunction>
-    std::vector<SimulationT<CreateSimulationFunction>> run(CreateSimulationFunction&& create_simulation)
-    {
-        return run(std::forward<CreateSimulationFunction>(create_simulation),
-                   [](SimulationT<CreateSimulationFunction>&& sim, size_t) -> SimulationT<CreateSimulationFunction>&& {
-                       return std::move(sim);
-                   });
-    }
-
-    /**
-     * @brief Return the number of total runs that the study will make.
-     */
+    /// @brief Return the number of total runs that the study will make.
     size_t get_num_runs() const
     {
         return m_num_runs;
     }
 
-    /**
-     * @brief Return the final time point for simulations.
-     */
+    /// @brief Return the final time point for simulations.
     Time get_tmax() const
     {
         return m_tmax;
     }
 
-    /**
-     * @brief Return the initial time point for simulations.
-     */
+    /// @brief Return the initial time point for simulations.
     Time get_t0() const
     {
         return m_t0;
     }
 
-    /**
-     * @brief Return the initial step sized used by simulations.
-     */
+    /// @brief Return the initial step sized used by simulations.
     Time get_dt() const
     {
         return m_dt;
@@ -261,9 +237,7 @@ public:
     }
     /** @} */
 
-    /**
-     * @brief Access the study's random number generator.
-     */
+    /// @brief Access the study's random number generator.
     RandomNumberGenerator& get_rng()
     {
         return m_rng;
@@ -324,11 +298,13 @@ private:
     }
 
     /**
-     * @brief Create a vector with the number of runs each process should make.
+     * @brief Distribute a number of runs over a number of processes.
+     * Processes with low ranks get additional runs, if the number is not evenly divisible.
      * @param num_runs The total number of runs.
      * @param num_procs The total number of processes, i.e. the size of MPI_Comm.
+     * @return A vector of size num_procs with the number of runs each process should make.
      */
-    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
+    static std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
     {
         assert(num_procs > 0);
         //evenly distribute runs

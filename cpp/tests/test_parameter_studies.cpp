@@ -18,13 +18,16 @@
 * limitations under the License.
 */
 #include "memilio/config.h"
+#include "memilio/utils/miompi.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
 #include "memilio/utils/random_number_generator.h"
+#include <cstddef>
 #include <gtest/gtest.h>
+#include <numeric>
 #include <stdio.h>
 
 TEST(ParameterStudies, sample_from_secir_params)
@@ -401,6 +404,63 @@ TEST(ParameterStudies, check_ensemble_run_result)
     }
 }
 
-// TEST(ParameterStudies, run_mocks) {
-//     mio::ParameterStudy2<class SimulationType, class ParameterType, typename TimeType>
-// }
+namespace
+{
+
+struct MockStudyParams {
+    const int init, run;
+};
+
+struct MockStudySim {
+    MockStudySim(const MockStudyParams& p_, double t0_, double dt_)
+        : p(p_)
+        , t0(t0_)
+        , dt(dt_)
+    {
+    }
+    void advance(double t)
+    {
+        tmax = t;
+    }
+
+    MockStudyParams p;
+    double t0, dt;
+    double tmax = 0;
+};
+
+} // namespace
+
+TEST(ParameterStudies, mocked_run)
+{
+    // run a very simple study, that works with mpi
+    const double t0 = 20, tmax = 21, dt = 22;
+    const MockStudyParams params{23, -1};
+    const size_t num_runs = 5; // enough to notice MPI effects
+    const auto make_sim   = [&](auto&& params_, auto t0_, auto dt_, auto i_) {
+        MockStudyParams cp{params_.init, (int)i_};
+        return MockStudySim(cp, t0_, dt_);
+    };
+    const auto process_sim = [&](MockStudySim&& s, size_t i) {
+        return s.tmax + i;
+    };
+    const double process_sim_result = (num_runs * tmax) + num_runs * (num_runs - 1) / 2.;
+    mio::ParameterStudy2 study(params, t0, tmax, dt, num_runs);
+    // case: run_serial without processing; expect created simulations in order
+    auto result_serial = study.run_serial(make_sim);
+    EXPECT_EQ(result_serial.size(), num_runs);
+    for (int i = 0; const auto& sim : result_serial) {
+        EXPECT_EQ(sim.t0, t0);
+        EXPECT_EQ(sim.dt, dt);
+        EXPECT_EQ(sim.tmax, tmax);
+        EXPECT_EQ(sim.p.init, params.init);
+        EXPECT_EQ(sim.p.run, i++);
+    }
+    // case: run and run_serial with processing; expect the same (unordered) result for both, on all ranks
+    // Note: currently the tests are not make use of MPI, so we expect the same result from each rank
+    auto result_serial_processed = study.run_serial(make_sim, process_sim);
+    auto result_parallel         = study.run(make_sim, process_sim);
+    for (const auto& result : {result_serial_processed, result_parallel}) {
+        EXPECT_EQ(result.size(), num_runs);
+        EXPECT_EQ(std::accumulate(result.begin(), result.end(), 0.0), process_sim_result);
+    }
+}
