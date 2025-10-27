@@ -20,8 +20,11 @@
 #ifndef MIO_GEOGRAPHY_LOCATIONS_H
 #define MIO_GEOGRAPHY_LOCATIONS_H
 
+#include "distance.h"
 #include "memilio/io/default_serialize.h"
+#include "memilio/geography/distance.h"
 #include "memilio/config.h"
+#include "memilio/utils/logging.h"
 #include <cassert>
 #include <cmath>
 #include <numbers>
@@ -90,7 +93,8 @@ public:
         return !(*this == other);
     }
 
-    bool is_close(const GeographicalLocation& other, ScalarType tol = 10 * Limits<ScalarType>::zero_tolerance()) const
+    bool is_close(const GeographicalLocation& other,
+                  Distance tol = Distance(10 * Limits<ScalarType>::zero_tolerance())) const
     {
         return distance(other) < tol;
     }
@@ -108,13 +112,13 @@ public:
     /*
     * @brief Calculate the distance between two GeographicalLocation%s.
     * @param other The other GeographicalLocation.
-    * @return The distance between the two locations in kilometers.
+    * @return The distance between the two locations as @ref mio::geo::Distance .
     * 
     * Uses the haversine formula (https://en.wikipedia.org/wiki/Haversine_formula) to calculate the distance between 
     * two geographical locations. Uses an earth radius of 6371 km (https://en.wikipedia.org/wiki/Earth_radius).
     * The math functions use radians, whereas coordinates are given in degrees.
     */
-    ScalarType distance(const GeographicalLocation& other) const
+    Distance distance(const GeographicalLocation& other) const
     {
         const ScalarType delta_latitude           = (m_latitude - other.m_latitude) * radians;
         const ScalarType delta_longitude          = (m_longitude - other.m_longitude) * radians;
@@ -123,8 +127,8 @@ public:
         const ScalarType first_part               = sin_delta_latitude_half * sin_delta_latitude_half;
         const ScalarType second_part              = cos(m_latitude * radians) * cos(other.m_latitude * radians) *
                                        sin_delta_longitude_half * sin_delta_longitude_half;
-        const ScalarType distance = 2.0 * earth_radius * asin(sqrt(first_part + second_part));
-        return distance;
+        const ScalarType distance = 2.0 * earth_radius.kilometers() * asin(sqrt(first_part + second_part));
+        return kilometers(distance);
     }
 
     /**
@@ -182,8 +186,8 @@ private:
 
     ScalarType m_latitude;
     ScalarType m_longitude;
-    constexpr static ScalarType earth_radius = 6371.;
-    constexpr static ScalarType radians      = std::numbers::pi / 180.0;
+    constexpr static mio::geo::Distance earth_radius = mio::geo::kilometers(6371.);
+    constexpr static ScalarType radians              = std::numbers::pi / 180.0;
 };
 
 } // namespace geo

@@ -21,6 +21,7 @@
 #define MIO_GEOGRAPHY_RTREE_H
 
 #include "memilio/utils/back_inserter_second_element.h"
+#include "memilio/geography/distance.h"
 #include <boost/geometry/geometries/multi_polygon.hpp>
 #include <boost/geometry/index/rtree.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
@@ -136,16 +137,15 @@ public:
      * @brief Return the indices of the points within a given radius (in kilometers) where the circle is approximated by a polygon.
      * 
      * @param location Midpoint for the query, provides get_latitude() and get_longitude().
-     * @param radius The radius of the query in kilometers.
+     * @param radius The radius of the query.
      * @return Vector with indices of the points found.
      */
-    std::vector<size_t> inrange_indices_approximate(const SphericalLocationType auto& location, double radius) const
+    std::vector<size_t> inrange_indices_approximate(const SphericalLocationType auto& location, Distance radius) const
     {
         using boost::geometry::index::covered_by;
         using boost::geometry::index::query;
 
-        auto radius_in_meter = 1000 * radius;
-        auto circle          = create_circle_approximation(location, radius_in_meter);
+        auto circle = create_circle_approximation(location, radius);
         std::vector<size_t> indices;
         query(rtree, covered_by(circle), mio::back_inserter_second_element<std::vector<size_t>, Node>{indices});
         return indices;
@@ -159,21 +159,20 @@ public:
      * @return Vector of vectors with indices of the points found.
      */
     std::vector<std::vector<size_t>> inrange_indices_query(const SphericalLocationType auto& location,
-                                                           const std::vector<double>& radii) const
+                                                           const std::vector<Distance>& radii) const
     {
         using boost::geometry::distance;
         using boost::geometry::index::covered_by;
         using boost::geometry::index::query;
 
-        auto max_radius      = std::max_element(radii.begin(), radii.end());
-        auto radius_in_meter = 1000 * (*max_radius);
-        auto circle          = create_circle_approximation(location, radius_in_meter);
+        auto max_radius = std::max_element(radii.begin(), radii.end());
+        auto circle     = create_circle_approximation(location, *max_radius);
         std::vector<Node> nodes;
         query(rtree, covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<std::vector<size_t>> result;
         for (const auto& radius : radii) {
-            radius_in_meter = 1000 * radius;
+            auto radius_in_meter = radius.meters();
             std::vector<size_t> indices;
             indices.reserve(nodes.size());
             for (auto& node : nodes) {
@@ -195,22 +194,21 @@ public:
      *
      * Basically the same as \ref inrange_indices_approximate, but filters the result to make sure the points are within the radius.
      */
-    std::vector<size_t> inrange_indices(const SphericalLocationType auto& location, double radius) const
+    std::vector<size_t> inrange_indices(const SphericalLocationType auto& location, Distance radius) const
     {
         using boost::geometry::distance;
         using boost::geometry::index::covered_by;
         using boost::geometry::index::query;
 
-        auto radius_in_meter = 1000 * radius;
+        auto circle = create_circle_approximation(location, radius);
 
-        auto circle = create_circle_approximation(location, radius_in_meter);
         std::vector<Node> nodes;
         query(rtree, covered_by(circle), std::back_inserter(nodes));
         auto midpoint = Point(location.get_longitude(), location.get_latitude());
         std::vector<size_t> indices;
         indices.reserve(nodes.size());
         for (auto& node : nodes) {
-            if (distance(midpoint, node.first) < radius_in_meter) {
+            if (distance(midpoint, node.first) < radius.meters()) {
                 indices.push_back(node.second);
             }
         }
@@ -237,17 +235,17 @@ private:
      * @brief Create a circle approximation object.
      *
      * @param location Midpoint, needs to provide get_latitude() and get_longitude().
-     * @param radius in meters.
+     * @param radius
      * @param approximation_points Number of points used to approximate the circle.
      * @return multi_polygon.
      */
-    MultiPolygon create_circle_approximation(const SphericalLocationType auto& location, double radius,
+    MultiPolygon create_circle_approximation(const SphericalLocationType auto& location, Distance radius,
                                              size_t approximation_points = 36) const
     {
         using namespace boost::geometry::strategy::buffer;
 
         geographic_point_circle<> point_strategy(approximation_points);
-        distance_symmetric<double> distance_strategy(radius);
+        distance_symmetric<double> distance_strategy(radius.meters());
         join_round join_strategy;
         end_round end_strategy;
         side_straight side_strategy;

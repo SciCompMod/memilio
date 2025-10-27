@@ -42,7 +42,7 @@ TEST(TestGeography, compareGeographicalLocation)
     // Verify that the set GeographicalLocations are not close.
     EXPECT_FALSE(geographical_location.is_close(geographical_location3));
     // Verify that the set GeographicalLocations are close with large tolerance.
-    EXPECT_TRUE(geographical_location.is_close(geographical_location3, 600));
+    EXPECT_TRUE(geographical_location.is_close(geographical_location3, mio::geo::kilometers(600)));
 }
 
 TEST(TestGeography, Distance)
@@ -53,14 +53,14 @@ TEST(TestGeography, Distance)
     // use negative coordinates
     auto neumayer = mio::geo::GeographicalLocation(-70.6, -8.2);
     // Test that the distance function is symmetric
-    EXPECT_DOUBLE_EQ(bonn.distance(berlin), berlin.distance(bonn));
-    auto distance = 478.7;
+    EXPECT_DOUBLE_EQ(bonn.distance(berlin).meters(), berlin.distance(bonn).meters());
+    mio::geo::Distance distance = mio::geo::kilometers(478.7);
     // case: distance bonn - berlin; expect: ~478.7km
-    EXPECT_LT(abs(bonn.distance(berlin) - distance), 0.1);
+    EXPECT_LT(abs((bonn.distance(berlin) - distance).kilometers()), 0.1);
     // case: distance bonn - bonn; expect: 0km
-    EXPECT_DOUBLE_EQ(bonn.distance(bonn), 0.);
+    EXPECT_DOUBLE_EQ(bonn.distance(bonn).meters(), 0.);
     // case: distance neumayer - bonn; expect: ~13543.7km
-    EXPECT_LT(abs(neumayer.distance(bonn) - 13543.7), 1.);
+    EXPECT_LT(abs(neumayer.distance(bonn).kilometers() - 13543.7), 1.);
 }
 
 TEST(TestGeography, rtreeConstructionVector)
@@ -125,8 +125,10 @@ TEST(TestGeography, rtreeinrange_approx)
     // Generate a RTree object
     auto rtree = mio::geo::RTree(locations.begin(), locations.end());
     // Verify that the in-range queries returns the correct number of results
-    EXPECT_EQ(rtree.inrange_indices_approximate(mio::geo::GeographicalLocation(50.9, 6.8), 150).size(), 2);
-    EXPECT_EQ(rtree.inrange_indices(mio::geo::GeographicalLocation(50.9, 6.8), 150).size(), 2);
+    EXPECT_EQ(
+        rtree.inrange_indices_approximate(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(),
+        2);
+    EXPECT_EQ(rtree.inrange_indices(mio::geo::GeographicalLocation(50.9, 6.8), mio::geo::kilometers(150)).size(), 2);
 }
 
 TEST(TestGeography, rtreeinrange_multiple_radii)
@@ -139,7 +141,9 @@ TEST(TestGeography, rtreeinrange_multiple_radii)
     // Generate a RTree object
     auto rtree = mio::geo::RTree(locations.begin(), locations.end());
     // Run inrange queries for three different ranges
-    auto result = rtree.inrange_indices_query(mio::geo::GeographicalLocation(51.4, 7.4), {130, 320, 80});
+    auto result =
+        rtree.inrange_indices_query(mio::geo::GeographicalLocation(51.4, 7.4),
+                                    {mio::geo::kilometers(130), mio::geo::kilometers(320), mio::geo::kilometers(80)});
     // Verify the number of results for each query is correct
     EXPECT_EQ(result[0].size(), 2);
     EXPECT_EQ(result[1].size(), 3);
