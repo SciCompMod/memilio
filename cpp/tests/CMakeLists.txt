@@ -75,6 +75,7 @@ set(TESTSOURCES
     test_ad.cpp
     test_smm_model.cpp
     test_geography.cpp
+    test_distance.cpp
     abm_helpers.h
     abm_helpers.cpp
     actions.h

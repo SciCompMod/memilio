@@ -20,6 +20,7 @@ add_library(memilio
     epidemiology/lct_populations.h
     epidemiology/adoption_rate.h
     epidemiology/simulation_day.h
+    geography/distance.h
     geography/regions.h
     geography/regions.cpp
     geography/geolocation.h
