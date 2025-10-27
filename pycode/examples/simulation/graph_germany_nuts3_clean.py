@@ -801,18 +801,18 @@ def run_training(name, num_training_files=20):
     #plots['z_score_contraction'].savefig(f'{name}/z_score_contraction_{name}.png')
 
 
-def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmentation=True):
+def run_inference(name, num_samples=10, on_synthetic_data=False):
     val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
-    with_aug = "_with_aug" if apply_augmentation else ""
 
     aug = bf.augmentations.NNPE(
         spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
     )
 
+    # validation data
+    validation_data = load_pickle(val_path)
     if on_synthetic_data:
         # validation data
-        validation_data = load_pickle(val_path)
         validation_data = apply_aug(validation_data, aug=aug)
         validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
         validation_data_skip2w = skip_2weeks(validation_data)
@@ -858,49 +858,62 @@ def run_inference(name, num_samples=100, on_synthetic_data=False, apply_augmenta
             results.append(result)
         results = combine_results(results)
         results = extract_observables(results)
-        if apply_augmentation:
-            results = apply_aug(results, aug=aug)
+        results_aug = apply_aug(results, aug=aug)
 
         # get sims in shape (samples, time, regions)
         simulations = np.zeros((num_samples, divi_data.shape[0], divi_data.shape[1]))
+        simulations_aug = np.zeros((num_samples, divi_data.shape[0], divi_data.shape[1]))
         for i in range(num_samples):
             simulations[i] = np.concatenate([results[key][i] for key in divi_region_keys], axis=-1)
+            simulations_aug[i] = np.concatenate([results_aug[key][i] for key in divi_region_keys], axis=-1)
 
         # save sims
-        with open(f'{name}/sims_{name}{synthetic}{with_aug}.pickle', 'wb') as f:
+        with open(f'{name}/sims_{name}{synthetic}.pickle', 'wb') as f:
             pickle.dump(simulations, f, pickle.HIGHEST_PROTOCOL)
+        with open(f'{name}/sims_{name}{synthetic}_with_aug.pickle', 'wb') as f:
+            pickle.dump(simulations_aug, f, pickle.HIGHEST_PROTOCOL)
 
-    plot_all_regions(simulations, divi_data, name, synthetic, with_aug)
 
-    plot_aggregated_to_federal_states(simulations, divi_data, name, synthetic, with_aug)
+    plot_all_regions(simulations, divi_data, name, synthetic, with_aug="")
+    plot_all_regions(simulations_aug, divi_data, name, synthetic, with_aug="_with_aug")
 
-    plot_aggregated_over_regions(simulations, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad")
-    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}{with_aug}.png')
+    plot_aggregated_to_federal_states(simulations, divi_data, name, synthetic, with_aug="")
+    plot_aggregated_to_federal_states(simulations_aug, divi_data, name, synthetic, with_aug="_with_aug")
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True, constrained_layout=True)
+    # Plot without augmentation
+    plot_aggregated_over_regions(
+        simulations, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad (No Aug)", ax=axes[0], color="red"
+    )
+    axes[0].set_title("Without Augmentation")
+    # Plot with augmentation
+    plot_aggregated_over_regions(
+        simulations_aug, true_data=divi_data, label="Region Aggregated Median $\pm$ Mad (With Aug)", ax=axes[1], color="red"
+    )
+    axes[1].set_title("With Augmentation")
+    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png')
     plt.close()
 
 
     fig, axis = plt.subplots(1, 2, figsize=(10, 4), sharex=True, layout="constrained")
     ax = calibration_curves_per_region(simulations, divi_data, ax=axis[0])
     ax, stats = calibration_median_mad_over_regions(simulations, divi_data, ax=axis[1])
-    plt.savefig(f'{name}/calibration_per_region_{name}{synthetic}{with_aug}.png')
+    plt.savefig(f'{name}/calibration_per_region_{name}{synthetic}.png')
+    plt.close()
+    fig, axis = plt.subplots(1, 2, figsize=(10, 4), sharex=True, layout="constrained")
+    ax = calibration_curves_per_region(simulations_aug, divi_data, ax=axis[0])
+    ax, stats = calibration_median_mad_over_regions(simulations_aug, divi_data, ax=axis[1])
+    plt.savefig(f'{name}/calibration_per_region_{name}{synthetic}_with_aug.png')
     plt.close()
 
+    plot_icu_on_germany(simulations, name, synthetic, with_aug="")
+    plot_icu_on_germany(simulations, name, synthetic, with_aug="_with_aug")
 
-    print("Fitted parameters ", name, synthetic, with_aug, ":")
-    for param in inference_params:
-        if param == 'damping_values':
-            plot_damping_values(samples['damping_values'][0].reshape((num_samples, 16, 3)), name, synthetic, with_aug)
-        else: 
-            med = np.median(samples[param][0], axis=0)
-            mad = np.median(np.abs(samples[param][0] - med), axis=0)
-            print(param, ": med: ", med)
-            print(param, ": mad: ", mad)
+    samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], samples['damping_values'].shape[1], -1))
+    validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
 
-    plot_icu_on_germany(simulations, name, synthetic, with_aug)
-
-
-    # plot = bf.diagnostics.pairs_posterior(simulations, priors=validation_data, dataset_id=0)
-    # plot.savefig(f'pairs_posterior_wcovidparams_oct{synthetic}_ma7_noise.png')
+    plot = bf.diagnostics.pairs_posterior(samples, priors=validation_data, dataset_id=0)
+    plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png')
 
 
 if __name__ == "__main__":
@@ -911,6 +924,4 @@ if __name__ == "__main__":
     # create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=1000)
     # run_training(name=name, num_training_files=20)
     run_inference(name=name, on_synthetic_data=True)
-    run_inference(name=name, on_synthetic_data=True, apply_augmentation=False)
     run_inference(name=name, on_synthetic_data=False)
-    run_inference(name=name, on_synthetic_data=False, apply_augmentation=False)
