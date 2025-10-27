@@ -151,6 +151,7 @@ void normalize_exposure_contribution(ContactExposureRates& local_contact_exposur
     for (auto index : make_index_range(local_contact_exposure.size())) {
         auto age_index = reduce_index<Index<CellIndex, AgeGroup>>(index);
         if (local_population_by_age[age_index] > 0) {
+            // this instruction is not and does not need to be atomic
             local_contact_exposure[index] = local_contact_exposure[index] / local_population_by_age[age_index];
         }
     }
