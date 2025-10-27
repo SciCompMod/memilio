@@ -901,7 +901,6 @@ def run_inference(name, num_samples=100, on_synthetic_data=False):
     plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png')
     plt.close()
 
-
     fig, axis = plt.subplots(1, 2, figsize=(10, 4), sharex=True, layout="constrained")
     ax = calibration_curves_per_region(simulations, divi_data, ax=axis[0])
     ax, stats = calibration_median_mad_over_regions(simulations, divi_data, ax=axis[1])
@@ -922,13 +921,23 @@ def run_inference(name, num_samples=100, on_synthetic_data=False):
     plot = bf.diagnostics.pairs_posterior(samples, priors=validation_data, dataset_id=0)
     plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png')
 
+    rmse = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(simulations, 0,1), divi_data, normalize=False)
+    rmse_aug = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(simulations_aug, 0,1), divi_data, normalize=False)
+    print("Mean RMSE over regions:", rmse["values"].mean())
+    print("Mean RMSE over regions (with aug):", rmse_aug["values"].mean())
+
+    cal_error = bf.diagnostics.metrics.calibration_error(np.swapaxes(simulations, 0,1), divi_data)
+    cal_error_aug = bf.diagnostics.metrics.calibration_error(np.swapaxes(simulations_aug, 0,1), divi_data)
+    print("Mean Calibration Error over regions:", cal_error["values"].mean())
+    print("Mean Calibration Error over regions (with aug):", cal_error_aug["values"].mean())
+
 
 if __name__ == "__main__":
     name = "3dampings"
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=1000)
+    # create_train_data(filename=f'{name}/validation_data{name}.pickle', number_samples=1000)
     # run_training(name=name, num_training_files=20)
     run_inference(name=name, on_synthetic_data=True)
     run_inference(name=name, on_synthetic_data=False)
