@@ -166,7 +166,20 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 int main(int argc, char** argv)
 {
     // Default problem size
-    size_t num_persons = 25000;
+    size_t num_persons = 1000000;
+
+    //print omp_threads
+#ifdef MEMILIO_ENABLE_OPENMP
+    int omp_threads = 1;
+#pragma omp parallel
+    {
+#pragma omp single
+        omp_threads = omp_get_num_threads();
+    }
+    std::cout << "Running ABM benchmark with " << omp_threads << " OpenMP threads.\n";
+#else
+    std::cout << "Running ABM benchmark without OpenMP.\n";
+#endif
 
     // Parse custom arguments for problem size BEFORE benchmark::Initialize
     // Remove custom args from argv to prevent benchmark from seeing them
