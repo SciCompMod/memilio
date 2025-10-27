@@ -538,6 +538,7 @@ protected:
 
     /**
      * @brief Store all air/contact exposures for the current simulation step.
+     * This will also compute the local population cache if it is not valid, as it is required for the computation of the exposure rates.
      * @param[in] t Current TimePoint of the simulation.
      * @param[in] dt The duration of the simulation step.
      */
