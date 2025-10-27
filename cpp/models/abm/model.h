@@ -94,7 +94,7 @@ public:
     Model(const Model& other, int id = 0)
         : parameters(other.parameters)
         , m_local_population_cache()
-        , m_local_population_per_age_cache()
+        , m_local_population_by_age_cache()
         , m_air_exposure_rates_cache()
         , m_contact_exposure_rates_cache()
         , m_is_local_population_cache_valid(false)
@@ -415,8 +415,8 @@ public:
             build_compute_local_population_cache();
             m_is_local_population_cache_valid = true;
         }
-        auto& m_local_population_per_age = m_local_population_per_age_cache[location.get()];
-        return m_local_population_per_age[{cell_idx, age}];
+        auto& m_local_population_by_age = m_local_population_by_age_cache[location.get()];
+        return m_local_population_by_age[{cell_idx, age}];
     }
 
     // Change the Location of a Person. this requires that Location is part of this Model.
@@ -564,12 +564,12 @@ protected:
                 --m_local_population_cache[origin.get()];
                 ++m_local_population_cache[destination.get()];
                 for (CellIndex cell : old_cells) {
-                    auto& local_population_per_age = m_local_population_per_age_cache[origin.get()];
-                    --local_population_per_age[{cell, person.get_age()}];
+                    auto& local_population_by_age = m_local_population_by_age_cache[origin.get()];
+                    --local_population_by_age[{cell, person.get_age()}];
                 }
                 for (CellIndex cell : cells) {
-                    auto& local_population_per_age = m_local_population_per_age_cache[destination.get()];
-                    ++local_population_per_age[{cell, person.get_age()}];
+                    auto& local_population_by_age = m_local_population_by_age_cache[destination.get()];
+                    ++local_population_by_age[{cell, person.get_age()}];
                 }
             }
         }
@@ -621,7 +621,7 @@ protected:
         auto personal_rng = PersonalRandomNumberGenerator(person);
         auto location     = person.get_location();
         mio::abm::interact(personal_rng, person, get_location(location),
-                           m_local_population_per_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
+                           m_local_population_by_age_cache[location.get()], m_air_exposure_rates_cache[location.get()],
                            m_contact_exposure_rates_cache[location.get()], t, dt, parameters);
     }
 
@@ -653,8 +653,8 @@ protected:
 
     mutable Eigen::Matrix<std::atomic_int_fast32_t, Eigen::Dynamic, 1>
         m_local_population_cache; ///< Current number of Persons in a given location.
-    mutable Eigen::Matrix<CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>, Eigen::Dynamic, 1>
-        m_local_population_per_age_cache; ///<Current number of Persons per AgeGroup in a given location.
+    mutable Eigen::Matrix<PopulationByAge, Eigen::Dynamic, 1>
+        m_local_population_by_age_cache; ///<Current number of Persons per AgeGroup in a given location.
     Eigen::Matrix<AirExposureRates, Eigen::Dynamic, 1>
         m_air_exposure_rates_cache; ///< Cache for local exposure through droplets in #transmissions/day.
     Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>

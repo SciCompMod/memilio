@@ -216,12 +216,12 @@ TEST_F(TestModel, exposureContributionNormalization)
     contact_exposure_rates.resize({mio::abm::CellIndex{1}, mio::abm::VirusVariant{1}, mio::AgeGroup{1}});
     contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}] = 10.0;
 
-    mio::CustomIndexArray<std::atomic_int_fast32_t, mio::abm::CellIndex, mio::AgeGroup> local_population_per_age;
-    local_population_per_age.resize({mio::abm::CellIndex{1}, mio::AgeGroup{1}});
-    local_population_per_age[{mio::abm::CellIndex{0}, mio::AgeGroup{0}}] =
+    mio::abm::PopulationByAge local_population_by_age;
+    local_population_by_age.resize({mio::abm::CellIndex{1}, mio::AgeGroup{1}});
+    local_population_by_age[{mio::abm::CellIndex{0}, mio::AgeGroup{0}}] =
         2; // Set population for cell 0 and age group 0 to 2
 
-    mio::abm::normalize_exposure_contribution(contact_exposure_rates, local_population_per_age, 1);
+    mio::abm::normalize_exposure_contribution(contact_exposure_rates, local_population_by_age);
 
     auto& rate = contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}];
     EXPECT_EQ(rate, 5.0);

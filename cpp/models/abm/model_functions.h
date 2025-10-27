@@ -37,14 +37,13 @@ namespace abm
  * @param[in] cell_index Cell index of the Cell.
  * @param[in] virus VirusVariant of interest.
  * @param[in] age_receiver AgeGroup of the receiving Person.
- * @param[in] num_persons_in_age_receiverer_group Number of persons in the AgeGroup of the receiving Person.
+ * @param[in] age_receiver_group_size Number of persons in the AgeGroup of the receiving Person.
  * @param[in] params The local infection parameters.
  * @return Average amount of Infection%s with the virus from the AgeGroup of the transmitter per day.
  */
 ScalarType daily_transmissions_by_contacts(const ContactExposureRates& rates, const CellIndex cell_index,
                                            const VirusVariant virus, const AgeGroup age_receiver,
-                                           size_t num_persons_in_age_receiverer_group,
-                                           const LocalInfectionParameters& params);
+                                           size_t age_receiver_group_size, const LocalInfectionParameters& params);
 
 /**
  * @brief Compute the number of daily transmissions for aerosol transmission of a virus in a cell.
@@ -71,23 +70,22 @@ void add_exposure_contribution(AirExposureRates& local_air_exposure, ContactExpo
                                const Person& person, const Location& location, const Parameters& params,
                                const TimePoint t, const TimeSpan dt);
 
+using PopulationByAge = CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>;
+
 /**
- * @brief Normalize contact exposure rate by number of people in age groups
- * @param[in, out] local_contact_exposure Exposure by rates contacts for the local population.
- * @param[in] local_population_per_age Local population per AgeGroup.
- * @param[in] num_agegroup The number of AgeGroups in the model.
+ * @brief Normalize contact exposure rate to average exposure per contact per time (from total exposure per time).
+ * @param[in, out] local_contact_exposure Exposure rates through contacts for the local population.
+ * @param[in] local_population_by_age Local population by AgeGroup%s.
  */
-void normalize_exposure_contribution(
-    ContactExposureRates& local_contact_exposure,
-    const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age,
-    size_t num_agegroups);
+void normalize_exposure_contribution(ContactExposureRates& local_contact_exposure,
+                                     const PopulationByAge& local_population_by_age);
 
 /**
  * @brief Let a Person interact with the population at its current Location, possibly getting infected.
  * @param[in, out] rng PersonalRandomNumberGenerator for this Person.
  * @param[in, out] person The person to interact with the local population.
  * @param[in] location The person's current location.
- * @param[in] local_population_per_age Local population per AgeGroup at the location.
+ * @param[in] local_population_by_age Local population by AgeGroup%s at the given location.
  * @param[in] local_air_exposure Precomputed exposure rates by aerosols for the local population.
  * @param[in] local_contact_exposure Precomputed exposure by rates contacts for the local population.
  * @param[in] t Current Simulation time.
@@ -95,9 +93,9 @@ void normalize_exposure_contribution(
  * @param[in] global_parameters Parameters of the Model.
  */
 void interact(PersonalRandomNumberGenerator& personal_rng, Person& person, const Location& location,
-              const CustomIndexArray<std::atomic_int_fast32_t, CellIndex, AgeGroup>& local_population_per_age,
-              const AirExposureRates& local_air_exposure, const ContactExposureRates& local_contact_exposure,
-              const TimePoint t, const TimeSpan dt, const Parameters& global_parameters);
+              const PopulationByAge& local_population_by_age, const AirExposureRates& local_air_exposure,
+              const ContactExposureRates& local_contact_exposure, const TimePoint t, const TimeSpan dt,
+              const Parameters& global_parameters);
 /**
  * @brief Change a persons location to another location.
  * If the person already is at the destination, neither mode nor cells are set.
