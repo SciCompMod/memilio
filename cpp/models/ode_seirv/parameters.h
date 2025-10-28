@@ -53,11 +53,11 @@ struct BaselineTransmissibility {
 /**
  * @brief Transition/recovery rate in 1/week.
  *
- * Controls E→I and I→Rand is included in the force of infection to decouple from R_e.
+ * Controls E→I and I→R and is included in the force of infection to decouple the recovery rate from R_e.
  * Use the model time unit (weeks). Default: 1/2.0
  */
 template <class FP>
-struct Gamma {
+struct RecoveryRate {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -91,10 +91,10 @@ struct SeasonalityAmplitude {
 /**
  * @brief Subtype-specific seasonal shift t_z.
  *
- * Phase shift for the sinusoid in the force of incetion.; may be adjusted by a seasonal-shift correction if implemented. Default: 0.0.
+ * Phase shift for the sinusoid in the force of infection; may be adjusted by a seasonal-shift correction if implemented. Default: 0.0.
  */
 template <class FP>
-struct ShiftTZ {
+struct SeasonalityShiftPerSubtype {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -112,7 +112,7 @@ struct ShiftTZ {
  * Additional small seasonal timing correction per season. Default: 0.0.
  */
 template <class FP>
-struct ShiftTS {
+struct SeasonalityShiftPerSeason{
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -128,7 +128,7 @@ struct ShiftTS {
  * @brief Outside force of infection in 1/week.
  *
  * Additive external hazard that can seed infections when no infectives are present.
- * Used for the beginning of the season (to import infections) or to model travel/imported cases.
+ * Used in the beginning of the season (to import infections) or to model travel/imported cases.
  * Default: 0.0.
  */
 template <class FP>
@@ -150,7 +150,7 @@ struct OutsideFoI {
  * Exponent on the infectious fraction in force of infection. Must be > 0. Default: 1.0.
  */
 template <class FP>
-struct ClusteringRho {
+struct ClusteringExponent{
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -169,7 +169,7 @@ struct ClusteringRho {
  * Combines share of symptomatic cases and their higher infectiousness. Default: 1.0.
  */
 template <class FP>
-struct SickMixingM {
+struct SickMixing {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -225,7 +225,7 @@ struct ContactPatternsSick {
  * Default: 1.0 (fully susceptible).
  */
 template <class FP>
-struct SigmaByAge {
+struct SusceptibilityByAge {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -275,10 +275,10 @@ struct VaccineEffectiveness {
 };
 
 /**
- * @brief phi: fraction of the population that remains susceptible at t0 (dimensionless, typically in [0,1]).
+ * @brief Fraction of the population that remains susceptible at t0 phi (dimensionless, typically in [0,1]).
  */
 template <class FP>
-struct Phi {
+struct SusceptibleFraction {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
