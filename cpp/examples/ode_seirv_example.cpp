@@ -28,6 +28,9 @@
  * We assume that no one is initially infected or exposed at the beginning of the season.
  * Infections are seeded later via the OutsideFoI parameter.
  * The destinction into the 2 layers of susceptibility is done via the parameters.
+ * @tparam FP floating point type
+ * @param[in, out] model SEIRV model
+ * @param[in] total_pop total population size
  */
 template <class FP>
 void set_initial_population(mio::oseirv::Model<FP>& model, const FP total_pop)
@@ -77,18 +80,18 @@ int main()
     mio::oseirv::Model<FP> model((int)num_groups);
     auto& parameters = model.parameters;
 
-    FP cont_freq = 10.0;
-    FP fact      = FP(1) / FP(num_groups);
+    FP cont_freq       = 10.0;
+    FP cont_freq_group = FP(1) / FP(num_groups);
 
     // Healthy contacts
     mio::ContactMatrixGroup<ScalarType>& contacts_healthy = parameters.get<mio::oseirv::ContactPatternsHealthy<FP>>();
     contacts_healthy[0]                                   = mio::ContactMatrix<FP>(
-        Eigen::MatrixXd::Constant((Eigen::Index)num_groups, (Eigen::Index)num_groups, fact * cont_freq));
+        Eigen::MatrixXd::Constant((Eigen::Index)num_groups, (Eigen::Index)num_groups, cont_freq_group * cont_freq));
 
     // Sick contacts (here 20% reduced)
     mio::ContactMatrixGroup<ScalarType>& contacts_sick = parameters.get<mio::oseirv::ContactPatternsSick<FP>>();
-    contacts_sick[0]                                   = mio::ContactMatrix<FP>(
-        Eigen::MatrixXd::Constant((Eigen::Index)num_groups, (Eigen::Index)num_groups, fact * cont_freq * 0.8));
+    contacts_sick[0]                                   = mio::ContactMatrix<FP>(Eigen::MatrixXd::Constant(
+        (Eigen::Index)num_groups, (Eigen::Index)num_groups, cont_freq_group * cont_freq * 0.8));
 
     // Parameters
     parameters.get<mio::oseirv::BaselineTransmissibility<FP>>() = 1.2;
