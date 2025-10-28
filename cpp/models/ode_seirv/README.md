@@ -9,6 +9,12 @@ model structure from:
 > **BMC Infectious Diseases** 17, 258 (2017).  
 > https://doi.org/10.1186/s12879-017-2344-6
 
+## Get started
+
+To get started, check out the
+[official documentation](https://memilio.readthedocs.io/en/latest/cpp/models/oseirv.html)
+or the [code example](../../examples/ode_seirv_example.cpp).
+
 ## Reference
 
 Please cite the original study if you use this model:

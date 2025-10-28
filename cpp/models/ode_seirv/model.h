@@ -76,50 +76,49 @@ public:
         const auto& params      = this->parameters;
         const size_t num_groups = (size_t)params.get_num_groups();
 
-        // Contact matrices
-        const auto cm_h_expr =
+        // Get effective contact matrix effective_contacts  = contacts_healthy + m*contacts_sick
+        Eigen::MatrixX<FP> contacts_healthy =
             params.template get<ContactPatternsHealthy<FP>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t));
-        const auto cm_s_expr =
+        Eigen::MatrixX<FP> contacts_sick =
             params.template get<ContactPatternsSick<FP>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t));
-
-        // Get effective contact matrix B = H + m*S
-        Eigen::MatrixX<FP> H = cm_h_expr;
-        Eigen::MatrixX<FP> S = cm_s_expr;
-        const FP m           = params.template get<SickMixingM<FP>>();
-        Eigen::MatrixX<FP> B = H + m * S;
+        const FP m                            = params.template get<SickMixingM<FP>>();
+        Eigen::MatrixX<FP> effective_contacts = contacts_healthy + m * contacts_sick;
 
         // Normalization ν(m): prepare susceptibility scaling and next-generation matrix (NG)
         // sigma_i = Phi * SigmaByAge[i] (age-specific susceptibility scaled by a global factor)
-        Eigen::VectorX<FP> sigma(num_groups);
+        Eigen::VectorX<FP> susceptibility(num_groups);
         for (size_t i = 0; i < num_groups; ++i)
-            sigma[(Eigen::Index)i] =
+            susceptibility[(Eigen::Index)i] =
                 params.template get<SigmaByAge<FP>>()[AgeGroup(i)] * params.template get<Phi<FP>>();
         // Sigma is a diagonal matrix applying susceptibility on the receiving (row) side of contacts.
-        Eigen::MatrixX<FP> Sigma = sigma.asDiagonal();
+        Eigen::MatrixX<FP> Sigma = susceptibility.asDiagonal();
 
-        // NG = Sigma * B is the (unnormalized) next-generation matrix. Its spectral radius will be used
-        // below to scale contacts B so that structure (mixing pattern) and transmissibility magnitude (BaselineTransmissibility)
+        // NG = Sigma * effective_contacts is the (unnormalized) next-generation matrix. Its spectral radius will be used
+        // below to scale contacts effective_contacts so that structure (mixing pattern) and transmissibility magnitude (BaselineTransmissibility)
         // are cleanly separated.
-        Eigen::MatrixX<FP> NG = Sigma * B;
+        Eigen::MatrixX<FP> NG = Sigma * effective_contacts;
 
         Eigen::ComplexEigenSolver<Eigen::MatrixX<FP>> ces;
         ces.compute(NG);
-        FP nu = ces.eigenvalues().cwiseAbs().maxCoeff();
-        if (nu > FP(0.)) {
-            B /= nu;
+        FP scale_transmissibility = ces.eigenvalues().cwiseAbs().maxCoeff();
+        if (scale_transmissibility > FP(0.)) {
+            effective_contacts /= scale_transmissibility;
         }
 
-        const FP Re =
+        const FP transmissibility_baseline =
             params.template get<BaselineTransmissibility<FP>>(); // baseline transmissibility scaling (R-like factor)
-        const FP gamma   = params.template get<Gamma<FP>>(); // progression/recovery rate (1 / mean duration)
-        const FP delta   = params.template get<SeasonalityAmplitude<FP>>(); // amplitude of seasonal modulation
-        const FP tz      = params.template get<ShiftTZ<FP>>(); // base phase shift for seasonality
-        const FP ts      = params.template get<ShiftTS<FP>>(); // additional phase shift (e.g. scenario-specific)
-        const FP lambda0 = params.template get<OutsideFoI<FP>>(); // constant external force of infection
-        const FP rho     = params.template get<
-            ClusteringRho<FP>>(); // clustering exponent; rho<1 dampens, rho>1 amplifies prevalence effect
+        const FP recovery_rate    = params.template get<Gamma<FP>>(); // progression/recovery rate (1 / mean duration)
+        const FP season_amplitude = params.template get<SeasonalityAmplitude<FP>>(); // amplitude of seasonal modulation
+        const FP season_shift_per_subtype = params.template get<ShiftTZ<FP>>(); // base phase shift for seasonality
+        const FP season_shift_per_season =
+            params.template get<ShiftTS<FP>>(); // additional phase shift (e.g. season-specific)
+        const FP outside_foi    = params.template get<OutsideFoI<FP>>(); // constant external force of infection
+        const FP clustering_exp = params.template get<ClusteringRho<
+            FP>>(); // clustering exponent; clustering_exp<1 dampens, clustering_exp>1 amplifies prevalence effect
 
-        const FP season = std::exp(delta * std::sin(FP(2) * std::numbers::pi_v<FP> * (t / FP(52.0) - tz + ts)));
+        const FP season =
+            std::exp(season_amplitude * std::sin(FP(2) * std::numbers::pi_v<FP> *
+                                                 (t / FP(52.0) - season_shift_per_subtype + season_shift_per_season)));
 
         for (auto i : make_index_range((mio::AgeGroup)num_groups)) {
             // Flat indices
@@ -130,7 +129,6 @@ public:
             const size_t Ii  = this->populations.get_flat_index({i, InfectionState::Infected});
             const size_t IVi = this->populations.get_flat_index({i, InfectionState::InfectedVaccinated});
 
-            // λ_i(t) = Re*γ*season * sum_j B_{ij} * ((I_j+I^V_j)/N_j)^ρ + λ0
             FP sum = FP(0);
             for (auto j : make_index_range((mio::AgeGroup)num_groups)) {
                 const size_t Sj  = this->populations.get_flat_index({j, InfectionState::Susceptible});
@@ -144,26 +142,26 @@ public:
 
                 const FP Nj       = pop[Sj] + pop[SVj] + pop[Ej] + pop[EVj] + pop[Ij] + pop[IVj] + pop[Rj] + pop[RVj];
                 const FP inf_frac = (Nj > FP(0)) ? ((pop[Ij] + pop[IVj]) / Nj) : FP(0);
-                const FP term     = (rho == FP(1)) ? inf_frac : std::pow(inf_frac, rho);
-                sum += B(i.get(), j.get()) * term;
+                const FP transmission_rate = (clustering_exp == FP(1)) ? inf_frac : std::pow(inf_frac, clustering_exp);
+                sum += effective_contacts(i.get(), j.get()) * transmission_rate;
             }
-            const FP lambda_i = Re * gamma * season * sum + lambda0;
+            const FP foi_i = transmissibility_baseline * recovery_rate * season * sum + lambda0;
 
             // Flows: S->E, S^V->E^V, E->I, E^V->I^V, I->R, I^V->R^V
             flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] =
-                lambda_i * y[Si];
+                foi_i * y[Si];
             flows[Base::template get_flat_flow_index<InfectionState::SusceptibleVaccinated,
-                                                     InfectionState::ExposedVaccinated>(i)] = lambda_i * y[SVi];
+                                                     InfectionState::ExposedVaccinated>(i)] = foi_i * y[SVi];
 
             flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(i)] =
-                gamma * y[Ei];
+                recovery_rate * y[Ei];
             flows[Base::template get_flat_flow_index<InfectionState::ExposedVaccinated,
-                                                     InfectionState::InfectedVaccinated>(i)] = gamma * y[EVi];
+                                                     InfectionState::InfectedVaccinated>(i)] = recovery_rate * y[EVi];
 
             flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(i)] =
-                gamma * y[Ii];
+                recovery_rate * y[Ii];
             flows[Base::template get_flat_flow_index<InfectionState::InfectedVaccinated,
-                                                     InfectionState::RecoveredVaccinated>(i)] = gamma * y[IVi];
+                                                     InfectionState::RecoveredVaccinated>(i)] = recovery_rate * y[IVi];
         }
     }
 };
