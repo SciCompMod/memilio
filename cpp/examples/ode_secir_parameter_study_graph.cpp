@@ -262,7 +262,7 @@ int main()
         2, 1, Eigen::VectorX<ScalarType>::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.2),
         indices_save_edges);
 
-    mio::ParameterStudy2 parameter_study(params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs));
+    mio::ParameterStudy parameter_study(params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs));
 
     if (mio::mpi::is_root()) {
         printf("Seeds: ");

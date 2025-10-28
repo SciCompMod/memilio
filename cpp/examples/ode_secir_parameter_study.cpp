@@ -127,7 +127,7 @@ int main()
 
     // create study
     auto num_runs = size_t(3);
-    mio::ParameterStudy2 parameter_study(model, t0, tmax, dt, num_runs);
+    mio::ParameterStudy parameter_study(model, t0, tmax, dt, num_runs);
 
     // set up for run
     auto sample_graph = [](const auto& model_, ScalarType t0_, ScalarType dt_, size_t) {

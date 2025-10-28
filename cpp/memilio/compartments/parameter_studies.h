@@ -47,7 +47,7 @@ namespace mio
  * @tparam StepType The type used for time steps, e.g. double or TimeStep.
  */
 template <class ParameterType, typename TimeType, typename StepType = TimeType>
-class ParameterStudy2
+class ParameterStudy
 {
 public:
     using Parameters = ParameterType;
@@ -76,7 +76,7 @@ public:
      * @param dt Initial time step of simulations.
      * @param num_runs Number of simulations that will be created and run.
      */
-    ParameterStudy2(const Parameters& parameters, Time t0, Time tmax, Step dt, size_t num_runs)
+    ParameterStudy(const Parameters& parameters, Time t0, Time tmax, Step dt, size_t num_runs)
         : m_parameters(parameters)
         , m_num_runs(num_runs)
         , m_t0{t0}

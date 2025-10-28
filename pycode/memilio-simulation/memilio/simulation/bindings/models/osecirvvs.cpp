@@ -59,7 +59,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     using GraphT      = mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>;
     using SimulationT = mio::GraphSimulation<double, GraphT, double, double>;
     using ParametersT = mio::Graph<typename Sim::Model, mio::MobilityParameters<double>>;
-    using StudyT      = mio::ParameterStudy2<ParametersT, double>;
+    using StudyT      = mio::ParameterStudy<ParametersT, double>;
 
     pymio::bind_class<StudyT, pymio::EnablePickling::Never>(m, name.c_str())
         .def(py::init<const ParametersT&, double, double, double, size_t>(), py::arg("parameters"), py::arg("t0"),

@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    mio::ParameterStudy2 study(graph_read, t0, tmax, 0.5, 2);
+    mio::ParameterStudy study(graph_read, t0, tmax, 0.5, 2);
     study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
         auto copy = g;
         return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<ScalarType>>(draw_sample(copy), t0_,

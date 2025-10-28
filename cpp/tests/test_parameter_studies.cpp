@@ -161,7 +161,7 @@ TEST(ParameterStudies, sample_graph)
     graph.add_node(1, model);
     graph.add_edge(0, 1, mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    mio::ParameterStudy2 study(graph, 0.0, 0.0, 0.5, 1);
+    mio::ParameterStudy study(graph, 0.0, 0.0, 0.5, 1);
     mio::log_rng_seeds(study.get_rng(), mio::LogLevel::warn);
     auto ensemble_results = study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
         auto copy = g;
@@ -377,7 +377,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
-    mio::ParameterStudy2 parameter_study(model, t0, tmax, 0.1, 1);
+    mio::ParameterStudy parameter_study(model, t0, tmax, 0.1, 1);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     // Run parameter study
@@ -444,7 +444,7 @@ TEST(ParameterStudies, mocked_run)
         return s.tmax + i;
     };
     const double process_sim_result = (num_runs * tmax) + num_runs * (num_runs - 1) / 2.;
-    mio::ParameterStudy2 study(params, t0, tmax, dt, num_runs);
+    mio::ParameterStudy study(params, t0, tmax, dt, num_runs);
     // case: run_serial without processing; expect created simulations in order
     auto result_serial = study.run_serial(make_sim);
     EXPECT_EQ(result_serial.size(), num_runs);

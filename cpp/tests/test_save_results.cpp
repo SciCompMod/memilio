@@ -170,7 +170,7 @@ TEST(TestSaveResult, save_result_with_params)
                    mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
     auto num_runs = 3;
-    mio::ParameterStudy2 parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -306,7 +306,7 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                                                    indices_save_edges));
 
     auto num_runs = 3;
-    mio::ParameterStudy2 parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
+    mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;

@@ -66,7 +66,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
     using GraphT      = mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>;
     using SimulationT = mio::GraphSimulation<double, GraphT, double, double>;
     using ParametersT = mio::Graph<typename Sim::Model, mio::MobilityParameters<double>>;
-    using StudyT      = mio::ParameterStudy2<ParametersT, double>;
+    using StudyT      = mio::ParameterStudy<ParametersT, double>;
 
     const auto create_simulation = [](const ParametersT& g, double t0, double dt, size_t) {
         auto copy = g;
