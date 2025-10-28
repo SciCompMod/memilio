@@ -188,20 +188,11 @@ public:
     }
 
 private:
-    /**
-     * @brief Point stores longitude and latitude in this order.
-     * 
-     */
+    /// @brief Point stores longitude and latitude in this order.
     using Point = boost::geometry::model::point<double, 2, boost::geometry::cs::geographic<boost::geometry::degree>>;
-    /**
-     * @brief Node stores a point and its associated index.
-     * 
-     */
+    /// @brief Node stores a point and its associated index.
     using Node = std::pair<Point, size_t>;
-    /**
-     * @brief MultiPolygon type for circle approximation.
-     * 
-     */
+    /// @brief MultiPolygon type for circle approximation.
     using MultiPolygon = boost::geometry::model::multi_polygon<boost::geometry::model::polygon<Point>>;
     /**
      * @brief Create a circle approximation object.

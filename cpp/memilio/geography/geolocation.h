@@ -176,7 +176,6 @@ public:
 private:
     /**
      * @brief Assert that the latitude and longitude are within valid ranges.
-     * 
      */
     void check_input() const
     {
