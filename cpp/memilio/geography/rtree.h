@@ -52,6 +52,8 @@ concept SphericalLocationType = requires(const Location& loc) {
  * Data structure to store spatial indices and allow for efficient in-range and nearest neighbour queries. 
  * Wraps the Boost::geometry::index::rtree. Can be initialized with a vector of geographical location data or a range.
  * The provided location data needs to provide get_latitude() and get_longitude().
+ * The tree is initialised with a maximum number of elements per tree node of 16, which can be changed for different use 
+ * cases. 
  */
 class RTree
 {
@@ -208,7 +210,7 @@ private:
      *
      * @param location Midpoint, needs to provide get_latitude() and get_longitude().
      * @param radius
-     * @param approximation_points Number of points used to approximate the circle.
+     * @param approximation_points Number of points used to approximate the circle. Default is 36, i.e. we build a 36-gon.
      * @return multi_polygon.
      */
     MultiPolygon create_circle_approximation(const SphericalLocationType auto& location, Distance radius,
