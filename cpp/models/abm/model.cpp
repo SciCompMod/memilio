@@ -71,6 +71,10 @@ PersonId Model::add_person(Person&& person)
     auto& new_person = m_persons.back();
     if (m_is_local_population_cache_valid) {
         ++m_local_population_cache[new_person.get_location().get()];
+        for (CellIndex cell : new_person.get_cells()) {
+            auto& local_population_by_age = m_local_population_by_age_cache[new_person.get_location().get()];
+            ++local_population_by_age[{cell, new_person.get_age()}];
+        }
     }
     return new_person.get_id();
 }
@@ -221,18 +225,33 @@ void Model::build_compute_local_population_cache() const
 {
     PRAGMA_OMP(single)
     {
+        log_debug("Building local population cache for ABM.");
         const size_t num_locations = m_locations.size();
         const size_t num_persons   = m_persons.size();
         m_local_population_cache.resize(num_locations);
+        m_local_population_by_age_cache.resize(num_locations);
+
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_locations; i++) {
             m_local_population_cache[i] = 0;
+            m_local_population_by_age_cache[i].resize(
+                {CellIndex(m_locations[i].get_cells().size()), AgeGroup(parameters.get_num_groups())});
+            for (CellIndex cell = 0; cell < CellIndex(m_locations[i].get_cells().size()); ++cell) {
+                for (AgeGroup group = AgeGroup(0); group < AgeGroup(parameters.get_num_groups()); ++group) {
+                    auto& local_population_by_age          = m_local_population_by_age_cache[i];
+                    local_population_by_age[{cell, group}] = 0;
+                }
+            }
         } // implicit taskloop barrier
         PRAGMA_OMP(taskloop)
         for (size_t i = 0; i < num_persons; i++) {
             if (m_activeness_statuses[i]) {
                 assert(m_persons[i].get_location_model_id() == m_id && "Person is not in this model but still active.");
                 ++m_local_population_cache[m_persons[i].get_location().get()];
+                for (CellIndex cell : m_persons[i].get_cells()) {
+                    auto& local_population_by_age = m_local_population_by_age_cache[m_persons[i].get_location().get()];
+                    ++local_population_by_age[{cell, m_persons[i].get_age()}];
+                }
             }
         } // implicit taskloop barrier
     } // implicit single barrier
@@ -242,6 +261,7 @@ void Model::build_exposure_caches()
 {
     PRAGMA_OMP(single)
     {
+        mio::log_debug("Building exposure caches for ABM.");
         const size_t num_locations = m_locations.size();
         m_air_exposure_rates_cache.resize(num_locations);
         m_contact_exposure_rates_cache.resize(num_locations);
@@ -297,6 +317,20 @@ void Model::compute_exposure_caches(TimePoint t, TimeSpan dt)
                                                     get_location(person.get_location()), parameters, t, dt);
             }
         } // implicit taskloop barrier
+
+        // 3) normalize contributions for each location
+
+        // make sure that the caches are computed
+        if (!m_is_local_population_cache_valid) {
+            build_compute_local_population_cache();
+            m_is_local_population_cache_valid = true;
+        }
+        PRAGMA_OMP(taskloop)
+        for (size_t location = 0; location < num_locations; ++location) {
+            mio::abm::normalize_exposure_contribution(m_contact_exposure_rates_cache[location],
+                                                      m_local_population_by_age_cache[location]);
+        } // implicit taskloop barrier
+
     } // implicit single barrier
 }
 
