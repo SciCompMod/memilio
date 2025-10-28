@@ -128,14 +128,15 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     flows.setZero();
     model.get_flows(pop, y0, 0.0, flows);
 
+    const auto recovery_rate = model.parameters.get<mio::oseirv::RecoveryRate<double>>();
     const double N       = S + SV + E + EV + I + IV; // (R,RV = 0)
     const double lambda  = (I + IV) / N; // expected force of infection
     const double f_SE    = S * lambda;
     const double f_SV_EV = SV * lambda;
-    const double f_E_I   = RecoveryRate * E;
-    const double f_EV_IV = RecoveryRate * EV;
-    const double f_I_R   = RecoveryRate * I;
-    const double f_IV_RV = RecoveryRate * IV;
+    const double f_E_I   = recovery_rate * E;
+    const double f_EV_IV = recovery_rate * EV;
+    const double f_I_R   = recovery_rate * I;
+    const double f_IV_RV = recovery_rate * IV;
 
     auto idx_SE = model.template get_flat_flow_index<mio::oseirv::InfectionState::Susceptible,
                                                      mio::oseirv::InfectionState::Exposed>(mio::AgeGroup(0));
