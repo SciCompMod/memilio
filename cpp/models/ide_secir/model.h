@@ -219,7 +219,7 @@ public:
         transitions; ///< TimeSeries containing points of time and the corresponding number of individuals transitioning from
     // one #InfectionState to another as defined in #InfectionTransition%s for every AgeGroup.
     TimeSeries<ScalarType> populations; ///< TimeSeries containing points of time and the corresponding number of
-        // people in defined #InfectionState%s for every AgeGroup.
+    // people in defined #InfectionState%s for every AgeGroup.
     CustomIndexArray<ScalarType, AgeGroup>
         total_confirmed_cases; ///< CustomIndexArray that contains the total number of confirmed cases at time t0 for every AgeGroup.
 

@@ -222,7 +222,7 @@ IOResult<void> set_initial_flows(Model& model, const ScalarType dt, const std::v
                 Eigen::Index(std::max(std::floor((offset - model.transitions.get_time(0) - 1) / dt), 0.));
             // Biggest index for which the entry is needed.
             idx_needed_last = Eigen::Index(std::min(std::ceil((offset - model.transitions.get_time(0) + 1) / dt),
-                                                    double(model.transitions.get_num_time_points() - 1)));
+                                                    ScalarType(model.transitions.get_num_time_points() - 1)));
 
             int INStISyi = model.get_transition_flat_index(
                 Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);

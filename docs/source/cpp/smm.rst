@@ -5,8 +5,10 @@ The stochastic metapopulation model uses a Markov process to simulate disease dy
 
 :math:`\partial_t p(X,Z;t) = G p(X,Z;t) + L p(X,Z;t)`.
 
-The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z` the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X` the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct methode (stochastic simulation algorithm) is used for simulation.
+The operator :math:`G` defines the infection state adoptions and only acts on :math:`Z`, the vector containing all subpopulations stratified by infection state. :math:`L` defines location changes, only acting on :math:`X`, the vector containing all subpopulations stratified by region. Infection state adoptions are modeled as stochastic jumps with independent Poisson processes given by adoption rate functions. Similar to the infection state dynamics, spatial transitions between regions are also modeled as stochastic jumps with independent Poisson processes given by transition rate functions. Gillespie's direct method (stochastic simulation algorithm) is used for simulation.
 
+In the following, we present more details of the stochastic metapopulation model, including code examples. 
+An overview of nonstandard but often used data types can be found under :doc:`data_types`.
 
 Infection states
 ----------------
@@ -36,7 +38,7 @@ Using the infection states Susceptible (S), Exposed (E), Carrier (C), Infected (
 Infection state transitions
 ---------------------------
 
-The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
+The infection state transitions are explicitly given by the adoption rates and are therefore subject to user input. Adoption rates always depend on their source infection state. If an adoption event requires interaction of agents (e.g. disease transmission), the corresponding rate depends not only on the source infection state, but also on other infection states, the **Influence**\s. An adoption rate that only depends on the source infection state, e.g. recovery or worsening of disease symptoms, is called `first-order` adoption rate and an adoption rate that has influences is called `second-order` adoption rate. Adoption rates are region-dependent; therefore it is possible to have different rates in two regions for the same infection state transition which can be useful when having e.g. region-dependent interventions or contact behavior.
 
 Using the infection states from above and two regions, there are five first-order adoption rates per region and one second-order adoption rate per region. In the example below, the second-order adoption rate (transition from S to E) differs between the regions:
 
@@ -53,9 +55,10 @@ Using the infection states from above and two regions, there are five first-orde
       adoption_rates.push_back({InfectionState::I, InfectionState::D, mio::regions::Region(r), 0.01 / 5., {}});
    }
 
-   //Set second-order adoption rate different for the two regions
+  //Set second-order adoption rate different for the two regions
+  // adoption rate has the form {i, j, k, c_{i,j}, {{tau1.state, tau1.factor}, {tau2.state, tau2.factor}}}, see the equation below
    adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(0), 0.1, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
-   adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(0), 0.2, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
+   adoption_rates.push_back({InfectionState::S, InfectionState::E, mio::regions::Region(1), 0.2, {{InfectionState::C, 1}, {InfectionState::I, 0.5}}});
 
    //Initialize model parameter
    model.parameters.get<mio::smm::AdoptionRates<InfectionState>>()   = adoption_rates;
@@ -80,12 +83,29 @@ The model has the following parameters:
    * - :math:`\gamma^{(k)}_{i,j}`
      - ``AdoptionRate``
      - Adoption rate in region k from infection state i to state j. Apart from the region k, the source (i) and target (j) infection state, the adoption rates get influences :math:`\tau \in \Psi` and a constant :math:`c_{i,j}`.
-   * - :math:`\tau`
+   * - :math:`\tau=(\tau_{factor}, \tau_{state})`
      - ``Influence``
      - Influence for second-order adoption rate consisting of the influencing infection state and a factor with which the population having the corresponding infection state is multiplied.
-   * - :math:`\lambda^{(k,l)}_{i}`
+   * - :math:`\tilde{\lambda}^{(k,l)}_{i}`
      - ``TransitionRate``
-     - Spatial transition rate for infection state i from region k to region l.
+     - Spatial transition rate for infection state i from region k to region l. Apart from the source region k, the target region l and the infection state i, the transition rates also get a constant :math:`\lambda^{(k,l)}_{i}`.
+
+The adoption rate :math:`\gamma^{(k)}_{i,j}` at time :math:`t` is given by
+
+.. math::  
+
+   \gamma^{(k)}_{i,j}(t) = 
+   \begin{cases}
+      c_{i,j}\frac{i^{(k)}}{N}\cdot\sum_{\tau \in \Psi}\tau_{factor} \cdot \tau_{state}(t) & \text{if } \Psi \neq \emptyset\\
+      c_{i,j}i^{(k)} & \text{if } \text{otherwise}
+   \end{cases}
+
+and the spatial transition rate at time :math:`t` by
+
+ :math:`\tilde{\lambda}^{(k,l)}_{i} = \lambda^{(k,l)}_{i}\cdot i^{(k)}(t)`
+
+with :math:`i^{(k)}` the population in region :math:`k` having infection state :math:`i`.
+
 
 Initial conditions
 ------------------
@@ -95,7 +115,7 @@ These populations have the class type **Populations** and can be set via:
 
 .. code-block:: cpp
 
-   double pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop;
+   double pop = 1000, numE = 0.001 * pop, numC = 0.0001 * pop, numI = 0.0001 * pop, numR = 0, numD = 0;
 
    //Population is distributed equally to the regions
    for (size_t r = 0; r < num_regions; ++r) {
@@ -118,26 +138,27 @@ As the spatial transition rates are dependent on infection state, region changes
       for (size_t i = 0; i < num_regions; ++i) {
          for (size_t j = 0; j < num_regions; ++j)
                if (i != j) {
-                  transition_rates.push_back(
-                     {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
-                  transition_rates.push_back(
-                     {InfectionState(s), mio::regions::Region(j), mio::regions::Region(i), 0.01});
-               }
+            // transition rate has the form {i, k, l, \lambda^{(k,l)}_{i}}
+            transition_rates.push_back(
+               {InfectionState(s), mio::regions::Region(i), mio::regions::Region(j), 0.01});
+            transition_rates.push_back(
+               {InfectionState(s), mio::regions::Region(j), mio::regions::Region(i), 0.01});
+         }
       }
    }
 
    //Initialize model parameter
    model.parameters.get<mio::smm::TransitionRates<InfectionState>>() = transition_rates;
 
-Non-pharmaceutical Interventions
+Nonpharmaceutical interventions
 --------------------------------
 
-There are no non-pharmaceutical interventions (NPIs) explicitly implemented in the model. However, NPIs influencing the adoption or spatial transition rates can be realized by resetting the corresponding model parameters.
+There are no nonpharmaceutical interventions (NPIs) explicitly implemented in the model. However, NPIs influencing the adoption or spatial transition rates can be realized by resetting the corresponding model parameters.
 
 Simulation
 ----------
 
-At the beginning of the simulation, the waiting times for all events (infection state adoptions and spatial transitions) are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting time for the event that just happend is drawn. The simulation saves the system state in discrete time steps.
+At the beginning of the simulation, the waiting times for all events (infection state adoptions and spatial transitions) are drawn. Then the time is advanced until the time point of the next event - which can be a spatial transition or an infection state adoption - and the event takes places. The waiting times of the other events are updated and a new waiting time for the event that just happened is drawn. The simulation saves the system state in discrete time steps.
 
 To simulate the model from `t0` to `tmax` with given step size `dt`, a **Simulation** has to be created and advanced until `tmax`. The step size is only used to regularly save the system state during the simulation.
 

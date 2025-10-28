@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele, Martin J. Kuehn
@@ -45,7 +45,7 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRun)
 
     auto& params = model.parameters;
 
-    params.set<mio::osecir::StartDay>(60);
+    params.set<mio::osecir::StartDay<double>>(60);
     params.set<mio::osecir::Seasonality<double>>(0.2);
     params.get<mio::osecir::TestAndTraceCapacity<double>>() = 35;
 
@@ -78,18 +78,18 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRun)
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(30.));
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore<double>>();
+    auto integrator = std::make_unique<mio::RKIntegratorCore<double>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd =
-        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, integrator);
+        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, std::move(integrator));
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -122,7 +122,7 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRunCashKarp)
     mio::AgeGroup nb_groups = model.parameters.get_num_groups();
     double fact             = 1.0 / (double)(size_t)nb_groups;
 
-    model.parameters.set<mio::osecir::StartDay>(60);
+    model.parameters.set<mio::osecir::StartDay<double>>(60);
     model.parameters.set<mio::osecir::Seasonality<double>>(0.2);
 
     auto& params = model.parameters;
@@ -158,19 +158,19 @@ TEST(TestOdeSecir, compareAgeResWithPreviousRunCashKarp)
 
     params.apply_constraints();
 
-    mio::ContactMatrixGroup& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
+    mio::ContactMatrixGroup<double>& contact_matrix = params.get<mio::osecir::ContactPatterns<double>>();
     contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
+        mio::ContactMatrix<double>(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<double>(30.));
 
     auto integrator =
-        std::make_shared<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>();
+        std::make_unique<mio::ControlledStepperWrapper<double, boost::numeric::odeint::runge_kutta_cash_karp54>>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
     integrator->set_abs_tolerance(1e-1);
     mio::TimeSeries<double> secihurd =
-        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, integrator);
+        mio::simulate<double, mio::osecir::Model<double>>(t0, tmax, dt, model, std::move(integrator));
 
     auto compare = load_test_data_csv<double>("secihurd-compare-cashkarp.csv");
 
