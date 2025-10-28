@@ -46,23 +46,23 @@ void set_initial_population(mio::oseirv::Model<FP>& model, const FP total_pop)
         // Total population N_i as currently stored in group totals
         FP Ni = pop.get_group_total(mio::AgeGroup(i));
 
-        FP sigma = params.template get<mio::oseirv::CustomIndexArray<FP>>()[mio::AgeGroup(i)];
-        FP phi   = params.template get<mio::oseirv::SusceptibleFraction<FP>>();
-        FP VC    = params.template get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)];
-        FP VE    = params.template get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)];
+        FP s_age = params.template get<mio::oseirv::SusceptibilityByAge<FP>>()[mio::AgeGroup(i)];
+        FP s_frac   = params.template get<mio::oseirv::SusceptibleFraction<FP>>();
+        FP vc    = params.template get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)];
+        FP ve    = params.template get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)];
 
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Exposed}]            = 0;
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::ExposedVaccinated}]  = 0;
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Infected}]           = 0;
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::InfectedVaccinated}] = 0;
 
-        pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Susceptible}] = phi * sigma * (FP(1) - VC) * Ni;
+        pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Susceptible}] = s_frac * s_age * (FP(1) - vc) * Ni;
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::SusceptibleVaccinated}] =
-            phi * sigma * (FP(1) - VE) * VC * Ni;
+            s_frac * s_age * (FP(1) - ve) * vc * Ni;
 
-        pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Recovered}] = (FP(1) - phi * sigma) * (FP(1) - VC) * Ni;
+        pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Recovered}] = (FP(1) - s_frac * s_age) * (FP(1) - vc) * Ni;
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::RecoveredVaccinated}] =
-            (FP(1) - phi * sigma * (FP(1) - VE)) * VC * Ni;
+            (FP(1) - s_frac * s_age * (FP(1) - ve)) * vc * Ni;
     }
 }
 
@@ -104,7 +104,7 @@ int main()
     parameters.get<mio::oseirv::SickMixing<FP>>()                 = 2.0;
 
     for (size_t i = 0; i < num_groups; ++i) {
-        parameters.get<mio::oseirv::CustomIndexArray<FP>>()[mio::AgeGroup(i)]     = 1.0;
+        parameters.get<mio::oseirv::SusceptibilityByAge<FP>>()[mio::AgeGroup(i)]     = 1.0;
         parameters.get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)]      = 0.3;
         parameters.get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)] = 0.5;
         model.populations.set_difference_from_group_total<mio::AgeGroup>(
