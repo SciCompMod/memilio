@@ -87,7 +87,7 @@ public:
         // Normalization ν(m): prepare susceptibility scaling and next-generation matrix (NG)
         Eigen::VectorX<FP> susceptibility(num_groups);
         for (size_t i = 0; i < num_groups; ++i)
-            susceptibility[(Eigen::Index)i] = params.template get<CustomIndexArray<FP>>()[AgeGroup(i)] *
+            susceptibility[(Eigen::Index)i] = params.template get<SusceptibilityByAge<FP>>()[AgeGroup(i)] *
                                               params.template get<SusceptibleFraction<FP>>();
         // Sigma is a diagonal matrix applying susceptibility on the receiving (row) side of contacts.
         Eigen::MatrixX<FP> Sigma = susceptibility.asDiagonal();
@@ -146,7 +146,7 @@ public:
                 const FP transmission_rate = (clustering_exp == FP(1)) ? inf_frac : std::pow(inf_frac, clustering_exp);
                 sum += effective_contacts(i.get(), j.get()) * transmission_rate;
             }
-            const FP foi_i = transmissibility_baseline * recovery_rate * season * sum + lambda0;
+            const FP foi_i = transmissibility_baseline * recovery_rate * season * sum + outside_foi;
 
             // Flows: S->E, S^V->E^V, E->I, E^V->I^V, I->R, I^V->R^V
             flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] =

@@ -233,7 +233,7 @@ struct SusceptibilityByAge {
     }
     static std::string name()
     {
-        return "CustomIndexArray";
+        return "SusceptibilityByAge";
     }
 };
 
@@ -294,7 +294,7 @@ template <class FP>
 using ParametersBase =
     ParameterSet<BaselineTransmissibility<FP>, RecoveryRate<FP>, SeasonalityAmplitude<FP>,
                  SeasonalityShiftPerSubtype<FP>, SeasonalityShiftPerSeason<FP>, OutsideFoI<FP>, ClusteringExponent<FP>,
-                 SickMixing<FP>, ContactPatternsHealthy<FP>, ContactPatternsSick<FP>, CustomIndexArray<FP>,
+                 SickMixing<FP>, ContactPatternsHealthy<FP>, ContactPatternsSick<FP>, SusceptibilityByAge<FP>,
                  VaccineCoverage<FP>, VaccineEffectiveness<FP>, SusceptibleFraction<FP>>;
 
 /**
