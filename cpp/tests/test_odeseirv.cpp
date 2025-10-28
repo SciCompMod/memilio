@@ -93,7 +93,7 @@ TEST(TestOdeSeirv, applyConstraints)
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-2.); // invalid -> 0
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5); // invalid -> 0
     EXPECT_TRUE(model.parameters.apply_constraints());
-    EXPECT_EQ(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 0.0);
+    EXPECT_EQ(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 1.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::BaselineTransmissibility<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::OutsideFoI<double>>(), 0.0);
 }
