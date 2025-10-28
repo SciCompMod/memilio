@@ -93,7 +93,7 @@ TEST(TestOdeSeirv, applyConstraints)
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-2.); // invalid -> 0
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5); // invalid -> 0
     EXPECT_TRUE(model.parameters.apply_constraints());
-    EXPECT_GT(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 0.0);
+    EXPECT_EQ(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::BaselineTransmissibility<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::OutsideFoI<double>>(), 0.0);
 }
@@ -111,7 +111,7 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Infected}]              = I;
     model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::InfectedVaccinated}]    = IV;
 
-    // Parameters: identity contacts, gamma=1, Re=1, others zero ⇒ λ = (I+IV)/N
+    // Parameters: identity contacts, RecoveryRate=1, ClusteringExponent=1, BaselineTransmissibility=1, others zero ⇒ λ = (I+IV)/N
     mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
     cm_h[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
@@ -132,10 +132,10 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     const double lambda  = (I + IV) / N; // expected force of infection
     const double f_SE    = S * lambda;
     const double f_SV_EV = SV * lambda;
-    const double f_E_I   = E; // gamma * E
-    const double f_EV_IV = EV; // gamma * EV
-    const double f_I_R   = I; // gamma * I
-    const double f_IV_RV = IV; // gamma * IV
+    const double f_E_I   = RecoveryRate * E;
+    const double f_EV_IV = RecoveryRate * EV;
+    const double f_I_R   = RecoveryRate * I;
+    const double f_IV_RV = RecoveryRate * IV;
 
     auto idx_SE = model.template get_flat_flow_index<mio::oseirv::InfectionState::Susceptible,
                                                      mio::oseirv::InfectionState::Exposed>(mio::AgeGroup(0));
@@ -144,7 +144,7 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     auto idx_EI =
         model.template get_flat_flow_index<mio::oseirv::InfectionState::Exposed, mio::oseirv::InfectionState::Infected>(
             mio::AgeGroup(0));
-    auto idx_EVI =
+    auto idx_EIV =
         model.template get_flat_flow_index<mio::oseirv::InfectionState::ExposedVaccinated,
                                            mio::oseirv::InfectionState::InfectedVaccinated>(mio::AgeGroup(0));
     auto idx_IR = model.template get_flat_flow_index<mio::oseirv::InfectionState::Infected,
@@ -156,7 +156,7 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     EXPECT_NEAR(flows[idx_SE], f_SE, 1e-12);
     EXPECT_NEAR(flows[idx_SV], f_SV_EV, 1e-12);
     EXPECT_NEAR(flows[idx_EI], f_E_I, 1e-12);
-    EXPECT_NEAR(flows[idx_EVI], f_EV_IV, 1e-12);
+    EXPECT_NEAR(flows[idx_EIV], f_EV_IV, 1e-12);
     EXPECT_NEAR(flows[idx_IR], f_I_R, 1e-12);
     EXPECT_NEAR(flows[idx_IVR], f_IV_RV, 1e-12);
 }
@@ -165,7 +165,7 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
 {
     mio::oseirv::Model<double> model(2);
     mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
-    // Each group only contacts itself so that λ_i = I_i / N_i
+    // Let each group have only contacts with itself and set other parameters, so that λ_i = I_i / N_i
     Eigen::MatrixXd Id2                       = Eigen::MatrixXd::Identity(2, 2);
     cm_h[0]                                   = mio::ContactMatrix<double>(Id2);
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
@@ -176,6 +176,7 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
     model.parameters.set<mio::oseirv::SeasonalityAmplitude<double>>(0.0);
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(0.0);
 
+    // Only population in the non-vaccinated susceptible and infected compartments
     // Group 0
     double S0 = 100, I0 = 20; // others zero
     model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Susceptible}] = S0;
@@ -262,7 +263,7 @@ TEST(TestOdeSeirv, simulationEuler)
     }
 }
 
-TEST(TestOdeSeirv, flowSimulation)
+TEST(TestOdeSeirv, flowSimulationEuler)
 {
     mio::oseirv::Model<double> model(1);
     model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Infected}] = 5;
