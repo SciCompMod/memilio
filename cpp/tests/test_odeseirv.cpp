@@ -89,7 +89,7 @@ TEST(TestOdeSeirv, applyConstraints)
     // First: defaults should need no correction
     EXPECT_FALSE(model.parameters.apply_constraints());
 
-    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(0.0); // invalid, must become >0 (1.0)
+    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(-0.5); // invalid, must become >0 (1.0)
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-2.); // invalid -> 0
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5); // invalid -> 0
     EXPECT_TRUE(model.parameters.apply_constraints());
