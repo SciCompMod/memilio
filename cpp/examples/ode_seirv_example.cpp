@@ -46,10 +46,10 @@ void set_initial_population(mio::oseirv::Model<FP>& model, const FP total_pop)
         // Total population N_i as currently stored in group totals
         FP Ni = pop.get_group_total(mio::AgeGroup(i));
 
-        FP s_age = params.template get<mio::oseirv::SusceptibilityByAge<FP>>()[mio::AgeGroup(i)];
-        FP s_frac   = params.template get<mio::oseirv::SusceptibleFraction<FP>>();
-        FP vc    = params.template get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)];
-        FP ve    = params.template get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)];
+        FP s_age  = params.template get<mio::oseirv::SusceptibilityByAge<FP>>()[mio::AgeGroup(i)];
+        FP s_frac = params.template get<mio::oseirv::SusceptibleFraction<FP>>();
+        FP vc     = params.template get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)];
+        FP ve     = params.template get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)];
 
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::Exposed}]            = 0;
         pop[{mio::AgeGroup(i), mio::oseirv::InfectionState::ExposedVaccinated}]  = 0;
@@ -104,7 +104,7 @@ int main()
     parameters.get<mio::oseirv::SickMixing<FP>>()                 = 2.0;
 
     for (size_t i = 0; i < num_groups; ++i) {
-        parameters.get<mio::oseirv::SusceptibilityByAge<FP>>()[mio::AgeGroup(i)]     = 1.0;
+        parameters.get<mio::oseirv::SusceptibilityByAge<FP>>()[mio::AgeGroup(i)]  = 1.0;
         parameters.get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)]      = 0.3;
         parameters.get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)] = 0.5;
         model.populations.set_difference_from_group_total<mio::AgeGroup>(
