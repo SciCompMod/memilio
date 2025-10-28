@@ -75,7 +75,7 @@ TEST(TestOdeSeirv, populationConservation)
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
 
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::Gamma<double>>(1.0);
+    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
 
     double t0 = 0.0, tmax = 5.0, dt = 0.5;
     auto sim  = simulate(t0, tmax, dt, model);
@@ -89,11 +89,11 @@ TEST(TestOdeSeirv, applyConstraints)
     // First: defaults should need no correction
     EXPECT_FALSE(model.parameters.apply_constraints());
 
-    model.parameters.set<mio::oseirv::ClusteringRho<double>>(0.0); // invalid, must become >0 (1.0)
+    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(0.0); // invalid, must become >0 (1.0)
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-2.); // invalid -> 0
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5); // invalid -> 0
     EXPECT_TRUE(model.parameters.apply_constraints());
-    EXPECT_GT(model.parameters.get<mio::oseirv::ClusteringRho<double>>(), 0.0);
+    EXPECT_GT(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::BaselineTransmissibility<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::OutsideFoI<double>>(), 0.0);
 }
@@ -117,8 +117,8 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::Gamma<double>>(1.0);
-    model.parameters.set<mio::oseirv::ClusteringRho<double>>(1.0);
+    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(1.0);
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(0.0);
     model.parameters.set<mio::oseirv::SeasonalityAmplitude<double>>(0.0);
 
@@ -171,8 +171,8 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Zero(2, 2));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::Gamma<double>>(1.0);
-    model.parameters.set<mio::oseirv::ClusteringRho<double>>(1.0);
+    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(1.0);
     model.parameters.set<mio::oseirv::SeasonalityAmplitude<double>>(0.0);
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(0.0);
 
@@ -250,7 +250,7 @@ TEST(TestOdeSeirv, simulationEuler)
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 0.));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::Gamma<double>>(1.0);
+    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
 
     double t0 = 0.0, tmax = 1.0, dt = 0.5;
     std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();
@@ -272,7 +272,7 @@ TEST(TestOdeSeirv, flowSimulation)
     mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
     cm_h[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::Gamma<double>>(1.0);
+    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
 
     double t0 = 0.0, tmax = 0.5, dt = 0.5;
     std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();

@@ -46,8 +46,8 @@ void set_initial_population(mio::oseirv::Model<FP>& model, const FP total_pop)
         // Total population N_i as currently stored in group totals
         FP Ni = pop.get_group_total(mio::AgeGroup(i));
 
-        FP sigma = params.template get<mio::oseirv::SigmaByAge<FP>>()[mio::AgeGroup(i)];
-        FP phi   = params.template get<mio::oseirv::Phi<FP>>();
+        FP sigma = params.template get<mio::oseirv::CustomIndexArray<FP>>()[mio::AgeGroup(i)];
+        FP phi   = params.template get<mio::oseirv::SusceptibleFraction<FP>>();
         FP VC    = params.template get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)];
         FP VE    = params.template get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)];
 
@@ -94,17 +94,17 @@ int main()
         (Eigen::Index)num_groups, (Eigen::Index)num_groups, cont_freq_group * cont_freq * 0.8));
 
     // Parameters
-    parameters.get<mio::oseirv::BaselineTransmissibility<FP>>() = 1.2;
-    parameters.get<mio::oseirv::Gamma<FP>>()                    = 1.0 / 2.0;
-    parameters.get<mio::oseirv::SeasonalityAmplitude<FP>>()     = 1.0;
-    parameters.get<mio::oseirv::ShiftTZ<FP>>()                  = 0.0;
-    parameters.get<mio::oseirv::ShiftTS<FP>>()                  = 0.0;
-    parameters.get<mio::oseirv::OutsideFoI<FP>>()               = 1e-6;
-    parameters.get<mio::oseirv::ClusteringRho<FP>>()            = 0.9;
-    parameters.get<mio::oseirv::SickMixingM<FP>>()              = 2.0;
+    parameters.get<mio::oseirv::BaselineTransmissibility<FP>>()   = 1.2;
+    parameters.get<mio::oseirv::RecoveryRate<FP>>()               = 1.0 / 2.0;
+    parameters.get<mio::oseirv::SeasonalityAmplitude<FP>>()       = 1.0;
+    parameters.get<mio::oseirv::SeasonalityShiftPerSubtype<FP>>() = 0.0;
+    parameters.get<mio::oseirv::SeasonalityShiftPerSeason<FP>>()  = 0.0;
+    parameters.get<mio::oseirv::OutsideFoI<FP>>()                 = 1e-6;
+    parameters.get<mio::oseirv::ClusteringExponent<FP>>()         = 0.9;
+    parameters.get<mio::oseirv::SickMixing<FP>>()                 = 2.0;
 
     for (size_t i = 0; i < num_groups; ++i) {
-        parameters.get<mio::oseirv::SigmaByAge<FP>>()[mio::AgeGroup(i)]           = 1.0;
+        parameters.get<mio::oseirv::CustomIndexArray<FP>>()[mio::AgeGroup(i)]     = 1.0;
         parameters.get<mio::oseirv::VaccineCoverage<FP>>()[mio::AgeGroup(i)]      = 0.3;
         parameters.get<mio::oseirv::VaccineEffectiveness<FP>>()[mio::AgeGroup(i)] = 0.5;
         model.populations.set_difference_from_group_total<mio::AgeGroup>(

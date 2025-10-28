@@ -73,25 +73,25 @@ The model uses the following parameters (time unit: week):
 		 - ``BaselineTransmissibility``
 		 - Baseline transmissibility (dimensionless); scales the normalized force of infection.
 	 * - :math:`\gamma`
-		 - ``Gamma``
+		 - ``RecoveryRate``
 		 - Transition / recovery rate (1/week) for E -> I and I -> R.
 	 * - :math:`\delta`
 		 - ``SeasonalityAmplitude``
 		 - Amplitude of the seasonal modulation :math:`\exp(\delta\,\sin(2\pi(t/52 - t_z + t_s)))`.
 	 * - :math:`t_z`
-		 - ``ShiftTZ``
+		 - ``SeasonalityShiftPerSubtype``
 		 - Coarse (subtype-specific) seasonal phase shift.
 	 * - :math:`t_s`
-		 - ``ShiftTS``
+		 - ``SeasonalityShiftPerSeason``
 		 - Fine seasonal phase adjustment per season.
 	 * - :math:`\lambda_0`
 		 - ``OutsideFoI``
 		 - External (additive) force of infection, can seed infections.
 	 * - :math:`\rho`
-		 - ``ClusteringRho``
+		 - ``ClusteringExponent``
 		 - Clustering exponent on the infectious fraction.
 	 * - :math:`m`
-		 - ``SickMixingM``
+		 - ``SickMixing``
 		 - Mixing weight for symptomatic (“sick”) contacts in the blended contact matrix.
 	 * - :math:`C^{H}`
 		 - ``ContactPatternsHealthy``
@@ -100,7 +100,7 @@ The model uses the following parameters (time unit: week):
 		 - ``ContactPatternsSick``
 		 - Age-structured contact matrix (symptomatic), combined using :math:`m`.
 	 * - :math:`\sigma_i`
-		 - ``SigmaByAge``
+		 - ``CustomIndexArray``
 		 - Age-specific baseline susceptibility (pre-existing immunity modifier).
 	 * - :math:`VC_i`
 		 - ``VaccineCoverage``
@@ -109,7 +109,7 @@ The model uses the following parameters (time unit: week):
 		 - ``VaccineEffectiveness``
 		 - Vaccine effectiveness (reducing effective susceptibility).
 	 * - :math:`\phi_0`
-		 - ``Phi``
+		 - ``SusceptibleFraction``
 		 - Fraction of the total population forming the effectively susceptible pool at :math:`t_0`.
 
 Note: ``VaccineCoverage`` and ``VaccineEffectiveness`` are only used for initialization. Transitions presently

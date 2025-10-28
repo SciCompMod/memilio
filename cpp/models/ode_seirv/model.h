@@ -81,15 +81,14 @@ public:
             params.template get<ContactPatternsHealthy<FP>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t));
         Eigen::MatrixX<FP> contacts_sick =
             params.template get<ContactPatternsSick<FP>>().get_cont_freq_mat().get_matrix_at(SimulationTime<FP>(t));
-        const FP m                            = params.template get<SickMixingM<FP>>();
+        const FP m                            = params.template get<SickMixing<FP>>();
         Eigen::MatrixX<FP> effective_contacts = contacts_healthy + m * contacts_sick;
 
         // Normalization ν(m): prepare susceptibility scaling and next-generation matrix (NG)
-        // sigma_i = Phi * SigmaByAge[i] (age-specific susceptibility scaled by a global factor)
         Eigen::VectorX<FP> susceptibility(num_groups);
         for (size_t i = 0; i < num_groups; ++i)
-            susceptibility[(Eigen::Index)i] =
-                params.template get<SigmaByAge<FP>>()[AgeGroup(i)] * params.template get<Phi<FP>>();
+            susceptibility[(Eigen::Index)i] = params.template get<CustomIndexArray<FP>>()[AgeGroup(i)] *
+                                              params.template get<SusceptibleFraction<FP>>();
         // Sigma is a diagonal matrix applying susceptibility on the receiving (row) side of contacts.
         Eigen::MatrixX<FP> Sigma = susceptibility.asDiagonal();
 
@@ -107,13 +106,15 @@ public:
 
         const FP transmissibility_baseline =
             params.template get<BaselineTransmissibility<FP>>(); // baseline transmissibility scaling (R-like factor)
-        const FP recovery_rate    = params.template get<Gamma<FP>>(); // progression/recovery rate (1 / mean duration)
+        const FP recovery_rate =
+            params.template get<RecoveryRate<FP>>(); // progression/recovery rate (1 / mean duration)
         const FP season_amplitude = params.template get<SeasonalityAmplitude<FP>>(); // amplitude of seasonal modulation
-        const FP season_shift_per_subtype = params.template get<ShiftTZ<FP>>(); // base phase shift for seasonality
+        const FP season_shift_per_subtype =
+            params.template get<SeasonalityShiftPerSubtype<FP>>(); // base phase shift for seasonality
         const FP season_shift_per_season =
-            params.template get<ShiftTS<FP>>(); // additional phase shift (e.g. season-specific)
+            params.template get<SeasonalityShiftPerSeason<FP>>(); // additional phase shift (e.g. season-specific)
         const FP outside_foi    = params.template get<OutsideFoI<FP>>(); // constant external force of infection
-        const FP clustering_exp = params.template get<ClusteringRho<
+        const FP clustering_exp = params.template get<ClusteringExponent<
             FP>>(); // clustering exponent; clustering_exp<1 dampens, clustering_exp>1 amplifies prevalence effect
 
         const FP season =

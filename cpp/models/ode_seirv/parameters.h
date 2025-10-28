@@ -65,7 +65,7 @@ struct RecoveryRate {
     }
     static std::string name()
     {
-        return "Gamma";
+        return "RecoveryRate";
     }
 };
 
@@ -102,7 +102,7 @@ struct SeasonalityShiftPerSubtype {
     }
     static std::string name()
     {
-        return "ShiftTZ";
+        return "SeasonalityShiftPerSubtype";
     }
 };
 
@@ -112,7 +112,7 @@ struct SeasonalityShiftPerSubtype {
  * Additional small seasonal timing correction per season. Default: 0.0.
  */
 template <class FP>
-struct SeasonalityShiftPerSeason{
+struct SeasonalityShiftPerSeason {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -120,7 +120,7 @@ struct SeasonalityShiftPerSeason{
     }
     static std::string name()
     {
-        return "ShiftTS";
+        return "SeasonalityShiftPerSeason";
     }
 };
 
@@ -150,7 +150,7 @@ struct OutsideFoI {
  * Exponent on the infectious fraction in force of infection. Must be > 0. Default: 1.0.
  */
 template <class FP>
-struct ClusteringExponent{
+struct ClusteringExponent {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
@@ -158,7 +158,7 @@ struct ClusteringExponent{
     }
     static std::string name()
     {
-        return "ClusteringRho";
+        return "ClusteringExponent";
     }
 };
 
@@ -177,7 +177,7 @@ struct SickMixing {
     }
     static std::string name()
     {
-        return "SickMixingM";
+        return "SickMixing";
     }
 };
 
@@ -233,7 +233,7 @@ struct SusceptibilityByAge {
     }
     static std::string name()
     {
-        return "SigmaByAge";
+        return "CustomIndexArray";
     }
 };
 
@@ -286,15 +286,16 @@ struct SusceptibleFraction {
     }
     static std::string name()
     {
-        return "Phi";
+        return "SusceptibleFraction";
     }
 };
 
 template <class FP>
 using ParametersBase =
-    ParameterSet<BaselineTransmissibility<FP>, Gamma<FP>, SeasonalityAmplitude<FP>, ShiftTZ<FP>, ShiftTS<FP>,
-                 OutsideFoI<FP>, ClusteringRho<FP>, SickMixingM<FP>, ContactPatternsHealthy<FP>,
-                 ContactPatternsSick<FP>, SigmaByAge<FP>, VaccineCoverage<FP>, VaccineEffectiveness<FP>, Phi<FP>>;
+    ParameterSet<BaselineTransmissibility<FP>, RecoveryRate<FP>, SeasonalityAmplitude<FP>,
+                 SeasonalityShiftPerSubtype<FP>, SeasonalityShiftPerSeason<FP>, OutsideFoI<FP>, ClusteringExponent<FP>,
+                 SickMixing<FP>, ContactPatternsHealthy<FP>, ContactPatternsSick<FP>, CustomIndexArray<FP>,
+                 VaccineCoverage<FP>, VaccineEffectiveness<FP>, SusceptibleFraction<FP>>;
 
 /**
  * @brief Parameter set for the age-resolved SEIRV model (S,E,I,R plus vaccinated states) as per the appendix.
@@ -332,9 +333,9 @@ public:
     bool apply_constraints()
     {
         bool corrected = false;
-        if (this->template get<ClusteringRho<FP>>() <= 0.0) {
-            this->template get<ClusteringRho<FP>>() = 1.0;
-            corrected                               = true;
+        if (this->template get<ClusteringExponent<FP>>() <= 0.0) {
+            this->template get<ClusteringExponent<FP>>() = 1.0;
+            corrected                                    = true;
         }
         if (this->template get<BaselineTransmissibility<FP>>() < 0.0) {
             this->template get<BaselineTransmissibility<FP>>() = 0.0;
