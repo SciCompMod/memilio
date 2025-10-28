@@ -100,7 +100,7 @@ private:
     std::vector<ScalarType> m_transmissionproboncontact_vector;
     std::vector<ScalarType> m_riskofinffromsymptomatic_vector;
     ScalarType m_calctime;
-    ScalarType m_tol;
+    ScalarType m_tol{1e-10};
 };
 
 } // namespace isir
