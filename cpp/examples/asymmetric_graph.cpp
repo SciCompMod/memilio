@@ -18,8 +18,9 @@
 * limitations under the License.
 */
 #include "memilio/config.h"
-#include "memilio/geography/locations.h"
-#include "memilio/geography/tree.h"
+#include "memilio/geography/geolocation.h"
+#include "memilio/geography/rtree.h"
+#include "memilio/geography/distance.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
@@ -122,7 +123,8 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
-        node.property.set_regional_neighbors(tree.inrange_indices_query(node.property.get_location(), {2.0}));
+        node.property.set_regional_neighbors(
+            tree.inrange_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
     }
 
     mio::log_info("Neighbors set");

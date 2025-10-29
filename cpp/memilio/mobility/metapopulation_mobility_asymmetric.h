@@ -22,7 +22,7 @@
 
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/random_number_generator.h"
-#include "memilio/geography/locations.h"
+#include "memilio/geography/geolocation.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
