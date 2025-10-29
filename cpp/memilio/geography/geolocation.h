@@ -54,12 +54,6 @@ public:
         check_input();
     }
     /**
-     * @brief Structure representing geographical coordinates for constructing a GeographicalLocation object.
-     * 
-     * @param latitude Latitude in degrees.
-     * @param longitude Longitude in degrees.
-     */
-    /**
      * @brief Construct a new Geographical Location object.
      * 
      * @param coordinates Pair of latitude and longitude in degrees as ScalarTypes.
@@ -93,6 +87,11 @@ public:
         return !(*this == other);
     }
 
+    /**
+     * @brief Check that this location is within a (small) distance of another.
+     * @param[in] other Any location.
+     * @param[in] tol The Absolute tolerance for considering two locations close.
+     */
     bool is_close(const GeographicalLocation& other,
                   Distance tol = Distance(10 * Limits<ScalarType>::zero_tolerance())) const
     {
