@@ -82,6 +82,7 @@ def generate_model_class(
         for layer in self.layer_seq:
             if type(layer).__module__.startswith("spektral.layers"):
                 # Pass both `x` and `a` to the layer
+                x = layer([x, a], mask=[node_mask, None])
             else:
                 x = layer(x)  # Pass only `x` to the layer
 
