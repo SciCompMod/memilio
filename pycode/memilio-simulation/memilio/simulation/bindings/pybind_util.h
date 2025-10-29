@@ -191,8 +191,8 @@ std::string pretty_name()
  *                   is a value of Type T, where T is the type of the argument.
  */
 template <class C, class... ArgTuples,
-          class = std::enable_if_t<(std::is_same<typename C::type::Shape, mio::SquareMatrixShape>::value ||
-                                    std::is_same<typename C::type::Shape, mio::ColumnVectorShape>::value),
+          class = std::enable_if_t<(std::is_same<typename C::type::Shape, mio::SquareMatrixShape<double>>::value ||
+                                    std::is_same<typename C::type::Shape, mio::ColumnVectorShape<double>>::value),
                                    void>>
 void bind_shape_constructor(C& cl, ArgTuples... arg_tuples)
 {

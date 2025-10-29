@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -22,23 +22,26 @@
 
 TEST(TestMatrixShape, Rect)
 {
-    EXPECT_EQ(mio::RectMatrixShape(3, 2).rows(), 3);
-    EXPECT_EQ(mio::RectMatrixShape(3, 2).cols(), 2);
-    EXPECT_EQ(mio::RectMatrixShape::get_shape_of(Eigen::MatrixXd::Zero(2, 3)), mio::RectMatrixShape(2, 3));
+    EXPECT_EQ(mio::RectMatrixShape<double>(3, 2).rows(), 3);
+    EXPECT_EQ(mio::RectMatrixShape<double>(3, 2).cols(), 2);
+    EXPECT_EQ(mio::RectMatrixShape<double>::get_shape_of(Eigen::MatrixXd::Zero(2, 3)),
+              mio::RectMatrixShape<double>(2, 3));
 }
 
 TEST(TestMatrixShape, Square)
 {
-    EXPECT_EQ(mio::SquareMatrixShape(3).rows(), 3);
-    EXPECT_EQ(mio::SquareMatrixShape(3).cols(), 3);
-    EXPECT_EQ(mio::SquareMatrixShape(3).size(), 3);
-    EXPECT_EQ(mio::SquareMatrixShape::get_shape_of(Eigen::MatrixXd::Zero(3, 3)), mio::SquareMatrixShape(3));
+    EXPECT_EQ(mio::SquareMatrixShape<double>(3).rows(), 3);
+    EXPECT_EQ(mio::SquareMatrixShape<double>(3).cols(), 3);
+    EXPECT_EQ(mio::SquareMatrixShape<double>(3).size(), 3);
+    EXPECT_EQ(mio::SquareMatrixShape<double>::get_shape_of(Eigen::MatrixXd::Zero(3, 3)),
+              mio::SquareMatrixShape<double>(3));
 }
 
 TEST(TestMatrixShape, Vector)
 {
-    EXPECT_EQ(mio::ColumnVectorShape(3).rows(), 3);
-    EXPECT_EQ(mio::ColumnVectorShape(3).cols(), 1);
-    EXPECT_EQ(mio::ColumnVectorShape(3).size(), 3);
-    EXPECT_EQ(mio::ColumnVectorShape::get_shape_of(Eigen::VectorXd::Zero(3)), mio::ColumnVectorShape(3));
+    EXPECT_EQ(mio::ColumnVectorShape<double>(3).rows(), 3);
+    EXPECT_EQ(mio::ColumnVectorShape<double>(3).cols(), 1);
+    EXPECT_EQ(mio::ColumnVectorShape<double>(3).size(), 3);
+    EXPECT_EQ(mio::ColumnVectorShape<double>::get_shape_of(Eigen::VectorXd::Zero(3)),
+              mio::ColumnVectorShape<double>(3));
 }
