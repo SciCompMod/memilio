@@ -185,6 +185,7 @@ public:
     template <class... Args>
     Edge<EdgePropertyT>& lazy_add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
+        mio::timing::AutoTimer<"Graph.lazy_add_edge()"> timer;
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
         for (auto& edge : m_edges) {
             if (edge.start_node_idx == start_node_idx && edge.end_node_idx == end_node_idx) {
@@ -197,6 +198,7 @@ public:
 
     Edge<EdgePropertyT>& sort_edges()
     {
+        mio::timing::AutoTimer<"Graph.sort_edges()"> timer;
         std::sort(m_edges.begin(), m_edges.end(), [](auto&& e1, auto&& e2) {
             return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
                                                           : e1.start_node_idx < e2.start_node_idx;
