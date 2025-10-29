@@ -25,6 +25,7 @@
 #include "memilio/mobility/graph.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
+#include "memilio/timer/auto_timer.h"
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/random_number_generator.h"
 #include "smm/simulation.h"
@@ -77,44 +78,47 @@ int main(int /*argc*/, char** /*argv*/)
                mio::MobilityEdgeDirected<ScalarType>>
         graph;
     mio::log_info("Starting Graph generation");
-
-    io::CSVReader<4> farms("../../farms.csv");
-    farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
-    int farm_id, num_cows;
-    double latitude, longitude;
-    while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
-        Model curr_model;
-        curr_model.populations[{home, InfectionState::S}]                                = num_cows;
-        curr_model.populations[{home, InfectionState::E}]                                = 1;
-        curr_model.populations[{home, InfectionState::I}]                                = 0;
-        curr_model.populations[{home, InfectionState::INS}]                              = 0;
-        curr_model.populations[{home, InfectionState::ICS}]                              = 0;
-        curr_model.populations[{home, InfectionState::R}]                                = 0;
-        curr_model.populations[{home, InfectionState::D}]                                = 0;
-        curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
-        graph.add_node(farm_id, longitude, latitude, curr_model, t0);
+    {
+        mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
+        io::CSVReader<4> farms("/home/kilian/Documents/projects/memilio-asymmetric-graph/farms.csv");
+        farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
+        int farm_id, num_cows;
+        double latitude, longitude;
+        while (farms.read_row(farm_id, num_cows, latitude, longitude)) {
+            Model curr_model;
+            curr_model.populations[{home, InfectionState::S}]                                = num_cows;
+            curr_model.populations[{home, InfectionState::E}]                                = 1;
+            curr_model.populations[{home, InfectionState::I}]                                = 0;
+            curr_model.populations[{home, InfectionState::INS}]                              = 0;
+            curr_model.populations[{home, InfectionState::ICS}]                              = 0;
+            curr_model.populations[{home, InfectionState::R}]                                = 0;
+            curr_model.populations[{home, InfectionState::D}]                                = 0;
+            curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
+            graph.add_node(farm_id, longitude, latitude, curr_model, t0);
+        }
     }
-
+    mio::log_info("Nodes added to Graph");
     auto rng = mio::RandomNumberGenerator();
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
-
-    io::CSVReader<2> edges("../../edges.csv");
-    edges.read_header(io::ignore_extra_column, "from", "to");
-    size_t from, to;
-    while (edges.read_row(from, to)) {
-        graph.add_edge(from, to, interesting_indices);
-        // graph.lazy_add_edge(from, to, interesting_indices);
+    {
+        mio::timing::AutoTimer<"Graph Edges Generation"> timer;
+        io::CSVReader<2> edges("/home/kilian/Documents/projects/memilio-asymmetric-graph/edges.csv");
+        edges.read_header(io::ignore_extra_column, "from", "to");
+        size_t from, to;
+        while (edges.read_row(from, to)) {
+            graph.add_edge(from, to, interesting_indices);
+            // graph.lazy_add_edge(from, to, interesting_indices);
+        }
+        // graph.sort_edges();
     }
-    // graph.sort_edges();
-
     mio::log_info("Graph generated");
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
                  });
-    auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
+    auto tree  = mio::geo::RTree({nodes.begin(), nodes.end()});
     mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
@@ -122,13 +126,13 @@ int main(int /*argc*/, char** /*argv*/)
     }
 
     mio::log_info("Neighbors set");
-
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    io::CSVReader<5> exchanges("../../trade.csv");
+    io::CSVReader<5> exchanges("/home/kilian/Documents/projects/memilio-asymmetric-graph/trade.csv");
     exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to", "edge");
 
     int date, num_animals, edge;
+    size_t from, to;
     while (exchanges.read_row(date, num_animals, from, to, edge)) {
         sim.add_exchange(date, num_animals, from, to);
     }
