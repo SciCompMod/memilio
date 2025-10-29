@@ -80,7 +80,11 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
+<<<<<<< HEAD
         io::CSVReader<4> farms("../../farms.csv");
+=======
+        io::CSVReader<4> farms("/home/kilian/Documents/projects/memilio-asymmetric-graph/farms.csv");
+>>>>>>> dab1c992aa3c028686e0440a7f20cf4de6eb8871
         farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
         int farm_id, num_cows;
         double latitude, longitude;
@@ -104,7 +108,11 @@ int main(int /*argc*/, char** /*argv*/)
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
     {
         mio::timing::AutoTimer<"Graph Edges Generation"> timer;
+<<<<<<< HEAD
         io::CSVReader<2> edges("../../edges.csv");
+=======
+        io::CSVReader<2> edges("/home/kilian/Documents/projects/memilio-asymmetric-graph/edges.csv");
+>>>>>>> dab1c992aa3c028686e0440a7f20cf4de6eb8871
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
@@ -128,7 +136,7 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("Neighbors set");
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    io::CSVReader<5> exchanges("../../trade.csv");
+    io::CSVReader<5> exchanges("/home/kilian/Documents/projects/memilio-asymmetric-graph/trade.csv");
     exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to", "edge");
 
     int date, num_animals, edge;
