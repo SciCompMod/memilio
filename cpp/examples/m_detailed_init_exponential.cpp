@@ -253,7 +253,7 @@ int main()
             if (backwards_fd) {
 
                 // finite_difference_orders = {1, 2, 4};
-                finite_difference_orders = {1};
+                finite_difference_orders = {4};
             }
             else {
                 finite_difference_orders = {2, 4};
@@ -271,7 +271,7 @@ int main()
                     ScalarType tmax = t0_ide + num_days;
 
                     std::string save_dir =
-                        fmt::format("../../simulation_results/no_calctime_281025/time_infected={}/"
+                        fmt::format("../../simulation_results/test2/time_infected={}/"
                                     "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_tolexp={}",
                                     time_infected, t0_ide, tmax, finite_difference_order, tol_exp);
 
@@ -286,7 +286,7 @@ int main()
                     auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
 
                     // Do IDE simulations.
-                    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+                    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
                     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
                     // std::vector<ScalarType> ide_exponents = {2};
