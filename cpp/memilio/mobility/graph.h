@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <functional>
+#include "memilio/timer/auto_timer.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -170,6 +171,7 @@ public:
     template <class... Args>
     Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
+        mio::timing::AutoTimer<"Graph.add_edge()"> timer;
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
         return *insert_sorted_replace(m_edges,
                                       Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
