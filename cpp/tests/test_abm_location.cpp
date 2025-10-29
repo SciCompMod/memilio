@@ -87,7 +87,6 @@ TEST_F(TestLocation, interact)
     auto dt = mio::abm::seconds(8640); //0.1 days
 
     // Setup model parameters for viral loads and infectivity distributions.
-    // Setup model parameters for viral loads and infectivity distributions.
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
     params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),

@@ -17,11 +17,23 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "distributions_helpers.h"
+#include "matchers.h"
+
 #include "memilio/utils/parameter_distributions.h"
-#include <distributions_helpers.h>
-#include <matchers.h>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+// define ctor and dtor to help speed up compilation of mocks
+// see http://google.github.io/googletest/gmock_cook_book.html#making-the-compilation-faster
+
+MockParameterDistribution::MockParameterDistribution()
+{
+}
+MockParameterDistribution::~MockParameterDistribution()
+{
+}
 
 void check_distribution(const mio::ParameterDistribution& dist, const mio::ParameterDistribution& dist_read)
 {

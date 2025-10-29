@@ -90,6 +90,8 @@ TEST(TestSdeSirs, check_constraints_parameters)
     parameters.set<mio::ssirs::TimeImmune<double>>(6);
     parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(0.04);
     parameters.get<mio::ssirs::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
+    parameters.set<mio::ssirs::StartDay<double>>(30);
+    parameters.set<mio::ssirs::Seasonality<double>>(0.3);
 
     // model.check_constraints() combines the functions from population and parameters.
     // We only want to test the functions for the parameters defined in parameters.h
@@ -107,6 +109,10 @@ TEST(TestSdeSirs, check_constraints_parameters)
     parameters.set<mio::ssirs::TimeImmune<double>>(6);
     parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(10.);
     EXPECT_EQ(parameters.check_constraints(), 1);
+
+    parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(0.04);
+    parameters.set<mio::ssirs::Seasonality<double>>(-2.);
+    EXPECT_EQ(parameters.check_constraints(), 1);
     mio::set_log_level(mio::LogLevel::warn);
 }
 
@@ -119,6 +125,8 @@ TEST(TestSdeSirs, apply_constraints_parameters)
     parameters.set<mio::ssirs::TimeImmune<double>>(6);
     parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(0.04);
     parameters.get<mio::ssirs::ContactPatterns<double>>().get_baseline()(0, 0) = 10;
+    parameters.set<mio::ssirs::StartDay<double>>(30);
+    parameters.set<mio::ssirs::Seasonality<double>>(0.3);
 
     EXPECT_EQ(parameters.apply_constraints(), 0);
 
@@ -135,5 +143,9 @@ TEST(TestSdeSirs, apply_constraints_parameters)
     parameters.set<mio::ssirs::TransmissionProbabilityOnContact<double>>(10.);
     EXPECT_EQ(parameters.apply_constraints(), 1);
     EXPECT_NEAR(parameters.get<mio::ssirs::TransmissionProbabilityOnContact<double>>(), 0.0, 1e-14);
+
+    parameters.set<mio::ssirs::Seasonality<double>>(-2.);
+    EXPECT_EQ(parameters.apply_constraints(), 1);
+    EXPECT_NEAR(parameters.get<mio::ssirs::Seasonality<double>>(), 0.0, 1e-14);
     mio::set_log_level(mio::LogLevel::warn);
 }

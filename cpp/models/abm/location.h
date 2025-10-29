@@ -25,7 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/location_type.h"
 
-#include "memilio/geography/locations.h"
+#include "memilio/geography/geolocation.h"
 #include "memilio/io/default_serialize.h"
 #include "boost/atomic/atomic.hpp"
 
@@ -33,30 +33,6 @@ namespace mio
 {
 namespace abm
 {
-
-struct GeographicalLocation {
-    ScalarType latitude;
-    ScalarType longitude;
-
-    /**
-     * @brief Compare two GeographicalLocation%s.
-     */
-    bool operator==(const GeographicalLocation& other) const
-    {
-        return (latitude == other.latitude && longitude == other.longitude);
-    }
-
-    bool operator!=(const GeographicalLocation& other) const
-    {
-        return !(latitude == other.latitude && longitude == other.longitude);
-    }
-
-    /// This method is used by the default serialization feature.
-    auto default_serialize()
-    {
-        return Members("GraphicalLocation").add("latitude", latitude).add("longitude", longitude);
-    }
-};
 
 struct CellIndex : public mio::Index<CellIndex> {
     CellIndex(size_t i)

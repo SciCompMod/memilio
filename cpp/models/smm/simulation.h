@@ -175,6 +175,7 @@ public:
         if (last_result_time < tmax) {
             m_result.add_time_point(tmax);
             m_result.get_last_value() = m_result[m_result.get_num_time_points() - 2];
+            // update internal times
             for (size_t i = 0; i < m_internal_time.size(); i++) {
                 m_internal_time[i] += m_current_rates[i] * (tmax - current_time);
             }
