@@ -223,6 +223,7 @@ private:
         return circle;
     }
 
+    // Arbitrarily chosen value - can be changed for better performance in different use cases.
     constexpr static size_t max_number_of_elements_per_tree_node = 16;
     boost::geometry::index::rtree<Node, boost::geometry::index::rstar<max_number_of_elements_per_tree_node>> rtree;
 };
