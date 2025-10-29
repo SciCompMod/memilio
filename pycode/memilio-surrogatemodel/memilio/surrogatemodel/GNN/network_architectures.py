@@ -26,7 +26,8 @@ import spektral.utils.convolution as spektral_convolution
 
 # Function to generate a model class dynamically
 
-def generate_model_class(name, layer_types, num_repeat, num_output, transform=None):
+def generate_model_class(
+        name, layer_types, num_repeat, num_output, transform=None):
     '''Generates a custom Keras model class with specified layers.
 
     :param name: Name of the generated class.
@@ -53,9 +54,24 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
         self.output_layer = tf.keras.layers.Dense(
             num_output, activation="relu")
 
-    def call(self, inputs):
+    def call(self, inputs, mask=None):
         # Input consists of a tuple (x, a) where x is the node features and a is the adjacency matrix
         x, a = inputs
+
+        # Extract potential node mask coming from the data loader and ensure broadcastable shape
+        node_mask = None
+        if mask is not None:
+            # When inputs is a list [x, a], Keras/Spektral typically forwards a list of masks [node_mask, None]
+            node_mask = mask[0] if isinstance(mask, (tuple, list)) else mask
+            if node_mask is not None:
+                # Expected by Spektral: shape [B, N, 1] to broadcast with [B, N, C]
+                if tf.rank(node_mask) == 2:
+                    node_mask = tf.expand_dims(node_mask, axis=-1)
+        # If no node_mask was provided by the pipeline, create a broadcastable ones-mask
+        if node_mask is None:
+            # x has shape [B, N, F]
+            x_shape = tf.shape(x)
+            node_mask = tf.ones([x_shape[0], x_shape[1], 1], dtype=tf.float32)
 
         # Apply transformation on adjacency matrix if provided
         if not tf.is_symbolic_tensor(a):
@@ -65,7 +81,7 @@ def generate_model_class(name, layer_types, num_repeat, num_output, transform=No
         # Pass through the layers
         for layer in self.layer_seq:
             if type(layer).__module__.startswith("spektral.layers"):
-                x = layer([x, a])  # Pass both `x` and `a` to the layer
+                # Pass both `x` and `a` to the layer
             else:
                 x = layer(x)  # Pass only `x` to the layer
 
@@ -90,7 +106,8 @@ def get_model(layer_type, num_layers, num_channels, activation, num_output=1):
     :param num_output: Number of output units in the final layer.
     :return: A Keras model instance with the specified architecture.
     """
-    if layer_type not in ["ARMAConv", "GCSConv", "GATConv", "GCNConv", "APPNPConv"]:
+    if layer_type not in [
+            "ARMAConv", "GCSConv", "GATConv", "GCNConv", "APPNPConv"]:
         raise ValueError(
             f"Unsupported layer_type: {layer_type}. Supported types are 'ARMAConv', 'GCSConv', 'GATConv', 'GCNConv', 'APPNPConv'.")
     if num_layers < 1:
@@ -141,11 +158,15 @@ def get_model(layer_type, num_layers, num_channels, activation, num_output=1):
             a = spektral_convolution.gcn_filter(a)
             return tf.convert_to_tensor(a, dtype=tf.float32)
     # Generate the input for generate_model_class
-    layer_types = [lambda: layer_name(
-        num_channels, activation=activation, kernel_initializer=tf.keras.initializers.GlorotUniform())]
+    layer_types = [
+        lambda:
+        layer_name(
+            num_channels, activation=activation,
+            kernel_initializer=tf.keras.initializers.GlorotUniform())]
     num_repeat = [num_layers]
     model_class = generate_model_class(
-        "CustomModel", layer_types, num_repeat, num_output, transform=transform)
+        "CustomModel", layer_types, num_repeat, num_output,
+        transform=transform)
     return model_class()
 
 
