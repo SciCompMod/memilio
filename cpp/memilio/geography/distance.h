@@ -30,8 +30,8 @@ namespace geo
 {
 
 /**
- * @brief Represents a point in time.
- * Seconds from an unspecified monday at 00:00 (epoch). 
+ * @brief Represents a distance.
+ * Internally, all distances are stored in meters.
  */
 class Distance
 {
@@ -41,8 +41,8 @@ public:
      */
     Distance() = default;
     /**
-     * @brief Creates a Distance from a specified number of seconds.
-     * @param[in] seconds The number of seconds after the epoch.
+     * @brief Creates a Distance from a specified distance in meters.
+     * @param[in] meters The distance in meters.
      */
     explicit constexpr Distance(ScalarType meters)
         : m_meters(meters)
@@ -50,7 +50,7 @@ public:
     }
 
     /**
-     * @brief Distance in kilometers.
+     * @brief return distance in kilometers.
      */
     ScalarType kilometers() const
     {
@@ -58,7 +58,7 @@ public:
     }
 
     /**
-     * @brief Distance in meters.
+     * @brief return distance in meters.
      */
     ScalarType meters() const
     {
@@ -131,7 +131,7 @@ private:
 
 /**
  * @brief Create a Distance of a specified number of meters.
- * @param[in] meters Number of meters in the Distance.
+ * @param[in] meters distance in meters.
  */
 constexpr inline Distance meters(ScalarType meters)
 {
@@ -140,7 +140,7 @@ constexpr inline Distance meters(ScalarType meters)
 
 /**
  * @brief Create a Distance of a specified number of kilometers.
- * @param[in] kilometers Number of kilometers in the Distance.
+ * @param[in] kilometers distance in kilometers.
  */
 constexpr inline Distance kilometers(ScalarType kilometers)
 {
