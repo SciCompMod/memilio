@@ -119,12 +119,12 @@ int main(int /*argc*/, char** /*argv*/)
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
                  });
-    auto tree  = mio::geo::RTree({nodes.begin(), nodes.end()});
+    auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
     mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
         node.property.set_regional_neighbors(
-            tree.inrange_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
+            tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
     }
 
     mio::log_info("Neighbors set");
