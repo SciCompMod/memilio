@@ -49,5 +49,7 @@ The following list explains the nonstandard data types that are used throughout 
      - Represents a coefficient-wise matrix expression :math:`B - D \odot (B - M)`, where :math:`B` is a baseline matrix, :math:`M` is a minimum matrix, :math:`D` is a time-dependent complex damping factor, and :math:`\odot` is element wise multiplication. Used as the base for time-dependent contact matrices.
    * - :code:`DampingMatrixExpressionGroup`
      - Represents a collection of ``DampingMatrixExpression``\s that are summed up. Used for representing multiple sources of contacts or mobility.
-   * - :code:`GeographicLocation`
+   * - :code:`GeographicalLocation`
      - Stores coordinates in (Latitude, Longitude) format. Allows for comparisons and realistic distance calculations.
+   * - :code:`Distance`
+     - Represents a distance. Internally, all distances are stored in meters. They can be created from meters or kilometers and they can be exported using both units.
