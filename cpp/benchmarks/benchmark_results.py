@@ -30,6 +30,46 @@ else:
     plt.rcParams['figure.facecolor'] = 'white'
 
 
+class rawData:
+    """Class to hold raw benchmark data."""
+
+    def __init__(self):
+        # Population sizes in thousands
+        self.population_sizes = [1000, 2000, 4000,
+                                 8000, 16000, 32000, 64000, 128000, 256000]  # in thousands
+        self.population_sizes = [p * 1000 for p in self.population_sizes]
+
+        # Runtime memilio single thread (normalized per time step)
+        self.memilio_times_single_core = np.array(
+            [33594, 68616, 135322, 271997, 550301, 1130269, 2237273, 5551993, 11600000]) * (1/120.0) * (1/1000)
+
+        # Runtime memilio four threads (normalized per time step)
+        self.covasim_times_four_cores = np.array(
+            [13812, 27802, 56257, 113088, 223888, 454182, 928952, 1944267, 4877925]) * (1/120.0)*(1/1000)
+
+        # covasim single thread (normalized per time step)
+        self.covasim_times_parallel = np.array(
+            [62415, 128200, 292536, 632381, 1298022, 2625049, 5385827]) * (1/120.0)*(1/1000)
+
+        # now data for weak scaling
+
+        # Runtime with 250.000 agents per core
+        self.memilio_weak_scaling_250k = np.array(
+            [8305, 9997, 13853, 22790, 40123, 77431]) * (1/120.0)*(1/1000)
+
+        # Runtime with 500.000 agents per core
+        self.memilio_weak_scaling_500k = np.array(
+            [16685, 20424, 27934, 45817, 80567, 155877]) * (1/120.0)*(1/1000)
+
+        # Runtime with 1.000.000 agents per core
+        self.memilio_weak_scaling_1m = np.array(
+            [34165, 41361, 56680, 91576, 159270, 315894]) * (1/120.0)*(1/1000)
+
+        # Runtime with 2.000.000 agents per core
+        self.memilio_weak_scaling_2m = np.array(
+            [69787, 83565, 112698, 181267, 322380, 601845]) * (1/120.0)*(1/1000)
+
+
 class BenchmarkAnalyzer:
     """Enhanced benchmark analysis and visualization tool."""
 
@@ -38,7 +78,7 @@ class BenchmarkAnalyzer:
         self.colors = {'memilio': '#1f77b4', 'covasim': '#ff7f0e'}
 
         # Default data - can be overridden by loading from files
-        self.population_sizes = [25, 50, 100,
+        self.population_sizes = [1000, 50, 100,
                                  200, 400, 800, 1600]  # in thousands
         self.population_sizes = [p * 1000 for p in self.population_sizes]
 
@@ -210,6 +250,136 @@ class BenchmarkAnalyzer:
 
         return fig, (ax1, ax2)
 
+    def plot_runtime_scaling_comparison(self, raw_data, save_path=None):
+        """Create runtime scaling plot comparing single core, four cores, and Covasim with speedup."""
+        fig, ax1 = plt.subplots(figsize=(12, 9))
+
+        # Plot MEmilio single core (solid line)
+        ax1.plot(raw_data.population_sizes, raw_data.memilio_times_single_core,
+                 marker='o', linewidth=3, markersize=8,
+                 color='#1f77b4', label='MEmilio ABM (1 core)', linestyle='-')
+
+        # Plot MEmilio four cores (dotted line)
+        ax1.plot(raw_data.population_sizes, raw_data.covasim_times_four_cores,
+                 marker='s', linewidth=3, markersize=8,
+                 color='#2ca02c', label='MEmilio ABM (4 cores)', linestyle=':')
+
+        # Plot Covasim (solid line) - note: covasim has fewer data points
+        covasim_pop_sizes = raw_data.population_sizes[:len(
+            raw_data.covasim_times_parallel)]
+        ax1.plot(covasim_pop_sizes, raw_data.covasim_times_parallel,
+                 marker='^', linewidth=3, markersize=8,
+                 color='#ff7f0e', label='Covasim', linestyle='-')
+
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+        ax1.set_xlabel('Population Size', fontsize=self.fontsize)
+        ax1.set_ylabel('Runtime per Time Step (seconds)',
+                       fontsize=self.fontsize)
+        ax1.set_title('Runtime Scaling Comparison',
+                      fontsize=self.fontsize+4)
+
+        ax1.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
+        ax1.grid(True, alpha=0.3)
+        ax1.legend(fontsize=self.fontsize-2, loc='upper left')
+
+        # Create secondary y-axis for speedup
+        ax2 = ax1.twinx()
+
+        # Calculate speedup for 1 core (Covasim / MEmilio single core)
+        speedup_1core = []
+        for i, pop in enumerate(covasim_pop_sizes):
+            speedup = raw_data.covasim_times_parallel[i] / \
+                raw_data.memilio_times_single_core[i]
+            speedup_1core.append(speedup)
+
+        # Calculate speedup for 4 cores (Covasim / MEmilio four cores)
+        speedup_4cores = []
+        for i, pop in enumerate(covasim_pop_sizes):
+            speedup = raw_data.covasim_times_parallel[i] / \
+                raw_data.covasim_times_four_cores[i]
+            speedup_4cores.append(speedup)
+
+        # Plot both speedup lines on secondary y-axis
+        ax2.plot(covasim_pop_sizes, speedup_1core,
+                 marker='D', linewidth=2.5, markersize=7,
+                 color='#d62728', label='Speedup (1 core vs Covasim)',
+                 linestyle='--', alpha=0.8)
+
+        ax2.plot(covasim_pop_sizes, speedup_4cores,
+                 marker='v', linewidth=2.5, markersize=7,
+                 color='#9467bd', label='Speedup (4 cores vs Covasim)',
+                 linestyle='-.', alpha=0.8)
+
+        ax2.set_ylabel('Speedup Factor (Covasim / MEmilio)',
+                       fontsize=self.fontsize, color='#8b0000')
+        ax2.tick_params(axis='y', labelcolor='#8b0000',
+                        labelsize=self.fontsize-2)
+        ax2.set_xscale('log')
+
+        # Add legend for speedup lines
+        ax2.legend(fontsize=self.fontsize-2, loc='center right')
+
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Runtime scaling plot saved to {save_path}")
+
+        return fig, ax1
+
+    def plot_weak_scaling(self, raw_data, save_path=None):
+        """Create weak scaling plot for different agent counts per core."""
+        fig, ax = plt.subplots(figsize=(12, 9))
+
+        # Number of cores for weak scaling
+        num_cores = [1, 2, 4, 8, 16, 32]
+
+        # Plot each configuration
+        ax.plot(num_cores, raw_data.memilio_weak_scaling_250k,
+                marker='o', linewidth=3, markersize=8,
+                label='250k agents per core', linestyle='-')
+
+        ax.plot(num_cores, raw_data.memilio_weak_scaling_500k,
+                marker='s', linewidth=3, markersize=8,
+                label='500k agents per core', linestyle='-')
+
+        ax.plot(num_cores, raw_data.memilio_weak_scaling_1m,
+                marker='^', linewidth=3, markersize=8,
+                label='1M agents per core', linestyle='-')
+
+        ax.plot(num_cores, raw_data.memilio_weak_scaling_2m,
+                marker='D', linewidth=3, markersize=8,
+                label='2M agents per core', linestyle='-')
+
+        # Add ideal scaling line (constant runtime)
+        ideal_runtime = raw_data.memilio_weak_scaling_250k[0]
+        ax.plot(num_cores, [ideal_runtime] * len(num_cores),
+                'k--', linewidth=2, alpha=0.5, label='Ideal (constant runtime)')
+
+        ax.set_xscale('log', base=2)
+        ax.set_yscale('log')
+        ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime per Time Step (seconds)',
+                      fontsize=self.fontsize)
+        ax.set_title('Weak Scaling: MEmilio ABM', fontsize=self.fontsize+4)
+
+        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=self.fontsize-2)
+
+        # Set x-axis ticks to actual core counts
+        ax.set_xticks(num_cores)
+        ax.set_xticklabels([str(c) for c in num_cores])
+
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Weak scaling plot saved to {save_path}")
+
+        return fig, ax
+
     def print_summary(self):
         """Print summary statistics."""
         metrics = self.calculate_metrics()
@@ -257,24 +427,23 @@ def main():
 
     args = parser.parse_args()
 
-    # Create analyzer
+    # Create analyzer and raw data
     analyzer = BenchmarkAnalyzer(fontsize=18)
+    raw_data = rawData()
 
     # Create plots
     save_dir = Path(args.save) if args.save else None
     if save_dir:
         save_dir.mkdir(exist_ok=True)
 
-    # Main scaling plot
-    runtime_path = save_dir / 'runtime_scaling.png' if save_dir else None
-    fig1, ax1 = analyzer.plot_runtime_scaling(runtime_path)
+    # Runtime scaling plot (single core, four cores, Covasim)
+    runtime_scaling_path = save_dir / 'runtime_scaling.png' if save_dir else None
+    fig1, ax1 = analyzer.plot_runtime_scaling_comparison(
+        raw_data, runtime_scaling_path)
 
-    # Speedup analysis
-    speedup_path = save_dir / 'speedup_analysis.png' if save_dir else None
-    fig2, (ax2, ax3) = analyzer.plot_speedup_analysis(speedup_path)
-
-    # Print summary
-    analyzer.print_summary()
+    # Weak scaling plot
+    weak_scaling_path = save_dir / 'weak_scaling.png' if save_dir else None
+    fig2, ax2 = analyzer.plot_weak_scaling(raw_data, weak_scaling_path)
 
     # Save data if requested
     if args.data_file:
