@@ -62,7 +62,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 100000;
+    int n_households = 10;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -119,7 +119,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     auto validity_period       = mio::abm::days(1);
     auto probability           = 0.5;
     auto start_date            = mio::abm::TimePoint(0);
-    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(40);
+    auto end_date              = mio::abm::TimePoint(0) + mio::abm::days(10);
     auto test_type             = mio::abm::TestType::Antigen;
     auto test_parameters       = model.parameters.get<mio::abm::TestData>()[test_type];
     auto testing_criteria_work = mio::abm::TestingCriteria();
@@ -159,7 +159,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     }
 
     // During the lockdown, social events are closed for 90% of people.
-    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(40);
+    auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
     mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
     return model;
@@ -173,9 +173,9 @@ int main()
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(60);
+    auto tmax = t0 + mio::abm::days(5);
     // auto sim  = mio::abm::Simulation(t0, std::move(model));
-    const size_t num_runs = 128;
+    const size_t num_runs = 3;
 
     // Create a parameter study. The ABM currently does not use parameters or dt, so we set them both to 0.
     mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
