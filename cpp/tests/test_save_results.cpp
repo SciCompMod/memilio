@@ -169,8 +169,8 @@ TEST(TestSaveResult, save_result_with_params)
     graph.add_edge(0, 1,
                    mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0)));
 
-    auto num_runs        = 3;
-    auto parameter_study = mio::ParameterStudy<double, mio::osecir::Simulation<double>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs = 3;
+    mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -183,10 +183,13 @@ TEST(TestSaveResult, save_result_with_params)
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_status = mio::IOResult<void>(mio::success());
     parameter_study.run(
-        [](auto&& g) {
-            return draw_sample(g);
+        [](auto&& g, auto t0_, auto dt_, auto) {
+            auto copy = g;
+            return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
         },
-        [&](auto results_graph, auto run_idx) {
+        [&](auto&& results, auto run_idx) {
+            auto results_graph = results.get_graph();
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();
@@ -302,8 +305,8 @@ TEST(TestSaveResult, save_percentiles_and_sums)
                    mio::MobilityParameters<double>(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 10), 1.0),
                                                    indices_save_edges));
 
-    auto num_runs        = 3;
-    auto parameter_study = mio::ParameterStudy<double, mio::osecir::Simulation<double>>(graph, 0.0, 2.0, 0.5, num_runs);
+    auto num_runs = 3;
+    mio::ParameterStudy parameter_study(graph, 0.0, 2.0, 0.5, num_runs);
     mio::log_rng_seeds(parameter_study.get_rng(), mio::LogLevel::warn);
 
     TempFileRegister tmp_file_register;
@@ -317,10 +320,13 @@ TEST(TestSaveResult, save_percentiles_and_sums)
     auto ensemble_edges = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_edges.reserve(size_t(num_runs));
     parameter_study.run(
-        [](auto&& g) {
-            return draw_sample(g);
+        [](auto&& g, auto t0_, auto dt_, auto) {
+            auto copy = g;
+            return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<double>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
         },
-        [&](auto results_graph, auto /*run_idx*/) {
+        [&](auto&& results, auto /*run_idx*/) {
+            auto results_graph = results.get_graph();
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
             ensemble_params.emplace_back();

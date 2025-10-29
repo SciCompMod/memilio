@@ -22,13 +22,15 @@
 
 #include "memilio/config.h"
 
+#include <string>
+
 namespace mio
 {
 
 /**
- * @brief Returns path to the repo directory.
-*/
-constexpr std::string mio::base_dir()
+ * @brief Returns the absolute path to the project directory.
+ */
+const static std::string base_dir()
 {
     return MEMILIO_BASE_DIR;
 }

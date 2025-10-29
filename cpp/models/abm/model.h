@@ -20,6 +20,7 @@
 #ifndef MIO_ABM_MODEL_H
 #define MIO_ABM_MODEL_H
 
+#include "abm/infection_state.h"
 #include "abm/model_functions.h"
 #include "abm/location_type.h"
 #include "abm/mobility_data.h"
@@ -61,6 +62,7 @@ public:
     using MobilityRuleType        = LocationType (*)(PersonalRandomNumberGenerator&, const Person&, TimePoint, TimeSpan,
                                               const Parameters&);
 
+    using Compartments = mio::abm::InfectionState;
     /**
      * @brief Create a Model.
      * @param[in] num_agegroups The number of AgeGroup%s in the simulated Model. Must be less than MAX_NUM_AGE_GROUPS.

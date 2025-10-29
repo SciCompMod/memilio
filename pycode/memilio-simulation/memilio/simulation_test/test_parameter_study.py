@@ -85,12 +85,14 @@ class Test_ParameterStudy(unittest.TestCase):
 
     def test_run(self):
         """ """
-        model = self._get_model()
+        graph = osecir.ModelGraph()
+        graph.add_node(0, self._get_model())
 
         t0 = 1
         tmax = 10
+        dt = 0.1
         num_runs = 3
-        study = osecir.ParameterStudy(model, t0, tmax, num_runs)
+        study = osecir.ParameterStudy(graph, t0, tmax, dt, num_runs)
 
         self.assertEqual(study.t0, t0)
         self.assertEqual(study.tmax, tmax)

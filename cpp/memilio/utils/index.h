@@ -21,13 +21,52 @@
 #define INDEX_H
 
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/type_safe.h"
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 namespace mio
 {
 
 template <typename... CategoryTags>
 class Index;
+
+namespace details
+{
+
+template <class... Tags>
+std::tuple<Index<Tags>...> get_tuple(Index<Tags...> i)
+{
+    if constexpr (sizeof...(Tags) == 1) {
+        return std::tuple(i);
+    }
+    else {
+        return i.indices;
+    }
+}
+
+template <class Enum>
+std::tuple<Index<Enum>> get_tuple(Enum i)
+    requires std::is_enum<Enum>::value
+{
+    return std::tuple(Index<Enum>(i));
+}
+
+// template <class... Tags>
+// Index<Tags...> merge_index_from_tuple(std::tuple<Index<Tags>...>);
+
+template <class... IndexArgs>
+auto merge_indices(IndexArgs... args)
+{
+    return std::tuple_cat(get_tuple(args)...);
+}
+
+template <class... IndexArgs>
+using merge_indices_expr = decltype(std::tuple(get_tuple(std::declval<IndexArgs>())...));
+
+} // namespace details
 
 /**
  * @brief An Index with a single template parameter is a typesafe wrapper for size_t
@@ -139,6 +178,13 @@ private:
     }
 
 public:
+    template <class... IndexArgs,
+              class = std::enable_if_t<is_expression_valid<details::merge_indices_expr, IndexArgs...>::value>>
+    Index(IndexArgs... _index_args)
+        : indices(details::merge_indices(_index_args...))
+    {
+    }
+
     // comparison operators
     bool operator==(Index const& other) const
     {
@@ -181,12 +227,20 @@ public:
     std::tuple<Index<CategoryTag>...> indices;
 };
 
-template <size_t Index, class... CategoryTags>
-struct type_at_index<Index, ::mio::Index<CategoryTags...>> : public type_at_index<Index, CategoryTags...> {
+/// Specialization of type_at_index for Index. @see type_at_index.
+template <size_t Tag, class... CategoryTags>
+struct type_at_index<Tag, ::mio::Index<CategoryTags...>> : public type_at_index<Tag, CategoryTags...> {
 };
 
-template <class CategoryTag, class... CategoryTags>
-struct index_of_type<CategoryTag, ::mio::Index<CategoryTags...>> : public index_of_type<CategoryTag, CategoryTags...> {
+/// Specialization of index_of_type for Index. @see index_of_type.
+template <class Tag, class... CategoryTags>
+struct index_of_type<Tag, ::mio::Index<CategoryTags...>> : public index_of_type<Tag, CategoryTags...> {
+};
+
+/// Specialization of index_of_type for Index. Resolves ambiguity when using Index%s as items. @see index_of_type.
+template <class... CategoryTags>
+struct index_of_type<Index<CategoryTags...>, Index<CategoryTags...>> {
+    static constexpr std::size_t value = 0;
 };
 
 // retrieves the Index at the Ith position for a Index with more than one Tag
