@@ -390,7 +390,7 @@ private:
 
 template <class Graph, class Timepoint = double, class Timespan = double,
           class edge_f = void (*)(Timepoint, Timespan, typename Graph::EdgeProperty&, typename Graph::NodeProperty&,
-                                  typename Graph::NodeProperty&),
+                                  typename Graph::NodeProperty&, mio::RandomNumberGenerator&),
           class node_f = void (*)(Timepoint, Timespan, typename Graph::NodeProperty&)>
 class AsymmetricGraphSimulation : public GraphSimulationBase<Graph, Timepoint, Timespan, edge_f, node_f>
 {
@@ -427,7 +427,7 @@ public:
                 mio::log_debug("{}, {}", e.start_node_idx, e.end_node_idx);
                 Base::m_edge_func(Base::m_t, next_event.number, e.property,
                                   Base::m_graph.nodes()[e.start_node_idx].property,
-                                  Base::m_graph.nodes()[e.end_node_idx].property);
+                                  Base::m_graph.nodes()[e.end_node_idx].property, m_rng);
             }
             dt = m_parameters.next_event_time() - Base::m_t;
         }
