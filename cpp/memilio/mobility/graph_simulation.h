@@ -28,6 +28,7 @@
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
+#include "models/smm/parameters.h"
 
 namespace mio
 {
@@ -589,11 +590,17 @@ public:
         //     }
         // }
 
-        // for (auto& n : Base::m_graph.nodes()) {
-        //     if (n.property.get_result().get_last_value()[2] > 40) {
-        //         n.property.get_model().get_parameters().get < mio::smm::AdoptionRates<ScalarType, >
-        //     }    // I don't know any smart way to access and modify the adoption rates here, I would need to know the template parameters.
-        // }
+        for (auto& n : Base::m_graph.nodes()) {
+            // using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
+            using Model        = std::decay_t<decltype(n.property.get_simulation().get_model())>;
+            using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Compartments>;
+            // n.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[0].factor = 0.5;
+            mio::unused(n.property.get_simulation().get_model().parameters.template get<AdoptionRate>());
+            //     if (n.property.get_result().get_last_value()[2] > 40) {
+            //         n.property.get_model().get_parameters().get < mio::smm::AdoptionRates<ScalarType, >
+            //     }    // I don't know any smart way to access and modify the adoption rates here, I would need to know the template parameters.
+        }
+    }
 
     RandomNumberGenerator& get_rng()
     {
