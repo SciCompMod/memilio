@@ -39,7 +39,8 @@ logging.getLogger("tensorflow").setLevel(logging.ERROR)
 class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     path = "/home/"
 
-    def create_dummy_data(self, num_samples, num_nodes, num_node_features, output_dim):
+    def create_dummy_data(
+            self, num_samples, num_nodes, num_node_features, output_dim):
         """
         Create dummy data for testing.
 
@@ -130,8 +131,9 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             ModelClass = generate_model_class(
                 "TestModel", layer_types, num_layers, num_output)
             model = ModelClass()
-        self.assertEqual(str(
-            error.exception), "layer_types and num_repeat must have the same length.")
+        self.assertEqual(
+            str(error.exception),
+            "layer_types and num_repeat must have the same length.")
 
         # Test with multiple layer types
         layer_types = [
@@ -176,8 +178,9 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         with self.assertRaises(ValueError) as error:
             model = get_model(layer_type, num_layers,
                               num_channels, activation, num_output)
-        self.assertEqual(str(
-            error.exception), "Unsupported layer_type: MonvConv. "
+        self.assertEqual(
+            str(error.exception),
+            "Unsupported layer_type: MonvConv. "
             "Supported types are 'ARMAConv', 'GCSConv', 'GATConv', 'GCNConv', 'APPNPConv'.")
         # Test with invalud num_layers
         layer_type = "GATConv"
@@ -209,8 +212,9 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         with self.assertRaises(ValueError) as error:
             model = get_model(layer_type, num_layers,
                               num_channels, activation, num_output)
-        self.assertEqual(str(
-            error.exception), "activation must be a string representing the activation function.")
+        self.assertEqual(
+            str(error.exception),
+            "activation must be a string representing the activation function.")
 
     def test_create_dataset(self):
         from memilio.surrogatemodel.GNN.evaluate_and_train import create_dataset
@@ -286,7 +290,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
         # Create a simple model for testing
         model = get_model(
-            layer_type="GCNConv", num_layers=2, num_channels=16, activation="relu", num_output=4)
+            layer_type="GCNConv", num_layers=2, num_channels=16,
+            activation="relu", num_output=4)
         loss_fn = MeanAbsolutePercentageError()
 
         # Create dummy data in the fake filesystem for testing
@@ -337,7 +342,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         number_of_epochs = 2
         # Create a simple model for testing
         model = get_model(
-            layer_type="GCNConv", num_layers=2, num_channels=16, activation="relu", num_output=4)
+            layer_type="GCNConv", num_layers=2, num_channels=16,
+            activation="relu", num_output=4)
 
         # Create dummy data in the fake filesystem for testing
         num_samples = 20
@@ -375,7 +381,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             loss_fn=MeanAbsolutePercentageError(),
             optimizer=tf.keras.optimizers.Adam(),
             es_patience=100,
-            save_results=True)
+            save_dir=self.path)
         save_results_path = os.path.join(self.path, "model_evaluations_paper")
         save_model_path = os.path.join(self.path, "saved_weights")
         self.assertTrue(os.path.exists(save_results_path))
@@ -430,8 +436,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_channels = 2
 
         model_parameters = [
-            (layer, n_layer, num_channels, activation) for layer in layers for n_layer in num_layers
-        ]
+            (layer, n_layer, num_channels, activation)
+            for layer in layers for n_layer in num_layers]
         batch_size = 2
         loss_function = MeanAbsolutePercentageError()
         optimizer = tf.keras.optimizers.Adam()

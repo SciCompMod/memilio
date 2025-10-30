@@ -35,8 +35,9 @@ import memilio.surrogatemodel.GNN.network_architectures as network_architectures
 from memilio.surrogatemodel.utils.helper_functions import (calc_split_index)
 
 from spektral.data import MixedLoader
-from spektral.layers import (GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv,
-                             APPNPConv, CrystalConv, GATConv, GINConv, XENetConv, GCNConv, GCSConv)
+from spektral.layers import (
+    GCSConv, GlobalAvgPool, GlobalAttentionPool, ARMAConv, AGNNConv, APPNPConv,
+    CrystalConv, GATConv, GINConv, XENetConv, GCNConv, GCSConv)
 from spektral.utils.convolution import normalized_laplacian, rescale_laplacian
 
 
@@ -150,7 +151,9 @@ def evaluate(loader, model, loss_fn, retransform=False):
             return np.average(output[:, :-1], 0, weights=output[:, -1])
 
 
-def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_patience, save_results=False, save_name="model"):
+def train_and_evaluate(
+        data, batch_size, epochs, model, loss_fn, optimizer, es_patience,
+        save_dir="", save_name="model"):
     '''Train and evaluate the GNN model.
     :param data: The dataset to use for training and evaluation.
     :param batch_size: Batch size for training.
@@ -159,8 +162,8 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     :param loss_fn: Loss function to use.
     :param optimizer: Optimizer to use for training.
     :param es_patience: Patience for early stopping.
-    :param save_results: Whether to save the results to a file.
-    :param save_name: Name to use when saving the results.
+    :param save_dir: Directory to save results into. If not provided, results are not saved.
+    :param save_name: Name to use when saving the results (without extension).
     :return: A dictionary containing training and evaluation results if save_results is False.'''
     n = len(data)
     # Determine split indices for training, validation, and test sets
@@ -279,7 +282,7 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
     ################################################################################
     # Save results
     ################################################################################
-    if save_results:
+    if save_dir:
         # save df
         df.loc[len(df.index)] = [  # layer_name, number_of_layer, channels,
             np.mean(train_losses),
@@ -296,11 +299,9 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
             save_name += '.pickle'
 
         # Save best weights as pickle
-        path = os.path.dirname(os.path.realpath(__file__))
-        file_path_w = os.path.join(path, 'saved_weights')
+        file_path_w = os.path.join(save_dir, 'saved_weights')
         # Ensure the directory exists
-        if not os.path.isdir(file_path_w):
-            os.mkdir(file_path_w)
+        os.makedirs(file_path_w, exist_ok=True)
 
         # Construct the full file path by joining the directory with save_name
         file_path_w = os.path.join(file_path_w, save_name)
@@ -309,13 +310,11 @@ def train_and_evaluate(data, batch_size, epochs,  model, loss_fn, optimizer, es_
         with open(file_path_w, 'wb') as f:
             pickle.dump(best_weights, f)
 
+        # Save evaluation CSV
+        file_path_df = os.path.join(save_dir, 'model_evaluations_paper')
+        os.makedirs(file_path_df, exist_ok=True)
         file_path_df = os.path.join(
-            os.path.dirname(
-                os.path.realpath(os.path.dirname(os.path.realpath(path)))),
-            'model_evaluations_paper')
-        if not os.path.isdir(file_path_df):
-            os.mkdir(file_path_df)
-        file_path_df = file_path_df+"/"+save_name.replace('.pickle', '.csv')
+            file_path_df, save_name.replace('.pickle', '.csv'))
         df.to_csv(file_path_df)
 
     else:
@@ -339,9 +338,14 @@ if __name__ == "__main__":
     optimizer = Adam(learning_rate=0.001)
     loss_fn = MeanAbsolutePercentageError()
 
+    path_memilio = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__), '../../../../..'))
+
     # Generate the Dataset
-    path_cases = "/localdata1/hege_mn/memilio/saves/GNN_data_30days_3dampings_classic5.pickle"
-    path_mobility = '/localdata1/hege_mn/memilio/data/Germany/mobility'
+    path_cases = os.path.join(path_memilio, "saves",
+                              "GNN_data_30days_3dampings_classic5.pickle")
+    path_mobility = os.path.join(path_memilio, "data", "Germany", "mobility")
     data = create_dataset(path_cases, path_mobility)
 
     # Define the model architecture
@@ -362,13 +366,11 @@ if __name__ == "__main__":
 
     model = model_class()
 
-    # early stopping patience
-    # name for df
     save_name = 'GNN_30days'  # name for model
-    # for param in parameters:
-
-    train_and_evaluate(data, batch_size, epochs, model,
-                       loss_fn, optimizer, es_patience, save_name)
+    train_and_evaluate(
+        data, batch_size, epochs, model, loss_fn, optimizer, es_patience,
+        save_dir=os.path.join(path_memilio, "saves", "GNN_model_results"),
+        save_name=save_name)
 
     elapsed_hyper = time.perf_counter() - start_hyper
     print(
