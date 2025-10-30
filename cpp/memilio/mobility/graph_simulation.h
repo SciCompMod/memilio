@@ -594,10 +594,15 @@ public:
         //         n.property.get_model().get_parameters().get < mio::smm::AdoptionRates<ScalarType, >
         //     }    // I don't know any smart way to access and modify the adoption rates here, I would need to know the template parameters.
         // }
+
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
     }
 
 private:
     mio::MobilityParametersTimed m_parameters;
+    RandomNumberGenerator m_rng;
 };
 
 template <typename FP, typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
