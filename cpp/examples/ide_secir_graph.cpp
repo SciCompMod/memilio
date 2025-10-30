@@ -37,9 +37,11 @@ int main()
     // Set time step size of IDE solver. Note that the time step size will be constant throughout the simulation.
     const ScalarType dt_ide_solver = 1.;
 
+    // Define number of age groups.
     size_t num_agegroups = 1;
 
-    mio::CustomIndexArray<ScalarType, mio::AgeGroup> N_init =
+    // Define initial values for the total population and number of deaths.
+    mio::CustomIndexArray<ScalarType, mio::AgeGroup> total_population_init =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 10000.);
     mio::CustomIndexArray<ScalarType, mio::AgeGroup> deaths_init =
         mio::CustomIndexArray<ScalarType, mio::AgeGroup>(mio::AgeGroup(num_agegroups), 13.10462213);
@@ -77,7 +79,7 @@ int main()
     }
 
     // Initialize IDE model that will be used in in each node in the graph below.
-    mio::isecir::Model model(std::move(transitions_init), N_init, deaths_init, num_agegroups);
+    mio::isecir::Model model(std::move(transitions_init), total_population_init, deaths_init, num_agegroups);
     model.check_constraints(dt_ide_solver);
 
     // Set up graph with two nodes and no edges. To each node, we pass an id, the above constructed IDE model as well

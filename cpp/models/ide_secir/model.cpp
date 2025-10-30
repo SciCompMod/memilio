@@ -181,6 +181,14 @@ ScalarType Model::get_global_support_max(ScalarType dt) const
     return global_support_max;
 }
 
+/* Disclaimer: The following discrete formulas are derived and explained in 
+Wendler A, Plötzke L, Tritzschak H, Kühn MJ: A nonstandard numerical scheme for a novel SECIR integro differential 
+equation-based model with nonexponentially distributed stay times. DOI:10.1016/j.amc.2025.129636.
+Note that throughout this implementation, we assume that the initial values for the transitions contain information 
+about the number of individuals transition within a time interval (in contrast to at a time point), cf. Section 3.4 in 
+the paper. The formulas from the paper are adapted accordingly by scaling with the time step size dt.
+ */
+
 // ---- Functionality to calculate the sizes of the compartments for time t0. ----
 void Model::compute_compartment_from_flows(ScalarType dt, Eigen::Index idx_InfectionState, AgeGroup group,
                                            Eigen::Index idx_IncomingFlow, int idx_TransitionDistribution1,
