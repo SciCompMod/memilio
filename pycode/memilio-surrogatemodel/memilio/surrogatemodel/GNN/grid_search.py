@@ -19,6 +19,7 @@
 #############################################################################
 
 import os
+from typing import Optional
 
 import pandas as pd
 import tensorflow as tf
@@ -62,7 +63,8 @@ training_parameters = [batch_size, loss_function,
 
 
 def perform_grid_search(
-        model_parameters, training_parameters, data, save_dir: str | None = None):
+        model_parameters, training_parameters, data,
+        save_dir: Optional[str] = None):
     """Perform grid search over the specified model parameters. 
     Trains and evaluates models with different configurations and stores the results in a CSV file.
     Results are saved in 'grid_search_results.csv' in the 'saves' directory.
