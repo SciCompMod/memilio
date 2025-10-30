@@ -293,6 +293,9 @@ public:
             else { // deserialize failed
                 // insert more information to the error message
                 std::string msg = "While setting \"" + name + "\": " + param_result.error().message();
+                if (param_result.error().message() == "Json value is not a string.") {
+                    msg += " Try using escaped quotes (\\\") around your input strings.";
+                }
                 return mio::failure(param_result.error().code(), msg);
             }
         })

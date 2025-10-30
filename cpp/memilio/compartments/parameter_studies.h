@@ -21,118 +21,133 @@
 #define MIO_COMPARTMENTS_PARAMETER_STUDIES_H
 
 #include "memilio/io/binary_serializer.h"
+#include "memilio/io/io.h"
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
-#include "memilio/utils/time_series.h"
 #include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/compartments/simulation.h"
 
+#include <cassert>
 #include <cmath>
+#include <concepts>
 #include <cstdint>
-#include <iterator>
-#include <limits>
-#include <numeric>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace mio
 {
 
 /**
- * Class that performs multiple simulation runs with randomly sampled parameters.
- * Can simulate mobility graphs with one simulation in each node or single simulations.
- * @tparam S type of simulation that runs in one node of the graph.
+ * @brief Class used to performs multiple simulation runs with randomly sampled parameters.
+ * @tparam ParameterType The parameters used to create simulations.
+ * @tparam TimeType The type used for time, e.g. double or TimePoint.
+ * @tparam StepType The type used for time steps, e.g. double or TimeStep.
  */
-template <typename FP, class S>
+template <class ParameterType, typename TimeType, typename StepType = TimeType>
 class ParameterStudy
 {
 public:
-    /**
-    * The type of simulation of a single node of the graph.
-    */
-    using Simulation = S;
-    /**
-    * The Graph type that stores the parametes of the simulation.
-    * This is the input of ParameterStudies.
-    */
-    using ParametersGraph = Graph<typename Simulation::Model, MobilityParameters<FP>>;
-    /**
-    * The Graph type that stores simulations and their results of each run.
-    * This is the output of ParameterStudies for each run.
-    */
-    using SimulationGraph = Graph<SimulationNode<FP, Simulation>, MobilityEdge<FP>>;
+    using Parameters = ParameterType;
+    using Time       = TimeType;
+    using Step       = StepType;
+
+private:
+    template <class CreateSimulationFunction>
+        requires std::is_invocable_v<CreateSimulationFunction, Parameters, Time, Step, size_t>
+    using SimulationT = std::decay_t<std::invoke_result_t<CreateSimulationFunction, Parameters, Time, Step, size_t>>;
+
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+        requires std::is_invocable_v<ProcessSimulationResultFunction, SimulationT<CreateSimulationFunction>, size_t>
+    using ProcessedResultT = std::decay_t<
+        std::invoke_result_t<ProcessSimulationResultFunction, SimulationT<CreateSimulationFunction>, size_t>>;
+
+public:
+    // TODO: replacement for "set_params_distributions_normal"? Maybe a special ctor for UncertainParameterSet?
 
     /**
-     * create study for graph of compartment models.
-     * @param graph graph of parameters
-     * @param t0 start time of simulations
-     * @param tmax end time of simulations
-     * @param graph_sim_dt time step of graph simulation
-     * @param num_runs number of runs
+     * @brief Create a parameter study with some parameters.
+     * The simulation type is determined when calling any "run" member function.
+     * @param parameters The parameters used to create simulations.
+     * @param t0 Start time of simulations.
+     * @param tmax End time of simulations.
+     * @param dt Initial time step of simulations.
+     * @param num_runs Number of simulations that will be created and run.
      */
-    ParameterStudy(const ParametersGraph& graph, FP t0, FP tmax, FP graph_sim_dt, size_t num_runs)
-        : m_graph(graph)
+    ParameterStudy(const Parameters& parameters, Time t0, Time tmax, Step dt, size_t num_runs)
+        : m_parameters(parameters)
         , m_num_runs(num_runs)
         , m_t0{t0}
         , m_tmax{tmax}
-        , m_dt_graph_sim(graph_sim_dt)
+        , m_dt(dt)
     {
     }
 
     /**
-     * create study for graph of compartment models.
-     * Creates distributions for all parameters of the models in the graph.
-     * @param graph graph of parameters
-     * @param t0 start time of simulations
-     * @param tmax end time of simulations
-     * @param dev_rel relative deviation of the created distributions from the initial value.
-     * @param graph_sim_dt time step of graph simulation
-     * @param num_runs number of runs
+     * @brief Run all simulations in serial.
+     * @param[in] create_simulation A callable sampling the study's parameters and return a simulation.
+     * @param[in] process_simulation_result (Optional) A callable that takes the simulation and processes its result.
+     * @return A vector that contains (processed) simulation results for each run.
+     *
+     * Important side effect: Calling this function overwrites seed and counter of thread_local_rng().
+     * Use this RNG when sampling parameters in create_simulation.
+     *
+     * The function signature for create_simulation is
+     * `SimulationT(const Parameters& study_parameters, Time t0, Step dt, size_t run_idx)`,
+     * where SimulationT is some kind of simulation.
+     * The function signature for process_simulation_result is
+     * `ProcessedResultT(SimulationT&&, size_t run_index)`,
+     * where ProcessedResultT is a (de)serializable result.
+     * @{
      */
-    ParameterStudy(const ParametersGraph& graph, FP t0, FP tmax, FP dev_rel, FP graph_sim_dt, size_t num_runs)
-        : ParameterStudy<FP, Simulation>(graph, t0, tmax, graph_sim_dt, num_runs)
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+    std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>
+    run_serial(CreateSimulationFunction&& create_simulation,
+               ProcessSimulationResultFunction&& process_simulation_result)
     {
-        for (auto& params_node : m_graph.nodes()) {
-            set_params_distributions_normal(params_node, t0, tmax, dev_rel);
-        }
+        return run_impl(0, m_num_runs, std::forward<CreateSimulationFunction>(create_simulation),
+                        std::forward<ProcessSimulationResultFunction>(process_simulation_result));
     }
 
-    /**
-     * @brief Create study for single compartment model.
-     * @param model compartment model with initial values
-     * @param t0 start time of simulations
-     * @param tmax end time of simulations
-     * @param num_runs number of runs in ensemble run
-     */
-    ParameterStudy(typename Simulation::Model const& model, FP t0, FP tmax, size_t num_runs)
-        : ParameterStudy<FP, Simulation>({}, t0, tmax, tmax - t0, num_runs)
+    template <class CreateSimulationFunction>
+    std::vector<SimulationT<CreateSimulationFunction>> run_serial(CreateSimulationFunction&& create_simulation)
     {
-        m_graph.add_node(0, model);
+        return run_serial(
+            std::forward<CreateSimulationFunction>(create_simulation),
+            [](SimulationT<CreateSimulationFunction>&& sim, size_t) -> SimulationT<CreateSimulationFunction>&& {
+                return std::move(sim);
+            });
     }
+    /** @} */
 
     /**
-     * @brief Carry out all simulations in the parameter study.
-     * Save memory and enable more runs by immediately processing and/or discarding the result.
-     * The result processing function is called when a run is finished. It receives the result of the run
-     * (a SimulationGraph object) and an ordered index. The values returned by the result processing function
-     * are gathered and returned as a list.
-     * This function is parallelized if memilio is configured with MEMILIO_ENABLE_MPI.
-     * The MPI processes each contribute a share of the runs. The sample function and result processing function
-     * are called in the same process that performs the run. The results returned by the result processing function are
-     * gathered at the root process and returned as a list by the root in the same order as if the programm
-     * were running sequentially. Processes other than the root return an empty list.
-     * @param sample_graph Function that receives the ParametersGraph and returns a sampled copy.
-     * @param result_processing_function Processing function for simulation results, e.g., output function.
-     * @returns At the root process, a list of values per run that have been returned from the result processing function.
-     *          At all other processes, an empty list.
-     * @tparam SampleGraphFunction Callable type, accepts instance of ParametersGraph.
-     * @tparam HandleSimulationResultFunction Callable type, accepts instance of SimulationGraph and an index of type size_t.
+     * @brief Run all simulations distributed over multiple MPI ranks.
+     * @param[in] create_simulation A callable sampling the study's parameters and return a simulation.
+     * @param[in] process_simulation_result A callable that takes the simulation and processes its result.
+     * @return A vector that contains processed simulation results for each run.
+     *
+     * Important: Do not forget to use mio::mpi::init and finalize when using this function!
+     *
+     * Important side effect: Calling this function overwrites seed and counter of thread_local_rng().
+     * Use this RNG when sampling parameters in create_simulation.
+     *
+     * The function signature for create_simulation is
+     * `SimulationT(const Parameters& study_parameters, Time t0, Step dt, size_t run_idx)`,
+     * where SimulationT is some kind of simulation.
+     * The function signature for process_simulation_result is
+     * `ProcessedResultT(SimulationT&&, size_t run_index)`,
+     * where ProcessedResultT is a (de)serializable result.
      */
-    template <class SampleGraphFunction, class HandleSimulationResultFunction>
-    std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>>
-    run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+    std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>
+    run(CreateSimulationFunction&& create_simulation, ProcessSimulationResultFunction&& process_simulation_result)
     {
+        using EnsembleResultT =
+            std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>;
         int num_procs, rank;
+
 #ifdef MEMILIO_ENABLE_MPI
         MPI_Comm_size(mpi::get_world(), &num_procs);
         MPI_Comm_rank(mpi::get_world(), &rank);
@@ -145,40 +160,15 @@ public:
         //So we set our own RNG to be used.
         //Assume that sampling uses the thread_local_rng() and isn't multithreaded
         m_rng.synchronize();
-        thread_local_rng() = m_rng;
 
-        auto run_distribution = distribute_runs(m_num_runs, num_procs);
-        auto start_run_idx =
+        std::vector<size_t> run_distribution = distribute_runs(m_num_runs, num_procs);
+        size_t start_run_idx =
             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
-        auto end_run_idx = start_run_idx + run_distribution[size_t(rank)];
+        size_t end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        std::vector<std::invoke_result_t<HandleSimulationResultFunction, SimulationGraph, size_t>> ensemble_result;
-        ensemble_result.reserve(m_num_runs);
-
-        for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
-            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
-
-            //prepare rng for this run by setting the counter to the right offset
-            //Add the old counter so that this call of run() produces different results
-            //from the previous call
-            auto run_rng_counter = m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(
-                                                             static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
-            thread_local_rng().set_counter(run_rng_counter);
-
-            //sample
-            auto sim = create_sampled_simulation(sample_graph);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
-                (thread_local_rng().get_counter() - run_rng_counter).get());
-
-            //perform run
-            sim.advance(m_tmax);
-
-            //handle result and store
-            ensemble_result.emplace_back(result_processing_function(std::move(sim).get_graph(), run_idx));
-        }
-
-        //Set the counter of our RNG so that future calls of run() produce different parameters.
-        m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
+        EnsembleResultT ensemble_result =
+            run_impl(start_run_idx, end_run_idx, std::forward<CreateSimulationFunction>(create_simulation),
+                     std::forward<ProcessSimulationResultFunction>(process_simulation_result));
 
 #ifdef MEMILIO_ENABLE_MPI
         //gather results
@@ -189,7 +179,7 @@ public:
                 ByteStream bytes(bytes_size);
                 MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
 
-                auto src_ensemble_results = deserialize_binary(bytes, Tag<decltype(ensemble_result)>{});
+                IOResult<EnsembleResultT> src_ensemble_results = deserialize_binary(bytes, Tag<EnsembleResultT>{});
                 if (!src_ensemble_results) {
                     log_error("Error receiving ensemble results from rank {}.", src_rank);
                 }
@@ -198,8 +188,8 @@ public:
             }
         }
         else {
-            auto bytes      = serialize_binary(ensemble_result);
-            auto bytes_size = int(bytes.data_size());
+            ByteStream bytes = serialize_binary(ensemble_result);
+            int bytes_size   = int(bytes.data_size());
             MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
             MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
             ensemble_result.clear(); //only return root process
@@ -209,40 +199,96 @@ public:
         return ensemble_result;
     }
 
-    /**
-     * @brief Carry out all simulations in the parameter study.
-     * Convenience function for a few number of runs, but can use more memory because it stores all runs until the end.
-     * Unlike the other overload, this function is not MPI-parallel.
-     * @return vector of SimulationGraph for each run.
-     */
-    template <class SampleGraphFunction>
-    std::vector<SimulationGraph> run(SampleGraphFunction sample_graph)
+    /// @brief Return the number of total runs that the study will make.
+    size_t get_num_runs() const
     {
-        std::vector<SimulationGraph> ensemble_result;
-        ensemble_result.reserve(m_num_runs);
+        return m_num_runs;
+    }
 
-        //The ParameterDistributions used for sampling parameters use thread_local_rng()
-        //So we set our own RNG to be used.
-        //Assume that sampling uses the thread_local_rng() and isn't multithreaded
+    /// @brief Return the final time point for simulations.
+    Time get_tmax() const
+    {
+        return m_tmax;
+    }
+
+    /// @brief Return the initial time point for simulations.
+    Time get_t0() const
+    {
+        return m_t0;
+    }
+
+    /// @brief Return the initial step sized used by simulations.
+    Time get_dt() const
+    {
+        return m_dt;
+    }
+
+    /**
+     * @brief Get the input parameters that each simulation in the study is created from.
+     * @{
+     */
+    const Parameters& get_parameters() const
+    {
+        return m_parameters;
+    }
+    Parameters& get_parameters()
+    {
+        return m_parameters;
+    }
+    /** @} */
+
+    /// @brief Access the study's random number generator.
+    RandomNumberGenerator& get_rng()
+    {
+        return m_rng;
+    }
+
+private:
+    /**
+     * @brief Main loop creating and running simulations.
+     * @param[in] start_run_idx, end_run_idx Range of indices. Performs one run for each index.
+     * @param[in] create_simulation A callable sampling the study's parameters and return a simulation.
+     * @param[in] process_simulation_result A callable that takes the simulation and processes its result.
+     * @return A vector that contains processed simulation results for each run.
+     *
+     * Important side effect: Calling this function overwrites seed and counter of thread_local_rng().
+     * Use this RNG when sampling parameters in create_simulation.
+     */
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+    std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>
+    run_impl(size_t start_run_idx, size_t end_run_idx, CreateSimulationFunction&& create_simulation,
+             ProcessSimulationResultFunction&& process_simulation_result)
+    {
+        assert(start_run_idx <= end_run_idx);
+
+        // Note that this overwrites seed and counter of thread_local_rng, but it does not replace it.
         thread_local_rng() = m_rng;
 
-        for (size_t i = 0; i < m_num_runs; i++) {
-            log(LogLevel::info, "ParameterStudies: run {}", i);
+        std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>> ensemble_result;
+        ensemble_result.reserve(m_num_runs);
+
+        for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
+            log(LogLevel::info, "ParameterStudies: run {}", run_idx);
 
             //prepare rng for this run by setting the counter to the right offset
             //Add the old counter so that this call of run() produces different results
             //from the previous call
-            auto run_rng_counter = m_rng.get_counter() +
-                                   rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(i), Counter<uint32_t>(0));
+            Counter<uint64_t> run_rng_counter =
+                m_rng.get_counter() +
+                rng_totalsequence_counter<uint64_t>(static_cast<uint32_t>(run_idx), Counter<uint32_t>(0));
             thread_local_rng().set_counter(run_rng_counter);
 
-            auto sim = create_sampled_simulation(sample_graph);
+            //sample
+            SimulationT<CreateSimulationFunction> sim =
+                create_simulation(std::as_const(m_parameters), std::as_const(m_t0), std::as_const(m_dt), run_idx);
             log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
                 (thread_local_rng().get_counter() - run_rng_counter).get());
 
+            //perform run
             sim.advance(m_tmax);
 
-            ensemble_result.emplace_back(std::move(sim).get_graph());
+            //handle result and store
+            ensemble_result.emplace_back(process_simulation_result(std::move(sim), run_idx));
         }
 
         //Set the counter of our RNG so that future calls of run() produce different parameters.
@@ -252,111 +298,19 @@ public:
     }
 
     /**
-     * @brief sets the number of Monte Carlo runs
-     * @param[in] num_runs number of runs
+     * @brief Distribute a number of runs over a number of processes.
+     * Processes with low ranks get additional runs, if the number is not evenly divisible.
+     * @param num_runs The total number of runs.
+     * @param num_procs The total number of processes, i.e. the size of MPI_Comm.
+     * @return A vector of size num_procs with the number of runs each process should make.
      */
-    void set_num_runs(size_t num_runs)
+    static std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
     {
-        m_num_runs = num_runs;
-    }
-
-    /**
-     * @brief returns the number of Monte Carlo runs
-     */
-    int get_num_runs() const
-    {
-        return static_cast<int>(m_num_runs);
-    }
-
-    /**
-     * @brief sets end point in simulation
-     * @param[in] tmax end point in simulation
-     */
-    void set_tmax(FP tmax)
-    {
-        m_tmax = tmax;
-    }
-
-    /**
-     * @brief returns end point in simulation
-     */
-    FP get_tmax() const
-    {
-        return m_tmax;
-    }
-
-    void set_t0(FP t0)
-    {
-        m_t0 = t0;
-    }
-
-    /**
-     * @brief returns start point in simulation
-     */
-    FP get_t0() const
-    {
-        return m_t0;
-    }
-
-    /**
-     * Get the input model that the parameter study is run for.
-     * Use for single node simulations, use get_model_graph for graph simulations.
-     * @{
-     */
-    const typename Simulation::Model& get_model() const
-    {
-        return m_graph.nodes()[0].property;
-    }
-    typename Simulation::Model& get_model()
-    {
-        return m_graph.nodes()[0].property;
-    }
-    /** @} */
-
-    /**
-     * Get the input graph that the parameter study is run for.
-     * Use for graph simulations, use get_model for single node simulations.
-     * @{
-     */
-    const ParametersGraph& get_model_graph() const
-    {
-        return m_graph;
-    }
-    ParametersGraph& get_model_graph()
-    {
-        return m_graph;
-    }
-    /** @} */
-
-    RandomNumberGenerator& get_rng()
-    {
-        return m_rng;
-    }
-
-private:
-    //sample parameters and create simulation
-    template <class SampleGraphFunction>
-    GraphSimulation<FP, SimulationGraph, FP, FP> create_sampled_simulation(SampleGraphFunction sample_graph)
-    {
-        SimulationGraph sim_graph;
-
-        auto sampled_graph = sample_graph(m_graph);
-        for (auto&& node : sampled_graph.nodes()) {
-            sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
-        }
-        for (auto&& edge : sampled_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
-        }
-
-        return make_mobility_sim<FP, Simulation>(m_t0, m_dt_graph_sim, std::move(sim_graph));
-    }
-
-    std::vector<size_t> distribute_runs(size_t num_runs, int num_procs)
-    {
+        assert(num_procs > 0);
         //evenly distribute runs
         //lower processes do one more run if runs are not evenly distributable
-        auto num_runs_local = num_runs / num_procs; //integer division!
-        auto remainder      = num_runs % num_procs;
+        size_t num_runs_local = num_runs / num_procs; //integer division!
+        size_t remainder      = num_runs % num_procs;
 
         std::vector<size_t> run_distribution(num_procs);
         std::fill(run_distribution.begin(), run_distribution.begin() + remainder, num_runs_local + 1);
@@ -365,23 +319,31 @@ private:
         return run_distribution;
     }
 
-private:
-    // Stores Graph with the names and ranges of all parameters
-    ParametersGraph m_graph;
-
-    size_t m_num_runs;
-
-    // Start time (should be the same for all simulations)
-    FP m_t0;
-    // End time (should be the same for all simulations)
-    FP m_tmax;
-    // time step of the graph
-    FP m_dt_graph_sim;
-    // adaptive time step of the integrator (will be corrected if too large/small)
-    FP m_dt_integration = 0.1;
-    //
-    RandomNumberGenerator m_rng;
+    ParameterType m_parameters; ///< Stores parameters used to create a simulation for each run.
+    size_t m_num_runs; ///< Total number of runs (i.e. simulations) to do when calling "run".
+    Time m_t0, m_tmax; ///< Start and end time for the simulations.
+    Step m_dt; ///< Initial step size of the simulation. Some integrators may adapt their step size during simulation.
+    RandomNumberGenerator m_rng; ///< The random number generator used by the study.
 };
+
+//sample parameters and create simulation
+template <typename FP, class Sim>
+auto make_sampled_graph_simulation(const Graph<typename Sim::Model, MobilityParameters<FP>>& sampled_graph, FP t0,
+                                   FP dt_node_sim, FP dt_graph_sim)
+{
+    using SimGraph = Graph<SimulationNode<FP, Sim>, MobilityEdge<FP>>;
+
+    SimGraph sim_graph;
+
+    for (auto&& node : sampled_graph.nodes()) {
+        sim_graph.add_node(node.id, node.property, t0, dt_node_sim);
+    }
+    for (auto&& edge : sampled_graph.edges()) {
+        sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+    }
+
+    return make_mobility_sim<FP, Sim>(t0, dt_graph_sim, std::move(sim_graph));
+}
 
 } // namespace mio
 

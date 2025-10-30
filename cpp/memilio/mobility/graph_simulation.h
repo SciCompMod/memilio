@@ -167,10 +167,12 @@ private:
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
  */
-template <class Graph, class Timepoint, class Timespan, class edge_f, class node_f>
+template <class GraphT, class Timepoint, class Timespan, class edge_f, class node_f>
 class GraphSimulationBase
 {
 public:
+    using Graph = GraphT;
+
     using node_function = node_f;
     using edge_function = edge_f;
 
