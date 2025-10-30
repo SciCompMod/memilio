@@ -500,6 +500,11 @@ public:
         }
     }
 
+    const Eigen::Matrix<ContactExposureRates, Eigen::Dynamic, 1>& get_contact_exposure_rates() const
+    {
+        return m_contact_exposure_rates_cache;
+    }
+
 protected:
     /**
      * @brief Person%s interact at their Location and may become infected.

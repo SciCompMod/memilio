@@ -112,6 +112,11 @@ TimePoint Infection::get_start_date() const
     return m_viral_load.start_date;
 }
 
+std::vector<std::pair<TimePoint, InfectionState>> Infection::get_infection_course() const
+{
+    return m_infection_course;
+}
+
 TimePoint Infection::draw_infection_course(PersonalRandomNumberGenerator& rng, AgeGroup age, const Parameters& params,
                                            TimePoint init_date, InfectionState init_state,
                                            ProtectionEvent latest_protection)

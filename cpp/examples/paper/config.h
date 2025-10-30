@@ -19,10 +19,14 @@
 */
 
 // Define parameters for the simulation.
+#include "abm/location.h"
 #include "abm/model.h"
 #include "abm/simulation.h"
 #include "abm/time.h"
+#include "abm/virus_variant.h"
+#include "memilio/epidemiology/age_group.h"
 #include "memilio/io/history.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include <vector>
 namespace params
 {
@@ -114,6 +118,30 @@ struct LogTimePoint : mio::LogAlways {
     static Type log(const mio::abm::Simulation<mio::abm::Model>& sim)
     {
         return sim.get_time();
+    }
+};
+
+struct LogExposureRate : mio::LogAlways {
+    using Type = std::vector<double>;
+    static Type log(const mio::abm::Simulation<mio::abm::Model>& sim)
+    {
+        std::vector<double> cum_rate(params::num_age_groups);
+        auto& rates = sim.get_model().get_contact_exposure_rates();
+        if (rates.size() > 0) {
+            size_t num_locs = 0;
+            for (auto& loc : sim.get_model().get_locations()) {
+                num_locs += 1;
+                for (size_t age = 0; age < params::num_age_groups; ++age) {
+                    cum_rate[age] += rates[loc.get_id().get()][{mio::abm::CellIndex(0),
+                                                                mio::abm::VirusVariant::Wildtype, mio::AgeGroup(age)}];
+                }
+            }
+            // Divide rate by number of locations
+            std::transform(cum_rate.begin(), cum_rate.end(), cum_rate.begin(), [num_locs](double x) {
+                return x / num_locs;
+            });
+        }
+        return cum_rate;
     }
 };
 } // namespace ABMLoggers
