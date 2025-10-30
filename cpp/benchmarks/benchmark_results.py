@@ -357,8 +357,6 @@ class BenchmarkAnalyzer:
         ax.plot(num_cores, [ideal_runtime] * len(num_cores),
                 'k--', linewidth=2, alpha=0.5, label='Ideal (constant runtime)')
 
-        ax.set_xscale('log', base=2)
-        ax.set_yscale('log')
         ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
         ax.set_ylabel('Runtime per Time Step (seconds)',
                       fontsize=self.fontsize)
@@ -414,6 +412,39 @@ class BenchmarkAnalyzer:
 
         print("="*60)
 
+    def print_weak_scaling_efficiency(self, raw_data):
+        """Print a table showing weak scaling efficiency."""
+        num_cores = [1, 2, 4, 8, 16, 32]
+
+        # Calculate efficiency as percentage (ideal runtime / actual runtime * 100)
+        # Ideal runtime is the runtime with 1 core
+
+        def calculate_efficiency(runtimes):
+            ideal = runtimes[0]
+            return [(ideal / runtime * 100) for runtime in runtimes]
+
+        eff_250k = calculate_efficiency(raw_data.memilio_weak_scaling_250k)
+        eff_500k = calculate_efficiency(raw_data.memilio_weak_scaling_500k)
+        eff_1m = calculate_efficiency(raw_data.memilio_weak_scaling_1m)
+        eff_2m = calculate_efficiency(raw_data.memilio_weak_scaling_2m)
+
+        print("\n" + "="*95)
+        print("WEAK SCALING EFFICIENCY TABLE: MEmilio ABM")
+        print("="*95)
+        print(f"{'Cores':>8} | {'250k agents/core':>20} | {'500k agents/core':>20} | {'1M agents/core':>20} | {'2M agents/core':>20}")
+        print(f"{'':>8} | {'Efficiency (%)':>20} | {'Efficiency (%)':>20} | {'Efficiency (%)':>20} | {'Efficiency (%)':>20}")
+        print("-"*95)
+
+        for i, cores in enumerate(num_cores):
+            print(
+                f"{cores:>8} | {eff_250k[i]:>19.1f}% | {eff_500k[i]:>19.1f}% | {eff_1m[i]:>19.1f}% | {eff_2m[i]:>19.1f}%")
+
+        print("="*95)
+        print("\nNote: Efficiency = (Runtime with 1 core / Runtime with N cores) × 100%")
+        print(
+            "      100% efficiency means perfect weak scaling (constant runtime per core)")
+        print()
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -444,6 +475,9 @@ def main():
     # Weak scaling plot
     weak_scaling_path = save_dir / 'weak_scaling.png' if save_dir else None
     fig2, ax2 = analyzer.plot_weak_scaling(raw_data, weak_scaling_path)
+
+    # Print weak scaling efficiency table
+    analyzer.print_weak_scaling_efficiency(raw_data)
 
     # Save data if requested
     if args.data_file:
