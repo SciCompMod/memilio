@@ -43,7 +43,7 @@ void init()
 #ifdef MEMILIO_ENABLE_MPI
     MPI_Init(nullptr, nullptr);
 #else
-    mio::log_debug("Using mio::mpi::init without MPI being enabled.");
+    mio::log_warning("Using mio::mpi::init without MPI being enabled.");
 #endif
 }
 

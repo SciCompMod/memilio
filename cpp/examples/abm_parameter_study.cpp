@@ -22,6 +22,7 @@
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
 #include "abm/time.h"
+#include "memilio/timer/auto_timer.h"
 
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/data/analyze_result.h"
@@ -62,7 +63,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
-    int n_households = 100000;
+    int n_households = 1000;
 
     // For more than 1 family households we need families. These are parents and children and randoms (which are distributed like the data we have for these households).
     auto child = mio::abm::HouseholdMember(num_age_groups); // A child is 50/50% 0-4 or 5-14.
@@ -169,13 +170,15 @@ int main()
 {
     mio::mpi::init();
 
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::off);
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(60);
     // auto sim  = mio::abm::Simulation(t0, std::move(model));
     const size_t num_runs = 128;
+
+    mio::timing::AutoTimer<"abm_timer"> timer;
 
     // Create a parameter study. The ABM currently does not use parameters or dt, so we set them both to 0.
     mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
