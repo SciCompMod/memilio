@@ -131,6 +131,7 @@ int main(int /*argc*/, char** /*argv*/)
     std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
     // Adoption rates corresponding to our model, paramters are arbitrary
     adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
+    adoption_rates.push_back({S, E, home, 0.0, {}});
     adoption_rates.push_back({E, I, home, 0.2, {}});
     adoption_rates.push_back({I, INS, home, 0.1, {}});
     adoption_rates.push_back({I, ICS, home, 0.1, {}});
@@ -230,7 +231,7 @@ int main(int /*argc*/, char** /*argv*/)
         sim.add_exchange(dates[i], num_animals_exchanges[i], from_exchanges[i], to_exchanges[i]);
     }
 
-    const size_t num_runs = 400;
+    const size_t num_runs = 4000;
 
     mio::ParameterStudy study(sim, t0, tmax, dt, num_runs);
 
@@ -238,10 +239,11 @@ int main(int /*argc*/, char** /*argv*/)
         auto sim2      = sim;
         sim2.get_rng() = mio::thread_local_rng();
         if (run_id % 2 == 0) {
-            auto index = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
-                {mio::regions::Region(0), InfectionState::E});
-            sim2.get_graph().nodes()[0].property.get_result().get_last_value()[index] = 100;
+            sim2.infectionrisk = 0.1;
         }
+        auto index = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
+            {mio::regions::Region(0), InfectionState::E});
+        sim2.get_graph().nodes()[0].property.get_result().get_last_value()[index] = 10;
         return sim2;
     };
     auto handle_result = [](auto&& sim, auto&& run) {

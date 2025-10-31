@@ -414,8 +414,6 @@ public:
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
 
-            apply_interventions();
-
             Base::m_t += dt;
 
             while (m_parameters.next_event_time() == Base::m_t) {
@@ -433,6 +431,7 @@ public:
                                   Base::m_graph.nodes()[e.end_node_idx].property, m_rng);
             }
             dt = m_parameters.next_event_time() - Base::m_t;
+            apply_interventions();
         }
     }
 
@@ -591,16 +590,26 @@ public:
         //         n.property.set_quarantined(false);
         //     }
         // }
-
+        auto infectious_compartments = {1, 2, 3, 4};
         for (auto& n : Base::m_graph.nodes()) {
-            // using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
-            using Model        = std::decay_t<decltype(n.property.get_simulation().get_model())>;
-            using AdoptionRate = mio::smm::AdoptionRates<ScalarType, typename Model::Compartments>;
-            // n.property.get_simulation().get_model().parameters.template get<AdoptionRate>()[0].factor = 0.5;
-            mio::unused(n.property.get_simulation().get_model().parameters.template get<AdoptionRate>());
-            //     if (n.property.get_result().get_last_value()[2] > 40) {
-            //         n.property.get_model().get_parameters().get < mio::smm::AdoptionRates<ScalarType, >
-            //     }    // I don't know any smart way to access and modify the adoption rates here, I would need to know the template parameters.
+            auto total_infections = 0;
+            for (auto comp : infectious_compartments) {
+                total_infections += n.property.get_result().get_last_value()[comp];
+            }
+            if (total_infections > 1) {
+                mio::log_debug("Node {} spreads higher risk category at time {} because there are {} total infections.",
+                               n.id, Base::m_t, total_infections);
+                mio::log_debug("This will affect {} other farms.", n.property.get_regional_neighbors()[0].size());
+                for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
+                    const auto node_id = n.property.get_regional_neighbors()[0][index];
+                    mio::log_debug("Neighbor node id: {}", node_id);
+                    auto neighbour_property = Base::m_graph.nodes()[node_id].property;
+                    using Model             = std::decay_t<decltype(neighbour_property.get_simulation().get_model())>;
+                    using AdoptionRate      = mio::smm::AdoptionRates<ScalarType, typename Model::Compartments>;
+                    neighbour_property.get_simulation().get_model().parameters.template get<AdoptionRate>()[1].factor +=
+                        infectionrisk;
+                }
+            }
         }
     }
 
@@ -608,6 +617,8 @@ public:
     {
         return m_rng;
     }
+
+    ScalarType infectionrisk = 0.0;
 
 private:
     mio::MobilityParametersTimed m_parameters;

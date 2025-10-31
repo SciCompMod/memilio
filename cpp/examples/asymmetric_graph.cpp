@@ -68,6 +68,7 @@ int main(int /*argc*/, char** /*argv*/)
     std::vector<mio::AdoptionRate<ScalarType, InfectionState>> adoption_rates;
     // Adoption rates corresponding to our model, paramters are arbitrary
     adoption_rates.push_back({S, E, home, 0.2, {{I, 0.8}, {INS, 0.1}, {ICS, 0.5}}});
+    adoption_rates.push_back({S, E, home, 0.0, {}});
     adoption_rates.push_back({E, I, home, 0.2, {}});
     adoption_rates.push_back({I, INS, home, 0.1, {}});
     adoption_rates.push_back({I, ICS, home, 0.1, {}});
@@ -131,12 +132,12 @@ int main(int /*argc*/, char** /*argv*/)
     // mio::log_info("Neighbors set");
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    io::CSVReader<5> exchanges("../../trade10000.csv");
-    exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to", "edge");
+    io::CSVReader<4> exchanges("../../trade10000.csv");
+    exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to");
 
-    int date, num_animals, edge;
+    int date, num_animals;
     size_t from, to;
-    while (exchanges.read_row(date, num_animals, from, to, edge)) {
+    while (exchanges.read_row(date, num_animals, from, to)) {
         sim.add_exchange(date, num_animals, from, to);
     }
     // mio::log_info("Exchanges added");
