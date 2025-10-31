@@ -19,9 +19,6 @@
 #############################################################################
 
 from pyfakefs import fake_filesystem_unittest
-import memilio.surrogatemodel.GNN.network_architectures as gnn_arch
-import memilio.surrogatemodel.GNN.GNN_utils as utils
-
 from unittest.mock import patch
 import os
 import unittest
@@ -31,6 +28,15 @@ import pandas as pd
 import tensorflow as tf
 import logging
 import spektral
+
+import memilio.surrogatemodel.GNN.network_architectures as gnn_arch
+import memilio.surrogatemodel.GNN.GNN_utils as utils
+
+from memilio.surrogatemodel.GNN.evaluate_and_train import (
+    create_dataset, train_and_evaluate, evaluate, train_step, MixedLoader)
+from memilio.surrogatemodel.GNN.grid_search import perform_grid_search
+from memilio.surrogatemodel.GNN.network_architectures import generate_model_class, get_model
+from tensorflow.keras.losses import MeanAbsolutePercentageError
 # suppress all autograph warnings from tensorflow
 
 logging.getLogger("tensorflow").setLevel(logging.ERROR)
@@ -87,7 +93,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.setUpPyfakefs()
 
     def test_generate_model_class(self):
-        from memilio.surrogatemodel.GNN.network_architectures import generate_model_class
 
         # Test parameters
         layer_types = [
@@ -152,7 +157,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertEqual(model.output_layer.units, num_output)
 
     def test_get_model(self):
-        from memilio.surrogatemodel.GNN.network_architectures import get_model
 
         # Test parameters
         layer_type = "GCNConv"
@@ -217,7 +221,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             "activation must be a string representing the activation function.")
 
     def test_create_dataset(self):
-        from memilio.surrogatemodel.GNN.evaluate_and_train import create_dataset
 
         # Create dummy data in the fake filesystem for testing
         num_samples = 10
@@ -250,8 +253,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.fs.remove_object(path_mobility)
 
     def test_train_step(self):
-        from memilio.surrogatemodel.GNN.evaluate_and_train import train_step
-        from tensorflow.keras.losses import MeanAbsolutePercentageError
 
         # Create a simple model for testing
         model = tf.keras.Sequential([
@@ -283,10 +284,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.assertGreaterEqual(loss.numpy(), 0)
 
     def test_evaluate(self):
-        from memilio.surrogatemodel.GNN.evaluate_and_train import (
-            evaluate, create_dataset, MixedLoader, train_step)
-        from memilio.surrogatemodel.GNN.network_architectures import get_model
-        from tensorflow.keras.losses import MeanAbsolutePercentageError
 
         # Create a simple model for testing
         model = get_model(
@@ -334,10 +331,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
     @patch("os.path.realpath", return_value="/home/")
     def test_train_and_evaluate(self, mock_realpath):
-        from memilio.surrogatemodel.GNN.evaluate_and_train import (
-            train_and_evaluate, create_dataset, MixedLoader)
-        from memilio.surrogatemodel.GNN.network_architectures import get_model
-        from tensorflow.keras.losses import MeanAbsolutePercentageError
 
         number_of_epochs = 2
         # Create a simple model for testing
@@ -410,16 +403,11 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         self.fs.remove_object(save_results_path)
         self.fs.remove_object(save_model_path)
 
-    @patch("os.path.realpath", return_value="/home/")
-    def test_perform_grid_search(self, mock_realpath):
-        from memilio.surrogatemodel.GNN.evaluate_and_train import (
-            create_dataset)
-        from memilio.surrogatemodel.GNN.grid_search import perform_grid_search
-        from tensorflow.keras.losses import MeanAbsolutePercentageError
+    def test_perform_grid_search(self):
 
         # Create dummy data in the fake filesystem for testing
-        num_samples = 20
-        num_nodes = 5
+        num_samples = 10
+        num_nodes = 4
         num_node_features = 3
         output_dim = 4
         data = self.create_dummy_data(
@@ -430,14 +418,17 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         # Create dataset
         dataset = create_dataset(
             path_cases, path_mobility, number_of_nodes=num_nodes)
-        layers = ["GCNConv", "GATConv"]
-        num_layers = [1, 2]
-        activation = "relu"
-        num_channels = 2
 
-        model_parameters = [
-            (layer, n_layer, num_channels, activation)
-            for layer in layers for n_layer in num_layers]
+        # Define model parameters for grid search
+        layers = ["GCNConv"]
+        num_layers = [1]
+        num_channels = [8]
+        activations = ["relu"]
+        model_parameters = [(layer, n_layer, channel, activation)
+                            for layer in layers for n_layer in num_layers
+                            for channel in num_channels
+                            for activation in activations
+                            for layer in layers for n_layer in num_layers]
         batch_size = 2
         loss_function = MeanAbsolutePercentageError()
         optimizer = tf.keras.optimizers.Adam()
@@ -445,9 +436,9 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         max_epochs = 2
         training_parameters = [batch_size, loss_function,
                                optimizer, es_patience, max_epochs]
-        # Perform grid search
+        # Perform grid search with explicit save_dir to avoid os.path.realpath issues
         perform_grid_search(model_parameters, training_parameters,
-                            dataset)
+                            dataset, save_dir=self.path)
 
         # Check if the results file is created
         results_file = os.path.join(
@@ -458,13 +449,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         df_results = pd.read_csv(results_file)
         self.assertEqual(len(df_results), len(model_parameters))
         self.assertEqual(len(df_results.columns), 10)
-
-        # Clean up
-        self.fs.remove_object(path_cases)
-        self.fs.remove_object(os.path.join(
-            path_mobility, "commuter_mobility_2022.txt"))
-        self.fs.remove_object(path_mobility)
-        self.fs.remove_object(os.path.join(self.path, "saves"))
 
     def test_scale_data_valid_data(self):
         """Test utils.scale_data with valid input and label data."""

@@ -317,17 +317,16 @@ def train_and_evaluate(
             file_path_df, save_name.replace('.pickle', '.csv'))
         df.to_csv(file_path_df)
 
-    else:
-        return {
-            "model": save_name,
-            "mean_train_loss": np.mean(train_losses),
-            "mean_val_loss": np.mean(val_losses),
-            "mean_test_loss": np.mean(test_scores),
-            "mean_test_loss_orig": np.mean(test_scores_r),
-            "training_time": elapsed/60,
-            "train_losses": losses_history_all,
-            "val_losses": val_losses_history_all
-        }
+    return {
+        "model": save_name,
+        "mean_train_loss": np.mean(train_losses),
+        "mean_val_loss": np.mean(val_losses),
+        "mean_test_loss": np.mean(test_scores),
+        "mean_test_loss_orig": np.mean(test_scores_r),
+        "training_time": elapsed/60,
+        "train_losses": losses_history_all,
+        "val_losses": val_losses_history_all
+    }
 
 
 if __name__ == "__main__":
