@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Daniel Abele
+* Authors: Kilian Volmer
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -81,7 +81,7 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
-        io::CSVReader<4> farms("../../farms.csv");
+        io::CSVReader<4> farms("../../farms10000.csv");
         farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
         int farm_id, num_cows;
         double latitude, longitude;
@@ -103,9 +103,10 @@ int main(int /*argc*/, char** /*argv*/)
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
+    // graph.reserve_edges(262144);
     {
         mio::timing::AutoTimer<"Graph Edges Generation"> timer;
-        io::CSVReader<2> edges("../../edges.csv");
+        io::CSVReader<2> edges("../../edges10000.csv");
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
@@ -114,23 +115,23 @@ int main(int /*argc*/, char** /*argv*/)
         }
         // graph.sort_edges();
     }
-    mio::log_info("Graph generated");
+    // mio::log_info("Graph generated");
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
                  });
     auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
-    mio::log_info("RTree generated");
+    // mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
         node.property.set_regional_neighbors(
             tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
     }
 
-    mio::log_info("Neighbors set");
+    // mio::log_info("Neighbors set");
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    io::CSVReader<5> exchanges("../../trade.csv");
+    io::CSVReader<5> exchanges("../../trade10000.csv");
     exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to", "edge");
 
     int date, num_animals, edge;
@@ -138,7 +139,7 @@ int main(int /*argc*/, char** /*argv*/)
     while (exchanges.read_row(date, num_animals, from, to, edge)) {
         sim.add_exchange(date, num_animals, from, to);
     }
-    mio::log_info("Exchanges added");
+    // mio::log_info("Exchanges added");
 
     // #ifdef MEMILIO_ENABLE_OPENMP
     // #pragma omp parallel for
@@ -146,10 +147,10 @@ int main(int /*argc*/, char** /*argv*/)
     // #endif
 
     auto sim2(sim);
-    mio::log_info("new Simulation created");
+    // mio::log_info("new Simulation created");
 
     sim2.advance(tmax);
-    mio::log_info("Simulation finished");
+    // mio::log_info("Simulation finished");
 
     // #ifdef MEMILIO_ENABLE_OPENMP
     //     }
@@ -164,8 +165,8 @@ int main(int /*argc*/, char** /*argv*/)
     // results.print_table({"Commuter Sick", "Commuter Total"});
 
     // auto exchange_results = sim2.sum_exchanges();
-    // mio::log_info("Sum of exchanged sick animals: {}", exchange_results[0]);
-    // mio::log_info("Sum of exchanged animals: {}", exchange_results[1]);
+    // // mio::log_info("Sum of exchanged sick animals: {}", exchange_results[0]);
+    // // mio::log_info("Sum of exchanged animals: {}", exchange_results[1]);
 
     auto sth = sim2.exchanges_per_timestep().export_csv("Exchange_statistics.csv", {"Commuter Sick", "Commuter Total"});
 
@@ -176,7 +177,7 @@ int main(int /*argc*/, char** /*argv*/)
     // }
 
     // exchange_results = sim2.sum_nodes();
-    // mio::log_info("{}, {}, {}, {}", exchange_results[0], exchange_results[1], exchange_results[2], exchange_results[3]);
+    // // mio::log_info("{}, {}, {}, {}", exchange_results[0], exchange_results[1], exchange_results[2], exchange_results[3]);
 
     sth = sim2.statistics_per_timestep().export_csv("Simulation_statistics.csv");
     // // auto combined_results = sim2.combine_node_results();
@@ -184,7 +185,7 @@ int main(int /*argc*/, char** /*argv*/)
     // // auto ioresult = combined_results.export_csv("Simulation_results.csv");
 
     // sim2.statistics_per_timestep({0, 1, 2, 3, 4}).print_table({"S", "E", "I", "R", "D"});
-    mio::log_info("Finished postprocessing");
+    // mio::log_info("Finished postprocessing");
 
     return 0;
 }
