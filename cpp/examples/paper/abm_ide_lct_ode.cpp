@@ -197,7 +197,6 @@ simulate_ide(Date start_date, std::string contact_data_dir, std::string reported
     if (exponential_scenario) {
         std::cout << "in exp scenario \n";
         // Set TransitionDistributions exponentially distributed.
-
         for (size_t group = 0; group < num_age_groups; group++) {
             // ExposedToInfectedNoSymptoms
             ExponentialSurvivalFunction<ScalarType> survivalExposedToInfectedNoSymptoms(1. / timeExposed[group]);
@@ -390,7 +389,6 @@ IOResult<void> simulate_lct(Vector init_compartments, std::string contact_data_d
                                          n_subcomps_ISev[5], n_subcomps_ICri[5], 1, 1>;
 
     // Define LctState with one subcompartment per compartment for the exponential scenario.
-
     using LctStateExponential = LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1>;
 
     using Model =
