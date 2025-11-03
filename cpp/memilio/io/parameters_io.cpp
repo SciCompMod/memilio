@@ -85,9 +85,9 @@ read_population_data(const std::vector<PopulationDataEntry>& population_data, co
         auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
             return r == 0 ||
                    (county_entry.county_id &&
-                    regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
-                   (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
-                   (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
+                    regions::de::StateId(r) == regions::de::get_state_id(int(*county_entry.county_id))) ||
+                   (county_entry.county_id && regions::de::CountyId(r) == *county_entry.county_id) ||
+                   (county_entry.district_id && regions::de::DistrictId(r) == *county_entry.district_id);
         });
         if (it != vregion.end()) {
             auto region_idx      = size_t(it - vregion.begin());

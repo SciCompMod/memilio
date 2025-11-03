@@ -152,10 +152,11 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    Graph(std::vector<NodePropertyT> nodes, std::vector<EdgePropertyT> edges)
-        : m_nodes(nodes)
-        , m_edges(edges)
+    Graph(std::vector<int>& node_ids, std::vector<NodePropertyT>& node_properties)
     {
+        for (auto i = size_t(0); i < node_ids.size(); ++i) {
+            add_node(node_ids[i], node_properties[i]);
+        }
     }
 
     template <class... Args>
@@ -253,135 +254,56 @@ private:
 private:
     std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
-}; // namespace mio
+};
 
-template <class FP, class Model, class ContactPattern>
-void set_german_holidays(Model& node, const int node_id,
-                  const mio::Date& start_date, const mio::Date& end_date)
+template <class FP, class Model, class TestAndTrace>
+void set_test_and_trace_capacity(mio::VectorRange<Node<Model>>& nodes)
 {
-    auto state_id        = regions::get_state_id(node_id);
-    auto holiday_periods = regions::get_holidays(state_id, start_date, end_date);
-
-    auto& contacts       = node.parameters.template get<ContactPattern>();
-    contacts.get_school_holidays() =
-        std::vector<std::pair<mio::SimulationTime<FP>, mio::SimulationTime<FP>>>(holiday_periods.size());
-    std::transform(
-        holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-            return std::make_pair(mio::SimulationTime<FP>(mio::get_offset_in_days(period.first, start_date)),
-                                    mio::SimulationTime<FP>(mio::get_offset_in_days(period.second, start_date)));
-        });
-}
-
-/**
- * @brief Sets the graph nodes for counties or districts.
- * Reads the node ids which could refer to districts or counties and the epidemiological
- * data from json files and creates one node for each id. Every node contains a model.
- * @param[in] params Model Parameters that are used for every node.
- * @param[in] start_date Start date for which the data should be read.
- * @param[in] end_data End date for which the data should be read.
- * @param[in] data_dir Directory that contains the data files.
- * @param[in, out] params_graph Graph whose nodes are set by the function.
- * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
- * @param[in] node_func Function that returns the county ids.
- * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
- * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
- * @param[in] tnt_capacity_factor Factor for test and trace capacity.
- */
-template <typename FP, class ContactPattern, class Model, class MobilityParams, class Parameters,
-          class ReadFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
-                         const std::vector<int>& node_ids, const std::vector<FP>& scaling_factor_inf, FP scaling_factor_icu,
-                         bool add_uncertainty_to_population = true)
-
-{
-    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
-    for (auto& node : nodes) {
-        node.parameters = params;
-    }
-
-    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string()));
-
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
 
-        set_german_holidays<FP, Model, ContactPattern>(nodes[node_idx], node_ids[node_idx], start_date, end_date);
-        if (add_uncertainty_to_population)
-        {
-            //uncertainty in populations
-            for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-                for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-                    auto& compartment_value = nodes[node_idx].populations[{i, j}];
-                    compartment_value =
-                        UncertainValue<FP>(compartment_value.value());
-                    compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
-                                                                                        1.1 * compartment_value.value()));
-                }
-            }
-        }
+        auto tnt_capacity = nodes[node_idx].property.populations.get_total() * tnt_capacity_factor;
 
-        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
-    }
-    return success();
-}
-
-/**
- * @brief Sets the graph nodes for counties or districts.
- * Reads the node ids which could refer to districts or counties and the epidemiological
- * data from json files and creates one node for each id. Every node contains a model.
- * @param[in] params Model Parameters that are used for every node.
- * @param[in] start_date Start date for which the data should be read.
- * @param[in] end_data End date for which the data should be read.
- * @param[in] data_dir Directory that contains the data files.
- * @param[in, out] params_graph Graph whose nodes are set by the function.
- * @param[in] read_func Function that reads input data for german counties and sets Model compartments.
- * @param[in] node_func Function that returns the county ids.
- * @param[in] scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
- * @param[in] scaling_factor_icu Factor of ICU cases to account for underreporting.
- * @param[in] tnt_capacity_factor Factor for test and trace capacity.
- */
-template <typename FP, class TestAndTrace, class ContactPattern, class Model, class MobilityParams, class Parameters,
-          class ReadFunction>
-IOResult<void> set_nodes(const Parameters& params, Date start_date, Date end_date, const fs::path& data_dir,
-                         Graph<Model, MobilityParams>& params_graph, ReadFunction&& read_func,
-                         const std::vector<int>& node_ids, const std::vector<FP>& scaling_factor_inf, FP scaling_factor_icu,
-                         FP tnt_capacity_factor, bool add_uncertainty_to_population = true)
-
-{
-    std::vector<Model> nodes(node_ids.size(), Model(int(size_t(params.get_num_groups()))));
-    for (auto& node : nodes) {
-        node.parameters = params;
-    }
-
-    BOOST_OUTCOME_TRY(read_func(nodes, start_date, node_ids, scaling_factor_inf, scaling_factor_icu, data_dir.string()));
-
-    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-
-        auto tnt_capacity = nodes[node_idx].populations.get_total() * tnt_capacity_factor;
-
-        // local parameters
-        auto& tnt_value = nodes[node_idx].parameters.template get<TestAndTrace>();
+        auto& tnt_value = nodes[node_idx].property.parameters.template get<TestAndTrace>();
         tnt_value       = UncertainValue<FP>(tnt_capacity);
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
+    }
+}
 
-        set_german_holidays<FP, Model, ContactPattern>(nodes[node_idx], node_ids[node_idx], start_date, end_date);
-        if (add_uncertainty_to_population)
-        {
-            //uncertainty in populations
-            for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-                for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
-                    auto& compartment_value = nodes[node_idx].populations[{i, j}];
-                    compartment_value =
-                        UncertainValue<FP>(compartment_value.value());
-                    compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
-                                                                                        1.1 * compartment_value.value()));
-                }
+template <class FP, class Model, class ContactPattern>
+void set_german_holidays(mio::VectorRange<Node<Model>>& nodes, const std::vector<int>& node_ids,
+                  const mio::Date& start_date, const mio::Date& end_date)
+{
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+        auto state_id        = regions::de::get_state_id(node_id[node_idx]);
+        auto holiday_periods = regions::de::get_holidays(state_id, start_date, end_date);
+
+        auto& contacts       = nodes[node_idx].property.parameters.template get<ContactPattern>();
+        contacts.get_school_holidays() =
+            std::vector<std::pair<mio::SimulationTime<FP>, mio::SimulationTime<FP>>>(holiday_periods.size());
+        std::transform(
+            holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
+                return std::make_pair(mio::SimulationTime<FP>(mio::get_offset_in_days(period.first, start_date)),
+                                        mio::SimulationTime<FP>(mio::get_offset_in_days(period.second, start_date)));
+            });
+    }
+}
+
+template <class FP, class Model>
+void set_uncertainty_on_population(mio::VectorRange<Node<Model>>& nodes)
+{
+    for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
+                auto& compartment_value = nodes[node_idx].property.populations[{i, j}];
+                compartment_value =
+                    UncertainValue<FP>(compartment_value.value());
+                compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
+                                                                                    1.1 * compartment_value.value()));
             }
         }
-
-        params_graph.add_node(node_ids[node_idx], nodes[node_idx]);
     }
-    return success();
 }
+
 
 /**
  * @brief Sets the graph edges.
@@ -442,24 +364,6 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
     }
 
     return success();
-}
-
-/**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param node_properties Vector of node properties of all nodes, e.g., parameters in each model node.
- * @param node_ids Indices for the nodes.
- * @return Graph with nodes only having no edges.
- */
-template <class NodePropertyT, class EdgePropertyT>
-auto create_graph_without_edges(const std::vector<NodePropertyT>& node_properties, const std::vector<int>& node_ids)
-{
-    // create a graph without edges for writing to file
-    auto graph = mio::Graph<NodePropertyT, EdgePropertyT>();
-    for (auto i = size_t(0); i < node_ids.size(); ++i) {
-        graph.add_node(node_ids[i], node_properties[i]);
-    }
-    return graph;
 }
 
 template <class T>

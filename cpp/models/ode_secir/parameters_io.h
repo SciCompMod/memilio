@@ -200,7 +200,7 @@ IOResult<void> set_confirmed_cases_data(Model<FP>& model, std::vector<ConfirmedC
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
 template <typename FP>
-IOResult<void> set_confirmed_cases_data(mio::VectorRange<Model<FP>>& model, const std::string& path,
+IOResult<void> set_confirmed_cases_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path,
                                         std::vector<int> const& region, Date date,
                                         const std::vector<double>& scaling_factor_inf)
 {
@@ -220,7 +220,7 @@ IOResult<void> set_confirmed_cases_data(mio::VectorRange<Model<FP>>& model, cons
 
     for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
         BOOST_OUTCOME_TRY(
-            set_confirmed_cases_data(model[region_idx], vcase_data[region_idx], vregion[region_idx], date, scaling_factor_inf));
+            set_confirmed_cases_data(model[region_idx].property, vcase_data[region_idx], vregion[region_idx], date, scaling_factor_inf));
     }
     return success();
 }
@@ -283,13 +283,13 @@ IOResult<void> set_population_data(Model<FP>& model, const std::vector<double>& 
 * @param[in] vregion Vector of keys of the regions of interest.
 */
 template <typename FP>
-IOResult<void> set_population_data(mio::VectorRange<Model<FP>>& model, const std::string& path,
+IOResult<void> set_population_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path,
                                    const std::vector<int>& vregion)
 {
     BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion));
 
     for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
-        BOOST_OUTCOME_TRY(set_population_data(model[region_idx], num_population[region_idx], vregion[region_idx]));
+        BOOST_OUTCOME_TRY(set_population_data(model[region_idx].property, num_population[region_idx], vregion[region_idx]));
     }
     return success();
 }
@@ -338,7 +338,7 @@ IOResult<void> set_divi_data(Model<FP>& model, const double num_icu, double scal
  * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data
  */
 template <class FP>
-IOResult<void> set_divi_data(mio::VectorRange<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
+IOResult<void> set_divi_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path, const std::vector<int>& vregion,
                              Date date, double scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
@@ -351,7 +351,7 @@ IOResult<void> set_divi_data(mio::VectorRange<Model<FP>>& model, const std::stri
     BOOST_OUTCOME_TRY(auto&& num_icu, read_divi_data(path, vregion, date));
 
     for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
-        BOOST_OUTCOME_TRY(set_divi_data(model[region_idx], num_icu[region_idx], vregion[region_idx], scaling_factor_icu));
+        BOOST_OUTCOME_TRY(set_divi_data(model[region_idx].property, num_icu[region_idx], vregion[region_idx], scaling_factor_icu));
     }
 
     return success();
@@ -377,11 +377,11 @@ IOResult<void> set_divi_data(mio::VectorRange<Model<FP>>& model, const std::stri
 */
 template <class FP>
 IOResult<void> export_input_data_timeseries(
-    mio::VectorRange<Model<FP>> models, const std::string& results_dir, Date date, const std::vector<int>& node_ids,
+    mio::VectorRange<Node<Model<FP>>> models, const std::string& results_dir, Date date, const std::vector<int>& node_ids,
     const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days,
     const mio::regions::de::EpidataFilenames& epidata_filenames)
 {
-    const auto num_age_groups = (size_t)models[0].parameters.get_num_groups();
+    const auto num_age_groups = (size_t)models[0].property.parameters.get_num_groups();
     // allow scalar scaling factor as convenience for 1-group models
     assert(scaling_factor_inf.size() == 1 || scaling_factor_inf.size() == num_age_groups);
     assert(models.size() == node_ids.size());
@@ -395,7 +395,7 @@ IOResult<void> export_input_data_timeseries(
                                       num_days, epidata_filenames));
 
         for (size_t r = 0; r < node_ids.size(); r++) {
-            extrapolated_data[r][t] = models[r].get_initial_values();
+            extrapolated_data[r][t] = models[r].property.get_initial_values();
         }
     }
 
@@ -410,7 +410,7 @@ IOResult<void> export_input_data_timeseries(
 }
 #else
 template <class FP>
-IOResult<void> export_input_data_county_timeseries(mio::VectorRange<Model<FP>>, const std::string&, Date, const std::vector<int>&,
+IOResult<void> export_input_data_county_timeseries(mio::VectorRange<Node<Model<FP>>>, const std::string&, Date, const std::vector<int>&,
                                                    const std::vector<double>&, const double, const int,
                                                    const mio::regions::de::EpidataFilenames&)
 {
@@ -430,7 +430,7 @@ IOResult<void> export_input_data_county_timeseries(mio::VectorRange<Model<FP>>, 
  * @param[in] age_group_names strings specifying age group names
  */
 template <typename FP>
-IOResult<void> read_input_data(mio::VectorRange<Model<FP>>& model, Date date, const std::vector<int>& node_ids,
+IOResult<void> read_input_data(mio::VectorRange<Node<Model<FP>>>& model, Date date, const std::vector<int>& node_ids,
                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                const mio::regions::de::EpidataFilenames& epidata_filenames)
 {

@@ -368,7 +368,7 @@ private:
     {
         std::unordered_map<int, FP> regional_population;
         for (auto& node : m_graph.nodes()) {
-            auto region_id = mio::regions::get_state_id(node.id).get();
+            auto region_id = mio::regions::de::get_state_id(node.id).get();
             regional_population[region_id] += node.property.get_simulation().get_model().populations.get_total();
         }
 
@@ -386,7 +386,7 @@ private:
 
         // Sum up
         for (auto& node : m_graph.nodes()) {
-            auto region_id    = mio::regions::get_state_id(node.id).get();
+            auto region_id    = mio::regions::de::get_state_id(node.id).get();
             auto& sim         = node.property.get_simulation();
             auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
             FP pop            = node.property.get_simulation().get_model().populations.get_total();
@@ -434,7 +434,7 @@ private:
         for (auto& [region_id, regional_data] : m_regional_icu_occupancy) {
             Eigen::VectorXd sum = Eigen::VectorXd::Zero(regional_data.get_num_elements());
             for (auto& node : m_graph.nodes()) {
-                if (mio::regions::get_state_id(node.id).get() == region_id) {
+                if (mio::regions::de::get_state_id(node.id).get() == region_id) {
                     auto& sim         = node.property.get_simulation();
                     auto& icu_history = sim.get_parameters().template get<ICUOccupancyHistory<FP>>();
                     sum += icu_history.get_last_value() *
@@ -454,7 +454,7 @@ private:
     void distribute_icu_data()
     {
         for (auto& node : m_graph.nodes()) {
-            auto region_id = mio::regions::get_state_id(node.id).get();
+            auto region_id = mio::regions::de::get_state_id(node.id).get();
             auto& sim      = node.property.get_simulation();
             sim.set_regional_icu_occupancy(m_regional_icu_occupancy.at(region_id));
             sim.set_global_icu_occupancy(m_global_icu_occupancy);

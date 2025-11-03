@@ -133,9 +133,9 @@ public:
     ScalarType num_deaths;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::StateId> state_id;
-    boost::optional<regions::CountyId> county_id;
-    boost::optional<regions::DistrictId> district_id;
+    boost::optional<regions::de::StateId> state_id;
+    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::de::DistrictId> district_id;
 
     template <class IOContext>
     static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
@@ -146,9 +146,9 @@ public:
         auto num_deaths    = obj.expect_element("Deaths", Tag<ScalarType>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id      = obj.expect_optional("ID_State", Tag<regions::StateId>{});
-        auto county_id     = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id   = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
+        auto state_id      = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
+        auto county_id     = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto district_id   = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
         return apply(
             io,
             [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid,
@@ -208,9 +208,9 @@ class DiviEntry
 public:
     ScalarType num_icu;
     Date date;
-    boost::optional<regions::StateId> state_id;
-    boost::optional<regions::CountyId> county_id;
-    boost::optional<regions::DistrictId> district_id;
+    boost::optional<regions::de::StateId> state_id;
+    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::de::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<DiviEntry> deserialize(IoContext& io)
@@ -218,9 +218,9 @@ public:
         auto obj         = io.expect_object("DiviEntry");
         auto num_icu     = obj.expect_element("ICU", Tag<ScalarType>{});
         auto date        = obj.expect_element("Date", Tag<StringDate>{});
-        auto state_id    = obj.expect_optional("ID_State", Tag<regions::StateId>{});
-        auto county_id   = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
+        auto state_id    = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
+        auto county_id   = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto district_id = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
         return apply(
             io,
             [](auto&& ni, auto&& d, auto&& sid, auto&& cid, auto&& did) {
@@ -304,17 +304,17 @@ public:
     static std::vector<const char*> age_group_names;
 
     CustomIndexArray<ScalarType, AgeGroup> population;
-    boost::optional<regions::StateId> state_id;
-    boost::optional<regions::CountyId> county_id;
-    boost::optional<regions::DistrictId> district_id;
+    boost::optional<regions::de::StateId> state_id;
+    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::de::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
         auto obj         = io.expect_object("PopulationDataEntry");
-        auto state_id    = obj.expect_optional("ID_State", Tag<regions::StateId>{});
-        auto county_id   = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
+        auto state_id    = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
+        auto county_id   = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto district_id = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
         std::vector<IOResult<ScalarType>> age_groups;
         age_groups.reserve(age_group_names.size());
         std::transform(age_group_names.begin(), age_group_names.end(), std::back_inserter(age_groups),
@@ -487,9 +487,9 @@ public:
         num_vaccinations_refreshed_additional;
     Date date;
     AgeGroup age_group;
-    boost::optional<regions::StateId> state_id;
-    boost::optional<regions::CountyId> county_id;
-    boost::optional<regions::DistrictId> district_id;
+    boost::optional<regions::de::StateId> state_id;
+    boost::optional<regions::de::CountyId> county_id;
+    boost::optional<regions::de::DistrictId> district_id;
 
     template <class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
@@ -501,9 +501,9 @@ public:
         auto num_vaccinations_refreshed_additional = obj.expect_optional("Vacc_refreshed_2", Tag<ScalarType>{});
         auto date                                  = obj.expect_element("Date", Tag<StringDate>{});
         auto age_group_str                         = obj.expect_element("Age_RKI", Tag<std::string>{});
-        auto state_id                              = obj.expect_optional("ID_County", Tag<regions::StateId>{});
-        auto county_id                             = obj.expect_optional("ID_County", Tag<regions::CountyId>{});
-        auto district_id                           = obj.expect_optional("ID_District", Tag<regions::DistrictId>{});
+        auto state_id                              = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
+        auto county_id                             = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        auto district_id                           = obj.expect_optional("ID_District", Tag<regions::de::DistrictId>{});
         return mio::apply(
             io,
             [](auto np, auto nc, auto n_refreshed_1, auto n_refreshed_2, auto d, auto&& a_str, auto sid, auto cid,
