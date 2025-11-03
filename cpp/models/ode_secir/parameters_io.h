@@ -294,6 +294,69 @@ IOResult<void> set_population_data(mio::VectorRange<Model<FP>>& model, const std
     return success();
 }
 
+/**
+ * @brief Sets ICU data from DIVI data into the a vector of models, distributed across age groups.
+ *
+ * This function reads DIVI data from a file, computes the number of individuals in critical condition (ICU)
+ * for each region, and sets these values in the model. The ICU cases are distributed across age groups
+ * using the transition probabilities from severe to critical.
+ * @tparam FP Floating point type (default: double).
+ *
+ * @param[in,out] model Vector of models, each representing a region, where the ICU population is updated.
+ * @param[in] num_icu icu data
+ * @param[in] scaling_factor_icu Scaling factor for reported ICU cases.
+ *
+ * @return An IOResult indicating success or failure.
+ */
+template <typename FP>
+IOResult<void> set_divi_data(Model<FP>& model, const double num_icu, double scaling_factor_icu)
+{
+    FP sum_mu_I_U = 0;
+    std::vector<FP> mu_I_U;
+    auto num_groups = model.parameters.get_num_groups();
+    for (auto i = AgeGroup(0); i < num_groups; i++) {
+        sum_mu_I_U += model.parameters.template get<CriticalPerSevere<FP>>()[i] *
+                                model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i];
+        mu_I_U.push_back(model.parameters.template get<CriticalPerSevere<FP>>()[i] *
+                                    model.parameters.template get<SeverePerInfectedSymptoms<FP>>()[i]);
+    }
+
+    for (auto i = AgeGroup(0); i < num_groups; i++) {
+        model.populations[{i, InfectionState::InfectedCriticalNaive}] =
+            scaling_factor_icu * num_icu * mu_I_U[(size_t)i] / sum_mu_I_U;
+    }
+
+    return success();
+}
+
+/**
+ * @brief sets populations data from DIVI register into Model
+ * @param[in, out] model vector of objects in which the data is set
+ * @param[in] path Path to transformed DIVI file
+ * @param[in] vregion vector of keys of the regions of interest
+ * @param[in] date Date for which the arrays are initialized
+ * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data
+ */
+template <class FP>
+IOResult<void> set_divi_data(mio::VectorRange<Model<FP>>& model, const std::string& path, const std::vector<int>& vregion,
+                             Date date, double scaling_factor_icu)
+{
+    // DIVI dataset will no longer be updated from CW29 2024 on.
+    if (!is_divi_data_available(date)) {
+        log_warning("No DIVI data available for date: {}. "
+                    "ICU compartment will be set based on Case data.",
+                    date);
+        return success();
+    }
+    BOOST_OUTCOME_TRY(auto&& num_icu, read_divi_data(path, vregion, date));
+
+    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
+        BOOST_OUTCOME_TRY(set_divi_data(model[region_idx], num_icu[region_idx], vregion[region_idx], scaling_factor_icu));
+    }
+
+    return success();
+}
+
 } //namespace details
 
 #ifdef MEMILIO_HAS_HDF5
@@ -371,7 +434,7 @@ IOResult<void> read_input_data(mio::VectorRange<Model<FP>>& model, Date date, co
                                const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                const mio::regions::de::EpidataFilenames& epidata_filenames)
 {
-    BOOST_OUTCOME_TRY(set_divi_data(model, epidata_filenames.divi_data_path, node_ids, date,
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, epidata_filenames.divi_data_path, node_ids, date,
                                              scaling_factor_icu));
 
     BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, epidata_filenames.case_data_path, node_ids,
