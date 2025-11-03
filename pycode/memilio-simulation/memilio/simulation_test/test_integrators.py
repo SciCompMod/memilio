@@ -74,6 +74,7 @@ class Test_Integrators(unittest.TestCase):
         result1 = simulate(0, 5, 1, model, integrator)
 
         dt_max = 0.5
+        integrator = mio.RKIntegratorCore()
         integrator.dt_max = dt_max
         result2 = simulate(0, 5, 0.5, model, integrator)
 

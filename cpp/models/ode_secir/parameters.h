@@ -43,24 +43,24 @@ namespace osecir
  * If the start day is 180 and simulation takes place from t0=0 to
  * tmax=100 the days 180 to 280 of the year are simulated
  */
+template <typename FP>
 struct StartDay {
-    using Type = double;
+    using Type = FP;
     static Type get_default(AgeGroup)
     {
-        return 0.;
+        return Type(0.0);
     }
     static std::string name()
     {
         return "StartDay";
     }
 };
-
 /**
  * @brief the seasonality in the SECIR model
  * the seasonality is given as (1+k*sin()) where the sine
  * curve is below one in summer and above one in winter
  */
-template <typename FP = double>
+template <typename FP>
 struct Seasonality {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -76,7 +76,7 @@ struct Seasonality {
 /**
  * @brief the icu capacity in the SECIR model
  */
-template <typename FP = double>
+template <typename FP>
 struct ICUCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -92,7 +92,7 @@ struct ICUCapacity {
 /**
  * @brief the (mean) latent time in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeExposed {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -109,7 +109,7 @@ struct TimeExposed {
  * @brief the (mean) time in day unit for asymptomatic cases that are infectious but
  *        have not yet developed symptoms.
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeInfectedNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -126,7 +126,7 @@ struct TimeInfectedNoSymptoms {
  * @brief the infectious time for symptomatic cases that are infected but
  *        who do not need to be hsopitalized in the SECIR model in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -143,7 +143,7 @@ struct TimeInfectedSymptoms {
  * @brief the time people are 'simply' hospitalized before returning home in the SECIR model
  *        in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeInfectedSevere {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -160,7 +160,7 @@ struct TimeInfectedSevere {
  * @brief the time people are treated by ICU before returning home in the SECIR model
  *        in day unit
  */
-template <typename FP = double>
+template <typename FP>
 struct TimeInfectedCritical {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -176,7 +176,7 @@ struct TimeInfectedCritical {
 /**
  * @brief probability of getting infected from a contact
  */
-template <typename FP = double>
+template <typename FP>
 struct TransmissionProbabilityOnContact {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -192,7 +192,7 @@ struct TransmissionProbabilityOnContact {
 /**
  * @brief the relative InfectedNoSymptoms infectability
  */
-template <typename FP = double>
+template <typename FP>
 struct RelativeTransmissionNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -208,7 +208,7 @@ struct RelativeTransmissionNoSymptoms {
 /**
  * @brief the percentage of asymptomatic cases in the SECIR model
  */
-template <typename FP = double>
+template <typename FP>
 struct RecoveredPerInfectedNoSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -224,7 +224,7 @@ struct RecoveredPerInfectedNoSymptoms {
 /**
  * @brief the risk of infection from symptomatic cases in the SECIR model
  */
-template <typename FP = double>
+template <typename FP>
 struct RiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -240,7 +240,7 @@ struct RiskOfInfectionFromSymptomatic {
 /**
  * @brief risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
  */
-template <typename FP = double>
+template <typename FP>
 struct MaxRiskOfInfectionFromSymptomatic {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -256,7 +256,7 @@ struct MaxRiskOfInfectionFromSymptomatic {
 /**
  * @brief the percentage of hospitalized patients per infected patients in the SECIR model
  */
-template <typename FP = double>
+template <typename FP>
 struct SeverePerInfectedSymptoms {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -272,7 +272,7 @@ struct SeverePerInfectedSymptoms {
 /**
  * @brief the percentage of ICU patients per hospitalized patients in the SECIR model
  */
-template <typename FP = double>
+template <typename FP>
 struct CriticalPerSevere {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -288,7 +288,7 @@ struct CriticalPerSevere {
 /**
  * @brief the percentage of dead patients per ICU patients in the SECIR model
  */
-template <typename FP = double>
+template <typename FP>
 struct DeathsPerCritical {
     using Type = CustomIndexArray<UncertainValue<FP>, AgeGroup>;
     static Type get_default(AgeGroup size)
@@ -304,7 +304,7 @@ struct DeathsPerCritical {
 /**
  * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
  */
-template <typename FP = double>
+template <typename FP>
 struct ContactPatterns {
     using Type = UncertainContactMatrix<FP>;
     static Type get_default(AgeGroup size)
@@ -320,7 +320,7 @@ struct ContactPatterns {
 /**
  * @brief the NPIs that are enforced if certain infection thresholds are exceeded.
  */
-template <typename FP = double>
+template <typename FP>
 struct DynamicNPIsInfectedSymptoms {
     using Type = DynamicNPIs<FP>;
     static Type get_default(AgeGroup /*size*/)
@@ -336,12 +336,12 @@ struct DynamicNPIsInfectedSymptoms {
 /**
  * @brief The delay with which DynamicNPIs are implemented and enforced after exceedance of threshold.
  */
-template <typename FP = double>
+template <typename FP>
 struct DynamicNPIsImplementationDelay {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup /*size*/)
     {
-        return 0.;
+        return Type(0.0);
     }
     static std::string name()
     {
@@ -352,7 +352,7 @@ struct DynamicNPIsImplementationDelay {
 /**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
-template <typename FP = double>
+template <typename FP>
 struct TestAndTraceCapacity {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -368,7 +368,7 @@ struct TestAndTraceCapacity {
 /**
  * @brief Multiplier for the test and trace capacity to determine when it is considered overloaded.
  */
-template <typename FP = double>
+template <typename FP>
 struct TestAndTraceCapacityMaxRisk {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
@@ -381,20 +381,20 @@ struct TestAndTraceCapacityMaxRisk {
     }
 };
 
-template <typename FP = double>
+template <typename FP>
 using ParametersBase =
-    ParameterSet<StartDay, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>, TestAndTraceCapacityMaxRisk<FP>,
-                 ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>, DynamicNPIsInfectedSymptoms<FP>,
-                 TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>, TimeInfectedSevere<FP>,
-                 TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>, RelativeTransmissionNoSymptoms<FP>,
-                 RecoveredPerInfectedNoSymptoms<FP>, RiskOfInfectionFromSymptomatic<FP>,
-                 MaxRiskOfInfectionFromSymptomatic<FP>, SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>,
-                 DeathsPerCritical<FP>>;
+    ParameterSet<StartDay<FP>, Seasonality<FP>, ICUCapacity<FP>, TestAndTraceCapacity<FP>,
+                 TestAndTraceCapacityMaxRisk<FP>, ContactPatterns<FP>, DynamicNPIsImplementationDelay<FP>,
+                 DynamicNPIsInfectedSymptoms<FP>, TimeExposed<FP>, TimeInfectedNoSymptoms<FP>, TimeInfectedSymptoms<FP>,
+                 TimeInfectedSevere<FP>, TimeInfectedCritical<FP>, TransmissionProbabilityOnContact<FP>,
+                 RelativeTransmissionNoSymptoms<FP>, RecoveredPerInfectedNoSymptoms<FP>,
+                 RiskOfInfectionFromSymptomatic<FP>, MaxRiskOfInfectionFromSymptomatic<FP>,
+                 SeverePerInfectedSymptoms<FP>, CriticalPerSevere<FP>, DeathsPerCritical<FP>>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-template <typename FP = double>
+template <typename FP>
 class Parameters : public ParametersBase<FP>
 {
 public:
@@ -412,11 +412,11 @@ public:
     /**
      * Percentage of infected commuters that are not detected.
      */
-    double& get_commuter_nondetection()
+    FP& get_commuter_nondetection()
     {
         return m_commuter_nondetection;
     }
-    double get_commuter_nondetection() const
+    FP get_commuter_nondetection() const
     {
         return m_commuter_nondetection;
     }
@@ -424,12 +424,12 @@ public:
     /**
      * Time in simulation before which no infected commuters are detected.
      */
-    double& get_start_commuter_detection()
+    FP& get_start_commuter_detection()
     {
         return m_start_commuter_detection;
     }
 
-    double get_start_commuter_detection() const
+    FP get_start_commuter_detection() const
     {
         return m_start_commuter_detection;
     }
@@ -437,12 +437,12 @@ public:
     /**
      * Time in simulation after which no infected commuters are detected.
      */
-    double& get_end_commuter_detection()
+    FP& get_end_commuter_detection()
     {
         return m_end_commuter_detection;
     }
 
-    double get_end_commuter_detection() const
+    FP get_end_commuter_detection() const
     {
         return m_end_commuter_detection;
     }
@@ -450,11 +450,11 @@ public:
     /**
      * Time in simulation after which no dynamic NPIs are applied.
      */
-    double& get_end_dynamic_npis()
+    FP& get_end_dynamic_npis()
     {
         return m_end_dynamic_npis;
     }
-    double get_end_dynamic_npis() const
+    FP get_end_dynamic_npis() const
     {
         return m_end_dynamic_npis;
     }
@@ -474,7 +474,7 @@ public:
      */
     bool apply_constraints()
     {
-        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
 
         int corrected = false;
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
@@ -649,7 +649,7 @@ public:
             return true;
         }
 
-        const double tol_times = 1e-1; // accepted tolerance for compartment stays
+        const FP tol_times = 1e-1; // accepted tolerance for compartment stays
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
@@ -760,16 +760,16 @@ public:
 
 private:
     AgeGroup m_num_groups;
-    double m_commuter_nondetection    = 0.0;
-    double m_start_commuter_detection = 0.0;
-    double m_end_commuter_detection   = 0.0;
-    double m_end_dynamic_npis         = std::numeric_limits<double>::max();
+    FP m_commuter_nondetection    = 0.0;
+    FP m_start_commuter_detection = 0.0;
+    FP m_end_commuter_detection   = 0.0;
+    FP m_end_dynamic_npis         = std::numeric_limits<FP>::max();
 };
 
 /**
  * @brief WIP !! TO DO: returns the actual, approximated reproduction rate
  */
-//double get_reprod_rate(Parameters const& params, double t, std::vector<double> const& yt);
+//FP get_reprod_rate(Parameters const& params, FP t, std::vector<FP> const& yt);
 
 } // namespace osecir
 } // namespace mio

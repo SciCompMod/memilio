@@ -1,0 +1,195 @@
+/* 
+* Copyright (C) 2020-2025 MEmilio
+*
+* Authors: Kilian Volmer, Sascha Korf, Carlotta Gerstein, Daniel Abele, Elisabeth Kluth, Khoa Nguyen, David Kerkmann
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+#ifndef MIO_GEOGRAPHY_LOCATIONS_H
+#define MIO_GEOGRAPHY_LOCATIONS_H
+
+#include "distance.h"
+#include "memilio/io/default_serialize.h"
+#include "memilio/geography/distance.h"
+#include "memilio/config.h"
+#include "memilio/utils/logging.h"
+#include <cassert>
+#include <cmath>
+#include <numbers>
+namespace mio
+{
+namespace geo
+{
+/**
+ * @brief Class representing a geographical location on the Earth's surface.
+ *
+ * Provides latitude and longitude in degrees and a method to calculate the distance to another location.
+ */
+class GeographicalLocation
+{
+
+public:
+    /**
+     * @brief Construct a new Geographical Location object.
+     * 
+     * @param lat Latitude in degrees.
+     * @param lon Longitude in degrees.
+     */
+    GeographicalLocation(ScalarType lat, ScalarType lon)
+        : m_latitude(lat)
+        , m_longitude(lon)
+    {
+        check_input();
+    }
+    /**
+     * @brief Construct a new Geographical Location object.
+     * 
+     * @param coordinates Pair of latitude and longitude in degrees as ScalarTypes.
+     */
+    GeographicalLocation(std::pair<ScalarType, ScalarType> coordinates)
+        : m_latitude(coordinates.first)
+        , m_longitude(coordinates.second)
+    {
+        check_input();
+    }
+
+    /**
+     * @brief Construct a new Geographical Location object using the default constructor to keep compatibility with ABM code.
+     * 
+     */
+    GeographicalLocation() = default;
+
+    /**
+     * @brief Compare two GeographicalLocation%s for equality
+     */
+    bool operator==(const GeographicalLocation& other) const
+    {
+        return (m_latitude == other.m_latitude && m_longitude == other.m_longitude);
+    }
+
+    /**
+     * @brief Compare two GeographicalLocation%s for inequality
+     */
+    bool operator!=(const GeographicalLocation& other) const
+    {
+        return !(*this == other);
+    }
+
+    /**
+     * @brief Check that this location is within a (small) distance of another.
+     * @param[in] other Any location.
+     * @param[in] tol The Absolute tolerance for considering two locations close.
+     */
+    bool is_close(const GeographicalLocation& other,
+                  Distance tol = Distance(10 * Limits<ScalarType>::zero_tolerance())) const
+    {
+        return distance(other) < tol;
+    }
+
+    /**
+     * @brief Default serialize the GeographicalLocation object.
+     * 
+     * This method is used by the default serialization feature.
+     */
+    auto default_serialize()
+    {
+        return Members("GeographicalLocation").add("latitude", m_latitude).add("longitude", m_longitude);
+    }
+
+    /*
+    * @brief Calculate the distance between two GeographicalLocation%s.
+    * @param other The other GeographicalLocation.
+    * @return The distance between the two locations as @ref mio::geo::Distance .
+    * 
+    * Uses the haversine formula (https://en.wikipedia.org/wiki/Haversine_formula) to calculate the distance between 
+    * two geographical locations. Uses an earth radius of 6371 km (https://en.wikipedia.org/wiki/Earth_radius).
+    * The math functions use radians, whereas coordinates are given in degrees.
+    */
+    Distance distance(const GeographicalLocation& other) const
+    {
+        const ScalarType delta_latitude           = (m_latitude - other.m_latitude) * radians;
+        const ScalarType delta_longitude          = (m_longitude - other.m_longitude) * radians;
+        const ScalarType sin_delta_latitude_half  = sin(delta_latitude * 0.5);
+        const ScalarType sin_delta_longitude_half = sin(delta_longitude * 0.5);
+        const ScalarType first_part               = sin_delta_latitude_half * sin_delta_latitude_half;
+        const ScalarType second_part              = cos(m_latitude * radians) * cos(other.m_latitude * radians) *
+                                       sin_delta_longitude_half * sin_delta_longitude_half;
+        const ScalarType distance = 2.0 * earth_radius.kilometers() * asin(sqrt(first_part + second_part));
+        return kilometers(distance);
+    }
+
+    /**
+     * @brief Get the latitude object
+     * 
+     * @return ScalarType latitude in degrees
+     */
+    ScalarType get_latitude() const
+    {
+        return m_latitude;
+    }
+
+    /**
+     * @brief Get the longitude object
+     * 
+     * @return ScalarType longitude in degrees
+     */
+    ScalarType get_longitude() const
+    {
+        return m_longitude;
+    }
+
+    /**
+     * @brief Set the latitude object
+     * 
+     * @param lat Latitude in degrees.
+     */
+    void set_latitude(ScalarType lat)
+    {
+        m_latitude = lat;
+        check_input();
+    }
+
+    /**
+     * @brief Set the longitude object
+     * 
+     * @param lon Longitude in degrees.
+     */
+    void set_longitude(ScalarType lon)
+    {
+        m_longitude = lon;
+        check_input();
+    }
+
+private:
+    /**
+     * @brief Assert that the latitude and longitude are within valid ranges.
+     */
+    void check_input() const
+    {
+        assert(m_latitude <= 90. && m_latitude >= -90. && "Latitude must be in [-90, 90]");
+        assert(m_longitude <= 180. && m_longitude >= -180. && "Longitude must be in [-180, 180]");
+    }
+
+    ScalarType m_latitude;
+    ScalarType m_longitude;
+    constexpr static mio::geo::Distance earth_radius = mio::geo::kilometers(6371.);
+    constexpr static ScalarType radians              = std::numbers::pi / 180.0;
+};
+
+} // namespace geo
+
+} // namespace mio
+
+#endif // MIO_GEOGRAPHY_LOCATIONS_H

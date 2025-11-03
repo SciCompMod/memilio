@@ -205,7 +205,7 @@ struct TimeInfectedCriticalToRecovered {
 * @brief the percentage of symptomatic cases
 */
 struct SymptomsPerInfectedNoSymptoms {
-    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -220,7 +220,7 @@ struct SymptomsPerInfectedNoSymptoms {
 * @brief the percentage of hospitalized cases per infected cases
 */
 struct SeverePerInfectedSymptoms {
-    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -235,7 +235,7 @@ struct SeverePerInfectedSymptoms {
 * @brief the percentage of ICU cases per hospitalized cases
 */
 struct CriticalPerInfectedSevere {
-    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -250,7 +250,7 @@ struct CriticalPerInfectedSevere {
 * @brief the percentage of dead cases per hospitalized cases
 */
 struct DeathsPerInfectedSevere {
-    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .1);
@@ -265,7 +265,7 @@ struct DeathsPerInfectedSevere {
 * @brief the percentage of dead cases per ICU cases
 */
 struct DeathsPerInfectedCritical {
-    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, .5);
@@ -379,7 +379,7 @@ struct InfectionRateFromViralShed {
  * @brief Probability that an Infection is detected.
  */
 struct DetectInfection {
-    using Type = CustomIndexArray<UncertainValue<>, VirusVariant, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, VirusVariant, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         return Type({VirusVariant::Count, size}, 1.);
@@ -394,7 +394,7 @@ struct DetectInfection {
  * @brief Effectiveness of a Mask of a certain MaskType% against an Infection%.
  */
 struct MaskProtection {
-    using Type = CustomIndexArray<UncertainValue<>, MaskType>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, MaskType>;
     static Type get_default(AgeGroup /*size*/)
     {
         Type defaut_value = Type(MaskType::Count, 0.0);
@@ -477,8 +477,8 @@ struct HighViralLoadProtectionFactor {
  * @brief Parameters that describe the reliability of a test.
  */
 struct TestParameters {
-    UncertainValue<> sensitivity;
-    UncertainValue<> specificity;
+    UncertainValue<ScalarType> sensitivity;
+    UncertainValue<ScalarType> specificity;
     TimeSpan required_time;
     TestType type;
 
@@ -561,7 +561,7 @@ struct QuarantineEffectiveness {
  * @brief Parameter for the exponential distribution to decide if a Person goes shopping.
  */
 struct BasicShoppingRate {
-    using Type = CustomIndexArray<UncertainValue<>, AgeGroup>;
+    using Type = CustomIndexArray<UncertainValue<ScalarType>, AgeGroup>;
     static auto get_default(AgeGroup size)
     {
         return Type({size}, 1.0);
@@ -576,10 +576,11 @@ struct BasicShoppingRate {
  * @brief Percentage of Person%s of the respective age going to work.
  */
 struct WorkRatio {
-    using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
+    using Type =
+        DampingMatrixExpression<ScalarType, Dampings<ScalarType, Damping<ScalarType, ColumnVectorShape<ScalarType>>>>;
     static auto get_default(AgeGroup /*size*/)
     {
-        return Type(Eigen::VectorXd::Constant(1, 1.0));
+        return Type(Eigen::VectorX<ScalarType>::Constant(1, 1.0));
     }
     static std::string name()
     {
@@ -591,10 +592,11 @@ struct WorkRatio {
  * @brief Percentage of Person%s of the respective age going to school.
  */
 struct SchoolRatio {
-    using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
+    using Type =
+        DampingMatrixExpression<ScalarType, Dampings<ScalarType, Damping<ScalarType, ColumnVectorShape<ScalarType>>>>;
     static auto get_default(AgeGroup /*size*/)
     {
-        return Type(Eigen::VectorXd::Constant(1, 1.0));
+        return Type(Eigen::VectorX<ScalarType>::Constant(1, 1.0));
     }
     static std::string name()
     {
@@ -606,10 +608,11 @@ struct SchoolRatio {
  * @brief Parameter for the exponential distribution to decide if a Person goes to a social event.
  */
 struct SocialEventRate {
-    using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
+    using Type =
+        DampingMatrixExpression<ScalarType, Dampings<ScalarType, Damping<ScalarType, ColumnVectorShape<ScalarType>>>>;
     static auto get_default(AgeGroup size)
     {
-        return Type(Eigen::VectorXd::Constant((size_t)size, 1.0));
+        return Type(Eigen::VectorX<ScalarType>::Constant((size_t)size, 1.0));
     }
     static std::string name()
     {

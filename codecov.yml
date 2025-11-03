@@ -1,0 +1,14 @@
+# MEmilio configuration for Codecov.io coverage reports
+
+# Allow tiny, non-deterministic coverage fluctuations (<= 0.1 percentage points)
+# caused by RNG/parallel execution to not fail CI.
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0.1%
+    patch:
+      default:
+        target: auto
+        threshold: 0.1%

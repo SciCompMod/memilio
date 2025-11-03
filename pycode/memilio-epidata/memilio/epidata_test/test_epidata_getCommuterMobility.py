@@ -178,6 +178,13 @@ class TestCommuterMobility(fake_filesystem_unittest.TestCase):
 
         """
 
+        gcm.get_commuter_data(
+            out_folder=self.path,
+            ref_year=2022,
+            interactive=True,
+            read_data=False
+        )
+
         testcountyid = 1051
         # direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(

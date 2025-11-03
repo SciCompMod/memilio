@@ -87,7 +87,6 @@ TEST_F(TestLocation, interact)
     auto dt = mio::abm::seconds(8640); //0.1 days
 
     // Setup model parameters for viral loads and viral shed distributions.
-    // Setup model parameters for viral loads and viral shed distributions.
     mio::abm::Parameters params = mio::abm::Parameters(num_age_groups);
     params.set_default<mio::abm::ViralLoadDistributions>(num_age_groups);
     params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
@@ -167,7 +166,7 @@ TEST_F(TestLocation, getGeographicalLocation)
     // Create a location of type Home.
     auto location = mio::abm::Location(mio::abm::LocationType::Home, 0);
     // Set a geographical location for the location.
-    mio::abm::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
+    mio::geo::GeographicalLocation geographical_location = {10.5100470359749, 52.2672785559812};
     location.set_geographical_location(geographical_location);
     // Verify that the set geographical location matches the expected values.
     EXPECT_EQ(location.get_geographical_location(), geographical_location);

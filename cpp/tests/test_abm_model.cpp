@@ -17,11 +17,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "utils.h"
 #include "abm/location.h"
 #include "abm/location_type.h"
 #include "abm/parameters.h"
 #include "abm/person.h"
 #include "abm/model.h"
+#include "abm/model_functions.h"
 #include "abm/virus_variant.h"
 #include "abm_helpers.h"
 #include "memilio/epidemiology/age_group.h"
@@ -104,6 +106,44 @@ TEST_F(TestModel, addPerson)
 }
 
 /**
+ * @brief Test the get_number_persons and get_number_persons_age methods in the Model class.
+ */
+TEST_F(TestModel, getNumberPersons)
+{
+    // replace spdlog::default_logger
+    mio::RedirectLogger logger(mio::LogLevel::debug); // Set log level to debug to capture log messages.
+    logger.capture();
+
+    auto model    = mio::abm::Model(num_age_groups);
+    auto location = model.add_location(mio::abm::LocationType::School);
+
+    // Add persons to the model.
+    model.add_person(location, age_group_15_to_34);
+    model.add_person(location, age_group_35_to_59);
+
+    EXPECT_TRUE(logger.read().empty());
+
+    // Verify the total number of persons in the model.
+    EXPECT_EQ(model.get_number_persons(location), 2); // This get also does the first build of the cache.
+#ifndef NDEBUG
+    EXPECT_THAT(logger.read(), ::testing::HasSubstr("Building local population cache for ABM."));
+#endif
+
+    // Verify the number of persons in the model for each age group.
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_15_to_34), 1);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_35_to_59), 1);
+    // Verify the number of persons in the model for an age group that has no persons.
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_0_to_4), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_5_to_14), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_60_to_79), 0);
+    EXPECT_EQ(model.get_number_persons_age(location, 0, age_group_80_plus), 0);
+
+    EXPECT_TRUE(logger.read().empty());
+
+    logger.release();
+}
+
+/**
  * @brief Test combined subpopulation count by location type in the Model class.
  */
 TEST_F(TestModel, getSubpopulationCombined)
@@ -165,6 +205,26 @@ TEST_F(TestModel, findLocation)
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Work, person_id), work_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::School, person_id), school_id);
     EXPECT_EQ(model_test.find_location(mio::abm::LocationType::Home, person_id), home_id);
+}
+
+/**
+ * @brief Test the exposure contribution normalization in the Model class.
+ */
+TEST_F(TestModel, exposureContributionNormalization)
+{
+    mio::abm::ContactExposureRates contact_exposure_rates;
+    contact_exposure_rates.resize({mio::abm::CellIndex{1}, mio::abm::VirusVariant{1}, mio::AgeGroup{1}});
+    contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}] = 10.0;
+
+    mio::abm::PopulationByAge local_population_by_age;
+    local_population_by_age.resize({mio::abm::CellIndex{1}, mio::AgeGroup{1}});
+    local_population_by_age[{mio::abm::CellIndex{0}, mio::AgeGroup{0}}] =
+        2; // Set population for cell 0 and age group 0 to 2
+
+    mio::abm::normalize_exposure_contribution(contact_exposure_rates, local_population_by_age);
+
+    auto& rate = contact_exposure_rates[{mio::abm::CellIndex{0}, mio::abm::VirusVariant::Wildtype, mio::AgeGroup{0}}];
+    EXPECT_EQ(rate, 5.0);
 }
 
 /**
