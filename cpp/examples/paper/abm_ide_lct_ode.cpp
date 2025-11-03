@@ -862,10 +862,11 @@ void save_transmission_rates(
  * @param[in] contact_data_dir Directory for contact matrices.
  * @param[in] initial_infection_state_dist Distribution from which initial infection states are drawn.
  * @param[in] rng Rng used for the model and the initialization.
+ * @param[in] one_location If true, there is only one location for each location type.
  */
 mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::string contact_data_dir,
                                               std::vector<double> initial_infection_state_dist,
-                                              mio::RandomNumberGenerator& rng)
+                                              mio::RandomNumberGenerator& rng, bool one_location)
 {
     using namespace params;
     mio::abm::Model model(num_age_groups);
@@ -971,216 +972,247 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
 
     size_t pop = size_t(total_population);
 
-    // Add persons
-    while (pop > 0) {
-        // First create a home location
-        auto home = model.add_location(mio::abm::LocationType::Home);
-        // Then sample size of home location
-        auto home_size =
-            mio::DiscreteDistribution<size_t>::get_instance()(
-                model.get_rng(), std::vector<ScalarType>(std::begin(ABMparams::household_size_distribution),
-                                                         std::end(ABMparams::household_size_distribution))) +
-            1;
-        // Check if size is bigger than remaining population
-        if (home_size > pop) {
-            // If yes, create one household for the remaining population
-            home_size = pop;
-        }
-        // Create persons for the sampled household
-        size_t num_adults = 0;
-        std::vector<mio::abm::PersonId> person_ids;
-        for (size_t p = 0; p < home_size; p++) {
-            // Sample person's age group
+    // One add one location of each type where all persons are assigned to
+    if (one_location) {
+        auto home   = model.add_location(mio::abm::LocationType::Home);
+        auto work   = model.add_location(mio::abm::LocationType::Work);
+        auto school = model.add_location(mio::abm::LocationType::School);
+        auto event  = model.add_location(mio::abm::LocationType::SocialEvent);
+        auto shop   = model.add_location(mio::abm::LocationType::BasicsShop);
+        for (size_t p = 0; p < pop; ++p) {
             auto age = mio::DiscreteDistribution<size_t>::get_instance()(
                 model.get_rng(), std::vector<ScalarType>(std::begin(age_group_sizes), std::end(age_group_sizes)));
             // Add person to model
-            auto pid = model.add_person(home, (AgeGroup)age);
-            // Add person id to map
-            person_ids.push_back(pid);
-            // Assign home location to person
+            auto pid     = model.add_person(home, (AgeGroup)age);
             auto& person = model.get_person(pid);
+            // Assign locations to person
             person.set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
-            // If person has adult age group (AgeGroup >= 2), increase the number of adult counter for this home location
-            if (age >= 2) {
-                num_adults++;
+            person.set_assigned_location(mio::abm::LocationType::Hospital, hosp_id, model.get_id());
+            person.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
+            person.set_assigned_location(mio::abm::LocationType::SocialEvent, event, model.get_id());
+            person.set_assigned_location(mio::abm::LocationType::BasicsShop, shop, model.get_id());
+            if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) { //work-aged
+                person.set_assigned_location(mio::abm::LocationType::Work, work, model.get_id());
+            }
+            if (person.get_age() == mio::AgeGroup(1)) { //school-aged
+                person.set_assigned_location(mio::abm::LocationType::School, school, model.get_id());
             }
         }
-        // Add home to household map
-        household_map[home] = std::make_pair(person_ids, num_adults);
-        // Reduce total population by added persons
-        pop -= home_size;
     }
-
-    // Check if all home locations have assigned at least one adult. If there is a home location without adults, another with at least two is searched and one child and one adult are swapped.
-    for (auto& [key, value] : household_map) {
-        if (value.second == 0) { // value.second is the number of adults
-            // Finde home with at least two adults
-            auto adult_home_it = std::find_if(household_map.begin(), household_map.end(), [](const auto& pair) {
-                return pair.second.second >= 2;
-            });
-            if (adult_home_it == household_map.end()) {
-                mio::log_error("No household with more than 1 adult found.");
-                break;
+    else {
+        // Add persons
+        while (pop > 0) {
+            // First create a home location
+            auto home = model.add_location(mio::abm::LocationType::Home);
+            // Then sample size of home location
+            auto home_size =
+                mio::DiscreteDistribution<size_t>::get_instance()(
+                    model.get_rng(), std::vector<ScalarType>(std::begin(ABMparams::household_size_distribution),
+                                                             std::end(ABMparams::household_size_distribution))) +
+                1;
+            // Check if size is bigger than remaining population
+            if (home_size > pop) {
+                // If yes, create one household for the remaining population
+                home_size = pop;
             }
-            // Get person ids to change for both households
-            auto child_id = value.first[0];
-            // Delete one child from children-only-household
-            value.first.erase(value.first.begin());
-            auto& child   = model.get_person(child_id);
-            auto adult_id = mio::abm::PersonId::invalid_ID();
-            // Search adult in household with more than one adults
-            for (size_t p = 0; p < adult_home_it->second.first.size(); ++p) {
-                auto pid             = adult_home_it->second.first[p];
-                auto& current_person = model.get_person(pid);
-                if (!(current_person.get_age() == mio::AgeGroup(0) || current_person.get_age() == mio::AgeGroup(1))) {
-                    adult_id = pid;
-                    // If adult is found, delete adult from its former home location
-                    adult_home_it->second.first.erase(adult_home_it->second.first.begin() + p);
-                    break;
+            // Create persons for the sampled household
+            size_t num_adults = 0;
+            std::vector<mio::abm::PersonId> person_ids;
+            for (size_t p = 0; p < home_size; p++) {
+                // Sample person's age group
+                auto age = mio::DiscreteDistribution<size_t>::get_instance()(
+                    model.get_rng(), std::vector<ScalarType>(std::begin(age_group_sizes), std::end(age_group_sizes)));
+                // Add person to model
+                auto pid = model.add_person(home, (AgeGroup)age);
+                // Add person id to map
+                person_ids.push_back(pid);
+                // Assign home location to person
+                auto& person = model.get_person(pid);
+                person.set_assigned_location(mio::abm::LocationType::Home, home, model.get_id());
+                // If person has adult age group (AgeGroup >= 2), increase the number of adult counter for this home location
+                if (age >= 2) {
+                    num_adults++;
                 }
             }
-            // Get adult from model
-            auto& adult = model.get_person(adult_id);
-            // Reassign home locations for child and adult
-            child.set_assigned_location(mio::abm::LocationType::Home, adult_home_it->first, model.get_id());
-            adult.set_assigned_location(mio::abm::LocationType::Home, key, model.get_id());
-            // Add child and adult to new homes in the map and increase/decrease num_adults
-            household_map[key].first.push_back(adult_id);
-            household_map[key].second += 1;
-            household_map[adult_home_it->first].first.push_back(child_id);
-            household_map[adult_home_it->first].second -= 1;
+            // Add home to household map
+            household_map[home] = std::make_pair(person_ids, num_adults);
+            // Reduce total population by added persons
+            pop -= home_size;
+        }
+
+        // Check if all home locations have assigned at least one adult. If there is a home location without adults, another with at least two is searched and one child and one adult are swapped.
+        for (auto& [key, value] : household_map) {
+            if (value.second == 0) { // value.second is the number of adults
+                // Finde home with at least two adults
+                auto adult_home_it = std::find_if(household_map.begin(), household_map.end(), [](const auto& pair) {
+                    return pair.second.second >= 2;
+                });
+                if (adult_home_it == household_map.end()) {
+                    mio::log_error("No household with more than 1 adult found.");
+                    break;
+                }
+                // Get person ids to change for both households
+                auto child_id = value.first[0];
+                // Delete one child from children-only-household
+                value.first.erase(value.first.begin());
+                auto& child   = model.get_person(child_id);
+                auto adult_id = mio::abm::PersonId::invalid_ID();
+                // Search adult in household with more than one adults
+                for (size_t p = 0; p < adult_home_it->second.first.size(); ++p) {
+                    auto pid             = adult_home_it->second.first[p];
+                    auto& current_person = model.get_person(pid);
+                    if (!(current_person.get_age() == mio::AgeGroup(0) ||
+                          current_person.get_age() == mio::AgeGroup(1))) {
+                        adult_id = pid;
+                        // If adult is found, delete adult from its former home location
+                        adult_home_it->second.first.erase(adult_home_it->second.first.begin() + p);
+                        break;
+                    }
+                }
+                // Get adult from model
+                auto& adult = model.get_person(adult_id);
+                // Reassign home locations for child and adult
+                child.set_assigned_location(mio::abm::LocationType::Home, adult_home_it->first, model.get_id());
+                adult.set_assigned_location(mio::abm::LocationType::Home, key, model.get_id());
+                // Add child and adult to new homes in the map and increase/decrease num_adults
+                household_map[key].first.push_back(adult_id);
+                household_map[key].second += 1;
+                household_map[adult_home_it->first].first.push_back(child_id);
+                household_map[adult_home_it->first].second -= 1;
+            }
+        }
+
+        // Helper variables for location creation
+        size_t curr_work_size     = 0;
+        size_t target_work_size   = 0;
+        size_t curr_school_size   = 0;
+        size_t target_school_size = 0;
+        size_t curr_event_size    = 0;
+        size_t target_event_size  = 0;
+        size_t curr_shop_size     = 0;
+        size_t target_shop_size   = 0;
+
+        // LocationIds and number of currently assigned persons per type
+        std::vector<std::pair<mio::abm::LocationId, size_t>> works;
+        std::vector<std::pair<mio::abm::LocationId, size_t>> schools;
+        std::vector<std::pair<mio::abm::LocationId, size_t>> shops;
+        std::vector<std::pair<mio::abm::LocationId, size_t>> events;
+
+        // Create locations
+        for (auto& person : model.get_persons()) {
+            // All agents are assigned hospital and ICU
+            person.set_assigned_location(mio::abm::LocationType::Hospital, hosp_id, model.get_id());
+            person.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
+
+            // Check if person is work-aged
+            if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+                // If the current location is full, a new work location has to be created
+                if (curr_work_size >= target_work_size) {
+                    // Sample work location size
+                    size_t size = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                        model.get_rng(), double(ABMparams::workplace_size[0]), double(ABMparams::workplace_size[1])));
+                    // Set size to minimum workplace size if necessary
+                    target_work_size = std::max({size, ABMparams::min_workplace_size});
+                    // Add work location to model and to work location vector
+                    auto work_id = model.add_location(mio::abm::LocationType::Work);
+                    works.push_back(std::make_pair(work_id, 0));
+                    // Set location's capacity to its sampled size
+                    auto work = model.get_location(work_id);
+                    work.set_capacity(uint32_t(size), uint32_t(1));
+                }
+                curr_work_size += 1;
+            }
+            // Check if person is school-aged
+            if (person.get_age() == mio::AgeGroup(1)) {
+                // If the current school location is full, a new school has to be created
+                if (curr_school_size >= target_school_size) {
+                    // Sample school size
+                    size_t size        = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                        model.get_rng(), double(ABMparams::school_size[0]), double(ABMparams::school_size[1])));
+                    target_school_size = std::max({size, ABMparams::min_school_size});
+                    // Add school to model and to school location vector
+                    auto school_id = model.add_location(mio::abm::LocationType::School);
+                    schools.push_back(std::make_pair(school_id, 0));
+                    // Set location's capacity to its size
+                    auto school = model.get_location(school_id);
+                    school.set_capacity(uint32_t(size), uint32_t(1));
+                }
+                curr_school_size += 1;
+            }
+
+            // Event
+            if (curr_event_size >= target_event_size) {
+                size_t size       = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                    model.get_rng(), double(ABMparams::event_size[0]), double(ABMparams::event_size[1])));
+                target_event_size = std::max({size, ABMparams::min_event_size});
+                auto event_id     = model.add_location(mio::abm::LocationType::SocialEvent);
+                events.push_back(std::make_pair(event_id, 0));
+                auto event = model.get_location(event_id);
+                event.set_capacity(uint32_t(size), uint32_t(1));
+            }
+            curr_event_size += 1;
+            // Shop
+            if (curr_shop_size >= target_shop_size) {
+                size_t size      = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
+                    model.get_rng(), double(ABMparams::shop_size[0]), double(ABMparams::shop_size[1])));
+                target_shop_size = std::max({size, ABMparams::min_shop_size});
+                auto shop_id     = model.add_location(mio::abm::LocationType::BasicsShop);
+                shops.push_back(std::make_pair(shop_id, 0));
+                auto shop = model.get_location(shop_id);
+                shop.set_capacity(uint32_t(size), uint32_t(1));
+            }
+            curr_shop_size += 1;
+        }
+        //Assign locations to persons
+        for (auto& person : model.get_persons()) {
+            // Check if person is work-aged
+            if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
+                // Sample work uniformly from all work locations
+                size_t work_index =
+                    mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), works.size() - 1);
+                person.set_assigned_location(mio::abm::LocationType::Work, works[work_index].first, model.get_id());
+                // Increase number of assign persons for sampled work location
+                works[work_index].second += 1;
+                // Check if work location is full
+                if (model.get_location(works[work_index].first).get_capacity().persons <= works[work_index].second) {
+                    // If yes, erase location from vector
+                    works.erase(works.begin() + work_index);
+                }
+            }
+            // Check if person is school-aged
+            if (person.get_age() == mio::AgeGroup(1)) {
+                // Sample school uniformly from all school locations
+                size_t school_index =
+                    mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), schools.size() - 1);
+                person.set_assigned_location(mio::abm::LocationType::School, schools[school_index].first,
+                                             model.get_id());
+                // Increase number of assign persons for sampled school locations
+                schools[school_index].second += 1;
+                // Check if school is full
+                if (model.get_location(schools[school_index].first).get_capacity().persons <=
+                    schools[school_index].second) {
+                    schools.erase(schools.begin() + school_index);
+                }
+            }
+            // Sample event
+            size_t event_index =
+                mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), events.size() - 1);
+            person.set_assigned_location(mio::abm::LocationType::SocialEvent, events[event_index].first,
+                                         model.get_id());
+            events[event_index].second += 1;
+            if (model.get_location(events[event_index].first).get_capacity().persons <= events[event_index].second) {
+                events.erase(events.begin() + event_index);
+            }
+            // Sample shop
+            size_t shop_index =
+                mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), shops.size() - 1);
+            person.set_assigned_location(mio::abm::LocationType::BasicsShop, shops[shop_index].first, model.get_id());
+            shops[shop_index].second += 1;
+            if (model.get_location(shops[shop_index].first).get_capacity().persons <= shops[shop_index].second) {
+                shops.erase(shops.begin() + shop_index);
+            }
         }
     }
-
-    // Helper variables for location creation
-    size_t curr_work_size     = 0;
-    size_t target_work_size   = 0;
-    size_t curr_school_size   = 0;
-    size_t target_school_size = 0;
-    size_t curr_event_size    = 0;
-    size_t target_event_size  = 0;
-    size_t curr_shop_size     = 0;
-    size_t target_shop_size   = 0;
-
-    // LocationIds and number of currently assigned persons per type
-    std::vector<std::pair<mio::abm::LocationId, size_t>> works;
-    std::vector<std::pair<mio::abm::LocationId, size_t>> schools;
-    std::vector<std::pair<mio::abm::LocationId, size_t>> shops;
-    std::vector<std::pair<mio::abm::LocationId, size_t>> events;
-
-    // Create locations
-    for (auto& person : model.get_persons()) {
-        // All agents are assigned hospital and ICU
-        person.set_assigned_location(mio::abm::LocationType::Hospital, hosp_id, model.get_id());
-        person.set_assigned_location(mio::abm::LocationType::ICU, icu_id, model.get_id());
-
-        // Check if person is work-aged
-        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
-            // If the current location is full, a new work location has to be created
-            if (curr_work_size >= target_work_size) {
-                // Sample work location size
-                size_t size = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                    model.get_rng(), double(ABMparams::workplace_size[0]), double(ABMparams::workplace_size[1])));
-                // Set size to minimum workplace size if necessary
-                target_work_size = std::max({size, ABMparams::min_workplace_size});
-                // Add work location to model and to work location vector
-                auto work_id = model.add_location(mio::abm::LocationType::Work);
-                works.push_back(std::make_pair(work_id, 0));
-                // Set location's capacity to its sampled size
-                auto work = model.get_location(work_id);
-                work.set_capacity(uint32_t(size), uint32_t(1));
-            }
-            curr_work_size += 1;
-        }
-        // Check if person is school-aged
-        if (person.get_age() == mio::AgeGroup(1)) {
-            // If the current school location is full, a new school has to be created
-            if (curr_school_size >= target_school_size) {
-                // Sample school size
-                size_t size        = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                    model.get_rng(), double(ABMparams::school_size[0]), double(ABMparams::school_size[1])));
-                target_school_size = std::max({size, ABMparams::min_school_size});
-                // Add school to model and to school location vector
-                auto school_id = model.add_location(mio::abm::LocationType::School);
-                schools.push_back(std::make_pair(school_id, 0));
-                // Set location's capacity to its size
-                auto school = model.get_location(school_id);
-                school.set_capacity(uint32_t(size), uint32_t(1));
-            }
-            curr_school_size += 1;
-        }
-
-        // Event
-        if (curr_event_size >= target_event_size) {
-            size_t size       = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                model.get_rng(), double(ABMparams::event_size[0]), double(ABMparams::event_size[1])));
-            target_event_size = std::max({size, ABMparams::min_event_size});
-            auto event_id     = model.add_location(mio::abm::LocationType::SocialEvent);
-            events.push_back(std::make_pair(event_id, 0));
-            auto event = model.get_location(event_id);
-            event.set_capacity(uint32_t(size), uint32_t(1));
-        }
-        curr_event_size += 1;
-        // Shop
-        if (curr_shop_size >= target_shop_size) {
-            size_t size      = static_cast<size_t>(mio::NormalDistribution<double>::get_instance()(
-                model.get_rng(), double(ABMparams::shop_size[0]), double(ABMparams::shop_size[1])));
-            target_shop_size = std::max({size, ABMparams::min_shop_size});
-            auto shop_id     = model.add_location(mio::abm::LocationType::BasicsShop);
-            shops.push_back(std::make_pair(shop_id, 0));
-            auto shop = model.get_location(shop_id);
-            shop.set_capacity(uint32_t(size), uint32_t(1));
-        }
-        curr_shop_size += 1;
-    }
-    //Assign locations to persons
-    for (auto& person : model.get_persons()) {
-        // Check if person is work-aged
-        if (person.get_age() == mio::AgeGroup(2) || person.get_age() == mio::AgeGroup(3)) {
-            // Sample work uniformly from all work locations
-            size_t work_index =
-                mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), works.size() - 1);
-            person.set_assigned_location(mio::abm::LocationType::Work, works[work_index].first, model.get_id());
-            // Increase number of assign persons for sampled work location
-            works[work_index].second += 1;
-            // Check if work location is full
-            if (model.get_location(works[work_index].first).get_capacity().persons <= works[work_index].second) {
-                // If yes, erase location from vector
-                works.erase(works.begin() + work_index);
-            }
-        }
-        // Check if person is school-aged
-        if (person.get_age() == mio::AgeGroup(1)) {
-            // Sample school uniformly from all school locations
-            size_t school_index =
-                mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), schools.size() - 1);
-            person.set_assigned_location(mio::abm::LocationType::School, schools[school_index].first, model.get_id());
-            // Increase number of assign persons for sampled school locations
-            schools[school_index].second += 1;
-            // Check if school is full
-            if (model.get_location(schools[school_index].first).get_capacity().persons <=
-                schools[school_index].second) {
-                schools.erase(schools.begin() + school_index);
-            }
-        }
-        // Sample event
-        size_t event_index =
-            mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), events.size() - 1);
-        person.set_assigned_location(mio::abm::LocationType::SocialEvent, events[event_index].first, model.get_id());
-        events[event_index].second += 1;
-        if (model.get_location(events[event_index].first).get_capacity().persons <= events[event_index].second) {
-            events.erase(events.begin() + event_index);
-        }
-        // Sample shop
-        size_t shop_index =
-            mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), shops.size() - 1);
-        person.set_assigned_location(mio::abm::LocationType::BasicsShop, shops[shop_index].first, model.get_id());
-        shops[shop_index].second += 1;
-        if (model.get_location(shops[shop_index].first).get_capacity().persons <= shops[shop_index].second) {
-            shops.erase(shops.begin() + shop_index);
-        }
-    }
-
     //Set contact rates
     BOOST_OUTCOME_TRY(auto&& home_contacts, read_mobility_plain(contact_data_dir + "baseline_home.txt"));
     BOOST_OUTCOME_TRY(auto&& school_contacts, read_mobility_plain(contact_data_dir + "baseline_school_pf_eig.txt"));
@@ -1272,11 +1304,12 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
  * @param[in] read_model Spacifies whether the model is read in or is initialized from scratch with initialize_abm. If the model is read in, the simulation is done using the given rng.
  * @param[in] rng RNG used for model simulation.
  * @param[in] start_time Start time of the simulation in days.
+ * @param[in] one_location If true, all agents there is only one location for each type.
  */
 IOResult<mio::TimeSeries<double>> simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_data_dir,
                                                std::vector<double> initial_infection_state_dist, bool save_results,
                                                std::string save_dir, bool read_model, mio::RandomNumberGenerator& rng,
-                                               double start_time)
+                                               double start_time, bool one_location)
 {
     mio::set_log_level(mio::LogLevel::warn);
     mio::abm::TimePoint start_tp = mio::abm::TimePoint(mio::abm::days(int(start_time)).seconds());
@@ -1337,8 +1370,8 @@ IOResult<mio::TimeSeries<double>> simulate_abm(bool exponential_scenario, Scalar
     }
     else {
         std::cout << "Initializing model...\n";
-        BOOST_OUTCOME_TRY(model,
-                          initialize_abm(exponential_scenario, contact_data_dir, initial_infection_state_dist, rng));
+        BOOST_OUTCOME_TRY(model, initialize_abm(exponential_scenario, contact_data_dir, initial_infection_state_dist,
+                                                rng, one_location));
         std::cout << "Initializing model finished!\n";
     }
 
@@ -1380,10 +1413,12 @@ IOResult<mio::TimeSeries<double>> simulate_abm(bool exponential_scenario, Scalar
  * @param[in] read_model Specifies whether the model should be read in for each simulation.
  * @param[in] save_single_results Specifies whether all individual simulation results should be saved.
  * @param[in] start_time Start time of the simulation in days.
+ * @param[in] one_location If true, there is only one location of each location type.
  */
 mio::IOResult<void> abm_ensemble_run(size_t num_runs, bool exponential_scenario, ScalarType tmax,
                                      std::string contact_data_dir, std::vector<double> initial_infection_state_dist,
-                                     std::string save_dir, bool read_model, bool save_single_results, double start_time)
+                                     std::string save_dir, bool read_model, bool save_single_results, double start_time,
+                                     bool one_location)
 {
     std::vector<std::vector<mio::TimeSeries<double>>> ensemble_result(
         num_runs, std::vector<mio::TimeSeries<ScalarType>>(
@@ -1395,7 +1430,7 @@ mio::IOResult<void> abm_ensemble_run(size_t num_runs, bool exponential_scenario,
         //Run ABM simulation
         BOOST_OUTCOME_TRY(ensemble_result[run][0],
                           simulate_abm(exponential_scenario, tmax, contact_data_dir, initial_infection_state_dist,
-                                       save_single_results, save_dir, read_model, rng, start_time));
+                                       save_single_results, save_dir, read_model, rng, start_time, one_location));
     }
     // Calculate ensemble percentiles
     BOOST_OUTCOME_TRY(mio::ensemble_percentile(ensemble_result, 0.05)[0].export_csv(save_dir + "ABM_p05.csv"));
@@ -1437,15 +1472,16 @@ int main()
     boost::filesystem::create_directories(abm_dir);
     mio::RandomNumberGenerator rng;
     rng.seed(seeds);
-    double init_tmax = 14;
+    double init_tmax  = 14;
+    bool one_location = false;
     // Simulation for initialization is 14 days
     auto init_result = simulate_abm(exponential_scenario, init_tmax, contact_data_dir, infection_distribution, true,
-                                    save_dir, false, rng, params::t0);
+                                    save_dir, false, rng, params::t0, one_location);
     // Simulate ABM ensemble run.
     size_t num_runs = 100;
     auto result_abm =
         abm_ensemble_run(num_runs, exponential_scenario, params::t0 + init_tmax + params::tmax, contact_data_dir,
-                         infection_distribution, save_dir, true, false, params::t0 + init_tmax);
+                         infection_distribution, save_dir, true, false, params::t0 + init_tmax, one_location);
 
     // Simulate IDE.
     // auto result_ide = simulate_ide(start_date, contact_data_dir, reported_data_dir, exponential_scenario, save_dir);

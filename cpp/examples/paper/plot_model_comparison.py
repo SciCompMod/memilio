@@ -294,6 +294,7 @@ if __name__ == '__main__':
     #                                       exponential_scenario,
     #                                       save_dir=plot_dir)
     
+    plot_ABM_results_one_compartments(result_dir, 0, ["05", "50", "95"], 6, 8)
     plot_ABM_results_one_compartments(result_dir, 1, ["05", "50", "95"], 6, 8)
     #plot_ABM_results_one_compartments(result_dir, 1, [], 6, 8)
     plot_ABM_results_one_compartments(result_dir, 3, ["05", "50", "95"], 6, 8)
