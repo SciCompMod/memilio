@@ -152,8 +152,7 @@ IOResult<UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string cont
 }
 
 /**
-* @brief Function that simulates from time 0 until tmax using an IDE model where we apply a contact scaling after
-* two days. The simulation results will be saved in the folder save_dir as .h5 files.    
+* @brief Function that simulates from time 0 until tmax using an IDE model. The simulation results will be saved in the folder save_dir as .h5 files.    
 *
 * @param[in] save_dir Directory where simulation results will be saved. Default is an empty string leading to the 
 * results not being saved. 
