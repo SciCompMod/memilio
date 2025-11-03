@@ -31,7 +31,7 @@ namespace abm
 void Infection::initialize_viral_load(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
                                       const Parameters& params, TimePoint init_date, ProtectionEvent latest_protection)
 {
-    auto vl_params                    = params.get<ViralLoadDistributions>()[{virus, age}];
+    auto& vl_params                   = params.get<ViralLoadDistributions>()[{virus, age}];
     ScalarType high_viral_load_factor = 1;
 
     if (latest_protection.type != ProtectionType::NoProtection) {
@@ -49,7 +49,7 @@ void Infection::initialize_viral_load(PersonalRandomNumberGenerator& rng, VirusV
 void Infection::initialize_viral_shed(PersonalRandomNumberGenerator& rng, VirusVariant virus, AgeGroup age,
                                       const Parameters& params)
 {
-    auto viral_shed_params = params.get<ViralShedDistribution>()[{virus, age}];
+    auto viral_shed_params = params.get<ViralShedParameters>()[{virus, age}];
     m_log_norm_alpha       = viral_shed_params.viral_shed_alpha;
     m_log_norm_beta        = viral_shed_params.viral_shed_beta;
 
@@ -349,8 +349,8 @@ TimePoint Infection::draw_infection_course_forward(PersonalRandomNumberGenerator
 {
     TimePoint start_of_init_state = init_date; // since there is no state transition from Recovered or Dead
     bool init                     = true; // the random start time of the first state cannot be drawn
-    auto& uniform_dist =
-        UniformDistribution<double>::get_instance(); // thus, just use the init_date as the start for this
+    // thus, just use the init_date as the start for this
+    auto& init_state_dist = params.get<InitialInfectionStateDistributions>()[{m_virus_variant, age, start_state}];
 
     TimePoint current_time       = init_date;
     InfectionState current_state = start_state;
@@ -360,7 +360,7 @@ TimePoint Infection::draw_infection_course_forward(PersonalRandomNumberGenerator
         StateTransition transition =
             get_forward_transition(rng, age, params, current_state, current_time, latest_protection);
         if (init && current_state != InfectionState::Susceptible) { // random init within first time period
-            ScalarType p = uniform_dist(rng);
+            ScalarType p = init_state_dist.get(rng);
             start_of_init_state -= transition.duration.multiply(1 - p);
             transition.duration = transition.duration.multiply(p);
             init                = false;

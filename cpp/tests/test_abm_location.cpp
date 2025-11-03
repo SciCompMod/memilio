@@ -92,9 +92,9 @@ TEST_F(TestLocation, interact)
     params.get<mio::abm::ViralLoadDistributions>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
                                                                       mio::ParameterDistributionConstant(0.0001),
                                                                       mio::ParameterDistributionConstant(-0.0001)};
-    params.set_default<mio::abm::ViralShedDistribution>(num_age_groups);
-    params.get<mio::abm::ViralShedDistribution>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
-                                                                     mio::ParameterDistributionConstant(1.)};
+    params.set_default<mio::abm::ViralShedParameters>(num_age_groups);
+    params.get<mio::abm::ViralShedParameters>()[{variant, age}] = {mio::ParameterDistributionConstant(1.),
+                                                                   mio::ParameterDistributionConstant(1.)};
 
     // Set incubtion period to two days so that the newly infected person is still exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::LogNormalDistribution<double>>>> mock_logNorm_dist;

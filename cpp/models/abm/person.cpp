@@ -233,8 +233,8 @@ ProtectionEvent Person::get_latest_protection(TimePoint t) const
     // Use reverse iterators to start from the most recent infection
     for (auto it = m_infections.rbegin(); it != m_infections.rend(); ++it) {
         if (it->get_start_date() <= t) {
-            latest_exposure_type = ExposureType::NaturalInfection;
-            latest_time          = it->get_start_date();
+            latest_protection_type = ProtectionType::NaturalInfection;
+            latest_time            = it->get_start_date();
             break; // Stop once we find the latest infection before time t
         }
     }
@@ -243,8 +243,8 @@ ProtectionEvent Person::get_latest_protection(TimePoint t) const
     for (auto it = m_vaccinations.rbegin(); it != m_vaccinations.rend(); ++it) {
         if (it->time <= t) {
             if (it->time > latest_time) {
-                latest_exposure_type = it->exposure_type;
-                latest_time          = it->time;
+                latest_protection_type = it->type;
+                latest_time            = it->time;
             }
         }
         else {
