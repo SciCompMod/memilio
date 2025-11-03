@@ -174,7 +174,7 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
             model = list(groundtruth.keys())[0]
 
             difference = np.abs(
-                groundtruth[model][0][-1, compartment]-results['ide'][i][-1, compartment])
+                (groundtruth[model][0][-1, compartment]-results['ide'][i][-1, compartment])/np.abs(groundtruth[model][0][-1, compartment]))
 
             errors[i].append(difference)
 
@@ -182,7 +182,7 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
 
 
 def plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                     gregory_orders_simulation, save_dir=""):
+                     gregory_orders_simulation, fd_order, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
@@ -196,7 +196,8 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     num_plots = 3
     num_plotted_results = len(gregory_orders_simulation)
 
-    fig, axs = plt.subplots(1, num_plots, sharex=True, figsize=(9, 3))
+    fig, axs = plt.subplots(1, num_plots, sharex=True,
+                            figsize=(12, 3))
     secir_dict = {0: 'Susceptible', 1:  'Infected', 2:  'Recovered'}
     labels = [
         f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
@@ -209,8 +210,9 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
     handles = [plt.Line2D([], [], color='none')]
 
     # Define colors.
-    colors = [plt.cm.viridis(x)
-              for x in np.linspace(0, 1, num_plotted_results)]
+    colors_ = [plt.cm.viridis(x)
+               for x in np.linspace(0, 1, num_plotted_results)]
+    colors = ["darkorange", colors_[1], "darkred"]
 
     for i in range(num_plots):
         for j in range(len(gregory_orders_simulation)):
@@ -227,48 +229,89 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         # Plot comparison line for linear convergence as well as second, third and fourth order.
         # Susceptibles
         if i == 0:
+            # print(i)
             num_timesteps_ide = len(timesteps_ide)
 
-            plotted_timesteps = timesteps_ide[:4]
-            comparison = [0.1*dt**2 for dt in plotted_timesteps]
+            plotted_timesteps = timesteps_ide[:6]
+            comparison = [0.5*errors_all_gregory_orders[0]
+                          [0, i]*dt**2 for dt in plotted_timesteps]
             second = axs[i].plot(plotted_timesteps, comparison,
                                  '--', color=colors[0], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^2)$")
             handles.append(second[0])
 
-            plotted_timesteps = timesteps_ide[:3]
-            comparison = [0.04*dt**3 for dt in plotted_timesteps]
+            plotted_timesteps = timesteps_ide[:4]
+            comparison = [0.5*errors_all_gregory_orders[1]
+                          [0, i]*dt**3 for dt in plotted_timesteps]
             third = axs[i].plot(plotted_timesteps, comparison,
                                 '--', color=colors[1], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^3)$")
             handles.append(third[0])
 
-            plotted_timesteps = timesteps_ide[:2]
-            comparison = [0.007*dt**4 for dt in plotted_timesteps]
+            plotted_timesteps = timesteps_ide[:3]
+            comparison = [0.5*errors_all_gregory_orders[2]
+                          [0, i]*dt**4 for dt in plotted_timesteps]
             fourth = axs[i].plot(plotted_timesteps, comparison,
-                                 '--', color=colors[2], linewidth=1.2, alpha=0.5, label=r"$\mathcal{O}(\Delta t^4)$")
+                                 '--', color=colors[2], linewidth=1.2, alpha=0.8, label=r"$\mathcal{O}(\Delta t^4)$")
             handles.append(fourth[0])
 
         # Infected
         if i == 1:
             num_timesteps_ide = len(timesteps_ide)
 
-            plotted_timesteps = timesteps_ide[:4]
-            comparison = [0.1*dt**2 for dt in plotted_timesteps]
-            axs[i].plot(plotted_timesteps, comparison,
-                        '--', color=colors[0], linewidth=1.2, alpha=0.5)
+            if fd_order == 1:
+                comparison = [0.5*errors_all_gregory_orders[2]
+                              [0, i]*dt for dt in timesteps_ide]
+                linear = axs[i].plot(timesteps_ide, comparison,
+                                     '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
+            elif fd_order == 2:
+                plotted_timesteps = timesteps_ide[:5]
+                comparison = [0.5*errors_all_gregory_orders[1]
+                              [0, i]*dt**2 for dt in plotted_timesteps]
+                axs[i].plot(plotted_timesteps, comparison,
+                            '--', color=colors[0], linewidth=1.2, alpha=0.5)
 
-            plotted_timesteps = timesteps_ide[:3]
-            comparison = [0.03*dt**3 for dt in plotted_timesteps]
-            axs[i].plot(plotted_timesteps, comparison,
-                        '--', color=colors[1], linewidth=1.2, alpha=0.5)
+                plotted_timesteps = timesteps_ide[:4]
+                comparison = [0.5*errors_all_gregory_orders[2]
+                              [0, i]*dt**3 for dt in plotted_timesteps]
+                axs[i].plot(plotted_timesteps, comparison,
+                            '--', color=colors[1], linewidth=1.2, alpha=0.5)
 
-            plotted_timesteps = timesteps_ide[:2]
-            comparison = [0.005*dt**4 for dt in plotted_timesteps]
-            axs[i].plot(plotted_timesteps, comparison,
-                        '--', color=colors[2], linewidth=1.2, alpha=0.5)
+                # plotted_timesteps = timesteps_ide[:3]
+                # comparison = [80*dt**4 for dt in plotted_timesteps]
+                # axs[i].plot(plotted_timesteps, comparison,
+                #             '--', color=colors[2], linewidth=1.2, alpha=0.5)
+
+            elif fd_order == 4:
+                plotted_timesteps = timesteps_ide[:5]
+                comparison = [0.5*errors_all_gregory_orders[0]
+                              [0, i]*dt**2 for dt in plotted_timesteps]
+                axs[i].plot(plotted_timesteps, comparison,
+                            '--', color=colors[0], linewidth=1.2, alpha=0.5)
+
+                plotted_timesteps = timesteps_ide[:3]
+                comparison = [0.5*errors_all_gregory_orders[1]
+                              [0, i]*dt**3 for dt in plotted_timesteps]
+                axs[i].plot(plotted_timesteps, comparison,
+                            '--', color=colors[1], linewidth=1.2, alpha=0.5)
+
+                plotted_timesteps = timesteps_ide[:3]
+                comparison = [0.5*errors_all_gregory_orders[2]
+                              [0, i]*dt**4 for dt in plotted_timesteps]
+                axs[i].plot(plotted_timesteps, comparison,
+                            '--', color=colors[2], linewidth=1.2, alpha=0.8)
 
         # Recovered
         if i == 2:
-            comparison = [2*dt for dt in timesteps_ide]
+
+            if fd_order == 1:
+                comparison = [0.5*errors_all_gregory_orders[2]
+                              [0, i]*dt for dt in timesteps_ide]
+            elif fd_order == 2:
+                comparison = [0.001*errors_all_gregory_orders[0]
+                              [0, i]*dt for dt in timesteps_ide]
+            elif fd_order == 4:
+                comparison = [0.004*errors_all_gregory_orders[0]
+                              [0, i]*dt for dt in timesteps_ide]
+
             linear = axs[i].plot(timesteps_ide, comparison,
                                  '--', color='gray', linewidth=1.2, label=r"$\mathcal{O}(\Delta t)$")
             handles.insert(4, linear[0])
@@ -284,8 +327,10 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         #     axs[i].set_ylim(1e-8, 5*1e-1)
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
-    fig.supylabel(
-        r"$\Vert \widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}}\Vert_{2}$", fontsize=12)
+    # ylabel = fig.supylabel(
+    #     r"$\Vert (\widehat{Z}_{\text{IDE}} - \widehat{Z}_{\text{ODE}})(t_\max)\Vert_{2}$", fontsize=12)
+    ylabel = fig.supylabel(
+        r"$err_\text{rel}$", fontsize=12)
 
     # Invert x axis only for one plot so that sharex=True and invert_xaxis work as intended.
     axs[0].invert_xaxis()
@@ -294,13 +339,15 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
 
     legend = fig.legend(handles=handles, labels=labels, ncol=2,  loc='lower right',
                         fontsize=8, bbox_transform=fig.transFigure, bbox_to_anchor=(1., -0.1))  # bbox_to_anchor=(0.5, -0.06),
-    plt.tight_layout()
+    fig.tight_layout()
+    # fig.subplots_adjust(left=0.)
+
     # plt.tight_layout(pad=0, w_pad=0.5, h_pad=0.1)
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
 
-        plt.savefig(f'{save_dir}/convergence_all_compartments.png', format='png', bbox_extra_artists=(legend,), bbox_inches='tight',
+        plt.savefig(f'{save_dir}/convergence_all_compartments_fd={fd_order}.png', format='png', bbox_extra_artists=(legend, ylabel), bbox_inches='tight',
                     dpi=500)
 
 
@@ -330,22 +377,36 @@ def get_total_pop_end(results):
     return total_pop_end
 
 
-def plot_total_pop_diff(gregory_orders_simulation, timesteps_ide, total_pop_end_all_gregory_orders, total_pop_reference, save_dir=""):
+def plot_total_pop_diff(gregory_orders_simulation, fd_orders, timesteps_ide, total_pop_all_fd_orders, total_pop_reference, save_dir=""):
 
-    # Plot relative difference per time step for all Gregory orders for a fixed finite_difference_order.
+    # Plot relative difference per time step for FD order for a fixed Gregory order.
 
     fig, axs = plt.subplots(1, 1, sharex=True, figsize=(9, 3))
+    # labels = [
+    #     f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
     labels = [
-        f"Gregory order {gregory_order}" for gregory_order in gregory_orders_simulation]
+        f"FD order {fd_order}" for fd_order in fd_orders]
 
     # Define colors.
-    colors = [plt.cm.viridis(x)
-              for x in np.linspace(0, 1, len(gregory_orders_simulation))]
+    # colors = [plt.cm.turbo(x)
+    #           for x in np.linspace(0, 1, len(fd_orders))]
+    colors = ["purple", "green", "mediumblue"]
 
-    for j in range(len(gregory_orders_simulation)):
+    # print(total_pop_all_fd_orders)
+
+    gregory_index = 2
+
+    for fd_index in range(len(fd_orders)):
         # Plot results.
+        # print(total_pop_all_fd_orders[fd_index])
+
+        print("FD index: ", fd_orders[fd_index])
+
+        for timestep in range(len(timesteps_ide)):
+            print(np.abs(1 - total_pop_all_fd_orders[fd_index]
+                  [gregory_index][timestep]/total_pop_reference))
         line = axs.plot(timesteps_ide,
-                        1 - total_pop_end_all_gregory_orders[j][:]/total_pop_reference, '-o', color=colors[j], label=labels[j])
+                        np.abs(1 - total_pop_all_fd_orders[fd_index][gregory_index][:]/total_pop_reference), '-o', color=colors[fd_index], label=labels[fd_index])
         # handles.append(line[0])
 
     axs.invert_xaxis()
@@ -356,7 +417,10 @@ def plot_total_pop_diff(gregory_orders_simulation, timesteps_ide, total_pop_end_
 
     fig.supxlabel(r'Time step $\Delta t$', fontsize=12)
     fig.supylabel(
-        r"Relative deviation", fontsize=12)
+        r"Relative deviation at $t_\max$", fontsize=12)
+
+    axs.set_title(
+        f"Gregory order {gregory_orders_simulation[gregory_index]}")
 
     plt.tight_layout()
 
@@ -364,8 +428,10 @@ def plot_total_pop_diff(gregory_orders_simulation, timesteps_ide, total_pop_end_
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
 
-        plt.savefig(f'{save_dir}/mass_conservation_diff.png', format='png',  bbox_inches='tight',
+        plt.savefig(f'{save_dir}/mass_conservation_diff_gregory={gregory_orders_simulation[gregory_index]}.png', format='png',  bbox_inches='tight',
                     dpi=500)
+
+        # plt.clf()
 
 
 def subfolders_scandir(path):
@@ -383,23 +449,46 @@ def main():
     # print(all_subfolders_walk("../simulation_results/"))
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "time_infected=2"
+    main_dir = "2025-10-29/time_infected=1"
     relevant_dir = os.path.join(root_dir, main_dir)
     print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
     # sub_dirs = ['detailed_init_exponential_dt_ode=1e-6_finite_diff=2_central_fd',
     #             'detailed_init_exponential_dt_ode=1e-6_finite_diff=4_central_fd']
+    # sub_dirs = [
+    #     "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=1_tolexp=8",
+    #     "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=2_tolexp=8",
+    #     "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=4_tolexp=8"]
+
+    sub_dirs = ["detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8",
+                "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=1_tolexp=8",
+                "detailed_init_exponential_t0ide=50_tmax=60_finite_diff=1_tolexp=8"]
+
+    fd_orders = [1, 1, 1]
 
     print(sub_dirs)
 
     # dir_name = "time_infected=2/detailed_init_exponential_t0ide=20_tmax=30_finite_diff=2"
-    for dir_name in sub_dirs:
+
+    total_pop_reference = 0
+    total_pop_all_fd_orders = []
+
+    gregory_orders_simulation = [1, 2, 3]
+    ide_exponents = [0, 1, 2, 3, 4]
+    timesteps_ide = []
+
+    # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
+
+    # Calculate time steps resulting from exponents_ide.
+
+    for exp in ide_exponents:
+        timesteps_ide.append(pow(10, -exp))
+
+    for dir_index, dir_name in enumerate(sub_dirs):
         print(dir_name)
+        fd_order = fd_orders[dir_index]
 
         groundtruth_ode = True
-
-        gregory_orders_simulation = [1, 2, 3]
-        ide_exponents = [0, 1, 2, 3, 4]
 
         ###################################################################################################################
 
@@ -411,20 +500,12 @@ def main():
         plot_dir = os.path.join(os.path.dirname(
             __file__),  f"../plots/{main_dir}/{dir_name}/")
 
-        # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
-
-        # Calculate time steps resulting from exponents_ide.
-        timesteps_ide = []
-        for exp in ide_exponents:
-            timesteps_ide.append(pow(10, -exp))
-
         # # Read groundtruth.
         groundtruth = read_groundtruth(
             result_dir, groundtruth_exponent, gregory_order_groundtruth, groundtruth_ode)
 
         errors_all_gregory_orders = []
 
-        total_pop_reference = 0
         total_pop_end_all_gregory_orders = []
 
         for gregory_order_simulation in gregory_orders_simulation:
@@ -439,7 +520,7 @@ def main():
             errors_all_gregory_orders.append(errors)
 
             print()
-            print(f"Gregory order {gregory_order_simulation}")
+            # print(f"Gregory order {gregory_order_simulation}")
             # print("Errors: ")
             # print(errors[:, :])
 
@@ -447,9 +528,9 @@ def main():
             order = compute_order_of_convergence(
                 errors, timesteps_ide)
 
-            print(
-                f"Orders of convergence: ")
-            print(order.T)
+            # print(
+            #     f"Orders of convergence: ")
+            # print(order.T)
 
             # print(
             #     f"Total population at end for time step {timesteps_ide[-1]}: {results['ide'][-1][-1].sum()}")
@@ -461,10 +542,16 @@ def main():
 
         # Plot convergence of all compartments separately.
         plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                         gregory_orders_simulation, plot_dir)
+                         gregory_orders_simulation, fd_order, plot_dir)
 
-        plot_total_pop_diff(gregory_orders_simulation, timesteps_ide,
-                            total_pop_end_all_gregory_orders, total_pop_reference, plot_dir)
+        total_pop_all_fd_orders.append(total_pop_end_all_gregory_orders)
+        # print("total pop:", total_pop_all_fd_orders)
+
+    # Path where plots will be stored.
+    plot_dir = os.path.join(os.path.dirname(
+        __file__),  f"../plots/{main_dir}/")
+    plot_total_pop_diff(gregory_orders_simulation, fd_orders, timesteps_ide,
+                        total_pop_all_fd_orders, total_pop_reference, plot_dir)
 
 
 if __name__ == '__main__':
