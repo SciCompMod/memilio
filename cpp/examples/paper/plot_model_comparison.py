@@ -202,32 +202,39 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
 
     plt.clf()
 
-def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_age_groups, num_comps, save_dir=""):
+def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_age_groups, num_comps, save_dir="", plot_init = True):
     figsize = (5, 3.5)
-    panel = [0.18, 0.18, 0.8, 0.8]
+    panel = [0.2, 0.18, 0.78, 0.8]
     fig = plt.figure(figsize=figsize)
     ax = fig.add_axes(panel)
     secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
+    start_time = 0
+    if(plot_init):
+        df = pd.read_csv(file + f"comps.csv")
+        values = df.iloc[:, 1 + compartment_index]
+        for age in range(num_age_groups):
+            values += df.iloc[:, 1 + compartment_index + age * num_comps]
+        ax.plot(df["Time"], values)
     while len(percentiles) > 0:
         if len(percentiles) == 1:
             df = pd.read_csv(file + f"ABM_p{percentiles[0]}.csv")
             values = df.iloc[:, 1 + compartment_index]
-            for age in range(1, num_age_groups):
+            for age in range(num_age_groups):
                 values += df.iloc[:, 1 + compartment_index + age * num_comps]
-            ax.plot(df["Time"], values, color=colors['Teal'])
+            ax.plot(df["Time"] + start_time, values, color=colors['Teal'])
             del percentiles[0]
         else:
             df_low = pd.read_csv(file + f"ABM_p{percentiles[0]}.csv")
             df_high = pd.read_csv(file + f"ABM_p{percentiles[-1]}.csv")
             values_low = df_low.iloc[:, 1 + compartment_index]
             values_high = df_high.iloc[:, 1 + compartment_index]
-            for age in range(1, num_age_groups):
+            for age in range(num_age_groups):
                 values_low += df_low.iloc[:, 1 + compartment_index + age * num_comps]
                 values_high += df_high.iloc[:, 1 + compartment_index + age * num_comps]
-            ax.plot(df_low["Time"], values_low, color=colors['Teal'], alpha=0.5)
-            ax.plot(df_high["Time"], values_high, color=colors['Teal'], alpha=0.5)
-            ax.fill_between(df_low["Time"], values_low, values_high, alpha=0.3, color=colors['Teal'])
+            #ax.plot(df_low["Time"] + start_time, values_low, color=colors['Teal'], alpha=0.5)
+            #ax.plot(df_high["Time"]+ start_time, values_high, color=colors['Teal'], alpha=0.5)
+            ax.fill_between(df_low["Time"] + start_time, values_low, values_high, alpha=0.3, color=colors['Teal'])
             del percentiles[0]
             del percentiles[-1]
     ax.set_ylabel(f"{secir_dict[compartment_index]} [#]")
@@ -255,12 +262,12 @@ def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
 if __name__ == '__main__':
 
     exponential_scenario = True
-    set_fontsize(5)
+    set_fontsize()
 
     if exponential_scenario:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/exponential/")
+            __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/exponential/Seed1/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
             __file__), "../../..", "plots/compare_abm_ide_lct_ode/exponential/")
@@ -287,6 +294,9 @@ if __name__ == '__main__':
     #                                       exponential_scenario,
     #                                       save_dir=plot_dir)
     
-    #plot_ABM_results_one_compartments(result_dir, 1, ["05", "25", "50", "75", "95"], 6, 8)
+    plot_ABM_results_one_compartments(result_dir, 1, ["05", "50", "95"], 6, 8)
+    #plot_ABM_results_one_compartments(result_dir, 1, [], 6, 8)
+    plot_ABM_results_one_compartments(result_dir, 3, ["05", "50", "95"], 6, 8)
+    plot_ABM_results_one_compartments(result_dir, 5, ["05", "50", "95"], 6, 8)
     
-    plot_single_ABM_run(result_dir, "518254265_179139074_1937166324_3882038653_1776323086_1261445406", 6, 8)
+    #plot_single_ABM_run(result_dir, "518254265_179139074_1937166324_3882038653_1776323086_1261445406", 6, 8)

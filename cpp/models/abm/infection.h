@@ -138,7 +138,8 @@ public:
             .add("viral_load", m_viral_load)
             .add("log_norm_alpha", m_log_norm_alpha)
             .add("log_norm_beta", m_log_norm_beta)
-            .add("detected", m_detected);
+            .add("detected", m_detected)
+            .add("individual_virus_shed_factor", m_individual_virus_shed_factor);
     }
 
 private:
