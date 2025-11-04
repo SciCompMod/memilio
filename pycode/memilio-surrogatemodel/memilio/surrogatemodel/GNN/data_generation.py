@@ -49,13 +49,6 @@ class Location(Enum):
     Other = 3
 
 
-# Enumerate the different initialization strategies for compartment populations
-class InitializationStrategy(Enum):
-    """Strategy for initializing compartment populations in the simulation."""
-    GROUND_TRUTH_NOISY = "ground_truth_noisy"  # Uses ground truth data with noise
-    BOUNDS_RANDOM = "bounds_random"  # Uses random values between bounds
-
-
 def set_covid_parameters(model, num_groups=6):
     """Setting COVID-parameters for the different age groups. 
 
@@ -131,8 +124,7 @@ def set_contact_matrices(model, data_dir, num_groups=6):
 
 def get_graph(
         num_groups, data_dir, mobility_directory, start_date=mio.Date(
-            2020, 6, 1),
-        end_date=mio.Date(2020, 8, 31)):
+            2020, 6, 1), end_date=mio.Date(2020, 8, 31)):
     """ Generate the associated graph given the mobility data. 
 
     :param num_groups: Number of age groups.
@@ -177,15 +169,13 @@ def get_graph(
 
 
 def run_secir_groups_simulation(
-        days, damping_days, damping_factors, graph, num_groups=6,
-        start_date=mio.Date(2020, 6, 1), end_date=mio.Date(2020, 8, 31),
-        initialization_strategy=InitializationStrategy.BOUNDS_RANDOM):
+        days, damping_days, damping_factors, graph, num_groups=6):
     """Run an ODE SECIR simulation with multiple age groups and regions.
 
     Uses an ODE SECIR model allowing for asymptomatic infection with 6
     different age groups. The model is stratified by region using a graph structure.
     Virus-specific parameters are fixed and initial number of persons in the 
-    particular infection states are chosen using the specified strategy.
+    particular infection states are chosen randomly between predefined bounds.
 
     :param days: Number of days simulated within a single run.
     :param damping_days: List of days where dampings are applied.
@@ -193,39 +183,21 @@ def run_secir_groups_simulation(
     :param graph: Graph initialized for the start_date with the population data.
     :param num_groups: Number of age groups considered in the simulation.
     :param start_date: Date when the simulation starts.
-    :param end_date: Date when the simulation ends.
-    :param initialization_strategy: Strategy for initializing compartment populations.
-        - GROUND_TRUTH_NOISY: Uses ground truth data with random noise (ratios 0.8-1.2)
-        - BOUNDS_RANDOM: Uses random values between predefined bounds
     :returns: Tuple containing (simulation_results, damped_matrices, damping_coefficients, runtime)
     """
     if len(damping_days) != len(damping_factors):
         raise ValueError("Length of damping_days and damping_factors differ!")
 
-    min_date = mio.Date(2020, 6, 1)
-    min_date_num = min_date.day_in_year
-    start_date_num = start_date.day_in_year - min_date_num
-
-    # Load the appropriate ground truth data based on initialization strategy
+    # Load ground truth bounds for initialization
     pydata_dir = os.path.join(data_dir, "Germany", "pydata")
-
-    if initialization_strategy == InitializationStrategy.GROUND_TRUTH_NOISY:
-        ground_truth_dir = os.path.join(
-            pydata_dir, "ground_truth_all_nodes.pickle")
-        with open(ground_truth_dir, 'rb') as f:
-            ground_truth_data = pickle.load(f)
-    elif initialization_strategy == InitializationStrategy.BOUNDS_RANDOM:
-        upper_bound_dir = os.path.join(
-            pydata_dir, "ground_truth_upper_bound.pickle")
-        lower_bound_dir = os.path.join(
-            pydata_dir, "ground_truth_lower_bound.pickle")
-        with open(upper_bound_dir, 'rb') as f:
-            ground_truth_upper_bound = pickle.load(f)
-        with open(lower_bound_dir, 'rb') as f:
-            ground_truth_lower_bound = pickle.load(f)
-    else:
-        raise ValueError(
-            f"Unknown initialization strategy: {initialization_strategy}")
+    upper_bound_dir = os.path.join(
+        pydata_dir, "ground_truth_upper_bound.pickle")
+    lower_bound_dir = os.path.join(
+        pydata_dir, "ground_truth_lower_bound.pickle")
+    with open(upper_bound_dir, 'rb') as f:
+        ground_truth_upper_bound = pickle.load(f)
+    with open(lower_bound_dir, 'rb') as f:
+        ground_truth_lower_bound = pickle.load(f)
 
     # Initialize model for each node
     for node_indx in range(graph.num_nodes):
@@ -237,22 +209,14 @@ def run_secir_groups_simulation(
             pop_age_group = model.populations.get_group_total_AgeGroup(
                 age_group)
 
-            # Generate initial compartment populations based on strategy
+            # Generate initial compartment populations with random values between bounds
             valid_configuration = False
             while valid_configuration is False:
-                if initialization_strategy == InitializationStrategy.GROUND_TRUTH_NOISY:
-                    # Use ground truth data with noise
-                    comp_data = ground_truth_data[node_indx][start_date_num][
-                        :, i]
-                    ratios = np.random.uniform(0.8, 1.2, size=8)
-                    init_data = comp_data * ratios
-                elif initialization_strategy == InitializationStrategy.BOUNDS_RANDOM:
-                    # Use random values between bounds
-                    init_data = np.asarray([0 for _ in range(8)])
-                    max_data = ground_truth_upper_bound[node_indx][:, i]
-                    min_data = ground_truth_lower_bound[node_indx][:, i]
-                    for j in range(1, 8):
-                        init_data[j] = random.uniform(min_data[j], max_data[j])
+                init_data = np.asarray([0 for _ in range(8)])
+                max_data = ground_truth_upper_bound[node_indx][:, i]
+                min_data = ground_truth_lower_bound[node_indx][:, i]
+                for j in range(1, 8):
+                    init_data[j] = random.uniform(min_data[j], max_data[j])
 
                 # Check if configuration is valid (infected population < total population)
                 if np.sum(init_data[1:]) < pop_age_group:
@@ -320,8 +284,7 @@ def run_secir_groups_simulation(
 def generate_data(
         num_runs, data_dir, path, input_width, label_width, start_date,
         end_date, save_data=True, transform=True, damping_method="classic",
-        max_number_damping=3,
-        initialization_strategy=InitializationStrategy.BOUNDS_RANDOM):
+        max_number_damping=3, mobility_file="commuter_mobility_2022.txt"):
     """Generate dataset by calling run_secir_groups_simulation multiple times.
 
     :param num_runs: Number of simulation runs to generate.
@@ -335,7 +298,7 @@ def generate_data(
     :param transform: Option to deactivate the transformation of the data. Default True.
     :param damping_method: String specifying the damping method. Values: "classic", "active", "random".
     :param max_number_damping: Maximal number of possible dampings.
-    :param initialization_strategy: Strategy for initializing compartment populations.
+    :param mobility_file: Filename of the mobility data file.
     :returns: Dictionary containing inputs, labels, contact_matrix, damping_days and damping_factors.
     """
     set_log_level(mio.LogLevel.Error)
@@ -352,18 +315,8 @@ def generate_data(
 
     # Setting basic parameter
     num_groups = 6
-    mobility_dir = data_dir + "/Germany/mobility/commuter_mobility_2022.txt"
-    graph = get_graph(num_groups, data_dir, mobility_dir)
-    # Define possible start dates for the simulation
-    # start_dates = [
-    #    mio.Date(2020, 6, 1),
-    #    mio.Date(2020, 7, 1),
-    #    mio.Date(2020, 8, 1),
-    #    mio.Date(2020, 9, 1),
-    #    mio.Date(2020, 10, 1),
-    #    mio.Date(2020, 11, 1),
-    #    mio.Date(2020, 12, 1)
-    # ]
+    mobility_dir = data_dir + "/Germany/mobility/" + mobility_file
+    graph = get_graph(num_groups, data_dir, mobility_dir, start_date, end_date)
 
     # show progess in terminal for longer runs
     # Due to the random structure, there is currently no need to shuffle the data
@@ -371,7 +324,6 @@ def generate_data(
 
     times = []
     for i in range(0, num_runs):
-        # start_date = start_dates[i % len(start_dates)]
         # Generate random damping days and damping factors
         if max_number_damping > 0:
             damping_days, damping_factors = dampings.generate_dampings(
@@ -382,8 +334,7 @@ def generate_data(
             damping_factors = []
         # Run simulation
         data_run, damped_matrices, damping_coefficients, t_run = run_secir_groups_simulation(
-            days, damping_days, damping_factors, graph, num_groups, start_date,
-            initialization_strategy)
+            days, damping_days, damping_factors, graph, num_groups)
 
         times.append(t_run)
 
@@ -442,21 +393,15 @@ if __name__ == "__main__":
     number_of_dampings = 0
     num_runs = 1
     label_width_list = [30]
-
-    # Define the start and the latest end date for the simulation
-    start_date = mio.Date(2019, 1, 1)
-    end_date = mio.Date(2021, 12, 31)
-
     random.seed(10)
 
-    # Other option is InitializationStrategy.GROUND_TRUTH_NOISY
-    init_strategy = InitializationStrategy.BOUNDS_RANDOM
+    # Define the start and the latest end date for the simulation
+    start_date = mio.Date(2020, 10, 1)
+    end_date = mio.Date(2021, 10, 31)
 
-    # init_strategy =
     for label_width in label_width_list:
         generate_data(
             num_runs=num_runs, data_dir=data_dir, path=path_output,
             input_width=input_width, label_width=label_width,
             start_date=start_date, end_date=end_date, save_data=True,
-            damping_method="active", max_number_damping=number_of_dampings,
-            initialization_strategy=init_strategy)
+            damping_method="active", max_number_damping=number_of_dampings)
