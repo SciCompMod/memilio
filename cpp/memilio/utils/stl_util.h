@@ -68,7 +68,7 @@ inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t 
 template <typename T, typename Pred>
 typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
 {
-    // mio::timing::AutoTimer<"insert_sorted_replace"> timer;
+    mio::timing::AutoTimer<"insert_sorted_replace"> timer;
     auto bounds = std::equal_range(begin(vec), end(vec), item, pred);
     auto lb     = bounds.first;
     auto ub     = bounds.second;
@@ -78,7 +78,7 @@ typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T c
         return lb;
     }
     else {
-        // mio::timing::AutoTimer<"insert_sorted_replace_vec_insert"> timer;
+        mio::timing::AutoTimer<"insert_sorted_replace_vec_insert"> timer;
         return vec.insert(lb, item);
     }
 }
