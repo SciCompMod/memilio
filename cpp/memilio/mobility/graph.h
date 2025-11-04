@@ -152,21 +152,37 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    Graph(std::vector<int>& node_ids, std::vector<NodePropertyT>& node_properties)
+    Graph(const std::vector<int>& node_ids, std::vector<NodePropertyT>& node_properties)
     {
         for (auto i = size_t(0); i < node_ids.size(); ++i) {
             add_node(node_ids[i], node_properties[i]);
         }
     }
 
+    Graph(std::vector<NodePropertyT>& node_properties)
+    {
+        for (auto i = size_t(0); i < node_properties.size(); ++i) {
+            add_node(i, node_properties[i]);
+        }
+    }
+
     template <class... Args>
-    Graph(std::vector<int>& node_ids, Args&&... args)
+    Graph(const std::vector<int>& node_ids, Args&&... args)
     {
         for (int id : node_ids) {
             add_node(id, std::forward<Args>(args)...);
         }
     }
 
+    template <class... Args>
+    Graph(const int number_of_nodes, Args&&... args)
+    {
+        for (auto id = size_t(0); id < number_of_nodes; ++id) {
+            add_node(id, std::forward<Args>(args)...);
+        }
+    }
+
+    Graph() = default;
 
     /**
      * @brief add a node to the graph. property of the node is constructed from arguments.
@@ -256,25 +272,24 @@ private:
     std::vector<Edge<EdgePropertyT>> m_edges;
 };
 
-template <class FP, class Model, class TestAndTrace>
-void set_test_and_trace_capacity(mio::VectorRange<Node<Model>>& nodes)
+template <class Model, class TestAndTrace>
+void set_test_and_trace_capacity(const mio::VectorRange<Node<Model>>& nodes, double tnt_capacity_factor)
 {
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
 
         auto tnt_capacity = nodes[node_idx].property.populations.get_total() * tnt_capacity_factor;
 
         auto& tnt_value = nodes[node_idx].property.parameters.template get<TestAndTrace>();
-        tnt_value       = UncertainValue<FP>(tnt_capacity);
+        tnt_value       = UncertainValue<double>(tnt_capacity);
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
     }
 }
 
 template <class FP, class Model, class ContactPattern>
-void set_german_holidays(mio::VectorRange<Node<Model>>& nodes, const std::vector<int>& node_ids,
-                  const mio::Date& start_date, const mio::Date& end_date)
+void set_german_holidays(const mio::VectorRange<Node<Model>>& nodes, const mio::Date& start_date, const mio::Date& end_date)
 {
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-        auto state_id        = regions::de::get_state_id(node_id[node_idx]);
+        auto state_id        = regions::de::get_state_id(nodes[node_idx].id);
         auto holiday_periods = regions::de::get_holidays(state_id, start_date, end_date);
 
         auto& contacts       = nodes[node_idx].property.parameters.template get<ContactPattern>();
@@ -288,15 +303,15 @@ void set_german_holidays(mio::VectorRange<Node<Model>>& nodes, const std::vector
     }
 }
 
-template <class FP, class Model>
-void set_uncertainty_on_population(mio::VectorRange<Node<Model>>& nodes)
+template <class Model>
+void set_uncertainty_on_population(const mio::VectorRange<Node<Model>>& nodes)
 {
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+        for (auto i = mio::AgeGroup(0); i < nodes[0].property.parameters.get_num_groups(); i++) {
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = nodes[node_idx].property.populations[{i, j}];
                 compartment_value =
-                    UncertainValue<FP>(compartment_value.value());
+                    UncertainValue<double>(compartment_value.value());
                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
                                                                                     1.1 * compartment_value.value()));
             }
@@ -342,7 +357,7 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
             commuting_weights =
                 (commuting_weights.size() == 0 ? std::vector<FP>(num_age_groups, 1.0) : commuting_weights);
             //commuters
-            auto working_population = 0.0;
+            FP working_population = 0.0;
             for (auto age = AgeGroup(0); age < populations.template size<mio::AgeGroup>(); ++age) {
                 working_population += populations.get_group_total(age) * commuting_weights[size_t(age)];
             }
