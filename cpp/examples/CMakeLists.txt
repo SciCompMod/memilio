@@ -112,6 +112,10 @@ add_executable(asymmetric_graph_data asym_ex_data.cpp)
 target_link_libraries(asymmetric_graph_data PRIVATE memilio smm)
 target_compile_options(asymmetric_graph_data PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(asym_ben asym_graph_ben.cpp)
+target_link_libraries(asym_ben PRIVATE memilio smm)
+target_compile_options(asym_ben PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(asymmetric_params asymmetric_params.cpp)
 target_link_libraries(asymmetric_params PRIVATE memilio smm)
 target_compile_options(asymmetric_params PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
