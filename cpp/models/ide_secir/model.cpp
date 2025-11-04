@@ -185,7 +185,7 @@ ScalarType Model::get_global_support_max(ScalarType dt) const
 Wendler A, Plötzke L, Tritzschak H, Kühn MJ: A nonstandard numerical scheme for a novel SECIR integro differential 
 equation-based model with nonexponentially distributed stay times. DOI:10.1016/j.amc.2025.129636.
 Note that throughout this implementation, we assume that the initial values for the transitions contain information 
-about the number of individuals transition within a time interval (in contrast to at a time point), cf. Section 3.4 in 
+about the number of individuals transitioning within a time interval (in contrast to at a time point), cf. Section 3.4 in 
 the paper. The formulas from the paper are adapted accordingly by scaling with the time step size dt.
  */
 

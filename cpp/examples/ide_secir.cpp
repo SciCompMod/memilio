@@ -38,7 +38,7 @@ int main()
     // Define simulation parameters.
     ScalarType t0   = 0.;
     ScalarType tmax = 5.;
-    ScalarType dt   = 0.01; // The time step size will stay constant throughout the simulation.
+    ScalarType dt   = 0.01; // The step size will stay constant throughout the simulation.
 
     // Define number of age groups.
     size_t num_agegroups = 2;
@@ -55,7 +55,7 @@ int main()
     size_t num_transitions = (size_t)mio::isecir::InfectionTransition::Count;
     mio::TimeSeries<ScalarType> transitions_init(num_transitions * num_agegroups);
 
-    // Define vector of transitions that will be added to the time points of the TimeSeries transitions_init.
+    // Define vector of transitions that will be added as values to the time points of the TimeSeries transitions_init.
     Vec vec_init(num_transitions * num_agegroups);
     for (size_t group = 0; group < num_agegroups; ++group) {
         vec_init[group * num_transitions + (size_t)mio::isecir::InfectionTransition::SusceptibleToExposed] = 25.0;
