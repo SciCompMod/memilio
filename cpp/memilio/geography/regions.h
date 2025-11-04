@@ -114,6 +114,8 @@ struct EpidataFilenames
     {
     }
     
+    public:
+
     static EpidataFilenames county(std::string& pydata)
     {
         EpidataFilenames s(pydata);

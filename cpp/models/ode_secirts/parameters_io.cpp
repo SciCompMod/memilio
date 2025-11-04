@@ -179,7 +179,7 @@ IOResult<void> compute_confirmed_cases_data(
         try_fix_constraints(num_InfectedSevere[i], tol_error, "InfectedSevere");
         try_fix_constraints(num_death[i], tol_error, "Dead");
         try_fix_constraints(num_icu[i], tol_error, "InfectedCritical");
-        try_fix_constraints(num_timm_i[i], tol_error, "Recently Recovered or Vaccinated");
+        try_fix_constraints(num_imm[i], tol_error, "Recently Recovered or Vaccinated");
     }
 
     return success();

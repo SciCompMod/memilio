@@ -134,17 +134,8 @@ IOResult<void> compute_confirmed_cases_data(
     return success();
 }
 
-IOResult<void> compute_confirmed_cases_data_fix_recovered(std::string const& path, std::vector<int> const& vregion,
-                                                         Date date, std::vector<std::vector<double>>& vnum_rec,
-                                                         double delay)
-{
-    BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
-    return compute_confirmed_cases_data_fix_recovered(case_data, vregion, date, vnum_rec, delay);
-}
-
-IOResult<void> compute_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& case_data,
-                                                         std::vector<int> const& vregion, Date date,
-                                                         std::vector<std::vector<double>>& vnum_rec, double delay)
+IOResult<std::vector<double>> compute_confirmed_cases_data_fix_recovered(
+    const std::vector<ConfirmedCasesDataEntry>& case_data, const int region, Date date, double delay)
 {
     auto max_date_entry = std::max_element(case_data.begin(), case_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -167,46 +158,37 @@ IOResult<void> compute_confirmed_cases_data_fix_recovered(const std::vector<Conf
         days_surplus = 0;
     }
 
+    auto num_groups = ConfirmedCasesDataEntry::age_group_names.size();
+    std::vector<double> num_rec(num_groups, 0.0);
+
     for (auto&& rki_entry : case_data) {
-        auto it = std::find_if(vregion.begin(), vregion.end(), [&rki_entry](auto r) {
-            return r == 0 || get_region_id(rki_entry) == r;
-        });
-        if (it != vregion.end()) {
-            auto region_idx = size_t(it - vregion.begin());
-            if (rki_entry.date == offset_date_by_days(date, int(-delay))) {
-                vnum_rec[region_idx][size_t(rki_entry.age_group)] = rki_entry.num_confirmed;
+        if (rki_entry.date == offset_date_by_days(date, int(-delay))) {
+            num_rec[size_t(rki_entry.age_group)] = rki_entry.num_confirmed;
+        }
+    }
+
+    for (size_t i = 0; i < num_groups; i++) {
+        auto try_fix_constraints = [region, i](double& value, double error, auto str) {
+            if (value < error) {
+                // this should probably return a failure
+                // but the algorithm is not robust enough to avoid large negative
+                // values and there are tests that rely on it
+                log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
+                            "exceeds expected negative value.",
+                            str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                value = 0.0;
             }
-        }
+            else if (value < 0) {
+                log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
+                            "automatically corrected",
+                            str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                value = 0.0;
+            }
+        };
+        try_fix_constraints(num_rec[i], 0, "Recovered");
     }
 
-    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
-        auto region   = vregion[region_idx];
-        auto& num_rec = vnum_rec[region_idx];
-
-        size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
-        for (size_t i = 0; i < num_groups; i++) {
-            auto try_fix_constraints = [region, i](double& value, double error, auto str) {
-                if (value < error) {
-                    // this should probably return a failure
-                    // but the algorithm is not robust enough to avoid large negative
-                    // values and there are tests that rely on it
-                    log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
-                              "exceeds expected negative value.",
-                              str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
-                    value = 0.0;
-                }
-                else if (value < 0) {
-                    log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
-                             "automatically corrected",
-                             str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
-                    value = 0.0;
-                }
-            };
-            try_fix_constraints(num_rec[i], 0, "Recovered");
-        }
-    }
-
-    return success();
+    return success(num_rec);
 }
 
 } // namespace details

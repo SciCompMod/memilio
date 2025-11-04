@@ -247,8 +247,6 @@ set_confirmed_cases_data(Model<FP>& model, const std::vector<ConfirmedCasesDataE
                                                    t_InfectedCritical, t_imm_interval_i, reduc_t_Infected, reduc_Exposed,
                                                    reduc_InfectedSymptoms, reduc_icu_death, mu_C_R, mu_I_H, mu_H_U, 
                                                    scaling_factor_inf, 1));
-
-    size_t num_groups = (size_t)model.parameters.get_num_groups();
     for (size_t i = 0; i < num_groups; i++) {
         model.populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}] =
             immunity_population[1][i] *
@@ -321,7 +319,6 @@ set_confirmed_cases_data(Model<FP>& model, const std::vector<ConfirmedCasesDataE
                                                    reduc_InfectedSymptoms, reduc_icu_death, mu_C_R, mu_I_H, mu_H_U, 
                                                    scaling_factor_inf, 2));
 
-    size_t num_groups = (size_t)model.parameters.get_num_groups();
     for (size_t i = 0; i < num_groups; i++) {
         model.populations[{AgeGroup(i), InfectionState::ExposedImprovedImmunity}] =
             immunity_population[2][i] *
@@ -379,7 +376,6 @@ set_confirmed_cases_data(Model<FP>& model, const std::vector<ConfirmedCasesDataE
  *
  * @param[in,out] model Vector of models, each representing a region, where the compartments are updated.
  * @param[in] path Path to the file containing case (RKI) data.
- * @param[in] vregion Vector of region IDs for which the data is processed.
  * @param[in] date Date for which the confirmed cases are set in the model.
  * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
  * @param[in] immunity_population Vector containing the immunity distribution for naive, partial, and improved immunity layers.
@@ -387,9 +383,8 @@ set_confirmed_cases_data(Model<FP>& model, const std::vector<ConfirmedCasesDataE
  * @return An IOResult indicating success or failure.
  */
 template <typename FP>
-IOResult<void> set_confirmed_cases_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path,
-                                        std::vector<int> const& vregion, Date date,
-                                        const std::vector<FP>& scaling_factor_inf,
+IOResult<void> set_confirmed_cases_data(const mio::VectorRange<Node<Model<FP>>>& model, const std::string& path,
+                                        Date date, const std::vector<FP>& scaling_factor_inf,
                                         const std::vector<std::vector<double>>& immunity_population)
 {
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
@@ -397,18 +392,18 @@ IOResult<void> set_confirmed_cases_data(mio::VectorRange<Node<Model<FP>>>& model
     // sort case_data into regions and ignore once with no region associated
     std::vector<std::vector<ConfirmedCasesDataEntry>> vcase_data{model.size()};
     for (auto&& entry : case_data) {
-        auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
-            return r == 0 || get_region_id(entry) == r;
+        auto it = std::find_if(model.begin(), model.end(), [&entry](auto m) {
+            return m.id == 0 || get_region_id(entry) == m.id;
         });
-        if (it != vregion.end()) {
-            auto region_idx = size_t(it - vregion.begin());
-            vcase_data[region_idx].pushback(entry);
+        if (it != model.end()) {
+            auto region_idx = size_t(it - model.begin());
+            vcase_data[region_idx].push_back(entry);
         }
     }
 
-    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
+    for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
         BOOST_OUTCOME_TRY(
-            set_confirmed_cases_data(model[region_idx].property, vcase_data[region_idx], vregion[region_idx], date, scaling_factor_inf, immunity_population));
+            set_confirmed_cases_data(model[region_idx].property, vcase_data[region_idx], model[region_idx].id, date, scaling_factor_inf, immunity_population));
     }
 
     return success();
@@ -494,20 +489,21 @@ IOResult<void> set_population_data(Model<FP>& model, const std::vector<double>& 
  *
  * @param[in,out] model A vector of models for which population data will be set.
  * @param[in] path The file path to the population data.
- * @param[in] vregion A vector of region identifiers corresponding to the population data.
  * @param[in] immunity_population A 2D vector where each row represents the immunity distribution for a specific region
  *                                 across different levels of immunity (e.g., naive, partial, improved).
  *
  * @return An IOResult indicating success or failure.
  */
 template <typename FP>
-IOResult<void> set_population_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path, const std::vector<int>& vregion,
+IOResult<void> set_population_data(const mio::VectorRange<Node<Model<FP>>>& model, const std::string& path,
                                    const std::vector<std::vector<double>>& immunity_population)
 {
+    std::vector<int> vregion; 
+    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) { return m.id; });
     BOOST_OUTCOME_TRY(auto&& num_population, mio::read_population_data(path, vregion));
 
-    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
-        BOOST_OUTCOME_TRY(set_population_data(model[region_idx].property, num_population[region_idx], vregion[region_idx], immunity_population));
+    for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
+        BOOST_OUTCOME_TRY(set_population_data(model[region_idx].property, num_population[region_idx], model[region_idx].id, immunity_population));
     }
     return success();
 }
@@ -627,14 +623,13 @@ IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<Vaccinat
  * @param[in,out] model A vector of models for which vaccination data will be set.
  * @param[in] path The file path to the vaccination data.
  * @param[in] date The starting date for the simulation.
- * @param[in] vregion A vector of region identifiers corresponding to the vaccination data.
  * @param[in] num_days The number of days for which the simulation runs.
  *
  * @return An IOResult indicating success or failure.
  */
 template <typename FP>
-IOResult<void> set_vaccination_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path, Date date,
-                                    const std::vector<int>& vregion, int num_days)
+IOResult<void> set_vaccination_data(const mio::VectorRange<Node<Model<FP>>>& model, const std::string& path, Date date,
+                                    int num_days)
 {
     // Set vaccination data to 0 for all models
     for (auto& m : model) {
@@ -660,22 +655,22 @@ IOResult<void> set_vaccination_data(mio::VectorRange<Node<Model<FP>>>& model, co
     }
 
     BOOST_OUTCOME_TRY(auto&& vacc_data, read_vaccination_data(path));
-    
+
     // Sort case_data into regions and ignore once with no region associated
     std::vector<std::vector<VaccinationDataEntry>> vvacc_data{model.size()};
     for (auto&& vacc_data_entry : vacc_data) {
-        auto it      = std::find_if(vregion.begin(), vregion.end(), [&vacc_data_entry](auto&& r) {
-            return r == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(r)) ||
-                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(r)) ||
-                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::de::DistrictId(r));
+        auto it      = std::find_if(model.begin(), model.end(), [&vacc_data_entry](auto&& m) {
+            return m.id == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(m.id)) ||
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(m.id)) ||
+                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::de::DistrictId(m.id));
         });
-        if (it != vregion.end()) {
-            auto region_idx = size_t(it - vregion.begin());
-            vvacc_data[region_idx].pushback(vacc_data_entry);
+        if (it != model.end()) {
+            auto region_idx = size_t(it - model.begin());
+            vvacc_data[region_idx].push_back(vacc_data_entry);
         }
     }
 
-    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
+    for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
         BOOST_OUTCOME_TRY(set_vaccination_data(model[region_idx].property, vacc_data[region_idx], date, num_days));
     }
     
@@ -721,13 +716,12 @@ IOResult<void> set_divi_data(Model<FP>& model, const double num_icu, double scal
  * @brief sets populations data from DIVI register into Model
  * @param[in, out] model vector of objects in which the data is set
  * @param[in] path Path to transformed DIVI file
- * @param[in] vregion vector of keys of the regions of interest
  * @param[in] date Date for which the arrays are initialized
  * @param[in] scaling_factor_icu factor by which to scale the icu cases of divi data
  */
 template <class FP>
-IOResult<void> set_divi_data(mio::VectorRange<Node<Model<FP>>>& model, const std::string& path, const std::vector<int>& vregion,
-                             Date date, double scaling_factor_icu)
+IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<FP>>>& model, const std::string& path, Date date, 
+                             double scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
     if (!is_divi_data_available(date)) {
@@ -736,16 +730,54 @@ IOResult<void> set_divi_data(mio::VectorRange<Node<Model<FP>>>& model, const std
                     date);
         return success();
     }
+
+    std::vector<int> vregion; 
+    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) { return m.id; });
     BOOST_OUTCOME_TRY(auto&& num_icu, read_divi_data(path, vregion, date));
 
-    for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
-        BOOST_OUTCOME_TRY(set_divi_data(model[region_idx].property, num_icu[region_idx], vregion[region_idx], scaling_factor_icu));
+    for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
+        BOOST_OUTCOME_TRY(set_divi_data(model[region_idx].property, num_icu[region_idx], scaling_factor_icu));
     }
 
     return success();
 }
 
 } // namespace details
+
+/**
+ * @brief Reads compartments for geographic units at a specified date from data files.
+ *
+ * This function estimates all compartments from available data using the provided model parameters.
+ *
+ * @param[in,out] model Vector of models, one per county, to be initialized with data.
+ * @param[in] date Date for which the data should be read.
+ * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
+ * @param[in] scaling_factor_icu Scaling factor for ICU cases.
+ * @param[in] pydata_dir Directory containing the input data files.
+ * @param[in] num_days Number of days to simulate.
+ * @param[in] immunity_population Matrix containing immunity proportions for each age group and immunity layer.
+ *
+ * @return An IOResult indicating success or failure.
+    */
+template <typename FP>
+IOResult<void> read_input_data(const mio::VectorRange<Node<Model<FP>>>& model, Date date,
+                               const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                               int num_days, const std::vector<std::vector<double>>& immunity_population, 
+                               const mio::regions::de::EpidataFilenames& epidata_filenames)
+{
+
+    BOOST_OUTCOME_TRY(
+        details::set_vaccination_data<FP>(model, epidata_filenames.vaccination_data_path, date, num_days));
+
+    // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
+    // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
+    BOOST_OUTCOME_TRY(details::set_divi_data<FP>(model, epidata_filenames.divi_data_path, date, scaling_factor_icu));
+
+    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data<FP>(model, epidata_filenames.case_data_path, date, 
+                                                        scaling_factor_inf, immunity_population));
+    BOOST_OUTCOME_TRY(details::set_population_data<FP>(model, epidata_filenames.population_data_path, immunity_population));
+    return success();
+}
 
 #ifdef MEMILIO_HAS_HDF5
 
@@ -756,10 +788,9 @@ IOResult<void> set_divi_data(mio::VectorRange<Node<Model<FP>>>& model, const std
  * used to initialize the model with real-world data. The resulting data represents the initialized states of
  * the model over the specified time range.
  *
- * @param[in] models A vector of models for which the extrapolated data is set.
+ * @param[in] model A vector of models for which the extrapolated data is set.
  * @param[in] results_dir Path to the directory where the extrapolated results will be saved in a h5 file.
  * @param[in] date Date for which the data should be read.
- * @param[in] node_ids Vector of keys of the node_ids of interest.
  * @param[in] scaling_factor_inf A vector of scaling factors applied to confirmed cases.
  * @param[in] scaling_factor_icu A scaling factor applied to ICU cases.
  * @param[in] num_days The number of days for which will be extrapolated.
@@ -770,26 +801,25 @@ IOResult<void> set_divi_data(mio::VectorRange<Node<Model<FP>>>& model, const std
  */
 template <typename FP>
 IOResult<void> export_input_data_timeseries(
-    mio::VectorRange<Node<Model<FP>>> models, const std::string& results_dir, Date date, const std::vector<int>& node_ids,
+    const mio::VectorRange<Node<Model<FP>>> model, const std::string& results_dir, Date date,
     const std::vector<double>& scaling_factor_inf, const double scaling_factor_icu, const int num_days,
     const std::vector<std::vector<double>>& immunity_population, const mio::regions::de::EpidataFilenames& epidata_filenames)
 {
-    const auto num_age_groups = (size_t)models[0].property.parameters.get_num_groups();
+    const auto num_age_groups = (size_t)model[0].property.parameters.get_num_groups();
     assert(scaling_factor_inf.size() == num_age_groups);
     assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
-    assert(models.size() == node_ids.size());
     std::vector<TimeSeries<double>> extrapolated_data(
-        models.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
+        model.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
 
     for (int t = 0; t <= num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
         // TODO: empty vaccination data path guard
-        BOOST_OUTCOME_TRY(read_input_data(model, date, county, scaling_factor_inf, scaling_factor_icu,
-                                      num_days, immunity_population, epidata_filenames));
+        BOOST_OUTCOME_TRY(read_input_data(model, date, scaling_factor_inf, scaling_factor_icu,
+                                          num_days, immunity_population, epidata_filenames));
 
-        for (size_t r = 0; r < node_ids.size(); r++) {
-            extrapolated_data[r][t] = models[r].property.get_initial_values();
+        for (size_t r = 0; r < model.size(); r++) {
+            extrapolated_data[r][t] = model[r].property.get_initial_values();
             // in set_population_data the number of death individuals is subtracted from the SusceptibleImprovedImmunity compartment.
             // Since we should be independent whether we consider them or not, we add them back here before we save the data.
             for (size_t age = 0; age < num_age_groups; age++) {
@@ -799,7 +829,10 @@ IOResult<void> export_input_data_timeseries(
             }
         }
     }
-    BOOST_OUTCOME_TRY(save_result(extrapolated_data, node_ids, static_cast<int>(num_age_groups),
+
+    std::vector<int> vregion; 
+    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) { return m.id; });
+    BOOST_OUTCOME_TRY(save_result(extrapolated_data, vregion, static_cast<int>(num_age_groups),
                                   path_join(results_dir, "Results_rki.h5")));
 
     auto extrapolated_rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{extrapolated_data});
@@ -811,7 +844,7 @@ IOResult<void> export_input_data_timeseries(
 
 #else
 template <typename FP>
-IOResult<void> export_input_data_timeseries(mio::VectorRange<Node<Model<FP>>>, const std::string&, Date, const std::vector<int>&,
+IOResult<void> export_input_data_timeseries(const mio::VectorRange<Node<Model<FP>>>, const std::string&, Date, const std::vector<int>&,
                                             const std::vector<double>&, const double, const int,
                                             const std::vector<std::vector<double>>, const mio::regions::de::EpidataFilenames&)
 {
@@ -821,45 +854,8 @@ IOResult<void> export_input_data_timeseries(mio::VectorRange<Node<Model<FP>>>, c
 
 #endif //MEMILIO_HAS_HDF5
 
-/**
- * @brief Reads compartments for geographic units at a specified date from data files.
- *
- * This function estimates all compartments from available data using the provided model parameters.
- *
- * @param[in,out] model Vector of models, one per county, to be initialized with data.
- * @param[in] date Date for which the data should be read.
- * @param[in] node_ids Vector of IDs of the units for which data is read.
- * @param[in] scaling_factor_inf Vector of scaling factors for confirmed cases.
- * @param[in] scaling_factor_icu Scaling factor for ICU cases.
- * @param[in] pydata_dir Directory containing the input data files.
- * @param[in] num_days Number of days to simulate.
- * @param[in] immunity_population Matrix containing immunity proportions for each age group and immunity layer.
- *
- * @return An IOResult indicating success or failure.
-    */
-template <typename FP>
-IOResult<void> read_input_data(mio::VectorRange<Node<Model<FP>>>& model, Date date, const std::vector<int>& node_ids,
-                               const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                               int num_days, const std::vector<std::vector<double>>& immunity_population, 
-                               const mio::regions::de::EpidataFilenames& epidata_filenames)
-{
-
-    BOOST_OUTCOME_TRY(
-        details::set_vaccination_data(model, epidata_filenames.vaccination_data_path, date, node_ids, num_days));
-
-    // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
-    // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
-    BOOST_OUTCOME_TRY(details::set_divi_data(model, epidata_filenames.divi_data_path, node_ids, date,
-                                             scaling_factor_icu));
-
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, epidata_filenames.case_data_path, node_ids,
-                                                        date, scaling_factor_inf, immunity_population));
-    BOOST_OUTCOME_TRY(details::set_population_data(model, epidata_filenames.population_data_path, node_ids,
-                                                   immunity_population));
-    return success();
-}
-
 } // namespace osecirts
+
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

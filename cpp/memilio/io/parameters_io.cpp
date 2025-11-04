@@ -19,6 +19,7 @@
 */
 
 #include "memilio/config.h"
+#include "memilio/io/parameters_io.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
