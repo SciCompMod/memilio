@@ -194,6 +194,10 @@ int main(int /*argc*/, char** /*argv*/)
     bcast_vector(from_exchanges, 0, MPI_COMM_WORLD);
     bcast_vector(to_exchanges, 0, MPI_COMM_WORLD);
 
+    if (rank == 0) {
+        mio::log_info("Data broadcasted to all {} ranks.", size);
+    }
+
     for (size_t i = 0; i < farm_ids.size(); ++i) {
         Model curr_model;
         curr_model.populations[{home, InfectionState::S}]                                = num_cows_vec[i];
@@ -277,12 +281,14 @@ int main(int /*argc*/, char** /*argv*/)
         mio::log_info("Allgather complete.");
 
     size_t big_index = 0;
+    size_t pos       = 0;
     for (size_t index = 0; index < size * num_calculations; ++index) {
         std::vector<std::vector<size_t>> neighbors;
         for (size_t i = 0; i < num_neighbour_queries; ++i) {
             std::vector<size_t> current_neighbors(all_neighbour_list_sizes[big_index]);
             for (int j = 0; j < all_neighbour_list_sizes[big_index]; ++j) {
-                current_neighbors[j] = flat_global[big_index + j];
+                current_neighbors[j] = flat_global[pos];
+                pos++;
             }
             neighbors.push_back(current_neighbors);
             big_index++;
@@ -327,6 +333,9 @@ int main(int /*argc*/, char** /*argv*/)
                 graph2.nodes()[index].property.get_location(), {mio::geo::kilometers(2.0)}));
         }
         for (size_t i = 0; i < farm_ids.size(); ++i) {
+            if (sim.get_graph().nodes()[i].id != graph2.nodes()[i].id) {
+                mio::log_error("Node ids do not match for node {}!", i);
+            }
             auto neighbors1 = sim.get_graph().nodes()[i].property.get_regional_neighbors();
             auto neighbors2 = graph2.nodes()[i].property.get_regional_neighbors();
             if (neighbors1.size() != neighbors2.size()) {
@@ -343,6 +352,9 @@ int main(int /*argc*/, char** /*argv*/)
                     std::sort(sort2.begin(), sort2.end());
                     if (sort1 != sort2) {
                         mio::log_error("Neighbor lists do not match for node {}!", i);
+                        for (size_t index = 0; index < sort1.size(); index++) {
+                            mio::log_error("  Neighbor 1: {}, Neighbor 2: {}", sort1[index], sort2[index]);
+                        }
                     }
                 }
             }
