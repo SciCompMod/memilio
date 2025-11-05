@@ -140,7 +140,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             model = ModelClass()
         self.assertEqual(
             str(error.exception),
-            "layer_types and num_repeat must have the same length.")
+            "layer_types and num_repeat must have the same length. "
+            "Got 1 and 2.")
 
         # Test with multiple layer types
         layer_types = [
@@ -186,8 +187,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
                               num_channels, activation, num_output)
         self.assertEqual(
             str(error.exception),
-            "Unsupported layer_type: MonvConv. "
-            "Supported types are 'ARMAConv', 'GCSConv', 'GATConv', 'GCNConv', 'APPNPConv'.")
+            "Unsupported layer_type: 'MonvConv'. "
+            "Supported types are: ARMAConv, GCSConv, GATConv, GCNConv, APPNPConv")
         # Test with invalud num_layers
         layer_type = "GATConv"
         num_layers = 0
@@ -195,7 +196,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             model = get_model(layer_type, num_layers,
                               num_channels, activation, num_output)
         self.assertEqual(str(
-            error.exception), "num_layers must be at least 1.")
+            error.exception), "num_layers must be at least 1, got 0.")
         # Test with invalid num_output
         num_layers = 2
         num_output = 0
@@ -203,7 +204,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             model = get_model(layer_type, num_layers,
                               num_channels, activation, num_output)
         self.assertEqual(str(
-            error.exception), "num_output must be at least 1.")
+            error.exception), "num_output must be at least 1, got 0.")
         # Test with invalid num_channels
         num_output = 2
         num_channels = 0
@@ -211,7 +212,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
             model = get_model(layer_type, num_layers,
                               num_channels, activation, num_output)
         self.assertEqual(str(
-            error.exception), "num_channels must be at least 1.")
+            error.exception), "num_channels must be at least 1, got 0.")
         # Test with invalid activation
         num_channels = 16
         activation = 5
@@ -220,7 +221,7 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
                               num_channels, activation, num_output)
         self.assertEqual(
             str(error.exception),
-            "activation must be a string representing the activation function.")
+            "activation must be a string, got int.")
 
     def test_create_dataset(self):
 
@@ -428,21 +429,17 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_layers = [1]
         num_channels = [8]
         activations = ["relu"]
-        model_parameters = [(layer, n_layer, channel, activation)
-                            for layer in layers for n_layer in num_layers
-                            for channel in num_channels
-                            for activation in activations
-                            for layer in layers for n_layer in num_layers]
+        parameter_grid = [(layer, n_layer, channel, activation)
+                          for layer in layers for n_layer in num_layers
+                          for channel in num_channels
+                          for activation in activations]
         batch_size = 2
-        loss_function = MeanAbsolutePercentageError()
-        optimizer = tf.keras.optimizers.Adam()
         es_patience = 5
         max_epochs = 2
-        training_parameters = [batch_size, loss_function,
-                               optimizer, es_patience, max_epochs]
         # Perform grid search with explicit save_dir to avoid os.path.realpath issues
-        perform_grid_search(model_parameters, training_parameters,
-                            dataset, save_dir=self.path)
+        perform_grid_search(dataset, parameter_grid, self.path,
+                            batch_size=batch_size, max_epochs=max_epochs,
+                            es_patience=es_patience)
 
         # Check if the results file is created
         results_file = os.path.join(
@@ -451,8 +448,8 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
 
         # Check if the results file has the expected number of rows
         df_results = pd.read_csv(results_file)
-        self.assertEqual(len(df_results), len(model_parameters))
-        self.assertEqual(len(df_results.columns), 10)
+        self.assertEqual(len(df_results), len(parameter_grid))
+        self.assertEqual(len(df_results.columns), 12)
 
     def test_scale_data_valid_data(self):
         """Test utils.scale_data with valid input and label data."""

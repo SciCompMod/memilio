@@ -25,7 +25,6 @@ over GNN architectures, training configurations, and model parameters to identif
 optimal configurations for epidemiological surrogate models.
 """
 
-import os
 from pathlib import Path
 
 import pandas as pd
@@ -126,6 +125,9 @@ def perform_grid_search(
     if not parameter_grid or len(parameter_grid) == 0:
         raise ValueError(
             "Parameter grid must contain at least one configuration.")
+
+    # Convert save_dir to Path if it's a string
+    save_dir = Path(save_dir) / "saves"
 
     # Determine output dimension from data
     output_dim = data[0].y.shape[-1]
@@ -230,10 +232,10 @@ def perform_grid_search(
             # Save intermediate results after each configuration
             results_df.to_csv(results_file, index=False)
             print(
-                f"  ✓ Configuration complete. Results saved to {results_file}")
+                f"Configuration complete. Results saved to {results_file}")
 
         except Exception as e:
-            print(f"  ✗ Error training configuration: {e}")
+            print(f"Error training configuration: {e}")
             # Continue with next configuration rather than failing entire search
 
         finally:
@@ -248,7 +250,7 @@ def perform_grid_search(
 
     # Print best configuration
     if len(results_df) > 0:
-        best_idx = results_df['mean_val_loss'].idxmin()
+        best_idx = results_df['mean_validation_loss'].idxmin()
         best_config = results_df.loc[best_idx]
         print(f"\nBest Configuration:")
         print(f"  Model: {best_config['model']}")
