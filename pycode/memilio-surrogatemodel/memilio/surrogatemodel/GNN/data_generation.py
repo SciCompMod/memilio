@@ -30,6 +30,7 @@ import os
 import pickle
 import random
 import time
+from enum import Enum
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -569,7 +570,7 @@ def main():
 
     # Configuration
     data_dir = os.path.join(os.getcwd(), 'data')
-    output_path = os.path.join(os.getcwd(), 'saves')
+    output_path = os.path.join(os.getcwd(), 'generated_datasets')
 
     # Simulation parameters
     input_width = 5  # Days of history used as input
