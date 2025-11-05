@@ -69,6 +69,12 @@ class rawData:
         self.memilio_weak_scaling_2m = np.array(
             [69787, 83565, 112698, 181267, 322380, 601845]) * (1/120.0)*(1/1000)
 
+        self.strong_scaling_cores = [1, 2, 4, 8, 16, 32]
+
+        # Runtime Strong scaling
+        self.memilio_strong_scaling_128_runs = np.array(
+            [2.018429e+02, 30345, 16234, 8956, 5234, 3120]) * (1/120.0)*(1/1000)
+
 
 class BenchmarkAnalyzer:
     """Enhanced benchmark analysis and visualization tool."""
