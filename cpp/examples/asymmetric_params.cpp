@@ -297,61 +297,6 @@ int main(int /*argc*/, char** /*argv*/)
         sim.add_exchange(dates[i], num_animals_exchanges[i], from_exchanges[i], to_exchanges[i]);
     }
     if (rank == 0) {
-        mio::log_info("I am worker 0 and I will check the correctness of the setup myself:");
-        mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
-                   mio::MobilityEdgeDirected<ScalarType>>
-            graph2;
-        for (size_t i = 0; i < farm_ids.size(); ++i) {
-            Model curr_model;
-            curr_model.populations[{home, InfectionState::S}]                                = num_cows_vec[i];
-            curr_model.populations[{home, InfectionState::E}]                                = 0;
-            curr_model.populations[{home, InfectionState::I}]                                = 0;
-            curr_model.populations[{home, InfectionState::INS}]                              = 0;
-            curr_model.populations[{home, InfectionState::ICS}]                              = 0;
-            curr_model.populations[{home, InfectionState::R}]                                = 0;
-            curr_model.populations[{home, InfectionState::D}]                                = 0;
-            curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
-            graph2.add_node(farm_ids[i], longitudes[i], latitudes[i], curr_model, t0);
-        }
-        auto nodes2 = graph2.nodes() | std::views::transform([](const auto& node) {
-                          return &node.property;
-                      });
-        auto tree2  = mio::geo::RTree(nodes2.begin(), nodes2.end());
-
-        for (size_t index = 0; index < farm_ids.size(); ++index) {
-            graph2.nodes()[index].property.set_regional_neighbors(
-                tree2.in_range_indices_query(graph2.nodes()[index].property.get_location(), query_distances));
-        }
-        for (size_t i = 0; i < farm_ids.size(); ++i) {
-            if (sim.get_graph().nodes()[i].id != graph2.nodes()[i].id) {
-                mio::log_error("Node ids do not match for node {}!", i);
-            }
-            auto neighbors1 = sim.get_graph().nodes()[i].property.get_regional_neighbors();
-            auto neighbors2 = graph2.nodes()[i].property.get_regional_neighbors();
-            if (neighbors1.size() != neighbors2.size()) {
-                mio::log_error("Neighbor list sizes do not match for node {}!", i);
-            }
-            else {
-                for (size_t j = 0; j < neighbors1.size(); ++j) {
-                    if (neighbors1[j].size() != neighbors2[j].size()) {
-                        mio::log_error("Neighbor list sizes do not match for node {}!", i);
-                    }
-                    auto sort1 = neighbors1[j];
-                    auto sort2 = neighbors2[j];
-                    std::sort(sort1.begin(), sort1.end());
-                    std::sort(sort2.begin(), sort2.end());
-                    if (sort1 != sort2) {
-                        mio::log_error("Neighbor lists do not match for node {}!", i);
-                        for (size_t index = 0; index < sort1.size(); index++) {
-                            mio::log_error("  Neighbor 1: {}, Neighbor 2: {}", sort1[index], sort2[index]);
-                        }
-                    }
-                }
-            }
-        }
-        mio::log_info("Setup correctness check complete.");
-    }
-    if (rank == 0) {
         mio::log_info("Starting the study:");
     }
     mio::ParameterStudy study(sim, t0, tmax, dt, num_runs);
