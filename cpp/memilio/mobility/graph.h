@@ -206,17 +206,16 @@ public:
         mio::timing::AutoTimer<"Graph.make_edges_unique()"> timer;
         std::vector<Edge<EdgePropertyT>> unique_edges;
         unique_edges.reserve(m_edges.size());
-        auto start_node = m_edges.front().start_node_idx;
-        auto end_node   = m_edges.front().end_node_idx;
-        for (const auto& edge : m_edges) {
-            if (edge.start_node_idx != start_node || edge.end_node_idx != end_node) {
-                unique_edges.push_back(edge);
-                start_node = edge.start_node_idx;
-                end_node   = edge.end_node_idx;
-            }
-        }
+        std::ranges::unique_copy(m_edges, std::back_inserter(unique_edges), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
+        });
         m_edges = std::move(unique_edges);
         return m_edges.back();
+    }
+
+    void reserve_edges(size_t n)
+    {
+        m_edges.reserve(n);
     }
 
     /**

@@ -210,19 +210,89 @@ int main(int /*argc*/, char** /*argv*/)
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
-
+    graph.reserve_edges(froms.size());
     for (size_t i = 0; i < froms.size(); ++i) {
-        graph.add_edge(froms[i], tos[i], interesting_indices);
+        graph.lazy_add_edge(froms[i], tos[i], interesting_indices);
     }
-
+    graph.sort_edges();
+    graph.make_edges_unique();
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
                  });
     auto tree  = mio::geo::RTree(nodes.begin(), nodes.end());
 
-    for (auto& node : graph.nodes()) {
-        node.property.set_regional_neighbors(
-            tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
+    std::vector<std::vector<std::vector<size_t>>> locally_calculated_neighbors;
+    size_t num_calculations = farm_ids.size() / size;
+    mio::log_info("Number of calculations: {}", num_calculations);
+
+    for (size_t i = num_calculations * rank; i < num_calculations * (rank + 1); ++i) {
+        locally_calculated_neighbors.push_back(
+            tree.in_range_indices_query(graph.nodes()[i].property.get_location(), {mio::geo::kilometers(2.0)}));
+    }
+    size_t num_neighbour_queries = 1;
+
+    std::vector<int> locally_saved_neighbour_list_sizes;
+    for (size_t outer_index = 0; outer_index < num_calculations; ++outer_index) {
+        for (size_t inner_index = 0; inner_index < num_neighbour_queries; ++inner_index) {
+            locally_saved_neighbour_list_sizes.push_back(locally_calculated_neighbors[outer_index][inner_index].size());
+        }
+    }
+    int local_num_total_neighbours =
+        std::accumulate(locally_saved_neighbour_list_sizes.begin(), locally_saved_neighbour_list_sizes.end(), 0);
+    std::vector<int> total_neighbours_per_rank(size, 0);
+    if (rank == 0)
+        mio::log_info("Now I will start to exchange the neighbor lists on all ranks.");
+
+    MPI_Allgather(&local_num_total_neighbours, 1, MPI_INT, total_neighbours_per_rank.data(), 1, MPI_INT,
+                  MPI_COMM_WORLD);
+    if (rank == 0)
+        mio::log_info("Gathering neighbor lists on all ranks.");
+    std::vector<int> displacements(size, 0);
+    for (int i = 1; i < size; ++i) {
+        displacements[i] += displacements[i - 1];
+        displacements[i] += total_neighbours_per_rank[i - 1];
+    }
+
+    std::vector<int> all_neighbour_list_sizes(size * num_calculations * num_neighbour_queries);
+    MPI_Allgather(locally_saved_neighbour_list_sizes.data(), num_calculations * num_neighbour_queries, MPI_INT,
+                  all_neighbour_list_sizes.data(), num_calculations * num_neighbour_queries, MPI_INT, MPI_COMM_WORLD);
+    if (rank == 0)
+        mio::log_info("Distributing neighbor lists to all ranks.");
+    std::vector<int> flat_local;
+    for (const auto& nodes : locally_calculated_neighbors) {
+        for (const auto& neighbours : nodes) {
+            flat_local.insert(flat_local.end(), neighbours.begin(), neighbours.end());
+        }
+    }
+    mio::log_info("The elements of displacements are: {} and the size is {}", displacements[0], displacements.size());
+    int total_elements = std::accumulate(all_neighbour_list_sizes.begin(), all_neighbour_list_sizes.end(), 0);
+    std::vector<int> flat_global(total_elements);
+    mio::log_info("The total number of elements that worker {} sends is {} and I also want to send {} elements", rank,
+                  total_elements, flat_local.size());
+    mio::log_info("All neighbour list sizes size: {}", all_neighbour_list_sizes.size());
+    mio::log_info("Elements per rank: {}, {}", total_neighbours_per_rank[0], total_neighbours_per_rank[1]);
+    MPI_Allgatherv(flat_local.data(), flat_local.size(), MPI_INT, flat_global.data(), total_neighbours_per_rank.data(),
+                   displacements.data(), MPI_INT, MPI_COMM_WORLD);
+    if (rank == 0)
+        mio::log_info("Allgather complete.");
+
+    size_t big_index = 0;
+    for (size_t index = 0; index < size * num_calculations; ++index) {
+        std::vector<std::vector<size_t>> neighbors;
+        for (size_t i = 0; i < num_neighbour_queries; ++i) {
+            std::vector<size_t> current_neighbors(all_neighbour_list_sizes[big_index]);
+            for (int j = 0; j < all_neighbour_list_sizes[big_index]; ++j) {
+                current_neighbors[j] = flat_global[big_index + j];
+            }
+            neighbors.push_back(current_neighbors);
+            big_index++;
+        }
+        graph.nodes()[index].property.set_regional_neighbors(neighbors);
+    }
+
+    for (auto index = num_calculations * size; index < farm_ids.size(); ++index) {
+        graph.nodes()[index].property.set_regional_neighbors(
+            tree.in_range_indices_query(graph.nodes()[index].property.get_location(), {mio::geo::kilometers(2.0)}));
     }
 
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
@@ -230,9 +300,59 @@ int main(int /*argc*/, char** /*argv*/)
     for (size_t i = 0; i < dates.size(); ++i) {
         sim.add_exchange(dates[i], num_animals_exchanges[i], from_exchanges[i], to_exchanges[i]);
     }
+    if (rank == 0) {
+        mio::log_info("I am worker 0 and I will check the correctness of the setup myself:");
+        mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
+                   mio::MobilityEdgeDirected<ScalarType>>
+            graph2;
+        for (size_t i = 0; i < farm_ids.size(); ++i) {
+            Model curr_model;
+            curr_model.populations[{home, InfectionState::S}]                                = num_cows_vec[i];
+            curr_model.populations[{home, InfectionState::E}]                                = 0;
+            curr_model.populations[{home, InfectionState::I}]                                = 0;
+            curr_model.populations[{home, InfectionState::INS}]                              = 0;
+            curr_model.populations[{home, InfectionState::ICS}]                              = 0;
+            curr_model.populations[{home, InfectionState::R}]                                = 0;
+            curr_model.populations[{home, InfectionState::D}]                                = 0;
+            curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
+            graph2.add_node(farm_ids[i], longitudes[i], latitudes[i], curr_model, t0);
+        }
+        auto nodes2 = graph2.nodes() | std::views::transform([](const auto& node) {
+                          return &node.property;
+                      });
+        auto tree2  = mio::geo::RTree(nodes2.begin(), nodes2.end());
 
-    const size_t num_runs = 4000;
+        for (size_t index = 0; index < farm_ids.size(); ++index) {
+            graph2.nodes()[index].property.set_regional_neighbors(tree2.in_range_indices_query(
+                graph2.nodes()[index].property.get_location(), {mio::geo::kilometers(2.0)}));
+        }
+        for (size_t i = 0; i < farm_ids.size(); ++i) {
+            auto neighbors1 = sim.get_graph().nodes()[i].property.get_regional_neighbors();
+            auto neighbors2 = graph2.nodes()[i].property.get_regional_neighbors();
+            if (neighbors1.size() != neighbors2.size()) {
+                mio::log_error("Neighbor list sizes do not match for node {}!", i);
+            }
+            else {
+                for (size_t j = 0; j < neighbors1.size(); ++j) {
+                    if (neighbors1[j].size() != neighbors2[j].size()) {
+                        mio::log_error("Neighbor list sizes do not match for node {}!", i);
+                    }
+                    auto sort1 = neighbors1[j];
+                    auto sort2 = neighbors2[j];
+                    std::sort(sort1.begin(), sort1.end());
+                    std::sort(sort2.begin(), sort2.end());
+                    if (sort1 != sort2) {
+                        mio::log_error("Neighbor lists do not match for node {}!", i);
+                    }
+                }
+            }
+        }
+        mio::log_info("Setup correctness check complete.");
+    }
+    if (rank == 0) {
 
+        mio::log_info("Starting the study:");
+    }
     mio::ParameterStudy study(sim, t0, tmax, dt, num_runs);
 
     auto get_simulation = [](const auto& sim, ScalarType, ScalarType, size_t run_id) {
