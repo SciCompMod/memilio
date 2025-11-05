@@ -187,11 +187,6 @@ public:
     {
         mio::timing::AutoTimer<"Graph.lazy_add_edge()"> timer;
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        for (auto& edge : m_edges) {
-            if (edge.start_node_idx == start_node_idx && edge.end_node_idx == end_node_idx) {
-                return m_edges.back();
-            }
-        }
         m_edges.emplace_back(start_node_idx, end_node_idx, std::forward<Args>(args)...);
         return m_edges.back();
     }
