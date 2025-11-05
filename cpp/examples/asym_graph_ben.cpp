@@ -154,6 +154,7 @@ int main(int /*argc*/, char** /*argv*/)
         graph2.lazy_add_edge(froms[i], tos[i], interesting_indices);
     }
     graph2.sort_edges();
+    graph2.make_edges_unique();
     mio::log_info("Second graph construction finished");
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
