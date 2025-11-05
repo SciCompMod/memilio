@@ -17,294 +17,441 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+"""
+Data generation module for GNN-based surrogate models.
+
+This module provides functionality to generate training data for Graph Neural Network
+surrogate models by running a ODE-SECIR model based simulations across multiple regions and
+time periods with varying damping interventions.
+"""
 
 import copy
 import os
 import pickle
 import random
 import time
-import memilio.simulation as mio
-import memilio.simulation.osecir as osecir
-import numpy as np
+from typing import Dict, List, Tuple
 
+import numpy as np
 from progress.bar import Bar
 
-from memilio.simulation import (AgeGroup, set_log_level, Damping)
+import memilio.simulation as mio
+import memilio.simulation.osecir as osecir
+from memilio.simulation import AgeGroup, set_log_level, Damping
 from memilio.simulation.osecir import (
-    Index_InfectionState, interpolate_simulation_result, ParameterStudy,
-    InfectionState, Model, interpolate_simulation_result)
+    Index_InfectionState, InfectionState, ParameterStudy,
+    interpolate_simulation_result)
 
 from memilio.surrogatemodel.GNN.GNN_utils import (
-    scale_data, remove_confirmed_compartments)
+    scale_data,
+    remove_confirmed_compartments
+)
 import memilio.surrogatemodel.utils.dampings as dampings
 
-from enum import Enum
 
-
-# Enumerate the different locations
 class Location(Enum):
+    """Contact location types for the model."""
     Home = 0
     School = 1
     Work = 2
     Other = 3
 
 
-def set_covid_parameters(model, num_groups=6):
-    """Setting COVID-parameters for the different age groups. 
+# Default number of age groups
+DEFAULT_NUM_AGE_GROUPS = 6
 
-    Parameters are based on Kühn et al. https://doi.org/10.1016/j.mbs.2021.108648.
+# Contact location names corresponding to provided contact files
+CONTACT_LOCATIONS = ["home", "school_pf_eig", "work", "other"]
 
-    :param model: memilio model, whose parameters should be clarified.
-    :param num_groups: Number of age groups.
+
+def set_covid_parameters(
+        model, start_date, num_groups=DEFAULT_NUM_AGE_GROUPS):
+    """Sets COVID-19 specific parameters for all age groups.
+
+    Parameters are based on Kühn et al. (2021): https://doi.org/10.1016/j.mbs.2021.108648
+    The function sets age-stratified parameters (when available) the following age groups:
+    0-4, 5-14, 15-34, 35-59, 60-79, 80+
+
+    :param model: MEmilio ODE SECIR model to configure.
+    :param start_date: Start date of the simulation (used to set StartDay parameter).
+    :param num_groups: Number of age groups (default: 6).
+
     """
+    # Age-specific transmission and progression parameters
+    transmission_probability = [0.03, 0.06, 0.06, 0.06, 0.09, 0.175]
+    recovered_per_infected_no_symptoms = [0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
+    severe_per_infected_symptoms = [
+        0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225]
+    critical_per_severe = [0.075, 0.075, 0.075, 0.15, 0.3, 0.4]
+    deaths_per_critical = [0.05, 0.05, 0.14, 0.14, 0.4, 0.6]
 
-    # age specific parameters
-    TransmissionProbabilityOnContact = [0.03, 0.06, 0.06, 0.06, 0.09, 0.175]
-    RecoveredPerInfectedNoSymptoms = [0.25, 0.25, 0.2, 0.2, 0.2, 0.2]
-    SeverePerInfectedSymptoms = [0.0075, 0.0075, 0.019, 0.0615, 0.165, 0.225]
-    CriticalPerSevere = [0.075, 0.075, 0.075, 0.15, 0.3, 0.4]
-    DeathsPerCritical = [0.05, 0.05, 0.14, 0.14, 0.4, 0.6]
+    # Age-specific compartment transition times (in days)
+    time_infected_no_symptoms = [2.74, 2.74, 2.565, 2.565, 2.565, 2.565]
+    time_infected_symptoms = [7.02625, 7.02625, 7.0665, 6.9385, 6.835, 6.775]
+    time_infected_severe = [5, 5, 5.925, 7.55, 8.5, 11]
+    time_infected_critical = [6.95, 6.95, 6.86, 17.36, 17.1, 11.6]
 
-    TimeInfectedNoSymptoms = [2.74, 2.74, 2.565, 2.565, 2.565, 2.565]
-    TimeInfectedSymptoms = [7.02625, 7.02625,
-                            7.0665, 6.9385, 6.835, 6.775]
-    TimeInfectedSevere = [5, 5, 5.925, 7.55, 8.5, 11]
-    TimeInfectedCritical = [6.95, 6.95, 6.86, 17.36, 17.1, 11.6]
+    # Apply parameters for each age group
+    for i in range(num_groups):
+        age_group = AgeGroup(i)
 
-    for i, rho, muCR, muHI, muUH, muDU, tc, ti, th, tu in zip(
-            range(num_groups),
-            TransmissionProbabilityOnContact, RecoveredPerInfectedNoSymptoms,
-            SeverePerInfectedSymptoms, CriticalPerSevere, DeathsPerCritical,
-            TimeInfectedNoSymptoms, TimeInfectedSymptoms, TimeInfectedSevere,
-            TimeInfectedCritical):
-        # Compartment transition duration
-        model.parameters.TimeExposed[AgeGroup(i)] = 3.335
-        model.parameters.TimeInfectedNoSymptoms[AgeGroup(i)] = tc
-        model.parameters.TimeInfectedSymptoms[AgeGroup(i)] = ti
-        model.parameters.TimeInfectedSevere[AgeGroup(i)] = th
-        model.parameters.TimeInfectedCritical[AgeGroup(i)] = tu
+        model.parameters.TimeExposed[age_group] = 3.335
+        model.parameters.TimeInfectedNoSymptoms[age_group] = time_infected_no_symptoms[i]
+        model.parameters.TimeInfectedSymptoms[age_group] = time_infected_symptoms[i]
+        model.parameters.TimeInfectedSevere[age_group] = time_infected_severe[i]
+        model.parameters.TimeInfectedCritical[age_group] = time_infected_critical[i]
 
-        # Compartment transition probabilities
-        model.parameters.RelativeTransmissionNoSymptoms[AgeGroup(i)] = 1
-        model.parameters.TransmissionProbabilityOnContact[AgeGroup(i)] = rho
-        model.parameters.RecoveredPerInfectedNoSymptoms[AgeGroup(i)] = muCR
-        model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.25
-        model.parameters.SeverePerInfectedSymptoms[AgeGroup(i)] = muHI
-        model.parameters.CriticalPerSevere[AgeGroup(i)] = muUH
-        model.parameters.DeathsPerCritical[AgeGroup(i)] = muDU
-        # twice the value of RiskOfInfectionFromSymptomatic
-        model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
-    # StartDay is the n-th day of the year
+        model.parameters.RelativeTransmissionNoSymptoms[age_group] = 1.0
+        model.parameters.TransmissionProbabilityOnContact[age_group] = transmission_probability[i]
+        model.parameters.RiskOfInfectionFromSymptomatic[age_group] = 0.25
+        model.parameters.MaxRiskOfInfectionFromSymptomatic[age_group] = 0.5
+        model.parameters.RecoveredPerInfectedNoSymptoms[age_group] = recovered_per_infected_no_symptoms[i]
+        model.parameters.SeverePerInfectedSymptoms[age_group] = severe_per_infected_symptoms[i]
+        model.parameters.CriticalPerSevere[age_group] = critical_per_severe[i]
+        model.parameters.DeathsPerCritical[age_group] = deaths_per_critical[i]
+
+    # Set simulation start day
     model.parameters.StartDay = start_date.day_in_year
 
 
-def set_contact_matrices(model, data_dir, num_groups=6):
-    """Setting the contact matrices for a model.
+def set_contact_matrices(model, data_dir, num_groups=DEFAULT_NUM_AGE_GROUPS):
+    """Loads and configures contact matrices for different location types.
 
-    :param model: memilio ODE-model, whose contact matrices should be modified. 
-    :param data_dir: directory, where the contact data is stored (should contain folder "contacts").
-    :param num_groups: Number of age groups considered.
+    Contact matrices are loaded for the locations defined in CONTACT_LOCATIONS.
+
+    :param model: MEmilio ODE SECIR model to configure.
+    :param data_dir: Root directory containing contact matrix data (should contain Germany/contacts/ subdirectory).
+    :param num_groups: Number of age groups (default: 6).
 
     """
-
     contact_matrices = mio.ContactMatrixGroup(
-        len(list(Location)), num_groups)
-    locations = ["home", "school_pf_eig", "work", "other"]
+        len(CONTACT_LOCATIONS), num_groups)
 
-    # Loading contact matrices for each location from .txt file
-    for i, location in enumerate(locations):
-        baseline_file = os.path.join(
-            data_dir, "Germany", "contacts", "baseline_" + location + ".txt")
-
-        contact_matrices[i] = mio.ContactMatrix(
-            mio.read_mobility_plain(baseline_file),
+    # Load contact matrices for each location
+    for location_idx, location_name in enumerate(CONTACT_LOCATIONS):
+        contact_file = os.path.join(
+            data_dir, "Germany", "contacts", f"baseline_{location_name}.txt"
         )
+
+        if not os.path.exists(contact_file):
+            raise FileNotFoundError(
+                f"Contact matrix file not found: {contact_file}"
+            )
+
+        contact_matrices[location_idx] = mio.ContactMatrix(
+            mio.read_mobility_plain(contact_file)
+        )
+
     model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
 
 
-def get_graph(
-        num_groups, data_dir, mobility_directory, start_date=mio.Date(
-            2020, 6, 1), end_date=mio.Date(2020, 8, 31)):
-    """ Generate the associated graph given the mobility data. 
+def get_graph(num_groups, data_dir, mobility_directory, start_date, end_date):
+    """Creates a graph with mobility connections.
 
-    :param num_groups: Number of age groups.
-    :param data_dir: Directory, where the contact data is stored (should contain folder "contacts").
-    :param mobility_directory: Directory containing the mobility data.
-    :param start_date: Date when the simulation starts.
-    :param end_date: Date when the simulation ends.
+    Creates a graph where each node represents a geographic region (here county) with its own ODE model, 
+    and edges represent mobility/commuter connections between these regions. Each node is initialized with 
+    population data and COVID parameters. Edges are weighted by commuter mobility patterns. 
+
+    :param num_groups: Number of age groups to model.
+    :param data_dir: Root directory containing population and contact data.
+    :param mobility_directory: Path to mobility/commuter data file.
+    :param start_date: Simulation start date.
+    :param end_date: Simulation end date (used for data loading).
+    :returns: Configured ModelGraph with nodes for each region and mobility edges.
+
     """
-    # Generating and Initializing the model
-    model = Model(num_groups)
-    set_covid_parameters(model)
-    set_contact_matrices(model, data_dir)
+    model = osecir.Model(num_groups)
+    set_covid_parameters(model, start_date, num_groups)
+    set_contact_matrices(model, data_dir, num_groups)
 
-    # Generating the graph
+    # Initialize empty graph
     graph = osecir.ModelGraph()
 
-    # Setting the parameters
-    scaling_factor_infected = [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]
+    # To account for underreporting
+    scaling_factor_infected = [2.5] * num_groups
     scaling_factor_icu = 1.0
-    tnt_capacity_factor = 7.5 / 100000.
+    # Test & trace capacity as in Kühn et al. (2021): https://doi.org/10.1016/j.mbs.2021.108648
+    tnt_capacity_factor = 7.5 / 100000.0
 
-    # Path containing the population data
-    data_dir_Germany = os.path.join(data_dir, "Germany")
-    pydata_dir = os.path.join(data_dir_Germany, "pydata")
+    # Paths to population data
+    pydata_dir = os.path.join(data_dir, "Germany", "pydata")
+    path_population_data = os.path.join(
+        pydata_dir, "county_current_population.json")
 
-    path_population_data = os.path.join(pydata_dir,
-                                        "county_current_population.json")
+    # Verify data files exist
+    if not os.path.exists(path_population_data):
+        raise FileNotFoundError(
+            f"Population data not found: {path_population_data}"
+        )
 
+    # Create one node per county
     is_node_for_county = True
 
-    mio.osecir.set_nodes(
-        model.parameters, mio.Date(
-            start_date.year, start_date.month, start_date.day),
-        mio.Date(end_date.year, end_date.month, end_date.day),
-        pydata_dir, path_population_data, is_node_for_county, graph,
-        scaling_factor_infected, scaling_factor_icu, tnt_capacity_factor, 0, False)
+    # Populate graph nodes with county level data
+    osecir.set_nodes(
+        model.parameters,
+        start_date,
+        end_date,
+        pydata_dir,
+        path_population_data,
+        is_node_for_county,
+        graph,
+        scaling_factor_infected,
+        scaling_factor_icu,
+        tnt_capacity_factor,
+        0,  # Zero days extrapolating the data
+        False  # No extrapolation of data
+    )
 
-    mio.osecir.set_edges(
-        mobility_directory, graph, len(Location))
+    # Add mobility edges between regions
+    osecir.set_edges(mobility_directory, graph, len(CONTACT_LOCATIONS))
 
     return graph
 
 
+def get_compartment_factors():
+    """Draw base factors for compartment initialization.
+
+    Factors follow the sampling strategy from Schmidt et al.
+    (2024): symptomatic individuals between 0.01% and 5% of the population,
+    exposed and asymptomatic compartments proportional to that symptomatic
+    proportion, and hospital/ICU/deaths sampled hierarchically.
+    Recovered is taken from the remaining feasible proportion and susceptibles
+    fill the residual.
+    """
+    p_infected = random.uniform(0.0001, 0.05)
+    p_exposed = p_infected * random.uniform(0.1, 5.0)
+    p_ins = p_infected * random.uniform(0.1, 5.0)
+    p_hosp = p_infected * random.uniform(0.001, 1.0)
+    p_icu = p_hosp * random.uniform(0.001, 1.0)
+    p_dead = p_icu * random.uniform(0.001, 1.0)
+
+    sum_randoms = (
+        p_infected + p_exposed + p_ins + p_hosp + p_icu + p_dead
+    )
+
+    if sum_randoms >= 1.0:
+        raise RuntimeError(
+            "Sampled compartment factors exceed total population. Adjust bounds."
+        )
+
+    p_recovered = random.uniform(0.0, 1.0 - sum_randoms)
+    p_susceptible = max(1.0 - (sum_randoms + p_recovered), 0.0)
+
+    return {
+        "infected": p_infected,
+        "exposed": p_exposed,
+        "infected_no_symptoms": p_ins,
+        "hospitalized": p_hosp,
+        "critical": p_icu,
+        "dead": p_dead,
+        "recovered": p_recovered,
+        "susceptible": p_susceptible
+    }
+
+
+def _initialize_compartments_for_node(
+        model, factors, num_groups, within_group_variation):
+    """Initializes epidemic compartments using shared base factors.
+
+    :param model: Model instance for the specific node.
+    :param factors: Compartment factors obtained from get_compartment_factors.
+    :param num_groups: Number of age groups.
+    :param within_group_variation: Whether to apply additional random scaling per age group.
+    """
+
+    def _variation():
+        return random.uniform(0.1, 1.0) if within_group_variation else 1.0
+
+    for age_idx in range(num_groups):
+        age_group = AgeGroup(age_idx)
+        total_population = model.populations.get_group_total_AgeGroup(
+            age_group)
+
+        infected_symptoms = total_population * \
+            factors["infected"] * _variation()
+
+        exposed = infected_symptoms * factors["exposed"] * _variation()
+        infected_no_symptoms = infected_symptoms * \
+            factors["infected_no_symptoms"] * _variation()
+        infected_severe = infected_symptoms * \
+            factors["hospitalized"] * _variation()
+        infected_critical = infected_severe * \
+            factors["critical"] * _variation()
+        dead = infected_critical * factors["dead"] * _variation()
+        recovered = total_population * factors["recovered"] * _variation()
+
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.InfectedSymptoms)] = infected_symptoms
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.Exposed)] = exposed
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.InfectedNoSymptoms)] = infected_no_symptoms
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.InfectedSevere)] = infected_severe
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.InfectedCritical)] = infected_critical
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.Dead)] = dead
+        model.populations[age_group, Index_InfectionState(
+            InfectionState.Recovered)] = recovered
+
+        # Susceptibles are the remainder
+        model.populations.set_difference_from_group_total_AgeGroup(
+            (age_group, InfectionState.Susceptible), total_population
+        )
+
+
+def _apply_dampings_to_model(model, damping_days, damping_factors, num_groups):
+    """Applies contact dampings (NPIs) to model at specified days.
+
+    Currently only supports global dampings (same for all age groups and spatial units).
+
+    :param model: Model to apply dampings to.
+    :param damping_days: Days at which to apply dampings.
+    :param damping_factors: Multiplicative factors for contact reduction.
+    :param num_groups: Number of age groups.
+    :returns: Tuple of (damped_contact_matrices, damping_coefficients).
+
+    """
+    damped_matrices = []
+    damping_coefficients = []
+
+    for day, factor in zip(damping_days, damping_factors):
+        # Create uniform damping matrix for all age groups
+        damping_matrix = np.ones((num_groups, num_groups)) * factor
+
+        # Add damping to model
+        model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+            Damping(coeffs=damping_matrix, t=day, level=0, type=0)
+        )
+
+        # Store resulting contact matrix and coefficients
+        damped_matrices.append(
+            model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
+                day + 1))
+        damping_coefficients.append(damping_matrix)
+
+    return damped_matrices, damping_coefficients
+
+
 def run_secir_groups_simulation(
-        days, damping_days, damping_factors, graph, num_groups=6):
-    """Run an ODE SECIR simulation with multiple age groups and regions.
+        days, damping_days, damping_factors, graph, within_group_variation,
+        num_groups=DEFAULT_NUM_AGE_GROUPS):
+    """Runs a multi-region ODE SECIR simulation with age groups and NPIs.
 
-    Uses an ODE SECIR model allowing for asymptomatic infection with 6
-    different age groups. The model is stratified by region using a graph structure.
-    Virus-specific parameters are fixed and initial number of persons in the 
-    particular infection states are chosen randomly between predefined bounds.
+    Performs the following steps:
+    1. Initialize each node with compartment specific (random) factors
+    2. Apply contact dampings (NPIs) at specified days
+    3. Run the simulation
+    4. Post-process and return results
 
-    :param days: Number of days simulated within a single run.
-    :param damping_days: List of days where dampings are applied.
-    :param damping_factors: List of damping factors associated to the damping days.
-    :param graph: Graph initialized for the start_date with the population data.
-    :param num_groups: Number of age groups considered in the simulation.
-    :param start_date: Date when the simulation starts.
-    :returns: Tuple containing (simulation_results, damped_matrices, damping_coefficients, runtime)
+    :param days: Total number of days to simulate.
+    :param damping_days: List of days when NPIs are applied.
+    :param damping_factors: List of contact reduction factors for each damping.
+    :param graph: Pre-configured ModelGraph with nodes and edges.
+    :param within_group_variation: Whether to apply per-age random variation during initialization.
+    :param num_groups: Number of age groups (default: 6).
+    :returns: Tuple containing dataset_entry (simulation results for each node [num_nodes, time_steps, compartments]), 
+              damped_matrices (contact matrices at each damping day), damping_coefficients (damping coefficient matrices), 
+              and runtime (execution time in seconds).
+    :raises ValueError: If lengths of damping_days and damping_factors don't match.
+
     """
     if len(damping_days) != len(damping_factors):
-        raise ValueError("Length of damping_days and damping_factors differ!")
+        raise ValueError(
+            f"Length mismatch: damping_days ({len(damping_days)}) != "
+            f"damping_factors ({len(damping_factors)})"
+        )
 
-    # Load ground truth bounds for initialization
-    pydata_dir = os.path.join(data_dir, "Germany", "pydata")
-    upper_bound_dir = os.path.join(
-        pydata_dir, "ground_truth_upper_bound.pickle")
-    lower_bound_dir = os.path.join(
-        pydata_dir, "ground_truth_lower_bound.pickle")
-    with open(upper_bound_dir, 'rb') as f:
-        ground_truth_upper_bound = pickle.load(f)
-    with open(lower_bound_dir, 'rb') as f:
-        ground_truth_lower_bound = pickle.load(f)
+    # Initialize each node in the graph
+    damped_matrices = []
+    damping_coefficients = []
 
-    # Initialize model for each node
-    for node_indx in range(graph.num_nodes):
-        model = graph.get_node(node_indx).property
+    factors = get_compartment_factors()
 
-        # Iterate over the different age groups
-        for i in range(num_groups):
-            age_group = AgeGroup(i)
-            pop_age_group = model.populations.get_group_total_AgeGroup(
-                age_group)
+    for node_idx in range(graph.num_nodes):
+        model = graph.get_node(node_idx).property
 
-            # Generate initial compartment populations with random values between bounds
-            valid_configuration = False
-            while valid_configuration is False:
-                init_data = np.asarray([0 for _ in range(8)])
-                max_data = ground_truth_upper_bound[node_indx][:, i]
-                min_data = ground_truth_lower_bound[node_indx][:, i]
-                for j in range(1, 8):
-                    init_data[j] = random.uniform(min_data[j], max_data[j])
+        # Initialize compartment populations
+        _initialize_compartments_for_node(
+            model, factors, num_groups, within_group_variation)
 
-                # Check if configuration is valid (infected population < total population)
-                if np.sum(init_data[1:]) < pop_age_group:
-                    valid_configuration = True
+        # Apply dampings/NPIs
+        if damping_days:
+            node_damped_mats, node_damping_coeffs = _apply_dampings_to_model(
+                model, damping_days, damping_factors, num_groups
+            )
+            # Store only from first node, since dampings are global at the moment
+            if node_idx == 0:
+                damped_matrices = node_damped_mats
+                damping_coefficients = node_damping_coeffs
 
-            # Set the populations for the different compartments
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.Exposed)] = init_data[1]
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedNoSymptoms)] = init_data[2]
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedSymptoms)] = init_data[3]
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedSevere)] = init_data[4]
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.InfectedCritical)] = init_data[5]
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.Recovered)] = init_data[6]
-            model.populations[age_group, Index_InfectionState(
-                InfectionState.Dead)] = init_data[7]
-            model.populations.set_difference_from_group_total_AgeGroup((
-                age_group, InfectionState.Susceptible), pop_age_group)
-
-        # Apply damping information (currently only global dampings supported)
-        damped_matrices = []
-        damping_coefficients = []
-
-        for i in np.arange(len(damping_days)):
-            day = damping_days[i]
-            factor = damping_factors[i]
-
-            damping = np.ones((num_groups, num_groups)) * np.float16(factor)
-            model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(
-                coeffs=(damping), t=day, level=0, type=0))
-            damped_matrices.append(
-                model.parameters.ContactPatterns.cont_freq_mat.get_matrix_at(
-                    day + 1))
-            damping_coefficients.append(damping)
-
-        # Apply mathematical constraints to parameters
         model.apply_constraints()
 
-        # Set model to graph
-        graph.get_node(node_indx).property.populations = model.populations
+        # Update graph with initialized populations
+        graph.get_node(node_idx).property.populations = model.populations
 
-    # Run simulation
-    study = ParameterStudy(graph, 0, days, dt=0.5, num_runs=1)
+    # Run simulation and measure runtime
+    study = ParameterStudy(graph, t0=0, tmax=days, dt=0.5, num_runs=1)
+
     start_time = time.perf_counter()
-    study.run()
+    study_results = study.run()
     runtime = time.perf_counter() - start_time
 
-    # Process results
-    graph_run = study.run()[0]
+    # Interpolate results to daily values
+    graph_run = study_results[0]
     results = interpolate_simulation_result(graph_run)
 
-    for result_indx in range(len(results)):
-        results[result_indx] = remove_confirmed_compartments(
-            np.asarray(results[result_indx]), num_groups)
+    # Remove confirmed compartments (not used in GNN)
+    for result_idx in range(len(results)):
+        results[result_idx] = remove_confirmed_compartments(
+            np.asarray(results[result_idx]), num_groups
+        )
 
     dataset_entry = copy.deepcopy(results)
 
     return dataset_entry, damped_matrices, damping_coefficients, runtime
 
 
-def generate_data(
-        num_runs, data_dir, path, input_width, label_width, start_date,
-        end_date, save_data=True, transform=True, damping_method="classic",
-        max_number_damping=3, mobility_file="commuter_mobility_2022.txt"):
-    """Generate dataset by calling run_secir_groups_simulation multiple times.
+def generate_data(num_runs, data_dir, output_path, input_width, label_width,
+                  start_date, end_date, save_data=True, transform=True,
+                  damping_method="classic", max_number_damping=3,
+                  mobility_file="commuter_mobility.txt",
+                  num_groups=DEFAULT_NUM_AGE_GROUPS,
+                  within_group_variation=True):
+    """Generates training dataset for GNN surrogate model.
+
+    Runs num_runs-ODE SECIR simulations with random initial conditions and damping patterns to create a training dataset.
+    If save_data=True, saves a pickle file named:
+    'GNN_data_{label_width}days_{max_number_damping}dampings_{damping_method}{num_runs}.pickle'
 
     :param num_runs: Number of simulation runs to generate.
-    :param data_dir: Directory with all data needed to initialize the models.
-    :param path: Path where the datasets are stored.
-    :param input_width: Number of time steps used for model input.
-    :param label_width: Number of time steps (days) used as model output/label.
-    :param start_date: Date when the simulation starts.
-    :param end_date: Date when the simulation ends.
-    :param save_data: Option to deactivate the save of the dataset. Default True.
-    :param transform: Option to deactivate the transformation of the data. Default True.
-    :param damping_method: String specifying the damping method. Values: "classic", "active", "random".
-    :param max_number_damping: Maximal number of possible dampings.
-    :param mobility_file: Filename of the mobility data file.
-    :returns: Dictionary containing inputs, labels, contact_matrix, damping_days and damping_factors.
+    :param data_dir: Root directory containing all required input data (population, contacts, mobility).
+    :param output_path: Directory where generated dataset will be saved.
+    :param input_width: Number of time steps for model input.
+    :param label_width: Number of time steps for model output/labels.
+    :param start_date: Simulation start date.
+    :param end_date: Simulation end date (used for set_nodes function).
+    :param save_data: Whether to save dataset (default: True).
+    :param transform: Whether to apply scaling transformation to data (default: True).
+    :param damping_method: Method for generating damping patterns: "classic", "active", "random".
+    :param max_number_damping: Maximum number of damping events per simulation.
+    :param mobility_file: Filename of mobility file (in data_dir/Germany/mobility/).
+    :param num_groups: Number of age groups (default: 6).
+    :param within_group_variation: Whether to apply random variation per spatial unit/age group when initializing compartments.
+    :returns: Dictionary with keys: "inputs" ([num_runs, input_width, num_nodes, features]), 
+              "labels" ([num_runs, label_width, num_nodes, features]), 
+              "contact_matrix" (List of damped contact matrices), "damping_days" (List of damping day arrays), 
+              "damping_factors" (List of damping factor arrays).
+
     """
     set_log_level(mio.LogLevel.Error)
-    days = label_width + input_width - 1
 
-    # Preparing output dictionary
+    # Calculate total simulation days
+    total_days = label_width + input_width - 1
+
+    # Initialize output dictionary
     data = {
         "inputs": [],
         "labels": [],
@@ -313,95 +460,163 @@ def generate_data(
         "damping_factors": []
     }
 
-    # Setting basic parameter
-    num_groups = 6
-    mobility_dir = data_dir + "/Germany/mobility/" + mobility_file
-    graph = get_graph(num_groups, data_dir, mobility_dir, start_date, end_date)
+    # Build mobility file path
+    mobility_path = os.path.join(
+        data_dir, "Germany", "mobility", mobility_file)
 
-    # show progess in terminal for longer runs
-    # Due to the random structure, there is currently no need to shuffle the data
-    bar = Bar('Number of Runs done', max=num_runs)
+    # Verify mobility file exists
+    if not os.path.exists(mobility_path):
+        raise FileNotFoundError(f"Mobility file not found: {mobility_path}")
 
-    times = []
-    for i in range(0, num_runs):
-        # Generate random damping days and damping factors
+    # Create graph (reused for all runs with different initial conditions)
+    graph = get_graph(num_groups, data_dir,
+                      mobility_path, start_date, end_date)
+
+    print(f"\nGenerating {num_runs} simulation runs...")
+    bar = Bar(
+        'Progress', max=num_runs,
+        suffix='%(percent)d%% [%(elapsed_td)s / %(eta_td)s]')
+
+    runtimes = []
+
+    for _ in range(num_runs):
+        # Generate random damping pattern
         if max_number_damping > 0:
             damping_days, damping_factors = dampings.generate_dampings(
-                days, max_number_damping, method=damping_method,
-                min_distance=2, min_damping_day=2)
+                total_days,
+                max_number_damping,
+                method=damping_method,
+                min_distance=2,
+                min_damping_day=2
+            )
         else:
             damping_days = []
             damping_factors = []
+
         # Run simulation
-        data_run, damped_matrices, damping_coefficients, t_run = run_secir_groups_simulation(
-            days, damping_days, damping_factors, graph, num_groups)
+        simulation_result, damped_mats, damping_coeffs, runtime = \
+            run_secir_groups_simulation(
+                total_days, damping_days, damping_factors, graph,
+                within_group_variation, num_groups
+            )
 
-        times.append(t_run)
+        runtimes.append(runtime)
 
-        inputs = np.asarray(data_run).transpose(1, 0, 2)[: input_width]
-        labels = np.asarray(data_run).transpose(1, 0, 2)[input_width:]
+        # Split into inputs and labels
+        # Shape: [num_nodes, time_steps, features] -> transpose to [time_steps, num_nodes, features]
+        result_transposed = np.asarray(simulation_result).transpose(1, 0, 2)
+        inputs = result_transposed[:input_width]
+        labels = result_transposed[input_width:]
 
+        # Store results
         data["inputs"].append(inputs)
         data["labels"].append(labels)
-        data["contact_matrix"].append(np.array(damped_matrices))
-        data["damping_factors"].append(damping_coefficients)
+        data["contact_matrix"].append(np.array(damped_mats))
+        data["damping_factors"].append(damping_coeffs)
         data["damping_days"].append(damping_days)
 
         bar.next()
 
     bar.finish()
 
-    print(
-        f"For Days = {days}, AVG runtime: {np.mean(times)}s, Median runtime: {np.median(times)}s")
+    # Print performance statistics
+    print(f"\nSimulation Statistics:")
+    print(f"  Total days simulated: {total_days}")
+    print(f"  Average runtime: {np.mean(runtimes):.3f}s")
+    print(f"  Median runtime: {np.median(runtimes):.3f}s")
+    print(f"  Total time: {np.sum(runtimes):.1f}s")
 
+    # Save dataset if requested
     if save_data:
+        # Apply scaling transformation
+        inputs_scaled, labels_scaled = scale_data(data, transform)
 
-        inputs, labels = scale_data(data, transform)
+        all_data = {
+            "inputs": inputs_scaled,
+            "labels": labels_scaled,
+            "damping_day": data["damping_days"],
+            "contact_matrix": data["contact_matrix"],
+            "damping_coeff": data["damping_factors"]
+        }
 
-        all_data = {"inputs": inputs,
-                    "labels": labels,
-                    "damping_day": data["damping_days"],
-                    "contact_matrix": data["contact_matrix"],
-                    "damping_coeff": data["damping_factors"]
-                    }
+        # Create output directory if needed
+        os.makedirs(output_path, exist_ok=True)
 
-        # check if data directory exists. If necessary create it.
-        if not os.path.isdir(path):
-            os.mkdir(path)
-
-        # generate the filename
+        # Generate filename
         if num_runs < 1000:
-            filename = 'GNN_data_%ddays_%ddampings_' % (
-                label_width, max_number_damping) + damping_method+'%d.pickle' % (num_runs)
+            filename = f'GNN_data_{label_width}days_{max_number_damping}dampings_{damping_method}{num_runs}.pickle'
         else:
-            filename = 'GNN_data_%ddays_%ddampings_' % (
-                label_width, max_number_damping) + damping_method+'%dk.pickle' % (num_runs//1000)
+            filename = f'GNN_data_{label_width}days_{max_number_damping}dampings_{damping_method}{num_runs//1000}k.pickle'
 
-        # save dict to pickle file
-        with open(os.path.join(path, filename), 'wb') as f:
+        # Save to pickle file
+        output_file = os.path.join(output_path, filename)
+        with open(output_file, 'wb') as f:
             pickle.dump(all_data, f)
+
+        print(f"\nDataset saved to: {output_file}")
 
     return data
 
 
-if __name__ == "__main__":
+def main():
+    """Main function for dataset generation.
 
-    path = os.getcwd()
-    path_output = os.path.join(os.getcwd(), 'saves')
-    data_dir = os.path.join(os.getcwd(), 'data')
-    input_width = 5
-    number_of_dampings = 0
-    num_runs = 1
-    label_width_list = [30]
+    Example configuration for generating GNN training data.
+
+    """
+    # Set random seed for reproducibility
     random.seed(10)
 
-    # Define the start and the latest end date for the simulation
+    # Configuration
+    data_dir = os.path.join(os.getcwd(), 'data')
+    output_path = os.path.join(os.getcwd(), 'saves')
+
+    # Simulation parameters
+    input_width = 5  # Days of history used as input
+    num_runs = 1  # Number of simulation runs
+    max_dampings = 0  # Number of NPI dampings per simulation
+
+    # Prediction horizons to generate data for
+    prediction_horizons = [30]  # Days to predict into the future
+
+    # Simulation time period
     start_date = mio.Date(2020, 10, 1)
     end_date = mio.Date(2021, 10, 31)
 
-    for label_width in label_width_list:
+    # Generate datasets
+    print("=" * 70)
+    print("GNN Surrogate Model - Dataset Generation")
+    print("=" * 70)
+    print(f"Data directory: {data_dir}")
+    print(f"Output directory: {output_path}")
+    print(f"Simulation period: {start_date} to {end_date}")
+    print(f"Number of runs per configuration: {num_runs}")
+    print(f"Input width: {input_width} days")
+    print(f"Max dampings: {max_dampings}")
+    print("=" * 70)
+
+    for label_width in prediction_horizons:
+        print(f"\n{'='*70}")
+        print(f"Generating data for {label_width}-day predictions")
+        print(f"{'='*70}")
+
         generate_data(
-            num_runs=num_runs, data_dir=data_dir, path=path_output,
-            input_width=input_width, label_width=label_width,
-            start_date=start_date, end_date=end_date, save_data=True,
-            damping_method="active", max_number_damping=number_of_dampings)
+            num_runs=num_runs,
+            data_dir=data_dir,
+            output_path=output_path,
+            input_width=input_width,
+            label_width=label_width,
+            start_date=start_date,
+            end_date=end_date,
+            save_data=True,
+            damping_method="active",
+            max_number_damping=max_dampings
+        )
+
+    print(f"\n{'='*70}")
+    print("Dataset generation complete!")
+    print(f"{'='*70}")
+
+
+if __name__ == "__main__":
+    main()
