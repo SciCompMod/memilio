@@ -104,17 +104,17 @@ int main(int /*argc*/, char** /*argv*/)
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
-    // graph.reserve_edges(262144);
+    graph.reserve_edges(200000);
     {
         mio::timing::AutoTimer<"Graph Edges Generation"> timer;
         io::CSVReader<2> edges("../../edges10000.csv");
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
-            graph.add_edge(from, to, interesting_indices);
-            // graph.lazy_add_edge(from, to, interesting_indices);
+            graph.lazy_add_edge(from, to, interesting_indices);
         }
-        // graph.sort_edges();
+        graph.sort_edges();
+        graph.make_edges_unique();
     }
     // mio::log_info("Graph generated");
 
@@ -125,11 +125,12 @@ int main(int /*argc*/, char** /*argv*/)
     // mio::log_info("RTree generated");
 
     for (auto& node : graph.nodes()) {
+        mio::timing::AutoTimer<"neighbourhood search"> timer;
         node.property.set_regional_neighbors(
             tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
     }
 
-    // mio::log_info("Neighbors set");
+    mio::log_info("Neighbors set");
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
     io::CSVReader<4> exchanges("../../trade10000.csv");
