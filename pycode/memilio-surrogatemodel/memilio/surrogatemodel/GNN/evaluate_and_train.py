@@ -65,14 +65,19 @@ class StaticGraphDataset(spektral.data.Dataset):
         self._node_labels = node_labels
         self._adjacency = adjacency.astype(np.float32)
         super().__init__()
+        # This must be set AFTER calling super().__init__()
+        self.a = self._adjacency
 
     def read(self):
-        """Create one Graph object per sample."""
+        """Create one Graph object per sample.
+
+        Note: For MixedLoader, individual Graph objects should not have an 
+        adjacency matrix (a). The adjacency matrix is stored at the dataset level.
+        """
         return [
             spektral.data.Graph(
                 x=feature.astype(np.float32),
                 y=label.astype(np.float32),
-                a=self._adjacency,
             )
             for feature, label in zip(self._node_features, self._node_labels)
         ]
@@ -87,7 +92,7 @@ class TrainingSummary:
     mean_val_loss: float
     mean_test_loss: float
     mean_test_loss_orig: float
-    training_minutes: float
+    training_time: float
     train_losses: List[List[float]]
     val_losses: List[List[float]]
 
@@ -326,7 +331,7 @@ def train_and_evaluate(
         mean_val_loss=float(np.min(epoch_val_losses))
         if epoch_val_losses else float("nan"), mean_test_loss=float(test_loss),
         mean_test_loss_orig=float(test_loss_orig),
-        training_minutes=elapsed / 60, train_losses=[epoch_train_losses],
+        training_time=elapsed / 60, train_losses=[epoch_train_losses],
         val_losses=[epoch_val_losses])
 
     if save_dir:
@@ -342,7 +347,7 @@ def train_and_evaluate(
             summary.mean_val_loss,
             summary.mean_test_loss,
             summary.mean_test_loss_orig,
-            summary.training_minutes,
+            summary.training_time,
             summary.train_losses,
             summary.val_losses
         ]

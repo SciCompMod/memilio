@@ -56,11 +56,13 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         :param output_dim: Number of output dimensions per node.
         :return: A dictionary containing inputs, adjacency matrix, and labels.
         """
-        X = np.random.rand(num_samples, 1, num_node_features,
-                           num_nodes).astype(np.float32)
+        # Shape should be (num_samples, input_width, num_nodes, num_features)
+        X = np.random.rand(num_samples, 1, num_nodes,
+                           num_node_features).astype(np.float32)
         A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
-        y = np.random.rand(num_samples, 1, output_dim,
-                           num_nodes).astype(np.float32)
+        # Shape should be (num_samples, label_width, num_nodes, label_features)
+        y = np.random.rand(num_samples, 1, num_nodes,
+                           output_dim).astype(np.float32)
         return {"inputs": X, "adjacency": A, "labels": y}
 
     def setup_fake_filesystem(self, fs, path, data):
@@ -227,11 +229,6 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
         num_nodes = 5
         num_node_features = 3
         output_dim = 4
-        X = np.random.rand(num_samples, 1,
-                           num_node_features, num_nodes).astype(np.float32)
-        A = np.random.randint(0, 2, (num_nodes, num_nodes)).astype(np.float32)
-        y = np.random.rand(num_samples, 1,
-                           output_dim,  num_nodes).astype(np.float32)
         data = self.create_dummy_data(
             num_samples, num_nodes, num_node_features, output_dim)
         # Save dummy data to the fake file system
@@ -255,22 +252,29 @@ class TestSurrogatemodelGNN(fake_filesystem_unittest.TestCase):
     def test_train_step(self):
 
         # Create a simple model for testing
-        model = tf.keras.Sequential([
-            tf.keras.layers.Dense(10, activation='relu'),
-            tf.keras.layers.Dense(2)
-        ])
+        model = get_model(
+            layer_type="GCNConv", num_layers=2, num_channels=16,
+            activation="relu", num_output=2)
         optimizer = tf.keras.optimizers.Adam()
         loss_fn = MeanAbsolutePercentageError()
 
         # Create dummy data
-        batch_size = 4
+        num_samples = 10
         num_nodes = 5
         num_node_features = 3
         output_dim = 2
-        inputs = np.random.rand(batch_size, num_nodes,
-                                num_node_features).astype(np.float32)
-        y = np.random.rand(batch_size, num_nodes,
-                           output_dim).astype(np.float32)
+        data = self.create_dummy_data(
+            num_samples, num_nodes, num_node_features, output_dim)
+        # Save dummy data to the fake file system
+        path_cases, path_mobility = self.setup_fake_filesystem(
+            self.fs, self.path, data)
+        # Create dataset
+        dataset = create_dataset(
+            path_cases, path_mobility, number_of_nodes=num_nodes)
+        # Build the model by calling it on a batch of data
+        loader = MixedLoader(dataset, batch_size=4, epochs=1)
+        inputs, y = next(loader)
+        model(inputs)
 
         # Perform a training step
         loss, acc = train_step(inputs, y, loss_fn, model, optimizer)
