@@ -456,7 +456,7 @@ TEST(ParameterStudies, mocked_run)
         EXPECT_EQ(sim.p.run, i++);
     }
     // case: run and run_serial with processing; expect the same (unordered) result for both, on all ranks
-    // Note: currently the tests are not make use of MPI, so we expect the same result from each rank
+    // Note: currently the tests do not make use of MPI, so we expect the same result from each rank
     auto result_serial_processed = study.run_serial(make_sim, process_sim);
     auto result_parallel         = study.run(make_sim, process_sim);
     for (const auto& result : {result_serial_processed, result_parallel}) {

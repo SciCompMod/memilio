@@ -52,13 +52,13 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
-    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    // Set the age groups that can go to school; here this is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
     // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-    // Check if the parameters satisfy their contraints.
+    // Check if the parameters satisfy their constraints.
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
@@ -90,7 +90,7 @@ mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
     add_household_group_to_model(model, threePersonHousehold_group);
 
     // Add one social event with 5 maximum contacts.
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
+    // Maximum contacts limit the number of people that a person can infect while being at this location.
     auto event = model.add_location(mio::abm::LocationType::SocialEvent);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
