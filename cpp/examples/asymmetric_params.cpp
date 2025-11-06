@@ -152,7 +152,7 @@ int main(int /*argc*/, char** /*argv*/)
     std::vector<int> farm_ids, num_cows_vec, dates, num_animals_exchanges;
     std::vector<int> froms, tos, from_exchanges, to_exchanges;
     if (rank == 0) {
-        io::CSVReader<4> farms("../../farms10000.csv");
+        io::CSVReader<4> farms("../../farms200000.csv");
         farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
         int farm_id, num_cows;
         double latitude, longitude;
@@ -162,14 +162,14 @@ int main(int /*argc*/, char** /*argv*/)
             latitudes.push_back(latitude);
             longitudes.push_back(longitude);
         }
-        io::CSVReader<2> edges("../../edges10000.csv");
+        io::CSVReader<2> edges("../../edges200000.csv");
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
             froms.push_back(from);
             tos.push_back(to);
         }
-        io::CSVReader<4> exchanges("../../trade10000.csv");
+        io::CSVReader<4> exchanges("../../trade200000.csv");
         exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to");
 
         int date, num_animals;
