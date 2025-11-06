@@ -423,8 +423,8 @@ public:
                 auto next_event = m_parameters.process_next_event();
                 if (Base::m_graph.nodes()[next_event.from].property.is_quarantined() ||
                     Base::m_graph.nodes()[next_event.to].property.is_quarantined()) {
-                    mio::log_info("Mobility from node {} to node {} at time {} skipped due to quarantine.",
-                                  next_event.from, next_event.to, Base::m_t);
+                    mio::log_debug("Mobility from node {} to node {} at time {} skipped due to quarantine.",
+                                   next_event.from, next_event.to, Base::m_t);
                     continue;
                 }
                 auto& e = Base::m_graph.get_edge(next_event.from, next_event.to);
@@ -451,8 +451,8 @@ public:
             auto animals        = Base::m_graph.nodes()[node_id].property.get_result().get_last_value();
             auto num_animals    = std::accumulate(animals.begin(), animals.end() - 1, 0);
             if (num_animals <= capacity) {
-                mio::log_info("Culling {} animals at node {} starting on day {} and going on for {} days.", num_animals,
-                              node_id, Base::m_t, dt);
+                mio::log_debug("Culling {} animals at node {} starting on day {} and going on for {} days.",
+                               num_animals, node_id, Base::m_t, dt);
                 for (auto index = 0; index < (animals.size() - 1); index++) {
                     animals[index] = 0;
                 }
@@ -462,6 +462,8 @@ public:
             }
             else {
                 while (capacity > 0) {
+                    mio::log_debug("Culling {} animals of node {} on day {} for {} days.", capacity, node_id, Base::m_t,
+                                   dt);
                     for (auto index = 0; index < (animals.size() - 1); index++) {
                         if (animals[index] < capacity) {
                             capacity -= animals[index];
@@ -493,8 +495,8 @@ public:
             auto animals        = Base::m_graph.nodes()[node_id].property.get_result().get_last_value();
             auto num_animals    = std::accumulate(animals.begin(), animals.end() - 1, 0);
             if (num_animals <= capacity) {
-                mio::log_info("Vaccinating {} animals at node {} starting on day {} and going on for {} days.",
-                              num_animals, node_id, Base::m_t, dt);
+                mio::log_debug("Vaccinating {} animals at node {} starting on day {} and going on for {} days.",
+                               num_animals, node_id, Base::m_t, dt);
                 for (auto index = 0; index < (animals.size() - 2); index++) {
                     animals[index] = 0;
                 }
@@ -707,9 +709,13 @@ public:
                 }
             }
             if (total_infections > 4) {
-                mio::log_debug("Node {} is quarantined at time {} because there are {} total infections.", n.id,
-                               Base::m_t, total_infections);
+                mio::log_debug("Node {} is culled at time {} because there are {} total infections.", n.id, Base::m_t,
+                               total_infections);
                 cull_node(n.id);
+                for (size_t index = 0; index < n.property.get_regional_neighbors()[0].size(); ++index) {
+                    const auto node_id = n.property.get_regional_neighbors()[0][index];
+                    vaccinate(node_id);
+                }
             }
         }
     }
@@ -718,6 +724,7 @@ public:
     {
         culling_queue.push(std::make_pair(node_id, Base::m_t));
         Base::m_graph.nodes()[node_id].property.set_quarantined(true);
+        mio::log_debug("It is day {} and we already want to cull {} farms.", Base::m_t, culling_queue.size());
     }
 
     void vaccinate_node(size_t node_id)
@@ -736,7 +743,7 @@ private:
     mio::MobilityParametersTimed m_parameters;
     RandomNumberGenerator m_rng;
     std::queue<std::pair<size_t, ScalarType>> culling_queue;
-    ScalarType culling_capacity_per_day = 200;
+    ScalarType culling_capacity_per_day = 2000;
     std::queue<std::pair<size_t, ScalarType>> vaccination_queue;
     ScalarType vaccination_capacity_per_day = 500;
 };

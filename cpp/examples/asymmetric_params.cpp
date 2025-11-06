@@ -48,6 +48,7 @@ enum class InfectionState
     INS,
     ICS,
     R,
+    V,
     D,
     Count
 };
@@ -226,7 +227,7 @@ int main(int /*argc*/, char** /*argv*/)
 
     auto tree = mio::geo::RTree(nodes.begin(), nodes.end());
 
-    std::vector<mio::geo::Distance> query_distances = {mio::geo::kilometers(2.0)};
+    std::vector<mio::geo::Distance> query_distances = {mio::geo::kilometers(5.0)};
 
     std::vector<std::vector<std::vector<size_t>>> locally_calculated_neighbors;
     size_t num_calculations = farm_ids.size() / size;
@@ -309,7 +310,7 @@ int main(int /*argc*/, char** /*argv*/)
         }
         auto index = sim2.get_graph().nodes()[0].property.get_simulation().get_model().populations.get_flat_index(
             {mio::regions::Region(0), InfectionState::E});
-        sim2.get_graph().nodes()[0].property.get_result().get_last_value()[index] = 10;
+        sim2.get_graph().nodes()[145236].property.get_result().get_last_value()[index] = 100;
         return sim2;
     };
     auto handle_result = [](auto&& sim, auto&& run) {
