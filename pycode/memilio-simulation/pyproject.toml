@@ -11,7 +11,7 @@ name = "memilio-simulation"
 version = "1.0.0"
 description = "Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [

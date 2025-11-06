@@ -11,7 +11,7 @@ name = "memilio-generation"
 version = "0.1.0"
 description = "Part of MEmilio project, automatic generation of model specific python bindings."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [

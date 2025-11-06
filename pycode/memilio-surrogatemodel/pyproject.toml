@@ -7,7 +7,7 @@ name = "memilio-surrogatemodel"
 version = "1.0.0"
 description = "Part of MEmilio project, implementation of surrogate models for the existing models in MEmilio."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 license = { text = "Apache-2.0" }
 authors = [{ name = "MEmilio Team" }]
 maintainers = [
