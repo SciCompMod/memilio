@@ -27,6 +27,7 @@
 #include "abm/virus_variant.h"
 #include "abm/parameters.h"
 
+#include <cstddef>
 #include <vector>
 
 namespace mio
@@ -198,6 +199,8 @@ private:
         m_log_norm_beta; ///< Parameters for the infectivity mapping, which is modelled through an invlogit function.
     ScalarType m_individual_virus_shed_factor; ///< Individual virus shed factor.
     bool m_detected; ///< Whether an Infection is detected or not.
+    mutable TimePoint m_last_lookup_time{0};
+    mutable size_t m_last_lookup_index{0};
 };
 
 } // namespace abm

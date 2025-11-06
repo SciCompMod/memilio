@@ -21,6 +21,8 @@
 #include "abm/infection.h"
 #include "abm/parameters.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <cassert>
+#include <iterator>
 #include <math.h>
 
 namespace mio
@@ -87,14 +89,27 @@ VirusVariant Infection::get_virus_variant() const
 
 InfectionState Infection::get_infection_state(TimePoint t) const
 {
-    if (t < m_infection_course[0].first)
+    assert(m_last_lookup_index < m_infection_course.size());
+    if (t < m_infection_course[0].first) {
         return InfectionState::Susceptible;
-
-    return (*std::prev(std::upper_bound(m_infection_course.begin(), m_infection_course.end(), t,
-                                        [](const TimePoint& s, std::pair<TimePoint, InfectionState> state) {
-                                            return state.first > s;
-                                        })))
-        .second;
+    }
+    auto infection_itr = m_infection_course.begin();
+    // offset the start iterator if the last lookup time
+    if (t >= m_last_lookup_time) {
+        infection_itr += m_last_lookup_index;
+        m_last_lookup_time = t;
+    }
+    else { // skip first element, as it was checked above
+        ++infection_itr;
+    }
+    // do a linear search, as we expect the current or next item to be the one we are looking for
+    for (; infection_itr != m_infection_course.end(); ++infection_itr) {
+        if (t < infection_itr->first) {
+            m_last_lookup_index = std::distance(m_infection_course.begin(), infection_itr) - 1;
+            break;
+        }
+    }
+    return std::prev(infection_itr)->second;
 }
 
 void Infection::set_detected()
