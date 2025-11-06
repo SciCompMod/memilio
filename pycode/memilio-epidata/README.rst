@@ -23,9 +23,9 @@ A more detailed description of the sources can be found in the `epidata subfolde
 Installation
 ------------
 
-Use the provided ``setup.py`` script to install the package and its dependencies.
+This project uses ``pyproject.toml`` to install the package and its dependencies.
 
-To install the package, use (from the directory that contains ``setup.py``)
+To install the package, run (from the directory that contains ``pyproject.toml``)
 
 .. code:: sh
 
@@ -116,7 +116,7 @@ Run pylint with the commands
 
 .. code:: sh
 
-    python setup.py pylint
+    python tools/run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
 Pylint report for actual master:
@@ -163,7 +163,7 @@ When you start creating a new script:
 
 When you add a new script
 
-- add a executable to the setup.py in "pycode/memilio-epidata"
+- add a script entry to ``pyproject.toml`` in "pycode/memilio-epidata"
 - add it to the cli_dict in getDataIntoPandasDataFrame.py
     - add a meaningfull key for the new script
     - as the value add a list in the form [comment to print when script is started, list of used parser arguments (optional)]

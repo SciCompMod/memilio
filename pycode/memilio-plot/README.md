@@ -23,9 +23,9 @@ by other packages of the MEmilio software.
 Installation
 ------------
 
-Use the provided ``setup.py`` script to install the package and its dependencies.
+This project uses ``pyproject.toml`` to install the package and its dependencies.
 
-To install the package, use (from the directory that contains ``setup.py``)
+To install the package, use pip (from the directory that contains ``pyproject.toml``)
 
 .. code:: sh
 
@@ -104,7 +104,7 @@ Run pylint with the commands
 
 .. code:: sh
 
-    python setup.py pylint
+    python tools/run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
 Pylint report for actual master:

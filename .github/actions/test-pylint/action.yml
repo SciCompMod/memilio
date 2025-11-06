@@ -28,7 +28,11 @@ runs:
       run: |
         cd pycode/memilio-${{ inputs.package }}
         mkdir -p build_pylint
-        python setup.py pylint
+        if [ -f tools/run_pylint.py ]; then
+          python tools/run_pylint.py
+        else
+          python -m pylint --rcfile=../pylintrc --load-plugins=pylint_json2html --output-format=jsonextended memilio/ > build_pylint/pylint_extended.json || true
+        fi
         pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v4

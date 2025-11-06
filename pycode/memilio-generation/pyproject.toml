@@ -1,0 +1,40 @@
+[build-system]
+requires = [
+  "scikit-build-core>=0.9.0",
+  "setuptools>=68",
+  "wheel"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "memilio-generation"
+version = "0.1.0"
+description = "Part of MEmilio project, automatic generation of model specific python bindings."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MEmilio Team" }]
+maintainers = [
+  { email = "martin.kuehn@dlr.de" }
+]
+urls = { 
+  Homepage = "https://github.com/SciCompMod/memilio",
+  Team = "https://memilio.readthedocs.io/en/latest/team.html"
+}
+dependencies = [
+  "libclang==18.1.1",
+  "dataclasses",
+  "dataclasses_json",
+  "graphviz",
+  "importlib-resources>=1.1.0; python_version < '3.9'"
+]
+
+[project.optional-dependencies]
+dev = []
+
+[tool.scikit-build]
+cmake.minimum-version = "3.13"
+wheel.packages = ["memilio"]
+
+[tool.scikit-build.package-data]
+"memilio.generation" = ["tools/*.json"]

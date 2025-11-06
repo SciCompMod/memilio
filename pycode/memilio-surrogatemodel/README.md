@@ -4,8 +4,8 @@ This package contains machine learning based surrogate models that make predicti
  
 ## Installation
 
-Use the provided `setup.py` script install the package. 
-To install the package, use the command (from the directory containing `setup.py`)
+Use the provided `pyproject.toml` file to install the package. 
+To install the package, use the command (from the directory containing `pyproject.toml`)
 
 ```bash
 pip install .

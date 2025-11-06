@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "memilio-plot"
+version = "1.0.0"
+description = "Part of MEmilio project, plots data to maps or visualizes simulation curves."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "MEmilio Team" }]
+maintainers = [
+  { email = "martin.kuehn@dlr.de" }
+]
+urls = { 
+  Homepage = "https://github.com/SciCompMod/memilio",
+  Team = "https://memilio.readthedocs.io/en/latest/team.html"
+}
+dependencies = [
+  "pandas>=1.2.2",
+  "matplotlib",
+  "numpy>=1.22,<1.25",
+  "openpyxl",
+  "xlrd",
+  "requests",
+  "pyxlsb",
+  "wget",
+  "folium",
+  "mapclassify",
+  "geopandas",
+  "h5py",
+  "imageio",
+  "datetime"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pyfakefs>=4.6",
+  "coverage>=7.0.1",
+  "pylint>=2.13.0,<2.16",
+  "pylint_json2html==0.4.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["memilio*"]

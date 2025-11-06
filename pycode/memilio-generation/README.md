@@ -13,7 +13,7 @@ The package uses the [Clang C++ library](https://clang.llvm.org/) and the [LibCl
 
 ## Installation
 
-Use the provided `setup.py` script to build and install the package. To install the package, use the command (from the directory containing `setup.py`)
+Use the provided `pyproject.toml` file to build and install the package. To install the package, use the command (from the directory containing `pyproject.toml`)
 
 ```bash
 pip install -e .[dev]
