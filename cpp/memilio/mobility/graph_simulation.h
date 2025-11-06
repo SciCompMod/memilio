@@ -25,6 +25,7 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/random_number_generator.h"
+#include <numeric>
 #include <queue>
 #include "memilio/compartments/feedback_simulation.h"
 #include "memilio/geography/regions.h"
@@ -410,6 +411,8 @@ public:
                 dt = t_max - Base::m_t;
             }
 
+            cull(dt);
+
             for (auto& n : Base::m_graph.nodes()) {
                 Base::m_node_func(Base::m_t, dt, n.property);
             }
@@ -432,6 +435,90 @@ public:
             }
             dt = m_parameters.next_event_time() - Base::m_t;
             apply_interventions();
+        }
+    }
+
+    /**
+     * @brief Go through the culling queue and cull as many animals as possible within dt.
+     * 
+     * @param dt Time span for culling.
+     */
+    void cull(ScalarType dt)
+    {
+        auto capacity = culling_capacity_per_day * dt;
+        while (!culling_queue.empty() && capacity > 0) {
+            auto [node_id, day] = culling_queue.front();
+            auto animals        = Base::m_graph.nodes()[node_id].property.get_result().get_last_value();
+            auto num_animals    = std::accumulate(animals.begin(), animals.end() - 1, 0);
+            if (num_animals <= capacity) {
+                mio::log_info("Culling {} animals at node {} starting on day {} and going on for {} days.", num_animals,
+                              node_id, Base::m_t, dt);
+                for (auto index = 0; index < (animals.size() - 1); index++) {
+                    animals[index] = 0;
+                }
+                animals[animals.size() - 1] += num_animals;
+                culling_queue.pop();
+                capacity -= num_animals;
+            }
+            else {
+                while (capacity > 0) {
+                    for (auto index = 0; index < (animals.size() - 1); index++) {
+                        if (animals[index] < capacity) {
+                            capacity -= animals[index];
+                            animals[animals.size() - 1] += animals[index];
+                            animals[index] = 0;
+                        }
+                        else {
+                            animals[animals.size() - 1] += capacity;
+                            animals[index] -= capacity;
+                            capacity = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief Go through the vaccination queue and vaccinate as many animals as possible within dt.
+     * 
+     * @param dt Time span for vaccination.
+     */
+    void vaccinate(ScalarType dt)
+    {
+        auto capacity = vaccination_capacity_per_day * dt;
+        while (!vaccination_queue.empty() && capacity > 0) {
+            auto [node_id, day] = vaccination_queue.front();
+            auto animals        = Base::m_graph.nodes()[node_id].property.get_result().get_last_value();
+            auto num_animals    = std::accumulate(animals.begin(), animals.end() - 1, 0);
+            if (num_animals <= capacity) {
+                mio::log_info("Vaccinating {} animals at node {} starting on day {} and going on for {} days.",
+                              num_animals, node_id, Base::m_t, dt);
+                for (auto index = 0; index < (animals.size() - 2); index++) {
+                    animals[index] = 0;
+                }
+                animals[animals.size() - 2] += num_animals;
+                vaccination_queue.pop();
+                capacity -= num_animals;
+            }
+            else {
+                while (capacity > 0) {
+                    for (auto index = 0; index < (animals.size() - 1); index++) {
+                        if (animals[index] < capacity) {
+                            capacity -= animals[index];
+                            animals[animals.size() - 2] += animals[index];
+                            animals[index] = 0;
+                        }
+                        else {
+                            animals[animals.size() - 2] += capacity;
+                            animals[index] -= capacity;
+                            capacity = 0;
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -544,6 +631,15 @@ public:
         return results;
     }
 
+    auto return_all_time_series()
+    {
+        std::vector<TimeSeries<ScalarType>> all_time_series;
+        for (auto& n : Base::m_graph.nodes()) {
+            all_time_series.push_back(n.property.get_result());
+        }
+        return all_time_series;
+    }
+
     auto statistics_per_timestep(std::vector<size_t> node_indices)
     {
         assert(node_indices.size() > 0);
@@ -610,7 +706,23 @@ public:
                         infectionrisk;
                 }
             }
+            if (total_infections > 4) {
+                mio::log_debug("Node {} is quarantined at time {} because there are {} total infections.", n.id,
+                               Base::m_t, total_infections);
+                cull_node(n.id);
+            }
         }
+    }
+
+    void cull_node(size_t node_id)
+    {
+        culling_queue.push(std::make_pair(node_id, Base::m_t));
+        Base::m_graph.nodes()[node_id].property.set_quarantined(true);
+    }
+
+    void vaccinate_node(size_t node_id)
+    {
+        vaccination_queue.push(std::make_pair(node_id, Base::m_t));
     }
 
     RandomNumberGenerator& get_rng()
@@ -623,6 +735,10 @@ public:
 private:
     mio::MobilityParametersTimed m_parameters;
     RandomNumberGenerator m_rng;
+    std::queue<std::pair<size_t, ScalarType>> culling_queue;
+    ScalarType culling_capacity_per_day = 200;
+    std::queue<std::pair<size_t, ScalarType>> vaccination_queue;
+    ScalarType vaccination_capacity_per_day = 500;
 };
 
 template <typename FP, typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
