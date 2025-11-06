@@ -42,21 +42,21 @@ int main()
                      NumExposed_2b = 1, NumInfectedNoSymptoms_2b = 2, NumInfectedSymptoms_2b = 2,
                      NumInfectedSevere_2b = 2, NumInfectedCritical_2b = 1;
     // The compartment for Susceptible people and all compartments for Dead and Recovered people must have exactly one subcompartment:
-    constexpr size_t NumSusceptible = 1, NumDead_a = 1, NumDead_b = 1, NumRecovered_a = 1, NumRecovered_b = 1,
-                     NumRecovered_ab = 1;
-    using InfState                   = mio::lsecir2d::InfectionState;
+    constexpr size_t NumSusceptible = 1, NumDead_a = 1, NumDead_b = 1, NumRecovered_1a = 1, NumRecovered_1b = 1,
+                     NumRecovered_2ab = 1;
+    using InfState                    = mio::lsecir2d::InfectionState;
     using LctState =
         mio::LctInfectionState<ScalarType, InfState, NumSusceptible, NumExposed_1a, NumInfectedNoSymptoms_1a,
-                               NumInfectedSymptoms_1a, NumInfectedSevere_1a, NumInfectedCritical_1a, NumRecovered_a,
+                               NumInfectedSymptoms_1a, NumInfectedSevere_1a, NumInfectedCritical_1a, NumRecovered_1a,
                                NumDead_a, NumExposed_2a, NumInfectedNoSymptoms_2a, NumInfectedSymptoms_2a,
                                NumInfectedSevere_2a, NumInfectedCritical_2a, NumExposed_1b, NumInfectedNoSymptoms_1b,
-                               NumInfectedSymptoms_1b, NumInfectedSevere_1b, NumInfectedCritical_1b, NumRecovered_b,
+                               NumInfectedSymptoms_1b, NumInfectedSevere_1b, NumInfectedCritical_1b, NumRecovered_1b,
                                NumDead_b, NumExposed_2b, NumInfectedNoSymptoms_2b, NumInfectedSymptoms_2b,
-                               NumInfectedSevere_2b, NumInfectedCritical_2b, NumRecovered_ab>;
+                               NumInfectedSevere_2b, NumInfectedCritical_2b, NumRecovered_2ab>;
     using Model = mio::lsecir2d::Model<ScalarType, LctState>;
     Model model;
 
-    ScalarType tmax = 10;
+    ScalarType tmax = 5;
 
     // Set Parameters.
     model.parameters.get<mio::lsecir2d::TimeExposed_a<ScalarType>>()[0]            = 3.;
@@ -119,8 +119,8 @@ int main()
         (initial_populations[(size_t)InfState::InfectedSymptoms_2a].size() != NumInfectedSymptoms_2a) ||
         (initial_populations[(size_t)InfState::InfectedSevere_2a].size() != NumInfectedSevere_2a) ||
         (initial_populations[(size_t)InfState::InfectedCritical_2a].size() != NumInfectedCritical_2a) ||
-        (initial_populations[(size_t)InfState::Recovered_a].size() !=
-         LctState::get_num_subcompartments<InfState::Recovered_a>()) ||
+        (initial_populations[(size_t)InfState::Recovered_1a].size() !=
+         LctState::get_num_subcompartments<InfState::Recovered_1a>()) ||
         (initial_populations[(size_t)InfState::Dead_a].size() !=
          LctState::get_num_subcompartments<InfState::Dead_a>()) ||
         (initial_populations[(size_t)InfState::Exposed_1b].size() != NumExposed_1b) ||
@@ -128,13 +128,17 @@ int main()
         (initial_populations[(size_t)InfState::InfectedSymptoms_1b].size() != NumInfectedSymptoms_1b) ||
         (initial_populations[(size_t)InfState::InfectedSevere_1b].size() != NumInfectedSevere_1b) ||
         (initial_populations[(size_t)InfState::InfectedCritical_1b].size() != NumInfectedCritical_1b) ||
+        (initial_populations[(size_t)InfState::Recovered_1b].size() !=
+         LctState::get_num_subcompartments<InfState::Recovered_1b>()) ||
+        (initial_populations[(size_t)InfState::Dead_b].size() !=
+         LctState::get_num_subcompartments<InfState::Dead_b>()) ||
         (initial_populations[(size_t)InfState::Exposed_2b].size() != NumExposed_2b) ||
         (initial_populations[(size_t)InfState::InfectedNoSymptoms_2b].size() != NumInfectedNoSymptoms_2b) ||
         (initial_populations[(size_t)InfState::InfectedSymptoms_2b].size() != NumInfectedSymptoms_2b) ||
         (initial_populations[(size_t)InfState::InfectedSevere_2b].size() != NumInfectedSevere_2b) ||
         (initial_populations[(size_t)InfState::InfectedCritical_2b].size() != NumInfectedCritical_2b) ||
-        (initial_populations[(size_t)InfState::Recovered_ab].size() !=
-         LctState::get_num_subcompartments<InfState::Recovered_ab>())) {
+        (initial_populations[(size_t)InfState::Recovered_2ab].size() !=
+         LctState::get_num_subcompartments<InfState::Recovered_2ab>())) {
         mio::log_error("The length of at least one vector in initial_populations does not match the related number of "
                        "subcompartments.");
         return 1;
@@ -149,7 +153,7 @@ int main()
     }
 
     // Perform a simulation.
-    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.5, model);
+    mio::TimeSeries<ScalarType> result = mio::simulate<ScalarType, Model>(0, tmax, 0.1, model);
     // The simulation result is divided by subcompartments.
     // We call the function calculate_compartments to get a result according to the InfectionStates.
     mio::TimeSeries<ScalarType> population_no_subcompartments = model.calculate_compartments(result);

@@ -40,7 +40,7 @@ enum class InfectionState
     InfectedSymptoms_1a   = 3,
     InfectedSevere_1a     = 4,
     InfectedCritical_1a   = 5,
-    Recovered_a           = 6,
+    Recovered_1a          = 6,
     Dead_a                = 7,
     // second infection with disease a
     Exposed_2a            = 8,
@@ -54,7 +54,7 @@ enum class InfectionState
     InfectedSymptoms_1b   = 15,
     InfectedSevere_1b     = 16,
     InfectedCritical_1b   = 17,
-    Recovered_b           = 18,
+    Recovered_1b          = 18,
     Dead_b                = 19,
     // second infection with disease b
     Exposed_2b            = 20,
@@ -63,8 +63,8 @@ enum class InfectionState
     InfectedSevere_2b     = 23,
     InfectedCritical_2b   = 24,
     // Recovered from both diseases
-    Recovered_ab = 25,
-    Count        = 26
+    Recovered_2ab = 25,
+    Count         = 26
 };
 
 } // namespace lsecir2d

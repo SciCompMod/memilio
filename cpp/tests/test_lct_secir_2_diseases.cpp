@@ -192,7 +192,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir1)
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::InfectedSevere],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::InfectedSevere_1a], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::Recovered],
-                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_a], 1e-5);
+                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_1a], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::Dead],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Dead_a], 1e-5);
     }
@@ -321,13 +321,13 @@ TEST(TestLCTSecir2d, compareWithLCTSecir2)
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::InfectedSevere],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::InfectedSevere_1b], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Recovered],
-                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_b], 1e-5);
+                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_1b], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Dead],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Dead_b], 1e-5);
     }
 }
 
-// 3. Test: Second infection with disease a (transmission prob. of disease b = 0, start in Recovered_b)*/
+// 3. Test: Second infection with disease a (transmission prob. of disease b = 0, start in Recovered_1b)*/
 TEST(TestLCTSecir2d, compareWithLCTSecir3)
 {
     using InfState_2d = mio::lsecir2d::InfectionState;
@@ -341,7 +341,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
 
     ScalarType t0   = 0;
     ScalarType tmax = 5;
-    ScalarType dt   = 0.1;
+    ScalarType dt   = 1;
 
     // Initialization vector for lct2d model.
     Eigen::VectorX<ScalarType> init_lct2d = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState_2d::Count, 0);
@@ -439,7 +439,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
         EXPECT_NEAR(result_lct.get_time(i), result_lct2d.get_time(i), 1e-5);
 
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::Susceptible],
-                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_b], 1e-5);
+                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_1b], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::Exposed],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Exposed_2a], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::InfectedNoSymptoms],
@@ -451,13 +451,13 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::InfectedSevere],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::InfectedSevere_2a], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::Recovered],
-                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_ab], 1e-5);
+                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_2ab], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState_lct::Dead],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Dead_a], 1e-5);
     }
 }
 
-// 4. Test: Second infection with disease b (transmission prob. of disease a = 0, start in Recovered_a)*/
+// 4. Test: Second infection with disease b (transmission prob. of disease a = 0, start in Recovered_1a)*/
 TEST(TestLCTSecir2d, compareWithLCTSecir4)
 {
     using InfState2d = mio::lsecir2d::InfectionState;
@@ -466,7 +466,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
     using Model_2d   = mio::lsecir2d::Model<ScalarType, LctState2d, LctState2d>;
     ScalarType t0    = 0;
     ScalarType tmax  = 5;
-    ScalarType dt    = 0.1;
+    ScalarType dt    = 1;
 
     // Initialization vector for lct2d model.
     Eigen::VectorX<ScalarType> init_lct2d = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState2d::Count, 0);
@@ -568,7 +568,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
         EXPECT_NEAR(result_lct.get_time(i), result_lct2d.get_time(i), 1e-5);
 
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Susceptible],
-                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_a], 1e-5);
+                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_1a], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Exposed],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Exposed_2b], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::InfectedNoSymptoms],
@@ -580,7 +580,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir4)
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::InfectedSevere],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::InfectedSevere_2b], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Recovered],
-                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_ab], 1e-5);
+                    result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Recovered_2ab], 1e-5);
         EXPECT_NEAR(result_lct[i][(Eigen::Index)InfState::Dead],
                     result_lct2d[i][(Eigen::Index)mio::lsecir2d::InfectionState::Dead_b], 1e-5);
     }
@@ -920,25 +920,25 @@ TEST(TestLCTSecir2d, testConstraintsModel)
     EXPECT_TRUE(constraint_check);
 
     // Check for improper number of subcompartments for Recovered.
-    using LctStatewrongRecovered_a = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1,
-                                                            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongRecovered_a    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_a>;
-    ModelwrongRecovered_a modelwrongRecovered_a;
-    constraint_check = modelwrongRecovered_a.check_constraints();
+    using LctStatewrongRecovered_1a = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1,
+                                                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongRecovered_1a    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_1a>;
+    ModelwrongRecovered_1a modelwrongRecovered_1a;
+    constraint_check = modelwrongRecovered_1a.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    using LctStatewrongRecovered_b = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                                            1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1>;
-    using ModelwrongRecovered_b    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_b>;
-    ModelwrongRecovered_b modelwrongRecovered_b;
-    constraint_check = modelwrongRecovered_b.check_constraints();
+    using LctStatewrongRecovered_1b = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                             1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1>;
+    using ModelwrongRecovered_1b    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_1b>;
+    ModelwrongRecovered_1b modelwrongRecovered_1b;
+    constraint_check = modelwrongRecovered_1b.check_constraints();
     EXPECT_TRUE(constraint_check);
 
-    using LctStatewrongRecovered_ab = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                                                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3>;
-    using ModelwrongRecovered_ab    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_ab>;
-    ModelwrongRecovered_ab modelwrongRecovered_ab;
-    constraint_check = modelwrongRecovered_ab.check_constraints();
+    using LctStatewrongRecovered_2ab = mio::LctInfectionState<ScalarType, InfState, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                                              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3>;
+    using ModelwrongRecovered_2ab    = mio::lsecir2d::Model<ScalarType, LctStatewrongRecovered_2ab>;
+    ModelwrongRecovered_2ab modelwrongRecovered_2ab;
+    constraint_check = modelwrongRecovered_2ab.check_constraints();
     EXPECT_TRUE(constraint_check);
 
     // Check for improper number of subcompartments for Dead.
