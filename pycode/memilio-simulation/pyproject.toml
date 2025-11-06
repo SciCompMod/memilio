@@ -30,6 +30,6 @@ Homepage = "https://github.com/SciCompMod/memilio"
 Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
 [tool.scikit-build]
-cmake.minimum-version = "3.13"
+cmake.version = "3.13"
 cmake.args = ["-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON"]
 wheel.packages = ["memilio"]
