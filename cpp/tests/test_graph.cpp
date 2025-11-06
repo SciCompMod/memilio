@@ -344,6 +344,41 @@ TEST(TestGraph, ot_edges)
     EXPECT_THAT(g.out_edges(1), testing::ElementsAreArray(v1));
 }
 
+TEST(TestGraph, compare_add_edge_functions)
+{
+    mio::Graph<int, int> g;
+    mio::Graph<int, int> g_lazy;
+    int num_nodes = 10;
+    for (int index = 0; index < num_nodes; ++index) {
+        g.add_node(index);
+        g_lazy.add_node(index);
+    }
+    for (int first_node = num_nodes; first_node >= 0; --first_node) {
+        for (int second_node = 0; second_node < num_nodes; ++second_node) {
+            if (first_node != second_node) {
+                g.add_edge(first_node, second_node, int(first_node + second_node));
+                g_lazy.lazy_add_edge(first_node, second_node, int(first_node + second_node));
+            }
+        }
+    }
+    for (int first_node = num_nodes; first_node >= 0; --first_node) {
+        for (int second_node = 0; second_node < num_nodes; ++second_node) {
+            if (first_node != second_node) {
+                g.add_edge(first_node, second_node, int(first_node + second_node));
+                g_lazy.lazy_add_edge(first_node, second_node, int(first_node + second_node));
+            }
+        }
+    }
+    g_lazy.sort_edges();
+    g_lazy.make_edges_unique();
+    EXPECT_EQ(g.edges().size(), g_lazy.edges().size());
+
+    for (size_t index = 0; index < g.edges().size(); index++) {
+        EXPECT_EQ(g.edges()[index].start_node_idx, g_lazy.edges()[index].start_node_idx);
+        EXPECT_EQ(g.edges()[index].end_node_idx, g_lazy.edges()[index].end_node_idx);
+    }
+}
+
 namespace
 {
 

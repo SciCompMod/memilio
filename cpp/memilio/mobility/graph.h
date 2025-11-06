@@ -179,6 +179,62 @@ public:
     }
 
     /**
+    * @brief Add edges to a graph without checking for duplicates and without sorting.
+    * 
+    * @param start_node_idx Id of start node
+    * @param end_node_idx Id of end node
+    * @param args Additional arguments for edge construction
+    * @return Edge<EdgePropertyT>& End of edge vector
+    */
+    template <class... Args>
+    Edge<EdgePropertyT>& lazy_add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        m_edges.emplace_back(start_node_idx, end_node_idx, std::forward<Args>(args)...);
+        return m_edges.back();
+    }
+
+    /**
+     * @brief Sort the edge vector of a graph.
+     * 
+     * @return Edge<EdgePropertyT>& End of edge vector
+     */
+    Edge<EdgePropertyT>& sort_edges()
+    {
+        std::sort(m_edges.begin(), m_edges.end(), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                          : e1.start_node_idx < e2.start_node_idx;
+        });
+        return m_edges.back();
+    }
+
+    /**
+     * @brief Make the edges of a graph unique.
+     * 
+     * Copies all the unique edges to a new vector and replaces the edge vector of the graph with it. Unique means that 
+     * the start and end node indices are unique. Other edge properties are not checked.
+     * @return Edge<EdgePropertyT>& End of edge vector
+     */
+    Edge<EdgePropertyT>& make_edges_unique()
+    {
+        std::vector<Edge<EdgePropertyT>> unique_edges;
+        unique_edges.reserve(m_edges.size());
+        std::ranges::unique_copy(m_edges, std::back_inserter(unique_edges), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
+        });
+        m_edges = std::move(unique_edges);
+        return m_edges.back();
+    }
+
+    /**
+     * @brief reserve space for edges.
+     */
+    void reserve_edges(size_t n)
+    {
+        m_edges.reserve(n);
+    }
+
+    /**
      * @brief range of nodes
      */
     auto nodes()

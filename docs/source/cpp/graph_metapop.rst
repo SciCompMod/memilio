@@ -177,6 +177,21 @@ The following steps detail how to configure and execute a graph simulation:
         graph.add_edge(0, 1, std::move(transition_rates));
         graph.add_edge(1, 0, std::move(transition_rates));
 
+.. dropdown:: :fa:`gears` Working with large graphs
+
+    When working with very large graphs, i.e. starting from a few thousand edges, it will be faster to not use the standard ``add_edge`` function. This function always
+    keeps the list of edges inside the graph sorted and checks for duplicates. For large graphs, it is faster to first add all the edges to the graph 
+    and then sort them and remove duplicates:
+
+    .. code-block:: cpp
+
+        graph.reserve_edges(2);
+        graph.lazy_add_edge(0, 1, std::move(transition_rates));
+        graph.lazy_add_edge(1, 0, std::move(transition_rates));
+        graph.sort_edges();
+        graph.make_edges_unique();
+
+
 5. **Initialize and Advance the Mobility Simulation:**
 
    With the graph constructed, initialize the simulation with the starting time and time step. Then, advance the simulation until the final time :math:`t_{max}`.
