@@ -13,10 +13,6 @@ authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
-urls = { 
-  Homepage = "https://github.com/SciCompMod/memilio",
-  Team = "https://memilio.readthedocs.io/en/latest/team.html"
-}
 dependencies = [
   "pandas>=2.0.0",
   "pyarrow",
@@ -55,6 +51,10 @@ cleandata = "memilio.epidata.cleanData:main"
 getcommutermobility = "memilio.epidata.getCommuterMobility:main"
 getvaccinationdata = "memilio.epidata.getVaccinationData:main"
 gethospitalizationdata = "memilio.epidata.getHospitalizationData:main"
+
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
 [tool.setuptools.packages.find]
 where = ["."]

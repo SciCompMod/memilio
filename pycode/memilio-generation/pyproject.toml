@@ -17,10 +17,6 @@ authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
-urls = { 
-  Homepage = "https://github.com/SciCompMod/memilio",
-  Team = "https://memilio.readthedocs.io/en/latest/team.html"
-}
 dependencies = [
   "libclang==18.1.1",
   "dataclasses",
@@ -32,9 +28,13 @@ dependencies = [
 [project.optional-dependencies]
 dev = []
 
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
+
 [tool.scikit-build]
 cmake.minimum-version = "3.13"
 wheel.packages = ["memilio"]
 
 [tool.scikit-build.package-data]
-"memilio.generation" = ["tools/*.json"]
+"memilio.generation" = ["tools/*.json", "tools/*.txt", "tools/README.md"]

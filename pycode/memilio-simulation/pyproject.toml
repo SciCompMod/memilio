@@ -17,10 +17,6 @@ authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
-urls = { 
-  Homepage = "https://github.com/SciCompMod/memilio",
-  Team = "https://memilio.readthedocs.io/en/latest/team.html"
-}
 dependencies = []
 
 [project.optional-dependencies]
@@ -28,6 +24,10 @@ dev = [
   "numpy>=1.22,<1.25",
   "pandas>=2.0.0"
 ]
+
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
 [tool.scikit-build]
 cmake.minimum-version = "3.13"

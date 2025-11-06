@@ -13,10 +13,6 @@ authors = [{ name = "MEmilio Team" }]
 maintainers = [
   { email = "martin.kuehn@dlr.de" }
 ]
-urls = { 
-  Homepage = "https://github.com/SciCompMod/memilio",
-  Team = "https://memilio.readthedocs.io/en/latest/team.html"
-}
 dependencies = [
   "pandas>=1.2.2",
   "progress",
@@ -31,6 +27,10 @@ dev = [
   "pyfakefs>=4.6",
   "coverage>=7.0.1"
 ]
+
+[project.urls]
+Homepage = "https://github.com/SciCompMod/memilio"
+Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
 [tool.setuptools.packages.find]
 where = ["."]
