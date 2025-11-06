@@ -10,15 +10,17 @@ int main()
     const ScalarType tmax = 10;
     ScalarType dt         = 0.1;
 
-    mio::oseirmetapop::Model<ScalarType> model(3, 1);
+    using namespace mio::oseirmetapop;
+
+    Model<ScalarType> model(3, 1);
 
     for (size_t i = 0; i < (size_t)model.parameters.get_num_regions(); i++) {
-        model.populations[{mio::regions::Region(i), mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] =
+        model.populations[{mio::regions::Region(i), mio::AgeGroup(0), InfectionState::Susceptible}] =
             10000;
     }
 
-    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Exposed}] += 100;
-    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), mio::oseir::InfectionState::Susceptible}] -=
+    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), InfectionState::Exposed}] += 100;
+    model.populations[{mio::regions::Region(0), mio::AgeGroup(0), InfectionState::Susceptible}] -=
         100;
 
     Eigen::MatrixXd mobility_data_commuter(3, 3);
@@ -26,18 +28,14 @@ int main()
 
     model.set_commuting_strengths(mobility_data_commuter);
 
-    mio::oseir::Parameters<ScalarType> local_params(1);
-
-    local_params.template get<mio::oseir::ContactPatterns<>>()
+    model.parameters.template get<ContactPatterns<>>()
         .get_cont_freq_mat()[0]
         .get_baseline()
         .setConstant(2.7);
 
-    local_params.set<mio::oseir::TimeExposed<>>(3.335);
-    local_params.set<mio::oseir::TimeInfected<>>(8.097612257);
-    local_params.set<mio::oseir::TransmissionProbabilityOnContact<>>(0.07333);
-
-    model.set_local_parameters(local_params);
+    model.parameters.set<TimeExposed<>>(3.335);
+    model.parameters.set<TimeInfected<>>(8.097612257);
+    model.parameters.set<TransmissionProbabilityOnContact<>>(0.07333);
 
     auto result = simulate(t0, tmax, dt, model);
 

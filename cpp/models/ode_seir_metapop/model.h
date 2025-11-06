@@ -17,20 +17,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ODESEIRMETAPOPADVANCED_MODEL_H
-#define ODESEIRMETAPOPADVANCED_MODEL_H
+#ifndef ODESEIRMETAPOP_MODEL_H
+#define ODESEIRMETAPOP_MODEL_H
+
+#include <Eigen/Dense>
 
 #include "memilio/compartments/flow_model.h"
 #include "memilio/epidemiology/populations.h"
-#include "models/ode_seir/model.h"
-#include "models/ode_seir/infection_state.h"
 #include "models/ode_seir_metapop/parameters.h"
-#include "models/ode_seir/parameters.h"
+#include "models/ode_seir_metapop/infection_state.h"
 #include "memilio/geography/regions.h"
-#include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/compartments/simulation.h"
-#include "memilio/utils/logging.h"
 
 namespace mio
 {
@@ -41,19 +38,19 @@ namespace oseirmetapop
 * define the model *
 ********************/
 
-using Flows = TypeList<Flow<mio::oseir::InfectionState::Susceptible, mio::oseir::InfectionState::Exposed>,
-                       Flow<mio::oseir::InfectionState::Exposed, mio::oseir::InfectionState::Infected>,
-                       Flow<mio::oseir::InfectionState::Infected, mio::oseir::InfectionState::Recovered>>;
+using Flows = TypeList<Flow<InfectionState::Susceptible, InfectionState::Exposed>,
+                       Flow<InfectionState::Exposed, InfectionState::Infected>,
+                       Flow<InfectionState::Infected, InfectionState::Recovered>>;
 
 /**
  * @brief The Model holds the Parameters and the initial Populations and defines the ordinary differential equations.
  */
 template <typename FP = ScalarType>
-class Model : public FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, mio::oseir::InfectionState>,
+class Model : public FlowModel<FP, InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, InfectionState>,
                                Parameters<FP>, Flows>
 {
 
-    using Base = FlowModel<FP, mio::oseir::InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, mio::oseir::InfectionState>,
+    using Base = FlowModel<FP, InfectionState, mio::Populations<FP, mio::regions::Region, AgeGroup, InfectionState>,
                            Parameters<FP>, Flows>;
 
 public:
@@ -66,42 +63,41 @@ public:
      * @param[in] num_agegroups The number of AgeGroup%s.
      */
     Model(int num_regions, int num_agegroups)
-        : Base(Populations({Region(num_regions), AgeGroup(num_agegroups), mio::oseir::InfectionState::Count}),
-               ParameterSet(Region(num_regions), AgeGroup(num_agegroups))),
-          local_model(num_agegroups)
+        : Base(Populations({Region(num_regions), AgeGroup(num_agegroups), InfectionState::Count}),
+               ParameterSet(Region(num_regions), AgeGroup(num_agegroups)))
     {
     }
 
     /**
      * @brief Compute the values of the flows between compartments at a given time. 
-     * @param[in] pop The current population by #mio::oseir::InfectionState, AgeGroup and Region.
-     * @param[in] y The current population by #mio::oseir::InfectionState, AgeGroup and Region.
+     * @param[in] pop The current population by #InfectionState, AgeGroup and Region.
+     * @param[in] y The current population by #InfectionState, AgeGroup and Region.
      * @param[in] t The current time.
      * @param[in, out] flows The computed flows between compartments.
      */
     void get_flows(Eigen::Ref<const Eigen::VectorX<FP>> pop, Eigen::Ref<const Eigen::VectorX<FP>> y, FP t,
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const override
     {
-        const auto& metapop_params     = this->parameters;
-        const auto& local_params = this->local_model.parameters;
+        using enum InfectionState;
+        const auto& params     = this->parameters;
         const auto& population = this->populations;
         const Eigen::MatrixXd commuting_strengths =
-            metapop_params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(t);
-        const size_t n_age_groups = (size_t)metapop_params.get_num_agegroups();
-        const size_t n_regions    = (size_t)metapop_params.get_num_regions();
+            params.template get<CommutingStrengths<>>().get_cont_freq_mat().get_matrix_at(t);
+        const size_t n_age_groups = (size_t)params.get_num_agegroups();
+        const size_t n_regions    = (size_t)params.get_num_regions();
 
         Eigen::MatrixXd infected_pop(n_regions, n_age_groups);
         for (size_t region_n = 0; region_n < n_regions; region_n++) {
             for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
                 infected_pop(region_n, age_i) =
-                    pop[population.get_flat_index({Region(region_n), AgeGroup(age_i), mio::oseir::InfectionState::Infected})];
+                    pop[population.get_flat_index({Region(region_n), AgeGroup(age_i), Infected})];
             }
         }
         Eigen::MatrixXd infectious_share_per_region = commuting_strengths.transpose() * infected_pop;
         for (size_t region_n = 0; region_n < n_regions; region_n++) {
             for (size_t age_i = 0; age_i < n_age_groups; age_i++) {
                 infectious_share_per_region(region_n, age_i) /=
-                    metapop_params.template get<PopulationAfterCommuting<FP>>()[{Region(region_n), AgeGroup(age_i)}];
+                    params.template get<PopulationAfterCommuting<FP>>()[{Region(region_n), AgeGroup(age_i)}];
             }
         }
         Eigen::MatrixXd infections_due_commuting = commuting_strengths * infectious_share_per_region;
@@ -109,35 +105,35 @@ public:
             for (size_t age_j = 0; age_j < n_age_groups; age_j++) {
                 for (size_t region_n = 0; region_n < n_regions; region_n++) {
                     const size_t Ejn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), mio::oseir::InfectionState::Exposed});
+                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Exposed});
                     const size_t Ijn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), mio::oseir::InfectionState::Infected});
+                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Infected});
                     const size_t Rjn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), mio::oseir::InfectionState::Recovered});
+                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Recovered});
                     const size_t Sjn =
-                        population.get_flat_index({Region(region_n), AgeGroup(age_j), mio::oseir::InfectionState::Susceptible});
+                        population.get_flat_index({Region(region_n), AgeGroup(age_j), Susceptible});
 
                     const double Nj_inv = 1.0 / (pop[Sjn] + pop[Ejn] + pop[Ijn] + pop[Rjn]);
                     double coeffStoE =
                         0.5 *
-                        local_params.template get<mio::oseir::ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
-                        local_params.template get<mio::oseir::TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
+                        params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(t)(age_i, age_j) *
+                        params.template get<TransmissionProbabilityOnContact<FP>>()[AgeGroup(age_i)];
 
-                    flows[Base::template get_flat_flow_index<mio::oseir::InfectionState::Susceptible, mio::oseir::InfectionState::Exposed>(
+                    flows[Base::template get_flat_flow_index<Susceptible, Exposed>(
                         {Region(region_n), AgeGroup(age_i)})] +=
                         (pop[Ijn] * Nj_inv + infections_due_commuting(region_n, age_j)) * coeffStoE *
-                        y[population.get_flat_index({Region(region_n), AgeGroup(age_i), mio::oseir::InfectionState::Susceptible})];
+                        y[population.get_flat_index({Region(region_n), AgeGroup(age_i), Susceptible})];
                 }
             }
             for (size_t region = 0; region < n_regions; region++) {
-                flows[Base::template get_flat_flow_index<mio::oseir::InfectionState::Exposed, mio::oseir::InfectionState::Infected>(
+                flows[Base::template get_flat_flow_index<Exposed, Infected>(
                     {Region(region), AgeGroup(age_i)})] =
-                    y[population.get_flat_index({Region(region), AgeGroup(age_i), mio::oseir::InfectionState::Exposed})] /
-                    local_params.template get<mio::oseir::TimeExposed<FP>>()[AgeGroup(age_i)];
-                flows[Base::template get_flat_flow_index<mio::oseir::InfectionState::Infected, mio::oseir::InfectionState::Recovered>(
+                    y[population.get_flat_index({Region(region), AgeGroup(age_i), Exposed})] /
+                    params.template get<TimeExposed<FP>>()[AgeGroup(age_i)];
+                flows[Base::template get_flat_flow_index<Infected, Recovered>(
                     {Region(region), AgeGroup(age_i)})] =
-                    y[population.get_flat_index({Region(region), AgeGroup(age_i), mio::oseir::InfectionState::Infected})] /
-                    local_params.template get<mio::oseir::TimeInfected<FP>>()[AgeGroup(age_i)];
+                    y[population.get_flat_index({Region(region), AgeGroup(age_i), Infected})] /
+                    params.template get<TimeInfected<FP>>()[AgeGroup(age_i)];
             }
         }
     }
@@ -154,25 +150,24 @@ public:
             return mio::failure(mio::StatusCode::OutOfRange, "t_idx is not a valid index for the TimeSeries");
         }
 
-        auto const& metapop_params = this->parameters;
-        auto const& local_params = this->local_model.parameters;
+        auto const& params = this->parameters;
         auto const& pop    = this->populations;
 
-        const size_t num_age_groups                = (size_t)local_params.get_num_agegroups();
-        const size_t num_regions                   = (size_t)local_params.get_num_regions();
+        const size_t num_age_groups                = (size_t)params.get_num_agegroups();
+        const size_t num_regions                   = (size_t)params.get_num_regions();
         constexpr size_t num_infected_compartments = 2;
         const size_t total_infected_compartments   = num_infected_compartments * num_age_groups * num_regions;
 
-        ContactMatrixGroup const& contact_matrix      = local_params.template get<mio::oseir::ContactPatterns<ScalarType>>();
-        ContactMatrixGroup const& commuting_strengths = metapop_params.template get<CommutingStrengths<ScalarType>>();
-        Populations const& population_after_commuting = metapop_params.template get<PopulationAfterCommuting<ScalarType>>();
+        ContactMatrixGroup const& contact_matrix      = params.template get<ContactPatterns<ScalarType>>();
+        ContactMatrixGroup const& commuting_strengths = params.template get<CommutingStrengths<ScalarType>>();
+        Populations const& population_after_commuting = params.template get<PopulationAfterCommuting<ScalarType>>();
 
         Eigen::MatrixXd F = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
         Eigen::MatrixXd V = Eigen::MatrixXd::Zero(total_infected_compartments, total_infected_compartments);
 
         for (auto i = AgeGroup(0); i < AgeGroup(num_age_groups); i++) {
             for (auto n = Region(0); n < Region(num_regions); n++) {
-                size_t Si = pop.get_flat_index({n, i, mio::oseir::InfectionState::Susceptible});
+                size_t Si = pop.get_flat_index({n, i, InfectionState::Susceptible});
                 for (auto j = AgeGroup(0); j < AgeGroup(num_age_groups); j++) {
                     for (auto m = Region(0); m < Region(num_regions); m++) {
                         auto const population_region     = pop.template slice<Region>({m.get(), 1});
@@ -180,7 +175,7 @@ public:
                         auto Njm = std::accumulate(population_region_age.begin(), population_region_age.end(), 0.);
 
                         double coeffStoE = 0.5 * contact_matrix.get_matrix_at(y.get_time(t_idx))(i.get(), j.get()) *
-                                           local_params.template get<mio::oseir::TransmissionProbabilityOnContact<ScalarType>>()[i];
+                                           params.template get<TransmissionProbabilityOnContact<ScalarType>>()[i];
                         if (n == m) {
                             F(i.get() * num_regions + n.get(), num_age_groups * num_regions + j.get() * num_regions +
                                                                    m.get()) += coeffStoE * y.get_value(t_idx)[Si] / Njm;
@@ -196,8 +191,8 @@ public:
                     }
                 }
 
-                double T_Ei = local_params.template get<mio::oseir::TimeExposed<ScalarType>>()[i];
-                double T_Ii = local_params.template get<mio::oseir::TimeInfected<ScalarType>>()[i];
+                double T_Ei = params.template get<TimeExposed<ScalarType>>()[i];
+                double T_Ii = params.template get<TimeInfected<ScalarType>>()[i];
                 V(i.get() * num_regions + n.get(), i.get() * num_regions + n.get()) = 1.0 / T_Ei;
                 V(num_age_groups * num_regions + i.get() * num_regions + n.get(), i.get() * num_regions + n.get()) =
                     -1.0 / T_Ei;
@@ -260,9 +255,9 @@ public:
         for (size_t region_n = 0; region_n < number_regions; ++region_n) {
             for (size_t age = 0; age < number_age_groups; ++age) {
                 double population_n = 0;
-                for (size_t state = 0; state < (size_t)mio::oseir::InfectionState::Count; state++) {
+                for (size_t state = 0; state < (size_t)InfectionState::Count; state++) {
                     population_n += population[{Region(region_n), mio::AgeGroup(age),
-                                                mio::oseir::InfectionState(state)}];
+                                                InfectionState(state)}];
                 }
                 population_after_commuting[{Region(region_n), mio::AgeGroup(age)}] += population_n;
                 for (size_t region_m = 0; region_m < number_regions; ++region_m) {
@@ -286,14 +281,6 @@ public:
         auto number_regions = (size_t)this->parameters.get_num_regions();
         set_commuting_strengths(Eigen::MatrixXd::Identity(number_regions, number_regions));
     }
-
-    void set_local_parameters(const mio::oseir::Parameters<FP>& params)
-    {
-        local_model.parameters = params;
-    }
-
-private:
-mio::oseir::Model<FP> local_model;
 };
 
 } // namespace oseirmetapop
