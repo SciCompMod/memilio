@@ -101,34 +101,44 @@ def plot_susceptibles(files, fileending, save_dir=""):
     plt.clf()
 
 
+def subfolders_scandir(path):
+    # path = os.path.dirname(path)
+    print(path)
+    with os.scandir(path) as it:
+        return [entry.name for entry in it if entry.is_dir()]
+
+
 if __name__ == '__main__':
 
-    dir_name = "messina_model_extended_test"
+    # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
+    root_dir = os.path.join(os.path.dirname(
+        __file__), "../simulation_results")
+    main_dir = "2025-10-29/time_infected=1"
+    relevant_dir = os.path.join(root_dir, main_dir)
 
-    # Path where simulation results (generated with ide_changepoints.cpp) are stored.
-    result_dir = os.path.join(os.path.dirname(
-        __file__),  f"../simulation_results/{dir_name}/")
-    # Path where plots will be stored.
-    plot_dir = os.path.join(os.path.dirname(
-        __file__),  f"../plots/{dir_name}/")
+    sub_dirs = subfolders_scandir(relevant_dir)
 
-    gregory_orders = ["1", "2", "3"]
-    ide_exponent = "3"
-    groundtruth_exponent = "4"
+    # sub_dirs = ["detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8",
+    #             "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=2_tolexp=8",
+    #             "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=4_tolexp=8"]
 
-    # for gregory_order in gregory_orders:
-    #     plot_susceptibles([os.path.join(result_dir, f"result_ide_dt=1e-4_gregoryorder=3_finitedifforder=1"),
-    #                        os.path.join(result_dir, f"result_ide_dt=1e-{dt_exp}_gregoryorder={gregory_order}_finitedifforder=1")],
-    #                       fileending=f"dt=1e-{dt_exp}_gregory={gregory_order}", save_dir=plot_dir)
+    for dir_name in sub_dirs:
+        print(main_dir + "/" + dir_name)
 
-    for gregory_order in gregory_orders:
-        plot_susceptibles([os.path.join(result_dir, f"result_ide_dt=1e-{groundtruth_exponent}_gregoryorder={3}"),
-                           os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-                          fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)
-    # for ODE
+        # Path where simulation results are stored.
+        result_dir = os.path.join(os.path.dirname(
+            __file__),  f"../simulation_results/{main_dir}/{dir_name}/")
+        # Path where plots will be stored.
+        plot_dir = os.path.join(os.path.dirname(
+            __file__),  f"../plots/{main_dir}/{dir_name}/")
 
-    # groundtruth_exponent = "6"
-    # for gregory_order in gregory_orders:
-    #     plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-{groundtruth_exponent}"),
-    #                        os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
-    #                       fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)
+        gregory_orders = ["3"]
+        ide_exponent = "3"
+
+        # for ODE
+
+        groundtruth_exponent = "6"
+        for gregory_order in gregory_orders:
+            plot_susceptibles([os.path.join(result_dir, f"result_ode_dt=1e-{groundtruth_exponent}"),
+                               os.path.join(result_dir, f"result_ide_dt=1e-{ide_exponent}_gregoryorder={gregory_order}")],
+                              fileending=f"dt=1e-{ide_exponent}_gregory={gregory_order}", save_dir=plot_dir)

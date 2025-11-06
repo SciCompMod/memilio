@@ -181,8 +181,69 @@ def compute_errors(groundtruth, results, groundtruth_exponent, timesteps_ide, gr
     return np.array(errors)
 
 
+def compute_l2_norm(timeseries, timestep):
+    """ Computes L2 norm of a time series.
+
+    @param[in] timeseries Considered timeseries.
+    @param[in] timestep Time step size.
+    @returns Norm.
+    """
+    norm = np.sqrt(timestep * np.sum(timeseries**2))
+    return norm
+
+
+def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide):
+    """ Computes relative L2 norm of the difference between time series from ODE and time series
+    from IDE for all compartments/flows.
+
+    @param[in] groundtruth Result obtained with ODE model.
+    @param[in] results Results obtained with IDE model for different time step sizes.
+    @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
+    @param[in] timesteps_ide List of time steps used in IDE simulations.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
+    @param[in] Array that contains computed errors.
+    """
+    num_errors = 3
+
+    errors = []
+
+    # # Compute error. Here, we define the error by the absolute value of the difference at the last time point between
+    # # groundtruth and simulation results.
+    # for i in range(len(results['ide'])):
+    #     errors.append([])
+
+    #     for compartment in range(num_errors):
+
+    #         model = list(groundtruth.keys())[0]
+
+    #         difference = np.abs(
+    #             (groundtruth[model][0][-1, compartment]-results['ide'][i][-1, compartment])/np.abs(groundtruth[model][0][-1, compartment]))
+
+    #         errors[i].append(difference)
+
+    # return np.array(errors)
+
+    # Compute error.
+    for i in range(len(results['ide'])):
+        errors.append([])
+        for compartment in range(num_errors):
+            timestep = timesteps_ide[i]
+            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
+            num_timepoints = len(results['ide'][i])
+
+            difference = groundtruth['ode'][0][int(
+                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment]-results['ide'][i][int(t0_ide/timestep)::][:, compartment]
+
+            norm_groundtruth = compute_l2_norm(groundtruth['ode'][0][int(
+                pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, compartment], timestep)
+            errors[i].append(compute_l2_norm(
+                difference, timestep)/norm_groundtruth)
+
+    return np.array(errors)
+
+
 def plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                     gregory_orders_simulation, fd_order, save_dir=""):
+                     gregory_orders_simulation, fd_order=1, l2=True, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
@@ -347,7 +408,13 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
 
-        plt.savefig(f'{save_dir}/convergence_all_compartments_fd={fd_order}.png', format='png', bbox_extra_artists=(legend, ylabel), bbox_inches='tight',
+        if l2:
+            filename = f'{save_dir}/convergence_all_compartments_l2.png'
+
+        else:
+            filename = f'{save_dir}/convergence_all_compartments.png'
+
+        plt.savefig(filename, format='png', bbox_extra_artists=(legend, ylabel), bbox_inches='tight',
                     dpi=500)
 
 
@@ -449,7 +516,7 @@ def main():
     # print(all_subfolders_walk("../simulation_results/"))
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2025-10-29/time_infected=1"
+    main_dir = "2025-10-29/time_infected=2"
     relevant_dir = os.path.join(root_dir, main_dir)
     print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -460,11 +527,15 @@ def main():
     #     "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=2_tolexp=8",
     #     "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=4_tolexp=8"]
 
-    sub_dirs = ["detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8",
-                "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=1_tolexp=8",
-                "detailed_init_exponential_t0ide=50_tmax=60_finite_diff=1_tolexp=8"]
+    # sub_dirs = ["detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8",
+    #             "detailed_init_exponential_t0ide=50_tmax=55_finite_diff=1_tolexp=8",
+    #             "detailed_init_exponential_t0ide=50_tmax=60_finite_diff=1_tolexp=8"]
 
-    fd_orders = [1, 1, 1]
+    sub_dirs = ["detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8",
+                "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=2_tolexp=8",
+                "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=4_tolexp=8"]
+
+    # fd_orders = [1, 1, 1]
 
     print(sub_dirs)
 
@@ -474,8 +545,10 @@ def main():
     total_pop_all_fd_orders = []
 
     gregory_orders_simulation = [1, 2, 3]
-    ide_exponents = [0, 1, 2, 3, 4]
+    ide_exponents = [0, 1, 2, 3]
     timesteps_ide = []
+
+    t0_ide = 50
 
     # The IDE model was simulated using a fixed step size dt=10^{-ide_exponent} for ide_exponent in ide_exponents.
 
@@ -486,7 +559,7 @@ def main():
 
     for dir_index, dir_name in enumerate(sub_dirs):
         print(dir_name)
-        fd_order = fd_orders[dir_index]
+        # fd_order = fd_orders[dir_index]
 
         groundtruth_ode = True
 
@@ -506,6 +579,8 @@ def main():
 
         errors_all_gregory_orders = []
 
+        errors_all_gregory_orders_l2 = []
+
         total_pop_end_all_gregory_orders = []
 
         for gregory_order_simulation in gregory_orders_simulation:
@@ -518,6 +593,11 @@ def main():
                 groundtruth, results, groundtruth_exponent, timesteps_ide, gregory_order_simulation)
 
             errors_all_gregory_orders.append(errors)
+
+            errors_l2 = compute_errors_l2(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide)
+
+            errors_all_gregory_orders_l2.append(errors_l2)
 
             print()
             # print(f"Gregory order {gregory_order_simulation}")
@@ -541,17 +621,23 @@ def main():
             total_pop_reference = results['ide'][-1][0].sum()
 
         # Plot convergence of all compartments separately.
+        fd_order = 1  # dummy rght now
+        l2 = False
         plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                         gregory_orders_simulation, fd_order, plot_dir)
+                         gregory_orders_simulation, fd_order, l2, plot_dir)
+
+        l2 = True
+        plot_convergence(errors_all_gregory_orders_l2, timesteps_ide,
+                         gregory_orders_simulation, fd_order, l2, plot_dir)
 
         total_pop_all_fd_orders.append(total_pop_end_all_gregory_orders)
         # print("total pop:", total_pop_all_fd_orders)
 
     # Path where plots will be stored.
-    plot_dir = os.path.join(os.path.dirname(
-        __file__),  f"../plots/{main_dir}/")
-    plot_total_pop_diff(gregory_orders_simulation, fd_orders, timesteps_ide,
-                        total_pop_all_fd_orders, total_pop_reference, plot_dir)
+    # plot_dir = os.path.join(os.path.dirname(
+    #     __file__),  f"../plots/{main_dir}/")
+    # plot_total_pop_diff(gregory_orders_simulation, fd_orders, timesteps_ide,
+    #                     total_pop_all_fd_orders, total_pop_reference, plot_dir)
 
 
 if __name__ == '__main__':
