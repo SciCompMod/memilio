@@ -353,7 +353,7 @@ TEST(TestGraph, compare_add_edge_functions)
         g.add_node(index);
         g_lazy.add_node(index);
     }
-    for (int first_node = num_nodes; first_node >= 0; --first_node) {
+    for (int first_node = num_nodes - 1; first_node >= 0; --first_node) {
         for (int second_node = 0; second_node < num_nodes; ++second_node) {
             if (first_node != second_node) {
                 g.add_edge(first_node, second_node, int(first_node + second_node));
@@ -361,7 +361,7 @@ TEST(TestGraph, compare_add_edge_functions)
             }
         }
     }
-    for (int first_node = num_nodes; first_node >= 0; --first_node) {
+    for (int first_node = num_nodes - 1; first_node >= 0; --first_node) {
         for (int second_node = 0; second_node < num_nodes; ++second_node) {
             if (first_node != second_node) {
                 g.add_edge(first_node, second_node, int(first_node + second_node));
