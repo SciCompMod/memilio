@@ -89,15 +89,15 @@ VirusVariant Infection::get_virus_variant() const
 
 InfectionState Infection::get_infection_state(TimePoint t) const
 {
+    assert(m_infection_course.size() > 0);
     assert(m_last_lookup_index < m_infection_course.size());
     if (t < m_infection_course[0].first) {
         return InfectionState::Susceptible;
     }
     auto infection_itr = m_infection_course.begin();
     // offset the start iterator if the last lookup time
-    if (t >= m_last_lookup_time) {
+    if (t >= m_infection_course[m_last_lookup_index].first) {
         infection_itr += m_last_lookup_index;
-        m_last_lookup_time = t;
     }
     else { // skip first element, as it was checked above
         ++infection_itr;
