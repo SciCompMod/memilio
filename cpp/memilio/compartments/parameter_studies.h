@@ -281,11 +281,15 @@ private:
             //sample
             SimulationT<CreateSimulationFunction> sim =
                 create_simulation(std::as_const(m_parameters), std::as_const(m_t0), std::as_const(m_dt), run_idx);
-            log(LogLevel::info, "ParameterStudies: Generated {} random numbers.",
-                (thread_local_rng().get_counter() - run_rng_counter).get());
+
+            [[maybe_unused]] const uint64_t create_counter = (thread_local_rng().get_counter() - run_rng_counter).get();
+            log_debug("ParameterStudy: Generated {} random numbers creating simulation #{}.", create_counter, run_idx);
 
             //perform run
             sim.advance(m_tmax);
+
+            log_debug("ParameterStudy: Generated {} random numbers running simulation #{}.",
+                      run_rng_counter.get() - create_counter, run_idx);
 
             //handle result and store
             ensemble_result.emplace_back(process_simulation_result(std::move(sim), run_idx));
@@ -326,7 +330,13 @@ private:
     RandomNumberGenerator m_rng; ///< The random number generator used by the study.
 };
 
-//sample parameters and create simulation
+/**
+ * @brief Create a GraphSimulation from a parameter graph.
+ * @param[in] sampled_graph A graph of models as nodes and mobility parameters as edges, with pre-sampled values.
+ * @param[in] t0 Start time of the graph simulation.
+ * @param[in] dt_node_sim (Initial) time step used by each node in the GraphSimulation.
+ * @param[in] dt_graph_sim Time step used by the GraphSimulation itself.
+ */
 template <typename FP, class Sim>
 auto make_sampled_graph_simulation(const Graph<typename Sim::Model, MobilityParameters<FP>>& sampled_graph, FP t0,
                                    FP dt_node_sim, FP dt_graph_sim)
