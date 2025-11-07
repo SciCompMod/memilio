@@ -21,52 +21,13 @@
 #define INDEX_H
 
 #include "memilio/utils/compiler_diagnostics.h"
-#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/type_safe.h"
-#include <tuple>
-#include <type_traits>
-#include <utility>
 
 namespace mio
 {
 
 template <typename... CategoryTags>
 class Index;
-
-namespace details
-{
-
-template <class... Tags>
-std::tuple<Index<Tags>...> get_tuple(Index<Tags...> i)
-{
-    if constexpr (sizeof...(Tags) == 1) {
-        return std::tuple(i);
-    }
-    else {
-        return i.indices;
-    }
-}
-
-template <class Enum>
-std::tuple<Index<Enum>> get_tuple(Enum i)
-    requires std::is_enum<Enum>::value
-{
-    return std::tuple(Index<Enum>(i));
-}
-
-// template <class... Tags>
-// Index<Tags...> merge_index_from_tuple(std::tuple<Index<Tags>...>);
-
-template <class... IndexArgs>
-auto merge_indices(IndexArgs... args)
-{
-    return std::tuple_cat(get_tuple(args)...);
-}
-
-template <class... IndexArgs>
-using merge_indices_expr = decltype(std::tuple(get_tuple(std::declval<IndexArgs>())...));
-
-} // namespace details
 
 /**
  * @brief An Index with a single template parameter is a typesafe wrapper for size_t
@@ -178,13 +139,6 @@ private:
     }
 
 public:
-    template <class... IndexArgs,
-              class = std::enable_if_t<is_expression_valid<details::merge_indices_expr, IndexArgs...>::value>>
-    Index(IndexArgs... _index_args)
-        : indices(details::merge_indices(_index_args...))
-    {
-    }
-
     // comparison operators
     bool operator==(Index const& other) const
     {
