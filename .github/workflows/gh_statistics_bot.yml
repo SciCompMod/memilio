@@ -345,8 +345,8 @@ jobs:
               
               // Create CSV file
               const csvContent = createCSVFile(monthlyData);
-              const now = new Date();
-              const csvFileName = `monthly-statistics-${now.getFullYear()}-${(now.getMonth()).toString().padStart(2, '0')}.csv`;
+              const csvNow = new Date();
+              const csvFileName = `monthly-statistics-${csvNow.getFullYear()}-${(csvNow.getMonth()).toString().padStart(2, '0')}.csv`;
               
               charts.push({
                 path: `docs/stats/${csvFileName}`,
