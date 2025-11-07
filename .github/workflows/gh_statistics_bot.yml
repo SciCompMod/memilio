@@ -268,6 +268,63 @@ jobs:
               </svg>`;
             }
 
+            function createCSVFile(monthlyData) {
+              // CSV headers
+              const headers = [
+                'Month',
+                'Total Commits',
+                'Active Contributors',
+                'Lines Added',
+                'Lines Deleted',
+                'Total Lines Changed',
+                'Files Changed',
+                'PRs Merged',
+                'PRs Opened',
+                'PRs Closed',
+                'Issues Opened',
+                'Issues Closed',
+                'Releases',
+                'Pre-Releases',
+                'Latest Release',
+                'Contributors'
+              ];
+              
+              // Escape CSV value (handle commas and quotes)
+              const escapeCSV = (value) => {
+                if (value === null || value === undefined) return '';
+                const str = String(value);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                  return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+              };
+              
+              // Build CSV rows
+              const rows = monthlyData.map(d => [
+                d.month,
+                d.stats.totalCommits,
+                d.stats.activeContributors,
+                d.stats.linesAdded,
+                d.stats.linesDeleted,
+                d.stats.totalLinesChanged,
+                d.stats.filesChanged,
+                d.prStats.merged,
+                d.prStats.opened,
+                d.prStats.closed,
+                d.issueStats.opened,
+                d.issueStats.closed,
+                d.releaseStats.total,
+                d.releaseStats.preReleases,
+                d.releaseStats.latestRelease || 'N/A',
+                d.stats.contributorsList.join('; ')
+              ].map(escapeCSV).join(','));
+              
+              // Combine headers and rows
+              const csvContent = [headers.join(','), ...rows].join('\n');
+              
+              return csvContent;
+            }
+
             async function createChartsOnBranch(monthlyData) {
               const totalCommits = monthlyData.map(d => d.stats.totalCommits);
               const mergedPRs = monthlyData.map(d => d.prStats.merged);
@@ -285,6 +342,17 @@ jobs:
                 { path: 'docs/stats/active-contributors-chart.svg', content: createSVGChart(activeContributors, 'Active Contributors', '#8b5cf6', monthLabels) },
                 { path: 'docs/stats/issues-closed-chart.svg', content: createSVGChart(issuesClosed, 'Issues Closed', '#ef4444', monthLabels) }
               ];
+              
+              // Create CSV file
+              const csvContent = createCSVFile(monthlyData);
+              const now = new Date();
+              const csvFileName = `monthly-statistics-${now.getFullYear()}-${(now.getMonth()).toString().padStart(2, '0')}.csv`;
+              
+              charts.push({
+                path: `docs/stats/${csvFileName}`,
+                content: csvContent,
+                isBase64: false
+              });
               
               // Get repo info
               const repoInfo = await github.rest.repos.get({
@@ -340,7 +408,7 @@ jobs:
                     repo: context.repo.repo,
                     path: chart.path,
                     message: `Update ${chart.path}`,
-                    content: Buffer.from(chart.content).toString('base64'),
+                    content: chart.isBase64 ? chart.content : Buffer.from(chart.content).toString('base64'),
                     branch: branchName
                   };
                   
@@ -354,10 +422,14 @@ jobs:
               }
               
               const latestMonth = monthlyData[monthlyData.length - 1];
+              const now = new Date();
+              const csvFileName = `monthly-statistics-${now.getFullYear()}-${(now.getMonth()).toString().padStart(2, '0')}.csv`;
+              
               return {
                 branchName: branchName,
                 message: `Charts updated on branch ${branchName} for ${latestMonth.month}`,
-                branchUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`
+                branchUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`,
+                csvUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${branchName}/docs/stats/${csvFileName}`
               };
             }
 
@@ -419,7 +491,8 @@ jobs:
                   text: `**👥 Active Contributors:** ${latest.stats.contributorsList.slice(0, 15).join(', ') || 'None'}\n` +
                         `**💻 Languages:** ${languages.map(l => `${l.language} (${l.percentage}%)`).join(', ') || 'N/A'}\n\n` +
                         `**📈 Charts:** [View detailed charts on branch ${branchResult.branchName}](${branchResult.branchUrl})\n` +
-                        `**📂 Repository:** ${context.repo.owner}/${context.repo.repo}`,
+                        `**📊 CSV Report:** [Download CSV file](${branchResult.csvUrl})\n` +
+                        `**� Repository:** ${context.repo.owner}/${context.repo.repo}`,
                   footer: 'Repository statistics • Generated by GitHub Actions'
                 }]
               };
