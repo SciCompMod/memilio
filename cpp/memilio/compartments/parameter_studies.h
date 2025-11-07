@@ -87,7 +87,7 @@ public:
 
     /**
      * @brief Run all simulations in serial.
-     * @param[in] create_simulation A callable sampling the study's parameters and return a simulation.
+     * @param[in] create_simulation A callable sampling the study's parameters and returning a simulation.
      * @param[in] process_simulation_result (Optional) A callable that takes the simulation and processes its result.
      * @return A vector that contains (processed) simulation results for each run.
      *
@@ -124,7 +124,7 @@ public:
 
     /**
      * @brief Run all simulations distributed over multiple MPI ranks.
-     * @param[in] create_simulation A callable sampling the study's parameters and return a simulation.
+     * @param[in] create_simulation A callable sampling the study's parameters and returning a simulation.
      * @param[in] process_simulation_result A callable that takes the simulation and processes its result.
      * @return A vector that contains processed simulation results for each run.
      *
