@@ -422,13 +422,13 @@ jobs:
               }
               
               const latestMonth = monthlyData[monthlyData.length - 1];
-              const csvFileName = `monthly-statistics-${csvNow.getFullYear()}-${(csvNow.getMonth()).toString().padStart(2, '0')}.csv`;
               
               return {
                 branchName: branchName,
                 message: `Charts updated on branch ${branchName} for ${latestMonth.month}`,
                 branchUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/tree/${branchName}`,
-                csvUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${branchName}/docs/stats/${csvFileName}`
+                csvUrl: `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/${branchName}/docs/stats/${csvFileName}`,
+                csvFileName: csvFileName
               };
             }
 
