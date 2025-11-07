@@ -177,7 +177,10 @@ int main()
     // Set the number of simulations to run in the study
     const size_t num_runs = 3;
 
-    // Create a parameter study. The ABM currently does not use parameters or dt, so we set them both to 0.
+    // Create a parameter study.
+    // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
+    // a new model for each simulation. Hence we set both arguments to 0.
+    // This is mostly due to https://github.com/SciCompMod/memilio/issues/1400
     mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
     // Optional: set seeds to get reproducable results
