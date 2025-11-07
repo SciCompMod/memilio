@@ -174,7 +174,7 @@ int main()
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(5);
-    // auto sim  = mio::abm::Simulation(t0, std::move(model));
+    // Set the number of simulations to run in the study
     const size_t num_runs = 3;
 
     // Create a parameter study. The ABM currently does not use parameters or dt, so we set them both to 0.
