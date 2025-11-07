@@ -53,7 +53,6 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
 
     // Compute S'(t) for t_1,..., t_{n0-1} with backwards difference operator. The corresponding flow is then given by -S'.
     for (size_t i = 1; i < (size_t)m_model->populations.get_num_time_points(); i++) {
-        // std::cout << "i: " << i << std::endl;
         m_model->flows.add_time_point(i * m_dt,
                                       TimeSeries<ScalarType>::Vector::Constant((size_t)InfectionTransition::Count, 0.));
         // TODO: Adapt compute_S_deriv_central so that we can use it already here?
@@ -67,16 +66,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         num_additional_time_points = floor((ScalarType)m_model->get_finite_difference_order() / 2.);
     }
 
-    // for (size_t i = 0; i < m_model->get_gregory_order(); i++) {
-    //     m_model->populations.remove_time_point(i);
-    //     m_model->flows.remove_time_point(i);
-    // }
-
     while (m_model->populations.get_last_time() < tmax + num_additional_time_points * m_dt - 1e-10) {
-
-        // std::cout << "SIR: " << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Susceptible] << ", "
-        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Infected] << ", "
-        //           << m_model->populations.get_last_value()[(Eigen::Index)InfectionState::Recovered] << std::endl;
 
         // Print time.
         if (floating_point_equal(std::remainder(10 * m_model->populations.get_last_time(), tmax), 0., 1e-7)) {

@@ -42,8 +42,8 @@ ModelMessinaExtendedDetailedInit::ModelMessinaExtendedDetailedInit(TimeSeries<Sc
     , m_gregory_order(gregory_order)
     , m_finite_difference_order(finite_difference_order)
 {
-    assert(m_gregory_order >= 1);
-    assert(m_finite_difference_order >= 1);
+    assert(m_gregory_order > 0);
+    assert(m_finite_difference_order > 0);
 }
 
 void ModelMessinaExtendedDetailedInit::set_transitiondistribution_vector(ScalarType dt, ScalarType tmax,
@@ -250,7 +250,6 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
 {
     // Linear backwards finite difference scheme.
     if (std::min(m_finite_difference_order, time_point_index) == 1) {
-        // std::cout << "First order finite difference \n";
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible]) /
@@ -259,7 +258,6 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
 
     // Compute S' with backwards finite difference scheme of second order, flow from S to I is then given by -S'.
     if (std::min(m_finite_difference_order, time_point_index) == 2) {
-        // std::cout << "Second order finite difference \n";
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(1 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
               4 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
@@ -269,7 +267,6 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
 
     // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
     if (std::min(m_finite_difference_order, time_point_index) == 4) {
-        // std::cout << "Fourth order finite difference \n";
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
               16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
@@ -350,7 +347,6 @@ void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t tim
         ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
 
         // For each index, the corresponding summand is computed here.
-
         sum_infected += gregory_weight * m_transitiondistribution_vector[current_time_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 

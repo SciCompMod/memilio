@@ -36,13 +36,7 @@
 using namespace mio;
 namespace params
 {
-// ScalarType t0_ode = 0.;
-// ScalarType t0_ide = 30.;
-// ScalarType tmax   = t0_ide + 1.;
-
 size_t num_agegroups = 1;
-
-// ScalarType TimeInfected = 2.;
 
 ScalarType TransmissionProbabilityOnContact = 1.;
 ScalarType RiskOfInfectionFromSymptomatic   = 1.;
@@ -51,33 +45,11 @@ ScalarType Seasonality                      = 0.;
 ScalarType cont_freq = 0.7;
 
 ScalarType S0               = 999000.;
-ScalarType I0               = 100.;
+ScalarType I0               = 1000.;
 ScalarType R0               = 0.;
 ScalarType total_population = S0 + I0 + R0;
 
 } // namespace params
-
-// mio::UncertainContactMatrix<ScalarType> scale_contact_matrix(ScalarType contact_scaling)
-// {
-//     using namespace params;
-
-//     mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
-//     if (contact_scaling <= 1.) {
-//         // Perform simulation with a decrease in contacts.
-//         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
-//         contact_matrix[0].add_damping(0., mio::SimulationTime(2.));
-//         contact_matrix[0].add_damping(contact_scaling, mio::SimulationTime(2.1));
-//     }
-//     else {
-//         // Perform simulation with an increase in contacts.
-//         contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, contact_scaling * cont_freq));
-//         contact_matrix[0].add_damping(1 - 1. / contact_scaling, mio::SimulationTime(-1.));
-//         contact_matrix[0].add_damping(1 - 1. / contact_scaling, mio::SimulationTime(2.));
-//         contact_matrix[0].add_damping(0., mio::SimulationTime(2.1));
-//     }
-
-//     return mio::UncertainContactMatrix(contact_matrix);
-// }
 
 mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent, ScalarType t0_ode, ScalarType tmax,
                                                         int TimeInfected, std::string save_dir = "")
@@ -131,10 +103,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  bool backwards_fd = true)
 {
-    unused(tmax);
-    unused(save_dir);
-    unused(backwards_fd);
-
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -238,7 +206,8 @@ int main()
     ScalarType ode_exponent = 6;
 
     // std::vector<int> time_infected_values = {1, 2, 5};
-    std::vector<ScalarType> time_infected_values = {2.};
+    // std::vector<ScalarType> time_infected_values = {1., 2., 5.};
+    std::vector<ScalarType> time_infected_values = {1., 2.};
 
     ScalarType tol_exp = 8;
 
@@ -253,7 +222,7 @@ int main()
             if (backwards_fd) {
 
                 // finite_difference_orders = {1, 2, 4};
-                finite_difference_orders = {4};
+                finite_difference_orders = {1, 2, 4};
             }
             else {
                 finite_difference_orders = {2, 4};
@@ -265,13 +234,13 @@ int main()
                 ScalarType t0_ide = 50.;
 
                 // std::vector<size_t> num_days_vec = {1, 5, 10};
-                std::vector<size_t> num_days_vec = {5};
+                std::vector<size_t> num_days_vec = {1, 5, 10};
 
                 for (size_t num_days : num_days_vec) {
                     ScalarType tmax = t0_ide + num_days;
 
                     std::string save_dir =
-                        fmt::format("../../simulation_results/test2/time_infected={}/"
+                        fmt::format("../../simulation_results/2025-11-07/time_infected={}/"
                                     "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_tolexp={}",
                                     time_infected, t0_ide, tmax, finite_difference_order, tol_exp);
 
@@ -286,10 +255,10 @@ int main()
                     auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
 
                     // Do IDE simulations.
-                    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3, 4};
+                    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
                     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-                    // std::vector<ScalarType> ide_exponents = {2};
+                    // std::vector<ScalarType> ide_exponents = {4};
                     // std::vector<size_t> gregory_orders    = {3};
 
                     for (size_t gregory_order : gregory_orders) {
