@@ -422,8 +422,7 @@ jobs:
               }
               
               const latestMonth = monthlyData[monthlyData.length - 1];
-              const now = new Date();
-              const csvFileName = `monthly-statistics-${now.getFullYear()}-${(now.getMonth()).toString().padStart(2, '0')}.csv`;
+              const csvFileName = `monthly-statistics-${csvNow.getFullYear()}-${(csvNow.getMonth()).toString().padStart(2, '0')}.csv`;
               
               return {
                 branchName: branchName,
