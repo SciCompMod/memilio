@@ -80,7 +80,7 @@ constexpr mio::abm::ActivityType guess_activity_type(mio::abm::LocationType curr
  */
 struct LogLocationInformation : mio::LogOnce {
     using Type = std::vector<
-        std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::abm::GeographicalLocation, size_t, int>>;
+        std::tuple<mio::abm::LocationId, mio::abm::LocationType, mio::geo::GeographicalLocation, size_t, int>>;
     /**
      * @brief Log the LocationInformation of the simulation. 
      * @param[in] sim The simulation of the abm.

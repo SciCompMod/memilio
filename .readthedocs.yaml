@@ -8,12 +8,10 @@ build:
     - ninja-build
   tools:
     python: "3.10"
-
-python:
-  install:
-    # Split requirements to control the installation order. This ensures that build dependencies are installed first.
-    - requirements: docs/requirements-build.txt
-    - requirements: docs/requirements.txt
+  jobs:
+    install:
+      - pip install --exists-action=w --no-cache-dir -r docs/requirements-build.txt
+      - pip install --exists-action=w --no-cache-dir -r docs/requirements.txt --no-build-isolation
 
 sphinx:
   configuration: docs/source/conf.py
