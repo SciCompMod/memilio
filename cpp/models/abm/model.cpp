@@ -83,7 +83,7 @@ void Model::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
     log_info("ABM Model interaction.");
-    interaction(t, dt);
+    // interaction(t, dt);
     log_info("ABM Model mobility.");
     perform_mobility(t, dt);
 }

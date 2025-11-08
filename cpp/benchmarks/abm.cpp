@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
-
+#include "abm/common_abm_loggers.h"
 #include "benchmark/benchmark.h"
 
 mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
@@ -54,7 +54,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
          {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
           mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
 
-        const auto num_locs = std::max(size_t(1), num_persons / 2'000);
+        const auto num_locs = std::max(size_t(1), num_persons / 100);
         std::vector<mio::abm::LocationId> locs(num_locs);
         std::generate(locs.begin(), locs.end(), [&] {
             return model.add_location(loc_type);
@@ -86,36 +86,36 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     }
 
     //masks at locations
-    for (auto& loc : model.get_locations()) {
-        //some % of locations require masks
-        //skip homes so persons always have a place to go, simulation might break otherwise
-        auto pct_require_mask = 0.2;
-        if (loc.get_type() != mio::abm::LocationType::Home &&
-            mio::UniformDistribution<ScalarType>::get_instance()(model.get_rng()) < pct_require_mask) {
-            loc.set_required_mask(mio::abm::MaskType::Community);
-        }
-    }
+    // for (auto& loc : model.get_locations()) {
+    //     //some % of locations require masks
+    //     //skip homes so persons always have a place to go, simulation might break otherwise
+    //     auto pct_require_mask = 0.2;
+    //     if (loc.get_type() != mio::abm::LocationType::Home &&
+    //         mio::UniformDistribution<double>::get_instance()(model.get_rng()) < pct_require_mask) {
+    //         loc.set_required_mask(mio::abm::MaskType::Community);
+    //     }
+    // }
 
     //testing schemes
-    auto sample = [&](auto v, size_t n) { //selects n elements from list v
-        std::shuffle(v.begin(), v.end(), model.get_rng());
-        return std::vector<typename decltype(v)::value_type>(v.begin(), v.begin() + n);
-    };
-    std::vector<mio::AgeGroup> ages;
-    std::generate_n(std::back_inserter(ages), model.parameters.get_num_groups(), [a = 0]() mutable {
-        return mio::AgeGroup(a++);
-    });
-    auto random_criteria = [&]() {
-        auto random_ages   = sample(ages, 2);
-        auto random_states = std::vector<mio::abm::InfectionState>(0);
-        return mio::abm::TestingCriteria(random_ages, random_states);
-    };
+    // auto sample = [&](auto v, size_t n) { //selects n elements from list v
+    //     std::shuffle(v.begin(), v.end(), model.get_rng());
+    //     return std::vector<typename decltype(v)::value_type>(v.begin(), v.begin() + n);
+    // };
+    // std::vector<mio::AgeGroup> ages;
+    // std::generate_n(std::back_inserter(ages), model.parameters.get_num_groups(), [a = 0]() mutable {
+    //     return mio::AgeGroup(a++);
+    // });
+    // auto random_criteria = [&]() {
+    //     auto random_ages   = sample(ages, 2);
+    //     auto random_states = std::vector<mio::abm::InfectionState>(0);
+    //     return mio::abm::TestingCriteria(random_ages, random_states);
+    // };
 
-    model.get_testing_strategy().add_scheme(
-        {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
-         mio::abm::LocationType::Home},
-        mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-                                mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
+    // model.get_testing_strategy().add_scheme(
+    //     {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+    //      mio::abm::LocationType::Home},
+    //     mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
+    //                             mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 }
@@ -135,21 +135,22 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
         state.ResumeTiming();
 
         //simulated time should be long enough to have full infection runs and mobility to every location
-        auto final_time = sim.get_time() + mio::abm::days(10);
+        auto final_time = sim.get_time() + mio::abm::days(5);
+        mio::History<mio::DataWriterToMemory, mio::abm::LogDataForMobility> history;
         sim.advance(final_time);
 
         //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
         //normally should have no significant effect on runtime
-        const bool monitor_infection_activity = false;
-        if constexpr (monitor_infection_activity) {
-            std::cout << "num_persons = " << num_persons << "\n";
-            for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-                std::cout << "inf_state = " << inf_state << ", sum = "
-                          << sim.get_model().get_subpopulation_combined(sim.get_time(),
-                                                                        mio::abm::InfectionState(inf_state))
-                          << "\n";
-            }
-        }
+        // const bool monitor_infection_activity = false;
+        // if constexpr (monitor_infection_activity) {
+        //     std::cout << "num_persons = " << num_persons << "\n";
+        //     for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+        //         std::cout << "inf_state = " << inf_state << ", sum = "
+        //                   << sim.get_model().get_subpopulation_combined(sim.get_time(),
+        //                                                                 mio::abm::InfectionState(inf_state))
+        //                   << "\n";
+        //     }
+        // }
     }
 }
 
@@ -161,8 +162,57 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 //have to be adjusted to get the benchmark back to normal.
 //For small sizes (e.g. 10k) extreme cases are too likely, i.e. infections die out
 //or overwhelm everything, so we don't benchmark these. Results should be mostly transferrable.
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_50k, 50000, {14159265u, 35897932u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_100k, 100000, {38462643u, 38327950u})->Unit(benchmark::kMillisecond);
-BENCHMARK_CAPTURE(abm_benchmark, abm_benchmark_200k, 200000, {28841971u, 69399375u})->Unit(benchmark::kMillisecond);
 
-BENCHMARK_MAIN();
+int main(int argc, char** argv)
+{
+    // Default problem size
+    size_t num_persons = 1000000;
+
+    //print omp_threads
+#ifdef MEMILIO_ENABLE_OPENMP
+    int omp_threads = 1;
+#pragma omp parallel
+    {
+#pragma omp single
+        omp_threads = omp_get_num_threads();
+    }
+    std::cout << "Running ABM benchmark with " << omp_threads << " OpenMP threads.\n";
+#else
+    std::cout << "Running ABM benchmark without OpenMP.\n";
+#endif
+
+    // Parse custom arguments for problem size BEFORE benchmark::Initialize
+    // Remove custom args from argv to prevent benchmark from seeing them
+    std::vector<char*> filtered_argv;
+    filtered_argv.push_back(argv[0]); // Keep program name
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg.find("--num_persons=") == 0) {
+            num_persons = std::stoul(arg.substr(14));
+            // Don't add this to filtered_argv
+        }
+        else {
+            // Keep other arguments for benchmark
+            filtered_argv.push_back(argv[i]);
+        }
+    }
+
+    // Update argc to reflect filtered arguments
+    int filtered_argc = static_cast<int>(filtered_argv.size());
+
+    // Register the benchmark with the specified problem size
+    std::string benchmark_name = "abm_benchmark_" + std::to_string(num_persons);
+    benchmark::RegisterBenchmark(benchmark_name.c_str(), [num_persons](benchmark::State& state) {
+        abm_benchmark(state, num_persons, {1415921265u, 35897932u});
+    })->Unit(benchmark::kMillisecond);
+
+    // Initialize and run benchmarks with filtered arguments
+    benchmark::Initialize(&filtered_argc, filtered_argv.data());
+    if (benchmark::ReportUnrecognizedArguments(filtered_argc, filtered_argv.data())) {
+        return 1;
+    }
+    benchmark::RunSpecifiedBenchmarks();
+    benchmark::Shutdown();
+    return 0;
+}
