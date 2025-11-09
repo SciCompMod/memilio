@@ -34,6 +34,7 @@ import keras
 
 import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
+from memilio.simulation.osecir import Model, interpolate_simulation_result
 from memilio.epidata import defaultDict as dd
 
 import geopandas as gpd
@@ -66,15 +67,14 @@ SLAB_SCALE = 0.2
 DATE_TIME = datetime.date(year=2020, month=10, day=1)
 NUM_DAMPING_POINTS = 3
 
-# %%
-def plot_region_median_mad(
+def plot_region_fit(
     data: np.ndarray,
     region: int,
     true_data=None,
     ax=None,
     label=None,
     color="red",
-    only_50q=False
+    only_80q=False
 ):
     if data.ndim != 3:
         raise ValueError("Array not of shape (samples, time_points, regions)")
@@ -88,7 +88,7 @@ def plot_region_median_mad(
     x = np.arange(n_time)
     vals = data[:, :, region]  # (samples, time_points)
 
-    qs_50 = np.quantile(vals, q=[0.25, 0.75], axis=0)
+    qs_80 = np.quantile(vals, q=[0.1, 0.9], axis=0)
     qs_90 = np.quantile(vals, q=[0.05, 0.95], axis=0)
     qs_95 = np.quantile(vals, q=[0.025, 0.975], axis=0)
 
@@ -99,9 +99,9 @@ def plot_region_median_mad(
 
     ax.plot(
         x, med, lw=2, label=label or f"{dd.County[region_ids[region]]}", color=color)
-    ax.fill_between(x, qs_50[0], qs_50[1], alpha=0.5,
-                    color=color, label="50% CI")
-    if not only_50q:
+    ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
+                    color=color, label="80% CI")
+    if not only_80q:
         ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
                         color=color, label="90% CI")
         ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
@@ -125,7 +125,7 @@ def plot_aggregated_over_regions(
     ax=None,
     label=None,
     color='red',
-    only_50q=False
+    only_80q=False
 ):
     if data.ndim != 3:
         raise ValueError("Array not of shape (samples, time_points, regions)")
@@ -136,7 +136,7 @@ def plot_aggregated_over_regions(
     # Aggregate over regions
     agg_over_regions = region_agg(data, axis=-1)  # (samples, time_points)
 
-    qs_50 = np.quantile(agg_over_regions, q=[0.25, 0.75], axis=0)
+    qs_80 = np.quantile(agg_over_regions, q=[0.1, 0.9], axis=0)
     qs_90 = np.quantile(agg_over_regions, q=[0.05, 0.95], axis=0)
     qs_95 = np.quantile(agg_over_regions, q=[0.025, 0.975], axis=0)
 
@@ -149,9 +149,9 @@ def plot_aggregated_over_regions(
 
     ax.plot(x, agg_median, lw=2,
                     label=label or "Aggregated over regions", color=color)
-    ax.fill_between(x, qs_50[0], qs_50[1], alpha=0.5,
-                    color=color, label="50% CI")
-    if not only_50q:
+    ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
+                    color=color, label="80% CI")
+    if not only_80q:
         ax.fill_between(x, qs_90[0], qs_90[1], alpha=0.3,
                         color=color, label="90% CI")
         ax.fill_between(x, qs_95[0], qs_95[1], alpha=0.1,
@@ -228,7 +228,7 @@ def plot_all_regions(simulations, divi_data, name, synthetic, with_aug):
         fig, ax = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(15, 25), layout="constrained")
         ax = ax.flatten()
         for i, region_idx in enumerate(range(start_idx, end_idx)):
-            plot_region_median_mad(
+            plot_region_fit(
                 simulations, region=region_idx, true_data=divi_data, label="Median", ax=ax[i], color="#132a70"
             )
         # Hide unused subplots
@@ -413,8 +413,80 @@ def plot_damping_values(damping_values, name, synthetic, with_aug):
     ax.legend(fontsize=10, loc="upper right", ncol=2)
     plt.savefig(f"{name}/damping_values_combined{name}{synthetic}{with_aug}.png", dpi=300)
 
+def run_prior_predictive_check(name):
+    validation_data = load_pickle(f'{name}/validation_data_{name}.pickle')  # synthetic data
 
-class Simulation:  
+    divi_region_keys = region_keys_sorted(validation_data)
+    num_samples = validation_data['region0'].shape[0]
+    time_points = validation_data['region0'].shape[1]
+
+    true_data = load_divi_data()
+    true_data = np.concatenate(
+        [true_data[key] for key in divi_region_keys], axis=-1
+    )[0]
+    # get sims in shape (samples, time, regions)
+    simulations = np.zeros((num_samples, time_points, len(divi_region_keys)))
+    for i in range(num_samples):
+        simulations[i] = np.concatenate([validation_data[key][i] for key in divi_region_keys], axis=-1)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    plot_aggregated_over_regions(
+        simulations, true_data=true_data, label="Region Aggregated Median (No Aug)", ax=ax, color="#132a70"
+    )
+    ax.set_title("Prior predictive check - Aggregated over regions")
+    plt.savefig(f'{name}/prior_predictive_check_{name}.png')
+
+def compare_median_sim_to_mean_param_sim(name):
+    num_samples = 10
+
+    divi_dict = load_divi_data()
+    validation_data_skip2w = skip_2weeks(divi_dict)
+    aggregate_states(validation_data_skip2w)
+    divi_region_keys = region_keys_sorted(divi_dict)
+    divi_data = np.concatenate(
+        [divi_dict[key] for key in divi_region_keys], axis=-1
+    )[0]
+
+    simulations_aug = load_pickle(f'{name}/sims_{name}_with_aug.pickle')
+
+    workflow = get_workflow()
+    workflow.approximator = keras.models.load_model(
+        filepath=os.path.join(f"{name}/model_{name}.keras")
+    )
+
+    samples = workflow.sample(conditions=validation_data_skip2w, num_samples=num_samples)
+    for key in inference_params:
+        samples[key] = np.median(samples[key], axis=1)
+    samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], 16, NUM_DAMPING_POINTS))
+    result = run_germany_nuts3_simulation(
+        damping_values=samples['damping_values'][0],
+        t_E=samples['t_E'][0], t_ISy=samples['t_ISy'][0],
+        t_ISev=samples['t_ISev'][0], t_Cr=samples['t_Cr'][0],
+        mu_CR=samples['mu_CR'][0], mu_IH=samples['mu_IH'][0],
+        mu_HU=samples['mu_HU'][0], mu_UD=samples['mu_UD'][0],
+        transmission_prob=samples['transmission_prob'][0]
+    )
+    for key in result.keys():
+        result[key] = np.array(result[key])[None, ...]  # add sample axis
+
+    result = extract_observables(result)
+    divi_region_keys = region_keys_sorted(result)
+    result = np.concatenate(
+        [result[key] if key in result else np.zeros_like(result[divi_region_keys[0]]) for key in divi_region_keys],
+        axis=-1
+    )[0]
+
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    plot_aggregated_over_regions(
+        simulations_aug, true_data=result, label="Compare median of sim to sim of median params", ax=ax, color="#132a70"
+    )
+    ax.set_title("Comparison of Median Simulation to Simulation of Median Parameters")
+    plt.savefig(f'{name}/compare_median_sim13_to_mean_param_sim_{name}.png')
+    plt.close()
+
+
+class Simulation:
     """ """
 
     def __init__(self, data_dir, start_date, results_dir):
@@ -747,14 +819,15 @@ def get_workflow():
     )
     inference_network = bf.networks.FlowMatching(subnet_kwargs={'widths': (512, 512, 512, 512, 512)})
 
-    aug = bf.augmentations.NNPE(spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False)
+    # aug = bf.augmentations.NNPE(spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False)
     workflow = bf.BasicWorkflow(
         simulator=simulator,
         adapter=adapter,
         summary_network=summary_network,
         inference_network=inference_network,
-        standardize='all',
-        augmentations={f'region{i}': aug for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids}
+        standardize='all'
+        # augmentations={f'region{i}': aug for i in range(len(region_ids)) if region_ids[i] not in no_icu_ids}
+        # aggregation of the states would need to be recomputed every time a different noise realization is applied
     )
 
     return workflow
@@ -764,16 +837,16 @@ def run_training(name, num_training_files=20):
     train_template = name+"/trainings_data{i}_"+name+".pickle"
     val_path = f"{name}/validation_data_{name}.pickle"
 
-    # aug = bf.augmentations.NNPE(
-    #     spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
-    # )
+    aug = bf.augmentations.NNPE(
+        spike_scale=SPIKE_SCALE, slab_scale=SLAB_SCALE, per_dimension=False
+    )
 
     # training data
     train_files = [train_template.format(i=i) for i in range(1, 1+num_training_files)]
     trainings_data = None
     for p in train_files:
         d = load_pickle(p)
-        # d = apply_aug(d, aug=aug)  # only on region keys
+        d = apply_aug(d, aug=aug)  # only on region keys
         d = skip_2weeks(d)
         d['damping_values'] = d['damping_values'].reshape((d['damping_values'].shape[0], -1))
         if trainings_data is None:
@@ -783,7 +856,7 @@ def run_training(name, num_training_files=20):
     aggregate_states(trainings_data)
 
     # validation data
-    validation_data = load_pickle(val_path)
+    validation_data = apply_aug(load_pickle(val_path), aug=aug)
     validation_data = skip_2weeks(validation_data)
     aggregate_states(validation_data)
     validation_data['damping_values'] = validation_data['damping_values'].reshape((validation_data['damping_values'].shape[0], -1))
@@ -819,7 +892,7 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
     )
 
     # validation data
-    validation_data = load_pickle(val_path)
+    validation_data = load_pickle(val_path)  # synthetic data
     if on_synthetic_data:
         # validation data
         validation_data = apply_aug(validation_data, aug=aug)
@@ -906,16 +979,16 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[0, 1], color="#132a70"
     )
     axes[0, 1].set_title("With Augmentation")
-    # Plot without augmentation (50% quantile only)
+    # Plot without augmentation (80% quantile only)
     plot_aggregated_over_regions(
-        simulations, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[1, 0], color="#132a70", only_50q=True
+        simulations, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[1, 0], color="#132a70", only_80q=True
     )
-    axes[1, 0].set_title("Without Augmentation (50% Quantile)")
-    # Plot with augmentation (50% quantile only)
+    axes[1, 0].set_title("Without Augmentation (80% Quantile)")
+    # Plot with augmentation (80% quantile only)
     plot_aggregated_over_regions(
-        simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[1, 1], color="#132a70", only_50q=True
+        simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[1, 1], color="#132a70", only_80q=True
     )
-    axes[1, 1].set_title("With Augmentation (50% Quantile)")
+    axes[1, 1].set_title("With Augmentation (80% Quantile)")
     plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png')
     plt.close()
 
@@ -949,11 +1022,13 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
 
 
 if __name__ == "__main__":
-    name = "3dampings_lessnoise"
+    name = "3dampings_lessnoise_newnetwork"
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(filename=f'{name}/validation_data{name}.pickle', number_samples=1000)
+    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=1000)
     # run_training(name=name, num_training_files=20)
-    run_inference(name=name, on_synthetic_data=True)
-    run_inference(name=name, on_synthetic_data=False)
+    # run_inference(name=name, on_synthetic_data=True)
+    # run_inference(name=name, on_synthetic_data=False)
+    # run_prior_predictive_check(name=name)
+    # compare_median_sim_to_mean_param_sim(name=name)
