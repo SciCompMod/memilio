@@ -29,42 +29,42 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     model.get_rng() = rng;
 
     //create persons at home
-    const auto mean_home_size    = 5.0;
-    const auto min_home_size     = 1;
-    auto& home_size_distribution = mio::PoissonDistribution<int>::get_instance();
-    auto home                    = model.add_location(mio::abm::LocationType::Home);
-    auto planned_home_size       = home_size_distribution(model.get_rng(), mean_home_size);
-    auto home_size               = 0;
-    for (size_t i = 0; i < num_persons; ++i) {
-        if (home_size >= std::max(min_home_size, planned_home_size)) {
-            home              = model.add_location(mio::abm::LocationType::Home);
-            planned_home_size = home_size_distribution(model.get_rng(), mean_home_size);
-            home_size         = 0;
-        }
+    // const auto mean_home_size    = 5.0;
+    // const auto min_home_size     = 1;
+    // auto& home_size_distribution = mio::PoissonDistribution<int>::get_instance();
+    // auto home                    = model.add_location(mio::abm::LocationType::Home);
+    // auto planned_home_size       = home_size_distribution(model.get_rng(), mean_home_size);
+    // auto home_size               = 0;
+    // for (size_t i = 0; i < num_persons; ++i) {
+    //     if (home_size >= std::max(min_home_size, planned_home_size)) {
+    //         home              = model.add_location(mio::abm::LocationType::Home);
+    //         planned_home_size = home_size_distribution(model.get_rng(), mean_home_size);
+    //         home_size         = 0;
+    //     }
 
-        auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
-            model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
-        auto person = model.add_person(home, age);
-        model.assign_location(uint32_t(i), home);
-        home_size++;
-    }
+    //     auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
+    //         model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
+    //     auto person = model.add_person(home, age);
+    //     model.assign_location(uint32_t(i), home);
+    //     home_size++;
+    // }
 
     //create other locations
-    for (auto loc_type :
-         {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
-          mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
+    // for (auto loc_type :
+    //      {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
+    //       mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
 
-        const auto num_locs = std::max(size_t(1), num_persons / 100);
-        std::vector<mio::abm::LocationId> locs(num_locs);
-        std::generate(locs.begin(), locs.end(), [&] {
-            return model.add_location(loc_type);
-        });
-        for (size_t p = 0; p < num_persons; ++p) {
-            auto loc_idx =
-                mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
-            model.assign_location(uint32_t(p), locs[loc_idx]);
-        }
-    }
+    //     const auto num_locs = std::max(size_t(1), num_persons / 100);
+    //     std::vector<mio::abm::LocationId> locs(num_locs);
+    //     std::generate(locs.begin(), locs.end(), [&] {
+    //         return model.add_location(loc_type);
+    //     });
+    //     for (size_t p = 0; p < num_persons; ++p) {
+    //         auto loc_idx =
+    //             mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
+    //         model.assign_location(uint32_t(p), locs[loc_idx]);
+    //     }
+    // }
 
     //infections and masks
     for (auto& person : model.get_persons()) {
@@ -72,50 +72,12 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
         //some % of people are infected, large enough to have some infection activity without everyone dying
         auto pct_infected = 0.05;
         if (mio::UniformDistribution<ScalarType>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
-            auto state = mio::abm::InfectionState(
-                mio::UniformIntDistribution<int>::get_instance()(prng, 1, int(mio::abm::InfectionState::Count) - 1));
-            auto infection = mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(),
-                                                 model.parameters, mio::abm::TimePoint(0), state);
+            auto infection =
+                mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(), model.parameters,
+                                    mio::abm::TimePoint(0), mio::abm::InfectionState::Exposed);
             person.add_new_infection(std::move(infection));
         }
-
-        //equal chance of (moderate) mask refusal and (moderate) mask eagerness
-        auto pct_compliance_values = std::array{0.05 /*0*/, 0.2 /*0.25*/, 0.5 /*0.5*/, 0.2 /*0.75*/, 0.05 /*1*/};
-        auto compliance_value      = 0.25 * mio::DiscreteDistribution<int>::get_instance()(prng, pct_compliance_values);
-        person.set_compliance(mio::abm::InterventionType::Mask, compliance_value);
     }
-
-    //masks at locations
-    // for (auto& loc : model.get_locations()) {
-    //     //some % of locations require masks
-    //     //skip homes so persons always have a place to go, simulation might break otherwise
-    //     auto pct_require_mask = 0.2;
-    //     if (loc.get_type() != mio::abm::LocationType::Home &&
-    //         mio::UniformDistribution<double>::get_instance()(model.get_rng()) < pct_require_mask) {
-    //         loc.set_required_mask(mio::abm::MaskType::Community);
-    //     }
-    // }
-
-    //testing schemes
-    // auto sample = [&](auto v, size_t n) { //selects n elements from list v
-    //     std::shuffle(v.begin(), v.end(), model.get_rng());
-    //     return std::vector<typename decltype(v)::value_type>(v.begin(), v.begin() + n);
-    // };
-    // std::vector<mio::AgeGroup> ages;
-    // std::generate_n(std::back_inserter(ages), model.parameters.get_num_groups(), [a = 0]() mutable {
-    //     return mio::AgeGroup(a++);
-    // });
-    // auto random_criteria = [&]() {
-    //     auto random_ages   = sample(ages, 2);
-    //     auto random_states = std::vector<mio::abm::InfectionState>(0);
-    //     return mio::abm::TestingCriteria(random_ages, random_states);
-    // };
-
-    // model.get_testing_strategy().add_scheme(
-    //     {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
-    //      mio::abm::LocationType::Home},
-    //     mio::abm::TestingScheme(random_criteria(), mio::abm::days(3), mio::abm::TimePoint(0),
-    //                             mio::abm::TimePoint(0) + mio::abm::days(10), {}, 0.5));
 
     return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
 }
