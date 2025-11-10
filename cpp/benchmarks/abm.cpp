@@ -33,7 +33,7 @@ mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list
     for (auto& person : model.get_persons()) {
         auto prng = mio::abm::PersonalRandomNumberGenerator(person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
-        auto pct_infected = 0.005;
+        auto pct_infected = 0.0005;
         if (mio::UniformDistribution<ScalarType>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
             auto infection =
                 mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(), model.parameters,
@@ -66,16 +66,16 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 
         //debug output can be enabled to check for unexpected results (e.g. infections dieing out)
         //normally should have no significant effect on runtime
-        // const bool monitor_infection_activity = false;
-        // if constexpr (monitor_infection_activity) {
-        //     std::cout << "num_persons = " << num_persons << "\n";
-        //     for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
-        //         std::cout << "inf_state = " << inf_state << ", sum = "
-        //                   << sim.get_model().get_subpopulation_combined(sim.get_time(),
-        //                                                                 mio::abm::InfectionState(inf_state))
-        //                   << "\n";
-        //     }
-        // }
+        const bool monitor_infection_activity = false;
+        if constexpr (monitor_infection_activity) {
+            std::cout << "num_persons = " << num_persons << "\n";
+            for (auto inf_state = 0; inf_state < (int)mio::abm::InfectionState::Count; inf_state++) {
+                std::cout << "inf_state = " << inf_state << ", sum = "
+                          << sim.get_model().get_subpopulation_combined(sim.get_time(),
+                                                                        mio::abm::InfectionState(inf_state))
+                          << "\n";
+            }
+        }
     }
 }
 

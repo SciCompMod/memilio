@@ -24,8 +24,8 @@ def covasim_benchmark(pop_size, n_days=120):
     Returns:
         Runtime in seconds
     """
-    # Calculate initial infections as 5% of population (matching ABM benchmark)
-    pop_infected = max(1, int(pop_size * 0.05))
+    # Calculate initial infections as 0.05% of population (matching ABM benchmark)
+    pop_infected = max(1, int(pop_size * 0.0005))
 
     pars = dict(
         pop_size=pop_size,
