@@ -27,11 +27,13 @@
 namespace mio
 {
 
+/// @brief Check that the given type has a check_constraints member function.
 template <class T>
 concept HasCheckConstraints = requires(T t) {
     { t.check_constraints() } -> std::same_as<bool>;
 };
 
+/// @brief Check that the given type has a apply_constraints member function.
 template <class T>
 concept HasApplyConstraints = requires(T t) {
     { t.apply_constraints() } -> std::same_as<bool>;
