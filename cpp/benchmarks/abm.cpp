@@ -20,57 +20,20 @@
 #include "abm/simulation.h"
 #include "abm/common_abm_loggers.h"
 #include "benchmark/benchmark.h"
+#include "abm/city_builder.h"
 
 mio::abm::Simulation<> make_simulation(size_t num_persons, std::initializer_list<uint32_t> seeds)
 {
     auto rng = mio::RandomNumberGenerator();
     rng.seed(seeds);
-    auto model      = mio::abm::Model(5);
-    model.get_rng() = rng;
 
-    //create persons at home
-    // const auto mean_home_size    = 5.0;
-    // const auto min_home_size     = 1;
-    // auto& home_size_distribution = mio::PoissonDistribution<int>::get_instance();
-    // auto home                    = model.add_location(mio::abm::LocationType::Home);
-    // auto planned_home_size       = home_size_distribution(model.get_rng(), mean_home_size);
-    // auto home_size               = 0;
-    // for (size_t i = 0; i < num_persons; ++i) {
-    //     if (home_size >= std::max(min_home_size, planned_home_size)) {
-    //         home              = model.add_location(mio::abm::LocationType::Home);
-    //         planned_home_size = home_size_distribution(model.get_rng(), mean_home_size);
-    //         home_size         = 0;
-    //     }
-
-    //     auto age    = mio::AgeGroup(mio::UniformIntDistribution<size_t>::get_instance()(
-    //         model.get_rng(), size_t(0), model.parameters.get_num_groups() - 1));
-    //     auto person = model.add_person(home, age);
-    //     model.assign_location(uint32_t(i), home);
-    //     home_size++;
-    // }
-
-    //create other locations
-    // for (auto loc_type :
-    //      {mio::abm::LocationType::School, mio::abm::LocationType::Work, mio::abm::LocationType::SocialEvent,
-    //       mio::abm::LocationType::BasicsShop, mio::abm::LocationType::Hospital, mio::abm::LocationType::ICU}) {
-
-    //     const auto num_locs = std::max(size_t(1), num_persons / 100);
-    //     std::vector<mio::abm::LocationId> locs(num_locs);
-    //     std::generate(locs.begin(), locs.end(), [&] {
-    //         return model.add_location(loc_type);
-    //     });
-    //     for (size_t p = 0; p < num_persons; ++p) {
-    //         auto loc_idx =
-    //             mio::UniformIntDistribution<size_t>::get_instance()(model.get_rng(), size_t(0), num_locs - 1);
-    //         model.assign_location(uint32_t(p), locs[loc_idx]);
-    //     }
-    // }
+    auto model = CityBuilder::build_world(CityConfig{static_cast<int>(num_persons)}, rng);
 
     //infections and masks
     for (auto& person : model.get_persons()) {
         auto prng = mio::abm::PersonalRandomNumberGenerator(person);
         //some % of people are infected, large enough to have some infection activity without everyone dying
-        auto pct_infected = 0.05;
+        auto pct_infected = 0.005;
         if (mio::UniformDistribution<ScalarType>::get_instance()(prng, 0.0, 1.0) < pct_infected) {
             auto infection =
                 mio::abm::Infection(prng, mio::abm::VirusVariant::Wildtype, person.get_age(), model.parameters,
@@ -128,7 +91,7 @@ void abm_benchmark(benchmark::State& state, size_t num_persons, std::initializer
 int main(int argc, char** argv)
 {
     // Default problem size
-    size_t num_persons = 1000000;
+    size_t num_persons = 1000;
 
     //print omp_threads
 #ifdef MEMILIO_ENABLE_OPENMP

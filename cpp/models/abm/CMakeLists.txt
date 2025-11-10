@@ -36,6 +36,7 @@ add_library(abm
     mask.cpp
     common_abm_loggers.h
     city_builder.h
+    city_builder.cpp
     city_parameters.h
 )
 target_link_libraries(abm PUBLIC memilio)

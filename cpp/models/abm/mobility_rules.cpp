@@ -89,7 +89,8 @@ LocationType go_to_shop(PersonalRandomNumberGenerator& rng, const Person& person
 {
     auto current_loc = person.get_location_type();
     //leave
-    if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
+    if (person.get_assigned_location(LocationType::BasicsShop) != mio::abm::LocationId::invalid_id() &&
+        t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
         !person.is_in_quarantine(t, params)) {
         return random_transition(rng, current_loc, dt,
                                  {{LocationType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});

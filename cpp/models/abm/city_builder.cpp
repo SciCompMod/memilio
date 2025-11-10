@@ -1,19 +1,25 @@
-#include "../include/city_builder.h"
-#include "../include/constants.h"
-#include "../include/parameter_setter.h"
-#include "../include/city_parameters.h"
+#include "city_builder.h"
+#include "city_parameters.h"
 #include <random>
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <iostream>
-#include <iomanip>
+#include <numeric>
 
-mio::abm::World CityBuilder::build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng)
+// Define age groups as constants
+const mio::AgeGroup age_group_0_to_4(0);
+const mio::AgeGroup age_group_5_to_14(1);
+const mio::AgeGroup age_group_15_to_34(2);
+const mio::AgeGroup age_group_35_to_59(3);
+const mio::AgeGroup age_group_60_to_79(4);
+const mio::AgeGroup age_group_80_plus(5);
+
+mio::abm::Model CityBuilder::build_world(const CityConfig& config, const mio::RandomNumberGenerator& rng,
+                                         size_t num_agegroups)
 {
-    auto world      = mio::abm::World(num_age_groups);
+    auto world      = mio::abm::Model(num_agegroups);
     world.get_rng() = rng; // Set the random number generator for the world
 
     // Get infrastructure configuration based on German demographic data
@@ -44,13 +50,10 @@ mio::abm::World CityBuilder::build_world(const CityConfig& config, const mio::Ra
                                           hospitals, icus, config.total_population, infra.num_households_hh_size,
                                           infra);
 
-    set_local_parameters(world);
-    set_parameters(world.parameters);
-
     return world;
 }
 
-std::vector<mio::abm::LocationId> CityBuilder::create_households(mio::abm::World& world, int num_households)
+std::vector<mio::abm::LocationId> CityBuilder::create_households(mio::abm::Model& world, int num_households)
 {
     std::vector<mio::abm::LocationId> household_ids;
     household_ids.reserve(num_households);
@@ -63,7 +66,7 @@ std::vector<mio::abm::LocationId> CityBuilder::create_households(mio::abm::World
     return household_ids;
 }
 
-std::vector<mio::abm::LocationId> CityBuilder::create_workplaces(mio::abm::World& world, int num_workplaces)
+std::vector<mio::abm::LocationId> CityBuilder::create_workplaces(mio::abm::Model& world, int num_workplaces)
 {
     std::vector<mio::abm::LocationId> workplace_ids;
     workplace_ids.reserve(num_workplaces);
@@ -76,7 +79,7 @@ std::vector<mio::abm::LocationId> CityBuilder::create_workplaces(mio::abm::World
     return workplace_ids;
 }
 
-std::vector<mio::abm::LocationId> CityBuilder::create_schools(mio::abm::World& world, int num_schools)
+std::vector<mio::abm::LocationId> CityBuilder::create_schools(mio::abm::Model& world, int num_schools)
 {
     std::vector<mio::abm::LocationId> school_ids;
     school_ids.reserve(num_schools);
@@ -89,7 +92,7 @@ std::vector<mio::abm::LocationId> CityBuilder::create_schools(mio::abm::World& w
     return school_ids;
 }
 
-std::vector<mio::abm::LocationId> CityBuilder::create_events(mio::abm::World& world, int num_events)
+std::vector<mio::abm::LocationId> CityBuilder::create_events(mio::abm::Model& world, int num_events)
 {
     std::vector<mio::abm::LocationId> event_ids;
     event_ids.reserve(num_events);
@@ -103,7 +106,7 @@ std::vector<mio::abm::LocationId> CityBuilder::create_events(mio::abm::World& wo
     return event_ids;
 }
 
-std::vector<mio::abm::LocationId> CityBuilder::create_shops(mio::abm::World& world, int num_shops)
+std::vector<mio::abm::LocationId> CityBuilder::create_shops(mio::abm::Model& world, int num_shops)
 {
     std::vector<mio::abm::LocationId> shop_ids;
     shop_ids.reserve(num_shops);
@@ -120,7 +123,7 @@ std::vector<mio::abm::LocationId> CityBuilder::create_shops(mio::abm::World& wor
 std::vector<int> CityBuilder::create_age_vector(int total_population)
 {
     std::vector<int> age_vector;
-    age_vector.resize(num_age_groups);
+    age_vector.resize(6); // We have 6 age groups
 
     // Use German age distribution from 2023 census data
     for (size_t i = 0; i < CityParameters::GERMAN_AGE_DISTRIBUTION.size(); ++i) {
@@ -164,7 +167,7 @@ int CityBuilder::ageGroupTInt6(mio::AgeGroup age_group)
 }
 
 void CityBuilder::create_and_assign_people_to_locations(
-    mio::abm::World& world, const std::vector<mio::abm::LocationId>& household_locations,
+    mio::abm::Model& world, const std::vector<mio::abm::LocationId>& household_locations,
     const std::vector<mio::abm::LocationId>& workplaces, const std::vector<mio::abm::LocationId>& prim_schools,
     const std::vector<mio::abm::LocationId>& sec_schools, const std::vector<mio::abm::LocationId>& shops,
     const std::vector<mio::abm::LocationId>& events, const std::vector<mio::abm::LocationId>& hospitals,
@@ -301,11 +304,11 @@ void CityBuilder::create_and_assign_people_to_locations(
         // Create persons for each age in the household
         for (const auto& age : household) {
             // Create a new person with the given age
-            auto& person = world.add_person(household_id, age);
-            // Assign the person to the household location
-            person.set_assigned_location(household_id);
-            person.set_assigned_location(hospitals[0]);
-            person.set_assigned_location(icus[0]);
+            auto person_id = world.add_person(household_id, age);
+            world.assign_location(person_id, household_id); // Assign the person to their household
+            // Assign the person to hospital and ICU (home is already assigned by add_person)
+            world.assign_location(person_id, hospitals[0]);
+            world.assign_location(person_id, icus[0]);
         }
         // Increment the household index
         household_index++;
@@ -317,7 +320,7 @@ void CityBuilder::create_and_assign_people_to_locations(
         if (loc.get_type() != mio::abm::LocationType::Home) {
             continue; // Only count households
         }
-        household_sizes[loc.get_persons().size() - 1]++;
+        household_sizes[world.get_number_persons(loc.get_id()) - 1]++;
     }
 
     for (size_t i = 0; i < household_sizes.size(); ++i) {
@@ -362,22 +365,26 @@ void CityBuilder::create_and_assign_people_to_locations(
 
         if (person.get_age() != age_group_0_to_4) {
             // Assign to a random shop if not in age group 0-4
-            person.set_assigned_location(shops[count_shops % infra.num_stores]);
+            auto shop_id = shops[count_shops % infra.num_stores];
+            world.assign_location(person.get_id(), shop_id);
             count_shops++;
         }
         // Assign to a random event
-        person.set_assigned_location(events[count_events % infra.num_events]);
+        auto event_id = events[count_events % infra.num_events];
+        world.assign_location(person.get_id(), event_id);
         count_events++;
 
         if (person.get_age() == age_group_5_to_14) {
-            // Assign to a school if in age group 0-14
+            // Assign to a school if in age group 5-14
             if (count_elementary_schools < infra.num_persons_elementary_schools) {
-                person.set_assigned_location(prim_schools[count_elementary_schools % infra.num_elementary_schools]);
+                auto school_id = prim_schools[count_elementary_schools % infra.num_elementary_schools];
+                world.assign_location(person.get_id(), school_id);
                 count_elementary_schools++;
                 continue;
             }
             else if (count_secondary_schools < infra.num_persons_secondary_schools) {
-                person.set_assigned_location(sec_schools[count_secondary_schools % infra.num_secondary_schools]);
+                auto school_id = sec_schools[count_secondary_schools % infra.num_secondary_schools];
+                world.assign_location(person.get_id(), school_id);
                 count_secondary_schools++;
                 continue;
             }
@@ -385,14 +392,16 @@ void CityBuilder::create_and_assign_people_to_locations(
         else if ((prim_overhang > 0 || sec_overhang > 0) && person.get_age() == age_group_15_to_34) {
             if (prim_overhang > 0) {
                 // Assign to a primary school if there are overhangs
-                person.set_assigned_location(prim_schools[count_elementary_schools % infra.num_elementary_schools]);
+                auto school_id = prim_schools[count_elementary_schools % infra.num_elementary_schools];
+                world.assign_location(person.get_id(), school_id);
                 count_elementary_schools++;
                 prim_overhang--;
                 continue;
             }
             else if (sec_overhang > 0) {
                 // Assign to a secondary school if there are overhangs
-                person.set_assigned_location(sec_schools[count_secondary_schools % infra.num_secondary_schools]);
+                auto school_id = sec_schools[count_secondary_schools % infra.num_secondary_schools];
+                world.assign_location(person.get_id(), school_id);
                 count_secondary_schools++;
                 sec_overhang--;
                 continue;
@@ -400,9 +409,10 @@ void CityBuilder::create_and_assign_people_to_locations(
         }
 
         else if (person.get_age() == age_group_35_to_59 || person.get_age() == age_group_15_to_34) {
-            // Assign to a workplace if in age group 35-59
+            // Assign to a workplace if in age group 35-59 or 15-34
             if (count_workers < infra.num_worker) {
-                person.set_assigned_location(workplaces[count_workers % infra.num_workplaces]);
+                auto work_id = workplaces[count_workers % infra.num_workplaces];
+                world.assign_location(person.get_id(), work_id);
                 count_workers++;
                 continue;
             }
@@ -410,7 +420,8 @@ void CityBuilder::create_and_assign_people_to_locations(
         else if (person.get_age() == age_group_60_to_79 || person.get_age() == age_group_80_plus) {
             // Assign to a workplace if in age group 60-79 or 80+
             if (amount_of_60plus_that_work > 0) {
-                person.set_assigned_location(workplaces[count_workers % infra.num_workplaces]);
+                auto work_id = workplaces[count_workers % infra.num_workplaces];
+                world.assign_location(person.get_id(), work_id);
                 count_workers++;
                 amount_of_60plus_that_work--;
                 continue;
@@ -424,39 +435,45 @@ void CityBuilder::create_and_assign_people_to_locations(
     for (auto& person : world.get_persons()) {
         // We count amount of workers and school attendees
 
-        if (person.get_assigned_locations()[1] != std::numeric_limits<uint32_t>::max()) {
+        auto home_loc     = person.get_assigned_location(mio::abm::LocationType::Home);
+        auto school_loc   = person.get_assigned_location(mio::abm::LocationType::School);
+        auto work_loc     = person.get_assigned_location(mio::abm::LocationType::Work);
+        auto event_loc    = person.get_assigned_location(mio::abm::LocationType::SocialEvent);
+        auto shop_loc     = person.get_assigned_location(mio::abm::LocationType::BasicsShop);
+        auto hospital_loc = person.get_assigned_location(mio::abm::LocationType::Hospital);
+        auto icu_loc      = person.get_assigned_location(mio::abm::LocationType::ICU);
+
+        if (school_loc != mio::abm::LocationId::invalid_id()) {
             school_attendees++;
         }
-        if (person.get_assigned_locations()[2] != std::numeric_limits<uint32_t>::max()) {
+        if (work_loc != mio::abm::LocationId::invalid_id()) {
             workerss++;
         }
 
-        if (person.get_assigned_locations()[0] == std::numeric_limits<uint32_t>::max()) {
+        if (home_loc == mio::abm::LocationId::invalid_id()) {
             //Home
-            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned home location.\n";
+            std::cerr << "Error: Person " << person.get_id() << " has no assigned home location.\n";
         }
-        if (person.get_assigned_locations()[1] != std::numeric_limits<uint32_t>::max() &&
-            person.get_assigned_locations()[2] != std::numeric_limits<uint32_t>::max()) {
-            std::cerr << "Error: Person " << person.get_person_id() << " has an wokr and school place assigned.\n";
+        if (school_loc != mio::abm::LocationId::invalid_id() && work_loc != mio::abm::LocationId::invalid_id()) {
+            std::cerr << "Error: Person " << person.get_id() << " has an work and school place assigned.\n";
         }
 
-        if (person.get_assigned_locations()[3] == std::numeric_limits<uint32_t>::max()) {
+        if (event_loc == mio::abm::LocationId::invalid_id()) {
             //Event
-            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned event location.\n";
+            std::cerr << "Error: Person " << person.get_id() << " has no assigned event location.\n";
         }
-        if (person.get_assigned_locations()[4] == std::numeric_limits<uint32_t>::max() &&
-            person.get_age() != age_group_0_to_4) {
+        if (shop_loc == mio::abm::LocationId::invalid_id() && person.get_age() != age_group_0_to_4) {
             //Shop
-            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned shop location.\n";
+            std::cerr << "Error: Person " << person.get_id() << " has no assigned shop location.\n";
         }
 
-        if (person.get_assigned_locations()[5] == std::numeric_limits<uint32_t>::max()) {
+        if (hospital_loc == mio::abm::LocationId::invalid_id()) {
             //Hospital
-            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned hospital location.\n";
+            std::cerr << "Error: Person " << person.get_id() << " has no assigned hospital location.\n";
         }
-        if (person.get_assigned_locations()[6] == std::numeric_limits<uint32_t>::max()) {
+        if (icu_loc == mio::abm::LocationId::invalid_id()) {
             //ICU
-            std::cerr << "Error: Person " << person.get_person_id() << " has no assigned ICU location.\n";
+            std::cerr << "Error: Person " << person.get_id() << " has no assigned ICU location.\n";
         }
     }
 
