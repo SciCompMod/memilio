@@ -38,8 +38,9 @@ Namespaces:
 
 Naming rules:
 
-  - Classes begin with large Letters , e.g. ``class MyClass``.
+  - classes begin with large letters , e.g. ``class MyClass``.
   - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function``.
+  - concepts begin with a boolean prefix (like is, has, can) and use large letters, e.g. ``IsMyClass`` or ``HasMyAwesomeFunciton``.
   - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading ``m_``, e.g. ``m_my_member``.
 
 Return Values:
@@ -47,7 +48,7 @@ Return Values:
   - If only one object is output, use return, for multiple objects, pass by reference (we still have to check ``std::expected``).
   - The semantics of return value arguments have to make clear, how the ownership is handled.
 
-    - If the function creates an object (allocates), pass it as ``std::unique_ptr<T>&``
+    - If the function creates an object (allocates), pass it as ``T``
     - If the function simply changes an object, pass is as ``T&``
 
   - Avoid producing unnecessarily long outputs. Ensure that all output is concise and limited to relevant information.
@@ -64,7 +65,7 @@ Logging:
 
 Includes:
 
-  - Please use include guards with capitalized name of the header file (``test.h -> #ifndefine TEST_H``).
+  - Please use include guards with capitalized name of the header file (``memilio/utils/test.h -> #ifndefine MIO_UTILS_TEST_H``).
   - Sort includes according to
 
      1. own header
