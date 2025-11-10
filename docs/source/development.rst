@@ -40,7 +40,7 @@ Naming rules:
 
   - classes begin with large letters , e.g. ``class MyClass``.
   - functions, methods, variables use small letters + underscore, e.g. ``my_awesome_function``.
-  - concepts begin with a boolean prefix (like is, has, can) and use large letters, e.g. ``IsMyClass`` or ``HasMyAwesomeFunciton``.
+  - concepts begin with a boolean prefix (like is, has, can) and use large letters, e.g. ``IsMyClass`` or ``HasMyAwesomeFunction``.
   - member variables should be generally private (we allow exceptions from this rule) and should be named with a leading ``m_``, e.g. ``m_my_member``.
 
 Return Values:

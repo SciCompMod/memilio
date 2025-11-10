@@ -33,7 +33,7 @@ concept HasCheckConstraints = requires(T t) {
     { t.check_constraints() } -> std::same_as<bool>;
 };
 
-/// @brief Check that the given type has a apply_constraints member function.
+/// @brief Check that the given type has an apply_constraints member function.
 template <class T>
 concept HasApplyConstraints = requires(T t) {
     { t.apply_constraints() } -> std::same_as<bool>;
@@ -159,8 +159,8 @@ public:
 /**
  * @brief Concept to check if a type is a valid compartment model.
  * Note that Model must be the first template argument 
- * @tparam Model a type that may or may not be a compartment model.
- * @tparam FP, floating point type, e.g., double.
+ * @tparam Model A type that may or may not be a compartment model.
+ * @tparam FP A floating point type, e.g. double.
  */
 template <class Model, typename FP>
 concept IsCompartmentalModel =

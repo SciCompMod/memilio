@@ -95,8 +95,8 @@ private:
 /**
  * @brief Concept to check if a type is a valid stochastic model.
  * Note that Model must be the first template argument 
- * @tparam Model a type that may or may not be a stochastic model.
- * @tparam FP, floating point type, e.g., double.
+ * @tparam Model A type that may or may not be a stochastic model.
+ * @tparam FP A floating point type, e.g. double.
  */
 template <class Model, typename FP>
 concept IsStochasticModel =
