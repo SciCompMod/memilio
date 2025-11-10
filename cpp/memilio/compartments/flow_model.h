@@ -243,7 +243,7 @@ private:
 template <class Model, typename FP>
 concept IsFlowModel =
     requires(Model m, Eigen::Ref<const Eigen::VectorX<FP>> const_vref, Eigen::Ref<Eigen::VectorX<FP>> vref, FP t) {
-        IsCompartmentalModel<Model, FP>;
+        requires IsCompartmentalModel<Model, FP>;
         { m.get_initial_flows() } -> std::convertible_to<Eigen::VectorX<FP>>;
         m.get_flows(const_vref, const_vref, t, vref);
         m.get_derivatives(const_vref, vref);

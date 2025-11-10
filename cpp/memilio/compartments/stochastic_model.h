@@ -101,7 +101,7 @@ private:
 template <class Model, typename FP>
 concept IsStochasticModel =
     requires(Model m, Eigen::Ref<const Eigen::VectorX<FP>> const_vref, Eigen::Ref<Eigen::VectorX<FP>> vref, FP t) {
-        IsCompartmentalModel<Model, FP>;
+        requires IsCompartmentalModel<Model, FP>;
         m.get_noise(const_vref, const_vref, t, vref);
     };
 
