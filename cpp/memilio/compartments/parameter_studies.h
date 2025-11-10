@@ -41,10 +41,11 @@ namespace mio
 {
 
 /**
- * @brief Class used to performs multiple simulation runs with randomly sampled parameters.
+ * @brief Class used to perform multiple simulation runs with randomly sampled parameters.
+ * Note that the type of simulation is not determined until calling one of the run functions.
  * @tparam ParameterType The parameters used to create simulations.
- * @tparam TimeType The type used for time, e.g. double or TimePoint.
- * @tparam StepType The type used for time steps, e.g. double or TimeStep.
+ * @tparam TimeType The time type used by the simulation, e.g. double or TimePoint.
+ * @tparam StepType The time step type used by the simulation, e.g. double or TimeStep. May be the same as TimeType.
  */
 template <class ParameterType, typename TimeType, typename StepType = TimeType>
 class ParameterStudy
