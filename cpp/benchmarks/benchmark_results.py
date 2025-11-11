@@ -44,11 +44,14 @@ class rawData:
             [33594, 68616, 135322, 271997, 550301, 1130269, 2237273, 5551993, 11600000]) * (1/120.0) * (1/1000)
 
         # Runtime memilio four threads (normalized per time step)
-        self.covasim_times_four_cores = np.array(
+        self.memilio_times_four_cores = np.array(
             [13812, 27802, 56257, 113088, 223888, 454182, 928952, 1944267, 4877925]) * (1/120.0)*(1/1000)
 
+        self.memilio_times_sixteen_cores = np.array(
+            [6905, 13902, 28128, 56388, 112888, 226091, 456476, 911234, 4877925]) * (1/120.0)*(1/1000)
+
         # covasim single thread (normalized per time step)
-        self.covasim_times_parallel = np.array(
+        self.covasim = np.array(
             [62415, 128200, 292536, 632381, 1298022, 2625049, 5385827]) * (1/120.0)*(1/1000)
 
         # now data for weak scaling
@@ -69,11 +72,16 @@ class rawData:
         self.memilio_weak_scaling_2m = np.array(
             [69787, 83565, 112698, 181267, 322380, 601845]) * (1/120.0)*(1/1000)
 
-        self.strong_scaling_cores = [1, 2, 4, 8, 16, 32]
+        # now data for strong scaling
+
+        self.strong_scaling_cores = [1, 2, 4, 8, 16, 32, 64, 128]
+        self.strong_scaling_nodes = [1, 2, 4, 8, 16, 32, 64, 128]
 
         # Runtime Strong scaling
-        self.memilio_strong_scaling_128_runs = np.array(
-            [2.018429e+02, 30345, 16234, 8956, 5234, 3120]) * (1/120.0)*(1/1000)
+        self.memilio_strong_scaling_128_runs_one_node = np.array(
+            [1, 30345, 16234, 8956, 5234, 3120])
+        self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
+            [1, 15876, 8423, 4650, 2723, 1500])
 
 
 class BenchmarkAnalyzer:
@@ -82,23 +90,6 @@ class BenchmarkAnalyzer:
     def __init__(self, fontsize=18):
         self.fontsize = fontsize
         self.colors = {'memilio': '#1f77b4', 'covasim': '#ff7f0e'}
-
-        # Default data - can be overridden by loading from files
-        self.population_sizes = [1000, 50, 100,
-                                 200, 400, 800, 1600]  # in thousands
-        self.population_sizes = [p * 1000 for p in self.population_sizes]
-
-        # Runtime data parallel (normalized per time step)
-        self.memilio_times = np.array(
-            [0.085, 0.16, 0.37, 0.75, 1.6, 3.1, 6.2]) * (1/120.0)
-        self.covasim_times = np.array(
-            [0.424, 0.757, 1.6, 3.4, 7.2, 16.2, 33.6]) * (1/120.0)
-
-        # Runtime data single thread (normalized per time step)
-        self.memilio_times = np.array(
-            [0.1, 0.2, 0.37, 0.75, 1.6, 3.1, 6.2]) * (1/120.0)
-        self.covasim_times = np.array(
-            [0.424, 0.757, 1.6, 3.4, 7.2, 16.2, 33.6]) * (1/120.0)
 
     def load_data_from_file(self, filename):
         """Load benchmark data from JSON file."""
