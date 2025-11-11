@@ -37,7 +37,7 @@
 
 #include <string>
 
-constexpr size_t num_age_groups = 5;
+// constexpr size_t num_age_groups = 5;
 
 /// An ABM setup taken from abm_minimal.cpp.
 mio::abm::Model make_model(size_t num_persons, mio::RandomNumberGenerator& rng)
@@ -79,10 +79,13 @@ int main()
     // This is mostly due to https://github.com/SciCompMod/memilio/issues/1400
     mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
+    mio::timing::AutoTimer<"abm_timer"> timer;
+
     // Optional: set seeds to get reproducable results
     // study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
 
     const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
+    std::cout << "Writing results to " << result_dir << std::endl;
     if (!mio::create_directory(result_dir)) {
         mio::log_error("Could not create result directory \"{}\".", result_dir);
         return 1;
@@ -109,15 +112,15 @@ int main()
         auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
         auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
 
-        mio::unused(save_result(ensemble_results_p05, {0}, num_age_groups,
+        mio::unused(save_result(ensemble_results_p05, {0}, 8,
                                 mio::path_join(result_dir, "Results_" + std::string("p05") + ".h5")));
-        mio::unused(save_result(ensemble_results_p25, {0}, num_age_groups,
+        mio::unused(save_result(ensemble_results_p25, {0}, 8,
                                 mio::path_join(result_dir, "Results_" + std::string("p25") + ".h5")));
-        mio::unused(save_result(ensemble_results_p50, {0}, num_age_groups,
+        mio::unused(save_result(ensemble_results_p50, {0}, 8,
                                 mio::path_join(result_dir, "Results_" + std::string("p50") + ".h5")));
-        mio::unused(save_result(ensemble_results_p75, {0}, num_age_groups,
+        mio::unused(save_result(ensemble_results_p75, {0}, 8,
                                 mio::path_join(result_dir, "Results_" + std::string("p75") + ".h5")));
-        mio::unused(save_result(ensemble_results_p95, {0}, num_age_groups,
+        mio::unused(save_result(ensemble_results_p95, {0}, 8,
                                 mio::path_join(result_dir, "Results_" + std::string("p95") + ".h5")));
     }
 
