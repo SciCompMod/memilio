@@ -6,6 +6,8 @@ add_library(ide_sir
     model_simplified.cpp
     simulation.h
     simulation.cpp
+    simulation_s_groundtruth.h
+    simulation_s_groundtruth.cpp
     simulation_simplified.h
     simulation_simplified.cpp
     parameters.h

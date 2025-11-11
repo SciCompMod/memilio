@@ -107,7 +107,7 @@ void SimulationMessinaExtendedDetailedInit::advance(ScalarType tmax, bool backwa
         }
 
         // Compute I and R.
-        m_model->compute_I_and_R(m_dt);
+        m_model->compute_I_and_R(m_dt, t0_index);
     }
 
     // If we use a central finite difference scheme, we remove the additional time points for which we have computed S

@@ -322,46 +322,44 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv_central(ScalarType dt)
 
 void ModelMessinaExtendedDetailedInit::compute_I_and_R(ScalarType dt, size_t time_point_index)
 {
-    size_t current_time_index = flows.get_num_time_points() - 1;
-
     // Index determining when we switch from one Gregory sum to the other one.
     // TODO: Explain better what the difference between the two Gregory sums is.
-    size_t switch_weights_index = std::min(current_time_index, m_gregory_order);
+    size_t switch_weights_index = std::min(time_point_index, m_gregory_order);
 
     ScalarType sum_infected = 0., sum_recovered = 0.;
 
     // Add first part of sum.
     for (size_t j = 0; j < switch_weights_index; j++) {
-        ScalarType gregory_weight = sum_part1_weight(current_time_index, j);
+        ScalarType gregory_weight = sum_part1_weight(time_point_index, j);
 
         // For each index, the corresponding summand is computed here.
-        sum_infected += gregory_weight * m_transitiondistribution_vector[current_time_index - j] *
+        sum_infected += gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 
-        sum_recovered += gregory_weight * (1 - m_transitiondistribution_vector[current_time_index - j]) *
+        sum_recovered += gregory_weight * (1 - m_transitiondistribution_vector[time_point_index - j]) *
                          flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
     // Add second part of sum.
-    for (size_t j = switch_weights_index; j <= current_time_index; j++) {
-        ScalarType gregory_weight = sum_part2_weight(current_time_index, j);
+    for (size_t j = switch_weights_index; j <= time_point_index; j++) {
+        ScalarType gregory_weight = sum_part2_weight(time_point_index, j);
 
         // For each index, the corresponding summand is computed here.
-        sum_infected += gregory_weight * m_transitiondistribution_vector[current_time_index - j] *
+        sum_infected += gregory_weight * m_transitiondistribution_vector[time_point_index - j] *
                         flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
 
-        sum_recovered += gregory_weight * (1 - m_transitiondistribution_vector[current_time_index - j]) *
+        sum_recovered += gregory_weight * (1 - m_transitiondistribution_vector[time_point_index - j]) *
                          flows.get_value(j)[(Eigen::Index)InfectionTransition::SusceptibleToInfected];
     }
 
     populations[time_point_index][(Eigen::Index)InfectionState::Infected] =
-        m_transitiondistribution_vector[current_time_index] *
+        m_transitiondistribution_vector[time_point_index] *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_infected;
 
     populations[time_point_index][(Eigen::Index)InfectionState::Recovered] =
         populations.get_value(0)[(Eigen::Index)InfectionState::Recovered] +
-        (1 - m_transitiondistribution_vector[current_time_index]) *
+        (1 - m_transitiondistribution_vector[time_point_index]) *
             populations.get_value(0)[(Eigen::Index)InfectionState::Infected] +
         dt * sum_recovered;
 }

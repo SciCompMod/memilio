@@ -22,6 +22,7 @@
 #include "ide_sir/infection_state.h"
 #include "ide_sir/parameters.h"
 #include "ide_sir/simulation.h"
+#include "ide_sir/simulation_s_groundtruth.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
@@ -101,8 +102,10 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
                                  ScalarType TimeInfected, ScalarType tol_exp, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
-                                 bool backwards_fd = true)
+                                 bool init_all_comps = true)
 {
+    unused(tmax);
+    unused(save_dir);
     using namespace params;
     using Vec = mio::TimeSeries<ScalarType>::Vector;
 
@@ -113,37 +116,59 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
         mio::TimeSeries<ScalarType> init_populations((size_t)mio::isir::InfectionState::Count);
 
-        if (result_groundtruth.get_num_time_points() == 0) {
-            std::cout << "No groundtruth was given.\n";
+        std::cout << "Initializing with given groundtruth.\n";
+
+        // Initialize time points before t0_ide based on groundtruth.
+        ScalarType dt_groundtruth       = result_groundtruth.get_time(1) - result_groundtruth.get_time(0);
+        size_t groundtruth_index_factor = size_t(dt_ide / dt_groundtruth);
+
+        Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
+
+        std::vector<size_t> compartments = {(size_t)mio::isir::InfectionState::Susceptible,
+                                            (size_t)mio::isir::InfectionState::Infected,
+                                            (size_t)mio::isir::InfectionState::Recovered};
+
+        // Add values to init_populations.
+        for (size_t compartment : compartments) {
+            vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
         }
-        else {
-            std::cout << "Initializing with given groundtruth.\n";
+        init_populations.add_time_point(t0_ode, vec_init);
 
-            // Initialize time points before t0_ide based on groundtruth.
-            ScalarType dt_groundtruth = result_groundtruth.get_time(1) - result_groundtruth.get_time(0);
-            // std::cout << "dt groundtruth: " << dt_groundtruth << std::endl;
-            size_t groundtruth_index_factor = size_t(dt_ide / dt_groundtruth);
-            // std::cout << "groundtruth_index: " << groundtruth_index << std::endl;
+        size_t t0_index; // Index of simulation start for I and R.
 
-            Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
+        while (init_populations.get_last_time() < t0_ide - 1e-10) {
 
-            std::vector<size_t> compartments = {(size_t)mio::isir::InfectionState::Susceptible,
-                                                (size_t)mio::isir::InfectionState::Infected,
-                                                (size_t)mio::isir::InfectionState::Recovered};
-
-            // Add values to init_populations.
-            for (size_t compartment : compartments) {
-                vec_init[compartment] = result_groundtruth.get_value(0)[compartment];
-            }
-            init_populations.add_time_point(t0_ode, vec_init);
-
-            while (init_populations.get_last_time() < t0_ide - 1e-10) {
-                for (size_t compartment : compartments) {
+            if (init_all_comps) { // Initialize all compartments with ODE results until t0_ide.
+                for (size_t compartment : compartments)
                     vec_init[compartment] = result_groundtruth.get_value(
                         size_t(init_populations.get_num_time_points() * groundtruth_index_factor))[compartment];
-                }
-                init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
+                t0_index = std::round((t0_ide - t0_ode) / dt_ide);
             }
+            else { // Only initialize S.
+                vec_init[(size_t)mio::isir::InfectionState::Susceptible] = result_groundtruth.get_value(
+                    size_t(init_populations.get_num_time_points() *
+                           groundtruth_index_factor))[(size_t)mio::isir::InfectionState::Susceptible];
+                vec_init[(size_t)mio::isir::InfectionState::Infected]  = 0.;
+                vec_init[(size_t)mio::isir::InfectionState::Recovered] = 0.;
+                t0_index                                               = 1; // Results for index=0 are given
+            }
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
+        }
+
+        // size_t init_index = std::round((t0_ide - t0_ode) / dt_ide);
+        // std::cout << "init_index: " << init_index << std::endl;
+
+        // Furthermore, add values of S from ODE results from t0 until tmax, set values for I and R to 0.
+        while (init_populations.get_last_time() < tmax - 1e-10) {
+
+            vec_init[(size_t)mio::isir::InfectionState::Susceptible] = result_groundtruth.get_value(
+                size_t(init_populations.get_num_time_points() *
+                       groundtruth_index_factor))[(size_t)mio::isir::InfectionState::Susceptible];
+            vec_init[(size_t)mio::isir::InfectionState::Infected]  = 0.;
+            vec_init[(size_t)mio::isir::InfectionState::Recovered] = 0.;
+
+            init_populations.add_time_point(init_populations.get_last_time() + dt_ide, vec_init);
         }
 
         // Initialize model.
@@ -175,14 +200,14 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         std::cout << "support max: " << model.compute_calctime(dt_ide) << std::endl;
 
         // Carry out simulation.
-        mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
-        sim.advance(tmax, backwards_fd);
+        mio::isir::SimulationSusceptibleGroundtruth sim(model, dt_ide);
+        sim.advance(tmax, t0_index);
 
         if (!save_dir.empty()) {
             // Save compartments.
-            mio::TimeSeries<ScalarType> compartments = sim.get_result();
+            mio::TimeSeries<ScalarType> result_compartments = sim.get_result();
             auto save_result_status_ide =
-                mio::save_result({compartments}, {0}, num_agegroups,
+                mio::save_result({result_compartments}, {0}, num_agegroups,
                                  save_dir + "result_ide_dt=1e-" + fmt::format("{:.0f}", ide_exponent) +
                                      "_gregoryorder=" + fmt::format("{}", gregory_order) + ".h5");
 
@@ -198,76 +223,62 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
 int main()
 {
-    using namespace params;
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
+
+    using namespace params;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
-    // std::vector<int> time_infected_values = {1, 2, 5};
-    // std::vector<ScalarType> time_infected_values = {1., 2., 5.};
-    std::vector<ScalarType> time_infected_values = {1., 2.};
-
     ScalarType tol_exp = 8;
 
-    // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    std::vector<bool> fd_schemes = {true};
+    ScalarType t0_ode = 0.;
+    ScalarType t0_ide = 50.;
 
-    for (bool backwards_fd : fd_schemes) {
+    std::vector<ScalarType> time_infected_values = {2.};
 
-        for (int time_infected : time_infected_values) {
+    std::vector<size_t> num_days_vec = {5};
 
-            std::vector<size_t> finite_difference_orders;
-            if (backwards_fd) {
+    std::vector<size_t> finite_difference_orders = {1, 2, 4};
 
-                // finite_difference_orders = {1, 2, 4};
-                finite_difference_orders = {1, 2, 4};
-            }
-            else {
-                finite_difference_orders = {2, 4};
-            }
+    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
+    std::vector<size_t> gregory_orders    = {1, 2, 3};
 
-            for (size_t finite_difference_order : finite_difference_orders) {
+    bool init_all_comps = false;
 
-                ScalarType t0_ode = 0.;
-                ScalarType t0_ide = 50.;
+    for (int time_infected : time_infected_values) {
 
-                // std::vector<size_t> num_days_vec = {1, 5, 10};
-                std::vector<size_t> num_days_vec = {1, 5, 10};
+        for (size_t finite_difference_order : finite_difference_orders) {
 
-                for (size_t num_days : num_days_vec) {
-                    ScalarType tmax = t0_ide + num_days;
+            for (size_t num_days : num_days_vec) {
+                ScalarType tmax = t0_ide + num_days;
 
-                    std::string save_dir =
-                        fmt::format("../../simulation_results/2025-11-07/time_infected={}/"
-                                    "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_tolexp={}",
-                                    time_infected, t0_ide, tmax, finite_difference_order, tol_exp);
+                std::string save_dir;
+                if (init_all_comps) {
+                    save_dir = fmt::format("../../simulation_results/2025-11-11/s_groundtruth/init_all_comps/"
+                                           "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_tolexp={}/",
+                                           t0_ide, tmax, finite_difference_order, tol_exp);
+                }
+                else { // Init only for S after t0_ode
+                    save_dir = fmt::format("../../simulation_results/2025-11-11/s_groundtruth/init_only_s/"
+                                           "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_tolexp={}/",
+                                           t0_ide, tmax, finite_difference_order, tol_exp);
+                }
 
-                    if (!backwards_fd) {
-                        save_dir = save_dir + "_central_fd";
-                    }
-                    save_dir = save_dir + "/";
-                    // Make folder if not existent yet.
-                    boost::filesystem::path dir(save_dir);
-                    boost::filesystem::create_directories(dir);
+                // Make folder if not existent yet.
+                boost::filesystem::path dir(save_dir);
+                boost::filesystem::create_directories(dir);
 
-                    auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
+                auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
 
-                    // Do IDE simulations.
-                    std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
-                    std::vector<size_t> gregory_orders    = {1, 2, 3};
-
-                    // std::vector<ScalarType> ide_exponents = {4};
-                    // std::vector<size_t> gregory_orders    = {3};
-
-                    for (size_t gregory_order : gregory_orders) {
-                        std::cout << std::endl;
-                        std::cout << "Gregory order: " << gregory_order << std::endl;
-                        mio::IOResult<void> result_ide =
-                            simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
-                                         time_infected, tol_exp, save_dir, result_ode, backwards_fd);
-                    }
+                // Do IDE simulations.
+                for (size_t gregory_order : gregory_orders) {
+                    std::cout << std::endl;
+                    std::cout << "Gregory order: " << gregory_order << std::endl;
+                    mio::IOResult<void> result_ide =
+                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
+                                     time_infected, tol_exp, save_dir, result_ode);
                 }
             }
         }
