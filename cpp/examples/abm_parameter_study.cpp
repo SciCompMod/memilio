@@ -71,7 +71,7 @@ int main()
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(14);
     // Set the number of simulations to run in the study
-    const size_t num_runs = 10;
+    const size_t num_runs = 128;
 
     // Create a parameter study.
     // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
@@ -82,7 +82,7 @@ int main()
     mio::timing::AutoTimer<"abm_timer"> timer;
 
     // Optional: set seeds to get reproducable results
-    // study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
+    study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
 
     const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
     std::cout << "Writing results to " << result_dir << std::endl;
@@ -93,7 +93,7 @@ int main()
 
     auto ensemble_results = study.run(
         [](auto, auto t0_, auto, size_t) {
-            return mio::abm::ResultSimulation(make_model(20000, mio::thread_local_rng()), t0_);
+            return mio::abm::ResultSimulation(make_model(2'000'000, mio::thread_local_rng()), t0_);
         },
         [result_dir](auto&& sim, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
