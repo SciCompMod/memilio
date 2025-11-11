@@ -100,3 +100,20 @@ add_pymio_module(_simulation_omseirs4
     LINKED_LIBRARIES memilio ode_mseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
 )
+
+# Install shared libraries for auditwheel to bundle them into the wheel
+if(BUILD_SHARED_LIBS)
+    if(TARGET jsoncpp_lib)
+        install(TARGETS jsoncpp_lib
+            LIBRARY DESTINATION memilio/simulation
+            RUNTIME DESTINATION memilio/simulation
+        )
+    endif()
+
+    if(TARGET memilio)
+        install(TARGETS memilio
+            LIBRARY DESTINATION memilio/simulation
+            RUNTIME DESTINATION memilio/simulation
+        )
+    endif()
+endif()
