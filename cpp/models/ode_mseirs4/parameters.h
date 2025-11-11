@@ -192,6 +192,12 @@ public:
         bool corrected    = false;
         auto clamp_nonneg = [&](auto& v) {
             if (v < 0) {
+                if (v > -1e-10) {
+                    log_warning("Constraint check: Parameter was found negative. Changed from {} to {} ", v, 0);
+                }
+                else {
+                    log_error("Constraint check: Parameter was found negative. Changed from {} to {} ", v, 0);
+                }
                 v         = 0;
                 corrected = true;
             }
@@ -215,10 +221,28 @@ public:
 
     bool check_constraints() const
     {
+        auto check_nonneg = [&](auto& v) {
+            if (v < 0) {
+                log_error("Constraint check: Parameter was found to be {} and should not be smaller than {}.", v, 0);
+                return true;
+            }
+        };
+        check_nonneg(this->template get<BaseTransmissionRate<FP>>());
+        check_nonneg(this->template get<SeasonalAmplitude<FP>>());
+        check_nonneg(this->template get<NaturalBirthDeathRate<FP>>());
+        check_nonneg(this->template get<LossMaternalImmunityRate<FP>>());
+        check_nonneg(this->template get<ProgressionRate<FP>>());
+        check_nonneg(this->template get<RecoveryRate<FP>>());
+        check_nonneg(this->template get<ImmunityWaningRate<FP>>());
+        check_nonneg(this->template get<Beta2Factor<FP>>());
+        check_nonneg(this->template get<Beta3Factor<FP>>());
+        check_nonneg(this->template get<Beta4Factor<FP>>());
         if (this->template get<SeasonalAmplitude<FP>>() < 0 || this->template get<SeasonalAmplitude<FP>>() > 1)
-            return true;
+            og_error("Constraint check: Parameter SeasonalAmplitude was found to be out of [0, 1].");
+        return true;
         return false;
     }
+
 private:
     Parameters(ParametersBase<FP>&& base)
         : ParametersBase<FP>(std::move(base))
