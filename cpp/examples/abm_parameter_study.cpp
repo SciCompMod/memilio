@@ -37,10 +37,10 @@
 
 #include <string>
 
-constexpr size_t num_age_groups = 4;
+constexpr size_t num_age_groups = 5;
 
 /// An ABM setup taken from abm_minimal.cpp.
-mio::abm::Simulation<> make_model(size_t num_persons, mio::RandomNumberGenerator& rng)
+mio::abm::Model make_model(size_t num_persons, mio::RandomNumberGenerator& rng)
 {
 
     auto model = CityBuilder::build_world(CityConfig{static_cast<int>(num_persons)}, rng);
@@ -58,7 +58,7 @@ mio::abm::Simulation<> make_model(size_t num_persons, mio::RandomNumberGenerator
         }
     }
 
-    return mio::abm::Simulation(mio::abm::TimePoint(0), std::move(model));
+    return model;
 }
 
 int main()
@@ -69,9 +69,9 @@ int main()
 
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(5);
+    auto tmax = t0 + mio::abm::days(14);
     // Set the number of simulations to run in the study
-    const size_t num_runs = 3;
+    const size_t num_runs = 10;
 
     // Create a parameter study.
     // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
@@ -90,7 +90,7 @@ int main()
 
     auto ensemble_results = study.run(
         [](auto, auto t0_, auto, size_t) {
-            return mio::abm::ResultSimulation(make_model(2'000'000, mio::thread_local_rng()), t0_);
+            return mio::abm::ResultSimulation(make_model(20000, mio::thread_local_rng()), t0_);
         },
         [result_dir](auto&& sim, auto&& run_idx) {
             auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
