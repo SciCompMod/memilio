@@ -54,6 +54,10 @@ class rawData:
         self.covasim = np.array(
             [62415, 128200, 292536, 632381, 1298022, 2625049, 5385827]) * (1/120.0)*(1/1000)
 
+        # OpenCoviasim single thread (normalized per time step)
+        self.opencovasim = np.array(
+            [62415, 128200, 292536, 632381, 1298022, 2625049, 5385827]) * (1/120.0)*(1/1000)
+
         # now data for weak scaling
 
         # Runtime with 250.000 agents per core
@@ -143,190 +147,153 @@ class BenchmarkAnalyzer:
             'covasim_scaling': {'exponent': covasim_slope, 'r_squared': covasim_r**2}
         }
 
-    def plot_runtime_scaling(self, save_path=None):
-        """Create the main runtime scaling plot."""
+    def plot_agent_scaling(self, raw_data, save_path=None):
+        """Plot 1: Scaling with agents - memilio (1, 4, 16 cores), covasim, and opencovid."""
         fig, ax = plt.subplots(figsize=(12, 9))
 
-        # Plot data with confidence intervals (assuming 10% uncertainty)
-        memilio_err = self.memilio_times * 0.1
-        covasim_err = self.covasim_times * 0.1
+        # Define colors for memilio lines (shades of blue)
+        memilio_color_1 = '#0d47a1'   # dark blue
+        memilio_color_4 = '#1976d2'   # medium blue
+        memilio_color_16 = '#64b5f6'  # light blue
+        covasim_color = '#ff7f0e'      # orange
+        opencovid_color = '#2ca02c'    # green
 
-        ax.errorbar(self.population_sizes, self.memilio_times, yerr=memilio_err,
-                    marker='o', linewidth=3, markersize=8, capsize=5,
-                    color=self.colors['memilio'], label='MEmilio ABM')
-        ax.errorbar(self.population_sizes, self.covasim_times, yerr=covasim_err,
-                    marker='s', linewidth=3, markersize=8, capsize=5,
-                    color=self.colors['covasim'], label='Covasim')
+        # Plot MEmilio with different core counts (all same color family)
+        ax.plot(raw_data.population_sizes, raw_data.memilio_times_single_core,
+                marker='o', linewidth=3, markersize=8,
+                color=memilio_color_1, label='MEmilio ABM (1 core)', linestyle='-')
 
-        # Add scaling lines
-        metrics = self.calculate_metrics()
-        log_pop_fine = np.linspace(np.log10(min(self.population_sizes)),
-                                   np.log10(max(self.population_sizes)), 100)
-        pop_fine = 10**log_pop_fine
+        ax.plot(raw_data.population_sizes, raw_data.memilio_times_four_cores,
+                marker='o', linewidth=3, markersize=8,
+                color=memilio_color_4, label='MEmilio ABM (4 cores)', linestyle='-')
 
-        memilio_fit = 10**(metrics['memilio_scaling']['exponent'] * log_pop_fine +
-                           np.log10(self.memilio_times[0]) -
-                           metrics['memilio_scaling']['exponent'] * np.log10(self.population_sizes[0]))
-        covasim_fit = 10**(metrics['covasim_scaling']['exponent'] * log_pop_fine +
-                           np.log10(self.covasim_times[0]) -
-                           metrics['covasim_scaling']['exponent'] * np.log10(self.population_sizes[0]))
+        ax.plot(raw_data.population_sizes, raw_data.memilio_times_sixteen_cores,
+                marker='o', linewidth=3, markersize=8,
+                color=memilio_color_16, label='MEmilio ABM (16 cores)', linestyle='-')
 
-        ax.plot(pop_fine, memilio_fit, '--', alpha=0.7,
-                color=self.colors['memilio'])
-        ax.plot(pop_fine, covasim_fit, '--', alpha=0.7,
-                color=self.colors['covasim'])
+        # Plot Covasim (fewer data points)
+        covasim_pop_sizes = raw_data.population_sizes[:len(raw_data.covasim)]
+        ax.plot(covasim_pop_sizes, raw_data.covasim,
+                marker='s', linewidth=3, markersize=8,
+                color=covasim_color, label='Covasim', linestyle='-')
+
+        # Plot OpenCOVID (fewer data points)
+        opencovid_pop_sizes = raw_data.population_sizes[:len(
+            raw_data.opencovasim)]
+        ax.plot(opencovid_pop_sizes, raw_data.opencovasim,
+                marker='^', linewidth=3, markersize=8,
+                color=opencovid_color, label='OpenCOVID', linestyle='-')
 
         ax.set_xscale('log')
         ax.set_yscale('log')
-        ax.set_xlabel('Population Size', fontsize=self.fontsize)
+        ax.set_xlabel('Number of Agents', fontsize=self.fontsize)
         ax.set_ylabel('Runtime per Time Step (seconds)',
                       fontsize=self.fontsize)
-        ax.set_title('Epidemic Simulation Runtime Scaling Comparison',
+        ax.set_title('Agent-Based Model Runtime Scaling',
                      fontsize=self.fontsize+4)
 
-        # Format axes
         ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
-
-        # Custom legend with scaling information
-        legend_text = [
-            f'MEmilio ABM (scaling ∝ n^{metrics["memilio_scaling"]["exponent"]:.2f})',
-            f'Covasim (scaling ∝ n^{metrics["covasim_scaling"]["exponent"]:.2f})'
-        ]
-        ax.legend(legend_text, fontsize=self.fontsize-2)
+        ax.legend(fontsize=self.fontsize-2, loc='upper left')
 
         plt.tight_layout()
 
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Plot saved to {save_path}")
+            print(f"Agent scaling plot saved to {save_path}")
 
         return fig, ax
 
-    def plot_speedup_analysis(self, save_path=None):
-        """Create speedup analysis plot."""
-        metrics = self.calculate_metrics()
+    def plot_one_node_strong_scaling(self, raw_data, save_path=None):
+        """Plot 3: One node strong scaling."""
+        fig, ax = plt.subplots(figsize=(12, 9))
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+        # Use only the data points that exist (skip the first element which is 1)
+        cores = raw_data.strong_scaling_cores[1:len(
+            raw_data.memilio_strong_scaling_128_runs_one_node)]
+        runtimes = raw_data.memilio_strong_scaling_128_runs_one_node[1:]
 
-        # Top plot: Speedup factor
-        ax1.semilogx(self.population_sizes, metrics['speedup'],
-                     marker='o', linewidth=3, markersize=8, color='green')
-        ax1.axhline(y=np.mean(metrics['speedup']), color='red', linestyle='--',
-                    label=f'Average speedup: {np.mean(metrics["speedup"]):.1f}x')
-        ax1.set_xlabel('Population Size', fontsize=self.fontsize)
-        ax1.set_ylabel(
-            'Speedup Factor\n(Covasim time / MEmilio time)', fontsize=self.fontsize)
-        ax1.set_title('MEmilio Performance Advantage',
-                      fontsize=self.fontsize+2)
-        ax1.grid(True, alpha=0.3)
-        ax1.legend(fontsize=self.fontsize-2)
-        ax1.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
+        # Plot runtime
+        ax.plot(cores, runtimes,
+                marker='o', linewidth=3, markersize=8,
+                color='#1f77b4', label='MEmilio ABM (One Node)', linestyle='-')
 
-        # Bottom plot: Time per 1000 agents
-        ax2.semilogx(self.population_sizes, np.array(metrics['memilio_per_1k'])*1000,
-                     marker='o', linewidth=3, markersize=8,
-                     color=self.colors['memilio'], label='MEmilio ABM')
-        ax2.semilogx(self.population_sizes, np.array(metrics['covasim_per_1k'])*1000,
-                     marker='s', linewidth=3, markersize=8,
-                     color=self.colors['covasim'], label='Covasim')
-        ax2.set_xlabel('Population Size', fontsize=self.fontsize)
-        ax2.set_ylabel(
-            'Runtime per 1000 Agents\nper Time Step (milliseconds)', fontsize=self.fontsize)
-        ax2.set_title('Computational Efficiency Comparison',
-                      fontsize=self.fontsize+2)
-        ax2.grid(True, alpha=0.3)
-        ax2.legend(fontsize=self.fontsize-2)
-        ax2.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
+        # Calculate and plot ideal scaling
+        if len(runtimes) > 0:
+            ideal_scaling = [runtimes[0] / c * cores[0] for c in cores]
+            ax.plot(cores, ideal_scaling,
+                    'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
-        plt.tight_layout()
+        ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime per Time Step (seconds)',
+                      fontsize=self.fontsize)
+        ax.set_title('Strong Scaling: One Node - MEmilio ABM',
+                     fontsize=self.fontsize+4)
 
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Speedup analysis saved to {save_path}")
+        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=self.fontsize-2)
 
-        return fig, (ax1, ax2)
-
-    def plot_runtime_scaling_comparison(self, raw_data, save_path=None):
-        """Create runtime scaling plot comparing single core, four cores, and Covasim with speedup."""
-        fig, ax1 = plt.subplots(figsize=(12, 9))
-
-        # Plot MEmilio single core (solid line)
-        ax1.plot(raw_data.population_sizes, raw_data.memilio_times_single_core,
-                 marker='o', linewidth=3, markersize=8,
-                 color='#1f77b4', label='MEmilio ABM (1 core)', linestyle='-')
-
-        # Plot MEmilio four cores (dotted line)
-        ax1.plot(raw_data.population_sizes, raw_data.covasim_times_four_cores,
-                 marker='s', linewidth=3, markersize=8,
-                 color='#2ca02c', label='MEmilio ABM (4 cores)', linestyle=':')
-
-        # Plot Covasim (solid line) - note: covasim has fewer data points
-        covasim_pop_sizes = raw_data.population_sizes[:len(
-            raw_data.covasim_times_parallel)]
-        ax1.plot(covasim_pop_sizes, raw_data.covasim_times_parallel,
-                 marker='^', linewidth=3, markersize=8,
-                 color='#ff7f0e', label='Covasim', linestyle='-')
-
-        ax1.set_xscale('log')
-        ax1.set_yscale('log')
-        ax1.set_xlabel('Population Size', fontsize=self.fontsize)
-        ax1.set_ylabel('Runtime per Time Step (seconds)',
-                       fontsize=self.fontsize)
-        ax1.set_title('Runtime Scaling Comparison',
-                      fontsize=self.fontsize+4)
-
-        ax1.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
-        ax1.grid(True, alpha=0.3)
-        ax1.legend(fontsize=self.fontsize-2, loc='upper left')
-
-        # Create secondary y-axis for speedup
-        ax2 = ax1.twinx()
-
-        # Calculate speedup for 1 core (Covasim / MEmilio single core)
-        speedup_1core = []
-        for i, pop in enumerate(covasim_pop_sizes):
-            speedup = raw_data.covasim_times_parallel[i] / \
-                raw_data.memilio_times_single_core[i]
-            speedup_1core.append(speedup)
-
-        # Calculate speedup for 4 cores (Covasim / MEmilio four cores)
-        speedup_4cores = []
-        for i, pop in enumerate(covasim_pop_sizes):
-            speedup = raw_data.covasim_times_parallel[i] / \
-                raw_data.covasim_times_four_cores[i]
-            speedup_4cores.append(speedup)
-
-        # Plot both speedup lines on secondary y-axis
-        ax2.plot(covasim_pop_sizes, speedup_1core,
-                 marker='D', linewidth=2.5, markersize=7,
-                 color='#d62728', label='Speedup (1 core vs Covasim)',
-                 linestyle='--', alpha=0.8)
-
-        ax2.plot(covasim_pop_sizes, speedup_4cores,
-                 marker='v', linewidth=2.5, markersize=7,
-                 color='#9467bd', label='Speedup (4 cores vs Covasim)',
-                 linestyle='-.', alpha=0.8)
-
-        ax2.set_ylabel('Speedup Factor (Covasim / MEmilio)',
-                       fontsize=self.fontsize, color='#8b0000')
-        ax2.tick_params(axis='y', labelcolor='#8b0000',
-                        labelsize=self.fontsize-2)
-        ax2.set_xscale('log')
-
-        # Add legend for speedup lines
-        ax2.legend(fontsize=self.fontsize-2, loc='center right')
+        # Set x-axis to log scale if useful, or linear
+        ax.set_xscale('log', base=2)
+        ax.set_yscale('log')
+        ax.set_xticks(cores)
+        ax.set_xticklabels([str(c) for c in cores])
 
         plt.tight_layout()
 
         if save_path:
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Runtime scaling plot saved to {save_path}")
+            print(f"One node strong scaling plot saved to {save_path}")
 
-        return fig, ax1
+        return fig, ax
+
+    def plot_multi_node_strong_scaling(self, raw_data, save_path=None):
+        """Plot 4: Multi-node strong scaling."""
+        fig, ax = plt.subplots(figsize=(12, 9))
+
+        # Use only the data points that exist (skip the first element which is 1)
+        nodes = raw_data.strong_scaling_nodes[1:len(
+            raw_data.memilio_strong_scaling_128_runs_multiple_nodes)]
+        runtimes = raw_data.memilio_strong_scaling_128_runs_multiple_nodes[1:]
+
+        # Plot runtime
+        ax.plot(nodes, runtimes,
+                marker='s', linewidth=3, markersize=8,
+                color='#2ca02c', label='MEmilio ABM (Multi-Node)', linestyle='-')
+
+        # Calculate and plot ideal scaling
+        if len(runtimes) > 0:
+            ideal_scaling = [runtimes[0] / n * nodes[0] for n in nodes]
+            ax.plot(nodes, ideal_scaling,
+                    'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
+
+        ax.set_xlabel('Number of Nodes', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime per Time Step (seconds)',
+                      fontsize=self.fontsize)
+        ax.set_title('Strong Scaling: Multi-Node - MEmilio ABM',
+                     fontsize=self.fontsize+4)
+
+        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
+        ax.grid(True, alpha=0.3)
+        ax.legend(fontsize=self.fontsize-2)
+
+        # Set x-axis to log scale if useful, or linear
+        ax.set_xscale('log', base=2)
+        ax.set_yscale('log')
+        ax.set_xticks(nodes)
+        ax.set_xticklabels([str(n) for n in nodes])
+
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            print(f"Multi-node strong scaling plot saved to {save_path}")
+
+        return fig, ax
 
     def plot_weak_scaling(self, raw_data, save_path=None):
-        """Create weak scaling plot for different agent counts per core."""
+        """Plot 2: Weak scaling plot for different agent counts per core."""
         fig, ax = plt.subplots(figsize=(12, 9))
 
         # Number of cores for weak scaling
@@ -442,6 +409,57 @@ class BenchmarkAnalyzer:
             "      100% efficiency means perfect weak scaling (constant runtime per core)")
         print()
 
+    def print_strong_scaling_efficiency(self, raw_data):
+        """Print a table showing strong scaling efficiency."""
+        # One node strong scaling
+        cores_one_node = raw_data.strong_scaling_cores[1:len(
+            raw_data.memilio_strong_scaling_128_runs_one_node)]
+        runtimes_one_node = raw_data.memilio_strong_scaling_128_runs_one_node[1:]
+
+        # Multi-node strong scaling
+        nodes_multi = raw_data.strong_scaling_nodes[1:len(
+            raw_data.memilio_strong_scaling_128_runs_multiple_nodes)]
+        runtimes_multi = raw_data.memilio_strong_scaling_128_runs_multiple_nodes[1:]
+
+        def calculate_strong_efficiency(baseline, runtimes, units):
+            """Calculate strong scaling efficiency: (baseline / (runtime * units)) * 100"""
+            return [(baseline / (runtime * unit) * 100) for runtime, unit in zip(runtimes, units)]
+
+        print("\n" + "="*70)
+        print("STRONG SCALING EFFICIENCY TABLE: MEmilio ABM")
+        print("="*70)
+
+        # One node table
+        if len(runtimes_one_node) > 0:
+            print("\nOne Node Strong Scaling:")
+            print(
+                f"{'Cores':>10} | {'Runtime (s)':>15} | {'Speedup':>10} | {'Efficiency (%)':>15}")
+            print("-"*70)
+            baseline_one = runtimes_one_node[0] * cores_one_node[0]
+            for i, cores in enumerate(cores_one_node):
+                speedup = baseline_one / runtimes_one_node[i]
+                efficiency = (speedup / cores) * 100
+                print(
+                    f"{cores:>10} | {runtimes_one_node[i]:>15.2f} | {speedup:>10.2f} | {efficiency:>15.1f}%")
+
+        # Multi-node table
+        if len(runtimes_multi) > 0:
+            print("\nMulti-Node Strong Scaling:")
+            print(
+                f"{'Nodes':>10} | {'Runtime (s)':>15} | {'Speedup':>10} | {'Efficiency (%)':>15}")
+            print("-"*70)
+            baseline_multi = runtimes_multi[0] * nodes_multi[0]
+            for i, nodes in enumerate(nodes_multi):
+                speedup = baseline_multi / runtimes_multi[i]
+                efficiency = (speedup / nodes) * 100
+                print(
+                    f"{nodes:>10} | {runtimes_multi[i]:>15.2f} | {speedup:>10.2f} | {efficiency:>15.1f}%")
+
+        print("="*70)
+        print("\nNote: Efficiency = (Speedup / Number of cores or nodes) × 100%")
+        print("      100% efficiency means perfect linear scaling")
+        print()
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -464,17 +482,29 @@ def main():
     if save_dir:
         save_dir.mkdir(exist_ok=True)
 
-    # Runtime scaling plot (single core, four cores, Covasim)
-    runtime_scaling_path = save_dir / 'runtime_scaling.png' if save_dir else None
-    fig1, ax1 = analyzer.plot_runtime_scaling_comparison(
-        raw_data, runtime_scaling_path)
+    # Plot 1: Agent scaling with memilio (1, 4, 16 cores), covasim, and opencovid
+    agent_scaling_path = save_dir / 'agent_scaling.png' if save_dir else None
+    fig1, ax1 = analyzer.plot_agent_scaling(raw_data, agent_scaling_path)
 
-    # Weak scaling plot
+    # Plot 2: Weak scaling
     weak_scaling_path = save_dir / 'weak_scaling.png' if save_dir else None
     fig2, ax2 = analyzer.plot_weak_scaling(raw_data, weak_scaling_path)
 
-    # Print weak scaling efficiency table
+    # Plot 3: One node strong scaling
+    one_node_strong_path = save_dir / \
+        'strong_scaling_one_node.png' if save_dir else None
+    fig3, ax3 = analyzer.plot_one_node_strong_scaling(
+        raw_data, one_node_strong_path)
+
+    # Plot 4: Multi-node strong scaling
+    multi_node_strong_path = save_dir / \
+        'strong_scaling_multi_node.png' if save_dir else None
+    fig4, ax4 = analyzer.plot_multi_node_strong_scaling(
+        raw_data, multi_node_strong_path)
+
+    # Print efficiency tables
     analyzer.print_weak_scaling_efficiency(raw_data)
+    analyzer.print_strong_scaling_efficiency(raw_data)
 
     # Save data if requested
     if args.data_file:
