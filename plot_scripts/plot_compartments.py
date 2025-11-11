@@ -98,7 +98,7 @@ def plot_susceptibles(files, fileending, save_dir=""):
         plt.savefig(save_dir + f"compare_compartments_{fileending}.png",
                     bbox_inches='tight', dpi=500)
 
-    plt.clf()
+    plt.close()
 
 
 def subfolders_scandir(path):
@@ -113,14 +113,10 @@ if __name__ == '__main__':
     # dir_name = "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8"
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2025-10-29/time_infected=1"
+    main_dir = "2025-11-07/time_infected=2"
     relevant_dir = os.path.join(root_dir, main_dir)
 
     sub_dirs = subfolders_scandir(relevant_dir)
-
-    # sub_dirs = ["detailed_init_exponential_t0ide=50_tmax=51_finite_diff=1_tolexp=8",
-    #             "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=2_tolexp=8",
-    #             "detailed_init_exponential_t0ide=50_tmax=51_finite_diff=4_tolexp=8"]
 
     for dir_name in sub_dirs:
         print(main_dir + "/" + dir_name)
@@ -133,7 +129,7 @@ if __name__ == '__main__':
             __file__),  f"../plots/{main_dir}/{dir_name}/")
 
         gregory_orders = ["3"]
-        ide_exponent = "3"
+        ide_exponent = "2"
 
         # for ODE
 
