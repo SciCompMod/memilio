@@ -103,17 +103,13 @@ add_pymio_module(_simulation_omseirs4
 
 # Install shared libraries for auditwheel to bundle them into the wheel
 if(BUILD_SHARED_LIBS)
-    if(TARGET jsoncpp_lib)
-        install(TARGETS jsoncpp_lib
-            LIBRARY DESTINATION memilio/simulation
-            RUNTIME DESTINATION memilio/simulation
-        )
-    endif()
-
-    if(TARGET memilio)
-        install(TARGETS memilio
-            LIBRARY DESTINATION memilio/simulation
-            RUNTIME DESTINATION memilio/simulation
-        )
-    endif()
+    install(DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/
+        DESTINATION memilio/simulation
+        FILES_MATCHING PATTERN "*.so*"
+        PATTERN "*.dylib*"
+    )
+    install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/
+        DESTINATION memilio/simulation
+        FILES_MATCHING PATTERN "*.dll"
+    )
 endif()
