@@ -549,6 +549,8 @@ IOResult<void> set_vaccination_data_age_group_names(std::vector<const char*> nam
 IOResult<std::vector<int>> get_node_ids(const std::string& path, bool is_node_for_county, bool rki_age_groups = true);
 IOResult<std::vector<int>> get_country_id(const std::string& /*path*/, bool /*is_node_for_county*/,
                                           bool /*rki_age_groups*/ = true);
+IOResult<std::vector<int>> get_provincia_ids(const std::string& path, bool /*is_node_for_county*/,
+                                          bool /*rki_age_groups*/ = true);
 
 /**
  * Represents an entry in a vaccination data file.

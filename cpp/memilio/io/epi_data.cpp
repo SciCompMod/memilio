@@ -72,6 +72,28 @@ IOResult<std::vector<int>> get_country_id(const std::string& /*path*/, bool /*is
     std::vector<int> id = {0};
     return success(id);
 }
+
+IOResult<std::vector<int>> get_provincia_ids(const std::string& path, bool /*is_node_for_county*/,
+    bool /*rki_age_groups*/)
+{
+mio::log_info("Reading node data from {}.\n", path);
+BOOST_OUTCOME_TRY(auto&& population_data, read_population_data_spain(path));
+std::vector<int> id;
+id.reserve(population_data.size());
+for (auto&& entry : population_data) {
+if (entry.provincia_id) {
+id.push_back(entry.provincia_id->get());
+}
+else {
+return failure(StatusCode::InvalidValue, "Population data file is missing provincia ids.");
+}
+}
+
+//remove duplicate node ids
+id.erase(std::unique(id.begin(), id.end()), id.end());
+mio::log_info("Reading node data completed.");
+return success(id);
+}
 } // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP

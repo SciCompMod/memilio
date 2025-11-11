@@ -1,7 +1,7 @@
-#######################################################################
+#############################################################################
 # Copyright (C) 2020-2025 MEmilio
 #
-# Authors: Henrik Zunker
+# Authors: Carlotta Gerstein
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -211,9 +211,6 @@ def plot_aggregated_to_federal_states(data, true_data, name, synthetic, with_aug
         )
     plt.savefig(f'{name}/federal_states_{name}{synthetic}{with_aug}.png')
     plt.close()
-
-
-# %%
 
 # plot simulations for all regions in 10x4 blocks
 def plot_all_regions(simulations, divi_data, name, synthetic, with_aug):
@@ -1004,11 +1001,10 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
     plt.close()
 
     plot_icu_on_germany(simulations, name, synthetic, with_aug="")
-    plot_icu_on_germany(simulations, name, synthetic, with_aug="_with_aug")
+    plot_icu_on_germany(simulations_aug, name, synthetic, with_aug="_with_aug")
 
     simulation_agg = np.sum(simulations, axis=-1, keepdims=True)  # sum over regions
     simulation_aug_agg = np.sum(simulations_aug, axis=-1, keepdims=True)
-    print(simulation_agg.shape, divi_data.shape)
 
     rmse = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(simulation_agg, 0,1), np.sum(divi_data, axis=-1, keepdims=True), normalize=False)
     rmse_aug = bf.diagnostics.metrics.root_mean_squared_error(np.swapaxes(simulation_aug_agg, 0,1), np.sum(divi_data, axis=-1, keepdims=True), normalize=False)
@@ -1026,7 +1022,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=1000)
+    create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=1000)
     # run_training(name=name, num_training_files=20)
     # run_inference(name=name, on_synthetic_data=True)
     # run_inference(name=name, on_synthetic_data=False)

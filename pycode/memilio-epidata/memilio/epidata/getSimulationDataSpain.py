@@ -39,6 +39,7 @@ def get_population_data():
 
 
 def fetch_icu_data():
+    # https://www.sanidad.gob.es/areas/alertasEmergenciasSanitarias/alertasActuales/nCov/capacidadAsistencial.htm?utm_source=chatgpt.com
     download_url = 'https://www.sanidad.gob.es/areas/alertasEmergenciasSanitarias/alertasActuales/nCov/documentos/Datos_Capacidad_Asistencial_Historico_14072023.csv'
     req = requests.get(download_url)
     req.encoding = 'ISO-8859-1'
@@ -75,10 +76,11 @@ def get_icu_data():
 
 
 def fetch_case_data():
+    # https://datos.gob.es/es/catalogo/e05070101-evolucion-de-enfermedad-por-el-coronavirus-covid-19
     download_url = 'https://cnecovid.isciii.es/covid19/resources/casos_diagnostico_provincia.csv'
     req = requests.get(download_url)
 
-    df = pd.read_csv(io.StringIO(req.text), sep=',')
+    df = pd.read_csv(io.StringIO(req.text), sep=',', keep_default_na=False, na_values=[])
 
     return df
 
@@ -198,5 +200,5 @@ if __name__ == "__main__":
     matrix = df.pivot(index='id_origin',
                       columns='id_destination', values='n_trips').fillna(0)
 
-    gd.write_dataframe(matrix, data_dir, 'commuter_mobility', 'txt', {
+    gd.write_dataframe(matrix, mobility_dir, 'commuter_mobility', 'txt', {
                        'sep': ' ', 'index': False, 'header': False})
