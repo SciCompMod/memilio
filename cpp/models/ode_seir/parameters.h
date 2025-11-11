@@ -183,19 +183,19 @@ public:
 
         for (auto i = AgeGroup(0); i < m_num_groups; i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error(
+                log_warning(
                     "Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], 0.0);
+                    this->template get<TimeExposed<FP>>()[i], tol_times);
                 return true;
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_error(
+                log_warning(
                     "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], 0.0);
+                    this->template get<TimeInfected<FP>>()[i], tol_times);
                 return true;
             }
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||

@@ -143,10 +143,10 @@ public:
         FP tol_times = 1e-1;
 
         if (this->template get<TimeInfected<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->template get<TimeInfected<FP>>(), 0.0);
+            log_warning("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>(), tol_times);
             return true;
         }
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
