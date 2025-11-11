@@ -33,7 +33,7 @@ Homepage = "https://github.com/SciCompMod/memilio"
 Team = "https://memilio.readthedocs.io/en/latest/team.html"
 
 [tool.scikit-build]
-cmake.version = "3.13"
+cmake.version = ">=3.13"
 wheel.packages = ["memilio"]
 
 [tool.setuptools]
