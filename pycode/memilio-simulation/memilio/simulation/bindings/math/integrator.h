@@ -68,6 +68,10 @@ void bind_Integrator_Core(pybind11::module_& m)
         .def("set_abs_tolerance", &RungeKuttaCashKarp54Integrator::set_abs_tolerance, pybind11::arg("tol"))
         .def("set_rel_tolerance", &RungeKuttaCashKarp54Integrator::set_rel_tolerance, pybind11::arg("tol"));
 
+    using RungeKutta4Integrator = mio::ExplicitStepperWrapper<double, boost::numeric::odeint::runge_kutta4>;
+    pymio::bind_class<RungeKutta4Integrator, pymio::EnablePickling::Never, mio::IntegratorCore<double>, std::shared_ptr<RungeKutta4Integrator>>(m, "RungeKutta4IntegratorCore")
+        .def(pybind11::init<>());
+
     pymio::bind_class<mio::RKIntegratorCore<double>, pymio::EnablePickling::Never, mio::IntegratorCore<double>, std::shared_ptr<mio::RKIntegratorCore<double>>>(m, "RKIntegratorCore")
         .def(pybind11::init<>())
         .def(pybind11::init<double, double, double, double>(),

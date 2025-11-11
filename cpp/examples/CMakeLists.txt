@@ -196,3 +196,7 @@ if(MEMILIO_HAS_JSONCPP)
     target_link_libraries(ide_initialization_example PRIVATE memilio ide_secir)
     target_compile_options(ide_initialization_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 endif()
+
+add_executable(ode_metapop_seir_benchmark ode_seir_metapop_benchmark.cpp)
+target_link_libraries(ode_metapop_seir_benchmark PRIVATE memilio ode_seir_metapop)
+target_compile_options(ode_metapop_seir_benchmark PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

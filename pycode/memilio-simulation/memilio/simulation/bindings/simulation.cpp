@@ -59,6 +59,10 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_CustomIndexArray<mio::UncertainValue<double>, mio::AgeGroup>(m, "AgeGroupArray");
     pymio::bind_class<mio::AgeGroup, pymio::EnablePickling::Required, mio::Index<mio::AgeGroup>>(m, "AgeGroup")
         .def(py::init<size_t>());
+    pymio::bind_Index<mio::regions::Region>(m, "IndexRegion");
+    pymio::bind_class<mio::regions::Region, pymio::EnablePickling::Never, mio::Index<mio::regions::Region>>(m,
+                                                                                                          "Region")
+        .def(py::init<size_t>());
     
     pymio::bind_CustomIndexArray<double, mio::AgeGroup, mio::SimulationDay>(m, "AgeGroupSimulationDayArray");
     pymio::bind_class<mio::SimulationDay, pymio::EnablePickling::Never, mio::Index<mio::SimulationDay>>(m,

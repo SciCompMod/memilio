@@ -39,6 +39,9 @@ def __getattr__(attr):
     elif attr == "oseir":
         import memilio.simulation.oseir as oseir
         return oseir
+    elif attr == "oseir_metapop":
+        import memilio.simulation.oseir_metapop as oseir_metapop
+        return oseir_metapop
     elif attr == "osecir":
         import memilio.simulation.osecir as osecir
         return osecir

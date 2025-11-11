@@ -76,6 +76,11 @@ add_pymio_module(_simulation_oseir
     SOURCES memilio/simulation/bindings/models/oseir.cpp
 )
 
+add_pymio_module(_simulation_oseir_metapop
+    LINKED_LIBRARIES memilio ode_seir_metapop
+    SOURCES memilio/simulation/bindings/models/oseir_metapop.cpp
+)
+
 add_pymio_module(_simulation_osecir
     LINKED_LIBRARIES memilio ode_secir
     SOURCES memilio/simulation/bindings/models/osecir.cpp
