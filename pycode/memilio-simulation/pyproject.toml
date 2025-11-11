@@ -33,3 +33,4 @@ Team = "https://memilio.readthedocs.io/en/latest/team.html"
 cmake.version = ">=3.13"
 cmake.args = ["-DMEMILIO_BUILD_SHARED_LIBS:BOOL=ON"]
 wheel.packages = ["memilio"]
+wheel.install-dir = "memilio/simulation"
