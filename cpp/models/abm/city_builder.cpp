@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <string>
 #include <numeric>
+#include "parameter_setter.h"
 
 // Define age groups as constants
 const mio::AgeGroup age_group_0_to_4(0);
@@ -50,6 +51,8 @@ mio::abm::Model CityBuilder::build_world(const CityConfig& config, const mio::Ra
                                           hospitals, icus, config.total_population, infra.num_households_hh_size,
                                           infra);
 
+    set_local_parameters(world);
+    set_parameters(world.parameters);
     return world;
 }
 

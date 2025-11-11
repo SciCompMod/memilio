@@ -38,6 +38,8 @@ add_library(abm
     city_builder.h
     city_builder.cpp
     city_parameters.h
+    parameter_setter.cpp
+    parameter_setter.h
 )
 target_link_libraries(abm PUBLIC memilio)
 target_include_directories(abm PUBLIC
