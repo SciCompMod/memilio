@@ -148,7 +148,7 @@ void normalize_exposure_contribution(ContactExposureRates& local_contact_exposur
     assert(local_population_by_age.size<CellIndex>() == local_contact_exposure.size<CellIndex>());
     assert(local_contact_exposure.size<VirusVariant>() == VirusVariant::Count);
 
-    for (auto index : make_index_range(local_contact_exposure.size())) {
+    for (const auto index : make_index_range(local_contact_exposure.size())) {
         auto age_index = reduce_index<Index<CellIndex, AgeGroup>>(index);
         if (local_population_by_age[age_index] > 0) {
             // this instruction is not and does not need to be atomic
