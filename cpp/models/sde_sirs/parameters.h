@@ -211,7 +211,7 @@ public:
         FP tol_times = 1e-1;
 
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
-            log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:d}", 0, 0.5);
+            log_error("Constraint check: Parameter Seasonality smaller {:d} or larger {:4f}", 0, 0.5);
             return true;
         }
         if (this->template get<TimeInfected<FP>>() < tol_times) {
