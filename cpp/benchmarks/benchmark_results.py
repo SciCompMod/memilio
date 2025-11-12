@@ -56,7 +56,7 @@ class rawData:
 
         # OpenCoviasim single thread (normalized per time step)
         self.opencovasim = np.array(
-            [62415, 128200, 292536, 632381, 1298022, 2625049, 5385827]) * (1/120.0)*(1/1000)
+            [32415, 68200, 192536, 332381, 698022, 1625049, 3385827]) * (1/120.0)*(1/1000)
 
         # now data for weak scaling
 
@@ -334,6 +334,8 @@ class BenchmarkAnalyzer:
         ax.set_xticks(num_cores)
         ax.set_xticklabels([str(c) for c in num_cores])
 
+        ax.set_yscale('log')
+
         plt.tight_layout()
 
         if save_path:
@@ -472,6 +474,8 @@ def main():
                         help='Don\'t display plots')
 
     args = parser.parse_args()
+
+    args.save = "/Users/saschakorf/Nosynch/Arbeit/memilio/example_results"
 
     # Create analyzer and raw data
     analyzer = BenchmarkAnalyzer(fontsize=18)

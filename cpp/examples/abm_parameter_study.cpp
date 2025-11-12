@@ -71,7 +71,7 @@ int main()
     auto t0   = mio::abm::TimePoint(0);
     auto tmax = t0 + mio::abm::days(14);
     // Set the number of simulations to run in the study
-    const size_t num_runs = 128;
+    const size_t num_runs = 128 * 128;
 
     // Create a parameter study.
     // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
