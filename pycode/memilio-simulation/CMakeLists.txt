@@ -13,7 +13,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_INSTALL_RPATH
+    "$ORIGIN"
+    "$ORIGIN/lib"
+    "${CMAKE_BINARY_DIR}/lib"
+    "${CMAKE_BINARY_DIR}/bin"
+)
 
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
@@ -45,7 +50,11 @@ function(add_pymio_module target_name)
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
-    install(TARGETS ${target_name} LIBRARY DESTINATION memilio/simulation)
+    install(TARGETS ${target_name}
+        LIBRARY DESTINATION .
+        ARCHIVE DESTINATION .
+        RUNTIME DESTINATION .
+    )
 endfunction()
 
 # build python extensions
@@ -99,4 +108,22 @@ add_pymio_module(_simulation_ssirs
 add_pymio_module(_simulation_omseirs4
     LINKED_LIBRARIES memilio ode_mseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
+)
+
+set(MEMILIO_SIMULATION_LIBS
+    memilio
+    abm
+    ode_sir
+    ode_seir
+    ode_secir
+    ode_secirvvs
+    sde_sir
+    sde_sirs
+    ode_mseirs4
+)
+
+install(TARGETS ${MEMILIO_SIMULATION_LIBS}
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION lib
 )
