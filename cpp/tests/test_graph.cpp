@@ -370,7 +370,7 @@ TEST(TestGraph, compare_add_edge_functions)
         }
     }
     g_lazy.sort_edges();
-    g_lazy.make_edges_unique();
+    g_lazy.remove_duplicate_edges();
     EXPECT_EQ(g.edges().size(), g_lazy.edges().size());
 
     for (size_t index = 0; index < g.edges().size(); index++) {

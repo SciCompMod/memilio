@@ -185,6 +185,9 @@ public:
     * @param end_node_idx Id of end node
     * @param args Additional arguments for edge construction
     * @return Edge<EdgePropertyT>& End of edge vector
+    * 
+    * This can be used in combination with :ref sort_edges and :ref remove_duplicate_edges instead of :ref add_edge
+    * for better performance when adding many edges at once.
     */
     template <class... Args>
     Edge<EdgePropertyT>& lazy_add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
@@ -209,13 +212,14 @@ public:
     }
 
     /**
-     * @brief Make the edges of a graph unique.
+     * @brief Remove duplicate edges from a sorted edge vector.
      * 
      * Copies all the unique edges to a new vector and replaces the edge vector of the graph with it. Unique means that 
-     * the start and end node indices are unique. Other edge properties are not checked.
+     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
+     * edge in the vector is kept.
      * @return Edge<EdgePropertyT>& End of edge vector
      */
-    Edge<EdgePropertyT>& make_edges_unique()
+    Edge<EdgePropertyT>& remove_duplicate_edges()
     {
         std::vector<Edge<EdgePropertyT>> unique_edges;
         unique_edges.reserve(m_edges.size());

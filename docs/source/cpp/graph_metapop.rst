@@ -189,7 +189,7 @@ The following steps detail how to configure and execute a graph simulation:
         graph.lazy_add_edge(0, 1, std::move(transition_rates));
         graph.lazy_add_edge(1, 0, std::move(transition_rates));
         graph.sort_edges();
-        graph.make_edges_unique();
+        graph.remove_duplicate_edges();
 
 
 5. **Initialize and Advance the Mobility Simulation:**
