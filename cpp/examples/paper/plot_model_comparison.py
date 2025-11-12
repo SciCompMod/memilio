@@ -8,11 +8,11 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 from plotting_settings import *
 
-model_colors = [colors['Light green'], colors['Rose'],
-                colors['Light blue'], colors['Teal']]
+model_colors = [colors['Green'], colors['Rose'],
+                colors['Blue'], colors['Teal']]
 
 
-def plot_model_comparison_all_compartments(files, save_dir=""):
+def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_groups=6, plot_init=False,  save_dir=""):
     """
     Plots the result of the simulation.
 
@@ -27,6 +27,8 @@ def plot_model_comparison_all_compartments(files, save_dir=""):
     secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
+    files = ["ode", "lct", "ide"]
+
     # Define plot.
     fig, axs = plt.subplots(4, 2, sharex='all')
     num_plots = 8
@@ -34,20 +36,19 @@ def plot_model_comparison_all_compartments(files, save_dir=""):
     labels = ['ODE', 'LCT', 'IDE', 'ABM']
 
     linestyles = ['-', '--', ':', '-']
-    # Add results to plot.
+    # Add results to plot for IDE, LCT and ODE.
     for file in range(len(files)):
         # Load data.
-        h5file = h5py.File(str(files[file]) + '.h5', 'r')
+        h5file = h5py.File(result_dir + str(files[file]) + '.h5', 'r')
 
         if (len(list(h5file.keys())) > 1):
             raise gd.DataError("File should contain one dataset.")
-        if (len(list(h5file[list(h5file.keys())[0]].keys())) > 3):
-            raise gd.DataError("Expected only one group.")
 
         data = h5file[list(h5file.keys())[0]]
+        # print(data)
 
-        # As there should be only one Group, total is the simulation result.
         total = data['Total'][:, :]
+        # print(total)
 
         dates = data['Time'][:]
 
@@ -63,21 +64,56 @@ def plot_model_comparison_all_compartments(files, save_dir=""):
 
         # LCT and IDE
         elif file == 1 or file == 2:
+            print(labels[file])
             for i in range(num_plots):
                 axs[int(i/2), i % 2].plot(dates,
                                           total[:, i], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
 
-        # ABM
-        # TODO
-        elif file == 3:
-            pass
-
         h5file.close()
+
+    # ABM
+    start_time = 0
+    if (plot_init):
+        df = pd.read_csv(result_dir + f"comps.csv")
+        for i in range(num_plots):
+            values = df.iloc[:, 1 + i]
+            for age in range(num_age_groups):
+                values += df.iloc[:, 1 + i + age * len(secir_dict)]
+            axs[int(i/2), i % 2].plot(df["Time"], values, label=labels[3],
+                                      color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
+    while len(percentiles) > 0:
+        if len(percentiles) == 1:
+            df = pd.read_csv(result_dir + f"ABM_p{percentiles[0]}.csv")
+            for i in range(num_plots):
+                values = df.iloc[:, 1 + i]
+                for age in range(num_age_groups):
+                    values += df.iloc[:, 1 +
+                                      i + age * len(secir_dict)]
+                axs[int(i/2), i % 2].plot(df["Time"] +
+                                          start_time, values, label=labels[3], color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
+            del percentiles[0]
+        else:
+            df_low = pd.read_csv(result_dir + f"ABM_p{percentiles[0]}.csv")
+            df_high = pd.read_csv(result_dir + f"ABM_p{percentiles[-1]}.csv")
+            for i in range(num_plots):
+                values_low = df_low.iloc[:, 1 + i]
+                values_high = df_high.iloc[:, 1 + i]
+                for age in range(num_age_groups):
+                    values_low += df_low.iloc[:, 1 +
+                                              i + age * len(secir_dict)]
+                    values_high += df_high.iloc[:, 1 +
+                                                i + age * len(secir_dict)]
+                # ax.plot(df_low["Time"] + start_time, values_low, color=colors['Teal'], alpha=0.5)
+                # ax.plot(df_high["Time"]+ start_time, values_high, color=colors['Teal'], alpha=0.5)
+                axs[int(i/2), i % 2].fill_between(df_low["Time"] + start_time, values_low,
+                                                  values_high, alpha=0.3, color=colors['Teal'])
+            del percentiles[0]
+            del percentiles[-1]
 
     # Define some characteristics of the plot
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
-        axs[int(i/2), i % 2].set_xlim(left=dates[0], right=dates[-1])
+        axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
         axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.5)
         axs[int(i/2), i % 2].ticklabel_format(axis='y',
                                               style='sci', scilimits=(0, 0))
@@ -125,8 +161,8 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
 
     # colors = ["C0", "limegreen"]
     linestyles = ['-', '--', ':', '-']
-    # Add results to plot.
-    for file in range(len(files)):
+    # Add results to plot for IDE, LCT and ODE.
+    for file in range(len(files)-1):
         # Load data.
         h5file = h5py.File(str(files[file]) + '.h5', 'r')
 
@@ -158,13 +194,9 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
             axs.plot(dates,
                      total[:, compartment_index], label=labels[file],  color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
 
-        # ABM
-        # TODO
-        elif file == 3:
-            axs.plot(0, 0, label=labels[file],  color=model_colors[file],
-                     linestyle=linestyles[file], linewidth=linewidth)
-
-        h5file.close()
+            h5file.close()
+    # ABM
+    # TODO
 
     # Define some characteristics of the plot
     if exponential_scenario:
@@ -202,7 +234,8 @@ def plot_model_comparison_one_compartment(files, compartment_index, exponential_
 
     plt.clf()
 
-def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_age_groups, num_comps, save_dir="", plot_init = True):
+
+def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_age_groups, num_comps, save_dir="", plot_init=True):
     figsize = (5, 3.5)
     panel = [0.2, 0.18, 0.78, 0.8]
     fig = plt.figure(figsize=figsize)
@@ -210,7 +243,7 @@ def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_
     secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
     start_time = 0
-    if(plot_init):
+    if (plot_init):
         df = pd.read_csv(file + f"comps.csv")
         values = df.iloc[:, 1 + compartment_index]
         for age in range(num_age_groups):
@@ -230,17 +263,21 @@ def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_
             values_low = df_low.iloc[:, 1 + compartment_index]
             values_high = df_high.iloc[:, 1 + compartment_index]
             for age in range(num_age_groups):
-                values_low += df_low.iloc[:, 1 + compartment_index + age * num_comps]
-                values_high += df_high.iloc[:, 1 + compartment_index + age * num_comps]
-            #ax.plot(df_low["Time"] + start_time, values_low, color=colors['Teal'], alpha=0.5)
-            #ax.plot(df_high["Time"]+ start_time, values_high, color=colors['Teal'], alpha=0.5)
-            ax.fill_between(df_low["Time"] + start_time, values_low, values_high, alpha=0.3, color=colors['Teal'])
+                values_low += df_low.iloc[:, 1 +
+                                          compartment_index + age * num_comps]
+                values_high += df_high.iloc[:, 1 +
+                                            compartment_index + age * num_comps]
+            # ax.plot(df_low["Time"] + start_time, values_low, color=colors['Teal'], alpha=0.5)
+            # ax.plot(df_high["Time"]+ start_time, values_high, color=colors['Teal'], alpha=0.5)
+            ax.fill_between(df_low["Time"] + start_time, values_low,
+                            values_high, alpha=0.3, color=colors['Teal'])
             del percentiles[0]
             del percentiles[-1]
     ax.set_ylabel(f"{secir_dict[compartment_index]} [#]")
     ax.set_xlabel("Time [days]")
     fig.savefig(save_dir + f"ABM_results_{compartment_index}.png", dpi=dpi)
-    
+
+
 def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
     figsize = (5, 3.5)
     panel = [0.18, 0.18, 0.8, 0.8]
@@ -253,11 +290,12 @@ def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
         values = df.iloc[:, 1 + comp]
         for age in range(num_age_groups):
             values += df.iloc[:, 1 + comp + age * num_comps]
-        ax.plot(df["Time"], values, label = secir_dict[comp])
+        ax.plot(df["Time"], values, label=secir_dict[comp])
     ax.set_ylabel(f"Individuals [#]")
     ax.set_xlabel("Time [days]")
     ax.legend()
     fig.savefig(save_dir + f"ABM_results_{seeds}.png", dpi=dpi)
+
 
 if __name__ == '__main__':
 
@@ -267,10 +305,10 @@ if __name__ == '__main__':
     if exponential_scenario:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/exponential/Seed1/")
+            __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "plots/compare_abm_ide_lct_ode/exponential/")
+            __file__), "../../..", "plots/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
 
     else:
         # Path where simulation results are stored.
@@ -280,11 +318,12 @@ if __name__ == '__main__':
         plot_dir = os.path.join(os.path.dirname(
             __file__), "../../..", "plots/compare_abm_ide_lct_ode/different_dists/")
 
-    # plot_model_comparison_all_compartments([os.path.join(result_dir, f"ode"),
-    #                                         os.path.join(result_dir, f"lct"),
-    #                                         os.path.join(result_dir, f"ide"),
-    #                                         os.path.join(result_dir, f"ide")],  # last file needs to be changed to ABM later on
-    #                                        save_dir=plot_dir)
+    percentiles = ["50"]
+    # percentiles = ["05", "50", "95"]
+    num_age_groups = 6
+    plot_init = False
+    plot_model_comparison_all_compartments(
+        result_dir, percentiles, num_age_groups, plot_init, save_dir=plot_dir)
 
     # plot_model_comparison_one_compartment([os.path.join(result_dir, f"ode"),
     #                                        os.path.join(result_dir, f"lct"),
@@ -293,11 +332,16 @@ if __name__ == '__main__':
     #                                       5,
     #                                       exponential_scenario,
     #                                       save_dir=plot_dir)
-    
-    plot_ABM_results_one_compartments(result_dir, 0, ["05", "50", "95"], 6, 8)
-    plot_ABM_results_one_compartments(result_dir, 1, ["05", "50", "95"], 6, 8)
-    #plot_ABM_results_one_compartments(result_dir, 1, [], 6, 8)
-    plot_ABM_results_one_compartments(result_dir, 3, ["05", "50", "95"], 6, 8)
-    plot_ABM_results_one_compartments(result_dir, 5, ["05", "50", "95"], 6, 8)
-    
-    #plot_single_ABM_run(result_dir, "518254265_179139074_1937166324_3882038653_1776323086_1261445406", 6, 8)
+
+    # plot_ABM_results_one_compartments(
+    #     result_dir, 0, ["05", "50", "95"], 6, 8, plot_dir)
+    # plot_ABM_results_one_compartments(
+    #     result_dir, 1, ["05", "50", "95"], 6, 8, plot_dir)
+    # plot_ABM_results_one_compartments(result_dir, 1, [], 6, 8, plot_dir)
+    # plot_ABM_results_one_compartments(
+    #     result_dir, 3, ["05", "50", "95"], 6, 8, plot_dir)
+    # plot_ABM_results_one_compartments(
+    #     result_dir, 5, ["05", "50", "95"], 6, 8, plot_dir)
+
+    # plot_single_ABM_run(
+    #     result_dir, "518254265_179139074_1937166324_3882038653_1776323086_1261445406", 6, 8)

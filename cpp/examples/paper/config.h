@@ -73,16 +73,17 @@ constexpr size_t n_subcomps_ISev[] = {8, 8, 8, 7, 6, 5};
 constexpr size_t n_subcomps_ICri[] = {8, 8, 8, 8, 7, 6};
 
 // Define epidemiological parameters.
-const ScalarType transmissionProbabilityOnContact[] = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
-const ScalarType relativeTransmissionNoSymptoms     = 1;
-const ScalarType riskOfInfectionFromSymptomatic     = 1.;
-const ScalarType seasonality                        = 0.;
-const ScalarType scale_confirmed_cases              = 1.;
+// std::vector<double> transmissionProbabilityOnContact = {0.03, 0.06, 0.06, 0.06, 0.09, 0.175};
+const ScalarType relativeTransmissionNoSymptoms = 1;
+const ScalarType riskOfInfectionFromSymptomatic = 1.;
+const ScalarType seasonality                    = 0.; // this implies that we don't have any seasonal effects in EBMs
+const ScalarType scale_confirmed_cases          = 1.;
 
 // Define simulation parameters.
-ScalarType t0   = 0.;
-ScalarType tmax = 20;
-ScalarType dt   = 0.01;
+const ScalarType t0        = 0.;
+const ScalarType init_tmax = 14.;
+const ScalarType tmax      = 35.;
+const ScalarType dt        = 0.1;
 
 } // namespace params
 
