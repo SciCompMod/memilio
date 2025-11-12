@@ -117,7 +117,7 @@ int main(int /*argc*/, char** /*argv*/)
     const auto tmax = 100.;
     const auto dt   = 1.; //initial time step
 
-    const size_t num_runs = 100;
+    const size_t num_runs = 100000;
 
     using Model = mio::smm::Model<ScalarType, 1, InfectionState>;
     auto home   = mio::regions::Region(0);

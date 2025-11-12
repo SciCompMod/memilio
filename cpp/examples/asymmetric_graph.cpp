@@ -83,7 +83,7 @@ int main(int /*argc*/, char** /*argv*/)
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
-        io::CSVReader<4> farms("../../farms10000.csv");
+        io::CSVReader<4> farms("../../farms200000.csv");
         farms.read_header(io::ignore_extra_column, "farms", "num_cows", "latitude", "longitude");
         int farm_id, num_cows;
         double latitude, longitude;
@@ -108,7 +108,7 @@ int main(int /*argc*/, char** /*argv*/)
     graph.reserve_edges(200000);
     {
         mio::timing::AutoTimer<"Graph Edges Generation"> timer;
-        io::CSVReader<2> edges("../../edges10000.csv");
+        io::CSVReader<2> edges("../../edges200000.csv");
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
@@ -117,7 +117,7 @@ int main(int /*argc*/, char** /*argv*/)
         graph.sort_edges();
         graph.make_edges_unique();
     }
-    // mio::log_info("Graph generated");
+    // // mio::log_info("Graph generated");
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
                      return &node.property;
@@ -128,13 +128,13 @@ int main(int /*argc*/, char** /*argv*/)
     for (auto& node : graph.nodes()) {
         mio::timing::AutoTimer<"neighbourhood search"> timer;
         node.property.set_regional_neighbors(
-            tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(2.0)}));
+            tree.in_range_indices_query(node.property.get_location(), {mio::geo::kilometers(5.0)}));
     }
 
     mio::log_info("Neighbors set");
     auto sim = mio::make_mobility_sim(t0, dt, std::move(graph));
 
-    io::CSVReader<4> exchanges("../../trade10000.csv");
+    io::CSVReader<4> exchanges("../../trade200000.csv");
     exchanges.read_header(io::ignore_extra_column, "date", "num_animals", "from", "to");
 
     int date, num_animals;
@@ -144,16 +144,17 @@ int main(int /*argc*/, char** /*argv*/)
     }
     // mio::log_info("Exchanges added");
 
-    // #ifdef MEMILIO_ENABLE_OPENMP
-    // #pragma omp parallel for
-    //     for (size_t i = 0; i < 100; ++i) {
-    // #endif
+    // // #ifdef MEMILIO_ENABLE_OPENMP
+    // // #pragma omp parallel for
+    // //     for (size_t i = 0; i < 100; ++i) {
+    // // #endif
 
-    auto sim2(sim);
-    // mio::log_info("new Simulation created");
+    // // mio::log_info("new Simulation created");
+    // sim2.infectionrisk = 0.1;
 
-    sim2.advance(tmax);
-    // mio::log_info("Simulation finished");
+    sim.advance(tmax);
+
+    mio::log_info("Simulation finished");
 
     // #ifdef MEMILIO_ENABLE_OPENMP
     //     }
@@ -171,24 +172,26 @@ int main(int /*argc*/, char** /*argv*/)
     // // mio::log_info("Sum of exchanged sick animals: {}", exchange_results[0]);
     // // mio::log_info("Sum of exchanged animals: {}", exchange_results[1]);
 
-    auto sth = sim2.exchanges_per_timestep().export_csv("Exchange_statistics.csv", {"Commuter Sick", "Commuter Total"});
+    // auto sth = sim2.exchanges_per_timestep().export_csv("Exchange_statistics.csv", {"Commuter Sick", "Commuter Total"});
 
-    // for (auto node : sim2.get_graph().nodes()) {
-    //     if (node.property.get_result().get_num_time_points() < num_time_points) {
-    //         mio::log_error("Node with inconsistent number of time points in results.");
-    //     }
-    // }
+    // // for (auto node : sim2.get_graph().nodes()) {
+    // //     if (node.property.get_result().get_num_time_points() < num_time_points) {
+    // //         mio::log_error("Node with inconsistent number of time points in results.");
+    // //     }
+    // // }
 
-    // exchange_results = sim2.sum_nodes();
-    // // mio::log_info("{}, {}, {}, {}", exchange_results[0], exchange_results[1], exchange_results[2], exchange_results[3]);
+    // // exchange_results = sim2.sum_nodes();
+    // // // mio::log_info("{}, {}, {}, {}", exchange_results[0], exchange_results[1], exchange_results[2], exchange_results[3]);
 
-    sth = sim2.statistics_per_timestep().export_csv("Simulation_statistics.csv");
-    // // auto combined_results = sim2.combine_node_results();
-    // // combined_results.print_table({"S", "E", "I", "R", "D"});
-    // // auto ioresult = combined_results.export_csv("Simulation_results.csv");
+    // sth = sim2.statistics_per_timestep().export_csv("Simulation_statistics.csv");
+    // // // auto combined_results = sim2.combine_node_results();
+    // // // combined_results.print_table({"S", "E", "I", "R", "D"});
+    // // // auto ioresult = combined_results.export_csv("Simulation_results.csv");
 
     // sim2.statistics_per_timestep({0, 1, 2, 3, 4}).print_table({"S", "E", "I", "R", "D"});
     // mio::log_info("Finished postprocessing");
+
+    mio::unused(sim.statistics_per_timestep().export_csv(mio::path_join("AsymmetricParams_single_run.csv")));
 
     return 0;
 }
