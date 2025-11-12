@@ -41,40 +41,41 @@ class rawData:
 
         # Runtime memilio single thread (normalized per time step)
         self.memilio_times_single_core = np.array(
-            [33594, 68616, 135322, 271997, 550301, 1130269, 2237273, 5551993, 11600000]) * (1/120.0) * (1/1000)
+            [32947, 67147, 137760, 274461, 549385, 1119135, 2193598, 7112954, 17757387]) * (1/120.0) * (1/1000)
 
         # Runtime memilio four threads (normalized per time step)
         self.memilio_times_four_cores = np.array(
             [13812, 27802, 56257, 113088, 223888, 454182, 928952, 1944267, 4877925]) * (1/120.0)*(1/1000)
 
         self.memilio_times_sixteen_cores = np.array(
-            [6905, 13902, 28128, 56388, 112888, 226091, 456476, 911234, 4877925]) * (1/120.0)*(1/1000)
+            [11571, 23337, 46865, 92908, 184811, 369252, 752734, 1609745, 3396075]) * (1/120.0)*(1/1000)
 
         # covasim single thread (normalized per time step)
         self.covasim = np.array(
-            [62415, 128200, 292536, 632381, 1298022, 2625049, 5385827]) * (1/120.0)*(1/1000)
+            [37809, 75152, 198949, 409061, 863334, 1762960, 3618340]) * (1/120.0)*(1/1000)
 
-        # OpenCoviasim single thread (normalized per time step)
-        self.opencovasim = np.array(
+        # OpenABM single thread (normalized per time step)
+        self.openabm = np.array(
             [32415, 68200, 192536, 332381, 698022, 1625049, 3385827]) * (1/120.0)*(1/1000)
 
         # now data for weak scaling
+        self.weak_scaling_cores = [1, 2, 4, 8, 16, 32]
 
         # Runtime with 250.000 agents per core
         self.memilio_weak_scaling_250k = np.array(
-            [8305, 9997, 13853, 22790, 40123, 77431]) * (1/120.0)*(1/1000)
+            [8406, 10466, 15257, 25711, 46061, 97237]) * (1/120.0)*(1/1000)
 
         # Runtime with 500.000 agents per core
         self.memilio_weak_scaling_500k = np.array(
-            [16685, 20424, 27934, 45817, 80567, 155877]) * (1/120.0)*(1/1000)
+            [16674, 21146, 30163, 52217, 91833, 239517]) * (1/120.0)*(1/1000)
 
         # Runtime with 1.000.000 agents per core
         self.memilio_weak_scaling_1m = np.array(
-            [34165, 41361, 56680, 91576, 159270, 315894]) * (1/120.0)*(1/1000)
+            [33568, 42239, 61171, 103338, 184308, 484596]) * (1/120.0)*(1/1000)
 
         # Runtime with 2.000.000 agents per core
         self.memilio_weak_scaling_2m = np.array(
-            [69787, 83565, 112698, 181267, 322380, 601845]) * (1/120.0)*(1/1000)
+            [66931, 85021, 124221, 205287, 367955, 764577]) * (1/120.0)*(1/1000)
 
         # now data for strong scaling
 
@@ -83,7 +84,7 @@ class rawData:
 
         # Runtime Strong scaling
         self.memilio_strong_scaling_128_runs_one_node = np.array(
-            [1, 30345, 16234, 8956, 5234, 3120])
+            [2.646570e+04, 2.068018e+04,  1.078597e+04, 5.317400e+03, 2.740988e+03, 1.440401e+03, 8.953795e+02, 5.889476e+02])
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
             [1, 15876, 8423, 4650, 2723, 1500])
 
@@ -179,8 +180,8 @@ class BenchmarkAnalyzer:
 
         # Plot OpenCOVID (fewer data points)
         opencovid_pop_sizes = raw_data.population_sizes[:len(
-            raw_data.opencovasim)]
-        ax.plot(opencovid_pop_sizes, raw_data.opencovasim,
+            raw_data.openabm)]
+        ax.plot(opencovid_pop_sizes, raw_data.openabm,
                 marker='^', linewidth=3, markersize=8,
                 color=opencovid_color, label='OpenCOVID', linestyle='-')
 
