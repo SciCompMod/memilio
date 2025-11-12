@@ -140,15 +140,24 @@ install(TARGETS ${MEMILIO_SIMULATION_LIBS}
 )
 
 # If jsoncpp was built as part of the bundled third-party dependencies, make sure its
-# libraries are installed into the wheel as well so auditwheel can bundle them.
+# shared library is copied into the wheel with the exact SONAME the runtime loader will
+# request. Wheels do not preserve symlinks, so install real copies for every relevant
+# name.
 if(TARGET jsoncpp_lib)
     set_target_properties(jsoncpp_lib PROPERTIES
         INSTALL_RPATH "\\$ORIGIN"
     )
-    install(TARGETS jsoncpp_lib
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION lib
+    set(JSONCPP_LIB_FILE $<TARGET_FILE:jsoncpp_lib>)
+    install(FILES ${JSONCPP_LIB_FILE}
+        DESTINATION lib
+    )
+    install(FILES ${JSONCPP_LIB_FILE}
+        DESTINATION lib
+        RENAME libjsoncpp.so.26
+    )
+    install(FILES ${JSONCPP_LIB_FILE}
+        DESTINATION lib
+        RENAME libjsoncpp.so
     )
 endif()
 
@@ -156,9 +165,16 @@ if(TARGET spdlog)
     set_target_properties(spdlog PROPERTIES
         INSTALL_RPATH "\\$ORIGIN"
     )
-    install(TARGETS spdlog
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION lib
+    set(SPDLOG_LIB_FILE $<TARGET_FILE:spdlog>)
+    install(FILES ${SPDLOG_LIB_FILE}
+        DESTINATION lib
+    )
+    install(FILES ${SPDLOG_LIB_FILE}
+        DESTINATION lib
+        RENAME libspdlog.so.1.15
+    )
+    install(FILES ${SPDLOG_LIB_FILE}
+        DESTINATION lib
+        RENAME libspdlog.so
     )
 endif()
