@@ -403,6 +403,7 @@ class AsymmetricGraphSimulation : public GraphSimulationBase<Graph, Timepoint, T
 public:
     void advance(Timepoint t_max = 1.0)
     {
+        mio::timing::AutoTimer<"Graph Simulation Advance"> timer;
         auto dt = m_parameters.next_event_time() - Base::m_t;
         while (Base::m_t < t_max) {
             mio::log_debug("Time: {}", Base::m_t);
