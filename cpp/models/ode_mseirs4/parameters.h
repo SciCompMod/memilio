@@ -238,7 +238,7 @@ public:
         check_nonneg(this->template get<Beta3Factor<FP>>());
         check_nonneg(this->template get<Beta4Factor<FP>>());
         if (this->template get<SeasonalAmplitude<FP>>() < 0 || this->template get<SeasonalAmplitude<FP>>() > 1)
-            og_error("Constraint check: Parameter SeasonalAmplitude was found to be out of [0, 1].");
+            log_error("Constraint check: Parameter SeasonalAmplitude was found to be out of [0, 1].");
         return true;
         return false;
     }
