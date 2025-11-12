@@ -50,6 +50,9 @@ function(add_pymio_module target_name)
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
+    set_target_properties(${target_name} PROPERTIES
+        INSTALL_RPATH "\\$ORIGIN;\\$ORIGIN/lib"
+    )
     install(TARGETS ${target_name}
         LIBRARY DESTINATION .
         ARCHIVE DESTINATION .
@@ -122,6 +125,14 @@ set(MEMILIO_SIMULATION_LIBS
     ode_mseirs4
 )
 
+foreach(target_name IN LISTS MEMILIO_SIMULATION_LIBS)
+    if(TARGET ${target_name})
+        set_target_properties(${target_name} PROPERTIES
+            INSTALL_RPATH "\\$ORIGIN"
+        )
+    endif()
+endforeach()
+
 install(TARGETS ${MEMILIO_SIMULATION_LIBS}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
@@ -131,6 +142,9 @@ install(TARGETS ${MEMILIO_SIMULATION_LIBS}
 # If jsoncpp was built as part of the bundled third-party dependencies, make sure its
 # libraries are installed into the wheel as well so auditwheel can bundle them.
 if(TARGET jsoncpp_lib)
+    set_target_properties(jsoncpp_lib PROPERTIES
+        INSTALL_RPATH "\\$ORIGIN"
+    )
     install(TARGETS jsoncpp_lib
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -139,6 +153,9 @@ if(TARGET jsoncpp_lib)
 endif()
 
 if(TARGET spdlog)
+    set_target_properties(spdlog PROPERTIES
+        INSTALL_RPATH "\\$ORIGIN"
+    )
     install(TARGETS spdlog
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
