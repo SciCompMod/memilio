@@ -130,16 +130,8 @@ install(TARGETS ${MEMILIO_SIMULATION_LIBS}
 
 # If jsoncpp was built as part of the bundled third-party dependencies, make sure its
 # libraries are installed into the wheel as well so auditwheel can bundle them.
-set(MEMILIO_JSONCPP_LIBS)
 if(TARGET jsoncpp_lib)
-    list(APPEND MEMILIO_JSONCPP_LIBS jsoncpp_lib)
-endif()
-if(TARGET jsoncpp_static)
-    list(APPEND MEMILIO_JSONCPP_LIBS jsoncpp_static)
-endif()
-
-if(MEMILIO_JSONCPP_LIBS)
-    install(TARGETS ${MEMILIO_JSONCPP_LIBS}
+    install(TARGETS jsoncpp_lib
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
         RUNTIME DESTINATION lib
