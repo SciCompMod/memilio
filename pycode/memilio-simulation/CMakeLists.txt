@@ -137,3 +137,11 @@ if(TARGET jsoncpp_lib)
         RUNTIME DESTINATION lib
     )
 endif()
+
+if(TARGET spdlog)
+    install(TARGETS spdlog
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION lib
+    )
+endif()
