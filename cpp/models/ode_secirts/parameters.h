@@ -892,7 +892,7 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_warning("Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please "
+                log_warning("Constraint check: Parameter TimeExposed changed from {} to {}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
                             "Consider to cancel and reset parameters.",
                             this->template get<TimeExposed<FP>>()[i], tol_times);
@@ -901,7 +901,7 @@ public:
             }
 
             if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
-                log_warning("Constraint check: Parameter TimeInfectedNoSymptoms changed from {:.4f} to {:.4f}. Please "
+                log_warning("Constraint check: Parameter TimeInfectedNoSymptoms changed from {} to {}. Please "
                             "note that unreasonably small compartment stays lead to massively increased run time. "
                             "Consider to cancel and reset parameters.",
                             this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);
@@ -1143,14 +1143,14 @@ public:
         }
 
         if (this->template get<DynamicNPIsImplementationDelay<FP>>() < 0.0) {
-            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {:d}", 0);
+            log_error("Constraint check: Parameter DynamicNPIsImplementationDelay smaller {}", 0);
             return true;
         }
 
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
 
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error("Constraint check: Parameter TimeExposed {:.4f} smaller {:.4f}. Please "
+                log_error("Constraint check: Parameter TimeExposed {} smaller {}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
                           this->template get<TimeExposed<FP>>()[i], tol_times);
@@ -1158,7 +1158,7 @@ public:
             }
 
             if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < tol_times) {
-                log_error("Constraint check: Parameter TimeInfectedNoSymptoms {:.4f} smaller {:.4f}. Please "
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms {} smaller {}. Please "
                           "note that unreasonably small compartment stays lead to massively increased run time. "
                           "Consider to cancel and reset parameters.",
                           this->template get<TimeInfectedNoSymptoms<FP>>()[i], tol_times);

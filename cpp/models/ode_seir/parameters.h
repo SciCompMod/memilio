@@ -144,7 +144,7 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
+                    "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeExposed<FP>>()[i], tol_times);
@@ -153,7 +153,7 @@ public:
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                    "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeInfected<FP>>()[i], tol_times);
@@ -163,7 +163,7 @@ public:
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
                 log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
                     this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
                 corrected                                                     = true;
@@ -183,25 +183,25 @@ public:
 
         for (auto i = AgeGroup(0); i < m_num_groups; i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
+                log_warning(
+                    "Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<TimeExposed<FP>>()[i], 0.0);
+                    this->template get<TimeExposed<FP>>()[i], tol_times);
                 return true;
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                log_warning(
+                    "Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
-                    this->template get<TimeInfected<FP>>()[i], 0.0);
+                    this->template get<TimeInfected<FP>>()[i], tol_times);
                 return true;
             }
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
-                          "greater {:.4f}",
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or "
+                          "greater {}",
                           this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
                 return true;
             }

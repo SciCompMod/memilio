@@ -326,79 +326,79 @@ public:
     bool check_constraints() const
     {
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
-            log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+            log_warning("Constraint check: Parameter Seasonality should lie between {} and {}", 0.0, 0.5);
             return true;
         }
 
         for (size_t i = 0; i < m_num_groups; ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeExposed is smaller than {:.4f}", 1.0);
+                log_error("Constraint check: Parameter TimeExposed is smaller than {}", 1.0);
                 return true;
             }
 
             if (this->template get<TimeInfectedNoSymptoms<FP>>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedNoSymptoms is smaller than {:.4f}", 1.0);
+                log_error("Constraint check: Parameter TimeInfectedNoSymptoms is smaller than {}", 1.0);
                 return true;
             }
 
             if (this->template get<TimeInfectedSymptoms<FP>>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSymptoms is smaller than {:.4f}", 1.0);
+                log_error("Constraint check: Parameter TimeInfectedSymptoms is smaller than {}", 1.0);
                 return true;
             }
 
             if (this->template get<TimeInfectedSevere<FP>>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedSevere is smaller than {:.4f}", 1.0);
+                log_error("Constraint check: Parameter TimeInfectedSevere is smaller than {}", 1.0);
                 return true;
             }
 
             if (this->template get<TimeInfectedCritical<FP>>()[i] < 1.0) {
-                log_error("Constraint check: Parameter TimeInfectedCritical is smaller than {:.4f}", 1.0);
+                log_error("Constraint check: Parameter TimeInfectedCritical is smaller than {}", 1.0);
                 return true;
             }
 
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0,
+                log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {} or larger {}", 0,
                           1);
                 return true;
             }
 
             if (this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] < 0.0 ||
                 this->template get<RelativeTransmissionNoSymptoms<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0,
+                log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {} or larger {}", 0,
                           1);
                 return true;
             }
 
             if (this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] < 0.0 ||
                 this->template get<RiskOfInfectionFromSymptomatic<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0,
+                log_error("Constraint check: Parameter  RiskOfInfectionFromSymptomatic smaller {} or larger {}", 0,
                           1);
                 return true;
             }
 
             if (this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] < 0.0 ||
                 this->template get<RecoveredPerInfectedNoSymptoms<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {:d} or larger {:d}", 0,
+                log_error("Constraint check: Parameter RecoveredPerInfectedNoSymptoms smaller {} or larger {}", 0,
                           1);
                 return true;
             }
 
             if (this->template get<SeverePerInfectedSymptoms<FP>>()[i] < 0.0 ||
                 this->template get<SeverePerInfectedSymptoms<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter SeverePerInfectedSymptoms smaller {} or larger {}", 0, 1);
                 return true;
             }
 
             if (this->template get<CriticalPerSevere<FP>>()[i] < 0.0 ||
                 this->template get<CriticalPerSevere<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter CriticalPerSevere smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter CriticalPerSevere smaller {} or larger {}", 0, 1);
                 return true;
             }
 
             if (this->template get<DeathsPerCritical<FP>>()[i] < 0.0 ||
                 this->template get<DeathsPerCritical<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter DeathsPerCritical smaller {:d} or larger {:d}", 0, 1);
+                log_error("Constraint check: Parameter DeathsPerCritical smaller {} or larger {}", 0, 1);
                 return true;
             }
         }

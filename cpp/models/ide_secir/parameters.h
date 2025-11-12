@@ -232,8 +232,8 @@ public:
             for (size_t i = 0; i < infectious_window_check; i++) {
                 if (this->get<TransmissionProbabilityOnContact>()[group].eval((ScalarType)i) < 0.0 ||
                     this->get<TransmissionProbabilityOnContact>()[group].eval((ScalarType)i) > 1.0) {
-                    log_error("Constraint check: TransmissionProbabilityOnContact smaller {:d} or larger {:d} at some "
-                              "time {:d}",
+                    log_error("Constraint check: TransmissionProbabilityOnContact smaller {} or larger {} at some "
+                              "time {}",
                               0, 1, i);
                     return true;
                 }
@@ -242,8 +242,8 @@ public:
             for (size_t i = 0; i < infectious_window_check; i++) {
                 if (this->get<RelativeTransmissionNoSymptoms>()[group].eval((ScalarType)i) < 0.0 ||
                     this->get<RelativeTransmissionNoSymptoms>()[group].eval((ScalarType)i) > 1.0) {
-                    log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {:d} or larger {:d} at some "
-                              "time {:d}",
+                    log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {} or larger {} at some "
+                              "time {}",
                               0, 1, i);
                     return true;
                 }
@@ -252,8 +252,8 @@ public:
             for (size_t i = 0; i < infectious_window_check; i++) {
                 if (this->get<RiskOfInfectionFromSymptomatic>()[group].eval((ScalarType)i) < 0.0 ||
                     this->get<RiskOfInfectionFromSymptomatic>()[group].eval((ScalarType)i) > 1.0) {
-                    log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d} at some "
-                              "time {:d}",
+                    log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {} or larger {} at some "
+                              "time {}",
                               0, 1, i);
                     return true;
                 }
@@ -262,7 +262,7 @@ public:
             for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
                 if (this->get<TransitionProbabilities>()[group][i] < 0.0 ||
                     this->get<TransitionProbabilities>()[group][i] > 1.0) {
-                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}",
+                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {} or larger {}",
                               0, 1);
                     return true;
                 }
@@ -271,7 +271,7 @@ public:
             if (!floating_point_equal(
                     this->get<TransitionProbabilities>()[group][(int)InfectionTransition::SusceptibleToExposed], 1.0,
                     1e-14)) {
-                log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {:d}",
+                log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {}",
                           1);
                 return true;
             }
@@ -280,7 +280,7 @@ public:
                     this->get<TransitionProbabilities>()[group][(int)InfectionTransition::ExposedToInfectedNoSymptoms],
                     1.0, 1e-14)) {
                 log_error("Constraint check: Parameter transition probability for ExposedToInfectedNoSymptoms unequal "
-                          "to {:d}",
+                          "to {}",
                           1);
                 return true;
             }
@@ -292,7 +292,7 @@ public:
                                       1.0, 1e-14)) {
                 log_error(
                     "Constraint check: Sum of transition probability for InfectedNoSymptomsToInfectedSymptoms and "
-                    "InfectedNoSymptomsToRecovered not equal to {:d}",
+                    "InfectedNoSymptomsToRecovered not equal to {}",
                     1);
                 return true;
             }
@@ -303,7 +303,7 @@ public:
                                               int)InfectionTransition::InfectedSymptomsToRecovered],
                                       1.0, 1e-14)) {
                 log_error("Constraint check: Sum of transition probability for InfectedSymptomsToInfectedSevere and "
-                          "InfectedSymptomsToRecovered not equal to {:d}",
+                          "InfectedSymptomsToRecovered not equal to {}",
                           1);
                 return true;
             }
@@ -314,7 +314,7 @@ public:
                                               int)InfectionTransition::InfectedSevereToRecovered],
                                       1.0, 1e-14)) {
                 log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
-                          "InfectedSevereToRecovered not equal to {:d}",
+                          "InfectedSevereToRecovered not equal to {}",
                           1);
                 return true;
             }
@@ -325,7 +325,7 @@ public:
                                                             [(int)InfectionTransition::InfectedCriticalToRecovered],
                     1.0, 1e-14)) {
                 log_error("Constraint check: Sum of transition probability for InfectedCriticalToDead and "
-                          "InfectedCriticalToRecovered not equal to {:d}",
+                          "InfectedCriticalToRecovered not equal to {}",
                           1);
                 return true;
             }
@@ -342,7 +342,7 @@ public:
         }
 
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
-            log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+            log_warning("Constraint check: Parameter Seasonality should lie between {} and {}", 0.0, 0.5);
             return true;
         }
 
