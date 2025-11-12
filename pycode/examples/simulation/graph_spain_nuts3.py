@@ -42,10 +42,12 @@ import geopandas as gpd
 excluded_ids = [8, 35, 38, 51, 52]
 region_ids = [region_id for region_id in dd.Provincias.keys()
               if region_id not in excluded_ids]
+excluded_comunidades = [4, 5, 18, 19]
+comunidades = [comunidad for comunidad in dd.Comunidades.keys() if comunidad not in excluded_comunidades]
 inference_params = ['damping_values', 't_E', 't_ISy', 't_ISev',
                     't_Cr', 'mu_CR', 'mu_IH', 'mu_HU', 'mu_UD', 'transmission_prob']
-summary_vars = ['state'] + [f'comunidad{i}' for i in range(len(dd.Comunidades))] + [
-    f'region{i}' for i in range(len(dd.Provincias))]
+summary_vars = ['state'] + [f'comunidad{i}' for i in range(len(comunidades))] + [
+    f'region{i}' for i in range(len(region_ids))]
 
 bounds = {
     't_E': (1.0, 5.2),
@@ -626,19 +628,14 @@ def concat_dicts(base: dict, new: dict) -> dict:
 def aggregate_states(d: dict) -> None:
     n_regions = len(region_ids)
     # per state
-    for r in range(n_regions):
-        print("indx: ", r)
-        print("region_id: ", region_ids[r])
-        print("comunidad: ", dd.Provincia_to_Comunidad[region_ids[r]])
-    for state in range(19):
+    for i, state in enumerate(comunidades):
         idxs = [
             r for r in range(n_regions)
-            if dd.Provincia_to_Comunidad[region_ids[r]] == state + 1
+            if dd.Provincia_to_Comunidad[region_ids[r]] == state
         ]
-        d[f"comunidad{state}"] = np.sum([d[f"region{r}"] for r in idxs], axis=0)
-        # print(d[f"comunidad{state}"].shape)
+        d[f"comunidad{i}"] = np.sum([d[f"region{r}"] for r in idxs], axis=0)
     # all allowed regions
-    d["state"] = np.sum([d[f"comunidad{r}"] for r in range(19)], axis=0)
+    d["state"] = np.sum([d[f"comunidad{r}"] for r in range(len(comunidades))], axis=0)
 
 def combine_results(dict_list):
     combined = {}
@@ -652,7 +649,7 @@ def skip_2weeks(d:dict) -> dict:
 def get_workflow():
 
     simulator = bf.make_simulator(
-        [prior, run_germany_nuts3_simulation]
+        [prior, run_spain_nuts3_simulation]
     )
     adapter = (
         bf.Adapter()
@@ -716,7 +713,6 @@ def run_training(name, num_training_files=20):
             trainings_data = d
         else:
             trainings_data = concat_dicts(trainings_data, d)
-    print(trainings_data['region0'].shape)
     aggregate_states(trainings_data)
 
     # validation data
@@ -889,7 +885,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(name):
         os.makedirs(name)
-    # create_train_data(filename=f'{name}/trainings_data1_{name}.pickle', number_samples=2000)
+    # create_train_data(filename=f'{name}/validation_data_{name}.pickle', number_samples=100)
     run_training(name=name, num_training_files=10)
     # run_inference(name=name, on_synthetic_data=True)
     # run_inference(name=name, on_synthetic_data=False)
