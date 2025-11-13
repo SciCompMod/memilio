@@ -710,6 +710,9 @@ public:
                 }
             }
             if (total_infections > 4) {
+                if (first_detection > Base::m_t) {
+                    first_detection = Base::m_t;
+                }
                 mio::log_debug("Node {} is culled at time {} because there are {} total infections.", n.id, Base::m_t,
                                total_infections);
                 cull_node(n.id);
@@ -747,6 +750,7 @@ private:
     ScalarType culling_capacity_per_day = 2000;
     std::queue<std::pair<size_t, ScalarType>> vaccination_queue;
     ScalarType vaccination_capacity_per_day = 500;
+    ScalarType first_detection              = std::numeric_limits<ScalarType>::max();
 };
 
 template <typename FP, typename Timepoint, class Timespan, class Graph, class NodeF, class EdgeF>
