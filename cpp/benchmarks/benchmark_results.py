@@ -56,7 +56,7 @@ class rawData:
 
         # opencovid single thread (normalized per time step)
         self.opencovid = np.array(
-            [32415, 68200, 192536, 332381, 698022, 1625049, 3385827]) * (1/120.0)*(1/1000)
+            [514, 861, 1584, 2959, 5918, 12816, 24275]) * (1/120.0)
 
         # now data for weak scaling
         self.weak_scaling_cores = [1, 2, 4, 8, 16, 32]
@@ -80,14 +80,14 @@ class rawData:
         # now data for strong scaling
 
         self.strong_scaling_cores = [1, 2, 4, 8, 16, 32, 64, 128]
-        self.strong_scaling_nodes = [4, 8, 16, 32, 64]
+        self.strong_scaling_nodes = [1, 2, 4, 8, 16, 32, 64, 128]
 
         # Runtime Strong scaling
         self.memilio_strong_scaling_128_runs_one_node = np.array(
             [2.646570e+04, 2.068018e+04,  1.078597e+04, 5.317400e+03, 2.740988e+03, 1.440401e+03, 8.953795e+02, 5.889476e+02])
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
             # only last data point available
-            [1.878124e+04, 9.376841e+03, 4.762327e+03, 2.363056e+03, 1.186088e+03])
+            [6.66666e+04, 3.803566e+04, 1.878124e+04, 9.376841e+03, 4.762327e+03, 2.363056e+03, 1.186088e+03, 6.005680e+02])
 
 
 class BenchmarkAnalyzer:
@@ -211,9 +211,9 @@ class BenchmarkAnalyzer:
         fig, ax = plt.subplots(figsize=(12, 9))
 
         # Use only the data points that exist (skip the first element which is 1)
-        cores = raw_data.strong_scaling_cores[1:len(
+        cores = raw_data.strong_scaling_cores[0:len(
             raw_data.memilio_strong_scaling_128_runs_one_node)]
-        runtimes = raw_data.memilio_strong_scaling_128_runs_one_node[1:]
+        runtimes = raw_data.memilio_strong_scaling_128_runs_one_node[0:]
 
         # Plot runtime
         ax.plot(cores, runtimes,
@@ -255,9 +255,9 @@ class BenchmarkAnalyzer:
         fig, ax = plt.subplots(figsize=(12, 9))
 
         # Use only the data points that exist (skip the first element which is 1)
-        nodes = raw_data.strong_scaling_nodes[1:len(
+        nodes = raw_data.strong_scaling_nodes[0:len(
             raw_data.memilio_strong_scaling_128_runs_multiple_nodes)]
-        runtimes = raw_data.memilio_strong_scaling_128_runs_multiple_nodes[1:]
+        runtimes = raw_data.memilio_strong_scaling_128_runs_multiple_nodes[0:]
 
         # Plot runtime
         ax.plot(nodes, runtimes,
