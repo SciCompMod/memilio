@@ -54,8 +54,8 @@ class rawData:
         self.covasim = np.array(
             [37809, 75152, 198949, 409061, 863334, 1762960, 3618340]) * (1/120.0)*(1/1000)
 
-        # OpenABM single thread (normalized per time step)
-        self.openabm = np.array(
+        # opencovid single thread (normalized per time step)
+        self.opencovid = np.array(
             [32415, 68200, 192536, 332381, 698022, 1625049, 3385827]) * (1/120.0)*(1/1000)
 
         # now data for weak scaling
@@ -80,13 +80,14 @@ class rawData:
         # now data for strong scaling
 
         self.strong_scaling_cores = [1, 2, 4, 8, 16, 32, 64, 128]
-        self.strong_scaling_nodes = [1, 2, 4, 8, 16, 32, 64, 128]
+        self.strong_scaling_nodes = [4, 8, 16, 32, 64]
 
         # Runtime Strong scaling
         self.memilio_strong_scaling_128_runs_one_node = np.array(
             [2.646570e+04, 2.068018e+04,  1.078597e+04, 5.317400e+03, 2.740988e+03, 1.440401e+03, 8.953795e+02, 5.889476e+02])
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
-            [1, 15876, 8423, 4650, 2723, 1500])
+            # only last data point available
+            [1.878124e+04, 9.376841e+03, 4.762327e+03, 2.363056e+03, 1.186088e+03])
 
 
 class BenchmarkAnalyzer:
@@ -180,8 +181,8 @@ class BenchmarkAnalyzer:
 
         # Plot OpenCOVID (fewer data points)
         opencovid_pop_sizes = raw_data.population_sizes[:len(
-            raw_data.openabm)]
-        ax.plot(opencovid_pop_sizes, raw_data.openabm,
+            raw_data.opencovid)]
+        ax.plot(opencovid_pop_sizes, raw_data.opencovid,
                 marker='^', linewidth=3, markersize=8,
                 color=opencovid_color, label='OpenCOVID', linestyle='-')
 
