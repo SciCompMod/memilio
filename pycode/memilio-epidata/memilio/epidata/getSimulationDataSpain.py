@@ -39,7 +39,7 @@ def get_population_data():
 
 
 def fetch_icu_data():
-    # https://www.sanidad.gob.es/areas/alertasEmergenciasSanitarias/alertasActuales/nCov/capacidadAsistencial.htm?utm_source=chatgpt.com
+    # https://www.sanidad.gob.es/areas/alertasEmergenciasSanitarias/alertasActuales/nCov/capacidadAsistencial.htm
     download_url = 'https://www.sanidad.gob.es/areas/alertasEmergenciasSanitarias/alertasActuales/nCov/documentos/Datos_Capacidad_Asistencial_Historico_14072023.csv'
     req = requests.get(download_url)
     req.encoding = 'ISO-8859-1'
@@ -69,6 +69,10 @@ def preprocess_icu_data(df):
 def get_icu_data():
     df = fetch_icu_data()
     df.rename(columns={'Cod_Provincia': 'ID_Provincia'}, inplace=True)
+    # ensure numeric, drop non-numeric and increment all IDs by 1
+    df['ID_Provincia'] = pd.to_numeric(df['ID_Provincia'], errors='coerce')
+    df = df[df['ID_Provincia'].notna()].copy()
+    df['ID_Provincia'] = df['ID_Provincia'].astype(int) + 1
     df = remove_islands(df)
     df = preprocess_icu_data(df)
 
@@ -80,7 +84,8 @@ def fetch_case_data():
     download_url = 'https://cnecovid.isciii.es/covid19/resources/casos_diagnostico_provincia.csv'
     req = requests.get(download_url)
 
-    df = pd.read_csv(io.StringIO(req.text), sep=',', keep_default_na=False, na_values=[])
+    df = pd.read_csv(io.StringIO(req.text), sep=',',
+                     keep_default_na=False, na_values=[])
 
     return df
 
