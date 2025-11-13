@@ -1,0 +1,32 @@
+[
+    {
+        "id": "30513de3-e03a-469a-a3e3-635d45d1b2a4",
+        "name": "School closure",
+        "description": "School closure intervention",
+        "tags": null
+    },
+    {
+        "id": "fb4fe730-5a7c-46a2-b731-494cfbd916b4",
+        "name": "Face masks & social distancing School",
+        "description": "Face mask usage and social distancing measures applied at 1-25% in schools",
+        "tags": null
+    },
+    {
+        "id": "2dfb8d4e-cdbe-45ac-ae9c-d070fe8ece2e",
+        "name": "Face masks & social distancing Work",
+        "description": "Face mask usage and social distancing measures applied at 1-25% in workplaces",
+        "tags": null
+    },
+    {
+        "id": "b5205110-96d3-4e0c-993c-2ca2dfe1412e",
+        "name": "Face masks & social distancing Other",
+        "description": "Face mask usage and social distancing measures applied at 1-25% in other settings",
+        "tags": null
+    },
+    {
+        "id": "96cd1086-0c57-4e87-9977-bc43b2ba56f2",
+        "name": "Remote work",
+        "description": "Implementation of remote work policies",
+        "tags": null
+    }
+]
