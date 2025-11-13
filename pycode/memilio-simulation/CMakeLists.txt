@@ -20,6 +20,9 @@ set(CMAKE_INSTALL_RPATH
     "${CMAKE_BINARY_DIR}/bin"
 )
 
+# Bundled JsonCpp must be linked statically so the wheel stays self-contained.
+set(MEMILIO_PREFER_STATIC_JSONCPP ON CACHE BOOL "" FORCE)
+
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
     include(FetchContent)
