@@ -206,6 +206,11 @@ if(MEMILIO_BUILD_BENCHMARKS)
     add_subdirectory(benchmarks)
 endif()
 
+if(MEMILIO_ENABLE_IPOPT)
+    add_subdirectory(tools/optimal_control)
+endif()
+
+
 if(MEMILIO_BUILD_SBML_MODELS)
     add_subdirectory(sbml_model_generation)
 endif()
