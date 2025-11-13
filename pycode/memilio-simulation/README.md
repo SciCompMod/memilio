@@ -4,9 +4,9 @@ This package contains Python bindings for the MEmilio C++ library. It enables se
 
 ## Installation
 
-Use the provided `setup.py` script to build the bindings and install the package. The script requires CMake and the Scikit-Build packages. Both are installed by the script if not available on the system. The package uses the [Pybind11 C++ library](https://pybind11.readthedocs.io) to create the bindings.
+This project is configured via ``pyproject.toml`` and is built with [scikit-build-core](https://scikit-build-core.readthedocs.io). CMake and Ninja must be available on the system. The package uses the [Pybind11 C++ library](https://pybind11.readthedocs.io) to create the bindings.
 
-To install the package, use the command (from the directory containing `setup.py`)
+To install the package, use the command (from the directory containing ``pyproject.toml``)
 
 ```bash
 pip install .
@@ -16,17 +16,17 @@ This builds the C++ library and C++ Python extension module and copies everythin
 
 All the requirements of the [C++ library](../../cpp/README.md) must be met in order to build and use the python bindings. A virtual environment is recommended. 
 
-CMake is executed internally by the `setup.py` script. All the options provided by the CMake configuration of the C++ library are available when building the Python extension as well. Additionally, the CMake configuration for the bindings provide the following CMake options:
+CMake is executed internally by scikit-build-core. All the options provided by the CMake configuration of the C++ library are available when building the Python extension as well. Additionally, the CMake configuration for the bindings provide the following CMake options:
 
 - MEMILIO_USE_BUNDLED_PYBIND11: ON or OFF, default ON. If ON, downloads Pybind11 automatically from a repository during CMake configuration. If OFF, Pybind11 needs to be installed on the system.
 
-When building the bindings, CMake options can be set by appending them to the install command, e.g.
+When building the bindings, CMake options can be forwarded with configuration settings, e.g.
 
 ```bash
-python setup.py install -- -DCMAKE_BUILD_TYPE=Debug -DMEMILIO_USE_BUNDLED_PYBIND11=OFF
+pip install . --config-settings=cmake.args="-DCMAKE_BUILD_TYPE=Debug" --config-settings=cmake.args="-DMEMILIO_USE_BUNDLED_PYBIND11=OFF"
 ```
 
-Alternatively, the `CMakeCache.txt` in the directory created by Scikit-Build can be edited to set the options.
+Alternatively, edit the `CMakeCache.txt` in the directory created by scikit-build-core.
 
 ## Development
 
@@ -37,8 +37,6 @@ pip install -e .[dev]
 ```
 
 This command allows you to work on the code without having to reinstall the package after a change. Note that this only works for changes to Python code. If C++ code is modified, the install command has to be repeated every time. The command also installs all additional dependencies required for development and maintenance. 
-
-For development, it may be easier to use the alternative command `python setup.py <build|install|develop>` which provides better configuration and observation of the C++ build process.
 
 The [bindings](memilio/simulation/bindings/) folder contains all the C++ code to expose the MEmilio library to Python and follows its structure, expect for the models that are bundled in a subfolder.
 

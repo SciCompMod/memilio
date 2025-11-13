@@ -37,7 +37,22 @@ if(MEMILIO_USE_BUNDLED_SPDLOG)
 
     if(NOT spdlog_POPULATED)
         FetchContent_Populate(spdlog)
+
+        # Even when the rest builds shared libraries, we sometimes
+        # prefer to keep spdlog static (e.g. for Python wheels where we don't want
+        # an extra shared dependency). Temporarily override BUILD_SHARED_LIBS while
+        # configuring spdlog to force a static build in that case.
+        if(MEMILIO_PREFER_STATIC_SPDLOG)
+            set(_MEMILIO_PREV_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+            set(BUILD_SHARED_LIBS OFF)
+        endif()
+
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
+
+        if(MEMILIO_PREFER_STATIC_SPDLOG)
+            set(BUILD_SHARED_LIBS ${_MEMILIO_PREV_BUILD_SHARED_LIBS})
+            unset(_MEMILIO_PREV_BUILD_SHARED_LIBS)
+        endif()
     endif()
 
 else()
@@ -198,6 +213,7 @@ else()
 endif()
 
 find_package(sbml ${MEMILIO_SBML_VERSION} CONFIG)
+
 if(sbml_FOUND)
     set(MEMILIO_HAS_SBML ON)
     message(STATUS "Found libSBML: ${libsbml_INCLUDE_DIRS}")

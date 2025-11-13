@@ -111,9 +111,9 @@ Please see the individual package documentation for more details on the function
 Installation
 ------------
 
-Each package provides a `setup.py` script that installs the package and its dependencies. 
+Each package provides a ``pyproject.toml`` that installs the package and its dependencies with pip.
 The dependencies of the individual packages are denoted in their documentation.
-The installation can be run with the following command (from the directory containing the `setup.py`)
+The installation can be run with the following command (from the directory containing the ``pyproject.toml`` file)
 
 .. code-block:: console 
     
@@ -171,8 +171,10 @@ Run pylint with the commands in the package folder
 
 .. code-block:: console
 
-    python setup.py pylint
+    python tools/run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+
+Packages without the helper script can run pylint directly, for example ``python -m pylint memilio``.
 
 Pylint report for actual master:
 
