@@ -22,6 +22,7 @@ set(CMAKE_INSTALL_RPATH
 
 # Bundled JsonCpp must be linked statically so the wheel stays self-contained.
 set(MEMILIO_PREFER_STATIC_JSONCPP ON CACHE BOOL "" FORCE)
+set(MEMILIO_PREFER_STATIC_SPDLOG ON CACHE BOOL "" FORCE)
 
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
@@ -165,19 +166,22 @@ if(TARGET jsoncpp_lib)
 endif()
 
 if(TARGET spdlog)
-    set_target_properties(spdlog PROPERTIES
-        INSTALL_RPATH "\\$ORIGIN"
-    )
-    set(SPDLOG_LIB_FILE $<TARGET_FILE:spdlog>)
-    install(FILES ${SPDLOG_LIB_FILE}
-        DESTINATION lib
-    )
-    install(FILES ${SPDLOG_LIB_FILE}
-        DESTINATION lib
-        RENAME libspdlog.so.1.15
-    )
-    install(FILES ${SPDLOG_LIB_FILE}
-        DESTINATION lib
-        RENAME libspdlog.so
-    )
+    get_target_property(_SPDLOG_LIB_TYPE spdlog TYPE)
+    if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
+        set_target_properties(spdlog PROPERTIES
+            INSTALL_RPATH "\\$ORIGIN"
+        )
+        set(SPDLOG_LIB_FILE $<TARGET_FILE:spdlog>)
+        install(FILES ${SPDLOG_LIB_FILE}
+            DESTINATION lib
+        )
+        install(FILES ${SPDLOG_LIB_FILE}
+            DESTINATION lib
+            RENAME libspdlog.so.1.15
+        )
+        install(FILES ${SPDLOG_LIB_FILE}
+            DESTINATION lib
+            RENAME libspdlog.so
+        )
+    endif()
 endif()
