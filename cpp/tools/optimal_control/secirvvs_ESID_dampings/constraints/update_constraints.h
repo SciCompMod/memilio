@@ -29,7 +29,7 @@ void update_path_constraint(const SecirvvsOptimization& settings,
             const auto& node_simulation = node.get_simulation();
             const auto& node_model      = node_simulation.get_model();
             size_t graph_node_id        = graph.nodes()[node_idx].id;
-            size_t num_age_groups       = node_model.parameters.get_num_groups();
+            size_t num_age_groups       = static_cast<size_t>(node_model.parameters.get_num_groups());
 
             const mio::TimeSeries<FP>& simulation_result      = node_simulation.get_result();
             Eigen::Ref<const Eigen::VectorX<FP>> latest_state = simulation_result.get_last_value();

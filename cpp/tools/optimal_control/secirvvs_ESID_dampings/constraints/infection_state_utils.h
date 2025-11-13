@@ -135,7 +135,8 @@ inline std::vector<mio::osecirvvs::InfectionState> query_infection_states(const 
     std::vector<InfectionState> result;
 
     if (!and_group_tokens.empty()) {
-        for (const auto& [name, state] : all_states) {
+        for (const auto& [n, state] : all_states) {
+            const auto& name = n; // create a named reference or copy
             bool match_all =
                 std::all_of(and_group_tokens.begin(), and_group_tokens.end(), [&](const std::string& token) {
                     return name.find(token) != std::string::npos;
@@ -147,7 +148,8 @@ inline std::vector<mio::osecirvvs::InfectionState> query_infection_states(const 
     }
 
     if (!or_group_tokens.empty()) {
-        for (const auto& [name, state] : all_states) {
+        for (const auto& [n, state] : all_states) {
+            const auto& name = n;
             bool match_any = std::any_of(or_group_tokens.begin(), or_group_tokens.end(), [&](const std::string& token) {
                 return name.find(token) != std::string::npos;
             });
