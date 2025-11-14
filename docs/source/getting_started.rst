@@ -32,9 +32,19 @@ A few things are not represented in this documentation, but are part of the `git
 In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`_ folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
+Why to use the software
+-----------------------
 
-Usage
------------------
+In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
+MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
+
+The use of a particular model is generally driven by the research question at hand. The distinction of MEmilio is the provision of a wide range of models, from simple compartmental models to complex integro-differential and agent-based models, allowing users to select the most appropriate model for their specific needs.
+
+How to use the software
+-----------------------
+
+The installation and use of MEmilio might look overwhelming at first due to the many features and models included. 
+However, we have structured this documentation to guide you step-by-step through the installation and usage process.
 
 .. _installation:
 
@@ -48,8 +58,7 @@ There are two main ways to set up MEmilio on your computer or on a remote cluste
 
 In addition, we provide several Python packages to download epidemiological data or create plots from Python.
 
-Below, we will give you a step-by-step guide for both methods. If you are new to MEmilio and more familiar with Python, Julia, or R than with C++, we recommend starting with the Python packages, 
-as they provide an easy access to simulate infection dynamics models from and collect experiences with MEmilio.
+Below, we will give you a step-by-step guide for both methods. If you are new to MEmilio and more familiar with Python, Julia, or R than with C++, we recommend starting with the Python packages, as they provide an easy access to simulate infection dynamics models from and collect experiences with MEmilio.
 
 Required tools
 *****************
