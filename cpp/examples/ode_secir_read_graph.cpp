@@ -17,43 +17,36 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/mobility/metapopulation_mobility_instant.h"
-#include "memilio/io/mobility_io.h"
 #include "memilio/compartments/parameter_studies.h"
+#include "memilio/config.h"
+#include "memilio/io/cli.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/mobility/metapopulation_mobility_instant.h"
+#include "memilio/utils/base_dir.h"
+
+#include "memilio/utils/stl_util.h"
+#include "ode_secir/model.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include <data_dir.h>
-#include <iostream>
 
-std::string setup(int argc, char** argv, const std::string data_dir)
-{
-    if (argc == 2) {
-        std::cout << "Using file " << argv[1] << " in data/Germany/mobility." << std::endl;
-        return mio::path_join(data_dir, "Germany", "mobility", (std::string)argv[1]);
-    }
-    else {
-        if (argc > 2) {
-            mio::log_error("Too many arguments given.");
-        }
-        else {
-            mio::log_warning("No arguments given.");
-        }
-        auto mobility_file = "commuter_mobility_2022.txt";
-        std::cout << "Using file " << mobility_file << " in data/Germany/mobility." << std::endl;
-        std::cout << "Usage: read_graph MOBILITY_FILE"
-                  << "\n\n";
-        std::cout
-            << "This example performs a simulation based on mobility data from the German Federal Employment Agency."
-            << std::endl;
-        return mio::path_join(data_dir, "Germany", "mobility", mobility_file);
-    }
-}
+#include <iostream>
 
 int main(int argc, char** argv)
 {
     mio::set_log_level(mio::LogLevel::critical);
-    std::string data_dir = DATA_DIR;
-    std::string filename = setup(argc, argv, data_dir);
+
+    auto parameters =
+        mio::cli::ParameterSetBuilder()
+            .add<"MobilityFile">(
+                mio::path_join(mio::base_dir(), "data", "Germany", "mobility", "commuter_mobility_2022.txt"),
+                {.description = "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file."})
+            .build();
+
+    auto result = mio::command_line_interface(argv[0], argc, argv, parameters, {"MobilityFile"});
+    if (!result) {
+        std::cout << result.error().message();
+        return result.error().code().value();
+    }
 
     const auto t0   = 0.;
     const auto tmax = 10.;
@@ -110,10 +103,10 @@ int main(int argc, char** argv)
     mio::osecir::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     std::cout << "Reading Mobility File..." << std::flush;
-    auto read_mobility_result = mio::read_mobility_plain(filename);
+    auto read_mobility_result = mio::read_mobility_plain(parameters.get<"MobilityFile">());
     if (!read_mobility_result) {
-        std::cout << read_mobility_result.error().formatted_message() << '\n';
-        std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file." << '\n';
+        std::cout << "\n" << read_mobility_result.error().formatted_message() << "\n";
+        std::cout << "Create the mobility file with MEmilio Epidata's getCommuterMobility.py file.\n";
         return 0;
     }
     auto& commuter_mobility = read_mobility_result.value();
@@ -137,7 +130,8 @@ int main(int argc, char** argv)
     std::cout << "Writing Json Files..." << std::flush;
     auto write_status = mio::write_graph(graph, "graph_parameters");
     if (!write_status) {
-        std::cout << "Error: " << write_status.error().formatted_message();
+        std::cout << "\n" << write_status.error().formatted_message();
+        return 0;
     }
     std::cout << "Done" << std::endl;
 
@@ -145,13 +139,19 @@ int main(int argc, char** argv)
     auto graph_read_result = mio::read_graph<ScalarType, mio::osecir::Model<ScalarType>>("graph_parameters");
 
     if (!graph_read_result) {
-        std::cout << "Error: " << graph_read_result.error().formatted_message();
+        std::cout << "\n" << graph_read_result.error().formatted_message();
+        return 0;
     }
     std::cout << "Done" << std::endl;
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = mio::ParameterStudy<ScalarType, mio::osecir::Simulation<ScalarType>>(graph_read, t0, tmax, 0.5, 2);
+    mio::ParameterStudy study(graph_read, t0, tmax, 0.5, 2);
+    study.run_serial([](auto&& g, auto t0_, auto dt_, auto) {
+        auto copy = g;
+        return mio::make_sampled_graph_simulation<double, mio::osecir::Simulation<ScalarType>>(draw_sample(copy), t0_,
+                                                                                               dt_, dt_);
+    });
     std::cout << "Done" << std::endl;
 
     return 0;

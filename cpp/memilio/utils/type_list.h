@@ -61,6 +61,12 @@ template <class Type, class... Types>
 struct index_of_type<Type, TypeList<Types...>> : public index_of_type<Type, Types...> {
 };
 
+/// Specialization of index_of_type for TypeList. Resolves ambiguity when using TypeLists as items. @see index_of_type.
+template <class... Types>
+struct index_of_type<TypeList<Types...>, TypeList<Types...>> {
+    static constexpr std::size_t value = 0;
+};
+
 } // namespace mio
 
 #endif // MIO_UTILS_TYPE_LIST_H_

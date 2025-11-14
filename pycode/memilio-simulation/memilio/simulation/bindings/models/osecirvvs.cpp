@@ -49,100 +49,94 @@ namespace py = pybind11;
 
 namespace
 {
-//select only the first node of the graph of each run, used for parameterstudy with single nodes
-template <class Sim>
-std::vector<Sim> filter_graph_results(
-    std::vector<mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>>&& graph_results)
-{
-    std::vector<Sim> results;
-    results.reserve(graph_results.size());
-    for (auto i = size_t(0); i < graph_results.size(); ++i) {
-        results.emplace_back(std::move(graph_results[i].nodes()[0].property.get_simulation()));
-    }
-    return std::move(results);
-}
 
 /*
  * @brief bind ParameterStudy for any model
  */
-template <class Simulation>
+template <class Sim>
 void bind_ParameterStudy(py::module_& m, std::string const& name)
 {
-    pymio::bind_class<mio::ParameterStudy<double, Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
-        .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
-             py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>&, double, double,
-                      double, size_t>(),
-             py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
-        .def_property("num_runs", &mio::ParameterStudy<double, Simulation>::get_num_runs,
-                      &mio::ParameterStudy<double, Simulation>::set_num_runs)
-        .def_property("tmax", &mio::ParameterStudy<double, Simulation>::get_tmax,
-                      &mio::ParameterStudy<double, Simulation>::set_tmax)
-        .def_property("t0", &mio::ParameterStudy<double, Simulation>::get_t0,
-                      &mio::ParameterStudy<double, Simulation>::set_t0)
-        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model),
+    using GraphT      = mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>;
+    using SimulationT = mio::GraphSimulation<double, GraphT, double, double>;
+    using ParametersT = mio::Graph<typename Sim::Model, mio::MobilityParameters<double>>;
+    using StudyT      = mio::ParameterStudy<ParametersT, double>;
+
+    pymio::bind_class<StudyT, pymio::EnablePickling::Never>(m, name.c_str())
+        .def(py::init<const ParametersT&, double, double, double, size_t>(), py::arg("parameters"), py::arg("t0"),
+             py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
+        .def_property_readonly("num_runs", &StudyT::get_num_runs)
+        .def_property_readonly("tmax", &StudyT::get_tmax)
+        .def_property_readonly("t0", &StudyT::get_t0)
+        .def_property_readonly("dt", &StudyT::get_dt)
+        .def_property_readonly("model_graph", py::overload_cast<>(&StudyT::get_parameters),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model",
-                               py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model, py::const_),
+        .def_property_readonly("model_graph", py::overload_cast<>(&StudyT::get_parameters, py::const_),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model_graph),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly(
-            "model_graph", py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model_graph, py::const_),
-            py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<double, Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<double, Simulation>, mio::MobilityEdge<double>>,
-                                  size_t)>
+            [](StudyT& self,
+               std::function<void(mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>, size_t)>
                    handle_result,
                bool variant_high) {
-                self.run(
-                    [variant_high](auto&& g) {
-                        return draw_sample(g, variant_high);
+                self.run_serial(
+                    [variant_high](const ParametersT& g, double t0, double dt, size_t) {
+                        auto copy = g;
+                        return mio::make_sampled_graph_simulation<double, Sim>(draw_sample(copy, variant_high), t0, dt,
+                                                                               dt);
                     },
                     [&handle_result](auto&& g, auto&& run_idx) {
-                        //handle_result_function needs to return something
-                        //we don't want to run an unknown python object through parameterstudies, so
-                        //we just return 0 and ignore the list returned by run().
-                        //So python will behave slightly different than c++
-                        handle_result(std::move(g), run_idx);
-                        return 0;
+                        handle_result(std::move(g.get_graph()), run_idx);
                     });
             },
-            py::arg("handle_result_func"), py::arg("variant_high"))
-        .def(
-            "run",
-            [](mio::ParameterStudy<double, Simulation>& self,
-               bool variant_high) { //default argument doesn't seem to work with functions
-                return self.run([variant_high](auto&& g) {
-                    return draw_sample(g, variant_high);
-                });
-            },
+            "Run a graph simulation, handling its result in the provided function.", py::arg("handle_result_func"),
             py::arg("variant_high"))
         .def(
-            "run_single",
-            [](mio::ParameterStudy<double, Simulation>& self, std::function<void(Simulation, size_t)> handle_result,
-               bool variant_high) {
-                self.run(
-                    [variant_high](auto&& g) {
-                        return draw_sample(g, variant_high);
+            "run",
+            [](StudyT& self,
+               bool variant_high) { //default argument doesn't seem to work with functions
+                return self.run_serial(
+                    [variant_high](const ParametersT& g, double t0, double dt, size_t) {
+                        auto copy = g;
+                        return mio::make_sampled_graph_simulation<double, Sim>(draw_sample(copy, variant_high), t0, dt,
+                                                                               dt);
                     },
-                    [&handle_result](auto&& r, auto&& run_idx) {
-                        handle_result(std::move(r.nodes()[0].property.get_simulation()), run_idx);
-                        return 0;
+                    [](SimulationT&& result, size_t) {
+                        return std::move(result.get_graph());
                     });
             },
+            "Run a graph simulation, returning all result graphs in a vector.", py::arg("variant_high"))
+        .def(
+            "run_single",
+            [](StudyT& self, std::function<void(Sim, size_t)> handle_result, bool variant_high) {
+                self.run_serial(
+                    [variant_high](const ParametersT& g, double t0, double dt, size_t) {
+                        auto copy = g;
+                        return mio::make_sampled_graph_simulation<double, Sim>(draw_sample(copy, variant_high), t0, dt,
+                                                                               dt);
+                    },
+                    [&handle_result](auto&& r, auto&& run_idx) {
+                        handle_result(std::move(r.get_graph().nodes()[0].property.get_simulation()), run_idx);
+                    });
+            },
+            "Run a simulation on a graph with a single model, handling its result in the provided function.",
             py::arg("handle_result_func"), py::arg("variant_high"))
         .def(
             "run_single",
-            [](mio::ParameterStudy<double, Simulation>& self, bool variant_high) {
-                return filter_graph_results(self.run([variant_high](auto&& g) {
-                    return draw_sample(g, variant_high);
-                }));
+            [](StudyT& self, bool variant_high) {
+                return self.run_serial(
+                    [variant_high](const ParametersT& g, double t0, double dt, size_t) {
+                        auto copy = g;
+                        return mio::make_sampled_graph_simulation<double, Sim>(draw_sample(copy, variant_high), t0, dt,
+                                                                               dt);
+                    },
+                    [](SimulationT&& result, size_t) {
+                        //select only the first node of the graph of each run, used for parameterstudy with single nodes
+                        return std::move(result.get_graph().nodes()[0].property.get_simulation());
+                    });
             },
-            py::arg("variant_high"));
+            "Run a simulation on a graph with a single model, returning all simulations in a vector",
+            py::arg("variant_high"))
+        .doc() = "Run a (graph) simulation multiple times, drawing new parameters each run.";
 }
 
 enum class ContactLocation
@@ -340,9 +334,9 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                                 mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP,
-                                         ContactLocation, mio::osecirvvs::Model<double>,
-                                         mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
-                                         mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
+                                              ContactLocation, mio::osecirvvs::Model<double>,
+                                              mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
+                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
                 mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain,
                 weights);
             return pymio::check_and_throw(result);

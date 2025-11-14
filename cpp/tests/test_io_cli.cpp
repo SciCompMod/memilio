@@ -301,18 +301,24 @@ TEST_F(TestCLI, test_get_param)
 TEST_F(TestCLI, test_set_param)
 {
     Params p;
-    auto set = mio::cli::details::AbstractSet::build(p).value();
-    auto id  = mio::cli::details::Identifier::make_raw("A");
+    auto set      = mio::cli::details::AbstractSet::build(p).value();
+    auto id_A     = mio::cli::details::Identifier::make_raw("A");
+    auto id_B     = mio::cli::details::Identifier::make_raw("B");
+    auto wrong_id = mio::cli::details::Identifier::make_raw("NotAnOption");
     // use normally
-    EXPECT_THAT(print_wrap(set.set_param(id, std::string("5.2"))), IsSuccess());
+    EXPECT_THAT(print_wrap(set.set_param(id_A, std::string("5.2"))), IsSuccess());
     EXPECT_EQ(p.get<A>(), 5.2);
+    EXPECT_THAT(print_wrap(set.set_param(id_B, std::string("\"5.2\""))), IsSuccess());
+    EXPECT_EQ(p.get<B>(), "5.2");
     // cause errors
-    auto result = set.set_param(id, std::string("definitely a double"));
+    auto result = set.set_param(id_A, std::string("definitely a double"));
     EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidType));
-    EXPECT_EQ(result.error().formatted_message(),
-              "Invalid type: While setting \"A\": Json value is not a double.\n"
-              "* Line 1, Column 1\n  Syntax error: value, object or array expected.\n");
-    result = set.set_param(mio::cli::details::Identifier::make_raw("NotAnOption"), std::string());
+    EXPECT_EQ(result.error().message(), "While setting \"A\": Json value is not a double.\n"
+                                        "* Line 1, Column 1\n  Syntax error: value, object or array expected.\n");
+    result = set.set_param(id_B, std::string("this string is missing quotes"));
+    EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidType));
+    EXPECT_THAT(result.error().message(), testing::HasSubstr("\\\"")); // check only for additional hint
+    result = set.set_param(wrong_id, std::string());
     EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::KeyNotFound));
     EXPECT_EQ(result.error().formatted_message(),
               "Key not found: Could not set parameter: No such option \"NotAnOption\".");

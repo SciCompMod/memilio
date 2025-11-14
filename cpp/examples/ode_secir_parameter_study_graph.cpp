@@ -20,7 +20,6 @@
 
 #include "memilio/compartments/parameter_studies.h"
 #include "memilio/config.h"
-#include "memilio/geography/regions.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
@@ -29,13 +28,11 @@
 #include "memilio/utils/miompi.h"
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/time_series.h"
+#include "ode_secir/model.h"
 #include "ode_secir/parameters_io.h"
 #include "ode_secir/parameter_space.h"
-#include "boost/filesystem.hpp"
-#include "memilio/utils/stl_util.h"
 #include <cstddef>
 #include <cstdio>
-#include <iomanip>
 
 /**
  * Set a value and distribution of an UncertainValue.
@@ -265,9 +262,7 @@ int main()
         2, 1, Eigen::VectorX<ScalarType>::Constant(num_age_groups * (size_t)mio::osecir::InfectionState::Count, 0.2),
         indices_save_edges);
 
-    //run parameter study
-    auto parameter_study = mio::ParameterStudy<ScalarType, mio::osecir::Simulation<ScalarType>>{
-        params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+    mio::ParameterStudy parameter_study(params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs));
 
     if (mio::mpi::is_root()) {
         printf("Seeds: ");
@@ -279,10 +274,13 @@ int main()
 
     auto save_single_run_result = mio::IOResult<void>(mio::success());
     auto ensemble               = parameter_study.run(
-        [](auto&& graph) {
-            return draw_sample(graph);
+        [](auto&& graph, ScalarType t0, ScalarType dt, size_t) {
+            auto copy = graph;
+            return mio::make_sampled_graph_simulation<ScalarType, mio::osecir::Simulation<ScalarType>>(
+                mio::osecir::draw_sample(copy), t0, dt, dt);
         },
-        [&](auto results_graph, auto&& run_id) {
+        [&](auto&& results_sim, auto&& run_id) {
+            auto results_graph       = results_sim.get_graph();
             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
 
             auto params = std::vector<mio::osecir::Model<ScalarType>>{};
@@ -319,7 +317,7 @@ int main()
         boost::filesystem::path results_dir("test_results");
         bool created = boost::filesystem::create_directories(results_dir);
         if (created) {
-            mio::log_info("Directory '{:s}' was created.", results_dir.string());
+            mio::log_info("Directory '{}' was created.", results_dir.string());
         }
 
         auto county_ids          = std::vector<int>{1001, 1002, 1003};
