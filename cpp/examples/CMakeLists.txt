@@ -22,6 +22,10 @@ add_executable(ode_seir_example ode_seir.cpp)
 target_link_libraries(ode_seir_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_seirdb_example ode_seirdb.cpp)
+target_link_libraries(ode_seirdb_example PRIVATE memilio ode_seirdb)
+target_compile_options(ode_seirdb_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_seir_ageres_example ode_seir_ageres.cpp)
 target_link_libraries(ode_seir_ageres_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
