@@ -59,7 +59,6 @@ class Model
 public:
     using typename Base::ParameterSet;
     using typename Base::Populations;
-    using typename Base::ScalarType;
 
     Model(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
@@ -91,16 +90,13 @@ public:
                 const size_t Dj = this->populations.get_flat_index({j, InfectionState::Dead});
                 const size_t Bj = this->populations.get_flat_index({j, InfectionState::Buried});
 
-                const FP Nj    = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj] + pop[Dj] + pop[Bj];
-                const FP divNj = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
-                const FP contact_rate =
-                    params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
-                        SimulationTime<FP>(t))(i.get(), j.get()) *
-                    divNj;
-                const FP coeffStoE =
-                    contact_rate * params.template get<TransmissionProbabilityOnContact<FP>>()[i];
-                const FP coeffStoEDead =
-                    contact_rate * params.template get<TransmissionProbabilityFromDead<FP>>()[i];
+                const FP Nj           = pop[Sj] + pop[Ej] + pop[Ij] + pop[Rj] + pop[Dj] + pop[Bj];
+                const FP divNj        = (Nj < Limits<FP>::zero_tolerance()) ? FP(0.0) : FP(1.0 / Nj);
+                const FP contact_rate = params.template get<ContactPatterns<FP>>().get_cont_freq_mat().get_matrix_at(
+                                            SimulationTime<FP>(t))(i.get(), j.get()) *
+                                        divNj;
+                const FP coeffStoE     = contact_rate * params.template get<TransmissionProbabilityOnContact<FP>>()[i];
+                const FP coeffStoEDead = contact_rate * params.template get<TransmissionProbabilityFromDead<FP>>()[i];
 
                 flows[Base::template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Exposed>(i)] +=
                     y[Si] * (coeffStoE * pop[Ij] + coeffStoEDead * pop[Dj]);
@@ -154,15 +150,15 @@ public:
                     contact_matrix.get_matrix_at(SimulationTime<FP>(y.get_time(t_idx)))(i.get(), j.get()) * divNj;
                 FP coeff_infected = base_coeff * params.template get<TransmissionProbabilityOnContact<FP>>()[i];
                 FP coeff_dead     = base_coeff * params.template get<TransmissionProbabilityFromDead<FP>>()[i];
-                F((size_t)i, (size_t)j + num_groups)           = coeff_infected * y.get_value(t_idx)[Si];
-                F((size_t)i, (size_t)j + 2 * num_groups)       = coeff_dead * y.get_value(t_idx)[Si];
+                F((size_t)i, (size_t)j + num_groups)     = coeff_infected * y.get_value(t_idx)[Si];
+                F((size_t)i, (size_t)j + 2 * num_groups) = coeff_dead * y.get_value(t_idx)[Si];
             }
 
-            FP T_Ei         = params.template get<TimeExposed<FP>>()[i];
-            FP T_Ii         = params.template get<TimeInfected<FP>>()[i];
-            FP T_Bi         = params.template get<TimeToBurial<FP>>()[i];
-            FP prob_recover = params.template get<ProbabilityToRecover<FP>>()[i];
-            FP prob_die     = 1.0 - prob_recover;
+            FP T_Ei                                               = params.template get<TimeExposed<FP>>()[i];
+            FP T_Ii                                               = params.template get<TimeInfected<FP>>()[i];
+            FP T_Bi                                               = params.template get<TimeToBurial<FP>>()[i];
+            FP prob_recover                                       = params.template get<ProbabilityToRecover<FP>>()[i];
+            FP prob_die                                           = 1.0 - prob_recover;
             V((size_t)i, (size_t)i)                               = 1.0 / T_Ei;
             V((size_t)i + num_groups, (size_t)i)                  = -1.0 / T_Ei;
             V((size_t)i + num_groups, (size_t)i + num_groups)     = 1.0 / T_Ii;
