@@ -98,7 +98,7 @@ mio::IOResult<mio::TimeSeries<ScalarType>> simulate_ode(ScalarType ode_exponent,
 
 mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order,
                                  size_t finite_difference_order, ScalarType t0_ode, ScalarType t0_ide, ScalarType tmax,
-                                 ScalarType TimeInfected, ScalarType tol_exp, std::string save_dir = "",
+                                 ScalarType TimeInfected, std::string save_dir = "",
                                  mio::TimeSeries<ScalarType> result_groundtruth =
                                      mio::TimeSeries<ScalarType>((size_t)mio::isir::InfectionState::Count),
                                  bool backwards_fd = true)
@@ -150,9 +150,6 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         mio::isir::ModelMessinaExtendedDetailedInit model(std::move(init_populations), total_population, gregory_order,
                                                           finite_difference_order);
 
-        // model.set_tol_for_support_max(pow(10, -(ScalarType)tol_exp));
-        unused(tol_exp);
-
         mio::ExponentialSurvivalFunction exp(1. / TimeInfected);
 
         mio::StateAgeFunctionWrapper dist(exp);
@@ -172,7 +169,7 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
         // mio::UncertainContactMatrix<ScalarType> contact_matrix = scale_contact_matrix(scaling_factor_contacts);
         model.parameters.get<mio::isir::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrix);
 
-        std::cout << "support max: " << model.compute_calctime(dt_ide) << std::endl;
+        std::cout << "support max: " << model.compute_calctime(dt_ide, 1e-8) << std::endl;
 
         // Carry out simulation.
         mio::isir::SimulationMessinaExtendedDetailedInit sim(model, dt_ide);
@@ -198,78 +195,53 @@ mio::IOResult<void> simulate_ide(std::vector<ScalarType> ide_exponents, size_t g
 
 int main()
 {
-    using namespace params;
     /* In this example we want to examine the convergence behavior under the assumption of exponential stay time 
     distributions. In this case, we can compare the solution of the IDE simulation with a corresponding ODE solution. */
+
+    using namespace params;
 
     // Compute groundtruth with ODE model.
     ScalarType ode_exponent = 6;
 
-    // std::vector<int> time_infected_values = {1, 2, 5};
-    // std::vector<ScalarType> time_infected_values = {1., 2., 5.};
     std::vector<ScalarType> time_infected_values = {2.};
 
-    ScalarType tol_exp = 8;
-
     ScalarType t0_ode = 0.;
-    ScalarType t0_ide = 0.;
+    ScalarType t0_ide = 50.;
+
+    std::vector<size_t> num_days_vec = {5};
+
+    std::vector<size_t> finite_difference_orders = {4};
 
     std::vector<ScalarType> ide_exponents = {0, 1, 2, 3};
     std::vector<size_t> gregory_orders    = {1, 2, 3};
 
     // true means that a backwards_fd scheme is used, false means that a central fd scheme is used
-    std::vector<bool> fd_schemes = {true};
+    bool backwards_fd = true;
 
-    for (bool backwards_fd : fd_schemes) {
+    for (int time_infected : time_infected_values) {
 
-        for (int time_infected : time_infected_values) {
+        for (size_t finite_difference_order : finite_difference_orders) {
 
-            std::vector<size_t> finite_difference_orders;
-            if (backwards_fd) {
+            for (size_t num_days : num_days_vec) {
+                ScalarType tmax = t0_ide + num_days;
 
-                // finite_difference_orders = {1, 2, 4};
-                finite_difference_orders = {1, 2, 4};
-            }
-            else {
-                finite_difference_orders = {2, 4};
-            }
+                std::string save_dir = fmt::format("../../simulation_results/2025-11-14/time_infected={}/"
+                                                   "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}/",
+                                                   time_infected, t0_ide, tmax, finite_difference_order);
 
-            for (size_t finite_difference_order : finite_difference_orders) {
+                // Make folder if not existent yet.
+                boost::filesystem::path dir(save_dir);
+                boost::filesystem::create_directories(dir);
 
-                // std::vector<size_t> num_days_vec = {1, 5, 10};
-                std::vector<size_t> num_days_vec = {5};
+                auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
 
-                for (size_t num_days : num_days_vec) {
-                    ScalarType tmax = t0_ide + num_days;
-
-                    std::string save_dir =
-                        fmt::format("../../simulation_results/2025-11-11/time_infected={}/"
-                                    "detailed_init_exponential_t0ide={}_tmax={}_finite_diff={}_tolexp={}",
-                                    time_infected, t0_ide, tmax, finite_difference_order, tol_exp);
-
-                    if (!backwards_fd) {
-                        save_dir = save_dir + "_central_fd";
-                    }
-                    save_dir = save_dir + "/";
-
-                    // Make folder if not existent yet.
-                    boost::filesystem::path dir(save_dir);
-                    boost::filesystem::create_directories(dir);
-
-                    auto result_ode = simulate_ode(ode_exponent, t0_ode, tmax, time_infected, save_dir).value();
-
-                    // Do IDE simulations.
-
-                    // std::vector<ScalarType> ide_exponents = {4};
-                    // std::vector<size_t> gregory_orders    = {3};
-
-                    for (size_t gregory_order : gregory_orders) {
-                        std::cout << std::endl;
-                        std::cout << "Gregory order: " << gregory_order << std::endl;
-                        mio::IOResult<void> result_ide =
-                            simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
-                                         time_infected, tol_exp, save_dir, result_ode, backwards_fd);
-                    }
+                // Do IDE simulations.
+                for (size_t gregory_order : gregory_orders) {
+                    std::cout << std::endl;
+                    std::cout << "Gregory order: " << gregory_order << std::endl;
+                    mio::IOResult<void> result_ide =
+                        simulate_ide(ide_exponents, gregory_order, finite_difference_order, t0_ode, t0_ide, tmax,
+                                     time_infected, save_dir, result_ode, backwards_fd);
                 }
             }
         }

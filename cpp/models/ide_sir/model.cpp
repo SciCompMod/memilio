@@ -248,7 +248,7 @@ size_t ModelMessinaExtendedDetailedInit::compute_S(ScalarType s_init, ScalarType
 
 void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t time_point_index)
 {
-    // Linear backwards finite difference scheme.
+    // Linear backwards finite difference scheme, flow from S to I is then given by -S'.
     if (std::min(m_finite_difference_order, time_point_index) == 1) {
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
             -(populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
@@ -259,20 +259,20 @@ void ModelMessinaExtendedDetailedInit::compute_S_deriv(ScalarType dt, size_t tim
     // Compute S' with backwards finite difference scheme of second order, flow from S to I is then given by -S'.
     if (std::min(m_finite_difference_order, time_point_index) == 2) {
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-            -(1 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+            -(3 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               4 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
-              3 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
+              1 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible]) /
             (2 * dt);
     }
 
     // Compute S' with backwards finite difference scheme of fourth order, flow from S to I is then given by -S'.
     if (std::min(m_finite_difference_order, time_point_index) == 4) {
         flows[time_point_index][(Eigen::Index)InfectionTransition::SusceptibleToInfected] =
-            -(3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible] -
-              16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
-              36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+            -(25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible] -
               48 * populations[time_point_index - 1][(Eigen::Index)InfectionState::Susceptible] +
-              25 * populations[time_point_index][(Eigen::Index)InfectionState::Susceptible]) /
+              36 * populations[time_point_index - 2][(Eigen::Index)InfectionState::Susceptible] -
+              16 * populations[time_point_index - 3][(Eigen::Index)InfectionState::Susceptible] +
+              3 * populations[time_point_index - 4][(Eigen::Index)InfectionState::Susceptible]) /
             (12 * dt);
     }
 }

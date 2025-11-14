@@ -226,12 +226,60 @@ def compute_errors_l2(groundtruth, results, groundtruth_exponent, timesteps_ide,
     return np.array(errors)
 
 
+def compute_errors_l2_sumIR(groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, relative_error=True):
+    """ Computes relative L2 norm of the difference between time series from ODE and time series
+    from IDE for all compartments/flows.
+
+    @param[in] groundtruth Result obtained with ODE model.
+    @param[in] results Results obtained with IDE model for different time step sizes.
+    @param[in] save_exponent The results of the ODE model were saved using the step size 10^{-save_exponent}.
+    @param[in] timesteps_ide List of time steps used in IDE simulations.
+    @param[in] flows Bool that determines whether we consider flows or compartments. Default is False.
+    @param[in] Array that contains computed errors.
+    """
+    num_errors = 3
+
+    errors = []
+
+    # Compute error.
+    for i in range(len(results['ide'])):
+        errors.append([])
+        for compartment in range(num_errors):
+            timestep = timesteps_ide[i]
+            scale_timesteps = timestep/pow(10, -groundtruth_exponent)
+
+            if compartment == 1:
+
+                sum_ide = np.abs(results['ide'][i][int(
+                    t0_ide/timestep)::][:, 1] + results['ide'][i][int(t0_ide/timestep)::][:, 2])
+
+                sum_ode = np.abs(groundtruth['ode'][0][int(
+                    pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, 1]) + np.abs(groundtruth['ode'][0][int(
+                        pow(10, groundtruth_exponent)*(t0_ide))::int(scale_timesteps)][:, 2])
+
+                difference = sum_ode - sum_ide
+
+                if relative_error:
+
+                    errors[i].append(compute_l2_norm(
+                        difference, timestep)/compute_l2_norm(sum_ode, timestep))
+
+                else:
+                    errors[i].append(compute_l2_norm(
+                        difference, timestep))
+            else:
+                errors[i].append(0)
+
+    return np.array(errors)
+
+
 def compute_max_norm(timeseries):
     """ Computes maximum norm of a time series.
 
     @param[in] timeseries Considered timeseries.
     @returns Norm.
     """
+    # print(timeseries)
     norm = np.max(np.abs(timeseries))
     return norm
 
@@ -268,7 +316,7 @@ def compute_errors_max(groundtruth, results, groundtruth_exponent, timesteps_ide
 
 
 def plot_convergence(errors_all_gregory_orders, timesteps_ide,
-                     gregory_orders_simulation, fd_order=1, l2=True, maxnorm=False, relative_error=True, save_dir=""):
+                     gregory_orders_simulation, fd_order=1, l2=True, maxnorm=False, norm_of_sum=False, relative_error=True, save_dir=""):
     """ Plots errors against timesteps with a subplot for each compartment /flow.
 
     @param[in] errors Array that contains computed errors of IDE model compared to groundtruth.
@@ -371,6 +419,8 @@ def plot_convergence(errors_all_gregory_orders, timesteps_ide,
             filename = f'{save_dir}/convergence_all_compartments_l2'
         elif maxnorm:
             filename = f'{save_dir}/convergence_all_compartments_max'
+        elif norm_of_sum:
+            filename = f'{save_dir}/convergence_all_compartments_sumIR'
         else:
             filename = f'{save_dir}/convergence_all_compartments_endpoint'
 
@@ -476,13 +526,20 @@ def get_ide_exponents(data_dir):
     return range(max_exponent+1)
 
 
+def get_t0_ide_from_dir_name(dir_name):
+    t0_string = [x for x in dir_name.split("_") if "t0ide" in x]
+    t0 = int(t0_string[0].split("=")[-1])
+
+    return t0
+
+
 def main():
 
     groundtruth_exponent = 6
 
     root_dir = os.path.join(os.path.dirname(
         __file__), "../simulation_results")
-    main_dir = "2025-11-07/time_infected=1"
+    main_dir = "2025-11-14/time_infected=2/"
     relevant_dir = os.path.join(root_dir, main_dir)
     print(relevant_dir)
     sub_dirs = subfolders_scandir(relevant_dir)
@@ -492,10 +549,10 @@ def main():
 
     gregory_orders_simulation = [1, 2, 3]
 
-    t0_ide = 50
-
     for dir_index, dir_name in enumerate(sub_dirs):
         print(dir_name)
+
+        t0_ide = get_t0_ide_from_dir_name(dir_name)
 
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
@@ -514,6 +571,9 @@ def main():
 
         errors_all_gregory_orders_l2_rel = []
         errors_all_gregory_orders_l2_abs = []
+
+        errors_all_gregory_orders_l2_sumIR_rel = []
+        errors_all_gregory_orders_l2_sumIR_abs = []
 
         errors_all_gregory_orders_max_rel = []
         errors_all_gregory_orders_max_abs = []
@@ -549,6 +609,13 @@ def main():
             errors_all_gregory_orders_l2_rel.append(errors_l2_rel)
             errors_all_gregory_orders_l2_abs.append(errors_l2_abs)
 
+            errors_l2_sumIR_rel = compute_errors_l2_sumIR(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, True)
+            errors_l2_sumIR_abs = compute_errors_l2_sumIR(
+                groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, False)
+            errors_all_gregory_orders_l2_sumIR_rel.append(errors_l2_sumIR_rel)
+            errors_all_gregory_orders_l2_sumIR_abs.append(errors_l2_sumIR_abs)
+
             errors_max_rel = compute_errors_max(
                 groundtruth, results, groundtruth_exponent, timesteps_ide, t0_ide, True)
             errors_max_abs = compute_errors_max(
@@ -583,9 +650,9 @@ def main():
         fd_order = 1  # dummy right now
 
         computed_errors_rel = [errors_all_gregory_orders_endpoint_rel,
-                               errors_all_gregory_orders_l2_rel, errors_all_gregory_orders_max_rel]
+                               errors_all_gregory_orders_l2_rel, errors_all_gregory_orders_max_rel, errors_all_gregory_orders_l2_rel]
         computed_errors_abs = [errors_all_gregory_orders_endpoint_abs,
-                               errors_all_gregory_orders_l2_abs, errors_all_gregory_orders_max_abs]
+                               errors_all_gregory_orders_l2_abs, errors_all_gregory_orders_max_abs, errors_all_gregory_orders_l2_abs]
 
         computed_errors = [computed_errors_rel, computed_errors_abs]
 
@@ -598,20 +665,30 @@ def main():
             # tmax norm
             l2 = False
             maxnorm = False
+            norm_of_sum = False
             plot_convergence(computed_errors[i][0], timesteps_ide,
-                             gregory_orders_simulation, fd_order, l2, maxnorm, relative_error, plot_dir)
+                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir)
 
             # L2 norm
             l2 = True
             maxnorm = False
+            norm_of_sum = False
             plot_convergence(computed_errors[i][1], timesteps_ide,
-                             gregory_orders_simulation, fd_order, l2, maxnorm, relative_error, plot_dir)
+                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum,  relative_error, plot_dir)
 
             # max norm
             l2 = False
             maxnorm = True
+            norm_of_sum = False
             plot_convergence(computed_errors[i][2], timesteps_ide,
-                             gregory_orders_simulation, fd_order, l2, maxnorm, relative_error, plot_dir)
+                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir)
+
+            # L2 nom of sum of I and R
+            l2 = False
+            maxnorm = False
+            norm_of_sum = True
+            plot_convergence(computed_errors[i][3], timesteps_ide,
+                             gregory_orders_simulation, fd_order, l2, maxnorm, norm_of_sum, relative_error, plot_dir)
 
     # Path where plots will be stored.
     # plot_dir = os.path.join(os.path.dirname(
