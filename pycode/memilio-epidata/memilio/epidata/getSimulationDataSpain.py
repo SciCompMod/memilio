@@ -20,19 +20,21 @@ def fetch_population_data():
         lambda x: x[0]['T3_Variable'] == 'Provincias')]
     df = df[df['MetaData'].apply(
         lambda x: x[1]['Nombre'] == 'Total')]
-    df['ID_Provincia'] = df['MetaData'].apply(lambda x: x[0]['Id'])
+    df['ID_Provincia'] = df['MetaData'].apply(
+        lambda x: dd.provincia_id_map_census[x[0]['Id']])
     df['Population'] = df['Data'].apply(lambda x: x[0]['Valor'])
     return df[['ID_Provincia', 'Population']]
 
 
 def remove_islands(df, column_labels=['ID_Provincia']):
     for label in column_labels:
-        df = df[~df[label].isin([51, 52, 8, 35, 38])]
+        df = df[~df[label].isin([530, 630, 640, 701, 702])]
     return df
 
 
 def get_population_data():
     df = fetch_population_data()
+    df = df.sort_values(by=['ID_Provincia'])
     df = remove_islands(df)
 
     return df
@@ -73,6 +75,7 @@ def get_icu_data():
     df['ID_Provincia'] = pd.to_numeric(df['ID_Provincia'], errors='coerce')
     df = df[df['ID_Provincia'].notna()].copy()
     df['ID_Provincia'] = df['ID_Provincia'].astype(int) + 1
+    df['ID_Provincia'] = df['ID_Provincia'].map(dd.provincia_id_map)
     df = remove_islands(df)
     df = preprocess_icu_data(df)
 
@@ -129,14 +132,19 @@ def preprocess_mobility_data(df, data_dir):
 
     zonification_df = pd.read_csv(os.path.join(data_dir, 'poblacion.csv'), sep='|')[
         ['municipio', 'provincia', 'poblacion']]
+    zonification_df['provincia'] = zonification_df['provincia'].map(
+        dd.provincia_id_map)
+    zonification_df.dropna(inplace=True, subset=['provincia'])
     poblacion = zonification_df.groupby('provincia')[
         'poblacion'].sum()
     zonification_df.drop_duplicates(
         subset=['municipio', 'provincia'], inplace=True)
     municipio_to_provincia = dict(
         zip(zonification_df['municipio'], zonification_df['provincia']))
-    df['id_origin'] = df['id_origin'].map(municipio_to_provincia)
-    df['id_destination'] = df['id_destination'].map(municipio_to_provincia)
+    df['id_origin'] = df['id_origin'].map(
+        municipio_to_provincia)
+    df['id_destination'] = df['id_destination'].map(
+        municipio_to_provincia)
 
     df.query('id_origin != id_destination', inplace=True)
     df = df.groupby(['date', 'id_origin', 'id_destination'],
@@ -157,7 +165,7 @@ def get_mobility_data(data_dir, start_date='2022-08-01', end_date='2022-08-31', 
     filename = f'Viajes_{level}_{start_date}_{end_date}_v2.parquet'
     if not os.path.exists(os.path.join(data_dir, filename)):
         print(
-            f"File {os.path.exists(os.path.join(data_dir, filename))} does not exist. Downloading mobility data...")
+            f"File {os.path.join(data_dir, filename)} does not exist. Downloading mobility data...")
         download_mobility_data(data_dir, start_date, end_date, level)
 
     df = pd.read_parquet(os.path.join(data_dir, filename))

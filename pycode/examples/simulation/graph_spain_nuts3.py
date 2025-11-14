@@ -35,16 +35,52 @@ import os
 os.environ["KERAS_BACKEND"] = "tensorflow"
 
 
-excluded_ids = [8, 35, 38, 51, 52]
+excluded_ids = [530, 630, 640, 701, 702]
 region_ids = [region_id for region_id in dd.Provincias.keys()
               if region_id not in excluded_ids]
-excluded_comunidades = [4, 5, 18, 19]
+excluded_comunidades = [53, 63, 64, 70]
 comunidades = [comunidad for comunidad in dd.Comunidades.keys(
 ) if comunidad not in excluded_comunidades]
 inference_params = ['damping_values', 't_E', 't_ISy', 't_ISev',
                     't_Cr', 'mu_CR', 'mu_IH', 'mu_HU', 'mu_UD', 'transmission_prob']
 summary_vars = ['state'] + [f'comunidad{i}' for i in range(len(comunidades))] + [
     f'region{i}' for i in range(len(region_ids))]
+
+
+def set_fontsize(base_fontsize=17):
+    fontsize = base_fontsize
+    plt.rcParams.update({
+        'font.size': fontsize,
+        'axes.titlesize': fontsize * 1,
+        'axes.labelsize': fontsize,
+        'xtick.labelsize': fontsize * 0.8,
+        'ytick.labelsize': fontsize * 0.8,
+        'legend.fontsize': fontsize * 0.8,
+        'font.family': "Arial"
+    })
+
+
+plt.style.use('default')
+
+dpi = 300
+
+colors = {"Blue": "#155489",
+          "Medium blue": "#64A7DD",
+          "Light blue": "#B4DCF6",
+          "Lilac blue": "#AECCFF",
+          "Turquoise": "#76DCEC",
+          "Light green": "#B6E6B1",
+          "Medium green": "#54B48C",
+          "Green": "#5D8A2B",
+          "Teal": "#20A398",
+          "Yellow": "#FBD263",
+          "Orange": "#E89A63",
+          "Rose": "#CF7768",
+          "Red": "#A34427",
+          "Purple": "#741194",
+          "Grey": "#C0BFBF",
+          "Dark grey": "#616060",
+          "Light grey": "#F1F1F1"}
 
 bounds = {
     't_E': (1.0, 5.2),
@@ -94,7 +130,7 @@ def plot_region_fit(
         fig, ax = plt.subplots()
 
     ax.plot(
-        x, med, lw=2, label=label or f"{dd.County[region_ids[region]]}", color=color)
+        x, med, lw=2, label=label or f"{dd.Provincias[region_ids[region]]}", color=color)
     ax.fill_between(x, qs_80[0], qs_80[1], alpha=0.5,
                     color=color, label="80% CI")
     if not only_80q:
@@ -107,11 +143,11 @@ def plot_region_fit(
         true_vals = true_data[:, region]  # (time_points,)
         ax.plot(x, true_vals, lw=2, color="black", label="True data")
 
-    ax.set_xlabel("Time", fontsize=12)
-    ax.set_ylabel("ICU", fontsize=12)
-    ax.set_title(f"{dd.Provincias[region_ids[region]]}", fontsize=12)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("ICU")
+    ax.set_title(f"{dd.Provincias[region_ids[region]]}")
     if label is not None:
-        ax.legend(fontsize=11, loc="upper right")
+        ax.legend(loc="upper right")
 
 
 def plot_aggregated_over_regions(
@@ -156,27 +192,27 @@ def plot_aggregated_over_regions(
         true_vals = region_agg(true_data, axis=-1)  # (time_points,)
         ax.plot(x, true_vals, lw=2, color="black", label="True data")
 
-    ax.set_xlabel("Time", fontsize=12)
-    ax.set_ylabel("ICU", fontsize=12)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("ICU")
     if label is not None:
-        ax.legend(fontsize=11)
+        ax.legend()
 
 
 def plot_aggregated_to_comunidades(data, true_data, name, synthetic, with_aug):
     fig, ax = plt.subplots(nrows=4, ncols=4, figsize=(
         25, 25), layout="constrained")
     ax = ax.flatten()
-    for state in range(16):
+    for state_idx, state in enumerate(comunidades):
         idxs = [i for i, region_id in enumerate(
-            region_ids) if dd.Provincia_to_Comunidad[region_id] == state + 1]
+            region_ids) if region_id // 10 == state]
         plot_aggregated_over_regions(
             data[:, :, idxs],  # Add a dummy region axis for compatibility
             true_data=true_data[:, idxs] if true_data is not None else None,
-            ax=ax[state],
-            label=f"State {state + 1}",
-            color=f"C{state % 10}"  # Cycle through 10 colors
+            ax=ax[state_idx],
+            label=f"{dd.Comunidades[state]}",
+            color=colors["Red"]
         )
-    plt.savefig(f'{name}/comunidades_{name}{synthetic}{with_aug}.png')
+    plt.savefig(f'{name}/comunidades_{name}{synthetic}{with_aug}.png', dpi=dpi)
     plt.close()
 
 # plot simulations for all regions in 6x4 blocks
@@ -196,14 +232,57 @@ def plot_all_regions(simulations, divi_data, name, synthetic, with_aug):
         ax = ax.flatten()
         for i, region_idx in enumerate(range(start_idx, end_idx)):
             plot_region_fit(
-                simulations, region=region_idx, true_data=divi_data, label="Median", ax=ax[i], color="#132a70"
+                simulations, region=region_idx, true_data=divi_data, label="Median", ax=ax[i], color=colors["Red"]
             )
         # Hide unused subplots
         for i in range(end_idx - start_idx, len(ax)):
             ax[i].axis("off")
         plt.savefig(
-            f'{name}/regions_block_{block + 1}_{name}{synthetic}{with_aug}.png')
+            f'{name}/regions_block_{block + 1}_{name}{synthetic}{with_aug}.png', dpi=dpi)
         plt.close()
+
+
+def plot_icu_on_spain(simulations, name, synthetic, with_aug):
+    med = np.median(simulations, axis=0)
+
+    population = pd.read_json(
+        'data/Spain/pydata/provincias_current_population.json')
+    values = med / population['Population'].to_numpy()[None, :] * 100000
+
+    map_data = gpd.read_file(os.path.join(os.getcwd(
+    ), 'tools/lineas_limite/SHP_ETRS89/recintos_provinciales_inspire_peninbal_etrs89/recintos_provinciales_inspire_peninbal_etrs89.shp'))
+    map_data['ID_Provincia'] = map_data['NAMEUNIT'].map(
+        dd.invert_dict(dd.Provincias))
+    map_data.dropna(inplace=True, subset=['ID_Provincia'])
+    map_data["ID_Provincia"] = map_data["ID_Provincia"].astype(int)
+    map_data = map_data[~map_data["ID_Provincia"].isin(excluded_ids)]
+    fedstate_data = gpd.read_file(os.path.join(
+        os.getcwd(), 'tools/lineas_limite/SHP_ETRS89/recintos_autonomicas_inspire_peninbal_etrs89/recintos_autonomicas_inspire_peninbal_etrs89.shp'))
+
+    plot_map(values[0], map_data, fedstate_data, "Median ICU",
+             f"{name}/median_icu_spain_initial_{name}{synthetic}{with_aug}")
+    plot_map(values[-1], map_data, fedstate_data, "Median ICU",
+             f"{name}/median_icu_spain_final_{name}{synthetic}{with_aug}")
+
+
+def plot_map(values, map_data, fedstate_data, label, filename):
+    map_data[label] = map_data['ID_Provincia'].map(
+        dict(zip(region_ids, values)))
+
+    fig, ax = plt.subplots(figsize=(12, 14))
+    map_data.plot(
+        column=f"{label}",
+        cmap='Reds',
+        linewidth=0.5,
+        ax=ax,
+        edgecolor='0.6',
+        legend=True,
+        legend_kwds={'label': f"{label} per County", 'shrink': 0.6},
+    )
+    fedstate_data.boundary.plot(ax=ax, color='black', linewidth=1)
+    ax.set_title(f"{label} per County")
+    ax.axis('off')
+    plt.savefig(filename, bbox_inches='tight', dpi=dpi)
 
 
 def calibration_curves_per_region(
@@ -265,13 +344,13 @@ def calibration_curves_per_region(
         # Custom legend: one patch for regions, one line for ideal
         region_patch = Patch(color=colors[-1], label="Regions")
         ax.legend(handles=[region_patch, ideal_line],
-                  frameon=True, ncol=1, fontsize=12)
+                  frameon=True, ncol=1)
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    ax.set_xlabel("Nominal level", fontsize=12)
-    ax.set_ylabel("Empirical coverage", fontsize=12)
-    ax.set_title("Calibration per region", fontsize=12)
+    ax.set_xlabel("Nominal level")
+    ax.set_ylabel("Empirical coverage")
+    ax.set_title("Calibration per region")
     return ax
 
 
@@ -328,14 +407,14 @@ def calibration_median_mad_over_regions(
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    ax.set_xlabel("Nominal level", fontsize=12)
-    ax.set_ylabel("Empirical coverage", fontsize=12)
-    ax.set_title("Calibration median and MAD across regions", fontsize=12)
-    ax.legend(fontsize=12)
+    ax.set_xlabel("Nominal level")
+    ax.set_ylabel("Empirical coverage")
+    ax.set_title("Calibration median and MAD across regions")
+    ax.legend()
     return ax, {"levels": x, "median": med, "mad": mad}
 
 
-def plot_damping_values(damping_values, name, synthetic, with_aug):
+def plot_damping_values(damping_values, name, synthetic):
 
     med = np.median(damping_values, axis=0)
     mad = np.median(np.abs(damping_values - med), axis=0)
@@ -350,39 +429,39 @@ def plot_damping_values(damping_values, name, synthetic, with_aug):
     x = np.arange(15, 61, 15)  # Time steps from 15 to 60
 
     for i, ax in enumerate(axes):
-        if i < 19:
+        if i < len(comunidades):
             ax.stairs(med[i], edges=x, lw=2, color='red', baseline=None)
             ax.fill_between(
                 x, med_extended[i] -
                 mad_extended[i], med_extended[i] + mad_extended[i],
                 alpha=0.25, color='red', step='post'
             )
-            ax.set_title(f"{dd.Comunidades[i+2]}", fontsize=10)
-            ax.set_xlabel("Time", fontsize=8)
-            ax.set_ylabel("Damping Value", fontsize=8)
+            ax.set_title(f"{dd.Comunidades[comunidades[i]]}")
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Damping Value")
         else:
             ax.axis('off')  # Hide unused subplots
 
-    plt.suptitle("Damping Values per Region", fontsize=14)
+    plt.suptitle("Damping Values per Region")
     plt.savefig(
-        f"{name}/damping_values{name}{synthetic}{with_aug}.png", dpi=300)
+        f"{name}/damping_values{name}{synthetic}.png", dpi=dpi)
 
     # Combined plot for all regions
     fig, ax = plt.subplots(figsize=(10, 6))
     cmap = plt.cm.get_cmap("viridis", 16)  # Colormap with 16 distinct colors
 
-    for i in range(19):
+    for i, comunidad in enumerate(comunidades):
         ax.stairs(
-            med[i], edges=x, lw=2, label=f"{dd.State[i+1]}",
+            med[i], edges=x, lw=2, label=f"{dd.Comunidades[comunidad]}",
             color=cmap(i), baseline=None
         )
 
-    ax.set_title("Damping Values per Region (Combined)", fontsize=14)
-    ax.set_xlabel("Time", fontsize=12)
-    ax.set_ylabel("Damping Value", fontsize=12)
-    ax.legend(fontsize=10, loc="upper right", ncol=2)
+    ax.set_title("Damping Values per Region (Combined)")
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Damping Value")
+    ax.legend(loc="upper right", ncol=2)
     plt.savefig(
-        f"{name}/damping_values_combined{name}{synthetic}{with_aug}.png", dpi=300)
+        f"{name}/damping_values_combined{name}{synthetic}.png", dpi=dpi)
 
 
 class Simulation:
@@ -496,8 +575,10 @@ class Simulation:
         mobility_graph = osecir.MobilityGraph()
         for node_idx in range(graph.num_nodes):
             node = graph.get_node(node_idx)
-            self.set_npis(node.property.parameters,
-                          end_date, damping_values[dd.Provincia_to_Comunidad[node.id]-1])
+            # determine comunidad index for this node's provincia and use its damping values
+            comunidad_idx = comunidades.index(node.id // 10)
+            self.set_npis(node.property.parameters, end_date,
+                          damping_values[comunidad_idx])
             mobility_graph.add_node(node.id, node.property)
         for edge_idx in range(graph.num_edges):
             mobility_graph.add_edge(
@@ -532,13 +613,13 @@ def run_spain_nuts3_simulation(damping_values, t_E, t_ISy, t_ISev, t_Cr, mu_CR, 
 
 
 def prior():
-    damping_values = np.zeros((NUM_DAMPING_POINTS, 19))
+    damping_values = np.zeros((NUM_DAMPING_POINTS, len(comunidades)))
     for i in range(NUM_DAMPING_POINTS):
         mean = np.random.uniform(0, 1)
         scale = 0.1
         a, b = (0 - mean) / scale, (1 - mean) / scale
         damping_values[i] = truncnorm.rvs(
-            a=a, b=b, loc=mean, scale=scale, size=19
+            a=a, b=b, loc=mean, scale=scale, size=len(comunidades)
         )
     return {
         'damping_values': np.transpose(damping_values),
@@ -618,12 +699,12 @@ def aggregate_states(d: dict) -> None:
     for i, state in enumerate(comunidades):
         idxs = [
             r for r in range(n_regions)
-            if dd.Provincia_to_Comunidad[region_ids[r]] == state
+            if region_ids[r] // 10 == state
         ]
         d[f"comunidad{i}"] = np.sum([d[f"region{r}"] for r in idxs], axis=0)
     # all allowed regions
     d["state"] = np.sum([d[f"comunidad{r}"]
-                        for r in range(len(comunidades))], axis=0)
+                         for r in range(len(comunidades))], axis=0)
 
 
 def combine_results(dict_list):
@@ -719,12 +800,12 @@ def run_training(name, num_training_files=20):
     # check data
     workflow = get_workflow()
     print("summary_variables shape:", workflow.adapter(
-        trainings_data)["summary_variables"].shape)
+        validation_data)["summary_variables"].shape)
     print("inference_variables shape:", workflow.adapter(
-        trainings_data)["inference_variables"].shape)
+        validation_data)["inference_variables"].shape)
 
     history = workflow.fit_offline(
-        data=trainings_data, epochs=500, batch_size=64, validation_data=validation_data
+        data=trainings_data, epochs=5, batch_size=64, validation_data=validation_data
     )
 
     workflow.approximator.save(
@@ -735,13 +816,15 @@ def run_training(name, num_training_files=20):
         test_data=validation_data, calibration_ecdf_kwargs={
             'difference': True, 'stacked': True}
     )
-    plots['losses'].savefig(f'{name}/losses_{name}.png')
-    plots['recovery'].savefig(f'{name}/recovery_{name}.png')
-    plots['calibration_ecdf'].savefig(f'{name}/calibration_ecdf_{name}.png')
-    # plots['z_score_contraction'].savefig(f'{name}/z_score_contraction_{name}.png')
+    plots['losses'].savefig(f'{name}/losses_{name}.png', dpi=dpi)
+    plots['recovery'].savefig(f'{name}/recovery_{name}.png', dpi=dpi)
+    plots['calibration_ecdf'].savefig(
+        f'{name}/calibration_ecdf_{name}.png', dpi=dpi)
+    plots['z_score_contraction'].savefig(
+        f'{name}/z_score_contraction_{name}.png', dpi=dpi)
 
 
-def run_inference(name, num_samples=1000, on_synthetic_data=False):
+def run_inference(name, num_samples=10, on_synthetic_data=False):
     val_path = f"{name}/validation_data_{name}.pickle"
     synthetic = "_synthetic" if on_synthetic_data else ""
 
@@ -776,16 +859,19 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    if os.path.exists(f'{name}/sims_{name}{synthetic}_with_aug.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle'):
+    if os.path.exists(f'{name}/sims_{name}{synthetic}_with_aug.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle'):
         simulations = load_pickle(f'{name}/sims_{name}{synthetic}.pickle')
         simulations_aug = load_pickle(
             f'{name}/sims_{name}{synthetic}_with_aug.pickle')
+        samples = load_pickle(f'{name}/samples_{name}{synthetic}.pickle')
         print("loaded simulations from file")
     else:
         samples = workflow.sample(
             conditions=validation_data_skip2w, num_samples=num_samples)
+        with open(f'{name}/samples_{name}{synthetic}.pickle', 'wb') as f:
+            pickle.dump(samples, f, pickle.HIGHEST_PROTOCOL)
         samples['damping_values'] = samples['damping_values'].reshape(
-            (samples['damping_values'].shape[0], num_samples, 19, NUM_DAMPING_POINTS))
+            (samples['damping_values'].shape[0], num_samples, len(comunidades), NUM_DAMPING_POINTS))
         results = []
         for i in range(num_samples):  # we only have one dataset for inference here
             result = run_spain_nuts3_simulation(
@@ -821,14 +907,17 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         with open(f'{name}/sims_{name}{synthetic}_with_aug.pickle', 'wb') as f:
             pickle.dump(simulations_aug, f, pickle.HIGHEST_PROTOCOL)
 
-        samples['damping_values'] = samples['damping_values'].reshape(
-            (samples['damping_values'].shape[0], samples['damping_values'].shape[1], -1))
-        validation_data['damping_values'] = validation_data['damping_values'].reshape(
-            (validation_data['damping_values'].shape[0], -1))
+    plot_damping_values(samples['damping_values'][0],
+                        name=name, synthetic=synthetic)
 
-        plot = bf.diagnostics.pairs_posterior(
-            samples, priors=validation_data, dataset_id=0)
-        plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png')
+    samples['damping_values'] = samples['damping_values'].reshape(
+        (samples['damping_values'].shape[0], samples['damping_values'].shape[1], -1))
+    validation_data['damping_values'] = validation_data['damping_values'].reshape(
+        (validation_data['damping_values'].shape[0], -1))
+
+    plot = bf.diagnostics.pairs_posterior(
+        samples, priors=validation_data, dataset_id=0)
+    plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png', dpi=dpi)
 
     plot_all_regions(simulations, divi_data, name, synthetic, with_aug="")
     plot_all_regions(simulations_aug, divi_data, name,
@@ -861,7 +950,7 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[1, 1], color="#132a70", only_80q=True
     )
     axes[1, 1].set_title("With Augmentation (80% Quantile)")
-    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png')
+    plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png', dpi=dpi)
     plt.close()
 
     fig, axis = plt.subplots(1, 2, figsize=(
@@ -869,7 +958,8 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
     ax = calibration_curves_per_region(simulations, divi_data, ax=axis[0])
     ax, stats = calibration_median_mad_over_regions(
         simulations, divi_data, ax=axis[1])
-    plt.savefig(f'{name}/calibration_per_region_{name}{synthetic}.png')
+    plt.savefig(
+        f'{name}/calibration_per_region_{name}{synthetic}.png', dpi=dpi)
     plt.close()
     fig, axis = plt.subplots(1, 2, figsize=(
         10, 4), sharex=True, layout="constrained")
@@ -877,11 +967,11 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
     ax, stats = calibration_median_mad_over_regions(
         simulations_aug, divi_data, ax=axis[1])
     plt.savefig(
-        f'{name}/calibration_per_region_{name}{synthetic}_with_aug.png')
+        f'{name}/calibration_per_region_{name}{synthetic}_with_aug.png', dpi=dpi)
     plt.close()
 
-    # plot_icu_on_spain(simulations, name, synthetic, with_aug="")
-    # plot_icu_on_spain(simulations_aug, name, synthetic, with_aug="_with_aug")
+    plot_icu_on_spain(simulations, name, synthetic, with_aug="")
+    plot_icu_on_spain(simulations_aug, name, synthetic, with_aug="_with_aug")
 
     simulation_agg = np.sum(simulations, axis=-1,
                             keepdims=True)  # sum over regions
@@ -909,7 +999,7 @@ if __name__ == "__main__":
     if not os.path.exists(name):
         os.makedirs(name)
     # create_train_data(
-        # filename=f'{name}/trainings_data1_{name}.pickle', number_samples=1000)
+    #     filename=f'{name}/validation_data_{name}.pickle', number_samples=10)
     # run_training(name=name, num_training_files=1)
     # run_inference(name=name, on_synthetic_data=True)
     run_inference(name=name, on_synthetic_data=False)
