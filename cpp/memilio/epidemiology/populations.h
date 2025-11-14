@@ -63,6 +63,17 @@ public:
     {
     }
 
+    explicit Populations(Base&& array)
+        : Base(std::move(array))
+    {
+    }
+
+    template <class OtherType>
+    Populations<OtherType, Tags...> convert() const
+    {
+        return Populations<OtherType, Tags...>(Base::convert<OtherType>());
+    }
+
     /**
      * @brief get_num_compartments returns the number of compartments
      *

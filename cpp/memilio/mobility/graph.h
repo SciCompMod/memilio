@@ -152,8 +152,12 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
+    /* add note for same size of parameters
+    */
     Graph(const std::vector<int>& node_ids, std::vector<NodePropertyT>& node_properties)
     {
+        assert(node_ids.size() == node_properties.size());
+
         for (auto i = size_t(0); i < node_ids.size(); ++i) {
             add_node(node_ids[i], node_properties[i]);
         }
@@ -167,10 +171,10 @@ public:
     }
 
     template <class... Args>
-    Graph(const std::vector<int>& node_ids, Args&&... args)
+    Graph(const std::vector<int>& node_ids, Args&&... node_args)
     {
         for (int id : node_ids) {
-            add_node(id, std::forward<Args>(args)...);
+            add_node(id, std::forward<Args>(node_args)...);
         }
     }
 

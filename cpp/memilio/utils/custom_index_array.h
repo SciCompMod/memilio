@@ -342,6 +342,15 @@ public:
         }
     }
 
+    template <class OtherType>
+    CustomIndexArray<OtherType, Tags...> convert() const
+    {
+        CustomIndexArray<OtherType, Tags...> other;
+        other.resize(m_dimensions);
+        other.array() = m_y.template cast<OtherType>();
+        return other;
+    }
+
 private:
     // Random Access Iterator for CustomIndexArray
     // To Do: As of Eigen 3.4, this is not needed anymore,
