@@ -31,7 +31,6 @@
 
 #include <cassert>
 #include <cmath>
-#include <concepts>
 #include <cstdint>
 #include <type_traits>
 #include <utility>
@@ -56,14 +55,21 @@ public:
     using Step       = StepType;
 
 private:
+    /// @brief The return type of `create_simulation`. Ensures that the function is invocable.
     template <class CreateSimulationFunction>
         requires std::is_invocable_v<CreateSimulationFunction, Parameters, Time, Step, size_t>
     using SimulationT = std::decay_t<std::invoke_result_t<CreateSimulationFunction, Parameters, Time, Step, size_t>>;
-
+    /// @brief The return type of `process_simulation_result`. Ensures that the function is invocable.
     template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
         requires std::is_invocable_v<ProcessSimulationResultFunction, SimulationT<CreateSimulationFunction>, size_t>
     using ProcessedResultT = std::decay_t<
         std::invoke_result_t<ProcessSimulationResultFunction, SimulationT<CreateSimulationFunction>, size_t>>;
+    /// @brief Type returned by run functions. Is void if ProcessedResultT is, otherwise a vector of ProcessedResultT.
+    template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
+    using EnsembleResultT =
+        std::conditional_t<std::is_void_v<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>,
+                           void,
+                           std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>>;
 
 public:
     // TODO: replacement for "set_params_distributions_normal"? Maybe a special ctor for UncertainParameterSet?
@@ -100,11 +106,11 @@ public:
      * where SimulationT is some kind of simulation.
      * The function signature for process_simulation_result is
      * `ProcessedResultT(SimulationT&&, size_t run_index)`,
-     * where ProcessedResultT is a (de)serializable result.
+     * where ProcessedResultT is a (de)serializable result, or void.
      * @{
      */
     template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
-    std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>
+    EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>
     run_serial(CreateSimulationFunction&& create_simulation,
                ProcessSimulationResultFunction&& process_simulation_result)
     {
@@ -139,14 +145,13 @@ public:
      * where SimulationT is some kind of simulation.
      * The function signature for process_simulation_result is
      * `ProcessedResultT(SimulationT&&, size_t run_index)`,
-     * where ProcessedResultT is a (de)serializable result.
+     * where ProcessedResultT is a (de)serializable result, or void.
      */
     template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
-    std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>
+    EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>
     run(CreateSimulationFunction&& create_simulation, ProcessSimulationResultFunction&& process_simulation_result)
     {
-        using EnsembleResultT =
-            std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>;
+        using ResultT = EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>;
         int num_procs, rank;
 
 #ifdef MEMILIO_ENABLE_MPI
@@ -167,37 +172,46 @@ public:
             std::accumulate(run_distribution.begin(), run_distribution.begin() + size_t(rank), size_t(0));
         size_t end_run_idx = start_run_idx + run_distribution[size_t(rank)];
 
-        EnsembleResultT ensemble_result =
+        if constexpr (std::is_void_v<ResultT>) {
+            // if the processor returns nothing, there is nothing to synchronize
             run_impl(start_run_idx, end_run_idx, std::forward<CreateSimulationFunction>(create_simulation),
                      std::forward<ProcessSimulationResultFunction>(process_simulation_result));
-
-#ifdef MEMILIO_ENABLE_MPI
-        //gather results
-        if (rank == 0) {
-            for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
-                int bytes_size;
-                MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
-                ByteStream bytes(bytes_size);
-                MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
-
-                IOResult<EnsembleResultT> src_ensemble_results = deserialize_binary(bytes, Tag<EnsembleResultT>{});
-                if (!src_ensemble_results) {
-                    log_error("Error receiving ensemble results from rank {}.", src_rank);
-                }
-                std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
-                          std::back_inserter(ensemble_result));
-            }
+            return;
         }
         else {
-            ByteStream bytes = serialize_binary(ensemble_result);
-            int bytes_size   = int(bytes.data_size());
-            MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
-            MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
-            ensemble_result.clear(); //only return root process
-        }
+            auto ensemble_result =
+                run_impl(start_run_idx, end_run_idx, std::forward<CreateSimulationFunction>(create_simulation),
+                         std::forward<ProcessSimulationResultFunction>(process_simulation_result));
+
+#ifdef MEMILIO_ENABLE_MPI
+            //gather results
+            if (rank == 0) {
+                for (int src_rank = 1; src_rank < num_procs; ++src_rank) {
+                    int bytes_size;
+                    MPI_Recv(&bytes_size, 1, MPI_INT, src_rank, 0, mpi::get_world(), MPI_STATUS_IGNORE);
+                    ByteStream bytes(bytes_size);
+                    MPI_Recv(bytes.data(), bytes.data_size(), MPI_BYTE, src_rank, 0, mpi::get_world(),
+                             MPI_STATUS_IGNORE);
+
+                    IOResult<ResultT> src_ensemble_results = deserialize_binary(bytes, Tag<ResultT>{});
+                    if (!src_ensemble_results) {
+                        log_error("Error receiving ensemble results from rank {}.", src_rank);
+                    }
+                    std::copy(src_ensemble_results.value().begin(), src_ensemble_results.value().end(),
+                              std::back_inserter(ensemble_result));
+                }
+            }
+            else {
+                ByteStream bytes = serialize_binary(ensemble_result);
+                int bytes_size   = int(bytes.data_size());
+                MPI_Send(&bytes_size, 1, MPI_INT, 0, 0, mpi::get_world());
+                MPI_Send(bytes.data(), bytes.data_size(), MPI_BYTE, 0, 0, mpi::get_world());
+                ensemble_result.clear(); //only return root process
+            }
 #endif
 
-        return ensemble_result;
+            return ensemble_result;
+        }
     }
 
     /// @brief Return the number of total runs that the study will make.
@@ -245,6 +259,20 @@ public:
     }
 
 private:
+    /// @brief Return the ensemble result vector, or "void" in form of a char.
+    template <class T>
+    inline auto make_ensemble_result()
+    {
+        if constexpr (std::is_void_v<T>) {
+            return char(0); // placeholder, as we cannot instanciate void
+        }
+        else {
+            T result;
+            result.reserve(m_num_runs);
+            return result;
+        }
+    }
+
     /**
      * @brief Main loop creating and running simulations.
      * @param[in] start_run_idx, end_run_idx Range of indices. Performs one run for each index.
@@ -256,17 +284,20 @@ private:
      * Use this RNG when sampling parameters in create_simulation.
      */
     template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
-    std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>>
+    EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>
     run_impl(size_t start_run_idx, size_t end_run_idx, CreateSimulationFunction&& create_simulation,
              ProcessSimulationResultFunction&& process_simulation_result)
     {
+        using ResultT = EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>;
         assert(start_run_idx <= end_run_idx);
+        // this bool (and all code that it is used in) enables using void functions
+        constexpr bool should_gather_results = !std::is_void_v<ResultT>;
 
         // Note that this overwrites seed and counter of thread_local_rng, but it does not replace it.
         thread_local_rng() = m_rng;
 
-        std::vector<ProcessedResultT<CreateSimulationFunction, ProcessSimulationResultFunction>> ensemble_result;
-        ensemble_result.reserve(m_num_runs);
+        // the result is not used or returned if the processing function returns nothing (i.e. void)
+        [[maybe_unused]] auto ensemble_result = make_ensemble_result<ResultT>();
 
         for (size_t run_idx = start_run_idx; run_idx < end_run_idx; run_idx++) {
             log(LogLevel::info, "ParameterStudies: run {}", run_idx);
@@ -283,6 +314,7 @@ private:
             SimulationT<CreateSimulationFunction> sim =
                 create_simulation(std::as_const(m_parameters), std::as_const(m_t0), std::as_const(m_dt), run_idx);
 
+            // the create_counter is only used for debug logging, hence it is unused in Release builds
             [[maybe_unused]] const uint64_t create_counter = (thread_local_rng().get_counter() - run_rng_counter).get();
             log_debug("ParameterStudy: Generated {} random numbers creating simulation #{}.", create_counter, run_idx);
 
@@ -292,14 +324,22 @@ private:
             log_debug("ParameterStudy: Generated {} random numbers running simulation #{}.",
                       run_rng_counter.get() - create_counter, run_idx);
 
-            //handle result and store
-            ensemble_result.emplace_back(process_simulation_result(std::move(sim), run_idx));
+            //handle result
+            if constexpr (should_gather_results) {
+                ensemble_result.emplace_back(process_simulation_result(std::move(sim), run_idx));
+            }
+            else {
+                process_simulation_result(std::move(sim), run_idx);
+            }
         }
 
         //Set the counter of our RNG so that future calls of run() produce different parameters.
         m_rng.set_counter(m_rng.get_counter() + rng_totalsequence_counter<uint64_t>(m_num_runs, Counter<uint32_t>(0)));
 
-        return ensemble_result;
+        if constexpr (should_gather_results) {
+            return ensemble_result;
+        }
+        // else: there is nothing to return, because process_simulation_result returns void
     }
 
     /**
