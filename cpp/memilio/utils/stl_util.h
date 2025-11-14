@@ -65,7 +65,7 @@ inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t 
  * @return iterator to inserted or replaced item in vec
  */
 template <typename T, typename Pred>
-typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
+void insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
 {
     auto bounds = std::equal_range(begin(vec), end(vec), item, pred);
     auto lb     = bounds.first;
@@ -73,15 +73,16 @@ typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T c
     assert(ub - lb <= 1); //input vector contains at most one item that is equal to the new item
     if (ub - lb == 1) {
         *lb = item;
-        return lb;
+        return;
     }
     else {
-        return vec.insert(lb, item);
+        vec.insert(lb, item);
+        return;
     }
 }
 
 template <typename T>
-typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item)
+void insert_sorted_replace(std::vector<T>& vec, T const& item)
 {
     return insert_sorted_replace(vec, item, std::less<T>());
 }
