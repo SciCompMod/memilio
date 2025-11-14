@@ -179,17 +179,32 @@ The following steps detail how to configure and execute a graph simulation:
 
 .. dropdown:: :fa:`gears` Working with large graphs
 
-    When working with very large graphs, i.e. starting from a few thousand edges, it will be faster to not use the standard ``add_edge`` function. This function always
-    keeps the list of edges inside the graph sorted and checks for duplicates. For large graphs, it is faster to first add all the edges to the graph 
-    and then sort them and remove duplicates:
+    When working with very large graphs, i.e. starting from a few thousand edges, it will be faster to not use the standard ``add_edge`` function.
+    For this case, we provide a ``GraphBuilder``. There you can add all edges without any checks and the edges will be sorted when the graph is generated:
 
     .. code-block:: cpp
 
-        graph.reserve_edges(2);
-        graph.lazy_add_edge(0, 1, std::move(transition_rates));
-        graph.lazy_add_edge(1, 0, std::move(transition_rates));
-        graph.sort_edges();
-        graph.remove_duplicate_edges();
+        mio::GraphBuilder<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> builder;
+        builder.add_node(1001, model_group1, t0);
+        builder.add_node(1002, model_group2, to);
+        builder.add_edge(0, 1, std::move(transition_rates));
+        builder.add_edge(1, 0, std::move(transition_rates));
+        auto graph = builder.build();
+
+
+    Usually, there should be no duplicate edges. If this is not certain, the ``GraphBuilder`` can also remove duplicates, based on the start and end node. 
+    The parameters in the edge will not be compared. In this case it will only keep the first edge that was inserted:
+
+    .. code-block:: cpp
+
+        mio::GraphBuilder<Int, Int> builder;
+        builder.add_node(1001, 100);
+        builder.add_node(1002, 100);
+        builder.add_edge(0, 1, 100);
+        builder.add_edge(1, 0, 100);
+        builder.add_edge(0, 1, 200);
+        auto graph = builder.build(true);
+        // graph contains the edges (0, 1, 100) and (1, 0, 100)
 
 
 5. **Initialize and Advance the Mobility Simulation:**

@@ -20,7 +20,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -28,7 +27,10 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
+#include <algorithm>
+#include <functional>
 #include <iostream>
+#include <ranges>
 
 #include "boost/filesystem.hpp"
 
@@ -152,6 +154,13 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
+    Graph() = default;
+    Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
+        : m_nodes(std::move(nodes))
+        , m_edges(std::move(edges))
+    {
+    }
+
     /**
      * @brief add a node to the graph. property of the node is constructed from arguments.
      */
@@ -173,66 +182,6 @@ public:
                                   return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
                                                                                 : e1.start_node_idx < e2.start_node_idx;
                               });
-    }
-
-    /**
-    * @brief Add edges to a graph without checking for duplicates and without sorting.
-    * 
-    * @param start_node_idx Id of start node
-    * @param end_node_idx Id of end node
-    * @param args Additional arguments for edge construction
-    * @return Edge<EdgePropertyT>& End of edge vector
-    * 
-    * This can be used in combination with :ref sort_edges and :ref remove_duplicate_edges instead of :ref add_edge
-    * for better performance when adding many edges at once.
-    */
-    template <class... Args>
-    Edge<EdgePropertyT>& lazy_add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
-    {
-        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        m_edges.emplace_back(start_node_idx, end_node_idx, std::forward<Args>(args)...);
-        return m_edges.back();
-    }
-
-    /**
-     * @brief Sort the edge vector of a graph.
-     * 
-     * @return Edge<EdgePropertyT>& End of edge vector
-     */
-    Edge<EdgePropertyT>& sort_edges()
-    {
-        std::sort(m_edges.begin(), m_edges.end(), [](auto&& e1, auto&& e2) {
-            return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
-                                                          : e1.start_node_idx < e2.start_node_idx;
-        });
-        return m_edges.back();
-    }
-
-    /**
-     * @brief Remove duplicate edges from a sorted edge vector.
-     * 
-     * Copies all the unique edges to a new vector and replaces the edge vector of the graph with it. Unique means that 
-     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
-     * edge in the vector is kept.
-     * @return Edge<EdgePropertyT>& End of edge vector
-     */
-    Edge<EdgePropertyT>& remove_duplicate_edges()
-    {
-        std::vector<Edge<EdgePropertyT>> unique_edges;
-        unique_edges.reserve(m_edges.size());
-        std::ranges::unique_copy(m_edges, std::back_inserter(unique_edges), [](auto&& e1, auto&& e2) {
-            return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
-        });
-        m_edges = std::move(unique_edges);
-        return m_edges.back();
-    }
-
-    /**
-     * @brief reserve space for edges.
-     */
-    void reserve_edges(size_t n)
-    {
-        m_edges.reserve(n);
     }
 
     /**
@@ -492,6 +441,112 @@ void print_graph(std::ostream& os, const Graph& g)
         os << '\n';
     }
 }
+
+/**
+ * @brief A builder class for constructing graphs.
+ *
+ * This class provides a interface for adding nodes and edges to a graph. It allows for efficient construction of large 
+ * graphs by reserving space for nodes and edges in advance. The build method finalizes the graph by sorting edges and 
+ * optionally removing duplicates.
+ * The advantage over the :ref add_edge function of the Graph class is that edges are only sorted once during the build 
+ * process, improving performance when adding many edges.
+ * 
+ * @tparam NodePropertyT Type of the node property.
+ * @tparam EdgePropertyT Type of the edge property.
+ */
+template <class NodePropertyT, class EdgePropertyT>
+class GraphBuilder
+{
+public:
+    using NodeProperty = NodePropertyT;
+    using EdgeProperty = EdgePropertyT;
+
+    GraphBuilder() = default;
+    GraphBuilder(const size_t num_nodes, const size_t num_edges)
+    {
+        m_nodes.reserve(num_nodes);
+        m_edges.reserve(num_edges);
+    }
+
+    /**
+     * @brief Add a node to the GraphBuilder.
+     *
+     * The property of the node is constructed from arguments.
+     * @param id Id for the node.
+     * @tparam args Additional arguments for node construction.
+     */
+    template <class... Args>
+    void add_node(int id, Args&&... args)
+    {
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief Add an edge to the GraphBuilder.
+     * 
+     * @param start_node_idx Id of start node
+     * @param end_node_idx Id of end node
+     * @tparam args Additional arguments for edge construction
+     */
+    template <class... Args>
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        m_edges.emplace_back(start_node_idx, end_node_idx, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief Build the graph from the added nodes and edges.
+     * 
+     * Sorts the edges and optionally removes duplicate edges (same start and end node indices).
+     * @param make_unique If true, duplicate edges are removed. The first added edge is kept!
+     * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
+     * @tparam NodeProperty The type of the node property.
+     * @tparam EdgeProperty The type of the edge property.
+     */
+    Graph<NodeProperty, EdgeProperty> build(bool make_unique = false)
+    {
+        sort_edges();
+        if (make_unique) {
+            remove_duplicate_edges();
+        }
+        Graph<NodeProperty, EdgeProperty> graph(std::move(m_nodes), std::move(m_edges));
+        return graph;
+    }
+
+private:
+    /**
+     * @brief Sort the edge vector of a graph.
+     */
+    void sort_edges()
+    {
+        std::stable_sort(m_edges.begin(), m_edges.end(), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                          : e1.start_node_idx < e2.start_node_idx;
+        });
+    }
+
+    /**
+     * @brief Remove duplicate edges from a sorted edge vector.
+     * 
+     * Copies all the unique edges to a new vector and replaces the original edge vector with it. Unique means that
+     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
+     * edge in the vector is kept.
+     */
+    void remove_duplicate_edges()
+    {
+        std::vector<Edge<EdgePropertyT>> unique_edges;
+        unique_edges.reserve(m_edges.size());
+        std::ranges::unique_copy(m_edges, std::back_inserter(unique_edges), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
+        });
+        m_edges = std::move(unique_edges);
+    }
+
+private:
+    std::vector<Node<NodePropertyT>> m_nodes;
+    std::vector<Edge<EdgePropertyT>> m_edges;
+};
 
 } // namespace mio
 

@@ -325,7 +325,7 @@ TEST(TestGraph, set_edges_saving_edges)
     EXPECT_EQ(indices_edge1, indices_save_edges);
 }
 
-TEST(TestGraph, ot_edges)
+TEST(TestGraph, out_edges)
 {
     mio::Graph<int, int> g;
     g.add_node(0);
@@ -344,38 +344,39 @@ TEST(TestGraph, ot_edges)
     EXPECT_THAT(g.out_edges(1), testing::ElementsAreArray(v1));
 }
 
-TEST(TestGraph, compare_add_edge_functions)
+TEST(TestGraphBuilder, Build)
 {
-    mio::Graph<int, int> g;
-    mio::Graph<int, int> g_lazy;
-    int num_nodes = 10;
-    for (int index = 0; index < num_nodes; ++index) {
-        g.add_node(index);
-        g_lazy.add_node(index);
-    }
-    for (int first_node = num_nodes - 1; first_node >= 0; --first_node) {
-        for (int second_node = 0; second_node < num_nodes; ++second_node) {
-            if (first_node != second_node) {
-                g.add_edge(first_node, second_node, int(first_node + second_node));
-                g_lazy.lazy_add_edge(first_node, second_node, int(first_node + second_node));
-            }
-        }
-    }
-    for (int first_node = num_nodes - 1; first_node >= 0; --first_node) {
-        for (int second_node = 0; second_node < num_nodes; ++second_node) {
-            if (first_node != second_node) {
-                g.add_edge(first_node, second_node, int(first_node + second_node));
-                g_lazy.lazy_add_edge(first_node, second_node, int(first_node + second_node));
-            }
-        }
-    }
-    g_lazy.sort_edges();
-    g_lazy.remove_duplicate_edges();
-    EXPECT_EQ(g.edges().size(), g_lazy.edges().size());
+    mio::GraphBuilder<int, int> builder(3, 3);
+    builder.add_node(0, 100);
+    builder.add_node(1, 100);
+    builder.add_node(2, 100);
+    builder.add_edge(0, 1, 100);
+    builder.add_edge(2, 1, 100);
+    builder.add_edge(1, 2, 100);
 
-    for (size_t index = 0; index < g.edges().size(); index++) {
-        EXPECT_EQ(g.edges()[index].start_node_idx, g_lazy.edges()[index].start_node_idx);
-        EXPECT_EQ(g.edges()[index].end_node_idx, g_lazy.edges()[index].end_node_idx);
+    auto g = builder.build();
+
+    EXPECT_EQ(g.nodes().size(), 3);
+    EXPECT_EQ(g.edges().size(), 3);
+}
+
+TEST(TestGraphBuilder, Build_unique)
+{
+    mio::GraphBuilder<int, int> builder;
+    builder.add_node(0, 100);
+    builder.add_node(1, 100);
+    builder.add_node(2, 100);
+    builder.add_edge(1, 2, 100);
+    builder.add_edge(0, 1, 100);
+    builder.add_edge(2, 1, 100);
+    builder.add_edge(1, 2, 200);
+
+    auto g = builder.build(true);
+
+    EXPECT_EQ(g.nodes().size(), 3);
+    EXPECT_EQ(g.edges().size(), 3);
+    for (const auto& e : g.edges()) {
+        EXPECT_EQ(e.property, 100);
     }
 }
 
