@@ -74,7 +74,8 @@ set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
 
-file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}/.." MEMILIO_BASE_DIR)
+# sets MEMILIO_BASE_DIR to the directory containing cpp (i.e., the root of the git repo) using OS native separators
+cmake_path(CONVERT "${PROJECT_SOURCE_DIR}/.." TO_NATIVE_PATH_LIST MEMILIO_BASE_DIR NORMALIZE)
 
 # code coverage analysis
 # Note: this only works under linux and with make
