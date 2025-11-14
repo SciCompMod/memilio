@@ -156,10 +156,9 @@ public:
      * @brief add a node to the graph. property of the node is constructed from arguments.
      */
     template <class... Args>
-    Node<NodePropertyT>& add_node(int id, Args&&... args)
+    void add_node(int id, Args&&... args)
     {
         m_nodes.emplace_back(id, std::forward<Args>(args)...);
-        return m_nodes.back();
     }
 
     /**
