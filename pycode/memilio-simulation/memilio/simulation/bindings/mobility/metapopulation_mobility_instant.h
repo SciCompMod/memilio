@@ -38,7 +38,7 @@ void bind_MobilityGraph(pybind11::module_& m, std::string const& name)
         .def(
             "add_node",
             [](G& self, int id, const typename Simulation::Model& p, double t0, double dt) -> auto& {
-                return self.add_node(id, p, t0, dt);
+                self.add_node(id, p, t0, dt);
             },
             pybind11::arg("id"), pybind11::arg("model"), pybind11::arg("t0") = 0.0, pybind11::arg("dt") = 0.1,
             pybind11::return_value_policy::reference_internal)
