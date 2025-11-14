@@ -8,6 +8,7 @@ set(TESTSOURCES
     testmain.cpp
     test_populations.cpp
     test_odeseir.cpp
+    test_odeseirdb.cpp
     test_odesir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
