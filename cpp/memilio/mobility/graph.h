@@ -166,16 +166,14 @@ public:
      * @brief add an edge to the graph. property of the edge is constructed from arguments.
      */
     template <class... Args>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(m_edges,
-                                      Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
-                                      [](auto&& e1, auto&& e2) {
-                                          return e1.start_node_idx == e2.start_node_idx
-                                                     ? e1.end_node_idx < e2.end_node_idx
-                                                     : e1.start_node_idx < e2.start_node_idx;
-                                      });
+        insert_sorted_replace(m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
+                              [](auto&& e1, auto&& e2) {
+                                  return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                                                : e1.start_node_idx < e2.start_node_idx;
+                              });
     }
 
     /**
