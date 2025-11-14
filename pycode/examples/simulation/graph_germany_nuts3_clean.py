@@ -199,8 +199,6 @@ def plot_aggregated_over_regions(
 
     ax.set_xlabel("Time")
     ax.set_ylabel("ICU")
-    if label is not None:
-        ax.legend()
 
 def plot_icu_on_germany(simulations, name, synthetic, with_aug):
     med = np.median(simulations, axis=0)
@@ -401,7 +399,7 @@ def calibration_median_mad_over_regions(
     return ax, {"levels": x, "median": med, "mad": mad}
 
 
-def plot_damping_values(damping_values, name, synthetic, with_aug):
+def plot_damping_values(damping_values, name, synthetic):
 
     med = np.median(damping_values, axis=0)
     mad = np.median(np.abs(damping_values - med), axis=0)
@@ -429,7 +427,7 @@ def plot_damping_values(damping_values, name, synthetic, with_aug):
             ax.axis('off')  # Hide unused subplots
 
     plt.suptitle("Damping Values per Region")
-    plt.savefig(f"{name}/damping_values{name}{synthetic}{with_aug}.png", dpi=dpi)
+    plt.savefig(f"{name}/damping_values{name}{synthetic}.png", dpi=dpi)
 
     # Combined plot for all regions
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -445,7 +443,7 @@ def plot_damping_values(damping_values, name, synthetic, with_aug):
     ax.set_xlabel("Time")
     ax.set_ylabel("Damping Value")
     ax.legend(loc="upper right", ncol=2)
-    plt.savefig(f"{name}/damping_values_combined{name}{synthetic}{with_aug}.png", dpi=dpi)
+    plt.savefig(f"{name}/damping_values_combined{name}{synthetic}.png", dpi=dpi)
 
 def run_prior_predictive_check(name):
     validation_data = load_pickle(f'{name}/validation_data_{name}.pickle')  # synthetic data
@@ -955,7 +953,7 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         filepath=os.path.join(f"{name}/model_{name}.keras")
     )
 
-    if os.path.exists(f'{name}/sims_{name}{synthetic}_with_aug.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle'):
+    if os.path.exists(f'{name}/sims_{name}{synthetic}_with_aug.pickle') and os.path.exists(f'{name}/sims_{name}{synthetic}.pickle') and os.path.exists(f'{name}/samples_{name}{synthetic}.pickle'):
         simulations = load_pickle(f'{name}/sims_{name}{synthetic}.pickle')
         simulations_aug = load_pickle(
             f'{name}/sims_{name}{synthetic}_with_aug.pickle')
@@ -996,17 +994,18 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
         with open(f'{name}/sims_{name}{synthetic}_with_aug.pickle', 'wb') as f:
             pickle.dump(simulations_aug, f, pickle.HIGHEST_PROTOCOL)
 
-    plot_damping_values(samples['damping_values'][0],
-                        name=name, synthetic=synthetic)
-
-    samples['damping_values'] = samples['damping_values'].reshape(
+        samples['damping_values'] = samples['damping_values'].reshape(
         (samples['damping_values'].shape[0], samples['damping_values'].shape[1], -1))
-    validation_data['damping_values'] = validation_data['damping_values'].reshape(
+        validation_data['damping_values'] = validation_data['damping_values'].reshape(
         (validation_data['damping_values'].shape[0], -1))
 
-    plot = bf.diagnostics.pairs_posterior(
-        samples, priors=validation_data, dataset_id=0)
-    plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png', dpi=dpi)
+        plot = bf.diagnostics.pairs_posterior(
+            samples, priors=validation_data, dataset_id=0)
+        plot.savefig(f'{name}/pairs_posterior_{name}{synthetic}.png', dpi=dpi)
+
+    samples['damping_values'] = samples['damping_values'].reshape((samples['damping_values'].shape[0], num_samples, 16, NUM_DAMPING_POINTS))
+    plot_damping_values(samples['damping_values'][0],
+                        name=name, synthetic=synthetic)
 
     plot_all_regions(simulations, divi_data, name, synthetic, with_aug="")
     plot_all_regions(simulations_aug, divi_data, name, synthetic, with_aug="_with_aug")
@@ -1014,27 +1013,17 @@ def run_inference(name, num_samples=1000, on_synthetic_data=False):
     plot_aggregated_to_federal_states(simulations, divi_data, name, synthetic, with_aug="")
     plot_aggregated_to_federal_states(simulations_aug, divi_data, name, synthetic, with_aug="_with_aug")
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 12), sharex=True, sharey='row', constrained_layout=True)
-    # Plot without augmentation
-    plot_aggregated_over_regions(
-        simulations, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[0, 0], color=colors["Red"]
-    )
-    axes[0, 0].set_title("Without Augmentation")
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6), constrained_layout=True)
     # Plot with augmentation
     plot_aggregated_over_regions(
-        simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[0, 1], color=colors["Red"]
+        simulations_aug, true_data=divi_data, label="Region Aggregated Median", ax=axes[0], color=colors["Red"]
     )
-    axes[0, 1].set_title("With Augmentation")
-    # Plot without augmentation (80% quantile only)
-    plot_aggregated_over_regions(
-        simulations, true_data=divi_data, label="Region Aggregated Median (No Aug)", ax=axes[1, 0], color=colors["Red"], only_80q=True
-    )
-    axes[1, 0].set_title("Without Augmentation (80% Quantile)")
     # Plot with augmentation (80% quantile only)
     plot_aggregated_over_regions(
-        simulations_aug, true_data=divi_data, label="Region Aggregated Median (With Aug)", ax=axes[1, 1], color=colors["Red"], only_80q=True
+        simulations_aug, true_data=divi_data, label="Region Aggregated Median", ax=axes[1], color=colors["Red"], only_80q=True
     )
-    axes[1, 1].set_title("With Augmentation (80% Quantile)")
+    lines, labels = axes[0].get_legend_handles_labels()
+    fig.legend(lines, labels)
     plt.savefig(f'{name}/region_aggregated_{name}{synthetic}.png', dpi=dpi)
     plt.close()
 
