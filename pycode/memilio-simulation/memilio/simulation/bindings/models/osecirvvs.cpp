@@ -85,15 +85,11 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                                                                                dt);
                     },
                     [&handle_result](auto&& g, auto&& run_idx) {
-                        //handle_result_function needs to return something
-                        //we don't want to run an unknown python object through parameterstudies, so
-                        //we just return 0 and ignore the list returned by run().
-                        //So python will behave slightly different than c++
                         handle_result(std::move(g.get_graph()), run_idx);
-                        return 0;
                     });
             },
-            py::arg("handle_result_func"), py::arg("variant_high"))
+            "Run a graph simulation, handling its result in the provided function.", py::arg("handle_result_func"),
+            py::arg("variant_high"))
         .def(
             "run",
             [](StudyT& self,
@@ -108,7 +104,7 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                         return std::move(result.get_graph());
                     });
             },
-            py::arg("variant_high"))
+            "Run a graph simulation, returning all result graphs in a vector.", py::arg("variant_high"))
         .def(
             "run_single",
             [](StudyT& self, std::function<void(Sim, size_t)> handle_result, bool variant_high) {
@@ -120,9 +116,9 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                     },
                     [&handle_result](auto&& r, auto&& run_idx) {
                         handle_result(std::move(r.get_graph().nodes()[0].property.get_simulation()), run_idx);
-                        return 0;
                     });
             },
+            "Run a simulation on a graph with a single model, handling its result in the provided function.",
             py::arg("handle_result_func"), py::arg("variant_high"))
         .def(
             "run_single",
@@ -138,7 +134,9 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
                         return std::move(result.get_graph().nodes()[0].property.get_simulation());
                     });
             },
-            py::arg("variant_high"));
+            "Run a simulation on a graph with a single model, returning all simulations in a vector",
+            py::arg("variant_high"))
+        .doc() = "Run a (graph) simulation multiple times, drawing new parameters each run.";
 }
 
 enum class ContactLocation

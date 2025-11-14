@@ -88,36 +88,37 @@ void bind_ParameterStudy(py::module_& m, std::string const& name)
             "run",
             [&create_simulation](StudyT& self, std::function<void(GraphT, size_t)> handle_result) {
                 self.run_serial(create_simulation, [&handle_result](auto&& g, auto&& run_idx) {
-                    //handle_result_function needs to return something
-                    //we don't want to run an unknown python object through parameterstudies, so
-                    //we just return 0 and ignore the list returned by run().
-                    //So python will behave slightly different than c++
                     handle_result(std::move(g.get_graph()), run_idx);
-                    return 0;
                 });
             },
-            py::arg("handle_result_func"))
-        .def("run",
-             [&create_simulation](StudyT& self) { //default argument doesn't seem to work with functions
-                 return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
-                     return std::move(result.get_graph());
-                 });
-             })
+            "Run a graph simulation, handling its result in the provided function.", py::arg("handle_result_func"))
+        .def(
+            "run",
+            [&create_simulation](StudyT& self) { //default argument doesn't seem to work with functions
+                return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
+                    return std::move(result.get_graph());
+                });
+            },
+            "Run a graph simulation, returning all result graphs in a vector.")
         .def(
             "run_single",
             [&create_simulation](StudyT& self, std::function<void(Sim, size_t)> handle_result) {
                 self.run_serial(create_simulation, [&handle_result](auto&& r, auto&& run_idx) {
                     handle_result(std::move(r.get_graph().nodes()[0].property.get_simulation()), run_idx);
-                    return 0;
                 });
             },
+            "Run a simulation on a graph with a single model, handling its result in the provided function.",
             py::arg("handle_result_func"))
-        .def("run_single", [&create_simulation](StudyT& self) {
-            return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
-                //select only the first node of the graph of each run, used for parameterstudy with single nodes
-                return std::move(result.get_graph().nodes()[0].property.get_simulation());
-            });
-        });
+        .def(
+            "run_single",
+            [&create_simulation](StudyT& self) {
+                return self.run_serial(create_simulation, [](SimulationT&& result, size_t) {
+                    //select only the first node of the graph of each run, used for parameterstudy with single nodes
+                    return std::move(result.get_graph().nodes()[0].property.get_simulation());
+                });
+            },
+            "Run a simulation on a graph with a single model, returning all simulations in a vector")
+        .doc() = "Run a (graph) simulation multiple times, drawing new parameters each run.";
 }
 
 enum class ContactLocation
