@@ -162,7 +162,10 @@ public:
     }
 
     /**
-     * @brief add a node to the graph. property of the node is constructed from arguments.
+     * @brief add a node to the graph. The property of the node is constructed from arguments.
+     *
+     * @param id id for the node
+     * @tparam args additional arguments for node construction
      */
     template <class... Args>
     void add_node(int id, Args&&... args)
@@ -171,7 +174,12 @@ public:
     }
 
     /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     * @brief add an edge to the graph. The property of the edge is constructed from arguments.
+     * @param start_node_idx id of start node
+     * @param end_node_idx id of end node
+     * @tparam args additional arguments for edge construction
+     *
+     * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
      */
     template <class... Args>
     void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
@@ -499,6 +507,7 @@ public:
      * @brief Build the graph from the added nodes and edges.
      * 
      * Sorts the edges and optionally removes duplicate edges (same start and end node indices).
+     * Wihout dupplicate removal, multiple edges between the same nodes are allowed and the order of insertion is stable.
      * @param make_unique If true, duplicate edges are removed. The first added edge is kept!
      * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
      * @tparam NodeProperty The type of the node property.
@@ -517,6 +526,9 @@ public:
 private:
     /**
      * @brief Sort the edge vector of a graph.
+     * 
+     * Sorts the edges first by start node index, then by end node index. We use stable_sort to keep the order of insertion
+     * for edges with the same start and end node indices.
      */
     void sort_edges()
     {

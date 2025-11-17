@@ -180,7 +180,8 @@ The following steps detail how to configure and execute a graph simulation:
 .. dropdown:: :fa:`gears` Working with large graphs
 
     When working with very large graphs, i.e. starting from a few thousand edges, it will be faster to not use the standard ``add_edge`` function.
-    For this case, we provide a ``GraphBuilder``. There you can add all edges without any checks and the edges will be sorted when the graph is generated:
+    For this case, we provide a ``GraphBuilder``. There you can add all edges without checking for uniqueness and sorting, thus improving the speed.
+    The edges will be sorted when the graph is generated:
 
     .. code-block:: cpp
 
@@ -191,9 +192,9 @@ The following steps detail how to configure and execute a graph simulation:
         builder.add_edge(1, 0, std::move(transition_rates));
         auto graph = builder.build();
 
-
-    Usually, there should be no duplicate edges. If this is not certain, the ``GraphBuilder`` can also remove duplicates, based on the start and end node. 
-    The parameters in the edge will not be compared. In this case it will only keep the first edge that was inserted:
+    Usually, there should be no duplicate edges in your input. If this is not certain, the ``GraphBuilder`` can also remove duplicates.
+    Here, duplicate means that the start and end node are the same. The parameters in the edge will not be compared. 
+    When duplicates are found, only the **first** inserted edge is kept, all subsequent edges are discarded: 
 
     .. code-block:: cpp
 
