@@ -186,7 +186,7 @@ The following steps detail how to configure and execute a graph simulation:
 
         mio::GraphBuilder<mio::SimulationNode<mio::Simulation<double, mio::osecir::Model<double>>>, mio::MobilityEdgeStochastic> builder;
         builder.add_node(1001, model_group1, t0);
-        builder.add_node(1002, model_group2, to);
+        builder.add_node(1002, model_group2, t0);
         builder.add_edge(0, 1, std::move(transition_rates));
         builder.add_edge(1, 0, std::move(transition_rates));
         auto graph = builder.build();

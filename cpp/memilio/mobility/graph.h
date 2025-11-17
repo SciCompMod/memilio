@@ -501,8 +501,6 @@ public:
      * Sorts the edges and optionally removes duplicate edges (same start and end node indices).
      * @param make_unique If true, duplicate edges are removed. The first added edge is kept!
      * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
-     * @tparam NodeProperty The type of the node property.
-     * @tparam EdgeProperty The type of the edge property.
      */
     Graph<NodeProperty, EdgeProperty> build(bool make_unique = false)
     {
