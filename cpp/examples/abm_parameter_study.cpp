@@ -1,7 +1,7 @@
 /*
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Khoa Nguyen
+* Authors: Rene Schmieding, Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,36 +17,48 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "abm/result_simulation.h"
 #include "abm/household.h"
 #include "abm/lockdown_rules.h"
 #include "abm/model.h"
-#include "abm/common_abm_loggers.h"
+#include "abm/time.h"
 
-#include <fstream>
+#include "memilio/compartments/parameter_studies.h"
+#include "memilio/data/analyze_result.h"
+#include "memilio/io/io.h"
+#include "memilio/io/result_io.h"
+#include "memilio/utils/base_dir.h"
+#include "memilio/utils/logging.h"
+#include "memilio/utils/miompi.h"
+#include "memilio/utils/random_number_generator.h"
+#include "memilio/utils/stl_util.h"
 
-int main()
+#include <string>
+
+constexpr size_t num_age_groups = 4;
+
+/// An ABM setup taken from abm_minimal.cpp.
+mio::abm::Model make_model(const mio::RandomNumberGenerator& rng)
 {
-    // This is a minimal example with children and adults < 60 year old.
-    // We divided them into 4 different age groups, which are defined as follows:
-    mio::set_log_level(mio::LogLevel::warn);
-    size_t num_age_groups         = 4;
+
     const auto age_group_0_to_4   = mio::AgeGroup(0);
     const auto age_group_5_to_14  = mio::AgeGroup(1);
     const auto age_group_15_to_34 = mio::AgeGroup(2);
     const auto age_group_35_to_59 = mio::AgeGroup(3);
-
     // Create the model with 4 age groups.
-    auto model = mio::abm::Model(num_age_groups);
+    auto model      = mio::abm::Model(num_age_groups);
+    model.get_rng() = rng;
+
     // Set same infection parameter for all age groups. For example, the incubation period is log normally distributed with parameters 4 and 1.
     model.parameters.get<mio::abm::TimeExposedToNoSymptoms>() = mio::ParameterDistributionLogNormal(4., 1.);
 
-    // Set the age group the can go to school is AgeGroup(1) (i.e. 5-14)
+    // Set the age groups that can go to school; here this is AgeGroup(1) (i.e. 5-14)
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()                    = false;
     model.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14] = true;
-    // Set the age group the can go to work is AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
+    // Set the age groups that can go to work; here these are AgeGroup(2) and AgeGroup(3) (i.e. 15-34 and 35-59)
     model.parameters.get<mio::abm::AgeGroupGotoWork>().set_multiple({age_group_15_to_34, age_group_35_to_59}, true);
 
-    // Check if the parameters satisfy their contraints.
+    // Check if the parameters satisfy their constraints.
     model.parameters.check_constraints();
 
     // There are 10 households for each household group.
@@ -78,7 +90,7 @@ int main()
     add_household_group_to_model(model, threePersonHousehold_group);
 
     // Add one social event with 5 maximum contacts.
-    // Maximum contacs limit the number of people that a person can infect while being at this location.
+    // Maximum contacts limit the number of people that a person can infect while being at this location.
     auto event = model.add_location(mio::abm::LocationType::SocialEvent);
     model.get_location(event).get_infection_parameters().set<mio::abm::MaximumContacts>(5);
     // Add hospital and ICU with 5 maximum contacs.
@@ -121,9 +133,9 @@ int main()
     for (auto& person : model.get_persons()) {
         mio::abm::InfectionState infection_state = mio::abm::InfectionState(
             mio::DiscreteDistribution<size_t>::get_instance()(mio::thread_local_rng(), infection_distribution));
-        auto rng = mio::abm::PersonalRandomNumberGenerator(person);
+        auto person_rng = mio::abm::PersonalRandomNumberGenerator(person);
         if (infection_state != mio::abm::InfectionState::Susceptible) {
-            person.add_new_infection(mio::abm::Infection(rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
+            person.add_new_infection(mio::abm::Infection(person_rng, mio::abm::VirusVariant::Wildtype, person.get_age(),
                                                          model.parameters, start_date, infection_state));
         }
     }
@@ -150,26 +162,70 @@ int main()
     auto t_lockdown = mio::abm::TimePoint(0) + mio::abm::days(10);
     mio::abm::close_social_events(t_lockdown, 0.9, model.parameters);
 
+    return model;
+}
+
+int main()
+{
+    mio::mpi::init();
+
+    mio::set_log_level(mio::LogLevel::warn);
+
     // Set start and end time for the simulation.
     auto t0   = mio::abm::TimePoint(0);
-    auto tmax = t0 + mio::abm::days(10);
-    auto sim  = mio::abm::Simulation(t0, std::move(model));
+    auto tmax = t0 + mio::abm::days(5);
+    // Set the number of simulations to run in the study
+    const size_t num_runs = 3;
 
-    // Create a history object to store the time series of the infection states.
-    mio::History<mio::abm::TimeSeriesWriter, mio::abm::LogInfectionState> historyTimeSeries{
-        Eigen::Index(mio::abm::InfectionState::Count)};
+    // Create a parameter study.
+    // Note that the study for the ABM currently does not make use of the arguments "parameters" or "dt", as we create
+    // a new model for each simulation. Hence we set both arguments to 0.
+    // This is mostly due to https://github.com/SciCompMod/memilio/issues/1400
+    mio::ParameterStudy study(0, t0, tmax, mio::abm::TimeSpan(0), num_runs);
 
-    // Run the simulation until tmax with the history object.
-    sim.advance(tmax, historyTimeSeries);
+    // Optional: set seeds to get reproducable results
+    // study.get_rng().seed({12341234, 53456, 63451, 5232576, 84586, 52345});
 
-    // The results are written into the file "abm_minimal.txt" as a table with 9 columns.
-    // The first column is Time. The other columns correspond to the number of people with a certain infection state at this Time:
-    // Time = Time in days, S = Susceptible, E = Exposed, I_NS = InfectedNoSymptoms, I_Sy = InfectedSymptoms, I_Sev = InfectedSevere,
-    // I_Crit = InfectedCritical, R = Recovered, D = Dead
-    std::ofstream outfile("abm_minimal.txt");
-    std::get<0>(historyTimeSeries.get_log())
-        .print_table(outfile, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
-    std::cout << "Results written to abm_minimal.txt" << std::endl;
+    const std::string result_dir = mio::path_join(mio::base_dir(), "example_results");
+    if (!mio::create_directory(result_dir)) {
+        mio::log_error("Could not create result directory \"{}\".", result_dir);
+        return 1;
+    }
+
+    auto ensemble_results = study.run(
+        [](auto, auto t0_, auto, size_t) {
+            return mio::abm::ResultSimulation(make_model(mio::thread_local_rng()), t0_);
+        },
+        [result_dir](auto&& sim, auto&& run_idx) {
+            auto interpolated_result = mio::interpolate_simulation_result(sim.get_result());
+            std::string outpath = mio::path_join(result_dir, "abm_minimal_run_" + std::to_string(run_idx) + ".txt");
+            std::ofstream outfile_run(outpath);
+            sim.get_result().print_table(outfile_run, {"S", "E", "I_NS", "I_Sy", "I_Sev", "I_Crit", "R", "D"}, 7, 4);
+            std::cout << "Results written to " << outpath << std::endl;
+            auto params = std::vector<mio::abm::Model>{};
+            return std::vector{interpolated_result};
+        });
+
+    if (ensemble_results.size() > 0) {
+        auto ensemble_results_p05 = ensemble_percentile(ensemble_results, 0.05);
+        auto ensemble_results_p25 = ensemble_percentile(ensemble_results, 0.25);
+        auto ensemble_results_p50 = ensemble_percentile(ensemble_results, 0.50);
+        auto ensemble_results_p75 = ensemble_percentile(ensemble_results, 0.75);
+        auto ensemble_results_p95 = ensemble_percentile(ensemble_results, 0.95);
+
+        mio::unused(save_result(ensemble_results_p05, {0}, num_age_groups,
+                                mio::path_join(result_dir, "Results_" + std::string("p05") + ".h5")));
+        mio::unused(save_result(ensemble_results_p25, {0}, num_age_groups,
+                                mio::path_join(result_dir, "Results_" + std::string("p25") + ".h5")));
+        mio::unused(save_result(ensemble_results_p50, {0}, num_age_groups,
+                                mio::path_join(result_dir, "Results_" + std::string("p50") + ".h5")));
+        mio::unused(save_result(ensemble_results_p75, {0}, num_age_groups,
+                                mio::path_join(result_dir, "Results_" + std::string("p75") + ".h5")));
+        mio::unused(save_result(ensemble_results_p95, {0}, num_age_groups,
+                                mio::path_join(result_dir, "Results_" + std::string("p95") + ".h5")));
+    }
+
+    mio::mpi::finalize();
 
     return 0;
 }
