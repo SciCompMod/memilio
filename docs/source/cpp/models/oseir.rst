@@ -95,6 +95,7 @@ each compartment:
   // Set values for each InfectionState in the specific age group
   model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = nb_exp_t0;
   model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Infected}] = nb_inf_t0;
+  model.populations[{mio::AgeGroup(0), mio::oseirdb::InfectionState::Recovered}] = nb_rec_t0;
 
   // Set the susceptible population as difference to ensure correct total population
   model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, nb_total_t0);
