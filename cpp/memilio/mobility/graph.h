@@ -510,8 +510,6 @@ public:
      * Wihout dupplicate removal, multiple edges between the same nodes are allowed and the order of insertion is stable.
      * @param make_unique If true, duplicate edges are removed. The first added edge is kept!
      * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
-     * @tparam NodeProperty The type of the node property.
-     * @tparam EdgeProperty The type of the edge property.
      */
     Graph<NodeProperty, EdgeProperty> build(bool make_unique = false)
     {

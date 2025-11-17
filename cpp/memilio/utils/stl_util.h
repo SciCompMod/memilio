@@ -62,7 +62,6 @@ inline std::ostream& set_ostream_format(std::ostream& out, size_t width, size_t 
  * @param item item to insert
  * @param pred binary comparator, pred(item, a) returns true if item should go before element a,
  *                                pred(a, item) returns true if element a should go before item
- * @return iterator to inserted or replaced item in vec
  */
 template <typename T, typename Pred>
 void insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
