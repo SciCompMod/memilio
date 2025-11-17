@@ -553,6 +553,34 @@ private:
         m_edges = std::move(unique_edges);
     }
 
+    /**
+     * @brief Remove duplicate edges from a sorted edge vector.
+     * 
+     * Copies all the unique edges to a new vector and replaces the original edge vector with it. Unique means that
+     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
+     * edge in the vector is kept.
+     */
+    void remove_double_edges()
+    {
+        std::vector<Edge<EdgePropertyT>> unique_edges;
+        unique_edges.reserve(m_edges.size());
+        auto curr_elem = m_edges.begin();
+        auto next_elem = std::adjacent_find(curr_elem, m_edges.end(), is_equal);
+        while (next_elem != m_edges.end()) {
+            std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
+            curr_elem = next_elem;
+            while (is_equal(*curr_elem, *next_elem) && next_elem != m_edges.end()) {
+                next_elem = next(next_elem);
+            }
+            curr_elem = prev(next_elem);
+            std::copy(curr_elem, next(curr_elem), std::back_inserter(unique_edges));
+            curr_elem = next(curr_elem);
+            next_elem = std::adjacent_find(curr_elem, m_edges.end(), is_equal);
+        }
+        std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
+        m_edges = std::move(unique_edges);
+    }
+
 private:
     std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
