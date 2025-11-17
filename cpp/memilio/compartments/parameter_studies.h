@@ -96,7 +96,7 @@ public:
      * @brief Run all simulations in serial.
      * @param[in] create_simulation A callable sampling the study's parameters and returning a simulation.
      * @param[in] process_simulation_result (Optional) A callable that takes the simulation and processes its result.
-     * @return A vector that contains (processed) simulation results for each run.
+     * @return A vector containing (processed) simulation results for each run, or void if processing returns nothing.
      *
      * Important side effect: Calling this function overwrites seed and counter of thread_local_rng().
      * Use this RNG when sampling parameters in create_simulation.
@@ -106,7 +106,9 @@ public:
      * where SimulationT is some kind of simulation.
      * The function signature for process_simulation_result is
      * `ProcessedResultT(SimulationT&&, size_t run_index)`,
-     * where ProcessedResultT is a (de)serializable result, or void.
+     * where ProcessedResultT is a (de)serializable result, or void. A void function can be useful if the results
+     * should be fully handled during the study, for example, when memory is limited and the results have to be written
+     * to a disk.
      * @{
      */
     template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
@@ -133,7 +135,8 @@ public:
      * @brief Run all simulations distributed over multiple MPI ranks.
      * @param[in] create_simulation A callable sampling the study's parameters and returning a simulation.
      * @param[in] process_simulation_result A callable that takes the simulation and processes its result.
-     * @return A vector that contains processed simulation results for each run.
+     * @return A vector that contains processed simulation results for each run, or void if processing returns nothing.
+     *
      *
      * Important: Do not forget to use mio::mpi::init and finalize when using this function!
      *
@@ -145,7 +148,12 @@ public:
      * where SimulationT is some kind of simulation.
      * The function signature for process_simulation_result is
      * `ProcessedResultT(SimulationT&&, size_t run_index)`,
-     * where ProcessedResultT is a (de)serializable result, or void.
+     * where ProcessedResultT is a (de)serializable result, or void. A void function can be useful if the results
+     * should be fully handled during the study, for example, when memory is limited and the results have to be written
+     * to a disk.
+     * 
+     * If MPI is enabled and the results are non-void, all results are gathered on the root rank 0. Other ranks will
+     * return an empty vector.
      */
     template <class CreateSimulationFunction, class ProcessSimulationResultFunction>
     EnsembleResultT<CreateSimulationFunction, ProcessSimulationResultFunction>
