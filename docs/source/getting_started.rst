@@ -188,7 +188,7 @@ Additional explanations for our models are linked at the corresponding sites of 
 Simulations used in publications
 ********************************
 For simulations used in publications, we maintain a separate repository: 
-`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`__. 
+`memilio-simulations <https://github.com/SciCompMod/memilio-simulations>`_. 
 This repository contains simulations organized in separate folders, each with the specific version of MEmilio 
 used for the published results. This ensures that simulation results can be easily reproduced.
 
@@ -199,8 +199,8 @@ that were used in publications.
 Loading data
 ~~~~~~~~~~~~
 The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download epidemiological relevant datasets. Some 
-datasets like contact matrices for Germany are also included in the ``data`` folder of the `github repository <https://github.com/SciCompMod/memilio/tree/main/data>`__and 
-school holidays (for Germany) are directly included in the `C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`__.  
+datasets like contact matrices for Germany are also included in the ``data`` folder of the `github repository <https://github.com/SciCompMod/memilio/tree/main/data>`_ and 
+school holidays (for Germany) are directly included in the `C++ code <https://github.com/SciCompMod/memilio/blob/main/cpp/memilio/geography/holiday_data.ipp>`_.  
 
 
 Creating new models
@@ -214,10 +214,10 @@ Visualizations
 ~~~~~~~~~~~~~~
 
 For visualizations, we provide our :doc:`python package MEmilio-plot <python/m-plot>`. Apart from that, we have 
-collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`__. 
-For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`__.
+collected some scripts that we used for visualizations in the `tools folder in our github repository <https://github.com/SciCompMod/memilio/tree/main/tools>`_. 
+For the latter, no regular testing is conducted. If you encounter errors, please `contact us <mailto:Martin.Kuehn@DLR.de>`_.
 
 Further questions
 ~~~~~~~~~~~~~~~~~
 If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via
-`e-mail <mailto:Martin.Kuehn@DLR.de>`__or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`__.
+`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`_.
