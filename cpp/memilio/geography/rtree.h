@@ -42,7 +42,7 @@ namespace geo
  * The location type needs to provide get_latitude() and get_longitude() methods returning floating point types.
  */
 template <class Location>
-concept SphericalLocationType = requires(const Location& loc) {
+concept IsSphericalLocation = requires(const Location& loc) {
     std::is_floating_point_v<decltype(loc.get_latitude())> && std::is_floating_point_v<decltype(loc.get_longitude())>;
 };
 
@@ -75,7 +75,7 @@ public:
      * 
      * @param locations A vector of geographical locations, they need to provide get_latitude() and get_longitude().
      */
-    template <SphericalLocationType Location>
+    template <IsSphericalLocation Location>
     RTree(const std::vector<Location>& locations)
         : rtree{}
     {
@@ -122,7 +122,7 @@ public:
      * @param number The number of nearest neighbours to find.
      * @return Vector with indices of the nearest neighbours.
      */
-    std::vector<size_t> nearest_neighbor_indices(const SphericalLocationType auto& location, size_t number) const
+    std::vector<size_t> nearest_neighbor_indices(const IsSphericalLocation auto& location, size_t number) const
     {
         using boost::geometry::index::nearest;
         using boost::geometry::index::query;
@@ -140,7 +140,7 @@ public:
      * @param radius The radius of the query.
      * @return Vector with indices of the points found.
      */
-    std::vector<size_t> in_range_indices_approximate(const SphericalLocationType auto& location, Distance radius) const
+    std::vector<size_t> in_range_indices_approximate(const IsSphericalLocation auto& location, Distance radius) const
     {
         using boost::geometry::index::covered_by;
         using boost::geometry::index::query;
@@ -158,7 +158,7 @@ public:
      * @param radii Vector containing the radii of the query.
      * @return Vector of vectors with indices of the points found.
      */
-    std::vector<std::vector<size_t>> in_range_indices_query(const SphericalLocationType auto& location,
+    std::vector<std::vector<size_t>> in_range_indices_query(const IsSphericalLocation auto& location,
                                                             const std::vector<Distance>& radii) const
     {
         using boost::geometry::distance;
@@ -194,7 +194,7 @@ public:
      *
      * Basically the same as \ref in_range_indices_approximate, but filters the result to make sure the points are within the radius.
      */
-    std::vector<size_t> in_range_indices(const SphericalLocationType auto& location, Distance radius) const
+    std::vector<size_t> in_range_indices(const IsSphericalLocation auto& location, Distance radius) const
     {
         using boost::geometry::distance;
         using boost::geometry::index::covered_by;
@@ -230,7 +230,7 @@ private:
      * @param approximation_points Number of points used to approximate the circle. Default is 36, i.e. we build a 36-gon.
      * @return multi_polygon.
      */
-    MultiPolygon create_circle_approximation(const SphericalLocationType auto& location, Distance radius,
+    MultiPolygon create_circle_approximation(const IsSphericalLocation auto& location, Distance radius,
                                              size_t approximation_points = 36) const
     {
         using namespace boost::geometry::strategy::buffer;

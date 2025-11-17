@@ -32,6 +32,7 @@
 #include "memilio/geography/regions.h"
 #include "memilio/utils/logging.h"
 #include <iostream>
+#include <ranges>
 
 #include "boost/filesystem.hpp"
 
@@ -155,31 +156,43 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    /**
-     * @brief add a node to the graph. property of the node is constructed from arguments.
-     */
-    template <class... Args>
-    Node<NodePropertyT>& add_node(int id, Args&&... args)
+    Graph() = default;
+    Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
+        : m_nodes(std::move(nodes))
+        , m_edges(std::move(edges))
     {
-        m_nodes.emplace_back(id, std::forward<Args>(args)...);
-        return m_nodes.back();
     }
 
     /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     * @brief add a node to the graph. The property of the node is constructed from arguments.
+     *
+     * @param id id for the node
+     * @tparam args additional arguments for node construction
      */
     template <class... Args>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    void add_node(int id, Args&&... args)
+    {
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief add an edge to the graph. The property of the edge is constructed from arguments.
+     * @param start_node_idx id of start node
+     * @param end_node_idx id of end node
+     * @tparam args additional arguments for edge construction
+     *
+     * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
+     */
+    template <class... Args>
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         mio::timing::AutoTimer<"Graph.add_edge()"> timer;
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(m_edges,
-                                      Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
-                                      [](auto&& e1, auto&& e2) {
-                                          return e1.start_node_idx == e2.start_node_idx
-                                                     ? e1.end_node_idx < e2.end_node_idx
-                                                     : e1.start_node_idx < e2.start_node_idx;
-                                      });
+        insert_sorted_replace(m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
+                              [](auto&& e1, auto&& e2) {
+                                  return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                                                : e1.start_node_idx < e2.start_node_idx;
+                              });
     }
 
     template <class... Args>
@@ -491,6 +504,142 @@ void print_graph(std::ostream& os, const Graph& g)
         os << '\n';
     }
 }
+
+/**
+ * @brief A builder class for constructing graphs.
+ *
+ * This class provides a interface for adding nodes and edges to a graph. It allows for efficient construction of large 
+ * graphs by reserving space for nodes and edges in advance. The build method finalizes the graph by sorting edges and 
+ * optionally removing duplicates.
+ * The advantage over the :ref add_edge function of the Graph class is that edges are only sorted once during the build 
+ * process, improving performance when adding many edges.
+ * 
+ * @tparam NodePropertyT Type of the node property.
+ * @tparam EdgePropertyT Type of the edge property.
+ */
+template <class NodePropertyT, class EdgePropertyT>
+class GraphBuilder
+{
+public:
+    using NodeProperty = NodePropertyT;
+    using EdgeProperty = EdgePropertyT;
+
+    GraphBuilder() = default;
+    GraphBuilder(const size_t num_nodes, const size_t num_edges)
+    {
+        m_nodes.reserve(num_nodes);
+        m_edges.reserve(num_edges);
+    }
+
+    /**
+     * @brief Add a node to the GraphBuilder.
+     *
+     * The property of the node is constructed from arguments.
+     * @param id Id for the node.
+     * @tparam args Additional arguments for node construction.
+     */
+    template <class... Args>
+    void add_node(int id, Args&&... args)
+    {
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief Add an edge to the GraphBuilder.
+     * 
+     * @param start_node_idx Id of start node
+     * @param end_node_idx Id of end node
+     * @tparam args Additional arguments for edge construction
+     */
+    template <class... Args>
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    {
+        assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
+        m_edges.emplace_back(start_node_idx, end_node_idx, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief Build the graph from the added nodes and edges.
+     * 
+     * Sorts the edges and optionally removes duplicate edges (same start and end node indices).
+     * Wihout dupplicate removal, multiple edges between the same nodes are allowed and the order of insertion is stable.
+     * @param make_unique If true, duplicate edges are removed. The first added edge is kept!
+     * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
+     */
+    Graph<NodeProperty, EdgeProperty> build(bool make_unique = false)
+    {
+        sort_edges();
+        if (make_unique) {
+            remove_duplicate_edges();
+        }
+        Graph<NodeProperty, EdgeProperty> graph(std::move(m_nodes), std::move(m_edges));
+        return graph;
+    }
+
+private:
+    /**
+     * @brief Sort the edge vector of a graph.
+     * 
+     * Sorts the edges first by start node index, then by end node index. We use stable_sort to keep the order of insertion
+     * for edges with the same start and end node indices.
+     */
+    void sort_edges()
+    {
+        std::stable_sort(m_edges.begin(), m_edges.end(), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                          : e1.start_node_idx < e2.start_node_idx;
+        });
+    }
+
+    /**
+     * @brief Remove duplicate edges from a sorted edge vector.
+     * 
+     * Copies all the unique edges to a new vector and replaces the original edge vector with it. Unique means that
+     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
+     * edge in the vector is kept.
+     */
+    void remove_duplicate_edges()
+    {
+        std::vector<Edge<EdgePropertyT>> unique_edges;
+        unique_edges.reserve(m_edges.size());
+        std::ranges::unique_copy(m_edges, std::back_inserter(unique_edges), [](auto&& e1, auto&& e2) {
+            return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
+        });
+        m_edges = std::move(unique_edges);
+    }
+
+    /**
+     * @brief Remove duplicate edges from a sorted edge vector.
+     * 
+     * Copies all the unique edges to a new vector and replaces the original edge vector with it. Unique means that
+     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
+     * edge in the vector is kept.
+     */
+    void remove_double_edges()
+    {
+        std::vector<Edge<EdgePropertyT>> unique_edges;
+        unique_edges.reserve(m_edges.size());
+        auto curr_elem = m_edges.begin();
+        auto next_elem = std::adjacent_find(curr_elem, m_edges.end(), is_equal);
+        while (next_elem != m_edges.end()) {
+            std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
+            curr_elem = next_elem;
+            while (is_equal(*curr_elem, *next_elem) && next_elem != m_edges.end()) {
+                next_elem = next(next_elem);
+            }
+            curr_elem = prev(next_elem);
+            std::copy(curr_elem, next(curr_elem), std::back_inserter(unique_edges));
+            curr_elem = next(curr_elem);
+            next_elem = std::adjacent_find(curr_elem, m_edges.end(), is_equal);
+        }
+        std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
+        m_edges = std::move(unique_edges);
+    }
+
+private:
+    std::vector<Node<NodePropertyT>> m_nodes;
+    std::vector<Edge<EdgePropertyT>> m_edges;
+};
 
 } // namespace mio
 
