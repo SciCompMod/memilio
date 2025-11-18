@@ -32,10 +32,10 @@ namespace mio
 namespace osecirvvs
 {
 /**
-     * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
-     * @tparam FP floating point type, e.g., double
-     * @param[inout] model Model including contact patterns for alle age groups
-     */
+ * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
+ * @tparam FP floating point type, e.g., double
+ * @param[inout] model Model including contact patterns for alle age groups
+ */
 template <typename FP>
 void draw_sample_demographics(Model<FP>& model)
 {
@@ -75,10 +75,10 @@ void draw_sample_demographics(Model<FP>& model)
 }
 
 /**
-     * draws a sample from the specified distributions for all parameters related to the infection.
-     * @tparam FP floating point type, e.g., double
-     * @param[inout] model Model including contact patterns for alle age groups
-     */
+ * draws a sample from the specified distributions for all parameters related to the infection.
+ * @tparam FP floating point type, e.g., double
+ * @param[inout] model Model including contact patterns for alle age groups
+ */
 template <typename FP>
 void draw_sample_infection(Model<FP>& model)
 {
@@ -141,10 +141,10 @@ void draw_sample_infection(Model<FP>& model)
 }
 
 /** Draws a sample from Model parameter distributions and stores sample values
-    * as Parameters parameter values (cf. UncertainValue and Parameters classes)
-    * @tparam FP floating point type, e.g., double
-    * @param[inout] model Model including contact patterns for alle age groups
-    */
+ * as Parameters parameter values (cf. UncertainValue and Parameters classes)
+ * @tparam FP floating point type, e.g., double
+ * @param[inout] model Model including contact patterns for alle age groups
+ */
 template <typename FP>
 void draw_sample(Model<FP>& model)
 {
@@ -155,15 +155,17 @@ void draw_sample(Model<FP>& model)
 }
 
 /**
-    * Draws samples for each model node in a graph.
-    * Some parameters are shared between nodes and only sampled once.
-    * @tparam FP floating point type, e.g., double
-    * @param graph Graph to be sampled.
-    * @param variant_high If true, use high value for infectiousness of variant.
-    * @return Graph with nodes and edges from the input graph sampled.
-    */
+ * Draws samples for each model node in a graph.
+ * Some parameters are shared between nodes and only sampled once.
+ * @tparam FP floating point type, e.g., double
+ * @param graph Graph to be sampled.
+ * @return Graph with nodes and edges from the input graph sampled.
+ *
+ * Note: Make sure to set the parameter InfectiousnessNewVariant. This function used to take a bool `variant_high`,
+ * setting InfectiousnessNewVariant to 1.6 if true, 1.4 otherwise, for all age groups.
+ */
 template <typename FP>
-Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph, bool variant_high)
+Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
 {
     Graph<Model<FP>, MobilityParameters<FP>> sampled_graph;
 
@@ -176,19 +178,6 @@ Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityPa
     shared_dynamic_npis.draw_sample();
     auto& shared_dynamic_npis_delay = shared_params_model.parameters.template get<DynamicNPIsImplementationDelay<FP>>();
     shared_dynamic_npis_delay.draw_sample();
-
-    FP delta_fac;
-    if (variant_high) {
-        delta_fac = 1.6;
-    }
-    else {
-        delta_fac = 1.4;
-    }
-
-    //infectiousness of virus variants is not sampled independently but depend on base infectiousness
-    for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-        shared_params_model.parameters.template get<InfectiousnessNewVariant<FP>>()[i] = delta_fac;
-    }
 
     for (auto& params_node : graph.nodes()) {
         auto& node_model = params_node.property;
