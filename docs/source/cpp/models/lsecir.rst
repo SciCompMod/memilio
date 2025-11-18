@@ -224,8 +224,7 @@ For age-resolved models, you can apply different dampings to different groups:
     contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
-
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 

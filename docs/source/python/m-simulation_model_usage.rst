@@ -103,7 +103,7 @@ where each entry represents the contact frequency between two age groups.
    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
         (num_groups, num_groups))
 
-Then, dampings can be added to (partially) reduce the contacts defined by a ``ContactMatrix`` beginning at a time step ``t=30``. 
+Then, dampings can be added as a relative factor to (partially) reduce the contacts defined by the ``ContactPatterns`` beginning at a time step ``t=30``. 
 
 .. code-block:: python
 
@@ -111,11 +111,9 @@ Then, dampings can be added to (partially) reduce the contacts defined by a ``Co
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
 
 
-If a minimum pattern is set, the contact reduction will relatively reduced the difference between the baseline and minimum patterns.
+If a minimum pattern is set, the contact reduction will reduce the difference between the baseline and minimum patterns and subtract it from the baseline instead of only acting on the contact patterns baseline. That means that when the contact patterns are damped to 100%, the contact patterns will be equal to the minimum pattern instead of zero.
 
-Several models also supports dynamic NPIs based on epidemic thresholds. These are implemented in the model specific **Simulation** class and are automatically triggered based on predefined criteria, such as the percentage of infected individuals in the population.
-
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings (e.g., home, school, work, other). 
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings (e.g., home, school, work, other). 
 
 Example for defining different contact locations:
 

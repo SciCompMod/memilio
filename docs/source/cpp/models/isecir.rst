@@ -55,7 +55,7 @@ The possible transitions between the **InfectionState**\s are:
     `InfectedSevereToInfectedCritical`
     `InfectedSevereToRecovered`
     `InfectedCriticalToDead`
-    `InfectedCriticalToRecovered  
+    `InfectedCriticalToRecovered`
 
 
 Sociodemographic Stratification
@@ -232,7 +232,7 @@ For age-resolved models, you can apply different dampings to different groups:
                              mio::SimulationTime(30.));
 
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The IDE-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 

@@ -296,7 +296,7 @@ Basic dampings can be added to the contact matrix as follows:
     // Add a damping that reduces contacts by 30% starting at day 5
     contact_matrix[0].add_damping(0.3, mio::SimulationTime(5.0));
 
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings as in the ODE-SECIR model. The ODE-SECIRVVS model supports the same contact locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world , you can implement detailed NPIs with location-specific dampings as in the ODE-SECIR model. The ODE-SECIRVVS model supports the same contact locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example of defining locations and interventions for a detailed scenario:
 
