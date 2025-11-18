@@ -1,5 +1,0 @@
-Dynamic NPIs
-============
-
-
-TODO

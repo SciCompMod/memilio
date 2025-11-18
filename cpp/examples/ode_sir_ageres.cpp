@@ -59,7 +59,8 @@ int main()
         mio::ContactMatrix<ScalarType>(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7),
                                mio::SimulationTime<ScalarType>(30.));
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     auto sir = mio::simulate<ScalarType>(t0, tmax, dt, model);
