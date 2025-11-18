@@ -28,7 +28,7 @@ The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download
 as infection or mobility data. More about this and our other Python packages can be found in the :doc:`Python Interface Section <python/python_packages>` 
 of this documentation.
 
-A few things are not represented in this documentation, but are part of the `github repository <https://github.com/SciCompMod/memilio>`__. 
+A few things are not represented in this documentation, but are part of the `GitHub repository <https://github.com/SciCompMod/memilio>`__. 
 In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
@@ -42,7 +42,7 @@ The use of a particular model is generally driven by the research question at ha
 
 :doc:`Aggregated models<cpp/aggregated_models>` are suitable for scenarios where population-level dynamics are of interest. They are computationally efficient and can be used for quick assessments or when data is limited. In our implementations, these models can easily be extended to address research questions that involve demographic dimensions such as age.
 
-Standard models based on :doc:`ordinary differential equations (ODE) <cpp/ode>` allow the simplest description of population-level infection dynamics. However, these also implicitly assume exponentially distributed stay times. If the data suggest these to be unrealistic, ODE-based models with the :doc:`linear chain trick (LCT) <cpp/lct>` can be used. With the LCT, Gamma, or more precisely, Erlang distributions can be adapted to expected stay time and variance. We also offer a first implmentation of a :doc:`generalized LCT <cpp/glct>` where more distributions can be approximated. For full flexibility, :doc:`integro-diffential equation-based (IDE) models <cpp/ide>` can be used. These allow for arbitrary stay time distributions and are thus suitable when a more realistic timing of disease progression is crucial for the research question. However, IDE models are computationally more expensive than ODE-based models.
+Standard models based on :doc:`ordinary differential equations (ODE) <cpp/ode>` allow the simplest description of population-level infection dynamics. However, these also implicitly assume exponentially distributed stay times. If the data suggest these to be unrealistic, ODE-based models with the :doc:`linear chain trick (LCT) <cpp/lct>` can be used. With the LCT, Gamma, or more precisely, Erlang distributions can be adapted to expected stay time and variance. We also offer a first implementation of a :doc:`generalized LCT <cpp/glct>` where more distributions can be approximated. For full flexibility, :doc:`integro-differential equation-based (IDE) models <cpp/ide>` can be used. These allow for arbitrary stay time distributions and are thus suitable when a more realistic timing of disease progression is crucial for the research question. However, IDE models are computationally more expensive than ODE-based models.
 
 For spatio-temporal dynamics, :doc:`graph-based metapopulation models <cpp/graph_metapop>`, which leverage :doc:`ODE-based models<cpp/ode>`, are a good compromise between level of detail and computational effort. They allow for the incorporation of mobility patterns and spatial heterogeneity, making them suitable for studying the spread of diseases across different regions. They can also be used to, e.g., consider different intervention strategies in different regions or to study the effect of mobility restrictions. To study the effect of local interventions, we provide the option to implement pre-defined and dynamic NPIs which automatically enforce interventions on a local and regional level when an incidence threshold criteria by the user is exceeded. For details, see, e.g.,
 
@@ -60,7 +60,7 @@ How to use MEmilio
 
 The installation and use of MEmilio might look overwhelming at first due to the many features and models included. 
 We have structured this documentation to guide you step-by-step through the installation and usage process.
-If you still need help, feel free to `contact us <mailto:Martin.Kuehn@DLR.de>`_ or open an issue `github <https://github.com/SciCompMod/memilio/issues>`_ 
+If you still need help, feel free to `contact us <mailto:Martin.Kuehn@DLR.de>`_ or open an issue `GitHub <https://github.com/SciCompMod/memilio/issues>`_ 
 and highlight @mknaranja and @HenrZu such that we can assist you as best as we can.
 
 .. _installation:
@@ -237,4 +237,4 @@ For the latter, no regular testing is conducted. If you encounter errors, please
 Further questions
 ~~~~~~~~~~~~~~~~~
 If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via
-`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`_.
+`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `GitHub <https://github.com/SciCompMod/memilio/>`_.
