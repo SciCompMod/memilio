@@ -30,7 +30,7 @@ from memilio.simulation.oseirdb import (Model, InfectionState as State,
 def run_ode_seirdb_simulation():
     """Runs the C++ ODE SEIRDB model"""
 
-    days = 60.
+    days = 30.
     dt = 1.0
 
     # Initialize Parameters
@@ -63,6 +63,8 @@ def run_ode_seirdb_simulation():
         (num_groups, num_groups), 2.7)
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
         (num_groups, num_groups))
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(
+        Damping(coeffs=np.r_[0.9], t=10.0, level=0, type=0))
 
     model.check_constraints()
 

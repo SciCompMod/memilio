@@ -30,7 +30,7 @@ int main()
     mio::set_log_level(mio::LogLevel::debug);
 
     ScalarType t0   = 0;
-    ScalarType tmax = 10.;
+    ScalarType tmax = 30.;
     ScalarType dt   = 1.0;
 
     mio::log_info("Simulating ODE SEIRDB; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -60,6 +60,7 @@ int main()
     mio::ContactMatrixGroup<ScalarType>& contact_matrix =
         model.parameters.get<mio::oseirdb::ContactPatterns<ScalarType>>();
     contact_matrix[0].get_baseline().setConstant(2.7);
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime<ScalarType>(10.));
 
     model.check_constraints();
 

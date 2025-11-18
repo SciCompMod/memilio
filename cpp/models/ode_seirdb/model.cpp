@@ -18,3 +18,11 @@
 * limitations under the License.
 */
 #include "ode_seirdb/model.h"
+
+namespace mio
+{
+namespace oseirdb
+{
+
+} // namespace oseirdb
+} // namespace mio

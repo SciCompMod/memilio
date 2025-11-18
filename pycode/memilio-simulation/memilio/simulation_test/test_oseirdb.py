@@ -38,13 +38,13 @@ class Test_oseirdb_integration(unittest.TestCase):
         self.t0 = 0.0
         self.tmax = 50.0
         self.dt = 0.5
-        total_population = 10000
+        total_population = 100000
 
         model.populations[A0, State.Exposed] = 1000
-        model.populations[A0, State.Infected] = 100
-        model.populations[A0, State.Recovered] = 100
-        model.populations[A0, State.Dead] = 25
-        model.populations[A0, State.Buried] = 20
+        model.populations[A0, State.Infected] = 1000
+        model.populations[A0, State.Recovered] = 1000
+        model.populations[A0, State.Dead] = 100
+        model.populations[A0, State.Buried] = 80
         model.populations.set_difference_from_total(
             (A0, State.Susceptible), total_population)
 

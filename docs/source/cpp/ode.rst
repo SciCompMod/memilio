@@ -140,6 +140,7 @@ List of models
     
     models/osir
     models/oseir
+    models/oseirdb
     models/oseair
     models/osecir
     models/osecirvvs
