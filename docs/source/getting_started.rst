@@ -32,8 +32,8 @@ A few things are not represented in this documentation, but are part of the `git
 In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
-Why to use the software
------------------------
+Why to use MEmilio
+------------------
 
 In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
 MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
@@ -53,11 +53,13 @@ For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation
 When individual-level interactions and heterogeneity are crucial, :doc:`individual-based models <cpp/individual_models>` provide a detailed representation of disease dynamics. These models can capture complex behaviors and interactions, making them valuable for understanding transmission dynamics in specific settings. Individual-based models are computationally intensive but offer unparalleled detail for certain research questions such as in-household transmission or vaccination and testing strategies targeting individuals that satisfy specific properties with respect to age, previous infections, immunity levels, or particular workplaces. The most versatile individual-based model in MEmilio is the :doc:`(mobility-based) agent-based model <cpp/mobility_based_abm>`.
 
 
-How to use the software
------------------------
+How to use MEmilio
+------------------
 
 The installation and use of MEmilio might look overwhelming at first due to the many features and models included. 
-However, we have structured this documentation to guide you step-by-step through the installation and usage process.
+We have structured this documentation to guide you step-by-step through the installation and usage process.
+If you still need help, feel free to `contact us <mailto:Martin.Kuehn@DLR.de>`_ or open an issue `github <https://github.com/SciCompMod/memilio/issues>`_ 
+and highlight @mknaranja and @HenrZu such that we can assist you as best as we can.
 
 .. _installation:
 
