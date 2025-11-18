@@ -193,7 +193,7 @@ public:
         for (auto i = AgeGroup(0); i < AgeGroup(m_num_groups); ++i) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeExposed changed from {:.4f} to {:.4f}. Please note that "
+                    "Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeExposed<FP>>()[i], tol_times);
@@ -201,13 +201,14 @@ public:
                 corrected                                = true;
             }
             if (this->template get<TimeToBurial<FP>>()[i] < tol_times) {
-                log_warning("Constraint check: Parameter TimeToBurial changed from {:.4f} to {:.4f}.", this->template get<TimeToBurial<FP>>()[i], tol_times);
+                log_warning("Constraint check: Parameter TimeToBurial changed from {} to {}.",
+                            this->template get<TimeToBurial<FP>>()[i], tol_times);
                 this->template get<TimeToBurial<FP>>()[i] = tol_times;
-                corrected                                = true;
+                corrected                                 = true;
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
                 log_warning(
-                    "Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+                    "Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeInfected<FP>>()[i], tol_times);
@@ -216,26 +217,24 @@ public:
             }
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
-                    this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
+                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
+                            this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] = 0.0;
                 corrected                                                     = true;
             }
             if (this->template get<TransmissionProbabilityFromDead<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityFromDead<FP>>()[i] > 1.0) {
-                log_warning(
-                    "Constraint check: Parameter TransmissionProbabilityFromDead changed from {:0.4f} to {:d} ",
-                    this->template get<TransmissionProbabilityFromDead<FP>>()[i], 0.0);
+                log_warning("Constraint check: Parameter TransmissionProbabilityFromDead changed from {} to {} ",
+                            this->template get<TransmissionProbabilityFromDead<FP>>()[i], 0.0);
                 this->template get<TransmissionProbabilityFromDead<FP>>()[i] = 0.0;
-                corrected                                                   = true;
+                corrected                                                    = true;
             }
             if (this->template get<ProbabilityToRecover<FP>>()[i] < 0.0 ||
                 this->template get<ProbabilityToRecover<FP>>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter ProbabilityToRecover changed from {:0.4f} to {:d} ",
+                log_warning("Constraint check: Parameter ProbabilityToRecover changed from {} to {} ",
                             this->template get<ProbabilityToRecover<FP>>()[i], 0.0);
                 this->template get<ProbabilityToRecover<FP>>()[i] = 0.0;
-                corrected                                          = true;
+                corrected                                         = true;
             }
         }
         return corrected;
@@ -252,44 +251,44 @@ public:
 
         for (auto i = AgeGroup(0); i < m_num_groups; i++) {
             if (this->template get<TimeExposed<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeExposed {:.4f} smaller or equal {:.4f}. Please note that "
+                log_warning(
+                    "Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeExposed<FP>>()[i], 0.0);
                 return true;
             }
             if (this->template get<TimeInfected<FP>>()[i] < tol_times) {
-                log_error(
-                    "Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+                log_warning(
+                    "Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
                     "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                     "and reset parameters.",
                     this->template get<TimeInfected<FP>>()[i], 0.0);
                 return true;
             }
             if (this->template get<TimeToBurial<FP>>()[i] < tol_times) {
-                log_error("Constraint check: Parameter TimeToBurial {:.4f} smaller or equal {:.4f}.",
-                          this->template get<TimeToBurial<FP>>()[i], 0.0);
+                log_warning("Constraint check: Parameter TimeToBurial {} smaller or equal {}.",
+                            this->template get<TimeToBurial<FP>>()[i], 0.0);
                 return true;
             }
             if (this->template get<TransmissionProbabilityOnContact<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityOnContact<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or "
-                          "greater {:.4f}",
-                          this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
+                log_warning("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or "
+                            "greater {}",
+                            this->template get<TransmissionProbabilityOnContact<FP>>()[i], 0.0, 1.0);
                 return true;
             }
             if (this->template get<TransmissionProbabilityFromDead<FP>>()[i] < 0.0 ||
                 this->template get<TransmissionProbabilityFromDead<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter TransmissionProbabilityFromDead {:.4f} smaller {:.4f} or "
-                          "greater {:.4f}",
-                          this->template get<TransmissionProbabilityFromDead<FP>>()[i], 0.0, 1.0);
+                log_warning("Constraint check: Parameter TransmissionProbabilityFromDead {} smaller {} or "
+                            "greater {}",
+                            this->template get<TransmissionProbabilityFromDead<FP>>()[i], 0.0, 1.0);
                 return true;
             }
             if (this->template get<ProbabilityToRecover<FP>>()[i] < 0.0 ||
                 this->template get<ProbabilityToRecover<FP>>()[i] > 1.0) {
-                log_error("Constraint check: Parameter ProbabilityToRecover {:.4f} smaller {:.4f} or greater {:.4f}",
-                          this->template get<ProbabilityToRecover<FP>>()[i], 0.0, 1.0);
+                log_warning("Constraint check: Parameter ProbabilityToRecover {} smaller {} or greater {}",
+                            this->template get<ProbabilityToRecover<FP>>()[i], 0.0, 1.0);
                 return true;
             }
         }
@@ -306,12 +305,12 @@ private:
 public:
     /**
      * deserialize an object of this class.
-     * @see mio::deserialize
+     * @see mio:eserialize
      */
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP> : eserialize(io));
         return success(Parameters(std::move(base)));
     }
 
