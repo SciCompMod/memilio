@@ -27,6 +27,7 @@ import pandas as pd
 from memilio.simulation import AgeGroup, ContactMatrix, Damping, SimulationDay
 from memilio.simulation.osecirvvs import InfectionState
 from memilio.simulation.osecirvvs import Model, Simulation, simulate, simulate_flows
+from memilio.simulation.osecirvvs import ParameterStudy, GraphParameterStudy, ModelGraph
 
 
 class Test_osecirvvs_integration(unittest.TestCase):
@@ -216,6 +217,38 @@ class Test_osecirvvs_integration(unittest.TestCase):
         model.parameters.TransmissionProbabilityOnContact[A0] = -1.
         self.assertEqual(model.parameters.check_constraints(), 1)
 
+    def test_study(self):
+        """ Runs a parameterstudy with a single model, to check that it is possible """
+    
+        t0 = 1
+        tmax = 10
+        dt = 0.5
+        num_runs = 3
+
+        study = ParameterStudy(self.model, t0, tmax, dt, num_runs)
+
+        results = study.run()
+
+        self.assertEqual(len(results), num_runs)
+        self.assertEqual(results[0].result.get_last_time(), tmax)
+
+    def test_study_graph(self):
+        """ Runs a parameterstudy with a graph, to check that it is possible """
+    
+        t0 = 1
+        tmax = 10
+        dt = 0.5
+        num_runs = 3
+
+        graph = ModelGraph()
+        graph.add_node(0, self.model)
+        
+        study = GraphParameterStudy(graph, t0, tmax, dt, num_runs)
+
+        results = study.run()
+
+        self.assertEqual(len(results), num_runs)
+        self.assertEqual(results[0].get_node(0).property.result.get_last_time(), tmax)
 
 if __name__ == '__main__':
     unittest.main()
