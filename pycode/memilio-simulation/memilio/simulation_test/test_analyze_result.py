@@ -59,7 +59,8 @@ class Test_AnalyzeResult(unittest.TestCase):
         graph.add_edge(0, 1, 0.01 * np.ones(10))
         graph.add_edge(1, 0, 0.01 * np.ones(10))
 
-        study = osecir.GraphParameterStudy(graph, t0=0, tmax=2, dt=0.5, num_runs=3)
+        study = osecir.GraphParameterStudy(
+            graph, t0=0, tmax=2, dt=0.5, num_runs=3)
         r = study.run()
         interpolated = osecir.interpolate_ensemble_results(r)
         self.assertEqual(interpolated[0][0].get_time(0), 0.0)

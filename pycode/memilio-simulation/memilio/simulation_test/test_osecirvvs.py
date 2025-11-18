@@ -219,7 +219,7 @@ class Test_osecirvvs_integration(unittest.TestCase):
 
     def test_study(self):
         """ Runs a parameterstudy with a single model, to check that it is possible """
-    
+
         t0 = 1
         tmax = 10
         dt = 0.5
@@ -234,7 +234,7 @@ class Test_osecirvvs_integration(unittest.TestCase):
 
     def test_study_graph(self):
         """ Runs a parameterstudy with a graph, to check that it is possible """
-    
+
         t0 = 1
         tmax = 10
         dt = 0.5
@@ -242,13 +242,15 @@ class Test_osecirvvs_integration(unittest.TestCase):
 
         graph = ModelGraph()
         graph.add_node(0, self.model)
-        
+
         study = GraphParameterStudy(graph, t0, tmax, dt, num_runs)
 
         results = study.run()
 
         self.assertEqual(len(results), num_runs)
-        self.assertEqual(results[0].get_node(0).property.result.get_last_time(), tmax)
+        self.assertEqual(results[0].get_node(
+            0).property.result.get_last_time(), tmax)
+
 
 if __name__ == '__main__':
     unittest.main()
