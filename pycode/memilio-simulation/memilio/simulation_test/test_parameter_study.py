@@ -78,10 +78,10 @@ class Test_ParameterStudy(unittest.TestCase):
         graph.add_edge(0, 1, 0.01 * np.ones(10))
         graph.add_edge(1, 0, 0.01 * np.ones(10))
 
-        study = osecir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
+        study = osecir.GraphParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
 
-        self.assertEqual(study.model_graph.num_nodes, 2)
-        self.assertEqual(study.model_graph.num_edges, 2)
+        self.assertEqual(study.parameters.num_nodes, 2)
+        self.assertEqual(study.parameters.num_edges, 2)
 
     def test_run(self):
         """ """
@@ -92,7 +92,7 @@ class Test_ParameterStudy(unittest.TestCase):
         tmax = 10
         dt = 0.1
         num_runs = 3
-        study = osecir.ParameterStudy(graph, t0, tmax, dt, num_runs)
+        study = osecir.GraphParameterStudy(graph, t0, tmax, dt, num_runs)
 
         self.assertEqual(study.t0, t0)
         self.assertEqual(study.tmax, tmax)
@@ -138,7 +138,8 @@ class Test_ParameterStudy(unittest.TestCase):
         handle_single_result_func.c = 0
         handle_single_result_func.results = []
         mio.seed_random_number_generator()  # must be seeded before ParameterStudy.run
-        study.run_single(handle_single_result_func)
+        study = osecir.ParameterStudy(graph.get_node(0).property, t0, tmax, dt, num_runs)
+        study.run(handle_single_result_func)
 
         self.assertEqual(handle_single_result_func.c, num_runs)
 
