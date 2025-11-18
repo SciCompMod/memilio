@@ -184,7 +184,7 @@ public:
 
         int corrected = false;
         if (this->template get<TimeExposedV1<FP>>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeExposedV1 changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeExposedV1 changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->template get<TimeExposedV1<FP>>(), tol_times);
@@ -192,7 +192,7 @@ public:
             corrected                               = true;
         }
         if (this->template get<TimeExposedV2<FP>>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeExposedV2 changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeExposedV2 changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->template get<TimeExposedV2<FP>>(), tol_times);
@@ -200,7 +200,7 @@ public:
             corrected                               = true;
         }
         if (this->template get<TimeInfectedV1<FP>>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfectedV1 changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeInfectedV1 changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->template get<TimeInfectedV1<FP>>(), tol_times);
@@ -208,7 +208,7 @@ public:
             corrected                                = true;
         }
         if (this->template get<TimeInfectedV2<FP>>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfectedV2 changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeInfectedV2 changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->template get<TimeInfectedV2<FP>>(), tol_times);
@@ -217,14 +217,14 @@ public:
         }
         if (this->template get<TransmissionProbabilityOnContactV1<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContactV1<FP>>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV1 changed from {:0.4f} to {:d} ",
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV1 changed from {} to {} ",
                         this->template get<TransmissionProbabilityOnContactV1<FP>>(), 0.0);
             this->template get<TransmissionProbabilityOnContactV1<FP>>() = 0.0;
             corrected                                                    = true;
         }
         if (this->template get<TransmissionProbabilityOnContactV2<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContactV2<FP>>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV2 changed from {:0.4f} to {:d} ",
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContactV2 changed from {} to {} ",
                         this->template get<TransmissionProbabilityOnContactV2<FP>>(), 0.0);
             this->template get<TransmissionProbabilityOnContactV2<FP>>() = 0.0;
             corrected                                                    = true;
@@ -242,44 +242,44 @@ public:
         FP tol_times = 1e-1;
 
         if (this->template get<TimeExposedV1<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeExposedV1 {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->template get<TimeExposedV1<FP>>(), 0.0);
+            log_warning("Constraint check: Parameter TimeExposedV1 {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposedV1<FP>>(), tol_times);
             return true;
         }
         if (this->template get<TimeExposedV2<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeExposedV2 {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->template get<TimeExposedV2<FP>>(), 0.0);
+            log_warning("Constraint check: Parameter TimeExposedV2 {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposedV2<FP>>(), tol_times);
             return true;
         }
         if (this->template get<TimeInfectedV1<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfectedV1 {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->template get<TimeInfectedV1<FP>>(), 0.0);
+            log_warning("Constraint check: Parameter TimeInfectedV1 {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfectedV1<FP>>(), tol_times);
             return true;
         }
         if (this->template get<TimeInfectedV2<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfectedV2 {:.4f} smaller or equal {:.4f}. Please note that "
-                      "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
-                      "and reset parameters.",
-                      this->template get<TimeInfectedV2<FP>>(), 0.0);
+            log_warning("Constraint check: Parameter TimeInfectedV2 {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfectedV2<FP>>(), tol_times);
             return true;
         }
         if (this->template get<TransmissionProbabilityOnContactV1<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContactV1<FP>>() > 1.0) {
-            log_error("Constraint check: Parameter TransmissionProbabilityOnContactV1 {:.4f} smaller {:.4f} or greater "
-                      "{:.4f}",
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContactV1 {} smaller {} or greater "
+                      "{}",
                       this->template get<TransmissionProbabilityOnContactV1<FP>>(), 0.0, 1.0);
             return true;
         }
         if (this->template get<TransmissionProbabilityOnContactV2<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContactV2<FP>>() > 1.0) {
-            log_error("Constraint check: Parameter TransmissionProbabilityOnContactV2 {:.4f} smaller {:.4f} or greater "
-                      "{:.4f}",
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContactV2 {} smaller {} or greater "
+                      "{}",
                       this->template get<TransmissionProbabilityOnContactV2<FP>>(), 0.0, 1.0);
             return true;
         }
