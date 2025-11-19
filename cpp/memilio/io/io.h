@@ -21,6 +21,7 @@
 #ifndef EPI_UTILS_IO_H
 #define EPI_UTILS_IO_H
 
+#include "memilio/io/fast_tuple.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/eigen_util.h"
@@ -502,9 +503,9 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
 }
 
 template <class IOContext, class F, class... T>
-details::ApplyResultT<F, T...> apply(IOContext& io, F f, const std::tuple<IOResult<T>...>& results)
+details::ApplyResultT<F, T...> apply(IOContext& io, F f, const FastTuple<IOResult<T>...>& results)
 {
-    return std::apply(
+    return apply(
         [&](auto&&... rs) {
             return apply(io, f, rs...);
         },

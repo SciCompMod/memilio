@@ -173,6 +173,21 @@ using not_copyable_if = std::conditional<Cond, details::NoCopy, details::Empty>;
 template <bool Cond>
 using not_copyable_if_t = typename not_copyable_if<Cond>::type;
 
+namespace details
+{
+
+template <std::size_t Index, class Head, class... Tail>
+struct type_at_index_impl {
+    using type = type_at_index_impl<Index - 1, Tail...>::type;
+};
+
+template <class Head, class... Tail>
+struct type_at_index_impl<0, Head, Tail...> {
+    using type = Head;
+};
+
+} // namespace details
+
 /**
  * Finds the type at the Index-th position in the list Types.
  * @tparam Index An index in `[0, sizeof...(Types))`.
@@ -181,7 +196,7 @@ using not_copyable_if_t = typename not_copyable_if<Cond>::type;
 template <std::size_t Index, class... Types>
 struct type_at_index {
     static_assert(Index < sizeof...(Types), "Index is too large for the list Types.");
-    using type = typename std::tuple_element<Index, std::tuple<Types...>>::type;
+    using type = typename details::type_at_index_impl<Index, Types...>::type;
 };
 
 /**
@@ -304,6 +319,58 @@ struct is_ad_type<ad::internal::active_type<Value, Tape>> : public std::true_typ
 template <class T>
 constexpr bool is_ad_type_v = is_ad_type<T>::value;
 /**@}*/
+
+namespace details
+{
+// // The following functions are not defined anywhere. Their use is to provide type conversions via their return type.
+
+// // Function declaration used to remove OmittedTag from the type list of a tuple.
+// // First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
+// // Tag == OmittedTag, of type tuple<>. This list is then concatenated, effectively removing OmittedTag.
+// template <class OmittedTag, class... Tags>
+// decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
+//                                                                std::tuple<Tags>>::type>()...))
+//     filter_tuple(std::tuple<Tags...>);
+
+// // Function declaration used to replace type T by std::tuple.
+// template <template <class...> class T, class... Args>
+// std::tuple<Args...> as_tuple(T<Args...>);
+
+// // Function declaration used to replace std::tuple by type T.
+// template <template <class...> class T, class... Args>
+// T<Args...> as_index(std::tuple<Args...>);
+
+// // Remove all occurrences of OmittedTag from the types in a std::tuple<types...>.
+// template <class OmittedTag, class Tuple>
+// using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()));
+
+// // Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
+// template <class OmittedTag, template <class...> class IndexTemplate, class Index>
+// using filtered_index_t = decltype(as_index<IndexTemplate>(
+//     std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
+
+template <class OmittedTag, template <class...> class ListType, class... Tags>
+struct filter_type_list_impl {
+    template <class... Filtered>
+    struct FilterList {
+        template <class Next>
+        std::conditional_t<std::is_same_v<OmittedTag, Next>, FilterList<Filtered...>, FilterList<Filtered..., Next>>
+        operator&(FilterList<Next>);
+    };
+
+    template <class... Ts>
+    static ListType<Ts...> as_list_type(FilterList<Ts...>);
+
+    // uses a binary left fold expression, i.e. the &'s are executed left to right.
+    using type = decltype(as_list_type((FilterList<>{} & ... & FilterList<Tags>{})));
+};
+
+template <class OmittedTag, template <class...> class ListType, class... Tags>
+filter_type_list_impl<OmittedTag, ListType, Tags...>::type filter_type_list(ListType<Tags...>);
+} //namespace details
+
+template <class OmittedTag, class List>
+using filter_type_list_t = decltype(details::filter_type_list<OmittedTag>(std::declval<List>()));
 
 } // namespace mio
 

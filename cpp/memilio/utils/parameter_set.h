@@ -20,7 +20,9 @@
 #ifndef EPI_UTILS_PARAMETER_SET_H
 #define EPI_UTILS_PARAMETER_SET_H
 
+#include "memilio/io/fast_tuple.h"
 #include "memilio/io/io.h"
+#include "memilio/utils/metaprogramming.h"
 
 #include <tuple>
 #include <utility>
@@ -226,7 +228,7 @@ public:
      */
     template <class Dummy = void,
               class       = std::enable_if_t<
-                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+                        details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
     ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {
@@ -261,7 +263,7 @@ public:
     template <class Tag>
     const typename ParameterTagTraits<Tag>::Type& get() const
     {
-        return std::get<details::TaggedParameter<Tag>>(m_tup).get();
+        return mio::get<details::TaggedParameter<Tag>>(m_tup).get();
     }
 
     /**
@@ -272,7 +274,7 @@ public:
     template <class Tag>
     typename ParameterTagTraits<Tag>::Type& get()
     {
-        return std::get<details::TaggedParameter<Tag>>(m_tup).get();
+        return mio::get<details::TaggedParameter<Tag>>(m_tup).get();
     }
 
     /**
@@ -364,7 +366,7 @@ private:
     static IOResult<ParameterSet> deserialize_recursive(IOContext& io, IOObject& obj, Rs&&... rs)
     {
         //read current parameter, append result to results of previous parameters, recurse to next parameter
-        using TaggedParameter = std::tuple_element_t<sizeof...(Rs), decltype(ParameterSet::m_tup)>;
+        using TaggedParameter = type_at_index_t<sizeof...(Rs), decltype(ParameterSet::m_tup)>;
         auto r = obj.expect_element(TaggedParameter::Tag::name(), mio::Tag<typename TaggedParameter::Type>{});
         return deserialize_recursive(io, obj, std::forward<Rs>(rs)..., std::move(r));
     }
@@ -397,7 +399,7 @@ public:
     }
 
 private:
-    std::tuple<details::TaggedParameter<Tags>...> m_tup;
+    FastTuple<details::TaggedParameter<Tags>...> m_tup;
 };
 
 namespace details

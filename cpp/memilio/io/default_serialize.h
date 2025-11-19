@@ -20,6 +20,7 @@
 #ifndef MIO_IO_DEFAULT_SERIALIZE_H_
 #define MIO_IO_DEFAULT_SERIALIZE_H_
 
+#include "memilio/io/fast_tuple.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/metaprogramming.h"
 
@@ -98,7 +99,7 @@ IOResult<DefaultSerializable> default_deserialize_impl(IOContext& io, DefaultSer
     auto obj = io.expect_object(name);
 
     // we cannot use expect_named_ref directly in apply, as function arguments have no guarantueed order of evaluation
-    std::tuple<IOResult<Members>...> results{expect_named_ref(obj, named_refs)...};
+    FastTuple<IOResult<Members>...> results{expect_named_ref(obj, named_refs)...};
 
     return apply(
         io,
@@ -148,13 +149,13 @@ struct Members {
      * @return A Members object with all previous class members and the newly added one.  
      */
     template <class T>
-    [[nodiscard]] Members<ValueTypes..., T> add(const char* member_name, T& member)
+    [[nodiscard]] Members<ValueTypes..., T> add(const char* member_name, T& member) &&
     {
-        return Members<ValueTypes..., T>{name, std::tuple_cat(named_refs, std::tuple(NamedRef{member_name, member}))};
+        return Members<ValueTypes..., T>{name, cat(std::move(named_refs), FastTuple{NamedRef{member_name, member}})};
     }
 
     const char* name; ///< Name of the class.
-    std::tuple<NamedRef<ValueTypes>...> named_refs; ///<  Names and references to members of the class.
+    FastTuple<NamedRef<ValueTypes>...> named_refs; ///<  Names and references to members of the class.
 
 private:
     /**
@@ -162,9 +163,9 @@ private:
      * @param[in] class_name Name of a class.
      * @param[in] named_references Tuple of added class Members.
      */
-    Members(const char* class_name, std::tuple<NamedRef<ValueTypes>...> named_references)
+    Members(const char* class_name, FastTuple<NamedRef<ValueTypes>...>&& named_references)
         : name(class_name)
-        , named_refs(named_references)
+        , named_refs(std::move(named_references))
     {
     }
 };
@@ -215,7 +216,7 @@ void serialize_internal(IOContext& io, const DefaultSerializable& a)
     // Note that the following cons_cast is only safe if we do not modify members.
     const auto members = const_cast<DefaultSerializable&>(a).default_serialize();
     // unpack members and serialize
-    std::apply(
+    apply(
         [&io, &members](auto... named_refs) {
             details::default_serialize_impl(io, members.name, named_refs...);
         },
@@ -242,7 +243,7 @@ IOResult<DefaultSerializable> deserialize_internal(IOContext& io, Tag<DefaultSer
     DefaultSerializable a = DefaultFactory<DefaultSerializable>::create();
     auto members          = a.default_serialize();
     // unpack members and deserialize
-    return std::apply(
+    return apply(
         [&io, &members, &a](auto... named_refs) {
             return details::default_deserialize_impl(io, a, members.name, named_refs...);
         },

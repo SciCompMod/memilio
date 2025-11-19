@@ -24,41 +24,11 @@
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/flow.h"
+#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/type_list.h"
 
 namespace mio
 {
-
-namespace details
-{
-// The following functions are not defined anywhere. Their use is to provide type conversions via their return type.
-
-// Function declaration used to remove OmittedTag from the type list of a tuple.
-// First a list of tuples is generated for each Tag in Tags, where the tuple is either of type tuple<Tag>, or if
-// Tag == OmittedTag, of type tuple<>. This list is then concatenated, effectively removing OmittedTag.
-template <class OmittedTag, class... Tags>
-decltype(std::tuple_cat(std::declval<typename std::conditional<std::is_same<OmittedTag, Tags>::value, std::tuple<>,
-                                                               std::tuple<Tags>>::type>()...))
-    filter_tuple(std::tuple<Tags...>);
-
-// Function declaration used to replace type T by std::tuple.
-template <template <class...> class T, class... Args>
-std::tuple<Args...> as_tuple(T<Args...>);
-
-// Function declaration used to replace std::tuple by type T.
-template <template <class...> class T, class... Args>
-T<Args...> as_index(std::tuple<Args...>);
-
-// Remove all occurrences of OmittedTag from the types in a std::tuple<types...>.
-template <class OmittedTag, class Tuple>
-using filtered_tuple_t = decltype(filter_tuple<OmittedTag>(std::declval<Tuple>()));
-
-// Remove all occurrences of OmittedTag from the types in an Index = IndexTemplate<types...>.
-template <class OmittedTag, template <class...> class IndexTemplate, class Index>
-using filtered_index_t = decltype(as_index<IndexTemplate>(
-    std::declval<filtered_tuple_t<OmittedTag, decltype(as_tuple(std::declval<Index>()))>>()));
-
-} //namespace details
 
 /**
  * @brief A FlowModel is a CompartmentalModel defined by the flows between compartments.
@@ -78,7 +48,7 @@ class FlowModel : public CompartmentalModel<FP, Comp, Pop, Params>
     // population of the model.
     // The remaining indices (those contained in FlowIndex) must still be provided to get an entry of population.
     // This approach only works with exactly one category of type Comp in PopIndex (hence the assertion below).
-    using FlowIndex = details::filtered_index_t<Comp, Index, PopIndex>;
+    using FlowIndex = filter_type_list_t<Comp, PopIndex>;
     // Enforce that Comp is a unique Category of PopIndex, since we use Flows (via their source/target) to provide
     // Comp indices for the population.
     static_assert(FlowIndex::size == PopIndex::size - 1, "Compartments must be used exactly once as population index.");
