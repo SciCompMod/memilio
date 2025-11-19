@@ -118,16 +118,16 @@ struct StartDay {
 };
 
 /**
- * @brief The seasonality in the SIRS model.
- * The seasonality is given as (1+k*sin()) where the sine
- * curve is below one in summer and above one in winter
+ * @brief The seasonality strength in the SIRS model.
+ * The seasonality is given by a Gaussian function , see https://doi.org/10.1016/j.epidem.2011.04.002.
+ * This parameter corresponds to rho from eq. 2 in the paper.
  */
 template <typename FP>
 struct Seasonality {
     using Type = UncertainValue<FP>;
     static Type get_default()
     {
-        return Type(0.);
+        return Type(0.5);
     }
     static std::string name()
     {
@@ -135,9 +135,46 @@ struct Seasonality {
     }
 };
 
+/**
+ * @brief The seasonality peak time point in the SIRS model.
+ * The seasonality is given by a Gaussian function , see https://doi.org/10.1016/j.epidem.2011.04.002.
+ * This parameter corresponds to phi from eq. 2 in the paper.
+ */
+template <typename FP>
+struct SeasonalityPeak {
+    using Type = UncertainValue<FP>;
+    static Type get_default()
+    {
+        return Type(0.);
+    }
+    static std::string name()
+    {
+        return "SeasonalityPeak";
+    }
+};
+
+/**
+ * @brief The seasonality width in the SIRS model.
+ * The seasonality is given by a Gaussian function , see https://doi.org/10.1016/j.epidem.2011.04.002.
+ * This parameter corresponds to sigma from eq. 2 in the paper.
+ */
+template <typename FP>
+struct SeasonalitySigma {
+    using Type = UncertainValue<FP>;
+    static Type get_default()
+    {
+        return Type(100.);
+    }
+    static std::string name()
+    {
+        return "SeasonalitySigma";
+    }
+};
+
 template <typename FP>
 using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>, Seasonality<FP>, StartDay<FP>>;
+    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>,
+                 Seasonality<FP>, SeasonalityPeak<FP>, SeasonalitySigma<FP>, StartDay<FP>>;
 
 /**
  * @brief Parameters of SIR model.
@@ -230,9 +267,8 @@ public:
         }
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
-            log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or greater {}",
-                this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or greater {}",
+                      this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
             return true;
         }
         return false;

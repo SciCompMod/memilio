@@ -26,6 +26,7 @@
 #include "memilio/epidemiology/populations.h"
 #include "sde_sirs/infection_state.h"
 #include "sde_sirs/parameters.h"
+#include <cmath>
 
 namespace mio
 {
@@ -57,11 +58,21 @@ public:
     {
         auto& params = Base::parameters;
         // effective contact rate by contact rate between groups i and j and damping j
-        FP season_val =
-            (1 + params.template get<Seasonality<FP>>() *
-                     sin(std::numbers::pi_v<ScalarType> * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
+        // FP season_val =
+        //     (1 + params.template get<Seasonality<FP>>() *
+        //              sin(std::numbers::pi_v<ScalarType> * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
+        FP t_season =
+            params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() + int(t / 365.) * 365.;
+        FP season_end = t_season + 182.5;
+        if (t >= season_end) {
+            t_season = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
+                       (int(t / 365.) + 1) * 365.;
+        }
+        FP season_val = params.template get<Seasonality<FP>>() + (1 - params.template get<Seasonality<FP>>()) *
+                                                                     (gaussian(t - t_season) / gaussian(0.)) * zeta(t);
 
-        FP coeffStoI = season_val * params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
+        FP coeffStoI = season_val *
+                       params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
                        params.template get<TransmissionProbabilityOnContact<FP>>() / Base::populations.get_total();
 
         flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =
@@ -79,6 +90,36 @@ public:
         get_flows(pop, y, t, flows);
         flows = flows.array().sqrt() * Base::white_noise(Flows::size()).array();
         this->get_derivatives(flows, noise);
+    }
+
+    double gaussian(FP t) const
+    {
+        auto& params = Base::parameters;
+        return 1. /
+               (std::sqrt(2. * std::numbers::pi_v<ScalarType> * params.template get<SeasonalitySigma<FP>>() *
+                          params.template get<SeasonalitySigma<FP>>())) *
+               std::exp(-0.5 * std::pow(t / params.template get<SeasonalitySigma<FP>>(), 2));
+    }
+
+    double zeta(FP t) const
+    {
+        auto& params     = Base::parameters;
+        double tau_minus = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
+                           365. * int(t / 365.) - 182.5;
+        double tau_plus = params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() +
+                          365. * int(t / 365.) - 182.5;
+        if (t <= params.template get<SeasonalityPeak<FP>>() - params.template get<StartDay<FP>>() - 182.5 + 30) {
+            return (t - tau_minus + 30) / 60.;
+        }
+        else if ((tau_plus - 30 <= t) && (t <= tau_plus)) {
+            return (-t + tau_plus + 30) / 60.;
+        }
+        else if ((tau_plus <= t) && (t <= tau_plus + 30)) {
+            return (t - tau_plus + 30) / 60.;
+        }
+        else {
+            return 1.;
+        }
     }
 };
 
