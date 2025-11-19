@@ -46,11 +46,11 @@ Standard models based on :doc:`ordinary differential equations (ODE) <cpp/ode>` 
 
 For spatio-temporal dynamics, :doc:`graph-based metapopulation models <cpp/graph_metapop>`, which leverage :doc:`ODE-based models<cpp/ode>`, are a good compromise between level of detail and computational effort. They allow for the incorporation of mobility patterns and spatial heterogeneity, making them suitable for studying the spread of diseases across different regions. They can also be used to, e.g., consider different intervention strategies in different regions or to study the effect of mobility restrictions. To study the effect of local interventions, we provide the option to implement pre-defined and dynamic NPIs which automatically enforce interventions on a local and regional level when an incidence threshold criteria by the user is exceeded. For details, see, e.g.,
 
-*   :doc:`ODE-based SECIR model <cpp/models/osecir#nonpharmaceutical-interventions>` for early-phase epidemics or full immunity cases
-*   :doc:`ODE-based SECIRVVS model <cpp/models/osecirvvs#nonpharmaceutical-interventions>` for early- or mid-phase epidemics with three immunity layers
-*   :doc:`ODE-based SECIRTS model <cpp/models/osecirts#nonpharmaceutical-interventions>` for mid- or late-phase epidemics with three immunity layers and waning immunity
+*   :doc:`ODE-based SECIR model <cpp/models/osecir>` for early-phase epidemics or full immunity cases
+*   :doc:`ODE-based SECIRVVS model <cpp/models/osecirvvs>` for early- or mid-phase epidemics with three immunity layers
+*   :doc:`ODE-based SECIRTS model <cpp/models/osecirts>` for mid- or late-phase epidemics with three immunity layers and waning immunity
 
-For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation_model_usage#nonpharmaceutical-interventions>`.
+For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation_model_usage>`.
 
 When individual-level interactions and heterogeneity are crucial, :doc:`individual-based models <cpp/individual_models>` provide a detailed representation of disease dynamics. These models can capture complex behaviors and interactions, making them valuable for understanding transmission dynamics in specific settings. Individual-based models are computationally intensive but offer unparalleled detail for certain research questions such as in-household transmission or vaccination and testing strategies targeting individuals that satisfy specific properties with respect to age, previous infections, immunity levels, or particular workplaces. The most versatile individual-based model in MEmilio is the :doc:`(mobility-based) agent-based model <cpp/mobility_based_abm>`.
 
