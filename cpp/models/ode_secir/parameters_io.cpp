@@ -44,17 +44,16 @@ namespace osecir
 namespace details
 {
 
-IOResult<void> compute_confirmed_cases_data(
-    std::vector<ConfirmedCasesDataEntry>& case_data, const int region, Date date,
-    std::vector<ScalarType>& num_Exposed, std::vector<ScalarType>& num_InfectedNoSymptoms,
-    std::vector<ScalarType>& num_InfectedSymptoms, std::vector<ScalarType>& num_InfectedSevere,
-    std::vector<ScalarType>& num_icu, std::vector<ScalarType>& num_death,
-    std::vector<ScalarType>& num_rec, const std::vector<int>& t_Exposed,
-    const std::vector<int>& t_InfectedNoSymptoms,
-    const std::vector<int>& t_InfectedSymptoms, const std::vector<int>& t_InfectedSevere,
-    const std::vector<int>& t_InfectedCritical, const std::vector<ScalarType>& mu_C_R,
-    const std::vector<ScalarType>& mu_I_H, const std::vector<ScalarType>& mu_H_U,
-    const std::vector<ScalarType>& scaling_factor_inf)
+IOResult<void>
+compute_confirmed_cases_data(std::vector<ConfirmedCasesDataEntry>& case_data, const int region, Date date,
+                             std::vector<ScalarType>& num_Exposed, std::vector<ScalarType>& num_InfectedNoSymptoms,
+                             std::vector<ScalarType>& num_InfectedSymptoms, std::vector<ScalarType>& num_InfectedSevere,
+                             std::vector<ScalarType>& num_icu, std::vector<ScalarType>& num_death,
+                             std::vector<ScalarType>& num_rec, const std::vector<int>& t_Exposed,
+                             const std::vector<int>& t_InfectedNoSymptoms, const std::vector<int>& t_InfectedSymptoms,
+                             const std::vector<int>& t_InfectedSevere, const std::vector<int>& t_InfectedCritical,
+                             const std::vector<ScalarType>& mu_C_R, const std::vector<ScalarType>& mu_I_H,
+                             const std::vector<ScalarType>& mu_H_U, const std::vector<ScalarType>& scaling_factor_inf)
 {
     auto max_date_entry = std::max_element(case_data.begin(), case_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -70,7 +69,6 @@ IOResult<void> compute_confirmed_cases_data(
     }
     auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
 
-
     for (auto&& entry : case_data) {
 
         auto date_df = entry.date;
@@ -84,12 +82,10 @@ IOResult<void> compute_confirmed_cases_data(
             num_rec[age] += entry.num_confirmed;
         }
         if (date_df == offset_date_by_days(date, days_surplus)) {
-            num_InfectedNoSymptoms[age] -=
-                1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+            num_InfectedNoSymptoms[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
         }
         if (date_df == offset_date_by_days(date, t_InfectedNoSymptoms[age] + days_surplus)) {
-            num_InfectedNoSymptoms[age] +=
-                1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
+            num_InfectedNoSymptoms[age] += 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
             num_Exposed[age] -= 1 / (1 - mu_C_R[age]) * scaling_factor_inf[age] * entry.num_confirmed;
         }
         if (date_df == offset_date_by_days(date, t_Exposed[age] + t_InfectedNoSymptoms[age] + days_surplus)) {
@@ -110,7 +106,6 @@ IOResult<void> compute_confirmed_cases_data(
         }
     }
 
-
     for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
         // R(t0) = ΣC(t0) − I(t0) − H(t0) − U(t0) − D(t0)
         // subtract currently infectious/hospitalized/ICU/dead
@@ -119,21 +114,20 @@ IOResult<void> compute_confirmed_cases_data(
         // recovered, we would implicitly assume that the same underreporting applies to the entire
         // history up to t0, which would be wrong. The scaling factor should reflect underreporting
         // around t0 only.
-        num_rec[i] -=
-            (num_InfectedSymptoms[i] / scaling_factor_inf[i] + num_InfectedSevere[i] / scaling_factor_inf[i] +
-                num_icu[i] / scaling_factor_inf[i] + num_death[i] / scaling_factor_inf[i]);
+        num_rec[i] -= (num_InfectedSymptoms[i] / scaling_factor_inf[i] + num_InfectedSevere[i] / scaling_factor_inf[i] +
+                       num_icu[i] / scaling_factor_inf[i] + num_death[i] / scaling_factor_inf[i]);
 
         auto try_fix_constraints = [region, i](ScalarType& value, ScalarType error, auto str) {
             if (value < error) {
                 //this should probably return a failure
                 //but the algorithm is not robust enough to avoid large negative values and there are tests that rely on it
-                log_error("{:s} for age group {:s} is {:.4f} for region {:d}, exceeds expected negative value.",
-                            str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                log_error("{:s} for age group {:s} is {:.4f} for region {:d}, exceeds expected negative value.", str,
+                          ConfirmedCasesDataEntry::age_group_names[i], value, region);
                 value = 0.0;
             }
             else if (value < 0) {
                 log_info("{:s} for age group {:s} is {:.4f} for region {:d}, automatically corrected", str,
-                            ConfirmedCasesDataEntry::age_group_names[i], value, region);
+                         ConfirmedCasesDataEntry::age_group_names[i], value, region);
                 value = 0.0;
             }
         };
@@ -192,8 +186,8 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, std::vector<Co
         // reuse group 0 parameters for all RKI age groups
         const size_t group = (model_groups == num_age_groups) ? ag : 0;
 
-        t_Exposed.push_back(static_cast<int>(
-            std::round(model.parameters.template get<TimeExposed<ScalarType>>()[(AgeGroup)group])));
+        t_Exposed.push_back(
+            static_cast<int>(std::round(model.parameters.template get<TimeExposed<ScalarType>>()[(AgeGroup)group])));
         t_InfectedNoSymptoms.push_back(static_cast<int>(
             std::round(model.parameters.template get<TimeInfectedNoSymptoms<ScalarType>>()[(AgeGroup)group])));
         t_InfectedSymptoms.push_back(static_cast<int>(
@@ -203,30 +197,24 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, std::vector<Co
         t_InfectedCritical.push_back(static_cast<int>(
             std::round(model.parameters.template get<TimeInfectedCritical<ScalarType>>()[(AgeGroup)group])));
 
-        mu_C_R.push_back(
-            model.parameters.template get<RecoveredPerInfectedNoSymptoms<ScalarType>>()[(AgeGroup)group]);
-        mu_I_H.push_back(
-            model.parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[(AgeGroup)group]);
-        mu_H_U.push_back(
-            model.parameters.template get<CriticalPerSevere<ScalarType>>()[(AgeGroup)group]);
+        mu_C_R.push_back(model.parameters.template get<RecoveredPerInfectedNoSymptoms<ScalarType>>()[(AgeGroup)group]);
+        mu_I_H.push_back(model.parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[(AgeGroup)group]);
+        mu_H_U.push_back(model.parameters.template get<CriticalPerSevere<ScalarType>>()[(AgeGroup)group]);
     }
 
-    BOOST_OUTCOME_TRY(compute_confirmed_cases_data(case_data, region, date, num_Exposed, num_InfectedNoSymptoms,
-                                                   num_InfectedSymptoms, num_InfectedSevere, num_icu, num_death, num_rec,
-                                                   t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere,
-                                                   t_InfectedCritical, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_full));
+    BOOST_OUTCOME_TRY(compute_confirmed_cases_data(
+        case_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
+        num_death, num_rec, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
+        mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf_full));
 
     if (model_groups == num_age_groups) {
         for (size_t i = 0; i < model_groups; i++) {
-            model.populations[{AgeGroup(i), InfectionState::Exposed}] = num_Exposed[i];
-            model.populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}] =
-                num_InfectedNoSymptoms[i];
+            model.populations[{AgeGroup(i), InfectionState::Exposed}]                     = num_Exposed[i];
+            model.populations[{AgeGroup(i), InfectionState::InfectedNoSymptoms}]          = num_InfectedNoSymptoms[i];
             model.populations[{AgeGroup(i), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-            model.populations[{AgeGroup(i), InfectionState::InfectedSymptoms}] =
-                num_InfectedSymptoms[i];
-            model.populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}] = 0;
-            model.populations[{AgeGroup(i), InfectionState::InfectedSevere}] =
-                num_InfectedSevere[i];
+            model.populations[{AgeGroup(i), InfectionState::InfectedSymptoms}]            = num_InfectedSymptoms[i];
+            model.populations[{AgeGroup(i), InfectionState::InfectedSymptomsConfirmed}]   = 0;
+            model.populations[{AgeGroup(i), InfectionState::InfectedSevere}]              = num_InfectedSevere[i];
             // Only set the number of ICU patients here, if the date is not available in the data.
             if (!is_divi_data_available(date)) {
                 model.populations[{AgeGroup(i), InfectionState::InfectedCritical}] = num_icu[i];
@@ -241,15 +229,12 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, std::vector<Co
                 return evaluate_intermediate<ScalarType>(a + b);
             });
         };
-        model.populations[{AgeGroup(0), InfectionState::Exposed}] = sum_vec(num_Exposed);
-        model.populations[{AgeGroup(0), InfectionState::InfectedNoSymptoms}] =
-            sum_vec(num_InfectedNoSymptoms);
+        model.populations[{AgeGroup(0), InfectionState::Exposed}]                     = sum_vec(num_Exposed);
+        model.populations[{AgeGroup(0), InfectionState::InfectedNoSymptoms}]          = sum_vec(num_InfectedNoSymptoms);
         model.populations[{AgeGroup(0), InfectionState::InfectedNoSymptomsConfirmed}] = 0;
-        model.populations[{AgeGroup(0), InfectionState::InfectedSymptoms}] =
-            sum_vec(num_InfectedSymptoms);
-        model.populations[{AgeGroup(0), InfectionState::InfectedSymptomsConfirmed}] = 0;
-        model.populations[{AgeGroup(0), InfectionState::InfectedSevere}] =
-            sum_vec(num_InfectedSevere);
+        model.populations[{AgeGroup(0), InfectionState::InfectedSymptoms}]            = sum_vec(num_InfectedSymptoms);
+        model.populations[{AgeGroup(0), InfectionState::InfectedSymptomsConfirmed}]   = 0;
+        model.populations[{AgeGroup(0), InfectionState::InfectedSevere}]              = sum_vec(num_InfectedSevere);
         if (!is_divi_data_available(date)) {
             model.populations[{AgeGroup(0), InfectionState::InfectedCritical}] = sum_vec(num_icu);
         }
@@ -261,8 +246,8 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, std::vector<Co
                             return evaluate_intermediate<ScalarType>(a + b);
                         }) == 0.0) {
         log_warning(
-            "No infections for unvaccinated reported on date {} for region {}. Population data has not been set.",
-            date, region);
+            "No infections for unvaccinated reported on date {} for region {}. Population data has not been set.", date,
+            region);
     }
     return success();
 }
@@ -271,7 +256,7 @@ IOResult<void> set_confirmed_cases_data(const mio::VectorRange<Node<Model<Scalar
                                         Date date, const std::vector<ScalarType>& scaling_factor_inf)
 {
     BOOST_OUTCOME_TRY(auto&& case_data, mio::read_confirmed_cases_data(path));
-    
+
     // sort case_data into regions and ignore once with no region associated
     std::vector<std::vector<ConfirmedCasesDataEntry>> vcase_data{model.size()};
     for (auto&& entry : case_data) {
@@ -285,8 +270,8 @@ IOResult<void> set_confirmed_cases_data(const mio::VectorRange<Node<Model<Scalar
     }
 
     for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
-        BOOST_OUTCOME_TRY(
-            set_confirmed_cases_data(model[region_idx].property, vcase_data[region_idx], model[region_idx].id, date, scaling_factor_inf));
+        BOOST_OUTCOME_TRY(set_confirmed_cases_data(model[region_idx].property, vcase_data[region_idx],
+                                                   model[region_idx].id, date, scaling_factor_inf));
     }
     return success();
 }
@@ -297,36 +282,35 @@ IOResult<void> set_population_data(Model<ScalarType>& model, const std::vector<S
     if (std::accumulate(num_population.begin(), num_population.end(), ScalarType(0.0),
                         [](const ScalarType& a, const ScalarType& b) {
                             return evaluate_intermediate<ScalarType>(a + b);
-                        }) <= 0)
-    {    
+                        }) <= 0) {
         log_warning("No population data available for region " + std::to_string(region) +
                     ". Population data has not been set.");
         return success();
     }
 
-    auto num_groups = model.parameters.get_num_groups();
-    auto data_groups  = num_population.size();
+    auto num_groups  = model.parameters.get_num_groups();
+    auto data_groups = num_population.size();
 
     if (data_groups == (size_t)num_groups) {
         for (auto i = AgeGroup(0); i < num_groups; i++) {
-            model.populations.template set_difference_from_group_total<AgeGroup>(
-                {i, InfectionState::Susceptible}, num_population[(size_t)i]);
+            model.populations.template set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
+                                                                                 num_population[(size_t)i]);
         }
     }
     else if ((size_t)num_groups == 1 && data_groups >= 1) {
         const ScalarType total = std::accumulate(num_population.begin(), num_population.end(), ScalarType(0.0),
-                                            [](const ScalarType& a, const ScalarType& b) {
-                                                return evaluate_intermediate<ScalarType>(a + b);
-                                            });
-        model.populations.template set_difference_from_group_total<AgeGroup>(
-            {AgeGroup(0), InfectionState::Susceptible}, total);
+                                                 [](const ScalarType& a, const ScalarType& b) {
+                                                     return evaluate_intermediate<ScalarType>(a + b);
+                                                 });
+        model.populations.template set_difference_from_group_total<AgeGroup>({AgeGroup(0), InfectionState::Susceptible},
+                                                                             total);
     }
 
     for (auto i = AgeGroup(0); i < AgeGroup(6); i++) {
         for (auto j = Index<InfectionState>(0); j < InfectionState::Count; ++j) {
             if (model.populations[{i, j}] < 0) {
-                log_warning("Compartment at age group {}, infection state {}, is negative: {}", size_t(i),
-                            size_t(j), model.populations[{i, j}]);
+                log_warning("Compartment at age group {}, infection state {}, is negative: {}", size_t(i), size_t(j),
+                            model.populations[{i, j}]);
             }
         }
     }
@@ -335,12 +319,15 @@ IOResult<void> set_population_data(Model<ScalarType>& model, const std::vector<S
 
 IOResult<void> set_population_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, const std::string& path)
 {
-    std::vector<int> vregion; 
-    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) { return m.id; });
+    std::vector<int> vregion;
+    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) {
+        return m.id;
+    });
     BOOST_OUTCOME_TRY(const auto&& num_population, read_population_data(path, vregion));
 
     for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
-        BOOST_OUTCOME_TRY(set_population_data(model[region_idx].property, num_population[region_idx], model[region_idx].id));
+        BOOST_OUTCOME_TRY(
+            set_population_data(model[region_idx].property, num_population[region_idx], model[region_idx].id));
     }
     return success();
 }
@@ -352,9 +339,9 @@ IOResult<void> set_divi_data(Model<ScalarType>& model, const ScalarType num_icu,
     auto num_groups = model.parameters.get_num_groups();
     for (auto i = AgeGroup(0); i < num_groups; i++) {
         sum_mu_I_U += model.parameters.template get<CriticalPerSevere<ScalarType>>()[i] *
-                                model.parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[i];
+                      model.parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[i];
         mu_I_U.push_back(model.parameters.template get<CriticalPerSevere<ScalarType>>()[i] *
-                                    model.parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[i]);
+                         model.parameters.template get<SeverePerInfectedSymptoms<ScalarType>>()[i]);
     }
 
     for (auto i = AgeGroup(0); i < num_groups; i++) {
@@ -365,7 +352,7 @@ IOResult<void> set_divi_data(Model<ScalarType>& model, const ScalarType num_icu,
     return success();
 }
 
-IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, const std::string& path, Date date, 
+IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, const std::string& path, Date date,
                              ScalarType scaling_factor_icu)
 {
     // DIVI dataset will no longer be updated from CW29 2024 on.
@@ -376,8 +363,10 @@ IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& mo
         return success();
     }
 
-    std::vector<int> vregion; 
-    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) { return m.id; });
+    std::vector<int> vregion;
+    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) {
+        return m.id;
+    });
     BOOST_OUTCOME_TRY(auto&& num_icu, read_divi_data(path, vregion, date));
 
     for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
@@ -393,21 +382,21 @@ IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& 
                                const std::vector<ScalarType>& scaling_factor_inf, ScalarType scaling_factor_icu,
                                const mio::regions::de::EpidataFilenames& epidata_filenames)
 {
-    BOOST_OUTCOME_TRY(details::set_divi_data(model, epidata_filenames.divi_data_path, date,
-                                             scaling_factor_icu));
+    BOOST_OUTCOME_TRY(details::set_divi_data(model, epidata_filenames.divi_data_path, date, scaling_factor_icu));
 
-    BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, epidata_filenames.case_data_path, date, 
-                                                        scaling_factor_inf));
+    BOOST_OUTCOME_TRY(
+        details::set_confirmed_cases_data(model, epidata_filenames.case_data_path, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(details::set_population_data(model, epidata_filenames.population_data_path));
     return success();
 }
 
 #ifdef MEMILIO_HAS_HDF5
 
-IOResult<void> export_input_data_timeseries(
-    const mio::VectorRange<Node<Model<ScalarType>>> model, const std::string& results_dir, Date date,
-    const std::vector<ScalarType>& scaling_factor_inf, ScalarType scaling_factor_icu, int num_days,
-    const mio::regions::de::EpidataFilenames& epidata_filenames)
+IOResult<void> export_input_data_timeseries(const mio::VectorRange<Node<Model<ScalarType>>> model,
+                                            const std::string& results_dir, Date date,
+                                            const std::vector<ScalarType>& scaling_factor_inf,
+                                            ScalarType scaling_factor_icu, int num_days,
+                                            const mio::regions::de::EpidataFilenames& epidata_filenames)
 {
     const auto num_age_groups = (size_t)model[0].property.parameters.get_num_groups();
     // allow scalar scaling factor as convenience for 1-group models
@@ -419,15 +408,18 @@ IOResult<void> export_input_data_timeseries(
     for (int t = 0; t <= num_days; ++t) {
         auto offset_day = offset_date_by_days(date, t);
 
-        BOOST_OUTCOME_TRY(read_input_data(model, date, scaling_factor_inf, scaling_factor_icu, epidata_filenames));
+        BOOST_OUTCOME_TRY(
+            read_input_data(model, offset_day, scaling_factor_inf, scaling_factor_icu, epidata_filenames));
 
         for (size_t r = 0; r < model.size(); r++) {
             extrapolated_data[r][t] = model[r].property.get_initial_values();
         }
     }
 
-    std::vector<int> vregion; 
-    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) { return m.id; });
+    std::vector<int> vregion;
+    std::transform(model.begin(), model.end(), std::back_inserter(vregion), [](const auto& m) {
+        return m.id;
+    });
     BOOST_OUTCOME_TRY(save_result(extrapolated_data, vregion, static_cast<int>(num_age_groups),
                                   path_join(results_dir, "Results_rki.h5")));
 
@@ -438,8 +430,9 @@ IOResult<void> export_input_data_timeseries(
     return success();
 }
 #else
-IOResult<void> export_input_data_county_timeseries(const mio::VectorRange<Node<Model<ScalarType>>>, const std::string&, Date, const std::vector<int>&,
-                                                   const std::vector<ScalarType>&, const ScalarType, const int,
+IOResult<void> export_input_data_county_timeseries(const mio::VectorRange<Node<Model<ScalarType>>>, const std::string&,
+                                                   Date, const std::vector<int>&, const std::vector<ScalarType>&,
+                                                   const ScalarType, const int,
                                                    const mio::regions::de::EpidataFilenames&)
 {
     mio::log_warning("HDF5 not available. Cannot export time series of extrapolated real data.");

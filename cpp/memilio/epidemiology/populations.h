@@ -26,6 +26,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/math/math_utils.h"
 
+#include <concepts>
 #include <numeric>
 
 namespace mio
@@ -68,10 +69,15 @@ public:
     {
     }
 
-    template <class OtherType>
-    Populations<OtherType, Tags...> convert() const
+    /**
+     * @brief Convert internally stored data to OtherType and save into new Populations.
+     * @tparam OtherType The type to convert into.
+     * @return New Populations of OtherType with copy of internal data.
+     */
+    template <class OtherType> requires std::convertible_to<typename Base::Type, OtherType>
+    Populations<OtherType, Categories...> convert() const
     {
-        return Populations<OtherType, Tags...>(Base::convert<OtherType>());
+        return Populations<OtherType, Categories...>(Base::template convert<OtherType>());
     }
 
     /**

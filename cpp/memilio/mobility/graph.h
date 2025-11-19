@@ -20,7 +20,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -29,6 +28,8 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include <iostream>
+#include <functional>
+#include <concepts>
 
 #include "boost/filesystem.hpp"
 
@@ -152,8 +153,8 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    /* add note for same size of parameters
-    */
+    /** add note for same size of parameters
+     */
     Graph(const std::vector<int>& node_ids, std::vector<NodePropertyT>& node_properties)
     {
         assert(node_ids.size() == node_properties.size());
@@ -170,7 +171,7 @@ public:
         }
     }
 
-    template <class... Args>
+    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Graph(const std::vector<int>& node_ids, Args&&... node_args)
     {
         for (int id : node_ids) {
@@ -178,7 +179,7 @@ public:
         }
     }
 
-    template <class... Args>
+    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Graph(const int number_of_nodes, Args&&... args)
     {
         for (auto id = size_t(0); id < number_of_nodes; ++id) {
@@ -191,7 +192,7 @@ public:
     /**
      * @brief add a node to the graph. property of the node is constructed from arguments.
      */
-    template <class... Args>
+    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Node<NodePropertyT>& add_node(int id, Args&&... args)
     {
         m_nodes.emplace_back(id, std::forward<Args>(args)...);
@@ -201,7 +202,7 @@ public:
     /**
      * @brief add an edge to the graph. property of the edge is constructed from arguments.
      */
-    template <class... Args>
+    template <class... Args> requires std::constructible_from<EdgePropertyT, Args...>
     Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
@@ -276,19 +277,34 @@ private:
     std::vector<Edge<EdgePropertyT>> m_edges;
 };
 
+/**
+ * @brief Set test and trace capacity with uncertainty for the given models.
+ * 
+ * @param[in, out] nodes VectorRange of Node%s each containing a Model in which the data is set.
+ * @param[in] tnt_capacity_factor Factor for test and trace capacity.
+ */
 template <class Model, class TestAndTrace>
-void set_test_and_trace_capacity(const mio::VectorRange<Node<Model>>& nodes, double tnt_capacity_factor)
+void set_test_and_trace_capacity(const mio::VectorRange<Node<Model>>& nodes, ScalarType tnt_capacity_factor)
 {
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
 
         auto tnt_capacity = nodes[node_idx].property.populations.get_total() * tnt_capacity_factor;
 
         auto& tnt_value = nodes[node_idx].property.parameters.template get<TestAndTrace>();
-        tnt_value       = UncertainValue<double>(tnt_capacity);
+        tnt_value       = UncertainValue<ScalarType>(tnt_capacity);
         tnt_value.set_distribution(mio::ParameterDistributionUniform(0.8 * tnt_capacity, 1.2 * tnt_capacity));
     }
 }
 
+/**
+ * @brief Set german state holidays for the given nodes.
+ * 
+ * Works for nodes of a graph depicting german counties or states.
+ * 
+ * @param[in, out] nodes VectorRange of Node%s each containing a Model in which the data is set.
+ * @param[in] start_date Date at the beginning of the simulation.
+ * @param[in] end_date Date at the end of the simulation.
+ */
 template <class FP, class Model, class ContactPattern>
 void set_german_holidays(const mio::VectorRange<Node<Model>>& nodes, const mio::Date& start_date, const mio::Date& end_date)
 {
@@ -307,6 +323,11 @@ void set_german_holidays(const mio::VectorRange<Node<Model>>& nodes, const mio::
     }
 }
 
+/**
+ * @brief Add uncertainty to the population of the given nodes.
+ * 
+ * @param[in, out] nodes VectorRange of Node%s each containing a Model in which the data is set.
+ */
 template <class Model>
 void set_uncertainty_on_population(const mio::VectorRange<Node<Model>>& nodes)
 {
@@ -315,7 +336,7 @@ void set_uncertainty_on_population(const mio::VectorRange<Node<Model>>& nodes)
             for (auto j = Index<typename Model::Compartments>(0); j < Model::Compartments::Count; ++j) {
                 auto& compartment_value = nodes[node_idx].property.populations[{i, j}];
                 compartment_value =
-                    UncertainValue<double>(compartment_value.value());
+                    UncertainValue<ScalarType>(compartment_value.value());
                 compartment_value.set_distribution(mio::ParameterDistributionUniform(0.9 * compartment_value.value(),
                                                                                     1.1 * compartment_value.value()));
             }
