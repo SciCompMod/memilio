@@ -83,7 +83,7 @@ const ScalarType scale_confirmed_cases          = 1.;
 const ScalarType t0        = 0.;
 const ScalarType init_tmax = 14.;
 const ScalarType tmax      = 35.;
-const ScalarType dt        = 0.1;
+const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params
 

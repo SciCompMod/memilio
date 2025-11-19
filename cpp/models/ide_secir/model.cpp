@@ -26,8 +26,12 @@
 #include "memilio/utils/logging.h"
 #include "memilio/math/eigen.h"
 
+#include "memilio/utils/time_series.h"
 #include "vector"
+#include <Eigen/src/Core/Matrix.h>
+#include <Eigen/src/Core/util/Meta.h>
 #include <algorithm>
+#include <boost/filesystem/detail/path_traits.hpp>
 #include <cstddef>
 #include <numbers>
 #include <vector>
@@ -39,13 +43,16 @@ namespace isecir
 
 Model::Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
              CustomIndexArray<ScalarType, AgeGroup> deaths_init, size_t num_agegroups,
-             CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init)
+             CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init,
+             Eigen::VectorX<ScalarType> compartments_init, ScalarType time_init)
     : parameters{Parameters(AgeGroup(num_agegroups))}
     , transitions{std::move(transitions_init)}
     , populations{TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count) * num_agegroups)}
     , total_confirmed_cases{total_confirmed_cases_init}
     , m_N{N_init}
     , m_num_agegroups{num_agegroups}
+    , m_compartments_init{compartments_init}
+    , m_time_init{time_init}
 
 {
     // Assert that input arguments for the total population have the correct size regarding
@@ -361,35 +368,125 @@ void Model::initial_compute_compartments_infection(ScalarType dt)
 
 void Model::initial_compute_compartments(ScalarType dt)
 {
-    // The initialization method only affects the Susceptible and Recovered compartments.
-    // It is possible to calculate the sizes of the other compartments in advance because only the initial values of
-    // the transitions are used.
-    initial_compute_compartments_infection(dt);
+    if (m_compartments_init.size() >
+        0) { // Check if we have initial compartments given for a time before the simulation start.
+        std::cout << "Initializing IDE \n";
+        m_initialization_method = 0;
 
-    // We store in two Booleans if there are Susceptibles or Recovered given for every age group.
-    bool susceptibles_given = true;
-    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-        int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
-        if (populations[Eigen::Index(0)][Si] < 1e-12) {
-            susceptibles_given = false;
-            break;
-        }
-    }
-    bool recovered_given = true;
-    for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-        int Ri = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
-        if (populations[Eigen::Index(0)][Ri] < 1e-12) {
-            recovered_given = false;
-            break;
-        }
-    }
+        ScalarType global_support_max = get_global_support_max(dt);
+        ScalarType start              = transitions.get_last_time() - global_support_max;
+        int start_index               = std::ceil(start / dt);
 
-    // We check which Initialization method we want to use.
-    if (!(total_confirmed_cases == CustomIndexArray<ScalarType, AgeGroup>()) &&
-        std::all_of(total_confirmed_cases.begin(), total_confirmed_cases.end(), [](ScalarType x) {
-            return x > 1e-12;
-        })) {
-        m_initialization_method = 1;
+        TimeSeries<ScalarType> init_flows = transitions;
+
+        TimeSeries<ScalarType> extended_init_flows(transitions.get_num_elements());
+        for (int i = start_index; i < transitions.get_time(0); i++) {
+            extended_init_flows.add_time_point(i * dt,
+                                               Eigen::VectorX<ScalarType>::Zero(transitions.get_num_elements()));
+
+            if (i == -1) {
+                for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+                    // int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
+                    // int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
+                    // int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
+                    // int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
+                    // int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
+                    // int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
+                    // // int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
+                    // int Di = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+
+                    // int StEi =
+                    //     get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
+                    // int EtINSi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::ExposedToInfectedNoSymptoms), group);
+                    // int INStISyi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedNoSymptomsToInfectedSymptoms), group);
+                    // int INStRi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedNoSymptomsToRecovered), group);
+                    // int ISytISevi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedSymptomsToInfectedSevere), group);
+                    // int ISytRi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedSymptomsToRecovered), group);
+                    // int ISevtICri = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
+                    // int ISevtRi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedSevereToInfectedCritical), group);
+                    // int ICritDi =
+                    //     get_transition_flat_index(Eigen::Index(InfectionTransition::InfectedCriticalToDead), group);
+                    // int ICritRi = get_transition_flat_index(
+                    //     Eigen::Index(InfectionTransition::InfectedCriticalToRecovered), group);
+
+                    // extended_init_flows.get_last_value()[StEi] += m_compartments_init[Ei];
+                    // extended_init_flows.get_last_value()[EtINSi] += m_compartments_init[INSi];
+                    // extended_init_flows.get_last_value()[INStISyi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedNoSymptomsToInfectedSymptoms] *
+                    //     m_compartments_init[ISyi];
+                    // extended_init_flows.get_last_value()[INStRi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedNoSymptomsToRecovered] *
+                    //     m_compartments_init[ISyi];
+                    // extended_init_flows.get_last_value()[ISytISevi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedSymptomsToInfectedSevere] *
+                    //     m_compartments_init[ISevi];
+                    // extended_init_flows.get_last_value()[ISytRi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedSymptomsToRecovered] *
+                    //     m_compartments_init[ISevi];
+                    // extended_init_flows.get_last_value()[ISevtICri] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedSevereToInfectedCritical] *
+                    //     m_compartments_init[ICri];
+                    // extended_init_flows.get_last_value()[ISevtRi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedSevereToRecovered] *
+                    //     m_compartments_init[ICri];
+                    // extended_init_flows.get_last_value()[ICritDi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedCriticalToDead] *
+                    //     m_compartments_init[Di];
+                    // extended_init_flows.get_last_value()[ICritRi] +=
+                    //     parameters.get<TransitionProbabilities>()[group][(
+                    //         Eigen::Index)InfectionTransition::InfectedCriticalToRecovered] *
+                    //     m_compartments_init[ICri];
+                }
+            }
+        }
+
+        std::cout << "extended flow intermediate time: " << extended_init_flows.get_last_time() << std::endl;
+        for (int i = 0; i < transitions.get_num_time_points(); i++) {
+            extended_init_flows.add_time_point(transitions.get_time(i), transitions.get_value(i));
+        }
+
+        std::cout << "extended flow last time: " << extended_init_flows.get_last_time() << std::endl;
+
+        // Reset populations so that possible entries are deleted and updated by init_compartments.
+        populations = TimeSeries<ScalarType>(Eigen::Index(InfectionState::Count) * m_num_agegroups);
+        populations.add_time_point(transitions.get_time(0) - dt, m_compartments_init);
+        populations.print_table();
+        TimeSeries<ScalarType> transitions_temp(transitions.get_num_elements());
+        size_t i = 0;
+        while (populations.get_last_time() < extended_init_flows.get_last_time() - 1e-10) {
+            // std::cout << "pop last time: " << populations.get_last_time() << std::endl;
+            // transitions = TimeSeries<ScalarType>(
+            //     populations.get_last_time(), extended_init_flows.get_value(start_index + populations.get_last_time()));
+            populations.add_time_point(
+                populations.get_last_time() + dt,
+                Eigen::VectorX<ScalarType>::Zero(((size_t)InfectionState::Count * m_num_agegroups)));
+            transitions_temp.add_time_point(i * dt, transitions.get_value(0));
+            transitions = transitions_temp;
+            if (i == 0 || i == 0) {
+                transitions.print_table();
+            }
+
+            // Compute compartments apart from S.
+            update_compartments();
+            i++;
+        }
+        transitions = extended_init_flows;
+
+        // Compute S by difference to total population.
         for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
             int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
             int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
@@ -399,69 +496,54 @@ void Model::initial_compute_compartments(ScalarType dt)
             int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
             int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
             int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-            // The scheme of the ODE model for initialization is applied here.
-            populations[Eigen::Index(0)][Ri] = total_confirmed_cases[group] - populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] -
-                                               populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
 
-            populations[Eigen::Index(0)][Si] = m_N[group] - populations[Eigen::Index(0)][Ei] -
-                                               populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Ri] -
-                                               populations[Eigen::Index(0)][Di];
+            populations.get_last_value()[Si] = m_N[group] - populations.get_last_value()[Ei] -
+                                               populations.get_last_value()[INSi] - populations.get_last_value()[ISyi] -
+                                               populations.get_last_value()[ISevi] -
+                                               populations.get_last_value()[ICri] - populations.get_last_value()[Ri] -
+                                               populations.get_last_value()[Di];
+
+            // std::cout << "Group size: " << m_N[group] << std::endl;
+            // std::cout << "S0: " << populations.get_last_value()[Si] << std::endl;
+            // std::cout << "Remainder: "
+            //           << -(-populations.get_last_value()[Ei] - populations.get_last_value()[INSi] -
+            //                populations.get_last_value()[ISyi] - populations.get_last_value()[ISevi] -
+            //                populations.get_last_value()[ICri] - populations.get_last_value()[Ri] -
+            //                populations.get_last_value()[Di])
+            //           << std::endl;
         }
     }
 
-    else if (susceptibles_given) {
-        // Take initialized value for Susceptibles if value can't be calculated via the standard formula.
-        m_initialization_method = 2;
-        // R; need an initial value for R, therefore do not calculate via compute_recovered()
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-            int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
-            int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
-            int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
-            int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
-            int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
-            int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
-            int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
-            int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-            populations[Eigen::Index(0)][Ri] = m_N[group] - populations[Eigen::Index(0)][Si] -
-                                               populations[Eigen::Index(0)][Ei] - populations[Eigen::Index(0)][INSi] -
-                                               populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Di];
-        }
-    }
-    else if (recovered_given) {
-        // If value for Recovered is initialized and standard method is not applicable (i.e., no value for total infections
-        // or Susceptibles given directly), calculate Susceptibles via other compartments.
-        m_initialization_method = 3;
-        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
-            int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
-            int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
-            int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
-            int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
-            int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
-            int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
-            int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
-            int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
-            populations[Eigen::Index(0)][Si] = m_N[group] - populations[Eigen::Index(0)][Ei] -
-                                               populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
-                                               populations[Eigen::Index(0)][ISevi] -
-                                               populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Ri] -
-                                               populations[Eigen::Index(0)][Di];
-        }
-    }
     else {
-        // Compute Susceptibles at t0 and m_forceofinfection at time t0-dt as initial values for discretization scheme.
-        // Use m_forceofinfection at t0-dt to be consistent with further calculations of S (see compute_susceptibles()),
-        // where also the value of m_forceofinfection for the previous timestep is used.
-        compute_forceofinfection(dt, true);
-        if (std::all_of(m_forceofinfection.begin(), m_forceofinfection.end(), [](ScalarType x) {
+        // The initialization method only affects the Susceptible and Recovered compartments.
+        // It is possible to calculate the sizes of the other compartments in advance because only the initial values of
+        // the transitions are used.
+        initial_compute_compartments_infection(dt);
+
+        // We store in two Booleans if there are Susceptibles or Recovered given for every age group.
+        bool susceptibles_given = true;
+        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+            int Si = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
+            if (populations[Eigen::Index(0)][Si] < 1e-12) {
+                susceptibles_given = false;
+                break;
+            }
+        }
+        bool recovered_given = true;
+        for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+            int Ri = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
+            if (populations[Eigen::Index(0)][Ri] < 1e-12) {
+                recovered_given = false;
+                break;
+            }
+        }
+
+        // We check which Initialization method we want to use.
+        if (!(total_confirmed_cases == CustomIndexArray<ScalarType, AgeGroup>()) &&
+            std::all_of(total_confirmed_cases.begin(), total_confirmed_cases.end(), [](ScalarType x) {
                 return x > 1e-12;
             })) {
-            m_initialization_method = 4;
+            m_initialization_method = 1;
             for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
                 int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
                 int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
@@ -471,18 +553,33 @@ void Model::initial_compute_compartments(ScalarType dt)
                 int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
                 int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
                 int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+                // The scheme of the ODE model for initialization is applied here.
+                populations[Eigen::Index(0)][Ri] = total_confirmed_cases[group] - populations[Eigen::Index(0)][ISyi] -
+                                                   populations[Eigen::Index(0)][ISevi] -
+                                                   populations[Eigen::Index(0)][ICri] -
+                                                   populations[Eigen::Index(0)][Eigen::Index(InfectionState::Dead)];
 
-                int StEi = get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
-                /* Attention: With an inappropriate combination of parameters and initial conditions, it can happen that S 
-                becomes greater than N when this formula is used. In this case, at least one compartment is initialized 
-                with a number less than zero, so that a log_error is thrown.
-                However, this initialization method is consistent with the numerical solver of the model equations,
-                so it may sometimes make sense to use this method. */
                 populations[Eigen::Index(0)][Si] =
-                    transitions.get_last_value()[StEi] / (dt * m_forceofinfection[group]);
+                    m_N[group] - populations[Eigen::Index(0)][Ei] - populations[Eigen::Index(0)][INSi] -
+                    populations[Eigen::Index(0)][ISyi] - populations[Eigen::Index(0)][ISevi] -
+                    populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Ri] -
+                    populations[Eigen::Index(0)][Di];
+            }
+        }
 
-                // Recovered; calculated as the difference between the total population and the sum of the other
-                // compartment sizes.
+        else if (susceptibles_given) {
+            // Take initialized value for Susceptibles if value can't be calculated via the standard formula.
+            m_initialization_method = 2;
+            // R; need an initial value for R, therefore do not calculate via compute_recovered()
+            for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+                int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
+                int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
+                int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
+                int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
+                int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
+                int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
+                int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
+                int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
                 populations[Eigen::Index(0)][Ri] =
                     m_N[group] - populations[Eigen::Index(0)][Si] - populations[Eigen::Index(0)][Ei] -
                     populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
@@ -490,11 +587,72 @@ void Model::initial_compute_compartments(ScalarType dt)
                     populations[Eigen::Index(0)][Di];
             }
         }
+        else if (recovered_given) {
+            // If value for Recovered is initialized and standard method is not applicable (i.e., no value for total infections
+            // or Susceptibles given directly), calculate Susceptibles via other compartments.
+            m_initialization_method = 3;
+            for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+                int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
+                int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
+                int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
+                int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
+                int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
+                int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
+                int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
+                int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+                populations[Eigen::Index(0)][Si] =
+                    m_N[group] - populations[Eigen::Index(0)][Ei] - populations[Eigen::Index(0)][INSi] -
+                    populations[Eigen::Index(0)][ISyi] - populations[Eigen::Index(0)][ISevi] -
+                    populations[Eigen::Index(0)][ICri] - populations[Eigen::Index(0)][Ri] -
+                    populations[Eigen::Index(0)][Di];
+            }
+        }
         else {
-            m_initialization_method = -1;
-            log_error("Error occured while initializing compartments: Force of infection is evaluated to 0 and neither "
-                      "Susceptibles nor Recovered or total confirmed cases for time 0 were set. One of them should be "
-                      "larger 0.");
+            // Compute Susceptibles at t0 and m_forceofinfection at time t0-dt as initial values for discretization scheme.
+            // Use m_forceofinfection at t0-dt to be consistent with further calculations of S (see compute_susceptibles()),
+            // where also the value of m_forceofinfection for the previous timestep is used.
+            compute_forceofinfection(dt, true);
+            if (std::all_of(m_forceofinfection.begin(), m_forceofinfection.end(), [](ScalarType x) {
+                    return x > 1e-12;
+                })) {
+                m_initialization_method = 4;
+                for (AgeGroup group = AgeGroup(0); group < AgeGroup(m_num_agegroups); ++group) {
+                    int Si    = get_state_flat_index(Eigen::Index(InfectionState::Susceptible), group);
+                    int Ei    = get_state_flat_index(Eigen::Index(InfectionState::Exposed), group);
+                    int INSi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedNoSymptoms), group);
+                    int ISyi  = get_state_flat_index(Eigen::Index(InfectionState::InfectedSymptoms), group);
+                    int ISevi = get_state_flat_index(Eigen::Index(InfectionState::InfectedSevere), group);
+                    int ICri  = get_state_flat_index(Eigen::Index(InfectionState::InfectedCritical), group);
+                    int Ri    = get_state_flat_index(Eigen::Index(InfectionState::Recovered), group);
+                    int Di    = get_state_flat_index(Eigen::Index(InfectionState::Dead), group);
+
+                    int StEi =
+                        get_transition_flat_index(Eigen::Index(InfectionTransition::SusceptibleToExposed), group);
+                    /* Attention: With an inappropriate combination of parameters and initial conditions, it can happen that S 
+                becomes greater than N when this formula is used. In this case, at least one compartment is initialized 
+                with a number less than zero, so that a log_error is thrown.
+                However, this initialization method is consistent with the numerical solver of the model equations,
+                so it may sometimes make sense to use this method. */
+                    populations[Eigen::Index(0)][Si] =
+                        transitions.get_last_value()[StEi] / (dt * m_forceofinfection[group]);
+
+                    // Recovered; calculated as the difference between the total population and the sum of the other
+                    // compartment sizes.
+                    populations[Eigen::Index(0)][Ri] =
+                        m_N[group] - populations[Eigen::Index(0)][Si] - populations[Eigen::Index(0)][Ei] -
+                        populations[Eigen::Index(0)][INSi] - populations[Eigen::Index(0)][ISyi] -
+                        populations[Eigen::Index(0)][ISevi] - populations[Eigen::Index(0)][ICri] -
+                        populations[Eigen::Index(0)][Di];
+                }
+            }
+            else {
+                m_initialization_method = -1;
+                log_error("Error occured while initializing compartments: Force of infection is evaluated to 0 and "
+                          "neither "
+                          "Susceptibles nor Recovered or total confirmed cases for time 0 were set. One of them "
+                          "should be "
+                          "larger 0.");
+            }
         }
     }
     // Verify that the initialization produces an appropriate result.
@@ -508,9 +666,9 @@ void Model::initial_compute_compartments(ScalarType dt)
             int idx = get_state_flat_index(i, group);
             if (populations[0][idx] < 0) {
                 m_initialization_method = -2;
-                log_error(
-                    "Initialization failed. One or more initial values for populations are less than zero. It may "
-                    "help to use a different method for initialization.");
+                log_error("Initialization failed. One or more initial values for populations are less than "
+                          "zero. It may "
+                          "help to use a different method for initialization.");
             }
         }
     }

@@ -61,13 +61,17 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
             for counter, ode_index in enumerate(ode_secir_indices):
                 axs[int(counter/2), counter % 2].plot(dates,
                                                       total[:, ode_index], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
+            print("total pop: ", total[0, :].sum())
+            print("S0: ", total[0, 1])
 
         # LCT and IDE
         elif file == 1 or file == 2:
-            print(labels[file])
             for i in range(num_plots):
                 axs[int(i/2), i % 2].plot(dates,
                                           total[:, i], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
+
+            print("total pop: ", total[0, :].sum())
+            print("S0: ", total[0, 1])
 
         h5file.close()
 
@@ -77,7 +81,8 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
         df = pd.read_csv(result_dir + f"comps.csv")
         for i in range(num_plots):
             values = df.iloc[:, 1 + i]
-            for age in range(num_age_groups):
+            # Start with index 1 as first age group is already contained in values
+            for age in range(1, num_age_groups):
                 values += df.iloc[:, 1 + i + age * len(secir_dict)]
             axs[int(i/2), i % 2].plot(df["Time"], values, label=labels[3],
                                       color=model_colors[3], linestyle=linestyles[3], linewidth=linewidth)
@@ -86,7 +91,8 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
             df = pd.read_csv(result_dir + f"ABM_p{percentiles[0]}.csv")
             for i in range(num_plots):
                 values = df.iloc[:, 1 + i]
-                for age in range(num_age_groups):
+                # Start with index 1 as first age group is already contained in values
+                for age in range(1, num_age_groups):
                     values += df.iloc[:, 1 +
                                       i + age * len(secir_dict)]
                 axs[int(i/2), i % 2].plot(df["Time"] +
@@ -98,33 +104,37 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
             for i in range(num_plots):
                 values_low = df_low.iloc[:, 1 + i]
                 values_high = df_high.iloc[:, 1 + i]
-                for age in range(num_age_groups):
+                # Start with index 1 as first age group is already contained in values_low and values_high
+                for age in range(1, num_age_groups):
                     values_low += df_low.iloc[:, 1 +
                                               i + age * len(secir_dict)]
                     values_high += df_high.iloc[:, 1 +
                                                 i + age * len(secir_dict)]
-                # ax.plot(df_low["Time"] + start_time, values_low, color=colors['Teal'], alpha=0.5)
-                # ax.plot(df_high["Time"]+ start_time, values_high, color=colors['Teal'], alpha=0.5)
+                axs[int(i/2), i % 2].plot(df_low["Time"] + start_time, values_low,
+                                          color=colors['Teal'], alpha=0.3)
+                axs[int(i/2), i % 2].plot(df_high["Time"] + start_time,
+                                          values_high, color=colors['Teal'], alpha=0.3)
                 axs[int(i/2), i % 2].fill_between(df_low["Time"] + start_time, values_low,
-                                                  values_high, alpha=0.3, color=colors['Teal'])
+                                                  values_high, alpha=0.3, color=model_colors[3])
             del percentiles[0]
             del percentiles[-1]
 
     # Define some characteristics of the plot
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
-        axs[int(i/2), i % 2].set_xlim(left=0, right=dates[-1])
-        axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.5)
+        axs[int(i/2), i % 2].set_xlim(left=14, right=35)
+        axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.3)
         axs[int(i/2), i % 2].ticklabel_format(axis='y',
                                               style='sci', scilimits=(0, 0))
+        axs[int(i/2), i % 2].tick_params(labelsize=8)
 
-    fig.legend(labels, bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
-               fancybox=False, shadow=False, ncol=1)
+    fig.legend(labels, loc="lower right",
+               fancybox=False, shadow=False, ncol=2, fontsize=12)  # bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
 
-    fig.supxlabel('Simulation time [days]')
-    fig.supylabel('Number of individuals')
-    # plt.subplots_adjust(left=None, bottom=None, right=None,
-    #                     top=None, wspace=None, hspace=0.6)
+    fig.supxlabel('Simulation time [days]', fontsize=12)
+    fig.supylabel('Number of individuals', fontsize=12)
+    plt.subplots_adjust(left=None, bottom=0.2, right=None,
+                        top=None, wspace=None, hspace=0.3)
 
     # plt.tight_layout()
 
@@ -246,14 +256,14 @@ def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_
     if (plot_init):
         df = pd.read_csv(file + f"comps.csv")
         values = df.iloc[:, 1 + compartment_index]
-        for age in range(num_age_groups):
+        for age in range(1, num_age_groups):
             values += df.iloc[:, 1 + compartment_index + age * num_comps]
         ax.plot(df["Time"], values)
     while len(percentiles) > 0:
         if len(percentiles) == 1:
             df = pd.read_csv(file + f"ABM_p{percentiles[0]}.csv")
             values = df.iloc[:, 1 + compartment_index]
-            for age in range(num_age_groups):
+            for age in range(1, num_age_groups):
                 values += df.iloc[:, 1 + compartment_index + age * num_comps]
             ax.plot(df["Time"] + start_time, values, color=colors['Teal'])
             del percentiles[0]
@@ -262,7 +272,7 @@ def plot_ABM_results_one_compartments(file, compartment_index, percentiles, num_
             df_high = pd.read_csv(file + f"ABM_p{percentiles[-1]}.csv")
             values_low = df_low.iloc[:, 1 + compartment_index]
             values_high = df_high.iloc[:, 1 + compartment_index]
-            for age in range(num_age_groups):
+            for age in range(1, num_age_groups):
                 values_low += df_low.iloc[:, 1 +
                                           compartment_index + age * num_comps]
                 values_high += df_high.iloc[:, 1 +
@@ -288,7 +298,7 @@ def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
     df = pd.read_csv(file + f"comps_{seeds}.csv")
     for comp in range(1, num_comps):
         values = df.iloc[:, 1 + comp]
-        for age in range(num_age_groups):
+        for age in range(1, num_age_groups):
             values += df.iloc[:, 1 + comp + age * num_comps]
         ax.plot(df["Time"], values, label=secir_dict[comp])
     ax.set_ylabel(f"Individuals [#]")
@@ -300,15 +310,17 @@ def plot_single_ABM_run(file, seeds, num_age_groups, num_comps, save_dir=""):
 if __name__ == '__main__':
 
     exponential_scenario = True
-    set_fontsize()
+    # set_fontsize()
+
+    max_value = 0.3
 
     if exponential_scenario:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
+            __file__), "../../..", f"simulation_results/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "plots/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
+            __file__),  f"plots/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
 
     else:
         # Path where simulation results are stored.
@@ -316,10 +328,10 @@ if __name__ == '__main__':
             __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/different_dists/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "plots/compare_abm_ide_lct_ode/different_dists/")
+            __file__),  "plots/compare_abm_ide_lct_ode/different_dists/")
 
-    percentiles = ["50"]
-    # percentiles = ["05", "50", "95"]
+    # percentiles = ["50"]
+    percentiles = ["05", "50", "95"]
     num_age_groups = 6
     plot_init = False
     plot_model_comparison_all_compartments(

@@ -64,8 +64,9 @@ public:
     *   should be used for initialization, for every AgeGroup.
     */
     Model(TimeSeries<ScalarType>&& transitions_init, CustomIndexArray<ScalarType, AgeGroup> N_init,
-          CustomIndexArray<ScalarType, AgeGroup> deaths_init, size_t num_agegroups,
-          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>());
+          CustomIndexArray<ScalarType, AgeGroup> deaths_init, const size_t num_agegroups,
+          CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init = CustomIndexArray<ScalarType, AgeGroup>(),
+          Eigen::VectorX<ScalarType> compartments_init = Eigen::VectorX<ScalarType>(), ScalarType time_init = 0.);
 
     // ---- Additional functionality such as constraint checking, setters and getters, etc. ----
     /**
@@ -422,6 +423,8 @@ private:
         m_transitiondistributions_in_forceofinfection; ///< CustomIndexArray
     // of Type AgeGroup containing a Vector containing the weighted TransitionDistributions for all necessary time
     // points in the force of infection term.
+    Eigen::VectorX<ScalarType> m_compartments_init;
+    ScalarType m_time_init;
 
     // ---- Friend classes/functions. ----
     // In the Simulation class, the actual simulation is performed which is why it needs access to the here

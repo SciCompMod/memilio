@@ -159,7 +159,7 @@ IOResult<UncertainContactMatrix<ScalarType>> get_contact_matrix(std::string cont
 * results not being saved. 
 * @returns Any io errors that happen or the simulation results for the compartments.
 */
-IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compartments,
+IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compartments, Vector init_compartments_ide,
                             std::vector<ScalarType> transmissionProbabilityOnContact, std::string contact_data_dir,
                             bool exponential_scenario = false, std::string save_dir = "")
 {
@@ -177,11 +177,12 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     // Set these values to zero since they are set according to RKI data below.
     CustomIndexArray<ScalarType, AgeGroup> deaths_init =
         CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
-    // CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init =
-    //     CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
+    CustomIndexArray<ScalarType, AgeGroup> total_confirmed_cases_init =
+        CustomIndexArray<ScalarType, AgeGroup>(AgeGroup(num_age_groups), 0.);
 
     // Initialize with empty series for flows as we will initialize based on RKI data later on.
-    isecir::Model model_ide(std::move(init_flows), total_population_init, deaths_init, num_age_groups);
+    isecir::Model model_ide(std::move(init_flows), total_population_init, deaths_init, num_age_groups,
+                            total_confirmed_cases_init, init_compartments_ide);
 
     model_ide.populations.get_value(0) = init_compartments;
 
@@ -331,20 +332,20 @@ IOResult<void> simulate_ide(TimeSeries<ScalarType> init_flows, Vector init_compa
     // Extend the transitions of model_ide such that there are enough time points before the simulation point.
     // For this, we add time points with zeros as values for the flows for the remaining time points that are not
     // included in init_flows.
-    ScalarType global_support_max = model_ide.get_global_support_max(dt);
+    // ScalarType global_support_max = model_ide.get_global_support_max(dt);
 
-    ScalarType start = model_ide.transitions.get_last_time() - global_support_max;
-    int start_index  = std::ceil(start / dt);
+    // ScalarType start = model_ide.transitions.get_last_time() - global_support_max;
+    // int start_index  = std::ceil(start / dt);
 
-    TimeSeries<ScalarType> extended_init_flows(model_ide.transitions.get_num_elements());
-    for (int i = start_index; i < model_ide.transitions.get_time(0); i++) {
-        extended_init_flows.add_time_point(i * dt, Vector::Zero(model_ide.transitions.get_num_elements()));
-    }
-    for (int i = 0; i < model_ide.transitions.get_num_time_points(); i++) {
-        extended_init_flows.add_time_point(model_ide.transitions.get_time(i), model_ide.transitions.get_value(i));
-    }
+    // TimeSeries<ScalarType> extended_init_flows(model_ide.transitions.get_num_elements());
+    // for (int i = start_index; i < model_ide.transitions.get_time(0); i++) {
+    //     extended_init_flows.add_time_point(i * dt, Vector::Zero(model_ide.transitions.get_num_elements()));
+    // }
+    // for (int i = 0; i < model_ide.transitions.get_num_time_points(); i++) {
+    //     extended_init_flows.add_time_point(model_ide.transitions.get_time(i), model_ide.transitions.get_value(i));
+    // }
 
-    model_ide.transitions = extended_init_flows;
+    // model_ide.transitions = extended_init_flows;
 
     model_ide.check_constraints(dt);
 
@@ -813,6 +814,68 @@ mio::TimeSeries<ScalarType> get_abm_flows_results(
         // Time in results time series is given in days
         result.add_time_point(t.days(), flows);
         step_size = mio::abm::hours(1);
+    }
+    return result;
+}
+
+mio::TimeSeries<ScalarType> get_abm_flows_results_alternative(
+    mio::abm::Model& model,
+    mio::History<mio::DataWriterToMemory, ABMLoggers::LogTimePoint, ABMLoggers::LogExposureRate>& history)
+{
+    mio::TimeSeries<ScalarType> result(static_cast<size_t>(mio::isecir::InfectionTransition::Count) *
+                                       params::num_age_groups);
+    auto& tps      = std::get<0>(history.get_log());
+    auto tmax      = tps[tps.size() - 1];
+    auto t0        = tps[0];
+    auto t         = t0;
+    auto step_size = mio::abm::hours(1);
+
+    while (t <= tmax) {
+        // std::cout << t.days() << "\n";
+
+        Eigen::VectorXd flows = Eigen::VectorXd::Zero(static_cast<size_t>(mio::isecir::InfectionTransition::Count) *
+                                                      params::num_age_groups);
+
+        for (auto& person : model.get_persons()) {
+            size_t age             = person.get_age().get();
+            auto initial_inf_state = person.get_infection_state(t);
+            auto final_inf_state   = person.get_infection_state(t + step_size - abm::seconds(1));
+            unused(initial_inf_state);
+            unused(final_inf_state);
+
+            // Check if at least one transition occurred in considered time step.
+            if (person.get_infection_state(t) != person.get_infection_state(t + step_size - abm::seconds(1))) {
+
+                auto infection_course = person.get_infection().get_infection_course();
+
+                // Get infection states that are passed through within considered time step.
+                std::vector<abm::InfectionState> infection_states = {};
+                for (auto infection_pair : infection_course) {
+                    if (std::get<0>(infection_pair) >= t && std::get<0>(infection_pair) < t + step_size) {
+                        infection_states.push_back(std::get<1>(infection_pair));
+                    }
+                }
+
+                for (size_t i = 0; i < infection_states.size() - 1; i++) {
+                    auto current_state = infection_states[i];
+                    auto new_state     = infection_states[i + 1];
+
+                    size_t flow_index = get_flow_index(current_state, new_state);
+
+                    // Check if flow_index is valid.
+                    if (flow_index == static_cast<size_t>(mio::isecir::InfectionTransition::Count) + 1) {
+                        mio::log_error("No valid infection state transition from {} to {}",
+                                       static_cast<size_t>(current_state), static_cast<size_t>(new_state));
+                    }
+
+                    flows[age * static_cast<size_t>(mio::isecir::InfectionTransition::Count) + flow_index] += 1;
+                }
+            }
+        }
+
+        t += step_size;
+        // Time in results time series is given in days
+        result.add_time_point(t.days(), flows);
     }
     return result;
 }
@@ -1391,7 +1454,7 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
         BOOST_OUTCOME_TRY(compartment_result.export_csv(save_dir + "comps.csv"));
         // Save flows
         std::cout << "Computing result flows...\n";
-        flow_result = get_abm_flows_results(sim.get_model(), history);
+        flow_result = get_abm_flows_results_alternative(sim.get_model(), history);
         std::cout << "Exporting flows...\n";
         BOOST_OUTCOME_TRY(flow_result.export_csv(save_dir + "flows.csv"));
         // Save model state
@@ -1496,30 +1559,32 @@ int main()
                                     infection_distribution, true, save_dir, false, rng, params::t0, one_location);
 
     // Simulate ABM ensemble run.
-    size_t num_runs = 10;
+    size_t num_runs = 1;
     auto result_abm =
         abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax, contact_data_dir,
                          infection_distribution, save_dir, true, false, params::t0 + params::init_tmax, one_location);
 
     // Get results from initial ABM run.
     // Use compartments at time init_tmax from ABM simulation as initial values for other models to make results comparable.
-    auto init_compartments = std::get<0>(init_result.value())[0].get_last_value();
+    auto init_compartments_ide = std::get<0>(init_result.value())[0].get_value(0);
+    auto init_compartments     = std::get<0>(init_result.value())[0].get_last_value();
     // TimeSeries of flows.
     auto init_flows = std::get<0>(init_result.value())[1];
     // Transmission rates.
     std::vector<double> transmissionProbabilityOnContact = std::get<1>(init_result.value());
+    // std::vector<double>::iterator max_transmission_prob =
+    //     std::max_element(transmissionProbabilityOnContact.begin(), transmissionProbabilityOnContact.end());
+    // ScalarType target_max_prob         = 0.3;
+    // ScalarType scale_transmission_prob = target_max_prob / *max_transmission_prob;
+    // std::cout << "Scale transmisssion prob: " << scale_transmission_prob << std::endl;
+    // for (size_t i = 0; i < transmissionProbabilityOnContact.size(); i++) {
+    //     transmissionProbabilityOnContact[i] *= scale_transmission_prob;
+    // }
 
     // Simulate IDE.
-    // Interpolate flow timeseries so that time points are equidistant (necessary for IDE simulation).
-    std::vector<ScalarType> time_points_init(std::round(params::init_tmax / params::dt) + 1);
-    for (int i = 0; i < (int)size(time_points_init); i++) {
-        time_points_init[i] = i * params::dt;
-    }
-    auto init_flows_interpolated = mio::interpolate_simulation_result(init_flows, time_points_init);
-
     mio::set_log_level(LogLevel::info);
-    auto result_ide = simulate_ide(init_flows_interpolated, init_compartments, transmissionProbabilityOnContact,
-                                   contact_data_dir, exponential_scenario, save_dir);
+    auto result_ide = simulate_ide(init_flows, init_compartments, init_compartments_ide,
+                                   transmissionProbabilityOnContact, contact_data_dir, exponential_scenario, save_dir);
 
     // Simulate LCT.
     auto result_lct = simulate_lct<exponential_scenario>(init_compartments, transmissionProbabilityOnContact,
