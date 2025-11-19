@@ -305,12 +305,12 @@ private:
 public:
     /**
      * deserialize an object of this class.
-     * @see mio:eserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<Parameters> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP> : eserialize(io));
+        BOOST_OUTCOME_TRY(auto&& base, ParametersBase<FP>::deserialize(io));
         return success(Parameters(std::move(base)));
     }
 
