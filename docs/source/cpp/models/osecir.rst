@@ -6,10 +6,10 @@ The model is particularly suited for pathogens with pre- or asymptomatic infecti
 symptoms are possible. The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases
 and, mostly, early epidemic phases. 
 
-*   A generalization of the model that allows for Gamma or Erlang distributed stay times is the :doc:`LCT-SECIR model <cpp/lsecir>`.
-*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <cpp/isecir>`.
-*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <cpp/osecirvvs>`.
-*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <cpp/osecirts>`.
+*   A generalization of the model that allows for Gamma or Erlang distributed stay times is the :doc:`LCT-SECIR model <lsecir>`.
+*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <isecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
 
 The infection states and the transitions (also see next two sections) are visualized in the following graph.
 

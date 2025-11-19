@@ -7,9 +7,9 @@ MEmilio code. The model is not suited for pathogens with pre-symptomatic infecti
 The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases
 and, mostly, early epidemic phases. 
 
-*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <cpp/osecir>`.
-*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <cpp/osecirvvs>`.
-*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <cpp/osecirts>`.
+*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <osecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
 
 
 The infection states and the transitions are visualized in the following graph.

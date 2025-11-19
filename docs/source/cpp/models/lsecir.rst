@@ -7,9 +7,9 @@ The LCT-SECIR module models and simulates an epidemic using an ODE-based SECIR-t
 Throught the LCT, exponentially distributed stay times are replaced by Gamma or Erlang distributed stay times by defining the compartments through the use of subcompartments. 
 The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases and, mostly, early epidemic phases.
 
-*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <cpp/isecir>`.
-*   A generalization of the model in the application sense that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <cpp/osecirvvs>`. However, this model does not allow for arbitrary stay time distributions.
-*   A generalization of the model in the application sense that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <cpp/osecirts>`. However, this model does not allow for arbitrary stay time distributions.
+*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <isecir>`.
+*   A generalization of the model in the application sense that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`. However, this model does not allow for arbitrary stay time distributions.
+*   A generalization of the model in the application sense that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`. However, this model does not allow for arbitrary stay time distributions.
 
 Below is a visualization of the infection states and transitions without a stratification according to sociodemographic groups.
 

@@ -46,9 +46,9 @@ Standard models based on :doc:`ordinary differential equations (ODE) <cpp/ode>` 
 
 For spatio-temporal dynamics, :doc:`graph-based metapopulation models <cpp/graph_metapop>`, which leverage :doc:`ODE-based models<cpp/ode>`, are a good compromise between level of detail and computational effort. They allow for the incorporation of mobility patterns and spatial heterogeneity, making them suitable for studying the spread of diseases across different regions. They can also be used to, e.g., consider different intervention strategies in different regions or to study the effect of mobility restrictions. To study the effect of local interventions, we provide the option to implement pre-defined and dynamic NPIs which automatically enforce interventions on a local and regional level when an incidence threshold criteria by the user is exceeded. For details, see, e.g.,
 
-*   :doc:`ODE-based SECIR model <cpp/osecir#nonpharmaceutical-interventions>` for early-phase epidemics or full immunity cases
-*   :doc:`ODE-based SECIRVVS model <cpp/osecirvvs#nonpharmaceutical-interventions>` for early- or mid-phase epidemics with three immunity layers
-*   :doc:`ODE-based SECIRTS model <cpp/osecirts#nonpharmaceutical-interventions>` for mid- or late-phase epidemics with three immunity layers and waning immunity
+*   :doc:`ODE-based SECIR model <cpp/models/osecir#nonpharmaceutical-interventions>` for early-phase epidemics or full immunity cases
+*   :doc:`ODE-based SECIRVVS model <cpp/models/osecirvvs#nonpharmaceutical-interventions>` for early- or mid-phase epidemics with three immunity layers
+*   :doc:`ODE-based SECIRTS model <cpp/models/osecirts#nonpharmaceutical-interventions>` for mid- or late-phase epidemics with three immunity layers and waning immunity
 
 For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation_model_usage#nonpharmaceutical-interventions>`.
 
