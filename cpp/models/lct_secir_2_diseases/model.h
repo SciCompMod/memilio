@@ -400,9 +400,11 @@ private:
         // Second Infection:
         // Outflow from Recovered_1a and Recovered_1b (people getting infected for the second time).
         double temp_Ra = dydt[Ri_a];
-        interact<0, 0>(pop, y, t, dydt, &part_a, &part_b, 1); // Outflow from Recovered_1a is only affected by b.
+        // Outflow from Recovered_1a is only affected by b.
+        interact<Group, 0>(pop, y, t, dydt, &part_a, &part_b, 1);
         double temp_Rb = dydt[Ri_b];
-        interact<0, 0>(pop, y, t, dydt, &part_a, &part_b, 0); // Outflow from Recovered_1b is only affected by a.
+        // Outflow from Recovered_1b is only affected by a.
+        interact<Group, 0>(pop, y, t, dydt, &part_a, &part_b, 0);
 
         // Calculate derivative of the Exposed_2i compartments:
         // Exposed_2a:
@@ -588,6 +590,7 @@ private:
         FP InfectedSymptoms_Group2_b   = 0;
         const auto& params             = this->parameters;
 
+        size_t first_index_group1 = this->populations.template get_first_index_of_group<Group1>();
         size_t first_index_group2 = this->populations.template get_first_index_of_group<Group2>();
 
         // Calculate sum of all subcompartments for InfectedNoSymptoms for disease a of Group2.
@@ -639,9 +642,6 @@ private:
         FP season_val         = 1 + params.template get<Seasonality<FP>>() *
                                 sin(3.141592653589793 * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5));
 
-        // Index of the first compartment (Susceptible) for the current group (Group1).
-        size_t first_index_group1 = this->populations.template get_first_index_of_group<Group1>();
-
         if (relevant_disease == 0) { // Disease a.
             // Get index for compartment Recovered_1b and calculate outflow driven by disease a.
             size_t compartment_index =
@@ -666,7 +666,7 @@ private:
                 (params.template get<RelativeTransmissionNoSymptoms_b<FP>>()[Group2] * InfectedNoSymptoms_Group2_b +
                  params.template get<RiskOfInfectionFromSymptomatic_b<FP>>()[Group2] * InfectedSymptoms_Group2_b);
         }
-        else if (relevant_disease == 2) { // Both diseases drive outflow from Susceptible compartment.
+        else if (relevant_disease == 2) { // Both diseases drive outflow from the Susceptible compartment.
             size_t compartment_index = first_index_group1;
             dydt[compartment_index] +=
                 -y[compartment_index] * div_N_Group2 * season_val *

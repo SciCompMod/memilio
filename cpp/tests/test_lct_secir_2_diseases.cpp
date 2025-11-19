@@ -341,7 +341,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
 
     ScalarType t0   = 0;
     ScalarType tmax = 5;
-    ScalarType dt   = 1;
+    ScalarType dt   = 0.1;
 
     // Initialization vector for lct2d model.
     Eigen::VectorX<ScalarType> init_lct2d = Eigen::VectorX<ScalarType>::Constant((Eigen::Index)InfState_2d::Count, 0);
@@ -351,7 +351,7 @@ TEST(TestLCTSecir2d, compareWithLCTSecir3)
 
     // Define LCT2D model.
     Model_2d model_lct2d;
-    //Set initial values
+    //Set initial values.
     for (size_t i = 0; i < LctState_2d::Count; i++) {
         model_lct2d.populations[i] = init_lct2d[i];
     }
