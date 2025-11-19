@@ -3,7 +3,15 @@ ODE-based SIR-type model
 
 The ODE-based SIR-type module models and simulates the epidemic using an ODE-based SIR-type model approach. The model is
 particularly suited for simple simulations of infectious diseases in a population and getting started with the MEmilio 
-library. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
+library. The model assumes infectiousness upon transmission and does not allow for pre-symptomatic infectious or noninfectious phases.
+The model assumes perfect immunity after recoveryIt is thus only suited for epidemic use cases
+and, mostly, early epidemic phases. 
+
+*   A generalization of the model that includes a pre-symptomatic noninfectious stage is the :doc:`ODE-SEIR model <oseir>`.
+*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <osecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
+
 In the following, we present the model in detail.
 
 The infection states and the transitions are visualized in the following image.

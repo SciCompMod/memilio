@@ -3,7 +3,14 @@ ODE-based SEIR-type model
 
 The ODE-SEIR module models and simulates the epidemic using an ODE-based SEIR-type model approach. The model
 is particularly suited for simple simulations of infectious diseases in a population and getting started with the
-MEmilio code. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
+MEmilio code. The model is not suited for pathogens with pre-symptomatic infectiousness.
+The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases
+and, mostly, early epidemic phases. 
+
+*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <osecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
+
 
 The infection states and the transitions are visualized in the following graph.
 

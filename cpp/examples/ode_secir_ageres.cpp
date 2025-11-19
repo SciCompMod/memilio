@@ -38,12 +38,6 @@ int main()
     ScalarType nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    // alpha = alpha_in; // percentage of asymptomatic cases
-    // beta  = beta_in; // risk of infection from the infected symptomatic patients
-    // rho   = rho_in; // hospitalized per infected
-    // theta = theta_in; // icu per hospitalized
-    // delta = delta_in; // deaths per ICUs
-
     mio::osecir::Model<ScalarType> model(3);
     auto nb_groups  = model.parameters.get_num_groups();
     ScalarType fact = 1.0 / (ScalarType)(size_t)nb_groups;
@@ -82,7 +76,8 @@ int main()
         params.get<mio::osecir::CriticalPerSevere<ScalarType>>()[i]                 = 0.25;
         params.get<mio::osecir::DeathsPerCritical<ScalarType>>()[i]                 = 0.3;
     }
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
