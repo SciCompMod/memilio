@@ -376,9 +376,9 @@ IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> tr
     using InfState = lsecir::InfectionState;
 
     using LctState0_4   = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[0], n_subcomps_INS[0],
-                                            n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
+                                          n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
     using LctState5_14  = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[1], n_subcomps_INS[1],
-                                            n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
+                                           n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
     using LctState15_34 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[2], n_subcomps_INS[2],
                                             n_subcomps_ISy[2], n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
     using LctState35_59 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[3], n_subcomps_INS[3],
@@ -1294,6 +1294,168 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
 }
 
 /**
+ * @brief Calculate the mean infectivity rates over time per age group and save it in csv file.
+ * @param[in] model Model from which the infectivity rates of the infected persons should be calculated.
+ * @param[in] save_dir Directory the results are saved in.
+ */
+void save_infectivity_rates(mio::abm::Model& model, std::string save_dir)
+{
+    std::vector<double> total_rates(params::num_age_groups, 0.0);
+    std::vector<double> first_half_rates(params::num_age_groups, 0.0);
+    std::vector<double> second_half_rates(params::num_age_groups, 0.0);
+    std::vector<double> first_third_rates(params::num_age_groups, 0.0);
+    std::vector<double> rest_third_rates(params::num_age_groups, 0.0);
+    std::vector<double> first_quarter_rates(params::num_age_groups, 0.0);
+    std::vector<double> rest_quarter_rates(params::num_age_groups, 0.0);
+
+    std::vector<size_t> counts_ag(params::num_age_groups, 0);
+
+    for (auto& person : model.get_persons()) {
+        if (person.get_infections().empty()) {
+            continue;
+        }
+        auto& infection  = person.get_infection();
+        size_t age_group = static_cast<size_t>(person.get_age());
+        counts_ag[age_group] += 1;
+        double hours_infected = std::get<0>(*(infection.get_infection_course().end() - 1)).hours() -
+                                std::get<0>(*infection.get_infection_course().begin()).hours();
+        auto start_tp             = std::get<0>(*infection.get_infection_course().begin());
+        auto end_tp_total         = std::get<0>(*(infection.get_infection_course().end() - 1));
+        auto end_tp_first_half    = start_tp + mio::abm::hours(int(hours_infected / 2));
+        auto end_tp_first_third   = start_tp + mio::abm::hours(int(hours_infected / 3));
+        auto end_tp_first_quarter = start_tp + mio::abm::hours(int(hours_infected / 4));
+        auto current_tp           = start_tp;
+        double rate_total         = 0.0;
+        double rate_first_half    = 0.0;
+        double rate_second_half   = 0.0;
+        double rate_first_third   = 0.0;
+        double rate_rest_third    = 0.0;
+        double rate_first_quarter = 0.0;
+        double rate_rest_quarter  = 0.0;
+        while (current_tp < end_tp_total) {
+            rate_total += infection.get_infectivity(current_tp);
+            if (current_tp < end_tp_first_half) {
+                rate_first_half += infection.get_infectivity(current_tp);
+            }
+            else {
+                rate_second_half += infection.get_infectivity(current_tp);
+            }
+            if (current_tp < end_tp_first_third) {
+                rate_first_third += infection.get_infectivity(current_tp);
+            }
+            else {
+                rate_rest_third += infection.get_infectivity(current_tp);
+            }
+            if (current_tp < end_tp_first_quarter) {
+                rate_first_quarter += infection.get_infectivity(current_tp);
+            }
+            else {
+                rate_rest_quarter += infection.get_infectivity(current_tp);
+            }
+            current_tp += mio::abm::hours(1);
+        }
+        total_rates[age_group] += rate_total / hours_infected;
+        first_half_rates[age_group] += rate_first_half / (hours_infected / 2.);
+        second_half_rates[age_group] += rate_second_half / (hours_infected / 2.);
+        first_third_rates[age_group] += rate_first_third / (hours_infected / 3.);
+        rest_third_rates[age_group] += rate_rest_third / (hours_infected - hours_infected / 3.);
+        first_quarter_rates[age_group] += rate_first_quarter / (hours_infected / 4.);
+        rest_quarter_rates[age_group] += rate_rest_quarter / (hours_infected - hours_infected / 4.);
+    }
+
+    for (size_t age = 0; age < params::num_age_groups; age++) {
+        if (counts_ag[age] == 0) {
+            counts_ag[age] = 1; // To avoid division by zero
+        }
+        total_rates[age] /= counts_ag[age];
+        first_half_rates[age] /= counts_ag[age];
+        second_half_rates[age] /= counts_ag[age];
+        first_third_rates[age] /= counts_ag[age];
+        rest_third_rates[age] /= counts_ag[age];
+        first_quarter_rates[age] /= counts_ag[age];
+        rest_quarter_rates[age] /= counts_ag[age];
+    }
+
+    std::string filename = save_dir + "infectivity_rates_total.csv";
+    auto file            = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", total_rates[age]);
+        }
+        fclose(file);
+    }
+    filename = save_dir + "infectivity_rates_first_half.csv";
+    file     = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", first_half_rates[age]);
+        }
+        fclose(file);
+    }
+    filename = save_dir + "infectivity_rates_second_half.csv";
+    file     = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", second_half_rates[age]);
+        }
+        fclose(file);
+    }
+    filename = save_dir + "infectivity_rates_first_third.csv";
+    file     = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", first_third_rates[age]);
+        }
+        fclose(file);
+    }
+    filename = save_dir + "infectivity_rates_rest_third.csv";
+    file     = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", rest_third_rates[age]);
+        }
+        fclose(file);
+    }
+    filename = save_dir + "infectivity_rates_first_quarter.csv";
+    file     = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", first_quarter_rates[age]);
+        }
+        fclose(file);
+    }
+    filename = save_dir + "infectivity_rates_rest_quarter.csv";
+    file     = fopen(filename.c_str(), "w");
+    if (file == NULL) {
+        mio::log(mio::LogLevel::warn, "Could not open file {}", filename);
+    }
+    else {
+        for (size_t age = 0; age < params::num_age_groups; age++) {
+            fprintf(file, "%.14f,", rest_quarter_rates[age]);
+        }
+        fclose(file);
+    }
+}
+
+/**
  * @brief Run one ABM simulation.
  * @param[in] exponential_scenario Specifies whether transition times are exponentially or lognormally distibuted.
  * @param[in] tmax End time of simulation.
@@ -1400,6 +1562,10 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
         std::cout << "Saving transmission rates...\n";
         transmission_rates = save_transmission_rates(history, save_dir);
         std::cout << "Saving results finished!\n";
+        // Save infectivity rates
+        std::cout << "Saving infectivity rates...\n";
+        save_infectivity_rates(sim.get_model(), save_dir);
+        std::cout << "Saving infectivity rates finished!\n";
     }
 
     std::vector simulation_results = {compartment_result, flow_result};

@@ -463,6 +463,14 @@ public:
     */
     TestResult get_test_result(TestType type) const;
 
+    /**
+     * @brief Get the infections of the Person.
+     */
+    std::vector<Infection> get_infections() const
+    {
+        return m_infections;
+    }
+
 private:
     LocationId m_location; ///< Current Location of the Person.
     LocationType m_location_type; ///< Type of the current Location.
