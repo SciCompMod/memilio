@@ -7,10 +7,10 @@ library. The model assumes infectiousness upon transmission and does not allow f
 The model assumes perfect immunity after recoveryIt is thus only suited for epidemic use cases
 and, mostly, early epidemic phases. 
 
-*   A generalization of the model that includes a pre-symptomatic noninfectious stage is the :doc:`ODE-SEIR model <cpp/oseir>`.
-*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <cpp/osecir>`.
-*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <cpp/osecirvvs>`.
-*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <cpp/osecirts>`.
+*   A generalization of the model that includes a pre-symptomatic noninfectious stage is the :doc:`ODE-SEIR model <oseir>`.
+*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <osecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
 
 In the following, we present the model in detail.
 
