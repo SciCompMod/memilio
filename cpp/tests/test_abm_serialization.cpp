@@ -112,12 +112,13 @@ TEST(TestAbmSerialization, Infection)
     viral_load["start_date"]["seconds"] = Json::Int(i++);
 
     Json::Value reference_json;
-    reference_json["infection_course"] = Json::Value(Json::arrayValue);
-    reference_json["virus_variant"]    = Json::UInt(0);
-    reference_json["viral_load"]       = viral_load;
-    reference_json["log_norm_alpha"]   = Json::Value((double)i++);
-    reference_json["log_norm_beta"]    = Json::Value((double)i++);
-    reference_json["detected"]         = Json::Value((bool)0);
+    reference_json["infection_course"]             = Json::Value(Json::arrayValue);
+    reference_json["virus_variant"]                = Json::UInt(0);
+    reference_json["viral_load"]                   = viral_load;
+    reference_json["log_norm_alpha"]               = Json::Value((double)i++);
+    reference_json["log_norm_beta"]                = Json::Value((double)i++);
+    reference_json["individual_virus_shed_factor"] = Json::Value((double)i++);
+    reference_json["detected"]                     = Json::Value((bool)0);
 
     test_json_serialization<mio::abm::Infection>(reference_json);
 }
@@ -260,6 +261,7 @@ TEST(TestAbmSerialization, Model)
     reference_json["locations"]                        = Json::Value(Json::arrayValue);
     reference_json["parameters"]                       = abm_parameters;
     reference_json["persons"]                          = Json::Value(Json::arrayValue);
+    reference_json["activeness_statuses"]              = Json::Value(Json::arrayValue);
     reference_json["rng"]["counter"]                   = Json::UInt(i++);
     reference_json["rng"]["key"]                       = Json::UInt(i++);
     reference_json["rng"]["seeds"]                     = json_uint_array({i++, i++, i++, i++, i++, i++});

@@ -896,7 +896,7 @@ FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eige
  * @return vector expression, same size as y, with migration factors per compartment.
  * @tparam Base simulation type that uses a SECIRS-type compartment model. see Simulation.
  */
-template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
 auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 {
     auto& params = sim.get_model().parameters;
@@ -943,7 +943,7 @@ auto get_migration_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::R
  * @param[in,out] migrated Vector representing the number of commuters in each state.
  * @param[in] time Current simulation time, used to determine the commuter detection period.
  */
-template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
 auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> migrated, FP time)
 {
     auto& model     = sim.get_model();

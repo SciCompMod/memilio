@@ -825,7 +825,7 @@ FP get_infections_relative(const Simulation<FP, Base>& sim, FP /*t*/, const Eige
  * @return vector expression, same size as y, with mobility factors per compartment.
  * @tparam Base simulation type that uses a secir compartment model. see Simulation.
  */
-template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
 auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Ref<const Eigen::VectorX<FP>>& y)
 
 {
@@ -866,7 +866,7 @@ auto get_mobility_factors(const Simulation<Base>& sim, FP /*t*/, const Eigen::Re
     return factors;
 }
 
-template <typename FP, class Base = mio::Simulation<Model<FP>, FP>>
+template <typename FP, class Base = mio::Simulation<FP, Model<FP>>>
 auto test_commuters(Simulation<FP, Base>& sim, Eigen::Ref<Eigen::VectorX<FP>> mobile_population, FP time)
 {
     auto& model     = sim.get_model();

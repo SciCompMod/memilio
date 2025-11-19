@@ -34,11 +34,9 @@ namespace mio
  * @tparam FP A floating point type, e.g. double.
  * @tparam M An implementation of a StochasticModel.
  */
-template <typename FP, class M>
+template <typename FP, IsStochasticModel<FP> M>
 class StochasticSimulation : public details::SimulationBase<FP, M, SdeIntegrator<FP>>
 {
-    static_assert(is_stochastic_model<FP, M>::value, "Template parameter must be a stochastic model.");
-
 public:
     using Base  = details::SimulationBase<FP, M, SdeIntegrator<FP>>;
     using Model = M;
