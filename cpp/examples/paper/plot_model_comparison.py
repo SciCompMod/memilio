@@ -12,7 +12,7 @@ model_colors = [colors['Green'], colors['Rose'],
                 colors['Blue'], colors['Teal']]
 
 
-def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_groups=6, plot_init=False,  save_dir=""):
+def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_groups=6, file_suffix="", plot_init=False,  save_dir=""):
     """
     Plots the result of the simulation.
 
@@ -27,7 +27,8 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
     secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
-    files = ["ode", "lct", "ide"]
+    files = ["ode"]  # , "lct", "ide"
+    files = [file + file_suffix for file in files]
 
     # Define plot.
     fig, axs = plt.subplots(4, 2, sharex='all')
@@ -38,6 +39,7 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
     linestyles = ['-', '--', ':', '-']
     # Add results to plot for IDE, LCT and ODE.
     for file in range(len(files)):
+
         # Load data.
         h5file = h5py.File(result_dir + str(files[file]) + '.h5', 'r')
 
@@ -142,7 +144,7 @@ def plot_model_comparison_all_compartments(result_dir, percentiles, num_age_grou
     if save_dir != "":
         if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
-        plt.savefig(save_dir + f"all_compartments.png",
+        plt.savefig(save_dir + f"all_compartments" + file_suffix + ".png",
                     bbox_inches='tight', dpi=500)
 
     plt.clf()
@@ -330,12 +332,20 @@ if __name__ == '__main__':
         plot_dir = os.path.join(os.path.dirname(
             __file__),  "plots/compare_abm_ide_lct_ode/different_dists/")
 
-    # percentiles = ["50"]
-    percentiles = ["05", "50", "95"]
+    infectivity_rates_str = ["infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
+                             "infectivity_rates_first_third", "infectivity_rates_rest_third", "infectivity_rates_first_quarter",
+                             "infectivity_rates_rest_quarter"]
+
     num_age_groups = 6
     plot_init = False
-    plot_model_comparison_all_compartments(
-        result_dir, percentiles, num_age_groups, plot_init, save_dir=plot_dir)
+
+    for i in range(len(infectivity_rates_str)):
+        file_suffix = "_" + infectivity_rates_str[i]
+
+        percentiles = ["05", "50", "95"]
+
+        plot_model_comparison_all_compartments(
+            result_dir, percentiles, num_age_groups, file_suffix, plot_init, save_dir=plot_dir)
 
     # plot_model_comparison_one_compartment([os.path.join(result_dir, f"ode"),
     #                                        os.path.join(result_dir, f"lct"),

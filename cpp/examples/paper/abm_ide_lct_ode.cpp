@@ -377,9 +377,9 @@ IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> tr
     using InfState = lsecir::InfectionState;
 
     using LctState0_4   = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[0], n_subcomps_INS[0],
-                                          n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
+                                            n_subcomps_ISy[0], n_subcomps_ISev[0], n_subcomps_ICri[0], 1, 1>;
     using LctState5_14  = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[1], n_subcomps_INS[1],
-                                           n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
+                                            n_subcomps_ISy[1], n_subcomps_ISev[1], n_subcomps_ICri[1], 1, 1>;
     using LctState15_34 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[2], n_subcomps_INS[2],
                                             n_subcomps_ISy[2], n_subcomps_ISev[2], n_subcomps_ICri[2], 1, 1>;
     using LctState35_59 = LctInfectionState<ScalarType, InfState, 1, n_subcomps_E[3], n_subcomps_INS[3],
@@ -566,7 +566,7 @@ IOResult<void> simulate_lct(Vector init_compartments, std::vector<ScalarType> tr
 }
 
 IOResult<void> simulate_ode(Vector init_compartments, std::vector<ScalarType> transmissionProbabilityOnContact,
-                            std::string contact_data_dir, std::string save_dir = "")
+                            std::string contact_data_dir, std::string filename = "", std::string save_dir = "")
 {
     using namespace params;
     // Use ODE FlowModel.
@@ -650,7 +650,7 @@ IOResult<void> simulate_ode(Vector init_compartments, std::vector<ScalarType> tr
 
     // Save results.
     if (!save_dir.empty()) {
-        std::string filename_ode = save_dir + "ode" + ".h5";
+        std::string filename_ode = save_dir + "ode" + filename + ".h5";
 
         // Aggregate age-resolved result to non-age-resolved result.
         TimeSeries<ScalarType> nonageresolved_result = sum_age_groups(results_ode[0]);
@@ -837,21 +837,23 @@ mio::TimeSeries<ScalarType> get_abm_flows_results_alternative(
                                                       params::num_age_groups);
 
         for (auto& person : model.get_persons()) {
-            size_t age             = person.get_age().get();
-            auto initial_inf_state = person.get_infection_state(t);
-            auto final_inf_state   = person.get_infection_state(t + step_size - abm::seconds(1));
-            unused(initial_inf_state);
-            unused(final_inf_state);
+            if (person.get_infections().empty()) {
+                continue;
+            }
+
+            size_t age         = person.get_age().get();
+            auto initial_state = person.get_infection_state(t + abm::seconds(1));
+            auto final_state   = person.get_infection_state(t + step_size);
 
             // Check if at least one transition occurred in considered time step.
-            if (person.get_infection_state(t) != person.get_infection_state(t + step_size - abm::seconds(1))) {
+            if (initial_state != final_state) {
 
                 auto infection_course = person.get_infection().get_infection_course();
 
                 // Get infection states that are passed through within considered time step.
-                std::vector<abm::InfectionState> infection_states = {};
+                std::vector<abm::InfectionState> infection_states = {initial_state};
                 for (auto infection_pair : infection_course) {
-                    if (std::get<0>(infection_pair) >= t && std::get<0>(infection_pair) < t + step_size) {
+                    if ((std::get<0>(infection_pair) > t) && (std::get<0>(infection_pair) <= t + step_size)) {
                         infection_states.push_back(std::get<1>(infection_pair));
                     }
                 }
@@ -1361,7 +1363,7 @@ mio::IOResult<mio::abm::Model> initialize_abm(bool exponential_scenario, std::st
  * @param[in] model Model from which the infectivity rates of the infected persons should be calculated.
  * @param[in] save_dir Directory the results are saved in.
  */
-void save_infectivity_rates(mio::abm::Model& model, std::string save_dir)
+std::vector<std::vector<double>> save_infectivity_rates(mio::abm::Model& model, std::string save_dir)
 {
     std::vector<double> total_rates(params::num_age_groups, 0.0);
     std::vector<double> first_half_rates(params::num_age_groups, 0.0);
@@ -1438,6 +1440,10 @@ void save_infectivity_rates(mio::abm::Model& model, std::string save_dir)
         first_quarter_rates[age] /= counts_ag[age];
         rest_quarter_rates[age] /= counts_ag[age];
     }
+
+    std::vector<std::vector<double>> all_rates = {total_rates,       first_half_rates, second_half_rates,
+                                                  first_third_rates, rest_third_rates, first_quarter_rates,
+                                                  rest_quarter_rates};
 
     std::string filename = save_dir + "infectivity_rates_total.csv";
     auto file            = fopen(filename.c_str(), "w");
@@ -1516,6 +1522,8 @@ void save_infectivity_rates(mio::abm::Model& model, std::string save_dir)
         }
         fclose(file);
     }
+
+    return all_rates;
 }
 
 /**
@@ -1531,7 +1539,7 @@ void save_infectivity_rates(mio::abm::Model& model, std::string save_dir)
  * @param[in] start_time Start time of the simulation in days.
  * @param[in] one_location If true, all agents there is only one location for each type.
  */
-IOResult<std::pair<std::vector<mio::TimeSeries<double>>, std::vector<double>>>
+IOResult<std::pair<std::vector<mio::TimeSeries<double>>, std::vector<std::vector<double>>>>
 simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_data_dir,
              std::vector<double> initial_infection_state_dist, bool save_results, std::string save_dir, bool read_model,
              mio::RandomNumberGenerator& rng, double start_time, bool one_location)
@@ -1609,6 +1617,7 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
     auto compartment_result = get_abm_compartment_results(sim.get_model(), history);
     auto flow_result        = TimeSeries<double>((Eigen::Index)mio::isecir::InfectionTransition::Count);
     std::vector<double> transmission_rates(num_age_groups);
+    std::vector<std::vector<double>> infectivity_rates = std::vector(7, std::vector<double>(num_age_groups));
 
     if (save_results) {
         // Save compartments
@@ -1627,13 +1636,13 @@ simulate_abm(bool exponential_scenario, ScalarType tmax, std::string contact_dat
         std::cout << "Saving results finished!\n";
         // Save infectivity rates
         std::cout << "Saving infectivity rates...\n";
-        save_infectivity_rates(sim.get_model(), save_dir);
+        infectivity_rates = save_infectivity_rates(sim.get_model(), save_dir);
         std::cout << "Saving infectivity rates finished!\n";
     }
 
     std::vector simulation_results = {compartment_result, flow_result};
-    std::pair<std::vector<TimeSeries<double>>, std::vector<double>> abm_results =
-        std::make_pair(simulation_results, transmission_rates);
+    std::pair<std::vector<TimeSeries<double>>, std::vector<std::vector<double>>> abm_results =
+        std::make_pair(simulation_results, infectivity_rates);
 
     return success(abm_results);
 }
@@ -1725,19 +1734,21 @@ int main()
                                     infection_distribution, true, save_dir, false, rng, params::t0, one_location);
 
     // Simulate ABM ensemble run.
-    size_t num_runs = 1;
+    size_t num_runs = 20;
     auto result_abm =
         abm_ensemble_run(num_runs, exponential_scenario, params::t0 + params::tmax, contact_data_dir,
                          infection_distribution, save_dir, true, false, params::t0 + params::init_tmax, one_location);
 
     // Get results from initial ABM run.
     // Use compartments at time init_tmax from ABM simulation as initial values for other models to make results comparable.
-    auto init_compartments_ide = std::get<0>(init_result.value())[0].get_value(0);
-    auto init_compartments     = std::get<0>(init_result.value())[0].get_last_value();
+    // auto init_compartments_ide = std::get<0>(init_result.value())[0].get_value(0);
+    auto init_compartments = std::get<0>(init_result.value())[0].get_last_value();
     // TimeSeries of flows.
     auto init_flows = std::get<0>(init_result.value())[1];
+    // Infectivity rates.
+    std::vector<std::vector<double>> infectivity_rates = std::get<1>(init_result.value());
     // Transmission rates.
-    std::vector<double> transmissionProbabilityOnContact = std::get<1>(init_result.value());
+    // std::vector<double> transmissionProbabilityOnContact = std::get<1>(init_result.value());
     // std::vector<double>::iterator max_transmission_prob =
     //     std::max_element(transmissionProbabilityOnContact.begin(), transmissionProbabilityOnContact.end());
     // ScalarType target_max_prob         = 0.3;
@@ -1747,17 +1758,28 @@ int main()
     //     transmissionProbabilityOnContact[i] *= scale_transmission_prob;
     // }
 
-    // Simulate IDE.
-    mio::set_log_level(LogLevel::info);
-    auto result_ide = simulate_ide(init_flows, init_compartments, init_compartments_ide,
-                                   transmissionProbabilityOnContact, contact_data_dir, exponential_scenario, save_dir);
+    std::vector<std::string> infectivity_rates_str = {
+        "infectivity_rates_total",       "infectivity_rates_first_half", "infectivity_rates_second_half",
+        "infectivity_rates_first_third", "infectivity_rates_rest_third", "infectivity_rates_first_quarter",
+        "infectivity_rates_rest_quarter"};
 
-    // Simulate LCT.
-    auto result_lct = simulate_lct<exponential_scenario>(init_compartments, transmissionProbabilityOnContact,
-                                                         contact_data_dir, save_dir);
+    for (size_t infectivity_idx = 0; infectivity_idx < infectivity_rates_str.size(); infectivity_idx++) {
 
-    // Simulate ODE.
-    auto result_ode = simulate_ode(init_compartments, transmissionProbabilityOnContact, contact_data_dir, save_dir);
+        std::string filename                                 = "_" + infectivity_rates_str[infectivity_idx];
+        std::vector<double> transmissionProbabilityOnContact = infectivity_rates[infectivity_idx];
 
+        // // Simulate IDE.
+        mio::set_log_level(LogLevel::info);
+        // auto result_ide = simulate_ide(init_flows, init_compartments, init_compartments_ide,
+        //                                transmissionProbabilityOnContact, contact_data_dir, exponential_scenario, save_dir);
+
+        // // Simulate LCT.
+        // auto result_lct = simulate_lct<exponential_scenario>(init_compartments, transmissionProbabilityOnContact,
+        //                                                      contact_data_dir, save_dir);
+
+        // Simulate ODE.
+        auto result_ode =
+            simulate_ode(init_compartments, transmissionProbabilityOnContact, contact_data_dir, filename, save_dir);
+    }
     return 0;
 }
