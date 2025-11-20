@@ -161,8 +161,8 @@ void draw_sample(Model<FP>& model)
  * @param graph Graph to be sampled.
  * @return Graph with nodes and edges from the input graph sampled.
  *
- * Note: Make sure to set the parameter InfectiousnessNewVariant. This function used to take a bool `variant_high`,
- * setting InfectiousnessNewVariant to 1.6 if true, 1.4 otherwise, for all age groups.
+ * CHANGENOTE: Make sure to set the parameter InfectiousnessNewVariant. This function used to take a bool
+ *`variant_high`, setting InfectiousnessNewVariant to 1.6 if true, 1.4 otherwise, for all age groups.
  */
 template <typename FP>
 Graph<Model<FP>, MobilityParameters<FP>> draw_sample(Graph<Model<FP>, MobilityParameters<FP>>& graph)
