@@ -81,13 +81,16 @@ class rawData:
 
         self.strong_scaling_cores = [1, 2, 4, 8, 16, 32, 64, 128]
         self.strong_scaling_nodes = [1, 2, 4, 8, 16, 32, 64, 128]
+        # multiply each by 128 for total cores
+        self.strong_scaling_nodes = [
+            n * 128 for n in self.strong_scaling_nodes]
 
         # Runtime Strong scaling
         self.memilio_strong_scaling_128_runs_one_node = np.array(
             [2.646570e+04, 2.068018e+04,  1.078597e+04, 5.317400e+03, 2.740988e+03, 1.440401e+03, 8.953795e+02, 5.889476e+02])
         self.memilio_strong_scaling_128_runs_multiple_nodes = np.array(
             # only last data point available
-            [6.66666e+04, 3.803566e+04, 1.878124e+04, 9.376841e+03, 4.762327e+03, 2.363056e+03, 1.186088e+03, 6.005680e+02])
+            [7.543782e+04, 3.803566e+04, 1.878124e+04, 9.376841e+03, 4.762327e+03, 2.363056e+03, 1.186088e+03, 6.005680e+02])
 
 
 class BenchmarkAnalyzer:
@@ -191,8 +194,8 @@ class BenchmarkAnalyzer:
         ax.set_xlabel('Number of Agents', fontsize=self.fontsize)
         ax.set_ylabel('Runtime per Time Step (seconds)',
                       fontsize=self.fontsize)
-        ax.set_title('Agent-Based Model Runtime Scaling',
-                     fontsize=self.fontsize+4)
+        # ax.set_title('Agent-Based Model Runtime Scaling',
+        #              fontsize=self.fontsize+4)
 
         ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
@@ -218,19 +221,19 @@ class BenchmarkAnalyzer:
         # Plot runtime
         ax.plot(cores, runtimes,
                 marker='o', linewidth=3, markersize=8,
-                color='#1f77b4', label='MEmilio ABM (One Node)', linestyle='-')
+                color='#1f77b4', label='MEmilio ABM', linestyle='-')
 
         # Calculate and plot ideal scaling
         if len(runtimes) > 0:
-            ideal_scaling = [runtimes[0] / c * cores[0] for c in cores]
+            ideal_scaling = [runtimes[1] / c * cores[1] for c in cores]
             ax.plot(cores, ideal_scaling,
                     'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
         ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime per Time Step (seconds)',
+        ax.set_ylabel('Runtime (seconds)',
                       fontsize=self.fontsize)
-        ax.set_title('Strong Scaling: One Node - MEmilio ABM',
-                     fontsize=self.fontsize+4)
+        # ax.set_title('Strong Scaling: One Node - MEmilio ABM',
+        #              fontsize=self.fontsize+4)
 
         ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
@@ -262,19 +265,19 @@ class BenchmarkAnalyzer:
         # Plot runtime
         ax.plot(nodes, runtimes,
                 marker='s', linewidth=3, markersize=8,
-                color='#2ca02c', label='MEmilio ABM (Multi-Node)', linestyle='-')
+                color='#2ca02c', label='MEmilio ABM', linestyle='-')
 
         # Calculate and plot ideal scaling
         if len(runtimes) > 0:
-            ideal_scaling = [runtimes[0] / n * nodes[0] for n in nodes]
+            ideal_scaling = [runtimes[1] / n * nodes[1] for n in nodes]
             ax.plot(nodes, ideal_scaling,
                     'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
-        ax.set_xlabel('Number of Nodes', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime per Time Step (seconds)',
+        ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime (seconds)',
                       fontsize=self.fontsize)
-        ax.set_title('Strong Scaling: Multi-Node - MEmilio ABM',
-                     fontsize=self.fontsize+4)
+        # ax.set_title('Strong Scaling: Multi-Node - MEmilio ABM',
+        #              fontsize=self.fontsize+4)
 
         ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
@@ -319,14 +322,14 @@ class BenchmarkAnalyzer:
                 label='2M agents per core', linestyle='-')
 
         # Add ideal scaling line (constant runtime)
-        ideal_runtime = raw_data.memilio_weak_scaling_250k[0]
-        ax.plot(num_cores, [ideal_runtime] * len(num_cores),
-                'k--', linewidth=2, alpha=0.5, label='Ideal (constant runtime)')
+        # ideal_runtime = raw_data.memilio_weak_scaling_250k[0]
+        # ax.plot(num_cores, [ideal_runtime] * len(num_cores),
+        #         'k--', linewidth=2, alpha=0.5, label='Ideal (constant runtime)')
 
         ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
         ax.set_ylabel('Runtime per Time Step (seconds)',
                       fontsize=self.fontsize)
-        ax.set_title('Weak Scaling: MEmilio ABM', fontsize=self.fontsize+4)
+        # ax.set_title('Weak Scaling: MEmilio ABM', fontsize=self.fontsize+4)
 
         ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
@@ -416,14 +419,14 @@ class BenchmarkAnalyzer:
     def print_strong_scaling_efficiency(self, raw_data):
         """Print a table showing strong scaling efficiency."""
         # One node strong scaling
-        cores_one_node = raw_data.strong_scaling_cores[1:len(
+        cores_one_node = raw_data.strong_scaling_cores[0:len(
             raw_data.memilio_strong_scaling_128_runs_one_node)]
-        runtimes_one_node = raw_data.memilio_strong_scaling_128_runs_one_node[1:]
+        runtimes_one_node = raw_data.memilio_strong_scaling_128_runs_one_node[0:]
 
         # Multi-node strong scaling
-        nodes_multi = raw_data.strong_scaling_nodes[1:len(
+        nodes_multi = raw_data.strong_scaling_nodes[0:len(
             raw_data.memilio_strong_scaling_128_runs_multiple_nodes)]
-        runtimes_multi = raw_data.memilio_strong_scaling_128_runs_multiple_nodes[1:]
+        runtimes_multi = raw_data.memilio_strong_scaling_128_runs_multiple_nodes[0:]
 
         def calculate_strong_efficiency(baseline, runtimes, units):
             """Calculate strong scaling efficiency: (baseline / (runtime * units)) * 100"""
