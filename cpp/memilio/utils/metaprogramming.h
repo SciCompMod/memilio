@@ -178,7 +178,7 @@ namespace details
 
 template <std::size_t Index, class Head, class... Tail>
 struct type_at_index_impl {
-    using type = type_at_index_impl<Index - 1, Tail...>::type;
+    using type = typename type_at_index_impl<Index - 1, Tail...>::type;
 };
 
 template <class Head, class... Tail>
@@ -366,7 +366,7 @@ struct filter_type_list_impl {
 };
 
 template <class OmittedTag, template <class...> class ListType, class... Tags>
-filter_type_list_impl<OmittedTag, ListType, Tags...>::type filter_type_list(ListType<Tags...>);
+typename filter_type_list_impl<OmittedTag, ListType, Tags...>::type filter_type_list(ListType<Tags...>);
 } //namespace details
 
 template <class OmittedTag, class List>
