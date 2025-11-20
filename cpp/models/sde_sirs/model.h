@@ -56,7 +56,12 @@ public:
                    Eigen::Ref<Eigen::VectorX<FP>> flows) const
     {
         auto& params = Base::parameters;
-        FP coeffStoI = params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
+        // effective contact rate by contact rate between groups i and j and damping j
+        FP season_val =
+            (1 + params.template get<Seasonality<FP>>() *
+                     sin(std::numbers::pi_v<ScalarType> * ((params.template get<StartDay<FP>>() + t) / 182.5 + 0.5)));
+
+        FP coeffStoI = season_val * params.template get<ContactPatterns<FP>>().get_matrix_at(SimulationTime<FP>(t))(0, 0) *
                        params.template get<TransmissionProbabilityOnContact<FP>>() / Base::populations.get_total();
 
         flows[this->template get_flat_flow_index<InfectionState::Susceptible, InfectionState::Infected>()] =

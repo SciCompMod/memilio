@@ -488,24 +488,24 @@ public:
         // --- Parameters affecting the transmission of the virus. ---
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
-            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {:d} or larger {:d}", 0, 1);
+            log_error("Constraint check: Parameter TransmissionProbabilityOnContact smaller {} or larger {}", 0, 1);
             return true;
         }
 
         if (this->template get<RelativeTransmissionNoSymptoms<FP>>() < 0.0 ||
             this->template get<RelativeTransmissionNoSymptoms<FP>>() > 1.0) {
-            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {:d} or larger {:d}", 0, 1);
+            log_error("Constraint check: Parameter RelativeTransmissionNoSymptoms smaller {} or larger {}", 0, 1);
             return true;
         }
 
         if (this->template get<RiskOfInfectionFromSymptomatic<FP>>() < 0.0 ||
             this->template get<RiskOfInfectionFromSymptomatic<FP>>() > 1.0) {
-            log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d}", 0, 1);
+            log_error("Constraint check: Parameter RiskOfInfectionFromSymptomatic smaller {} or larger {}", 0, 1);
             return true;
         }
 
         if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
-            log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+            log_warning("Constraint check: Parameter Seasonality should lie between {} and {}", 0.0, 0.5);
             return true;
         }
 
