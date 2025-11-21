@@ -282,7 +282,7 @@ class BenchmarkAnalyzer:
     def plot_agent_scaling(self, raw_data, save_path=None):
         """Plot 1: Scaling with agents - memilio (1, 4, 16 cores), covasim, and opencovid."""
         figsize = (10, 6)
-        panel = (0.12, 0.12, 0.85, 0.83)
+        panel = (0.15, 0.15, 0.80, 0.80)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
 
@@ -358,7 +358,7 @@ class BenchmarkAnalyzer:
     def plot_one_node_strong_scaling(self, raw_data, save_path=None):
         """Plot 3: One node strong scaling."""
         figsize = (10, 6)
-        panel = (0.12, 0.12, 0.85, 0.83)
+        panel = (0.15, 0.15, 0.80, 0.80)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
 
@@ -407,7 +407,7 @@ class BenchmarkAnalyzer:
     def plot_multi_node_strong_scaling(self, raw_data, save_path=None):
         """Plot 4: Multi-node strong scaling."""
         figsize = (10, 6)
-        panel = (0.12, 0.12, 0.85, 0.83)
+        panel = (0.15, 0.15, 0.80, 0.80)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
 
@@ -456,7 +456,7 @@ class BenchmarkAnalyzer:
     def plot_weak_scaling(self, raw_data, save_path=None):
         """Plot 2: Weak scaling plot for different agent counts per core."""
         figsize = (10, 6)
-        panel = (0.12, 0.12, 0.85, 0.83)
+        panel = (0.15, 0.15, 0.80, 0.80)
         fig = plt.figure(figsize=figsize, dpi=DPI)
         ax = fig.add_axes(panel)
 
