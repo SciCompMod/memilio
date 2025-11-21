@@ -149,10 +149,9 @@ install(TARGETS ${MEMILIO_SIMULATION_LIBS}
     RUNTIME DESTINATION lib
 )
 
-# If jsoncpp was built as part of the bundled third-party dependencies, make sure its
-# shared library is copied into the wheel with the exact SONAME the runtime loader will
-# request. Wheels do not preserve symlinks, so install real copies for every relevant
-# name.
+# If jsoncpp comes from the bundled third-party dependencies, copy its shared
+# library into the wheel under every file name importers might look for. Wheels
+# drop symlinks, so place real copies for each alias.
 if(TARGET jsoncpp_lib)
     set_target_properties(jsoncpp_lib PROPERTIES
         INSTALL_RPATH "$ORIGIN"
