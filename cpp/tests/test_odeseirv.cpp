@@ -96,11 +96,40 @@ TEST(TestOdeSeirv, applyConstraints)
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-2.); // invalid -> 0
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5); // invalid -> 0
     EXPECT_TRUE(model.parameters.apply_constraints());
-    EXPECT_DOUBLE_EQ((double)model.parameters.get<mio::oseirv::TimeExposed<double>>(), 1e-3);
-    EXPECT_DOUBLE_EQ((double)model.parameters.get<mio::oseirv::TimeInfected<double>>(), 1e-3);
+    EXPECT_DOUBLE_EQ((double)model.parameters.get<mio::oseirv::TimeExposed<double>>(), 1e-1);
+    EXPECT_DOUBLE_EQ((double)model.parameters.get<mio::oseirv::TimeInfected<double>>(), 1e-1);
     EXPECT_EQ(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 1.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::BaselineTransmissibility<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::OutsideFoI<double>>(), 0.0);
+}
+
+TEST(TestOdeSeirv, checkConstraints)
+{
+    mio::oseirv::Model<double> model(1);
+    EXPECT_FALSE(model.parameters.check_constraints());
+
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(0.05);
+    EXPECT_TRUE(model.parameters.check_constraints());
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(0.5);
+    EXPECT_FALSE(model.parameters.check_constraints());
+
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(0.05);
+    EXPECT_TRUE(model.parameters.check_constraints());
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(0.5);
+    EXPECT_FALSE(model.parameters.check_constraints());
+
+    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(0.0);
+    EXPECT_TRUE(model.parameters.check_constraints());
+    model.parameters.set<mio::oseirv::ClusteringExponent<double>>(1.0);
+    EXPECT_FALSE(model.parameters.check_constraints());
+
+    model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-1.0);
+    EXPECT_TRUE(model.parameters.check_constraints());
+    model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(0.5);
+    EXPECT_FALSE(model.parameters.check_constraints());
+
+    model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5);
+    EXPECT_TRUE(model.parameters.check_constraints());
 }
 
 TEST(TestOdeSeirv, flowsSingleAgeGroup)
@@ -201,10 +230,10 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
     flows.setZero();
     model.get_flows(pop, y0, 0.0, flows);
 
-    double N0      = S0 + I0;
-    double N1      = S1 + I1;
-    double lambda0 = I0 / N0; // identity contacts => only own group contributes
-    double lambda1 = I1 / N1;
+    double N0                      = S0 + I0;
+    double N1                      = S1 + I1;
+    double lambda0                 = I0 / N0; // identity contacts => only own group contributes
+    double lambda1                 = I1 / N1;
     const double inv_time_infected = 1.0 / model.parameters.get<mio::oseirv::TimeInfected<double>>();
 
     auto idx_SE_0 = model.template get_flat_flow_index<mio::oseirv::InfectionState::Susceptible,

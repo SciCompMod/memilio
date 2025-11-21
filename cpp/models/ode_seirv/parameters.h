@@ -20,6 +20,7 @@
 #ifndef SEIRV_PARAMETERS_H
 #define SEIRV_PARAMETERS_H
 
+#include "memilio/config.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/custom_index_array.h"
@@ -344,36 +345,99 @@ public:
     }
 
     /**
-     * @brief Apply minimal constraints to keep parameters valid.
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not.
+     * Time spans cannot be negative and probabilities can only take values between [0,1].
+     * 
+     * Attention: This function should be used with care. It is necessary for some test problems to run through quickly,
+     *            but in a manual execution of an example, check_constraints() may be preferred. Note that the apply_constraints()
+     *            function can and will not set Parameters to meaningful values in an epidemiological or virological context,
+     *            as all models are designed to be transferable to multiple diseases. Consequently, only acceptable
+     *            (like 0 or 1 for probabilities or small positive values for time spans) values are set here and a manual adaptation
+     *            may often be necessary to have set meaningful values.
      *
-     * @return true if one or more parameters were corrected; false otherwise.
+     * @return Returns true if one ore more constraint were corrected, false otherwise.
      */
     bool apply_constraints()
     {
-        bool corrected = false;
-        const FP min_time = FP(1e-3);
+        const FP tol_times = 1e-1;
 
-        if (this->template get<TimeExposed<FP>>() < min_time) {
-            this->template get<TimeExposed<FP>>() = min_time;
+        bool corrected = false;
+        if (this->template get<TimeExposed<FP>>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeExposed changed from {} to {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposed<FP>>(), tol_times);
+            this->template get<TimeExposed<FP>>() = tol_times;
             corrected                             = true;
         }
-        if (this->template get<TimeInfected<FP>>() < min_time) {
-            this->template get<TimeInfected<FP>>() = min_time;
+        if (this->template get<TimeInfected<FP>>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>(), tol_times);
+            this->template get<TimeInfected<FP>>() = tol_times;
             corrected                              = true;
         }
         if (this->template get<ClusteringExponent<FP>>() <= 0.0) {
+            log_warning("Constraint check: Parameter ClusteringExponent changed from {} to {}", //
+                        this->template get<ClusteringExponent<FP>>(), 1.0);
             this->template get<ClusteringExponent<FP>>() = 1.0;
             corrected                                    = true;
         }
         if (this->template get<BaselineTransmissibility<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter BaselineTransmissibility changed from {} to {}", //
+                        this->template get<BaselineTransmissibility<FP>>(), 0.0);
             this->template get<BaselineTransmissibility<FP>>() = 0.0;
             corrected                                          = true;
         }
         if (this->template get<OutsideFoI<FP>>() < 0.0) {
+            log_warning("Constraint check: Parameter OutsideFoI changed from {} to {}", //
+                        this->template get<OutsideFoI<FP>>(), 0.0);
             this->template get<OutsideFoI<FP>>() = 0.0;
             corrected                            = true;
         }
         return corrected;
+    }
+
+    /**
+     * @brief Checks whether all Parameters satisfy their corresponding constraints and logs an error
+     * if constraints are not satisfied.
+     * @return Returns true if one constraint is not satisfied, otherwise false.
+     */
+    bool check_constraints() const
+    {
+        const FP tol_times = 1e-1;
+
+        if (this->template get<TimeExposed<FP>>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeExposed {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeExposed<FP>>(), tol_times);
+            return true;
+        }
+        if (this->template get<TimeInfected<FP>>() < tol_times) {
+            log_warning("Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
+                        "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
+                        "and reset parameters.",
+                        this->template get<TimeInfected<FP>>(), tol_times);
+            return true;
+        }
+        if (this->template get<ClusteringExponent<FP>>() <= 0.0) {
+            log_error("Constraint check: Parameter ClusteringExponent {} smaller or equal {}", //
+                      this->template get<ClusteringExponent<FP>>(), 0.0);
+            return true;
+        }
+        if (this->template get<BaselineTransmissibility<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter BaselineTransmissibility {} smaller {}", //
+                      this->template get<BaselineTransmissibility<FP>>(), 0.0);
+            return true;
+        }
+        if (this->template get<OutsideFoI<FP>>() < 0.0) {
+            log_error("Constraint check: Parameter OutsideFoI {} smaller {}", //
+                      this->template get<OutsideFoI<FP>>(), 0.0);
+            return true;
+        }
+        return false;
     }
 
 private:
