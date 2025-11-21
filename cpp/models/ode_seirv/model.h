@@ -106,8 +106,8 @@ public:
 
         const FP transmissibility_baseline =
             params.template get<BaselineTransmissibility<FP>>(); // baseline transmissibility scaling (R-like factor)
-        const FP recovery_rate =
-            params.template get<RecoveryRate<FP>>(); // progression/recovery rate (1 / mean duration)
+        const FP infection_rate   = FP(1) / params.template get<TimeExposed<FP>>(); // 1 / mean latent duration
+        const FP recovery_rate    = FP(1) / params.template get<TimeInfected<FP>>(); // 1 / mean infectious duration
         const FP season_amplitude = params.template get<SeasonalityAmplitude<FP>>(); // amplitude of seasonal modulation
         const FP season_shift_per_subtype =
             params.template get<SeasonalityShiftPerSubtype<FP>>(); // base phase shift for seasonality
@@ -155,9 +155,9 @@ public:
                                                      InfectionState::ExposedVaccinated>(i)] = foi_i * y[SVi];
 
             flows[Base::template get_flat_flow_index<InfectionState::Exposed, InfectionState::Infected>(i)] =
-                recovery_rate * y[Ei];
+                infection_rate * y[Ei];
             flows[Base::template get_flat_flow_index<InfectionState::ExposedVaccinated,
-                                                     InfectionState::InfectedVaccinated>(i)] = recovery_rate * y[EVi];
+                                                     InfectionState::InfectedVaccinated>(i)] = infection_rate * y[EVi];
 
             flows[Base::template get_flat_flow_index<InfectionState::Infected, InfectionState::Recovered>(i)] =
                 recovery_rate * y[Ii];

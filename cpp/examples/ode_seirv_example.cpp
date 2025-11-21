@@ -95,7 +95,8 @@ int main()
 
     // Parameters
     parameters.get<mio::oseirv::BaselineTransmissibility<FP>>()   = 1.2;
-    parameters.get<mio::oseirv::RecoveryRate<FP>>()               = 1.0 / 2.0;
+    parameters.get<mio::oseirv::TimeExposed<FP>>()                = 2.0;
+    parameters.get<mio::oseirv::TimeInfected<FP>>()               = 2.0; // same duration for E->I and I->R
     parameters.get<mio::oseirv::SeasonalityAmplitude<FP>>()       = 1.0;
     parameters.get<mio::oseirv::SeasonalityShiftPerSubtype<FP>>() = 0.0;
     parameters.get<mio::oseirv::SeasonalityShiftPerSeason<FP>>()  = 0.0;

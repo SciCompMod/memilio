@@ -51,21 +51,39 @@ struct BaselineTransmissibility {
 };
 
 /**
- * @brief Transition/recovery rate in 1/week.
+ * @brief Mean time spent in the exposed compartment in weeks.
  *
- * Controls E→I and I→R and is included in the force of infection to decouple the recovery rate from R_e.
- * Use the model time unit (weeks). Default: 1/2.0
+ * Controls the progression E→I. Use the model time unit (weeks). Default: 2.0
  */
 template <class FP>
-struct RecoveryRate {
+struct TimeExposed {
     using Type = UncertainValue<FP>;
     static Type get_default(AgeGroup)
     {
-        return Type(1.0 / 2.0);
+        return Type(2.0);
     }
     static std::string name()
     {
-        return "RecoveryRate";
+        return "TimeExposed";
+    }
+};
+
+/**
+ * @brief Mean time spent in the infectious compartment in weeks.
+ *
+ * Controls the progression I→R and scales the force of infection via 1 / TimeInfected.
+ * Use the model time unit (weeks). Default: 2.0
+ */
+template <class FP>
+struct TimeInfected {
+    using Type = UncertainValue<FP>;
+    static Type get_default(AgeGroup)
+    {
+        return Type(2.0);
+    }
+    static std::string name()
+    {
+        return "TimeInfected";
     }
 };
 
@@ -292,7 +310,7 @@ struct SusceptibleFraction {
 
 template <class FP>
 using ParametersBase =
-    ParameterSet<BaselineTransmissibility<FP>, RecoveryRate<FP>, SeasonalityAmplitude<FP>,
+    ParameterSet<BaselineTransmissibility<FP>, TimeExposed<FP>, TimeInfected<FP>, SeasonalityAmplitude<FP>,
                  SeasonalityShiftPerSubtype<FP>, SeasonalityShiftPerSeason<FP>, OutsideFoI<FP>, ClusteringExponent<FP>,
                  SickMixing<FP>, ContactPatternsHealthy<FP>, ContactPatternsSick<FP>, SusceptibilityByAge<FP>,
                  VaccineCoverage<FP>, VaccineEffectiveness<FP>, SusceptibleFraction<FP>>;
@@ -333,6 +351,16 @@ public:
     bool apply_constraints()
     {
         bool corrected = false;
+        const FP min_time = FP(1e-3);
+
+        if (this->template get<TimeExposed<FP>>() < min_time) {
+            this->template get<TimeExposed<FP>>() = min_time;
+            corrected                             = true;
+        }
+        if (this->template get<TimeInfected<FP>>() < min_time) {
+            this->template get<TimeInfected<FP>>() = min_time;
+            corrected                              = true;
+        }
         if (this->template get<ClusteringExponent<FP>>() <= 0.0) {
             this->template get<ClusteringExponent<FP>>() = 1.0;
             corrected                                    = true;

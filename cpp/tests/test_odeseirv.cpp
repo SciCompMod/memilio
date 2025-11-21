@@ -75,7 +75,8 @@ TEST(TestOdeSeirv, populationConservation)
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
 
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(1.0);
 
     double t0 = 0.0, tmax = 5.0, dt = 0.5;
     auto sim  = simulate(t0, tmax, dt, model);
@@ -89,10 +90,14 @@ TEST(TestOdeSeirv, applyConstraints)
     // First: defaults should need no correction
     EXPECT_FALSE(model.parameters.apply_constraints());
 
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(0.0); // invalid, will be set to minimum time
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(-1.0); // invalid, will be set to minimum time
     model.parameters.set<mio::oseirv::ClusteringExponent<double>>(-0.5); // invalid, must become >0 (1.0)
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(-2.); // invalid -> 0
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(-0.5); // invalid -> 0
     EXPECT_TRUE(model.parameters.apply_constraints());
+    EXPECT_DOUBLE_EQ((double)model.parameters.get<mio::oseirv::TimeExposed<double>>(), 1e-3);
+    EXPECT_DOUBLE_EQ((double)model.parameters.get<mio::oseirv::TimeInfected<double>>(), 1e-3);
     EXPECT_EQ(model.parameters.get<mio::oseirv::ClusteringExponent<double>>(), 1.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::BaselineTransmissibility<double>>(), 0.0);
     EXPECT_EQ(model.parameters.get<mio::oseirv::OutsideFoI<double>>(), 0.0);
@@ -111,13 +116,14 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::Infected}]              = I;
     model.populations[{mio::AgeGroup(0), mio::oseirv::InfectionState::InfectedVaccinated}]    = IV;
 
-    // Parameters: identity contacts, RecoveryRate=1, ClusteringExponent=1, BaselineTransmissibility=1, others zero ⇒ λ = (I+IV)/N
+    // Parameters: identity contacts, TimeInfected=1, ClusteringExponent=1, BaselineTransmissibility=1, others zero ⇒ λ = (I+IV)/N
     mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
     cm_h[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(1.0);
     model.parameters.set<mio::oseirv::ClusteringExponent<double>>(1.0);
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(0.0);
     model.parameters.set<mio::oseirv::SeasonalityAmplitude<double>>(0.0);
@@ -128,15 +134,16 @@ TEST(TestOdeSeirv, flowsSingleAgeGroup)
     flows.setZero();
     model.get_flows(pop, y0, 0.0, flows);
 
-    const auto recovery_rate = model.parameters.get<mio::oseirv::RecoveryRate<double>>();
-    const double N       = S + SV + E + EV + I + IV; // (R,RV = 0)
-    const double lambda  = (I + IV) / N; // expected force of infection
-    const double f_SE    = S * lambda;
-    const double f_SV_EV = SV * lambda;
-    const double f_E_I   = recovery_rate * E;
-    const double f_EV_IV = recovery_rate * EV;
-    const double f_I_R   = recovery_rate * I;
-    const double f_IV_RV = recovery_rate * IV;
+    const double inv_time_exposed  = 1.0 / model.parameters.get<mio::oseirv::TimeExposed<double>>();
+    const double inv_time_infected = 1.0 / model.parameters.get<mio::oseirv::TimeInfected<double>>();
+    const double N                 = S + SV + E + EV + I + IV; // (R,RV = 0)
+    const double lambda            = (I + IV) / N; // expected force of infection
+    const double f_SE              = S * lambda;
+    const double f_SV_EV           = SV * lambda;
+    const double f_E_I             = inv_time_exposed * E;
+    const double f_EV_IV           = inv_time_exposed * EV;
+    const double f_I_R             = inv_time_infected * I;
+    const double f_IV_RV           = inv_time_infected * IV;
 
     auto idx_SE = model.template get_flat_flow_index<mio::oseirv::InfectionState::Susceptible,
                                                      mio::oseirv::InfectionState::Exposed>(mio::AgeGroup(0));
@@ -172,7 +179,8 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Zero(2, 2));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(1.0);
     model.parameters.set<mio::oseirv::ClusteringExponent<double>>(1.0);
     model.parameters.set<mio::oseirv::SeasonalityAmplitude<double>>(0.0);
     model.parameters.set<mio::oseirv::OutsideFoI<double>>(0.0);
@@ -197,6 +205,7 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
     double N1      = S1 + I1;
     double lambda0 = I0 / N0; // identity contacts => only own group contributes
     double lambda1 = I1 / N1;
+    const double inv_time_infected = 1.0 / model.parameters.get<mio::oseirv::TimeInfected<double>>();
 
     auto idx_SE_0 = model.template get_flat_flow_index<mio::oseirv::InfectionState::Susceptible,
                                                        mio::oseirv::InfectionState::Exposed>(mio::AgeGroup(0));
@@ -218,8 +227,8 @@ TEST(TestOdeSeirv, flowsTwoAgeGroupsIdentityContacts)
     // Exposed are zero => progressions must be zero
     EXPECT_NEAR(flows[idx_EI_0], 0.0, 1e-12);
     EXPECT_NEAR(flows[idx_EI_1], 0.0, 1e-12);
-    EXPECT_NEAR(flows[idx_IR_0], I0, 1e-12);
-    EXPECT_NEAR(flows[idx_IR_1], I1, 1e-12);
+    EXPECT_NEAR(flows[idx_IR_0], inv_time_infected * I0, 1e-12);
+    EXPECT_NEAR(flows[idx_IR_1], inv_time_infected * I1, 1e-12);
 }
 
 TEST(TestOdeSeirv, zeroPopulationNoNan)
@@ -252,7 +261,8 @@ TEST(TestOdeSeirv, simulationEuler)
     mio::ContactMatrixGroup<ScalarType>& cm_s = model.parameters.get<mio::oseirv::ContactPatternsSick<double>>();
     cm_s[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 0.));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(1.0);
 
     double t0 = 0.0, tmax = 1.0, dt = 0.5;
     std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();
@@ -274,7 +284,8 @@ TEST(TestOdeSeirv, flowSimulationEuler)
     mio::ContactMatrixGroup<ScalarType>& cm_h = model.parameters.get<mio::oseirv::ContactPatternsHealthy<double>>();
     cm_h[0]                                   = mio::ContactMatrix<double>(Eigen::MatrixXd::Constant(1, 1, 1));
     model.parameters.set<mio::oseirv::BaselineTransmissibility<double>>(1.0);
-    model.parameters.set<mio::oseirv::RecoveryRate<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeExposed<double>>(1.0);
+    model.parameters.set<mio::oseirv::TimeInfected<double>>(1.0);
 
     double t0 = 0.0, tmax = 0.5, dt = 0.5;
     std::unique_ptr<mio::OdeIntegratorCore<double>> integrator = std::make_unique<mio::EulerIntegratorCore<double>>();

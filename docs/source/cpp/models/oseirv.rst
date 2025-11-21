@@ -72,9 +72,12 @@ The model uses the following parameters (time unit: week):
 	 * - :math:`R_e`
 		 - ``BaselineTransmissibility``
 		 - Baseline transmissibility (dimensionless); scales the normalized force of infection.
-	 * - :math:`\gamma`
-		 - ``RecoveryRate``
-		 - Transition / recovery rate (1/week) for E -> I and I -> R.
+	 * - :math:`T_E`
+		 - ``TimeExposed``
+		 - Mean time (weeks) in the exposed compartment; progression E -> I occurs with rate :math:`1/T_E`.
+	 * - :math:`T_I`
+		 - ``TimeInfected``
+		 - Mean infectious time (weeks); progression I -> R occurs with rate :math:`1/T_I` and the force of infection scales with :math:`1/T_I`.
 	 * - :math:`\delta`
 		 - ``SeasonalityAmplitude``
 		 - Amplitude of the seasonal modulation :math:`\exp(\delta\,\sin(2\pi(t/52 - t_z + t_s)))`.
@@ -239,4 +242,3 @@ Overview of the ``oseirv`` namespace:
 -------------------------------------
 
 .. doxygennamespace:: mio::oseirv
-
