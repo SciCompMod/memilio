@@ -27,15 +27,19 @@
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/io/history.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include <algorithm>
+#include <numeric>
 #include <vector>
 namespace params
 {
-const size_t num_age_groups               = 6;
-const size_t scaling_factor               = 1000;
-const std::vector<double> age_group_sizes = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
-const ScalarType total_population         = 83155031. / scaling_factor;
-// const ScalarType total_confirmed_cases = 341223.;
-// const ScalarType deaths = 0.;
+const size_t num_age_groups = 6;
+// Define age group sizes and resulting total population of Germany.
+const std::vector<double> age_group_sizes_germany = {3969138.0, 7508662, 18921292, 28666166, 18153339, 5936434};
+const ScalarType total_population_germany =
+    std::accumulate(age_group_sizes_germany.begin(), age_group_sizes_germany.end(), 0.);
+// Define scaling factor so that we can scale population down for faster simulation.
+const size_t scaling_factor       = 1000;
+const ScalarType total_population = total_population_germany / scaling_factor;
 
 // Define transition probabilities per age group.
 const ScalarType infectedSymptomsPerInfectedNoSymptoms[] = {0.75, 0.75, 0.8, 0.8, 0.8, 0.8};
@@ -82,7 +86,7 @@ const ScalarType scale_confirmed_cases          = 1.;
 // Define simulation parameters.
 const ScalarType t0        = 0.;
 const ScalarType init_tmax = 14.;
-const ScalarType tmax      = 35.;
+const ScalarType tmax      = 35;
 const ScalarType dt        = 1. / 24.; // corresponds to hours that are used as time step in ABM simulation
 
 } // namespace params

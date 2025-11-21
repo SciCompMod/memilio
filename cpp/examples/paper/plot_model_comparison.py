@@ -27,9 +27,6 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
     secir_dict = {0: 'Susceptible', 1: 'Exposed', 2: 'Carrier', 3: 'Infected', 4: 'Hospitalized',
                   5: 'ICU', 6: 'Recovered', 7: 'Dead'}
 
-    files = ["ode"]  # , "lct", "ide"
-    files = [file + file_suffix for file in files]
-
     # Define plot.
     fig, axs = plt.subplots(4, 2, sharex='all')
     num_plots = 8
@@ -37,45 +34,6 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
     labels = ['ODE', 'LCT', 'IDE', 'ABM']
 
     linestyles = ['-', '--', ':', '-']
-    # Add results to plot for IDE, LCT and ODE.
-    for file in range(len(files)):
-
-        # Load data.
-        h5file = h5py.File(result_dir + str(files[file]) + '.h5', 'r')
-
-        if (len(list(h5file.keys())) > 1):
-            raise gd.DataError("File should contain one dataset.")
-
-        data = h5file[list(h5file.keys())[0]]
-        # print(data)
-
-        total = data['Total'][:, :]
-        # print(total)
-
-        dates = data['Time'][:]
-
-        # Plot data.
-        # ODE
-        if file == 0:
-            # Define indices of compartmens in ODE results separately because results include two compartments for
-            # confirmed cases that we do not consider.
-            ode_secir_indices = [0, 1, 2, 4, 6, 7, 8, 9]
-            for counter, ode_index in enumerate(ode_secir_indices):
-                axs[int(counter/2), counter % 2].plot(dates,
-                                                      total[:, ode_index], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
-            print("total pop: ", total[0, :].sum())
-            print("S0: ", total[0, 1])
-
-        # LCT and IDE
-        elif file == 1 or file == 2:
-            for i in range(num_plots):
-                axs[int(i/2), i % 2].plot(dates,
-                                          total[:, i], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
-
-            print("total pop: ", total[0, :].sum())
-            print("S0: ", total[0, 1])
-
-        h5file.close()
 
     # ABM
     start_time = 0
@@ -121,22 +79,60 @@ def plot_model_comparison_all_compartments(result_dir,  percentiles, num_age_gro
             del percentiles[0]
             del percentiles[-1]
 
+    # Add results to plot for IDE, LCT and ODE.
+    files = ["ode", "lct", "ide"]  # , "lct", "ide"
+    files = [file + file_suffix for file in files]
+    for file in range(len(files)):
+
+        # Load data.
+        h5file = h5py.File(result_dir + str(files[file]) + '.h5', 'r')
+
+        if (len(list(h5file.keys())) > 1):
+            raise gd.DataError("File should contain one dataset.")
+
+        data = h5file[list(h5file.keys())[0]]
+        # print(data)
+
+        total = data['Total'][:, :]
+        # print(total)
+
+        dates = data['Time'][:]
+
+        # Plot data.
+        # ODE
+        if file == 0:
+            # Define indices of compartmens in ODE results separately because results include two compartments for
+            # confirmed cases that we do not consider.
+            ode_secir_indices = [0, 1, 2, 4, 6, 7, 8, 9]
+            for counter, ode_index in enumerate(ode_secir_indices):
+                axs[int(counter/2), counter % 2].plot(dates,
+                                                      total[:, ode_index], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
+
+        # LCT and IDE
+        elif file == 1 or file == 2:
+            for i in range(num_plots):
+                axs[int(i/2), i % 2].plot(dates,
+                                          total[:, i], label=labels[file], color=model_colors[file], linestyle=linestyles[file], linewidth=linewidth)
+
+        h5file.close()
+
     # Define some characteristics of the plot
     for i in range(num_plots):
         axs[int(i/2), i % 2].set_title(secir_dict[i], fontsize=8)
-        axs[int(i/2), i % 2].set_xlim(left=14, right=35)
+        axs[int(i/2), i % 2].set_xlim(left=0, right=35)
+        # axs[int(i/2), i % 2].set_ylim(bottom=0, top=1500)
         axs[int(i/2), i % 2].grid(True, linestyle='--', alpha=0.3)
         axs[int(i/2), i % 2].ticklabel_format(axis='y',
                                               style='sci', scilimits=(0, 0))
         axs[int(i/2), i % 2].tick_params(labelsize=8)
 
     fig.legend(labels, loc="lower right",
-               fancybox=False, shadow=False, ncol=2, fontsize=12)  # bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
+               fancybox=False, shadow=False, ncol=2, fontsize=10)  # bbox_to_anchor=(0.1, -0.73, 0.8, 0.8),
 
     fig.supxlabel('Simulation time [days]', fontsize=12)
     fig.supylabel('Number of individuals', fontsize=12)
     plt.subplots_adjust(left=None, bottom=0.2, right=None,
-                        top=None, wspace=None, hspace=0.3)
+                        top=None, wspace=None, hspace=0.6)
 
     # plt.tight_layout()
 
@@ -314,12 +310,12 @@ if __name__ == '__main__':
     exponential_scenario = True
     # set_fontsize()
 
-    max_value = 0.3
+    # max_value = 0.3
 
     if exponential_scenario:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", f"simulation_results/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
+            __file__),  f"simulation_results/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
             __file__),  f"plots/compare_abm_ide_lct_ode/exponential/one_location/Seed1/")
@@ -327,7 +323,7 @@ if __name__ == '__main__':
     else:
         # Path where simulation results are stored.
         result_dir = os.path.join(os.path.dirname(
-            __file__), "../../..", "simulation_results/compare_abm_ide_lct_ode/different_dists/")
+            __file__), "simulation_results/compare_abm_ide_lct_ode/different_dists/")
         # Path where plots will be stored.
         plot_dir = os.path.join(os.path.dirname(
             __file__),  "plots/compare_abm_ide_lct_ode/different_dists/")
@@ -337,9 +333,9 @@ if __name__ == '__main__':
                              "infectivity_rates_rest_quarter"]
 
     num_age_groups = 6
-    plot_init = False
+    plot_init = True
 
-    for i in range(len(infectivity_rates_str)):
+    for i in range(len(infectivity_rates_str[:1])):
         file_suffix = "_" + infectivity_rates_str[i]
 
         percentiles = ["05", "50", "95"]
