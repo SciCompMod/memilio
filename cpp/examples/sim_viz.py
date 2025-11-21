@@ -169,10 +169,10 @@ def plot_infection_states(
         if group != 'Total' and group != 'Group1':
             plt.plot(x, y25[group].flatten(), color=color_plot[i+1],
                      linestyle='dashdot', linewidth=1.2, alpha=0.7)
-            plt.plot(x, y75[group].flatten(), color=color_plot[i],
+            plt.plot(x, y75[group].flatten(), color=color_plot[i+1],
                      linestyle='dashdot', linewidth=1.2, alpha=0.7)
             plt.fill_between(x, y25[group].flatten(), y75[group].flatten(),
-                             alpha=0.2, color=color_plot[i])
+                             alpha=0.2, color=color_plot[i+1])
             # Optional: 90% percentile
             if show_90 and y05 is not None and y95 is not None:
                 plt.plot(x, y05[group].flatten(), color=color_plot[i+1],
