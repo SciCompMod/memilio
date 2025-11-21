@@ -21,12 +21,13 @@
 #ifndef MIO_SMM_MODEL_H
 #define MIO_SMM_MODEL_H
 
-#include "memilio/config.h"
-#include "memilio/epidemiology/age_group.h"
+#include "memilio/utils/index.h"
+#include "memilio/utils/index_range.h"
 #include "smm/parameters.h"
 #include "memilio/compartments/compartmental_model.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/geography/regions.h"
+#include <utility>
 
 namespace mio
 {
@@ -36,26 +37,27 @@ namespace smm
 template <class T, std::size_t>
 using age_group = T;
 
+template <class Status, class Region>
+using PopulationIndex = decltype(merge_indices(std::declval<Region>(), std::declval<Status>()));
+
 /**
  * @brief Stochastic Metapopulation Model.
  * @tparam regions Number of regions.
  * @tparam Status An infection state enum.
  */
-template <typename FP, size_t regions, class Status, size_t... Groups>
-class Model : public mio::CompartmentalModel<
-                  FP, Status, mio::Populations<FP, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
-                  ParametersBase<FP, Status, age_group<mio::AgeGroup, Groups>...>>
+template <typename FP, class Comp, class StatusT = Comp, class RegionT = mio::regions::Region>
+class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
+                                             ParametersBase<FP, StatusT, RegionT>>
 {
-    using Base =
-        mio::CompartmentalModel<FP, Status,
-                                mio::Populations<FP, mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>,
-                                ParametersBase<FP, Status, age_group<mio::AgeGroup, Groups>...>>;
-    using Index = mio::Index<mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>;
+    using Base = mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
+                                         ParametersBase<FP, StatusT, RegionT>>;
 
 public:
-    Model()
-        : Base(typename Base::Populations(
-                   {static_cast<mio::regions::Region>(regions), Status::Count, static_cast<mio::AgeGroup>(Groups)...}),
+    using Status = StatusT;
+    using Region = RegionT;
+
+    Model(Status status_dimensions, Region region_dimensions)
+        : Base(typename Base::Populations(merge_indices(region_dimensions, status_dimensions)),
                typename Base::ParameterSet())
     {
     }
@@ -66,46 +68,26 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the adoption rate.
      */
-    FP evaluate(const AdoptionRate<FP, Status, age_group<mio::AgeGroup, Groups>...>& rate,
-                const Eigen::VectorXd& x) const
+    FP evaluate(const AdoptionRate<FP, Status, Region>& rate, const Eigen::VectorXd& x) const
     {
-        const auto& pop       = this->populations;
-        const auto index_from = std::apply(
-            [&](auto&&... args) {
-                return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
-            },
-            rate.group_indices);
-        const auto source = pop.get_flat_index(index_from); // Why is here rate.from used? KV
+        const auto& pop   = this->populations;
+        const auto source = pop.get_flat_index({rate.region, rate.from});
         // determine order and calculate rate
         if (rate.influences.size() == 0) { // first order adoption
             return rate.factor * x[source];
         }
         else { // second order adoption
+            FP N = 0;
+            for (auto status : make_index_range(reduce_index<Status>(this->populations.size()))) {
+                N += x[pop.get_flat_index({rate.region, status})];
+            }
             // accumulate influences
             FP influences = 0.0;
             for (size_t i = 0; i < rate.influences.size(); i++) {
-                FP N = 0; // Welches N brauchen wir hier??
-
-                for (size_t s = 0; s < static_cast<size_t>(Status::Count); ++s) {
-                    const auto index = std::apply(
-                        [&](auto&&... args) {
-                            return Index{rate.influences[i].region.value_or(rate.region), Status(s),
-                                         std::forward<decltype(args)>(args)...};
-                        },
-                        rate.influences[i].group_indices);
-                    N += x[pop.get_flat_index(index)];
-                }
-                const auto index = std::apply(
-                    [&](auto&&... args) {
-                        return Index{rate.influences[i].region.value_or(rate.region), rate.influences[i].status,
-                                     std::forward<decltype(args)>(args)...};
-                    },
-                    rate.influences[i].group_indices);
-                if (N > 0) {
-                    influences += rate.influences[i].factor * x[pop.get_flat_index(index)] / N;
-                }
+                influences +=
+                    rate.influences[i].factor * x[pop.get_flat_index({rate.region, rate.influences[i].status})];
             }
-            return rate.factor * x[source] * influences;
+            return (N > 0) ? (rate.factor * x[source] * influences / N) : 0;
         }
     }
 
@@ -115,15 +97,9 @@ public:
      * @param[in] x The current state of the model.
      * @return Current value of the transition rate.
      */
-    FP evaluate(const TransitionRate<FP, Status, age_group<mio::AgeGroup, Groups>...>& rate,
-                const Eigen::VectorXd& x) const
+    FP evaluate(const TransitionRate<FP, Status, Region>& rate, const Eigen::VectorXd& x) const
     {
-        auto index = std::apply(
-            [&](auto&&... args) {
-                return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
-            },
-            rate.group_indices_from);
-        const auto source = this->populations.get_flat_index(index);
+        const auto source = this->populations.get_flat_index({rate.from, rate.status});
         return rate.factor * x[source];
     }
 

@@ -21,14 +21,9 @@
 #ifndef MIO_SMM_SIMULATION_H
 #define MIO_SMM_SIMULATION_H
 
-#include "memilio/config.h"
-#include "memilio/epidemiology/age_group.h"
-#include "memilio/utils/index.h"
-#include "memilio/utils/logging.h"
 #include "smm/model.h"
 #include "smm/parameters.h"
-#include "memilio/compartments/simulation.h"
-#include <utility>
+#include "memilio/utils/time_series.h"
 
 namespace mio
 {
@@ -41,12 +36,12 @@ namespace smm
  * @tparam regions The number of regions.
  * @tparam Status An infection state enum.
  */
-template <typename FP, size_t regions, class Status, size_t... Groups>
+template <typename FP, class Comp, class Status = Comp, class Region = mio::regions::Region>
 class Simulation
 {
 public:
-    using Model = smm::Model<FP, regions, Status, Groups...>;
-    using Index = mio::Index<mio::regions::Region, Status, age_group<mio::AgeGroup, Groups>...>;
+    using Model = smm::Model<FP, Comp, Status, Region>;
+    using Index = typename Model::Populations::Index;
 
     /**
      * @brief Set up the simulation for a Stochastic Metapopulation Model.
@@ -104,38 +99,18 @@ public:
             if (next_event < adoption_rates().size()) {
                 // perform adoption event
                 const auto& rate = adoption_rates()[next_event];
-                auto index_from  = std::apply(
-                    [&](auto&&... args) {
-                        return Index{rate.region, rate.from, std::forward<decltype(args)>(args)...};
-                    },
-                    rate.group_indices);
-                m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
-                m_model->populations[index_from] -= 1;
-                auto index_to = std::apply(
-                    [&](auto&&... args) {
-                        return Index{rate.region, rate.to, std::forward<decltype(args)>(args)...};
-                    },
-                    rate.group_indices);
-                m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
-                m_model->populations[index_to] += 1;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.from})] -= 1;
+                m_model->populations[{rate.region, rate.from}] -= 1.0;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.region, rate.to})] += 1;
+                m_model->populations[{rate.region, rate.to}] += 1.0;
             }
             else {
                 // perform transition event
                 const auto& rate = transition_rates()[next_event - adoption_rates().size()];
-                auto index_from  = std::apply(
-                    [&](auto&&... args) {
-                        return Index{rate.from, rate.status, std::forward<decltype(args)>(args)...};
-                    },
-                    rate.group_indices_from);
-                m_result.get_last_value()[m_model->populations.get_flat_index(index_from)] -= 1;
-                m_model->populations[index_from] -= 1;
-                auto index_to = std::apply(
-                    [&](auto&&... args) {
-                        return Index{rate.to, rate.status, std::forward<decltype(args)>(args)...};
-                    },
-                    rate.group_indices_to);
-                m_result.get_last_value()[m_model->populations.get_flat_index(index_to)] += 1;
-                m_model->populations[index_to] += 1;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.from, rate.status})] -= 1;
+                m_model->populations[{rate.from, rate.status}] -= 1.0;
+                m_result.get_last_value()[m_model->populations.get_flat_index({rate.to, rate.status})] += 1;
+                m_model->populations[{rate.to, rate.status}] += 1.0;
             }
             // update internal times
             for (size_t i = 0; i < m_internal_time.size(); i++) {
@@ -157,7 +132,6 @@ public:
             }
         }
         return m_result.get_last_value();
-        // }
     }
 
     /**
@@ -189,25 +163,21 @@ private:
     /**
      * @brief Returns the model's transition rates.
      */
-    inline constexpr const typename smm::TransitionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>::Type&
-    transition_rates()
+    inline constexpr const typename smm::TransitionRates<FP, Status, Region>::Type& transition_rates()
     {
-        return m_model->parameters
-            .template get<smm::TransitionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>>();
+        return m_model->parameters.template get<smm::TransitionRates<FP, Status, Region>>();
     }
 
     /**
      * @brief Returns the model's adoption rates.
      */
-    inline constexpr const typename smm::AdoptionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>::Type&
-    adoption_rates()
+    inline constexpr const typename smm::AdoptionRates<FP, Status, Region>::Type& adoption_rates()
     {
-        return m_model->parameters.template get<smm::AdoptionRates<FP, Status, age_group<mio::AgeGroup, Groups>...>>();
+        return m_model->parameters.template get<smm::AdoptionRates<FP, Status, Region>>();
     }
 
     /**
-     * @brief 
-     * 
+     * @brief Calculate current values for m_current_rates and m_waiting_times.
      */
     inline void update_current_rates_and_waiting_times()
     {

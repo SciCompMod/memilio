@@ -20,14 +20,68 @@
 #ifndef INDEX_H
 #define INDEX_H
 
+#include "memilio/io/io.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/type_safe.h"
+
+#include <cstddef>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 namespace mio
 {
 
 template <typename... CategoryTags>
 class Index;
+
+namespace details
+{
+
+/// @brief Function definition that accepts a MultiIndex, used for the definition of IsMultiIndex.
+template <class... T>
+void is_multi_index_impl(Index<T...>);
+
+} // namespace details
+
+/// @brief A MultiIndex is an Index any number of categories. Does accept empty or single category indices.
+template <typename... CategoryTags>
+concept IsMultiIndex = requires(Index<CategoryTags...> i) { details::is_multi_index_impl(i); };
+
+namespace details
+{
+
+/// @brief Obtain a tuple of singular indices from a Index or MultiIndex.
+template <class... Tags>
+std::tuple<Index<Tags>...> get_tuple(const Index<Tags...>& i)
+{
+    if constexpr (sizeof...(Tags) == 1) {
+        return std::tuple(i);
+    }
+    else {
+        return i.indices;
+    }
+}
+
+/// @brief Obtain a tuple of one index from an enum value.
+template <class Enum>
+std::tuple<Index<Enum>> get_tuple(Enum i)
+    requires std::is_enum<Enum>::value
+{
+    return std::tuple(Index<Enum>(i));
+}
+
+template <class... IndexArgs>
+    requires((std::is_enum_v<IndexArgs> || IsMultiIndex<IndexArgs>) && ...)
+decltype(auto) merge_indices_impl(IndexArgs&&... args)
+{
+    return std::tuple_cat(details::get_tuple(args)...);
+}
+
+template <class... T>
+Index<T...> tuple_to_index(std::tuple<Index<T>...>);
+
+} // namespace details
 
 /**
  * @brief An Index with a single template parameter is a typesafe wrapper for size_t
@@ -72,8 +126,8 @@ public:
     /**
      * @brief Constructor from enum, if CategoryTag is an enum
      */
-    template <typename Dummy = CategoryTag, std::enable_if_t<std::is_enum<Dummy>::value, void>* = nullptr>
-    Index(Dummy val)
+    Index(CategoryTag val)
+        requires std::is_enum_v<CategoryTag>
         : TypeSafe<size_t, Index<CategoryTag>>((size_t)val)
     {
     }
@@ -129,6 +183,13 @@ public:
     // constructor from Indices
     Index(Index<CategoryTag> const&... _indices)
         : indices{_indices...}
+    {
+    }
+
+    template <class... IndexArgs>
+        requires(sizeof...(IndexArgs) > 1)
+    Index(IndexArgs&&... subindices)
+        : indices(details::merge_indices_impl(std::forward<IndexArgs>(subindices)...))
     {
     }
 
@@ -197,70 +258,69 @@ struct index_of_type<Index<CategoryTags...>, Index<CategoryTags...>> {
     static constexpr std::size_t value = 0;
 };
 
-// retrieves the Index at the Ith position for a Index with more than one Tag
-template <size_t I, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) > 1), void>* = nullptr>
+// retrieves the Index at the Ith position for a Index
+template <size_t I, typename... CategoryTags>
 constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type&
 get(Index<CategoryTags...>& i) noexcept
 {
-    return std::get<I>(i.indices);
+    if constexpr (sizeof...(CategoryTags) == 1) {
+        static_assert(I == 0, "I must be equal to zero for an Index with just one template parameter");
+        return i;
+    }
+    else {
+        return std::get<I>(i.indices);
+    }
 }
 
-// retrieves the Index at the Ith position for a Index with one Tag, equals identity function
-template <size_t I, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) == 1), void>* = nullptr>
-constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type&
-get(Index<CategoryTags...>& i) noexcept
-{
-    static_assert(I == 0, "I must be equal to zero for an Index with just one template parameter");
-    return i;
-}
-
-// retrieves the Index at the Ith position for a Index with more than one Tag const version
-template <size_t I, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) > 1), void>* = nullptr>
+// retrieves the Index at the Ith position for a Index, const version
+template <size_t I, typename... CategoryTags>
 constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type const&
 get(Index<CategoryTags...> const& i) noexcept
 {
-    return std::get<I>(i.indices);
-}
-
-// retrieves the Index at the Ith position for a Index with one Tag, equals identity function const version
-template <size_t I, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) == 1), void>* = nullptr>
-constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTags>...>>::type const&
-get(Index<CategoryTags...> const& i) noexcept
-{
-    static_assert(I == 0, "I must be equal to zero for an Index with just one template parameter");
-    return i;
+    if constexpr (sizeof...(CategoryTags) == 1) {
+        static_assert(I == 0, "I must be equal to zero for an Index with just one template parameter");
+        return i;
+    }
+    else {
+        return std::get<I>(i.indices);
+    }
 }
 
 // retrieves the Index for the tag Tag of a Index with more than one Tag
-template <typename Tag, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) > 1), void>* = nullptr>
+template <typename Tag, typename... CategoryTags>
 constexpr Index<Tag>& get(Index<CategoryTags...>& i) noexcept
 {
-    return std::get<Index<Tag>>(i.indices);
+    if constexpr (sizeof...(CategoryTags) == 1) {
+        using IndexTag = std::tuple_element_t<0, std::tuple<CategoryTags...>>;
+        static_assert(std::is_same<Tag, IndexTag>::value,
+                      "Tags must match for an Index with just one template parameter");
+        return i;
+    }
+    else {
+        return std::get<Index<Tag>>(i.indices);
+    }
 }
 
-// retrieves the Index for the tag Tag of a Index with one Tag, equals identity function
-template <typename Tag, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) == 1), void>* = nullptr>
-constexpr Index<Tag>& get(Index<CategoryTags...>& i) noexcept
-{
-    using IndexTag = std::tuple_element_t<0, std::tuple<CategoryTags...>>;
-    static_assert(std::is_same<Tag, IndexTag>::value, "Tags must match for an Index with just one template parameter");
-    return i;
-}
-
-// retrieves the Index for the tag Tag for a Index with more than one Tag const version
-template <typename Tag, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) > 1), void>* = nullptr>
+// retrieves the Index for the tag Tag of a Index with more than one Tag
+template <typename Tag, typename... CategoryTags>
 constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
 {
-    return std::get<Index<Tag>>(i.indices);
+    if constexpr (sizeof...(CategoryTags) == 1) {
+        using IndexTag = std::tuple_element_t<0, std::tuple<CategoryTags...>>;
+        static_assert(std::is_same<Tag, IndexTag>::value,
+                      "Tags must match for an Index with just one template parameter");
+        return i;
+    }
+    else {
+        return std::get<Index<Tag>>(i.indices);
+    }
 }
 
-// retrieves the Index for the tag Tag for a Index with one Tag, equals identity function const version
-template <typename Tag, typename... CategoryTags, std::enable_if_t<(sizeof...(CategoryTags) == 1), void>* = nullptr>
-constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
+template <class... IndexArgs>
+decltype(auto) merge_indices(IndexArgs&&... args)
 {
-    using IndexTag = std::tuple_element_t<0, std::tuple<CategoryTags...>>;
-    static_assert(std::is_same<Tag, IndexTag>::value, "Tags must match for an Index with just one template parameter");
-    return i;
+    using MergedIndex = decltype(details::tuple_to_index(details::merge_indices_impl(std::declval<IndexArgs>()...)));
+    return MergedIndex(std::forward<IndexArgs>(args)...);
 }
 
 namespace details
@@ -315,6 +375,13 @@ template <class SubIndex, class SuperIndex>
 SubIndex reduce_index(const SuperIndex& index)
 {
     return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
+}
+
+template <class Enum, class SuperIndex>
+    requires std::is_enum_v<Enum>
+Index<Enum> reduce_index(const SuperIndex& index)
+{
+    return details::reduce_index_impl(index, mio::Tag<Index<Enum>>{});
 }
 
 /**

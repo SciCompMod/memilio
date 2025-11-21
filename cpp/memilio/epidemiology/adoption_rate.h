@@ -20,15 +20,22 @@
 #ifndef MIO_EPI_ADOPTIONRATE_H
 #define MIO_EPI_ADOPTIONRATE_H
 
-#include "memilio/utils/index.h"
-#include "memilio/config.h"
 #include "memilio/geography/regions.h"
-#include <limits>
-#include <tuple>
-#include <optional>
+#include <vector>
 
 namespace mio
 {
+
+/**
+ * @brief Struct defining an influence for a second-order adoption.
+ * The population having "status" is multiplied with "factor."
+ * @tparam Status An infection state enum.
+ */
+template <typename FP, class Status>
+struct Influence {
+    Status status;
+    FP factor;
+};
 
 /**
  * @brief Struct defining a possible status adoption in a Model based on Poisson Processes.
@@ -38,30 +45,13 @@ namespace mio
  * @tparam Status An infection state enum.
  * @tparam Groups Additional grouping indices.
  */
-template <typename FP, class Status, class... Groups>
+template <typename FP, class Status, class Region = mio::regions::Region>
 struct AdoptionRate {
-
-    /**
- * @brief Struct defining an influence for a second-order adoption.
- * The population having "status" is multiplied with "factor."
- * @tparam status An infection state enum.
- * @tparam factor Scaling factor for the influence.
- * @tparam 
- * @tparam Groups Additional grouping indices.
- */
-    struct Influence {
-        Status status;
-        FP factor;
-        std::optional<mio::regions::Region> region = std::nullopt;
-        std::tuple<Groups...> group_indices{};
-    };
-
     Status from; // i
     Status to; // j
-    mio::regions::Region region; // k
+    Region region; // k
     FP factor; // gammahat_{ij}^k
-    std::vector<Influence> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )
-    std::tuple<Groups...> group_indices{};
+    std::vector<Influence<FP, Status>> influences; // influences[tau] = ( Psi_{i,j,tau} , gamma_{i,j,tau} )};
 };
 
 } // namespace mio
