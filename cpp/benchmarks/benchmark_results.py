@@ -21,13 +21,18 @@ try:
 except ImportError:
     HAS_PANDAS = False
 
-# Set style for better-looking plots
-if HAS_SEABORN:
-    plt.style.use('seaborn-v0_8-whitegrid')
-else:
-    plt.style.use('default')
-    plt.rcParams['grid.alpha'] = 0.3
-    plt.rcParams['figure.facecolor'] = 'white'
+# Set professional plot style
+plt.style.use('default')
+plt.rcParams['grid.alpha'] = 0.3
+plt.rcParams['figure.facecolor'] = 'white'
+
+# DPI for high-quality output
+DPI = 300
+
+# Base fontsize settings
+BASE_FONTSIZE = 20
+TICK_FONTSIZE = int(0.8 * BASE_FONTSIZE)
+LEGEND_FONTSIZE = int(0.8 * BASE_FONTSIZE)
 
 
 class rawData:
@@ -96,8 +101,8 @@ class rawData:
 class BenchmarkAnalyzer:
     """Enhanced benchmark analysis and visualization tool."""
 
-    def __init__(self, fontsize=18):
-        self.fontsize = fontsize
+    def __init__(self, fontsize=None):
+        self.fontsize = fontsize if fontsize is not None else BASE_FONTSIZE
         self.colors = {'memilio': '#1f77b4', 'covasim': '#ff7f0e'}
 
     def load_data_from_file(self, filename):
@@ -152,9 +157,137 @@ class BenchmarkAnalyzer:
             'covasim_scaling': {'exponent': covasim_slope, 'r_squared': covasim_r**2}
         }
 
+    def _annotate_speedups_minmax(self, ax, x_data, y_data_fast, y_data_slow, color, fontsize=None):
+        """Draw triangle markers and speedup labels for min and max speedup only."""
+        if fontsize is None:
+            fontsize = max(int(TICK_FONTSIZE * 0.85), 6)
+
+        try:
+            import matplotlib.patheffects as mpatheffects
+        except Exception:
+            mpatheffects = None
+
+        # Get axis limits for label positioning
+        try:
+            x_limits = ax.get_xlim()
+            is_log_x = ax.get_xscale() == 'log'
+        except Exception:
+            x_limits = None
+            is_log_x = False
+
+        def _shift_label_x(x_value):
+            if x_limits is None:
+                return x_value
+            xmin, xmax = x_limits
+            if not (np.isfinite(xmin) and np.isfinite(xmax)):
+                return x_value
+            if is_log_x and x_value > 0:
+                candidate = x_value * 1.4  # Moderate shift to the right
+                max_allowed = xmax / 1.01 if xmax > 0 else xmax
+                if x_value >= max_allowed:
+                    return x_value
+                return candidate if candidate < max_allowed else max_allowed
+            span = xmax - xmin
+            if span <= 0:
+                return x_value
+            # Moderate shift to the right
+            candidate = x_value + 0.10 * span
+            max_allowed = xmax - 0.01 * span
+            if x_value >= max_allowed:
+                return x_value
+            return candidate if candidate < max_allowed else max_allowed
+
+        # First pass: calculate all speedups to find min and max
+        min_len = min(len(x_data), len(y_data_fast), len(y_data_slow))
+        speedups = []
+        valid_indices = []
+
+        for i in range(min_len):
+            y_fast = y_data_fast[i]
+            y_slow = y_data_slow[i]
+
+            if np.isfinite(y_fast) and np.isfinite(y_slow) and y_fast > 0 and y_slow > 0:
+                speedup = y_slow / y_fast
+                if np.isfinite(speedup):
+                    speedups.append(speedup)
+                    valid_indices.append(i)
+
+        if not speedups:
+            return
+
+        # Find indices of min and max speedup
+        min_speedup_idx = valid_indices[np.argmin(speedups)]
+        max_speedup_idx = valid_indices[np.argmax(speedups)]
+
+        # Draw annotations only for min and max
+        for i in [min_speedup_idx, max_speedup_idx]:
+            x = x_data[i]
+            y_fast = y_data_fast[i]
+            y_slow = y_data_slow[i]
+
+            lower, upper = (y_fast, y_slow) if y_fast < y_slow else (
+                y_slow, y_fast)
+
+            # Draw triangle markers along the vertical line
+            n_points = 12
+            y_points = np.logspace(np.log10(lower), np.log10(upper), n_points)
+            x_points = np.full(n_points, x)
+
+            ax.plot(
+                x_points,
+                y_points,
+                color=color,
+                linewidth=0,
+                linestyle='None',
+                marker='^',
+                markersize=4,
+                markerfacecolor=color,
+                markeredgecolor=color,
+                alpha=0.45,
+                zorder=1.5,
+            )
+
+            # Calculate and display speedup
+            speedup = y_slow / y_fast
+
+            y_mid = np.sqrt(y_fast * y_slow)
+            # Position slightly above center
+            shift_factor = 1.4
+            offset_upper = upper * 0.99
+            offset_lower = lower * 1.02
+            if y_fast < y_slow:
+                # Position slightly above center
+                y_pos = min(y_mid * shift_factor, offset_upper)
+            else:
+                y_pos = max(y_mid * shift_factor, offset_lower)
+
+            label = f"{speedup:.1f}×"
+            # Increase fontsize - was using TICK_FONTSIZE * 0.85, now use BASE_FONTSIZE * 0.9
+            label_fontsize = int(BASE_FONTSIZE * 0.9)
+            text_obj = ax.text(
+                _shift_label_x(x),
+                y_pos,
+                label,
+                ha="center",
+                va="center",
+                color=color,
+                fontsize=label_fontsize,
+                zorder=4,
+                clip_on=False,
+            )
+            if mpatheffects is not None:
+                text_obj.set_path_effects(
+                    [mpatheffects.withStroke(linewidth=2.0, foreground="white")])
+
     def plot_agent_scaling(self, raw_data, save_path=None):
         """Plot 1: Scaling with agents - memilio (1, 4, 16 cores), covasim, and opencovid."""
-        fig, ax = plt.subplots(figsize=(12, 9))
+        figsize = (10, 6)
+        panel = (0.12, 0.12, 0.85, 0.83)
+        fig = plt.figure(figsize=figsize, dpi=DPI)
+        ax = fig.add_axes(panel)
+
+        # Set tick label sizes
+        ax.tick_params(axis='both', which='both', labelsize=TICK_FONTSIZE)
 
         # Define colors for memilio lines (shades of blue)
         memilio_color_1 = '#0d47a1'   # dark blue
@@ -191,27 +324,46 @@ class BenchmarkAnalyzer:
 
         ax.set_xscale('log')
         ax.set_yscale('log')
-        ax.set_xlabel('Number of Agents', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime per Time Step (seconds)',
+        ax.set_xlabel('Agents [#]', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime [s]',
                       fontsize=self.fontsize)
-        # ax.set_title('Agent-Based Model Runtime Scaling',
-        #              fontsize=self.fontsize+4)
 
-        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=self.fontsize-2, loc='upper left')
+        ax.legend(fontsize=LEGEND_FONTSIZE, loc='upper left',
+                  framealpha=0.95, edgecolor='gray', fancybox=False)
 
-        plt.tight_layout()
+        # Add speedup annotations between different implementations (min and max only)
+        # MEmilio 16 cores vs Covasim (use covasim color)
+        self._annotate_speedups_minmax(ax, covasim_pop_sizes,
+                                       raw_data.memilio_times_sixteen_cores[:len(
+                                           raw_data.covasim)],
+                                       raw_data.covasim, covasim_color)
+
+        # MEmilio 16 cores vs OpenCOVID (use opencovid color)
+        self._annotate_speedups_minmax(ax, opencovid_pop_sizes,
+                                       raw_data.memilio_times_sixteen_cores[:len(
+                                           raw_data.opencovid)],
+                                       raw_data.opencovid, opencovid_color)
 
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Agent scaling plot saved to {save_path}")
+            fig.savefig(save_path, dpi=DPI)
+            # Also save PDF version
+            pdf_path = str(save_path).replace('.png', '.pdf')
+            fig.savefig(pdf_path, dpi=DPI)
+            print(
+                f"Agent scaling plots saved to:\n  {save_path}\n  {pdf_path}")
 
         return fig, ax
 
     def plot_one_node_strong_scaling(self, raw_data, save_path=None):
         """Plot 3: One node strong scaling."""
-        fig, ax = plt.subplots(figsize=(12, 9))
+        figsize = (10, 6)
+        panel = (0.12, 0.12, 0.85, 0.83)
+        fig = plt.figure(figsize=figsize, dpi=DPI)
+        ax = fig.add_axes(panel)
+
+        # Set tick label sizes
+        ax.tick_params(axis='both', which='both', labelsize=TICK_FONTSIZE)
 
         # Use only the data points that exist (skip the first element which is 1)
         cores = raw_data.strong_scaling_cores[0:len(
@@ -229,15 +381,13 @@ class BenchmarkAnalyzer:
             ax.plot(cores, ideal_scaling,
                     'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
-        ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime (seconds)',
+        ax.set_xlabel('Cores [#]', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime [s]',
                       fontsize=self.fontsize)
-        # ax.set_title('Strong Scaling: One Node - MEmilio ABM',
-        #              fontsize=self.fontsize+4)
 
-        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=self.fontsize-2)
+        ax.legend(fontsize=LEGEND_FONTSIZE,
+                  framealpha=0.95, edgecolor='gray', fancybox=False)
 
         # Set x-axis to log scale if useful, or linear
         ax.set_xscale('log', base=2)
@@ -245,17 +395,24 @@ class BenchmarkAnalyzer:
         ax.set_xticks(cores)
         ax.set_xticklabels([str(c) for c in cores])
 
-        plt.tight_layout()
-
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"One node strong scaling plot saved to {save_path}")
+            fig.savefig(save_path, dpi=DPI)
+            pdf_path = str(save_path).replace('.png', '.pdf')
+            fig.savefig(pdf_path, dpi=DPI)
+            print(
+                f"One node strong scaling plots saved to:\n  {save_path}\n  {pdf_path}")
 
         return fig, ax
 
     def plot_multi_node_strong_scaling(self, raw_data, save_path=None):
         """Plot 4: Multi-node strong scaling."""
-        fig, ax = plt.subplots(figsize=(12, 9))
+        figsize = (10, 6)
+        panel = (0.12, 0.12, 0.85, 0.83)
+        fig = plt.figure(figsize=figsize, dpi=DPI)
+        ax = fig.add_axes(panel)
+
+        # Set tick label sizes
+        ax.tick_params(axis='both', which='both', labelsize=TICK_FONTSIZE)
 
         # Use only the data points that exist (skip the first element which is 1)
         nodes = raw_data.strong_scaling_nodes[0:len(
@@ -273,15 +430,13 @@ class BenchmarkAnalyzer:
             ax.plot(nodes, ideal_scaling,
                     'k--', linewidth=2, alpha=0.5, label='Ideal Scaling')
 
-        ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime (seconds)',
+        ax.set_xlabel('Cores [#]', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime [s]',
                       fontsize=self.fontsize)
-        # ax.set_title('Strong Scaling: Multi-Node - MEmilio ABM',
-        #              fontsize=self.fontsize+4)
 
-        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=self.fontsize-2)
+        ax.legend(fontsize=LEGEND_FONTSIZE,
+                  framealpha=0.95, edgecolor='gray', fancybox=False)
 
         # Set x-axis to log scale if useful, or linear
         ax.set_xscale('log', base=2)
@@ -289,17 +444,24 @@ class BenchmarkAnalyzer:
         ax.set_xticks(nodes)
         ax.set_xticklabels([str(n) for n in nodes])
 
-        plt.tight_layout()
-
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Multi-node strong scaling plot saved to {save_path}")
+            fig.savefig(save_path, dpi=DPI)
+            pdf_path = str(save_path).replace('.png', '.pdf')
+            fig.savefig(pdf_path, dpi=DPI)
+            print(
+                f"Multi-node strong scaling plots saved to:\n  {save_path}\n  {pdf_path}")
 
         return fig, ax
 
     def plot_weak_scaling(self, raw_data, save_path=None):
         """Plot 2: Weak scaling plot for different agent counts per core."""
-        fig, ax = plt.subplots(figsize=(12, 9))
+        figsize = (10, 6)
+        panel = (0.12, 0.12, 0.85, 0.83)
+        fig = plt.figure(figsize=figsize, dpi=DPI)
+        ax = fig.add_axes(panel)
+
+        # Set tick label sizes
+        ax.tick_params(axis='both', which='both', labelsize=TICK_FONTSIZE)
 
         # Number of cores for weak scaling
         num_cores = [1, 2, 4, 8, 16, 32]
@@ -326,14 +488,13 @@ class BenchmarkAnalyzer:
         # ax.plot(num_cores, [ideal_runtime] * len(num_cores),
         #         'k--', linewidth=2, alpha=0.5, label='Ideal (constant runtime)')
 
-        ax.set_xlabel('Number of Cores', fontsize=self.fontsize)
-        ax.set_ylabel('Runtime per Time Step (seconds)',
+        ax.set_xlabel('Cores [#]', fontsize=self.fontsize)
+        ax.set_ylabel('Runtime [s]',
                       fontsize=self.fontsize)
-        # ax.set_title('Weak Scaling: MEmilio ABM', fontsize=self.fontsize+4)
 
-        ax.tick_params(axis='both', which='major', labelsize=self.fontsize-2)
         ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=self.fontsize-2)
+        ax.legend(fontsize=LEGEND_FONTSIZE,
+                  framealpha=0.95, edgecolor='gray', fancybox=False)
 
         # Set x-axis ticks to actual core counts
         ax.set_xticks(num_cores)
@@ -341,11 +502,11 @@ class BenchmarkAnalyzer:
 
         ax.set_yscale('log')
 
-        plt.tight_layout()
-
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            print(f"Weak scaling plot saved to {save_path}")
+            fig.savefig(save_path, dpi=DPI)
+            pdf_path = str(save_path).replace('.png', '.pdf')
+            fig.savefig(pdf_path, dpi=DPI)
+            print(f"Weak scaling plots saved to:\n  {save_path}\n  {pdf_path}")
 
         return fig, ax
 
@@ -483,7 +644,7 @@ def main():
     args.save = "/Users/saschakorf/Nosynch/Arbeit/memilio/example_results"
 
     # Create analyzer and raw data
-    analyzer = BenchmarkAnalyzer(fontsize=18)
+    analyzer = BenchmarkAnalyzer(fontsize=20)
     raw_data = rawData()
 
     # Create plots
