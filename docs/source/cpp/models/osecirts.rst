@@ -1,12 +1,16 @@
+.. include:: ../../literature.rst
+
 ODE-based SECIRTS-type model including multi-layer waning immunity
 ==================================================================
 
-This model extends the ODE-SECIRVVS model by adding waning immunity and introducing temporary immunity states that change the meaning of recovery.
+This model extends the :doc:`ODE-SECIRVVS model <osecirvvs>` by adding waning immunity and introducing temporary immunity states that change the meaning of recovery.
 Like the ODE-SECIRVVS model, the ODE-SECIRTS model has three layers of immunity: naive immunity, partial immunity, improved immunity.
 
 Additionally, waning immunity is defined by the parameters ``TimeWaningPartialImmunity``, ``TimeWaningImprovedImmunity``, ``TimeTemporaryImmunityPI``, and ``TimeTemporaryImmunityII``. The parameters ``TimeWaningPartialImmunity`` and ``TimeWaningImprovedImmunity`` represent the (mean) duration after which an individual transitions from one immunity layer to the next weaker one due to waning immunity, assuming no vaccination or recovery from infection has occurred during this period. Similarly, the parameters ``TimeTemporaryImmunityPI`` and ``TimeTemporaryImmunityII`` denote the (mean) duration of temporary immunity following exposure to the virus, either through vaccination or recovery. During this state of temporary immunity, individuals are protected from reinfection and are incapable of transmitting the virus to others. Should individuals previously reside in the naive or partial immunity layer, their stay in the temporary immunity state results in a transition to the next stronger immunity layer.
 
-For more details about the model, we refer to `1 <https://www.medrxiv.org/content/10.1101/2024.03.01.24303602v3>`_.
+For more details about the model, we refer to |Novel_travel_time_aware_metapopulation_models|.
+
+The complete system of equations can be found in the supplementary material: `doi:10.1371/journal.pcbi.1012630.s001 <https://doi.org/10.1371/journal.pcbi.1012630.s001>`_.
 
 Below is an overview of the model architecture and its compartments.
 
@@ -62,7 +66,7 @@ The model extends the ODE-SECIRVVS model by adding temporary immunity states and
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIRTS model is implemented as a **FlowModel**, which computes the flows between compartments explicitly. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
+The ODE-SECIRTS model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments. A key difference from the ODE-SECIRVVS model is that vaccinations in the ODE-SECIRTS model are implemented as flows within the ODE system rather than discrete events.
 
 The model has the following state trnsitions:
 
@@ -313,8 +317,7 @@ The model also supports dynamic NPIs based on epidemic thresholds:
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
     dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
 
-For more complex scenarios, such as real-world lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the ODE-SECIR model. 
-
+For more complex scenarios, such as real-world venue closures or lockdown modeling, detailed NPIs with location-specific dampings can be implemented. For further details, see the documentation of the :doc:`ODE-SECIR model <cpp/osecir>`
 
 Simulation
 ----------

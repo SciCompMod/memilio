@@ -34,12 +34,32 @@ There also exist other IO modules that are implemented for specific models.
 The command line interface
 --------------------------
 
+.. note::
+
+    The command line interface (CLI) requires the JsonCPP dependency to be enabled, which is the default when building MEmilio.
+    You can use the CMake variable ``MEMILIO_HAS_JSONCPP`` and the preprocessor macro of the same name to check if the
+    dependency (and the command line interface) is available.
+
 We provide a function ``mio::command_line_interface`` in the header ``memilio/io/cli.h``, that can be used to write to
 or read from a parameter set. It can take parameters from command line arguments (i.e. the content of ``argv`` in the
-main function), and assign them to or get them from a ``mio::ParameterSet``. A small example can be seen in
+main function), and assign them to or get them from a ``mio::ParameterSet``. If the parameter set is only used for the
+CLI, make use of the ``mio::cli::ParameterSetBuilder``. A small example can be seen in
 `cpp/examples/cli.cpp <https://github.com/SciCompMod/memilio/blob/main/cpp/examples/cli.cpp>`_.
 
-The command line interface (CLI) provides some non-parameter options listed below.
+.. note::
+
+    The CLI function communicates using the error message in its result. Hence, all dialogue, including the help text,
+    is passed through its return value. Use the following code snippet to correctly return error codes and messages:
+
+    .. code-block:: cpp
+
+        auto result = mio::command_line_interface(argv[0], argc, argv, parameters);
+        if (!result) {
+            std::cout << result.error().message();
+            return result.error().code().value();
+        }
+
+The CLI provides some built-in options, listed below.
 
 ====================== =====================================
 Name  (Alias)          Description
@@ -65,8 +85,109 @@ parameter that can be set.
 
 To set the value of a parameter from the command line, first type the corresponding parameter option (see ``--help``),
 followed by the value that should be assigned (reference ``--print_option``). Values are given as a JSON value
-corresponding to the Type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
+corresponding to the type of the parameter. Note that some characters may need to be escaped or quoted. For example, the
 JSON string ``"some string"`` must be entered as ``\\"some string\\"`` or ``'"some string"'``.
+
+
+Feature overview
+~~~~~~~~~~~~~~~~
+
+Here we briefly list available features of the CLI:
+
+- Built-in options (see table above).
+
+- Can be used with any ``ParameterSet``, as long as all parameters are (de)serializable.
+
+- Default options: As an optional parameter to the CLI function, you can pass a list of parameter names. The
+  first command line arguments (after the program name) are passed to these parameters as values. For example:
+
+  .. code:: cpp
+
+      auto result = mio::command_line_interface("example-program", argc, argv, parameters, {"Path", "N"});
+
+  Now, calling ``example-program /path/to/something 5`` is equivalent to
+  ``example-program --Path /path/to/something --N 5``.
+  Make sure to add quotes to values that contain spaces! 
+
+- Required parameters: The CLI checks that all required parameters are set, and returns an error if some were not set.
+  This can be used, e.g., if a program requires a path to be set. Check out the next section to learn how to mark a
+  parameter as required.
+
+
+Parameters and ParameterSetBuilder
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``mio::cli::ParameterSetBuilder`` can be used to create parameters specifically for usage with the CLI. For general
+purpose parameters, check out ``mio::ParameterSet``.
+
+In the following example, we create a ``mio::cli::ParameterSet`` with two parameters. One minimal parameter called "A"
+of type ``int`` with initial value 5, and a parameter called "B" of type ``double`` with value 2.5, that uses all
+optional features (alias, description, and the required flag).
+
+.. code-block:: cpp
+
+  auto parameters = mio::cli::ParameterSetBuilder()
+                        .add<"A">(5)
+                        .add<"B", double>(2.5, {.alias="b", .description="This is a description.", .is_required=true})
+                        .build();
+
+This set can then be passed to the CLI. You can access parameters using their name, for example ``parameters.get<"A">``.
+
+If you want to use ``mio::ParameterSet`` instead, you can find an equivalent definition of the example parameters A and
+B as structs in the dropdown below.
+
+.. dropdown:: Parameter structs for A and B
+
+    .. code-block:: cpp
+        
+        struct A {
+            using Type = int;
+            static Type get_default()
+            {
+                return 5;
+            }
+            static std::string name()
+            {
+                return "A";
+            }
+        };
+        
+        struct B {
+            using Type = double;
+            static Type get_default()
+            {
+                return 2.5;
+            }
+            static std::string name()
+            {
+                return "B";
+            }
+            static std::string alias()
+            {
+                return "b";
+            }
+            static std::string description()
+            {
+                return "This is a description.";
+            }
+            static bool is_required() {
+                return true;
+            }
+        };
+
+    Note that A is a typical parameter struct, while B has additional member functions. These are only used by the CLI,
+    the ``mio::ParameterSet`` will ignore them.
+
+.. dropdown:: :fa:`gears` Expert's knowledge
+
+    Internally, the CLI uses type erasure via an ``AbstractParameter`` class to avoid dealing with the long template
+    lists needed to use a ``mio::ParametSet`` directly. There are two classes for managing a set of
+    ``AbstractParameter``\s, the ``AbstractSet``, used internally with runtime lookup for parameters by name or alias,
+    and the ``mio::cli::ParameterSet``, which allows direct access of parameters via ``StringLiteral``\s while restoring
+    the parameter's original type. However, the template of a ``mio::cli::ParameterSet`` is difficult to define, since
+    it stores both the name as a ``StringLiteral`` as well as the type of each parameter. The builder allows defining
+    this set iteratively, and makes it easier to change set definitions.
+
 
 .. _history:
 

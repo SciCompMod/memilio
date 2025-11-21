@@ -3,7 +3,13 @@ ODE-based SECIR-type model
 
 The ODE-SECIR module models and simulates an epidemic using an ODE-based SECIR-type model approach.
 The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical
-symptoms are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
+symptoms are possible. The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases
+and, mostly, early epidemic phases. 
+
+*   A generalization of the model that allows for Gamma or Erlang distributed stay times is the :doc:`LCT-SECIR model <lsecir>`.
+*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <isecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
 
 The infection states and the transitions (also see next two sections) are visualized in the following graph.
 
@@ -34,9 +40,9 @@ current implementation and detection is only modeled implicitly through detectio
 Infection State Transitions
 ---------------------------
 
-The ODE-SECIR model is implemented as **FlowModel**. With just minimal overhead, the **FlowModel** computes the new 
-transmissions, infections, and hospitalizations explicitly in every time step instead of only computing the aggregated 
-compartment values. The defined transitions `FromState, ToState` are:
+The ODE-SECIR model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+This allows for explicit computation of new transmissions, infections, and hospitalizations. Additionally, the aggregated
+compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
   
@@ -187,9 +193,7 @@ For age-resolved models, you can apply different dampings to different groups:
     contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant((size_t)nb_groups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
-The SECIR model also supports dynamic NPIs based on epidemic thresholds. These are implemented in the model specific **Simulation** class and are automatically triggered based on predefined criteria, such as the percentage of infected individuals in the population.
-
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The ODE-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 
@@ -251,7 +255,13 @@ A complex lockdown scenario with multiple interventions starting on a specific d
     contact_dampings.push_back(social_events(start_lockdown, 0.6, 0.8));
     contact_dampings.push_back(physical_distancing(start_lockdown, 0.4, 0.6));
 
-For dynamic NPIs that are automatically activated based on thresholds:
+A more advanced structure to automatically activate interventions based on threshold criteria is given by **DynamicNPIs**.
+Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
+In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
+activated for a defined duration when the threshold is exceeded. As above, different dampings `contact_dampings` can be assigned to different contact locations
+and are then triggered all at once the threshold is exceeded.
+The following example shows how to set up dynamic NPIs based on the number of 200 symptomatic infected individuals per 100,000 population. 
+It will be active for at least 14 days and checked every 3 days. If the last check after day 14 is negative, the NPI will be deactivated.
 
 .. code-block:: cpp
 
@@ -260,7 +270,7 @@ For dynamic NPIs that are automatically activated based on thresholds:
     dynamic_npis.set_interval(mio::SimulationTime(3.0));  // Check every 3 days
     dynamic_npis.set_duration(mio::SimulationTime(14.0)); // Apply for 14 days
     dynamic_npis.set_base_value(100'000);                // Per 100,000 population
-    dynamic_npis.set_threshold(200.0, dampings);         // Trigger at 200 cases per 100,000
+    dynamic_npis.set_threshold(200.0, contact_dampings);         // Trigger at 200 cases per 100,000
 
 
 Simulation

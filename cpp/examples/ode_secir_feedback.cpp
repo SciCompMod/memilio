@@ -60,7 +60,8 @@ void initialize_model(mio::osecir::Model<double>& model, int total_population, d
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Dead}]                        = 0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible},
                                                 total_population);
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 }
 

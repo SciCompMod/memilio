@@ -3,7 +3,14 @@ ODE-based SEIR-type model
 
 The ODE-SEIR module models and simulates the epidemic using an ODE-based SEIR-type model approach. The model
 is particularly suited for simple simulations of infectious diseases in a population and getting started with the
-MEmilio code. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases.
+MEmilio code. The model is not suited for pathogens with pre-symptomatic infectiousness.
+The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases
+and, mostly, early epidemic phases. 
+
+*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <osecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
+
 
 The infection states and the transitions are visualized in the following graph.
 
@@ -26,9 +33,9 @@ The model contains the following list of **InfectionState**\s:
 Infection State Transitions
 ---------------------------
 
-The ODE-SEIR model is implemented as **FlowModel**. With just minimal overhead, the **FlowModel** computes the new 
-transmissions, infections, and recoveries explicitly in every time step instead of only computing the aggregated 
-compartment values. The defined transitions `FromState, ToState` are:
+The ODE-SEIR model is implemented as a **FlowModel**, which defines the derivatives of each flow between compartments.
+This allows for explicit computation of new transmissions, infections, and recoveries. Additionally, the aggregated
+compartment values can be computed with minimal overhead. The defined transitions `FromState, ToState` are:
 
 .. code-block:: RST
 
@@ -95,6 +102,7 @@ each compartment:
   // Set values for each InfectionState in the specific age group
   model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Exposed}] = nb_exp_t0;
   model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Infected}] = nb_inf_t0;
+  model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::Recovered}] = nb_rec_t0;
 
   // Set the susceptible population as difference to ensure correct total population
   model.populations.set_difference_from_total({mio::AgeGroup(0), mio::osecir::InfectionState::Susceptible}, nb_total_t0);
@@ -229,6 +237,7 @@ Additionally, you can export the results to a CSV file:
 The ODE-SEIR model also provides utility functions to extract specific measures, such as the reproduction number:
 
 .. code-block:: cpp
+  
     // Calculate R value at a specific time index
     auto r_at_index = mio::oseir::get_reproduction_number(time_idx, result_sim);
     

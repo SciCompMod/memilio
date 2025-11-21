@@ -3,7 +3,15 @@ ODE-based SIR-type model
 
 The ODE-based SIR-type module models and simulates the epidemic using an ODE-based SIR-type model approach. The model is
 particularly suited for simple simulations of infectious diseases in a population and getting started with the MEmilio 
-library. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
+library. The model assumes infectiousness upon transmission and does not allow for pre-symptomatic infectious or noninfectious phases.
+The model assumes perfect immunity after recoveryIt is thus only suited for epidemic use cases
+and, mostly, early epidemic phases. 
+
+*   A generalization of the model that includes a pre-symptomatic noninfectious stage is the :doc:`ODE-SEIR model <oseir>`.
+*   A generalization of the model that includes pre-symptomatic noninfectious and infectious stages is the :doc:`ODE-SECIR model <osecir>`.
+*   A generalization of the model that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`.
+*   A generalization of the model that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`.
+
 In the following, we present the model in detail.
 
 The infection states and the transitions are visualized in the following image.
@@ -27,8 +35,8 @@ The model contains the following list of **InfectionState**\s:
 Infection State transitions
 ---------------------------
 
-The ODE-SIR model is implemented as a **CompartmentalModel**. In each time step, the model computes the aggregated
-compartment values.
+The ODE-SIR model is implemented as a **CompartmentalModel**, which defines the derivative of the aggregated compartment
+values in time.
 
 
 Sociodemographic Stratification
@@ -97,7 +105,7 @@ and all other compartments.
 .. code-block:: cpp
 
    for (auto i = mio::AgeGroup(0); i < nb_groups; i++){
-      model.populations[{i, mio::osir::InfectionState::Exposed}] = 1/nb_groups * nb_exp_t0;
+      model.populations[{i, mio::osir::InfectionState::Infected}] = 1/nb_groups * nb_inf_t0;
       model.populations[{i, mio::osir::InfectionState::Recovered}] = 1/nb_groups * nb_rec_t0;
 
       model.populations.set_difference_from_group_total<mio::AgeGroup>(
@@ -117,7 +125,7 @@ Basic dampings can be added to the ContactPatterns as follows:
 
    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 1/nb_groups * cont_freq));
 
-   // Add a uniform damping acress all age groups
+   // Add a uniform damping across all age groups
    contact_matrix.add_damping(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.7), mio::SimulationTime(30.));
 
 

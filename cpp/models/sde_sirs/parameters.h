@@ -98,9 +98,46 @@ struct ContactPatterns {
     }
 };
 
+/**
+ * @brief The start day in the SIRS model
+ * The start day defines in which season the simulation can be started
+ * If the start day is 180 and simulation takes place from t0=0 to
+ * tmax=100 the days 180 to 280 of the year are simulated
+ */
+template <typename FP>
+struct StartDay {
+    using Type = FP;
+    static Type get_default()
+    {
+        return Type(0.0);
+    }
+    static std::string name()
+    {
+        return "StartDay";
+    }
+};
+
+/**
+ * @brief The seasonality in the SIRS model.
+ * The seasonality is given as (1+k*sin()) where the sine
+ * curve is below one in summer and above one in winter
+ */
+template <typename FP>
+struct Seasonality {
+    using Type = UncertainValue<FP>;
+    static Type get_default()
+    {
+        return Type(0.);
+    }
+    static std::string name()
+    {
+        return "Seasonality";
+    }
+};
+
 template <typename FP>
 using ParametersBase =
-    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>>;
+    ParameterSet<TransmissionProbabilityOnContact<FP>, TimeInfected<FP>, ContactPatterns<FP>, TimeImmune<FP>, Seasonality<FP>, StartDay<FP>>;
 
 /**
  * @brief Parameters of SIR model.
@@ -132,8 +169,14 @@ public:
         FP tol_times = 1e-1;
 
         int corrected = false;
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+            log_warning("Constraint check: Parameter Seasonality changed from {} to {}",
+                        this->template get<Seasonality<FP>>(), 0);
+            this->template set<Seasonality<FP>>(0);
+            corrected = true;
+        }
         if (this->template get<TimeInfected<FP>>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->template get<TimeInfected<FP>>(), tol_times);
@@ -141,7 +184,7 @@ public:
             corrected                              = true;
         }
         if (this->template get<TimeImmune<FP>>() < tol_times) {
-            log_warning("Constraint check: Parameter TimeInfected changed from {:.4f} to {:.4f}. Please note that "
+            log_warning("Constraint check: Parameter TimeInfected changed from {} to {}. Please note that "
                         "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                         "and reset parameters.",
                         this->template get<TimeImmune<FP>>(), tol_times);
@@ -150,7 +193,7 @@ public:
         }
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
-            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {:0.4f} to {:d} ",
+            log_warning("Constraint check: Parameter TransmissionProbabilityOnContact changed from {} to {} ",
                         this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0);
             this->template get<TransmissionProbabilityOnContact<FP>>() = 0.0;
             corrected                                                  = true;
@@ -167,15 +210,19 @@ public:
     {
         FP tol_times = 1e-1;
 
+        if (this->template get<Seasonality<FP>>() < 0.0 || this->template get<Seasonality<FP>>() > 0.5) {
+            log_error("Constraint check: Parameter Seasonality smaller {} or larger {:4f}", 0, 0.5);
+            return true;
+        }
         if (this->template get<TimeInfected<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+            log_error("Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
                       this->template get<TimeInfected<FP>>(), 0.0);
             return true;
         }
         if (this->template get<TimeImmune<FP>>() < tol_times) {
-            log_error("Constraint check: Parameter TimeInfected {:.4f} smaller or equal {:.4f}. Please note that "
+            log_error("Constraint check: Parameter TimeInfected {} smaller or equal {}. Please note that "
                       "unreasonably small compartment stays lead to massively increased run time. Consider to cancel "
                       "and reset parameters.",
                       this->template get<TimeImmune<FP>>(), 0.0);
@@ -184,7 +231,7 @@ public:
         if (this->template get<TransmissionProbabilityOnContact<FP>>() < 0.0 ||
             this->template get<TransmissionProbabilityOnContact<FP>>() > 1.0) {
             log_error(
-                "Constraint check: Parameter TransmissionProbabilityOnContact {:.4f} smaller {:.4f} or greater {:.4f}",
+                "Constraint check: Parameter TransmissionProbabilityOnContact {} smaller {} or greater {}",
                 this->template get<TransmissionProbabilityOnContact<FP>>(), 0.0, 1.0);
             return true;
         }
