@@ -13,7 +13,16 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}/lib" "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_INSTALL_RPATH
+    "$ORIGIN"
+    "$ORIGIN/lib"
+    "${CMAKE_BINARY_DIR}/lib"
+    "${CMAKE_BINARY_DIR}/bin"
+)
+
+# Bundled JsonCpp must be linked statically so the wheel stays self-contained.
+set(MEMILIO_PREFER_STATIC_JSONCPP ON CACHE BOOL "" FORCE)
+set(MEMILIO_PREFER_STATIC_SPDLOG ON CACHE BOOL "" FORCE)
 
 if(MEMILIO_USE_BUNDLED_PYBIND11)
     # Fetch pybind11
@@ -45,7 +54,14 @@ function(add_pymio_module target_name)
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
-    install(TARGETS ${target_name} LIBRARY DESTINATION memilio/simulation)
+    set_target_properties(${target_name} PROPERTIES
+        INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
+    )
+    install(TARGETS ${target_name}
+        LIBRARY DESTINATION .
+        ARCHIVE DESTINATION .
+        RUNTIME DESTINATION .
+    )
 endfunction()
 
 # build python extensions
@@ -105,3 +121,72 @@ add_pymio_module(_simulation_omseirs4
     LINKED_LIBRARIES memilio ode_mseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
 )
+
+set(MEMILIO_SIMULATION_LIBS
+    memilio
+    abm
+    ode_sir
+    ode_seir
+    ode_secir
+    ode_seirdb
+    ode_secirvvs
+    sde_sir
+    sde_sirs
+    ode_mseirs4
+)
+
+foreach(target_name IN LISTS MEMILIO_SIMULATION_LIBS)
+    if(TARGET ${target_name})
+        set_target_properties(${target_name} PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+        )
+    endif()
+endforeach()
+
+install(TARGETS ${MEMILIO_SIMULATION_LIBS}
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION lib
+)
+
+# If jsoncpp comes from the bundled third-party dependencies, copy its shared
+# library into the wheel under every file name importers might look for. Wheels
+# drop symlinks, so place real copies for each alias.
+if(TARGET jsoncpp_lib)
+    set_target_properties(jsoncpp_lib PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+    )
+    set(JSONCPP_LIB_FILE $<TARGET_FILE:jsoncpp_lib>)
+    install(FILES ${JSONCPP_LIB_FILE}
+        DESTINATION lib
+    )
+    install(FILES ${JSONCPP_LIB_FILE}
+        DESTINATION lib
+        RENAME libjsoncpp.so.26
+    )
+    install(FILES ${JSONCPP_LIB_FILE}
+        DESTINATION lib
+        RENAME libjsoncpp.so
+    )
+endif()
+
+if(TARGET spdlog)
+    get_target_property(_SPDLOG_LIB_TYPE spdlog TYPE)
+    if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
+        set_target_properties(spdlog PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
+        )
+        set(SPDLOG_LIB_FILE $<TARGET_FILE:spdlog>)
+        install(FILES ${SPDLOG_LIB_FILE}
+            DESTINATION lib
+        )
+        install(FILES ${SPDLOG_LIB_FILE}
+            DESTINATION lib
+            RENAME libspdlog.so.1.15
+        )
+        install(FILES ${SPDLOG_LIB_FILE}
+            DESTINATION lib
+            RENAME libspdlog.so
+        )
+    endif()
+endif()
