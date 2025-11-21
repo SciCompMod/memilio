@@ -22,6 +22,10 @@ add_executable(ode_seir_example ode_seir.cpp)
 target_link_libraries(ode_seir_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
+add_executable(ode_seirdb_example ode_seirdb.cpp)
+target_link_libraries(ode_seirdb_example PRIVATE memilio ode_seirdb)
+target_compile_options(ode_seirdb_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
 add_executable(ode_seir_ageres_example ode_seir_ageres.cpp)
 target_link_libraries(ode_seir_ageres_example PRIVATE memilio ode_seir)
 target_compile_options(ode_seir_ageres_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
@@ -107,6 +111,12 @@ target_compile_options(graph_stochastic_mobility_example PRIVATE ${MEMILIO_CXX_F
 add_executable(abm_minimal_example abm_minimal.cpp)
 target_link_libraries(abm_minimal_example PRIVATE memilio abm)
 target_compile_options(abm_minimal_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+
+if(MEMILIO_HAS_HDF5)
+    add_executable(abm_parameter_study_example abm_parameter_study.cpp)
+    target_link_libraries(abm_parameter_study_example PRIVATE memilio abm)
+    target_compile_options(abm_parameter_study_example PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif()
 
 add_executable(abm_history_example abm_history_object.cpp)
 target_link_libraries(abm_history_example PRIVATE memilio abm)

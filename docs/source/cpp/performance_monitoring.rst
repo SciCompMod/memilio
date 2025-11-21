@@ -61,7 +61,7 @@ To measure how long advancing a simulation without the setup takes, you can writ
         Simulation sim; ... // setup
 
         {
-            mio::timer::AutoTimer<"my simulation"> my_timer; // my_timer starts here
+            mio::timing::AutoTimer<"my simulation"> my_timer; // my_timer starts here
             sim.advance(t_max); // run the simulation
         } // my_timer stops here
 
@@ -92,7 +92,7 @@ To measure the time a class member function takes, add a timer like this:
 
     class Bar {
         void baz() {
-            mio::timer::AutoTimer<"baz", "foo::Bar"> timer;
+            mio::timing::AutoTimer<"baz", "foo::Bar"> timer;
             
             ... // rest of the function
         }
@@ -214,11 +214,11 @@ with parallel regions. But, if you have to, you can use a NamedTimer directly wi
 
     class Bar {
         void baz() {
-            mio::timer::NamedTimer<"baz", "foo::Bar">::get_instance().start();
+            mio::timing::NamedTimer<"baz", "foo::Bar">::get_instance().start();
             
             ... // rest of the function
 
-            mio::timer::NamedTimer<"baz", "foo::Bar">::get_instance().stop();
+            mio::timing::NamedTimer<"baz", "foo::Bar">::get_instance().stop();
         }
     };
     
