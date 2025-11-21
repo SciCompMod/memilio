@@ -51,6 +51,11 @@ mio::abm::Model CityBuilder::build_world(const CityConfig& config, const mio::Ra
                                           hospitals, icus, config.total_population, infra.num_households_hh_size,
                                           infra);
 
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_5_to_14]  = true;
+    world.parameters.get<mio::abm::AgeGroupGotoSchool>()[age_group_15_to_34] = true;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_15_to_34]   = true;
+    world.parameters.get<mio::abm::AgeGroupGotoWork>()[age_group_35_to_59]   = true;
+
     set_local_parameters(world);
     set_parameters(world.parameters);
     return world;
