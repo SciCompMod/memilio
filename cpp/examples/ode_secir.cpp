@@ -74,7 +74,8 @@ int main()
     model.parameters.get<mio::osecir::SeverePerInfectedSymptoms<ScalarType>>()         = 0.2;
     model.parameters.get<mio::osecir::CriticalPerSevere<ScalarType>>()                 = 0.25;
     model.parameters.get<mio::osecir::DeathsPerCritical<ScalarType>>()                 = 0.3;
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     // Using default Integrator
