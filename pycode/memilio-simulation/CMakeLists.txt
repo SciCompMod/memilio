@@ -128,6 +128,7 @@ set(MEMILIO_SIMULATION_LIBS
     ode_sir
     ode_seir
     ode_secir
+    ode_seirdb
     ode_secirvvs
     sde_sir
     sde_sirs
