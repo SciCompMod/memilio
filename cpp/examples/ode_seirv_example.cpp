@@ -27,7 +27,7 @@
  * 
  * We assume that no one is initially infected or exposed at the beginning of the season.
  * Infections are seeded later via the OutsideFoI parameter.
- * The destinction into the 2 layers of susceptibility is done via the parameters.
+ * The distinction into the 2 layers of susceptibility is done via the parameters.
  * @tparam FP floating point type
  * @param[in, out] model SEIRV model
  * @param[in] total_pop total population size
