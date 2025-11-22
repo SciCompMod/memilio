@@ -162,7 +162,7 @@ void Model::perform_mobility(TimePoint t, TimeSpan dt)
                     (has_locations({LocationType::ICU}) && try_mobility_rule(&go_to_icu)) ||
                     (has_locations({LocationType::School, LocationType::Home}) && try_mobility_rule(&go_to_school)) ||
                     (has_locations({LocationType::Work, LocationType::Home}) && try_mobility_rule(&go_to_work)) ||
-                    (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_mobility_rule(&go_to_shop)) ||
+                    // (has_locations({LocationType::BasicsShop, LocationType::Home}) && try_mobility_rule(&go_to_shop)) ||
                     (has_locations({LocationType::SocialEvent, LocationType::Home}) &&
                      try_mobility_rule(&go_to_event)) ||
                     (has_locations({LocationType::Home}) && try_mobility_rule(&go_to_quarantine));
