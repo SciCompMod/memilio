@@ -109,14 +109,14 @@ struct EpidataFilenames
 {
     private:
 
-    EpidataFilenames(std::string& pydata) :
+    EpidataFilenames(const std::string& pydata) :
         population_data_path(mio::path_join(pydata, "county_current_population.json"))
     {
     }
     
     public:
 
-    static EpidataFilenames county(std::string& pydata)
+    static EpidataFilenames county(const std::string& pydata)
     {
         EpidataFilenames s(pydata);
 
@@ -127,7 +127,7 @@ struct EpidataFilenames
         return s;
     }
 
-    static EpidataFilenames states(std::string& pydata)
+    static EpidataFilenames states(const std::string& pydata)
     {
         EpidataFilenames s(pydata);
 
@@ -138,7 +138,7 @@ struct EpidataFilenames
         return s;
     }
 
-    static EpidataFilenames country(std::string& pydata)
+    static EpidataFilenames country(const std::string& pydata)
     {
         EpidataFilenames s(pydata);
 
