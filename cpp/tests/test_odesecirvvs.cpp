@@ -856,8 +856,7 @@ TEST(TestOdeSECIRVVS, model_initialization)
                                                 mio::regions::de::EpidataFilenames::county(pydata_germany_dir)),
                 IsSuccess());
 
-    // Values from data/export_time_series_init_osecirvvs.h5, for reading in comparison
-    // operator for return of mio::read_result and model population needed.
+    // comparison for return of mio::read_result and model population needed.
     auto expected_values =
         (Eigen::ArrayXd(num_age_groups * Eigen::Index(mio::osecirvvs::InfectionState::Count)) << 3.46722e+06, 176.06,
          3.42799, 0.00017139, 0.00059842, 1.52355, 9.52168e-05, 0.000803518, 0, 0, 0, 7.28479, 0.000193296, 0.000551002,
