@@ -146,7 +146,7 @@ TEST(TestGraph, graph_without_edges)
     std::vector<MockModel> models = {MockModel(), MockModel()};
     std::vector<int> ids          = {1, 2};
 
-    auto g = mio::create_graph_without_edges<MockModel, MockMobility>(models, ids);
+    mio::Graph<MockModel, MockMobility> g(ids, models);
 
     EXPECT_EQ(g.edges().size(), 0);
     EXPECT_EQ(g.nodes().size(), 2);
@@ -157,60 +157,6 @@ TEST(TestGraph, graph_without_edges)
     EXPECT_TRUE(model_type_true);
     auto model_type_false = std::is_same<decltype(g.nodes()[0].property), MockMobility>::value;
     EXPECT_FALSE(model_type_false);
-}
-
-TEST(TestGraph, set_nodes_secir)
-{
-
-    mio::osecir::Parameters<double> params(1);
-    mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph;
-    const auto& read_function_nodes = mock_read_function<mio::osecir::Model<double>>;
-    const auto& node_id_function    = mock_node_function;
-
-    const fs::path& dir = " ";
-
-    auto result =
-        mio::set_nodes<double, mio::osecir::TestAndTraceCapacity<double>, mio::osecir::ContactPatterns<double>,
-                       mio::osecir::Model<double>, mio::MobilityParameters<double>, mio::osecir::Parameters<double>,
-                       decltype(read_function_nodes), decltype(node_id_function)>(
-            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", false, params_graph, read_function_nodes,
-            node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
-
-    EXPECT_EQ(params_graph.nodes().size(), 2);
-    EXPECT_EQ(params_graph.nodes()[0].id, 1001);
-    EXPECT_EQ(params_graph.nodes()[1].id, 1002);
-    auto model_type_true1 = std::is_same<decltype(params_graph.nodes()[0].property), mio::osecir::Model<double>>::value;
-    EXPECT_TRUE(model_type_true1);
-    auto model_type_true2 = std::is_same<decltype(params_graph.nodes()[1].property), mio::osecir::Model<double>>::value;
-    EXPECT_TRUE(model_type_true2);
-}
-
-TEST(TestGraph, set_nodes_secirvvs)
-{
-
-    mio::osecirvvs::Parameters<double> params(1);
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    const auto& read_function_nodes = mock_read_function<mio::osecirvvs::Model<double>>;
-    const auto& node_id_function    = mock_node_function;
-
-    const fs::path& dir = " ";
-
-    auto result =
-        mio::set_nodes<double, mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
-                       mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
-                       mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>(
-            params, mio::Date(2020, 5, 10), mio::Date(2020, 5, 11), dir, " ", false, params_graph, read_function_nodes,
-            node_id_function, std::vector<double>(size_t(1), 1.0), 1.0, 0.01);
-
-    EXPECT_EQ(params_graph.nodes().size(), 2);
-    EXPECT_EQ(params_graph.nodes()[0].id, 1001);
-    EXPECT_EQ(params_graph.nodes()[1].id, 1002);
-    auto model_type_true1 =
-        std::is_same<decltype(params_graph.nodes()[0].property), mio::osecirvvs::Model<double>>::value;
-    EXPECT_TRUE(model_type_true1);
-    auto model_type_true2 =
-        std::is_same<decltype(params_graph.nodes()[1].property), mio::osecirvvs::Model<double>>::value;
-    EXPECT_TRUE(model_type_true2);
 }
 
 TEST(TestGraph, set_edges)

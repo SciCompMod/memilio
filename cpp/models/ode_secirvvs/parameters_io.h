@@ -96,7 +96,7 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, const std::vec
  * @param[in] path Path to the confirmed cases data file.
  * @param[in] date Date at which the data is read.
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
- * @param set_death[in] If true, set the number of deaths.
+ * @param[in] set_death If true, set the number of deaths.
  */
 IOResult<void> set_confirmed_cases_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, const std::string& path,
                                         Date date, const std::vector<ScalarType>& scaling_factor_inf,
@@ -334,12 +334,14 @@ IOResult<void> set_vaccination_data(const mio::VectorRange<Node<Model<FP>>>& mod
  * @param[in] scaling_factor_icu Scaling factor for ICU cases.
  * @param[in] num_days Number of days to simulate.
  * @param[in] epidata_filenames Object containing the input data file paths.
+ * @param[in] set_death If true, set the number of deaths.
  *
  * @return An IOResult indicating success or failure.
  */
 IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, Date date,
                                const std::vector<ScalarType>& scaling_factor_inf, ScalarType scaling_factor_icu,
-                               int num_days, const mio::regions::de::EpidataFilenames& epidata_filenames);
+                               int num_days, const mio::regions::de::EpidataFilenames& epidata_filenames,
+                               bool set_death = false);
 
 /**
  * @brief Converts input data from one range of models to another with different type.

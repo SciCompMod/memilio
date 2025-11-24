@@ -703,7 +703,8 @@ IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& mo
 
 IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, Date date,
                                const std::vector<ScalarType>& scaling_factor_inf, ScalarType scaling_factor_icu,
-                               int num_days, const mio::regions::de::EpidataFilenames& epidata_filenames)
+                               int num_days, const mio::regions::de::EpidataFilenames& epidata_filenames, 
+                               bool set_death)
 {
 
     BOOST_OUTCOME_TRY(
@@ -714,7 +715,7 @@ IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& 
     BOOST_OUTCOME_TRY(details::set_divi_data(model, epidata_filenames.divi_data_path, date, scaling_factor_icu));
 
     BOOST_OUTCOME_TRY(
-        details::set_confirmed_cases_data(model, epidata_filenames.case_data_path, date, scaling_factor_inf));
+        details::set_confirmed_cases_data(model, epidata_filenames.case_data_path, date, scaling_factor_inf, set_death));
     BOOST_OUTCOME_TRY(details::set_population_data(model, epidata_filenames.population_data_path,
                                                    epidata_filenames.case_data_path, date));
     return success();
@@ -739,7 +740,7 @@ IOResult<void> export_input_data_timeseries(const mio::VectorRange<Node<Model<Sc
 
         // TODO: empty vaccination data path guard
         BOOST_OUTCOME_TRY(
-            read_input_data(model, offset_day, scaling_factor_inf, scaling_factor_icu, num_days, epidata_filenames));
+            read_input_data(model, offset_day, scaling_factor_inf, scaling_factor_icu, num_days, epidata_filenames, true));
 
         for (size_t r = 0; r < model.size(); r++) {
             extrapolated_data[r][t] = model[r].property.get_initial_values();

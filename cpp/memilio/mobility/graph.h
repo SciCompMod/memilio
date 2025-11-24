@@ -153,9 +153,7 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    /** add note for same size of parameters
-     */
-    Graph(const std::vector<int>& node_ids, std::vector<NodePropertyT>& node_properties)
+    Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
     {
         assert(node_ids.size() == node_properties.size());
 
