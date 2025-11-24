@@ -117,13 +117,13 @@ PYBIND11_MODULE(_simulation, m)
     m.def(
         "get_state_id_de",
         [](int county) {
-            return int(mio::regions::get_state_id(int(mio::regions::CountyId(county))));
+            return int(mio::regions::de::get_state_id(int(mio::regions::de::CountyId(county))));
         },
         py::arg("county_id"));
     m.def(
         "get_holidays_de",
         [](int state, mio::Date start_date, mio::Date end_date) {
-            auto h = mio::regions::get_holidays(mio::regions::StateId(state), start_date, end_date);
+            auto h = mio::regions::de::get_holidays(mio::regions::de::StateId(state), start_date, end_date);
             return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
