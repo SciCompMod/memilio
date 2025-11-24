@@ -337,20 +337,20 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
     m.def(
         "read_input_data_german_county",
         [](mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>& params_graph, mio::Date start_date,
-           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& pydata_path) {
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, std::string& pydata_path) {
 
             auto result = mio::osecirvvs::read_input_data(params_graph.nodes(), start_date, scaling_factor_inf, scaling_factor_icu, 
                             mio::regions::de::EpidataFilenames::county(pydata_path));
             return pymio::check_and_throw(result);
         },
-        "Reads compartments for german counties at a specified date from data files."
+        "Reads compartments for german counties at a specified date from data files.",
         py::arg("params_graph"), py::arg("start_date"), py::arg("scaling_factor_inf"), py::arg("scaling_factor_icu"),
         py::arg("pydata_path"), py::return_value_policy::move);
 
     m.def(
         "create_graph_german_county",
         [](const mio::osecirvvs::Parameters<double>& params, mio::Date start_date, mio::Date end_date,
-           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, const std::string& pydata_path,
+           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, std::string& pydata_path,
            double tnt_capacity_factor) {
 
             auto node_ids = pymio::check_and_throw(mio::get_node_ids(mio::path_join(pydata_path, "county_current_population.json"), true));
