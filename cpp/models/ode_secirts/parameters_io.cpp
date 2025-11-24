@@ -289,8 +289,8 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, const std::vec
     BOOST_OUTCOME_TRY(compute_confirmed_cases_data(
         case_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
         num_death, num_timm1, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        t_imm_interval_i, reduc_t_Infected, reduc_Exposed, reduc_InfectedSymptoms, reduc_icu_death, mu_C_R, mu_I_H,
-        mu_H_U, scaling_factor_inf, 0));
+        t_imm_interval_i, mu_C_R, mu_I_H, mu_H_U, reduc_t_Infected, reduc_Exposed, reduc_InfectedSymptoms, 
+        reduc_icu_death, scaling_factor_inf, 0));
 
     size_t num_groups = (size_t)model.parameters.get_num_groups();
     for (size_t i = 0; i < num_groups; i++) {
@@ -344,8 +344,9 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, const std::vec
     BOOST_OUTCOME_TRY(compute_confirmed_cases_data(
         case_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
         num_death, num_timm1, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        t_imm_interval_i, reduc_t_Infected, reduc_Exposed, reduc_InfectedSymptoms, reduc_icu_death, mu_C_R, mu_I_H,
-        mu_H_U, scaling_factor_inf, 1));
+        t_imm_interval_i, mu_C_R, mu_I_H, mu_H_U, reduc_t_Infected, reduc_Exposed, reduc_InfectedSymptoms, 
+        reduc_icu_death, scaling_factor_inf, 1));
+
     for (size_t i = 0; i < num_groups; i++) {
         model.populations[{AgeGroup(i), InfectionState::ExposedPartialImmunity}] =
             immunity_population[1][i] *
@@ -414,8 +415,8 @@ IOResult<void> set_confirmed_cases_data(Model<ScalarType>& model, const std::vec
     BOOST_OUTCOME_TRY(compute_confirmed_cases_data(
         case_data, region, date, num_Exposed, num_InfectedNoSymptoms, num_InfectedSymptoms, num_InfectedSevere, num_icu,
         num_death, num_timm2, t_Exposed, t_InfectedNoSymptoms, t_InfectedSymptoms, t_InfectedSevere, t_InfectedCritical,
-        t_imm_interval_i, reduc_t_Infected, reduc_Exposed, reduc_InfectedSymptoms, reduc_icu_death, mu_C_R, mu_I_H,
-        mu_H_U, scaling_factor_inf, 2));
+        t_imm_interval_i, mu_C_R, mu_I_H, mu_H_U, reduc_t_Infected, reduc_Exposed, reduc_InfectedSymptoms, 
+        reduc_icu_death, scaling_factor_inf, 2));
 
     for (size_t i = 0; i < num_groups; i++) {
         model.populations[{AgeGroup(i), InfectionState::ExposedImprovedImmunity}] =

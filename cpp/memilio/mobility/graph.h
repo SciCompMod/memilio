@@ -180,7 +180,7 @@ public:
     template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Graph(const int number_of_nodes, Args&&... args)
     {
-        for (auto id = size_t(0); id < number_of_nodes; ++id) {
+        for (int id = 0; id < number_of_nodes; ++id) {
             add_node(id, std::forward<Args>(args)...);
         }
     }
