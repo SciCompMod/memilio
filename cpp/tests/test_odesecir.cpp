@@ -1551,7 +1551,6 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
     models1[0].property.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
 
     auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
-    const std::vector<int> counties{1002};
     const auto date = mio::Date(2020, 12, 1);
 
     std::vector<double> scale6(num_age_groups, 1.0);

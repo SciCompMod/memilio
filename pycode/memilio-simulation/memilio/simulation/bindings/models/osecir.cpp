@@ -305,7 +305,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
             auto node_ids = pymio::check_and_throw(mio::get_node_ids(mio::path_join(pydata_path, "county_current_population.json"), true));
 
             mio::Graph<mio::osecir::Model<double>, mio::MobilityParameters<double>> params_graph(node_ids, 
-            mio::osecir::Model<double>::Populations({params.get_num_groups(), mio::osecir::InfectionState::Count}), params);
+                mio::osecir::Model<double>::Populations({params.get_num_groups(), mio::osecir::InfectionState::Count}), params);
             pymio::check_and_throw(mio::osecir::read_input_data(params_graph.nodes(), start_date, scaling_factor_inf, scaling_factor_icu, 
                             mio::regions::de::EpidataFilenames::county(pydata_path)));
             

@@ -306,7 +306,7 @@ IOResult<void> set_population_data(Model<ScalarType>& model, const std::vector<S
                                                                              total);
     }
 
-    for (auto i = AgeGroup(0); i < AgeGroup(6); i++) {
+    for (auto i = AgeGroup(0); i < num_groups; i++) {
         for (auto j = Index<InfectionState>(0); j < InfectionState::Count; ++j) {
             if (model.populations[{i, j}] < 0) {
                 log_warning("Compartment at age group {}, infection state {}, is negative: {}", size_t(i), size_t(j),
