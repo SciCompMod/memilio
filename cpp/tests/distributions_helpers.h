@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Daniel Abele
@@ -33,6 +33,9 @@ void check_distribution(const mio::ParameterDistribution& dist, const mio::Param
 class MockParameterDistribution
 {
 public:
+    MockParameterDistribution();
+    ~MockParameterDistribution();
+
     MOCK_METHOD(double, get_rand_sample, (), ());
 };
 //the second class is clonable etc. and forwards calls to a stable instance of the first class

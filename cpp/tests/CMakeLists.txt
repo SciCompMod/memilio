@@ -8,6 +8,8 @@ set(TESTSOURCES
     testmain.cpp
     test_populations.cpp
     test_odeseir.cpp
+    test_odeseirdb.cpp
+    test_odeseirv.cpp
     test_odesir.cpp
     test_numericalIntegration.cpp
     test_smoother.cpp
@@ -74,6 +76,8 @@ set(TESTSOURCES
     test_glct_secir.cpp
     test_ad.cpp
     test_smm_model.cpp
+    test_geography.cpp
+    test_distance.cpp
     abm_helpers.h
     abm_helpers.cpp
     actions.h
@@ -87,6 +91,8 @@ set(TESTSOURCES
     test_graph_abm.cpp
     test_abstract_parameter_dist.cpp
     test_temporal_hybrid_model.cpp
+    test_odemseirs4.cpp
+    test_uncertain_ad_compatibility.cpp
 )
 
 if(MEMILIO_HAS_JSONCPP)
@@ -107,7 +113,7 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm d_abm smm)
+target_link_libraries(memilio-test PRIVATE memilio ode_secir ode_seir ode_seirdb ode_secirvvs ode_secirts ode_seair ide_seir ide_secir lct_secir glct_secir abm gtest_main AD::AD graph_abm d_abm smm)
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 # make unit tests find the test data files

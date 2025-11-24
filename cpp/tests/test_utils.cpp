@@ -1,7 +1,7 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
-* Authors: Rene Schmieding 
+* Authors: Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "memilio/utils/base_dir.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/index_range.h"
 #include "memilio/utils/logging.h"
@@ -26,6 +27,8 @@
 #include "gmock/gmock.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <boost/filesystem.hpp>
 
 template <size_t Tag>
 struct CategoryTag : public mio::Index<CategoryTag<Tag>> {
@@ -159,4 +162,14 @@ TEST(TestUtils, RedirectLogger)
     EXPECT_TRUE(logger.view().empty()); // check that read() cleared the buffer
 
     logger.release();
+}
+
+TEST(TestUtils, base_dir)
+{
+    auto base_dir = boost::filesystem::path(mio::base_dir());
+    // check that the path exists
+    EXPECT_TRUE(boost::filesystem::exists(base_dir));
+    // check that the path is correct, by sampling some fixed paths from project files
+    EXPECT_TRUE(boost::filesystem::exists(base_dir / "cpp" / "memilio"));
+    EXPECT_TRUE(boost::filesystem::exists(base_dir / "pycode" / "memilio-epidata"));
 }

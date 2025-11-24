@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Henrik Zunker
@@ -22,6 +22,7 @@
 #include "ode_secirts/parameters.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
+#include "memilio/data/analyze_result.h"
 
 int main()
 {
@@ -30,13 +31,13 @@ int main()
     // After the simulation, the aggregated size of the temporary immunity states are printed.
     mio::set_log_level(mio::LogLevel::warn);
 
-    double t0   = 0;
-    double tmax = 30;
-    double dt   = 0.1;
+    ScalarType t0   = 0;
+    ScalarType tmax = 30;
+    ScalarType dt   = 0.1;
 
     mio::log_info("Simulating SECIRTS; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    mio::osecirts::Model<double> model(3);
+    mio::osecirts::Model<ScalarType> model(3);
     auto nb_groups = model.parameters.get_num_groups();
 
     for (mio::AgeGroup i = 0; i < nb_groups; i++) {
@@ -73,75 +74,77 @@ int main()
 
         // parameters
         //times
-        model.parameters.get<mio::osecirts::TimeExposed<double>>()[i]                = 3.33;
-        model.parameters.get<mio::osecirts::TimeInfectedNoSymptoms<double>>()[i]     = 1.87;
-        model.parameters.get<mio::osecirts::TimeInfectedSymptoms<double>>()[i]       = 7;
-        model.parameters.get<mio::osecirts::TimeInfectedSevere<double>>()[i]         = 6;
-        model.parameters.get<mio::osecirts::TimeInfectedCritical<double>>()[i]       = 7;
-        model.parameters.get<mio::osecirts::TimeTemporaryImmunityPI<double>>()[i]    = 60;
-        model.parameters.get<mio::osecirts::TimeTemporaryImmunityII<double>>()[i]    = 60;
-        model.parameters.get<mio::osecirts::TimeWaningPartialImmunity<double>>()[i]  = 180;
-        model.parameters.get<mio::osecirts::TimeWaningImprovedImmunity<double>>()[i] = 180;
+        model.parameters.get<mio::osecirts::TimeExposed<ScalarType>>()[i]                = 3.33;
+        model.parameters.get<mio::osecirts::TimeInfectedNoSymptoms<ScalarType>>()[i]     = 1.87;
+        model.parameters.get<mio::osecirts::TimeInfectedSymptoms<ScalarType>>()[i]       = 7;
+        model.parameters.get<mio::osecirts::TimeInfectedSevere<ScalarType>>()[i]         = 6;
+        model.parameters.get<mio::osecirts::TimeInfectedCritical<ScalarType>>()[i]       = 7;
+        model.parameters.get<mio::osecirts::TimeTemporaryImmunityPI<ScalarType>>()[i]    = 60;
+        model.parameters.get<mio::osecirts::TimeTemporaryImmunityII<ScalarType>>()[i]    = 60;
+        model.parameters.get<mio::osecirts::TimeWaningPartialImmunity<ScalarType>>()[i]  = 180;
+        model.parameters.get<mio::osecirts::TimeWaningImprovedImmunity<ScalarType>>()[i] = 180;
 
         //probabilities
-        model.parameters.get<mio::osecirts::TransmissionProbabilityOnContact<double>>()[i]  = 0.15;
-        model.parameters.get<mio::osecirts::RelativeTransmissionNoSymptoms<double>>()[i]    = 0.5;
-        model.parameters.get<mio::osecirts::RiskOfInfectionFromSymptomatic<double>>()[i]    = 0.0;
-        model.parameters.get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<double>>()[i] = 0.4;
-        model.parameters.get<mio::osecirts::RecoveredPerInfectedNoSymptoms<double>>()[i]    = 0.2;
-        model.parameters.get<mio::osecirts::SeverePerInfectedSymptoms<double>>()[i]         = 0.1;
-        model.parameters.get<mio::osecirts::CriticalPerSevere<double>>()[i]                 = 0.1;
-        model.parameters.get<mio::osecirts::DeathsPerCritical<double>>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirts::TransmissionProbabilityOnContact<ScalarType>>()[i]  = 0.15;
+        model.parameters.get<mio::osecirts::RelativeTransmissionNoSymptoms<ScalarType>>()[i]    = 0.5;
+        model.parameters.get<mio::osecirts::RiskOfInfectionFromSymptomatic<ScalarType>>()[i]    = 0.0;
+        model.parameters.get<mio::osecirts::MaxRiskOfInfectionFromSymptomatic<ScalarType>>()[i] = 0.4;
+        model.parameters.get<mio::osecirts::RecoveredPerInfectedNoSymptoms<ScalarType>>()[i]    = 0.2;
+        model.parameters.get<mio::osecirts::SeverePerInfectedSymptoms<ScalarType>>()[i]         = 0.1;
+        model.parameters.get<mio::osecirts::CriticalPerSevere<ScalarType>>()[i]                 = 0.1;
+        model.parameters.get<mio::osecirts::DeathsPerCritical<ScalarType>>()[i]                 = 0.1;
 
-        model.parameters.get<mio::osecirts::ReducExposedPartialImmunity<double>>()[i]                     = 0.8;
-        model.parameters.get<mio::osecirts::ReducExposedImprovedImmunity<double>>()[i]                    = 0.331;
-        model.parameters.get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<double>>()[i]            = 0.65;
-        model.parameters.get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<double>>()[i]           = 0.243;
-        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<double>>()[i]  = 0.1;
-        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<double>>()[i] = 0.091;
-        model.parameters.get<mio::osecirts::ReducTimeInfectedMild<double>>()[i]                           = 0.9;
+        model.parameters.get<mio::osecirts::ReducExposedPartialImmunity<ScalarType>>()[i]                     = 0.8;
+        model.parameters.get<mio::osecirts::ReducExposedImprovedImmunity<ScalarType>>()[i]                    = 0.331;
+        model.parameters.get<mio::osecirts::ReducInfectedSymptomsPartialImmunity<ScalarType>>()[i]            = 0.65;
+        model.parameters.get<mio::osecirts::ReducInfectedSymptomsImprovedImmunity<ScalarType>>()[i]           = 0.243;
+        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadPartialImmunity<ScalarType>>()[i]  = 0.1;
+        model.parameters.get<mio::osecirts::ReducInfectedSevereCriticalDeadImprovedImmunity<ScalarType>>()[i] = 0.091;
+        model.parameters.get<mio::osecirts::ReducTimeInfectedMild<ScalarType>>()[i]                           = 0.9;
     }
 
-    model.parameters.get<mio::osecirts::ICUCapacity<double>>()          = 100;
-    model.parameters.get<mio::osecirts::TestAndTraceCapacity<double>>() = 0.0143;
-    const size_t daily_vaccinations                                     = 10;
-    const size_t num_days                                               = 300;
-    model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>().resize(mio::SimulationDay(num_days));
-    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::ICUCapacity<ScalarType>>()          = 100;
+    model.parameters.get<mio::osecirts::TestAndTraceCapacity<ScalarType>>() = 0.0143;
+    const size_t daily_vaccinations                                         = 10;
+    const size_t num_days                                                   = 300;
+    model.parameters.get<mio::osecirts::DailyPartialVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyFullVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
+    model.parameters.get<mio::osecirts::DailyBoosterVaccinations<ScalarType>>().resize(mio::SimulationDay(num_days));
     for (size_t i = 0; i < num_days; ++i) {
         for (mio::AgeGroup j = 0; j < nb_groups; ++j) {
-            auto num_vaccinations = static_cast<double>(i * daily_vaccinations);
-            model.parameters.get<mio::osecirts::DailyPartialVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            auto num_vaccinations = static_cast<ScalarType>(i * daily_vaccinations);
+            model.parameters.get<mio::osecirts::DailyPartialVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyFullVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyFullVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
-            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<double>>()[{j, mio::SimulationDay(i)}] =
+            model.parameters.get<mio::osecirts::DailyBoosterVaccinations<ScalarType>>()[{j, mio::SimulationDay(i)}] =
                 num_vaccinations;
         }
     }
 
-    mio::ContactMatrixGroup& contact_matrix = model.parameters.get<mio::osecirts::ContactPatterns<double>>();
-    const double cont_freq                  = 10;
-    const double fact                       = 1.0 / (double)(size_t)nb_groups;
-    contact_matrix[0] =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
-                               mio::SimulationTime(30.));
+    mio::ContactMatrixGroup<ScalarType>& contact_matrix =
+        model.parameters.get<mio::osecirts::ContactPatterns<ScalarType>>();
+    const ScalarType cont_freq = 10;
+    const ScalarType fact      = 1.0 / (ScalarType)(size_t)nb_groups;
+    contact_matrix[0]          = mio::ContactMatrix<ScalarType>(
+        Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixX<ScalarType>::Constant((size_t)nb_groups, (size_t)nb_groups, 0.7),
+                               mio::SimulationTime<ScalarType>(30.));
 
-    model.parameters.get<mio::osecirts::Seasonality<double>>() = 0.2;
-
+    model.parameters.get<mio::osecirts::Seasonality<ScalarType>>() = 0.2;
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
-    mio::TimeSeries<double> result = simulate(t0, tmax, dt, model);
+    mio::TimeSeries<ScalarType> result = mio::osecirts::simulate<ScalarType>(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
         auto result_interpolated = mio::interpolate_simulation_result(result);
         for (auto t_indx = 0; t_indx < result_interpolated.get_num_time_points(); t_indx++) {
-            double timm_pi = 0.0;
-            double timm_ii = 0.0;
+            ScalarType timm_pi = 0.0;
+            ScalarType timm_ii = 0.0;
             for (mio::AgeGroup i = 0; i < nb_groups; i++) {
                 timm_pi += result_interpolated.get_value(t_indx)[model.populations.get_flat_index(
                     {i, mio::osecirts::InfectionState::TemporaryImmunePartialImmunity})];

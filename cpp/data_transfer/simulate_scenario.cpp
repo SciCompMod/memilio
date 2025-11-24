@@ -230,7 +230,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params)
 {
     //TODO: io error handling
-    auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
+    auto contact_matrices = mio::ContactMatrixGroup<double>(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
@@ -295,8 +295,8 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     const int num_groups = 6;
     const bool long_time = true;
     auto end_date        = mio::offset_date_by_days(start_date, num_days);
-    mio::osecirvvs::Parameters params(num_groups);
-    params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
+    mio::osecirvvs::Parameters<double> params(num_groups);
+    params.get<mio::osecirvvs::StartDay<double>>() = mio::get_day_in_year(start_date);
     BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
@@ -324,12 +324,13 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     auto tnt_capacity_factor     = 0.;
 
     const auto& set_node_function =
-        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+        mio::set_nodes<double, mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
                        mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+        mio::set_edges<double, ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
+                       mio::MobilityCoefficientGroup<double>, mio::osecirvvs::InfectionState,
+                       decltype(read_function_edges)>;
 
     auto population_data_path =
         mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json");
@@ -355,142 +356,142 @@ get_graph(mio::Date start_date, const int num_days, const fs::path& data_dir)
     return mio::success(params_graph);
 }
 
-mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std::string& data_dir,
-                        const std::string& result_dir, bool save_single_runs, const int num_runs,
-                        bool save_non_aggregated_results)
+// mio::IOResult<void> run(const int num_days_sim, mio::Date start_date, const std::string& data_dir,
+//                         const std::string& result_dir, bool save_single_runs, const int num_runs,
+//                         bool save_non_aggregated_results)
+// {
+//     //create or load graph
+//     mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
+//     BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, data_dir));
+//     params_graph = created;
+
+//     std::vector<int> county_ids(params_graph.nodes().size());
+//     std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+//         return n.id;
+//     });
+
+//     //run parameter study
+//     auto parameter_study = mio::ParameterStudy<mio::osecirvvs::Simulation<>>{
+//         params_graph, 0.0, static_cast<double>(num_days_sim), 0.5, static_cast<size_t>(num_runs)};
+
+//     if (mio::mpi::is_root()) {
+//         printf("Seeds: ");
+//         for (auto s : parameter_study.get_rng().get_seeds()) {
+//             printf("%u, ", s);
+//         }
+//         printf("\n");
+//     }
+
+//     auto save_single_run_result = mio::IOResult<void>(mio::success());
+//     auto ensemble               = parameter_study.run(
+//         [&](auto&& graph) {
+//             return draw_sample(graph, false);
+//         },
+//         [&](auto results_graph, auto&& run_idx) {
+//             auto interpolated_result = mio::interpolate_simulation_result(results_graph);
+//             auto params              = std::vector<mio::osecirvvs::Model<double>>();
+//             params.reserve(results_graph.nodes().size());
+//             std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
+//                                          [](auto&& node) {
+//                                return node.property.get_simulation().get_model();
+//                            });
+
+//             if (save_single_run_result && save_single_runs) {
+//                 save_single_run_result =
+//                     save_result_with_params(interpolated_result, params, county_ids, result_dir, run_idx);
+//             }
+//             std::cout << "run " << run_idx << " complete." << std::endl;
+//             return std::make_pair(interpolated_result, params);
+//         });
+
+//     if (ensemble.size() > 0) {
+//         auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
+//         ensemble_results.reserve(ensemble.size());
+//         auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
+//         ensemble_params.reserve(ensemble.size());
+//         for (auto&& run : ensemble) {
+//             ensemble_results.emplace_back(std::move(run.first));
+//             ensemble_params.emplace_back(std::move(run.second));
+//         }
+
+//         bool save_percentiles = true;
+
+//         // BOOST_OUTCOME_TRY(save_single_run_result);
+//         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs,
+//                                        save_percentiles, size_t(num_days_sim), save_non_aggregated_results));
+//     }
+
+//     return mio::success();
+// }
+
+int main() //int argc, char** argv
 {
-    //create or load graph
-    mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph;
-    BOOST_OUTCOME_TRY(auto&& created, get_graph(start_date, num_days_sim, data_dir));
-    params_graph = created;
+    // TODO: Adjust this script if still required.
+    // mio::set_log_level(mio::LogLevel::warn);
+    // mio::mpi::init();
 
-    std::vector<int> county_ids(params_graph.nodes().size());
-    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
-        return n.id;
-    });
+    // std::string data_dir;
 
-    //run parameter study
-    auto parameter_study = mio::ParameterStudy<mio::osecirvvs::Simulation<>>{
-        params_graph, 0.0, static_cast<double>(num_days_sim), 0.5, static_cast<size_t>(num_runs)};
+    // mio::Date start_date             = mio::Date(2022, 6, 1);
+    // int num_days_sim                 = 5;
+    // int num_simulation_runs          = 5;
+    // bool save_non_aggregated_results = true;
+    // std::cout << argc << std::endl;
 
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : parameter_study.get_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        printf("\n");
-    }
+    // if (argc == 1) {
+    //     data_dir = "../../data";
+    // }
+    // else if (argc == 6) {
+    //     data_dir     = argv[1];
+    //     start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+    //     num_days_sim = std::atoi(argv[5]);
+    // }
+    // else if (argc == 7) {
+    //     data_dir            = argv[1];
+    //     start_date          = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+    //     num_days_sim        = std::atoi(argv[5]);
+    //     num_simulation_runs = std::atoi(argv[6]);
+    // }
+    // else if (argc == 8) {
+    //     data_dir                    = argv[1];
+    //     start_date                  = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
+    //     num_days_sim                = std::atoi(argv[5]);
+    //     num_simulation_runs         = std::atoi(argv[6]);
+    //     save_non_aggregated_results = bool(argv[7]);
+    // }
+    // else {
+    //     mio::mpi::finalize();
+    //     return 0;
+    // }
 
-    auto save_single_run_result = mio::IOResult<void>(mio::success());
-    auto ensemble               = parameter_study.run(
-        [&](auto&& graph) {
-            return draw_sample(graph, false);
-        },
-        [&](auto results_graph, auto&& run_idx) {
-            auto interpolated_result = mio::interpolate_simulation_result(results_graph);
-            auto params              = std::vector<mio::osecirvvs::Model<double>>();
-            params.reserve(results_graph.nodes().size());
-            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(params),
-                                         [](auto&& node) {
-                               return node.property.get_simulation().get_model();
-                           });
+    // //mio::thread_local_rng().seed(
+    // //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
+    // mio::thread_local_rng().synchronize();
+    // if (mio::mpi::is_root()) {
+    //     printf("Seeds: ");
+    //     for (auto s : mio::thread_local_rng().get_seeds()) {
+    //         printf("%u, ", s);
+    //     }
+    //     printf("\n");
+    // }
 
-            if (save_single_run_result && save_single_runs) {
-                save_single_run_result =
-                    save_result_with_params(interpolated_result, params, county_ids, result_dir, run_idx);
-            }
-            std::cout << "run " << run_idx << " complete." << std::endl;
-            return std::make_pair(interpolated_result, params);
-        });
+    // std::string result_dir = "";
 
-    if (ensemble.size() > 0) {
-        auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
-        ensemble_results.reserve(ensemble.size());
-        auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model<double>>>{};
-        ensemble_params.reserve(ensemble.size());
-        for (auto&& run : ensemble) {
-            ensemble_results.emplace_back(std::move(run.first));
-            ensemble_params.emplace_back(std::move(run.second));
-        }
+    // result_dir = data_dir;
+    // boost::filesystem::path res_dir(result_dir);
+    // bool created_results = boost::filesystem::create_directories(res_dir);
+    // if (created_results) {
+    //     mio::log_info("Directory '{:s}' was created.", res_dir.string());
+    // }
+    // printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-        bool save_percentiles = true;
-
-        // BOOST_OUTCOME_TRY(save_single_run_result);
-        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir, save_single_runs,
-                                       save_percentiles, size_t(num_days_sim), save_non_aggregated_results));
-    }
-
-    return mio::success();
-}
-
-int main(int argc, char** argv)
-{
-
-    mio::set_log_level(mio::LogLevel::warn);
-    mio::mpi::init();
-
-    std::string data_dir;
-
-    mio::Date start_date             = mio::Date(2022, 6, 1);
-    int num_days_sim                 = 5;
-    int num_simulation_runs          = 5;
-    bool save_non_aggregated_results = true;
-    std::cout << argc << std::endl;
-
-    if (argc == 1) {
-        data_dir = "../../data";
-    }
-    else if (argc == 6) {
-        data_dir     = argv[1];
-        start_date   = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
-        num_days_sim = std::atoi(argv[5]);
-    }
-    else if (argc == 7) {
-        data_dir            = argv[1];
-        start_date          = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
-        num_days_sim        = std::atoi(argv[5]);
-        num_simulation_runs = std::atoi(argv[6]);
-    }
-    else if (argc == 8) {
-        data_dir                    = argv[1];
-        start_date                  = mio::Date(std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]));
-        num_days_sim                = std::atoi(argv[5]);
-        num_simulation_runs         = std::atoi(argv[6]);
-        save_non_aggregated_results = bool(argv[7]);
-    }
-    else {
-        mio::mpi::finalize();
-        return 0;
-    }
-
-    //mio::thread_local_rng().seed(
-    //    {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
-    mio::thread_local_rng().synchronize();
-    if (mio::mpi::is_root()) {
-        printf("Seeds: ");
-        for (auto s : mio::thread_local_rng().get_seeds()) {
-            printf("%u, ", s);
-        }
-        printf("\n");
-    }
-
-    std::string result_dir = "";
-
-    result_dir = data_dir;
-    boost::filesystem::path res_dir(result_dir);
-    bool created_results = boost::filesystem::create_directories(res_dir);
-    if (created_results) {
-        mio::log_info("Directory '{:s}' was created.", res_dir.string());
-    }
-    printf("Saving results to \"%s\".\n", result_dir.c_str());
-
-    auto result =
-        run(num_days_sim, start_date, data_dir, result_dir, false, num_simulation_runs, save_non_aggregated_results);
-    if (!result) {
-        printf("%s\n", result.error().formatted_message().c_str());
-        mio::mpi::finalize();
-        return -1;
-    }
-    mio::mpi::finalize();
-    return 0;
+    // auto result =
+    //     run(num_days_sim, start_date, data_dir, result_dir, false, num_simulation_runs, save_non_aggregated_results);
+    // if (!result) {
+    //     printf("%s\n", result.error().formatted_message().c_str());
+    //     mio::mpi::finalize();
+    //     return -1;
+    // }
+    // mio::mpi::finalize();
+    // return 0;
 }

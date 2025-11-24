@@ -230,7 +230,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
 mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters<double>& params)
 {
     //TODO: io error handling
-    auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
+    auto contact_matrices = mio::ContactMatrixGroup<double>(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(auto&& baseline,
                           mio::read_mobility_plain(
@@ -260,8 +260,8 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
     // global parameters
     const int num_groups = 6;
     const bool long_time = true;
-    mio::osecirvvs::Parameters params(num_groups);
-    params.get<mio::osecirvvs::StartDay>() = mio::get_day_in_year(start_date);
+    mio::osecirvvs::Parameters<double> params(num_groups);
+    params.get<mio::osecirvvs::StartDay<double>>() = mio::get_day_in_year(start_date);
     BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
 
@@ -276,26 +276,27 @@ generate_extrapolated_data(mio::Date start_date, const int num_days, const fs::p
     auto scaling_factor_icu      = 1.0;
     auto tnt_capacity_factor     = 0.0;
     auto mobile_compartments     = {mio::osecirvvs::InfectionState::SusceptibleNaive,
-                                mio::osecirvvs::InfectionState::ExposedNaive,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
-                                mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
-                                mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
-                                mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
-                                mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
+                                    mio::osecirvvs::InfectionState::ExposedNaive,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsNaive,
+                                    mio::osecirvvs::InfectionState::SusceptibleImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsPartialImmunity,
+                                    mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedNoSymptomsImprovedImmunity,
+                                    mio::osecirvvs::InfectionState::InfectedSymptomsImprovedImmunity};
     mio::Date end_date           = offset_date_by_days(start_date, num_days);
 
     const auto& set_node_function =
-        mio::set_nodes<mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
+        mio::set_nodes<double, mio::osecirvvs::TestAndTraceCapacity<double>, mio::osecirvvs::ContactPatterns<double>,
                        mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
                        mio::osecirvvs::Parameters<double>, decltype(read_function_nodes), decltype(node_id_function)>;
     const auto& set_edge_function =
-        mio::set_edges<ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
-                       mio::MobilityCoefficientGroup, mio::osecirvvs::InfectionState, decltype(read_function_edges)>;
+        mio::set_edges<double, ContactLocation, mio::osecirvvs::Model<double>, mio::MobilityParameters<double>,
+                       mio::MobilityCoefficientGroup<double>, mio::osecirvvs::InfectionState,
+                       decltype(read_function_edges)>;
     BOOST_OUTCOME_TRY(
         set_node_function(params, start_date, end_date, data_dir,
                           mio::path_join((data_dir / "pydata" / "Germany").string(), "county_current_population.json"),

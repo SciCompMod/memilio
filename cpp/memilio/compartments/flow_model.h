@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
@@ -61,7 +61,7 @@ using filtered_index_t = decltype(as_index<IndexTemplate>(
 } //namespace details
 
 /**
- * @brief A FlowModel is a CompartmentalModel defined by the flows between compartments. 
+ * @brief A FlowModel is a CompartmentalModel defined by the flows between compartments.
  *
  * Inherits from  @see CompartmentalModel, and defines the derivatives depending on the flows. Hence, a model implementing
  * FlowModel has to define the function get_flows, instead of get_derivatives.
@@ -159,13 +159,13 @@ public:
      * flat_index = ((((I_{1}) * D_{2} + I_{2}) * D_{3} + I_{3}) ... ) * D_{n} + I_{n}
      * = I_{n} + I_{n-1} * D_{n} + I_{n-2} * D_{n} * D_{n-1} + ... + I_{1} * D_{n} * ... * D_{2}
      * for indices (I_{1}, ... , I_{n}) and dimension (D_{1}, ... , D_{n}).
-     *   
+     *
      * The flows use their position in the TypeList Flows instead of the template argument Comp from the base class,
-     * hence they use the Population::Index type without Comp. The position is determined by the Source and Target 
+     * hence they use the Population::Index type without Comp. The position is determined by the Source and Target
      * template arguments instead. As this dimension (the number of flows) may be larger or smaller
      * (e.g. a S->I->R model has 3 Comp's, but 2 Flows) than Comp::Count, we cannot simply use
      * this->populations.get_flat_index.
-     *   
+     *
      * Instead, we omit Comp from PopIndex (getting FlowIndex), calculate the flat_index without the Comp index or
      * Dimension, i.e. we omit I_j and D_j corresponding to Comp from the formula above. We do this by calling
      * flatten_index with a FlowIndex, with dimensions derived from Pop via reduce_index.
@@ -235,41 +235,19 @@ private:
 };
 
 /**
- * Detect whether certain member functions (the name before '_expr_t') exist.
- * If the member function exists in the type M, this template when instatiated
- * will be equal to the return type of the function. Otherwise the template is invalid.
- * @tparam FP floating point type, e.g. double.
- * @tparam M Any class, e.g. FlowModel.
- * @{
- */
-template <typename FP, class M>
-using get_derivatives_expr_t = decltype(std::declval<const M&>().get_derivatives(
-    std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
-
-template <typename FP, class M>
-using get_flows_expr_t =
-    decltype(std::declval<const M&>().get_flows(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-                                                std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-                                                std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
-
-template <typename FP, class M>
-using get_initial_flows_expr_t =
-    decltype(std::declval<Eigen::VectorX<FP>>() = std::declval<const M&>().get_initial_flows());
-/** @} */
-
-/**
- * Template meta function to check if a type is a valid flow model. 
- * Defines a static constant of name `value`. 
- * The constant `value` will be equal to true if M is a valid flow model type.
- * Otherwise, `value` will be equal to false.
- * @tparam FP floating point type, e.g. double.
+ * @brief Concept to check if a type is a valid flow model.
+ * Note that Model must be the first template argument 
  * @tparam Model A type that may or may not be a flow model.
+ * @tparam FP A floating point type, e.g. double.
  */
-template <typename FP, class Model>
-using is_flow_model = std::integral_constant<bool, (is_expression_valid<get_derivatives_expr_t, FP, Model>::value &&
-                                                    is_expression_valid<get_flows_expr_t, FP, Model>::value &&
-                                                    is_expression_valid<get_initial_flows_expr_t, FP, Model>::value &&
-                                                    is_compartment_model<FP, Model>::value)>;
+template <class Model, typename FP>
+concept IsFlowModel =
+    requires(Model m, Eigen::Ref<const Eigen::VectorX<FP>> const_vref, Eigen::Ref<Eigen::VectorX<FP>> vref, FP t) {
+        requires IsCompartmentalModel<Model, FP>;
+        { m.get_initial_flows() } -> std::convertible_to<Eigen::VectorX<FP>>;
+        m.get_flows(const_vref, const_vref, t, vref);
+        m.get_derivatives(const_vref, vref);
+    };
 
 } // namespace mio
 

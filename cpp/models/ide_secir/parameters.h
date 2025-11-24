@@ -55,13 +55,13 @@ namespace isecir
  */
 struct TransitionDistributions {
 
-    using Type = CustomIndexArray<std::vector<StateAgeFunctionWrapper>, AgeGroup>;
+    using Type = CustomIndexArray<std::vector<StateAgeFunctionWrapper<ScalarType>>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         SmootherCosine smoothcos(2.0);
-        StateAgeFunctionWrapper delaydistribution(smoothcos);
-        std::vector<StateAgeFunctionWrapper> state_age_function_vector((int)InfectionTransition::Count,
-                                                                       delaydistribution);
+        StateAgeFunctionWrapper<ScalarType> delaydistribution(smoothcos);
+        std::vector<StateAgeFunctionWrapper<ScalarType>> state_age_function_vector((int)InfectionTransition::Count,
+                                                                                   delaydistribution);
         return Type(size, state_age_function_vector);
     }
 
@@ -97,13 +97,14 @@ struct TransitionProbabilities {
  * @brief The contact patterns within the society are modelled using an UncertainContactMatrix.
  */
 struct ContactPatterns {
-    using Type = UncertainContactMatrix<double>;
+    using Type = UncertainContactMatrix<ScalarType>;
 
     static Type get_default(AgeGroup size)
     {
-        ContactMatrixGroup contact_matrix = ContactMatrixGroup(1, static_cast<Eigen::Index>((size_t)size));
-        contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(static_cast<Eigen::Index>((size_t)size),
-                                                                         static_cast<Eigen::Index>((size_t)size), 10.));
+        ContactMatrixGroup<ScalarType> contact_matrix =
+            ContactMatrixGroup<ScalarType>(1, static_cast<Eigen::Index>((size_t)size));
+        contact_matrix[0] = mio::ContactMatrix<ScalarType>(Eigen::MatrixX<ScalarType>::Constant(
+            static_cast<Eigen::Index>((size_t)size), static_cast<Eigen::Index>((size_t)size), 10.));
         return Type(contact_matrix);
     }
     static std::string name()
@@ -116,7 +117,7 @@ struct ContactPatterns {
 * @brief Probability of getting infected from a contact.
 */
 struct TransmissionProbabilityOnContact {
-    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    using Type = CustomIndexArray<StateAgeFunctionWrapper<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
@@ -133,7 +134,7 @@ struct TransmissionProbabilityOnContact {
 */
 struct RelativeTransmissionNoSymptoms {
 
-    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    using Type = CustomIndexArray<StateAgeFunctionWrapper<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
@@ -149,7 +150,7 @@ struct RelativeTransmissionNoSymptoms {
 * @brief The risk of infection from symptomatic cases in the SECIR model.
 */
 struct RiskOfInfectionFromSymptomatic {
-    using Type = CustomIndexArray<StateAgeFunctionWrapper, AgeGroup>;
+    using Type = CustomIndexArray<StateAgeFunctionWrapper<ScalarType>, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
         ConstantFunction constfunc(1.0);
@@ -231,8 +232,8 @@ public:
             for (size_t i = 0; i < infectious_window_check; i++) {
                 if (this->get<TransmissionProbabilityOnContact>()[group].eval((ScalarType)i) < 0.0 ||
                     this->get<TransmissionProbabilityOnContact>()[group].eval((ScalarType)i) > 1.0) {
-                    log_error("Constraint check: TransmissionProbabilityOnContact smaller {:d} or larger {:d} at some "
-                              "time {:d}",
+                    log_error("Constraint check: TransmissionProbabilityOnContact smaller {} or larger {} at some "
+                              "time {}",
                               0, 1, i);
                     return true;
                 }
@@ -241,8 +242,8 @@ public:
             for (size_t i = 0; i < infectious_window_check; i++) {
                 if (this->get<RelativeTransmissionNoSymptoms>()[group].eval((ScalarType)i) < 0.0 ||
                     this->get<RelativeTransmissionNoSymptoms>()[group].eval((ScalarType)i) > 1.0) {
-                    log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {:d} or larger {:d} at some "
-                              "time {:d}",
+                    log_error("Constraint check: RelativeTransmissionNoSymptoms smaller {} or larger {} at some "
+                              "time {}",
                               0, 1, i);
                     return true;
                 }
@@ -251,8 +252,8 @@ public:
             for (size_t i = 0; i < infectious_window_check; i++) {
                 if (this->get<RiskOfInfectionFromSymptomatic>()[group].eval((ScalarType)i) < 0.0 ||
                     this->get<RiskOfInfectionFromSymptomatic>()[group].eval((ScalarType)i) > 1.0) {
-                    log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {:d} or larger {:d} at some "
-                              "time {:d}",
+                    log_error("Constraint check: RiskOfInfectionFromSymptomatic smaller {} or larger {} at some "
+                              "time {}",
                               0, 1, i);
                     return true;
                 }
@@ -261,7 +262,7 @@ public:
             for (size_t i = 0; i < (int)InfectionTransition::Count; i++) {
                 if (this->get<TransitionProbabilities>()[group][i] < 0.0 ||
                     this->get<TransitionProbabilities>()[group][i] > 1.0) {
-                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {:d} or larger {:d}",
+                    log_error("Constraint check: One parameter in TransitionProbabilities smaller {} or larger {}",
                               0, 1);
                     return true;
                 }
@@ -270,7 +271,7 @@ public:
             if (!floating_point_equal(
                     this->get<TransitionProbabilities>()[group][(int)InfectionTransition::SusceptibleToExposed], 1.0,
                     1e-14)) {
-                log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {:d}",
+                log_error("Constraint check: Parameter transition probability for SusceptibleToExposed unequal to {}",
                           1);
                 return true;
             }
@@ -279,7 +280,7 @@ public:
                     this->get<TransitionProbabilities>()[group][(int)InfectionTransition::ExposedToInfectedNoSymptoms],
                     1.0, 1e-14)) {
                 log_error("Constraint check: Parameter transition probability for ExposedToInfectedNoSymptoms unequal "
-                          "to {:d}",
+                          "to {}",
                           1);
                 return true;
             }
@@ -291,7 +292,7 @@ public:
                                       1.0, 1e-14)) {
                 log_error(
                     "Constraint check: Sum of transition probability for InfectedNoSymptomsToInfectedSymptoms and "
-                    "InfectedNoSymptomsToRecovered not equal to {:d}",
+                    "InfectedNoSymptomsToRecovered not equal to {}",
                     1);
                 return true;
             }
@@ -302,7 +303,7 @@ public:
                                               int)InfectionTransition::InfectedSymptomsToRecovered],
                                       1.0, 1e-14)) {
                 log_error("Constraint check: Sum of transition probability for InfectedSymptomsToInfectedSevere and "
-                          "InfectedSymptomsToRecovered not equal to {:d}",
+                          "InfectedSymptomsToRecovered not equal to {}",
                           1);
                 return true;
             }
@@ -313,7 +314,7 @@ public:
                                               int)InfectionTransition::InfectedSevereToRecovered],
                                       1.0, 1e-14)) {
                 log_error("Constraint check: Sum of transition probability for InfectedSevereToInfectedCritical and "
-                          "InfectedSevereToRecovered not equal to {:d}",
+                          "InfectedSevereToRecovered not equal to {}",
                           1);
                 return true;
             }
@@ -324,7 +325,7 @@ public:
                                                             [(int)InfectionTransition::InfectedCriticalToRecovered],
                     1.0, 1e-14)) {
                 log_error("Constraint check: Sum of transition probability for InfectedCriticalToDead and "
-                          "InfectedCriticalToRecovered not equal to {:d}",
+                          "InfectedCriticalToRecovered not equal to {}",
                           1);
                 return true;
             }
@@ -341,7 +342,7 @@ public:
         }
 
         if (this->get<Seasonality>() < 0.0 || this->get<Seasonality>() > 0.5) {
-            log_warning("Constraint check: Parameter Seasonality should lie between {:0.4f} and {:.4f}", 0.0, 0.5);
+            log_warning("Constraint check: Parameter Seasonality should lie between {} and {}", 0.0, 0.5);
             return true;
         }
 

@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2025 MEmilio
 *
 * Authors: Rene Schmieding, Henrik Zunker
@@ -20,6 +20,7 @@
 #ifndef MIO_COMPARTMENTS_FLOW_SIMULATION_H
 #define MIO_COMPARTMENTS_FLOW_SIMULATION_H
 
+#include "memilio/compartments/flow_model.h"
 #include "memilio/compartments/flow_simulation_base.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/math/integrator.h"
@@ -32,7 +33,7 @@ namespace mio
  * @tparam FP A floating point type, e.g. double.
  * @tparam M An implementation of a FlowModel.
  */
-template <typename FP, class M>
+template <typename FP, IsFlowModel<FP> M>
 class FlowSimulation : public details::FlowSimulationBase<FP, M, OdeIntegrator<FP>>
 {
 public:

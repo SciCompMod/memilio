@@ -1,5 +1,5 @@
-/* 
-* Copyright (C) 2020-2025 German Aerospace Center (DLR-SC)
+/*
+* Copyright (C) 2020-2025 MEmilio
 *
 * Authors: René Schmieding, Julia Bicker
 *
@@ -35,9 +35,9 @@ namespace smm
  * @brief A vector of AdoptionRate%s, see mio::AdoptionRate
  * @tparam Status An infection state enum.
  */
-template <class Status>
+template <typename FP, class Status>
 struct AdoptionRates {
-    using Type = std::vector<AdoptionRate<Status>>;
+    using Type = std::vector<AdoptionRate<FP, Status>>;
     const static std::string name()
     {
         return "AdoptionRates";
@@ -48,25 +48,25 @@ struct AdoptionRates {
  * @brief Struct defining a possible regional transition in a Model based on Poisson Processes.
  * @tparam Status An infection state enum.
  */
-template <class Status>
+template <typename FP, class Status>
 struct TransitionRate {
     Status status; // i
     mio::regions::Region from; // k
     mio::regions::Region to; // l
-    ScalarType factor; // lambda_i^{kl}
+    FP factor; // lambda_i^{kl}
 };
 
-template <class Status>
+template <typename FP, class Status>
 struct TransitionRates {
-    using Type = std::vector<TransitionRate<Status>>;
+    using Type = std::vector<TransitionRate<FP, Status>>;
     const static std::string name()
     {
         return "TransitionRates";
     }
 };
 
-template <class Status>
-using ParametersBase = mio::ParameterSet<AdoptionRates<Status>, TransitionRates<Status>>;
+template <typename FP, class Status>
+using ParametersBase = mio::ParameterSet<AdoptionRates<FP, Status>, TransitionRates<FP, Status>>;
 
 } // namespace smm
 

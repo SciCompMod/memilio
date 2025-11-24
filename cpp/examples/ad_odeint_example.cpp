@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "ad/ad.hpp"
+#include "memilio/ad/ad.h"
 #include "boost/numeric/odeint.hpp"
 #include <array>
 
@@ -56,7 +56,7 @@ int main()
     x[0]                 = 1.0; // start at x=1.0, p=0.0
     x[1]                 = 0.0;
     ad::derivative(x[0]) = 1.0; // compute derivative with respect to x[0] (scalar tangent-linear mode)
-    ad::derivative(x[0]) = 0.0;
+    ad::derivative(x[1]) = 0.0;
 
     auto t0    = time_type(0.0); // initial time
     auto t_end = time_type(10.0); // stop time
@@ -72,10 +72,10 @@ int main()
 
     // We want to compare AD derivatives with difference quotient
     // To this end, we simulate again with a perturbation of the initial value of x[0]
-    const double h        = 1e-3; // pertubation for finite differences
+    const double h                  = 1e-3; // pertubation for finite differences
     std::array<double, dimension> y = {ad::value(x[0]), ad::value(x[1])};
-    x[0]                  = 1.0 + h; // add perturbation to initial value of x[0]
-    x[1]                  = 0.0;
+    x[0]                            = 1.0 + h; // add perturbation to initial value of x[0]
+    x[1]                            = 0.0;
 
     // integrate perturbed system
     boost::numeric::odeint::integrate_adaptive(make_controlled<error_stepper_type>(abs_tol, rel_tol),

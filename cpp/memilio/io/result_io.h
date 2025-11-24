@@ -44,8 +44,8 @@ namespace mio
  * @param filename Name of file
  * @return Any io errors that occur during writing of the files. 
  */
-IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids, int num_groups,
-                           const std::string& filename);
+IOResult<void> save_result(const std::vector<TimeSeries<ScalarType>>& result, const std::vector<int>& ids,
+                           int num_groups, const std::string& filename);
 
 class SimulationResult
 {
@@ -66,7 +66,7 @@ public:
      * @param groups Simulation results of individual groups.
      * @param total Simulation results as the sum over all groups.
      */
-    SimulationResult(const TimeSeries<double>& groups, const TimeSeries<double>& totals)
+    SimulationResult(const TimeSeries<ScalarType>& groups, const TimeSeries<ScalarType>& totals)
         : m_groups(groups)
         , m_totals(totals)
     {
@@ -75,7 +75,7 @@ public:
     /**
      * @brief Simulation results of individual groups.
      */
-    const TimeSeries<double>& get_groups() const
+    const TimeSeries<ScalarType>& get_groups() const
     {
         return m_groups;
     }
@@ -83,14 +83,14 @@ public:
     /**
      * @brief Simulation results of the sum over all groups.
      */
-    const TimeSeries<double>& get_totals() const
+    const TimeSeries<ScalarType>& get_totals() const
     {
         return m_totals;
     }
 
 private:
-    TimeSeries<double> m_groups;
-    TimeSeries<double> m_totals;
+    TimeSeries<ScalarType> m_groups;
+    TimeSeries<ScalarType> m_totals;
 };
 
 /**
@@ -121,14 +121,15 @@ std::vector<TimeSeries<double>> aggregate_result(std::vector<TimeSeries<double>>
  * @return Any io errors that occur during writing of the files.
  */
 template <class Model>
-IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& result, const std::vector<Model>& params,
-                                       const std::vector<int>& county_ids, const fs::path& result_dir, size_t run_idx)
+IOResult<void> save_result_with_params(const std::vector<TimeSeries<ScalarType>>& result,
+                                       const std::vector<Model>& params, const std::vector<int>& county_ids,
+                                       const fs::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
     BOOST_OUTCOME_TRY(create_directory(result_dir_run.string()));
     BOOST_OUTCOME_TRY(save_result(result, county_ids, (int)(size_t)params[0].parameters.get_num_groups(),
                                   (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(write_graph(create_graph_without_edges<Model, MobilityParameters<double>>(params, county_ids),
+    BOOST_OUTCOME_TRY(write_graph(create_graph_without_edges<Model, MobilityParameters<ScalarType>>(params, county_ids),
                                   result_dir_run.string(), IOF_OmitDistributions));
     return success();
 }
@@ -147,7 +148,7 @@ IOResult<void> save_result_with_params(const std::vector<TimeSeries<double>>& re
  * @return Any io errors that occur during writing of the files.
  */
 template <class Model>
-IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& ensemble_results,
+IOResult<void> save_results(const std::vector<std::vector<TimeSeries<ScalarType>>>& ensemble_results,
                             const std::vector<std::vector<Model>>& ensemble_params, const std::vector<int>& county_ids,
                             const fs::path& result_dir, bool save_single_runs = true, bool save_percentiles = true,
                             size_t num_days = 0, bool save_non_aggregated_results = false)
@@ -255,7 +256,7 @@ IOResult<void> save_results(const std::vector<std::vector<TimeSeries<double>>>& 
         //     auto ensemble_params_p95 = ensemble_params_percentile(ensemble_params, 0.95);
 
         //     auto make_graph = [&county_ids](auto&& params) {
-        //         return create_graph_without_edges<Model, MobilityParameters<double>>(params, county_ids);
+        //         return create_graph_without_edges<Model, MobilityParameters<ScalarType>>(params, county_ids);
         //     };
         //     BOOST_OUTCOME_TRY(
         //         write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), IOF_OmitDistributions));
