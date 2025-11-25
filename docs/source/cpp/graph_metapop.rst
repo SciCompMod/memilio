@@ -179,7 +179,7 @@ The following steps detail how to configure and execute a graph simulation:
 
 .. dropdown:: :fa:`gears` Working with large graphs
 
-    When working with very large graphs, i.e. starting from a few thousand edges, it will be faster to not use the standard ``add_edge`` function.
+    When working with very large graphs, i.e. starting from ten thousand edges, it will be faster to not use the standard ``add_edge`` function.
     For this case, we provide a ``GraphBuilder``. There you can add all edges without checking for uniqueness and sorting, thus improving the speed.
     The edges will be sorted when the graph is generated:
 
