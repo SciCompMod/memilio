@@ -354,12 +354,15 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu, int num_days, 
            std::string& pydata_path, double tnt_capacity_factor) {
 
-            auto node_ids = pymio::check_and_throw(mio::get_node_ids(mio::path_join(pydata_path, "county_current_population.json"), true));
+            auto result_node_id = mio::get_node_ids(mio::path_join(pydata_path, "county_current_population.json"), true);
+            auto node_ids = pymio::check_and_throw(result_node_id);
 
             mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>> params_graph(node_ids, 
                 mio::osecirvvs::Model<double>::Populations({params.get_num_groups(), mio::osecirvvs::InfectionState::Count}), params);
-            pymio::check_and_throw(mio::osecirvvs::read_input_data(params_graph.nodes(), start_date, 
-                            scaling_factor_inf, scaling_factor_icu, num_days, mio::regions::de::EpidataFilenames::county(pydata_path)));
+            auto result_read_input_data = mio::osecirvvs::read_input_data(params_graph.nodes(), start_date, 
+                                            scaling_factor_inf, scaling_factor_icu, num_days,
+                                            mio::regions::de::EpidataFilenames::county(pydata_path))
+            pymio::check_and_throw(result_read_input_data);
             
             mio::set_test_and_trace_capacity<mio::osecirvvs::Model<double>, mio::osecirvvs::TestAndTraceCapacity<double>>(params_graph.nodes(), tnt_capacity_factor);
             mio::set_german_holidays<double, mio::osecirvvs::Model<double>, mio::osecirvvs::ContactPatterns<double>>(params_graph.nodes(), start_date, end_date);
