@@ -51,6 +51,7 @@ class Model : public mio::CompartmentalModel<FP, Comp, mio::Populations<FP, Popu
 {
     using Base = mio::CompartmentalModel<FP, Comp, mio::Populations<FP, PopulationIndex<StatusT, RegionT>>,
                                          ParametersBase<FP, StatusT, RegionT>>;
+    static_assert(!Base::Populations::Index::has_duplicates, "Do not use the same Index tag multiple times!");
 
 public:
     using Status = StatusT;

@@ -41,7 +41,6 @@ class Simulation
 {
 public:
     using Model = smm::Model<FP, Comp, Status, Region>;
-    using Index = typename Model::Populations::Index;
 
     /**
      * @brief Set up the simulation for a Stochastic Metapopulation Model.
@@ -60,12 +59,14 @@ public:
     {
         assert(dt > 0);
         assert(m_waiting_times.size() > 0);
-        assert(std::all_of(adoption_rates().begin(), adoption_rates().end(), [](auto&& r) {
-            return static_cast<size_t>(r.region) < regions;
-        }));
-        assert(std::all_of(transition_rates().begin(), transition_rates().end(), [](auto&& r) {
-            return static_cast<size_t>(r.from) < regions && static_cast<size_t>(r.to) < regions;
-        }));
+        assert(std::all_of(adoption_rates().begin(), adoption_rates().end(),
+                           [regions = reduce_index<Region>(model.populations.size())](auto&& r) {
+                               return r.region < regions;
+                           }));
+        assert(std::all_of(transition_rates().begin(), transition_rates().end(),
+                           [regions = reduce_index<Region>(model.populations.size())](auto&& r) {
+                               return r.from < regions && r.to < regions;
+                           }));
         // initialize (internal) next event times by random values
         for (size_t i = 0; i < m_tp_next_event.size(); i++) {
             m_tp_next_event[i] += mio::ExponentialDistribution<FP>::get_instance()(m_model->get_rng(), 1.0);

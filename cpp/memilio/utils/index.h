@@ -22,6 +22,7 @@
 
 #include "memilio/io/io.h"
 #include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/type_safe.h"
 
 #include <cstddef>
@@ -116,9 +117,10 @@ class MEMILIO_ENABLE_EBO Index<CategoryTag> : public TypeSafe<size_t, Index<Cate
 public:
     using TypeSafe<size_t, Index<CategoryTag>>::TypeSafe;
 
-    static size_t constexpr size = 1;
+    static constexpr size_t size         = 1;
+    static constexpr bool has_duplicates = false;
 
-    static Index constexpr Zero()
+    static constexpr Index Zero()
     {
         return Index((size_t)0);
     }
@@ -173,7 +175,8 @@ template <typename... CategoryTag>
 class Index
 {
 public:
-    static size_t constexpr size = sizeof...(CategoryTag);
+    static constexpr size_t size         = sizeof...(CategoryTag);
+    static constexpr bool has_duplicates = has_duplicates_v<CategoryTag...>;
 
     static Index constexpr Zero()
     {
@@ -209,6 +212,25 @@ public:
     bool operator!=(Index const& other) const
     {
         return !(this == other);
+    }
+
+    bool operator<(Index const& other) const
+    {
+        // use apply to unfold both tuples, then use a fold expression to evaluate a pairwise less
+        return std::apply(
+            [&other](auto&&... indices_) {
+                return std::apply(
+                    [&](auto&&... other_indices_) {
+                        return ((indices_ < other_indices_) && ...);
+                    },
+                    other.indices);
+            },
+            indices);
+    }
+
+    bool operator<=(Index const& other) const
+    {
+        return (*this == other) || (*this < other);
     }
 
     /**
@@ -372,9 +394,16 @@ inline Index<CategoryTags...> extend_index_impl(const Index<Subset...>& i, const
  * @return A (sub)index with the given categories and values from index.
  */
 template <class SubIndex, class SuperIndex>
-SubIndex reduce_index(const SuperIndex& index)
+decltype(auto) reduce_index(const SuperIndex& index)
 {
-    return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
+    if constexpr (SubIndex::size == 1 && std::is_base_of_v<Index<SubIndex>, SubIndex>) {
+        // this case handles reducing from e.g. Index<AgeGroup, ...> directly to AgeGroup
+        // the default case would instead reduce to Index<AgeGroup>, which may cause conversion errors
+        return details::reduce_index_impl(index, mio::Tag<Index<SubIndex>>{});
+    }
+    else {
+        return details::reduce_index_impl(index, mio::Tag<SubIndex>{});
+    }
 }
 
 template <class Enum, class SuperIndex>
