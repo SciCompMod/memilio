@@ -55,6 +55,7 @@ class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
     using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
+    using BaseFP = FP;
     using Index = typename Base::Index;
 
     template <class... Ts,
@@ -74,10 +75,10 @@ public:
      * @tparam OtherType The type to convert into.
      * @return New Populations of OtherType with copy of internal data.
      */
-    template <class OtherType> requires std::convertible_to<typename Base::Type, OtherType>
+    template <class OtherType> requires std::convertible_to<BaseFP, OtherType>
     Populations<OtherType, Categories...> convert() const
     {
-        return Populations<OtherType, Categories...>(Base::template convert<OtherType>());
+        return Populations<OtherType, Categories...>(Base::template convert<BaseFP>().template convert<UncertainValue<OtherType>>());
     }
 
     /**

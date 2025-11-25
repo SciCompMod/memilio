@@ -161,11 +161,11 @@ void convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& mo
     assert(model_from.size() == model_to.size());
     assert((size_t)model_from[0].property.parameters.get_num_groups() == (size_t)model_to[0].property.parameters.get_num_groups());
     // Todo: add conversion of ParameterSet and then re-use code from other model parameters io 
-
+    
     for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
         // convert populations to mio::UncertainValue<FP>
         // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_to[region_idx].property.populations.template convert<ScalarType>().template convert<mio::UncertainValue<FP>>();
+        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
     }
 }
 

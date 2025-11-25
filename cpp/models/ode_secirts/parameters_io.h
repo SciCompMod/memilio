@@ -387,9 +387,8 @@ IOResult<void> convert_input_data_type(const mio::VectorRange<Node<Model<ScalarT
     for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
         // convert populations to mio::UncertainValue<FP>
         // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_to[region_idx]
-                                                        .property.populations.template convert<ScalarType>()
-                                                        .template convert<mio::UncertainValue<FP>>();
+        model_to[region_idx].property.populations = model_from[region_idx]
+                                                        .property.populations.template convert<FP>();
     }
     return success();
 }
