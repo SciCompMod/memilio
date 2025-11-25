@@ -375,9 +375,8 @@ TEST(TestGraphBuilder, Build_unique)
 
     EXPECT_EQ(g.nodes().size(), 3);
     EXPECT_EQ(g.edges().size(), 3);
-    for (const auto& e : g.edges()) {
-        EXPECT_EQ(e.property, 100);
-    }
+    // The last added edge is kept:
+    EXPECT_EQ(g.edges()[1].property, 200);
 }
 
 namespace

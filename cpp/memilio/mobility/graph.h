@@ -563,7 +563,7 @@ public:
      * 
      * Sorts the edges and optionally removes duplicate edges (same start and end node indices).
      * Wihout dupplicate removal, multiple edges between the same nodes are allowed and the order of insertion is stable.
-     * @param make_unique If true, duplicate edges are removed. The first added edge is kept!
+     * @param make_unique If true, duplicate edges are removed. The last added edge is kept!
      * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
      */
     Graph<NodeProperty, EdgeProperty> build(bool make_unique = false)
@@ -595,42 +595,31 @@ private:
      * @brief Remove duplicate edges from a sorted edge vector.
      * 
      * Copies all the unique edges to a new vector and replaces the original edge vector with it. Unique means that
-     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
+     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the last 
      * edge in the vector is kept.
      */
     void remove_duplicate_edges()
     {
         std::vector<Edge<EdgePropertyT>> unique_edges;
         unique_edges.reserve(m_edges.size());
-        std::ranges::unique_copy(m_edges, std::back_inserter(unique_edges), [](auto&& e1, auto&& e2) {
+        auto curr_elem = m_edges.begin();
+        auto next_elem = std::adjacent_find(curr_elem, m_edges.end(), [](auto&& e1, auto&& e2) {
             return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
         });
-        m_edges = std::move(unique_edges);
-    }
-
-    /**
-     * @brief Remove duplicate edges from a sorted edge vector.
-     * 
-     * Copies all the unique edges to a new vector and replaces the original edge vector with it. Unique means that
-     * the start and end node indices are unique. Other edge properties are not checked and may get lost. Only the first 
-     * edge in the vector is kept.
-     */
-    void remove_double_edges()
-    {
-        std::vector<Edge<EdgePropertyT>> unique_edges;
-        unique_edges.reserve(m_edges.size());
-        auto curr_elem = m_edges.begin();
-        auto next_elem = std::adjacent_find(curr_elem, m_edges.end(), is_equal);
         while (next_elem != m_edges.end()) {
             std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
             curr_elem = next_elem;
-            while (is_equal(*curr_elem, *next_elem) && next_elem != m_edges.end()) {
+            while ((*curr_elem).start_node_idx == (*next_elem).start_node_idx &&
+                   (*curr_elem).end_node_idx == (*next_elem).end_node_idx && next_elem != m_edges.end()) {
                 next_elem = next(next_elem);
             }
             curr_elem = prev(next_elem);
             std::copy(curr_elem, next(curr_elem), std::back_inserter(unique_edges));
+            mio::log_warning("Deleted duplicate edge(s)");
             curr_elem = next(curr_elem);
-            next_elem = std::adjacent_find(curr_elem, m_edges.end(), is_equal);
+            next_elem = std::adjacent_find(curr_elem, m_edges.end(), [](auto&& e1, auto&& e2) {
+                return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
+            });
         }
         std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
         m_edges = std::move(unique_edges);
