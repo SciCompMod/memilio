@@ -560,6 +560,7 @@ private:
             }
             curr_elem = prev(next_elem);
             std::copy(curr_elem, next(curr_elem), std::back_inserter(unique_edges));
+            mio::log_warning("Deleted duplicate edge(s)");
             curr_elem = next(curr_elem);
             next_elem = std::adjacent_find(curr_elem, m_edges.end(), [](auto&& e1, auto&& e2) {
                 return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
