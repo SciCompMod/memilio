@@ -122,8 +122,38 @@ IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& v
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
+template <typename FP = ScalarType>
 IOResult<std::vector<std::vector<ScalarType>>>
-read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion);
+read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion)
+{
+    std::vector<std::vector<ScalarType>> vnum_population(
+        vregion.size(), std::vector<ScalarType>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+
+    for (auto&& county_entry : population_data) {
+        //accumulate population of states or country from population of counties
+        if (!county_entry.county_id && !county_entry.district_id) {
+            return failure(StatusCode::InvalidFileFormat, "File with county population expected.");
+        }
+        //find region that this county belongs to
+        //all counties belong to the country (id = 0)
+        auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
+            return r == 0 ||
+                   (county_entry.county_id &&
+                    regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
+                   (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
+                   (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
+        });
+        if (it != vregion.end()) {
+            auto region_idx      = size_t(it - vregion.begin());
+            auto& num_population = vnum_population[region_idx];
+            for (size_t age = 0; age < num_population.size(); age++) {
+                num_population[age] += county_entry.population[AgeGroup(age)];
+            }
+        }
+    }
+
+    return success(vnum_population);
+}
 
 /**
  * @brief Reads population data from census data.
@@ -133,8 +163,13 @@ read_population_data(const std::vector<PopulationDataEntry>& population_data, co
  * @return An IOResult containing a vector of vectors, where each inner vector represents the population
  *         distribution across age groups for a specific region, or an error if the function fails.
  */
+template <typename FP = ScalarType>
 IOResult<std::vector<std::vector<ScalarType>>> read_population_data(const std::string& path,
-                                                                    const std::vector<int>& vregion);
+                                                                    const std::vector<int>& vregion)
+{
+    BOOST_OUTCOME_TRY(auto&& population_data, mio::read_population_data(path));
+    return read_population_data(population_data, vregion);
+}
 
 } // namespace mio
 

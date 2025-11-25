@@ -248,8 +248,8 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
             auto result      = mio::set_edges<double, // FP,
                                               ContactLocation, mio::osecirvvs::Model<double>,
                                               mio::MobilityParameters<double>, mio::MobilityCoefficientGroup<double>,
-                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain)>(
-                mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain,
+                                              mio::osecirvvs::InfectionState, decltype(mio::read_mobility_plain<double>)>(
+                mobility_data_file, params_graph, mobile_comp, contact_locations_size, mio::read_mobility_plain<double>,
                 weights);
             return pymio::check_and_throw(result);
         },
