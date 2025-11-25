@@ -309,7 +309,7 @@ PYBIND11_MODULE(_simulation_osecir, m)
                 mio::osecir::Model<double>::Populations({params.get_num_groups(), mio::osecir::InfectionState::Count}), params);
             auto result_read_input_data = mio::osecir::read_input_data(params_graph.nodes(), start_date, 
                                             scaling_factor_inf, scaling_factor_icu, 
-                                            mio::regions::de::EpidataFilenames::county(pydata_path))
+                                            mio::regions::de::EpidataFilenames::county(pydata_path));
             pymio::check_and_throw(result_read_input_data);
             
             mio::set_test_and_trace_capacity<mio::osecir::Model<double>, mio::osecir::TestAndTraceCapacity<double>>(params_graph.nodes(), tnt_capacity_factor);

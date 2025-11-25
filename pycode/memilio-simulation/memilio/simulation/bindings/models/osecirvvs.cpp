@@ -361,7 +361,7 @@ PYBIND11_MODULE(_simulation_osecirvvs, m)
                 mio::osecirvvs::Model<double>::Populations({params.get_num_groups(), mio::osecirvvs::InfectionState::Count}), params);
             auto result_read_input_data = mio::osecirvvs::read_input_data(params_graph.nodes(), start_date, 
                                             scaling_factor_inf, scaling_factor_icu, num_days,
-                                            mio::regions::de::EpidataFilenames::county(pydata_path))
+                                            mio::regions::de::EpidataFilenames::county(pydata_path));
             pymio::check_and_throw(result_read_input_data);
             
             mio::set_test_and_trace_capacity<mio::osecirvvs::Model<double>, mio::osecirvvs::TestAndTraceCapacity<double>>(params_graph.nodes(), tnt_capacity_factor);
