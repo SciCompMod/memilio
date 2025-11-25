@@ -92,38 +92,37 @@ TEST(TestSMM, evaluateinterregionalAdoptionRate)
     using Age = mio::AgeGroup;
     using mio::regions::Region;
     using Status = mio::Index<Infections, Age, Region>;
-    using Model  = mio::smm::Model<double, Infections, Status>;
+    using Model  = mio::smm::Model<double, Infections, Status, mio::Index<>>;
 
-    std::vector<mio::AdoptionRate<double, Status>> adoption_rates;
+    std::vector<mio::AdoptionRate<double, Status, mio::Index<>>> adoption_rates;
     //Second-order adoption
     adoption_rates.push_back({{Infections::S, Age(0), Region(0)},
                               {Infections::I, Age(0), Region(0)},
-                              mio::regions::Region(0),
+                              {},
                               0.1,
                               {{{Infections::I, Age(1), Region(0)}, 0.1}, {{Infections::I, Age(1), Region(1)}, 0.2}}});
     //First-order adoption
-    adoption_rates.push_back(
-        {{Infections::I, Age(1), Region(0)}, {Infections::R, Age(1), Region(0)}, Region(0), 0.2, {}});
-    Model model({Infections::Count, Age(2), Region(2)}, Region(1));
+    adoption_rates.push_back({{Infections::I, Age(1), Region(0)}, {Infections::R, Age(1), Region(0)}, {}, 0.2, {}});
+    Model model({Infections::Count, Age(2), Region(2)}, {});
 
-    model.populations[{Region(0), Infections::S, Age(0), Region(0)}] = 50;
-    model.populations[{Region(0), Infections::I, Age(0), Region(0)}] = 10;
-    model.populations[{Region(0), Infections::R, Age(0), Region(0)}] = 0;
+    model.populations[{Infections::S, Age(0), Region(0)}] = 50;
+    model.populations[{Infections::I, Age(0), Region(0)}] = 10;
+    model.populations[{Infections::R, Age(0), Region(0)}] = 0;
 
-    model.populations[{Region(0), Infections::S, Age(1), Region(0)}] = 100;
-    model.populations[{Region(0), Infections::I, Age(1), Region(0)}] = 20;
-    model.populations[{Region(0), Infections::R, Age(1), Region(0)}] = 0;
+    model.populations[{Infections::S, Age(1), Region(0)}] = 100;
+    model.populations[{Infections::I, Age(1), Region(0)}] = 20;
+    model.populations[{Infections::R, Age(1), Region(0)}] = 0;
 
-    model.populations[{Region(0), Infections::S, Age(0), Region(1)}] = 40;
-    model.populations[{Region(0), Infections::I, Age(0), Region(1)}] = 80;
-    model.populations[{Region(0), Infections::R, Age(0), Region(1)}] = 0;
+    model.populations[{Infections::S, Age(0), Region(1)}] = 40;
+    model.populations[{Infections::I, Age(0), Region(1)}] = 80;
+    model.populations[{Infections::R, Age(0), Region(1)}] = 0;
 
-    model.populations[{Region(0), Infections::S, Age(1), Region(1)}] = 80;
-    model.populations[{Region(0), Infections::I, Age(1), Region(1)}] = 16;
-    model.populations[{Region(0), Infections::R, Age(1), Region(1)}] = 0;
+    model.populations[{Infections::S, Age(1), Region(1)}] = 80;
+    model.populations[{Infections::I, Age(1), Region(1)}] = 16;
+    model.populations[{Infections::R, Age(1), Region(1)}] = 0;
 
     EXPECT_DOUBLE_EQ(model.evaluate(adoption_rates[0], model.populations.get_compartments()),
-                     0.1 * 50. * (0.1 * 20. * 1. / 120. + 0.2 * 16 * 1. / 96.));
+                     0.1 * 50. * (0.1 * 20. * 1. + 0.2 * 16 * 1.) / (60 + 120 + 120 + 96));
     EXPECT_DOUBLE_EQ(model.evaluate(adoption_rates[1], model.populations.get_compartments()), 4.);
 }
 
