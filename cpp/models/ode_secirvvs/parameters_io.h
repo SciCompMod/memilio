@@ -26,6 +26,7 @@
 
 #include "ode_secirvvs/model.h"
 #include "memilio/geography/regions.h"
+#include "memilio/mobility/graph.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/parameters_io.h"
 #include "memilio/io/io.h"
