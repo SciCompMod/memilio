@@ -536,7 +536,8 @@ class Simulation:
 
         graph = mio.osecir.create_graph_german_county(
             model.parameters,
-            mio.Date(self.start_date.year,self.start_date.month, self.start_date.day),
+            mio.Date(self.start_date.year,
+                     self.start_date.month, self.start_date.day),
             mio.Date(end_date.year, end_date.month, end_date.day),
             scaling_factor_infected, scaling_factor_icu, pydata_dir, tnt_capacity_factor)
 

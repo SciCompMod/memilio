@@ -623,7 +623,7 @@ class Simulation:
         mobility_data_file = os.path.join(
             data_dir_Germany, "mobility", "commuter_mobility_2022.txt")
         pydata_dir = os.path.join(data_dir_Germany, "pydata")
-        
+
         graph = mio.osecir.create_graph_german_county(
             model.parameters, self.start_date, end_date,
             scaling_factor_infected, scaling_factor_icu, pydata_dir, tnt_capacity_factor)
