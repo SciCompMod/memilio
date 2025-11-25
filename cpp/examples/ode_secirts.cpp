@@ -132,7 +132,8 @@ int main()
                                mio::SimulationTime<ScalarType>(30.));
 
     model.parameters.get<mio::osecirts::Seasonality<ScalarType>>() = 0.2;
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     mio::TimeSeries<ScalarType> result = mio::osecirts::simulate<ScalarType>(t0, tmax, dt, model);

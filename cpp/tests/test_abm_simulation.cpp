@@ -161,7 +161,7 @@ TEST(TestSimulation, ResultSimulation)
     const auto tmax = t0 + mio::abm::hours(50);
     auto sim        = mio::abm::ResultSimulation(std::move(model), t0);
 
-    // run simulation. expect one timepopint per day, but nothing to change in the results
+    // run simulation. expect one timepoint per day, but nothing to change in the results
     sim.advance(tmax);
     const size_t N = (size_t)(tmax - t0).hours() + 1;
     ASSERT_EQ(sim.get_result().get_num_time_points(), N);

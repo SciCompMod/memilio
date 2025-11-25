@@ -439,7 +439,7 @@ TEST(TestOdeSECIRVVS, draw_sample)
     graph.add_node(0, make_model(num_age_groups, /*set_invalid_initial_value*/ true));
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(num_age_groups, num_age_groups));
 
-    auto sampled_graph = mio::osecirvvs::draw_sample(graph, true);
+    auto sampled_graph = mio::osecirvvs::draw_sample(graph);
 
     ASSERT_EQ(sampled_graph.nodes().size(), graph.nodes().size());
     ASSERT_EQ(sampled_graph.edges().size(), graph.edges().size());
@@ -1179,7 +1179,7 @@ TEST(TestOdeSECIRVVS, parameter_percentiles)
     //sample a few times
     auto sampled_graphs = std::vector<mio::Graph<mio::osecirvvs::Model<double>, mio::MobilityParameters<double>>>();
     std::generate_n(std::back_inserter(sampled_graphs), 10, [&graph]() {
-        return mio::osecirvvs::draw_sample(graph, true);
+        return mio::osecirvvs::draw_sample(graph);
     });
 
     //extract nodes from graph

@@ -110,7 +110,8 @@ int main()
         params.get<mio::osecir::CriticalPerSevere<ScalarType>>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical<ScalarType>>()[i]                = 0.3;
     }
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     params.apply_constraints();
 
     mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
@@ -140,14 +141,13 @@ int main()
         if (!write_result_status) {
             std::cout << "Error writing result: " << write_result_status.error().formatted_message();
         }
-        return 0; // Result handler must return something.
     };
 
     // Optional: set seeds to get reproducable results
     // parameter_study.get_rng().seed({1456, 157456, 521346, 35345, 6875, 6435});
 
     // run study
-    auto result = parameter_study.run(sample_graph, handle_result);
+    parameter_study.run(sample_graph, handle_result);
 
     mio::mpi::finalize();
 

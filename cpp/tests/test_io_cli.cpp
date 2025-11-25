@@ -315,7 +315,7 @@ TEST_F(TestCLI, test_set_param)
     EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidType));
     EXPECT_EQ(result.error().message(), "While setting \"A\": Json value is not a double.\n"
                                         "* Line 1, Column 1\n  Syntax error: value, object or array expected.\n");
-    result = set.set_param(id_B, std::string("this is string is missing quotes"));
+    result = set.set_param(id_B, std::string("this string is missing quotes"));
     EXPECT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidType));
     EXPECT_THAT(result.error().message(), testing::HasSubstr("\\\"")); // check only for additional hint
     result = set.set_param(wrong_id, std::string());
