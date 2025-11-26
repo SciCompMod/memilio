@@ -249,7 +249,8 @@ public:
     /**
      * @brief Checks whether all compartments have non-negative values.
      * This function can be used to prevent slighly negative function values in compartment sizes that came out
-     * due to roundoff errors if, e.g., population sizes were computed in a complex way.
+     * due to roundoff errors if, e.g., population sizes were computed in a complex way. If negative values
+     * which are smaller than -1e-10 are found, an error is logged, otherwise, only a warning is logged.
      *
      * Attention: This function should be used with care. It can not and will not set model parameters and
      *            compartments to meaningful values. In most cases it is preferable to use check_constraints,
@@ -263,8 +264,13 @@ public:
         bool corrected = false;
         for (int i = 0; i < this->array().size(); i++) {
             if (this->array()[i] < 0.0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i],
-                            0);
+                if (this->array()[i] > -1e-10) {
+                    log_warning("Constraint check: Compartment number {} changed from {} to {}", i, this->array()[i],
+                                0);
+                }
+                else {
+                    log_error("Constraint check: Compartment number {} changed from {} to {}", i, this->array()[i], 0);
+                }
                 this->array()[i] = 0.0;
                 corrected        = true;
             }
@@ -281,7 +287,7 @@ public:
         for (int i = 0; i < this->array().size(); i++) {
             FP value = this->array()[i];
             if (value < 0.0) {
-                log_error("Constraint check: Compartment size {} is {} and smaller {}", i, value, 0);
+                log_error("Constraint check: Compartment number {} is {} and smaller {}", i, value, 0);
                 return true;
             }
         }

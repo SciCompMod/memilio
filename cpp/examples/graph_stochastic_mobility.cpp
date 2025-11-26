@@ -80,7 +80,8 @@ int main(int /*argc*/, char** /*argv*/)
     contact_matrix.add_damping(
         Eigen::MatrixX<ScalarType>::Constant((size_t)num_age_groups, (size_t)num_age_groups, 0.6),
         mio::SimulationTime<ScalarType>(5.));
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     model.apply_constraints();
 
     //modify model for second node

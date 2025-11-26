@@ -23,6 +23,7 @@
 #include "compartments/simulation.h"
 #include "compartments/flow_simulation.h"
 #include "compartments/compartmental_model.h"
+#include "compartments/parameter_studies.h"
 #include "epidemiology/age_group.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
@@ -38,7 +39,6 @@
 #include "ode_secir/analyze_result.h"
 #include "ode_secir/parameter_space.h"
 #include "ode_secir/parameters_io.h"
-#include "memilio/compartments/parameter_studies.h"
 #include "memilio/data/analyze_result.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/io/mobility_io.h"
@@ -48,100 +48,14 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
 #include "Eigen/Core"
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 namespace py = pybind11;
 
 namespace
 {
-
-//select only the first node of the graph of each run, used for parameterstudy with single nodes
-template <class Sim>
-std::vector<Sim> filter_graph_results(
-    std::vector<mio::Graph<mio::SimulationNode<double, Sim>, mio::MobilityEdge<double>>>&& graph_results)
-{
-    std::vector<Sim> results;
-    results.reserve(graph_results.size());
-    for (auto i = size_t(0); i < graph_results.size(); ++i) {
-        results.emplace_back(std::move(graph_results[i].nodes()[0].property.get_simulation()));
-    }
-    return std::move(results);
-}
-
-/*
- * @brief bind ParameterStudy for any model
- */
-template <class Simulation>
-void bind_ParameterStudy(py::module_& m, std::string const& name)
-{
-    pymio::bind_class<mio::ParameterStudy<double, Simulation>, pymio::EnablePickling::Never>(m, name.c_str())
-        .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
-             py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MobilityParameters<double>>&, double, double,
-                      double, size_t>(),
-             py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
-        .def_property("num_runs", &mio::ParameterStudy<double, Simulation>::get_num_runs,
-                      &mio::ParameterStudy<double, Simulation>::set_num_runs)
-        .def_property("tmax", &mio::ParameterStudy<double, Simulation>::get_tmax,
-                      &mio::ParameterStudy<double, Simulation>::set_tmax)
-        .def_property("t0", &mio::ParameterStudy<double, Simulation>::get_t0,
-                      &mio::ParameterStudy<double, Simulation>::set_t0)
-        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly("model",
-                               py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model, py::const_),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly("model_graph",
-                               py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model_graph),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly(
-            "model_graph", py::overload_cast<>(&mio::ParameterStudy<double, Simulation>::get_model_graph, py::const_),
-            py::return_value_policy::reference_internal)
-        .def(
-            "run",
-            [](mio::ParameterStudy<double, Simulation>& self,
-               std::function<void(mio::Graph<mio::SimulationNode<double, Simulation>, mio::MobilityEdge<double>>,
-                                  size_t)>
-                   handle_result) {
-                self.run(
-                    [](auto&& g) {
-                        return draw_sample(g);
-                    },
-                    [&handle_result](auto&& g, auto&& run_idx) {
-                        //handle_result_function needs to return something
-                        //we don't want to run an unknown python object through parameterstudies, so
-                        //we just return 0 and ignore the list returned by run().
-                        //So python will behave slightly different than c++
-                        handle_result(std::move(g), run_idx);
-                        return 0;
-                    });
-            },
-            py::arg("handle_result_func"))
-        .def("run",
-             [](mio::ParameterStudy<double, Simulation>& self) { //default argument doesn't seem to work with functions
-                 return self.run([](auto&& g) {
-                     return draw_sample(g);
-                 });
-             })
-        .def(
-            "run_single",
-            [](mio::ParameterStudy<double, Simulation>& self, std::function<void(Simulation, size_t)> handle_result) {
-                self.run(
-                    [](auto&& g) {
-                        return draw_sample(g);
-                    },
-                    [&handle_result](auto&& r, auto&& run_idx) {
-                        handle_result(std::move(r.nodes()[0].property.get_simulation()), run_idx);
-                        return 0;
-                    });
-            },
-            py::arg("handle_result_func"))
-        .def("run_single", [](mio::ParameterStudy<double, Simulation>& self) {
-            return filter_graph_results(self.run([](auto&& g) {
-                return draw_sample(g);
-            }));
-        });
-}
 
 enum class ContactLocation
 {
@@ -239,7 +153,8 @@ PYBIND11_MODULE(_simulation_osecir, m)
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
     py::bind_vector<std::vector<MobilityGraph>>(m, "EnsembleGraphResults");
-    bind_ParameterStudy<mio::osecir::Simulation<double>>(m, "ParameterStudy");
+    pymio::bind_OdeParameterStudy<mio::osecir::Simulation<double>>(m, "ParameterStudy");
+    pymio::bind_GraphOdeParameterStudy<mio::osecir::Simulation<double>>(m, "GraphParameterStudy");
 
     m.def("set_params_distributions_normal", &mio::osecir::set_params_distributions_normal<double>, py::arg("model"),
           py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"));
@@ -267,11 +182,11 @@ PYBIND11_MODULE(_simulation_osecir, m)
                                 mio::osecir::InfectionState::InfectedSymptoms, mio::osecir::InfectionState::Recovered};
             auto weights     = std::vector<ScalarType>{0., 0., 1.0, 1.0, 0.33, 0., 0.};
             auto result      = mio::set_edges<double, // FP
-                                         ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
-                                         mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState,
-                                         decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
-                                                                             mobile_comp, contact_locations_size,
-                                                                             mio::read_mobility_plain, weights);
+                                              ContactLocation, mio::osecir::Model<double>, mio::MobilityParameters<double>,
+                                              mio::MobilityCoefficientGroup<double>, mio::osecir::InfectionState,
+                                              decltype(mio::read_mobility_plain)>(mobility_data_file, params_graph,
+                                                                                  mobile_comp, contact_locations_size,
+                                                                                  mio::read_mobility_plain, weights);
             return pymio::check_and_throw(result);
         },
         py::return_value_policy::move);

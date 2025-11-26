@@ -3,11 +3,15 @@
 LCT-based SECIR-type model
 ==========================
 
-The LCT-SECIR module models and simulates an epidemic using an ODE-based approach while making use of the Linear Chain 
-This provides the option of Erlang distributed stay times in the compartments through the use of subcompartments. 
-The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery and is thus only suited for epidemic use cases. 
+The LCT-SECIR module models and simulates an epidemic using an ODE-based SECIR-type model approach while making use of the Linear Chain Trick (LCT).
+Throught the LCT, exponentially distributed stay times are replaced by Gamma or Erlang distributed stay times by defining the compartments through the use of subcompartments. 
+The model is particularly suited for pathogens with pre- or asymptomatic infection states and when severe or critical states are possible. The model assumes perfect immunity after recovery. It is thus only suited for epidemic use cases and, mostly, early epidemic phases.
 
-Below is a visualization of the infection states and transitions without a stratification according to socisdemographic groups.
+*   A generalization of the model that allows for arbitrary distributed stay times is the :doc:`IDE-SECIR model <isecir>`.
+*   A generalization of the model in the application sense that includes three immunity layers and vaccination is the :doc:`ODE-SECIRVVS model <osecirvvs>`. However, this model does not allow for arbitrary stay time distributions.
+*   A generalization of the model in the application sense that includes three immunity layers, vaccination, and waning immunity is the :doc:`ODE-SECIRTS model <osecirts>`. However, this model does not allow for arbitrary stay time distributions.
+
+Below is a visualization of the infection states and transitions without a stratification according to sociodemographic groups.
 
 .. image:: https://github.com/SciCompMod/memilio/assets/70579874/6a5d5a95-20f9-4176-8894-c091bd48bfb7
    :alt: tikzLCTSECIR
@@ -220,8 +224,7 @@ For age-resolved models, you can apply different dampings to different groups:
     contact_matrix.add_damping(Eigen::VectorX<ScalarType>::Constant(num_agegroups, 0.7).asDiagonal(),
                              mio::SimulationTime(30.));
 
-
-For more complex scenarios, such as real-world lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings. The LCT-SECIR model supports contact matrices for different locations (e.g., home, school, work, other) and can apply different dampings to each location.
 
 Example for defining different contact locations:
 

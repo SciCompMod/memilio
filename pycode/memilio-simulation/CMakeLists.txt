@@ -77,6 +77,11 @@ add_pymio_module(_simulation_oseir
     SOURCES memilio/simulation/bindings/models/oseir.cpp
 )
 
+add_pymio_module(_simulation_oseirdb
+    LINKED_LIBRARIES memilio ode_seirdb
+    SOURCES memilio/simulation/bindings/models/oseirdb.cpp
+)
+
 add_pymio_module(_simulation_osecir
     LINKED_LIBRARIES memilio ode_secir
     SOURCES memilio/simulation/bindings/models/osecir.cpp
@@ -87,6 +92,15 @@ add_pymio_module(_simulation_osecirvvs
     SOURCES memilio/simulation/bindings/models/osecirvvs.cpp
 )
 
+add_pymio_module(_simulation_ssir
+    LINKED_LIBRARIES memilio sde_sir
+    SOURCES memilio/simulation/bindings/models/ssir.cpp
+)
+
+add_pymio_module(_simulation_ssirs
+    LINKED_LIBRARIES memilio sde_sirs
+    SOURCES memilio/simulation/bindings/models/ssirs.cpp
+)
 add_pymio_module(_simulation_omseirs4
     LINKED_LIBRARIES memilio ode_mseirs4
     SOURCES memilio/simulation/bindings/models/omseirs4.cpp
