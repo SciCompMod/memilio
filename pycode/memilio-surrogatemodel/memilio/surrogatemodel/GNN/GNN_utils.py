@@ -176,7 +176,7 @@ def scale_data(
         raise ValueError("Label data must be numeric.")
 
     # Calculate number of age groups from data shape
-    num_groups = int(inputs_array.shape[2] / num_compartments)
+    num_groups = int(inputs_array.shape[-1] / num_compartments)
 
     # Initialize transformer (log1p for numerical stability)
     transformer = FunctionTransformer(np.log1p, validate=True)

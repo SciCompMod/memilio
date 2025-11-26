@@ -40,7 +40,7 @@ import memilio.simulation as mio
 import memilio.simulation.osecir as osecir
 from memilio.simulation import AgeGroup, set_log_level, Damping
 from memilio.simulation.osecir import (
-    Index_InfectionState, InfectionState, ParameterStudy,
+    Index_InfectionState, InfectionState, GraphParameterStudy,
     interpolate_simulation_result)
 
 from memilio.surrogatemodel.GNN.GNN_utils import (
@@ -394,7 +394,7 @@ def run_secir_groups_simulation(
         graph.get_node(node_idx).property.populations = model.populations
 
     # Run simulation and measure runtime
-    study = ParameterStudy(graph, t0=0, tmax=days, dt=0.5, num_runs=1)
+    study = GraphParameterStudy(graph, 0, days, 0.5, 1)
 
     start_time = time.perf_counter()
     study_results = study.run()
