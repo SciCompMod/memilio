@@ -34,8 +34,8 @@ size_t num_agegroups = 1;
 
 // ScalarType cont_freq = 1.;
 
-ScalarType t0   = 0.;
-ScalarType tmax = 1.;
+ScalarType t0   = 0;
+ScalarType tmax = 1;
 } // namespace params
 
 // This function returns a TimeSeries containing the
@@ -66,12 +66,21 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
             init_populations.add_time_point(0, vec_init);
         }
         else {
-            // Set value at t0 according to groundtruth.
+
+            // Set values at t0,..., t_(gregor_yorder-1) according to groundtruth.
             Vec vec_init(Vec::Constant((size_t)mio::isir::InfectionState::Count, 0.));
             vec_init[(size_t)mio::isir::InfectionState::Susceptible] =
                 result_groundtruth.get_value(0)[(size_t)mio::isir::InfectionState::Susceptible];
-
             init_populations.add_time_point(0, vec_init);
+
+            ScalarType dt_groundtruth       = result_groundtruth.get_time(1) - result_groundtruth.get_time(0);
+            size_t groundtruth_index_factor = size_t(dt / dt_groundtruth);
+            while ((size_t)init_populations.get_num_time_points() < gregory_order) {
+                init_populations.add_time_point(
+                    init_populations.get_last_time() + dt,
+                    result_groundtruth.get_value((size_t)init_populations.get_num_time_points() *
+                                                 groundtruth_index_factor));
+            }
         }
 
         // Initialize model.
@@ -125,7 +134,8 @@ simulate_ide(std::vector<ScalarType> ide_exponents, size_t gregory_order, std::s
 
 int main()
 {
-    std::string result_dir = "../../simulation_results/messina_paper_example_dt=1e-7_17072025/";
+    std::string result_dir = fmt::format(
+        "../../simulation_results/2025-11-23/messina_more_init_values/t0ide={}_tmax={}/", params::t0, params::tmax);
     // Make folder if not existent yet.
     boost::filesystem::path dir(result_dir);
     boost::filesystem::create_directories(dir);
@@ -133,8 +143,7 @@ int main()
     // Compute groundtruth.
 
     size_t gregory_order_groundtruth                  = 3;
-    std::vector<ScalarType> ide_exponents_groundtruth = {7};
-
+    std::vector<ScalarType> ide_exponents_groundtruth = {6};
     std::cout << "Using Gregory order = " << gregory_order_groundtruth << std::endl;
     mio::IOResult<mio::TimeSeries<ScalarType>> result_groundtruth =
         simulate_ide(ide_exponents_groundtruth, gregory_order_groundtruth, result_dir);
@@ -142,6 +151,8 @@ int main()
     // Simulate with larger timesteps and use result_groundtruth for initialization.
     std::vector<size_t> gregory_orders    = {1, 2, 3};
     std::vector<ScalarType> ide_exponents = {1, 2, 3, 4};
+    // std::vector<size_t> gregory_orders    = {3};
+    // std::vector<ScalarType> ide_exponents = {4};
 
     for (size_t gregory_order : gregory_orders) {
         std::cout << "Using Gregory order = " << gregory_order << std::endl;
