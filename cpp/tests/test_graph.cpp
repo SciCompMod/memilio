@@ -146,8 +146,8 @@ TEST(TestGraph, graph_without_edges)
     std::vector<MockModel> models = {MockModel(), MockModel()};
     std::vector<int> ids          = {1, 2};
 
-    auto g = mio::create_graph_without_edges<MockModel, MockMobility>(models, ids);
-
+    mio::Graph<MockModel, MockMobility> g(ids, models);
+    
     EXPECT_EQ(g.edges().size(), 0);
     EXPECT_EQ(g.nodes().size(), 2);
     EXPECT_EQ(g.nodes()[0].id, 1);
