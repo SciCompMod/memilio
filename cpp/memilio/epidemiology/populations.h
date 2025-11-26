@@ -26,6 +26,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/math/math_utils.h"
 
+#include <concepts>
 #include <numeric>
 
 namespace mio
@@ -54,6 +55,7 @@ class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
     using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
+    using BaseFP = FP;
     using Index = typename Base::Index;
 
     template <class... Ts,
@@ -61,6 +63,22 @@ public:
     explicit Populations(Index const& sizes, Ts... args)
         : Base(sizes, args...)
     {
+    }
+
+        explicit Populations(Base&& array)
+        : Base(std::move(array))
+    {
+    }
+
+    /**
+     * @brief Convert internally stored data to OtherType and save into new Populations.
+     * @tparam OtherType The type to convert into.
+     * @return New Populations of OtherType with copy of internal data.
+     */
+    template <class OtherType> requires std::convertible_to<BaseFP, OtherType>
+    Populations<OtherType, Categories...> convert() const
+    {
+        return Populations<OtherType, Categories...>(Base::template convert<BaseFP>().template convert<UncertainValue<OtherType>>());
     }
 
     /**

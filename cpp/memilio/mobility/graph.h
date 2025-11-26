@@ -20,7 +20,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -29,6 +28,8 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include <iostream>
+#include <functional>
+#include <concepts>
 
 #include "boost/filesystem.hpp"
 
@@ -152,10 +153,44 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
+    Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
+    {
+        assert(node_ids.size() == node_properties.size());
+
+        for (auto i = size_t(0); i < node_ids.size(); ++i) {
+            add_node(node_ids[i], node_properties[i]);
+        }
+    }
+
+    Graph(std::vector<NodePropertyT>& node_properties)
+    {
+        for (auto i = size_t(0); i < node_properties.size(); ++i) {
+            add_node(i, node_properties[i]);
+        }
+    }
+
+    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const std::vector<int>& node_ids, Args&&... node_args)
+    {
+        for (int id : node_ids) {
+            add_node(id, std::forward<Args>(node_args)...);
+        }
+    }
+
+    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const int number_of_nodes, Args&&... args)
+    {
+        for (int id = 0; id < number_of_nodes; ++id) {
+            add_node(id, std::forward<Args>(args)...);
+        }
+    }
+
+    Graph() = default;
+
     /**
      * @brief add a node to the graph. property of the node is constructed from arguments.
      */
-    template <class... Args>
+    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Node<NodePropertyT>& add_node(int id, Args&&... args)
     {
         m_nodes.emplace_back(id, std::forward<Args>(args)...);
@@ -165,7 +200,7 @@ public:
     /**
      * @brief add an edge to the graph. property of the edge is constructed from arguments.
      */
-    template <class... Args>
+    template <class... Args> requires std::constructible_from<EdgePropertyT, Args...>
     Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
