@@ -418,24 +418,6 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
     return success();
 }
 
-/**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param node_properties Vector of node properties of all nodes, e.g., parameters in each model node.
- * @param node_ids Indices for the nodes.
- * @return Graph with nodes only having no edges.
- */
-template <class NodePropertyT, class EdgePropertyT>
-auto create_graph_without_edges(const std::vector<NodePropertyT>& node_properties, const std::vector<int>& node_ids)
-{
-    // create a graph without edges for writing to file
-    auto graph = mio::Graph<NodePropertyT, EdgePropertyT>();
-    for (auto i = size_t(0); i < node_ids.size(); ++i) {
-        graph.add_node(node_ids[i], node_properties[i]);
-    }
-    return graph;
-}
-
 template <class T>
 std::enable_if_t<!has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T&)
 {

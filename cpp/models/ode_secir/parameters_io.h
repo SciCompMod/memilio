@@ -26,6 +26,7 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "ode_secir/model.h"
+#include "memilio/mobility/graph.h"
 #include "memilio/io/epi_data.h"
 #include "memilio/io/parameters_io.h"
 #include "memilio/io/result_io.h"
