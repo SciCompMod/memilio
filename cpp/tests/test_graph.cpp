@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
@@ -354,7 +355,7 @@ TEST(TestGraphBuilder, Build)
     builder.add_edge(2, 1, 100);
     builder.add_edge(1, 2, 100);
 
-    auto g = builder.build();
+    auto g = std::move(builder).build();
 
     EXPECT_EQ(g.nodes().size(), 3);
     EXPECT_EQ(g.edges().size(), 3);
@@ -370,13 +371,15 @@ TEST(TestGraphBuilder, Build_unique)
     builder.add_edge(0, 1, 100);
     builder.add_edge(2, 1, 100);
     builder.add_edge(1, 2, 200);
+    builder.add_edge(2, 1, 300);
 
-    auto g = builder.build(true);
+    auto g = std::move(builder).build(true);
 
     EXPECT_EQ(g.nodes().size(), 3);
     EXPECT_EQ(g.edges().size(), 3);
-    // The last added edge is kept:
+    // The last added edges are kept:
     EXPECT_EQ(g.edges()[1].property, 200);
+    EXPECT_EQ(g.edges()[2].property, 300);
 }
 
 namespace
