@@ -315,11 +315,13 @@ constexpr std::array<T, size_t(T::Count)> enum_members()
     return enum_members;
 }
 
-template<class T>
-using VectorRange = mio::Range<std::pair<typename std::vector<T>::iterator, typename std::vector<T>::iterator>>;
+template<class T> 
+using VectorRange = std::conditional_t<std::is_const_v<T>, 
+    typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator, 
+                                  typename std::vector<std::remove_const_t<T>>::const_iterator>>, 
+    typename mio::Range<std::pair<typename std::vector<T>::iterator, 
+                                  typename std::vector<T>::iterator>>>;
 
-template<class T>
-using ConstVectorRange = mio::Range<std::pair<typename std::vector<T>::const_iterator, typename std::vector<T>::const_iterator>>;
 
 } // namespace mio
 

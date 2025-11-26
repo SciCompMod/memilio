@@ -508,7 +508,8 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
  * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
  */
 template<class FP>
-void convert_model_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from, const mio::VectorRange<Node<Model<FP>>>& model_to)
+void convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>> model_from, 
+                             mio::VectorRange<Node<Model<FP>>> model_to)
 {
     assert(model_from.size() == model_to.size());
     assert((size_t)model_from[0].property.parameters.get_num_groups() == (size_t)model_to[0].property.parameters.get_num_groups());
