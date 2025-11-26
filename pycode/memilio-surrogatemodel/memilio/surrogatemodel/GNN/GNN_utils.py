@@ -175,56 +175,22 @@ def scale_data(
     if not np.issubdtype(labels_array.dtype, np.number):
         raise ValueError("Label data must be numeric.")
 
-    # Calculate number of age groups from data shape
-    num_groups = int(inputs_array.shape[-1] / num_compartments)
-
     # Initialize transformer (log1p for numerical stability)
     transformer = FunctionTransformer(np.log1p, validate=True)
 
-    # Process inputs
-    # Reshape: [samples, timesteps, nodes, features] -> [nodes, samples, timesteps, features]
-    #       -> [nodes * compartments, samples * timesteps * age_groups]
-    inputs_reshaped = inputs_array.transpose(2, 0, 1, 3).reshape(
-        num_groups * num_compartments, -1
-    )
-
     if transform:
-        inputs_transformed = transformer.transform(inputs_reshaped)
+        inputs_scaled = transformer.transform(
+            inputs_array.reshape(-1, inputs_array.shape[-1])
+        ).reshape(inputs_array.shape)
+        labels_scaled = transformer.transform(
+            labels_array.reshape(-1, labels_array.shape[-1])
+        ).reshape(labels_array.shape)
     else:
-        inputs_transformed = inputs_reshaped
+        inputs_scaled = inputs_array
+        labels_scaled = labels_array
 
-    original_shape_input = inputs_array.shape
-
-    # Reverse reshape to separate dimensions
-    inputs_back = inputs_transformed.reshape(
-        original_shape_input[2],
-        original_shape_input[0],
-        original_shape_input[1],
-        original_shape_input[3]
-    )
-
-    # Reverse transpose and reorder to [samples, features, timesteps, nodes]
-    scaled_inputs = inputs_back.transpose(1, 2, 0, 3).transpose(0, 3, 1, 2)
-
-    # Process labels with same procedure
-    labels_reshaped = labels_array.transpose(2, 0, 1, 3).reshape(
-        num_groups * num_compartments, -1
-    )
-
-    if transform:
-        labels_transformed = transformer.transform(labels_reshaped)
-    else:
-        labels_transformed = labels_reshaped
-
-    original_shape_labels = labels_array.shape
-
-    labels_back = labels_transformed.reshape(
-        original_shape_labels[2],
-        original_shape_labels[0],
-        original_shape_labels[1],
-        original_shape_labels[3]
-    )
-
-    scaled_labels = labels_back.transpose(1, 2, 0, 3).transpose(0, 3, 1, 2)
+    # Reorder to [samples, features, timesteps, nodes]
+    scaled_inputs = inputs_scaled.transpose(0, 3, 1, 2)
+    scaled_labels = labels_scaled.transpose(0, 3, 1, 2)
 
     return scaled_inputs, scaled_labels

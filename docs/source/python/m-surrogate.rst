@@ -185,7 +185,7 @@ Module Structure
 The GNN module is located in `pycode/memilio-surrogatemodel/memilio/surrogatemodel/GNN <https://github.com/SciCompMod/memilio/tree/main/pycode/memilio-surrogatemodel/memilio/surrogatemodel/GNN>`_ and consists of:
 
 - **data_generation.py**: Generates training and evaluation data by simulating epidemiological scenarios with the mechanistic SECIR model
-- **network_architectures.py**: Defines various GNN architectures (GCN, GAT, GIN) with configurable layers and preprocessing
+- **network_architectures.py**: Defines various GNN architectures (ARMAConv, GCSConv, GATConv, GCNConv, APPNPConv) with configurable depth and channels
 - **evaluate_and_train.py**: Implements training and evaluation pipelines for GNN models
 - **grid_search.py**: Provides hyperparameter optimization through systematic grid search
 - **GNN_utils.py**: Contains utility functions for data preprocessing, graph construction, and population data handling
@@ -193,20 +193,24 @@ The GNN module is located in `pycode/memilio-surrogatemodel/memilio/surrogatemod
 Data Generation
 ~~~~~~~~~~~~~~~
 
-The data generation process in ``data_generation.py`` creates graph-structured training data through mechanistic simulations:
+The data generation process in ``data_generation.py`` creates graph-structured training data through mechanistic simulations. Use ``generate_data`` to run multiple simulations and persist a pickle with inputs, labels, damping info, and contact matrices:
 
 .. code-block:: python
 
     from memilio.surrogatemodel.GNN import data_generation
-    
-    # Generate training dataset
-    dataset = data_generation.generate_dataset(
-        num_runs=1000,                    # Number of simulation scenarios
-        num_days=30,                      # Simulation horizon
-        num_age_groups=6,                 # Age stratification
-        data_dir='path/to/contact_data',  # Contact matrices location
-        mobility_dir='path/to/mobility',  # Mobility data location
-        save_path='gnn_training_data.pickle'
+    import memilio.simulation as mio
+
+    data = data_generation.generate_data(
+        num_runs=5,
+        data_dir="/path/to/memilio/data",
+        output_path="/tmp/generated_datasets",
+        input_width=5,
+        label_width=30,
+        start_date=mio.Date(2020, 10, 1),
+        end_date=mio.Date(2021, 10, 31),
+        mobility_file="commuter_mobility.txt",  # or commuter_mobility_2022.txt
+        transform=True,
+        save_data=True
     )
 
 **Data Generation Workflow:**
@@ -240,28 +244,18 @@ The data generation process in ``data_generation.py`` creates graph-structured t
 Network Architectures
 ~~~~~~~~~~~~~~~~~~~~~
 
-The ``network_architectures.py`` module provides flexible GNN model construction for different layer types.
+The ``network_architectures.py`` module provides flexible GNN model construction for supported layer types (ARMAConv, GCSConv, GATConv, GCNConv, APPNPConv).
 
 .. code-block:: python
 
     from memilio.surrogatemodel.GNN import network_architectures
-    
-    # Define GNN architecture
-    model_config = {
-        'layer_type': 'GCN',           # GNN layer type
-        'num_layers': 3,                # Network depth
-        'hidden_dim': 64,               # Hidden layer dimensions
-        'activation': 'relu',           # Activation function
-        'dropout_rate': 0.2,            # Dropout for regularization
-        'use_batch_norm': True,         # Batch normalization
-        'aggregation': 'mean',          # Neighborhood aggregation method
-    }
-    
-    # Build model
-    model = network_architectures.build_gnn_model(
-        config=model_config,
-        input_shape=(num_timesteps, num_features),
-        output_dim=num_compartments * num_age_groups
+
+    model = network_architectures.get_model(
+        layer_type="GCNConv",
+        num_layers=3,
+        num_channels=64,
+        activation="relu",
+        num_output=48  # outputs per node
     )
 
 
@@ -272,36 +266,34 @@ The ``evaluate_and_train.py`` module provides the training functionality:
 
 .. code-block:: python
 
-    from memilio.surrogatemodel.GNN import evaluate_and_train
-    
-    # Load training data
-    with open('gnn_training_data.pickle', 'rb') as f:
-        dataset = pickle.load(f)
-    
-    # Define training configuration
-    training_config = {
-        'epochs': 100,
-        'batch_size': 32,
-        'learning_rate': 0.001,
-        'optimizer': 'adam',
-        'loss_function': 'mse',
-        'early_stopping_patience': 10,
-        'validation_split': 0.2
-    }
-    
-    # Train model
-    history = evaluate_and_train.train_gnn_model(
-        model=model,
-        dataset=dataset,
-        config=training_config,
-        save_weights='best_gnn_model.h5'
+    from tensorflow.keras.losses import MeanAbsolutePercentageError
+    from tensorflow.keras.optimizers import Adam
+    from memilio.surrogatemodel.GNN import evaluate_and_train, network_architectures
+
+    dataset = evaluate_and_train.load_gnn_dataset(
+        "/tmp/generated_datasets/GNN_data_30days_3dampings_classic5.pickle",
+        "/path/to/memilio/data/Germany/mobility",
+        number_of_nodes=400
     )
-    
-    # Evaluate on test set
-    metrics = evaluate_and_train.evaluate_model(
+
+    model = network_architectures.get_model(
+        layer_type="GCNConv",
+        num_layers=3,
+        num_channels=32,
+        activation="relu",
+        num_output=48
+    )
+
+    results = evaluate_and_train.train_and_evaluate(
+        data=dataset,
+        batch_size=32,
+        epochs=50,
         model=model,
-        test_data=test_dataset,
-        metrics=['mae', 'mape', 'r2']
+        loss_fn=MeanAbsolutePercentageError(),
+        optimizer=Adam(learning_rate=0.001),
+        es_patience=10,
+        save_dir="/tmp/model_results",
+        save_name="gnn_model"
     )
 
 **Training Features:**
@@ -309,8 +301,7 @@ The ``evaluate_and_train.py`` module provides the training functionality:
 1. **Mini-batch Training**: Graph batching for efficient training on large datasets
 2. **Custom Loss Functions**: MSE, MAE, MAPE, or custom compartment-weighted losses
 3. **Early Stopping**: Monitors validation loss to prevent overfitting
-4. **Learning Rate Scheduling**: Adaptive learning rate reduction on plateaus
-5. **Save Best Weights**: Saves best model weights based on validation performance
+4. **Save Best Weights**: Saves best model weights based on validation performance
 
 **Evaluation Metrics:**
 
@@ -331,31 +322,31 @@ The ``grid_search.py`` module enables systematic exploration of hyperparameter s
 
 .. code-block:: python
 
-    from memilio.surrogatemodel.GNN import grid_search
-    
-    # Define search space
-    param_grid = {
-        'layer_type': ['GCN', 'GAT', 'GIN'],
-        'num_layers': [2, 3, 4, 5],
-        'hidden_dim': [32, 64, 128, 256],
-        'learning_rate': [0.001, 0.0005, 0.0001],
-        'dropout_rate': [0.0, 0.1, 0.2, 0.3],
-        'batch_size': [16, 32, 64],
-        'activation': ['relu', 'elu', 'tanh']
-    }
-    
-    # Run grid search with cross-validation
-    results = grid_search.run_hyperparameter_search(
-        param_grid=param_grid,
-        data_path='gnn_training_data.pickle',
-        cv_folds=5,
-        metric='mae',
-        save_results='grid_search_results.csv'
+    from pathlib import Path
+    from memilio.surrogatemodel.GNN import grid_search, evaluate_and_train
+
+    data = evaluate_and_train.create_dataset(
+        "/tmp/generated_datasets/GNN_data_30days_3dampings_classic5.pickle",
+        "/path/to/memilio/data/Germany/mobility",
+        number_of_nodes=400
     )
-    
-    # Analyze best configuration
-    best_config = grid_search.get_best_configuration(results)
-    print(f"Best configuration: {best_config}")
+
+    parameter_grid = grid_search.generate_parameter_grid(
+        layer_types=["GCNConv", "GATConv"],
+        num_layers_options=[2, 3],
+        num_channels_options=[16, 32],
+        activation_functions=["relu", "elu"]
+    )
+
+    grid_search.perform_grid_search(
+        data=data,
+        parameter_grid=parameter_grid,
+        save_dir=str(Path("/tmp/grid_results")),
+        batch_size=32,
+        max_epochs=50,
+        es_patience=10,
+        learning_rate=0.001
+    )
 
 Utility Functions
 ~~~~~~~~~~~~~~~~~
@@ -404,80 +395,55 @@ Here is a complete example workflow from data generation to model evaluation:
 
 .. code-block:: python
 
-    import pickle
-    from pathlib import Path
+    import memilio.simulation as mio
+    from tensorflow.keras.losses import MeanAbsolutePercentageError
+    from tensorflow.keras.optimizers import Adam
     from memilio.surrogatemodel.GNN import (
-        data_generation, 
-        network_architectures, 
+        data_generation,
+        network_architectures,
         evaluate_and_train
     )
-    
-    # Step 1: Generate training data
-    print("Generating training data...")
-    dataset = data_generation.generate_dataset(
-        num_runs=5000,
-        num_days=30,
-        num_age_groups=6,
-        data_dir='/path/to/memilio/data/Germany',
-        mobility_dir='/path/to/mobility_data',
-        save_path='gnn_dataset_5000.pickle'
+
+    # Step 1: Generate and save training data
+    data_generation.generate_data(
+        num_runs=100,
+        data_dir="/path/to/memilio/data",
+        output_path="/tmp/generated_datasets",
+        input_width=5,
+        label_width=30,
+        start_date=mio.Date(2020, 10, 1),
+        end_date=mio.Date(2021, 10, 31),
+        save_data=True,
+        mobility_file="commuter_mobility.txt"
     )
-    
-    # Step 2: Define and build GNN model
-    print("Building GNN model...")
-    model_config = {
-        'layer_type': 'GCN',
-        'num_layers': 4,
-        'hidden_dim': 128,
-        'activation': 'relu',
-        'dropout_rate': 0.2,
-        'use_batch_norm': True
-    }
-    
-    model = network_architectures.build_gnn_model(
-        config=model_config,
-        input_shape=(1, 48),  # 6 age groups × 8 compartments
-        output_dim=48         # Predict all compartments
+
+    # Step 2: Load dataset and build model
+    dataset = evaluate_and_train.load_gnn_dataset(
+        "/tmp/generated_datasets/GNN_data_30days_3dampings_classic100.pickle",
+        "/path/to/memilio/data/Germany/mobility",
+        number_of_nodes=400
     )
-    
-    # Step 3: Train the model
-    print("Training model...")
-    training_config = {
-        'epochs': 200,
-        'batch_size': 32,
-        'learning_rate': 0.001,
-        'optimizer': 'adam',
-        'loss_function': 'mae',
-        'early_stopping_patience': 20,
-        'validation_split': 0.2
-    }
-    
-    history = evaluate_and_train.train_gnn_model(
+
+    model = network_architectures.get_model(
+        layer_type="GCNConv",
+        num_layers=4,
+        num_channels=128,
+        activation="relu",
+        num_output=48
+    )
+
+    # Step 3: Train and evaluate
+    results = evaluate_and_train.train_and_evaluate(
+        data=dataset,
+        batch_size=32,
+        epochs=100,
         model=model,
-        dataset=dataset,
-        config=training_config,
-        save_weights='gnn_weights_best.h5'
+        loss_fn=MeanAbsolutePercentageError(),
+        optimizer=Adam(learning_rate=0.001),
+        es_patience=20,
+        save_dir="/tmp/model_results",
+        save_name="gnn_weights_best"
     )
-    
-    # Step 4: Evaluate on test data
-    print("Evaluating model...")
-    test_metrics = evaluate_and_train.evaluate_model(
-        model=model,
-        test_data='gnn_test_data.pickle',
-        metrics=['mae', 'mape', 'r2']
-    )
-    
-    # Print results
-    print(f"Test MAE: {test_metrics['mae']:.4f}")
-    print(f"Test MAPE: {test_metrics['mape']:.2f}%")
-    print(f"Test R²: {test_metrics['r2']:.4f}")
-    
-    # Step 5: Make predictions on new scenarios
-    with open('new_scenario.pickle', 'rb') as f:
-        new_data = pickle.load(f)
-    
-    predictions = model.predict(new_data)
-    print(f"Predictions shape: {predictions.shape}")
 
 **GPU Acceleration:**
 

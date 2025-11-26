@@ -119,9 +119,26 @@ def load_gnn_dataset(
     if not dataset_path.exists():
         raise FileNotFoundError(f"Dataset not found: {dataset_path}")
 
-    mobility_path = mobility_dir / mobility_filename
-    if not mobility_path.exists():
-        raise FileNotFoundError(f"Mobility file not found: {mobility_path}")
+    # Accept multiple common commuter mobility filenames for compatibility
+    candidate_files = []
+    if mobility_filename:
+        candidate_files.append(mobility_filename)
+    candidate_files.extend([
+        "commuter_mobility.txt",
+        "commuter_mobility_2022.txt"
+    ])
+    mobility_path = None
+    for fname in candidate_files:
+        path = mobility_dir / fname
+        if path.exists():
+            mobility_path = path
+            break
+
+    if mobility_path is None:
+        raise FileNotFoundError(
+            f"Mobility file not found in {mobility_dir}. "
+            f"Tried: {', '.join(candidate_files)}"
+        )
 
     with dataset_path.open("rb") as fp:
         data = pickle.load(fp)
@@ -137,11 +154,16 @@ def load_gnn_dataset(
         raise ValueError(
             "Loaded dataset is empty; expected at least one sample.")
 
+    if inputs.ndim != 4 or labels.ndim != 4:
+        raise ValueError(
+            f"Expected 4D arrays for inputs/labels, got {inputs.ndim} and {labels.ndim}."
+        )
+
     # Flatten temporal dimensions into feature vectors per node.
     num_samples, input_width, num_nodes, num_features = inputs.shape
-    _, label_width, _, label_features = labels.shape
+    _, label_width, label_nodes, label_features = labels.shape
 
-    if num_nodes != number_of_nodes:
+    if num_nodes != number_of_nodes or label_nodes != number_of_nodes:
         raise ValueError(
             f"Number of nodes in dataset ({num_nodes}) does not match expected "
             f"value ({number_of_nodes}).")

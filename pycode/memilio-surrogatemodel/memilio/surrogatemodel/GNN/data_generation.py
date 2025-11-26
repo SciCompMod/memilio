@@ -469,9 +469,9 @@ def generate_data(num_runs, data_dir, output_path, input_width, label_width,
     if not os.path.exists(mobility_path):
         raise FileNotFoundError(f"Mobility file not found: {mobility_path}")
 
-    # Create graph (reused for all runs with different initial conditions)
-    graph = get_graph(num_groups, data_dir,
-                      mobility_path, start_date, end_date)
+    # Create base graph. A new copy will be used per run to avoid cumulative dampings.
+    base_graph = get_graph(num_groups, data_dir,
+                           mobility_path, start_date, end_date)
 
     print(f"\nGenerating {num_runs} simulation runs...")
     bar = Bar(
@@ -495,11 +495,13 @@ def generate_data(num_runs, data_dir, output_path, input_width, label_width,
             damping_factors = []
 
         # Run simulation
-        simulation_result, damped_mats, damping_coeffs, runtime = \
-            run_secir_groups_simulation(
-                total_days, damping_days, damping_factors, graph,
-                within_group_variation, num_groups
-            )
+        # Use a fresh graph copy per run to prevent damping accumulation across runs.
+        graph = copy.deepcopy(base_graph)
+
+        simulation_result, damped_mats, damping_coeffs, runtime = run_secir_groups_simulation(
+            total_days, damping_days, damping_factors, graph,
+            within_group_variation, num_groups
+        )
 
         runtimes.append(runtime)
 
@@ -529,12 +531,15 @@ def generate_data(num_runs, data_dir, output_path, input_width, label_width,
 
     # Save dataset if requested
     if save_data:
-        # Apply scaling transformation
+        # Apply scaling transformation and store with shape
+        # [samples, timesteps, nodes, features] expected by loaders.
         inputs_scaled, labels_scaled = scale_data(data, transform)
+        inputs_for_save = inputs_scaled.transpose(0, 2, 3, 1)
+        labels_for_save = labels_scaled.transpose(0, 2, 3, 1)
 
         all_data = {
-            "inputs": inputs_scaled,
-            "labels": labels_scaled,
+            "inputs": inputs_for_save,
+            "labels": labels_for_save,
             "damping_day": data["damping_days"],
             "contact_matrix": data["contact_matrix"],
             "damping_coeff": data["damping_factors"]
