@@ -92,27 +92,18 @@ private:
     mutable RandomNumberGenerator m_rng; ///< RNG for generating white noise in the get_noise implementation.
 };
 
-namespace details
-{
-template <typename FP, class M>
-using get_noise_expr_t =
-    decltype(std::declval<const M&>().get_noise(std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-                                                std::declval<Eigen::Ref<const Eigen::VectorX<FP>>>(),
-                                                std::declval<FP>(), std::declval<Eigen::Ref<Eigen::VectorX<FP>>>()));
-}
-
 /**
- * Template meta function to check if a type is a valid stochastic model. 
- * Defines a static constant of name `value`. 
- * The constant `value` will be equal to true if M is a valid stochastic model type.
- * Otherwise, `value` will be equal to false.
- * @tparam FP A floating point type, e.g. double.
+ * @brief Concept to check if a type is a valid stochastic model.
+ * Note that Model must be the first template argument 
  * @tparam Model A type that may or may not be a stochastic model.
+ * @tparam FP A floating point type, e.g. double.
  */
-template <typename FP, class Model>
-using is_stochastic_model =
-    std::integral_constant<bool, (is_expression_valid<details::get_noise_expr_t, FP, Model>::value &&
-                                  is_compartment_model<FP, Model>::value)>;
+template <class Model, typename FP>
+concept IsStochasticModel =
+    requires(Model m, Eigen::Ref<const Eigen::VectorX<FP>> const_vref, Eigen::Ref<Eigen::VectorX<FP>> vref, FP t) {
+        requires IsCompartmentalModel<Model, FP>;
+        m.get_noise(const_vref, const_vref, t, vref);
+    };
 
 } // namespace mio
 

@@ -89,9 +89,12 @@ of the age group.
 Nonpharmaceutical interventions
 -------------------------------
 
-One important topic of interest in infectious disease dynamics are nonpharmaceutical interventions, which aim to reduce the spread of the disease.
-The model supports to define base contact patters for the mean daily contacts between different age groups. When using multiple contact patterns they get 
-accumulated to get overall daily contacts. 
+One important topic of interest in infectious disease dynamics are nonpharmaceutical interventions (NPIs), which aim to mitigate the dynamics of the disease spread. 
+In our models, NPIs are implemented through dampings to the contact matrix. These dampings reduce the contact rates between different groups to simulate interventions.
+
+The basic contact matrix is defined through its baseline `ContactPatterns` (and a potential minimum pattern which does not need to be set and which is not used by default).
+For a model with a single age group, the contact matrix is simply value, a 1x1 matrix and `num_groups=1`. For `num_groups>1`, the contact matrix is a square matrix of size `num_groups x num_groups`,
+where each entry represents the contact frequency between two age groups.
 
 .. code-block:: python
 
@@ -100,12 +103,112 @@ accumulated to get overall daily contacts.
    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.zeros(
         (num_groups, num_groups))
 
-Then, dampings can be added to (partially) reduce the contacts defined by a ``ContactMatrix`` beginning at a time step ``t=30``. 
+Then, dampings can be added as a relative factor to (partially) reduce the contacts defined by the ``ContactPatterns`` beginning at a time step ``t=30``. 
 
 .. code-block:: python
 
    model.parameters.ContactPatterns.cont_freq_mat.add_damping(
         Damping(coeffs=np.r_[0.9], t=30.0, level=0, type=0))
+
+
+If a minimum pattern is set, the contact reduction will reduce the difference between the baseline and minimum patterns and subtract it from the baseline instead of only acting on the contact patterns baseline. That means that when the contact patterns are damped to 100%, the contact patterns will be equal to the minimum pattern instead of zero.
+
+For more complex scenarios, such as real-world venue closures or lockdown modeling, you can implement detailed NPIs with location-specific dampings (e.g., home, school, work, other). 
+
+Example for defining different contact locations:
+
+.. code-block:: python
+
+   // Define different contact locations
+   class Location(Enum):
+      """ """
+      Home = 0
+      School = 1
+      Work = 2
+      Other = 3
+
+    
+   // Load contact location matrices for Germany
+   contact_matrices = mio.ContactMatrixGroup(
+      len(list(Location)), self.num_groups)
+   locations = ["home", "school_pf_eig", "work", "other"]
+
+   for i, location in enumerate(locations):
+      baseline_file = os.path.join(
+            self.data_dir, "Germany", "contacts", "baseline_" + location + ".txt")
+      contact_matrices[i] = mio.ContactMatrix(
+            mio.read_mobility_plain(baseline_file),
+            np.zeros((self.num_groups, self.num_groups))
+      )
+   model.parameters.ContactPatterns.cont_freq_mat = contact_matrices
+
+You can create intervention types that target specific locations with different intensities:
+
+.. code-block:: python
+
+    // Different types of NPI
+   class Intervention(Enum):
+      """ """
+      Home = 0
+      SchoolClosure = 1
+      HomeOffice = 2
+      GatheringBanFacilitiesClosure = 3
+      PhysicalDistanceAndMasks = 4
+      SeniorAwareness = 5
+    
+    // Different levels of NPI
+   class InterventionLevel(Enum):
+      """ """
+      Main = 0
+      PhysicalDistanceAndMasks = 1
+      SeniorAwareness = 2
+      Holidays = 3
+
+A complex lockdown scenario with multiple interventions starting on a specific date can be implemented via:
+
+.. code-block:: python
+
+   start_spring_date = datetime.date(2020, 3, 18)
+
+   if start_spring_date < end_date:
+      start_spring = (start_spring_date - self.start_date).days
+      dampings.append(contacts_at_home(start_spring, 0.6, 0.8))
+      dampings.append(school_closure(start_spring, 1.0, 1.0))
+      dampings.append(home_office(start_spring, 0.2, 0.3))
+      dampings.append(social_events(start_spring, 0.6, 0.8))
+      dampings.append(social_events_work(start_spring, 0.1, 0.2))
+      dampings.append(physical_distancing_home_school(start_spring, 0.4, 0.6))
+      dampings.append(physical_distancing_work_other(start_spring, 0.4, 0.6))
+
+A more advances structure to automatically activate interventions based on threshold criteria is given by **DynamicNPIs**.
+Dynamic NPIs can be configured to trigger when the number of symptomatic infected individuals exceeds a certain relative threshold in the population. 
+In contrast to static NPIs which are active as long as no other NPI gets implemented, dynamic NPIs are checked at regular intervals and get 
+activated for a defined duration when the threshold is exceeded. As above, different dampings `dampings` can be assigned to different contact locations
+and are then triggered all at once the threshold is exceeded.
+The following example shows how to set up dynamic NPIs based on the number of 200 symptomatic infected individuals per 100,000 population. 
+It will be active for at least 14 days and checked every 3 days. If the last check after day 14 is negative, the NPI will be deactivated.
+
+.. code-block:: python
+
+    // Configure dynamic NPIs with thresholds
+   dynamic_npis = params.DynamicNPIsInfectedSymptoms
+   dampings = []
+   # increased from [0.4, 0.6] in Nov
+   dampings.append(contacts_at_home(0, 0.6, 0.8))
+   dampings.append(school_closure(0, 0.25, 0.25))  # see paper
+   dampings.append(home_office(0, 0.2, 0.3))
+   dampings.append(social_events(0, 0.6, 0.8))
+   dampings.append(social_events_work(0, 0.1, 0.2))
+   dampings.append(physical_distancing_home_school(0, 0.6, 0.8))
+   dampings.append(physical_distancing_work_other(0, 0.6, 0.8))
+   dampings.append(senior_awareness(0, 0.0, 0.0))
+
+   dynamic_npis.interval = 3.0
+   dynamic_npis.duration = 14.0
+   dynamic_npis.base_value = 100000
+   dynamic_npis.set_threshold(200.0, dampings)
+
+            
 
 Simulation
 ----------

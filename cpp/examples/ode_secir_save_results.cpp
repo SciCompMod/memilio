@@ -71,7 +71,8 @@ int main()
         params.get<mio::osecir::CriticalPerSevere<ScalarType>>()[i]                = 0.25;
         params.get<mio::osecir::DeathsPerCritical<ScalarType>>()[i]                = 0.3;
     }
-
+    // The function apply_constraints() ensures that all parameters are within their defined bounds.
+    // Note that negative values are set to zero instead of stopping the simulation.
     params.apply_constraints();
 
     mio::ContactMatrixGroup<ScalarType>& contact_matrix = params.get<mio::osecir::ContactPatterns<ScalarType>>();
