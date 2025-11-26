@@ -26,16 +26,11 @@ epidemiological simulations.
 """
 
 import os
-from typing import List, Tuple
 
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import FunctionTransformer
 
 from memilio.simulation.osecir import ModelGraph, set_edges
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import transformMobilityData as tmd
-from memilio.epidata import modifyDataframeSeries as mdfs
 
 
 # Default number of compartments in the ODE-SECIR model (without confirmed compartments)
@@ -150,67 +145,6 @@ def create_mobility_graph(mobility_dir, num_regions, county_ids, models):
     set_edges(parent_dir, graph, num_contact_locations)
 
     return graph
-
-
-def transform_mobility_data(data_dir):
-    """Updates mobility data to merge Eisenach and Wartburgkreis counties.
-
-    :param data_dir: Root directory containing Germany mobility data.
-    :returns: Path to the updated mobility directory.
-    """
-    # Get mobility data directory
-    mobility_dir = os.path.join(data_dir, 'Germany/mobility/')
-
-    # Update mobility files by merging Eisenach and Wartburgkreis
-    tmd.updateMobility2022(mobility_dir, mobility_file='twitter_scaled_1252')
-    tmd.updateMobility2022(
-        mobility_dir, mobility_file='commuter_mobility_2022')
-
-    return mobility_dir
-
-
-def load_population_data(data_dir, age_groups=None):
-    """Loads population data for counties stratified by age groups.
-
-    Reads county-level population data and aggregates it into specified age groups.
-    Default age groups follow the standard 6-group structure used in the ODE-SECIR model.
-
-    :param data_dir: Root directory containing population data (should contain Germany/pydata/ subdirectory).
-    :param age_groups: List of age group labels (default: ['0-4', '5-14', '15-34', '35-59', '60-79', '80-130']).
-    :returns: List of population data entries, where each entry is [county_id, pop_group1, pop_group2, ...].
-    :raises FileNotFoundError: If population data file is not found.
-    """
-    if age_groups is None:
-        age_groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80-130']
-
-    # Load population data
-    population_file = os.path.join(
-        data_dir, 'Germany', 'pydata', 'county_population.json')
-
-    if not os.path.exists(population_file):
-        raise FileNotFoundError(
-            f"Population data file not found: {population_file}")
-
-    df_population = pd.read_json(population_file)
-
-    # Initialize DataFrame for age-grouped population
-    df_population_agegroups = pd.DataFrame(
-        columns=[df_population.columns[0]] + age_groups
-    )
-
-    # Process each region
-    for region_id in df_population.iloc[:, 0]:
-        region_data = df_population[df_population.iloc[:, 0]
-                                    == int(region_id)]
-        age_grouped_pop = list(
-            mdfs.fit_age_group_intervals(
-                region_data.iloc[:, 2:], age_groups)
-        )
-
-        df_population_agegroups.loc[len(df_population_agegroups.index)] = [
-            int(region_id)] + age_grouped_pop
-
-    return df_population_agegroups.values.tolist()
 
 
 def scale_data(

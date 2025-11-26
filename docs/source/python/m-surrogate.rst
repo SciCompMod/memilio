@@ -375,16 +375,9 @@ The ``GNN_utils.py`` module provides essential helper functions used throughout 
     )
     
     # Apply logarithmic scaling
-    scaled_data = GNN_utils.scale_data(
+    scaled_inputs, scaled_labels = GNN_utils.scale_data(
         data=dataset,
-        method='log',
-        epsilon=1e-6  # Small constant to avoid log(0)
-    )
-    
-    # Load population data
-    population = GNN_utils.load_population_data(
-        data_dir='path/to/demographics',
-        age_groups=[0, 5, 15, 35, 60, 80]
+        transform=True
     )
 
 **Graph Construction:**
@@ -506,4 +499,3 @@ Additional Resources
 - :doc:`ODE-SECIR Model <../models/ode_secir>`
 - :doc:`MEmilio Simulation Package <m-simulation>`
 - :doc:`Python Bindings <python_bindings>`
-
