@@ -1085,7 +1085,7 @@ IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>>
         model_to[region_idx].property.populations = model_from[region_idx]
                                                         .property.populations.template convert<FP>();
     }
-    return mio::sucess();
+    return mio::success();
 }
 
 } // namespace osecirvvs
