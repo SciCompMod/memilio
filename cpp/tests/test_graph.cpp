@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
