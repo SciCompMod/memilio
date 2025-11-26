@@ -88,7 +88,7 @@ public:
      * @brief Build the graph from the added nodes and edges.
      * 
      * Sorts the edges and optionally removes duplicate edges (same start and end node indices).
-     * Wihout dupplicate removal, multiple edges between the same nodes are allowed and the order of insertion is stable.
+     * Without duplicate removal, multiple edges between the same nodes are allowed and the order of insertion is stable.
      * @param make_unique If true, duplicate edges are removed. The last added edge is kept!
      * @return Graph<NodePropertyT, EdgePropertyT> The constructed graph.
      */
@@ -130,25 +130,19 @@ private:
         unique_edges.reserve(m_edges.size());
         bool duplicate_edges = false;
         auto curr_elem       = m_edges.begin();
-        auto next_elem       = std::adjacent_find(curr_elem, m_edges.end(), [](auto&& e1, auto&& e2) {
-            return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
-        });
-        while (next_elem != m_edges.end()) {
-            std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
-            curr_elem = next_elem;
-            while (next_elem != m_edges.end() && (*curr_elem).start_node_idx == (*next_elem).start_node_idx &&
-                   (*curr_elem).end_node_idx == (*next_elem).end_node_idx) {
-                next_elem = next(next_elem);
+
+        while (curr_elem != m_edges.end()) {
+            auto next_elem = std::next(curr_elem);
+            if (next_elem != m_edges.end() && curr_elem->start_node_idx == next_elem->start_node_idx &&
+                curr_elem->end_node_idx == next_elem->end_node_idx) {
+                duplicate_edges = true;
             }
-            curr_elem = prev(next_elem);
-            std::copy(curr_elem, next(curr_elem), std::back_inserter(unique_edges));
-            duplicate_edges = true;
-            curr_elem       = next(curr_elem);
-            next_elem       = std::adjacent_find(curr_elem, m_edges.end(), [](auto&& e1, auto&& e2) {
-                return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx;
-            });
+            else if (next_elem != m_edges.end()) {
+                std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
+            }
+            curr_elem = next_elem;
         }
-        std::copy(curr_elem, next_elem, std::back_inserter(unique_edges));
+        std::copy(std::prev(m_edges.end()), m_edges.end(), std::back_inserter(unique_edges));
         m_edges = std::move(unique_edges);
         if (duplicate_edges) {
             mio::log_warning("Removed duplicate edge(s)");
