@@ -315,12 +315,19 @@ constexpr std::array<T, size_t(T::Count)> enum_members()
     return enum_members;
 }
 
+/**
+ * @brief Defines generic Range type for IterPair of a vector.
+ * When elements should be const, template argument accepts const type.
+ * As vector is not defined for const values, the const specifier is removed and
+ * the const_iterator is used. std::conditional tries to compile both cases, thus
+ * we also need std::remove_const for the case where T is not const.
+ */
 template<class T> 
 using VectorRange = std::conditional_t<std::is_const_v<T>, 
     typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator, 
                                   typename std::vector<std::remove_const_t<T>>::const_iterator>>, 
-    typename mio::Range<std::pair<typename std::vector<T>::iterator, 
-                                  typename std::vector<T>::iterator>>>;
+    typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::iterator, 
+                                  typename std::vector<std::remove_const_t<T>>::iterator>>>;
 
 
 } // namespace mio
