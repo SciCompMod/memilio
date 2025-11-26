@@ -354,7 +354,7 @@ TEST(TestGraphBuilder, Build)
     builder.add_edge(2, 1, 100);
     builder.add_edge(1, 2, 100);
 
-    auto g = builder.build();
+    auto g = std::move(builder).build();
 
     EXPECT_EQ(g.nodes().size(), 3);
     EXPECT_EQ(g.edges().size(), 3);
