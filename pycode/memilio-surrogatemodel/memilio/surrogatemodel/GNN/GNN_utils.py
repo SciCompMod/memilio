@@ -57,7 +57,8 @@ def remove_confirmed_compartments(dataset_entries, num_groups):
     for timestep_data in dataset_entries:
         # Reshape to separate age groups and compartments
         data_reshaped = timestep_data.reshape(
-            [num_groups, int(np.asarray(dataset_entries).shape[1] / num_groups)]
+            [num_groups, int(np.asarray(
+                dataset_entries).shape[1] / num_groups)]
         )
 
         # Merge InfectedNoSymptoms (index 2) with InfectedNoSymptomsConfirmed (index 3)

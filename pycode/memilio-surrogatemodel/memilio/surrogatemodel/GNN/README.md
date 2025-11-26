@@ -23,7 +23,7 @@ The GNN module consists of the following components:
 
 - **`grid_search.py`**: Provides hyperparameter optimization through systematic grid search over network architectures, training configurations, and model parameters to identify optimal GNN configurations for epidemiological forecasting.
 
-- **`GNN_utils.py`**: Contains utility functions for data preprocessing, mobility graph creation, population data loading, data scaling/transformation, and other helper functions used throughout the GNN workflow.
+- **`GNN_utils.py`**: Contains utility functions for data preprocessing (e.g., removing confirmed compartments, scaling data), and building graphs or baseline contact matrices used throughout the GNN workflow.
 
 ## Documentation
 
