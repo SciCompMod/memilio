@@ -154,7 +154,7 @@ public:
     using EdgeProperty = EdgePropertyT;
 
     /**
-     * @brief construct graph without edges from pairs of node ids and properties.
+     * @brief Construct graph without edges from pairs of node_ids and node_properties.
      */
     Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
     {
@@ -166,7 +166,7 @@ public:
     }
 
     /**
-     * @brief construct graph without edges from properties with default node ids.
+     * @brief Construct graph without edges from node_properties with default node ids [0, 1, ...].
      */
     Graph(std::vector<NodePropertyT>& node_properties)
     {
@@ -176,7 +176,7 @@ public:
     }
 
     /**
-     * @brief construct graph without edges creating each node with same arguments and a corresponding node id.
+     * @brief Construct graph without edges, creating a node for each id in node_ids from the same node_args.
      */
     template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Graph(const std::vector<int>& node_ids, Args&&... node_args)
@@ -187,7 +187,7 @@ public:
     }
 
     /**
-     * @brief construct graph without edges creating each node with same arguments and default node ids.
+     * @brief Construct graph without edges, creating each node from the same node_args with default node ids [0, 1, ...].
      */
     template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
     Graph(const int number_of_nodes, Args&&... args)

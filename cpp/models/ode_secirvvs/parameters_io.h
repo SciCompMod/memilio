@@ -1066,10 +1066,12 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
  * @tparam FP Floating point type.
  * @param[in] model_from VectorRange of Node%s each containing a Model with the input data.
  * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
+ * 
+ * @return An IOResult indicating success or failure.
  */
 template <class FP>
-void convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>> model_from,
-                             mio::VectorRange<Node<Model<FP>>> model_to)
+IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>> model_from,
+                                       mio::VectorRange<Node<Model<FP>>> model_to)
 {
     assert(model_from.size() == model_to.size());
     assert((size_t)model_from[0].property.parameters.get_num_groups() ==
@@ -1083,6 +1085,7 @@ void convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>> model_fro
         model_to[region_idx].property.populations = model_from[region_idx]
                                                         .property.populations.template convert<FP>();
     }
+    return mio::sucess();
 }
 
 } // namespace osecirvvs
