@@ -116,7 +116,7 @@ Run pylint with the commands
 
 .. code:: sh
 
-    python tools/run_pylint.py
+    python ../tools/run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
 Pylint report for actual master:

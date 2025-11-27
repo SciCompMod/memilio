@@ -13,6 +13,8 @@ runs:
         sudo apt-get -qq update
         sudo apt-get -qq -y install python3-pip gnupg
         python -m pip install --upgrade pip
+    # Pylint runs against the prebuilt wheels in pycode/wheelhouse/*cp311*.
+    # So, use current latest supported Python version.
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
@@ -30,14 +32,8 @@ runs:
     - name: Run pylint
       shell: bash
       run: |
-        cd pycode/memilio-${{ inputs.package }}
-        mkdir -p build_pylint
-        if [ -f tools/run_pylint.py ]; then
-          python tools/run_pylint.py
-        else
-          python -m pylint --rcfile=../pylintrc --load-plugins=pylint_json2html --output-format=jsonextended memilio/ > build_pylint/pylint_extended.json || true
-        fi
-        pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+        python pycode/tools/run_pylint.py --package-dir memilio-${{ inputs.package }}
+        pylint-json2html -f jsonextended -o pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html < pycode/memilio-${{ inputs.package }}/build_pylint/pylint_extended.json
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v4
       with:
