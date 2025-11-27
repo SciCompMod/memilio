@@ -1,3 +1,5 @@
+.. include:: ../literature.rst
+
 MEmilio Surrogate Model
 ========================
 
@@ -5,7 +7,7 @@ MEmilio Surrogate Model contains machine learning based surrogate models that ma
 Currently there are only surrogate models for ODE-type models. The simulations of these models are used for data generation. 
 The goal is to create a powerful tool that predicts the infection dynamics faster than a simulation of an expert model, 
 e.g., a metapopulation or agent-based model while still having acceptable errors with respect to the original simulations.
- 
+
 The package can be found in `pycode/memilio-surrogatemodel <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-surrogatemodel>`_.
 
 For more details, we refer to: Schmidt A, Zunker H, Heinlein A, Kühn MJ. (2025). *Graph Neural Network Surrogates to leverage Mechanistic Expert Knowledge towards Reliable and Immediate Pandemic Response*. Submitted for publication. `arXiv:2411.06500 <https://arxiv.org/abs/2411.06500>`_
@@ -177,7 +179,7 @@ The GNN surrogate models are based on the research presented in:
 
 |Graph_Neural_Network_Surrogates|
 
-The implementation leverages the mechanistic ODE-SECIR model (see :doc:`ODE-SECIR documentation <../models/ode_secir>`) as the underlying expert model, using Python bindings to the C++ backend for efficient simulation during data generation.
+The implementation leverages the mechanistic ODE-SECIR model (see :doc:`ODE-SECIR documentation <cpp/models/osecir>`) as the underlying expert model, using Python bindings to the C++ backend for efficient simulation during data generation.
 
 Module Structure
 ~~~~~~~~~~~~~~~~
@@ -458,10 +460,8 @@ Additional Resources
 
 - `GNN Module <https://github.com/SciCompMod/memilio/tree/main/pycode/memilio-surrogatemodel/memilio/surrogatemodel/GNN>`_
 - `GNN README <https://github.com/SciCompMod/memilio/blob/main/pycode/memilio-surrogatemodel/memilio/surrogatemodel/GNN/README.md>`_
-- `Test Scripts <https://github.com/SciCompMod/memilio/tree/main/pycode/memilio-surrogatemodel/memilio/surrogatemodel_test>`_
 
 **Related Documentation:**
 
-- :doc:`ODE-SECIR Model <../models/ode_secir>`
+- :doc:`ODE-SECIR Model <cpp/models/osecir>`
 - :doc:`MEmilio Simulation Package <m-simulation>`
-- :doc:`Python Bindings <python_bindings>`
