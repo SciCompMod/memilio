@@ -24,6 +24,7 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/timer/auto_timer.h"
@@ -75,9 +76,9 @@ int main(int /*argc*/, char** /*argv*/)
     adoption_rates.push_back({ICS, R, home, 0.4, {}});
     adoption_rates.push_back({INS, R, home, 0.5, {}});
 
-    mio::Graph<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
-               mio::MobilityEdgeDirected<ScalarType>>
-        graph;
+    mio::GraphBuilder<mio::LocationNode<ScalarType, mio::smm::Simulation<ScalarType, 1, InfectionState>>,
+                      mio::MobilityEdgeDirected<ScalarType>>
+        builder;
     mio::log_info("Starting Graph generation");
     {
         mio::timing::AutoTimer<"Graph Nodes Generation"> timer;
@@ -95,7 +96,7 @@ int main(int /*argc*/, char** /*argv*/)
             curr_model.populations[{home, InfectionState::R}]                                = 0;
             curr_model.populations[{home, InfectionState::D}]                                = 0;
             curr_model.parameters.get<mio::smm::AdoptionRates<ScalarType, InfectionState>>() = adoption_rates;
-            graph.add_node(farm_id, longitude, latitude, curr_model, t0);
+            builder.add_node(farm_id, longitude, latitude, curr_model, t0);
         }
     }
     mio::log_info("Nodes added to Graph");
@@ -110,11 +111,10 @@ int main(int /*argc*/, char** /*argv*/)
         edges.read_header(io::ignore_extra_column, "from", "to");
         size_t from, to;
         while (edges.read_row(from, to)) {
-            // graph.add_edge(from, to, interesting_indices);
-            graph.lazy_add_edge(from, to, interesting_indices);
+            builder.add_edge(from, to, interesting_indices);
         }
-        graph.sort_edges();
     }
+    auto graph = std::move(builder).build();
     mio::log_info("Graph generated");
 
     auto nodes = graph.nodes() | std::views::transform([](const auto& node) {
