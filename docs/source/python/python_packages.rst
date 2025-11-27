@@ -117,7 +117,7 @@ The installation can be run with the following command (from the directory conta
 
 .. code-block:: console 
     
-    pip install .
+    python -m pip install .
 
 This copies the package and the required dependencies to your site-packages.
 
@@ -125,7 +125,7 @@ For development of code use this command instead
 
 .. code-block:: console 
     
-    pip install -e .[dev]
+    python -m pip install -e .[dev]
 
 This command allows you to work on the code without having to reinstall the package after a change. It also installs all additional dependencies required for development and maintenance.
 
@@ -157,7 +157,7 @@ To get the coverage report do in the package folder
 
 Coverage report for actual master:
 
-`Coverage Report <https://scicompmod.github.io/memilio/coverage/python/>`_
+`Coverage Report <https://scicompmod.github.io/memilio/coverage/python/>`__
 
 Inspection via pylint
 ---------------------
@@ -179,4 +179,4 @@ From the repository root you can also target a package explicitly, for example
 
 Pylint report for actual master:
 
-`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`_
+`Pylint Report <https://dlr-sc.github.io/memilio/pylint/>`__
