@@ -65,12 +65,6 @@ function(add_pymio_module target_name)
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
 
-    if(DEFINED _MEMILIO_MODULE_RPATH)
-        set_target_properties(${target_name} PROPERTIES
-            INSTALL_RPATH "${_MEMILIO_MODULE_RPATH}"
-        )
-    endif()
-
     # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME)
     install(TARGETS ${target_name}
         LIBRARY DESTINATION .
@@ -150,14 +144,6 @@ set(MEMILIO_SIMULATION_LIBS
     ode_mseirs4
 )
 
-foreach(target_name IN LISTS MEMILIO_SIMULATION_LIBS)
-    if(TARGET ${target_name})
-        set_target_properties(${target_name} PROPERTIES
-            INSTALL_RPATH "$ORIGIN"
-        )
-    endif()
-endforeach()
-
 install(TARGETS ${MEMILIO_SIMULATION_LIBS}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
@@ -168,9 +154,6 @@ install(TARGETS ${MEMILIO_SIMULATION_LIBS}
 # library into the wheel under every file name importers might look for. Wheels
 # drop symlinks, so place real copies for each alias.
 if(TARGET jsoncpp_lib)
-    set_target_properties(jsoncpp_lib PROPERTIES
-        INSTALL_RPATH "$ORIGIN"
-    )
     set(JSONCPP_LIB_FILE $<TARGET_FILE:jsoncpp_lib>)
     install(FILES ${JSONCPP_LIB_FILE}
         DESTINATION lib
@@ -189,9 +172,6 @@ if(TARGET spdlog)
     get_target_property(_SPDLOG_LIB_TYPE spdlog TYPE)
 
     if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
-        set_target_properties(spdlog PROPERTIES
-            INSTALL_RPATH "$ORIGIN"
-        )
         set(SPDLOG_LIB_FILE $<TARGET_FILE:spdlog>)
         install(FILES ${SPDLOG_LIB_FILE}
             DESTINATION lib
