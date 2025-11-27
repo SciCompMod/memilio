@@ -20,7 +20,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <functional>
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/date.h"
@@ -28,7 +27,10 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
+#include <algorithm>
+#include <functional>
 #include <iostream>
+#include <ranges>
 
 #include "boost/filesystem.hpp"
 
@@ -152,30 +154,42 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    /**
-     * @brief add a node to the graph. property of the node is constructed from arguments.
-     */
-    template <class... Args>
-    Node<NodePropertyT>& add_node(int id, Args&&... args)
+    Graph() = default;
+    Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
+        : m_nodes(std::move(nodes))
+        , m_edges(std::move(edges))
     {
-        m_nodes.emplace_back(id, std::forward<Args>(args)...);
-        return m_nodes.back();
     }
 
     /**
-     * @brief add an edge to the graph. property of the edge is constructed from arguments.
+     * @brief add a node to the graph. The property of the node is constructed from arguments.
+     *
+     * @param id id for the node
+     * @tparam args additional arguments for node construction
      */
     template <class... Args>
-    Edge<EdgePropertyT>& add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
+    void add_node(int id, Args&&... args)
+    {
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief add an edge to the graph. The property of the edge is constructed from arguments.
+     * @param start_node_idx id of start node
+     * @param end_node_idx id of end node
+     * @tparam args additional arguments for edge construction
+     *
+     * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
+     */
+    template <class... Args>
+    void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
-        return *insert_sorted_replace(m_edges,
-                                      Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
-                                      [](auto&& e1, auto&& e2) {
-                                          return e1.start_node_idx == e2.start_node_idx
-                                                     ? e1.end_node_idx < e2.end_node_idx
-                                                     : e1.start_node_idx < e2.start_node_idx;
-                                      });
+        insert_sorted_replace(m_edges, Edge<EdgePropertyT>(start_node_idx, end_node_idx, std::forward<Args>(args)...),
+                              [](auto&& e1, auto&& e2) {
+                                  return e1.start_node_idx == e2.start_node_idx ? e1.end_node_idx < e2.end_node_idx
+                                                                                : e1.start_node_idx < e2.start_node_idx;
+                              });
     }
 
     /**

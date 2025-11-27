@@ -28,23 +28,40 @@ The :doc:`memilio-epidata <python/m-epidata>` package provides tools to download
 as infection or mobility data. More about this and our other Python packages can be found in the :doc:`Python Interface Section <python/python_packages>` 
 of this documentation.
 
-A few things are not represented in this documentation, but are part of the `github repository <https://github.com/SciCompMod/memilio>`__. 
-In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__folder you can find some regularly used data 
+A few things are not represented in this documentation, but are part of the `GitHub repository <https://github.com/SciCompMod/memilio>`__. 
+In the `data <https://github.com/SciCompMod/memilio/tree/main/data>`__ folder you can find some regularly used data 
 for simulations of a pathogen's spread, currently mostly for Germany. 
 
-Why to use the software
------------------------
+Why to use MEmilio
+------------------
 
 In computationaly epidemiology and infectious disease dynamics, models are often implemented in Python or R. However, this approach often limits the possibility to build large-scale models including an advanced level of detail, e.g., in demography, spatial resolution, or even individual immunity or to run many simulations in a short time frame. 
 MEmilio addresses this challenge by providing a high-performance framework implemented in C++ that allows for large-scale modeling in short time frames to be used in research, policy advice, and education.
 
 The use of a particular model is generally driven by the research question at hand. The distinction of MEmilio is the provision of a wide range of models, from simple compartmental models to complex integro-differential and agent-based models, allowing users to select the most appropriate model for their specific needs.
 
-How to use the software
------------------------
+:doc:`Aggregated models<cpp/aggregated_models>` are suitable for scenarios where population-level dynamics are of interest. They are computationally efficient and can be used for quick assessments or when data is limited. In our implementations, these models can easily be extended to address research questions that involve demographic dimensions such as age.
+
+Standard models based on :doc:`ordinary differential equations (ODE) <cpp/ode>` allow the simplest description of population-level infection dynamics. However, these also implicitly assume exponentially distributed stay times. If the data suggest these to be unrealistic, ODE-based models with the :doc:`linear chain trick (LCT) <cpp/lct>` can be used. With the LCT, Gamma, or more precisely, Erlang distributions can be adapted to expected stay time and variance. We also offer a first implementation of a :doc:`generalized LCT <cpp/glct>` where more distributions can be approximated. For full flexibility, :doc:`integro-differential equation-based (IDE) models <cpp/ide>` can be used. These allow for arbitrary stay time distributions and are thus suitable when a more realistic timing of disease progression is crucial for the research question. However, IDE models are computationally more expensive than ODE-based models.
+
+For spatio-temporal dynamics, :doc:`graph-based metapopulation models <cpp/graph_metapop>`, which leverage :doc:`ODE-based models<cpp/ode>`, are a good compromise between level of detail and computational effort. They allow for the incorporation of mobility patterns and spatial heterogeneity, making them suitable for studying the spread of diseases across different regions. They can also be used to, e.g., consider different intervention strategies in different regions or to study the effect of mobility restrictions. To study the effect of local interventions, we provide the option to implement pre-defined and dynamic NPIs which automatically enforce interventions on a local and regional level when an incidence threshold criteria by the user is exceeded. For details, see, e.g.,
+
+*   :doc:`ODE-based SECIR model <cpp/models/osecir>` for early-phase epidemics or full immunity cases
+*   :doc:`ODE-based SECIRVVS model <cpp/models/osecirvvs>` for early- or mid-phase epidemics with three immunity layers
+*   :doc:`ODE-based SECIRTS model <cpp/models/osecirts>` for mid- or late-phase epidemics with three immunity layers and waning immunity
+
+For Python, please see, e.g., :doc:`ODE-based SECIRTS model <python/m-simulation_model_usage>`.
+
+When individual-level interactions and heterogeneity are crucial, :doc:`individual-based models <cpp/individual_models>` provide a detailed representation of disease dynamics. These models can capture complex behaviors and interactions, making them valuable for understanding transmission dynamics in specific settings. Individual-based models are computationally intensive but offer unparalleled detail for certain research questions such as in-household transmission or vaccination and testing strategies targeting individuals that satisfy specific properties with respect to age, previous infections, immunity levels, or particular workplaces. The most versatile individual-based model in MEmilio is the :doc:`(mobility-based) agent-based model <cpp/mobility_based_abm>`.
+
+
+How to use MEmilio
+------------------
 
 The installation and use of MEmilio might look overwhelming at first due to the many features and models included. 
-However, we have structured this documentation to guide you step-by-step through the installation and usage process.
+We have structured this documentation to guide you step-by-step through the installation and usage process.
+If you still need help, feel free to `contact us <mailto:Martin.Kuehn@DLR.de>`_ or open an issue at `GitHub <https://github.com/SciCompMod/memilio/issues>`_ 
+and highlight @mknaranja and @HenrZu such that we can assist you as best as we can.
 
 .. _installation:
 
@@ -220,4 +237,4 @@ For the latter, no regular testing is conducted. If you encounter errors, please
 Further questions
 ~~~~~~~~~~~~~~~~~
 If you have any further questions, please take a look at our :doc:`faq` and feel free to contact us via
-`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `github <https://github.com/SciCompMod/memilio/>`_.
+`e-mail <mailto:Martin.Kuehn@DLR.de>`_ or open an issue or discussion on `GitHub <https://github.com/SciCompMod/memilio/>`_.
