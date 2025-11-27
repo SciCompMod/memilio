@@ -171,11 +171,11 @@ Run pylint with the commands in the package folder
 
 .. code-block:: console
 
-    python ../tools/run_pylint.py
+    python ../run_pylint.py
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
 From the repository root you can also target a package explicitly, for example
-``python pycode/tools/run_pylint.py --package-dir memilio-plot``.
+``python pycode/run_pylint.py --package-dir memilio-plot``.
 
 Pylint report for actual master:
 

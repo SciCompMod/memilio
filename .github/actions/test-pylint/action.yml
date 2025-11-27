@@ -32,7 +32,7 @@ runs:
     - name: Run pylint
       shell: bash
       run: |
-        python pycode/tools/run_pylint.py --package-dir memilio-${{ inputs.package }}
+        python pycode/run_pylint.py --package-dir memilio-${{ inputs.package }}
         pylint-json2html -f jsonextended -o pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html < pycode/memilio-${{ inputs.package }}/build_pylint/pylint_extended.json
     - name: Upload Pylint Report
       uses: actions/upload-artifact@v4

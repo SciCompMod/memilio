@@ -42,7 +42,7 @@ def parse_args(pycode_root: Path) -> argparse.Namespace:
 
 
 def main() -> int:
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[1]
     pycode_root = repo_root / "pycode"
     args = parse_args(pycode_root)
     package_dir = pycode_root / args.package_dir
