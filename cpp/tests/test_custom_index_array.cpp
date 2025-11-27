@@ -433,7 +433,7 @@ TEST(CustomIndexArray, convert_floating_point)
     mio::CustomIndexArray<float, Dim1> array_float({size_dim1}, value_float);
     mio::CustomIndexArray<float, Dim1> array_float2 = array_float.convert<double>().convert<float>();
     for (auto i = mio::Index<Dim1>(0); i < size_dim1; ++i) {
-        EXPECT_FLOAT_EQ((array_float2[i]), value_float);
+        EXPECT_FLOAT_EQ(array_float2[i], value_float);
     }
 
     // case: double arrays with mixed precision; expect the value to be truncated during conversion to float
