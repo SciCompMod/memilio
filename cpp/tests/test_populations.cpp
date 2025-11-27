@@ -269,7 +269,7 @@ TEST(TestPopulations, convert_floating_point)
     mio::Populations<float, TestAgeGroup> pop_float({size_dim1}, value_float);
     mio::Populations<float, TestAgeGroup> pop_float2 = pop_float.convert<double>().convert<float>();
     for (auto i = mio::Index<TestAgeGroup>(0); i < size_dim1; ++i) {
-        ASSERT_FLOAT_EQ((pop_float2[i]), value_float);
+        ASSERT_FLOAT_EQ(pop_float2[i], value_float);
     }
 
     // case: double arrays with mixed precision; expect the value to be truncated during conversion to float
