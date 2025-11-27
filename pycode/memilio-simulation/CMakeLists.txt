@@ -13,12 +13,23 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_INSTALL_RPATH
-    "$ORIGIN"
-    "$ORIGIN/lib"
-    "${CMAKE_BINARY_DIR}/lib"
-    "${CMAKE_BINARY_DIR}/bin"
-)
+
+# Windows has no RPATH (CMAKE_SKIP_RPATH defaults to ON there), so set this only on UNIX and APPLE.
+if(APPLE)
+    set(CMAKE_INSTALL_RPATH
+        "@loader_path"
+        "@loader_path/lib"
+        "${CMAKE_BINARY_DIR}/lib"
+        "${CMAKE_BINARY_DIR}/bin"
+    )
+elseif(UNIX)
+    set(CMAKE_INSTALL_RPATH
+        "$ORIGIN"
+        "$ORIGIN/lib"
+        "${CMAKE_BINARY_DIR}/lib"
+        "${CMAKE_BINARY_DIR}/bin"
+    )
+endif()
 
 # Use a static spdlog so the wheel stays self-contained.
 set(MEMILIO_PREFER_STATIC_SPDLOG ON CACHE BOOL "" FORCE)
@@ -53,9 +64,12 @@ function(add_pymio_module target_name)
     pybind11_add_module(${target_name} MODULE ${PYBIND11_MODULE_SOURCES})
     target_link_libraries(${target_name} PRIVATE ${PYBIND11_MODULE_LINKED_LIBRARIES})
     target_include_directories(${target_name} PRIVATE memilio/simulation/bindings)
-    set_target_properties(${target_name} PROPERTIES
-        INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
-    )
+
+    if(DEFINED _MEMILIO_MODULE_RPATH)
+        set_target_properties(${target_name} PROPERTIES
+            INSTALL_RPATH "${_MEMILIO_MODULE_RPATH}"
+        )
+    endif()
 
     # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME)
     install(TARGETS ${target_name}
