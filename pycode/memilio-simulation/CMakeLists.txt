@@ -20,8 +20,7 @@ set(CMAKE_INSTALL_RPATH
     "${CMAKE_BINARY_DIR}/bin"
 )
 
-# Bundled JsonCpp must be linked statically so the wheel stays self-contained.
-set(MEMILIO_PREFER_STATIC_JSONCPP ON CACHE BOOL "" FORCE)
+# Use a static spdlog so the wheel stays self-contained.
 set(MEMILIO_PREFER_STATIC_SPDLOG ON CACHE BOOL "" FORCE)
 
 if(MEMILIO_USE_BUNDLED_PYBIND11)
@@ -57,6 +56,8 @@ function(add_pymio_module target_name)
     set_target_properties(${target_name} PROPERTIES
         INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
     )
+
+    # Make sure to install shared and static libraries (LIBRARY and ARCHIVE) and the executables (RUNTIME)
     install(TARGETS ${target_name}
         LIBRARY DESTINATION .
         ARCHIVE DESTINATION .
@@ -172,6 +173,7 @@ endif()
 
 if(TARGET spdlog)
     get_target_property(_SPDLOG_LIB_TYPE spdlog TYPE)
+
     if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
         set_target_properties(spdlog PROPERTIES
             INSTALL_RPATH "$ORIGIN"
