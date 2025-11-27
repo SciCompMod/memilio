@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
@@ -325,7 +326,7 @@ TEST(TestGraph, set_edges_saving_edges)
     EXPECT_EQ(indices_edge1, indices_save_edges);
 }
 
-TEST(TestGraph, ot_edges)
+TEST(TestGraph, out_edges)
 {
     mio::Graph<int, int> g;
     g.add_node(0);
@@ -342,6 +343,43 @@ TEST(TestGraph, ot_edges)
 
     std::vector<mio::Edge<int>> v1 = {{1, 2, 1}};
     EXPECT_THAT(g.out_edges(1), testing::ElementsAreArray(v1));
+}
+
+TEST(TestGraphBuilder, Build)
+{
+    mio::GraphBuilder<int, int> builder(3, 3);
+    builder.add_node(0, 100);
+    builder.add_node(1, 100);
+    builder.add_node(2, 100);
+    builder.add_edge(0, 1, 100);
+    builder.add_edge(2, 1, 100);
+    builder.add_edge(1, 2, 100);
+
+    auto g = std::move(builder).build();
+
+    EXPECT_EQ(g.nodes().size(), 3);
+    EXPECT_EQ(g.edges().size(), 3);
+}
+
+TEST(TestGraphBuilder, Build_unique)
+{
+    mio::GraphBuilder<int, int> builder;
+    builder.add_node(0, 100);
+    builder.add_node(1, 100);
+    builder.add_node(2, 100);
+    builder.add_edge(1, 2, 100);
+    builder.add_edge(0, 1, 100);
+    builder.add_edge(2, 1, 100);
+    builder.add_edge(1, 2, 200);
+    builder.add_edge(2, 1, 300);
+
+    auto g = std::move(builder).build(true);
+
+    EXPECT_EQ(g.nodes().size(), 3);
+    EXPECT_EQ(g.edges().size(), 3);
+    // The last added edges are kept:
+    EXPECT_EQ(g.edges()[1].property, 200);
+    EXPECT_EQ(g.edges()[2].property, 300);
 }
 
 namespace
