@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <functional>
 #include <iostream>
+#include <concepts>
 #include <ranges>
 
 #include "boost/filesystem.hpp"
@@ -154,7 +155,57 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
+    /**
+     * @brief Construct graph without edges from pairs of node_ids and node_properties.
+     */
+    Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
+    {
+        assert(node_ids.size() == node_properties.size());
+
+        for (auto i = size_t(0); i < node_ids.size(); ++i) {
+            add_node(node_ids[i], node_properties[i]);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges from node_properties with default node ids [0, 1, ...].
+     */
+    Graph(std::vector<NodePropertyT>& node_properties)
+    {
+        for (auto i = size_t(0); i < node_properties.size(); ++i) {
+            add_node(i, node_properties[i]);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges, creating a node for each id in node_ids from the same node_args.
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const std::vector<int>& node_ids, Args&&... node_args)
+    {
+        for (int id : node_ids) {
+            add_node(id, std::forward<Args>(node_args)...);
+        }
+    }
+
+    /**
+     * @brief Construct graph without edges, creating each node from the same node_args with default node ids [0, 1, ...].
+     */
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
+    Graph(const int number_of_nodes, Args&&... args)
+    {
+        for (int id = 0; id < number_of_nodes; ++id) {
+            add_node(id, std::forward<Args>(args)...);
+        }
+    }
+
     Graph() = default;
+
+    /**
+     * @brief Construct graph containing the given nodes and edges.
+     */
     Graph(std::vector<Node<NodePropertyT>>&& nodes, std::vector<Edge<EdgePropertyT>>&& edges)
         : m_nodes(std::move(nodes))
         , m_edges(std::move(edges))
@@ -168,6 +219,7 @@ public:
      * @tparam args additional arguments for node construction
      */
     template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
     void add_node(int id, Args&&... args)
     {
         m_nodes.emplace_back(id, std::forward<Args>(args)...);
@@ -182,6 +234,7 @@ public:
      * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
      */
     template <class... Args>
+        requires std::constructible_from<EdgePropertyT, Args...>
     void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);
@@ -395,24 +448,6 @@ IOResult<void> set_edges(const fs::path& mobility_data_file, Graph<Model, Mobili
     }
 
     return success();
-}
-
-/**
- * Create an unconnected graph.
- * Can be used to save space on disk when writing parameters if the edges are not required.
- * @param node_properties Vector of node properties of all nodes, e.g., parameters in each model node.
- * @param node_ids Indices for the nodes.
- * @return Graph with nodes only having no edges.
- */
-template <class NodePropertyT, class EdgePropertyT>
-auto create_graph_without_edges(const std::vector<NodePropertyT>& node_properties, const std::vector<int>& node_ids)
-{
-    // create a graph without edges for writing to file
-    auto graph = mio::Graph<NodePropertyT, EdgePropertyT>();
-    for (auto i = size_t(0); i < node_ids.size(); ++i) {
-        graph.add_node(node_ids[i], node_properties[i]);
-    }
-    return graph;
 }
 
 template <class T>
