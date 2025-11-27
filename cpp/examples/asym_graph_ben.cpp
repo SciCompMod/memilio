@@ -24,6 +24,7 @@
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/mobility/metapopulation_mobility_asymmetric.h"
 #include "memilio/mobility/graph.h"
+#include "memilio/mobility/graph_builder.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/logging.h"
 #include "memilio/timer/auto_timer.h"
@@ -161,7 +162,7 @@ int main(int /*argc*/, char** /*argv*/)
         for (size_t i = 0; i < num_edges_benchmark; ++i) {
             builder.add_edge(from_exchanges[i], to_exchanges[i], interesting_indices);
         }
-        auto graph2 = builder.build(true);
+        auto graph2 = std::move(builder).build(true);
         end         = std::chrono::high_resolution_clock::now();
         duration    = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
