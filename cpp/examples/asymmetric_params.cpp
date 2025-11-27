@@ -216,7 +216,6 @@ int main(int /*argc*/, char** /*argv*/)
 
     std::vector<std::vector<size_t>> interesting_indices;
     interesting_indices.push_back({Model().populations.get_flat_index({home, InfectionState::I})});
-    graph.reserve_edges(froms.size());
     for (size_t i = 0; i < froms.size(); ++i) {
         builder.add_edge(froms[i], tos[i], interesting_indices);
     }
