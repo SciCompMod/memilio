@@ -64,7 +64,8 @@ public:
     {
     }
 
-        explicit Populations(Base&& array)
+    /// @brief Create populations by taking ownership of a CustomIndexArray.
+    explicit Populations(Base&& array)
         : Base(std::move(array))
     {
     }
