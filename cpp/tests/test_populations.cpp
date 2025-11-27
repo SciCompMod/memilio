@@ -264,7 +264,7 @@ TEST(TestPopulations, convert_floating_point)
 {
     // similar test to CustomIndexArray.convert_floating_point
     // case: float arrays with mixed precision; expect same result after conversion through double precision
-    float value_float = 0.10005;
+    float value_float = 0.10005f;
     auto size_dim1    = mio::Index<TestAgeGroup>(7);
     mio::Populations<float, TestAgeGroup> pop_float({size_dim1}, value_float);
     mio::Populations<float, TestAgeGroup> pop_float2 = pop_float.convert<double>().convert<float>();
