@@ -31,7 +31,8 @@
 
 namespace mio
 {
-IOResult<std::vector<ScalarType>> compute_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion, Date date)
+IOResult<std::vector<ScalarType>> compute_divi_data(const std::vector<DiviEntry>& divi_data,
+                                                    const std::vector<int>& vregion, Date date)
 {
 
     auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) {
@@ -48,7 +49,6 @@ IOResult<std::vector<ScalarType>> compute_divi_data(const std::vector<DiviEntry>
     }
 
     std::vector<ScalarType> vnum_icu(vregion.size(), 0.0);
-
 
     for (auto&& entry : divi_data) {
         auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
@@ -86,9 +86,9 @@ read_population_data(const std::vector<PopulationDataEntry>& population_data, co
         auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
             return r == 0 ||
                    (county_entry.county_id &&
-                    regions::de::StateId(r) == regions::de::get_state_id(int(*county_entry.county_id))) ||
-                   (county_entry.county_id && regions::de::CountyId(r) == *county_entry.county_id) ||
-                   (county_entry.district_id && regions::de::DistrictId(r) == *county_entry.district_id);
+                    regions::StateId(r) == regions::get_state_id(int(*county_entry.county_id))) ||
+                   (county_entry.county_id && regions::CountyId(r) == *county_entry.county_id) ||
+                   (county_entry.district_id && regions::DistrictId(r) == *county_entry.district_id);
         });
         if (it != vregion.end()) {
             auto region_idx      = size_t(it - vregion.begin());

@@ -98,8 +98,7 @@ TEST(TestOdeSecir, compareWithPreviousRun)
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-3);
     integrator->set_abs_tolerance(1e-1);
-    mio::TimeSeries<double> secihurd =
-        mio::simulate<double, ModelT>(t0, tmax, dt, model, std::move(integrator));
+    mio::TimeSeries<double> secihurd = mio::simulate<double, ModelT>(t0, tmax, dt, model, std::move(integrator));
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -1007,13 +1006,13 @@ TEST(TestOdeSecir, get_reproduction_number)
 
 TEST(Secir, get_mobility_factors)
 {
-    auto beta                                                                           = 0.25;
-    auto max_beta                                                                       = 0.5;
-    auto model                                                                          = ModelT(1);
-    model.parameters.get<mio::osecir::TimeExposed<double>>().array()                    = 3.;
-    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>().array()         = 2.;
-    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>().array() = 0.1;
-    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>().array() = beta;
+    auto beta                                                                              = 0.25;
+    auto max_beta                                                                          = 0.5;
+    auto model                                                                             = ModelT(1);
+    model.parameters.get<mio::osecir::TimeExposed<double>>().array()                       = 3.;
+    model.parameters.get<mio::osecir::TimeInfectedNoSymptoms<double>>().array()            = 2.;
+    model.parameters.get<mio::osecir::RecoveredPerInfectedNoSymptoms<double>>().array()    = 0.1;
+    model.parameters.get<mio::osecir::RiskOfInfectionFromSymptomatic<double>>().array()    = beta;
     model.parameters.get<mio::osecir::MaxRiskOfInfectionFromSymptomatic<double>>().array() = max_beta;
     model.populations[{mio::AgeGroup(0), mio::osecir::InfectionState::InfectedNoSymptoms}] = 100;
     mio::osecir::Simulation<double> sim(model, 0.0);
@@ -1281,16 +1280,14 @@ TEST_F(ModelTestOdeSecir, read_input_data)
     auto model2 = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
 
     auto pydata_germany_path = std::string(TEST_GERMANY_PYDATA_DIR);
-    auto read_result1 = 
-        mio::osecir::read_input_data(mio::make_range(model1.begin(), model1.end()), {2020, 12, 01}, 
-                                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                     mio::regions::de::EpidataFilenames::county(pydata_germany_path));
-    
+    auto read_result1 = mio::osecir::read_input_data(mio::make_range(model1.begin(), model1.end()), {2020, 12, 01},
+                                                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                     mio::regions::de::EpidataFilenames::county(pydata_germany_path));
+
     auto pydata_district_path = mio::path_join(TEST_DATA_DIR, "District", "pydata");
-    auto read_result_district = 
-        mio::osecir::read_input_data(mio::make_range(model2.begin(), model2.end()), {2020, 12, 01}, 
-                                     std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
-                                     mio::regions::de::EpidataFilenames::county(pydata_district_path));
+    auto read_result_district = mio::osecir::read_input_data(
+        mio::make_range(model2.begin(), model2.end()), {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0),
+        1.0, mio::regions::de::EpidataFilenames::county(pydata_district_path));
 
     EXPECT_THAT(read_result1, IsSuccess());
     EXPECT_THAT(read_result_district, IsSuccess());
@@ -1320,11 +1317,11 @@ TEST_F(ModelTestOdeSecir, export_time_series_init)
 
     // Test exporting time series
     std::vector<mio::Node<ModelT>> models{mio::Node<ModelT>(1002, model)};
-    EXPECT_THAT(mio::osecir::export_input_data_timeseries(
-                    mio::make_range(models.begin(), models.end()), tmp_results_dir, {2020, 12, 01}, 
-                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2, 
-                    mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
-                IsSuccess());
+    EXPECT_THAT(
+        mio::osecir::export_input_data_timeseries(mio::make_range(models.begin(), models.end()), tmp_results_dir,
+                                                  {2020, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                  2, mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
+        IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
     EXPECT_THAT(data_extrapolated, IsSuccess());
@@ -1349,11 +1346,11 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
 
     // Test exporting time series
     std::vector<mio::Node<ModelT>> models{mio::Node<ModelT>(1002, model)};
-    EXPECT_THAT(mio::osecir::export_input_data_timeseries(
-                    mio::make_range(models.begin(), models.end()), tmp_results_dir, {1000, 12, 01}, 
-                    std::vector<double>(size_t(num_age_groups), 1.0), 1.0, 2, 
-                    mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
-                IsSuccess());
+    EXPECT_THAT(
+        mio::osecir::export_input_data_timeseries(mio::make_range(models.begin(), models.end()), tmp_results_dir,
+                                                  {1000, 12, 01}, std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
+                                                  2, mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
+        IsSuccess());
 
     auto data_extrapolated = mio::read_result(mio::path_join(tmp_results_dir, "Results_rki.h5"));
     EXPECT_THAT(data_extrapolated, IsSuccess());
@@ -1379,10 +1376,10 @@ TEST_F(ModelTestOdeSecir, export_time_series_init_old_date)
 TEST_F(ModelTestOdeSecir, model_initialization)
 {
     // Vector assignment necessary as read_input_data_county changes model
-    auto model_vector             = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
+    auto model_vector       = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
     auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
 
-    EXPECT_THAT(mio::osecir::read_input_data(mio::make_range(model_vector.begin(), model_vector.end()), {2020, 12, 01}, 
+    EXPECT_THAT(mio::osecir::read_input_data(mio::make_range(model_vector.begin(), model_vector.end()), {2020, 12, 01},
                                              std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
                                              mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
@@ -1406,10 +1403,10 @@ TEST_F(ModelTestOdeSecir, model_initialization_old_date)
 {
     mio::set_log_level(mio::LogLevel::off);
     // Vector assignment necessary as read_input_data_county changes model
-    auto model_vector             = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
+    auto model_vector       = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1002, model)};
     auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
 
-    EXPECT_THAT(mio::osecir::read_input_data(mio::make_range(model_vector.begin(), model_vector.end()), {1000, 12, 01}, 
+    EXPECT_THAT(mio::osecir::read_input_data(mio::make_range(model_vector.begin(), model_vector.end()), {1000, 12, 01},
                                              std::vector<double>(size_t(num_age_groups), 1.0), 1.0,
                                              mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
@@ -1446,10 +1443,10 @@ TEST(TestOdeSecir, set_divi_data_invalid_dates)
     auto model_vector = std::vector<mio::Node<ModelT>>{mio::Node<ModelT>(1001, model)};
 
     // Test with date before DIVI dataset was available.
-    EXPECT_THAT(mio::osecir::details::set_divi_data(mio::make_range(model_vector.begin(), model_vector.end()), 
-                                                    "", {2019, 12, 01}, 1.0), 
+    EXPECT_THAT(mio::osecir::details::set_divi_data(mio::make_range(model_vector.begin(), model_vector.end()), "",
+                                                    {2019, 12, 01}, 1.0),
                 IsSuccess());
-                
+
     // Assure that populations is the same as before.
     EXPECT_THAT(print_wrap(model_vector[0].property.populations.array().cast<double>()),
                 MatrixNear(print_wrap(model.populations.array().cast<double>()), 1e-10, 1e-10));
@@ -1474,7 +1471,7 @@ TEST(TestOdeSecir, set_divi_data_empty_data)
 
 TEST_F(ModelTestOdeSecir, set_confirmed_cases_data_with_ICU)
 {
-    auto model_test           = ModelT{model};
+    auto model_test = ModelT{model};
     model_test.populations.array().setConstant(1);
 
     // set params
@@ -1551,16 +1548,16 @@ TEST(TestOdeSecirIO, read_input_data_county_aggregates_one_group)
     models1[0].property.parameters.get<mio::osecir::CriticalPerSevere<double>>()[mio::AgeGroup(0)]         = 0.25;
 
     auto pydata_dir_Germany = mio::path_join(TEST_DATA_DIR, "Germany", "pydata");
-    const auto date = mio::Date(2020, 12, 1);
+    const auto date         = mio::Date(2020, 12, 1);
 
     std::vector<double> scale6(num_age_groups, 1.0);
     std::vector<double> scale1{1.0};
 
     // Initialize both models
-    ASSERT_THAT(mio::osecir::read_input_data(mio::make_range(models6.begin(), models6.end()), date, scale6, 1.0, 
+    ASSERT_THAT(mio::osecir::read_input_data(mio::make_range(models6.begin(), models6.end()), date, scale6, 1.0,
                                              mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
-    ASSERT_THAT(mio::osecir::read_input_data(mio::make_range(models1.begin(), models1.end()), date, scale1, 1.0, 
+    ASSERT_THAT(mio::osecir::read_input_data(mio::make_range(models1.begin(), models1.end()), date, scale1, 1.0,
                                              mio::regions::de::EpidataFilenames::county(pydata_dir_Germany)),
                 IsSuccess());
 
@@ -1592,7 +1589,7 @@ TEST(TestOdeSecirIO, set_population_data_single_age_group)
     // Test population data with 6 different values for age groups
     std::vector<double> population_data6 = {10000.0, 20000.0, 30000.0, 25000.0, 15000.0, 8000.0};
     std::vector<double> population_data1 = {108000.0}; // sum of all age groups
-    const int region                                  = 1002;
+    const int region                     = 1002;
 
     // Set population data for both models
     EXPECT_THAT(mio::osecir::details::set_population_data(models6, population_data6, region), IsSuccess());
@@ -1639,7 +1636,7 @@ TEST(TestOdeSecirIO, set_confirmed_cases_data_single_age_group)
                                                current_date,
                                                mio::AgeGroup(age_group),
                                                {},
-                                               mio::regions::de::CountyId(1002),
+                                               mio::regions::CountyId(1002),
                                                {}};
             case_data.push_back(entry);
         }
@@ -1698,10 +1695,8 @@ TEST(TestOdeSecirIO, set_divi_data_single_age_group)
 
     auto num_icu = read_divi_data(divi_data_path, {region}, date).value();
 
-    auto result_6_groups =
-        mio::osecir::details::set_divi_data(models6, num_icu[0], scaling_factor_icu);
-    auto result_1_group =
-        mio::osecir::details::set_divi_data(models1, num_icu[0], scaling_factor_icu);
+    auto result_6_groups = mio::osecir::details::set_divi_data(models6, num_icu[0], scaling_factor_icu);
+    auto result_1_group  = mio::osecir::details::set_divi_data(models1, num_icu[0], scaling_factor_icu);
 
     EXPECT_THAT(result_6_groups, IsSuccess());
     EXPECT_THAT(result_1_group, IsSuccess());

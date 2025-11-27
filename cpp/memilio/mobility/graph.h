@@ -155,42 +155,6 @@ public:
     using NodeProperty = NodePropertyT;
     using EdgeProperty = EdgePropertyT;
 
-    Graph(const std::vector<int>& node_ids, const std::vector<NodePropertyT>& node_properties)
-    {
-        assert(node_ids.size() == node_properties.size());
-
-        for (auto i = size_t(0); i < node_ids.size(); ++i) {
-            add_node(node_ids[i], node_properties[i]);
-        }
-    }
-
-    Graph(std::vector<NodePropertyT>& node_properties)
-    {
-        for (auto i = size_t(0); i < node_properties.size(); ++i) {
-            add_node(i, node_properties[i]);
-        }
-    }
-
-    template <class... Args>
-        requires std::constructible_from<NodePropertyT, Args...>
-    Graph(const std::vector<int>& node_ids, Args&&... node_args)
-    {
-        for (int id : node_ids) {
-            add_node(id, std::forward<Args>(node_args)...);
-        }
-    }
-
-    template <class... Args>
-        requires std::constructible_from<NodePropertyT, Args...>
-    Graph(const int number_of_nodes, Args&&... args)
-    {
-        for (int id = 0; id < number_of_nodes; ++id) {
-            add_node(id, std::forward<Args>(args)...);
-        }
-    }
-
-    Graph() = default;
-
     /**
      * @brief Construct graph without edges from pairs of node_ids and node_properties.
      */
@@ -376,8 +340,8 @@ void set_german_holidays(const mio::VectorRange<Node<Model>>& nodes, const mio::
                          const mio::Date& end_date)
 {
     for (size_t node_idx = 0; node_idx < nodes.size(); ++node_idx) {
-        auto state_id        = regions::de::get_state_id(nodes[node_idx].id);
-        auto holiday_periods = regions::de::get_holidays(state_id, start_date, end_date);
+        auto state_id        = regions::get_state_id(nodes[node_idx].id);
+        auto holiday_periods = regions::get_holidays(state_id, start_date, end_date);
 
         auto& contacts = nodes[node_idx].property.parameters.template get<ContactPattern>();
         contacts.get_school_holidays() =

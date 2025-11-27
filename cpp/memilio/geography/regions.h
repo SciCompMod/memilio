@@ -46,9 +46,6 @@ struct Region : public mio::Index<Region> {
     }
 };
 
-namespace de
-{
-
 /**
  * Id of a state.
  * For Germany the Ids are:
@@ -105,23 +102,24 @@ get_holidays(StateId state);
  */
 Range<std::pair<std::vector<std::pair<Date, Date>>::const_iterator, std::vector<std::pair<Date, Date>>::const_iterator>>
 get_holidays(StateId state, Date start_date, Date end_date);
-struct EpidataFilenames
-{
-    private:
 
-    EpidataFilenames(std::string& pydata) :
-        population_data_path(mio::path_join(pydata, "county_current_population.json"))
+namespace de
+{
+
+struct EpidataFilenames {
+private:
+    EpidataFilenames(std::string& pydata)
+        : population_data_path(mio::path_join(pydata, "county_current_population.json"))
     {
     }
-    
-    public:
 
+public:
     static EpidataFilenames county(std::string& pydata)
     {
         EpidataFilenames s(pydata);
 
-        s.case_data_path = mio::path_join(pydata, "cases_all_county_age_ma7.json");
-        s.divi_data_path = mio::path_join(pydata, "county_divi_ma7.json");
+        s.case_data_path        = mio::path_join(pydata, "cases_all_county_age_ma7.json");
+        s.divi_data_path        = mio::path_join(pydata, "county_divi_ma7.json");
         s.vaccination_data_path = mio::path_join(pydata, "vacc_county_ageinf_ma7.json");
 
         return s;
@@ -131,10 +129,10 @@ struct EpidataFilenames
     {
         EpidataFilenames s(pydata);
 
-        s.case_data_path = mio::path_join(pydata, "cases_all_state_age_ma7.json");
-        s.divi_data_path = mio::path_join(pydata, "state_divi_ma7.json");
+        s.case_data_path        = mio::path_join(pydata, "cases_all_state_age_ma7.json");
+        s.divi_data_path        = mio::path_join(pydata, "state_divi_ma7.json");
         s.vaccination_data_path = mio::path_join(pydata, "vacc_state_ageinf_ma7.json");
-        
+
         return s;
     }
 
@@ -142,10 +140,10 @@ struct EpidataFilenames
     {
         EpidataFilenames s(pydata);
 
-        s.case_data_path = mio::path_join(pydata, "cases_all_age_ma7.json");
-        s.divi_data_path = mio::path_join(pydata, "germany_divi_ma7.json");
+        s.case_data_path        = mio::path_join(pydata, "cases_all_age_ma7.json");
+        s.divi_data_path        = mio::path_join(pydata, "germany_divi_ma7.json");
         s.vaccination_data_path = mio::path_join(pydata, "vacc_ageinf_ma7.json");
-        
+
         return s;
     }
 

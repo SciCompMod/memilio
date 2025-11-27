@@ -54,9 +54,8 @@ template <typename FP, class... Categories>
 class Populations : public CustomIndexArray<UncertainValue<FP>, Categories...>
 {
 public:
-    using Base   = CustomIndexArray<UncertainValue<FP>, Categories...>;
-    using BaseFP = FP;
-    using Index  = typename Base::Index;
+    using Base  = CustomIndexArray<UncertainValue<FP>, Categories...>;
+    using Index = typename Base::Index;
 
     template <class... Ts,
               typename std::enable_if_t<std::is_constructible<UncertainValue<FP>, Ts...>::value>* = nullptr>

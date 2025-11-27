@@ -260,8 +260,8 @@ IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<Vaccinat
 
     auto days_until_effective_n = static_cast<int>(
         floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialVaccination<FP>>()[AgeGroup(0)])));
-    auto days_until_effective_pi = static_cast<int>(
-        floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[AgeGroup(0)])));
+    auto days_until_effective_pi = static_cast<int>(floor(
+        static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[AgeGroup(0)])));
     auto days_until_effective_ii = static_cast<int>(
         floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[AgeGroup(0)])));
 
@@ -320,10 +320,9 @@ IOResult<void> set_vaccination_data(const mio::VectorRange<Node<Model<FP>>>& mod
     std::vector<std::vector<VaccinationDataEntry>> vvacc_data{model.size()};
     for (auto&& vacc_data_entry : vacc_data) {
         auto it = std::find_if(model.begin(), model.end(), [&vacc_data_entry](auto&& m) {
-            return m.id == 0 ||
-                   (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(m.id)) ||
-                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(m.id)) ||
-                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::de::DistrictId(m.id));
+            return m.id == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::CountyId(m.id)) ||
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::StateId(m.id)) ||
+                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::DistrictId(m.id));
         });
         if (it != model.end()) {
             auto region_idx = size_t(it - model.begin());
@@ -388,8 +387,7 @@ IOResult<void> convert_input_data_type(const mio::VectorRange<Node<Model<ScalarT
     for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
         // convert populations to mio::UncertainValue<FP>
         // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_from[region_idx]
-                                                        .property.populations.template convert<FP>();
+        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
     }
     return success();
 }

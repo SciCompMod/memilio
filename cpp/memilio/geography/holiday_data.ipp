@@ -25,10 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace mio
-{
-
-namespace regions
+namespace holidays
 {
 
 namespace de
@@ -302,6 +299,4 @@ static const std::vector<std::pair<mio::Date, mio::Date>> holidays_16_th = {
 
 } // namespace de
 
-} // namespace regions
-
-} // namespace mio
+} // namespace holidays

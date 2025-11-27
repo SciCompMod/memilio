@@ -306,10 +306,9 @@ IOResult<void> set_vaccination_data(const mio::VectorRange<Node<Model<FP>>>& mod
     std::vector<std::vector<VaccinationDataEntry>> vvacc_data{model.size()};
     for (auto&& vacc_data_entry : vacc_data) {
         auto it = std::find_if(model.begin(), model.end(), [&vacc_data_entry](auto&& m) {
-            return m.id == 0 ||
-                   (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::de::CountyId(m.id)) ||
-                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::de::StateId(m.id)) ||
-                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::de::DistrictId(m.id));
+            return m.id == 0 || (vacc_data_entry.county_id && vacc_data_entry.county_id == regions::CountyId(m.id)) ||
+                   (vacc_data_entry.state_id && vacc_data_entry.state_id == regions::StateId(m.id)) ||
+                   (vacc_data_entry.district_id && vacc_data_entry.district_id == regions::DistrictId(m.id));
         });
         if (it != model.end()) {
             auto region_idx = size_t(it - model.begin());
