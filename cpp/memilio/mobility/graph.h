@@ -180,7 +180,8 @@ public:
     /**
      * @brief Construct graph without edges, creating a node for each id in node_ids from the same node_args.
      */
-    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
     Graph(const std::vector<int>& node_ids, Args&&... node_args)
     {
         for (int id : node_ids) {
@@ -191,7 +192,8 @@ public:
     /**
      * @brief Construct graph without edges, creating each node from the same node_args with default node ids [0, 1, ...].
      */
-    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
     Graph(const int number_of_nodes, Args&&... args)
     {
         for (int id = 0; id < number_of_nodes; ++id) {
@@ -213,7 +215,8 @@ public:
      * @param id id for the node
      * @tparam args additional arguments for node construction
      */
-    template <class... Args> requires std::constructible_from<NodePropertyT, Args...>
+    template <class... Args>
+        requires std::constructible_from<NodePropertyT, Args...>
     void add_node(int id, Args&&... args)
     {
         m_nodes.emplace_back(id, std::forward<Args>(args)...);
@@ -227,7 +230,8 @@ public:
      *
      * If an edge with the same start and end node indices already exists, it is replaced by the newly constructed edge.
      */
-    template <class... Args> requires std::constructible_from<EdgePropertyT, Args...>
+    template <class... Args>
+        requires std::constructible_from<EdgePropertyT, Args...>
     void add_edge(size_t start_node_idx, size_t end_node_idx, Args&&... args)
     {
         assert(m_nodes.size() > start_node_idx && m_nodes.size() > end_node_idx);

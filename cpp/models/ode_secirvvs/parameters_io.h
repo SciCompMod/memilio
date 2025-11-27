@@ -1059,7 +1059,6 @@ IOResult<void> read_input_data(std::vector<Model>& model, Date date, const std::
     return success();
 }
 
-
 /**
  * @brief Converts input data from one range of models to another with different type.
  * 
@@ -1082,8 +1081,7 @@ IOResult<void> convert_model_data_type(mio::VectorRange<Node<Model<ScalarType>>>
     for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
         // convert populations to mio::UncertainValue<FP>
         // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_from[region_idx]
-                                                        .property.populations.template convert<FP>();
+        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
     }
     return mio::success();
 }

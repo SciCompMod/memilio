@@ -75,10 +75,12 @@ public:
      * @tparam OtherType The type to convert into.
      * @return New Populations of OtherType with copy of internal data.
      */
-    template <class OtherType> requires std::convertible_to<typename Base::Type::Type, OtherType>
+    template <class OtherType>
+        requires std::convertible_to<typename Base::Type::Type, OtherType>
     Populations<OtherType, Categories...> convert() const
     {
-        return Populations<OtherType, Categories...>(Base::template convert<typename Base::Type::Type>().template convert<UncertainValue<OtherType>>());
+        return Populations<OtherType, Categories...>(
+            Base::template convert<typename Base::Type::Type>().template convert<UncertainValue<OtherType>>());
     }
 
     /**

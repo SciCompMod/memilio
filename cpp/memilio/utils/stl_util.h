@@ -322,13 +322,13 @@ constexpr std::array<T, size_t(T::Count)> enum_members()
  * the const_iterator is used. std::conditional tries to compile both cases, thus
  * we also need std::remove_const for the case where T is not const.
  */
-template<class T> 
-using VectorRange = std::conditional_t<std::is_const_v<T>, 
-    typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator, 
-                                  typename std::vector<std::remove_const_t<T>>::const_iterator>>, 
-    typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::iterator, 
-                                  typename std::vector<std::remove_const_t<T>>::iterator>>>;
-
+template <class T>
+using VectorRange =
+    std::conditional_t<std::is_const_v<T>,
+                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::const_iterator,
+                                                     typename std::vector<std::remove_const_t<T>>::const_iterator>>,
+                       typename mio::Range<std::pair<typename std::vector<std::remove_const_t<T>>::iterator,
+                                                     typename std::vector<std::remove_const_t<T>>::iterator>>>;
 
 } // namespace mio
 
