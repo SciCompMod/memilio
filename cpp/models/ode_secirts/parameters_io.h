@@ -359,39 +359,6 @@ IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& 
                                int num_days, const std::vector<std::vector<ScalarType>>& immunity_population,
                                const mio::regions::de::EpidataFilenames& epidata_filenames);
 
-/**
- * @brief Converts input data from one range of models to another with different type.
- * 
- * @tparam FP Floating point type (default: double).
- * @param[in] model_from VectorRange of Node%s each containing a Model with the input data.
- * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
- * @param[in] date Date for which the data should be read.
- * @param[in] num_days Number of days to simulate.
- * @param[in] epidata_filenames Object containing the input data file paths.
- *
- * @return An IOResult indicating success or failure.
- */
-template <class FP>
-IOResult<void> convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from,
-                                       const mio::VectorRange<Node<Model<FP>>>& model_to, Date date, int num_days,
-                                       const mio::regions::de::EpidataFilenames& epidata_filenames)
-{
-    assert(model_from.size() == model_to.size());
-    assert((size_t)model_from[0].property.parameters.get_num_groups() ==
-           (size_t)model_to[0].property.parameters.get_num_groups());
-    // Todo: add conversion of ParameterSet and then re-use code from all model parameters io
-    // For now call set_vacination_data with FP to set correct parameters
-    BOOST_OUTCOME_TRY(
-        details::set_vaccination_data<FP>(model_to, epidata_filenames.vaccination_data_path, date, num_days));
-
-    for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
-        // convert populations to mio::UncertainValue<FP>
-        // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
-    }
-    return success();
-}
-
 #ifdef MEMILIO_HAS_HDF5
 
 /**

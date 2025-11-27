@@ -52,17 +52,16 @@ namespace details
  * @param[in] mu_* vector Probabilities to get from one compartement to another for each age group.
  * @param[in] scaling_factor_inf Factors by which to scale the confirmed cases of rki data.
  */
-IOResult<void> compute_confirmed_cases_data(
-    std::vector<ConfirmedCasesDataEntry>& case_data, const int region, Date date,
-    std::vector<ScalarType>& num_Exposed, std::vector<ScalarType>& num_InfectedNoSymptoms,
-    std::vector<ScalarType>& num_InfectedSymptoms, std::vector<ScalarType>& num_InfectedSevere,
-    std::vector<ScalarType>& num_icu, std::vector<ScalarType>& num_death,
-    std::vector<ScalarType>& num_rec, const std::vector<int>& t_Exposed,
-    const std::vector<int>& t_InfectedNoSymptoms,
-    const std::vector<int>& t_InfectedSymptoms, const std::vector<int>& t_InfectedSevere,
-    const std::vector<int>& t_InfectedCritical, const std::vector<ScalarType>& mu_C_R,
-    const std::vector<ScalarType>& mu_I_H, const std::vector<ScalarType>& mu_H_U,
-    const std::vector<ScalarType>& scaling_factor_inf);
+IOResult<void>
+compute_confirmed_cases_data(std::vector<ConfirmedCasesDataEntry>& case_data, const int region, Date date,
+                             std::vector<ScalarType>& num_Exposed, std::vector<ScalarType>& num_InfectedNoSymptoms,
+                             std::vector<ScalarType>& num_InfectedSymptoms, std::vector<ScalarType>& num_InfectedSevere,
+                             std::vector<ScalarType>& num_icu, std::vector<ScalarType>& num_death,
+                             std::vector<ScalarType>& num_rec, const std::vector<int>& t_Exposed,
+                             const std::vector<int>& t_InfectedNoSymptoms, const std::vector<int>& t_InfectedSymptoms,
+                             const std::vector<int>& t_InfectedSevere, const std::vector<int>& t_InfectedCritical,
+                             const std::vector<ScalarType>& mu_C_R, const std::vector<ScalarType>& mu_I_H,
+                             const std::vector<ScalarType>& mu_H_U, const std::vector<ScalarType>& scaling_factor_inf);
 
 /**
  * @brief Sets populations data from already read case data with multiple age groups into a Model.
@@ -123,11 +122,10 @@ IOResult<void> set_divi_data(Model<ScalarType>& model, const ScalarType num_icu,
  * @param[in] date Date at which the data is read.
  * @param[in] scaling_factor_icu Scaling factor for reported ICU cases.
  */
-IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, const std::string& path, Date date, 
+IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, const std::string& path, Date date,
                              ScalarType scaling_factor_icu);
 
 } //namespace details
-
 
 /**
  * @brief Reads compartments for geographic units at a specified date from data files.
@@ -145,29 +143,6 @@ IOResult<void> set_divi_data(const mio::VectorRange<Node<Model<ScalarType>>>& mo
 IOResult<void> read_input_data(const mio::VectorRange<Node<Model<ScalarType>>>& model, Date date,
                                const std::vector<ScalarType>& scaling_factor_inf, ScalarType scaling_factor_icu,
                                const mio::regions::de::EpidataFilenames& epidata_filenames);
-
-/**
- * @brief Converts input data from one range of models to another with different type.
- * 
- * @tparam FP Floating point type (default: double).
- * @param[in] model_from VectorRange of Node%s each containing a Model with the input data.
- * @param[in,out] model_to VectorRange of Node%s each containing a Model to be initialized with data.
- *
- * @return An IOResult indicating success or failure.
- */
-template<class FP>
-void convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from, const mio::VectorRange<Node<Model<FP>>>& model_to)
-{
-    assert(model_from.size() == model_to.size());
-    assert((size_t)model_from[0].property.parameters.get_num_groups() == (size_t)model_to[0].property.parameters.get_num_groups());
-    // Todo: add conversion of ParameterSet and then re-use code from other model parameters io 
-    
-    for (size_t region_idx = 0; region_idx < model_from.size(); ++region_idx) {
-        // convert populations to mio::UncertainValue<FP>
-        // needs 2 converts as mio::UncertainValue<ScalarType> -> mio::UncertainValue<FP> does not work
-        model_to[region_idx].property.populations = model_from[region_idx].property.populations.template convert<FP>();
-    }
-}
 
 #ifdef MEMILIO_HAS_HDF5
 
@@ -188,13 +163,15 @@ void convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& mo
  * 
  * @return An IOResult indicating success or failure.
  */
-IOResult<void> export_input_data_timeseries(
-    const mio::VectorRange<Node<Model<ScalarType>>> model, const std::string& results_dir, Date date,
-    const std::vector<ScalarType>& scaling_factor_inf, ScalarType scaling_factor_icu, int num_days,
-    const mio::regions::de::EpidataFilenames& epidata_filenames);
+IOResult<void> export_input_data_timeseries(const mio::VectorRange<Node<Model<ScalarType>>> model,
+                                            const std::string& results_dir, Date date,
+                                            const std::vector<ScalarType>& scaling_factor_inf,
+                                            ScalarType scaling_factor_icu, int num_days,
+                                            const mio::regions::de::EpidataFilenames& epidata_filenames);
 #else
-IOResult<void> export_input_data_county_timeseries(const mio::VectorRange<Node<Model<ScalarType>>>, const std::string&, Date, const std::vector<int>&,
-                                                   const std::vector<ScalarType>&, const ScalarType, const int,
+IOResult<void> export_input_data_county_timeseries(const mio::VectorRange<Node<Model<ScalarType>>>, const std::string&,
+                                                   Date, const std::vector<int>&, const std::vector<ScalarType>&,
+                                                   const ScalarType, const int,
                                                    const mio::regions::de::EpidataFilenames&);
 #endif // MEMILIO_HAS_HDF5
 

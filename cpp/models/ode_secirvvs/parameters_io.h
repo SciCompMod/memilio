@@ -392,7 +392,7 @@ IOResult<void> export_input_data_county_timeseries(const mio::VectorRange<Node<M
  * @return An IOResult indicating success or failure.
  */
 template <class FP>
-IOResult<void> convert_input_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from,
+IOResult<void> convert_model_data_type(const mio::VectorRange<Node<Model<ScalarType>>>& model_from,
                                        const mio::VectorRange<Node<Model<FP>>>& model_to, Date date, int num_days,
                                        const mio::regions::de::EpidataFilenames& epidata_filenames)
 {
