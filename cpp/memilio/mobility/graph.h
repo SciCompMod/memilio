@@ -20,8 +20,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <algorithm>
-#include <functional>
 #include "memilio/timer/auto_timer.h"
 #include "memilio/utils/stl_util.h"
 #include "memilio/epidemiology/age_group.h"
@@ -31,6 +29,8 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/geography/regions.h"
 #include "memilio/utils/logging.h"
+#include <algorithm>
+#include <functional>
 #include <iostream>
 #include <ranges>
 

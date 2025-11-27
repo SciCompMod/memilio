@@ -77,7 +77,6 @@ void insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
         return;
     }
     else {
-        mio::timing::AutoTimer<"insert_sorted_replace_vec_insert"> timer;
         vec.insert(lb, item);
         return;
     }
