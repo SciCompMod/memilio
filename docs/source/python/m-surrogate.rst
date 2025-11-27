@@ -34,17 +34,19 @@ Usage
 The package currently provides the following modules:
 
 - `models`: models for different tasks
-   Currently we have the following models: 
-   - `ode_secir_simple`: A simple model allowing for asymptomatic as well as symptomatic infection states not stratified by age groups.
-   - `ode_secir_groups`: A model allowing for asymptomatic as well as symptomatic infection states stratified by age groups and including one damping.
 
-     Each model folder contains the following files: 
-     - `data_generation`: Data generation from expert model simulation outputs.
-     - `model`: Training and evaluation of the model. 
-     - `network_architectures`: Contains multiple network architectures.
-     - `grid_search`: Utilities for hyperparameter optimization.
-     - `hyperparameter_tuning`: Scripts for tuning model hyperparameters.
+  Currently we have the following models:
 
+  - `ode_secir_simple`: A simple model allowing for asymptomatic as well as symptomatic infection states not stratified by age groups.
+  - `ode_secir_groups`: A model allowing for asymptomatic as well as symptomatic infection states stratified by age groups and including one damping.
+
+  Each model folder contains the following files:
+
+  - `data_generation`: Data generation from expert model simulation outputs.
+  - `model`: Training and evaluation of the model.
+  - `network_architectures`: Contains multiple network architectures.
+  - `grid_search`: Utilities for hyperparameter optimization.
+  - `hyperparameter_tuning`: Scripts for tuning model hyperparameters.
 
 - `tests`: This file contains all tests.
 
@@ -465,5 +467,4 @@ Additional Resources
 
 **Related Documentation:**
 
-- :doc:`ODE-SECIR Model <cpp/models/osecir>`
 - :doc:`MEmilio Simulation Package <m-simulation>`
