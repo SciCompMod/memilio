@@ -160,6 +160,8 @@ template <typename FP>
 IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<VaccinationDataEntry>& vacc_data, Date date,
                                     int num_days)
 {
+    using std::floor;
+
     auto max_date_entry = std::max_element(vacc_data.begin(), vacc_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
     });
@@ -181,11 +183,11 @@ IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<Vaccinat
 
     // type conversion from UncertainValue -> FP -> int
     auto days_until_effective1 = static_cast<int>(
-        static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)]));
+        floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialImmunity<FP>>()[AgeGroup(0)])));
     auto days_until_effective2 = static_cast<int>(
-        static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)]));
+        floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedImmunity<FP>>()[AgeGroup(0)])));
     auto vaccination_distance =
-        static_cast<int>(static_cast<FP>(model.parameters.template get<VaccinationGap<FP>>()[AgeGroup(0)]));
+        floor(static_cast<int>(static_cast<FP>(model.parameters.template get<VaccinationGap<FP>>()[AgeGroup(0)])));
 
     for (auto&& vacc_data_entry : vacc_data) {
         auto date_df = vacc_data_entry.date;

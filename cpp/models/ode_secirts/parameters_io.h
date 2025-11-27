@@ -239,6 +239,7 @@ template <typename FP>
 IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<VaccinationDataEntry>& vacc_data, Date date,
                                     int num_days)
 {
+    using std::floor;
 
     auto max_date_entry = std::max_element(vacc_data.begin(), vacc_data.end(), [](auto&& a, auto&& b) {
         return a.date < b.date;
@@ -258,11 +259,11 @@ IOResult<void> set_vaccination_data(Model<FP>& model, const std::vector<Vaccinat
     }
 
     auto days_until_effective_n = static_cast<int>(
-        static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialVaccination<FP>>()[AgeGroup(0)]));
+        floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectivePartialVaccination<FP>>()[AgeGroup(0)])));
     auto days_until_effective_pi = static_cast<int>(
-        static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[AgeGroup(0)]));
+        floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectiveImprovedVaccination<FP>>()[AgeGroup(0)])));
     auto days_until_effective_ii = static_cast<int>(
-        static_cast<FP>(model.parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[AgeGroup(0)]));
+        floor(static_cast<FP>(model.parameters.template get<DaysUntilEffectiveBoosterImmunity<FP>>()[AgeGroup(0)])));
 
     for (auto&& vacc_data_entry : vacc_data) {
         BOOST_OUTCOME_TRY(set_vaccination_data<FP>(model, vacc_data_entry, date, num_days, max_date,
