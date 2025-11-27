@@ -144,6 +144,14 @@ set(MEMILIO_SIMULATION_LIBS
     ode_mseirs4
 )
 
+foreach(target_name IN LISTS MEMILIO_SIMULATION_LIBS)
+    if(TARGET ${target_name})
+        set_target_properties(${target_name} PROPERTIES
+            INSTALL_RPATH "$ORIGIN;$ORIGIN/lib"
+        )
+    endif()
+endforeach()
+
 install(TARGETS ${MEMILIO_SIMULATION_LIBS}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
@@ -154,17 +162,14 @@ install(TARGETS ${MEMILIO_SIMULATION_LIBS}
 # library into the wheel under every file name importers might look for. Wheels
 # drop symlinks, so place real copies for each alias.
 if(TARGET jsoncpp_lib)
-    set(JSONCPP_LIB_FILE $<TARGET_FILE:jsoncpp_lib>)
-    install(FILES ${JSONCPP_LIB_FILE}
-        DESTINATION lib
+    set_target_properties(jsoncpp_lib PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
     )
-    install(FILES ${JSONCPP_LIB_FILE}
+    install(FILES
+        $<TARGET_FILE:jsoncpp_lib>
+        $<TARGET_SONAME_FILE:jsoncpp_lib>
+        $<TARGET_LINKER_FILE:jsoncpp_lib>
         DESTINATION lib
-        RENAME libjsoncpp.so.26
-    )
-    install(FILES ${JSONCPP_LIB_FILE}
-        DESTINATION lib
-        RENAME libjsoncpp.so
     )
 endif()
 
@@ -172,17 +177,14 @@ if(TARGET spdlog)
     get_target_property(_SPDLOG_LIB_TYPE spdlog TYPE)
 
     if(_SPDLOG_LIB_TYPE STREQUAL "SHARED_LIBRARY")
-        set(SPDLOG_LIB_FILE $<TARGET_FILE:spdlog>)
-        install(FILES ${SPDLOG_LIB_FILE}
-            DESTINATION lib
+        set_target_properties(spdlog PROPERTIES
+            INSTALL_RPATH "$ORIGIN"
         )
-        install(FILES ${SPDLOG_LIB_FILE}
+        install(FILES
+            $<TARGET_FILE:spdlog>
+            $<TARGET_SONAME_FILE:spdlog>
+            $<TARGET_LINKER_FILE:spdlog>
             DESTINATION lib
-            RENAME libspdlog.so.1.15
-        )
-        install(FILES ${SPDLOG_LIB_FILE}
-            DESTINATION lib
-            RENAME libspdlog.so
         )
     endif()
 endif()
